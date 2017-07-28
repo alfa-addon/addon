@@ -1,0 +1,92 @@
+{
+  "id": "plusdede",
+  "name": "Plusdede",
+  "active": true,
+  "adult": false,
+  "language": "es",
+  "thumbnail": "plusdede.png",
+  "banne": "plusdede.png",
+  "version": 1,
+  "changes": [
+    {
+      "date": "17/07/2017",
+      "description": "port de canal pordede"
+    }
+  ],
+  "categories": [
+    "movie",
+    "tvshow"
+  ],
+  "settings": [
+    {
+      "id": "plusdedeuser",
+      "type": "text",
+      "label": "@30014",
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "plusdedepassword",
+      "type": "text",
+      "hidden": true,
+      "label": "@30015",
+      "enabled": "!eq(-1,'')",
+      "visible": true
+    },
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": "!eq(-1,'') + !eq(-2,'')",
+      "visible": true
+    },
+    {
+      "id": "plusdedesortlinks",
+      "type": "list",
+      "label": "Ordenar enlaces",
+      "default": 0,
+      "enabled": true,
+      "visible": "!eq(-2,'') + !eq(-3,'')",
+      "lvalues": [
+        "No",
+        "Por Valoración",
+        "Por Idioma",
+        "Por Calidad",
+        "Por Idioma y Calidad",
+        "Por Idioma y Valoración",
+        "Por Idioma, Calidad y No Reporte"
+      ]
+    },
+    {
+      "id": "plusdedeshowlinks",
+      "type": "list",
+      "label": "Mostrar enlaces",
+      "default": 0,
+      "enabled": true,
+      "visible": "!eq(-3,'') + !eq(-4,'')",
+      "lvalues": [
+        "Todos",
+        "Ver online",
+        "Descargar"
+      ]
+    },
+    {
+      "id": "plusdedenumberlinks",
+      "type": "list",
+      "label": "Limitar número de enlaces",
+      "default": 0,
+      "enabled": true,
+      "visible": "!eq(-4,'') + !eq(-5,'')",
+      "lvalues": [
+        "No",
+        "5",
+        "10",
+        "15",
+        "20",
+        "25",
+        "30"
+      ]
+    }
+  ]
+}
