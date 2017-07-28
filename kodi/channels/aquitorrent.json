@@ -1,0 +1,38 @@
+{
+  "id": "aquitorrent",
+  "name": "Aquitorrent",
+  "active": true,
+  "adult": false,
+  "language": "es",
+  "thumbnail": "http://s6.postimg.org/kta7oe8y9/aquitorrentlogo.png",
+  "banner": "aquitorrent.png",
+  "version": 1,
+  "changes": [
+    {
+      "date": "15/03/2017",
+      "description": "limpieza código"
+    },
+    {
+      "date": "13/12/2016",
+      "description": "Actualización,correción y adaptacion infoplus."
+    }
+  ],
+  "categories": [
+    "torrent",
+    "movie",
+    "tvshow",
+    "documentary",
+    "anime",
+    "vos"
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}
