@@ -1,0 +1,11 @@
+Versión 0.0.1
+- Cambiados xml a json y adaptada conversión interna, eliminado código de comprobaciones.
+- Eliminado código de conversión de versiones previas al anterior addon que ya no hará falta.
+- Comentado codigo para actualización y ayuda.
+- Eliminado código de boxee, xbox y versiones previas a xbmc12 y otras opciones que no se usa como pyload o jdownloader.
+- Renombrado nombres de ficheros en español a inglés para hacerlo más fácil para no hispano parlante.
+- Nuevos iconos y nuevas rutas en local. # pendiente de crear sistema para elegir otro pack de iconos.
+- Reseteados valores en "versión" a 1 en canales y servers.
+- Biblioteca es ahora videoteca.
+- Cambiado el sistema para configurar la biblioteca de kodi e integrarla con los datos del addon.
+- Preparado codigo para permitir más clientes de torrent sin modificar código de platformtools, se añade un elemento dentro de /servers/torrent.json nodo "clients"
