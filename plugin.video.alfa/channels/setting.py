@@ -56,6 +56,11 @@ def mainlist(item):
                              action="channel_config", folder=True,
                              thumbnail=config.get_thumb("thumb_videolibrary.png")))
 
+    if config.is_xbmc():
+        itemlist.append(Item(channel=CHANNELNAME, title="   Ajustes de cliente Torrent",
+                             action="setting_torrent", folder=True,
+                             thumbnail=config.get_thumb("thumb_channels_torrent.png")))
+
     # itemlist.append(Item(channel=CHANNELNAME, title="   Añadir o Actualizar canal/conector desde una URL",
     #                      action="menu_addchannels"))
     itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,
@@ -108,6 +113,36 @@ def menu_channels(item):
 def channel_config(item):
     return platformtools.show_channel_settings(channelpath=filetools.join(config.get_runtime_path(), "channels",
                                                                           item.config))
+
+
+def setting_torrent(item):
+    logger.info()
+
+    default = config.get_setting("torrent_client", server="torrent", default=0)
+
+    torrent_options = ["Preguntar", "Cliente interno", "Cliente interno - MCT"]
+    torrent_options.extend(platformtools.torrent_client_installed())
+
+    list_controls = [
+        {
+            "id": "list_torrent",
+            "type": "list",
+            "label": "¿Qué cliente quiere usar para reproducir torrent?",
+            "default": default,
+            "enabled": True,
+            "visible": True,
+            "lvalues": torrent_options
+        }
+    ]
+
+    platformtools.show_channel_settings(list_controls=list_controls, callback='save_setting_torrent', item=item,
+                                        caption="configuración -- Torrent", custom_button={'visible': False})
+
+
+def save_setting_torrent(item, dict_data_saved):
+
+    if dict_data_saved and "list_torrent" in dict_data_saved:
+        config.set_setting("torrent_client", dict_data_saved["list_torrent"], server="torrent")
 
 
 def menu_servers(item):

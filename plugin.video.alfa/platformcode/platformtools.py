@@ -821,6 +821,23 @@ def set_player(item, xlistitem, mediaurl, view, strm):
         xbmc_videolibrary.mark_auto_as_watched(item)
 
 
+def torrent_client_installed(show_tuple=False):
+    # Plugins externos se encuentra en servers/torrent.json nodo clients
+    from core import filetools
+    from core import jsontools
+    torrent_clients = jsontools.get_node_from_file("torrent.json", "clients", filetools.join(config.get_runtime_path(),
+                                                                                             "servers"))
+    torrent_options = []
+    for client in torrent_clients:
+        if xbmc.getCondVisibility('System.HasAddon("%s")' % client["id"]):
+            if show_tuple:
+                torrent_options.append(["Plugin externo: %s" % client["name"], client["url"]])
+            else:
+                torrent_options.append("Plugin externo: %s" % client["name"])
+    logger.debug("lista es %s" % torrent_options)
+    return torrent_options
+
+
 def play_torrent(item, xlistitem, mediaurl):
     logger.info()
     # Opciones disponibles para Reproducir torrents
@@ -828,20 +845,21 @@ def play_torrent(item, xlistitem, mediaurl):
     torrent_options.append(["Cliente interno (necesario libtorrent)"])
     torrent_options.append(["Cliente interno MCT (necesario libtorrent)"])
 
-    # Plugins externos se encuentra en servers/torrent.json nodo clients
-    from core import filetools
-    from core import jsontools
-    torrent_clients = jsontools.get_node_from_file("torrent.json", "clients", filetools.join(config.get_runtime_path(),
-                                                                                             "servers"))
-    for client in torrent_clients:
-        if xbmc.getCondVisibility('System.HasAddon("%s")' % client["id"]):
-            torrent_options.append(["Plugin externo: %s" % client["name"], client["url"]])
+    torrent_options.extend(torrent_client_installed(show_tuple=True))
+    logger.debug("lista2 es %s" % torrent_options)
 
-    # todo permitir elegir opción por defecto
-    if len(torrent_options) > 1:
-        seleccion = dialog_select("Abrir torrent con...", [opcion[0] for opcion in torrent_options])
+    torrent_client = config.get_setting("torrent_client", server="torrent")
+
+    if torrent_client and torrent_client - 1 <= len(torrent_options):
+        if torrent_client == 0:
+            seleccion = dialog_select("Abrir torrent con...", [opcion[0] for opcion in torrent_options])
+        else:
+            seleccion = torrent_client - 1
     else:
-        seleccion = 0
+        if len(torrent_options) > 1:
+            seleccion = dialog_select("Abrir torrent con...", [opcion[0] for opcion in torrent_options])
+        else:
+            seleccion = 0
 
     # Plugins externos
     if seleccion > 1:
