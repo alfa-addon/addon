@@ -1,2 +1,0 @@
-Versión 1.0.1
-- Agregada primera versión de Alfa-Addon
