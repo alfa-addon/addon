@@ -249,7 +249,7 @@ def parse_mixed_results(item, data):
     patron += '.*?<div class="year">([^<]+)</div>+'
     patron += '.*?<div class="value"><i class="fa fa-star"></i> ([^<]+)</div>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-
+    logger.debug("PARSE_DATA:" + data)
     if item.tipo == "lista":
         following = scrapertools.find_single_match(data, '<div class="follow-lista-buttons ([^"]+)">')
         data_id = scrapertools.find_single_match(data, 'data-model="10" data-id="([^"]+)">')
@@ -416,7 +416,7 @@ def peliculas(item):
     # Descarga la pagina
     headers = {"X-Requested-With": "XMLHttpRequest"}
     data = httptools.downloadpage(item.url, headers=headers).data
-    # logger.debug("data_DEF_PELICULAS="+data)
+    logger.debug("data_DEF_PELICULAS=" + data)
 
     # Extrae las entradas (carpetas)
     json_object = jsontools.load(data)
@@ -606,7 +606,7 @@ def findvideos(item, verTodos=False):
 
     # Descarga la pagina
     data = httptools.downloadpage(item.url).data
-    logger.info(data)
+    logger.info("URL:" + item.url + " DATA=" + data)
     # logger.debug("data="+data)
 
     data_model = scrapertools.find_single_match(data, 'data-model="([^"]+)"')
@@ -617,10 +617,10 @@ def findvideos(item, verTodos=False):
     url = "https://www.plusdede.com/aportes/" + data_model + "/" + data_id + "?popup=1"
 
     data = httptools.downloadpage(url).data
-    # logger.debug("dataLINKS"+data)
+    logger.debug("URL:" + url + " dataLINKS=" + data)
     token = scrapertools.find_single_match(data, '_token" content="([^"]+)"')
 
-    patron = '<a target="_blank" (.*?)</a>'
+    patron = 'target="_blank" (.*?)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     itemlist = []
 
