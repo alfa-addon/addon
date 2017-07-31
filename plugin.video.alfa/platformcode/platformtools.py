@@ -834,7 +834,6 @@ def torrent_client_installed(show_tuple=False):
                 torrent_options.append(["Plugin externo: %s" % client["name"], client["url"]])
             else:
                 torrent_options.append("Plugin externo: %s" % client["name"])
-    logger.debug("lista es %s" % torrent_options)
     return torrent_options
 
 
@@ -846,7 +845,6 @@ def play_torrent(item, xlistitem, mediaurl):
     torrent_options.append(["Cliente interno MCT (necesario libtorrent)"])
 
     torrent_options.extend(torrent_client_installed(show_tuple=True))
-    logger.debug("lista2 es %s" % torrent_options)
 
     torrent_client = config.get_setting("torrent_client", server="torrent")
 
