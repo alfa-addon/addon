@@ -10,6 +10,10 @@
   "version": 1,
   "changes": [
     {
+      "date": "31/07/2017",
+      "description": "Actualizado por cambio de estructura de la página"
+    },
+    {
       "date": "12/05/2017",
       "description": "Arreglada paginación y enlaces directos"
     },
