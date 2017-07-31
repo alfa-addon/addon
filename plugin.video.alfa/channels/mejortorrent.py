@@ -6,7 +6,6 @@ import sys
 import urllib
 import urlparse
 
-from channelselector import get_thumbnail_path
 from core import config
 from core import httptools
 from core import logger
@@ -428,15 +427,16 @@ def play(item):
 
 
 def get_thumbnail(thumb_name=None):
-    img_path = config.get_runtime_path() + '/resources/images/squares'
+    # img_path = config.get_runtime_path() + '/resources/images/squares'
+    img_path = config.get_thumb(thumb_name)
 
-    if thumb_name:
-        file_path = os.path.join(img_path, thumb_name)
-        if os.path.isfile(file_path):
-            thumb_path = file_path
-        else:
-            thumb_path = urlparse.urljoin(get_thumbnail_path(), thumb_name)
-    else:
-        thumb_path = urlparse.urljoin(get_thumbnail_path(), thumb_name)
+    # if thumb_name:
+    #     file_path = os.path.join(img_path, thumb_name)
+    #     if os.path.isfile(file_path):
+    #         thumb_path = file_path
+    #     else:
+    #         thumb_path = urlparse.urljoin(get_thumbnail_path(), thumb_name)
+    # else:
+    #     thumb_path = urlparse.urljoin(get_thumbnail_path(), thumb_name)
 
-    return thumb_path
+    return img_path
