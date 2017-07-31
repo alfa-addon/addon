@@ -1,0 +1,30 @@
+{
+  "id": "vernovelasonline",
+  "name": "Ver Novelas Online",
+  "active": true,
+  "adult": false,
+  "language": "es",
+  "thumbnail": "https://s16.postimg.org/g4lzydrmd/vernovelasonline1.png",
+  "bannermenu": "https://s16.postimg.org/w44nhxno5/vernovelasonline2.png",
+  "version": 1,
+  "changes": [
+    {
+      "date": "28/06/2017",
+      "description": "Primera version"
+    }
+  ],
+  "categories": [
+    "tvshow",
+    "latino"
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}
