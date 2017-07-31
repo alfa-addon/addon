@@ -142,7 +142,7 @@ def findvideos(item):
         # Opción "Añadir esta película a la biblioteca de XBMC"
         if item.extra != "library":
             if config.get_videolibrary_support():
-                itemlist.append(Item(channel=item.channel, title="Añadir a la biblioteca", text_color="green",
+                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
                                      filtro=True, action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
                                      infoLabels={'title': item.fulltitle}, fulltitle=item.fulltitle,
                                      extra="library"))
