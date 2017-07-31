@@ -281,7 +281,7 @@ def findvideos(item):
     if itemlist:
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
                                    text_color="magenta"))    
-        # Opción "Añadir esta película a la videoteca de KODI"
+        # Opción "Añadir esta película a la videoteca"
         if item.extra != "library":
             if config.get_videolibrary_support():
                 itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
