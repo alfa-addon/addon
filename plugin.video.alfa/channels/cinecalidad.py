@@ -201,9 +201,8 @@ def peliculas(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-
-    patron = '<div class="home_post_cont.*? post_box">.*?<a href="([^"]+)".*?src="([^"]+)".*?title="(.*?) \((' \
-             '.*?)\)".*?p&gt;([^&]+)&lt;'
+    patron = '<div class="home_post_cont.*? post_box">.*?<a href="(.*?)".*?'
+    patron += 'src="(.*?)".*?title="(.*?) \((.*?)\).*?".*?p&gt;(.*?)&lt'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedplot in matches:
@@ -283,65 +282,45 @@ def findvideos(item):
     itemlist = []
     duplicados = []
     data = httptools.downloadpage(item.url).data
-
-    patron = 'dec\("([^"]+)"\)\+dec\("([^"]+)"\)'
+    patron = 'target="_blank".*? service=".*?" data="(.*?)"><li>(.*?)<\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    recomendados = ["uptobox", "thevideos", "nowvideo", "pcloud", "directo"]
-    for scrapedurl, scrapedtitle in matches:
 
-        if dec(scrapedurl) in servidor:
-            server = servidor[dec(scrapedurl)]
-            title = "Ver " + item.contentTitle + " en " + servidor[dec(scrapedurl)].upper()
-            if 'yourupload' in dec(scrapedurl):
-                url = dec(scrapedurl).replace('watch', 'embed') + dec(scrapedtitle)
-            elif 'gdredirect' in dec(scrapedurl):
-                url = ''
-                url_list = []
-                url_list += get_urls(item, dec(scrapedtitle))
+    server_url = {'YourUpload':'https://www.yourupload.com/embed/',
+                  'Openload':'https://openload.co/embed/',
+                  'TVM':'https://thevideo.me/embed-',
+                  'Trailer':'',
+                  'BitTorrent':'',
+                  'Mega':'',
+                  'MediaFire':''}
 
-                for video in url_list:
-                    new_title = title + ' (' + video['label'] + ')'
-                    itemlist.append(
-                        Item(channel=item.channel,
-                             action="play",
-                             title=new_title,
-                             fulltitle=item.title,
-                             url=video['file'],
-                             language=IDIOMAS[item.language],
-                             thumbnail=item.thumbnail,
-                             plot=item.plot,
-                             quality=video['label'],
-                             server='directo'
-                             ))
-                    duplicados.append(title)
+    for video_cod, server_id in matches:
+        if server_id not in ['BitTorrent', 'Mega', 'MediaFire', 'Trailer','']:
+            video_id = dec(video_cod)
+
+        if server_id in server_url:
+            server = server_id.lower()
+            thumbnail = servertools.guess_server_thumbnail(server_id)
+            if server_id == 'TVM':
+                server = 'thevideo.me'
+                url= server_url[server_id]+video_id+'.html'
             else:
+                url = server_url[server_id]+video_id
+        title = item.contentTitle +' (%s)'%server
+        quality = 'default'
 
-                if 'youtube' in dec(scrapedurl):
-                    title = '[COLOR orange]Trailer en Youtube[/COLOR]'
-                url = dec(scrapedurl) + dec(scrapedtitle)
 
-            if (servidor[dec(scrapedurl)]) in recomendados:
-                title = title + "[COLOR limegreen] [I] (Recomedado) [/I] [/COLOR]"
-            thumbnail = servertools.guess_server_thumbnail(servidor[dec(scrapedurl)])
-            plot = ""
-            if title not in duplicados and url != '':
-                new_item = Item(channel=item.channel,
-                                action="play",
-                                title=title,
-                                fulltitle=item.title,
-                                url=url,
-                                thumbnail=thumbnail,
-                                plot=item.plot,
-                                extra=item.thumbnail,
-                                language=IDIOMAS[item.language],
-                                quality='default',
-                                server=server.lower()
-                                )
-                if 'Trailer' in new_item.title:
-                    trailer_item = new_item
-                else:
-                    itemlist.append(new_item)
-            duplicados.append(title)
+        if server_id not in ['BitTorrent', 'Mega', 'MediaFire', 'Trailer']:
+            if url not in duplicados:
+                itemlist.append(item.clone(action = 'play',
+                                           title=title,
+                                           fulltitle=item.contentTitle,
+                                           url=url,
+                                           language=IDIOMAS[item.language],
+                                           thumbnail = thumbnail,
+                                           quality=quality,
+                                           server = server
+                                           ))
+                duplicados.append(url)
 
     # Requerido para FilterTools
 
@@ -351,7 +330,7 @@ def findvideos(item):
 
     autoplay.start(itemlist, item)
 
-    itemlist.append(trailer_item)
+    #itemlist.append(trailer_item)
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(
             Item(channel=item.channel,
