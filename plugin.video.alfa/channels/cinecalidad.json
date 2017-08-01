@@ -12,6 +12,10 @@
   "version": 1,
   "changes": [
     {
+      "date": "01/08/2017",
+      "description": "Cambio de estructura"
+    },
+    {
       "date": "24/06/2017",
       "description": "Cambios para autoplay"
     },
