@@ -25,6 +25,14 @@
   ],
   "settings": [
     {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+   {
       "id": "copiapopuser",
       "type": "text",
       "color": "0xFF25AA48",
