@@ -14,7 +14,8 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Todas", action="lista",
                          thumbnail='https://s18.postimg.org/fwvaeo6qh/todas.png',
-                         fanart='https://s18.postimg.org/fwvaeo6qh/todas.png'))
+                         fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
+                         url ='https://www.playpornx.net/category/porn-movies/?filter=date'))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url='http://www.playpornx.net/?s=',
                          thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
                          fanart='https://s30.postimg.org/pei7txpa9/buscar.png'))
@@ -28,10 +29,12 @@ def lista(item):
     itemlist = []
     if item.url == '': item.url = host
     data = httptools.downloadpage(item.url).data
-    patron = '<a class="clip-link" title="([^"]+)"  href="([^"]+)">\s*<span class="clip">\s*<img  alt=".*?" width="190" height="266" src="([^"]+)" data-qazy="true" \/><span class="vertical-align"><\/span>\s*<\/span>'
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    logger.debug(data)
+    patron = 'role=article><a href=(.*?) rel=bookmark title=(.*?)>.*?src=(.*?) class'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedtitle, scrapedurl, scrapedthumbnail in matches:
+    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
         url = scrapedurl
         thumbnail = scrapedthumbnail
         title = scrapedtitle

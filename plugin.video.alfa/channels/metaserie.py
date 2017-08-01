@@ -62,12 +62,9 @@ def todas(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    logger.debug(data)
-
-    patron = '<div class="poster">[^<]'
-    patron += '<a href="([^"]+)" title="([^"]+)en(.*?)">[^<]'
-    patron += '<div class="poster_efecto"><span>([^<]+)<.*?div>[^<]'
-    patron += '<img.*?src="([^"]+)"'
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    patron = '<div class=poster>.*?<a href=(.*?) title=(.*?)en(.*?)>.*?'
+    patron +='<div class=poster_efecto><span>(.*?)<.*?div>.*?<img.*?src=(.*?) class'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle, lang, scrapedplot, scrapedthumbnail in matches:
@@ -95,8 +92,8 @@ def todas(item):
     # Paginacion
 
     next_page_url = scrapertools.find_single_match(data,
-                                                   '<li><a class="next page-numbers local-link" href="(['
-                                                   '^"]+)">&raquo;.*?li>')
+                                                   '<li><a class=next page-numbers local-link href=('
+                                                   '.*?)>&raquo;.*?li>')
     if next_page_url != "":
         itemlist.append(Item(channel=item.channel,
                              action="todas",
@@ -174,7 +171,6 @@ def episodiosxtemp(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    logger.debug(data)
     patron = '<td><h3 class=".*?href="([^"]+)".*?">([^<]+).*?td>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
