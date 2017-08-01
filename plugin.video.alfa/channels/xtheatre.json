@@ -1,0 +1,44 @@
+{
+  "id": "xtheatre",
+  "name": "xTheatre",
+  "active": true,
+  "adult": true,
+  "language": "es",
+  "fanart": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/xthearebg.jpg",
+  "thumbnail": "https://xtheatre.net/wp-content/uploads/xtlogo.jpg",
+  "banner": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/xthearebm.png",
+  "version": 1,
+  "changes": [
+    {
+      "date": "07/06/17",
+      "description": "Canal Nuevo"
+    }
+  ],
+   "categories": [
+   "adult"
+ ],
+ "settings": [
+    {
+      "id": "modo_grafico",
+      "type": "bool",
+      "label": "Buscar información extra",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "perfil",
+      "type": "list",
+      "label": "Perfil de color",
+      "default": 3,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Sin color",
+        "Perfil 3",
+        "Perfil 2",
+        "Perfil 1"
+      ]
+    }
+  ]
+}
