@@ -606,6 +606,8 @@ def findvideos(item):
         url = scrapedurl
         idioma = audio[scrapedidioma]
         server = scrapedserver.strip(' ')
+        if server == 'streamin':
+            server = 'streaminto'
         title = item.contentSerieName + ' ' + str(item.contentSeasonNumber) + 'x' + str(
             item.contentEpisodeNumber) + ' ' + idioma + ' (' + server + ')'
 
