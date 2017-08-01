@@ -9,6 +9,10 @@
   "banner": "cinefox.png",
   "changes": [
     {
+      "date": "01/08/2017",
+      "description": "Agregado servidor gvideo"
+    },
+    {
       "date": "05/04/2017",
       "description": "Cambio en los servidores"
     },
