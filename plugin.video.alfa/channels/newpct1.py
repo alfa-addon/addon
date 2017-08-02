@@ -18,7 +18,7 @@ def mainlist(item):
                          extra="peliculas"))
     itemlist.append(
         Item(channel=item.channel, action="submenu", title="Series", url="http://www.newpct1.com/", extra="series"))
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar"))
+    # itemlist.append(Item(channel=item.channel, action="search", title="Buscar"))
 
     return itemlist
 
