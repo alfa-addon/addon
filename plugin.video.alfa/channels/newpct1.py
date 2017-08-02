@@ -158,7 +158,7 @@ def listado(item):
             title = title + ' ' + calidad
 
         context = ""
-        context_title = scrapertools.find_single_match(url, "http://www.newpct1.com/(.*?)/(.*?)/")
+        context_title = scrapertools.find_single_match(url, "http://(?:www.)?newpct1.com/(.*?)/(.*?)/")
         if context_title:
             try:
                 context = context_title[0].replace("pelicula", "movie").replace("descargar", "movie").replace("series",
@@ -168,6 +168,7 @@ def listado(item):
                     context_title = context_title[:-4]
                 elif re.search('\(\d{4}\)', context_title[-6:]):
                     context_title = context_title[:-6]
+
             except:
                 context_title = show
 
@@ -421,6 +422,8 @@ def findvideos(item):
             Item(channel=item.channel, action="play", server="torrent", title=title + " [torrent]", fulltitle=title,
                  url=url, thumbnail=caratula, plot=item.plot, folder=False))
 
+
+    logger.debug("matar %s" % data)
     # escraped ver vídeos, descargar vídeos un link, múltiples liks
     data = data.replace("'", '"')
     data = data.replace(
@@ -448,13 +451,11 @@ def findvideos(item):
         servidor = servidor.replace("streamin", "streaminto")
         titulo = titulo + " [" + servidor + "]"
         mostrar_server = True
-        if config.get_setting("hidepremium") == "true":
+        if config.get_setting("hidepremium"):
             mostrar_server = servertools.is_server_enabled(servidor)
         if mostrar_server:
             try:
-                servers_module = __import__("servers." + servidor)
-                server_module = getattr(servers_module, servidor)
-                devuelve = server_module.find_videos(enlace)
+                devuelve = servertools.findvideosbyserver(enlace, servidor)
                 if devuelve:
                     enlace = devuelve[0][1]
                     itemlist.append(
@@ -471,13 +472,11 @@ def findvideos(item):
             parte_titulo = titulo + " (%s/%s)" % (p, len(partes)) + " [" + servidor + "]"
             p += 1
             mostrar_server = True
-            if config.get_setting("hidepremium") == "true":
+            if config.get_setting("hidepremium"):
                 mostrar_server = servertools.is_server_enabled(servidor)
             if mostrar_server:
                 try:
-                    servers_module = __import__("servers." + servidor)
-                    server_module = getattr(servers_module, servidor)
-                    devuelve = server_module.find_videos(enlace)
+                    devuelve = servertools.findvideosbyserver(enlace, servidor)
                     if devuelve:
                         enlace = devuelve[0][1]
                         itemlist.append(Item(fanart=item.fanart, channel=item.channel, action="play", server=servidor,
