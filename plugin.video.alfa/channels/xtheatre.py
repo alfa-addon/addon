@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-#------------------------------------------------------------
-# pelisalacarta - XBMC Plugin
-# Canal para PelisPlanet
-# http://blog.tvalacarta.info/plugin-xbmc/pelisalacarta/
-#------------------------------------------------------------
+
 import re
 import sys
 import urllib
