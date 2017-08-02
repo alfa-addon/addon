@@ -207,10 +207,4 @@ def findvideos(item):
         videoitem.channel = item.channel
         videoitem.title = "%s [COLOR yellow](%s)[/COLOR]" % (item.title, videoitem.server)
 
-    # if config.get_library_support() and len(itemlist) > 0:
-    #     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la biblioteca[/COLOR]',
-    #                          url=item.url, action="add_pelicula_to_library",
-    #                          thumbnail='https://s19.postimg.org/l5z8iy1zn/biblioteca.png',
-    #                          extra="findvideos", contentTitle=item.contentTitle))
-
     return itemlist
