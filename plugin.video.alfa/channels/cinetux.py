@@ -211,7 +211,7 @@ def generos(item):
     data = httptools.downloadpage(item.url).data
     bloque = scrapertools.find_single_match(data, '(?s)dos_columnas">(.*?)</ul>')
     # Extrae las entradas
-    patron = '<li><a href="/([^"]+)">(.*?)</li>'
+    patron = '<li><a.*?href="/([^"]+)">(.*?)</li>'
     matches = scrapertools.find_multiple_matches(bloque, patron)
     for scrapedurl, scrapedtitle in matches:
         scrapedurl = CHANNEL_HOST + scrapedurl
@@ -312,11 +312,13 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
             if "lazy" in bloque1:
                 lazy = "lazy-"
             patron = '(?s)id="%s".*?metaframe.*?%ssrc="([^"]+)' %(scrapedoption, lazy)
-            #logger.info("Intel22 %s" %patron)
             url = scrapertools.find_single_match(bloque1, patron)
             if "goo.gl" in url:
                 url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location","")
-            server = servertools.get_server_from_url(url)
+            if "www.cinetux.me" in url:
+                server = scrapertools.find_single_match(url, "player/(.*?)\.")
+            else:
+                server = servertools.get_server_from_url(url)
             matches.append([url, server, "", language.strip(), t_tipo])
     bloque2 = scrapertools.find_single_match(data, '(?s)box_links.*?dt_social_single')
     bloque2 = bloque2.replace("\t","").replace("\r","")
@@ -367,12 +369,17 @@ def play(item):
         id = scrapertools.find_single_match(data, 'img src="[^#]+#(.*?)"')
         item.url = "https://youtube.googleapis.com/embed/?status=ok&hl=es&allow_embed=1&ps=docs&partnerid=30&hd=1&autoplay=0&cc_load_policy=1&showinfo=0&docid=" + id
         itemlist = servertools.find_video_items(data = item.url)
-    elif "links" in item.url:
+    elif "links" in item.url or "www.cinetux.me" in item.url:
         data = httptools.downloadpage(item.url).data
         scrapedurl = scrapertools.find_single_match(data, '<a href="(http[^"]+)')
+        logger.info("Intel11 %s" %scrapedurl)
         if scrapedurl == "":
             scrapedurl = scrapertools.find_single_match(data, '(?i)<frame src="(http[^"]+)')
-        if "goo.gl" in scrapedurl:
+            logger.info("Intel22 %s" %scrapedurl)
+            if scrapedurl == "":
+                scrapedurl = scrapertools.find_single_match(data, 'replace."([^"]+)"')
+                logger.info("Intel33 %s" %scrapedurl)
+        elif "goo.gl" in scrapedurl:
             scrapedurl = httptools.downloadpage(scrapedurl, follow_redirects=False, only_headers=True).headers.get("location", "")
         item.url = scrapedurl
         itemlist = servertools.find_video_items(data = item.url)
