@@ -4,6 +4,8 @@
   "active": true,
   "adult": false,
   "language": "es",
+  "thumbnail": "plusdede.png",
+  "banner": "plusdede.png",
   "version": 1,
   "changes": [
     {
