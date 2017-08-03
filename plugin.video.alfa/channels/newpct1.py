@@ -18,7 +18,7 @@ def mainlist(item):
                          extra="peliculas"))
     itemlist.append(
         Item(channel=item.channel, action="submenu", title="Series", url="http://www.newpct1.com/", extra="series"))
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar"))
+    # itemlist.append(Item(channel=item.channel, action="search", title="Buscar"))
 
     return itemlist
 
@@ -57,7 +57,7 @@ def submenu(item):
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
 
-    patron = '<li><a href="http://www.newpct1.com/' + item.extra + '/">.*?<ul>(.*?)</ul>'
+    patron = '<li><a href="http://(?:www.)?newpct1.com/' + item.extra + '/">.*?<ul>(.*?)</ul>'
     data = scrapertools.get_match(data, patron)
 
     patron = '<a href="([^"]+)".*?>([^>]+)</a>'
@@ -126,7 +126,6 @@ def listado(item):
         if "1.com/series" in url:
             action = "completo"
             extra = "serie"
-            context = "tvshow"
 
             title = scrapertools.find_single_match(title, '([^-]+)')
             title = title.replace("Ver online", "", 1).replace("Descarga Serie HD", "", 1).replace("Ver en linea", "",
@@ -137,7 +136,7 @@ def listado(item):
                 url_i = 'http://www.newpct1.com/index.php?page=buscar&url=&letter=&q=%22' + title.replace(" ","%20") + '%22'     
             else:
                 url_i = 'http://www.newpct1.com/index.php?page=buscar&url=&letter=&q=' + title 
-            
+
             if "1.com/series-hd" in url:
                 extra="serie-hd"
                 url = url_i + '&categoryID=&categoryIDR=1469&calidad=' + calidad.replace(" ","+") #DTV+720p+AC3+5.1
@@ -147,29 +146,31 @@ def listado(item):
             elif "1.com/series/" in url: 
                 extra="serie-tv"
                 url = url_i + '&categoryID=&categoryIDR=767&calidad=' + calidad.replace(" ","+") 
-                
+
             url += '&idioma=&ordenar=Nombre&inon=Descendente'  
             '''
-            show = title
         else:
             title = title.replace("Descargar", "", 1).strip()
             if title.endswith("gratis"): title = title[:-7]
-            show = ""
-            context = "movie"
 
-        context_title = scrapertools.find_single_match(url, "http://www.newpct1.com/(.*?)/(.*?)/")
+        show = title
+        if item.extra != "buscar-list":
+            title = title + ' ' + calidad
+
+        context = ""
+        context_title = scrapertools.find_single_match(url, "http://(?:www.)?newpct1.com/(.*?)/(.*?)/")
         if context_title:
             try:
+                context = context_title[0].replace("pelicula", "movie").replace("descargar", "movie").replace("series",
+                                                                                                              "tvshow")
                 context_title = context_title[1].replace("-", " ")
                 if re.search('\d{4}', context_title[-4:]):
                     context_title = context_title[:-4]
                 elif re.search('\(\d{4}\)', context_title[-6:]):
                     context_title = context_title[:-6]
-            except:
-                context_title = title
 
-        if item.extra != "buscar-list":
-            title = title + ' ' + calidad
+            except:
+                context_title = show
 
         itemlist.append(
             Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail, extra=extra, show=show,
@@ -212,7 +213,7 @@ def completo(item):
                 categoryID=buscar_en_subcategoria(item.show,'767')
             if categoryID !="":
                 item.url=item.url.replace("categoryID=","categoryID="+categoryID)
-                
+
             #Fanart
             oTvdb= TvDb()
             serieID=oTvdb.get_serieId_by_title(item.show)
@@ -241,12 +242,12 @@ def completo(item):
     salir = False
     while not salir:
 
-        # Saca la URL de la siguiente página    
+        # Saca la URL de la siguiente página
         ultimo_item = items_programas[len(items_programas) - 1]
 
         # Páginas intermedias
         if ultimo_item.action == ultimo_action:
-            # Quita el elemento de "Página siguiente" 
+            # Quita el elemento de "Página siguiente"
             ultimo_item = items_programas.pop()
 
             # Añade las entradas de la página a la lista completa
@@ -269,7 +270,7 @@ def completo(item):
             salir = True
 
     if (config.get_videolibrary_support() and len(itemlist) > 0 and item.extra.startswith("serie")):
-        itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=item.url,
+        itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la biblioteca", url=item.url,
                              action="add_serie_to_library", extra="completo###serie_add", show=item.show))
     logger.debug("items=" + str(len(itemlist)))
     return itemlist
@@ -421,6 +422,8 @@ def findvideos(item):
             Item(channel=item.channel, action="play", server="torrent", title=title + " [torrent]", fulltitle=title,
                  url=url, thumbnail=caratula, plot=item.plot, folder=False))
 
+
+    logger.debug("matar %s" % data)
     # escraped ver vídeos, descargar vídeos un link, múltiples liks
     data = data.replace("'", '"')
     data = data.replace(
@@ -447,11 +450,12 @@ def findvideos(item):
     for logo, servidor, idioma, calidad, enlace, titulo in enlaces_ver:
         servidor = servidor.replace("streamin", "streaminto")
         titulo = titulo + " [" + servidor + "]"
-        if servertools.is_server_enabled(servidor):
+        mostrar_server = True
+        if config.get_setting("hidepremium"):
+            mostrar_server = servertools.is_server_enabled(servidor)
+        if mostrar_server:
             try:
-                servers_module = __import__("servers." + servidor)
-                server_module = getattr(servers_module, servidor)
-                devuelve = server_module.find_videos(enlace)
+                devuelve = servertools.findvideosbyserver(enlace, servidor)
                 if devuelve:
                     enlace = devuelve[0][1]
                     itemlist.append(
@@ -467,11 +471,12 @@ def findvideos(item):
         for enlace in partes:
             parte_titulo = titulo + " (%s/%s)" % (p, len(partes)) + " [" + servidor + "]"
             p += 1
-            if servertools.is_server_enabled(servidor):
+            mostrar_server = True
+            if config.get_setting("hidepremium"):
+                mostrar_server = servertools.is_server_enabled(servidor)
+            if mostrar_server:
                 try:
-                    servers_module = __import__("servers." + servidor)
-                    server_module = getattr(servers_module, servidor)
-                    devuelve = server_module.find_videos(enlace)
+                    devuelve = servertools.findvideosbyserver(enlace, servidor)
                     if devuelve:
                         enlace = devuelve[0][1]
                         itemlist.append(Item(fanart=item.fanart, channel=item.channel, action="play", server=servidor,

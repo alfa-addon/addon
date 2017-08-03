@@ -24,41 +24,48 @@ def update(path, p_dialog, i, t, serie, overwrite):
         serie.channel = channel
         serie.url = url
 
-        heading = 'Actualizando videoteca....'
-        p_dialog.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (serie.contentSerieName,
-                                                                          serie.channel.capitalize()))
-        try:
-            pathchannels = filetools.join(config.get_runtime_path(), "channels", serie.channel + '.py')
-            logger.info("Cargando canal: " + pathchannels + " " +
-                        serie.channel)
+        channel_active = config.get_setting("active", channel=channel, default=False)
 
-            if serie.library_filter_show:
-                serie.show = serie.library_filter_show.get(channel, serie.contentSerieName)
+        if channel_active:
 
-            obj = imp.load_source(serie.channel, pathchannels)
-            itemlist = obj.episodios(serie)
-
+            heading = 'Actualizando videoteca....'
+            p_dialog.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (serie.contentSerieName,
+                                                                              serie.channel.capitalize()))
             try:
-                if int(overwrite) == 3:
-                    # Sobrescribir todos los archivos (tvshow.nfo, 1x01.nfo, 1x01 [canal].json, 1x01.strm, etc...)
-                    insertados, sobreescritos, fallidos = videolibrarytools.save_tvshow(serie, itemlist)
-                else:
-                    insertados, sobreescritos, fallidos = videolibrarytools.save_episodes(path, itemlist, serie,
-                                                                                          silent=True,
-                                                                                          overwrite=overwrite)
-                insertados_total += insertados
+                pathchannels = filetools.join(config.get_runtime_path(), "channels", serie.channel + '.py')
+                logger.info("Cargando canal: " + pathchannels + " " +
+                            serie.channel)
+
+                if serie.library_filter_show:
+                    serie.show = serie.library_filter_show.get(channel, serie.contentSerieName)
+
+                obj = imp.load_source(serie.channel, pathchannels)
+                itemlist = obj.episodios(serie)
+
+                try:
+                    if int(overwrite) == 3:
+                        # Sobrescribir todos los archivos (tvshow.nfo, 1x01.nfo, 1x01 [canal].json, 1x01.strm, etc...)
+                        insertados, sobreescritos, fallidos = videolibrarytools.save_tvshow(serie, itemlist)
+                    else:
+                        insertados, sobreescritos, fallidos = videolibrarytools.save_episodes(path, itemlist, serie,
+                                                                                              silent=True,
+                                                                                              overwrite=overwrite)
+                    insertados_total += insertados
+
+                except Exception, ex:
+                    logger.error("Error al guardar los capitulos de la serie")
+                    template = "An exception of type %s occured. Arguments:\n%r"
+                    message = template % (type(ex).__name__, ex.args)
+                    logger.error(message)
 
             except Exception, ex:
-                logger.error("Error al guardar los capitulos de la serie")
+                logger.error("Error al obtener los episodios de: %s" % serie.show)
                 template = "An exception of type %s occured. Arguments:\n%r"
                 message = template % (type(ex).__name__, ex.args)
                 logger.error(message)
 
-        except Exception, ex:
-            logger.error("Error al obtener los episodios de: %s" % serie.show)
-            template = "An exception of type %s occured. Arguments:\n%r"
-            message = template % (type(ex).__name__, ex.args)
-            logger.error(message)
+        else:
+            logger.debug("Canal %s no activo no se actualiza" % serie.channel)
 
     return insertados_total > 0
 

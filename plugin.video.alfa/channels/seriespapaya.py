@@ -6,7 +6,6 @@ import urllib
 import urlparse
 
 from channels import filtertools
-from channelselector import get_thumb
 from core import config
 from core import httptools
 from core import jsontools
@@ -25,9 +24,9 @@ CALIDADES = ['360p', '480p', '720p HD', '1080p HD']
 def mainlist(item):
     logger.info()
 
-    thumb_series = get_thumb("thumb_channels_tvshow.png")
-    thumb_series_az = get_thumb("thumb_channels_tvshow_az.png")
-    thumb_buscar = get_thumb("thumb_search.png")
+    thumb_series = config.get_thumb("thumb_channels_tvshow.png")
+    thumb_series_az = config.get_thumb("thumb_channels_tvshow_az.png")
+    thumb_buscar = config.get_thumb("thumb_search.png")
 
     itemlist = []
     itemlist.append(
@@ -52,22 +51,22 @@ def listado_alfabetico(item):
 
 
 def series_por_letra(item):
-    logger.info("letra: {0}".format(item.title))
+    logger.info("letra: %s" % item.title)
     item.letter = item.title.lower()
     item.extra = 0
     return series_por_letra_y_grupo(item)
 
 
 def series_por_letra_y_grupo(item):
-    logger.info("letra: {0} - grupo: {1}".format(item.letter, item.extra))
+    logger.info("letra: %s - grupo: %s" % (item.letter, item.extra))
     itemlist = []
     url = urlparse.urljoin(HOST, "autoload_process.php")
 
-    postRequest = {
+    post_request = {
         "group_no": item.extra,
         "letra": item.letter.lower()
     }
-    data = httptools.downloadpage(url, post=urllib.urlencode(postRequest)).data
+    data = httptools.downloadpage(url, post=urllib.urlencode(post_request)).data
 
     series = re.findall(
         'list_imagen.+?src="(?P<img>[^"]+).+?<div class="list_titulo"><a[^>]+href="(?P<url>[^"]+)[^>]+>(.*?)</a>', data,
@@ -107,7 +106,7 @@ def novedades(item):
 
 
 def newest(categoria):
-    logger.info("categoria: {0}".format(categoria))
+    logger.info("categoria: %s" % categoria)
 
     if categoria != 'series':
         return []
@@ -119,13 +118,13 @@ def newest(categoria):
     except:
         import sys
         for line in sys.exc_info():
-            logger.error("{0}".format(line))
+            logger.error("%s" % line)
 
     return []
 
 
 def episodios(item):
-    logger.info("url: {0}".format(item.url))
+    logger.info("url: %s" % item.url)
 
     data = httptools.downloadpage(item.url).data
 
@@ -136,15 +135,15 @@ def episodios(item):
     for url, title, langs in episodes:
         logger.debug("langs %s" % langs)
         languages = " ".join(
-            ["[{0}]".format(IDIOMAS.get(lang, lang)) for lang in re.findall('images/s-([^\.]+)', langs)])
+            ["[%s]" % IDIOMAS.get(lang, lang) for lang in re.findall('images/s-([^\.]+)', langs)])
         filter_lang = languages.replace("[", "").replace("]", "").split(" ")
         itemlist.append(item.clone(action="findvideos",
-                                   title="{0} {1} {2}".format(item.title, title, languages),
+                                   title="%s %s %s" % (item.title, title, languages),
                                    url=urlparse.urljoin(HOST, url),
                                    language=filter_lang
                                    ))
 
-    itemlist = filtertools.get_links(itemlist, item.channel, list_idiomas, CALIDADES)
+    itemlist = filtertools.get_links(itemlist, item, list_idiomas, CALIDADES)
 
     # Opción "Añadir esta serie a la videoteca de XBMC"
     if config.get_videolibrary_support() and len(itemlist) > 0:
@@ -155,10 +154,10 @@ def episodios(item):
 
 
 def search(item, texto):
-    logger.info("texto: {0}".format(texto))
-    data = httptools.downloadpage(urlparse.urljoin(HOST, "/buscar.php?term={0}".format(texto))).data
-    jsonResult = jsontools.load(data)
-    tvShows = jsonResult["myData"]
+    logger.info("texto: %s" % texto)
+    data = httptools.downloadpage(urlparse.urljoin(HOST, "/buscar.php?term=%s" % texto)).data
+    data_dict = jsontools.load(data)
+    tvshows = data_dict["myData"]
 
     return [item.clone(action="episodios",
                        title=show["titulo"],
@@ -166,11 +165,11 @@ def search(item, texto):
                        url=urlparse.urljoin(HOST, show["urla"]),
                        thumbnail=urlparse.urljoin(HOST, show["img"]),
                        context=filtertools.context(item, list_idiomas, CALIDADES)
-                       ) for show in tvShows]
+                       ) for show in tvshows]
 
 
 def findvideos(item):
-    logger.info("url: {0}".format(item.url))
+    logger.info("url: %s" % item.url)
 
     data = httptools.downloadpage(item.url).data
 
@@ -204,9 +203,9 @@ def findvideos(item):
 
 
 def play(item):
-    logger.info("play: {0}".format(item.url))
+    logger.info("play: %s" % item.url)
     data = httptools.downloadpage(item.url).data
-    videoURL = scrapertools.find_single_match(data, "location.href='([^']+)")
-    logger.debug("Video URL = {0}".format(videoURL))
-    itemlist = servertools.find_video_items(data=videoURL)
+    video_url = scrapertools.find_single_match(data, "location.href='([^']+)")
+    logger.debug("Video URL = %s" % video_url)
+    itemlist = servertools.find_video_items(data=video_url)
     return itemlist
