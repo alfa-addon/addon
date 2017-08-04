@@ -132,7 +132,7 @@ def save_movie(item):
     for c in subcarpetas:
         code = scrapertools.find_single_match(c, '\[(.*?)\]')
         if code and code in item.infoLabels['code']:
-            path = c
+            path = filetools.join(MOVIES_PATH, c)
             _id = code
             break
 
