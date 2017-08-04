@@ -46,7 +46,7 @@ def mainlist(item):
                          url=urlparse.urljoin(HOST, "fichas_creadas/"), thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, title="Series por género", action="generos",
                          url=HOST, thumbnail=thumb_series))
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=HOST + "finder.php",
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url="https://seriesblanco.com/finder.php",
                          thumbnail=thumb_buscar))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, CALIDADES)

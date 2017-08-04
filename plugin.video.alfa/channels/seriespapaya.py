@@ -197,7 +197,7 @@ def findvideos(item):
         quality=quality,
     ) for lang, date, server, url, linkType, quality, uploader in links]
 
-    itemlist = filtertools.get_links(itemlist, item.channel, list_idiomas, CALIDADES)
+    itemlist = filtertools.get_links(itemlist, item, list_idiomas, CALIDADES)
 
     return itemlist
 
