@@ -139,7 +139,7 @@ def busqueda(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    data = json.Xml2Json(data).result
+    data = xml2dict(data)
 
     for f in data["Data"]["Fichas"]["Ficha"]:
         title = "%s  (%s)" % (f["Title"], f["Year"])
@@ -296,12 +296,14 @@ def fichas(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
+    # data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
 
     fichas_marca = {'1': 'Siguiendo', '2': 'Pendiente', '3': 'Favorita', '4': 'Vista', '5': 'Abandonada'}
-    patron = '<div class="c_fichas_image">.*?href="\.([^"]+)".*?src="\.([^"]+)".*?' \
+    patron = '<div class="c_fichas_image".*?href="\.([^"]+)".*?src-data="\.([^"]+)".*?' \
              '<div class="c_fichas_data".*?marked="([^"]*)".*?serie="([^"]*)".*?' \
              '<div class="c_fichas_title">(?:<div class="c_fichas_episode">([^<]+)</div>|)([^<]+)</div>'
     matches = scrapertools.find_multiple_matches(data, patron)
+
     for scrapedurl, scrapedthumbnail, marca, serie, episodio, scrapedtitle in matches:
         tipo = "movie"
         scrapedurl = host + scrapedurl.rsplit("-dc=")[0]
@@ -472,7 +474,7 @@ def findvideos(item):
 
     url = "https://playmax.mx/c_enlaces_n.php?apikey=%s&sid=%s&ficha=%s&cid=%s" % (apikey, sid, ficha, cid)
     data = httptools.downloadpage(url).data
-    data = json.Xml2Json(data).result
+    data = xml2dict(data)
 
     for k, v in data["Data"].items():
         try:
@@ -490,31 +492,34 @@ def findvideos(item):
                 elif type(v["Item"]) is dict:
                     v["Item"] = [v["Item"]]
                 for it in v["Item"]:
-                    thumbnail = "%s/styles/prosilver/imageset/%s.png" % (host, it['Host'])
-                    title = "   %s - %s/%s" % (it['Host'].capitalize(), it['Quality'], it['Lang'])
-                    calidad = int(scrapertools.find_single_match(it['Quality'], '(\d+)p'))
-                    calidadaudio = it['QualityA'].replace("...", "")
-                    subtitulos = it['Subtitles'].replace("Sin subtítulos", "")
-                    if subtitulos:
-                        title += " (%s)" % subtitulos
-                    if calidadaudio:
-                        title += "  [Audio:%s]" % calidadaudio
+                    try:
+                        thumbnail = "%s/styles/prosilver/imageset/%s.png" % (host, it['Host'])
+                        title = "   %s - %s/%s" % (it['Host'].capitalize(), it['Quality'], it['Lang'])
+                        calidad = int(scrapertools.find_single_match(it['Quality'], '(\d+)p'))
+                        calidadaudio = it['QualityA'].replace("...", "")
+                        subtitulos = it['Subtitles'].replace("Sin subtítulos", "")
+                        if subtitulos:
+                            title += " (%s)" % subtitulos
+                        if calidadaudio:
+                            title += "  [Audio:%s]" % calidadaudio
 
-                    likes = 0
-                    if it["Likes"] != "0" or it["Dislikes"] != "0":
-                        likes = int(it["Likes"]) - int(it["Dislikes"])
-                        title += "  (%s ok, %s ko)" % (it["Likes"], it["Dislikes"])
-                    if type(it["Url"]) is dict:
-                        for i, enlace in enumerate(it["Url"]["Item"]):
-                            titulo = title + "  (Parte %s)" % (i + 1)
-                            itemlist.append(item.clone(title=titulo, url=enlace, action="play", calidad=calidad,
+                        likes = 0
+                        if it["Likes"] != "0" or it["Dislikes"] != "0":
+                            likes = int(it["Likes"]) - int(it["Dislikes"])
+                            title += "  (%s ok, %s ko)" % (it["Likes"], it["Dislikes"])
+                        if type(it["Url"]) is dict:
+                            for i, enlace in enumerate(it["Url"]["Item"]):
+                                titulo = title + "  (Parte %s)" % (i + 1)
+                                itemlist.append(item.clone(title=titulo, url=enlace, action="play", calidad=calidad,
+                                                           thumbnail=thumbnail, order=order, like=likes, ficha=ficha,
+                                                           cid=cid, folder=False))
+                        else:
+                            url = it["Url"]
+                            itemlist.append(item.clone(title=title, url=url, action="play", calidad=calidad,
                                                        thumbnail=thumbnail, order=order, like=likes, ficha=ficha,
                                                        cid=cid, folder=False))
-                    else:
-                        url = it["Url"]
-                        itemlist.append(item.clone(title=title, url=url, action="play", calidad=calidad,
-                                                   thumbnail=thumbnail, order=order, like=likes, ficha=ficha,
-                                                   cid=cid, folder=False))
+                    except:
+                        pass
         except:
             pass
 
@@ -632,7 +637,7 @@ def acciones_fichas(item, sid, ficha, season=False):
     estados = [{'following': 'seguir'}, {'favorite': 'favorita'}, {'view': 'vista'}, {'slope': 'pendiente'}]
     url = "https://playmax.mx/ficha.php?apikey=%s&sid=%s&f=%s" % (apikey, sid, ficha)
     data = httptools.downloadpage(url).data
-    data = json.Xml2Json(data).result
+    data = xml2dict(data)
 
     try:
         marked = data["Data"]["User"]["Marked"]
@@ -716,7 +721,7 @@ def acciones_cuenta(item):
         return itemlist
     elif "Añadir a una lista" in item.title:
         data = httptools.downloadpage(host + "/c_listas.php?apikey=%s&sid=%s" % (apikey, sid)).data
-        data = json.Xml2Json(data).result
+        data = xml2dict(data)
         itemlist.append(item.clone(title="Crear nueva lista", folder=False))
         if data["Data"]["TusListas"] != "\t":
             import random
@@ -845,7 +850,7 @@ def listas(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    data = json.Xml2Json(data).result
+    data = xml2dict(data)
     if item.extra == "listas":
         itemlist.append(Item(channel=item.channel, title="Listas más seguidas", action="listas", text_color=color1,
                              url=item.url + "&orden=1", extra="listas_plus"))
@@ -921,3 +926,61 @@ def select_page(item):
         item.url = re.sub(r'start=(\d+)', "start=%s" % number, item.url)
 
     return fichas(item)
+
+
+def xml2dict(xmldata):
+    """
+    Lee un fichero o texto XML y retorna un diccionario json
+
+    Parametros:
+    file (str) -- Ruta completa al archivo XML que se desea convertir en JSON.
+    xmldata (str) -- Texto XML que se desea convertir en JSON.
+
+    Retorna:
+    Un diccionario construido a partir de los campos del XML.
+
+    """
+    from core import filetools
+    import sys
+    parse = globals().get(sys._getframe().f_code.co_name)
+
+    # if xmldata is None and file is None:
+    #     raise Exception("No hay nada que convertir!")
+    # elif xmldata is None:
+    #     if not filetools.exists(file):
+    #         raise Exception("El archivo no existe!")
+    #     xmldata = open(file, "rb").read()
+
+    matches = re.compile("<(?P<tag>[^>]+)>[\n]*[\s]*[\t]*(?P<value>.*?)[\n]*[\s]*[\t]*<\/(?P=tag)\s*>",
+                         re.DOTALL).findall(xmldata)
+
+    return_dict = {}
+    for tag, value in matches:
+        # Si tiene elementos
+        if "<" and "</" in value:
+            if tag in return_dict:
+                if type(return_dict[tag]) == list:
+                    return_dict[tag].append(parse(value))
+                else:
+                    return_dict[tag] = [return_dict[tag]]
+                    return_dict[tag].append(parse(value))
+            else:
+                return_dict[tag] = parse(value)
+
+        else:
+            if tag in return_dict:
+                if type(return_dict[tag]) == list:
+                    return_dict[tag].append(value)
+                else:
+                    return_dict[tag] = [return_dict[tag]]
+                    return_dict[tag].append(value)
+            else:
+                if value in ["true", "false"]:
+                    if value == "true":
+                        value = True
+                    else:
+                        value = False
+
+                return_dict[tag] = value
+
+    return return_dict

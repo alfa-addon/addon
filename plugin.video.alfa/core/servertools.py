@@ -330,7 +330,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                         video_urls.extend(response)
                     except:
                         save_server_stats({server: "error"}, "resolve")
-                        logger.error("Error al obrener la url en modo free")
+                        logger.error("Error al obtener la url en modo free")
                         error_messages.append("Se ha producido un error en %s" % server_name)
                         import traceback
                         logger.error(traceback.format_exc())

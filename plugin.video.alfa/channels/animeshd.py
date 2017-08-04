@@ -7,6 +7,7 @@ from core import httptools
 from core import logger
 from core import scrapertools
 from core.item import Item
+from core import servertools
 
 tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
            "Drama": "https://s16.postimg.org/94sia332d/drama.png",
@@ -172,19 +173,13 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<iframe.*?src=(.*?) frameborder=0'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    itemlist.extend(servertools.find_video_items(data=data))
 
-    for video_url in matches:
-        data = get_source(video_url)
-        data = data.replace("'", '')
-        patron = 'file:(.*?),label:(.*?),type'
-        matches = re.compile(patron, re.DOTALL).findall(data)
+    for videoitem in itemlist:
+        title = item.title+' (%s)'%videoitem.server
+        videoitem.channel = item.channel
+        videoitem.title = title
+        videoitem.action = 'play'
 
-        for scrapedurl, scrapedquality in matches:
-            url = scrapedurl
-            quality = scrapedquality
-            title = item.contentSerieName + ' (%s)' % quality
-            itemlist.append(item.clone(action='play', title=title, url=url, quality=quality))
 
     return itemlist
