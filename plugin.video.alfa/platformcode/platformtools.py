@@ -375,7 +375,7 @@ def set_context_commands(item, parent_item):
                 ((item.channel not in ["favorites", "videolibrary", "help", ""]
                   or item.action in ["update_videolibrary"]) and parent_item.channel != "favorites"):
             context_commands.append((config.get_localized_string(30155), "XBMC.RunPlugin(%s?%s)" %
-                                     (sys.argv[0], item.clone(channel="favoritos", action="addFavourite",
+                                     (sys.argv[0], item.clone(channel="favorites", action="addFavourite",
                                                               from_channel=item.channel,
                                                               from_action=item.action).tourl())))
 
@@ -660,7 +660,7 @@ def get_dialogo_opciones(item, default_action, strm):
             dialog_ok("No puedes ver ese vídeo porque...", "El servidor donde está alojado no está",
                       "soportado en alfa todavía", item.url)
 
-        if item.channel == "favoritos":
+        if item.channel == "favorites":
             # "Quitar de favoritos"
             opciones.append(config.get_localized_string(30154))
 
@@ -699,7 +699,7 @@ def set_opcion(item, seleccion, opciones, video_urls):
     # "Añadir a favoritos":
     elif opciones[seleccion] == config.get_localized_string(30155):
         from channels import favorites
-        item.from_channel = "favoritos"
+        item.from_channel = "favorites"
         favorites.addFavourite(item)
         salir = True
 
