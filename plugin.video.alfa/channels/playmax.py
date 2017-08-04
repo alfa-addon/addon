@@ -142,6 +142,7 @@ def busqueda(item):
     data = xml2dict(data)
 
     for f in data["Data"]["Fichas"]["Ficha"]:
+        f["Title"] = f["Title"].replace("<![CDATA[", "").replace("]]>", "")
         title = "%s  (%s)" % (f["Title"], f["Year"])
         infolab = {'year': f["Year"]}
         thumbnail = f["Poster"]
@@ -299,7 +300,7 @@ def fichas(item):
     # data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
 
     fichas_marca = {'1': 'Siguiendo', '2': 'Pendiente', '3': 'Favorita', '4': 'Vista', '5': 'Abandonada'}
-    patron = '<div class="c_fichas_image".*?href="\.([^"]+)".*?src-data="\.([^"]+)".*?' \
+    patron = '<div class="c_fichas_image"[^>]*>[^<]*<[^>]+href="\.([^"]+)".*?src="\.([^"]+)".*?' \
              '<div class="c_fichas_data".*?marked="([^"]*)".*?serie="([^"]*)".*?' \
              '<div class="c_fichas_title">(?:<div class="c_fichas_episode">([^<]+)</div>|)([^<]+)</div>'
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -776,7 +777,7 @@ def acciones_cuenta(item):
     for category, contenido in matches:
         itemlist.append(item.clone(action="", title=category, text_color=color3))
 
-        patron = '<div class="c_fichas_image">.*?href="\.([^"]+)".*?src="\.([^"]+)".*?serie="([^"]*)".*?' \
+        patron = '<div class="c_fichas_image"[^>]*>[^<]*<[^>]+href="\.([^"]+)".*?src="\.([^"]+)".*?serie="([^"]*)".*?' \
                  '<div class="c_fichas_title">(?:<div class="c_fichas_episode">([^<]+)</div>|)([^<]+)</div>'
         entradas = scrapertools.find_multiple_matches(contenido, patron)
         for scrapedurl, scrapedthumbnail, serie, episodio, scrapedtitle in entradas:
