@@ -372,13 +372,10 @@ def play(item):
     elif "links" in item.url or "www.cinetux.me" in item.url:
         data = httptools.downloadpage(item.url).data
         scrapedurl = scrapertools.find_single_match(data, '<a href="(http[^"]+)')
-        logger.info("Intel11 %s" %scrapedurl)
         if scrapedurl == "":
             scrapedurl = scrapertools.find_single_match(data, '(?i)<frame src="(http[^"]+)')
-            logger.info("Intel22 %s" %scrapedurl)
             if scrapedurl == "":
                 scrapedurl = scrapertools.find_single_match(data, 'replace."([^"]+)"')
-                logger.info("Intel33 %s" %scrapedurl)
         elif "goo.gl" in scrapedurl:
             scrapedurl = httptools.downloadpage(scrapedurl, follow_redirects=False, only_headers=True).headers.get("location", "")
         item.url = scrapedurl
