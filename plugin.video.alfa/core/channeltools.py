@@ -18,6 +18,10 @@ def is_adult(channel_name):
     channel_parameters = get_channel_parameters(channel_name)
     return channel_parameters["adult"]
 
+def is_active(channel_name):
+    logger.info("channel_name=" + channel_name)
+    channel_parameters = get_channel_parameters(channel_name)
+    return channel_parameters["active"]
 
 def get_channel_parameters(channel_name):
     global dict_channels_parameters
