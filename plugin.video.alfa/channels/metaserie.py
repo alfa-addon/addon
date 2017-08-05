@@ -174,7 +174,7 @@ def episodiosxtemp(item):
     patron = '<td><h3 class=".*?href="([^"]+)".*?">([^<]+).*?td>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedtitle in matches:
+    for scrapedurl, scrapedtitle in matches[::-1]:
         url = scrapedurl
         contentEpisodeNumber = re.findall(r'.*?x([^\/]+)\/', url)
         title = scrapedtitle

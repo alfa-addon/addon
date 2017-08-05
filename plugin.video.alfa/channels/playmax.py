@@ -4,7 +4,6 @@ import re
 
 from core import config
 from core import httptools
-from core import jsontools as json
 from core import logger
 from core import scrapertools
 from core import tmdb
@@ -124,6 +123,7 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
+    texto = texto.replace(" ", "%20")
     item.url = "%s/buscar.php?apikey=%s&sid=%s&buscar=%s&modo=[fichas]&start=0" % (host, apikey, sid, texto)
     try:
         return busqueda(item)
@@ -140,8 +140,13 @@ def busqueda(item):
 
     data = httptools.downloadpage(item.url).data
     data = xml2dict(data)
+    if type(data["Data"]["Fichas"]["Ficha"]) == dict:
+        searched_data = [data["Data"]["Fichas"]["Ficha"]]
+    else:
+        searched_data = data["Data"]["Fichas"]["Ficha"]
 
-    for f in data["Data"]["Fichas"]["Ficha"]:
+    for f in searched_data:
+        f["Title"] = f["Title"].replace("<![CDATA[", "").replace("]]>", "")
         title = "%s  (%s)" % (f["Title"], f["Year"])
         infolab = {'year': f["Year"]}
         thumbnail = f["Poster"]
@@ -157,7 +162,6 @@ def busqueda(item):
         else:
             tipo = "movie"
             show = ""
-
         itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, text_color=color2,
                              contentTitle=f["Title"], show=show, contentType=tipo, infoLabels=infolab,
                              thumbnail=thumbnail))
@@ -219,7 +223,7 @@ def newest(categoria):
     except:
         import sys
         for line in sys.exc_info():
-            logger.error("{0}".format(line))
+            logger.error("%s" %line)
         return []
 
     return itemlist
@@ -299,7 +303,7 @@ def fichas(item):
     # data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
 
     fichas_marca = {'1': 'Siguiendo', '2': 'Pendiente', '3': 'Favorita', '4': 'Vista', '5': 'Abandonada'}
-    patron = '<div class="c_fichas_image".*?href="\.([^"]+)".*?src-data="\.([^"]+)".*?' \
+    patron = '<div class="c_fichas_image"[^>]*>[^<]*<[^>]+href="\.([^"]+)".*?src-data="\.([^"]+)".*?' \
              '<div class="c_fichas_data".*?marked="([^"]*)".*?serie="([^"]*)".*?' \
              '<div class="c_fichas_title">(?:<div class="c_fichas_episode">([^<]+)</div>|)([^<]+)</div>'
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -776,7 +780,7 @@ def acciones_cuenta(item):
     for category, contenido in matches:
         itemlist.append(item.clone(action="", title=category, text_color=color3))
 
-        patron = '<div class="c_fichas_image">.*?href="\.([^"]+)".*?src="\.([^"]+)".*?serie="([^"]*)".*?' \
+        patron = '<div class="c_fichas_image"[^>]*>[^<]*<[^>]+href="\.([^"]+)".*?src="\.([^"]+)".*?serie="([^"]*)".*?' \
                  '<div class="c_fichas_title">(?:<div class="c_fichas_episode">([^<]+)</div>|)([^<]+)</div>'
         entradas = scrapertools.find_multiple_matches(contenido, patron)
         for scrapedurl, scrapedthumbnail, serie, episodio, scrapedtitle in entradas:
@@ -940,16 +944,8 @@ def xml2dict(xmldata):
     Un diccionario construido a partir de los campos del XML.
 
     """
-    from core import filetools
     import sys
     parse = globals().get(sys._getframe().f_code.co_name)
-
-    # if xmldata is None and file is None:
-    #     raise Exception("No hay nada que convertir!")
-    # elif xmldata is None:
-    #     if not filetools.exists(file):
-    #         raise Exception("El archivo no existe!")
-    #     xmldata = open(file, "rb").read()
 
     matches = re.compile("<(?P<tag>[^>]+)>[\n]*[\s]*[\t]*(?P<value>.*?)[\n]*[\s]*[\t]*<\/(?P=tag)\s*>",
                          re.DOTALL).findall(xmldata)
