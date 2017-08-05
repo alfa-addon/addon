@@ -402,7 +402,7 @@ def findvideostv(item):
         idioma = IDIOMAS.get(idiomas_videos.get(language))
         titulo = "%s [" + idioma + "] (" + calidad_videos.get(quality) + ")"
 
-        itemlist.append(item.clone(action="play", title=titulo, url=url, contentType="episode", server=server))
+        itemlist.append(item.clone(action="play", title=titulo, url=url, contentType="episode"))
 
     # Enlace Descarga
     patron = '<span class="movie-downloadlink-list" id_movies_types="([^"]+)" id_movies_servers="([^"]+)".*?episode="%s' \
