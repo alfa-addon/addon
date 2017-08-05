@@ -168,7 +168,7 @@ def busqueda(item):
 
     if __modo_grafico__:
         tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
-    # total = int(data.get("Data", {}).get("totalResultsFichas"), "0")
+
     total = int(data["Data"]["totalResultsFichas"])
     actualpage = int(scrapertools.find_single_match(item.url, "start=(\d+)"))
     if actualpage + 20 < total:
