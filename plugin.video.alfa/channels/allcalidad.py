@@ -116,7 +116,7 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     patron = '(?s)fmi(.*?)thead'
     bloque = scrapertools.find_single_match(data, patron)
-    match = scrapertools.find_multiple_matches(bloque, '(?is)iframe .*?src="([^"]+)')
+    match = scrapertools.find_multiple_matches(bloque, '(?is)(?:iframe|script) .*?src="([^"]+)')
     for url in match:
         server = servertools.get_server_from_url(url)
         titulo = "Ver en: " + server
@@ -139,7 +139,7 @@ def findvideos(item):
         itemlist.append(Item(channel = item.channel))
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
                                    text_color="magenta"))
-        # Opción "Añadir esta película a la biblioteca de XBMC"
+        # Opción "Añadir esta película a la biblioteca de KODI"
         if item.extra != "library":
             if config.get_videolibrary_support():
                 itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
