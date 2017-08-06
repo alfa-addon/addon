@@ -476,7 +476,7 @@ def clear_saved_searches(item):
 
 
 def get_saved_searches():
-    current_saved_searches_list = config.get_setting("saved_searches_list", "buscador")
+    current_saved_searches_list = config.get_setting("saved_searches_list", "search")
     if current_saved_searches_list is None:
         saved_searches_list = []
     else:
