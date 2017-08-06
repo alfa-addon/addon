@@ -126,6 +126,8 @@ def findvideos(item):
                 titulo = "[COLOR = yellow]Ver trailer: " + server + "[/COLOR]"
         elif "directo" in server:
             continue
+        elif "vimeo" in url:
+            url += "|" + "http://www.allcalidad.com"
         itemlist.append(
                  Item(channel = item.channel,
                  action = "play",
