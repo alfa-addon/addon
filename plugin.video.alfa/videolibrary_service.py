@@ -25,9 +25,9 @@ def update(path, p_dialog, i, t, serie, overwrite):
         serie.channel = channel
         serie.url = url
 
-        channel_active = channeltools.is_active(channel)
+        channel_enabled = channeltools.is_enabled(channel)
 
-        if channel_active:
+        if channel_enabled:
 
             heading = 'Actualizando videoteca....'
             p_dialog.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (serie.contentSerieName,
