@@ -190,7 +190,7 @@ def episodios(item):
     episodes = re.findall("<tr.*?href=['\"](?P<url>[^'\"]+).+?>(?P<title>.+?)</a>.*?<td>(?P<flags>.*?)</td>", data,
                           re.MULTILINE | re.DOTALL)
     for url, title, flags in episodes:
-        title = title.replace("<span itemprop='episodeNumber'>", "").replace("</span>", "")
+        title = re.sub("<span[^>]+>", "", title).replace("</span>", "")
         idiomas = " ".join(["[%s]" % IDIOMAS.get(language, "OVOS") for language in
                             re.findall("banderas/([^\.]+)", flags, re.MULTILINE)])
         filter_lang = idiomas.replace("[", "").replace("]", "").split(" ")
@@ -302,7 +302,7 @@ def play(item):
         if ajax_data:
             data = ajax_data
 
-        patron = "onclick='window.open\(\"([^\"]+)\"\);'/>"
+        patron = "window.location.href\s*=\s*[\"']([^\"']+)'"
         url = scrapertoolsV2.find_single_match(data, patron)
 
     else:
