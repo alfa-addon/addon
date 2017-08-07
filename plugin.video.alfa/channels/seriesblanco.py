@@ -16,8 +16,6 @@ IDIOMAS = {'es': 'Español', 'en': 'Inglés', 'la': 'Latino', 'vo': 'VO', 'vos':
 list_idiomas = IDIOMAS.values()
 CALIDADES = ['SD', 'HDiTunes', 'Micro-HD-720p', 'Micro-HD-1080p', '1080p', '720p']
 
-CAPITULOS_DE_ESTRENO_STR = "Capítulos de Estreno"
-
 
 def mainlist(item):
     logger.info()
@@ -32,16 +30,10 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Todas las series", action="series",
                          url=urlparse.urljoin(HOST, "listado/"), thumbnail=thumb_series))
     itemlist.append(
-        Item(channel=item.channel, title="Capítulos de estreno", action="home_section", extra=CAPITULOS_DE_ESTRENO_STR,
-             url=HOST, thumbnail=thumb_series))
-    itemlist.append(
-        Item(channel=item.channel, title="Último actualizado", action="home_section", extra="Último Actualizado",
+        Item(channel=item.channel, title="Capítulos estrenados recientemente", action="home_section", extra="Series Online : Capítulos estrenados recientemente",
              url=HOST, thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, title="Series más vistas", action="series", extra="Series Más vistas",
                          url=urlparse.urljoin(HOST, "listado-visto/"), thumbnail=thumb_series))
-    itemlist.append(
-        Item(channel=item.channel, title="Series menos vistas", action="home_section", extra="Series Menos vistas",
-             url=HOST, thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, title="Últimas fichas creadas", action="series",
                          url=urlparse.urljoin(HOST, "fichas_creadas/"), thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, title="Series por género", action="generos",
@@ -198,6 +190,7 @@ def episodios(item):
     episodes = re.findall("<tr.*?href=['\"](?P<url>[^'\"]+).+?>(?P<title>.+?)</a>.*?<td>(?P<flags>.*?)</td>", data,
                           re.MULTILINE | re.DOTALL)
     for url, title, flags in episodes:
+        title = title.replace("<span itemprop='episodeNumber'>", "").replace("</span>", "")
         idiomas = " ".join(["[%s]" % IDIOMAS.get(language, "OVOS") for language in
                             re.findall("banderas/([^\.]+)", flags, re.MULTILINE)])
         filter_lang = idiomas.replace("[", "").replace("]", "").split(" ")

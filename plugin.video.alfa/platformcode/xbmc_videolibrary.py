@@ -375,30 +375,19 @@ def update(folder_content=config.get_setting("folder_tvshows"), folder=""):
     """
     logger.info(folder)
 
-    if not folder:
-        # Actualizar toda la coleccion
-        while xbmc.getCondVisibility('Library.IsScanningVideo()'):
-            xbmc.sleep(500)
-        xbmc.executebuiltin('UpdateLibrary(video)')
+    payload = {
+        "jsonrpc": "2.0",
+        "method": "VideoLibrary.Scan",
+        "id": 1
+    }
 
-    else:
-        # Actualizar una sola carpeta en un hilo independiente
-
-        def update_multi_threads(update_path, lock):
-            lock.acquire()
-            # logger.debug("%s\nINICIO" % update_path)
-            payload = {"jsonrpc": "2.0",
-                       "method": "VideoLibrary.Scan",
-                       "params": {"directory": update_path}, "id": 1}
-
-            data = get_data(payload)
-            lock.release()
-            # logger.debug("%s\nFIN data: %s" % (update_path, data))
-
+    if folder:
         videolibrarypath = config.get_videolibrary_config_path()
 
         if folder.endswith('/') or folder.endswith('\\'):
             folder = folder[:-1]
+
+        update_path = None
 
         if videolibrarypath.startswith("special:"):
             if videolibrarypath.endswith('/'):
@@ -407,9 +396,12 @@ def update(folder_content=config.get_setting("folder_tvshows"), folder=""):
         else:
             update_path = filetools.join(videolibrarypath, folder_content, folder) + "/"
 
-        t = threading.Thread(target=update_multi_threads, args=[update_path, threading.Lock()])
-        t.setDaemon(True)
-        t.start()
+        payload["params"] = {"directory": update_path}
+
+    while xbmc.getCondVisibility('Library.IsScanningVideo()'):
+        xbmc.sleep(500)
+
+    data = get_data(payload)
 
 
 def clean(mostrar_dialogo=False):

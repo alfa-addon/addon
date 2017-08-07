@@ -11,6 +11,7 @@ import threading
 from core import config
 from core import filetools
 from core import logger
+from core import channeltools
 from core import videolibrarytools
 from platformcode import platformtools
 
@@ -24,9 +25,9 @@ def update(path, p_dialog, i, t, serie, overwrite):
         serie.channel = channel
         serie.url = url
 
-        channel_active = config.get_setting("active", channel=channel, default=False)
+        channel_enabled = channeltools.is_enabled(channel)
 
-        if channel_active:
+        if channel_enabled:
 
             heading = 'Actualizando videoteca....'
             p_dialog.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (serie.contentSerieName,

@@ -3,7 +3,6 @@
 import re
 
 from channels import renumbertools
-from channelselector import get_thumb
 from core import config
 from core import httptools
 from core import logger
@@ -18,8 +17,8 @@ host = "http://www.cartoon-latino.com/"
 def mainlist(item):
     logger.info()
 
-    thumb_series = get_thumb("thumb_channels_tvshow.png")
-    thumb_series_az = get_thumb("thumb_channels_tvshow_az.png")
+    thumb_series = config.get_thumb("thumb_channels_tvshow.png")
+    thumb_series_az = config.get_thumb("thumb_channels_tvshow_az.png")
 
     itemlist = list()
 
