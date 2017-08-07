@@ -324,8 +324,8 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
     bloque2 = bloque2.replace("\t","").replace("\r","")
     patron  = '(?s)optn" href="([^"]+)'
     patron += '.*?title="([^"]+)'
-    patron += '.*?src.*?src="[^>]+"\s/>([^<]+)'
-    patron += '.*?src="[^>]+"\s/>([^<]+)'
+    patron += '.*?src.*?src="[^>]+"?/>([^<]+)'
+    patron += '.*?src="[^>]+"?/>([^<]+)'
     patron += '.*?/span>([^<]+)'
     matches.extend(scrapertools.find_multiple_matches(bloque2, patron))
     filtrados = []
