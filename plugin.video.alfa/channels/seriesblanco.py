@@ -190,6 +190,7 @@ def episodios(item):
     episodes = re.findall("<tr.*?href=['\"](?P<url>[^'\"]+).+?>(?P<title>.+?)</a>.*?<td>(?P<flags>.*?)</td>", data,
                           re.MULTILINE | re.DOTALL)
     for url, title, flags in episodes:
+        title = title.replace("<span itemprop='episodeNumber'>", "").replace("</span>", "")
         idiomas = " ".join(["[%s]" % IDIOMAS.get(language, "OVOS") for language in
                             re.findall("banderas/([^\.]+)", flags, re.MULTILINE)])
         filter_lang = idiomas.replace("[", "").replace("]", "").split(" ")
