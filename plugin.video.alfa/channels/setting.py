@@ -873,8 +873,9 @@ def overwrite_tools(item):
         p_dialog = platformtools.dialog_progress_bg('alfa', heading)
         p_dialog.update(0, '')
 
-        import glob
-        show_list = glob.glob(filetools.join(videolibrarytools.TVSHOWS_PATH, u'/*/tvshow.nfo'))
+        show_list = []
+        for path, folders, files in filetools.walk(videolibrarytools.TVSHOWS_PATH):
+            show_list.extend([filetools.join(path, f) for f in files if f == "tvshow.nfo"])
 
         if show_list:
             t = float(100) / len(show_list)
