@@ -12,6 +12,10 @@
       {
         "pattern": "(?s)https://youtube.googleapis.com.*?docid=([^(?:&|\")]+)",
         "url": "http://docs.google.com/get_video_info?docid=\\1"
+      },
+      {
+        "pattern": "(?s)https://drive.google.com/file/d/([^/]+)/preview",
+        "url": "http://docs.google.com/get_video_info?docid=\\1"
       }
     ]
   },

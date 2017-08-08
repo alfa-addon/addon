@@ -62,11 +62,11 @@ def getchanneltypes():
     logger.info()
 
     # Lista de categorias
-    channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "torrent", "latino"]
+    channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent", "latino"]
     dict_types_lang = {'movie': config.get_localized_string(30122), 'tvshow': config.get_localized_string(30123),
                        'anime': config.get_localized_string(30124), 'documentary': config.get_localized_string(30125),
                        'vos': config.get_localized_string(30136), 'adult': config.get_localized_string(30126),
-                       'latino': config.get_localized_string(30127)}
+                       'latino': config.get_localized_string(30127), 'direct': config.get_localized_string(30137)}
 
     if config.get_setting("adult_mode") != 0:
         channel_types.append("adult")
