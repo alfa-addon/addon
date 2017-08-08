@@ -1,14 +1,18 @@
 {
-  "id": "bajui",
-  "name": "Bajui",
+  "id": "bajui2",
+  "name": "Bajui2",
   "active": true,
   "adult": false,
   "language": "es",
   "thumbnail": "bajui.png",
   "banner": "bajui.png",
   "fanart": "bajui.png",
-  "version": 1,
+  "version": 2,
   "changes": [
+    {
+      "date": "07/08/2017",
+      "description": "Fix URL HOST changed to Bajui2"
+    },
     {
       "date": "15/03/2017",
       "description": "limpieza código"
