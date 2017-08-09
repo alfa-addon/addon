@@ -16,8 +16,8 @@ host = "http://ver-pelis.me"
 def mainlist(item):
     logger.info()
     itemlist = []
-    i = 0
     global i
+    i = 0
     itemlist.append(
         item.clone(title = "[COLOR oldlace]Películas[/COLOR]", action = "scraper", url = host + "/ver/",
                    thumbnail = "http://imgur.com/36xALWc.png", fanart = "http://imgur.com/53dhEU4.jpg",
@@ -49,7 +49,6 @@ def categoria_anno(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     bloque = scrapertools.find_single_match(data, 'mobile_menu.*?(%s.*?)</ul>' %item.extra)
-    logger.info("Intel44 %s" %bloque)
     patron  = '(?is)<li.*?a href="([^"]+)'
     patron += '.*?title="[^"]+">([^<]+)'
     match = scrapertools.find_multiple_matches(bloque, patron)
@@ -80,8 +79,8 @@ def scraper(item):
     global i
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron = scrapertools.find_multiple_matches(data,
-                                                '<a class="thumb cluetip".*?href="([^"]+)".*?src="([^"]+)" alt="([^"]+)".*?"res">([^"]+)</span>')
+    patron = '<a class="thumb cluetip".*?href="([^"]+)".*?src="([^"]+)" alt="([^"]+)".*?"res">([^"]+)</span>'
+    patron = scrapertools.find_multiple_matches(data, patron)
     if len(patron) > 20:
         if item.next_page != 20:
             url_next_page = item.url
@@ -91,9 +90,7 @@ def scraper(item):
         else:
             patron = patron[item.i:][:20]
             next_page = 20
-
             url_next_page = item.url
-
     for url, thumb, title, cuality in patron:
         title = re.sub(r"Imagen", "", title)
         titulo = "[COLOR floralwhite]" + title + "[/COLOR]" + " " + "[COLOR crimson][B]" + cuality + "[/B][/COLOR]"
@@ -101,31 +98,13 @@ def scraper(item):
 
         if item.extra != "search":
             item.i += 1
-        new_item = item.clone(action="findvideos", title=titulo, url=url, thumbnail=thumb, fulltitle=title,
-                              contentTitle=title, contentType="movie", library=True)
-        new_item.infoLabels['year'] = get_year(url)
-        itemlist.append(new_item)
+        itemlist.append(item.clone(action="findvideos", title=titulo, url=url, thumbnail=thumb, fulltitle=title,
+                              contentTitle=title, contentType="movie", library=True))
 
     ## Paginación
     if url_next_page:
         itemlist.append(item.clone(title="[COLOR crimson]Siguiente >>[/COLOR]", url=url_next_page, next_page=next_page,
                                    thumbnail="http://imgur.com/w3OMy2f.png", i=item.i))
-    try:
-        from core import tmdb
-        tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
-        for item in itemlist:
-            if not "Siguiente >>" in item.title:
-                if "0." in str(item.infoLabels['rating']):
-                    item.infoLabels['rating'] = "[COLOR indianred]Sin puntuacíon[/COLOR]"
-                else:
-                    item.infoLabels['rating'] = "[COLOR orange]" + str(item.infoLabels['rating']) + "[/COLOR]"
-                item.title = item.title + "  " + str(item.infoLabels['rating'])
-    except:
-        pass
-
-    for item_tmdb in itemlist:
-        logger.info(str(item_tmdb.infoLabels['tmdb_id']))
-
     return itemlist
 
 
@@ -137,10 +116,12 @@ def findvideos(item):
     if data_post:
         post = 'id=' + data_post[0] + '&slug=' + data_post[1]
         data_info = httptools.downloadpage(host + '/ajax/cargar_video.php', post=post).data
-        enlaces = scrapertools.find_multiple_matches(data_info,
-                                                     "</i> (\w+ \w+).*?<a onclick=\"load_player\('([^']+)','([^']+)', ([^']+),.*?REPRODUCIR\">([^']+)</a>")
+        patron  = """</i> ([^<]+)"""
+        patron += """.*?<a onclick=\"load_player\('([^']+)"""
+        patron += """','([^']+)', ([^']+),.*?REPRODUCIR\">([^']+)</a>"""
+        enlaces = scrapertools.find_multiple_matches(data_info, patron)
         for server, id_enlace, name, number, idioma_calidad in enlaces:
-
+            server = server.strip()
             if "SUBTITULOS" in idioma_calidad and not "P" in idioma_calidad:
                 idioma_calidad = idioma_calidad.replace("SUBTITULOS", "VO")
                 idioma_calidad = idioma_calidad.replace("VO", "[COLOR orangered] VO[/COLOR]")
@@ -164,14 +145,23 @@ def findvideos(item):
             url = host + "/ajax/video.php?id=" + id_enlace + "&slug=" + name + "&quality=" + number
 
             if not "Ultra" in server:
-                server = "[COLOR cyan][B]" + server + "[/B][/COLOR]"
+                server = "[COLOR cyan][B]" + server + " [/B][/COLOR]"
                 extra = ""
             else:
-                server = "[COLOR yellow][B]" + server + "[/B][/COLOR]"
+                server = "[COLOR yellow][B]Gvideo [/B][/COLOR]"
                 extra = "yes"
             title = server.strip() + "  " + idioma_calidad
-            itemlist.append(Item(channel=item.channel, action="play", title=title, url=url, fanart=item.fanart,
-                                 thumbnail=item.thumbnail, fulltitle=item.title, extra=extra, folder=True))
+            itemlist.append(Item(
+                                 channel = item.channel,
+                                 action = "play",
+                                 title = title,
+                                 url = url,
+                                 fanart = item.fanart,
+                                 thumbnail = item.thumbnail,
+                                 fulltitle = item.fulltitle,
+                                 extra = extra,
+                                 folder = True
+                                 ))
         if item.library and config.get_videolibrary_support() and len(itemlist) > 0:
             infoLabels = {'tmdb_id': item.infoLabels['tmdb_id'],
                           'title': item.infoLabels['title']}
@@ -198,16 +188,13 @@ def play(item):
         url = scrapertools.find_single_match(data, '(?is)iframe src="([^"]+)"')
     videolist = servertools.find_video_items(data=url)
     for video in videolist:
-        itemlist.append(Item(channel=item.channel, url=video.url, server=video.server,
-                             title="[COLOR floralwhite][B]" + video.server + "[/B][/COLOR]", action="play",
-                             folder=False))
+        itemlist.append(Item(
+                             channel = item.channel,
+                             url = video.url,
+                             server = video.server,
+                             fulltitle = item.fulltitle,
+                             thumbnail = item.thumbnail,
+                             action = "play"
+                             ))
 
     return itemlist
-
-
-def get_year(url):
-    data = httptools.downloadpage(url).data
-    year = scrapertools.find_single_match(data, '<p><strong>Año:</strong>(.*?)</p>')
-    if year == "":
-        year = " "
-    return year
