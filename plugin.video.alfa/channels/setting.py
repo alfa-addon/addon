@@ -911,19 +911,25 @@ def overwrite_tools(item):
             t = float(100) / len(movies_list)
 
         for i, movie_json in enumerate(movies_list):
-            from core import jsontools
-            path = filetools.dirname(movie_json)
-            movie = Item().fromjson(filetools.read(movie_json))
+            try:
+                from core import jsontools
+                path = filetools.dirname(movie_json)
+                movie = Item().fromjson(filetools.read(movie_json))
 
-            # Eliminamos la carpeta con la pelicula ...
-            filetools.rmdirtree(path)
+                # Eliminamos la carpeta con la pelicula ...
+                filetools.rmdirtree(path)
 
-            import math
-            heading = 'Actualizando videoteca....'
+                import math
+                heading = 'Actualizando videoteca....'
 
-            p_dialog2.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (movie.contentTitle,
-                                                                               movie.channel.capitalize()))
-            # ... y la volvemos a añadir
-            videolibrarytools.save_movie(movie)
+                p_dialog2.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (movie.contentTitle,
+                                                                                   movie.channel.capitalize()))
+                # ... y la volvemos a añadir
+                videolibrarytools.save_movie(movie)
+            except Exception, ex:
+                logger.error("Error al crear de nuevo la película")
+                template = "An exception of type %s occured. Arguments:\n%r"
+                message = template % (type(ex).__name__, ex.args)
+                logger.error(message)
 
         p_dialog2.close()
