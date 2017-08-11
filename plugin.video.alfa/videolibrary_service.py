@@ -87,7 +87,7 @@ def check_for_update(overwrite=True):
             p_dialog.update(0, '')
             show_list = []
 
-            for path, folders, files in filetools.walk(library.TVSHOWS_PATH):
+            for path, folders, files in filetools.walk(videolibrarytools.TVSHOWS_PATH):
                 show_list.extend([filetools.join(path, f) for f in files if f == "tvshow.nfo"])
 
             if show_list:

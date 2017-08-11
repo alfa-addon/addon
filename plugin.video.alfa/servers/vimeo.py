@@ -17,7 +17,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         page_url = scrapertools.find_single_match(page_url, ".*?video/[0-9]+")
 
     data = httptools.downloadpage(page_url, headers = headers).data
-    logger.info("Intel11 %s" %data)
     patron  = 'mime":"([^"]+)"'
     patron += '.*?url":"([^"]+)"'
     patron += '.*?quality":"([^"]+)"'

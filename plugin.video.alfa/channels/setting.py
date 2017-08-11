@@ -866,10 +866,11 @@ def overwrite_tools(item):
     from core import videolibrarytools
 
     seleccion = platformtools.dialog_yesno("Sobrescribir toda la videoteca",
-                                           "Esto puede llevar algun tiempo.",
+                                           "Esto puede llevar algún tiempo.",
                                            "¿Desea continuar?")
     if seleccion == 1:
-        heading = 'Sobrescribiendo videoteca....'
+        # tvshows
+        heading = 'Sobrescribiendo videoteca....SERIES'
         p_dialog = platformtools.dialog_progress_bg('alfa', heading)
         p_dialog.update(0, '')
 
@@ -893,5 +894,42 @@ def overwrite_tools(item):
 
             # ... y la volvemos a añadir
             videolibrary_service.update(path, p_dialog, i, t, serie, 3)
-
         p_dialog.close()
+
+        # movies
+        heading = 'Sobrescribiendo videoteca....PELICULAS'
+        p_dialog2 = platformtools.dialog_progress_bg('alfa', heading)
+        p_dialog2.update(0, '')
+
+        movies_list = []
+        for path, folders, files in filetools.walk(videolibrarytools.MOVIES_PATH):
+            movies_list.extend([filetools.join(path, f) for f in files if f.endswith(".json")])
+
+        logger.debug("movies_list %s" % movies_list)
+
+        if movies_list:
+            t = float(100) / len(movies_list)
+
+        for i, movie_json in enumerate(movies_list):
+            try:
+                from core import jsontools
+                path = filetools.dirname(movie_json)
+                movie = Item().fromjson(filetools.read(movie_json))
+
+                # Eliminamos la carpeta con la pelicula ...
+                filetools.rmdirtree(path)
+
+                import math
+                heading = 'Actualizando videoteca....'
+
+                p_dialog2.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (movie.contentTitle,
+                                                                                   movie.channel.capitalize()))
+                # ... y la volvemos a añadir
+                videolibrarytools.save_movie(movie)
+            except Exception, ex:
+                logger.error("Error al crear de nuevo la película")
+                template = "An exception of type %s occured. Arguments:\n%r"
+                message = template % (type(ex).__name__, ex.args)
+                logger.error(message)
+
+        p_dialog2.close()
