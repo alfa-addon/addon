@@ -2,22 +2,26 @@
   "active": true,
   "changes": [
     {
-      "date": "12/07/2017",
-      "description": "Versión inicial"
+      "date": "18/07/2017",
+      "description": "Versión incial"
     }
   ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "downace.com/embed/([A-z0-9]+)",
-        "url": "https://downace.com/embed/\\1"
+        "pattern": "(?s)https://youtube.googleapis.com.*?docid=([^(?:&|\")]+)",
+        "url": "http://docs.google.com/get_video_info?docid=\\1"
+      },
+      {
+        "pattern": "(?s)https://drive.google.com/file/d/([^/]+)/preview",
+        "url": "http://docs.google.com/get_video_info?docid=\\1"
       }
     ]
   },
   "free": true,
-  "id": "downace",
-  "name": "downace",
+  "id": "gvideo",
+  "name": "gvideo",
   "settings": [
     {
       "default": false,
@@ -44,6 +48,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s12.postimg.org/4n9fmdy7x/logo-downace.png",
   "version": 1
 }

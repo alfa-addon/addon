@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import glob
 import os
 
 from core import config
@@ -36,53 +35,55 @@ def list_movies(item):
     logger.info()
     itemlist = []
 
-    for f in glob.glob(filetools.join(videolibrarytools.MOVIES_PATH, u'/*/*.nfo')):
-        nfo_path = f
-        head_nfo, new_item = videolibrarytools.read_nfo(nfo_path)
+    for raiz, subcarpetas, ficheros in filetools.walk(videolibrarytools.MOVIES_PATH):
+        for f in ficheros:
+            if f.endswith(".nfo"):
+                nfo_path = filetools.join(raiz, f)
+                head_nfo, new_item = videolibrarytools.read_nfo(nfo_path)
 
-        new_item.nfo = nfo_path
-        new_item.path = filetools.dirname(f)
-        new_item.thumbnail = new_item.contentThumbnail
-        new_item.text_color = "blue"
+                new_item.nfo = nfo_path
+                new_item.path = raiz
+                new_item.thumbnail = new_item.contentThumbnail
+                new_item.text_color = "blue"
 
-        if not filetools.exists(filetools.join(videolibrarytools.MOVIES_PATH, new_item.strm_path)):
-            # Si se ha eliminado el strm desde la bilbioteca de kodi, no mostrarlo
-            continue
+                if not filetools.exists(filetools.join(new_item.path, filetools.basename(new_item.strm_path))):
+                    # Si se ha eliminado el strm desde la bilbioteca de kodi, no mostrarlo
+                    continue
 
-        # Menu contextual: Marcar como visto/no visto
-        visto = new_item.library_playcounts.get(os.path.splitext(f)[0], 0)
-        new_item.infoLabels["playcount"] = visto
-        if visto > 0:
-            texto_visto = "Marcar película como no vista"
-            contador = 0
-        else:
-            texto_visto = "Marcar película como vista"
-            contador = 1
+                # Menu contextual: Marcar como visto/no visto
+                visto = new_item.library_playcounts.get(os.path.splitext(f)[0], 0)
+                new_item.infoLabels["playcount"] = visto
+                if visto > 0:
+                    texto_visto = "Marcar película como no vista"
+                    contador = 0
+                else:
+                    texto_visto = "Marcar película como vista"
+                    contador = 1
 
-        # Menu contextual: Eliminar serie/canal
-        num_canales = len(new_item.library_urls)
-        if "downloads" in new_item.library_urls:
-            num_canales -= 1
-        if num_canales > 1:
-            texto_eliminar = "Eliminar película/canal"
-            multicanal = True
-        else:
-            texto_eliminar = "Eliminar esta película"
-            multicanal = False
+                # Menu contextual: Eliminar serie/canal
+                num_canales = len(new_item.library_urls)
+                if "downloads" in new_item.library_urls:
+                    num_canales -= 1
+                if num_canales > 1:
+                    texto_eliminar = "Eliminar película/canal"
+                    multicanal = True
+                else:
+                    texto_eliminar = "Eliminar esta película"
+                    multicanal = False
 
-        new_item.context = [{"title": texto_visto,
-                             "action": "mark_content_as_watched",
-                             "channel": "videolibrary",
-                             "playcount": contador},
-                            {"title": texto_eliminar,
-                             "action": "delete",
-                             "channel": "videolibrary",
-                             "multicanal": multicanal}]
-        # ,{"title": "Cambiar contenido (PENDIENTE)",
-        # "action": "",
-        # "channel": "videolibrary"}]
-        # logger.debug("new_item: " + new_item.tostring('\n'))
-        itemlist.append(new_item)
+                new_item.context = [{"title": texto_visto,
+                                     "action": "mark_content_as_watched",
+                                     "channel": "videolibrary",
+                                     "playcount": contador},
+                                    {"title": texto_eliminar,
+                                     "action": "delete",
+                                     "channel": "videolibrary",
+                                     "multicanal": multicanal}]
+                # ,{"title": "Cambiar contenido (PENDIENTE)",
+                # "action": "",
+                # "channel": "videolibrary"}]
+                # logger.debug("new_item: " + new_item.tostring('\n'))
+                itemlist.append(new_item)
 
     return sorted(itemlist, key=lambda it: it.title.lower())
 
@@ -92,66 +93,68 @@ def list_tvshows(item):
     itemlist = []
 
     # Obtenemos todos los tvshow.nfo de la videoteca de SERIES recursivamente
-    for f in glob.glob(filetools.join(videolibrarytools.TVSHOWS_PATH, u'/*/tvshow.nfo')):
-        # logger.debug("file es %s" % f)
+    for raiz, subcarpetas, ficheros in filetools.walk(videolibrarytools.TVSHOWS_PATH):
+        for f in ficheros:
+            if f == "tvshow.nfo":
+                tvshow_path = filetools.join(raiz, f)
+                # logger.debug(tvshow_path)
+                head_nfo, item_tvshow = videolibrarytools.read_nfo(tvshow_path)
+                item_tvshow.title = item_tvshow.contentTitle
+                item_tvshow.path = raiz
+                item_tvshow.nfo = tvshow_path
 
-        head_nfo, item_tvshow = videolibrarytools.read_nfo(f)
-        item_tvshow.title = item_tvshow.contentTitle
-        item_tvshow.path = filetools.join(videolibrarytools.TVSHOWS_PATH, item_tvshow.path)
-        item_tvshow.nfo = f
+                # Menu contextual: Marcar como visto/no visto
+                visto = item_tvshow.library_playcounts.get(item_tvshow.contentTitle, 0)
+                item_tvshow.infoLabels["playcount"] = visto
+                if visto > 0:
+                    texto_visto = "Marcar serie como no vista"
+                    contador = 0
+                else:
+                    texto_visto = "Marcar serie como vista"
+                    contador = 1
 
-        # Menu contextual: Marcar como visto/no visto
-        visto = item_tvshow.library_playcounts.get(item_tvshow.contentTitle, 0)
-        item_tvshow.infoLabels["playcount"] = visto
-        if visto > 0:
-            texto_visto = "Marcar serie como no vista"
-            contador = 0
-        else:
-            texto_visto = "Marcar serie como vista"
-            contador = 1
+                # Menu contextual: Buscar automáticamente nuevos episodios o no
+                if item_tvshow.active and int(item_tvshow.active) > 0:
+                    texto_update = "Buscar automáticamente nuevos episodios: Desactivar"
+                    value = 0
+                    item_tvshow.text_color = "green"
+                else:
+                    texto_update = "Buscar automáticamente nuevos episodios: Activar"
+                    value = 1
+                    item_tvshow.text_color = "0xFFDF7401"
 
-        # Menu contextual: Buscar automáticamente nuevos episodios o no
-        if item_tvshow.active and int(item_tvshow.active) > 0:
-            texto_update = "Buscar automáticamente nuevos episodios: Desactivar"
-            value = 0
-            item_tvshow.text_color = "green"
-        else:
-            texto_update = "Buscar automáticamente nuevos episodios: Activar"
-            value = 1
-            item_tvshow.text_color = "0xFFDF7401"
+                # Menu contextual: Eliminar serie/canal
+                num_canales = len(item_tvshow.library_urls)
+                if "downloads" in item_tvshow.library_urls:
+                    num_canales -= 1
+                if num_canales > 1:
+                    texto_eliminar = "Eliminar serie/canal"
+                    multicanal = True
+                else:
+                    texto_eliminar = "Eliminar esta serie"
+                    multicanal = False
 
-        # Menu contextual: Eliminar serie/canal
-        num_canales = len(item_tvshow.library_urls)
-        if "downloads" in item_tvshow.library_urls:
-            num_canales -= 1
-        if num_canales > 1:
-            texto_eliminar = "Eliminar serie/canal"
-            multicanal = True
-        else:
-            texto_eliminar = "Eliminar esta serie"
-            multicanal = False
+                item_tvshow.context = [{"title": texto_visto,
+                                        "action": "mark_content_as_watched",
+                                        "channel": "videolibrary",
+                                        "playcount": contador},
+                                       {"title": texto_update,
+                                        "action": "mark_tvshow_as_updatable",
+                                        "channel": "videolibrary",
+                                        "active": value},
+                                       {"title": texto_eliminar,
+                                        "action": "delete",
+                                        "channel": "videolibrary",
+                                        "multicanal": multicanal},
+                                       {"title": "Buscar nuevos episodios ahora",
+                                        "action": "update_tvshow",
+                                        "channel": "videolibrary"}]
+                # ,{"title": "Cambiar contenido (PENDIENTE)",
+                # "action": "",
+                # "channel": "videolibrary"}]
 
-        item_tvshow.context = [{"title": texto_visto,
-                                "action": "mark_content_as_watched",
-                                "channel": "videolibrary",
-                                "playcount": contador},
-                               {"title": texto_update,
-                                "action": "mark_tvshow_as_updatable",
-                                "channel": "videolibrary",
-                                "active": value},
-                               {"title": texto_eliminar,
-                                "action": "delete",
-                                "channel": "videolibrary",
-                                "multicanal": multicanal},
-                               {"title": "Buscar nuevos episodios ahora",
-                                "action": "update_tvshow",
-                                "channel": "videolibrary"}]
-        # ,{"title": "Cambiar contenido (PENDIENTE)",
-        # "action": "",
-        # "channel": "videolibrary"}]
-
-        # logger.debug("item_tvshow:\n" + item_tvshow.tostring('\n'))
-        itemlist.append(item_tvshow)
+                # logger.debug("item_tvshow:\n" + item_tvshow.tostring('\n'))
+                itemlist.append(item_tvshow)
 
     if itemlist:
         itemlist = sorted(itemlist, key=lambda it: it.title.lower())
@@ -168,19 +171,18 @@ def get_seasons(item):
     itemlist = []
     dict_temp = {}
 
+    raiz, carpetas_series, ficheros = filetools.walk(item.path).next()
+
     # Menu contextual: Releer tvshow.nfo
     head_nfo, item_nfo = videolibrarytools.read_nfo(item.nfo)
-
-    # Miramos las temporadas que estén marcadas como vistas
-    if not hasattr(item_nfo, 'library_playcounts'):
-        item_nfo.library_playcounts = {}
 
     if config.get_setting("no_pile_on_seasons", "videolibrary") == 2:  # Siempre
         return get_episodes(item)
 
-    for f in glob.glob1(item.path, u'*.json'):
-        season = f.split('x')[0]
-        dict_temp[season] = "Temporada %s" % season
+    for f in ficheros:
+        if f.endswith('.json'):
+            season = f.split('x')[0]
+            dict_temp[season] = "Temporada %s" % season
 
     if config.get_setting("no_pile_on_seasons", "videolibrary") == 1 and len(dict_temp) == 1:  # Sólo si hay una temporada
         return get_episodes(item)
@@ -231,54 +233,58 @@ def get_episodes(item):
     # logger.debug("item:\n" + item.tostring('\n'))
     itemlist = []
 
+    # Obtenemos los archivos de los episodios
+    raiz, carpetas_series, ficheros = filetools.walk(item.path).next()
+
     # Menu contextual: Releer tvshow.nfo
     head_nfo, item_nfo = videolibrarytools.read_nfo(item.nfo)
 
     # Crear un item en la lista para cada strm encontrado
-    for f in glob.glob1(item.path, u'*.strm'):
-        season_episode = scrapertools.get_season_and_episode(f)
-        if not season_episode:
-            # El fichero no incluye el numero de temporada y episodio
-            continue
-        season, episode = season_episode.split("x")
-        # Si hay q filtrar por temporada, ignoramos los capitulos de otras temporadas
-        if item.filtrar_season and int(season) != int(item.contentSeason):
-            continue
+    for i in ficheros:
+        if i.endswith('.strm'):
+            season_episode = scrapertools.get_season_and_episode(i)
+            if not season_episode:
+                # El fichero no incluye el numero de temporada y episodio
+                continue
+            season, episode = season_episode.split("x")
+            # Si hay q filtrar por temporada, ignoramos los capitulos de otras temporadas
+            if item.filtrar_season and int(season) != int(item.contentSeason):
+                continue
 
-        # Obtener los datos del season_episode.nfo
-        nfo_path = filetools.join(item.path, f).replace('.strm', '.nfo')
-        head_nfo, epi = videolibrarytools.read_nfo(nfo_path)
+            # Obtener los datos del season_episode.nfo
+            nfo_path = filetools.join(raiz, i).replace('.strm', '.nfo')
+            head_nfo, epi = videolibrarytools.read_nfo(nfo_path)
 
-        # Fijar el titulo del capitulo si es posible
-        if epi.contentTitle:
-            title_episodie = epi.contentTitle.strip()
-        else:
-            title_episodie = "Temporada %s Episodio %s" % \
-                             (epi.contentSeason, str(epi.contentEpisodeNumber).zfill(2))
+            # Fijar el titulo del capitulo si es posible
+            if epi.contentTitle:
+                title_episodie = epi.contentTitle.strip()
+            else:
+                title_episodie = "Temporada %s Episodio %s" % \
+                                 (epi.contentSeason, str(epi.contentEpisodeNumber).zfill(2))
 
-        epi.contentTitle = "%sx%s" % (epi.contentSeason, str(epi.contentEpisodeNumber).zfill(2))
-        epi.title = "%sx%s - %s" % (epi.contentSeason, str(epi.contentEpisodeNumber).zfill(2), title_episodie)
+            epi.contentTitle = "%sx%s" % (epi.contentSeason, str(epi.contentEpisodeNumber).zfill(2))
+            epi.title = "%sx%s - %s" % (epi.contentSeason, str(epi.contentEpisodeNumber).zfill(2), title_episodie)
 
-        if item_nfo.library_filter_show:
-            epi.library_filter_show = item_nfo.library_filter_show
+            if item_nfo.library_filter_show:
+                epi.library_filter_show = item_nfo.library_filter_show
 
-        # Menu contextual: Marcar episodio como visto o no
-        visto = item_nfo.library_playcounts.get(season_episode, 0)
-        epi.infoLabels["playcount"] = visto
-        if visto > 0:
-            texto = "Marcar episodio como no visto"
-            value = 0
-        else:
-            texto = "Marcar episodio como visto"
-            value = 1
-        epi.context = [{"title": texto,
-                        "action": "mark_content_as_watched",
-                        "channel": "videolibrary",
-                        "playcount": value,
-                        "nfo": item.nfo}]
+            # Menu contextual: Marcar episodio como visto o no
+            visto = item_nfo.library_playcounts.get(season_episode, 0)
+            epi.infoLabels["playcount"] = visto
+            if visto > 0:
+                texto = "Marcar episodio como no visto"
+                value = 0
+            else:
+                texto = "Marcar episodio como visto"
+                value = 1
+            epi.context = [{"title": texto,
+                            "action": "mark_content_as_watched",
+                            "channel": "videolibrary",
+                            "playcount": value,
+                            "nfo": item.nfo}]
 
-        # logger.debug("epi:\n" + epi.tostring('\n'))
-        itemlist.append(epi)
+            # logger.debug("epi:\n" + epi.tostring('\n'))
+            itemlist.append(epi)
 
     return sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
 
@@ -530,25 +536,28 @@ def mark_season_as_watched(item):
     # logger.debug("item:\n" + item.tostring('\n'))
 
     # Obtener el diccionario de episodios marcados
-    tvshow_path = filetools.join(item.path, 'tvshow.nfo')
-    head_nfo, it = videolibrarytools.read_nfo(tvshow_path)
+    f = filetools.join(item.path, 'tvshow.nfo')
+    head_nfo, it = videolibrarytools.read_nfo(f)
     if not hasattr(it, 'library_playcounts'):
         it.library_playcounts = {}
 
+    # Obtenemos los archivos de los episodios
+    raiz, carpetas_series, ficheros = filetools.walk(item.path).next()
+
     # Marcamos cada uno de los episodios encontrados de esta temporada
     episodios_marcados = 0
-    for f in glob.glob1(item.path, u'*.strm'):
-        # if f.endswith(".strm"):
-        season_episode = scrapertools.get_season_and_episode(f)
-        if not season_episode:
-            # El fichero no incluye el numero de temporada y episodio
-            continue
-        season, episode = season_episode.split("x")
+    for i in ficheros:
+        if i.endswith(".strm"):
+            season_episode = scrapertools.get_season_and_episode(i)
+            if not season_episode:
+                # El fichero no incluye el numero de temporada y episodio
+                continue
+            season, episode = season_episode.split("x")
 
-        if int(item.contentSeason) == -1 or int(season) == int(item.contentSeason):
-            name_file = os.path.splitext(os.path.basename(f))[0]
-            it.library_playcounts[name_file] = item.playcount
-            episodios_marcados += 1
+            if int(item.contentSeason) == -1 or int(season) == int(item.contentSeason):
+                name_file = os.path.splitext(os.path.basename(f))[0]
+                it.library_playcounts[name_file] = item.playcount
+                episodios_marcados += 1
 
     if episodios_marcados:
         if int(item.contentSeason) == -1:
@@ -564,7 +573,7 @@ def mark_season_as_watched(item):
             it = check_tvshow_playcount(it, item.contentSeason)
 
         # Guardamos los cambios en tvshow.nfo
-        filetools.write(tvshow_path, head_nfo + it.tojson())
+        filetools.write(f, head_nfo + it.tojson())
         item.infoLabels['playcount'] = item.playcount
 
         if config.is_xbmc():

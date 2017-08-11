@@ -1,5 +1,5 @@
 {
-    "id": "ver-pelis",
+    "id": "verpelis",
     "name": "Ver-pelis",
     "active": true,
     "adult": false,
@@ -19,7 +19,8 @@
     "categories": [
         "torrent",
         "movie",
-        "tvshow"
+        "tvshow",
+        "direct"
     ],
     "settings": [
         {

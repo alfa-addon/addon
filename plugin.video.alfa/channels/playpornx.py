@@ -16,6 +16,7 @@ def mainlist(item):
                          thumbnail='https://s18.postimg.org/fwvaeo6qh/todas.png',
                          fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
                          url ='https://www.playpornx.net/category/porn-movies/?filter=date'))
+
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url='http://www.playpornx.net/?s=',
                          thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
                          fanart='https://s30.postimg.org/pei7txpa9/buscar.png'))
@@ -30,7 +31,6 @@ def lista(item):
     if item.url == '': item.url = host
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    logger.debug(data)
     patron = 'role=article><a href=(.*?) rel=bookmark title=(.*?)>.*?src=(.*?) class'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -45,7 +45,7 @@ def lista(item):
 
     if itemlist != []:
         actual_page_url = item.url
-        next_page = scrapertools.find_single_match(data, 'rel="next" href="([^"]+)"')
+        next_page = scrapertools.find_single_match(data, '<link rel=next href=(.*?) \/>')
         if next_page != '':
             itemlist.append(Item(channel=item.channel, action="lista", title='Siguiente >>>', url=next_page,
                                  thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png', extra=item.extra))

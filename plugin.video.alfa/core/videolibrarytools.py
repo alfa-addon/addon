@@ -127,14 +127,13 @@ def save_movie(item):
 
     base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").lower().encode("utf8")
 
-    subcarpetas = os.listdir(MOVIES_PATH)
-
-    for c in subcarpetas:
-        code = scrapertools.find_single_match(c, '\[(.*?)\]')
-        if code and code in item.infoLabels['code']:
-            path = filetools.join(MOVIES_PATH, c)
-            _id = code
-            break
+    for raiz, subcarpetas, ficheros in filetools.walk(MOVIES_PATH):
+        for c in subcarpetas:
+            code = scrapertools.find_single_match(c, '\[(.*?)\]')
+            if code and code in item.infoLabels['code']:
+                path = filetools.join(raiz, c)
+                _id = code
+                break
 
     if not path:
         # Crear carpeta
@@ -248,14 +247,13 @@ def save_tvshow(item, episodelist):
 
     base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").lower().encode("utf8")
 
-    subcarpetas = os.listdir(TVSHOWS_PATH)
-
-    for c in subcarpetas:
-        code = scrapertools.find_single_match(c, '\[(.*?)\]')
-        if code and code in item.infoLabels['code']:
-            path = filetools.join(TVSHOWS_PATH, c)
-            _id = code
-            break
+    for raiz, subcarpetas, ficheros in filetools.walk(TVSHOWS_PATH):
+        for c in subcarpetas:
+            code = scrapertools.find_single_match(c, '\[(.*?)\]')
+            if code and code in item.infoLabels['code']:
+                path = filetools.join(raiz, c)
+                _id = code
+                break
 
     if not path:
         path = filetools.join(TVSHOWS_PATH, ("%s [%s]" % (base_name, _id)).strip())
@@ -348,7 +346,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     news_in_playcounts = {}
 
     # Listamos todos los ficheros de la serie, asi evitamos tener que comprobar si existe uno por uno
-    ficheros = os.listdir(path)
+    raiz, carpetas_series, ficheros = filetools.walk(path).next()
     ficheros = [filetools.join(path, f) for f in ficheros]
 
     # Silent es para no mostrar progreso (para videolibrary_service)
