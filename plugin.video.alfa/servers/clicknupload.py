@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import re
 import urllib
 
 from core import httptools
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 token = ""
 excption = False

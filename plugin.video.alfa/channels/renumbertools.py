@@ -10,9 +10,8 @@ try:
 except:
     xbmcgui = None
 
-from core import config
+from platformcode import config, logger
 from core import jsontools
-from core import logger
 from core.item import Item
 from platformcode import platformtools
 
@@ -318,7 +317,8 @@ if xbmcgui:
             self.mediapath = os.path.join(config.get_runtime_path(), 'resources', 'skins', 'Default', 'media')
             self.font = "font12"
 
-            window_bg = xbmcgui.ControlImage(320, 130, 600, 440, os.path.join(self.mediapath, 'Windows', 'DialogBack.png'))
+            window_bg = xbmcgui.ControlImage(320, 130, 600, 440,
+                                             os.path.join(self.mediapath, 'Windows', 'DialogBack.png'))
             self.addControl(window_bg)
 
             header_bg = xbmcgui.ControlImage(window_bg.getX(), window_bg.getY() + 8, window_bg.getWidth(), 35,
@@ -342,16 +342,19 @@ if xbmcgui:
             header_title.addLabel(self.show)
 
             self.controls_bg = xbmcgui.ControlImage(window_bg.getX() + 20, header_bg.getY() + header_bg.getHeight() + 6,
-                                                    562, 260, os.path.join(self.mediapath, 'Windows', 'BackControls.png'))
+                                                    562, 260,
+                                                    os.path.join(self.mediapath, 'Windows', 'BackControls.png'))
             self.addControl(self.controls_bg)
 
-            self.scroll_bg = xbmcgui.ControlImage(window_bg.getX() + window_bg.getWidth() - 25, self.controls_bg.getY(), 10,
+            self.scroll_bg = xbmcgui.ControlImage(window_bg.getX() + window_bg.getWidth() - 25, self.controls_bg.getY(),
+                                                  10,
                                                   self.controls_bg.getHeight(), os.path.join(self.mediapath, 'Controls',
                                                                                              'ScrollBack.png'))
             self.addControl(self.scroll_bg)
             self.scroll_bg.setVisible(False)
 
-            self.scroll2_bg = xbmcgui.ControlImage(window_bg.getX() + window_bg.getWidth() - 25, self.controls_bg.getY(),
+            self.scroll2_bg = xbmcgui.ControlImage(window_bg.getX() + window_bg.getWidth() - 25,
+                                                   self.controls_bg.getY(),
                                                    10, self.controls_bg.getHeight(), os.path.join(self.mediapath,
                                                                                                   'Controls',
                                                                                                   'ScrollBar.png'))
@@ -363,14 +366,16 @@ if xbmcgui:
                                                    font=self.font, focusTexture=os.path.join(self.mediapath, 'Controls',
                                                                                              'KeyboardKey.png'),
                                                    noFocusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                               'KeyboardKeyNF.png'), alignment=ALIGN_CENTER)
+                                                                               'KeyboardKeyNF.png'),
+                                                   alignment=ALIGN_CENTER)
             self.addControl(btn_add_season)
 
             self.btn_info = xbmcgui.ControlButton(window_bg.getX() + 210, btn_add_season.getY(), 120, 30, 'Información',
                                                   font=self.font, focusTexture=os.path.join(self.mediapath, 'Controls',
                                                                                             'KeyboardKey.png'),
                                                   noFocusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                              'KeyboardKeyNF.png'), alignment=ALIGN_CENTER)
+                                                                              'KeyboardKeyNF.png'),
+                                                  alignment=ALIGN_CENTER)
             self.addControl(self.btn_info)
 
             check_update_internet_w = 235
@@ -405,12 +410,14 @@ if xbmcgui:
                                                 focusTexture=os.path.join(self.mediapath, 'Controls',
                                                                           'KeyboardKey.png'),
                                                 noFocusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                            'KeyboardKeyNF.png'), alignment=ALIGN_CENTER)
+                                                                            'KeyboardKeyNF.png'),
+                                                alignment=ALIGN_CENTER)
             self.addControl(self.btn_ok)
 
             self.btn_cancel = xbmcgui.ControlButton(self.btn_info.getX() + 30, self.btn_ok.getY(), 120, 30, 'Cancelar',
-                                                    font=self.font, focusTexture=os.path.join(self.mediapath, 'Controls',
-                                                                                              'KeyboardKey.png'),
+                                                    font=self.font,
+                                                    focusTexture=os.path.join(self.mediapath, 'Controls',
+                                                                              'KeyboardKey.png'),
                                                     noFocusTexture=os.path.join(self.mediapath, 'Controls',
                                                                                 'KeyboardKeyNF.png'),
                                                     alignment=ALIGN_CENTER)
@@ -521,12 +528,14 @@ if xbmcgui:
                     self.addControl(btn_delete_season)
                     btn_delete_season.setVisible(False)
 
-                    hb_bg = xbmcgui.ControlImage(self.controls_bg.getX() + 10, pos_y + 40, self.controls_bg.getWidth() - 20,
+                    hb_bg = xbmcgui.ControlImage(self.controls_bg.getX() + 10, pos_y + 40,
+                                                 self.controls_bg.getWidth() - 20,
                                                  2, os.path.join(self.mediapath, 'Controls', 'ScrollBack.png'))
                     self.addControl(hb_bg)
                     hb_bg.setVisible(False)
 
-                    group = ControlGroup(label_season=label_season, edit_season=edit_season, label_episode=label_episode,
+                    group = ControlGroup(label_season=label_season, edit_season=edit_season,
+                                         label_episode=label_episode,
                                          edit_episode=edit_episode, btn_delete_season=btn_delete_season, hb=hb_bg)
 
                     pos_y += 50
@@ -827,9 +836,10 @@ if xbmcgui:
                     pos_x += self.controls[i].label_episode.getWidth() + 5
                     self.controls[i].edit_episode.setPosition(pos_x, pos_y - 2)
 
-                    self.controls[i].btn_delete_season.setPosition(self.controls_bg.getX() + self.controls_bg.getWidth() -
-                                                                   self.controls[i].btn_delete_season.getWidth() - 14,
-                                                                   pos_y)
+                    self.controls[i].btn_delete_season.setPosition(
+                        self.controls_bg.getX() + self.controls_bg.getWidth() -
+                        self.controls[i].btn_delete_season.getWidth() - 14,
+                        pos_y)
 
                     self.controls[i].hb.setPosition(self.controls_bg.getX() + 10, pos_y + 40)
 
@@ -931,60 +941,60 @@ if xbmcgui:
         def onAction(self, action):
             self.close()
 
-    # TODO mirar retro-compatiblidad
-    # class ControlEdit(xbmcgui.ControlButton):
-    #     def __new__(self, *args, **kwargs):
-    #         del kwargs["isPassword"]
-    #         del kwargs["window"]
-    #         args = list(args)
-    #         return xbmcgui.ControlButton.__new__(self, *args, **kwargs)
-    #
-    #     def __init__(self, *args, **kwargs):
-    #         self.isPassword = kwargs["isPassword"]
-    #         self.window = kwargs["window"]
-    #         self.label = ""
-    #         self.text = ""
-    #         self.textControl = xbmcgui.ControlLabel(self.getX(), self.getY(), self.getWidth(), self.getHeight(),
-    #                                                 self.text,
-    #                                                 font=kwargs["font"], textColor=kwargs["textColor"], alignment=4 | 1)
-    #         self.window.addControl(self.textControl)
-    #
-    #     def setLabel(self, val):
-    #         self.label = val
-    #         xbmcgui.ControlButton.setLabel(self, val)
-    #
-    #     def getX(self):
-    #         return xbmcgui.ControlButton.getPosition(self)[0]
-    #
-    #     def getY(self):
-    #         return xbmcgui.ControlButton.getPosition(self)[1]
-    #
-    #     def setEnabled(self, e):
-    #         xbmcgui.ControlButton.setEnabled(self, e)
-    #         self.textControl.setEnabled(e)
-    #
-    #     def setWidth(self, w):
-    #         xbmcgui.ControlButton.setWidth(self, w)
-    #         self.textControl.setWidth(w / 2)
-    #
-    #     def setHeight(self, w):
-    #         xbmcgui.ControlButton.setHeight(self, w)
-    #         self.textControl.setHeight(w)
-    #
-    #     def setPosition(self, x, y):
-    #         xbmcgui.ControlButton.setPosition(self, x, y)
-    #         self.textControl.setPosition(x + self.getWidth() / 2, y)
-    #
-    #     def setText(self, text):
-    #         self.text = text
-    #         if self.isPassword:
-    #             self.textControl.setLabel("*" * len(self.text))
-    #         else:
-    #             self.textControl.setLabel(self.text)
-    #
-    #     def getText(self):
-    #         return self.text
-    #
-    #
-    # if not hasattr(xbmcgui, "ControlEdit"):
-    #     xbmcgui.ControlEdit = ControlEdit
+            # TODO mirar retro-compatiblidad
+            # class ControlEdit(xbmcgui.ControlButton):
+            #     def __new__(self, *args, **kwargs):
+            #         del kwargs["isPassword"]
+            #         del kwargs["window"]
+            #         args = list(args)
+            #         return xbmcgui.ControlButton.__new__(self, *args, **kwargs)
+            #
+            #     def __init__(self, *args, **kwargs):
+            #         self.isPassword = kwargs["isPassword"]
+            #         self.window = kwargs["window"]
+            #         self.label = ""
+            #         self.text = ""
+            #         self.textControl = xbmcgui.ControlLabel(self.getX(), self.getY(), self.getWidth(), self.getHeight(),
+            #                                                 self.text,
+            #                                                 font=kwargs["font"], textColor=kwargs["textColor"], alignment=4 | 1)
+            #         self.window.addControl(self.textControl)
+            #
+            #     def setLabel(self, val):
+            #         self.label = val
+            #         xbmcgui.ControlButton.setLabel(self, val)
+            #
+            #     def getX(self):
+            #         return xbmcgui.ControlButton.getPosition(self)[0]
+            #
+            #     def getY(self):
+            #         return xbmcgui.ControlButton.getPosition(self)[1]
+            #
+            #     def setEnabled(self, e):
+            #         xbmcgui.ControlButton.setEnabled(self, e)
+            #         self.textControl.setEnabled(e)
+            #
+            #     def setWidth(self, w):
+            #         xbmcgui.ControlButton.setWidth(self, w)
+            #         self.textControl.setWidth(w / 2)
+            #
+            #     def setHeight(self, w):
+            #         xbmcgui.ControlButton.setHeight(self, w)
+            #         self.textControl.setHeight(w)
+            #
+            #     def setPosition(self, x, y):
+            #         xbmcgui.ControlButton.setPosition(self, x, y)
+            #         self.textControl.setPosition(x + self.getWidth() / 2, y)
+            #
+            #     def setText(self, text):
+            #         self.text = text
+            #         if self.isPassword:
+            #             self.textControl.setLabel("*" * len(self.text))
+            #         else:
+            #             self.textControl.setLabel(self.text)
+            #
+            #     def getText(self):
+            #         return self.text
+            #
+            #
+            # if not hasattr(xbmcgui, "ControlEdit"):
+            #     xbmcgui.ControlEdit = ControlEdit

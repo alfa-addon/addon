@@ -5,12 +5,11 @@ import urlparse
 
 from channels import renumbertools
 from channelselector import get_thumb
-from core import config
 from core import httptools
-from core import logger
 from core import scrapertools
 from core import tmdb
 from core.item import Item
+from platformcode import config, logger
 
 host = "https://seriesmeme.com/"
 
@@ -18,9 +17,8 @@ host = "https://seriesmeme.com/"
 def mainlist(item):
     logger.info()
 
-    thumb_series = get_thumb("thumb_channels_tvshow.png")
-
-    thumb_series_az = get_thumb("thumb_channels_tvshow_az.png")
+    thumb_series = get_thumb("channels_tvshow.png")
+    thumb_series_az = get_thumb("channels_tvshow_az.png")
 
     itemlist = list()
 

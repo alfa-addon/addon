@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import re
 import urllib
 
-from core import config
-from core import logger
 from core import scrapertools
+from platformcode import config, logger
 
 
 def test_video_exists(page_url):
@@ -15,7 +13,7 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
 
-    if config.get_setting("premium", server="onefichier") == True:
+    if config.get_setting("premium", server="onefichier"):
         user = config.get_setting("user", server="onefichier")
         password = config.get_setting("password", server="onefichier")
 

@@ -3,11 +3,10 @@
 import os
 import re
 
-from core import config
-from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
+from platformcode import config, logger
 
 IMAGES_PATH = os.path.join(config.get_runtime_path(), 'resources', 'images', 'cinetemagay')
 

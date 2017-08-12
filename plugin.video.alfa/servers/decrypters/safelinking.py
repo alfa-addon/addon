@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 
 def get_long_url(short_url):

@@ -2,16 +2,15 @@
 
 import re
 
-from core import config
 from core import httptools
-from core import logger
 from core import scrapertools
 from core import servertools
-from core import tmdb
 from core.item import Item
+from platformcode import config, logger
 
 __modo_grafico__ = config.get_setting('modo_grafico', "ver-pelis")
 host = "http://ver-pelis.me"
+
 
 def mainlist(item):
     logger.info()
@@ -19,47 +18,48 @@ def mainlist(item):
     global i
     i = 0
     itemlist.append(
-        item.clone(title = "[COLOR oldlace]Películas[/COLOR]", action = "scraper", url = host + "/ver/",
-                   thumbnail = "http://imgur.com/36xALWc.png", fanart = "http://imgur.com/53dhEU4.jpg",
-                   contentType = "movie"))
-    itemlist.append(item.clone(title = "[COLOR oldlace]Películas por año[/COLOR]", action = "categoria_anno",
-                               url = host, thumbnail = "http://imgur.com/36xALWc.png", extra = "Por año",
-                               fanart = "http://imgur.com/53dhEU4.jpg", contentType = "movie"))
-    itemlist.append(item.clone(title = "[COLOR oldlace]Películas en Latino[/COLOR]", action = "scraper",
-                               url = host + "/ver/latino/", thumbnail = "http://imgur.com/36xALWc.png",
-                               fanart = "http://imgur.com/53dhEU4.jpg", contentType = "movie"))
-    itemlist.append(item.clone(title = "[COLOR oldlace]Películas en Español[/COLOR]", action = "scraper",
-                               url = host + "/ver/subtituladas/", thumbnail = "http://imgur.com/36xALWc.png",
-                               fanart = "http://imgur.com/53dhEU4.jpg", contentType = "movie"))
-    itemlist.append(item.clone(title = "[COLOR oldlace]Películas Subtituladas[/COLOR]", action = "scraper",
-                               url = host + "/ver/espanol/", thumbnail = "http://imgur.com/36xALWc.png",
-                               fanart = "http://imgur.com/53dhEU4.jpg", contentType = "movie"))
-    itemlist.append(item.clone(title = "[COLOR oldlace]Por Género[/COLOR]", action = "categoria_anno",
-                               url = host, thumbnail = "http://imgur.com/36xALWc.png", extra = "Categorias",
-                               fanart = "http://imgur.com/53dhEU4.jpg", contentType = "movie"))
+        item.clone(title="[COLOR oldlace]Películas[/COLOR]", action="scraper", url=host + "/ver/",
+                   thumbnail="http://imgur.com/36xALWc.png", fanart="http://imgur.com/53dhEU4.jpg",
+                   contentType="movie"))
+    itemlist.append(item.clone(title="[COLOR oldlace]Películas por año[/COLOR]", action="categoria_anno",
+                               url=host, thumbnail="http://imgur.com/36xALWc.png", extra="Por año",
+                               fanart="http://imgur.com/53dhEU4.jpg", contentType="movie"))
+    itemlist.append(item.clone(title="[COLOR oldlace]Películas en Latino[/COLOR]", action="scraper",
+                               url=host + "/ver/latino/", thumbnail="http://imgur.com/36xALWc.png",
+                               fanart="http://imgur.com/53dhEU4.jpg", contentType="movie"))
+    itemlist.append(item.clone(title="[COLOR oldlace]Películas en Español[/COLOR]", action="scraper",
+                               url=host + "/ver/subtituladas/", thumbnail="http://imgur.com/36xALWc.png",
+                               fanart="http://imgur.com/53dhEU4.jpg", contentType="movie"))
+    itemlist.append(item.clone(title="[COLOR oldlace]Películas Subtituladas[/COLOR]", action="scraper",
+                               url=host + "/ver/espanol/", thumbnail="http://imgur.com/36xALWc.png",
+                               fanart="http://imgur.com/53dhEU4.jpg", contentType="movie"))
+    itemlist.append(item.clone(title="[COLOR oldlace]Por Género[/COLOR]", action="categoria_anno",
+                               url=host, thumbnail="http://imgur.com/36xALWc.png", extra="Categorias",
+                               fanart="http://imgur.com/53dhEU4.jpg", contentType="movie"))
 
-    itemlist.append(itemlist[-1].clone(title = "[COLOR orangered]Buscar[/COLOR]", action = "search",
-                                       thumbnail = "http://imgur.com/ebWyuGe.png", fanart = "http://imgur.com/53dhEU4.jpg",
-                                       contentType = "tvshow"))
+    itemlist.append(itemlist[-1].clone(title="[COLOR orangered]Buscar[/COLOR]", action="search",
+                                       thumbnail="http://imgur.com/ebWyuGe.png", fanart="http://imgur.com/53dhEU4.jpg",
+                                       contentType="tvshow"))
 
     return itemlist
+
 
 def categoria_anno(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.find_single_match(data, 'mobile_menu.*?(%s.*?)</ul>' %item.extra)
-    patron  = '(?is)<li.*?a href="([^"]+)'
+    bloque = scrapertools.find_single_match(data, 'mobile_menu.*?(%s.*?)</ul>' % item.extra)
+    patron = '(?is)<li.*?a href="([^"]+)'
     patron += '.*?title="[^"]+">([^<]+)'
     match = scrapertools.find_multiple_matches(bloque, patron)
     for url, titulo in match:
         itemlist.append(Item(
-                        channel = item.channel,
-                        action = "scraper",
-                        title = titulo,
-                        url = url
-                        ))
-        
+            channel=item.channel,
+            action="scraper",
+            title=titulo,
+            url=url
+        ))
+
     return itemlist
 
 
@@ -99,7 +99,7 @@ def scraper(item):
         if item.extra != "search":
             item.i += 1
         itemlist.append(item.clone(action="findvideos", title=titulo, url=url, thumbnail=thumb, fulltitle=title,
-                              contentTitle=title, contentType="movie", library=True))
+                                   contentTitle=title, contentType="movie", library=True))
 
     ## Paginación
     if url_next_page:
@@ -116,7 +116,7 @@ def findvideos(item):
     if data_post:
         post = 'id=' + data_post[0] + '&slug=' + data_post[1]
         data_info = httptools.downloadpage(host + '/ajax/cargar_video.php', post=post).data
-        patron  = """</i> ([^<]+)"""
+        patron = """</i> ([^<]+)"""
         patron += """.*?<a onclick=\"load_player\('([^']+)"""
         patron += """','([^']+)', ([^']+),.*?REPRODUCIR\">([^']+)</a>"""
         enlaces = scrapertools.find_multiple_matches(data_info, patron)
@@ -152,16 +152,16 @@ def findvideos(item):
                 extra = "yes"
             title = server.strip() + "  " + idioma_calidad
             itemlist.append(Item(
-                                 channel = item.channel,
-                                 action = "play",
-                                 title = title,
-                                 url = url,
-                                 fanart = item.fanart,
-                                 thumbnail = item.thumbnail,
-                                 fulltitle = item.fulltitle,
-                                 extra = extra,
-                                 folder = True
-                                 ))
+                channel=item.channel,
+                action="play",
+                title=title,
+                url=url,
+                fanart=item.fanart,
+                thumbnail=item.thumbnail,
+                fulltitle=item.fulltitle,
+                extra=extra,
+                folder=True
+            ))
         if item.library and config.get_videolibrary_support() and len(itemlist) > 0:
             infoLabels = {'tmdb_id': item.infoLabels['tmdb_id'],
                           'title': item.infoLabels['title']}
@@ -189,12 +189,12 @@ def play(item):
     videolist = servertools.find_video_items(data=url)
     for video in videolist:
         itemlist.append(Item(
-                             channel = item.channel,
-                             url = video.url,
-                             server = video.server,
-                             fulltitle = item.fulltitle,
-                             thumbnail = item.thumbnail,
-                             action = "play"
-                             ))
+            channel=item.channel,
+            url=video.url,
+            server=video.server,
+            fulltitle=item.fulltitle,
+            thumbnail=item.thumbnail,
+            action="play"
+        ))
 
     return itemlist

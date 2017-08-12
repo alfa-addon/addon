@@ -2,12 +2,12 @@
 
 import os
 
-from core import config
+from channelselector import get_thumb
 from core import filetools
-from core import videolibrarytools
-from core import logger
 from core import scrapertools
+from core import videolibrarytools
 from core.item import Item
+from platformcode import config, logger
 from platformcode import platformtools
 
 
@@ -17,10 +17,10 @@ def mainlist(item):
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="list_movies", title="Películas",
                          category="Videoteca de películas",
-                         thumbnail=config.get_thumb("thumb_videolibrary_movie.png")))
+                         thumbnail=get_thumb("videolibrary_movie.png")))
     itemlist.append(Item(channel=item.channel, action="list_tvshows", title="Series",
                          category="Videoteca de series",
-                         thumbnail=config.get_thumb("thumb_videolibrary_tvshow.png")))
+                         thumbnail=get_thumb("videolibrary_tvshow.png")))
 
     return itemlist
 
@@ -184,7 +184,8 @@ def get_seasons(item):
             season = f.split('x')[0]
             dict_temp[season] = "Temporada %s" % season
 
-    if config.get_setting("no_pile_on_seasons", "videolibrary") == 1 and len(dict_temp) == 1:  # Sólo si hay una temporada
+    if config.get_setting("no_pile_on_seasons", "videolibrary") == 1 and len(
+            dict_temp) == 1:  # Sólo si hay una temporada
         return get_episodes(item)
     else:
 
@@ -327,7 +328,7 @@ def findvideos(item):
         item_json.contentChannel = "local"
         # Soporte para rutas relativas en descargas
         if filetools.is_relative(item_json.url):
-            item_json.url = filetools.join(videolibrarytools.LIBRARY_PATH, item_json.url)
+            item_json.url = filetools.join(videolibrarytools.VIDEOLIBRARY_PATH, item_json.url)
 
         del list_canales['downloads']
 

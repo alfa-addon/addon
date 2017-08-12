@@ -3,9 +3,9 @@
 import re
 
 from core import httptools
-from core import logger
 from core import scrapertools
 from core.item import Item
+from platformcode import logger
 
 host = "http://www.playpornx.net/list-movies/"
 

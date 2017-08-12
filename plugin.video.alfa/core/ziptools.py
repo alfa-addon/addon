@@ -6,8 +6,7 @@
 import os
 import zipfile
 
-import config
-import logger
+from platformcode import config, logger
 
 
 class ziptools:
@@ -32,7 +31,7 @@ class ziptools:
                     logger.info("path=%s" % path)
                     logger.info("name=%s" % name)
                     if folder_to_extract:
-                        if path != os.path.join(dir, folder):
+                        if path != os.path.join(dir, folder_to_extract):
                             break
                     else:
                         os.makedirs(path)
