@@ -255,7 +255,7 @@ def parse_videos(item, type_str, data):
 
 
 def extract_videos_section(data):
-    return re.findall("panel-title(.+?)</div>[^<]*</div>[^<]*</div>", data, re.MULTILINE | re.DOTALL)
+    return re.findall("panel-title[^>]*>\s*([VvDd].+?)</div>[^<]*</div>[^<]*</div>", data, re.MULTILINE | re.DOTALL)
 
 
 def findvideos(item):
@@ -275,10 +275,10 @@ def findvideos(item):
     list_links = []
 
     if filtro_enlaces != 0:
-        list_links.extend(parse_videos(item, "Ver", online[0]))
+        list_links.extend(parse_videos(item, "Ver", online[-2]))
 
     if filtro_enlaces != 1:
-        list_links.extend(parse_videos(item, "Descargar", online[1]))
+        list_links.extend(parse_videos(item, "Descargar", online[-1]))
 
     list_links = filtertools.get_links(list_links, item, list_idiomas, CALIDADES)
 
