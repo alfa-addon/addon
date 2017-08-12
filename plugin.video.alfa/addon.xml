@@ -29,9 +29,10 @@
       [I] - arreglos internos
       - videoteca - conversion de peliculas fixed[/I]
     </news>
-    <description lang="es">Descripción en Español</description>
-    <summary lang="en">English summary</summary>
-    <description lang="en">English description</description>
+    <summary lang="es">Películas y series a la carta</summary>
+    <description lang="es">Fork del popular pelisalacarta. Todo está en Internet, y ahora en tu media center.</description>
+    <summary lang="en">Movies and TV Shows on demand</summary>
+    <description lang="en">Movies,TV Shows, Documentaries, Anime, ... Everything is on the net, and now on your media center.</description>
     <disclaimer>[COLOR red]The owners and submitters to this addon do not host or distribute any of the content displayed by these addons nor do they have any affiliation with the content providers.[/COLOR]</disclaimer>
     <platform>all</platform>
     <license>GNU GPL v3</license>
