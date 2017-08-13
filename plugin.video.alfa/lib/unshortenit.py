@@ -3,6 +3,7 @@
 try:
     from selenium.webdriver import PhantomJS
     from contextlib import closing
+
     linkbucks_support = True
 except:
     linkbucks_support = False
@@ -10,16 +11,16 @@ try:
     from urllib.request import urlsplit, urlparse
 except:
     from urlparse import urlsplit, urlparse
-import re
-import os
-import requests
-import time
 import json
+import os
+import re
+import time
 from base64 import b64decode
-import random
+
+import requests
+
 
 class UnshortenIt(object):
-
     _headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                 'Accept-Encoding': 'gzip,deflate,sdch',
                 'Accept-Language': 'en-US,en;q=0.8',
@@ -39,7 +40,7 @@ class UnshortenIt(object):
 
         if re.search(self._adfly_regex, domain, re.IGNORECASE) or type == 'adfly':
             return self._unshorten_adfly(uri)
-        if re.search(self._adfocus_regex, domain, re.IGNORECASE) or type =='adfocus':
+        if re.search(self._adfocus_regex, domain, re.IGNORECASE) or type == 'adfocus':
             return self._unshorten_adfocus(uri)
         if re.search(self._linkbucks_regex, domain, re.IGNORECASE) or type == 'linkbucks':
             if linkbucks_support:
@@ -59,7 +60,7 @@ class UnshortenIt(object):
             # p.ost.im uses meta http refresh to redirect.
             if domain == 'p.ost.im':
                 r = requests.get(uri, headers=self._headers, timeout=self._timeout)
-                uri = re.findall(r'.*url\=(.*?)\"\.*',r.text)[0]
+                uri = re.findall(r'.*url\=(.*?)\"\.*', r.text)[0]
                 return uri, 200
             r = requests.head(uri, headers=self._headers, timeout=self._timeout)
             while True:
@@ -85,7 +86,7 @@ class UnshortenIt(object):
                 left = ''
                 right = ''
 
-                for c in [ysmm[i:i+2] for i in range(0, len(ysmm), 2)]:
+                for c in [ysmm[i:i + 2] for i in range(0, len(ysmm), 2)]:
                     left += c[0]
                     right = c[1] + right
 
@@ -202,9 +203,10 @@ class UnshortenIt(object):
                 time.sleep(5)
 
                 payload = {'adSessionId': session_id, 'callback': 'c'}
-                r = requests.get('http://sh.st/shortest-url/end-adsession', params=payload, headers=http_header, timeout=self._timeout)
+                r = requests.get('http://sh.st/shortest-url/end-adsession', params=payload, headers=http_header,
+                                 timeout=self._timeout)
                 response = r.content[6:-2].decode('utf-8')
-                
+
                 if r.status_code == 200:
                     resp_uri = json.loads(response)['destinationUrl']
                     if resp_uri is not None:

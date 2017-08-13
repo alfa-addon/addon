@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import re
-import urllib
 import urlparse
 
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 
 def test_video_exists(page_url):
@@ -39,13 +37,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = scrapertools.cache_page(url, headers=headers)
     logger.info("data=" + data)
 
-    # <param name="src" value="http://v35.veehd.com/dl/f118c68806e2a98ca38a70b44b89d52b/1356264992/6000.4623246.avi&b=390">
-    media_url = scrapertools.get_match(data, '<param name="src"value="([^"]+)"')
+    # # <param name="src" value="http://v35.veehd.com/dl/f118c68806e2a98ca38a70b44b89d52b/1356264992/6000.4623246.avi&b=390">
+    # media_url = scrapertools.get_match(data, '<param name="src"value="([^"]+)"')
 
     video_urls = []
 
-    if len(matches) > 0:
-        video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [veehd]", media_url])
+    # if len(matches) > 0:
+    #     video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [veehd]", media_url])
 
     for video_url in video_urls:
         logger.info("%s - %s" % (video_url[0], video_url[1]))

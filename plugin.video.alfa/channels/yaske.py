@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import re
 import base64
+import re
 
 from core import channeltools
-from core import config
 from core import httptools
-from core import logger
 from core import scrapertoolsV2
 from core import servertools
 from core import tmdb
 from core.item import Item
-
+from platformcode import config, logger
 
 HOST = 'http://www.yaske.ro'
 parameters = channeltools.get_channel_parameters('yaske')

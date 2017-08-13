@@ -7,14 +7,13 @@ from threading import Thread
 
 import xbmc
 import xbmcgui
-from core import config
 from core import httptools
-from core import logger
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
 from core.scrapertools import decodeHtmlentities as dhe
+from platformcode import config, logger
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context

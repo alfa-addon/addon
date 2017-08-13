@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import re
-
 from core import httptools
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 
 def test_video_exists(page_url):
@@ -15,7 +13,7 @@ def test_video_exists(page_url):
         pass
 
     if not response.data or "urlopen error [Errno 1]" in str(response.code):
-        from core import config
+        from platformcode import config
         if config.is_xbmc():
             return False, "[Raptu] Este conector solo funciona a partir de Kodi 17"
         elif config.get_platform() == "plex":

@@ -4,9 +4,9 @@ import re
 import urllib
 
 from core import jsontools as json
-from core import logger
 from core import scrapertools
 from core.item import Item
+from platformcode import logger
 
 url_api = ""
 beeg_salt = ""

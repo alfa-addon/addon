@@ -8,8 +8,7 @@ from unicodedata import normalize
 
 import xbmc
 import xbmcgui
-from core import config
-from core import logger
+from platformcode import config, logger
 
 allchars = string.maketrans('', '')
 deletechars = ',\\/:*"<>|?'

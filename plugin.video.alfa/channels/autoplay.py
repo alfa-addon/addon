@@ -3,10 +3,9 @@
 import os
 
 from core import channeltools
-from core import config
 from core import jsontools
-from core import logger
 from core.item import Item
+from platformcode import config, logger
 from platformcode import platformtools
 
 __channel__ = "autoplay"

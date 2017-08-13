@@ -2,8 +2,8 @@
 
 import urllib
 
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 
 # Obtiene la URL que hay detrás de un enlace a linkbucks

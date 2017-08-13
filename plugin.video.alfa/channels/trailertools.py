@@ -7,12 +7,11 @@ import re
 import urllib
 import urlparse
 
-from core import config
 from core import jsontools
-from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
+from platformcode import config, logger
 from platformcode import platformtools
 
 result = None

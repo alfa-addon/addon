@@ -5,8 +5,8 @@ import urllib
 
 from core import httptools
 from core import jsontools
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
