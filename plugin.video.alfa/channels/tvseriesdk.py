@@ -4,37 +4,26 @@
 # -*- By the Alfa Develop Group -*-
 
 import re
-from core import logger
-from core import config
-from core import scrapertools
-from core.item import Item
-from core import servertools
+
 from core import httptools
-from core import tmdb
+from core import scrapertools
+from core import servertools
+from core.item import Item
+from platformcode import config, logger
 
 host = 'http://www.tvseriesdk.com/'
+
 
 def mainlist(item):
     logger.info()
 
-    itemlist = []
-
-    itemlist.append(item.clone(title="Ultimos",
-                               action="last_episodes",
-                               url=host
-                               ))
-
-    itemlist.append(item.clone(title="Todas",
-                               action="list_all",
-                               url = host
-                               ))
-
-    itemlist.append(item.clone(title="Buscar",
-                               action="search",
-                               url='http://www.tvseriesdk.com/index.php?s='
-                               ))
+    itemlist = list()
+    itemlist.append(item.clone(title="Ultimos", action="last_episodes", url=host))
+    itemlist.append(item.clone(title="Todas", action="list_all", url=host))
+    itemlist.append(item.clone(title="Buscar", action="search", url='http://www.tvseriesdk.com/index.php?s='))
 
     return itemlist
+
 
 def get_source(url):
     logger.info()
@@ -42,11 +31,11 @@ def get_source(url):
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
-def list_all (item):
-    logger.info ()
+
+def list_all(item):
+    logger.info()
     global i
-    itemlist = []
-    templist =[]
+    templist = []
     data = get_source(item.url)
 
     patron = '<li class=cat-item cat-item-\d+><a href=(.*?) title=(.*?)>(.*?)<\/a>'
@@ -64,34 +53,28 @@ def list_all (item):
 
             url_next_page = item.url
 
-
-
     for scrapedurl, scrapedplot, scrapedtitle in matches:
         url = scrapedurl
-        plot= scrapedplot
-        contentSerieName=scrapedtitle
+        plot = scrapedplot
+        contentSerieName = scrapedtitle
         title = contentSerieName
-        thumbnail=''
 
-        templist.append(item.clone(action='episodes',
+        templist.append(item.clone(action='episodios',
                                    title=title,
                                    url=url,
                                    thumbnail='',
                                    plot=plot,
-                                   contentErieName = contentSerieName
+                                   contentErieName=contentSerieName
                                    ))
     itemlist = get_thumb(templist)
- ## Paginación
+    #  Paginación
     if url_next_page:
-        itemlist.append(item.clone(title="Siguiente >>",
-                                   url=url_next_page,
-                                   next_page=next_page,
-                                   i=item.i
-                                   ))
+        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, next_page=next_page, i=item.i))
     return itemlist
 
-def last_episodes (item):
-    logger.info ()
+
+def last_episodes(item):
+    logger.info()
     itemlist = []
     data = get_source(item.url)
     patron = '<div class=pelis>.*?<a href=(.*?) title=(.*?)><img src=(.*?) alt='
@@ -102,45 +85,44 @@ def last_episodes (item):
         title = scrapedtitle
         thumbnail = scrapedthumbnail
 
-        itemlist.append(item.clone(action='episodes',
+        itemlist.append(item.clone(action='findvideos',
                                    title=title,
                                    url=url,
-                                   thumbnail = thumbnail
+                                   thumbnail=thumbnail
                                    ))
     return itemlist
 
-def episodes (item):
-    logger.info ()
+
+def episodios(item):
+    logger.info()
     itemlist = []
     data = get_source(item.url)
     patron = '<a href=(.*?) class=lcc>(.*?)<\/a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    n_ep= 1
+    n_ep = 1
     for scrapedurl, scrapedtitle in matches[::-1]:
         url = scrapedurl
         scrapedtitle = re.sub(r'Capítulo \d+', '', scrapedtitle)
-        title = '1x%s - %s'%(n_ep, scrapedtitle)
-        itemlist.append(item.clone(action='findvideos',
-                                   title=title,
-                                   url=url,
-                                   contentEpisodeNumber = n_ep,
-                                   contentSeasonNumber = '1'
-                                   ))
-        n_ep +=1
+        title = '1x%s - %s' % (n_ep, scrapedtitle)
+        itemlist.append(
+            item.clone(action='findvideos', title=title, url=url, contentEpisodeNumber=n_ep, contentSeasonNumber='1'))
+        n_ep += 1
     return itemlist
+
 
 def get_thumb(itemlist):
     logger.info()
     for item in itemlist:
         data = get_source(item.url)
-        item.thumbnail = scrapertools.find_single_match(data,'<div class=sinope><img src=(.*?) alt=')
+        item.thumbnail = scrapertools.find_single_match(data, '<div class=sinope><img src=(.*?) alt=')
     return itemlist
+
 
 def search_list(item):
     logger.info()
-    itemlist =[]
+    itemlist = []
 
-    data= get_source(item.url)
+    data = get_source(item.url)
     patron = 'img title.*?src=(.*?) width=.*?class=tisearch><a href=(.*?)>(.*?)<\/a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -148,12 +130,8 @@ def search_list(item):
         title = scrapedtitle
         url = scrapedurl
         thumbnail = scrapedthumb
-        itemlist.append(item.clone(title=title,
-                                   url=url,
-                                   thumbnail=thumbnail,
-                                   action='findvideos'
-                                   ))
-    #Pagination < link
+        itemlist.append(item.clone(title=title, url=url, thumbnail=thumbnail, action='findvideos'))
+    # Pagination < link
     next_page = scrapertools.find_single_match(data, '<link rel=next href=(.*?) />')
     if next_page:
         itemlist.append(Item(channel=item.channel, action="search_list", title='>> Pagina Siguiente', url=next_page,
@@ -172,33 +150,33 @@ def search(item, texto):
     else:
         return []
 
+
 def findvideos(item):
     logger.info()
-    itemlist=[]
-    servers = {'netu':'http://hqq.tv/player/embed_player.php?vid=',
-               'open':'https://openload.co/embed/',
-               'netv':'http://goo.gl/',
-               'gamo':'http://gamovideo.com/embed-',
-               'powvideo':'http://powvideo.net/embed-',
-               'play':'http://streamplay.to/embed-',
-               'vido':'http://vidoza.net/embed-'}
+    itemlist = []
+    servers = {'netu': 'http://hqq.tv/player/embed_player.php?vid=',
+               'open': 'https://openload.co/embed/',
+               'netv': 'http://goo.gl/',
+               'gamo': 'http://gamovideo.com/embed-',
+               'powvideo': 'http://powvideo.net/embed-',
+               'play': 'http://streamplay.to/embed-',
+               'vido': 'http://vidoza.net/embed-'}
     data = get_source(item.url)
     patron = 'id=tab\d+.*?class=tab_content><script>(.*?)\((.*?)\)<\/script>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for server, video_id in matches:
         if server not in ['gamo', 'powvideo', 'play', 'vido', 'netv']:
-            url = servers[server]+video_id
+            url = servers[server] + video_id
         elif server == 'netv':
-            url = get_source(servers[server]+video_id)
+            url = get_source(servers[server] + video_id)
         else:
-            url = servers[server]+video_id+'.html'
+            url = servers[server] + video_id + '.html'
 
         itemlist.extend(servertools.find_video_items(data=url))
     for videoitem in itemlist:
         videoitem.channel = item.channel
-        videoitem.title = item.title+' (%s)'%videoitem.server
+        videoitem.title = item.title + ' (%s)' % videoitem.server
         videoitem.action = 'play'
 
     return itemlist
-

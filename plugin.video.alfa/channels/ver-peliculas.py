@@ -7,14 +7,13 @@ import re
 import urllib
 import urlparse
 
-from core import config
+from channelselector import get_thumb
 from core import httptools
-from core import logger
-from core import scrapertools
-from core.item import Item
 from core import jsontools
+from core import scrapertools
 from core import servertools
-from core import tmdb
+from core.item import Item
+from platformcode import config, logger
 
 host = "http://ver-peliculas.io/"
 
@@ -27,8 +26,7 @@ def mainlist(item):
              title="Peliculas",
              action="listado",
              url=host + "peliculas/",
-             thumbnail=config.get_thumb("thumb_channels_movie.png"
-             )))
+             thumbnail=get_thumb("channels_movie.png")))
     itemlist.append(
         Item(channel=item.channel,
              title="Español",
@@ -40,15 +38,13 @@ def mainlist(item):
              title="Latino",
              action="listado",
              url=host + "peliculas/en-latino/",
-             thumbnail=config.get_thumb("thumb_channels_latino.png"
-             )))
+             thumbnail=get_thumb("channels_latino.png")))
     itemlist.append(
         Item(channel=item.channel,
              title="Subtituladas",
              action="listado",
              url=host + "peliculas/subtituladas/",
-             thumbnail=config.get_thumb("thumb_channels_vos.png"
-             )))
+             thumbnail=get_thumb("channels_vos.png")))
     itemlist.append(
         Item(channel=item.channel,
              title="Categorias",
@@ -60,8 +56,7 @@ def mainlist(item):
              title="Buscar",
              action="search",
              url=host + "core/ajax/suggest_search",
-             thumbnail=config.get_thumb("thumb_search.png"
-             )))
+             thumbnail=get_thumb("search.png")))
 
     return itemlist
 
@@ -120,7 +115,7 @@ def listado(item):
     logger.info()
     itemlist = []
     data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url).data)
-    logger.debug (data)
+    logger.debug(data)
     pattern = '<a href="([^"]+)"[^>]+><img (?:src)?(?:data-original)?="([^"]+)".*?alt="([^"]+)"'
     matches = re.compile(pattern, re.DOTALL).findall(data)
 
@@ -143,8 +138,7 @@ def listado(item):
                                  action="listado",
                                  title=">> Página siguiente",
                                  url=url,
-                                 thumbnail=config.get_thumb("thumb_next.png"
-                                 )))
+                                 thumbnail=get_thumb("next.png")))
 
     return itemlist
 
@@ -155,33 +149,33 @@ def get_source(url):
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
+
 def findvideos(item):
     logger.info()
-    itemlist =[]
-    duplicated =[]
+    duplicated = []
 
-    data= get_source(item.url)
+    data = get_source(item.url)
     video_info = scrapertools.find_single_match(data, "load_player\('(.*?)','(.*?)'\);")
-    movie_info= scrapertools.find_single_match(item.url, 'http:\/\/ver-peliculas\.io\/peliculas\/(\d+)-(.*?)-\d{'
-                                                         '4}-online\.')
+    movie_info = scrapertools.find_single_match(item.url, 'http:\/\/ver-peliculas\.io\/peliculas\/(\d+)-(.*?)-\d{'
+                                                          '4}-online\.')
     movie_id = movie_info[0]
     movie_name = movie_info[1]
     sub = video_info[1]
-    url_base='http://ver-peliculas.io/core/api.php?id=%s&slug=%s'%(movie_id, movie_name)
+    url_base = 'http://ver-peliculas.io/core/api.php?id=%s&slug=%s' % (movie_id, movie_name)
     data = httptools.downloadpage(url_base).data
     json_data = jsontools.load(data)
     video_list = json_data['lista']
-    itemlist =[]
-    for videoitem in  video_list:
+    itemlist = []
+    for videoitem in video_list:
         video_base_url = 'http://ver-peliculas.io/core/videofinal.php'
         if video_list[videoitem] != None:
             video_lang = video_list[videoitem]
             languages = ['latino', 'spanish', 'subtitulos']
             for lang in languages:
                 if video_lang[lang] != None:
-                    if not isinstance(video_lang[lang],int):
+                    if not isinstance(video_lang[lang], int):
                         video_id = video_lang[lang][0]["video"]
-                        post = {"video":video_id , "sub": sub}
+                        post = {"video": video_id, "sub": sub}
                         post = urllib.urlencode(post)
                         data = httptools.downloadpage(video_base_url, post=post).data
                         playlist = jsontools.load(data)
@@ -191,7 +185,7 @@ def findvideos(item):
                         for video_link in sources:
                             url = video_link['sources']
                             if 'onevideo' in url:
-                                data= get_source(url)
+                                data = get_source(url)
                                 g_urls = servertools.findvideos(data=data)
                                 url = g_urls[0][1]
                                 server = g_urls[0][0]
@@ -201,7 +195,7 @@ def findvideos(item):
                                     lang = 'Español'
                                 title = '(%s) %s (%s)' % (server, item.title, lang)
                                 thumbnail = servertools.guess_server_thumbnail(server)
-                                itemlist.append(item.clone(title= title,
+                                itemlist.append(item.clone(title=title,
                                                            url=url,
                                                            server=server,
                                                            thumbnail=thumbnail,
@@ -221,22 +215,22 @@ def findvideos(item):
 
     return itemlist
 
+
 def newest(category):
     logger.info()
-    itemlist = []
     item = Item()
     try:
         if category == 'peliculas':
             item.url = host + "peliculas/"
         elif category == 'infantiles':
             item.url = host + 'categorias/peliculas-de-animacion.html'
-        itemlist = lista(item)
+        itemlist = listado(item)
         if itemlist[-1].title == '>> Página siguiente':
             itemlist.pop()
     except:
         import sys
         for line in sys.exc_info():
-            logger.error("{0}".format(line))
+            logger.error("%s" % line)
         return []
 
     return itemlist
