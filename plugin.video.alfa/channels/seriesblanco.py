@@ -213,10 +213,10 @@ def episodios(item):
 def parse_videos(item, type_str, data):
     video_patterns_str = [
         '<tr.+?<span>(?P<date>.+?)</span>.*?banderas/(?P<language>[^\.]+).+?href="(?P<link>[^"]+).+?servidores/'
-        '(?P<server>[^\.]+).*?</td>.*?<td>.*?<span>(?P<uploader>.+?)</span>.*?<span>(?P<quality>.*?)</span>'
-        # '<tr.+?banderas/(?P<language>[^\.]+).+?<td[^>]*>(?P<date>.+?)</td>.+?href=[\'"](?P<link>[^\'"]+)'
-        # '.+?servidores/(?P<server>[^\.]+).*?</td>.*?<td[^>]*>.*?<a[^>]+>(?P<uploader>.+?)</a>.*?</td>.*?<td[^>]*>'
-        # '(?P<quality>.*?)</td>.*?</tr>'
+        '(?P<server>[^\.]+).*?</td>.*?<td>.*?<span>(?P<uploader>.+?)</span>.*?<span>(?P<quality>.*?)</span>',
+        '<tr.+?banderas/(?P<language>[^\.]+).+?<td[^>]*>(?P<date>.+?)</td>.+?href=[\'"](?P<link>[^\'"]+)'
+        '.+?servidores/(?P<server>[^\.]+).*?</td>.*?<td[^>]*>.*?<a[^>]+>(?P<uploader>.+?)</a>.*?</td>.*?<td[^>]*>'
+        '(?P<quality>.*?)</td>.*?</tr>'
     ]
 
     for v_pat_str in video_patterns_str:
@@ -257,7 +257,7 @@ def parse_videos(item, type_str, data):
 
 
 def extract_videos_section(data):
-    return re.findall('<table class="table table-Hover">(.*?)</table>', data, re.MULTILINE | re.DOTALL)
+    return re.findall("panel-title[^>]*>\s*([VvDd].+?)</div>[^<]*</div>[^<]*</div>", data, re.MULTILINE | re.DOTALL)
 
 
 def findvideos(item):
@@ -268,7 +268,6 @@ def findvideos(item):
     # logger.info(data)
 
     online = extract_videos_section(data)
-    logger.debug("online %s" % online)
 
     try:
         filtro_enlaces = config.get_setting("filterlinks", item.channel)
@@ -278,10 +277,10 @@ def findvideos(item):
     list_links = []
 
     if filtro_enlaces != 0:
-        list_links.extend(parse_videos(item, "Ver", online[0]))
+        list_links.extend(parse_videos(item, "Ver", online[-2]))
 
     if filtro_enlaces != 1:
-        list_links.extend(parse_videos(item, "Descargar", online[1]))
+        list_links.extend(parse_videos(item, "Descargar", online[-1]))
 
     list_links = filtertools.get_links(list_links, item, list_idiomas, CALIDADES)
 

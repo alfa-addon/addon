@@ -75,13 +75,7 @@ def peliculas(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '(?s)short_overlay.*?<a href="([^"]+)'
-    patron += '.*?img.*?src="([^"]+)'
-    patron += '.*?title="([^"]+)'
-    patron += '.*?kinopoisk">([^<]+)'
-    patron += '</span(.*?)small_rating'
-
-    patron = '(?s)short_overlay.*?<a href="([^"]+)'
+    patron  = '(?s)short_overlay.*?<a href="([^"]+)'
     patron += '.*?img.*?src="([^"]+)'
     patron += '.*?title="(.*?)"'
     patron += '.*?(Idioma.*?)post-ratings'
@@ -118,13 +112,10 @@ def findvideos(item):
     bloque = scrapertools.find_single_match(data, patron)
     match = scrapertools.find_multiple_matches(bloque, '(?is)(?:iframe|script) .*?src="([^"]+)')
     for url in match:
-        server = servertools.get_server_from_url(url)
-        titulo = "Ver en: " + server
-        if "youtube" in server:
-            if "embed" in url:
-                url = "http://www.youtube.com/watch?v=" + scrapertools.find_single_match(url, 'embed/(.*)')
-                titulo = "[COLOR = yellow]Ver trailer: " + server + "[/COLOR]"
-        elif "directo" in server:
+        titulo = "Ver en: %s"
+        if "youtube" in url:
+            titulo = "[COLOR = yellow]Ver trailer: %s[/COLOR]"
+        if "ad.js" in url or "script" in url:
             continue
         elif "vimeo" in url:
             url += "|" + "http://www.allcalidad.com"
@@ -137,6 +128,7 @@ def findvideos(item):
                  server=server,
                  url=url
                  ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     if itemlist:
         itemlist.append(Item(channel=item.channel))
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
