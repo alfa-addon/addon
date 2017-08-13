@@ -2,13 +2,15 @@
 
 import re
 
+from core import config
 from core import httptools
 from core import jsontools
+from core import logger
 from core import scrapertools
-from core import servertools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
+from core import servertools
+
 
 tgenero = {"Drama": "https://s16.postimg.org/94sia332d/drama.png",
            u"Accción": "https://s3.postimg.org/y6o9puflv/accion.png",
@@ -237,9 +239,9 @@ def findvideos(item):
                                    language=lang,
                                    url=url
                                    ))
-    logger.debug('templist: %s' % templist)
+    logger.debug('templist: %s'%templist)
     for videoitem in templist:
-        logger.debug('videoitem.language: %s' % videoitem.language)
+        logger.debug('videoitem.language: %s'%videoitem.language)
         data = httptools.downloadpage(videoitem.url).data
         data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
         id = scrapertools.find_single_match(data, 'var _SOURCE =.*?source:(.*?),')
@@ -253,20 +255,21 @@ def findvideos(item):
 
         data = httptools.downloadpage(new_url).data
 
-        url = scrapertools.find_single_match(data, '<iframe src="(.*?preview)"')
+        url = scrapertools.find_single_match (data, '<iframe src="(.*?preview)"')
         title = videoitem.contentTitle + ' (' + audio[videoitem.language] + ')'
-        logger.debug('url: %s' % url)
+        logger.debug('url: %s'%url)
         video_list.extend(servertools.find_video_items(data=url))
         for urls in video_list:
-            if urls.language == '':
+            if urls.language=='':
                 urls.language = videoitem.language
-            urls.title = item.title + '(%s) (%s)' % (urls.language, urls.server)
-        logger.debug('video_list: %s' % video_list)
-        # itemlist.append(item.clone(title= title, url = url, action = 'play', subtitle = sub))
+            urls.title = item.title+'(%s) (%s)'%(urls.language, urls.server)
+        logger.debug('video_list: %s'%video_list)
+        #itemlist.append(item.clone(title= title, url = url, action = 'play', subtitle = sub))
 
     for video_url in video_list:
         video_url.channel = item.channel
-        video_url.action = 'play'
+        video_url.action ='play'
+
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(

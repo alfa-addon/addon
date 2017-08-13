@@ -4,13 +4,14 @@ import re
 import urllib
 from base64 import b64decode as bdec
 
+from core import config
 from core import filetools
 from core import httptools
 from core import jsontools
+from core import logger
 from core import scrapertools
 from core.item import Item
 from core.tmdb import Tmdb
-from platformcode import config, logger
 from platformcode import platformtools
 
 __perfil__ = config.get_setting('perfil', "tvmoviedb")

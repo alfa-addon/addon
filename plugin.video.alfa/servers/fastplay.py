@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import re
+
 from core import httptools
+from core import logger
 from core import scrapertools
 from lib import jsunpack
-from platformcode import logger
 
 
 def test_video_exists(page_url):
@@ -23,7 +25,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         data = jsunpack.unpack(data).replace("\\", "")
     video_urls = []
     videos = scrapertools.find_multiple_matches(data, 'file\s*:\s*"([^"]+)",label:"(.*?)"')
-    # Detección de subtítulos
+    ##Detección de subtítulos
     subtitulo = scrapertools.find_single_match(data, 'tracks:\s*\[{file:"(.*?)"')
     if "http" not in subtitulo:
         subtitulo = "http://fastplay.cc" + subtitulo

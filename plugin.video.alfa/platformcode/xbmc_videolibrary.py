@@ -9,9 +9,10 @@ import time
 import urllib2
 
 import xbmc
+from core import config
 from core import filetools
 from core import jsontools
-from platformcode import config, logger
+from core import logger
 from platformcode import platformtools
 
 

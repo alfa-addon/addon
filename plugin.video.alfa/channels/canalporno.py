@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from core import httptools
+from core import logger
 from core import scrapertools
-from platformcode import logger
 
 host = "http://www.canalporno.com"
 

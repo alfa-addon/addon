@@ -5,9 +5,9 @@ import re
 import time
 
 from core import jsontools
+from core import logger
 from core import scrapertools
 from core.item import InfoLabels
-from platformcode import logger
 
 # -----------------------------------------------------------------------------------------------------------
 # Conjunto de funciones relacionadas con las infoLabels.

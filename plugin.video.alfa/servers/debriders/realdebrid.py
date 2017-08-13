@@ -3,9 +3,10 @@
 import time
 import urllib
 
+from core import config
 from core import jsontools
+from core import logger
 from core import scrapertools
-from platformcode import config, logger
 from platformcode import platformtools
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0'}

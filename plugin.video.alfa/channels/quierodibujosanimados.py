@@ -3,9 +3,11 @@
 import re
 import urlparse
 
+from core import config
+from core import logger
 from core import scrapertools
 from core.item import Item
-from platformcode import logger
+
 
 
 def mainlist(item):

@@ -12,12 +12,12 @@ import os
 import sys
 import urllib
 
-import config
 import xbmc
 import xbmcgui
 import xbmcplugin
+from core import config
+from core import logger
 from core.item import Item
-from platformcode import logger
 
 
 def dialog_ok(heading, line1, line2="", line3=""):

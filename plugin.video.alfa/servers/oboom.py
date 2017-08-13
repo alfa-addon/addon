@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from platformcode import logger
+import re
+
+from core import logger
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):

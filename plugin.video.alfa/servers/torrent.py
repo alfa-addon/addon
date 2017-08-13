@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from platformcode import logger
+import re
+
+from core import logger
 
 
 # Returns an array of possible video url's from the page_url

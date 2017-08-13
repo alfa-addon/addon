@@ -6,8 +6,8 @@
 import re
 import time
 
+import logger
 from core import httptools
-from platformcode import logger
 
 
 def cache_page(url, post=None, headers=None, modo_cache=None, timeout=None):

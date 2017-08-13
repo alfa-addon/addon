@@ -4,11 +4,12 @@ import re
 import urlparse
 
 from channels import filtertools
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import config, logger
 
 HOST = 'http://seriesdanko.to/'
 IDIOMAS = {'es': 'Español', 'la': 'Latino', 'vos': 'VOS', 'vo': 'VO'}

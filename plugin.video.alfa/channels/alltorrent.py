@@ -5,12 +5,13 @@ import re
 import unicodedata
 from threading import Thread
 
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
 
 __modo_grafico__ = config.get_setting('modo_grafico', "ver-pelis")
 
@@ -254,14 +255,14 @@ def get_art(item):
             if id == None:
                 if item.contentType == "movie":
                     urlbing_imdb = "http://www.bing.com/search?q=%s+%s+tv+series+site:imdb.com" % (
-                        item.fulltitle.replace(' ', '+'), year)
+                    item.fulltitle.replace(' ', '+'), year)
                     data = browser(urlbing_imdb)
                     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|http://ssl-proxy.my-addr.org/myaddrproxy.php/", "", data)
                     subdata_imdb = scrapertools.find_single_match(data,
                                                                   '<li class="b_algo">(.*?)h="ID.*?<strong>.*?TV Series')
                 else:
                     urlbing_imdb = "http://www.bing.com/search?q=%s+%s+site:imdb.com" % (
-                        item.fulltitle.replace(' ', '+'), year)
+                    item.fulltitle.replace(' ', '+'), year)
                     data = browser(urlbing_imdb)
                     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|http://ssl-proxy.my-addr.org/myaddrproxy.php/", "", data)
                     subdata_imdb = scrapertools.find_single_match(data, '<li class="b_algo">(.*?)h="ID.*?<strong>')
@@ -281,7 +282,7 @@ def get_art(item):
                         title = scrapertools.find_single_match(item.fulltitle, '\(.*?\)')
                         if item.contentType != "movie":
                             urlbing_imdb = "http://www.bing.com/search?q=%s+%s+tv+series+site:imdb.com" % (
-                                title.replace(' ', '+'), year)
+                            title.replace(' ', '+'), year)
                             data = browser(urlbing_imdb)
                             data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|http://ssl-proxy.my-addr.org/myaddrproxy.php/", "",
                                           data)
@@ -289,7 +290,7 @@ def get_art(item):
                                                                           '<li class="b_algo">(.*?)h="ID.*?<strong>.*?TV Series')
                         else:
                             urlbing_imdb = "http://www.bing.com/search?q=%s+%s+site:imdb.com" % (
-                                title.replace(' ', '+'), year)
+                            title.replace(' ', '+'), year)
                             data = browser(urlbing_imdb)
                             data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|http://ssl-proxy.my-addr.org/myaddrproxy.php/", "",
                                           data)

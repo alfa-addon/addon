@@ -3,10 +3,11 @@
 import re
 import urlparse
 
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core.item import Item
-from platformcode import config, logger
 
 CHANNEL_HOST = "http://animeid.tv/"
 

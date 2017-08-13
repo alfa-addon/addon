@@ -2,8 +2,8 @@
 
 import re
 
+from core import logger
 from core import scrapertools
-from platformcode import logger
 
 
 # Returns an array of possible video url's from the page_url

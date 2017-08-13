@@ -5,7 +5,7 @@
 
 import traceback
 
-from platformcode import logger
+import logger
 
 try:
     import json
@@ -82,7 +82,7 @@ def get_node_from_file(name_file, node, path=None):
     @rtype: dict
     """
     logger.info()
-    from platformcode import config
+    from core import config
     from core import filetools
 
     dict_node = {}
@@ -156,7 +156,7 @@ def update_node(dict_node, name_file, node, path=None):
     """
     logger.info()
 
-    from platformcode import config
+    from core import config
     from core import filetools
     json_data = {}
     result = False

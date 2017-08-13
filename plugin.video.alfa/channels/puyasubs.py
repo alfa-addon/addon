@@ -2,11 +2,12 @@
 
 import re
 
+from core import config
 from core import httptools
 from core import jsontools
+from core import logger
 from core import scrapertools
 from core.item import Item
-from platformcode import config, logger
 
 __modo_grafico__ = config.get_setting('modo_grafico', 'puyasubs')
 __perfil__ = config.get_setting('perfil', "puyasubs")
@@ -188,7 +189,7 @@ def torrents(item):
         size = size.strip()
         filtro_tmdb = {"original_language": "ja"}.items()
         title += "  [COLOR %s][Semillas:%s[/COLOR]|[COLOR %s]Leech:%s[/COLOR]|%s]" % (
-            color4, seeds, color5, leechers, size)
+        color4, seeds, color5, leechers, size)
         url = "https://www.frozen-layer.com" + url
 
         itemlist.append(Item(channel=item.channel, action="play", url=url, title=title, contentTitle=contentTitle,

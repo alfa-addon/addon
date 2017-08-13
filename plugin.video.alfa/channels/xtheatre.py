@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
 
 import re
+import sys
+import urllib
 import urlparse
 
-from core import channeltools
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import config, logger
+from core import channeltools
+from core import tmdb
 
 __channel__ = "xtheatre"
 
@@ -26,7 +30,7 @@ perfil = [['0xFF6E2802', '0xFFFAA171', '0xFFE9D7940'],
           ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']]
 
 if __perfil__ - 1 >= 0:
-    color1, color2, color3 = perfil[__perfil__ - 1]
+    color1, color2, color3 = perfil[__perfil__-1]
 else:
     color1 = color2 = color3 = ""
 
@@ -38,7 +42,6 @@ fanart_host = parameters['fanart']
 thumbnail_host = parameters['thumbnail']
 thumbnail = 'https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/%s.png'
 
-
 def mainlist(item):
     logger.info()
 
@@ -47,21 +50,21 @@ def mainlist(item):
 
     itemlist.append(Item(channel=__channel__, title="Últimas", url=host + '?filtre=date&cat=0',
                          action="peliculas", viewmode="movie_with_plot", viewcontent='movies',
-                         thumbnail=thumbnail % '1'))
+                         thumbnail = thumbnail % '1'))
 
     itemlist.append(Item(channel=__channel__, title="Más Vistas", url=host + '?display=extract&filtre=views',
                          action="peliculas", viewmode="movie_with_plot", viewcontent='movies',
-                         thumbnail=thumbnail % '2'))
+                         thumbnail = thumbnail % '2'))
 
     itemlist.append(Item(channel=__channel__, title="Mejor Valoradas", url=host + '?display=extract&filtre=rate',
                          action="peliculas", viewmode="movie_with_plot", viewcontent='movies',
-                         thumbnail=thumbnail % '3'))
+                         thumbnail = thumbnail % '3'))
 
     itemlist.append(Item(channel=__channel__, title="Categorías", action="categorias",
                          url=host + 'categories/', viewmode="movie_with_plot", viewcontent='movies',
-                         thumbnail=thumbnail % '4'))
+                         thumbnail = thumbnail % '4'))
 
-    itemlist.append(Item(channel=__channel__, title="Buscador", action="search", url=host, thumbnail=thumbnail % '5'))
+    itemlist.append(Item(channel=__channel__, title="Buscador", action="search", url=host, thumbnail = thumbnail % '5'))
 
     return itemlist
 
@@ -183,6 +186,7 @@ def sub_search(item):
 
 
 def findvideos(item):
+
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)

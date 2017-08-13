@@ -5,8 +5,8 @@
 
 import os
 
+import config
 import scrapertools
-from platformcode import config
 
 
 def get_current_plugin_version():

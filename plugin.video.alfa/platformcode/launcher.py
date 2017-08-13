@@ -8,11 +8,12 @@ import sys
 import urllib2
 
 from core import channeltools
+from core import config
+from core import videolibrarytools
+from core import logger
 from core import scrapertools
 from core import servertools
-from core import videolibrarytools
 from core.item import Item
-from platformcode import config, logger
 from platformcode import platformtools
 
 
@@ -73,7 +74,7 @@ def run(item=None):
             #             itemlist.insert(0, Item(title="Descargar version " + new_published_version_tag,
             #                                     version=new_published_version_tag, channel="updater",
             #                                     action="update",
-            #                                     thumbnail=channelselector.get_thumb("update.png")))
+            #                                     thumbnail=channelselector.get_thumb("thumb_update.png")))
             #     except:
             #         import traceback
             #         logger.error(traceback.format_exc())

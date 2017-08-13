@@ -7,14 +7,15 @@ import os
 import re
 import time
 
+from core import config
 from core import filetools
+from core import videolibrarytools
+from core import logger
 from core import scraper
 from core import scrapertools
 from core import servertools
-from core import videolibrarytools
 from core.downloader import Downloader
 from core.item import Item
-from platformcode import config, logger
 from platformcode import platformtools
 
 STATUS_COLORS = {0: "orange", 1: "orange", 2: "green", 3: "red"}
@@ -51,7 +52,7 @@ def mainlist(item):
                         itemlist):
 
                     title = TITLE_TVSHOW % (
-                        STATUS_COLORS[i.downloadStatus], i.downloadProgress, i.contentSerieName, i.contentChannel)
+                    STATUS_COLORS[i.downloadStatus], i.downloadProgress, i.contentSerieName, i.contentChannel)
 
                     itemlist.append(Item(title=title, channel="descargas", action="mainlist", contentType="tvshow",
                                          contentSerieName=i.contentSerieName, contentChannel=i.contentChannel,
@@ -60,9 +61,8 @@ def mainlist(item):
 
                 else:
                     s = \
-                        filter(
-                            lambda x: x.contentSerieName == i.contentSerieName and x.contentChannel == i.contentChannel,
-                            itemlist)[0]
+                    filter(lambda x: x.contentSerieName == i.contentSerieName and x.contentChannel == i.contentChannel,
+                           itemlist)[0]
                     s.downloadProgress.append(i.downloadProgress)
                     downloadProgress = sum(s.downloadProgress) / len(s.downloadProgress)
 
@@ -71,7 +71,7 @@ def mainlist(item):
                         s.downloadStatus = i.downloadStatus
 
                     s.title = TITLE_TVSHOW % (
-                        STATUS_COLORS[s.downloadStatus], downloadProgress, i.contentSerieName, i.contentChannel)
+                    STATUS_COLORS[s.downloadStatus], downloadProgress, i.contentSerieName, i.contentChannel)
 
             # Peliculas
             elif i.contentType == "movie" or i.contentType == "video":
@@ -149,7 +149,7 @@ def clean_all(item):
         if fichero.endswith(".json"):
             download_item = Item().fromjson(filetools.read(os.path.join(DOWNLOAD_LIST_PATH, fichero)))
             if not item.contentType == "tvshow" or (
-                            item.contentSerieName == download_item.contentSerieName and item.contentChannel == download_item.contentChannel):
+                    item.contentSerieName == download_item.contentSerieName and item.contentChannel == download_item.contentChannel):
                 filetools.remove(os.path.join(DOWNLOAD_LIST_PATH, fichero))
 
     platformtools.itemlist_refresh()
@@ -161,7 +161,7 @@ def clean_ready(item):
         if fichero.endswith(".json"):
             download_item = Item().fromjson(filetools.read(os.path.join(DOWNLOAD_LIST_PATH, fichero)))
             if not item.contentType == "tvshow" or (
-                            item.contentSerieName == download_item.contentSerieName and item.contentChannel == download_item.contentChannel):
+                    item.contentSerieName == download_item.contentSerieName and item.contentChannel == download_item.contentChannel):
                 if download_item.downloadStatus == STATUS_CODES.completed:
                     filetools.remove(os.path.join(DOWNLOAD_LIST_PATH, fichero))
 
@@ -175,7 +175,7 @@ def restart_error(item):
             download_item = Item().fromjson(filetools.read(os.path.join(DOWNLOAD_LIST_PATH, fichero)))
 
             if not item.contentType == "tvshow" or (
-                            item.contentSerieName == download_item.contentSerieName and item.contentChannel == download_item.contentChannel):
+                    item.contentSerieName == download_item.contentSerieName and item.contentChannel == download_item.contentChannel):
                 if download_item.downloadStatus == STATUS_CODES.error:
                     if filetools.isfile(
                             os.path.join(config.get_setting("downloadpath"), download_item.downloadFilename)):
@@ -196,7 +196,7 @@ def download_all(item):
                 filetools.read(os.path.join(DOWNLOAD_LIST_PATH, fichero)))
 
             if not item.contentType == "tvshow" or (
-                            item.contentSerieName == download_item.contentSerieName and item.contentChannel == download_item.contentChannel):
+                    item.contentSerieName == download_item.contentSerieName and item.contentChannel == download_item.contentChannel):
                 if download_item.downloadStatus in [STATUS_CODES.stoped, STATUS_CODES.canceled]:
                     res = start_download(download_item)
                     platformtools.itemlist_refresh()
@@ -339,7 +339,7 @@ def get_server_position(server):
     if server in servers:
         pos = [s for s in sorted(servers, key=lambda x: (sum(servers[x]["speeds"]) / (len(servers[x]["speeds"]) or 1),
                                                          float(sum(servers[x]["success"])) / (
-                                                             len(servers[x]["success"]) or 1)), reverse=True)]
+                                                         len(servers[x]["success"]) or 1)), reverse=True)]
         return pos.index(server) + 1
     else:
         return 0
@@ -532,7 +532,7 @@ def download_from_server(item):
                 return {"downloadStatus": STATUS_CODES.error}
     progreso.close()
     logger.info("contentAction: %s | contentChannel: %s | server: %s | url: %s" % (
-        item.contentAction, item.contentChannel, item.server, item.url))
+    item.contentAction, item.contentChannel, item.server, item.url))
 
     if not item.server or not item.url or not item.contentAction == "play" or item.server in unsupported_servers:
         logger.error("El Item no contiene los parametros necesarios.")
@@ -677,7 +677,7 @@ def start_download(item):
 
 def get_episodes(item):
     logger.info("contentAction: %s | contentChannel: %s | contentType: %s" % (
-        item.contentAction, item.contentChannel, item.contentType))
+    item.contentAction, item.contentChannel, item.contentType))
 
     # El item que pretendemos descargar YA es un episodio
     if item.contentType == "episode":
@@ -727,7 +727,7 @@ def get_episodes(item):
                 episode.contentTitle = re.sub("\[[^\]]+\]|\([^\)]+\)|\d*x\d*\s*-", "", episode.title).strip()
 
             episode.downloadFilename = filetools.validate_path(os.path.join(item.downloadFilename, "%dx%0.2d - %s" % (
-                episode.contentSeason, episode.contentEpisodeNumber, episode.contentTitle.strip())))
+            episode.contentSeason, episode.contentEpisodeNumber, episode.contentTitle.strip())))
 
             itemlist.append(episode)
         # Cualquier otro resultado no nos vale, lo ignoramos
@@ -785,7 +785,7 @@ def save_download(item):
 
 def save_download_video(item):
     logger.info("contentAction: %s | contentChannel: %s | contentTitle: %s" % (
-        item.contentAction, item.contentChannel, item.contentTitle))
+    item.contentAction, item.contentChannel, item.contentTitle))
 
     set_movie_title(item)
 
@@ -802,7 +802,7 @@ def save_download_video(item):
 
 def save_download_movie(item):
     logger.info("contentAction: %s | contentChannel: %s | contentTitle: %s" % (
-        item.contentAction, item.contentChannel, item.contentTitle))
+    item.contentAction, item.contentChannel, item.contentTitle))
 
     progreso = platformtools.dialog_progress("Descargas", "Obteniendo datos de la pelicula")
 
@@ -830,7 +830,7 @@ def save_download_movie(item):
 
 def save_download_tvshow(item):
     logger.info("contentAction: %s | contentChannel: %s | contentType: %s | contentSerieName: %s" % (
-        item.contentAction, item.contentChannel, item.contentType, item.contentSerieName))
+    item.contentAction, item.contentChannel, item.contentType, item.contentSerieName))
 
     progreso = platformtools.dialog_progress("Descargas", "Obteniendo datos de la serie")
 

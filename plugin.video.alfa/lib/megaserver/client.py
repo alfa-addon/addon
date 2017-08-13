@@ -1,16 +1,16 @@
 import base64
+import sys
 import json
 import random
 import struct
 import time
 import urllib
 from threading import Thread
-
 from Crypto.Cipher import AES
 from file import File
 from handler import Handler
-from platformcode import logger
 from server import Server
+from core import logger
 
 
 class Client(object):

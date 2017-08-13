@@ -4,10 +4,10 @@ import re
 import urllib
 
 from core import httptools
+from core import logger
 from core import scrapertools
-from core import servertools
 from core.item import Item
-from platformcode import logger
+from core import servertools
 
 tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
            "Drama": "https://s16.postimg.org/94sia332d/drama.png",

@@ -4,10 +4,10 @@ import re
 import urlparse
 
 import xbmc
+from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import logger
 
 
 # Main list manual

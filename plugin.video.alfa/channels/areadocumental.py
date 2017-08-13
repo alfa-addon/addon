@@ -2,10 +2,11 @@
 
 import urllib
 
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core.item import Item
-from platformcode import config, logger
 
 host = "http://www.area-documental.com"
 __perfil__ = int(config.get_setting('perfil', "areadocumental"))

@@ -7,11 +7,12 @@ import urllib
 
 import xbmc
 import xbmcgui
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core.item import Item
 from core.scrapertools import decodeHtmlentities as dhe
-from platformcode import config, logger
 from platformcode import platformtools
 
 ACTION_SHOW_FULLSCREEN = 36
@@ -174,9 +175,9 @@ def peliculas(item):
                     dialog = xbmcgui.Dialog()
                     if dialog.yesno(
                                                     '[COLOR crimson][B]Sin resultados en[/B][/COLOR]' + '[COLOR gold][B] Pasate[/B][/COLOR]' + '[COLOR floralwhite][B]A[/B][/COLOR]' + '[COLOR yellow][B]Torrent[/B][/COLOR]',
-                            '[COLOR cadetblue]¿Quieres hacer una busqueda en Alfa?[/COLOR]',
-                            '', "", '[COLOR crimson][B]No,gracias[/B][/COLOR]',
-                            '[COLOR yellow][B]Si[/B][/COLOR]'):
+                                                    '[COLOR cadetblue]¿Quieres hacer una busqueda en Alfa?[/COLOR]',
+                                                    '', "", '[COLOR crimson][B]No,gracias[/B][/COLOR]',
+                                                    '[COLOR yellow][B]Si[/B][/COLOR]'):
                         item.extra = "movie" + "|" + item.extra.split("|")[2]
                         return busqueda(item)
                     else:
@@ -186,9 +187,9 @@ def peliculas(item):
                     dialog = xbmcgui.Dialog()
                     if dialog.yesno(
                                                     '[COLOR crimson][B]Sin resultados en[/B][/COLOR]' + '[COLOR slateblue][B] Pasate[/B][/COLOR]' + '[COLOR floralwhite][B]A[/B][/COLOR]' + '[COLOR slateblue][B]Torrent[/B][/COLOR]',
-                            '[COLOR cadetblue]¿Quieres hacer una busqueda en Alfa?[/COLOR]',
-                            '', "", '[COLOR crimson][B]No,gracias[/B][/COLOR]',
-                            '[COLOR yellow][B]Si[/B][/COLOR]'):
+                                                    '[COLOR cadetblue]¿Quieres hacer una busqueda en Alfa?[/COLOR]',
+                                                    '', "", '[COLOR crimson][B]No,gracias[/B][/COLOR]',
+                                                    '[COLOR yellow][B]Si[/B][/COLOR]'):
                         item.extra = "serie" + "|" + item.extra.split("|")[2]
                         return busqueda(item)
                     else:
@@ -671,7 +672,7 @@ def fanart(item):
             matches = re.compile(patron, re.DOTALL).findall(data_tmdb)
             if len(matches) == 0:
                 urlbing_imdb = "http://www.bing.com/search?q=%s+%s+tv+series+site:imdb.com" % (
-                    title.replace(' ', '+'), year)
+                title.replace(' ', '+'), year)
                 data = browser(urlbing_imdb)
                 data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|http://ssl-proxy.my-addr.org/myaddrproxy.php/", "", data)
                 try:
@@ -1676,14 +1677,14 @@ class TextBox2(xbmcgui.WindowDialog):
         self.addControl(self.plot)
         self.plot.setAnimations(
             [('conditional', 'effect=zoom delay=2000 center=auto start=0 end=100  time=800  condition=true  ',), (
-                'conditional',
-                'effect=rotate  delay=2000 center=auto aceleration=6000 start=0% end=360%  time=800  condition=true',),
+            'conditional',
+            'effect=rotate  delay=2000 center=auto aceleration=6000 start=0% end=360%  time=800  condition=true',),
              ('WindowClose', 'effect=zoom center=auto start=100% end=-0%  time=600 condition=true',)])
         self.addControl(self.fanart)
         self.fanart.setAnimations(
             [('WindowOpen', 'effect=slide start=0,-700 delay=1000 time=2500 tween=bounce condition=true',), (
-                'conditional',
-                'effect=rotate center=auto  start=0% end=360% delay=3000 time=2500 tween=bounce condition=true',),
+            'conditional',
+            'effect=rotate center=auto  start=0% end=360% delay=3000 time=2500 tween=bounce condition=true',),
              ('WindowClose', 'effect=slide end=0,-700%  time=1000 condition=true',)])
         self.addControl(self.title)
         self.title.setText(self.getTitle)
@@ -1728,7 +1729,6 @@ def translate(to_translate, to_langage="auto", langage="auto"):
         'User-Agent': "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30)"}
     before_trans = 'class="t0">'
     link = "http://translate.google.com/m?hl=%s&sl=%s&q=%s" % (to_langage, langage, to_translate.replace(" ", "+"))
-    import urllib2
     request = urllib2.Request(link, headers=agents)
     page = urllib2.urlopen(request).read()
     result = page[page.find(before_trans) + len(before_trans):]

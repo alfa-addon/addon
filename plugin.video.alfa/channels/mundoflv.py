@@ -5,12 +5,13 @@ import urlparse
 
 from channels import autoplay
 from channels import filtertools
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
 
 host = "http://mundoflv.com"
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
@@ -623,11 +624,9 @@ def findvideos(item):
 
         itemlist = filtertools.get_link(itemlist, new_item, list_language)
 
-    import os
     for videoitem in itemlist:
         videoitem.infoLabels = item.infoLabels
-        videoitem.thumbnail = os.path.join(config.get_runtime_path(), "resources", "media", "servers",
-                                           "server_%s.png" % videoitem.server)
+        videoitem.thumbnail = config.get_thumb("server_%s.png" % videoitem.server)
 
     # Requerido para AutoPlay
 

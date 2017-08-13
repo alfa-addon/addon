@@ -8,11 +8,12 @@ from threading import Thread
 
 import xbmc
 import xbmcgui
+from core import config
+from core import logger
 from core import scrapertools
 from core import tmdb
 from core.item import Item
 from core.scrapertools import decodeHtmlentities as dhe
-from platformcode import config, logger
 from platformcode import platformtools
 
 mainWindow = list()
@@ -211,13 +212,12 @@ class main(xbmcgui.WindowDialog):
             try:
                 if self.item.contentType == "movie":
                     self.infoLabels["fanart"] = \
-                        self.images.get("moviebackground",
-                                        self.images.get("hdmovieclearart", self.images.get("movieart")))[
-                            0].get("url")
+                    self.images.get("moviebackground", self.images.get("hdmovieclearart", self.images.get("movieart")))[
+                        0].get("url")
                 else:
                     self.infoLabels["fanart"] = \
-                        self.images.get("showbackground", self.images.get("hdclearart", self.images.get("clearart")))[
-                            0].get("url")
+                    self.images.get("showbackground", self.images.get("hdclearart", self.images.get("clearart")))[
+                        0].get("url")
             except:
                 self.infoLabels["fanart"] = 'http://i.imgur.com/XuXGXjN.jpg'
                 import traceback
@@ -245,9 +245,8 @@ class main(xbmcgui.WindowDialog):
                             break
                     if not find:
                         self.infoLabels["thumbnail"] = \
-                            self.images.get("hdtvlogo", self.images.get("clearlogo", self.images.get("tvthumb")))[
-                                0].get(
-                                "url")
+                        self.images.get("hdtvlogo", self.images.get("clearlogo", self.images.get("tvthumb")))[0].get(
+                            "url")
                 else:
                     self.infoLabels["thumbnail"] = self.images.get("hdtvlogo", self.images.get("clearlogo", ))[0].get(
                         "url")
@@ -258,7 +257,7 @@ class main(xbmcgui.WindowDialog):
                 logger.error(traceback.format_exc())
         elif not self.item.rating_filma or "image.tmdb.org" in self.infoLabels.get("thumbnail",
                                                                                    "") or not self.infoLabels.get(
-            "thumbnail"):
+                "thumbnail"):
             self.infoLabels["thumbnail"] = 'http://i.imgur.com/8K5f4Uo.png'
 
         self.name = re.sub(r'(\[.*?\])', '', self.infoLabels["title"])
@@ -290,8 +289,8 @@ class main(xbmcgui.WindowDialog):
         self.addControl(self.fanart)
         self.fanart.setAnimations([('conditional', 'effect=rotatey start=100% end=0% time=1500 condition=true',),
                                    ('unfocus', 'effect=zoom start=110% end=100% time=1000 tween=elastic easing=out',), (
-                                       'WindowClose',
-                                       'effect=rotatey delay= 1000 start=0% end=-300% time=800 condition=true',)])
+                                   'WindowClose',
+                                   'effect=rotatey delay= 1000 start=0% end=-300% time=800 condition=true',)])
 
         self.addControl(self.background)
         self.addControl(self.critica_image)
@@ -353,8 +352,8 @@ class main(xbmcgui.WindowDialog):
             self.addControl(self.thumbnail)
             self.thumbnail.setAnimations(
                 [('conditional', 'effect=zoom delay=2000 center=auto start=0 end=100 time=800 condition=true',), (
-                    'conditional',
-                    'effect=rotate delay=2000 center=auto aceleration=6000 start=0% end=360% time=800 condition=true',),
+                'conditional',
+                'effect=rotate delay=2000 center=auto aceleration=6000 start=0% end=360% time=800 condition=true',),
                  ('WindowClose', 'effect=zoom start=100% end=0% time=600 condition=true',)])
         else:
             self.thumbnail = xbmcgui.ControlButton(813, 0, 390, 150, '', self.infoLabels.get("thumbnail", ""),
@@ -362,8 +361,8 @@ class main(xbmcgui.WindowDialog):
             self.addControl(self.thumbnail)
             self.thumbnail.setAnimations(
                 [('conditional', 'effect=zoom delay=2000 center=auto start=0 end=100 time=800 condition=true',), (
-                    'conditional',
-                    'effect=rotate delay=2000 center=auto aceleration=6000 start=0% end=360% time=800 condition=true',),
+                'conditional',
+                'effect=rotate delay=2000 center=auto aceleration=6000 start=0% end=360% time=800 condition=true',),
                  ('unfocus', 'effect=zoom start=105% end=100% time=1000 tween=elastic easing=out',),
                  ('focus', 'effect=zoom start=80% end=100% time=700',),
                  ('WindowClose', 'effect=zoom start=100% end=0% time=600 condition=true',)])
@@ -372,8 +371,8 @@ class main(xbmcgui.WindowDialog):
         self.addControl(self.icon)
         self.icon.setAnimations(
             [('conditional', 'effect=slide start=0,-700 delay=2000 time=2500 tween=bounce condition=true',), (
-                'conditional',
-                'effect=rotate center=auto start=0% end=360% delay=3000 time=2500 tween=bounce condition=true',),
+            'conditional',
+            'effect=rotate center=auto start=0% end=360% delay=3000 time=2500 tween=bounce condition=true',),
              ('WindowClose', 'effect=slide end=0,-700% time=1000 condition=true',)])
         self.addControl(self.fa_icon)
         self.fa_icon.setAnimations(
@@ -408,10 +407,9 @@ class main(xbmcgui.WindowDialog):
         self.addControl(self.btn_left)
         self.btn_left.setAnimations(
             [('conditional', 'effect=zoom start=-100 end=100 delay=5000 time=2000 condition=true tween=bounce',), (
-                'conditional',
-                'effect=zoom start=720,642,70,29 end=640,642,69,29 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
-                    self.btn_left.getId()) + ')',),
-             ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
+            'conditional',
+            'effect=zoom start=720,642,70,29 end=640,642,69,29 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
+                self.btn_left.getId()) + ')',), ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
         self.btn_left.setVisible(False)
         self.botones.append(self.btn_left)
         if thread1:
@@ -443,8 +441,8 @@ class main(xbmcgui.WindowDialog):
                                            'effect=rotatey start=200 end=0 delay=6200 time=900 tween=elastic condition=true',),
                                           ('unfocus',
                                            'effect=zoom center=auto start=70% end=100% time=700 reversible=false',), (
-                                              'focus',
-                                              'effect=rotate center=auto start=0% end=360% time=650 tween=bounce',),
+                                          'focus',
+                                          'effect=rotate center=auto start=0% end=360% time=650 tween=bounce',),
                                           ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
                 self.addControl(fadelabel)
                 fadelabel.addLabel(peli)
@@ -474,9 +472,9 @@ class main(xbmcgui.WindowDialog):
             self.addControl(self.btn_right)
             self.btn_right.setAnimations(
                 [('conditional', 'effect=slide start=-3000 end=0 delay=6200 time=2000 condition=true tween=bounce',), (
-                    'conditional',
-                    'effect=zoom start=230,490, 60, 27, 29 end=1230,642,61,27 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
-                        self.btn_right.getId()) + ')',),
+                'conditional',
+                'effect=zoom start=230,490, 60, 27, 29 end=1230,642,61,27 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
+                    self.btn_right.getId()) + ')',),
                  ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
             self.botones.append(self.btn_right)
         xbmc.sleep(200)
@@ -768,11 +766,10 @@ class related(xbmcgui.WindowDialog):
             try:
                 if self.item.contentType == "movie":
                     self.infoLabels["fanart"] = \
-                        images.get("moviebackground", images.get("hdmovieclearart", images.get("movieart")))[0].get(
-                            "url")
+                    images.get("moviebackground", images.get("hdmovieclearart", images.get("movieart")))[0].get("url")
                 else:
                     self.infoLabels["fanart"] = \
-                        images.get("showbackground", images.get("hdclearart", images.get("clearart")))[0].get("url")
+                    images.get("showbackground", images.get("hdclearart", images.get("clearart")))[0].get("url")
             except:
                 import traceback
                 logger.error(traceback.format_exc())
@@ -826,8 +823,7 @@ class related(xbmcgui.WindowDialog):
         self.info_peli.setText(self.info)
         self.info_peli.setAnimations(
             [('conditional', 'effect=fade start=0% end=100%  delay=3600 time=800  condition=true',), (
-                'conditional',
-                'effect=slide  delay=1000  start=0,-500  delay=2600 time=2200 tween=bounce condition=true',),
+            'conditional', 'effect=slide  delay=1000  start=0,-500  delay=2600 time=2200 tween=bounce condition=true',),
              ('WindowClose', 'effect=fade end=0% time=1000 condition=true',)])
 
         self.poster_peli = xbmcgui.ControlImage(210, 90, 230, 260, self.infoLabels.get("thumbnail", ""))
@@ -935,13 +931,12 @@ class related(xbmcgui.WindowDialog):
             self.seasons = xbmcgui.ControlFadeLabel(413, 485, 400, 60, self.fonts["12"])
             self.addControl(self.seasons)
             temporadas = "  [COLOR yellowgreen][B]%s/%s[/B][/COLOR]" % (
-                self.infoLabels.get("number_of_seasons"), self.infoLabels.get("number_of_episodes", "---"))
+            self.infoLabels.get("number_of_seasons"), self.infoLabels.get("number_of_episodes", "---"))
             self.seasons.addLabel(temporadas)
             self.seasons.setAnimations([('conditional',
                                          'effect=slide start=0,-700 delay=5600 time=700 condition=true tween=circle easing=in',),
                                         (
-                                            'WindowClose',
-                                            'effect=slide end=0,-7000% delay=300 time=700 condition=true',)])
+                                        'WindowClose', 'effect=slide end=0,-7000% delay=300 time=700 condition=true',)])
 
         i = 0
         sleep = 0
@@ -1032,9 +1027,9 @@ class related(xbmcgui.WindowDialog):
                                        'effect=rotate delay=4000 center=auto  start=0% end=360% time=2500  condition=true ',),
                                       ('unfocus',
                                        'effect=zoom center=auto start=70% end=100% time=700 reversible=false',), (
-                                          'conditional',
-                                          'effect=rotate center=auto start=0% end=360% reversible=false  time=2000 loop=true condition=Control.HasFocus(' + str(
-                                              self.trailer_r.getId()) + ')'),
+                                      'conditional',
+                                      'effect=rotate center=auto start=0% end=360% reversible=false  time=2000 loop=true condition=Control.HasFocus(' + str(
+                                          self.trailer_r.getId()) + ')'),
                                       ('WindowClose', 'effect=slide end=2000 time=700 condition=true',)])
         self.botones.append(self.trailer_r)
 
@@ -1072,9 +1067,9 @@ class related(xbmcgui.WindowDialog):
             self.buscar.setAnimations([('conditional', 'effect=slide start=0,700 delay=6000 time=200 condition=true',),
                                        ('unfocus',
                                         'effect=zoom center=auto start=70% end=100% time=700 reversible=false',), (
-                                           'conditional',
-                                           'effect=zoom center=auto start=100% end=120% reversible=false tween=bounce time=1000 loop=true condition=Control.HasFocus(' + str(
-                                               self.buscar.getId()) + ')'),
+                                       'conditional',
+                                       'effect=zoom center=auto start=100% end=120% reversible=false tween=bounce time=1000 loop=true condition=Control.HasFocus(' + str(
+                                           self.buscar.getId()) + ')'),
                                        ('WindowClose', 'effect=rotatey end=-300 time=1500 condition=true',)])
         self.global_search = xbmcgui.ControlButton(1046, 620, 140, 53, '', 'http://imgur.com/hoOvpHV.png',
                                                    'http://imgur.com/hoOvpHV.png')
@@ -1595,8 +1590,8 @@ class ActorInfo(xbmcgui.WindowDialog):
                                            'effect=rotatey start=200 end=0 delay=2000 time=900 tween=elastic condition=true',),
                                           ('unfocus',
                                            'effect=zoom center=auto start=70% end=100% time=700 reversible=false',), (
-                                              'focus',
-                                              'effect=rotate center=auto start=0% end=360% time=650 tween=bounce',),
+                                          'focus',
+                                          'effect=rotate center=auto start=0% end=360% time=650 tween=bounce',),
                                           ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',), ])
                 self.addControl(self.neon)
                 self.neon.setVisibleCondition('[Control.HasFocus(' + str(self.image.getId()) + ')]')
@@ -1624,10 +1619,9 @@ class ActorInfo(xbmcgui.WindowDialog):
             self.addControl(self.btn_right)
             self.btn_right.setAnimations(
                 [('conditional', 'effect=slide start=-3000 end=0 delay=5000 time=2000 condition=true tween=bounce',), (
-                    'conditional',
-                    'effect=zoom start=230,490, 60, 27, 29 end=1230,642,61,27 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
-                        self.btn_right.getId()) + ')',),
-                 ('WindowClose', 'effect=fade end=0% time=1000 condition=true',)])
+                'conditional',
+                'effect=zoom start=230,490, 60, 27, 29 end=1230,642,61,27 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
+                    self.btn_right.getId()) + ')',), ('WindowClose', 'effect=fade end=0% time=1000 condition=true',)])
             self.botones.append(self.btn_right)
 
         xbmc.sleep(200)
@@ -1924,10 +1918,9 @@ class images(xbmcgui.WindowDialog):
         self.addControl(self.btn_left)
         self.btn_left.setAnimations(
             [('conditional', 'effect=zoom start=-100 end=100 delay=5000 time=2000 condition=true tween=bounce',), (
-                'conditional',
-                'effect=zoom start=293,642,70,29 end=243,642,69,29 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
-                    self.btn_left.getId()) + ')',),
-             ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
+            'conditional',
+            'effect=zoom start=293,642,70,29 end=243,642,69,29 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
+                self.btn_left.getId()) + ')',), ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
         self.btn_left.setVisible(False)
         self.botones.append(self.btn_left)
         for img in self.imagenes:
@@ -1961,9 +1954,9 @@ class images(xbmcgui.WindowDialog):
             self.addControl(self.btn_right)
             self.btn_right.setAnimations(
                 [('conditional', 'effect=slide start=-3000 end=0 delay=3600 time=2000 condition=true tween=bounce',), (
-                    'conditional',
-                    'effect=zoom start=230,490, 60, 27, 29 end=1190,642,61,27 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
-                        self.btn_right.getId()) + ')',),
+                'conditional',
+                'effect=zoom start=230,490, 60, 27, 29 end=1190,642,61,27 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
+                    self.btn_right.getId()) + ')',),
                  ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
             self.botones.append(self.btn_right)
         xbmc.sleep(200)

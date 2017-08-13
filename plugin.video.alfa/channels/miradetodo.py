@@ -2,12 +2,13 @@
 
 import re
 
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
 
 tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
            "Suspense": "https://s13.postimg.org/wmw6vl1cn/suspenso.png",
@@ -360,7 +361,6 @@ def findvideos(item):
         elif video_url != '':
             itemlist.extend(servertools.find_video_items(data=video_url[0]))
 
-        import os
         for videoitem in itemlist:
             if videoitem.server != 'directo':
 
@@ -370,9 +370,7 @@ def findvideos(item):
                     title = item.contentTitle + ' (%s) %s' % (quality, language)
                 videoitem.title = title
                 videoitem.channel = item.channel
-
-                videoitem.thumbnail = os.path.join(config.get_runtime_path(), "resources", "media", "servers",
-                                                   "server_%s.png" % videoitem.server)
+                videoitem.thumbnail = config.get_thumb("server_%s.png" % videoitem.server)
                 videoitem.quality = item.quality
 
     if item.infoLabels['mediatype'] == 'movie':

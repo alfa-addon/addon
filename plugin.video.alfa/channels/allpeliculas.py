@@ -2,11 +2,12 @@
 
 import string
 
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import config, logger
 
 __modo_grafico__ = config.get_setting('modo_grafico', "allpeliculas")
 __perfil__ = int(config.get_setting('perfil', "allpeliculas"))
@@ -365,7 +366,7 @@ def episodios(item):
     for item in itemlist:
         if item.infoLabels["episodio_titulo"]:
             item.title = "%dx%02d: %s" % (
-                item.contentSeason, item.contentEpisodeNumber, item.infoLabels["episodio_titulo"])
+            item.contentSeason, item.contentEpisodeNumber, item.infoLabels["episodio_titulo"])
         else:
             item.title = "%dx%02d: %s" % (item.contentSeason, item.contentEpisodeNumber, item.title)
 

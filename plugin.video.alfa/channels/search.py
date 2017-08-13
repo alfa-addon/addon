@@ -6,10 +6,10 @@ import re
 import time
 from threading import Thread
 
-from channelselector import get_thumb
 from core import channeltools
+from core import config
+from core import logger
 from core.item import Item
-from platformcode import config, logger
 from platformcode import platformtools
 
 
@@ -23,13 +23,13 @@ def mainlist(item):
                 "channel": item.channel}]
     itemlist.append(Item(channel=item.channel, action="search",
                          title="Buscar por titulo", context=context,
-                         thumbnail=get_thumb("search.png")))
+                         thumbnail=config.get_thumb("thumb_search.png")))
     itemlist.append(Item(channel=item.channel, action="search",
                          title="Buscar por categorias (búsqueda avanzada)", extra="categorias",
                          context=context,
-                         thumbnail=get_thumb("search.png")))
+                         thumbnail=config.get_thumb("thumb_search.png")))
     itemlist.append(Item(channel=item.channel, action="opciones", title="Opciones",
-                         thumbnail=get_thumb("search.png")))
+                         thumbnail=config.get_thumb("thumb_search.png")))
 
     saved_searches_list = get_saved_searches()
     context2 = context[:]
@@ -41,13 +41,13 @@ def mainlist(item):
     if saved_searches_list:
         itemlist.append(Item(channel=item.channel, action="",
                              title="Búsquedas guardadas:", context=context2,
-                             thumbnail=get_thumb("search.png")))
+                             thumbnail=config.get_thumb("thumb_search.png")))
         for saved_search_text in saved_searches_list:
             itemlist.append(Item(channel=item.channel, action="do_search",
                                  title='    "' + saved_search_text + '"',
                                  extra=saved_search_text, context=context2,
                                  category=saved_search_text,
-                                 thumbnail=get_thumb("search.png")))
+                                 thumbnail=config.get_thumb("thumb_search.png")))
 
     return itemlist
 
@@ -55,12 +55,14 @@ def mainlist(item):
 def opciones(item):
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="setting_channel",
-                         title="Elegir canales incluidos en la búsqueda", folder=False,
-                         thumbnail=get_thumb("search.png")))
-    itemlist.append(Item(channel=item.channel, action="clear_saved_searches", title="Borrar búsquedas guardadas",
-                         folder=False, thumbnail=get_thumb("search.png")))
-    itemlist.append(Item(channel=item.channel, action="settings", title="Otros ajustes", folder=False,
-                         thumbnail=get_thumb("search.png")))
+                         title="Elegir canales incluidos en la búsqueda",
+                         folder=False, thumbnail=config.get_thumb("thumb_search.png")))
+    itemlist.append(Item(channel=item.channel, action="clear_saved_searches",
+                         title="Borrar búsquedas guardadas", folder=False,
+                         thumbnail=config.get_thumb("thumb_search.png")))
+    itemlist.append(Item(channel=item.channel, action="settings",
+                         title="Otros ajustes", folder=False,
+                         thumbnail=config.get_thumb("thumb_search.png")))
     return itemlist
 
 
@@ -443,8 +445,7 @@ def do_search(item, categories=None):
                         itemlist.append(i.clone(title=title, from_action=i.action, from_channel=i.channel,
                                                 channel="search", action="show_result", adult=element["adult"]))
 
-    title = "Buscando: '%s' | Encontrado: %d vídeos | Tiempo: %2.f segundos" % (
-    tecleado, total, time.time() - start_time)
+    title = "Buscando: '%s' | Encontrado: %d vídeos | Tiempo: %2.f segundos" % (tecleado, total, time.time() - start_time)
     itemlist.insert(0, Item(title=title, text_color='yellow'))
 
     progreso.close()

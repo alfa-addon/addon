@@ -3,11 +3,12 @@
 import re
 import urllib
 
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import config, logger
 
 __modo_grafico__ = config.get_setting("modo_grafico", "descargasmix")
 __perfil__ = config.get_setting("perfil", "descargasmix")

@@ -4,14 +4,14 @@ import re
 import urllib
 import urlparse
 
-from channelselector import get_thumb
 from core import channeltools
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
 from platformcode import platformtools
 
 __channel__ = "pelispedia"
@@ -90,7 +90,7 @@ def mainlist(item):
 
     itemlist.append(Item(channel=__channel__, action="settings", title="Configuración", text_color=color1,
                          fanart=fanart_host, text_bold=True,
-                         thumbnail=get_thumb("setting_0.png")))
+                         thumbnail=config.get_thumb("thumb_setting_0.png")))
 
     return itemlist
 
@@ -564,7 +564,7 @@ def play(item):
 
         url = "http://player.pelispedia.tv/template/protected.php"
         post = "fv=%s&url=%s&sou=%s&token=%s" % ("0", _id, "pic", token)
-        # eyJjdCI6IkVNYUd3Z2IwS2szSURzSGFGdkxGWlE9PSIsIml2IjoiZDI0NzhlYzU0OTZlYTJkNWFlOTFkZjAzZTVhZTNlNmEiLCJzIjoiOWM3MTM3MjNhMTkyMjFiOSJ9
+                                                  # eyJjdCI6IkVNYUd3Z2IwS2szSURzSGFGdkxGWlE9PSIsIml2IjoiZDI0NzhlYzU0OTZlYTJkNWFlOTFkZjAzZTVhZTNlNmEiLCJzIjoiOWM3MTM3MjNhMTkyMjFiOSJ9
         data = httptools.downloadpage(url, post=post).data
 
         logger.debug("datito %s " % data)

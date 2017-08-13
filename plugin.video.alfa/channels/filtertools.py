@@ -3,9 +3,11 @@
 # filtertools - se encarga de filtrar resultados
 # ------------------------------------------------------------
 
+from core import config
+from core import filetools
 from core import jsontools
+from core import logger
 from core.item import Item
-from platformcode import config, logger
 from platformcode import platformtools
 
 TAG_TVSHOW_FILTER = "TVSHOW_FILTER"
