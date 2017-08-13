@@ -4,61 +4,60 @@ import glob
 import os
 
 from core import channeltools
-from core import config
-from core import logger
 from core.item import Item
+from platformcode import config, logger
 
 
-def getmainlist():
+def getmainlist(view="thumb_"):
     logger.info()
     itemlist = list()
 
     # Añade los canales que forman el menú principal
     itemlist.append(Item(title=config.get_localized_string(30130), channel="news", action="mainlist",
-                         thumbnail=config.get_thumb("thumb_news.png"),
+                         thumbnail=get_thumb("news.png", view),
                          category=config.get_localized_string(30119), viewmode="thumbnails",
                          context=[{"title": "Configurar Novedades", "channel": "news", "action": "menu_opciones",
                                    "goto": True}]))
 
     itemlist.append(Item(title=config.get_localized_string(30118), channel="channelselector", action="getchanneltypes",
-                         thumbnail=config.get_thumb("thumb_channels.png"),
+                         thumbnail=get_thumb("channels.png", view), view=view,
                          category=config.get_localized_string(30119), viewmode="thumbnails"))
 
     itemlist.append(Item(title=config.get_localized_string(30103), channel="search", action="mainlist",
-                         thumbnail=config.get_thumb("thumb_search.png"),
+                         thumbnail=get_thumb("search.png", view),
                          category=config.get_localized_string(30119), viewmode="list",
                          context=[{"title": "Configurar Buscador", "channel": "search", "action": "opciones",
                                    "goto": True}]))
 
     itemlist.append(Item(title=config.get_localized_string(30102), channel="favorites", action="mainlist",
-                         thumbnail=config.get_thumb("thumb_favorites.png"),
+                         thumbnail=get_thumb("favorites.png", view),
                          category=config.get_localized_string(30102), viewmode="thumbnails"))
 
     if config.get_videolibrary_support():
         itemlist.append(Item(title=config.get_localized_string(30131), channel="videolibrary", action="mainlist",
-                             thumbnail=config.get_thumb("thumb_videolibrary.png"),
+                             thumbnail=get_thumb("videolibrary.png", view),
                              category=config.get_localized_string(30119), viewmode="thumbnails",
                              context=[{"title": "Configurar Videoteca", "channel": "videolibrary",
                                        "action": "channel_config"}]))
 
     itemlist.append(Item(title=config.get_localized_string(30101), channel="downloads", action="mainlist",
-                         thumbnail=config.get_thumb("thumb_downloads.png"), viewmode="list",
+                         thumbnail=get_thumb("downloads.png", view), viewmode="list",
                          context=[{"title": "Configurar Descargas", "channel": "setting", "config": "downloads",
                                    "action": "channel_config"}]))
 
-    thumb_configuracion = "thumb_setting_%s.png" % 0  # config.get_setting("plugin_updates_available")
+    thumb_configuracion = "setting_%s.png" % 0  # config.get_setting("plugin_updates_available")
 
     itemlist.append(Item(title=config.get_localized_string(30100), channel="setting", action="mainlist",
-                         thumbnail=config.get_thumb(thumb_configuracion),
+                         thumbnail=get_thumb(thumb_configuracion, view),
                          category=config.get_localized_string(30100), viewmode="list"))
     # TODO REVISAR LA OPCION AYUDA
     # itemlist.append(Item(title=config.get_localized_string(30104), channel="help", action="mainlist",
-    #                      thumbnail=config.get_thumb("thumb_help.png"),
+    #                      thumbnail=get_thumb("help.png", view),
     #                      category=config.get_localized_string(30104), viewmode="list"))
     return itemlist
 
 
-def getchanneltypes():
+def getchanneltypes(view="thumb_"):
     logger.info()
 
     # Lista de categorias
@@ -77,9 +76,8 @@ def getchanneltypes():
     # Ahora construye el itemlist ordenadamente
     itemlist = list()
     title = config.get_localized_string(30121)
-    itemlist.append(Item(title=title, channel="channelselector", action="filterchannels",
-                         category=title, channel_type="all",
-                         thumbnail=config.get_thumb("thumb_channels_all.png"),
+    itemlist.append(Item(title=title, channel="channelselector", action="filterchannels", view=view,
+                         category=title, channel_type="all", thumbnail=get_thumb("channels_all.png", view),
                          viewmode="thumbnails"))
 
     for channel_type in channel_types:
@@ -87,12 +85,12 @@ def getchanneltypes():
         title = dict_types_lang.get(channel_type, channel_type)
         itemlist.append(Item(title=title, channel="channelselector", action="filterchannels", category=title,
                              channel_type=channel_type, viewmode="thumbnails",
-                             thumbnail=config.get_thumb("thumb_channels_" + channel_type + ".png")))
+                             thumbnail=get_thumb("channels_" + channel_type + ".png", view)))
 
     return itemlist
 
 
-def filterchannels(category, preferred_thumb=""):
+def filterchannels(category, view="thumb_"):
     logger.info()
 
     channelslist = []
@@ -133,9 +131,8 @@ def filterchannels(category, preferred_thumb=""):
                 continue
             logger.info("channel_parameters=" + repr(channel_parameters))
 
-            # preferred_thumb TODO REVISAR
             # Si prefiere el banner y el canal lo tiene, cambia ahora de idea
-            if preferred_thumb == "banner" and "banner" in channel_parameters:
+            if view == "banner_" and "banner" in channel_parameters:
                 channel_parameters["thumbnail"] = channel_parameters["banner"]
 
             # si el canal está desactivado no se muestra el canal en la lista
@@ -150,15 +147,15 @@ def filterchannels(category, preferred_thumb=""):
                 # como hemos llegado hasta aquí (el canal está activo en channel.json), se devuelve True
                 channel_status = True
 
-            if channel_status != True:
+            if not channel_status:
                 # si obtenemos el listado de canales desde "activar/desactivar canales", y el canal está desactivado
                 # lo mostramos, si estamos listando todos los canales desde el listado general y está desactivado,
                 # no se muestra
-                if appenddisabledchannels != True:
+                if not appenddisabledchannels:
                     continue
 
             # Se salta el canal para adultos si el modo adultos está desactivado
-            if channel_parameters["adult"] == True and config.get_setting("adult_mode") == 0:
+            if channel_parameters["adult"] and config.get_setting("adult_mode") == 0:
                 continue
 
             # Se salta el canal si está en un idioma filtrado
@@ -194,10 +191,25 @@ def filterchannels(category, preferred_thumb=""):
 
         channel_parameters = channeltools.get_channel_parameters('url')
         # Si prefiere el banner y el canal lo tiene, cambia ahora de idea
-        if preferred_thumb == "banner" and "banner" in channel_parameters:
+        if view == "banner_" and "banner" in channel_parameters:
             channel_parameters["thumbnail"] = channel_parameters["banner"]
 
         channelslist.insert(0, Item(title="Tengo una URL", action="mainlist", channel="url",
                                     thumbnail=channel_parameters["thumbnail"], type="generic", viewmode="list"))
 
     return channelslist
+
+
+def get_thumb(thumb_name, view="thumb_"):
+
+    path = os.path.join(config.get_runtime_path(), "resources", "media", "general")
+
+    # if config.get_setting("icons"):  # TODO obtener de la configuración el pack de thumbs seleccionado
+    #     selected_icon = config.get_setting("icons")
+    # else:
+    #     selected_icon = os.sep + "default"
+
+    selected_icon = os.sep + "default"
+    web_path = path + selected_icon + os.sep
+
+    return os.path.join(web_path, view + thumb_name)

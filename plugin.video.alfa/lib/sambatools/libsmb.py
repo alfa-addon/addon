@@ -2,8 +2,8 @@
 
 import os
 
-from core import logger
 from nmb.NetBIOS import NetBIOS
+from platformcode import logger
 from smb.SMBConnection import SMBConnection
 
 remote = None

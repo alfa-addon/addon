@@ -7,9 +7,8 @@
 import os
 import traceback
 
-from core import logger
 from core import scrapertools
-from platformcode import platformtools
+from platformcode import platformtools, logger
 
 try:
     from lib.sambatools import libsmb as samba

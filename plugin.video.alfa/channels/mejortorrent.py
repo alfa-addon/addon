@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import os
 import re
 import sys
 import urllib
 import urlparse
 
-from core import config
+from channelselector import get_thumb
 from core import httptools
-from core import logger
 from core import scrapertools
 from core.item import Item
 from core.tmdb import Tmdb
+from platformcode import logger
 
 host = "http://www.mejortorrent.com"
 
@@ -21,13 +20,13 @@ def mainlist(item):
 
     itemlist = []
 
-    thumb_pelis = get_thumbnail("thumb_channels_movie.png")
-    thumb_pelis_hd = get_thumbnail("thumb_channels_movie_hd.png")
-    thumb_series = get_thumbnail("thumb_channels_tvshow.png")
-    thumb_series_hd = get_thumbnail("thumb_channels_tvshow_hd.png")
-    thumb_series_az = get_thumbnail("thumb_channels_tvshow_az.png")
-    thumb_docus = get_thumbnail("thumb_channels_documentary.png")
-    thumb_buscar = get_thumbnail("thumb_search.png")
+    thumb_pelis = get_thumb("channels_movie.png")
+    thumb_pelis_hd = get_thumb("channels_movie_hd.png")
+    thumb_series = get_thumb("channels_tvshow.png")
+    thumb_series_hd = get_thumb("channels_tvshow_hd.png")
+    thumb_series_az = get_thumb("channels_tvshow_az.png")
+    thumb_docus = get_thumb("channels_documentary.png")
+    thumb_buscar = get_thumb("search.png")
 
     itemlist.append(Item(channel=item.channel, title="Peliculas", action="getlist",
                          url="http://www.mejortorrent.com/torrents-de-peliculas.html", thumbnail=thumb_pelis))
@@ -424,19 +423,3 @@ def play(item):
                              thumbnail=item.thumbnail, plot=item.plot, folder=False))
 
     return itemlist
-
-
-def get_thumbnail(thumb_name=None):
-    # img_path = config.get_runtime_path() + '/resources/images/squares'
-    img_path = config.get_thumb(thumb_name)
-
-    # if thumb_name:
-    #     file_path = os.path.join(img_path, thumb_name)
-    #     if os.path.isfile(file_path):
-    #         thumb_path = file_path
-    #     else:
-    #         thumb_path = urlparse.urljoin(get_thumbnail_path(), thumb_name)
-    # else:
-    #     thumb_path = urlparse.urljoin(get_thumbnail_path(), thumb_name)
-
-    return img_path

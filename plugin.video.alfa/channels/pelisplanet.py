@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import re
-import sys
-import urllib
 import urlparse
 
-from core import config
+from core import channeltools
 from core import httptools
-from core import logger
 from core import scrapertools
 from core import servertools
-from core.item import Item
-from core import channeltools
 from core import tmdb
+from core.item import Item
+from platformcode import config, logger
 
 host = "http://www.pelisplanet.com/"
 
@@ -23,6 +20,7 @@ parameters = channeltools.get_channel_parameters('pelisplanet')
 fanart_host = parameters['fanart']
 thumbnail_host = parameters['thumbnail']
 color1, color2, color3 = ['0xFFA5F6AF', '0xFF5FDA6D', '0xFF11811E']
+
 
 def mainlist(item):
     logger.info()
@@ -163,28 +161,29 @@ def peliculas(item):
     for scrapedurl, calidad, year, scrapedtitle, scrapedthumbnail in matches:
         datas = httptools.downloadpage(scrapedurl).data
         datas = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", datas)
-        #logger.info(datas)
+        # logger.info(datas)
         if '/ ' in scrapedtitle:
             scrapedtitle = scrapedtitle.partition('/ ')[2]
         contentTitle = scrapertools.find_single_match(datas, '<em class="pull-left">Titulo original: </em>([^<]+)</p>')
         contentTitle = scrapertools.decodeHtmlentities(contentTitle.strip())
         rating = scrapertools.find_single_match(datas, 'alt="Puntaje MPA IMDb" /></a><span>([^<]+)</span>')
-        director = scrapertools.find_single_match(datas, '<div class="list-cast-info tableCell"><a href="[^"]+" rel="tag">([^<]+)</a></div>')
+        director = scrapertools.find_single_match(datas,
+                                                  '<div class="list-cast-info tableCell"><a href="[^"]+" rel="tag">([^<]+)</a></div>')
         title = "%s [COLOR yellow][%s][/COLOR]" % (scrapedtitle.strip(), calidad.upper())
 
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, plot='',
                              url=scrapedurl, contentQuality=calidad, thumbnail=scrapedthumbnail,
-                             contentTitle=contentTitle, infoLabels={"year": year, 'rating': rating, 'director': director},
+                             contentTitle=contentTitle,
+                             infoLabels={"year": year, 'rating': rating, 'director': director},
                              text_color=color3))
 
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
 
     paginacion = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)">')
     if paginacion:
-
         itemlist.append(Item(channel=item.channel, action="peliculas",
-                                   title="» Siguiente »", url=paginacion, plot="Página Siguiente",
-                                   thumbnail='https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/next.png'))
+                             title="» Siguiente »", url=paginacion, plot="Página Siguiente",
+                             thumbnail='https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/next.png'))
 
     for item in itemlist:
         if item.infoLabels['plot'] == '':
@@ -243,11 +242,11 @@ def findvideos(item):
                 fanart = item.fanart
                 itemlist.append(item.clone(action="play", title=title, url=url, server='directo',
                                            thumbnail=thumbnail, fanart=fanart, extra='directo',
-                                           quality=quality, language=language,))
+                                           quality=quality, language=language, ))
                 itemlist.sort(key=lambda it: it.title, reverse=True)
 
         # if 'youtube' not in scrapedurl:
-        if  'youtube' not in scrapedurl:
+        if 'youtube' not in scrapedurl:
             quality = scrapertools.find_single_match(
                 datas, '<p class="hidden-xs hidden-sm">.*?class="magnet-download">([^<]+)p</a>')
             title = "[COLOR green]%s[/COLOR] [COLOR yellow][%s][/COLOR] [COLOR yellow][%s][/COLOR]" % (

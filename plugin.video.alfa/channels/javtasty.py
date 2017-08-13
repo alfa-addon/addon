@@ -2,10 +2,9 @@
 
 import urlparse
 
-from core import config
 from core import httptools
-from core import logger
 from core import scrapertools
+from platformcode import config, logger
 
 host = "http://www.javtasty.com"
 

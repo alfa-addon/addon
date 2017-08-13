@@ -3,7 +3,6 @@
 import re
 import urllib2
 
-from core import logger
 from core import scrapertools
 
 
