@@ -14,11 +14,11 @@ import time
 import urllib
 
 from cache import Cache
+from core import logger
 from dispatcher import Dispatcher
 from file import File
 from handler import Handler
 from monitor import Monitor
-from platformcode import logger
 from resume_data import ResumeData
 from server import Server
 

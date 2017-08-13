@@ -4,10 +4,10 @@ import re
 import urlparse
 
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import logger
 
 HOST = 'http://peliculasaudiolatino.com'
 

@@ -5,7 +5,7 @@ import urlparse
 
 from core import httptools
 from core import jsontools
-from platformcode import logger
+from core import logger
 
 
 def mainlist(item):

@@ -9,11 +9,11 @@ import re
 import time
 from threading import Thread
 
-from channelselector import get_thumb
 from core import channeltools
+from core import config
+from core import logger
 from core import scrapertools
 from core.item import Item
-from platformcode import config, logger
 from platformcode import platformtools
 
 THUMBNAILS = {'0': 'posters', '1': 'banners', '2': 'squares'}
@@ -40,7 +40,7 @@ def mainlist(item):
     list_canales = get_channels_list()
 
     if list_canales['peliculas']:
-        thumbnail = get_thumb("channels_movie.png")
+        thumbnail = config.get_thumb("thumb_channels_movie.png")
     new_item = Item(channel=item.channel, action="novedades", extra="peliculas", title="Películas",
                     thumbnail=thumbnail)
 
@@ -52,7 +52,7 @@ def mainlist(item):
     itemlist.append(new_item)
 
     if list_canales['infantiles']:
-        thumbnail = get_thumb("channels_children.png")
+        thumbnail = config.get_thumb("thumb_channels_children.png")
     new_item = Item(channel=item.channel, action="novedades", extra="infantiles", title="Para niños",
                     thumbnail=thumbnail)
     new_item.context = [{"title": "Canales incluidos en: %s" % new_item.title,
@@ -63,7 +63,7 @@ def mainlist(item):
     itemlist.append(new_item)
 
     if list_canales['series']:
-        thumbnail = get_thumb("channels_tvshow.png")
+        thumbnail = config.get_thumb("thumb_channels_tvshow.png")
     new_item = Item(channel=item.channel, action="novedades", extra="series", title="Episodios de series",
                     thumbnail=thumbnail)
     new_item.context = [{"title": "Canales incluidos en: %s" % new_item.title,
@@ -74,7 +74,7 @@ def mainlist(item):
     itemlist.append(new_item)
 
     if list_canales['anime']:
-        thumbnail = get_thumb("channels_anime.png")
+        thumbnail = config.get_thumb("thumb_channels_anime.png")
     new_item = Item(channel=item.channel, action="novedades", extra="anime", title="Episodios de anime",
                     thumbnail=thumbnail)
     new_item.context = [{"title": "Canales incluidos en: %s" % new_item.title,
@@ -85,7 +85,7 @@ def mainlist(item):
     itemlist.append(new_item)
 
     if list_canales['documentales']:
-        thumbnail = get_thumb("channels_documentary.png")
+        thumbnail = config.get_thumb("thumb_channels_documentary.png")
     new_item = Item(channel=item.channel, action="novedades", extra="documentales", title="Documentales",
                     thumbnail=thumbnail)
     new_item.context = [{"title": "Canales incluidos en: %s" % new_item.title,
@@ -205,7 +205,7 @@ def novedades(item):
             time.sleep(0.5)
             pendent = [a for a in threads if a.isAlive()]
 
-    mensaje = "Resultados obtenidos: %s | Tiempo: %2.f segundos" % (len(list_newest), time.time() - start_time)
+    mensaje = "Resultados obtenidos: %s | Tiempo: %2.f segundos" % (len(list_newest), time.time()-start_time)
     progreso.update(100, mensaje, " ", " ")
     logger.info(mensaje)
     start_time = time.time()
@@ -404,28 +404,28 @@ def show_channels(item):
 def menu_opciones(item):
     itemlist = list()
     itemlist.append(Item(channel=item.channel, title="Canales incluidos en:",
-                         thumbnail=get_thumb("setting_0.png"),
+                         thumbnail=config.get_thumb("thumb_setting_0.png"),
                          folder=False))
     itemlist.append(Item(channel=item.channel, action="setting_channel", extra="peliculas", title="    - Películas ",
-                         thumbnail=get_thumb("channels_movie.png"),
+                         thumbnail=config.get_thumb("thumb_channels_movie.png"),
                          folder=False))
     itemlist.append(Item(channel=item.channel, action="setting_channel", extra="infantiles", title="    - Para niños",
-                         thumbnail=get_thumb("channels_children.png"),
+                         thumbnail=config.get_thumb("thumb_channels_children.png"),
                          folder=False))
     itemlist.append(Item(channel=item.channel, action="setting_channel", extra="series",
                          title="    - Episodios de series",
-                         thumbnail=get_thumb("channels_tvshow.png"),
+                         thumbnail=config.get_thumb("thumb_channels_tvshow.png"),
                          folder=False))
     itemlist.append(Item(channel=item.channel, action="setting_channel", extra="anime",
                          title="    - Episodios de anime",
-                         thumbnail=get_thumb("channels_anime.png"),
+                         thumbnail=config.get_thumb("thumb_channels_anime.png"),
                          folder=False))
     itemlist.append(Item(channel=item.channel, action="setting_channel", extra="documentales",
                          title="    - Documentales",
-                         thumbnail=get_thumb("channels_documentary.png"),
+                         thumbnail=config.get_thumb("thumb_channels_documentary.png"),
                          folder=False))
     itemlist.append(Item(channel=item.channel, action="settings", title="Otros ajustes",
-                         thumbnail=get_thumb("setting_0.png"),
+                         thumbnail=config.get_thumb("thumb_setting_0.png"),
                          folder=False))
     return itemlist
 

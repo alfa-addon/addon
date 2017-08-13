@@ -5,12 +5,13 @@ import re
 import sys
 import urlparse
 
+from core import config
 from core import httptools
 from core import jsontools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import config, logger
 from platformcode import platformtools
 
 
@@ -22,7 +23,7 @@ def login():
 
     url = "http://www.pordede.com/api/login/auth?response_type=code&client_id=appclient&redirect_uri=http%3A%2F%2Fwww.pordede.com%2Fapi%2Flogin%2Freturn&state=none"
     post = "username=%s&password=%s&authorized=autorizar" % (
-        config.get_setting("pordedeuser", "pordede"), config.get_setting("pordedepassword", "pordede"))
+    config.get_setting("pordedeuser", "pordede"), config.get_setting("pordedepassword", "pordede"))
     data = httptools.downloadpage(url, post).data
     if '"ok":true' in data:
         return True
@@ -547,15 +548,15 @@ def findvideos(item, verTodos=False):
 
         jdown = scrapertools.find_single_match(match, '<div class="jdownloader">[^<]+</div>')
         if (showlinks == 1 and jdown != '') or (
-                        showlinks == 2 and jdown == ''):  # Descartar enlaces veronline/descargar
+                showlinks == 2 and jdown == ''):  # Descartar enlaces veronline/descargar
             continue
 
         idiomas = re.compile('<div class="flag([^"]+)">([^<]+)</div>', re.DOTALL).findall(match)
         idioma_0 = (
-            idiomas[0][0].replace("&nbsp;", "").strip() + " " + idiomas[0][1].replace("&nbsp;", "").strip()).strip()
+        idiomas[0][0].replace("&nbsp;", "").strip() + " " + idiomas[0][1].replace("&nbsp;", "").strip()).strip()
         if len(idiomas) > 1:
             idioma_1 = (
-                idiomas[1][0].replace("&nbsp;", "").strip() + " " + idiomas[1][1].replace("&nbsp;", "").strip()).strip()
+            idiomas[1][0].replace("&nbsp;", "").strip() + " " + idiomas[1][1].replace("&nbsp;", "").strip()).strip()
             idioma = idioma_0 + ", " + idioma_1
         else:
             idioma_1 = ''
@@ -614,7 +615,7 @@ def findvideos(item, verTodos=False):
                 orden = (valora_idioma(idioma_0, idioma_1) * 1000) + valoracion
             elif sortlinks == 6:
                 orden = (valora_idioma(idioma_0, idioma_1) * 100000) + (
-                    valora_calidad(calidad_video, calidad_audio) * 1000) + valoracion
+                valora_calidad(calidad_video, calidad_audio) * 1000) + valoracion
             itemsort.append(
                 {'action': "play", 'title': title, 'url': url, 'thumbnail': thumbnail, 'fanart': item.fanart,
                  'plot': plot, 'extra': sesion + "|" + item.url, 'fulltitle': item.fulltitle, 'orden1': (jdown == ''),

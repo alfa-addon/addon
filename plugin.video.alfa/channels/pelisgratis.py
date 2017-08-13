@@ -2,12 +2,13 @@
 
 import re
 
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
 
 tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
            "Suspense": "https://s13.postimg.org/wmw6vl1cn/suspenso.png",

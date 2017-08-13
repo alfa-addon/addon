@@ -2,12 +2,13 @@
 
 import re
 
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import tmdb
 from core.item import Item
 from lib import jsunpack
-from platformcode import config, logger
 
 host = 'http://pelisencasa.net'
 

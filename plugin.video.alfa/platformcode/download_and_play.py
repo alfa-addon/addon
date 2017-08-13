@@ -15,8 +15,9 @@ import urllib2
 
 import xbmc
 import xbmcgui
+from core import config
 from core import downloadtools
-from platformcode import config, logger
+from core import logger
 
 
 # Download a file and start playing while downloading
@@ -322,7 +323,6 @@ class DownloadThread(threading.Thread):
                                 self.tiempofalta = 0
                         break
                     except:
-                        import sys
                         reintentos = reintentos + 1
                         logger.info("ERROR en la descarga del bloque, reintento %d" % reintentos)
                         for line in sys.exc_info():

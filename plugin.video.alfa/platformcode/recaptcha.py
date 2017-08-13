@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import xbmcgui
+from core import config
 from core import httptools
 from core import scrapertools
-from platformcode import config
 from platformcode import platformtools
 
 

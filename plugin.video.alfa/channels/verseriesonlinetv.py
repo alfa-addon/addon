@@ -6,11 +6,12 @@ import urllib2
 
 import xbmc
 import xbmcgui
+from core import config
+from core import logger
 from core import scrapertools, httptools
 from core import servertools
 from core.item import Item
 from core.scrapertools import decodeHtmlentities as dhe
-from platformcode import config, logger
 
 ACTION_SHOW_FULLSCREEN = 36
 ACTION_GESTURE_SWIPE_LEFT = 511

@@ -3,8 +3,8 @@
 import re
 import urllib
 
+from core import logger
 from core import scrapertools
-from platformcode import logger
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):

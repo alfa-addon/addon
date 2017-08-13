@@ -6,9 +6,9 @@ import urllib
 import urllib2
 import urlparse
 
+from core import logger
 from core import scrapertools
 from core.item import Item
-from platformcode import logger
 
 try:
     import xbmc

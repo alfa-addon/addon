@@ -2,11 +2,12 @@
 
 import re
 
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
 
 host = "http://www.clasicofilm.com/"
 # Configuracion del canal
@@ -60,7 +61,7 @@ def search(item, texto):
     cx = scrapertools.find_single_match(data, "var cx = '([^']+)'")
     texto = texto.replace(" ", "%20")
     item.url = "https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&hl=es&sig=0c3990ce7a056ed50667fe0c3873c9b6&cx=%s&q=%s&sort=&googlehost=www.google.com&start=0" % (
-        cx, texto)
+    cx, texto)
 
     try:
         return busqueda(item)

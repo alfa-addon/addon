@@ -5,12 +5,13 @@ import urlparse
 
 from channels import autoplay
 from channels import filtertools
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
 
 IDIOMAS = {'latino': 'Latino', 'castellano': 'Español', 'portugues': 'Portugues'}
 list_language = IDIOMAS.values()
@@ -284,16 +285,16 @@ def findvideos(item):
     patron = 'target="_blank".*? service=".*?" data="(.*?)"><li>(.*?)<\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    server_url = {'YourUpload': 'https://www.yourupload.com/embed/',
-                  'Openload': 'https://openload.co/embed/',
-                  'TVM': 'https://thevideo.me/embed-',
-                  'Trailer': '',
-                  'BitTorrent': '',
-                  'Mega': '',
-                  'MediaFire': ''}
+    server_url = {'YourUpload':'https://www.yourupload.com/embed/',
+                  'Openload':'https://openload.co/embed/',
+                  'TVM':'https://thevideo.me/embed-',
+                  'Trailer':'',
+                  'BitTorrent':'',
+                  'Mega':'',
+                  'MediaFire':''}
 
     for video_cod, server_id in matches:
-        if server_id not in ['BitTorrent', 'Mega', 'MediaFire', 'Trailer', '']:
+        if server_id not in ['BitTorrent', 'Mega', 'MediaFire', 'Trailer','']:
             video_id = dec(video_cod)
 
         if server_id in server_url:
@@ -301,22 +302,23 @@ def findvideos(item):
             thumbnail = servertools.guess_server_thumbnail(server_id)
             if server_id == 'TVM':
                 server = 'thevideo.me'
-                url = server_url[server_id] + video_id + '.html'
+                url= server_url[server_id]+video_id+'.html'
             else:
-                url = server_url[server_id] + video_id
-        title = item.contentTitle + ' (%s)' % server
+                url = server_url[server_id]+video_id
+        title = item.contentTitle +' (%s)'%server
         quality = 'default'
+
 
         if server_id not in ['BitTorrent', 'Mega', 'MediaFire', 'Trailer']:
             if url not in duplicados:
-                itemlist.append(item.clone(action='play',
+                itemlist.append(item.clone(action = 'play',
                                            title=title,
                                            fulltitle=item.contentTitle,
                                            url=url,
                                            language=IDIOMAS[item.language],
-                                           thumbnail=thumbnail,
+                                           thumbnail = thumbnail,
                                            quality=quality,
-                                           server=server
+                                           server = server
                                            ))
                 duplicados.append(url)
 
@@ -328,7 +330,7 @@ def findvideos(item):
 
     autoplay.start(itemlist, item)
 
-    # itemlist.append(trailer_item)
+    #itemlist.append(trailer_item)
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(
             Item(channel=item.channel,

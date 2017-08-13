@@ -4,10 +4,11 @@ import re
 import urllib
 import urlparse
 
+from core import config
 from core import httptools
 from core import jsontools as json
+from core import logger
 from core import scrapertools
-from platformcode import config, logger
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):

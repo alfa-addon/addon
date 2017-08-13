@@ -5,8 +5,9 @@
 
 import os
 
+import config
 import jsontools
-from platformcode import config, logger
+import logger
 
 DEFAULT_UPDATE_URL = "/channels/"
 dict_channels_parameters = dict()
@@ -17,12 +18,9 @@ def is_adult(channel_name):
     channel_parameters = get_channel_parameters(channel_name)
     return channel_parameters["adult"]
 
-
 def is_enabled(channel_name):
     logger.info("channel_name=" + channel_name)
-    return get_channel_parameters(channel_name)["active"] and get_channel_setting("enabled", channel=channel_name,
-                                                                                  default=True)
-
+    return get_channel_parameters(channel_name)["active"] and get_channel_setting("enabled", channel = channel_name, default = True)
 
 def get_channel_parameters(channel_name):
     global dict_channels_parameters

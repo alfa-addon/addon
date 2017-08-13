@@ -8,7 +8,8 @@ import os
 import sys
 
 import xbmc
-from platformcode import config, logger
+from core import config
+from core import logger
 
 logger.info("init...")
 

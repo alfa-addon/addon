@@ -2,11 +2,12 @@
 
 import re
 
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
 
 sid = config.get_setting("sid_playmax", "playmax")
 apikey = "0ea143087685e9e0a23f98ae"
@@ -222,7 +223,7 @@ def newest(categoria):
     except:
         import sys
         for line in sys.exc_info():
-            logger.error("%s" % line)
+            logger.error("%s" %line)
         return []
 
     return itemlist
@@ -343,7 +344,7 @@ def fichas(item):
             title = "Dejar de seguir lista"
         item.extra = ""
         url = host + "/data.php?mode=seguir_lista&apikey=%s&sid=%s&lista=%s" % (
-            apikey, sid, item.url.rsplit("/l", 1)[1])
+        apikey, sid, item.url.rsplit("/l", 1)[1])
         itemlist.insert(0, item.clone(action="acciones_cuenta", title=title, url=url, text_color=color4,
                                       lista=item.title, folder=False))
 

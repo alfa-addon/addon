@@ -6,9 +6,10 @@
 import os
 import time
 
+import config
+import logger
 import scrapertools
 import versiontools
-from platformcode import config, logger
 
 
 # Método antiguo, muestra un popup con la versión

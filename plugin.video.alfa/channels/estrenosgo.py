@@ -3,12 +3,13 @@
 import re
 
 from core import channeltools
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
 
 HOST = 'http://estrenosli.org/'
 parameters = channeltools.get_channel_parameters('estrenosgo')
@@ -164,17 +165,15 @@ def findvideos(item):
                 if s:
                     itemlist.append(item.clone(url=s[0][1], action="play", folder=False, server=s[0][2],
                                                title="Ver %s en %s%s" % (
-                                                   capitulo.strip(), s[0][2].capitalize(), idioma),
+                                               capitulo.strip(), s[0][2].capitalize(), idioma),
                                                thumbnail2=item.thumbnail,
                                                thumbnail=config.get_thumb("server_" + s[0][2] + ".png")))
         else:
-            import os
             for s in servertools.findvideos(data):
                 itemlist.append(item.clone(url=s[1], action="play", folder=False, server=s[2],
                                            title="Ver en %s%s" % (s[2].capitalize(), idioma),
                                            thumbnail2=item.thumbnail,
-                                           thumbnail=os.path.join(config.get_runtime_path(), "resources", "media",
-                                                                  "servers", "server_" + s[2] + ".png")))
+                                           thumbnail=config.get_thumb("server_" + s[2] + ".png")))
 
     # Insertar items "Buscar trailer" y "Añadir a la videoteca"
     if itemlist and item.extra == "movie":

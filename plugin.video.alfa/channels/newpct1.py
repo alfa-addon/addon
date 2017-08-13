@@ -2,11 +2,12 @@
 
 import re
 
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import config, logger
 
 
 def mainlist(item):
@@ -420,6 +421,7 @@ def findvideos(item):
         itemlist.append(
             Item(channel=item.channel, action="play", server="torrent", title=title + " [torrent]", fulltitle=title,
                  url=url, thumbnail=caratula, plot=item.plot, folder=False))
+
 
     logger.debug("matar %s" % data)
     # escraped ver vídeos, descargar vídeos un link, múltiples liks

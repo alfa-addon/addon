@@ -6,12 +6,13 @@ import sys
 import urlparse
 
 from core import channeltools
+from core import config
 from core import httptools
 from core import jsontools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import config, logger
 from platformcode import platformtools
 
 HOST = 'http://www.plusdede.com'

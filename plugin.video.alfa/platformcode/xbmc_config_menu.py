@@ -8,8 +8,9 @@ import os
 
 import xbmcgui
 from core import channeltools
+from core import config
+from core import logger
 from core import servertools
-from platformcode import config, logger
 
 
 class SettingsWindow(xbmcgui.WindowXMLDialog):
@@ -860,16 +861,15 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
             if focus not in [10004, 10005, 10006]:
                 try:
                     focus_control = \
-                        [self.visible_controls.index(c) for c in self.visible_controls if
-                         c["control"] == self.getFocus()][
-                            0]
+                    [self.visible_controls.index(c) for c in self.visible_controls if c["control"] == self.getFocus()][
+                        0]
                     focus_control += 1
                 except:
                     focus_control = 0
 
                 while not focus_control == len(self.visible_controls) and (
-                                self.visible_controls[focus_control]["type"] == "label" or not
-                        self.visible_controls[focus_control]["active"]):
+                        self.visible_controls[focus_control]["type"] == "label" or not
+                self.visible_controls[focus_control]["active"]):
                     focus_control += 1
 
                 if focus_control >= len(self.visible_controls):
@@ -884,9 +884,8 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
             if focus not in [10003, 10004, 10005, 10006]:
                 try:
                     focus_control = \
-                        [self.visible_controls.index(c) for c in self.visible_controls if
-                         c["control"] == self.getFocus()][
-                            0]
+                    [self.visible_controls.index(c) for c in self.visible_controls if c["control"] == self.getFocus()][
+                        0]
                     focus_control -= 1
 
                     while not focus_control == -1 and (self.visible_controls[focus_control]["type"] == "label" or not

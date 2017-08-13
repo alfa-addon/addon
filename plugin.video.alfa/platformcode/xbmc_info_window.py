@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import xbmcgui
+from core import logger
 from core.tmdb import Tmdb
-from platformcode import logger
 
 ID_BUTTON_CLOSE = 10003
 ID_BUTTON_PREVIOUS = 10025

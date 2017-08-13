@@ -4,10 +4,11 @@ import re
 import urllib
 import urlparse
 
+from core import config
 from core import jsontools
+from core import logger
 from core import scrapertools
 from core.item import Item
-from platformcode import config, logger
 
 host = "http://www.documaniatv.com/"
 account = config.get_setting("documaniatvaccount", "documaniatv")

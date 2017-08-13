@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from platformcode import logger
+import re
+
+from core import logger
 
 
 def test_video_exists(page_url):

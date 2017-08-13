@@ -4,9 +4,9 @@ import re
 import sys
 
 from core import httptools
+from core import logger
 from core import scrapertools
 from core.item import Item
-from platformcode import logger
 
 thumbnail_host = 'https://github.com/master-1970/resources/raw/master/images/squares/pelis24.PNG'
 

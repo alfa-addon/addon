@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import re
+
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
-from platformcode import config, logger
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0'}
 

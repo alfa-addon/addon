@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import re
+
+from core import logger
 from core import scrapertools
-from platformcode import logger
 
 
 def test_video_exists(page_url):
@@ -47,7 +49,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         logger.info("%s - %s" % (video_url[0], video_url[1]))
 
     return video_urls
-
 
 if __name__ == "__main__":
     import getopt

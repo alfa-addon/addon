@@ -2,10 +2,10 @@
 
 import re
 
+from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import logger
 
 
 def mainlist(item):

@@ -3,6 +3,7 @@
 import urllib
 
 from core import httptools
+from core import logger
 from core import scrapertools
 
 
@@ -12,8 +13,7 @@ def test_video_exists(page_url):
         return False, "[gvideo] El video no existe o ha sido borrado"
     if "Se+ha+excedido+el" in response.data:
         return False, "[gvideo] Se ha excedido el número de reproducciones permitidas"
-
-    return True, ""
+	return True, ""
 
 
 def get_video_url(page_url, user="", password="", video_password=""):
@@ -29,8 +29,8 @@ def get_video_url(page_url, user="", password="", video_password=""):
     headers_string = "|Cookie=" + cookies
     url_streams = scrapertools.find_single_match(data, 'url_encoded_fmt_stream_map=(.*)')
     streams = scrapertools.find_multiple_matches(url_streams,
-                                                 'itag=(\d+)&url=(.*?)(?:;.*?quality=.*?(?:,|&)|&quality=.*?(?:,|&))')
-    itags = {'18': '360p', '22': '720p', '34': '360p', '35': '480p', '37': '1080p', '43': '360p', '59': '480p'}
+                                             'itag=(\d+)&url=(.*?)(?:;.*?quality=.*?(?:,|&)|&quality=.*?(?:,|&))')
+    itags = {'18':'360p', '22':'720p', '34':'360p', '35':'480p', '37':'1080p', '43':'360p', '59':'480p'}
     for itag, video_url in streams:
         if not video_url in urls:
             video_url += headers_string

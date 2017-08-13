@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 
 import base64
+import re
 import struct
 import zlib
 from hashlib import sha1
 
+from core import config
 from core import filetools
 from core import httptools
+from core import logger
 from core import scrapertools
-from platformcode import config, logger
 
 GLOBAL_HEADER = {'User-Agent': 'Mozilla/5.0', 'Accept-Language': '*'}
 proxy = "http://anonymouse.org/cgi-bin/anon-www.cgi/"

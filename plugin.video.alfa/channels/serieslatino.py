@@ -5,12 +5,13 @@ import re
 
 from channels import autoplay
 from channels import filtertools
+from core import config
 from core import httptools
+from core import logger
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
 
 host = 'http://www.serieslatino.tv/'
 

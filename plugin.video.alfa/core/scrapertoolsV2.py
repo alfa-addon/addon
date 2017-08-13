@@ -7,8 +7,8 @@ import re
 import time
 import urlparse
 
+import logger
 from core.entities import html5
-from platformcode import logger
 
 
 def printMatches(matches):
