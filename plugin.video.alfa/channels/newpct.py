@@ -166,7 +166,8 @@ def listado(item):
                 Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail, plot=plot))
         else:
             itemlist.append(
-                Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail, plot=plot))
+                Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail, plot=plot,
+                     contentTitle=title))
 
     # Página siguiente
     '''
