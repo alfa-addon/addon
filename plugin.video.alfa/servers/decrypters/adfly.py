@@ -2,8 +2,8 @@
 
 from base64 import b64decode
 
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 
 def get_long_url(short_url):

@@ -19,7 +19,7 @@ except Exception, e:
 import xbmc
 import xbmcgui
 
-from core import config
+from platformcode import config
 from core import scrapertools
 from core import filetools
 
@@ -497,7 +497,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", item=None):
 def getProgress(h, video_file, _pf={}):
     if len(_pf) > 0:
         _pf_msg = "[%s] [%s] %s[%s] [%s]" % (
-        _pf['current'], _pf['continuous'], _pf['continuous2'], _pf['have'], _pf['len'])
+            _pf['current'], _pf['continuous'], _pf['continuous2'], _pf['have'], _pf['len'])
     else:
         _pf_msg = ""
 

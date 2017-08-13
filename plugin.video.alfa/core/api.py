@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-# Client for api.tvalacarta.info
+# Client for api.xxxxxxxxxxxxx
 # ------------------------------------------------------------
 
 import urllib
 
-import config
 import jsontools
-import logger
 import scrapertools
+from platformcode import config, logger
 
 MAIN_URL = ""
 API_KEY = "nzgJy84P9w54H2w"

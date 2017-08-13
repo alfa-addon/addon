@@ -2,8 +2,8 @@
 
 import re
 
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 
 def test_video_exists(page_url):

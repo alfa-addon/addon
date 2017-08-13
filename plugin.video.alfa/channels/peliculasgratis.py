@@ -7,14 +7,13 @@ import urlparse
 
 import xbmc
 import xbmcgui
-from core import config
 from core import httptools
-from core import logger
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
 from core.scrapertools import decodeHtmlentities as dhe
+from platformcode import config, logger
 
 ACTION_SHOW_FULLSCREEN = 36
 ACTION_GESTURE_SWIPE_LEFT = 511
@@ -278,7 +277,7 @@ def fanart(item):
         if posterdb == None:
             if item.contentType != "movie":
                 urlbing_imdb = "http://www.bing.com/search?q=%s+%s+tv+series+site:imdb.com" % (
-                title_imdb.replace(' ', '+'), year)
+                    title_imdb.replace(' ', '+'), year)
                 data = browser(urlbing_imdb)
                 data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|http://ssl-proxy.my-addr.org/myaddrproxy.php/", "", data)
                 subdata_imdb = scrapertools.find_single_match(data,
@@ -303,14 +302,14 @@ def fanart(item):
                     title = scrapertools.find_single_match(title_imdb, '\(.*?\)')
                     if item.contentType != "movie":
                         urlbing_imdb = "http://www.bing.com/search?q=%s+%s+tv+series+site:imdb.com" % (
-                        title_imdb.replace(' ', '+'), year)
+                            title_imdb.replace(' ', '+'), year)
                         data = browser(urlbing_imdb)
                         data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|http://ssl-proxy.my-addr.org/myaddrproxy.php/", "", data)
                         subdata_imdb = scrapertools.find_single_match(data,
                                                                       '<li class="b_algo">(.*?)h="ID.*?<strong>.*?TV Series')
                     else:
                         urlbing_imdb = "http://www.bing.com/search?q=%s+%s+site:imdb.com" % (
-                        title_imdb.replace(' ', '+'), year)
+                            title_imdb.replace(' ', '+'), year)
                         data = browser(urlbing_imdb)
                         data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|http://ssl-proxy.my-addr.org/myaddrproxy.php/", "", data)
                         subdata_imdb = scrapertools.find_single_match(data, '<li class="b_algo">(.*?)h="ID.*?<strong>')
@@ -903,14 +902,14 @@ class TextBox2(xbmcgui.WindowDialog):
         self.addControl(self.plot)
         self.plot.setAnimations(
             [('conditional', 'effect=zoom delay=2000 center=auto start=0 end=100  time=800  condition=true  ',), (
-            'conditional',
-            'effect=rotate  delay=2000 center=auto aceleration=6000 start=0% end=360%  time=800  condition=true',),
+                'conditional',
+                'effect=rotate  delay=2000 center=auto aceleration=6000 start=0% end=360%  time=800  condition=true',),
              ('WindowClose', 'effect=zoom center=auto start=100% end=-0%  time=600 condition=true',)])
         self.addControl(self.fanart)
         self.fanart.setAnimations(
             [('WindowOpen', 'effect=slide start=0,-700 delay=1000 time=2500 tween=bounce condition=true',), (
-            'conditional',
-            'effect=rotate center=auto  start=0% end=360% delay=3000 time=2500 tween=bounce condition=true',),
+                'conditional',
+                'effect=rotate center=auto  start=0% end=360% delay=3000 time=2500 tween=bounce condition=true',),
              ('WindowClose', 'effect=slide end=0,-700%  time=1000 condition=true',)])
         self.addControl(self.title)
         self.title.setText(self.getTitle)

@@ -3,10 +3,9 @@
 import os
 import re
 
-from core import config
-from core import logger
 from core import scrapertools
 from core.item import Item
+from platformcode import config, logger
 
 
 def strip_tags(value):

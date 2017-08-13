@@ -2,15 +2,13 @@
 
 import base64
 import os
-import re
 import time
 import urllib
 
-from core import config
 from core import httptools
-from core import logger
 from core import scrapertools
 from lib import jsunpack
+from platformcode import config, logger
 
 
 def test_video_exists(page_url):
@@ -68,7 +66,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         fname = scrapertools.find_single_match(data, 'name="fname" value="([^"]+)"')
         hash_f = scrapertools.find_single_match(data, 'name="hash" value="([^"]+)"')
         post = 'op=download1&usr_login=&id=%s&fname=%s&referer=&hash=%s&imhuman=Proceed+to+video' % (
-        flashx_id, urllib.quote(fname), hash_f)
+            flashx_id, urllib.quote(fname), hash_f)
         wait_time = scrapertools.find_single_match(data, "<span id='xxc2'>(\d+)")
 
         file_id = scrapertools.find_single_match(data, "'file_id', '([^']+)'")
@@ -108,7 +106,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     # Extrae la URL
     # {file:"http://f11-play.flashx.tv/luq4gfc7gxixexzw6v4lhz4xqslgqmqku7gxjf4bk43u4qvwzsadrjsozxoa/video1.mp4"}
     video_urls = []
-    match = match.replace("\\","").replace('\"',"\'")
+    match = match.replace("\\", "").replace('\"', "\'")
     media_urls = scrapertools.find_multiple_matches(match, "{src:'([^']+)'.*?,label:'([^']+)'")
     subtitle = ""
     for media_url, label in media_urls:

@@ -9,11 +9,10 @@ import re
 import time
 import urlparse
 
-from core import config
 from core import httptools
 from core import jsontools
-from core import logger
 from core.item import Item
+from platformcode import config, logger
 from platformcode import platformtools
 
 dict_servers_parameters = {}
@@ -260,7 +259,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                 ["free"] + [server] + [premium for premium in server_parameters["premium"] if not premium == server],
                 [server] + [premium for premium in server_parameters["premium"] if not premium == server] + ["free"],
                 [premium for premium in server_parameters["premium"] if not premium == server] + [server] + ["free"]
-                ]
+            ]
 
             if server_parameters["free"] == True:
                 opciones.append("free")

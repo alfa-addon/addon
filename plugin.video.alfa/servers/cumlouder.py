@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import re
-
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 
 def test_video_exists(page_url):
@@ -19,4 +17,3 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [cumlouder]", media_url])
 
     return video_urls
-

@@ -29,7 +29,7 @@ import urlparse
 from threading import Thread, Lock
 
 from core import filetools
-from core import logger
+from platformcode import logger
 
 
 class Downloader:
