@@ -3,12 +3,11 @@
 import re
 import threading
 
-from core import config
 from core import filetools
 from core import httptools
-from core import logger
 from core import scrapertools
 from core.item import Item
+from platformcode import config, logger
 
 __perfil__ = config.get_setting('perfil', "copiapop")
 

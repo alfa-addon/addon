@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from core import config
-from core import logger
 from core.item import InfoLabels
+from platformcode import config, logger
 from platformcode import platformtools
 
 # Este modulo es una interface para poder implementar diferentes scrapers

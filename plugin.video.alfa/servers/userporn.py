@@ -3,8 +3,8 @@
 import base64
 import re
 
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 HOSTER_KEY = "NTI2NzI5Cgo="
 

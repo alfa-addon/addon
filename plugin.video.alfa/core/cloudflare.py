@@ -8,7 +8,7 @@ import time
 import urllib
 import urlparse
 
-from core import logger
+from platformcode import logger
 
 
 class Cloudflare:

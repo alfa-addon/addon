@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from core.httptools import downloadpage
-from core.scrapertools import logger, get_match, find_multiple_matches
+from core.scrapertools import get_match, find_multiple_matches
+from platformcode import logger
 
 host = "http://vidabc.com"
 id_server = "vidabc"
@@ -25,10 +26,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     try:
         sources = get_match(data, 'sources\s*:\s* \[([^\]]+)\]')
     except:
-        try:
-            from core import jsunpack
-        except:
-            from lib import jsunpack
+        from lib import jsunpack
         sources = jsunpack.unpack(get_match(data, '<script[^>]*>(eval.function.p,a,c,k,e,.*?)</script>'))
         sources = get_match(sources, 'sources\s*:\s*\[([^\]]+)\]')
 

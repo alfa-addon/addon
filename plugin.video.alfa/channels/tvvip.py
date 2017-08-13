@@ -5,11 +5,10 @@ import re
 import unicodedata
 import urllib
 
-from core import config
 from core import jsontools
-from core import logger
 from core import scrapertools
 from core.item import Item
+from platformcode import config, logger
 
 host = "http://tv-vip.com"
 headers = [['User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0'],
@@ -764,7 +763,7 @@ def listas(item):
             from core import videolibrarytools
             new_item = item.clone(title=title, url=url, fulltitle=title, fanart=fanart, extra="findvideos",
                                   thumbnail=thumbnail, infoLabels=infolabels, category="Cine")
-            videolibrarytools.add_pelicula_to_library(new_item)
+            videolibrarytools.add_movie(new_item)
             error = False
         except:
             error = True

@@ -3,12 +3,11 @@
 import re
 import unicodedata
 
-from core import config
 from core import httptools
 from core import jsontools
-from core import logger
 from core import scrapertools
 from core.item import Item
+from platformcode import config, logger
 
 host = "http://pelisipad.com/black_json/%s"
 ext = "/list.js"
@@ -567,7 +566,7 @@ def listas(item):
             from core import videolibrarytools
             new_item = item.clone(title=title, url=url, fulltitle=title, fanart=fanart, extra="findvideos",
                                   thumbnail=thumbnail, infoLabels=infolabels, category="Cine")
-            videolibrarytools.add_pelicula_to_library(new_item)
+            videolibrarytools.add_movie(new_item)
             error = False
         except:
             error = True

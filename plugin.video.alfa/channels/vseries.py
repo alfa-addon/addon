@@ -3,12 +3,11 @@
 import re
 import urlparse
 
-from core import config
 from core import jsontools
-from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
+from platformcode import config, logger
 
 DEFAULT_HEADERS = []
 DEFAULT_HEADERS.append(

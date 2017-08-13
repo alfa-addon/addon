@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------
-# pelisalacarta - XBMC Plugin
 # Conector para streamcherry
-# http://blog.tvalacarta.info/plugin-xbmc/pelisalacarta/
 # --------------------------------------------------------
 
+import re
+
 from core import httptools
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 
 def test_video_exists(page_url):
@@ -39,6 +39,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     return video_urls
 
+
 # Encuentra vídeos del servidor en el texto pasado
 def find_videos(data):
     encontrados = set()
@@ -52,7 +53,7 @@ def find_videos(data):
         titulo = "[streamcherry]"
         url = "http://streamcherry.com/embed/%s" % match
         if url not in encontrados:
-            logger.info("  url="+url)
+            logger.info("  url=" + url)
             devuelve.append([titulo, url, 'streamcherry'])
             encontrados.add(url)
         else:

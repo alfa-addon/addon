@@ -6,11 +6,10 @@
 import os
 import time
 
-from core import config
 from core import filetools
-from core import logger
 from core import scrapertools
 from core.item import Item
+from platformcode import config, logger
 from platformcode import platformtools
 
 try:
@@ -148,7 +147,7 @@ def readbookmark(filepath):
     logger.info()
     import urllib
 
-    bookmarkfile = filetools.open_for_reading(filepath)
+    bookmarkfile = filetools.file_open(filepath)
 
     lines = bookmarkfile.readlines()
 

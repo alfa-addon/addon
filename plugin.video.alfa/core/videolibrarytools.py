@@ -5,14 +5,12 @@
 
 import errno
 import math
-import os
 
-from core import config
 from core import filetools
-from core import logger
 from core import scraper
 from core import scrapertools
 from core.item import Item
+from platformcode import config, logger
 from platformcode import platformtools
 
 FOLDER_MOVIES = config.get_setting("folder_movies")

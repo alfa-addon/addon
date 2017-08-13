@@ -2,12 +2,12 @@
 
 import re
 
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 
 def test_video_exists(page_url):
-    ogger.info("(page_url='%s')" % page_url)
+    logger.info("(page_url='%s')" % page_url)
 
     # Existe: http://bitshare.com/files/v1ehsvu3/Nikita.S02E15.HDTV.XviD-ASAP.avi.html
     # No existe: http://bitshare.com/files/tn74w9tm/Rio.2011.DVDRip.LATiNO.XviD.by.Glad31.avi.html

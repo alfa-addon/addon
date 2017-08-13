@@ -4,19 +4,14 @@
 # -*- By the Alfa Develop Group -*-
 
 import re
-import urllib
-import urlparse
 
-from channels import autoplay
-from channels import filtertools
-from core import config
+from channelselector import get_thumb
 from core import httptools
-from core import logger
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
-
+from platformcode import config, logger
 
 host = 'http://www.ohpelis.com'
 headers = {
@@ -31,13 +26,13 @@ def mainlist(item):
 
     itemlist.append(
         item.clone(title="Peliculas",
-                   action = 'movies_menu'
+                   action='movies_menu'
                    ))
 
     itemlist.append(
-            item.clone(title="Series",
-                       action ='series_menu'
-                       ))
+        item.clone(title="Series",
+                   action='series_menu'
+                   ))
 
     itemlist.append(
         item.clone(title="Buscar",
@@ -45,8 +40,8 @@ def mainlist(item):
                    url='http://www.ohpelis.com/?s=',
                    ))
 
-
     return itemlist
+
 
 def series_menu(item):
     logger.info()
@@ -54,11 +49,11 @@ def series_menu(item):
     itemlist = []
 
     itemlist.append(
-            item.clone(title="Series",
-                       action="list_all",
-                       url=host + '/series/',
-                       extra='serie'
-                       ))
+        item.clone(title="Series",
+                   action="list_all",
+                   url=host + '/series/',
+                   extra='serie'
+                   ))
 
     return itemlist
 
@@ -69,21 +64,21 @@ def movies_menu(item):
     itemlist = []
 
     itemlist.append(
-            item.clone(title="Todas",
-                       action="list_all",
-                       url=host + '/peliculas/'
-                       ))
+        item.clone(title="Todas",
+                   action="list_all",
+                   url=host + '/peliculas/'
+                   ))
 
     itemlist.append(
-            item.clone(title="Generos",
-                       action="section",
-                       url=host, extra='genres'))
+        item.clone(title="Generos",
+                   action="section",
+                   url=host, extra='genres'))
 
     itemlist.append(
-            item.clone(title="Por año",
-                       action="section",
-                       url=host, extra='byyear'
-                       ))
+        item.clone(title="Por año",
+                   action="section",
+                   url=host, extra='byyear'
+                   ))
 
     return itemlist
 
@@ -95,9 +90,9 @@ def list_all(item):
     data = httptools.downloadpage(item.url).data
 
     patron = '<div class="poster"><a href="(.*?)"><img src="(.*?)" alt="(.*?)"><\/a>.*?<span>(\d{4})<\/span>.*?'
-    patron +='<div class="texto">(.*?)<div'
+    patron += '<div class="texto">(.*?)<div'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    
+
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedplot in matches:
         title = scrapedtitle
         plot = scrapedplot
@@ -106,12 +101,12 @@ def list_all(item):
         year = scrapedyear
         new_item = (item.clone(title=title,
                                url=url,
-                               thumbnail = thumbnail,
-                               plot = plot,
-                               infoLabels={'year':year}
+                               thumbnail=thumbnail,
+                               plot=plot,
+                               infoLabels={'year': year}
                                ))
         if item.extra == 'serie':
-            new_item.action ='seasons'
+            new_item.action = 'seasons'
             new_item.contentSerieName = title
         else:
             new_item.action = 'findvideos'
@@ -127,9 +122,10 @@ def list_all(item):
                              action="list_all",
                              title=">> Página siguiente",
                              url=next_page,
-                             thumbnail=config.get_thumb("thumb_next.png")))
+                             thumbnail=get_thumb("next.png")))
     return itemlist
-    
+
+
 def section(item):
     logger.info()
 
@@ -139,11 +135,11 @@ def section(item):
     if item.extra == 'genres':
         patron = '<li class="cat-item cat-item-\d+"><a href="(.*?)" >(.*?)<\/a> <i>\d+<\/i>'
     elif item.extra == 'byyear':
-        patron ='<li><a href="(http:\/\/www\.ohpelis\.com\/release.*?)">(.*?)<\/a><\/li>'
+        patron = '<li><a href="(http:\/\/www\.ohpelis\.com\/release.*?)">(.*?)<\/a><\/li>'
     elif item.extra == 'alpha':
         patron = '<li><a href="(http:\/\/www\.ohpelis\.com\/.*?)" >(.*?)<\/a><\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    
+
     for scrapedurl, scrapedtitle in matches:
         title = scrapedtitle
         url = scrapedurl
@@ -154,15 +150,16 @@ def section(item):
                              ))
 
     return itemlist
-    
+
+
 def search_list(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     patron = '><div class="result-item">.*?<a href="(.*?)"><img src="(.*?)" alt="(.*?)" \/><span class="(.*?)".*?'
-    patron +='<span class="year">(.*?)<\/span>.*?<p>(.*?)<\/p>'
+    patron += '<span class="year">(.*?)<\/span>.*?<p>(.*?)<\/p>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    
+
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedtype, scrapedyear, scrapedplot in matches:
         title = scrapedtitle
         plot = scrapedplot
@@ -170,21 +167,22 @@ def search_list(item):
         url = scrapedurl
         year = scrapedyear
         new_item = item.clone(action='',
-                       title=title,
-                       url=url,
-                       thumbnail=thumbnail,
-                       plot=plot,
-                       infoLabels={'year': year})
+                              title=title,
+                              url=url,
+                              thumbnail=thumbnail,
+                              plot=plot,
+                              infoLabels={'year': year})
         if scrapedtype == 'movies':
             new_item.action = 'findvideos'
             new_item.contentTitle = title
         else:
             new_item.action = 'seasons'
             new_item.contentSerieName = title
-        
+
         itemlist.append(new_item)
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
+
 
 def search(item, texto):
     logger.info()
@@ -193,7 +191,8 @@ def search(item, texto):
     if texto != '':
         return search_list(item)
 
-def seasons (item):
+
+def seasons(item):
     logger.info()
     itemlist = []
 
@@ -204,10 +203,10 @@ def seasons (item):
     for scrapedseason, scrapedtitle in matches:
         title = scrapedtitle
         contentSeasonNumber = scrapedseason
-        infoLabels['season']= scrapedseason
-        itemlist.append(item.clone(title = title,
-                                   contentSeasonNumber= contentSeasonNumber,
-                                   action = 'episodesxseason',
+        infoLabels['season'] = scrapedseason
+        itemlist.append(item.clone(title=title,
+                                   contentSeasonNumber=contentSeasonNumber,
+                                   action='episodesxseason',
                                    infoLabels=infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -216,12 +215,13 @@ def seasons (item):
         itemlist.append(item.clone(title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
                                    url=item.url,
                                    action="add_serie_to_library",
-                                   extra = 'episodes',
+                                   extra='episodes',
                                    contentSerieName=item.contentSerieName,
                                    ))
     return itemlist
 
-def episodes (item):
+
+def episodes(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -234,34 +234,35 @@ def episodes (item):
         contentEpisodeNumber = num_ep
         url = scrapedurl
         title = '%sx%s - %s' % (season, num_ep, scrapedtitle)
-        itemlist.append(item.clone(title = title,
-                                   url = url,
-                                   contentEpisodeNumber = contentEpisodeNumber,
-                                   action = 'findvideos',
-                                   infoLabels = infoLabels
+        itemlist.append(item.clone(title=title,
+                                   url=url,
+                                   contentEpisodeNumber=contentEpisodeNumber,
+                                   action='findvideos',
+                                   infoLabels=infoLabels
                                    ))
         num_ep += 1
     return itemlist
 
-def episodesxseason (item):
+
+def episodesxseason(item):
     logger.info()
     itemlist = []
     season = item.contentSeasonNumber
     data = httptools.downloadpage(item.url).data
-    patron = '<div class="numerando">%s - (\d+)<\/div><div class="episodiotitle"><a href="(.*?)">(.*?)<\/a>'%season
+    patron = '<div class="numerando">%s - (\d+)<\/div><div class="episodiotitle"><a href="(.*?)">(.*?)<\/a>' % season
     matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
-    num_ep=1
+    num_ep = 1
     for scrapedepisode, scrapedurl, scrapedtitle in matches:
-        title = '%sx%s - %s'%(season, num_ep, scrapedtitle)
+        title = '%sx%s - %s' % (season, num_ep, scrapedtitle)
         url = scrapedurl
-        infoLabels['episode']= num_ep
-        itemlist.append(item.clone(title = title,
+        infoLabels['episode'] = num_ep
+        itemlist.append(item.clone(title=title,
                                    url=url,
-                                   contentEpisodeNumber = num_ep,
-                                   action = 'findvideos',
+                                   contentEpisodeNumber=num_ep,
+                                   action='findvideos',
                                    infoLabels=infoLabels))
-        num_ep +=1
+        num_ep += 1
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
@@ -270,13 +271,12 @@ def episodesxseason (item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    templist =[]
     data = httptools.downloadpage(item.url).data
     itemlist.extend(servertools.find_video_items(data=data))
     for videoitem in itemlist:
         videoitem.channel = item.channel
         if videoitem.server != 'youtube':
-            videoitem.title = item.title+' (%s)'%videoitem.server
+            videoitem.title = item.title + ' (%s)' % videoitem.server
         else:
             videoitem.title = 'Trailer en %s' % videoitem.server
         videoitem.action = 'play'
@@ -293,9 +293,9 @@ def findvideos(item):
 
     return itemlist
 
+
 def newest(categoria):
     logger.info()
-    itemlist = []
     item = Item()
     try:
         if categoria == 'peliculas':
@@ -310,7 +310,7 @@ def newest(categoria):
     except:
         import sys
         for line in sys.exc_info():
-            logger.error("{0}".format(line))
+            logger.error("%s" % line)
         return []
 
     return itemlist
