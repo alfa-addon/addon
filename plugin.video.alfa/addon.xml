@@ -8,7 +8,7 @@
     <provides>video</provides>
   </extension>
   <extension point="xbmc.addon.metadata">
-    <summary lang="es">Sumario en Español</summary>
+    <summary lang="es">Navega con Kodi por páginas web.</summary>
     <assets>
       <icon>icon.png</icon>
       <fanart>fanart.jpg</fanart>
@@ -27,9 +27,9 @@
 
       [COLOR green]Gracias a[/COLOR] [COLOR yellow]k991293[/COLOR] [COLOR green]por su colaboración en esta versión[/COLOR]
       </news>
-    <description lang="es">Descripción en Español</description>
-    <summary lang="en">English summary</summary>
-    <description lang="en">English description</description>
+    <description lang="es">Navega con Kodi por páginas web para ver sus videos de manera fácil.</description>
+    <summary lang="en">Browse web pages using Kodi</summary>
+    <description lang="en">Browse web pages using Kodi, you can easily watch their video content.</description>
     <disclaimer>[COLOR red]The owners and submitters to this addon do not host or distribute any of the content displayed by these addons nor do they have any affiliation with the content providers.[/COLOR]</disclaimer>
     <platform>all</platform>
     <license>GNU GPL v3</license>
