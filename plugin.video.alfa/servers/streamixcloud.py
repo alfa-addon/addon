@@ -26,12 +26,12 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                                             "<script type='text/javascript'>(eval\(function\(p,a,c,k,e,d.*?)</script")
     data = jsunpack.unpack(packed)
 
-    media_url = scrapertools.find_single_match(data, 'sources:\["([^"]+)"')
-    ext = scrapertools.get_filename_from_url(media_url)[-4:]
-    video_urls.append([".flv [streamixcloud]", media_url.replace(".mp4", ".flv")])
-    video_urls.append(["%s [streamixcloud]" % ext, media_url])
+    media_url = scrapertools.find_multiple_matches(data, '\{file:"([^"]+)",')
+    # thumb = scrapertools.find_single_match(data, '\],image:"([^"]+)"')
 
-    for video_url in video_urls:
-        logger.info("%s - %s" % (video_url[0], video_url[1]))
+    ext = scrapertools.get_filename_from_url(media_url[0])[-4:]
+
+    for url in media_url:
+        video_urls.append(["%s [streamixcloud]" % ext, url])
 
     return video_urls
