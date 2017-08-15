@@ -79,6 +79,17 @@ function get_response(data) {
 
         nav_history.newResponse(item_list, data.category);
 
+        currentWebLink = document.getElementById("current_web_link")
+        if (currentWebLink) {
+            if (data.url) {
+                currentWebLink.style.display = "block";
+                currentWebLink.href = data.url;
+            }
+            else {
+                currentWebLink.style.display = "none";
+            }
+        }
+
         //console.debug(nav_history)
         send_data({
             "id": response.id,
