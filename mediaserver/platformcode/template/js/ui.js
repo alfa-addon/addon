@@ -104,6 +104,19 @@ function image_error(thumbnail) {
 	};
 };
 
+function set_original_url(url){
+    currentWebLink = document.getElementById("current_web_link")
+    if (currentWebLink) {
+        if (url) {
+            currentWebLink.style.display = "block";
+            currentWebLink.href = url;
+        }
+        else {
+            currentWebLink.style.display = "none";
+        }
+    }
+}
+
 function show_images(){
 	var container = document.getElementById("itemlist");
     var images = container.getElementsByTagName("img");

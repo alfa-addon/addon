@@ -77,7 +77,9 @@ function get_response(data) {
         document.getElementById("itemlist").scrollTop = 0;
 		show_images();
 
-        nav_history.newResponse(item_list, data.category);
+        nav_history.newResponse(item_list, data.category, data.url);
+
+        set_original_url(data.url)
 
         //console.debug(nav_history)
         send_data({
