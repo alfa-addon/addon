@@ -68,7 +68,7 @@ var nav_history = {
             this.states[this.current].end = new Date().getTime();
             this.states[this.current].data = data;
             this.states[this.current].category = category;
-            this.states[this.current].url = url;
+            this.states[this.current].source_url = url;
             this.confirmed = true;
             if (settings.builtin_history && !this.from_nav) {
                 if (this.current > 0) {
@@ -87,7 +87,7 @@ var nav_history = {
             this.states[this.current].end = new Date().getTime();
             this.states[this.current].data = data;
             this.states[this.current].category = category;
-            this.states[this.current].url = url;
+            this.states[this.current].source_url = url;
             this.states = this.states.slice(0, this.current + 1);
         }
 		this.from_nav = false;
@@ -118,7 +118,7 @@ var nav_history = {
         if (this.states[this.current].end - this.states[this.current].start > this.cache) {
             document.getElementById("itemlist").innerHTML = this.states[this.current].data.join("");
             set_category(this.states[this.current].category)
-            set_original_url(this.states[this.current].url)
+            set_original_url(this.states[this.current].source_url)
             if (this.states[this.current].focus >= 0) {
                 document.getElementById("itemlist").children[this.states[this.current].focus].children[0].focus();
             }
