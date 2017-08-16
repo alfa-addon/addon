@@ -94,7 +94,7 @@ function focus_element(element) {
 function image_error(thumbnail) {
     var src = thumbnail.src;
     if (thumbnail.src.indexOf(domain) == 0) {
-        thumbnail.src = "http://media.tvalacarta.info/pelisalacarta/thumb_folder2.png";
+        thumbnail.src = "https://github.com/alfa-addon/addon/raw/master/plugin.video.alfa/resources/media/general/default/thumb_folder.png";
     }
 	else {
 		thumbnail.src = domain + "/proxy/" + encodeURIComponent(btoa(thumbnail.src));
@@ -103,6 +103,19 @@ function image_error(thumbnail) {
 		document.activeElement.onfocus();
 	};
 };
+
+function set_original_url(url){
+    currentWebLink = document.getElementById("current_web_link")
+    if (currentWebLink) {
+        if (url) {
+            currentWebLink.style.display = "block";
+            currentWebLink.href = url;
+        }
+        else {
+            currentWebLink.style.display = "none";
+        }
+    }
+}
 
 function show_images(){
 	var container = document.getElementById("itemlist");
