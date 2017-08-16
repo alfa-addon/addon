@@ -3,9 +3,9 @@
 import urllib
 
 from core import jsontools
-from core import logger
 from core import scrapertools
 from core.item import Item
+from platformcode import logger
 
 CHANNELNAME = "youtube_channel"
 YOUTUBE_V3_API_KEY = "AIzaSyCjsmBT0JZy1RT-PLwB-Zkfba87sa2inyI"

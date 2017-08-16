@@ -10,11 +10,10 @@
 import re
 import urllib2
 
-from core import config
 from core import jsontools
-from core import logger
 from core import scrapertools
 from core.item import InfoLabels
+from platformcode import config, logger
 from platformcode import platformtools
 
 HOST = "https://api.thetvdb.com"

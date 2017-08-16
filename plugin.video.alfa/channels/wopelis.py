@@ -3,13 +3,12 @@
 import re
 
 from core import channeltools
-from core import config
 from core import httptools
-from core import logger
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
+from platformcode import config, logger
 
 HOST = 'http://www.wopelis.com'
 __channel__ = 'wopelis'
@@ -235,7 +234,7 @@ def episodios(item):
             if i.infoLabels['title']:
                 # Si el capitulo tiene nombre propio añadirselo al titulo del item
                 i.title = "%sx%s %s" % (
-                i.infoLabels['season'], str(i.infoLabels['episode']).zfill(2), i.infoLabels['title'])
+                    i.infoLabels['season'], str(i.infoLabels['episode']).zfill(2), i.infoLabels['title'])
 
     return itemlist
 

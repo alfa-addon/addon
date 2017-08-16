@@ -6,13 +6,13 @@ import urllib
 import urlparse
 
 from channels import filtertools
-from core import config
+from channelselector import get_thumb
 from core import httptools
 from core import jsontools
-from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
+from platformcode import config, logger
 
 HOST = "http://www.seriespapaya.com"
 
@@ -24,9 +24,9 @@ CALIDADES = ['360p', '480p', '720p HD', '1080p HD']
 def mainlist(item):
     logger.info()
 
-    thumb_series = config.get_thumb("thumb_channels_tvshow.png")
-    thumb_series_az = config.get_thumb("thumb_channels_tvshow_az.png")
-    thumb_buscar = config.get_thumb("thumb_search.png")
+    thumb_series = get_thumb("channels_tvshow.png")
+    thumb_series_az = get_thumb("channels_tvshow_az.png")
+    thumb_buscar = get_thumb("search.png")
 
     itemlist = []
     itemlist.append(

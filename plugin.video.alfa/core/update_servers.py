@@ -6,9 +6,9 @@
 import os
 import urlparse
 
-from core import config
 from core import scrapertools
 from core import servertools
+from platformcode import config
 
 remote_url = ""
 local_folder = os.path.join(config.get_runtime_path(), "servers")

@@ -5,8 +5,8 @@ import hashlib
 import urlparse
 
 from core import httptools
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 host = "https://www.nuvid.com"
 

@@ -8,11 +8,10 @@ import imp
 import math
 import threading
 
-from core import config
-from core import filetools
-from core import logger
 from core import channeltools
+from core import filetools
 from core import videolibrarytools
+from platformcode import config, logger
 from platformcode import platformtools
 
 

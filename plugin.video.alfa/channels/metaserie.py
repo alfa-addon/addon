@@ -5,12 +5,11 @@ import urlparse
 
 from channels import autoplay
 from channels import filtertools
-from core import config
 from core import httptools
-from core import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
+from platformcode import config, logger
 
 IDIOMAS = {'la': 'Latino', 'es': 'Español', 'sub': 'VOS'}
 list_language = IDIOMAS.values()
@@ -64,7 +63,7 @@ def todas(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     patron = '<div class=poster>.*?<a href=(.*?) title=(.*?)en(.*?)>.*?'
-    patron +='<div class=poster_efecto><span>(.*?)<.*?div>.*?<img.*?src=(.*?) class'
+    patron += '<div class=poster_efecto><span>(.*?)<.*?div>.*?<img.*?src=(.*?) class'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle, lang, scrapedplot, scrapedthumbnail in matches:

@@ -4,9 +4,9 @@ import re
 import urllib
 import urlparse
 
-from core import logger
 from core import scrapertools
 from core.item import Item
+from platformcode import logger
 
 
 def mainlist(item):
@@ -166,7 +166,8 @@ def listado(item):
                 Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail, plot=plot))
         else:
             itemlist.append(
-                Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail, plot=plot))
+                Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail, plot=plot,
+                     contentTitle=title))
 
     # Página siguiente
     '''

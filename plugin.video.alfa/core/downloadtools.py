@@ -11,8 +11,7 @@ import time
 import urllib
 import urllib2
 
-import config
-import logger
+from platformcode import config, logger
 
 entitydefs = {
     'AElig': u'\u00C6',  # latin capital letter AE = latin capital ligature AE, U+00C6 ISOlat1'
