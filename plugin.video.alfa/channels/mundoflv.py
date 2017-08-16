@@ -5,13 +5,12 @@ import urlparse
 
 from channels import autoplay
 from channels import filtertools
-from core import config
 from core import httptools
-from core import logger
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
+from platformcode import config, logger
 
 host = "http://mundoflv.com"
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
@@ -346,13 +345,13 @@ def temporadas(item):
     itemlist = []
     templist = []
     data = httptools.downloadpage(item.url).data
+    data = data.replace ('"',"'")
     realplot = ''
-    patron = "<button class='classnamer' onclick='javascript: mostrarcapitulos.*?blank'>([^<]+)</button>"
+    patron = "<button class='classnamer' onclick='javascript: mostrarcapitulos.*?blank'>([^<]+)<\/button>"
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    serieid = scrapertools.find_single_match(data, 'data-nonce="(.*?)"')
-
+    serieid = scrapertools.find_single_match(data, "data-nonce='(.*?)'")
     item.thumbnail = item.thumbvid
     infoLabels = item.infoLabels
     for scrapedtitle in matches:
@@ -409,6 +408,7 @@ def episodiosxtemp(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
+    data = data.replace('"', "'")
     patron = "<button class='classnamer' onclick='javascript: mostrarenlaces\(([^\)]+)\).*?<"
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -624,9 +624,11 @@ def findvideos(item):
 
         itemlist = filtertools.get_link(itemlist, new_item, list_language)
 
+    import os
     for videoitem in itemlist:
         videoitem.infoLabels = item.infoLabels
-        videoitem.thumbnail = config.get_thumb("server_%s.png" % videoitem.server)
+        videoitem.thumbnail = os.path.join(config.get_runtime_path(), "resources", "media", "servers",
+                                           "server_%s.png" % videoitem.server)
 
     # Requerido para AutoPlay
 
@@ -639,7 +641,7 @@ def play(item):
     logger.info()
 
     data = httptools.downloadpage(item.url).data
-    if 'streamplay' not in item.server or 'streame' not in item.server:
+    if item.server not in ['streamplay','streame']:
         url = scrapertools.find_single_match(data, '<(?:IFRAME|iframe).*?(?:SRC|src)=*([^ ]+) (?!style|STYLE)')
     else:
         url = scrapertools.find_single_match(data, '<meta http-equiv="refresh" content="0; url=([^"]+)">')

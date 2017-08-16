@@ -1,0 +1,14 @@
+{
+  "id": "ver-peliculas",
+  "thumbnail":"https://s14.postimg.org/98ulljwhd/ver-peliculas.png",
+  "banner":"https://s2.postimg.org/4k1ivod2h/ver-peliculas-banner.png",
+  "name": "Ver-peliculas",
+  "active": true,
+  "adult": false,
+  "language": "es",
+  "version": 1,
+  "categories": [
+    "movie",
+    "latino"
+  ]
+}
