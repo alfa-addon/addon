@@ -3,17 +3,17 @@
 import re
 import urlparse
 
-from channelselector import get_thumbnail_path
-from core import logger
+from channelselector import get_thumb
 from core import scrapertools
 from core import servertools
 from core.item import Item
 from core.tmdb import Tmdb
+from platformcode import logger
 from servers.decrypters import expurl
 
 
 def agrupa_datos(data):
-    ## Agrupa los datos
+    # Agrupa los datos
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|<!--.*?-->', '', data)
     data = re.sub(r'\s+', ' ', data)
     data = re.sub(r'>\s<', '><', data)
@@ -23,7 +23,7 @@ def agrupa_datos(data):
 def mainlist(item):
     logger.info()
 
-    thumb_buscar = get_thumbnail_path() + "thumb_search.png"
+    thumb_buscar = get_thumb("search.png")
 
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Últimas agregadas", action="agregadas",

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from core import httptools
-from core import logger
 from core import scrapertools
+from platformcode import logger
 
 
 def mainlist(item):
@@ -32,7 +32,7 @@ def lista(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, duration, scrapedtitle in matches:
         if "/embed-" not in scrapedurl:
-            scrapedurl = scrapedurl.replace("datoporn.com/", "datoporn.com/embed-") + ".html"
+            scrapedurl = scrapedurl.replace("dato.porn/", "dato.porn/embed-") + ".html"
         if duration:
             scrapedtitle = "%s - %s" % (duration, scrapedtitle)
 

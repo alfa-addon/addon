@@ -4,12 +4,12 @@ import re
 import urlparse
 
 from channels import filtertools
-from core import config
+from channelselector import get_thumb
 from core import httptools
-from core import logger
 from core import scrapertoolsV2
 from core import servertools
 from core.item import Item
+from platformcode import config, logger
 
 HOST = "http://seriesblanco.com/"
 IDIOMAS = {'es': 'Español', 'en': 'Inglés', 'la': 'Latino', 'vo': 'VO', 'vos': 'VOS', 'vosi': 'VOSI', 'otro': 'OVOS'}
@@ -20,9 +20,9 @@ CALIDADES = ['SD', 'HDiTunes', 'Micro-HD-720p', 'Micro-HD-1080p', '1080p', '720p
 def mainlist(item):
     logger.info()
 
-    thumb_series = config.get_thumb("thumb_channels_tvshow.png")
-    thumb_series_az = config.get_thumb("thumb_channels_tvshow_az.png")
-    thumb_buscar = config.get_thumb("thumb_search.png")
+    thumb_series = get_thumb("channels_tvshow.png")
+    thumb_series_az = get_thumb("channels_tvshow_az.png")
+    thumb_buscar = get_thumb("search.png")
 
     itemlist = list()
     itemlist.append(Item(channel=item.channel, title="Listado alfabético", action="series_listado_alfabetico",
@@ -30,7 +30,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Todas las series", action="series",
                          url=urlparse.urljoin(HOST, "listado/"), thumbnail=thumb_series))
     itemlist.append(
-        Item(channel=item.channel, title="Capítulos estrenados recientemente", action="home_section", extra="Series Online : Capítulos estrenados recientemente",
+        Item(channel=item.channel, title="Capítulos estrenados recientemente", action="home_section",
+             extra="Series Online : Capítulos estrenados recientemente",
              url=HOST, thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, title="Series más vistas", action="series", extra="Series Más vistas",
                          url=urlparse.urljoin(HOST, "listado-visto/"), thumbnail=thumb_series))
@@ -38,8 +39,9 @@ def mainlist(item):
                          url=urlparse.urljoin(HOST, "fichas_creadas/"), thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, title="Series por género", action="generos",
                          url=HOST, thumbnail=thumb_series))
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url="https://seriesblanco.com/finder.php",
-                         thumbnail=thumb_buscar))
+    itemlist.append(
+        Item(channel=item.channel, title="Buscar...", action="search", url="https://seriesblanco.com/finder.php",
+             thumbnail=thumb_buscar))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, CALIDADES)
 
@@ -255,7 +257,7 @@ def parse_videos(item, type_str, data):
 
 
 def extract_videos_section(data):
-    return re.findall("panel-title(.+?)</div>[^<]*</div>[^<]*</div>", data, re.MULTILINE | re.DOTALL)
+    return re.findall("panel-title[^>]*>\s*([VvDd].+?)</div>[^<]*</div>[^<]*</div>", data, re.MULTILINE | re.DOTALL)
 
 
 def findvideos(item):
@@ -275,10 +277,10 @@ def findvideos(item):
     list_links = []
 
     if filtro_enlaces != 0:
-        list_links.extend(parse_videos(item, "Ver", online[0]))
+        list_links.extend(parse_videos(item, "Ver", online[-2]))
 
     if filtro_enlaces != 1:
-        list_links.extend(parse_videos(item, "Descargar", online[1]))
+        list_links.extend(parse_videos(item, "Descargar", online[-1]))
 
     list_links = filtertools.get_links(list_links, item, list_idiomas, CALIDADES)
 

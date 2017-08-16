@@ -4,11 +4,10 @@ import re
 import urllib
 import urlparse
 
-from core import config
 from core import httptools
-from core import logger
 from core import scrapertools
 from core.item import Item
+from platformcode import config, logger
 
 host = "https://www.porntrex.com"
 
@@ -107,7 +106,7 @@ def lista(item):
                     next_page = re.sub(r'&from=(\d+)', '&from=%s' % next_page, item.url)
                 else:
                     next_page = "%s?mode=async&function=get_block&block_id=list_videos_common_videos_list&sort_by=post_date&from=%s" % (
-                    item.url, next_page)
+                        item.url, next_page)
                 itemlist.append(item.clone(action="lista", title=">> Página Siguiente", url=next_page))
 
     return itemlist
@@ -275,7 +274,7 @@ def tags(item):
 
         bloque = scrapertools.find_single_match(data,
                                                 '>%s</strong>(.*?)(?:(?!%s)(?!#)[A-Z#]{1}</strong>|<div class="footer-margin">)' % (
-                                                item.extra, item.extra))
+                                                    item.extra, item.extra))
         matches = scrapertools.find_multiple_matches(bloque, '<a href="([^"]+)">\s*(.*?)</a>')
         for url, title in matches[item.length:item.length + 100]:
             if "go.php?" in url:

@@ -3,12 +3,11 @@
 import re
 import urllib
 
-from core import config
 from core import httptools
 from core import jsontools
-from core import logger
 from core import scrapertools
 from core.item import Item
+from platformcode import config, logger
 
 host = 'http://pelismag.net'
 api = host + '/api'

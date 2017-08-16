@@ -5,14 +5,15 @@
 
 import os
 
-from core import config
+from channelselector import get_thumb
 from core import filetools
-from core import logger
 from core import servertools
 from core.item import Item
+from platformcode import config, logger
 from platformcode import platformtools
 
 CHANNELNAME = "setting"
+
 
 # todo revisar elementos de update
 def mainlist(item):
@@ -20,7 +21,7 @@ def mainlist(item):
 
     itemlist = list()
     itemlist.append(Item(channel=CHANNELNAME, title="Preferencias", action="settings", folder=False,
-                         thumbnail=config.get_thumb("thumb_setting_0.png")))
+                         thumbnail=get_thumb("setting_0.png")))
 
     # if config.get_setting("plugin_updates_available") == 0:
     #     nuevas = ""
@@ -29,44 +30,40 @@ def mainlist(item):
     # else:
     #     nuevas = " (%s nuevas)" % config.get_setting("plugin_updates_available")
     #
-    # thumb_configuracion = "thumb_setting_%s.png" % config.get_setting("plugin_updates_available")
+    # thumb_configuracion = "setting_%s.png" % config.get_setting("plugin_updates_available")
     #
     # itemlist.append(Item(channel=CHANNELNAME, title="Descargar e instalar otras versiones" + nuevas,
     #                      action="get_all_versions", folder=True,
-    #                      thumbnail=config.get_thumb(thumb_configuracion)))
+    #                      thumbnail=get_thumb(thumb_configuracion)))
 
-    itemlist.append(Item(channel=CHANNELNAME, title="", action="", folder=False,
-                         thumbnail=config.get_thumb("thumb_setting_0.png")))
+    itemlist.append(Item(channel=CHANNELNAME, title="", action="", folder=False, thumbnail=get_thumb("setting_0.png")))
 
     itemlist.append(Item(channel=CHANNELNAME, title="Ajustes especiales", action="", folder=False,
-                         thumbnail=config.get_thumb("thumb_setting_0.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="   Ajustes de Canales", action="menu_channels",
-                         folder=True, thumbnail=config.get_thumb("thumb_channels.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="   Ajustes de Servidores", action="menu_servers",
-                         folder=True, thumbnail=config.get_thumb("thumb_channels.png")))
+                         thumbnail=get_thumb("setting_0.png")))
+    itemlist.append(Item(channel=CHANNELNAME, title="   Ajustes de Canales", action="menu_channels", folder=True,
+                         thumbnail=get_thumb("channels.png")))
+    itemlist.append(Item(channel=CHANNELNAME, title="   Ajustes de Servidores", action="menu_servers", folder=True,
+                         thumbnail=get_thumb("channels.png")))
     itemlist.append(Item(channel="news", title="   Ajustes de la sección 'Novedades'", action="menu_opciones",
-                         folder=True, thumbnail=config.get_thumb("thumb_news.png")))
+                         folder=True, thumbnail=get_thumb("news.png")))
     itemlist.append(Item(channel="search", title="   Ajustes del buscador global", action="opciones", folder=True,
-                         thumbnail=config.get_thumb("thumb_search.png")))
+                         thumbnail=get_thumb("search.png")))
     itemlist.append(Item(channel=CHANNELNAME, title="   Ajustes de descargas", action="channel_config",
-                         config="downloads", folder=True, thumbnail=config.get_thumb("thumb_downloads.png")))
+                         config="downloads", folder=True, thumbnail=get_thumb("downloads.png")))
 
     if config.get_videolibrary_support():
-        itemlist.append(Item(channel="videolibrary", title="   Ajustes de la videoteca",
-                             action="channel_config", folder=True,
-                             thumbnail=config.get_thumb("thumb_videolibrary.png")))
+        itemlist.append(Item(channel="videolibrary", title="   Ajustes de la videoteca", action="channel_config",
+                             folder=True, thumbnail=get_thumb("videolibrary.png")))
 
     if config.is_xbmc():
-        itemlist.append(Item(channel=CHANNELNAME, title="   Ajustes de cliente Torrent",
-                             action="setting_torrent", folder=True,
-                             thumbnail=config.get_thumb("thumb_channels_torrent.png")))
+        itemlist.append(Item(channel=CHANNELNAME, title="   Ajustes de cliente Torrent", action="setting_torrent",
+                             folder=True, thumbnail=get_thumb("channels_torrent.png")))
 
     # itemlist.append(Item(channel=CHANNELNAME, title="   Añadir o Actualizar canal/conector desde una URL",
     #                      action="menu_addchannels"))
-    itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,
-                         thumbnail=config.get_thumb("thumb_setting_0.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="Otras herramientas", action="submenu_tools",
-                         folder=True, thumbnail=config.get_thumb("thumb_setting_0.png")))
+    itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))
+    itemlist.append(Item(channel=CHANNELNAME, title="Otras herramientas", action="submenu_tools", folder=True,
+                         thumbnail=get_thumb("setting_0.png")))
 
     return itemlist
 
@@ -75,13 +72,11 @@ def menu_channels(item):
     logger.info()
     itemlist = list()
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Activar/desactivar canales",
-                         action="conf_tools", folder=False, extra="channels_onoff",
-                         thumbnail=config.get_thumb("thumb_setting_0.png")))
+    itemlist.append(Item(channel=CHANNELNAME, title="Activar/desactivar canales", action="conf_tools", folder=False,
+                         extra="channels_onoff", thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Ajustes por canales",
-                         action="", folder=False,
-                         thumbnail=config.get_thumb("thumb_setting_0.png")))
+    itemlist.append(Item(channel=CHANNELNAME, title="Ajustes por canales", action="", folder=False,
+                         thumbnail=get_thumb("setting_0.png")))
 
     # Inicio - Canales configurables
     import channelselector
@@ -98,14 +93,12 @@ def menu_channels(item):
                                  thumbnail=channel.thumbnail))
     # Fin - Canales configurables
 
-    itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,
-                         thumbnail=config.get_thumb("thumb_setting_0.png")))
+    itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Herramientas de canales", action="",
-                         folder=False, thumbnail=config.get_thumb("thumb_channels.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="   Comprobar archivos *_data.json",
-                         action="conf_tools", folder=True, extra="lib_check_datajson",
-                         thumbnail=config.get_thumb("thumb_channels.png")))
+    itemlist.append(Item(channel=CHANNELNAME, title="Herramientas de canales", action="", folder=False,
+                         thumbnail=get_thumb("channels.png")))
+    itemlist.append(Item(channel=CHANNELNAME, title="   Comprobar archivos *_data.json", action="conf_tools",
+                         folder=True, extra="lib_check_datajson", thumbnail=get_thumb("channels.png")))
 
     return itemlist
 
@@ -140,7 +133,6 @@ def setting_torrent(item):
 
 
 def save_setting_torrent(item, dict_data_saved):
-
     if dict_data_saved and "list_torrent" in dict_data_saved:
         config.set_setting("torrent_client", dict_data_saved["list_torrent"], server="torrent")
 
@@ -149,17 +141,14 @@ def menu_servers(item):
     logger.info()
     itemlist = list()
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Sevidores bloqueados",
-                         action="servers_blacklist", folder=False,
-                         thumbnail=config.get_thumb("thumb_setting_0.png")))
+    itemlist.append(Item(channel=CHANNELNAME, title="Sevidores bloqueados", action="servers_blacklist", folder=False,
+                         thumbnail=get_thumb("setting_0.png")))
 
     itemlist.append(Item(channel=CHANNELNAME, title="Servidores favoritos",
-                         action="servers_favorites", folder=False,
-                         thumbnail=config.get_thumb("thumb_setting_0.png")))
+                         action="servers_favorites", folder=False, thumbnail=get_thumb("setting_0.png")))
 
     itemlist.append(Item(channel=CHANNELNAME, title="Ajustes de debriders:",
-                         action="", folder=False,
-                         thumbnail=config.get_thumb("thumb_setting_0.png")))
+                         action="", folder=False, thumbnail=get_thumb("setting_0.png")))
 
     # Inicio - Servidores configurables
 
@@ -169,12 +158,10 @@ def menu_servers(item):
         if server_parameters["has_settings"]:
             itemlist.append(
                 Item(channel=CHANNELNAME, title="   Configuración del servidor '%s'" % server_parameters["name"],
-                     action="server_config", config=server, folder=False,
-                     thumbnail=""))
+                     action="server_config", config=server, folder=False, thumbnail=""))
 
     itemlist.append(Item(channel=CHANNELNAME, title="Ajustes de servidores",
-                         action="", folder=False,
-                         thumbnail=config.get_thumb("thumb_setting_0.png")))
+                         action="", folder=False, thumbnail=get_thumb("setting_0.png")))
 
     server_list = servertools.get_servers_list().keys()
 
@@ -185,8 +172,7 @@ def menu_servers(item):
                                                         server_parameters["settings"]):
             itemlist.append(
                 Item(channel=CHANNELNAME, title="   Configuración del servidor '%s'" % server_parameters["name"],
-                     action="server_config", config=server, folder=False,
-                     thumbnail=""))
+                     action="server_config", config=server, folder=False, thumbnail=""))
 
     # Fin - Servidores configurables
 
@@ -224,8 +210,7 @@ def servers_blacklist(item):
         list_controls.append(control)
 
     return platformtools.show_channel_settings(list_controls=list_controls, dict_values=dict_values,
-                                               caption="Servidores bloqueados",
-                                               callback="cb_servers_blacklist")
+                                               caption="Servidores bloqueados", callback="cb_servers_blacklist")
 
 
 def cb_servers_blacklist(item, dict_values):
@@ -285,10 +270,8 @@ def servers_favorites(item):
                    'visible': True}
         list_controls.append(control)
 
-    return platformtools.show_channel_settings(list_controls=list_controls, dict_values=dict_values,
-                                               item=server_names,
-                                               caption="Servidores favoritos",
-                                               callback="cb_servers_favorites")
+    return platformtools.show_channel_settings(list_controls=list_controls, dict_values=dict_values, item=server_names,
+                                               caption="Servidores favoritos", callback="cb_servers_favorites")
 
 
 def cb_servers_favorites(server_names, dict_values):
@@ -363,9 +346,8 @@ def get_all_versions(item):
         else:
             title_color = "0xFF666666"
 
-        itemlist.append(Item(channel=CHANNELNAME, title=title, url=entry["url"],
-                             filename=entry["filename"], package=entry["package"],
-                             version=str(entry["version"]), text_color=title_color,
+        itemlist.append(Item(channel=CHANNELNAME, title=title, url=entry["url"], filename=entry["filename"],
+                             package=entry["package"], version=str(entry["version"]), text_color=title_color,
                              action="download_and_install_package", folder=False))
 
     return itemlist
@@ -575,22 +557,21 @@ def submenu_tools(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Herramientas de canales", action="",
-                         folder=False, thumbnail=config.get_thumb("thumb_channels.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="   Comprobar archivos *_data.json",
-                         action="conf_tools", folder=True, extra="lib_check_datajson",
-                         thumbnail=config.get_thumb("thumb_channels.png")))
+    itemlist.append(Item(channel=CHANNELNAME, title="Herramientas de canales", action="", folder=False,
+                         thumbnail=get_thumb("channels.png")))
+    itemlist.append(Item(channel=CHANNELNAME, title="   Comprobar archivos *_data.json", action="conf_tools",
+                         folder=True, extra="lib_check_datajson", thumbnail=get_thumb("channels.png")))
 
     if config.get_videolibrary_support():
         itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,
-                             thumbnail=config.get_thumb("thumb_setting_0.png")))
-        itemlist.append(Item(channel=CHANNELNAME, title="Herramientas de videoteca", action="",
-                             folder=False, thumbnail=config.get_thumb("thumb_videolibrary.png")))
+                             thumbnail=get_thumb("setting_0.png")))
+        itemlist.append(Item(channel=CHANNELNAME, title="Herramientas de videoteca", action="", folder=False,
+                             thumbnail=get_thumb("videolibrary.png")))
         itemlist.append(Item(channel=CHANNELNAME, action="overwrite_tools", folder=False,
-                             thumbnail=config.get_thumb("thumb_videolibrary.png"),
+                             thumbnail=get_thumb("videolibrary.png"),
                              title="   Sobreescribir toda la videoteca (strm, nfo y json)"))
         itemlist.append(Item(channel="videolibrary", action="update_videolibrary", folder=False,
-                             thumbnail=config.get_thumb("thumb_videolibrary.png"),
+                             thumbnail=get_thumb("videolibrary.png"),
                              title="   Buscar nuevos episodios y actualizar videoteca"))
 
     return itemlist
@@ -866,15 +847,17 @@ def overwrite_tools(item):
     from core import videolibrarytools
 
     seleccion = platformtools.dialog_yesno("Sobrescribir toda la videoteca",
-                                           "Esto puede llevar algun tiempo.",
+                                           "Esto puede llevar algún tiempo.",
                                            "¿Desea continuar?")
     if seleccion == 1:
-        heading = 'Sobrescribiendo videoteca....'
+        # tvshows
+        heading = 'Sobrescribiendo videoteca....SERIES'
         p_dialog = platformtools.dialog_progress_bg('alfa', heading)
         p_dialog.update(0, '')
 
-        import glob
-        show_list = glob.glob(filetools.join(videolibrarytools.TVSHOWS_PATH, u'/*/tvshow.nfo'))
+        show_list = []
+        for path, folders, files in filetools.walk(videolibrarytools.TVSHOWS_PATH):
+            show_list.extend([filetools.join(path, f) for f in files if f == "tvshow.nfo"])
 
         if show_list:
             t = float(100) / len(show_list)
@@ -892,5 +875,42 @@ def overwrite_tools(item):
 
             # ... y la volvemos a añadir
             videolibrary_service.update(path, p_dialog, i, t, serie, 3)
-
         p_dialog.close()
+
+        # movies
+        heading = 'Sobrescribiendo videoteca....PELICULAS'
+        p_dialog2 = platformtools.dialog_progress_bg('alfa', heading)
+        p_dialog2.update(0, '')
+
+        movies_list = []
+        for path, folders, files in filetools.walk(videolibrarytools.MOVIES_PATH):
+            movies_list.extend([filetools.join(path, f) for f in files if f.endswith(".json")])
+
+        logger.debug("movies_list %s" % movies_list)
+
+        if movies_list:
+            t = float(100) / len(movies_list)
+
+        for i, movie_json in enumerate(movies_list):
+            try:
+                from core import jsontools
+                path = filetools.dirname(movie_json)
+                movie = Item().fromjson(filetools.read(movie_json))
+
+                # Eliminamos la carpeta con la pelicula ...
+                filetools.rmdirtree(path)
+
+                import math
+                heading = 'Actualizando videoteca....'
+
+                p_dialog2.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (movie.contentTitle,
+                                                                                   movie.channel.capitalize()))
+                # ... y la volvemos a añadir
+                videolibrarytools.save_movie(movie)
+            except Exception, ex:
+                logger.error("Error al crear de nuevo la película")
+                template = "An exception of type %s occured. Arguments:\n%r"
+                message = template % (type(ex).__name__, ex.args)
+                logger.error(message)
+
+        p_dialog2.close()

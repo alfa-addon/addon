@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import base64
 import re
 
 from core import channeltools
-from core import config
 from core import httptools
-from core import logger
 from core import scrapertoolsV2
 from core import servertools
 from core import tmdb
 from core.item import Item
+from platformcode import config, logger
 
 HOST = 'http://www.yaske.ro'
 parameters = channeltools.get_channel_parameters('yaske')
@@ -229,6 +229,11 @@ def findvideos(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for url, idioma, calidad in matches:
+        if 'yaske' in url:
+            data = httptools.downloadpage(url).data
+            url_enc = scrapertoolsV2.find_single_match(data, "eval.*?'(.*?)'")
+            url_dec = base64.b64decode(url_enc)
+            url = scrapertoolsV2.find_single_match(url_dec, 'iframe src="(.*?)"')
         sublist.append(item.clone(action="play", url=url, folder=False, text_color=color1, quality=calidad.strip(),
                                   language=idioma.strip()))
 
