@@ -15,7 +15,7 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 
-host = "http://ver-peliculas.io/"
+host = "http://ver-peliculas.org/"
 
 
 def mainlist(item):
@@ -156,18 +156,18 @@ def findvideos(item):
 
     data = get_source(item.url)
     video_info = scrapertools.find_single_match(data, "load_player\('(.*?)','(.*?)'\);")
-    movie_info = scrapertools.find_single_match(item.url, 'http:\/\/ver-peliculas\.io\/peliculas\/(\d+)-(.*?)-\d{'
+    movie_info = scrapertools.find_single_match(item.url, 'http:\/\/ver-peliculas\.org\/peliculas\/(\d+)-(.*?)-\d{'
                                                           '4}-online\.')
     movie_id = movie_info[0]
     movie_name = movie_info[1]
     sub = video_info[1]
-    url_base = 'http://ver-peliculas.io/core/api.php?id=%s&slug=%s' % (movie_id, movie_name)
+    url_base = 'http://ver-peliculas.org/core/api.php?id=%s&slug=%s' % (movie_id, movie_name)
     data = httptools.downloadpage(url_base).data
     json_data = jsontools.load(data)
     video_list = json_data['lista']
     itemlist = []
     for videoitem in video_list:
-        video_base_url = 'http://ver-peliculas.io/core/videofinal.php'
+        video_base_url = 'http://ver-peliculas.org/core/videofinal.php'
         if video_list[videoitem] != None:
             video_lang = video_list[videoitem]
             languages = ['latino', 'spanish', 'subtitulos']
@@ -184,12 +184,12 @@ def findvideos(item):
 
                         for video_link in sources:
                             url = video_link['sources']
-                            if 'onevideo' in url:
-                                data = get_source(url)
-                                g_urls = servertools.findvideos(data=data)
-                                url = g_urls[0][1]
-                                server = g_urls[0][0]
-                            if url not in duplicated:
+                            # if 'onevideo' in url:
+                                # data = get_source(url)
+                                # g_urls = servertools.findvideos(data=data)
+                                # url = g_urls[0][1]
+                                # server = g_urls[0][0]
+                            if url not in duplicated and server!='drive':
                                 lang = lang.capitalize()
                                 if lang == 'Spanish':
                                     lang = 'Español'
