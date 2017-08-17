@@ -113,6 +113,7 @@ class platform(Platformtools):
         JsonData["data"]["viewmode"] = parent_item.viewmode
         JsonData["data"]["category"] = parent_item.category.capitalize()
         JsonData["data"]["host"] = self.controller.host
+        if parent_item.url: JsonData["data"]["url"] = parent_item.url
 
         # Recorremos el itemlist
         for item in itemlist:
