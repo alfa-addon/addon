@@ -222,7 +222,7 @@ def show_result(item):
     if item.adult and config.get_setting("adult_request_password"):
         # Solicitar contraseña
         tecleado = platformtools.dialog_input("", "Contraseña para canales de adultos", True)
-        if tecleado is None or tecleado != config.get_setting("adult_pin"):
+        if tecleado is None or tecleado != config.get_setting("adult_password"):
             return []
 
     item.channel = item.__dict__.pop('from_channel')
