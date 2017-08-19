@@ -14,9 +14,16 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
+from core import tmdb
+
+__channel__ = "ver-peliculas"
 
 host = "http://ver-peliculas.org/"
 
+try:
+    __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
+except:
+    __modo_grafico__ = True
 
 def mainlist(item):
     logger.info()
@@ -115,19 +122,22 @@ def listado(item):
     logger.info()
     itemlist = []
     data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url).data)
-    logger.debug(data)
+    # logger.debug(data)
     pattern = '<a href="([^"]+)"[^>]+><img (?:src)?(?:data-original)?="([^"]+)".*?alt="([^"]+)"'
     matches = re.compile(pattern, re.DOTALL).findall(data)
 
     for url, thumb, title in matches:
-        title = title.replace("Película", "", 1)
+        year = scrapertools.find_single_match(url, '-(\d+)-online')
+        title = title.replace("Película", "", 1).partition(" /")[0].partition(":")[0]
         itemlist.append(Item(channel=item.channel,
                              action="findvideos",
                              title=title,
+                             infoLabels={"year": year},
                              url=url,
                              thumbnail=thumb,
                              contentTitle=title
                              ))
+    tmdb.set_infoLabels(itemlist, __modo_grafico__)
 
     pagination = scrapertools.find_single_match(data, '<ul class="pagination">(.*?)</ul>')
     if pagination:
@@ -139,6 +149,13 @@ def listado(item):
                                  title=">> Página siguiente",
                                  url=url,
                                  thumbnail=get_thumb("next.png")))
+
+        for item in itemlist:
+            if item.infoLabels['plot'] == '':
+                data = httptools.downloadpage(item.url).data
+                item.plot = scrapertools.find_single_match(data, '<div class="desc">([^<]+)</div>').strip()
+                item.fanart = scrapertools.find_single_match(data, '<meta property="og:image" content="([^"]+)"/>')
+
 
     return itemlist
 
