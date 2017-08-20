@@ -381,10 +381,10 @@ def check_value(channel, itemlist):
         quality_list = channel_node['quality'] = list()
 
     for item in itemlist:
-        if item.server not in server_list:
+        if item.server not in server_list and item.server !='':
             server_list.append(item.server)
             change = True
-        if item.quality not in quality_list:
+        if item.quality not in quality_list and item.quality !='':
             quality_list.append(item.quality)
             change = True
 

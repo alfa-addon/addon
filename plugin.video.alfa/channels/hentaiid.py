@@ -17,7 +17,6 @@ def mainlist(item):
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="series", title="Novedades",
                          url=urlparse.urljoin(CHANNEL_HOST, "archivos/h2/"), extra="novedades"))
-    itemlist.append(Item(channel=item.channel, action="letras", title="Por orden alfabético"))
     itemlist.append(Item(channel=item.channel, action="generos", title="Por géneros", url=CHANNEL_HOST))
     itemlist.append(Item(channel=item.channel, action="series", title="Sin Censura",
                          url=urlparse.urljoin(CHANNEL_HOST, "archivos/sin-censura/")))
@@ -25,20 +24,6 @@ def mainlist(item):
                          url=urlparse.urljoin(CHANNEL_HOST, "archivos/hight-definition/")))
     itemlist.append(Item(channel=item.channel, action="series", title="Mejores Hentais",
                          url=urlparse.urljoin(CHANNEL_HOST, "archivos/ranking-hentai/")))
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar",
-                         url=urlparse.urljoin(CHANNEL_HOST, "?s=")))
-
-    return itemlist
-
-
-def letras(item):
-    logger.info()
-
-    itemlist = []
-
-    for letra in '0ABCDEFGHIJKLMNOPQRSTUVWXYZ':
-        itemlist.append(Item(channel=item.channel, action="series", title=letra,
-                             url=urlparse.urljoin(CHANNEL_HOST, "/?s=letra-%s" % letra.replace("0", "num"))))
 
     return itemlist
 
@@ -47,49 +32,34 @@ def generos(item):
     logger.info()
 
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}", "", data)
+    data = re.sub(r"\n|\r|\t|\s{2}", "", httptools.downloadpage(item.url).data)
 
-    data = scrapertools.get_match(data, "<div class='cccon'>(.*?)</div><div id=\"myslides\">")
-    patron = "<a.+? href='/([^']+)'>(.*?)</a>"
+    pattern = 'id="hentai2"><div[^>]+>(.*?)</div></div>'
+    data = scrapertools.find_single_match(data, pattern)
+
+    patron = 'href="([^"]+)"[^>]+>(.*?)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedtitle in matches:
-        title = scrapertools.entityunescape(scrapedtitle)
-        url = urlparse.urljoin(item.url, scrapedurl)
+    for url, title in matches:
         # logger.debug("title=[{0}], url=[{1}]".format(title, url))
-
         itemlist.append(Item(channel=item.channel, action="series", title=title, url=url))
 
     return itemlist
 
 
-def search(item, texto):
-    logger.info()
-    if item.url == "":
-        item.url = urlparse.urljoin(CHANNEL_HOST, "animes/?buscar=")
-    texto = texto.replace(" ", "+")
-    item.url = "%s%s" % (item.url, texto)
-
-    try:
-        return series(item)
-    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("%s" % line)
-        return []
-
-
 def series(item):
     logger.info()
 
-    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|\s{2}", "", httptools.downloadpage(item.url).data)
 
-    patron = '<div class="post" id="post"[^<]+<center><h1 class="post-title entry-title"[^<]+<a href="([^"]+)">' \
-             '(.*?)</a>[^<]+</h1></center>[^<]+<div[^<]+</div>[^<]+<div[^<]+<div.+?<img src="([^"]+)"'
+    pattern = "<div class='wp-pagenavi'>(.*?)</div>"
+    pagination = scrapertools.find_single_match(data, pattern)
 
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    pattern = '<div class="col-xs-12 col-md-12 col-lg-9px-3"><ul>(.*?)</ul><div class="clearfix">'
+    data = scrapertools.find_single_match(data, pattern)
+
+    pattern = '<a href="([^"]+)".*?<img src="([^"]+)" title="([^"]+)"'
+    matches = re.compile(pattern, re.DOTALL).findall(data)
     itemlist = []
 
     if item.extra == "novedades":
@@ -97,25 +67,20 @@ def series(item):
     else:
         action = "episodios"
 
-    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
-        title = scrapertools.unescape(scrapedtitle)
+    for url, thumbnail, title in matches:
         fulltitle = title
-        url = urlparse.urljoin(item.url, scrapedurl)
-        thumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
         show = title
         # logger.debug("title=[{0}], url=[{1}], thumbnail=[{2}]".format(title, url, thumbnail))
         itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                              show=show, fulltitle=fulltitle, fanart=thumbnail, folder=True))
 
-    patron = '</span><a class="page larger" href="([^"]+)"'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for match in matches:
-        if len(matches) > 0:
-            scrapedurl = match
-            scrapedtitle = ">> Pagina Siguiente"
+    if pagination:
+        page = scrapertools.find_single_match(pagination, '>Página\s*(\d+)\s*de\s*\d+<')
+        pattern = 'href="([^"]+)">%s<' % (int(page) + 1)
+        url_page = scrapertools.find_single_match(pagination, pattern)
 
-            itemlist.append(Item(channel=item.channel, action="series", title=scrapedtitle, url=scrapedurl,
-                                 folder=True, viewmode="movies_with_plot"))
+        if url_page:
+            itemlist.append(Item(channel=item.channel, action="series", title=">> Página Siguiente", url=url_page))
 
     return itemlist
 
@@ -124,9 +89,11 @@ def episodios(item):
     logger.info()
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, '<div class="listanime">(.*?)</div>')
-    patron = '<a href="([^"]+)">([^<]+)</a>'
+    data = re.sub(r"\n|\r|\t|\s{2}", "", httptools.downloadpage(item.url).data)
+    pattern = '<div class="box-entry-title text-center">Lista de Capítulos</div>(.*?)</div></div>'
+
+    data = scrapertools.find_single_match(data, pattern)
+    patron = '<a href="([^"]+)"[^>]+>([^<]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
@@ -136,10 +103,9 @@ def episodios(item):
         plot = item.plot
 
         # logger.debug("title=[{0}], url=[{1}], thumbnail=[{2}]".format(title, url, thumbnail))
-
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url,
                              thumbnail=thumbnail, plot=plot, show=item.show, fulltitle="%s %s" % (item.show, title),
-                             fanart=thumbnail, viewmode="movies_with_plot", folder=True))
+                             fanart=thumbnail))
 
     return itemlist
 
@@ -148,7 +114,8 @@ def findvideos(item):
     logger.info()
 
     data = httptools.downloadpage(item.url).data
-    patron = '<div id="tab\d".+?>[^<]+<[iframe|IFRAME].*?[src|SRC]="([^"]+)"'
+
+    patron = '<(?:iframe)?(?:IFRAME)?\s*(?:src)?(?:SRC)?="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for url in matches:
