@@ -6,7 +6,6 @@
 import os
 import re
 import sys
-import threading
 
 PLATFORM_NAME = "mediaserver"
 PLUGIN_NAME = "alfa"
@@ -84,14 +83,6 @@ def open_settings():
                     platformtools.dialog_ok("Canales para adultos",
                                             "Los campos 'Nueva contraseña' y 'Confirmar nueva contraseña' no coinciden."
                                             , "Entre de nuevo en 'Preferencias' para cambiar la contraseña")
-
-            # Solo esta sesion:
-            # id = threading.current_thread().name
-            # if get_setting("adult_mode") == 2:
-            #     adult_setting[id] = True
-            #     set_setting("adult_mode", 0)
-            # else:
-            #     adult_setting = {}
 
         else:
             platformtools.dialog_ok("Canales para adultos", "La contraseña no es correcta.",
