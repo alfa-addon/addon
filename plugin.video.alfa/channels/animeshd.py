@@ -8,19 +8,6 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import logger
-from channels import autoplay
-from channels import filtertools
-
-IDIOMAS = {'Latino': 'LAT', 'Castellano':'CAST','Subtitulado': 'VOS'}
-list_language = IDIOMAS.values()
-logger.debug('lista_language: %s' % list_language)
-
-list_quality = ['default']
-list_servers = [
-    'rapidvideo',
-    'downace',
-    'openload'
-]
 
 tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
            "Drama": "https://s16.postimg.org/94sia332d/drama.png",
@@ -48,8 +35,6 @@ headers = [['User-Agent', 'Mozilla/50.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/
 
 def mainlist(item):
     logger.info()
-
-    autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
 
     itemlist.append(item.clone(title="Ultimas",
@@ -79,8 +64,6 @@ def mainlist(item):
                                thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
                                fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
                                ))
-
-    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -178,16 +161,10 @@ def episodios(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedlang, scrapedtitle in matches:
-        language = IDIOMAS[scrapedlang]
-
+        language = scrapedlang
         title = scrapedtitle + ' (%s)' % language
         url = scrapedurl
-        itemlist.append(item.clone(title=title,
-                                   url=url,
-                                   action='findvideos',
-                                   language=language,
-                                   quality ='default'
-                                   ))
+        itemlist.append(item.clone(title=title, url=url, action='findvideos', language=language))
     return itemlist
 
 
@@ -203,13 +180,6 @@ def findvideos(item):
         videoitem.channel = item.channel
         videoitem.title = title
         videoitem.action = 'play'
-        videoitem.language = item.language
 
-        # Requerido para FilterTools
 
-        itemlist = filtertools.get_links(itemlist, item, list_language)
-
-        # Requerido para AutoPlay
-
-        autoplay.start(itemlist, item)
     return itemlist
