@@ -61,30 +61,3 @@ def search(item, texto):
         return todas(item)
     else:
         return []
-
-
-def findvideos(item):
-    logger.info()
-
-    itemlist = []
-
-    data = httptools.downloadpage(item.url).data
-    patron = '<li.*?<a href="([^"]+)" target="_blank"><i class="icon-metro online"><\/i><span>Ver.*?<\/span><\/a> <\/li>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl in matches:
-        title = item.title
-        url = scrapedurl
-        itemlist.append(item.clone(title=title, url=url, action="play"))
-
-    return itemlist
-
-
-def play(item):
-    logger.info()
-    itemlist = []
-    item.url = item.url.replace(' ', '%20')
-    data = httptools.downloadpage(item.url, add_referer=True).data
-    url = scrapertools.find_single_match(data, '<iframe.*?src="([^"]+)".*?frameborder="0"')
-    itemlist = servertools.find_video_items(data=data)
-
-    return itemlist

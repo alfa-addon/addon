@@ -38,6 +38,17 @@
       "visible": true
     },
     {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar"
+      ]
+    },
+    {
       "id": "include_in_newest_anime",
       "type": "bool",
       "label": "Incluir en Novedades - Episodios de anime",

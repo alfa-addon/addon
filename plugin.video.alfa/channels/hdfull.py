@@ -12,6 +12,20 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
+from channels import filtertools
+from channels import autoplay
+
+IDIOMAS = {'LAT': 'Latino', 'ESP': 'Español', 'ESPSUB': 'VOS', 'ENGSUB' : 'VOSE'}
+list_language = IDIOMAS.values()
+list_quality = ['RHDTV', 'HD0180M', 'HD720M', 'TS']
+list_servers = [
+    'openload',
+    'powvideo',
+    'streamplay',
+    'streamcloud',
+    'nowvideo'
+
+]
 
 host = "http://hdfull.tv"
 
@@ -42,7 +56,7 @@ def login():
 
 def mainlist(item):
     logger.info()
-
+    autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
 
     itemlist.append(Item(channel=item.channel, action="menupeliculas", title="Películas", url=host, folder=True))
@@ -56,6 +70,7 @@ def mainlist(item):
         login()
         itemlist.append(Item(channel=item.channel, action="settingCanal", title="Configuración...", url=""))
 
+    autoplay.show_option(item.channel, itemlist)
     return itemlist
 
 
@@ -465,7 +480,8 @@ def episodios(item):
                 'id'] + ";3"
 
             itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url,
-                                 thumbnail=thumbnail, show=item.show, folder=True, contentType="episode"))
+                                 thumbnail=thumbnail, show=item.show, folder=True, contentType="episode",
+                                 context =autoplay.context))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=url_targets,
@@ -696,11 +712,13 @@ def findvideos(item):
             fanart = scrapertools.find_single_match(data, '<div style="background-image.url. ([^\s]+)')
             if account:
                 url += "###" + id + ";" + type
-
+            logger.debug('idioma: %s'%idioma)
+            logger.debug('IDIOMAS[idioma]: %s' % IDIOMAS[idioma])
             enlaces.append(
                 Item(channel=item.channel, action="play", title=title, fulltitle=title, url=url, thumbnail=thumbnail,
                      plot=plot, fanart=fanart, show=item.show, folder=True, server=servername, infoLabels=infolabels,
-                     contentTitle=item.contentTitle, contentType=item.contentType, tipo=option))
+                     contentTitle=item.contentTitle, contentType=item.contentType, tipo=option, language =
+                     IDIOMAS[idioma], quality=calidad, context= autoplay.context))
 
     enlaces.sort(key=lambda it: it.tipo, reverse=True)
     itemlist.extend(enlaces)
@@ -712,6 +730,9 @@ def findvideos(item):
             itemlist.extend(file_cine_library(item, url_targets))
         except:
             pass
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+    autoplay.start(itemlist, item)
 
     return itemlist
 

@@ -9,12 +9,30 @@ from core import jsontools
 from core import scrapertools
 from core.item import Item
 from platformcode import logger
+from channels import filtertools
+from channels import autoplay
+
+list_language = ['No filtrar']
+logger.debug('lista_language: %s' % list_language)
+
+list_quality = ['default']
+list_servers = [
+    'izanagi',
+    'yourupload',
+    'okru',
+    'netutv',
+    'openload',
+    'streamango',
+    'mp4upload'
+]
 
 HOST = "https://animeflv.net/"
 
 
 def mainlist(item):
     logger.info()
+
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()
 
@@ -34,6 +52,8 @@ def mainlist(item):
                          extra="status"))
 
     itemlist = renumbertools.show_option(item.channel, itemlist)
+
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -131,7 +151,7 @@ def novedades_episodios(item):
         thumbnail = urlparse.urljoin(HOST, thumbnail)
 
         new_item = Item(channel=item.channel, action="findvideos", title=title, url=url, show=show, thumbnail=thumbnail,
-                        fulltitle=title)
+                        fulltitle=title, context = autoplay.context)
 
         itemlist.append(new_item)
 
@@ -155,7 +175,7 @@ def novedades_anime(item):
         thumbnail = urlparse.urljoin(HOST, thumbnail)
 
         new_item = Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
-                        fulltitle=title, plot=plot)
+                        fulltitle=title, plot=plot, context = autoplay.context)
         if _type != "Película":
             new_item.show = title
             new_item.context = renumbertools.context(item)
@@ -189,7 +209,7 @@ def listado(item):
         thumbnail = urlparse.urljoin(HOST, thumbnail)
 
         new_item = Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
-                        fulltitle=title, plot=plot)
+                        fulltitle=title, plot=plot, context = autoplay.context)
 
         if _type == "Anime":
             new_item.show = title
@@ -242,7 +262,7 @@ def episodios(item):
             title = "%s: %sx%s" % (item.title, season, str(episode).zfill(2))
 
             itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumb, fulltitle=title,
-                                       fanart=item.thumbnail, contentType="episode"))
+                                       fanart=item.thumbnail, contentType="episode", context = autoplay.context))
     else:
         # no hay thumbnail
         matches = re.compile('<a href="(/ver/[^"]+)"[^>]+>(.*?)<', re.DOTALL).findall(data)
@@ -299,11 +319,15 @@ def findvideos(item):
                 if video_urls:
                     video_urls.sort(key=lambda v: int(v[0]))
                     itemlist.append(item.clone(title="Enlace encontrado en %s" % server, action="play",
-                                               video_urls=video_urls))
+                                               video_urls=video_urls, language='No filtrar', quality ='default',
+                                               server=server))
             else:
                 url = scrapertools.find_single_match(data, '"file":"([^"]+)"')
                 if url:
-                    itemlist.append(item.clone(title="Enlace encontrado en %s" % server, url=url, action="play"))
+                    if server == 'izanagi':
+                        server = 'directo'
+                    itemlist.append(item.clone(title="Enlace encontrado en %s" % server, url=url, action="play",
+                                               language='No filtrar', quality ='default', server=server))
 
         else:
             aux_url.append(e)
@@ -314,6 +338,14 @@ def findvideos(item):
         videoitem.fulltitle = item.fulltitle
         videoitem.channel = item.channel
         videoitem.thumbnail = item.thumbnail
+
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
 
     return itemlist
 

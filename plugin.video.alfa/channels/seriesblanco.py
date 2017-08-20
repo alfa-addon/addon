@@ -10,15 +10,20 @@ from core import scrapertoolsV2
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
+from channels import autoplay
 
 HOST = "http://seriesblanco.com/"
 IDIOMAS = {'es': 'Español', 'en': 'Inglés', 'la': 'Latino', 'vo': 'VO', 'vos': 'VOS', 'vosi': 'VOSI', 'otro': 'OVOS'}
 list_idiomas = IDIOMAS.values()
 CALIDADES = ['SD', 'HDiTunes', 'Micro-HD-720p', 'Micro-HD-1080p', '1080p', '720p']
+list_servers =['youwatch','powvideo', 'openload', 'streamplay', 'streaminto', 'flashx', 'gamovideo', 'nowvideo',
+               'rockfile']
 
 
 def mainlist(item):
     logger.info()
+
+    autoplay.init(item.channel, list_servers, CALIDADES)
 
     thumb_series = get_thumb("channels_tvshow.png")
     thumb_series_az = get_thumb("channels_tvshow_az.png")
@@ -44,6 +49,7 @@ def mainlist(item):
              thumbnail=thumb_buscar))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, CALIDADES)
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -199,7 +205,8 @@ def episodios(item):
         display_title = "%s - %s %s" % (item.show, title, idiomas)
         # logger.debug("Episode found %s: %s" % (display_title, urlparse.urljoin(HOST, url)))
         itemlist.append(item.clone(title=display_title, url=urlparse.urljoin(HOST, url),
-                                   action="findvideos", plot=plot, fanart=fanart, language=filter_lang))
+                                   action="findvideos", plot=plot, fanart=fanart, language=filter_lang,
+                                   context = autoplay.context))
 
     itemlist = filtertools.get_links(itemlist, item, list_idiomas, CALIDADES)
 
@@ -248,7 +255,7 @@ def parse_videos(item, type_str, data):
             itemlist.append(
                 item.clone(title=title, fulltitle=item.title, url=urlparse.urljoin(HOST, v_fields.get("link")),
                            action="play", language=IDIOMAS.get(v_fields.get("language"), "OVOS"),
-                           quality=quality))
+                           quality=quality, server= v_fields.get("server")))
 
         if len(itemlist) > 0:
             return itemlist
@@ -283,6 +290,14 @@ def findvideos(item):
         list_links.extend(parse_videos(item, "Descargar", online[-1]))
 
     list_links = filtertools.get_links(list_links, item, list_idiomas, CALIDADES)
+
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(list_links, item, list_idiomas)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(list_links, item)
 
     return list_links
 

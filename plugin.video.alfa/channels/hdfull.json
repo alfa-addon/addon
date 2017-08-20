@@ -50,6 +50,21 @@
       "visible": true
     },
     {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "Latino",
+        "Español",
+        "VOS",
+        "VOSE"
+      ]
+    },
+    {
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
