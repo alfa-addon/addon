@@ -114,8 +114,8 @@ def open_settings():
                     set_setting('adult_password', settings_post['adult_aux_new_password1'])
                 else:
                     platformtools.dialog_ok("Canales para adultos",
-                                            "Los campos 'Nueva contraseña' y 'Confirmar nueva contraseña' no coinciden.",
-                                            "Entre de nuevo en 'Preferencias' para cambiar la contraseña")
+                                            "Los campos 'Nueva contraseña' y 'Confirmar nueva contraseña' no coinciden."
+                                            , "Entre de nuevo en 'Preferencias' para cambiar la contraseña")
 
         else:
             platformtools.dialog_ok("Canales para adultos", "La contraseña no es correcta.",
@@ -133,8 +133,8 @@ def open_settings():
     # si se ha cambiado la ruta de la videoteca llamamos a comprobar directorios para que lo cree y pregunte
     # automaticamente si configurar la videoteca
     if settings_pre.get("videolibrarypath", None) != settings_post.get("videolibrarypath", None) or \
-                    settings_pre.get("folder_movies", None) != settings_post.get("folder_movies", None) or \
-                    settings_pre.get("folder_tvshows", None) != settings_post.get("folder_tvshows", None):
+        settings_pre.get("folder_movies", None) != settings_post.get("folder_movies", None) or \
+            settings_pre.get("folder_tvshows", None) != settings_post.get("folder_tvshows", None):
         verify_directories_created()
 
     else:
@@ -165,10 +165,10 @@ def get_setting(name, channel="", server="", default=None):
     @param server: nombre del servidor
     @type server: str
     @param default: valor devuelto en caso de que no exista el parametro name
-    @type default: cualquiera
+    @type default: any
 
     @return: El valor del parametro 'name'
-    @rtype: El tipo del valor del parametro
+    @rtype: any
 
     """
 
@@ -205,7 +205,8 @@ def get_setting(name, channel="", server="", default=None):
             return False
         else:
             # special case return as str
-            if name in ["adult_password", "adult_aux_intro_password", "adult_aux_new_password1", "adult_aux_new_password2"]:
+            if name in ["adult_password", "adult_aux_intro_password", "adult_aux_new_password1",
+                        "adult_aux_new_password2"]:
                 return value
             else:
                 try:
@@ -395,7 +396,7 @@ def verify_directories_created():
                 for f in files:
                     if not filetools.exists(filetools.join(default, folder, f)) or \
                             (filetools.getsize(filetools.join(default, folder, f)) !=
-                                 filetools.getsize(filetools.join(default, '720p', f))):
+                                filetools.getsize(filetools.join(default, '720p', f))):
                         filetools.copy(filetools.join(default, '720p', f),
                                        filetools.join(default, folder, f),
                                        True)

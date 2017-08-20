@@ -22,7 +22,7 @@ websocket_port = config.get_setting("websocket.port")
 myip = config.get_local_ip()
 
 
-def ThreadNameWrap(func):
+def thread_name_wrap(func):
     @wraps(func)
     def bar(*args, **kw):
         if "name" not in kw:
@@ -32,7 +32,7 @@ def ThreadNameWrap(func):
     return bar
 
 
-threading.Thread.__init__ = ThreadNameWrap(threading.Thread.__init__)
+threading.Thread.__init__ = thread_name_wrap(threading.Thread.__init__)
 
 if sys.version_info < (2, 7, 11):
     import ssl
@@ -40,7 +40,7 @@ if sys.version_info < (2, 7, 11):
     ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def MostrarInfo():
+def show_info():
     os.system('cls' if os.name == 'nt' else 'clear')
     print ("--------------------------------------------------------------------")
     print ("Alfa Iniciado")
@@ -54,7 +54,6 @@ def MostrarInfo():
     print ("Bookmark Path     : " + config.get_setting("bookmarkpath"))
     print ("Videolibrary Path : " + config.get_setting("videolibrarypath"))
     print ("--------------------------------------------------------------------")
-    conexiones = []
     controllers = platformtools.controllers
     for a in controllers:
         try:
@@ -68,8 +67,8 @@ def start():
     logger.info("server init...")
     config.verify_directories_created()
     try:
-        HTTPServer.start(MostrarInfo)
-        WebSocket.start(MostrarInfo)
+        HTTPServer.start(show_info)
+        WebSocket.start(show_info)
 
         # Da por levantado el servicio
         logger.info("--------------------------------------------------------------------")
@@ -84,10 +83,10 @@ def start():
         logger.info("Bookmark Path     : " + config.get_setting("bookmarkpath"))
         logger.info("VideoLibrary Path : " + config.get_setting("videolibrarypath"))
         logger.info("--------------------------------------------------------------------")
-        MostrarInfo()
+        show_info()
 
-        start = True
-        while start:
+        flag = True
+        while flag:
             time.sleep(1)
 
     except KeyboardInterrupt:
@@ -96,7 +95,7 @@ def start():
         print 'Deteniendo el servidor WebSocket...'
         WebSocket.stop()
         print 'Alfa Detenido'
-        start = False
+        flag = False
 
 
 # Inicia el programa

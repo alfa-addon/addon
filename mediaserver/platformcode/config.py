@@ -5,13 +5,13 @@
 
 import os
 import re
+import sys
 import threading
 
 PLATFORM_NAME = "mediaserver"
 PLUGIN_NAME = "alfa"
 
 settings_dic = {}
-settings_types = {}
 adult_setting = {}
 
 
@@ -52,14 +52,14 @@ def get_system_platform():
 
 
 def open_settings():
-    Opciones = []
+    options = []
     from xml.dom import minidom
     settings = open(menufilepath, 'rb').read()
     xmldoc = minidom.parseString(settings)
     for category in xmldoc.getElementsByTagName("category"):
         for setting in category.getElementsByTagName("setting"):
-            Opciones.append(dict(setting.attributes.items() + [(u"category", category.getAttribute("label")),
-                                                               (u"value", get_setting(setting.getAttribute("id")))]))
+            options.append(dict(setting.attributes.items() + [(u"category", category.getAttribute("label")),
+                                                              (u"value", get_setting(setting.getAttribute("id")))]))
 
     from platformcode import platformtools
     global adult_setting
@@ -69,7 +69,7 @@ def open_settings():
     adult_mode = get_setting('adult_mode')
     adult_request_password = get_setting('adult_request_password')
 
-    platformtools.open_settings(Opciones)
+    platformtools.open_settings(options)
 
     # Hemos accedido a la seccion de Canales para adultos
     if get_setting('adult_aux_intro_password'):
@@ -82,22 +82,16 @@ def open_settings():
                     set_setting('adult_password', get_setting('adult_aux_new_password1'))
                 else:
                     platformtools.dialog_ok("Canales para adultos",
-                                            "Los campos 'Nueva contraseña' y 'Confirmar nueva contraseña' no coinciden.",
-                                            "Entre de nuevo en 'Preferencias' para cambiar la contraseña")
-
-            # Fijar adult_pin
-            adult_pin = ""
-            if get_setting("adult_request_password") == True:
-                adult_pin = get_setting("adult_password")
-            set_setting("adult_pin", adult_pin)
+                                            "Los campos 'Nueva contraseña' y 'Confirmar nueva contraseña' no coinciden."
+                                            , "Entre de nuevo en 'Preferencias' para cambiar la contraseña")
 
             # Solo esta sesion:
-            id = threading.current_thread().name
-            if get_setting("adult_mode") == 2:
-                adult_setting[id] = True
-                set_setting("adult_mode", "0")
-            else:
-                adult_setting = {}
+            # id = threading.current_thread().name
+            # if get_setting("adult_mode") == 2:
+            #     adult_setting[id] = True
+            #     set_setting("adult_mode", 0)
+            # else:
+            #     adult_setting = {}
 
         else:
             platformtools.dialog_ok("Canales para adultos", "La contraseña no es correcta.",
@@ -112,24 +106,30 @@ def open_settings():
         set_setting('adult_aux_new_password2', '')
 
 
-def get_setting(name, channel="", server=""):
+def get_setting(name, channel="", server="", default=None):
     """
     Retorna el valor de configuracion del parametro solicitado.
 
-    Devuelve el valor del parametro 'name' en la configuracion global o en la configuracion propia del canal 'channel'.
+    Devuelve el valor del parametro 'name' en la configuracion global, en la configuracion propia del canal 'channel'
+    o en la del servidor 'server'.
 
-    Si se especifica el nombre del canal busca en la ruta \addon_data\plugin.video.alfa\settings_channels el
-    archivo channel_data.json y lee el valor del parametro 'name'. Si el archivo channel_data.json no existe busca en la
-     carpeta channels el archivo channel.xml y crea un archivo channel_data.json antes de retornar el valor solicitado.
-    Si el parametro 'name' no existe en channel_data.json lo busca en la configuracion global y si ahi tampoco existe
-    devuelve un str vacio.
+    Los parametros channel y server no deben usarse simultaneamente. Si se especifica el nombre del canal se devolvera
+    el resultado de llamar a channeltools.get_channel_setting(name, channel, default). Si se especifica el nombre del
+    servidor se devolvera el resultado de llamar a servertools.get_channel_setting(name, server, default). Si no se
+    especifica ninguno de los anteriores se devolvera el valor del parametro en la configuracion global si existe o
+    el valor default en caso contrario.
 
-    Parametros:
-    name -- nombre del parametro
-    channel [opcional] -- nombre del canal
+    @param name: nombre del parametro
+    @type name: str
+    @param channel: nombre del canal
+    @type channel: str
+    @param server: nombre del servidor
+    @type server: str
+    @param default: valor devuelto en caso de que no exista el parametro name
+    @type default: any
 
-    Retorna:
-    value -- El valor del parametro 'name'
+    @return: El valor del parametro 'name'
+    @rtype: any
 
     """
 
@@ -138,7 +138,7 @@ def get_setting(name, channel="", server=""):
 
         # logger.info("config.get_setting reading channel setting '"+name+"' from channel json")
         from core import channeltools
-        value = channeltools.get_channel_setting(name, channel)
+        value = channeltools.get_channel_setting(name, channel, default)
         # logger.info("config.get_setting -> '"+repr(value)+"'")
 
         return value
@@ -146,7 +146,7 @@ def get_setting(name, channel="", server=""):
     elif server:
         # logger.info("config.get_setting reading server setting '"+name+"' from server json")
         from core import servertools
-        value = servertools.get_server_setting(name, server)
+        value = servertools.get_server_setting(name, server, default)
         # logger.info("config.get_setting -> '"+repr(value)+"'")
 
         return value
@@ -155,31 +155,28 @@ def get_setting(name, channel="", server=""):
     else:
         # logger.info("config.get_setting reading main setting '"+name+"'")
         global settings_dic
-        value = settings_dic.get(name, "")
+        value = settings_dic.get(name, default)
+        if value == default:
+            return value
 
-        if name == "adult_mode":
-            global adult_setting
-            id = threading.current_thread().name
-            if adult_setting.get(id) == True:
-                value = "2"
-
+        # logger.info("config.get_setting -> '"+value+"'")
         # hack para devolver el tipo correspondiente
-        global settings_types
+        if value == "true":
+            return True
+        elif value == "false":
+            return False
+        else:
+            # special case return as str
+            if name in ["adult_password", "adult_aux_intro_password", "adult_aux_new_password1",
+                        "adult_aux_new_password2"]:
+                return value
+            else:
+                try:
+                    value = int(value)
+                except ValueError:
+                    pass
 
-        if settings_types.get(name) in ['enum', 'number']:
-            value = int(value)
-
-        elif settings_types.get(name) == 'bool':
-            value = value == 'true'
-
-        elif not settings_types.has_key(name):
-            try:
-                t = eval(value)
-                value = t[0](t[1])
-            except:
-                value = None
-
-        return value
+                return value
 
 
 def set_setting(name, value, channel="", server=""):
@@ -214,25 +211,16 @@ def set_setting(name, value, channel="", server=""):
         return servertools.set_server_setting(name, value, server)
     else:
         global settings_dic
-        global settings_types
 
-        if settings_types.get(name) == 'bool':
+        if isinstance(value, bool):
             if value:
-                new_value = "true"
+                value = "true"
             else:
-                new_value = "false"
+                value = "false"
+        elif isinstance(value, (int, long)):
+            value = str(value)
 
-        elif settings_types.get(name):
-            new_value = str(value)
-
-        else:
-            if isinstance(value, basestring):
-                new_value = "(%s, %s)" % (type(value).__name__, repr(value))
-            else:
-                new_value = "(%s, %s)" % (type(value).__name__, value)
-
-        settings_dic[name] = new_value
-
+        settings_dic[name] = value
         from xml.dom import minidom
         # Crea un Nuevo XML vacio
         new_settings = minidom.getDOMImplementation().createDocument(None, "settings", None)
@@ -339,11 +327,9 @@ def get_local_ip():
 
 def load_settings():
     global settings_dic
-    global settings_types
     defaults = {}
     from xml.etree import ElementTree
 
-    encontrado = False
     # Lee el archivo XML (si existe)
     if os.path.exists(configfilepath):
         settings = open(configfilepath, 'rb').read()
@@ -357,10 +343,9 @@ def load_settings():
         for target in category.findall("setting"):
             if target.get("id"):
                 defaults[target.get("id")] = target.get("default")
-                settings_types[target.get("id")] = target.get("type")
 
     for key in defaults:
-        if not key in settings_dic:
+        if key not in settings_dic:
             settings_dic[key] = defaults[key]
     set_settings(settings_dic)
 
@@ -387,7 +372,14 @@ def set_settings(JsonRespuesta):
 # Fichero de configuración
 menufilepath = os.path.join(get_runtime_path(), "resources", "settings.xml")
 configfilepath = os.path.join(get_data_path(), "settings.xml")
-if not os.path.exists(get_data_path()): os.mkdir(get_data_path())
+if not os.path.exists(get_data_path()):
+    os.mkdir(get_data_path())
 # Literales
 TRANSLATION_FILE_PATH = os.path.join(get_runtime_path(), "resources", "language", "Spanish", "strings.xml")
 load_settings()
+
+# modo adulto:
+# sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie sesión
+# si es == 2 lo desactivamos.
+if get_setting("adult_mode") == 2:
+    set_setting("adult_mode", 0)
