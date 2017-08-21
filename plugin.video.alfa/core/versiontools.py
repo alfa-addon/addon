@@ -14,7 +14,7 @@ def get_current_plugin_version():
 
 
 def get_current_plugin_version_tag():
-    return "1.5.7"
+    return "1.7.0"
 
 
 def get_current_plugin_date():

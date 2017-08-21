@@ -447,7 +447,7 @@ def mkdir(path):
         logger.error("ERROR al crear el directorio: %s" % path)
         logger.error(traceback.format_exc())
         # platformtools.dialog_notification("Error al crear el directorio", path)
-        platformtools.dialog_ok("Alfa", "IMPORTANTE - Instale y Ejecute el script 'Alfa - fix settings', que se encuentra en el repositorio de Alfa y "
+        platformtools.dialog_ok("Alfa", "[COLOR red][B]IMPORTANTE[/B][/COLOR] - Instale y Ejecute el script 'Fix version 1.7.0', que se encuentra en el repositorio de Alfa y "
                                         "vuelva a entrar en el addon, [B]si no lo hace tendrá problemas[/B]")
         return False
     else:
