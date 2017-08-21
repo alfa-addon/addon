@@ -14,11 +14,11 @@ def get_current_plugin_version():
 
 
 def get_current_plugin_version_tag():
-    return "4.3.0-beta1"
+    return "1.5.7"
 
 
 def get_current_plugin_date():
-    return "30/06/2017"
+    return "22/08/2017"
 
 
 def get_current_channels_version():

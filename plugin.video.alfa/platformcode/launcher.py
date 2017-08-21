@@ -129,9 +129,9 @@ def run(item=None):
 
                 # Parental control
                 # If it is an adult channel, and user has configured pin, asks for it
-                if channeltools.is_adult(item.channel) and config.get_setting("adult_pin") != "":
+                if channeltools.is_adult(item.channel) and config.get_setting("adult_request_password"):
                     tecleado = platformtools.dialog_input("", "Contraseña para canales de adultos", True)
-                    if tecleado is None or tecleado != config.get_setting("adult_pin"):
+                    if tecleado is None or tecleado != config.get_setting("adult_password"):
                         return
 
             # # Actualiza el canal individual
