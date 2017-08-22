@@ -138,17 +138,18 @@ def get_channel_parameters(channel_name):
 def get_channel_json(channel_name):
     # logger.info("channel_name=" + channel_name)
     import filetools
+    channel_json = None
     try:
         channel_path = filetools.join(config.get_runtime_path(), "channels", channel_name + ".json")
-        # logger.info("channel_data=" + channel_path)
-        channel_json = jsontools.load(filetools.read(channel_path))
-        # logger.info("channel_json= %s" % channel_json)
+        if filetools.isfile(channel_path):
+            # logger.info("channel_data=" + channel_path)
+            channel_json = jsontools.load(filetools.read(channel_path))
+            # logger.info("channel_json= %s" % channel_json)
 
     except Exception, ex:
         template = "An exception of type %s occured. Arguments:\n%r"
         message = template % (type(ex).__name__, ex.args)
         logger.error(" %s" % message)
-        channel_json = None
 
     return channel_json
 
@@ -187,10 +188,10 @@ def get_channel_setting(name, channel, default=None):
     @param channel: nombre del canal
     @type channel: str
     @param default: valor devuelto en caso de que no exista el parametro name
-    @type default: cualquiera
+    @type default: any
 
     @return: El valor del parametro 'name'
-    @rtype: El tipo del valor del parametro
+    @rtype: any
 
     """
     file_settings = os.path.join(config.get_data_path(), "settings_channels", channel + "_data.json")

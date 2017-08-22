@@ -345,13 +345,13 @@ def temporadas(item):
     itemlist = []
     templist = []
     data = httptools.downloadpage(item.url).data
+    data = data.replace ('"',"'")
     realplot = ''
-    patron = "<button class='classnamer' onclick='javascript: mostrarcapitulos.*?blank'>([^<]+)</button>"
+    patron = "<button class='classnamer' onclick='javascript: mostrarcapitulos.*?blank'>([^<]+)<\/button>"
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    serieid = scrapertools.find_single_match(data, 'data-nonce="(.*?)"')
-
+    serieid = scrapertools.find_single_match(data, "data-nonce='(.*?)'")
     item.thumbnail = item.thumbvid
     infoLabels = item.infoLabels
     for scrapedtitle in matches:
@@ -408,6 +408,7 @@ def episodiosxtemp(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
+    data = data.replace('"', "'")
     patron = "<button class='classnamer' onclick='javascript: mostrarenlaces\(([^\)]+)\).*?<"
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -640,7 +641,7 @@ def play(item):
     logger.info()
 
     data = httptools.downloadpage(item.url).data
-    if 'streamplay' not in item.server or 'streame' not in item.server:
+    if item.server not in ['streamplay','streame']:
         url = scrapertools.find_single_match(data, '<(?:IFRAME|iframe).*?(?:SRC|src)=*([^ ]+) (?!style|STYLE)')
     else:
         url = scrapertools.find_single_match(data, '<meta http-equiv="refresh" content="0; url=([^"]+)">')

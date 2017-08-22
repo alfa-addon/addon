@@ -29,19 +29,20 @@ def start():
 def run(item):
     itemlist = []
     # Muestra el item en el log:
-    PrintItems(item)
+    print_items(item)
 
     # Control Parental, comprueba si es adulto o no
     if item.action == "mainlist":
         # Parental control
-        if channeltools.is_adult(item.channel) and config.get_setting("adult_pin") != "":
+        if channeltools.is_adult(item.channel) and config.get_setting("adult_request_password"):
             tecleado = platformtools.dialog_input("", "Contraseña para canales de adultos", True)
-            if tecleado is None or tecleado != config.get_setting("adult_pin"):
+            if tecleado is None or tecleado != config.get_setting("adult_password"):
                 platformtools.render_items(None, item)
                 return
 
     # Importa el canal para el item, todo item debe tener un canal, sino sale de la función
-    if item.channel: channelmodule = ImportarCanal(item)
+    if item.channel:
+        channelmodule = import_channel(item)
 
     # If item has no action, stops here
     if item.action == "":
@@ -153,13 +154,13 @@ def run(item):
             itemlist = [Item(title="No hay elementos para mostrar", thumbnail=get_thumb("error.png"))]
 
         # Imprime en el log el resultado
-        PrintItems(itemlist)
+        print_items(itemlist)
 
     # Muestra los resultados en pantalla
     platformtools.render_items(itemlist, item)
 
 
-def ImportarCanal(item):
+def import_channel(item):
     channel = item.channel
     channelmodule = ""
     if os.path.exists(os.path.join(config.get_runtime_path(), "channels", channel + ".py")):
@@ -171,7 +172,7 @@ def ImportarCanal(item):
     return channelmodule
 
 
-def PrintItems(itemlist):
+def print_items(itemlist):
     if type(itemlist) == list:
         if len(itemlist) > 0:
             logger.info("Items devueltos")
@@ -197,13 +198,13 @@ def add_pelicula_to_library(item):
 
 
 def add_serie_to_library(item):
-    channel = ImportarCanal(item)
+    channel = import_channel(item)
     videolibrarytools.add_tvshow(item, channel)
 
 
 def download_all_episodes(item, first_episode="", preferred_server="vidspot", filter_language=""):
     logger.info("show=" + item.show)
-    channel = ImportarCanal(item)
+    channel = import_channel(item)
     show_title = item.show
 
     # Obtiene el listado desde el que se llamó

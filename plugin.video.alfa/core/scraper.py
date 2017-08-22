@@ -188,7 +188,7 @@ def cuadro_completar(item):
                                   'visible': True})
 
     # logger.debug(dict_default)
-    if platformtools.show_channel_settings(listado_controles, caption="Completar información", item=item,
+    if platformtools.show_channel_settings(list_controls=listado_controles, caption="Completar información", item=item,
                                            callback="core.scraper.callback_cuadro_completar",
                                            custom_button={"visible": False}):
         return True

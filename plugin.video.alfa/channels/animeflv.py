@@ -223,7 +223,7 @@ def episodios(item):
         item.plot = scrapertools.find_single_match(data, 'Description[^>]+><p>(.*?)</p>')
 
     matches = re.compile('href="([^"]+)"><figure><img class="[^"]+" data-original="([^"]+)".+?</h3>'
-                         '<p>(.*?)</p>', re.DOTALL).findall(data)
+                         '\s*<p>(.*?)</p>', re.DOTALL).findall(data)
 
     if matches:
         for url, thumb, title in matches:
