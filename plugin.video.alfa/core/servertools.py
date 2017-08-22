@@ -565,10 +565,10 @@ def get_server_setting(name, server, default=None):
         @param server: nombre del servidor
         @type server: str
         @param default: valor devuelto en caso de que no exista el parametro name
-        @type default: cualquiera
+        @type default: any
 
         @return: El valor del parametro 'name'
-        @rtype: El tipo del valor del parametro 
+        @rtype: any
 
         """
     # Creamos la carpeta si no existe

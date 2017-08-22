@@ -6,8 +6,9 @@ from core import httptools
 from core import scrapertools
 from core.item import Item
 from platformcode import logger
+from core import servertools
 
-host = 'http://www.18hentaionline.eu/'
+host = 'http://www.18hentaionline.net/'
 headers = [['User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0'],
            ['Referer', host]]
 
@@ -92,17 +93,58 @@ def episodios(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url, headers=headers).data
-    patron = '<td>([^<]+)<\/td>.<td>([^<]+)<\/td>.<td>([^<]+)<\/td>.<td>([^<]+)<\/td>.<td><a href="([^"]+)".*?>Ver Capitulo<\/a><\/td>'
+    old_mode = scrapertools.find_single_match(data, '<th>Censura<\/th>')
+    if old_mode:
+        patron = '<td>(\d+)<\/td><td>(.*?)<\/td><td>(.*?)<\/td><td>(.*?)<\/td><td><a href="(.*?)".*?>Ver Capitulo<\/a><\/td>'
 
-    matches = re.compile(patron, re.DOTALL).findall(data)
+        matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedcap, scrapedaud, scrapedsub, scrapedcen, scrapedurl in matches:
-        url = scrapedurl
-        title = 'CAPITULO ' + scrapedcap + ' AUDIO: ' + scrapedaud + ' SUB:' + scrapedsub + ' ' + censura[scrapedcen]
-        thumbnail = ''
-        plot = ''
-        fanart = ''
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=item.fulltitle, url=url,
-                             thumbnail=item.thumbnail, plot=plot))
+        for scrapedcap, scrapedaud, scrapedsub, scrapedcen, scrapedurl in matches:
+            url = scrapedurl
+            title = 'CAPITULO ' + scrapedcap + ' AUDIO: ' + scrapedaud + ' SUB:' + scrapedsub + ' ' + censura[scrapedcen]
+            thumbnail = ''
+            plot = ''
+            fanart = ''
+            itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=item.fulltitle, url=url,
+                                 thumbnail=item.thumbnail, plot=plot))
+    else:
+        patron = '<\/i>.*?(.\d+)<\/td><td style="text-align:center">MP4<\/td><td style="text-align:center">(.*?)<\/td>.*?'
+        patron +='<a class="dr-button" href="(.*?)" >'
+
+        matches = re.compile(patron, re.DOTALL).findall(data)
+
+        for scrapedcap, scrapedsub, scrapedurl in matches:
+            url = scrapedurl
+            if scrapedsub !='':
+                subs= scrapedsub
+            else:
+                sub = 'No'
+            title = 'CAPITULO %s SUB %s'%(scrapedcap, subs)
+            thumbnail = ''
+            plot = ''
+            fanart = ''
+            itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=item.fulltitle, url=url,
+                                 thumbnail=item.thumbnail, plot=plot))
 
     return itemlist
+
+def findvideos(item):
+    logger.info()
+
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    gvideo = scrapertools.find_single_match(data,'<li rel="(http:\/\/www\.18hentaionline\.net\/ramus\/phar\.php\?vid=.*?)">')
+    headers = {'Host':'www.18hentaionline.net', 'Referer':item.url}
+    gvideo_data = httptools.downloadpage(gvideo, headers = headers).data
+    gvideo_url = scrapertools.find_single_match(gvideo_data, 'file: "(.*?)"')
+    server = 'directo'
+    new_item = (item.clone(url=gvideo_url, server=server))
+    itemlist.append(new_item)
+    itemlist.extend(servertools.find_video_items(data=data))
+    for videoitem in itemlist:
+        videoitem.channel = item.channel
+        videoitem.title = item.title+' (%s)'%videoitem.server
+        videoitem.action = 'play'
+    return itemlist
+
+

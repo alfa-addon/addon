@@ -101,7 +101,7 @@ def generos(item):
     matches = scrapertools.find_multiple_matches(data, '<li class="cat-item cat-item-.*?><a href="([^"]+)".*?>(.*?)<b>')
 
     for scrapedurl, scrapedtitle in matches:
-        if scrapedtitle == "Eroticas +18 " and config.get_setting("adult_mode") != "0":
+        if scrapedtitle == "Eroticas +18 " and config.get_setting("adult_mode") != 0:
             itemlist.append(item.clone(action="eroticas", title=scrapedtitle, url=scrapedurl))
         elif (scrapedtitle != "Estrenos ") and (scrapedtitle != "Próximos Estrenos "):
             itemlist.append(item.clone(action="entradas", title=scrapedtitle, url=scrapedurl))

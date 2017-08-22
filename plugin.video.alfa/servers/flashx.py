@@ -40,6 +40,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             pass
 
     matches = scrapertools.find_multiple_matches(data, "<script type='text/javascript'>(.*?)</script>")
+    m = ""
     for n, m in enumerate(matches):
         if m.startswith("eval"):
             try:

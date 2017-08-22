@@ -8,7 +8,6 @@ import re
 
 import xbmc
 import xbmcaddon
-import xbmcgui
 
 PLUGIN_NAME = "alfa"
 
@@ -112,17 +111,11 @@ def open_settings():
             # Cambio de contraseña
             if settings_post['adult_aux_new_password1']:
                 if settings_post['adult_aux_new_password1'] == settings_post['adult_aux_new_password2']:
-                    adult_password = set_setting('adult_password', settings_post['adult_aux_new_password1'])
+                    set_setting('adult_password', settings_post['adult_aux_new_password1'])
                 else:
                     platformtools.dialog_ok("Canales para adultos",
-                                            "Los campos 'Nueva contraseña' y 'Confirmar nueva contraseña' no coinciden.",
-                                            "Entre de nuevo en 'Preferencias' para cambiar la contraseña")
-
-            # Fijar adult_pin
-            adult_pin = ""
-            if settings_post["adult_request_password"] == True:
-                adult_pin = adult_password
-            set_setting("adult_pin", adult_pin)
+                                            "Los campos 'Nueva contraseña' y 'Confirmar nueva contraseña' no coinciden."
+                                            , "Entre de nuevo en 'Preferencias' para cambiar la contraseña")
 
         else:
             platformtools.dialog_ok("Canales para adultos", "La contraseña no es correcta.",
@@ -140,8 +133,8 @@ def open_settings():
     # si se ha cambiado la ruta de la videoteca llamamos a comprobar directorios para que lo cree y pregunte
     # automaticamente si configurar la videoteca
     if settings_pre.get("videolibrarypath", None) != settings_post.get("videolibrarypath", None) or \
-                    settings_pre.get("folder_movies", None) != settings_post.get("folder_movies", None) or \
-                    settings_pre.get("folder_tvshows", None) != settings_post.get("folder_tvshows", None):
+        settings_pre.get("folder_movies", None) != settings_post.get("folder_movies", None) or \
+            settings_pre.get("folder_tvshows", None) != settings_post.get("folder_tvshows", None):
         verify_directories_created()
 
     else:
@@ -156,13 +149,13 @@ def get_setting(name, channel="", server="", default=None):
     """
     Retorna el valor de configuracion del parametro solicitado.
 
-    Devuelve el valor del parametro 'name' en la configuracion global, en la configuracion propia del canal 'channel' 
+    Devuelve el valor del parametro 'name' en la configuracion global, en la configuracion propia del canal 'channel'
     o en la del servidor 'server'.
 
-    Los parametros channel y server no deben usarse simultaneamente. Si se especifica el nombre del canal se devolvera 
-    el resultado de llamar a channeltools.get_channel_setting(name, channel, default). Si se especifica el nombre del 
+    Los parametros channel y server no deben usarse simultaneamente. Si se especifica el nombre del canal se devolvera
+    el resultado de llamar a channeltools.get_channel_setting(name, channel, default). Si se especifica el nombre del
     servidor se devolvera el resultado de llamar a servertools.get_channel_setting(name, server, default). Si no se
-    especifica ninguno de los anteriores se devolvera el valor del parametro en la configuracion global si existe o 
+    especifica ninguno de los anteriores se devolvera el valor del parametro en la configuracion global si existe o
     el valor default en caso contrario.
 
     @param name: nombre del parametro
@@ -172,10 +165,10 @@ def get_setting(name, channel="", server="", default=None):
     @param server: nombre del servidor
     @type server: str
     @param default: valor devuelto en caso de que no exista el parametro name
-    @type default: cualquiera
+    @type default: any
 
     @return: El valor del parametro 'name'
-    @rtype: El tipo del valor del parametro 
+    @rtype: any
 
     """
 
@@ -206,35 +199,21 @@ def get_setting(name, channel="", server="", default=None):
             value = xbmc.translatePath(value)
 
         # hack para devolver el tipo correspondiente
-        settings_types = get_settings_types()
-
-        if settings_types.get(name) in ['enum', 'number']:
-            try:
-                value = int(value)
-            except Exception, ex:
-                from platformcode import logger
-                logger.error("Error al convertir '%s' de tipo 'enum','number' \n%s" % (name, ex))
-
-        elif settings_types.get(name) == 'bool':
-            value = value == 'true'
-
-        elif name not in settings_types:
-            try:
-                if value in ['true', 'false']:
-                    if value == 'true':
-                        aux_val = True
-                    else:
-                        aux_val = False
-                    value = bool(aux_val)
-                else:
-                    t = eval(value)
-                    value = t[0](t[1])
-            except Exception, ex:
-                from platformcode import logger
-                logger.error("Error al convertir '%s' se pasa como tipo 'None'\n%s" % (name, ex))
-                value = None
-
-        return value
+        if value == "true":
+            return True
+        elif value == "false":
+            return False
+        else:
+            # special case return as str
+            if name in ["adult_password", "adult_aux_intro_password", "adult_aux_new_password1",
+                        "adult_aux_new_password2"]:
+                return value
+            else:
+                try:
+                    value = int(value)
+                except ValueError:
+                    pass
+                return value
 
 
 def set_setting(name, value, channel="", server=""):
@@ -269,25 +248,16 @@ def set_setting(name, value, channel="", server=""):
         return servertools.set_server_setting(name, value, server)
     else:
         try:
-            settings_types = get_settings_types()
-
-            if settings_types.get(name) == 'bool':
+            if isinstance(value, bool):
                 if value:
-                    new_value = "true"
+                    value = "true"
                 else:
-                    new_value = "false"
+                    value = "false"
 
-            elif settings_types.get(name):
-                new_value = str(value)
+            elif isinstance(value, (int, long)):
+                value = str(value)
 
-            else:
-                if isinstance(value, basestring):
-                    new_value = "(%s, %s)" % (type(value).__name__, repr(value))
-
-                else:
-                    new_value = "(%s, %s)" % (type(value).__name__, value)
-
-            __settings__.setSetting(name, new_value)
+            __settings__.setSetting(name, value)
 
         except Exception, ex:
             from platformcode import logger
@@ -295,28 +265,6 @@ def set_setting(name, value, channel="", server=""):
             return None
 
         return value
-
-
-def get_settings_types():
-    """
-    Devuelve un diccionario con los parametros (key) de la configuracion global y sus tipos (value)
-
-    :return: dict 
-    """
-    win10000 = xbmcgui.Window(10000)
-    settings_types = win10000.getProperty(PLUGIN_NAME + "_settings_types")
-
-    if not settings_types:
-        infile = open(os.path.join(get_runtime_path(), "resources", "settings.xml"))
-        data = infile.read()
-        infile.close()
-
-        matches = re.findall('<setting id="([^"]*)" type="([^"]*)', data)
-        settings_types = "{%s}" % ",".join("'%s': '%s'" % tup for tup in matches)
-
-        win10000.setProperty(PLUGIN_NAME + "_settings_types", settings_types)
-
-    return eval(settings_types)
 
 
 def get_localized_string(code):
@@ -448,7 +396,7 @@ def verify_directories_created():
                 for f in files:
                     if not filetools.exists(filetools.join(default, folder, f)) or \
                             (filetools.getsize(filetools.join(default, folder, f)) !=
-                                 filetools.getsize(filetools.join(default, '720p', f))):
+                                filetools.getsize(filetools.join(default, '720p', f))):
                         filetools.copy(filetools.join(default, '720p', f),
                                        filetools.join(default, folder, f),
                                        True)
