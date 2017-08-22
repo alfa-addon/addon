@@ -85,14 +85,14 @@ def episodios(item):
                 total_episode += 1
                 season, episode = renumbertools.numbered_for_tratk(item.channel, item.show, 1, total_episode)
                 if len(name.split(pat)) == i:
-                    title += "{0}x{1:02d} ".format(season, episode)
+                    title += "%sx%s " % (season, str(episode).zfill(2))
                 else:
-                    title += "{0}x{1:02d}_".format(season, episode)
+                    title += "%sx%s_" % (season, str(episode).zfill(2))
         else:
             total_episode += 1
             season, episode = renumbertools.numbered_for_tratk(item.channel, item.show, 1, total_episode)
 
-            title += "{0}x{1:02d} ".format(season, episode)
+            title += "%sx%s " % (season, str(episode).zfill(2))
 
         url = host + "/" + link
         if "disponible" in link:
@@ -110,21 +110,17 @@ def episodios(item):
     return itemlist
 
 
-# def getUrlVideo(item):
 def findvideos(item):
-    ## Kodi 17+
-    ## Openload as default server
+    logger.info()
 
     import base64
 
     itemlist = []
 
-    ## Urls
-    urlServer = "https://openload.co/embed/%s/"
-    urlApiGetKey = "https://serieslan.com/idv.php?i=%s"
+    url_server = "https://openload.co/embed/%s/"
+    url_api_get_key = "https://serieslan.com/ide.php?i=%s&k=%s"
 
-    ## JS
-    def txc(key, str):
+    def txc(key, _str):
         s = range(256)
         j = 0
         res = ''
@@ -135,13 +131,13 @@ def findvideos(item):
             s[j] = x
         i = 0
         j = 0
-        for y in range(len(str)):
+        for y in range(len(_str)):
             i = (i + 1) % 256
             j = (j + s[i]) % 256
             x = s[i]
             s[i] = s[j]
             s[j] = x
-            res += chr(ord(str[y]) ^ s[(s[i] + s[j]) % 256])
+            res += chr(ord(_str[y]) ^ s[(s[i] + s[j]) % 256])
         return res
 
     data = httptools.downloadpage(item.url).data
@@ -151,20 +147,26 @@ def findvideos(item):
                                                '<div id="tab-1" class="tab-content current">.+?<img src="([^"]*)">')
     show = scrapertools.find_single_match(data, '<span>Episodio: <\/span>([^"]*)<\/p><p><span>Idioma')
     thumbnail = host + thumbnail
-    data = httptools.downloadpage(urlApiGetKey % idv, headers={'Referer': item.url}).data
-    video_url = urlServer % (txc(ide, base64.decodestring(data)))
-    server = "openload"
-    if " SUB" in item.title:
-        lang = "VOS"
-    elif " Sub" in item:
-        lang = "VOS"
-    else:
-        lang = "Latino"
-    title = "Enlace encontrado en " + server + " [" + lang + "]"
-    itemlist.append(Item(channel=item.channel, action="play", title=title, show=show, url=video_url, plot=item.plot,
-                         thumbnail=thumbnail, server=server, folder=False))
+    data = httptools.downloadpage(url_api_get_key % (idv, ide), headers={'Referer': item.url}).data
+    data = eval(data)
 
-    return itemlist
+    if type(data) == list:
+        logger.debug("inside")
+        video_url = url_server % (txc(ide, base64.decodestring(data[2])))
+        server = "openload"
+        if " SUB" in item.title:
+            lang = "VOS"
+        elif " Sub" in item:
+            lang = "VOS"
+        else:
+            lang = "Latino"
+        title = "Enlace encontrado en " + server + " [" + lang + "]"
+        itemlist.append(Item(channel=item.channel, action="play", title=title, show=show, url=video_url, plot=item.plot,
+                             thumbnail=thumbnail, server=server, folder=False))
+
+        return itemlist
+    else:
+        return []
 
 
 def play(item):
