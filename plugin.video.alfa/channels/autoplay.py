@@ -98,11 +98,14 @@ def start(itemlist, item):
             favorite_servers = []
             favorite_quality = []
 
-            # Guarda el valor actual de "Accion al seleccionar vídeo:" en preferencias
-            user_config_setting = config.get_setting("default_action")
+            # Guarda el valor actual de "Accion y Player Mode" en preferencias
+            user_config_setting_action = config.get_setting("default_action")
+            user_config_setting_player = config.get_setting("player_mode")
             # Habilita la accion "Ver en calidad alta" (si el servidor devuelve más de una calidad p.e. gdrive)
-            if user_config_setting != 2:
+            if user_config_setting_action != 2:
                 config.set_setting("default_action", 2)
+            if user_config_setting_player != 0:
+                config.set_setting("player_mode", 0)
 
             # Informa que AutoPlay esta activo
             platformtools.dialog_notification('AutoPlay Activo', '', sound=False)
@@ -274,9 +277,11 @@ def start(itemlist, item):
                 platformtools.dialog_notification("AutoPlay", "Nueva Calidad/Servidor disponible en la "
                                                               "configuracion", sound=False)
 
-            # Restaura si es necesario el valor previo de "Accion al seleccionar vídeo:" en preferencias
-            if user_config_setting != 2:
-                config.set_setting("default_action", user_config_setting)
+                # Restaura si es necesario el valor previo de "Accion y Player Mode" en preferencias
+                if user_config_setting_action != 2:
+                    config.set_setting("default_action", user_config_setting_action)
+                if user_config_setting_player != 0:
+                    config.set_setting("player_mode", user_config_setting_player)
 
         # devuelve la lista de enlaces para la eleccion manual
         return itemlist
@@ -524,11 +529,15 @@ def save(item, dict_data_saved):
         # Obtiene el nodo AUTOPLAY desde el json
         autoplay_node = jsontools.get_node_from_file('autoplay', 'AUTOPLAY')
 
+    new_config = dict_data_saved
+    if not new_config['active']:
+        new_config['language']=0
     channel_node = autoplay_node.get(item.from_channel)
     config.set_setting("filter_languages", dict_data_saved.pop("language"), item.from_channel)
     channel_node['settings'] = dict_data_saved
 
     result, json_data = jsontools.update_node(autoplay_node, 'autoplay', 'AUTOPLAY')
+
 
     return result
 
