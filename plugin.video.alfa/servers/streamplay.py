@@ -17,7 +17,8 @@ def test_video_exists(page_url):
     data = httptools.downloadpage(page_url, headers={'Referer': referer}).data
     if data == "File was deleted":
         return False, "[Streamplay] El archivo no existe o ha sido borrado"
-
+    elif "Video is processing now" in data:
+        return False, "[Streamplay] El archivo se está procesando"
     return True, ""
 
 
@@ -25,7 +26,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("(page_url='%s')" % page_url)
     referer = re.sub(r"embed-|player-", "", page_url)[:-5]
     data = httptools.downloadpage(page_url, headers={'Referer': referer}).data
-
 
     matches = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
     data = jsunpack.unpack(matches).replace("\\", "")
