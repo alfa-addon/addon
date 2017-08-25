@@ -285,6 +285,7 @@ function get_response(data) {
 				else {
 					keypress = "";
 				};
+                if (!data.items[x].value) data.items[x].value = "";
                 itemlist[data.items[x].category].push(replace_list(html.config.text, {
                     "item_color": data.items[x].color,
                     "item_label": data.items[x].label,

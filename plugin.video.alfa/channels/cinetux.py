@@ -314,15 +314,11 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
             url = scrapertools.find_single_match(bloque1, patron)
             if "goo.gl" in url:
                 url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
-            if "www.cinetux.me" in url:
-                server = scrapertools.find_single_match(url, "player/(.*?)\.")
-            else:
-                server = servertools.get_server_from_url(url)
-            matches.append([url, server, "", language.strip(), t_tipo])
+            matches.append([url, "", "", language.strip(), t_tipo])
     bloque2 = scrapertools.find_single_match(data, '(?s)box_links.*?dt_social_single')
     bloque2 = bloque2.replace("\t", "").replace("\r", "")
     patron = '(?s)optn" href="([^"]+)'
-    patron += '.*?title="([^"]+)'
+    patron += '.*?title="([^\.]+)'
     patron += '.*?src.*?src="[^>]+"?/>([^<]+)'
     patron += '.*?src="[^>]+"?/>([^<]+)'
     patron += '.*?/span>([^<]+)'
@@ -336,7 +332,7 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
         scrapedtipo = match[4]
         if t_tipo.upper() not in scrapedtipo.upper():
             continue
-        title = "   Mirror en " + scrapedserver.split(".")[0] + " (" + scrapedlanguage + ")"
+        title = "   Mirror en %s (" + scrapedlanguage + ")"
         if len(scrapedcalidad.strip()) > 0:
             title += " (Calidad " + scrapedcalidad.strip() + ")"
 
@@ -357,6 +353,7 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
             title = "Mostrar enlaces filtrados en %s" % ", ".join(filtrados)
             lista_enlaces.append(item.clone(title=title, action="findvideos", url=item.url, text_color=color3,
                                             filtro=True))
+    lista_enlaces = servertools.get_servers_itemlist(lista_enlaces, lambda i: i.title % i.server.capitalize())
     return lista_enlaces
 
 
@@ -368,7 +365,6 @@ def play(item):
         data = httptools.downloadpage(item.url, headers={'Referer': item.extra}).data.replace("\\", "")
         id = scrapertools.find_single_match(data, 'img src="[^#]+#(.*?)"')
         item.url = "https://youtube.googleapis.com/embed/?status=ok&hl=es&allow_embed=1&ps=docs&partnerid=30&hd=1&autoplay=0&cc_load_policy=1&showinfo=0&docid=" + id
-        itemlist = servertools.find_video_items(data=item.url)
     elif "links" in item.url or "www.cinetux.me" in item.url:
         data = httptools.downloadpage(item.url).data
         scrapedurl = scrapertools.find_single_match(data, '<a href="(http[^"]+)')
@@ -380,7 +376,16 @@ def play(item):
             scrapedurl = httptools.downloadpage(scrapedurl, follow_redirects=False, only_headers=True).headers.get(
                 "location", "")
         item.url = scrapedurl
-        itemlist = servertools.find_video_items(data=item.url)
     else:
         return [item]
+    itemlist.append(
+             Item(channel = item.channel,
+             action = "play",
+             title = "%s",
+             fulltitle = item.fulltitle,
+             thumbnail = item.thumbnail,
+             server = "",
+             url = item.url
+             ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

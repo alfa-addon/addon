@@ -7,9 +7,9 @@
     }
   ],
   "find_videos": {
-    "ignore_urls": {
-      "value": "http://www.mp4upload.com/embed/embed"
-    },
+    "ignore_urls": [
+      "http://www.mp4upload.com/embed/embed"
+    ],
     "patterns": [
       {
         "pattern": "mp4upload.com/embed-([A-Za-z0-9]+)",
