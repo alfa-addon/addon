@@ -127,7 +127,7 @@ def peliculas(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
-    # logger.info(data)
+    logger.info(data)
 
     patron = '<div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'  # img, title.strip()
     patron += '<span class="icon-star2"></span>(.*?)/div>.*?'  # rating
@@ -138,7 +138,8 @@ def peliculas(item):
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for scrapedthumbnail, scrapedtitle, rating, calidad, scrapedurl, year in matches[item.page:item.page + 20]:
-        if 'Próximamente' not in calidad:
+        if 'Próximamente' not in calidad and '-XXX.jpg' not in scrapedthumbnail:
+
             scrapedtitle = scrapedtitle.replace('Ver ', '').strip()
             contentTitle = scrapedtitle.partition(':')[0].partition(',')[0]
             title = "%s [COLOR green][%s][/COLOR] [COLOR yellow][%s][/COLOR]" % (
