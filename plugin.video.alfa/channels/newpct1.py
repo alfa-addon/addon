@@ -11,12 +11,17 @@ from platformcode import config, logger
 
 def mainlist(item):
     logger.info()
-
+    
     itemlist = []
+    
+    thumb_pelis=get_thumb("channels_movie.png")
+    thumb_series=get_thumb("channels_tvshow.png")
+    
     itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url="http://www.newpct1.com/",
-                         extra="peliculas"))
-    itemlist.append(
-        Item(channel=item.channel, action="submenu", title="Series", url="http://www.newpct1.com/", extra="series"))
+                         extra="peliculas", thumbnail=thumb_pelis ))
+    
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Series", url="http://www.newpct1.com/", extra="series", 
+                         thumbnail=thumb_series))
     # itemlist.append(Item(channel=item.channel, action="search", title="Buscar"))
 
     return itemlist
