@@ -7,9 +7,9 @@
     }
   ],
   "find_videos": {
-    "ignore_urls": {
-      "value": "http://www.4shared.com/flash/player.swf"
-    },
+    "ignore_urls": [
+      "http://www.4shared.com/flash/player.swf"
+    ],
     "patterns": [
       {
         "pattern": "(http://www.4shared.com/embed/[A-Z0-9a-z]+/[A-Z0-9a-z]+)",
