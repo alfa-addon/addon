@@ -163,7 +163,7 @@ def findvideos(item):
     duplicated =[]
 
     data = httptools.downloadpage(item.url).data
-    patron = '<div class="player-box" id="tabs-(\d+)"><iframe data-src="(.*?)" allowfullscreen'
+    patron = '<div class="player-box" id="tabs-(\d+)"><iframe data-src="(.*?)".*?allowfullscreen'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for id, scrapedurl in matches:
@@ -185,7 +185,7 @@ def findvideos(item):
             for url in url_list:
                 if url[1] not in duplicated:
                     thumbnail = servertools.guess_server_thumbnail(server)
-                    itemlist.append(item.clone(title=title, plot=url[1], url=url[1], action='play', server=server,
+                    itemlist.append(item.clone(title=title, url=url[1], action='play', server=server,
                                                thumbnail = thumbnail))
                     duplicated.append(url[1])
 
@@ -194,14 +194,14 @@ def findvideos(item):
             for url in url_list:
                 if url[1] not in duplicated:
                     thumbnail = servertools.guess_server_thumbnail(server)
-                    itemlist.append(item.clone(title = title, plot=url[1], url=url[1], action='play', server=server,
+                    itemlist.append(item.clone(title = title, url=url[1], action='play', server=server,
                                                thumbnail = thumbnail))
                     duplicated.append(url[1])
         else:
             url = scrapedurl
             if url not in duplicated:
                 thumbnail = servertools.guess_server_thumbnail(server)
-                itemlist.append(item.clone(title= title, plot=url, url=url, action='play', server=server, thumbnail =
+                itemlist.append(item.clone(title= title, url=url, action='play', server=server, thumbnail =
                 thumbnail))
                 duplicated.append(url)
 
