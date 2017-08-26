@@ -3,10 +3,11 @@
 import re
 import urlparse
 
+from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import logger
+from platformcode import logger, config
 
 
 def mainlist(item):
@@ -28,7 +29,7 @@ def PorFecha(item):
     logger.info()
 
     # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, '<section class="lanzamiento">(.*?)</section>')
     logger.info("data=" + data)
 
@@ -54,7 +55,7 @@ def Idiomas(item):
     logger.info()
 
     # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, '<section class="idioma">(.*?)</section>')
     logger.info("data=" + data)
 
@@ -80,7 +81,7 @@ def calidades(item):
     logger.info()
 
     # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, '<section class="calidades">(.*?)</section>')
     logger.info("data=" + data)
 
@@ -106,7 +107,7 @@ def generos(item):
     logger.info()
 
     # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, '<section class="generos">(.*?)</section>')
     logger.info("data=" + data)
 
@@ -121,6 +122,8 @@ def generos(item):
         plot = ""
         url = urlparse.urljoin(item.url, scrapedurl)
         logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
+        if "Adulto" in title and config.get_setting("adult_mode") == 0:
+            continue
         itemlist.append(
             Item(channel=item.channel, action="peliculas", title=title, url=url, thumbnail=thumbnail, plot=plot,
                  fulltitle=title, viewmode="movie"))
@@ -148,7 +151,7 @@ def peliculas(item):
     logger.info()
 
     # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     logger.info("data=" + data)
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
 
@@ -178,7 +181,7 @@ def findvideos(item):
     logger.info()
 
     # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     # logger.info("data="+data)
 
     # Extrae las entradas (carpetas)  

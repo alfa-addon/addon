@@ -381,11 +381,10 @@ def play(item):
     itemlist.append(
              Item(channel = item.channel,
              action = "play",
-             title = "%s",
              fulltitle = item.fulltitle,
              thumbnail = item.thumbnail,
              server = "",
              url = item.url
              ))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    itemlist = servertools.get_servers_itemlist(itemlist)
     return itemlist
