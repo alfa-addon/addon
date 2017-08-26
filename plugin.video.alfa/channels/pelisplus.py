@@ -9,6 +9,7 @@ from core import scrapertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from core import servertools
 
 host = "http://www.pelisplus.tv/"
 
@@ -25,10 +26,11 @@ list_quality = ['1080p',
                 '720p',
                 '480p',
                 '360p',
-                '240p'
+                '240p',
+                'default'
                 ]
 list_servers = [
-    'directo',
+    'gvideo',
     'openload',
     'thevideos'
 ]
@@ -419,65 +421,65 @@ def findvideos(item):
     logger.info()
     itemlist = []
     duplicados = []
-    datas = httptools.downloadpage(item.url).data
-    patron = "<iframe.*?src='([^']+)' frameborder='0' allowfullscreen.*?"
-    matches = re.compile(patron, re.DOTALL).findall(datas)
+    data = httptools.downloadpage(item.url).data
+    logger.debug('data: %s'%data)
+    video_page = scrapertools.find_single_match(data, "<iframe width='100%' height='500' src='(.*?)' frameborder='0'")
+    data = httptools.downloadpage(video_page).data
+    patron = '<li data-id=".*?">\s+<a href="(.*?)" >'
+    matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl in matches:
 
-        if 'elreyxhd' or 'pelisplus.biz' in scrapedurl:
-            patronr = ''
-            data = httptools.downloadpage(scrapedurl, headers=headers).data
+        if 'tipo' in scrapedurl:
+            server = 'gvideo'
+            gvideo_data = httptools.downloadpage(scrapedurl).data
+            video_url = scrapertools.find_single_match(gvideo_data,'<div id="player">.*?border: none" src="\/\/(.*?)" ')
+            video_url= 'http://%s'%video_url
+            gvideo_url = httptools.downloadpage(video_url).data
+            videourl = servertools.findvideosbyserver(gvideo_url, server)
 
-            quote = scrapertools.find_single_match(data, 'sources.*?file.*?http')
-            if quote and "'" in quote:
-                patronr = "file:'([^']+)',label:'([^.*?]+)',type:.*?'.*?}"
-            elif '"' in quote:
-                patronr = '{file:"(.*?)",label:"(.*?)"}'
-            if patronr != '':
-                matchesr = re.compile(patronr, re.DOTALL).findall(data)
+            logger.debug('videourl: %s'%videourl)
+            language = 'latino'
+            quality = 'default'
+            url = videourl[0][1]
+            title = '%s (%s)'%(item.contentTitle, server)
+            thumbnail = item.thumbnail
+            fanart = item.fanart
+            if video_url not in duplicados:
+                itemlist.append(item.clone(action="play",
+                                           title=title,
+                                           url=url,
+                                           thumbnail=thumbnail,
+                                           fanart=fanart,
+                                           show=title,
+                                           extra='gvideo',
+                                           language=language,
+                                           quality=quality,
+                                           server=server
+                                           ))
+                duplicados.append(video_url)
 
-                for scrapedurl, scrapedcalidad in matchesr:
-                    url = scrapedurl
-                    language = 'latino'
-                    quality = scrapedcalidad.decode('cp1252').encode('utf8')
-                    title = item.contentTitle + ' (' + str(scrapedcalidad) + ')'
-                    thumbnail = item.thumbnail
-                    fanart = item.fanart
-                    if url not in duplicados:
-                        itemlist.append(item.clone(action="play",
-                                                   title=title,
-                                                   url=url,
-                                                   thumbnail=thumbnail,
-                                                   fanart=fanart,
-                                                   show=title,
-                                                   extra='directo',
-                                                   language=language,
-                                                   quality=quality,
-                                                   server='directo',
-                                                   ))
-                        duplicados.append(url)
 
-    url = scrapedurl
-    from core import servertools
-    itemlist.extend(servertools.find_video_items(data=datas))
+
+
+    itemlist.extend(servertools.find_video_items(data=data))
 
     for videoitem in itemlist:
         # videoitem.infoLabels = item.infoLabels
         videoitem.channel = item.channel
         if videoitem.quality == '' or videoitem.language == '':
-            videoitem.quality = 'default'
-            videoitem.language = 'Latino'
+           videoitem.quality = 'default'
+           videoitem.language = 'Latino'
         if videoitem.server != '':
-            videoitem.thumbnail = servertools.guess_server_thumbnail(videoitem.server)
+           videoitem.thumbnail = servertools.guess_server_thumbnail(videoitem.server)
         else:
-            videoitem.thumbnail = item.thumbnail
-            videoitem.server = 'directo'
+           videoitem.thumbnail = item.thumbnail
+           videoitem.server = 'directo'
         videoitem.action = 'play'
         videoitem.fulltitle = item.title
 
         if videoitem.extra != 'directo' and 'youtube' not in videoitem.url:
-            videoitem.title = item.contentTitle + ' (' + videoitem.server + ')'
+           videoitem.title = item.contentTitle + ' (' + videoitem.server + ')'
 
     n = 0
     for videoitem in itemlist:

@@ -44,7 +44,9 @@
     "latino",
     "movie",
     "tvshow",
-    "documentary"
+    "documentary",
+    "direct"
+
   ],
   "settings": [
     {

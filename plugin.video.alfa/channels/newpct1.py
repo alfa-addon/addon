@@ -11,16 +11,16 @@ from platformcode import config, logger
 
 def mainlist(item):
     logger.info()
-    
+
     itemlist = []
-    
+
     thumb_pelis=get_thumb("channels_movie.png")
     thumb_series=get_thumb("channels_tvshow.png")
-    
+
     itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url="http://www.newpct1.com/",
                          extra="peliculas", thumbnail=thumb_pelis ))
-    
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Series", url="http://www.newpct1.com/", extra="series", 
+
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Series", url="http://www.newpct1.com/", extra="series",
                          thumbnail=thumb_series))
     # itemlist.append(Item(channel=item.channel, action="search", title="Buscar"))
 
@@ -136,22 +136,22 @@ def listado(item):
                                                                                                    1).strip()
             # logger.info("[newpct1.py] titulo="+title)
             '''
-            if len(title)>3:    
-                url_i = 'http://www.newpct1.com/index.php?page=buscar&url=&letter=&q=%22' + title.replace(" ","%20") + '%22'     
+            if len(title)>3:
+                url_i = 'http://www.newpct1.com/index.php?page=buscar&url=&letter=&q=%22' + title.replace(" ","%20") + '%22'
             else:
-                url_i = 'http://www.newpct1.com/index.php?page=buscar&url=&letter=&q=' + title 
+                url_i = 'http://www.newpct1.com/index.php?page=buscar&url=&letter=&q=' + title
 
             if "1.com/series-hd" in url:
                 extra="serie-hd"
                 url = url_i + '&categoryID=&categoryIDR=1469&calidad=' + calidad.replace(" ","+") #DTV+720p+AC3+5.1
-            elif "1.com/series-vo" in url: 
+            elif "1.com/series-vo" in url:
                 extra="serie-vo"
-                url = url_i + '&categoryID=&categoryIDR=775&calidad=' + calidad.replace(" ","+") #HDTV+720p+AC3+5.1       
-            elif "1.com/series/" in url: 
+                url = url_i + '&categoryID=&categoryIDR=775&calidad=' + calidad.replace(" ","+") #HDTV+720p+AC3+5.1
+            elif "1.com/series/" in url:
                 extra="serie-tv"
-                url = url_i + '&categoryID=&categoryIDR=767&calidad=' + calidad.replace(" ","+") 
+                url = url_i + '&categoryID=&categoryIDR=767&calidad=' + calidad.replace(" ","+")
 
-            url += '&idioma=&ordenar=Nombre&inon=Descendente'  
+            url += '&idioma=&ordenar=Nombre&inon=Descendente'
             '''
         else:
             title = title.replace("Descargar", "", 1).strip()
@@ -185,7 +185,7 @@ def listado(item):
         paginacion = scrapertools.get_match(data, patron)
 
         if "Next" in paginacion:
-            url_next_page = scrapertools.get_match(paginacion, '<a href="([^>]+)>Next</a>')[:-1].replace(" ", "%20")
+            url_next_page = scrapertools.get_match(paginacion, '<a href="(http[^>]+)>Next</a>')[:-1].replace(" ", "%20")
             itemlist.append(Item(channel=item.channel, action="listado", title=">> Página siguiente", url=url_next_page,
                                  extra=item.extra))
             # logger.info("[newpct1.py] listado items:" + str(len(itemlist)))
@@ -208,7 +208,7 @@ def completo(item):
 
         if item.extra != "serie_add":
             '''
-            # Afinar mas la busqueda 
+            # Afinar mas la busqueda
             if item_extra=="serie-hd":
                 categoryID=buscar_en_subcategoria(item.show,'1469')
             elif item_extra=="serie-vo":
@@ -374,7 +374,7 @@ def get_episodios(item):
         paginacion = scrapertools.get_match(data, patron)
         # logger.info("[newpct1.py] get_episodios: paginacion= " + paginacion)
         if "Next" in paginacion:
-            url_next_page = scrapertools.get_match(paginacion, '<a href="([^>]+)>Next</a>')[:-1]
+            url_next_page = scrapertools.get_match(paginacion, '<a href="(http[^>]+)>Next</a>')[:-1]
             url_next_page = url_next_page.replace(" ", "%20")
             # logger.info("[newpct1.py] get_episodios: url_next_page= " + url_next_page)
             itemlist.append(
