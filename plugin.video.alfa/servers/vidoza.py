@@ -8,7 +8,7 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
-    if "Page not found" in data:
+    if "Page not found" in data or "File was deleted" in data:
         return False, "[vidoza] El archivo no existe o ha sido borrado"
     elif "processing" in data:
         return False, "[vidoza] El vídeo se está procesando"
