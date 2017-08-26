@@ -374,7 +374,7 @@ def get_episodios(item):
         paginacion = scrapertools.get_match(data, patron)
         # logger.info("[newpct1.py] get_episodios: paginacion= " + paginacion)
         if "Next" in paginacion:
-            url_next_page = scrapertools.get_match(paginacion, '<a href="(http[^>]+)>Next</a>')[:-1]
+            url_next_page = "http" + scrapertools.get_match(paginacion, '<a href="http([^>]+)>Next</a>')[:-1]
             url_next_page = url_next_page.replace(" ", "%20")
             # logger.info("[newpct1.py] get_episodios: url_next_page= " + url_next_page)
             itemlist.append(
