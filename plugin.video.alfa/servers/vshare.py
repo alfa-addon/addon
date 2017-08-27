@@ -11,11 +11,8 @@ from lib import jsunpack
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
-    data = httptools.downloadpage(page_url).data
-    if "File was deleted" in data:
-        return False, "El archivo no existe<br/>en streaminto o ha sido borrado."
-    elif "Video is processing now" in data:
-        return False, "El archivo está siendo procesado<br/>Prueba dentro de un rato."
+    if httptools.downloadpage(page_url).code != 200:
+        return False, "El archivo no existe en vShare o ha sido borrado."
     else:
         return True, ""
 
