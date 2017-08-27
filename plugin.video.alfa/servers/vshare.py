@@ -12,7 +12,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
     if httptools.downloadpage(page_url).code != 200:
-        return False, "El archivo no existe en vShare o ha sido borrado"
+        return False, "El archivo no existe en vShare o ha sido borrado."
     else:
         return True, ""
 
