@@ -7,10 +7,6 @@
     }
   ],
   "find_videos": {
-    "ignore_urls": [
-      "http://streamin.to/embed-theme.html",
-      "http://streamin.to/embed-jquery.html"
-    ],
     "patterns": [
       {
         "pattern": "(http://vshare.io/v/[\\w]+[^\"']*)[\"']",
