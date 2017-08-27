@@ -2,6 +2,7 @@
 
 import re
 
+from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
 from core import servertools

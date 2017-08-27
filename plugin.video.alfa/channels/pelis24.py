@@ -21,14 +21,14 @@ def mainlist(item):
     item.action = "peliculas"
     itemlist.append(item.clone(title="Novedades", url="http://www.pelis24.tv/ultimas-peliculas/"))
     itemlist.append(item.clone(title="Estrenos", url="http://pelis24.tv/estrenos/"))
-    itemlist.append(item.clone(title="", folder=False))
+    itemlist.append(item.clone(title="Calidad HD", url="https://pelis24.tv/xfsearch/calidad/HD"))
+    itemlist.append(item.clone(title="Calidad HQ", url="https://pelis24.tv/xfsearch/calidad/HQ"))
+    itemlist.append(item.clone(title="Calidad SD", url="https://pelis24.tv/xfsearch/calidad/SD"))
     itemlist.append(item.clone(title="Castellano", url="http://pelis24.tv/pelicula-ca/"))
-    itemlist.append(item.clone(title="Latino", url="http://pelis24.tv/pelicula-latino/"))
+    itemlist.append(item.clone(title="Latino", url="https://pelis24.tv/pelicula-la/"))
     itemlist.append(item.clone(title="Versión original", url="http://pelis24.tv/peliculasvo/"))
-    itemlist.append(item.clone(title="Versión original subtitulada", url="http://pelis24.tv/peliculasvose/"))
-
-    itemlist.append(item.clone(title="", folder=False))
-    itemlist.append(item.clone(title="Filtrar por género", action="genero", url="http://pelis24.tv/tags/"))
+    itemlist.append(item.clone(title="Versión original subtitulada", url="http://pelis24.tv/peliculas-su/"))
+    itemlist.append(item.clone(title="Filtrar por género", action="genero", url="http://pelis24.tv"))
     itemlist.append(item.clone(title="Buscar", action="search", url="http://www.pelis24.tv/"))
     return itemlist
 
@@ -108,12 +108,15 @@ def buscar(item):
 def genero(item):
     logger.info()
     itemlist = []
-    generos = ["Animación", "Aventuras", "Bélico", "Ciencia+ficción", "Crimen", "Comedia",
-               "Deporte", "Drama", "Fantástico", "Infantil", "Musical", "Romance", "Terror", "Thriller"]
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+    patron = '<li><a href="\/xfsearch\/genero\/([^"]+)"(?: title=".*?").*?(.*?)<\/a><\/li>'
+    matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for g in generos:
-        itemlist.append(Item(channel=item.channel, action="peliculas", title=g.replace('+', ' '),
-                             thumbnail=thumbnail_host, url=item.url + g + "/"))
+    for scrapedurl, scrapedtitle in matches:
+        url = '%s/xfsearch/genero/%s' % (item.url, scrapedurl)
+        itemlist.append(Item(channel=item.channel, action="peliculas", title=scrapedurl,
+                             thumbnail=thumbnail_host, url=url))
 
     return itemlist
 
@@ -129,12 +132,12 @@ def peliculas(item):
     patron = '<div class="movie-img img-box">.*?'
     patron += '<img src="([^"]+).*?'
     patron += 'href="([^"]+).*?'
-    patron += '<div class="movie-series">(.*?)\((\d{4})\).*?'
+    patron += '<div class="movie-series">(.*?)<\/.*?'
     patron += '<a href=[^>]+>([^<]+)</a>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for thumbnail, url, title, year, quality in matches:
+    for thumbnail, url, title, quality in matches:
         if "/series/" in url:
             # Descartamos las series
             continue
@@ -142,21 +145,21 @@ def peliculas(item):
         if not thumbnail.startswith("http"):
             thumbnail = "http://www.pelis24.tv" + thumbnail
         contentTitle = title.split("/")[0]
+        year = scrapertools.find_single_match(contentTitle, '\((\d{4})\)')
+        contentTitle= contentTitle.replace (' (%s)'%year, '')
         title = "%s (%s)" % (contentTitle, quality)
-        year = year
         itemlist.append(
             Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
                  contentQuality=quality, contentTitle=contentTitle, infoLabels = {'year':year}))
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    if item.title != 'Versión original':
+        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     # Extrae el paginador
-    next_page = scrapertools.find_single_match(data, '<span class="pnext"><a href="([^"]+)')
+    next_page = scrapertools.find_single_match(data, '<span class="pnext".*?<a href="([^"]+)')
     if next_page:
         itemlist.append(Item(channel=item.channel, action="peliculas", title=">> Página siguiente",
                              thumbnail=thumbnail_host, url=next_page))
-
     return itemlist
-
 
 def findvideos(item):
     itemlist=[]
