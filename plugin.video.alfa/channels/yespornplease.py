@@ -65,8 +65,6 @@ def links(item):
     logger.info()
     data = httptools.downloadpage(item.url).data
 
-    logger.info(data)
-
     reExpr = "<img\s+src=['\"](?P<img>[^'\"]+)[^>]+title[^'\"]*['\"](?P<title>[^\"]+)[^>]+id[^'\"]*['\"](?P<id>[^'\"]+)[^>]*>(?:[^<]*<[^>]+>(?P<quality>[^<]+)<)?[^<]*<[^>]*duration[^>]*>(?P<duration>[^<]+)"
     reResults = re.findall(reExpr, data, re.MULTILINE | re.DOTALL)
     result = []
