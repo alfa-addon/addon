@@ -38,7 +38,6 @@ def categories(item):
     data = httptools.downloadpage(item.url).data
 
     result = []
-    logger.info(data)
 
     categories = re.findall("href=[\"'](?P<url>/search[^\"']+).*?>(?P<name>[^<>]+)</div>.*?badge[^>]+>(?P<counter>\d+)", data, re.DOTALL | re.MULTILINE)
     for url, name, counter in categories:
