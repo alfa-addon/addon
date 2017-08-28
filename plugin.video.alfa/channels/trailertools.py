@@ -542,7 +542,7 @@ try:
                     elif item.action == "play" and not self.item.windowed:
                         for window in window_select:
                             window.close()
-                        retorna = platformtools.play_video(item)
+                        retorna = platformtools.play_video(item, force_direct=True)
                         if not retorna:
                             while True:
                                 xbmc.sleep(1000)
