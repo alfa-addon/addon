@@ -24,6 +24,7 @@
   ],
   "settings": [
     {
+      "id": "lab_1",
       "type": "label",
       "label": "Ubicacion de archivos",
       "enabled": true,
@@ -54,6 +55,7 @@
       "visible": true
     },
     {
+      "id": "lab_2",
       "type": "label",
       "label": "Descarga",
       "enabled": true,
@@ -132,6 +134,7 @@
       "visible": true
     },
     {
+      "id": "lab_3",
       "type": "label",
       "label": "Elección del servidor",
       "enabled": true,
