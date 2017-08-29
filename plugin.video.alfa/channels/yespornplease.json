@@ -1,0 +1,29 @@
+{
+  "id": "yespornplease",
+  "name": "YesPornPlease",
+  "active": true,
+  "adult": true,
+  "language": "es",
+  "thumbnail": "yespornplease.png",
+  "banner": "yespornplease.png",
+  "version": 1,
+  "changes": [
+    {
+      "date": "27/08/2017",
+      "description": "Canal creado"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}
