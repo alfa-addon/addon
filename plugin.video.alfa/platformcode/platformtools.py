@@ -452,7 +452,7 @@ def is_playing():
     return xbmc.Player().isPlaying()
 
 
-def play_video(item, strm=False):
+def play_video(item, strm=False, force_direct=False):
     logger.info()
     # logger.debug(item.tostring('\n'))
 
@@ -503,7 +503,17 @@ def play_video(item, strm=False):
         xlistitem.setProperty('inputstream.adaptive.manifest_type', 'mpd')
 
     # se lanza el reproductor
-    set_player(item, xlistitem, mediaurl, view, strm)
+    if force_direct:  # cuando viene de una ventana y no directamente de la base del addon
+        # Añadimos el listitem a una lista de reproducción (playlist)
+        playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+        playlist.clear()
+        playlist.add(mediaurl, xlistitem)
+
+        # Reproduce
+        xbmc_player = xbmc.Player()
+        xbmc_player.play(playlist, xlistitem)
+    else:
+        set_player(item, xlistitem, mediaurl, view, strm)
 
 
 def stop_video():

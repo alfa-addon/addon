@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # ------------------------------------------------------------
 # Channel for recent videos on several channels
 # ------------------------------------------------------------
@@ -41,61 +41,49 @@ def mainlist(item):
 
     if list_canales['peliculas']:
         thumbnail = get_thumb("channels_movie.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="peliculas", title="Películas",
-                    thumbnail=thumbnail)
+        new_item = Item(channel=item.channel, action="novedades", extra="peliculas", title="Películas",
+                        thumbnail=thumbnail)
 
-    new_item.context = [{"title": "Canales incluidos en: %s" % new_item.title,
-                         "extra": new_item.extra,
-                         "action": "setting_channel",
-                         "channel": new_item.channel}]
-    new_item.category = "Novedades en %s" % new_item.extra
-    itemlist.append(new_item)
+        set_category_context(new_item)
+        itemlist.append(new_item)
 
     if list_canales['infantiles']:
         thumbnail = get_thumb("channels_children.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="infantiles", title="Para niños",
-                    thumbnail=thumbnail)
-    new_item.context = [{"title": "Canales incluidos en: %s" % new_item.title,
-                         "extra": new_item.extra,
-                         "action": "setting_channel",
-                         "channel": new_item.channel}]
-    new_item.category = "Novedades en %s" % new_item.extra
-    itemlist.append(new_item)
+        new_item = Item(channel=item.channel, action="novedades", extra="infantiles", title="Para niños",
+                        thumbnail=thumbnail)
+        set_category_context(new_item)
+        itemlist.append(new_item)
 
     if list_canales['series']:
         thumbnail = get_thumb("channels_tvshow.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="series", title="Episodios de series",
-                    thumbnail=thumbnail)
-    new_item.context = [{"title": "Canales incluidos en: %s" % new_item.title,
-                         "extra": new_item.extra,
-                         "action": "setting_channel",
-                         "channel": new_item.channel}]
-    new_item.category = "Novedades en %s" % new_item.extra
-    itemlist.append(new_item)
+        new_item = Item(channel=item.channel, action="novedades", extra="series", title="Episodios de series",
+                        thumbnail=thumbnail)
+        set_category_context(new_item)
+        itemlist.append(new_item)
 
     if list_canales['anime']:
         thumbnail = get_thumb("channels_anime.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="anime", title="Episodios de anime",
-                    thumbnail=thumbnail)
-    new_item.context = [{"title": "Canales incluidos en: %s" % new_item.title,
-                         "extra": new_item.extra,
-                         "action": "setting_channel",
-                         "channel": new_item.channel}]
-    new_item.category = "Novedades en %s" % new_item.extra
-    itemlist.append(new_item)
+        new_item = Item(channel=item.channel, action="novedades", extra="anime", title="Episodios de anime",
+                        thumbnail=thumbnail)
+        set_category_context(new_item)
+        itemlist.append(new_item)
 
     if list_canales['documentales']:
         thumbnail = get_thumb("channels_documentary.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="documentales", title="Documentales",
-                    thumbnail=thumbnail)
-    new_item.context = [{"title": "Canales incluidos en: %s" % new_item.title,
-                         "extra": new_item.extra,
-                         "action": "setting_channel",
-                         "channel": new_item.channel}]
-    new_item.category = "Novedades en %s" % new_item.extra
-    itemlist.append(new_item)
+        new_item = Item(channel=item.channel, action="novedades", extra="documentales", title="Documentales",
+                        thumbnail=thumbnail)
+        set_category_context(new_item)
+        itemlist.append(new_item)
 
     return itemlist
+
+
+def set_category_context(item):
+    item.context = [{"title": "Canales incluidos en: %s" % item.title,
+                     "extra": item.extra,
+                     "action": "setting_channel",
+                     "channel": item.channel}]
+    item.category = "Novedades en %s" % item.extra
 
 
 def get_channels_list():
