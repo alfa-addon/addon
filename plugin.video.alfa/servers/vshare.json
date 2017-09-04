@@ -1,0 +1,50 @@
+{
+  "active": true,
+  "changes": [
+    {
+      "date": "27/08/2017",
+      "description": "Versión incial"
+    }
+  ],
+  "find_videos": {
+    "patterns": [
+      {
+        "pattern": "(http://vshare.io/v/[\\w]+[^\"']*)[\"']",
+        "url": "\\1"
+      }
+    ]
+  },
+  "free": true,
+  "id": [
+    "vshare"
+  ],
+  "name": "vshare",
+  "settings": [
+    {
+      "default": false,
+      "enabled": true,
+      "id": "black_list",
+      "label": "Incluir en lista negra",
+      "type": "bool",
+      "visible": true
+    },
+    {
+      "default": 0,
+      "enabled": true,
+      "id": "favorites_servers_list",
+      "label": "Incluir en lista de favoritos",
+      "lvalues": [
+        "No",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "type": "list",
+      "visible": false
+    }
+  ],
+  "thumbnail": "server_vshare.png",
+  "version": 1
+}

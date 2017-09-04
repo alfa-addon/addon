@@ -11,7 +11,7 @@ def test_video_exists(page_url):
 
     data = httptools.downloadpage(page_url).data
     if "<title>watch </title>" in data.lower():
-        return False, "[kingvid] El archivo no existe o  ha sido borrado"
+        return False, "[kingvid] El archivo no existe o ha sido borrado"
 
     return True, ""
 
@@ -19,7 +19,7 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
 
-    data = httptools.downloadpage(page_url).data
+    data = httptools.downloadpage(page_url, add_referer = True).data
     match = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
     data = jsunpack.unpack(match)
 
