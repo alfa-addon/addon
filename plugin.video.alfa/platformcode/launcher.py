@@ -120,9 +120,12 @@ def run(item=None):
             play_from_library(item)
             return
 
-        elif item.action == "editor_keymap":
-            from platformcode import editor_keymap
-            return editor_keymap.start()
+        elif item.action == "keymap":
+            from platformcode import keymaptools
+            if item.open:
+                return keymaptools.open_shortcut_menu()
+            else:
+                return keymaptools.set_key()
 
         # Action in certain channel specified in "action" and "channel" parameters
         else:
