@@ -162,7 +162,7 @@ def episodios(item):
 
     for scrapedurl, scrapedlang, scrapedtitle in matches:
         language = scrapedlang
-        title = scrapedtitle + ' (%s)' % language
+        title = scrapedtitle
         url = scrapedurl
         itemlist.append(item.clone(title=title, url=url, action='findvideos', language=language))
     return itemlist
@@ -176,7 +176,7 @@ def findvideos(item):
     itemlist.extend(servertools.find_video_items(data=data))
 
     for videoitem in itemlist:
-        title = item.title+' (%s)'%videoitem.server
+        title = item.title
         videoitem.channel = item.channel
         videoitem.title = title
         videoitem.action = 'play'

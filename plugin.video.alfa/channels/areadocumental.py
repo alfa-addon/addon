@@ -135,18 +135,19 @@ def entradas(item):
         scrapedthumbnail = host + urllib.quote(scrapedthumbnail)
         title = scrapedtitle
         if "full_hd" in extra:
-            scrapedtitle += " [COLOR gold][3D][/COLOR]"
+            quality = "3D"
         elif "720" in extra:
-            scrapedtitle += " [COLOR gold][720p][/COLOR]"
+            quality ='720'
         else:
-            scrapedtitle += " [COLOR gold][SD][/COLOR]"
+            quality = 'SD'
 
         year = year.replace("\xc2\xa0", "").replace(" ", "")
         if not year.isspace() and year != "":
             infolab['year'] = int(year)
-            scrapedtitle += "  (" + year + ")"
-        itemlist.append(item.clone(action="findvideos", title=scrapedtitle, fulltitle=title,
-                                   url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels=infolab))
+
+        itemlist.append(item.clone(action="findvideos", title=title, fulltitle=title,
+                                   url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels=infolab, contentTitle =
+                                   title, quality = quality))
 
     next_page = scrapertools.find_single_match(data2, '<a href="([^"]+)"> ></a>')
     if next_page:
@@ -171,7 +172,7 @@ def findvideos(item):
             url_sub = host + urllib.quote(url_sub)
             title = "Ver video en [[COLOR %s]%s[/COLOR]] Sub %s" % (color3, quality, label)
             itemlist.append(item.clone(action="play", server="directo", title=title,
-                                       url=url, subtitle=url_sub, extra=item.url, calidad=quality))
+                                       url=url, subtitle=url_sub, extra=item.url, quality=quality, language = label))
 
     return itemlist
 
