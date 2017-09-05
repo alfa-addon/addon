@@ -139,3 +139,8 @@ def findvideos(item):
                                      infoLabels={'title': item.fulltitle}, fulltitle=item.fulltitle,
                                      extra="library"))
     return itemlist
+
+
+def play(item):
+    item.thumbnail = item.contentThumbnail
+    return [item]

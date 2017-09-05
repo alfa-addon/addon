@@ -307,6 +307,7 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
         patron = '(?is)#(option-[^"]+).*?png">([^<]+)'
         match = scrapertools.find_multiple_matches(data, patron)
         for scrapedoption, language in match:
+            scrapedserver = ""
             lazy = ""
             if "lazy" in bloque1:
                 lazy = "lazy-"
@@ -314,7 +315,9 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
             url = scrapertools.find_single_match(bloque1, patron)
             if "goo.gl" in url:
                 url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
-            matches.append([url, "", "", language.strip(), t_tipo])
+            if "player" in url:
+                scrapedserver = scrapertools.find_single_match(url, 'player/(\w+)')
+            matches.append([url, scrapedserver, "", language.strip(), t_tipo])
     bloque2 = scrapertools.find_single_match(data, '(?s)box_links.*?dt_social_single')
     bloque2 = bloque2.replace("\t", "").replace("\r", "")
     patron = '(?s)optn" href="([^"]+)'
@@ -369,7 +372,7 @@ def play(item):
         data = httptools.downloadpage(item.url).data
         scrapedurl = scrapertools.find_single_match(data, '<a href="(http[^"]+)')
         if scrapedurl == "":
-            scrapedurl = scrapertools.find_single_match(data, '(?i)<frame src="(http[^"]+)')
+            scrapedurl = scrapertools.find_single_match(data, '(?i)frame.*?src="(http[^"]+)')
             if scrapedurl == "":
                 scrapedurl = scrapertools.find_single_match(data, 'replace."([^"]+)"')
         elif "goo.gl" in scrapedurl:
