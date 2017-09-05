@@ -42,6 +42,9 @@ def run(item=None):
     logger.info(item.tostring())
 
     try:
+        if item.action == "editor_keymap":
+            from platformcode import editor_keymap
+            return editor_keymap.start()
 
         # If item has no action, stops here
         if item.action == "":
