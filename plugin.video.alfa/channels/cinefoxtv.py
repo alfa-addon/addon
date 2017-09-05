@@ -164,7 +164,7 @@ def findvideos(item):
         itemlist.extend(servertools.find_video_items(data=scrapedurl))
 
     for videoitem in itemlist:
-        videoitem.title = item.contentTitle + ' (' + videoitem.server + ')'
+        videoitem.title = item.contentTitle
         videoitem.channel = item.channel
         videoitem.plot = info
         videoitem.action = "play"
