@@ -1,7 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
 
 import re
-
+from channelselector import get_thumb
 from core import channeltools
 from core import httptools
 from core import scrapertools
@@ -166,7 +166,8 @@ def findvideos(item):
                                                title="Ver %s en %s%s" % (
                                                    capitulo.strip(), s[0][2].capitalize(), idioma),
                                                thumbnail2=item.thumbnail,
-                                               thumbnail=config.get_thumb("server_" + s[0][2] + ".png")))
+                                               thumbnail=get_thumb("server_" + s[0][2] + ".png"),
+                                                                                   language = idioma))
         else:
             import os
             for s in servertools.findvideos(data):
@@ -174,7 +175,8 @@ def findvideos(item):
                                            title="Ver en %s%s" % (s[2].capitalize(), idioma),
                                            thumbnail2=item.thumbnail,
                                            thumbnail=os.path.join(config.get_runtime_path(), "resources", "media",
-                                                                  "servers", "server_" + s[2] + ".png")))
+                                                                  "servers", "server_" + s[2] + ".png"),
+                                                                                   language = idioma))
 
     # Insertar items "Buscar trailer" y "Añadir a la videoteca"
     if itemlist and item.extra == "movie":

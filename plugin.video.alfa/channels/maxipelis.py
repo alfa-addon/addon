@@ -127,9 +127,12 @@ def findvideos(item):
     patron = '<tr><td> <a class="link_a" href="([^"]+)".*?<td> (.*?)</td><td> (.*?)</td><td> (.*?)</td>'
     matches = scrapertools.find_multiple_matches(data, patron)
 
-    for url, server, idioma, calidad in matches:
-        title = server + "  [" + idioma + "] [" + calidad + "]"
-        itemlist.append(item.clone(action="play", title=title, fulltitle = item.title, url=url))
+    for url, server, calidad, idioma in matches:
+        title = item.contentTitle
+        server = servertools.get_server_from_url(url)
+
+        itemlist.append(item.clone(action="play", title=title, fulltitle = item.title, url=url, language = idioma,
+                                   contentTitle = item.contentTitle, quality = calidad, server = server))
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra !='findvideos' :
         itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Agregar esta pelicula a la Videoteca[/COLOR]',
@@ -137,13 +140,14 @@ def findvideos(item):
                              contentTitle = item.contentTitle))
     return itemlist
 
-def play(item):
-    logger.info()
-    itemlist = servertools.find_video_items(data=item.url)
-
-    for videoitem in itemlist:
-        videoitem.title = item.title
-        videoitem.fulltitle = item.fulltitle
-        videoitem.thumbnail = item.thumbnail
-        videoitem.channel = item.channel
-    return itemlist
+# def play(item):
+#     logger.info()
+#     itemlist = servertools.find_video_items(data=item.url)
+#
+#     for videoitem in itemlist:
+#         videoitem.title = item.title
+#         videoitem.fulltitle = item.fulltitle
+#         videoitem.thumbnail = item.thumbnail
+#         videoitem.channel = item.channel
+#         videoitem.
+#     return itemlist

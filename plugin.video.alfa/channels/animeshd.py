@@ -180,6 +180,7 @@ def findvideos(item):
         videoitem.channel = item.channel
         videoitem.title = title
         videoitem.action = 'play'
-
+        videoitem.language = item.language
+        videoitem.contentSerieName = item.contentSerieName
 
     return itemlist
