@@ -103,7 +103,8 @@ def entradas(item):
         filtro = {"poster_path": filtro_thumb}.items()
         itemlist.append(Item(channel=item.channel, action="findvideos", url=scrapedurl, title=titulo,
                              contentTitle=scrapedtitle, infoLabels={'filtro': filtro}, text_color=color2,
-                             thumbnail=scrapedthumbnail, contentType="movie", fulltitle=scrapedtitle))
+                             thumbnail=scrapedthumbnail, contentType="movie", fulltitle=scrapedtitle, language =
+                             idiomas))
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     if len(matches) > item.page + 20:
@@ -233,7 +234,8 @@ def findvideos(item):
         if detalle:
             title += " (%s)" % detalle
 
-        itemlist.append(item.clone(action="play", url=url, title=title, server=servidor, text_color=color3))
+        itemlist.append(item.clone(action="play", url=url, title=title, server=servidor, text_color=color3,
+                                   language = idioma, quality = calidad))
 
     if item.extra != "findvideos" and config.get_videolibrary_support():
         itemlist.append(item.clone(title="Añadir película a la videoteca", action="add_pelicula_to_library",

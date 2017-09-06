@@ -352,7 +352,8 @@ def findvideos(item):
         if server == "Ul":
             server = "Uploaded"
         title = "%s  [%s][%s]" % (server, idioma, calidad)
-        itemlist.append(item.clone(action="play", title=title, url=url))
+        itemlist.append(item.clone(action="play", title=title, url=url, language = idioma, quality = calidad,
+                                   server = server))
 
     patron = 'id="(embed[0-9]*)".*?<div class="calishow">(.*?)<.*?src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -362,7 +363,8 @@ def findvideos(item):
             title = "Directo"
         idioma = scrapertools.find_single_match(data, 'href="#%s".*?>([^<]+)<' % id_embed)
         title = "%s  [%s][%s]" % (title.capitalize(), idioma, calidad)
-        itemlist.append(item.clone(action="play", title=title, url=url))
+        itemlist.append(item.clone(action="play", title=title, url=url, language = idioma, quality = calidad,
+                                   server = server))
 
     if itemlist:
         if not config.get_setting('menu_trailer', item.channel):
