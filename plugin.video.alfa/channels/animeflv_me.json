@@ -1,4 +1,4 @@
-{
+﻿{
   "id": "animeflv_me",
   "name": "Animeflv.ME",
   "active": true,
@@ -8,6 +8,10 @@
   "banner": "http://i.imgur.com/dTZwCPq.png",
   "version": 1,
   "changes": [
+    {
+      "date": "03/09/2017",
+      "description": "Añadidos links de openload (No disponible de momento con la videoteca)"
+    },
     {
       "date": "15/03/2017",
       "description": "limpieza código"

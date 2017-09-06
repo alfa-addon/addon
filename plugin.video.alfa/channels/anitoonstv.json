@@ -1,4 +1,4 @@
-{
+﻿{
   "id": "anitoonstv",
   "name": "AniToons TV",
   "active": true,
@@ -9,8 +9,8 @@
   "version": 1,
   "changes": [
     {
-      "date": "13/06/2017",
-      "description": "Arreglado problema en nombre de servidores"
+      "date": "03/09/2017",
+      "description": "Arreglado problema en nombre de servidores (nuevamente), añadido a anime"
     },
     {
       "date": "02/06/2017",
@@ -19,6 +19,7 @@
   ],
   "categories": [
     "tvshow",
-    "latino"
+    "latino",
+    "anime"
   ]
 }
