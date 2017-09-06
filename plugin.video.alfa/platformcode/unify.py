@@ -44,7 +44,7 @@ def set_lang(language):
 
     old_lang = language
     logger.debug('language: %s'%language)
-    language = re.sub(r'\[*.?COLOR.*?\]|\[|\]', '', language)
+    language = re.sub(r'\[*.?COLOR.*?\]|\[|\]|\(|\)', '', language)
     logger.debug('language re.sub: x%sx' % language)
 
     language = simplify(language)
@@ -121,6 +121,12 @@ def title_format(item):
             except:
                 logger.debug('infoLabels: %s'%item.infoLabels)
 
+        # Damos formato a la calidad si existiera
+        if item.quality:
+            quality = '[COLOR %s][%s][/COLOR]' % (color_scheme['quality'], item.quality.strip())
+            item.title = '%s %s' % (item.title, quality)
+        else:
+            quality = ''
         # Damos formato al idioma si existiera
         if lang:
             if isinstance(item.language, list):
@@ -129,23 +135,17 @@ def title_format(item):
             else:
                 item.title = '%s %s' % (item.title, item.language)
 
-        #Damos formato a la calidad si existiera
-        if item.quality:
-            quality = '[COLOR %s][%s][/COLOR]'%(color_scheme['quality'], item.quality)
-            item.title = '%s %s' % (item.title, quality)
-        else:
-            quality = ''
         if item.server:
-            server = '[COLOR %s][%s][/COLOR]' % (color_scheme['server'], item.server)
+            server = '[COLOR %s][%s][/COLOR]' % (color_scheme['server'], item.server.strip())
 
         #compureba si estamos en findvideos, y si hay server, si es asi no se muestra el
         #titulo sino el server, en caso contrario se muestra el titulo normalmente.
 
         if item.action != 'play' and item.server:
-            item.title ='%s %s'%(item.title, server)
+            item.title ='%s %s'%(item.title, server.strip())
         elif item.action == 'play' and item.server:
             #item.title = 'S:%s  Q:%s I:%s' % (server, quality, item.language)
-            item.title = '%s  %s %s' % (server, quality, item.language)
+            item.title = '%s %s %s' % (server.strip(), quality.strip(), item.language)
         else:
             item.title = '%s' % item.title
 

@@ -184,20 +184,16 @@ def peliculas(item):
         scrapedtitle = re.sub(r"\(\d+\)", "", scrapedtitle).strip()
         scrapedcalidad = re.sub(r"<a href.*?>|</a>", "", scrapedcalidad).strip()
         scrapedlenguaje = re.sub(r"<a href.*?>|</a>", "", scrapedlenguaje).strip()
-        scrapedcalidad = scrapedcalidad.replace(scrapedcalidad,
-                                                bbcode_kodi2html("[COLOR orange]" + scrapedcalidad + "[/COLOR]"))
-
+        scrapedlenguaje = scrapedlenguaje.split(',')
         if not "Adultos" in scrapedgenero and not "Adultos" in scrapedlenguaje and not "Adultos" in scrapedcalidad:
-            scrapedlenguaje = scrapedlenguaje.replace(scrapedlenguaje,
-                                                      bbcode_kodi2html("[COLOR orange]" + scrapedlenguaje + "[/COLOR]"))
 
-            scrapedtitle = scrapedtitle + "-(Idioma: " + scrapedlenguaje + ")" + "-(Calidad: " + scrapedcalidad + ")"
-            scrapedtitle = scrapedtitle.replace(scrapedtitle,
-                                                bbcode_kodi2html("[COLOR white]" + scrapedtitle + "[/COLOR]"))
+            scrapedtitle = scrapedtitle + scrapedcalidad
+
             extra = year + "|" + title_fan
             itemlist.append(Item(channel=item.channel, title=scrapedtitle, url=scrapedurl, action="fanart",
                                  thumbnail=scrapedthumbnail, extra=extra,
-                                 fanart="http://s18.postimg.org/h9kb22mnt/pdkfanart.jpg", library=True, folder=True))
+                                 fanart="http://s18.postimg.org/h9kb22mnt/pdkfanart.jpg", library=True, folder=True,
+                                 language=scrapedlenguaje, quality=scrapedcalidad, infoLabels={'year':year}))
     ## Paginación
 
     next_page = scrapertools.get_match(data, '<span class="current">.*?<a href="(.*?)".*?>Siguiente &raquo;</a></div>')
