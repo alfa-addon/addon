@@ -118,7 +118,6 @@ def lista_gen(item):
     data1 = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data1)
     patron_sec = '<section class="content">.+?<\/section>'
     data = scrapertools.find_single_match(data1, patron_sec)
-    logger.info("xsxxxxssss"+item.title)
     patron = '<article id=.+? class=.+?><div.+?>'
     patron += '<a href="([^"]+)" title="([^"]+)'  # scrapedurl, # scrapedtitle
     patron += ' Capítulos Completos ([^"]+)">'  # scrapedlang
@@ -173,7 +172,6 @@ def episodios(item):
     matches = scrapertools.find_multiple_matches(data, patron_caps)
     show = scrapertools.find_single_match(data, '<h3><strong>.+?de (.+?)<\/strong>')
     scrapedplot = scrapertools.find_single_match(data, '<strong>Sinopsis<\/strong><strong>([^"]+)<\/strong><\/pre>')
-    logger.info("epibla   " + data)
     for link, cap, name in matches:
         if 'x' in cap:
             title = cap + " - " + name
