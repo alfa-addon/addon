@@ -51,6 +51,6 @@
         <setting id="extended_info" type="bool" label="Mostrar opción ExtendedInfo (Necesario addon externo):" default="false"/>
 		
 		<setting label="Botones/Teclas de acceso (Cambios requieren reiniciar Kodi)" type="lsep"/>
-		<setting id="button_keymap" type="action" label="31100" action="RunPlugin(plugin://plugin.video.alfa/?ewogICAgImFjdGlvbiI6ICJlZGl0b3Jfa2V5bWFwIiwgCiAgICAiaW5mb0xhYmVscyI6IHt9Cn0%3D)" />
+		<setting id="shortcut_key" type="action" label="31100" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAia2V5bWFwIg0KfQ==)" />
    </category>
 </settings>
