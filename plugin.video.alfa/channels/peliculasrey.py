@@ -145,14 +145,14 @@ def peliculas(item):
 
     tabla_pelis = scrapertools.find_single_match(data,
                                                  'class="section col-17 col-main grid-125 overflow clearfix">(.*?)</div></section>')
-    patron = '<img src="([^"]+)" alt="([^"]+).*?href="([^"]+)'
+    patron = '<img src="([^"]+)" alt="([^\(]+)\((\d{4})\).*?href="([^"]+)'
 
     matches = re.compile(patron, re.DOTALL).findall(tabla_pelis)
     itemlist = []
 
-    for scrapedthumbnail, scrapedtitle, scrapedurl in matches:
+    for scrapedthumbnail, scrapedtitle, year, scrapedurl in matches:
         itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, plot="", fulltitle=scrapedtitle))
+                             thumbnail=scrapedthumbnail, plot="", fulltitle=scrapedtitle, infoLabels={'year':year}))
 
     next_page = scrapertools.find_single_match(data, 'rel="next" href="([^"]+)')
     if next_page != "":

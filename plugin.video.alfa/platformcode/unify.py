@@ -38,7 +38,7 @@ def set_lang(language):
     cast =['castellano','espanol','cast','esp','espaol', 'es','']
     lat=['latino','lat','la', 'espanol latino', 'espaol latino']
     vose=['subtitulado','subtitulada','sub','sub espanol','vose','espsub','su','ingles','subs castellano',
-          'sub: español']
+          'sub: español', 'vs']
     vos=['vos', 'sub ingles', 'engsub', 'vosi','ingles subtitulado', 'sub: ingles']
     vo=['ingles', 'en','vo', 'ovos']
 
