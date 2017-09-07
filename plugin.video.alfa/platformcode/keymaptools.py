@@ -109,72 +109,65 @@ MAIN_MENU = {
 class Main(xbmcgui.WindowXMLDialog):
     def __init__(self, *args, **kwargs):
         self.items = []
-        self.open = kwargs.get("open")
 
     def onInit(self):
         self.setCoordinateResolution(2)
 
-        if self.open:
-            for menuentry in MAIN_MENU.keys():
-                item = xbmcgui.ListItem(MAIN_MENU[menuentry]["label"])
-                item.setProperty("thumb", str(MAIN_MENU[menuentry]["icon"]))
-                item.setProperty("identifier", str(menuentry))
-                item.setProperty("order", str(MAIN_MENU[menuentry]["order"]))
-                self.items.append(item)
+        for menuentry in MAIN_MENU.keys():
+            item = xbmcgui.ListItem(MAIN_MENU[menuentry]["label"])
+            item.setProperty("thumb", str(MAIN_MENU[menuentry]["icon"]))
+            item.setProperty("identifier", str(menuentry))
+            item.setProperty("order", str(MAIN_MENU[menuentry]["order"]))
+            self.items.append(item)
 
-            self.items.sort(key=lambda it: it.getProperty("order"))
-            self.getControl(32500).addItems(self.items)
-            self.setFocusId(32500)
-            self.open = False
+        self.items.sort(key=lambda it: it.getProperty("order"))
+        self.getControl(32500).addItems(self.items)
+        self.setFocusId(32500)
 
     def onClick(self, control_id):
         if control_id == 32500:
             identifier = self.getControl(32500).getSelectedItem().getProperty("identifier")
             if identifier == "news":
-                self.close()
+                xbmc.executebuiltin('Dialog.Close(all,true)')
                 xbmc.executebuiltin(
                     'ActivateWindow(10025, "plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAibWFpbmxpc3QiLCANCiAgICAiY2hhbm5lbCI6ICJuZXdzIg0KfQ==")')
             elif identifier == "channels":
-                self.close()
+                xbmc.executebuiltin('Dialog.Close(all,true)')
                 xbmc.executebuiltin(
                     'ActivateWindow(10025, "plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAiZ2V0Y2hhbm5lbHR5cGVzIiwgDQogICAgImNoYW5uZWwiOiAiY2hhbm5lbHNlbGVjdG9yIg0KfQ==")')
             elif identifier == "search":
-                self.close()
+                xbmc.executebuiltin('Dialog.Close(all,true)')
                 xbmc.executebuiltin(
                     'ActivateWindow(10025, "plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAibWFpbmxpc3QiLCANCiAgICAiY2hhbm5lbCI6ICJzZWFyY2giDQp9")')
             elif identifier == "favorites":
-                self.close()
+                xbmc.executebuiltin('Dialog.Close(all,true)')
                 xbmc.executebuiltin(
                     'ActivateWindow(10025, "plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAibWFpbmxpc3QiLCANCiAgICAiY2hhbm5lbCI6ICJmYXZvcml0ZXMiDQp9")')
             elif identifier == "videolibrary":
-                self.close()
+                xbmc.executebuiltin('Dialog.Close(all,true)')
                 xbmc.executebuiltin(
                     'ActivateWindow(10025, "plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAibWFpbmxpc3QiLCANCiAgICAiY2hhbm5lbCI6ICJ2aWRlb2xpYnJhcnkiDQp9")')
             elif identifier == "downloads":
-                self.close()
+                xbmc.executebuiltin('Dialog.Close(all,true)')
                 xbmc.executebuiltin(
                     'ActivateWindow(10025, "plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAibWFpbmxpc3QiLCANCiAgICAiY2hhbm5lbCI6ICJkb3dubG9hZHMiDQp9")')
             elif identifier == "settings":
-                self.close()
+                xbmc.executebuiltin('Dialog.Close(all,true)')
                 xbmc.executebuiltin(
                     'ActivateWindow(10025, "plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAibWFpbmxpc3QiLCANCiAgICAiY2hhbm5lbCI6ICJzZXR0aW5nIg0KfQ==")')
 
-            config.set_setting("shortcut_flag", "")
 
     def onAction(self, action):
         # exit
         if action.getId() in [xbmcgui.ACTION_PREVIOUS_MENU, xbmcgui.ACTION_NAV_BACK]:
             # main.close()
-            self.close()
-            config.set_setting("shortcut_flag", "")
+            xbmc.executebuiltin('Dialog.Close(all,true)')
 
         if action.getId() == xbmcgui.ACTION_CONTEXT_MENU:
             config.open_settings()
 
 
 def open_shortcut_menu():
-    if config.get_setting("shortcut_flag") != "open":
-        main = Main('ShortCutMenu.xml', config.get_runtime_path(), open=True)
-        config.set_setting("shortcut_flag", "open")
-        main.doModal()
-        del main
+    main = Main('ShortCutMenu.xml', config.get_runtime_path())
+    main.doModal()
+    del main
