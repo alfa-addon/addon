@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 import time
@@ -269,8 +269,8 @@ def episodios(item):
                                        fanart=item.thumbnail, contentType="episode"))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=item.url,
-                             action="add_serie_to_library", extra="episodios", show=item.title	))
+        itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca",
+                             action="add_serie_to_library", extra="episodios"))
 
     return itemlist
 
@@ -321,10 +321,8 @@ def findvideos(item):
                                                video_urls=video_urls))
 
         else:
-            if e.startswith("https://cldup.com") and cldup == False:
-                itemlist.append(item.clone(title="Enlace encontrado en Cldup",
-                                           action="play",
-                                           url = e))
+            if e.startswith("https://cldup.com") and not cldup:
+                itemlist.append(item.clone(title="Enlace encontrado en Cldup", action="play", url=e))
                 cldup = True
             aux_url.append(e)
 
