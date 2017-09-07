@@ -36,7 +36,7 @@
 			<width>969</width>
 			<height>70</height>
 			<font>font20_title</font>
-			<label>Shortcut</label>
+			<label>Alfa - $ADDON[plugin.video.alfa 30998]</label>
 			<align>left</align>
 			<aligny>center</aligny>
 			<shadowcolor>black</shadowcolor>
