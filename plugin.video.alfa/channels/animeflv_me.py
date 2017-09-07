@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 import re
 import urlparse
@@ -315,7 +315,6 @@ def episodios(item):
             itemlist.append(Item(channel=item.channel, title="Descargar todos los episodios",
                                  url=item.url, action="download_all_episodes", extra="episodios",
                                  show=item.show))
-
     return itemlist
 
 
@@ -324,23 +323,48 @@ def findvideos(item):
 
     itemlist = []
 
-    page_html = get_url_contents(item.url)
-
-    regex_api = r'http://player\.animeflv\.me/[^\"]+'
-    iframe_url = scrapertools.find_single_match(page_html, regex_api)
-
-    iframe_html = get_url_contents(iframe_url)
-
-    regex_video_list = r'var part = \[([^\]]+)'
-
-    videos_html = scrapertools.find_single_match(iframe_html, regex_video_list)
-    videos = re.findall('"([^"]+)"', videos_html, re.DOTALL)
-
     qualities = ["360", "480", "720", "1080"]
-
-    for quality_id, video_url in enumerate(videos):
+    if 'player' in item.url:
+        page_html = get_url_contents(item.url)
+        data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", page_html)
+        patron_open='<!-- Start .+? -->.+?<iframe src="(.+?)"'
+        video_url = scrapertools.find_single_match(data, patron_open)
+        #for server,video_url in videos_url:
+        server="openload"
         itemlist.append(Item(channel=item.channel, action="play", url=video_url, show=re.escape(item.show),
-                             title="Ver en calidad [{0}]".format(qualities[quality_id]), plot=item.plot,
+                             title="Ver en "+server+" [{0}]".format(qualities[1]), plot=item.plot, server=server,
                              folder=True, fulltitle=item.title, viewmode="movies_with_plot"))
 
+    else:
+
+        page_html = get_url_contents(item.url)
+
+        regex_api = r'http://player\.animeflv\.me/[^\"]+'
+        iframe_url = scrapertools.find_single_match(page_html, regex_api)
+
+        iframe_html = get_url_contents(iframe_url)
+
+        regex_video_list = r'var part = \[([^\]]+)'
+
+        videos_html = scrapertools.find_single_match(iframe_html, regex_video_list)
+        videos = re.findall('"([^"]+)"', videos_html, re.DOTALL)
+
+        
+        for quality_id, video_url in enumerate(videos):
+            itemlist.append(Item(channel=item.channel, action="play", url=video_url, show=re.escape(item.show),
+                             title="Ver en calidad [{0}]".format(qualities[quality_id]), plot=item.plot,
+                             folder=True, fulltitle=item.title, viewmode="movies_with_plot"))
+        patron_open='<div id="player"><iframe src="(.+?)"'
+        data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", page_html)
+
+        videos_html_other = scrapertools.find_single_match(data, patron_open)
+        #for video_url in videos_html_other:
+        video_url = videos_html_other
+        a=1
+        itemlist.append(Item(channel=item.channel, action="findvideos", url=video_url, show=re.escape(item.show),
+                             title="Ver en Otro servidor [{0}]".format(qualities[1]), plot=item.plot,
+                             folder=True, fulltitle=item.title, viewmode="movies_with_plot"))
+        
+
     return __sort_by_quality(itemlist)
+
