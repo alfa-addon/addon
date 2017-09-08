@@ -6,6 +6,7 @@ import unicodedata
 from core import httptools
 from core import jsontools
 from core import scrapertools
+from core import servertools
 from core.item import Item
 from platformcode import config, logger
 
@@ -152,20 +153,20 @@ def entradas(item):
             thumbnail = host % "movie/%s/poster_167x250.jpg" % child["id"]
 
         if child['height'] < 720:
-            quality = "[B]  [SD][/B]"
+            quality = "SD"
         elif child['height'] < 1080:
-            quality = "[B]  [720p][/B]"
+            quality = "720p"
         elif child['height'] >= 1080:
-            quality = "[B]  [1080p][/B]"
+            quality = "1080p"
         fulltitle = unicodedata.normalize('NFD', unicode(child['name'], 'utf-8')).encode('ASCII', 'ignore') \
             .decode("utf-8")
         if child['name'] == "":
             title = child['id'].rsplit(".", 1)[0]
         else:
             title = child['name']
-        if child['year']:
-            title += " (" + child['year'] + ")"
-        title += quality
+        #if child['year']:
+        #    title += " (" + child['year'] + ")"
+        #title += quality
 
         video_urls = []
         for k, v in child.get("video", {}).items():
@@ -175,7 +176,7 @@ def entradas(item):
 
         itemlist.append(Item(channel=item.channel, action="findvideos", server="", title=title, url=url,
                              thumbnail=thumbnail, fanart=fanart, fulltitle=fulltitle, infoLabels=infolabels,
-                             contentTitle=fulltitle, video_urls=video_urls, text_color=color3))
+                             contentTitle=fulltitle, video_urls=video_urls, text_color=color3, quality=quality))
 
     return itemlist
 
@@ -517,12 +518,12 @@ def findvideos(item):
         import base64
         item.video_urls.sort(key=lambda it: (it[1], random.random()), reverse=True)
         i = 0
-        calidad_actual = ""
-        for vid, calidad in item.video_urls:
-            title = "Ver vídeo en %sp" % calidad
-            if calidad != calidad_actual:
+        actual_quality = ""
+        for vid, quality in item.video_urls:
+            title = "Ver vídeo en %sp" % quality
+            if quality != actual_quality:
                 i = 0
-                calidad_actual = calidad
+                actual_quality = quality
 
             if i % 2 == 0:
                 title += " [COLOR purple]Mirror %s[/COLOR] - %s" % (str(i + 1), item.fulltitle)
@@ -530,14 +531,15 @@ def findvideos(item):
                 title += " [COLOR green]Mirror %s[/COLOR] - %s" % (str(i + 1), item.fulltitle)
             url = vid % "%s" % base64.b64decode("dHQ9MTQ4MDE5MDQ1MSZtbT1NRzZkclhFand6QmVzbmxSMHNZYXhBJmJiPUUwb1dVVVgx"
                                                 "WTBCQTdhWENpeU9paUE=")
-            itemlist.append(item.clone(title=title, action="play", url=url, server="directo", video_urls=""))
+            itemlist.append(item.clone(title=title, action="play", url=url, video_urls=""))
             i += 1
 
         if itemlist and item.extra == "" and config.get_videolibrary_support():
             itemlist.append(Item(channel=item.channel, title="Añadir enlaces a la videoteca", text_color=color5,
                                  contentTitle=item.fulltitle, url=item.url, action="add_pelicula_to_library",
-                                 infoLabels={'title': item.fulltitle}, extra="findvideos", fulltitle=item.fulltitle))
-
+                                 infoLabels={'title': item.fulltitle}, extra="findvideos", fulltitle=item.fulltitle
+                                 ))
+    itemlist = servertools.get_servers_itemlist(itemlist)
     return itemlist
 
 
