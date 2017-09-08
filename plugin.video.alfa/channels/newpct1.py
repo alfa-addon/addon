@@ -260,7 +260,7 @@ def findvideos(item):
 
     # <a href="http://tumejorjuego.com/download/index.php?link=descargar-torrent/058310_yo-frankenstein-blurayrip-ac3-51.html" title="Descargar torrent de Yo Frankenstein " class="btn-torrent" target="_blank">Descarga tu Archivo torrent!</a>
 
-    patron = '<a href="([^"]+)" title="[^"]+" class="btn-torrent" target="_blank">'
+    patron = 'openTorrent.*?"title=".*?" class="btn-torrent">.*?function openTorrent.*?href = "(.*?)";'
 
     # escraped torrent
     url = scrapertools.find_single_match(data, patron)
