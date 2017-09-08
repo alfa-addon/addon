@@ -6,7 +6,9 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from core.scrapertools import decodeHtmlentities as dhe
-from platformcode import config, logger
+from platformcode import logger
+from platformcode import config
+from core import tmdb
 
 try:
     import xbmc
@@ -172,7 +174,6 @@ def peliculas(item):
     patron += 'Calidad:(.*?)</br>.*?'
     patron += 'Género:.*?tag">(.*?)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
 
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedlenguaje, scrapedcalidad, scrapedgenero in matches:
 
@@ -184,20 +185,22 @@ def peliculas(item):
         scrapedtitle = re.sub(r"\(\d+\)", "", scrapedtitle).strip()
         scrapedcalidad = re.sub(r"<a href.*?>|</a>", "", scrapedcalidad).strip()
         scrapedlenguaje = re.sub(r"<a href.*?>|</a>", "", scrapedlenguaje).strip()
-        scrapedcalidad = scrapedcalidad.replace(scrapedcalidad,
-                                                bbcode_kodi2html("[COLOR orange]" + scrapedcalidad + "[/COLOR]"))
-
+        scrapedlenguaje = scrapedlenguaje.split(',')
         if not "Adultos" in scrapedgenero and not "Adultos" in scrapedlenguaje and not "Adultos" in scrapedcalidad:
-            scrapedlenguaje = scrapedlenguaje.replace(scrapedlenguaje,
-                                                      bbcode_kodi2html("[COLOR orange]" + scrapedlenguaje + "[/COLOR]"))
 
-            scrapedtitle = scrapedtitle + "-(Idioma: " + scrapedlenguaje + ")" + "-(Calidad: " + scrapedcalidad + ")"
-            scrapedtitle = scrapedtitle.replace(scrapedtitle,
-                                                bbcode_kodi2html("[COLOR white]" + scrapedtitle + "[/COLOR]"))
+            scrapedtitle = scrapedtitle
+
             extra = year + "|" + title_fan
-            itemlist.append(Item(channel=item.channel, title=scrapedtitle, url=scrapedurl, action="fanart",
-                                 thumbnail=scrapedthumbnail, extra=extra,
-                                 fanart="http://s18.postimg.org/h9kb22mnt/pdkfanart.jpg", library=True, folder=True))
+            new_item = Item(channel=item.channel, title=scrapedtitle, url=scrapedurl, action="fanart",
+                            thumbnail=scrapedthumbnail, extra=extra,
+                            fanart="http://s18.postimg.org/h9kb22mnt/pdkfanart.jpg", library=True, folder=True,
+                            language=scrapedlenguaje, quality=scrapedcalidad, contentTitle= scrapedtitle, infoLabels={
+                'year':year})
+            #TODO Dividir los resultados antes
+            #if year:
+            #    tmdb.set_infoLabels_item(new_item)
+            itemlist.append(new_item)
+
     ## Paginación
 
     next_page = scrapertools.get_match(data, '<span class="current">.*?<a href="(.*?)".*?>Siguiente &raquo;</a></div>')
@@ -453,7 +456,7 @@ def fanart(item):
                     else:
                         category = item.extra
                     itemlist.append(Item(channel=item.channel, title=item.title, action="findvideos", url=item.url,
-                                         server="torrent", thumbnail=logo, fanart=item.extra, extra=extra, show=show,
+                                         thumbnail=logo, fanart=item.extra, extra=extra, show=show,
                                          category=category, library=item.library, fulltitle=fulltitle, folder=True))
 
     title_info = "Info"
@@ -540,17 +543,19 @@ def findvideos(item):
                         continue
 
                 servertitle = scrapertools.get_match(video_url, 'http.*?://(.*?)/')
-                servertitle = servertitle.replace(servertitle,
-                                                  bbcode_kodi2html("[COLOR red]" + servertitle + "[/COLOR]"))
                 servertitle = servertitle.replace("embed.", "")
                 servertitle = servertitle.replace("player.", "")
                 servertitle = servertitle.replace("api.video.", "")
-                servertitle = re.sub(r"hqq.tv|hqq.watch", "netu.tv", servertitle)
-                servertitle = servertitle.replace("anonymouse.org", "netu.tv")
-                title = bbcode_kodi2html("[COLOR orange]Ver en --[/COLOR]") + servertitle + " " + idioma + " " + calidad
+                servertitle = re.sub(r"hqq.tv|hqq.watch", "netutv", servertitle)
+                servertitle = servertitle.replace("anonymouse.org", "netu")
+                title = servertitle
+                logger.debug('servertitle: %s' % servertitle)
+                server = servertools.get_server_name(servertitle)
+                logger.debug('server: %s'%server)
                 itemlist.append(
-                    Item(channel=item.channel, title=title, url=video_url, action="play", thumbnail=item.category,
-                         plot=scrapedplot, fanart=item.show))
+                    Item(channel=item.channel, title=title, url=video_url, action="play",
+                         thumbnail=item.category,
+                         plot=scrapedplot, fanart=item.show, server=server, language=idioma, quality=calidad))
     if item.library and config.get_videolibrary_support() and len(itemlist) > 0:
         infoLabels = {'tmdb_id': item.infoLabels['tmdb_id'],
                       'title': item.fulltitle}

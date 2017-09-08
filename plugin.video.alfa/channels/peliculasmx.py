@@ -4,8 +4,12 @@ import re
 import urlparse
 
 from core import scrapertools
+from core import httptools
+from core import tmdb
 from core.item import Item
+
 from platformcode import logger
+
 
 
 def mainlist(item):
@@ -25,8 +29,8 @@ def generos(item):
     itemlist = []
 
     # Descarga la página
-    data = scrapertools.cachePage(item.url)
-
+    data = httptools.downloadpage(item.url).data
+    logger.debug(data)
     # <li class="cat-item cat-item-3"><a href="http://peliculasmx.net/category/accion/" >Accion</a> <span>246</span>
     patron = '<li class="cat-item cat-item-.*?'
     patron += '<a href="([^"]+)".*?'
@@ -51,24 +55,26 @@ def peliculas(item):
     itemlist = []
 
     # Descarga la página
-    data = scrapertools.cachePage(item.url)
-
+    data = httptools.downloadpage(item.url).data
     patron = '<div id="mt-.*?'
     patron += '<a href="([^"]+)".*?'
     patron += '<img src="([^"]+)".*?'
     patron += '<span class="tt">([^<]+).*?'
+    patron += '<span class="year">(\d{4})</span>.*?'
     patron += '<span class="calidad2">([^<]+)'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for match in matches:
-        scrapedurl = match[0]  # urlparse.urljoin("",match[0])
-        scrapedtitle = match[2] + ' [' + match[3] + ']'
-        scrapedthumbnail = match[1]
-        itemlist.append(
-            Item(channel=item.channel, action="findvideos", title=scrapedtitle, fulltitle=scrapedtitle, url=scrapedurl,
-                 thumbnail=scrapedthumbnail, folder=True))
+    for scrapedurl, scrapedthumbnail, scrapedtitle, year, quality in matches:
+        url =scrapedurl
+        title = scrapedtitle
+        thumbnail = scrapedthumbnail
 
+        itemlist.append(
+            Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
+                 thumbnail=thumbnail, quality=quality, infoLabels={'year':year}))
+
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     # Extrae la marca de siguiente página
     paginador = scrapertools.find_single_match(data, "<div class='paginado'>.*?lateral")
 

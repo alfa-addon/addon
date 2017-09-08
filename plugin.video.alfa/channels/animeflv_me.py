@@ -8,6 +8,7 @@ from channels import renumbertools
 from core import filetools
 from core import httptools
 from core import scrapertools
+from core import servertools
 from core.item import Item
 from platformcode import config, logger
 
@@ -23,7 +24,7 @@ REGEX_TITLE = r'(?:bigChar_a" href=.+?>)(.+?)(?:</a>)'
 REGEX_THUMB = r'src="(http://media.animeflv\.me/uploads/thumbs/[^"]+?)"'
 REGEX_PLOT = r'<span class="info">Línea de historia:</span><p><span>(.*?)</span>'
 REGEX_URL = r'href="(http://animeflv\.me/Anime/[^"]+)">'
-REGEX_SERIE = r'{0}.+?{1}([^<]+?)</a><p>(.+?)</p>'.format(REGEX_THUMB, REGEX_URL)
+REGEX_SERIE = r'%s.+?%s([^<]+?)</a><p>(.+?)</p>' % (REGEX_THUMB, REGEX_URL)
 REGEX_EPISODE = r'href="(http://animeflv\.me/Ver/[^"]+?)">(?:<span.+?</script>)?(.+?)</a></td><td>(\d+/\d+/\d+)</td></tr>'
 REGEX_GENERO = r'<a href="(http://animeflv\.me/genero/[^\/]+/)">([^<]+)</a>'
 
@@ -157,20 +158,13 @@ def letras(item):
 
     base_url = 'http://animeflv.me/ListadeAnime?c='
 
-    itemlist = []
-    itemlist.append(Item(channel=item.channel, action="series", title="#",
-                         url=base_url + "#", viewmode="movies_with_plot"))
+    itemlist = list()
+    itemlist.append(Item(channel=item.channel, action="series", title="#", url=base_url + "#"))
 
-    # Itera sobre las posiciones de las letras en la tabla ascii
-    # 65 = A, 90 = Z
-    for i in xrange(65, 91):
-        letter = chr(i)
+    for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+        logger.debug("title=[%s], url=[%s], thumbnail=[]" % (letter, base_url + letter))
 
-        logger.debug("title=[{0}], url=[{1}], thumbnail=[]".format(
-            letter, base_url + letter))
-
-        itemlist.append(Item(channel=item.channel, action="series", title=letter,
-                             url=base_url + letter, viewmode="movies_with_plot"))
+        itemlist.append(Item(channel=item.channel, action="series", title=letter, url=base_url + letter))
 
     return itemlist
 
@@ -182,14 +176,12 @@ def generos(item):
 
     html = get_url_contents(item.url)
 
-    generos = re.findall(REGEX_GENERO, html)
+    list_genre = re.findall(REGEX_GENERO, html)
 
-    for url, genero in generos:
-        logger.debug(
-            "title=[{0}], url=[{1}], thumbnail=[]".format(genero, url))
+    for url, genero in list_genre:
+        logger.debug("title=[%s], url=[%s], thumbnail=[]" % (genero, url))
 
-        itemlist.append(Item(channel=item.channel, action="series", title=genero, url=url,
-                             plot='', viewmode="movies_with_plot"))
+        itemlist.append(Item(channel=item.channel, action="series", title=genero, url=url))
 
     return itemlist
 
@@ -198,28 +190,26 @@ def search(item, texto):
     logger.info()
 
     texto = texto.replace(" ", "%20")
-    item.url = "{0}{1}".format(item.url, texto)
+    item.url = "%s%s" % (item.url, texto)
 
     html = get_url_contents(item.url)
 
     try:
         # Se encontro un solo resultado y se redicciono a la página de la serie
         if html.find('<title>Ver') >= 0:
-            series = [__extract_info_from_serie(html)]
+            show_list = [__extract_info_from_serie(html)]
         # Se obtuvo una lista de resultados
         else:
-            series = __find_series(html)
+            show_list = __find_series(html)
 
         items = []
-        for serie in series:
-            title, url, thumbnail, plot = serie
+        for show in show_list:
+            title, url, thumbnail, plot = show
 
-            logger.debug("title=[{0}], url=[{1}], thumbnail=[{2}]".format(
-                title, url, thumbnail))
+            logger.debug("title=[%s], url=[%s], thumbnail=[%s]" % (title, url, thumbnail))
 
-            items.append(Item(channel=item.channel, action="episodios", title=title,
-                              url=url, thumbnail=thumbnail, plot=plot,
-                              show=title, viewmode="movies_with_plot", context=renumbertools.context(item)))
+            items.append(Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
+                              plot=plot, show=title, viewmode="movies_with_plot", context=renumbertools.context(item)))
     except:
         import sys
         for line in sys.exc_info():
@@ -234,25 +224,21 @@ def series(item):
 
     page_html = get_url_contents(item.url)
 
-    series = __find_series(page_html)
+    show_list = __find_series(page_html)
 
     items = []
-    for serie in series:
-        title, url, thumbnail, plot = serie
+    for show in show_list:
+        title, url, thumbnail, plot = show
 
-        logger.debug("title=[{0}], url=[{1}], thumbnail=[{2}]".format(
-            title, url, thumbnail))
+        logger.debug("title=[%s], url=[%s], thumbnail=[%s]" % (title, url, thumbnail))
 
-        items.append(Item(channel=item.channel, action="episodios", title=title, url=url,
-                          thumbnail=thumbnail, plot=plot, show=title, viewmode="movies_with_plot",
-                          context=renumbertools.context(item)))
+        items.append(Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
+                          plot=plot, show=title, viewmode="movies_with_plot", context=renumbertools.context(item)))
 
     url_next_page = __find_next_page(page_html)
 
     if url_next_page:
-        items.append(Item(channel=item.channel, action="series", title=">> Página Siguiente",
-                          url=url_next_page, thumbnail="", plot="", folder=True,
-                          viewmode="movies_with_plot"))
+        items.append(Item(channel=item.channel, action="series", title=">> Página Siguiente", url=url_next_page))
 
     return items
 
@@ -265,7 +251,10 @@ def episodios(item):
     html_serie = get_url_contents(item.url)
 
     info_serie = __extract_info_from_serie(html_serie)
-    plot = info_serie[3] if info_serie else ''
+    if info_serie[3]:
+        plot = info_serie[3]
+    else:
+        plot = ''
 
     episodes = re.findall(REGEX_EPISODE, html_serie, re.DOTALL)
 
@@ -280,21 +269,17 @@ def episodios(item):
             season, episode = renumbertools.numbered_for_tratk(
                 item.channel, item.show, season, episode)
 
-            title = "{0}x{1:02d} {2} ({3})".format(
-                season, episode, "Episodio " + str(episode), date)
+            title = "%sx%s %s (%s)" % (season, str(episode).zfill(2), "Episodio %s" % episode, date)
         # El enlace pertenece a una pelicula
         else:
-            title = "{0} ({1})".format(title, date)
+            title = "%s (%s)" % (title, date)
             item.url = url
             es_pelicula = True
 
-        logger.debug("title=[{0}], url=[{1}], thumbnail=[{2}]".format(
-            title, url, item.thumbnail))
+        logger.debug("title=[%s], url=[%s], thumbnail=[%s]" % (title, url, item.thumbnail))
 
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url,
-                             thumbnail=item.thumbnail, plot=plot, show=item.show,
-                             fulltitle="{0} {1}".format(item.show, title),
-                             viewmode="movies_with_plot", folder=True))
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=item.thumbnail,
+                             plot=plot, show=item.show, fulltitle="%s %s" % (item.show, title)))
 
     # El sistema soporta la videoteca y se encontro por lo menos un episodio
     # o pelicula
@@ -315,7 +300,6 @@ def episodios(item):
             itemlist.append(Item(channel=item.channel, title="Descargar todos los episodios",
                                  url=item.url, action="download_all_episodes", extra="episodios",
                                  show=item.show))
-
     return itemlist
 
 
@@ -325,22 +309,27 @@ def findvideos(item):
     itemlist = []
 
     page_html = get_url_contents(item.url)
-
     regex_api = r'http://player\.animeflv\.me/[^\"]+'
     iframe_url = scrapertools.find_single_match(page_html, regex_api)
 
     iframe_html = get_url_contents(iframe_url)
+    itemlist.extend(servertools.find_video_items(data=iframe_html))
+
+    qualities = ["360", "480", "720", "1080"]
+    for videoitem in itemlist:
+        videoitem.fulltitle = item.fulltitle
+        videoitem.title = "%s en calidad [%s]" % (videoitem.server, qualities[1])
+        videoitem.channel = item.channel
+        videoitem.thumbnail = item.thumbnail
 
     regex_video_list = r'var part = \[([^\]]+)'
 
     videos_html = scrapertools.find_single_match(iframe_html, regex_video_list)
     videos = re.findall('"([^"]+)"', videos_html, re.DOTALL)
 
-    qualities = ["360", "480", "720", "1080"]
-
     for quality_id, video_url in enumerate(videos):
         itemlist.append(Item(channel=item.channel, action="play", url=video_url, show=re.escape(item.show),
-                             title="Ver en calidad [{0}]".format(qualities[quality_id]), plot=item.plot,
-                             folder=True, fulltitle=item.title, viewmode="movies_with_plot"))
+                             title="Ver en calidad [%s]" % (qualities[quality_id]), plot=item.plot,
+                             fulltitle=item.title))
 
     return __sort_by_quality(itemlist)

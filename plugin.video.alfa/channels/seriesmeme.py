@@ -24,7 +24,7 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, action="lista_gen", title="Novedades", url=host,
                          thumbnail=thumb_series))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Series", url=urlparse.urljoin(host, "/lista"),
+    itemlist.append(Item(channel=item.channel, action="lista", title="Listado Completo de Series", url=urlparse.urljoin(host, "/lista"),
                          thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, action="categorias", title="Categorias", url=host,
                          thumbnail=thumb_series))
@@ -121,7 +121,7 @@ def lista_gen(item):
     patron = '<article id=.+? class=.+?><div.+?>'
     patron += '<a href="([^"]+)" title="([^"]+)'  # scrapedurl, # scrapedtitle
     patron += ' Capítulos Completos ([^"]+)">'  # scrapedlang
-    patron += '<img.+? data-src=.+? data-lazy-src="([^"]+)"'  # scrapedthumbnail
+    patron += '<img src=".+?" data-lazy-src="([^"]+)"'  # scrapedthumbnail
     matches = scrapertools.find_multiple_matches(data, patron)
     i = 0
     for scrapedurl, scrapedtitle, scrapedlang, scrapedthumbnail in matches:
@@ -134,13 +134,14 @@ def lista_gen(item):
                  show=scrapedtitle, context=renumbertools.context(item)))
     tmdb.set_infoLabels(itemlist)
     # Paginacion
-    patron_pag = '<a class="nextpostslink" rel="next" href="([^"]+)">'
-    next_page_url = scrapertools.find_single_match(data, patron_pag)
-
-    if next_page_url != "" and i != 1:
-        item.url = next_page_url
-        itemlist.append(Item(channel=item.channel, action="lista_gen", title=">> Página siguiente", url=next_page_url,
-                             thumbnail='https://s32.postimg.org/4zppxf5j9/siguiente.png'))
+    
+    #patron_pag='<a class="nextpostslink" rel="next" href="([^"]+)">'
+    patron_pag='<li class="next right"><a href="([^"]+)" >([^"]+)<\/a><\/li>'
+    next_page_url = scrapertools.find_single_match(data,patron_pag)
+    
+    if next_page_url!="" and i!=1:
+        item.url=next_page_url[0]
+        itemlist.append(Item(channel = item.channel,action = "lista_gen",title = ">> Página siguiente", url = next_page_url[0], thumbnail='https://s32.postimg.org/4zppxf5j9/siguiente.png'))
 
     return itemlist
 
@@ -171,7 +172,6 @@ def episodios(item):
     matches = scrapertools.find_multiple_matches(data, patron_caps)
     show = scrapertools.find_single_match(data, '<h3><strong>.+?de (.+?)<\/strong>')
     scrapedplot = scrapertools.find_single_match(data, '<strong>Sinopsis<\/strong><strong>([^"]+)<\/strong><\/pre>')
-    logger.info("epibla   " + data)
     for link, cap, name in matches:
         if 'x' in cap:
             title = cap + " - " + name
