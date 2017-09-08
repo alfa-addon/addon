@@ -77,25 +77,31 @@ def agregadas(item):
     itemlist = []
 
     data = scrapertools.cache_page(item.url)
-    logger.info("data=" + data)
+    data = re.sub(r'\n|\r|\t|\s{2}|&nbsp;|"', "", data)
 
-    patron = 'class=\'reflectMe\' src="([^"]+).*?class="infor".*?href="([^"]+).*?<h2>(.*?)<.*?class="sinopsis">(.*?)<'  # url
+    patron = scrapertools.find_multiple_matches (data,'<divclass=col-mt-5 postsh>.*?Duración')
 
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    for element in patron:
+        info = scrapertools.find_single_match(element,
+                                              "calidad>(.*?)<.*?ahref=(.*?)>.*?'reflectMe' src=(.*?)\/>.*?<h2>(.*?)"
+                                              "<\/h2>.*?sinopsis>(.*?)<\/div>.*?Año:<\/span>(.*?)<\/li>")
+        quality = info[0]
+        url = info[1]
+        thumbnail = info[2]
+        title = info[3]
+        plot = info[4]
+        year = info[5].strip()
 
-    for thumbnail, url, title, sinopsis in matches:
-        url = urlparse.urljoin(item.url, url)
-        thumbnail = urlparse.urljoin(url, thumbnail)
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title + " ", fulltitle=title, url=url,
-                             thumbnail=thumbnail, show=title, plot=sinopsis))
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',thumbnail=thumbnail,
+                             plot=plot,
+                             quality=quality, infoLabels={'year':year}))
 
     # Paginación
     try:
-        patron = 'tima">.*?href="([^"]+)" ><i'
+        next_page = scrapertools.find_single_match(data,'tima>.*?href=(.*?) ><i')
 
-        next_page = re.compile(patron, re.DOTALL).findall(data)
-
-        itemlist.append(Item(channel=item.channel, action="agregadas", title="Página siguiente >>", url=next_page[0],
+        itemlist.append(Item(channel=item.channel, action="agregadas", title='Pagina Siguiente >>',
+                             url=next_page.strip(),
                              viewmode="movie_with_plot"))
     except:
         pass
@@ -135,12 +141,16 @@ def findvideos(item):
 
     for scrapedidioma, scrapedcalidad, scrapedurl in matches:
         idioma = ""
-        scrapedserver = re.findall("http[s*]?://(.*?)/", scrapedurl)
-        title = item.title + " [" + scrapedcalidad + "][" + scrapedidioma + "][" + scrapedserver[0] + "]"
+        title = item.title + " [" + scrapedcalidad + "][" + scrapedidioma +"]"
+        quality = scrapedcalidad
+        language = scrapedidioma
         if not ("omina.farlante1" in scrapedurl or "404" in scrapedurl):
             itemlist.append(
-                Item(channel=item.channel, action="play", title=title, fulltitle=title, url=scrapedurl, thumbnail="",
-                     plot=plot, show=item.show))
+                Item(channel=item.channel, action="play", title=title, fulltitle=title, url=scrapedurl,
+                     thumbnail="", plot=plot, show=item.show, quality= quality, language=language))
+
+    itemlist=servertools.get_servers_itemlist(itemlist)
+
     return itemlist
 
 
