@@ -348,7 +348,8 @@ def fichas(item):
 
         itemlist.append(
             Item(channel=item.channel, action=action, title=title, url=url, fulltitle=title, thumbnail=thumbnail,
-                 show=show, folder=True, contentType=contentType, contentTitle=contentTitle))
+                 show=show, folder=True, contentType=contentType, contentTitle=contentTitle,
+                 language =textoidiomas+'x'))
 
     ## Paginación
     next_page_url = scrapertools.find_single_match(data, '<a href="([^"]+)">.raquo;</a>')
@@ -610,7 +611,6 @@ def findvideos(item):
     itemlist = []
     ## Carga estados
     status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
-
     url_targets = item.url
 
     ## Vídeos

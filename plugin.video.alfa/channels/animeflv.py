@@ -11,7 +11,7 @@ from core import jsontools
 from core import servertools
 from core import scrapertools
 from core.item import Item
-from platformcode import logger
+from platformcode import config, logger
 
 HOST = "https://animeflv.net/"
 
@@ -242,7 +242,7 @@ def episodios(item):
             else:
                 season, episode = renumbertools.numbered_for_tratk(item.channel, item.show, 1, episode)
 
-            title = "%s: %sx%s" % (item.title, season, str(episode).zfill(2))
+            title = "%sx%s : %s" % (season, str(episode).zfill(2), item.title)
 
             itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumb, fulltitle=title,
                                        fanart=item.thumbnail, contentType="episode"))
@@ -263,10 +263,14 @@ def episodios(item):
             else:
                 season, episode = renumbertools.numbered_for_tratk(item.channel, item.show, 1, episode)
 
-            title = "%s: %sx%s" % (item.title, season, str(episode).zfill(2))
+            title = "%sx%s : %s" % (season, str(episode).zfill(2), item.title)
 
             itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumb, fulltitle=title,
                                        fanart=item.thumbnail, contentType="episode"))
+
+    if config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca",
+                             action="add_serie_to_library", extra="episodios"))
 
     return itemlist
 
@@ -317,10 +321,8 @@ def findvideos(item):
                                                video_urls=video_urls))
 
         else:
-            if e.startswith("https://cldup.com") and cldup == False:
-                itemlist.append(item.clone(title="Enlace encontrado en Cldup",
-                                           action="play",
-                                           url = e))
+            if e.startswith("https://cldup.com") and not cldup:
+                itemlist.append(item.clone(title="Enlace encontrado en Cldup", action="play", url=e))
                 cldup = True
             aux_url.append(e)
 

@@ -153,10 +153,10 @@ def findvideos(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     for servidor, idioma, calidad, scrapedurl in matches:
         url = scrapedurl
-        title = "Ver en " + servidor + " [" + idioma + "][" + calidad + "]"
+        server = servertools.get_server_name(servidor)
+        title = item.title
         itemlist.append(Item(channel=item.channel, action="play", title=title, fulltitle=item.fulltitle, url=url,
-                             thumbnail=scrapedthumbnail, folder=False))
-
+                             thumbnail=scrapedthumbnail, language=idioma, quality=calidad, server=server))
     return itemlist
 
 

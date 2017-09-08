@@ -31,34 +31,6 @@ def mainlist(item):
 
     return itemlist
 
-
-def search(item, texto):
-    logger.info("search:" + texto)
-    texto = texto.replace(" ", "+")
-    item.url = "http://www.newpct1.com/index.php?page=buscar&q=%27" + texto + "%27&ordenar=Fecha&inon=Descendente"
-    item.extra = "buscar-list"
-    try:
-        itemlist = completo(item)
-
-        # Esta pagina coloca a veces contenido duplicado, intentamos descartarlo
-        dict_aux = {}
-        for i in itemlist:
-            if not i.url in dict_aux:
-                dict_aux[i.url] = i
-            else:
-                itemlist.remove(i)
-
-        return itemlist
-
-
-    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("%s" % line)
-        return []
-
-
 def submenu(item):
     logger.info()
     itemlist = []
@@ -107,7 +79,6 @@ def alfabeto(item):
 
 def listado(item):
     logger.info()
-    # logger.info("[newpct1.py] listado url=" + item.url)
     itemlist = []
     url_next_page =''
 
@@ -127,7 +98,6 @@ def listado(item):
         fichas = data
         page_extra = item.extra
 
-    # <li><a href="http://www.newpct1.com/pelicula/x-men-dias-del-futuro-pasado/ts-screener/" title="Descargar XMen Dias Del Futuro gratis"><img src="http://www.newpct1.com/pictures/f/58066_x-men-dias-del-futuro--blurayrip-ac3-5.1.jpg" width="130" height="180" alt="Descargar XMen Dias Del Futuro gratis"><h2>XMen Dias Del Futuro </h2><span>BluRayRip AC3 5.1</span></a></li>
     patron = '<li><a href="([^"]+).*?'  # url
     patron += 'title="([^"]+).*?'  # titulo
     patron += '<img src="([^"]+)"[^>]+>.*?'  # thumbnail
@@ -169,7 +139,6 @@ def listado(item):
             title = scrapertools.find_single_match(title, '([^-]+)')
             title = title.replace("Ver online", "", 1).replace("Descarga Serie HD", "", 1).replace("Ver en linea", "",
                                                                                                    1).strip()
-            # logger.info("[newpct1.py] titulo="+title)
 
         else:
             title = title.replace("Descargar", "", 1).strip()
@@ -181,7 +150,6 @@ def listado(item):
 
         context = ""
         context_title = scrapertools.find_single_match(url, "http://(?:www.)?newpct1.com/(.*?)/(.*?)/")
-        #logger.debug('context_title[0]: %s' % context_title[0])
         if context_title:
             try:
                 context = context_title[0].replace("descargar-", "").replace("pelicula", "movie").replace("series",
@@ -215,15 +183,6 @@ def listado(item):
                              url=url_next_page, next_page=next_page, folder=True,
                              text_color='yellow', text_bold=True, modo = modo, plot = extra,
                              extra = page_extra))
-    # if "pagination" in data:
-    #     patron = '<ul class="pagination">(.*?)</ul>'
-    #     paginacion = scrapertools.get_match(data, patron)
-    #
-    #     if "Next" in paginacion:
-    #         url_next_page = scrapertools.get_match(paginacion, '<a href="(http[^>]+)>Next</a>')[:-1].replace(" ", "%20")
-    #         itemlist.append(Item(channel=item.channel, action="listado", title=">> Página siguiente", url=url_next_page,
-    #                              extra=item.extra))
-            # logger.info("[newpct1.py] listado items:" + str(len(itemlist)))
     return itemlist
 
 def listado2(item):
@@ -231,77 +190,47 @@ def listado2(item):
     itemlist = []
     data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, post=item.post).data)
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
-    logger.debug(data)
+
     list_chars = [["Ã±", "ñ"]]
 
     for el in list_chars:
         data = re.sub(r"%s" % el[0], el[1], data)
 
     try:
-        # logger.debug("data %s " % data)
         get, post = scrapertools.find_single_match(data, '<ul class="pagination">.*?<a class="current" href.*?'
                                                          '<a\s*href="([^"]+)"(?:\s*onClick=".*?\'([^"]+)\'.*?")')
     except:
         post = False
 
     if post:
-        # logger.debug("post %s" % post)
-        # logger.debug("item.post %s" % item.post)
         if "pg" in item.post:
             item.post = re.sub(r"pg=(\d+)", "pg=%s" % post, item.post)
-            # logger.debug("item.post %s" % item.post)
         else:
             item.post += "&pg=%s" % post
-            # logger.debug("item.post %s" % item.post)
-
-    # logger.debug("data %s " % next_page)
 
     pattern = '<ul class="%s">(.*?)</ul>' % item.pattern
     data = scrapertools.get_match(data, pattern)
-    # logger.debug("data %s " % data)
-
     pattern = '<li><a href="(?P<url>[^"]+)".*?<img src="(?P<img>[^"]+)"[^>]+>.*?<h2.*?>\s*(?P<title>.*?)\s*</h2>'
 
     matches = re.compile(pattern, re.DOTALL).findall(data)
 
     for url, thumb, title in matches:
         # fix encoding for title
+        real_title = scrapertools.find_single_match(title, r'font color.*?font.*?><b>(.*?)<\/b><\/font>')
         title = scrapertools.htmlclean(title)
         title = title.replace("ï¿½", "ñ")
-
-        # logger.debug("\n\nu %s " % url)
-        # logger.debug("\nb %s " % thumb)
-        # logger.debug("\nt %s " % title)
-
-        # title is the clean way but it doesn't work if it's a long, so we have to use title_to_fix
-        # title_fix = False
-        # if title.endswith(".."):
-        #     title = title_to_fix
-        #     title_fix = True
 
         # no mostramos lo que no sean videos
         if "/juego/" in url or "/varios/" in url:
             continue
 
         if ".com/series" in url:
-            # title = scrapertools.find_single_match(title, '([^-]+)')
-            # title = title.replace("Ver online", "", 1).replace("Ver en linea", "", 1). \
-            #     replace("Descarga Serie HD", "", 1).strip()
 
-            show = title
-            # if quality:
-            #     title = "%s [%s]" % (title, quality)
+            show = real_title
 
             itemlist.append(Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumb,
-                                 context=["buscar_trailer"], show=show))
-
+                                 context=["buscar_trailer"], contentSerieName=show))
         else:
-            # title = title.replace("Descargar", "", 1).strip()
-            # if title.endswith("gratis"):
-            #     title = title[:-6].strip()
-
-            # if quality:
-            #     title = "%s [%s]" % (title, quality)
 
                 itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumb,
                                      context=["buscar_trailer"]))
@@ -311,113 +240,6 @@ def listado2(item):
                                    thumbnail=get_thumb("next.png")))
 
     return itemlist
-
-
-
-
-def completo(item):
-    logger.info()
-    itemlist = []
-    categoryID = ""
-
-    # Guarda el valor por si son etiquetas para que lo vea 'listadofichas'
-    item_extra = item.extra
-    item_show = item.show
-    item_title = item.title
-    infoLabels = item.infoLabels
-
-    # Lee las entradas
-    if item_extra.startswith("serie"):
-        ultimo_action = "get_episodios"
-
-        if item.extra != "serie_add":
-            '''
-            # Afinar mas la busqueda
-            if item_extra=="serie-hd":
-                categoryID=buscar_en_subcategoria(item.show,'1469')
-            elif item_extra=="serie-vo":
-                categoryID=buscar_en_subcategoria(item.show,'775')
-            elif item_extra=="serie-tv":
-                categoryID=buscar_en_subcategoria(item.show,'767')
-            if categoryID !="":
-                item.url=item.url.replace("categoryID=","categoryID="+categoryID)
-
-            #Fanart
-            oTvdb= TvDb()
-            serieID=oTvdb.get_serieId_by_title(item.show)
-            fanart = oTvdb.get_graphics_by_serieId(serieID)
-            if len(fanart)>0:
-                item.fanart = fanart[0]'''
-            # try:
-            #     from core.tmdb import Tmdb
-            #     oTmdb = Tmdb(texto_buscado=item.show, tipo="tv", idioma_busqueda="es")
-            #     item.fanart = oTmdb.get_backdrop()
-            #     item.plot = oTmdb.get_sinopsis()
-            #     print item.plot
-            # except:
-            #     pass
-        else:
-            item_title = item.show
-
-        items_programas = get_episodios(item)
-    else:
-        ultimo_action = "listado"
-        items_programas = listado(item)
-
-    if len(items_programas) == 0:
-        return itemlist  # devolver lista vacia
-
-    salir = False
-    while not salir:
-
-        # Saca la URL de la siguiente página
-        ultimo_item = items_programas[len(items_programas) - 1]
-
-        # Páginas intermedias
-        if ultimo_item.action == ultimo_action:
-            # Quita el elemento de "Página siguiente"
-            ultimo_item = items_programas.pop()
-
-            # Añade las entradas de la página a la lista completa
-            itemlist.extend(items_programas)
-
-            # Carga la siguiente página
-            ultimo_item.extra = item_extra
-            ultimo_item.show = item_show
-            ultimo_item.title = item_title
-            logger.debug("url=" + ultimo_item.url)
-            if item_extra.startswith("serie"):
-                items_programas = get_episodios(ultimo_item)
-            else:
-                items_programas = listado(ultimo_item)
-
-        # Última página
-        else:
-            # Añade a la lista completa y sale
-            itemlist.extend(items_programas)
-            salir = True
-
-    if (config.get_videolibrary_support() and len(itemlist) > 0 and item.extra.startswith("serie")):
-        itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la biblioteca", url=item.url,
-                             action="add_serie_to_library", extra="completo###serie_add", show=item.show))
-    logger.debug("items=" + str(len(itemlist)))
-    return itemlist
-
-
-def buscar_en_subcategoria(titulo, categoria):
-    data = httptools.downloadpage("http://www.newpct1.com/pct1/library/include/ajax/get_subcategory.php",
-                                  post="categoryIDR=" + categoria).data
-    data = data.replace("</option>", " </option>")
-    patron = '<option value="(\d+)">(' + titulo.replace(" ", "\s").replace("(", "/(").replace(")",
-                                                                                              "/)") + '\s[^<]*)</option>'
-    logger.debug("data=" + data)
-    logger.debug("patron=" + patron)
-    matches = re.compile(patron, re.DOTALL | re.IGNORECASE).findall(data)
-
-    if len(matches) == 0: matches = [('', '')]
-    logger.debug("resultado=" + matches[0][0])
-    return matches[0][0]
-
 
 def findvideos(item):
     logger.info()
@@ -438,7 +260,7 @@ def findvideos(item):
 
     # <a href="http://tumejorjuego.com/download/index.php?link=descargar-torrent/058310_yo-frankenstein-blurayrip-ac3-51.html" title="Descargar torrent de Yo Frankenstein " class="btn-torrent" target="_blank">Descarga tu Archivo torrent!</a>
 
-    patron = '<a href="([^"]+)" title="[^"]+" class="btn-torrent" target="_blank">'
+    patron = 'openTorrent.*?"title=".*?" class="btn-torrent">.*?function openTorrent.*?href = "(.*?)";'
 
     # escraped torrent
     url = scrapertools.find_single_match(data, patron)
@@ -511,23 +333,15 @@ def findvideos(item):
     return itemlist
 
 
-# def episodios(item):
-#     # Necesario para las actualizaciones automaticas
-#     infoLabels= item.infoLabels
-#     infoLabels['show']=item.show
-#     return completo(Item(item.clone(url=item.url, extra="serie_add", infoLabels=infoLabels)))
-
 def episodios(item):
     logger.info()
     itemlist = []
     infoLabels = item.infoLabels
     data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url).data)
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
-
-    # logger.debug("data %s " % data)
+    logger.debug('data: %s'%data)
     pattern = '<ul class="%s">(.*?)</ul>' % "pagination"  # item.pattern
     pagination = scrapertools.find_single_match(data, pattern)
-    # logger.debug("pagination %s" % pagination)
     if pagination:
         pattern = '<li><a href="([^"]+)">Last<\/a>'
         full_url = scrapertools.find_single_match(pagination, pattern)
@@ -535,11 +349,10 @@ def episodios(item):
         list_pages = []
         for x in range(1, int(last_page) + 1):
             list_pages.append("%s%s" % (url, x))
-            # logger.debug("data %s%s" % (url, x))
-            # logger.debug("list_pages %s" % list_pages)
     else:
         list_pages = [item.url]
 
+    logger.debug ('pattern: %s'%pattern)
     for index, page in enumerate(list_pages):
         logger.debug("Loading page %s/%s url=%s" % (index, len(list_pages), page))
         data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(page).data)
@@ -547,14 +360,11 @@ def episodios(item):
 
         pattern = '<ul class="%s">(.*?)</ul>' % "buscar-list"  # item.pattern
         data = scrapertools.get_match(data, pattern)
-        # logger.debug("data %s " % data)
 
         pattern = '<li[^>]*><a href="(?P<url>[^"]+).*?<img src="(?P<thumb>[^"]+)".*?<h2[^>]+>(?P<info>.*?)</h2>'
         matches = re.compile(pattern, re.DOTALL).findall(data)
-        # logger.debug("data %s " % matches)
 
         for url, thumb, info in matches:
-            # logger.debug("info %s" % info)
 
             if "<span" in info:  # new style
                 pattern = ".*?[^>]+>.*?Temporada\s*(?P<season>\d+)\s*Capitulo(?:s)?\s*(?P<episode>\d+)" \

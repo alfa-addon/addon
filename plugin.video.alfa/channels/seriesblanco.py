@@ -11,7 +11,7 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 
-HOST = "http://seriesblanco.com/"
+HOST = "https://seriesblanco.com/"
 IDIOMAS = {'es': 'Español', 'en': 'Inglés', 'la': 'Latino', 'vo': 'VO', 'vos': 'VOS', 'vosi': 'VOSI', 'otro': 'OVOS'}
 list_idiomas = IDIOMAS.values()
 CALIDADES = ['SD', 'HDiTunes', 'Micro-HD-720p', 'Micro-HD-1080p', '1080p', '720p']
@@ -40,7 +40,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Series por género", action="generos",
                          url=HOST, thumbnail=thumb_series))
     itemlist.append(
-        Item(channel=item.channel, title="Buscar...", action="search", url="https://seriesblanco.com/finder.php",
+        Item(channel=item.channel, title="Buscar...", action="search", url=urlparse.urljoin(HOST, "finder.php"),
              thumbnail=thumb_buscar))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, CALIDADES)

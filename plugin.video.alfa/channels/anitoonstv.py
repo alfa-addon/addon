@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 
@@ -106,19 +106,15 @@ def episodios(item):
         season, episode = renumbertools.numbered_for_tratk(
             item.channel, item.show, season, episode)
         date = name
-        title = "{0}x{1:02d} {2} ({3})".format(
-            season, episode, "Episodio " + str(episode), date)
+        title = "%sx%s %s (%s)" % (season, str(episode).zfill(2), "Episodio %s" % episode, date)
         # title = str(temp)+"x"+cap+"  "+name
         url = host + "/" + link
-        if "NO DISPONIBLE" in name:
-            name = name
-        else:
+        if "NO DISPONIBLE" not in name:
             itemlist.append(Item(channel=item.channel, action="findvideos", title=title, thumbnail=scrapedthumbnail,
                                  plot=scrapedplot, url=url, show=show))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=item.url,
-
                              action="add_serie_to_library", extra="episodios", show=show))
 
     return itemlist
@@ -132,6 +128,7 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     data1 = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     data_vid = scrapertools.find_single_match(data1, '<div class="videos">(.+?)<\/div><div .+?>')
+
     # name = scrapertools.find_single_match(data,'<span>Titulo.+?<\/span>([^<]+)<br>')
     scrapedplot = scrapertools.find_single_match(data, '<br><span>Descrip.+?<\/span>([^<]+)<br>')
     scrapedthumbnail = scrapertools.find_single_match(data, '<div class="caracteristicas"><img src="([^<]+)">')
@@ -139,13 +136,14 @@ def findvideos(item):
     for server, quality, url in itemla:
         if "Calidad Alta" in quality:
             quality = quality.replace("Calidad Alta", "HQ")
-            server = server.lower()
-            server = server.strip()
-            if "ok" in server:
+            server = server.lower().strip()
+            if "ok" == server:
                 server = 'okru'
-        itemlist.append(
-            item.clone(url=url, action="play", server=server, contentQuality=quality, thumbnail=scrapedthumbnail,
-                       plot=scrapedplot, title="Enlace encontrado en %s: [%s ]" % (server.capitalize(), quality)))
+            if "netu" == server:
+                continue
+        itemlist.append(item.clone(url=url, action="play", server=server, contentQuality=quality,
+                                   thumbnail=scrapedthumbnail, plot=scrapedplot,
+                                   title="Enlace encontrado en %s: [%s]" % (server.capitalize(), quality)))
     return itemlist
 
 
@@ -155,18 +153,15 @@ def play(item):
     itemlist = []
 
     # Buscamos video por servidor ...
-
     devuelve = servertools.findvideosbyserver(item.url, item.server)
 
     if not devuelve:
         # ...sino lo encontramos buscamos en todos los servidores disponibles
-
         devuelve = servertools.findvideos(item.url, skip=True)
 
     if devuelve:
         # logger.debug(devuelve)
         itemlist.append(Item(channel=item.channel, title=item.contentTitle, action="play", server=devuelve[0][2],
-
-                             url=devuelve[0][1], thumbnail=item.thumbnail, folder=False))
+                             url=devuelve[0][1], thumbnail=item.thumbnail))
 
     return itemlist
