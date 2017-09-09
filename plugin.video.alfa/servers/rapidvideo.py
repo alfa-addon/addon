@@ -31,7 +31,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    bloque = scrapertools.find_single_match(data, 'video class.*?home_video')
     patron = 'https://www.rapidvideo.com/e/[^"]+'
     match = scrapertools.find_multiple_matches(data, patron)
     for url1 in match:
