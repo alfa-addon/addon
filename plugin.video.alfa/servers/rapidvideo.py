@@ -30,11 +30,15 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
-
     data = httptools.downloadpage(page_url).data
-    urls = scrapertools.find_multiple_matches(data, '"file":"([^"]+)","label":"[^"]*","res":"([^"]+)"')
-    for mediaurl, res in urls:
-        ext = scrapertools.get_filename_from_url(mediaurl)[-4:]
-        video_urls.append(['%s %sp [rapidvideo]' % (ext, res), mediaurl.replace("\\", "")])
+    bloque = scrapertools.find_single_match(data, 'video class.*?home_video')
+    patron = 'https://www.rapidvideo.com/e/[^"]+'
+    match = scrapertools.find_multiple_matches(data, patron)
+    for url1 in match:
+       res = scrapertools.find_single_match(url1, '=(\w+)')
+       data = httptools.downloadpage(url1).data
+       url = scrapertools.find_single_match(data, 'source src="([^"]+)')
+       ext = scrapertools.get_filename_from_url(url)[-4:]
+       video_urls.append(['%s %s [rapidvideo]' % (ext, res), url])
 
     return video_urls
