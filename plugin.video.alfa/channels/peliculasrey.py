@@ -172,11 +172,11 @@ def findvideos(item):
     itemlist = []
     itemtemp = []
 
-    for scrapedurl, nombre_servidor, idioma, calidad in matches:
-        idioma = idioma.strip()
-        calidad = calidad.strip()
-        if "youapihd" in nombre_servidor.lower():
-            nombre_servidor = "gvideo"
+    for scrapedurl, server_name, language, quality in matches:
+        language = language.strip()
+        quality = quality.strip()
+        if "youapihd" in server_name.lower():
+            server_name = "gvideo"
         if "pelismundo" in scrapedurl:
             data = httptools.downloadpage(scrapedurl, add_referer = True).data
             patron = 'sources.*?}],'
@@ -193,8 +193,10 @@ def findvideos(item):
                                      fulltitle = item.title,
                                      server = "directo",
                                      thumbnail = item.thumbnail,
-                                     title = "Ver en " + nombre_servidor + " (" + idioma + ") (Calidad " + videoitem[0] + ")",
-                                     url = videoitem[1]
+                                     title = server_name + " (" + language + ") (Calidad " + videoitem[0] + ")",
+                                     url = videoitem[1],
+                                     language = language,
+                                     quality = videoitem[0]
                                      ))
         else:
             itemlist.append(Item(channel=item.channel,
@@ -202,10 +204,12 @@ def findvideos(item):
                                  extra = "",
                                  fulltitle = item.title,
                                  server = "",
-                                 title = "Ver en " + nombre_servidor + " (" + idioma + ") (Calidad " + calidad + ")",
+                                 title = server_name + " (" + language + ") (Calidad " + quality + ")",
                                  thumbnail = item.thumbnail,
                                  url = scrapedurl,
-                                 folder = False
+                                 folder = False,
+                                 language = language,
+                                 quality = quality
                                  ))
     itemlist = servertools.get_servers_itemlist(itemlist)
     return itemlist
