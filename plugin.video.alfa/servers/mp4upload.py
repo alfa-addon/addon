@@ -1,17 +1,23 @@
 # -*- coding: utf-8 -*-
 
+import re
+
+from core import httptools
 from core import scrapertools
+from lib import jsunpack
 from platformcode import logger
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
 
-    data = scrapertools.cache_page(page_url)
-    logger.info("data=" + data)
-    media_url = scrapertools.find_single_match(data, '"file": "(.+?)"')
-    logger.info("media_url=" + media_url)
-    media_url = media_url.replace("?start=0", "")
+    data = re.sub(r"\n|\r|\t|\s{2}", "", httptools.downloadpage(page_url).data)
+
+    match = scrapertools.find_single_match(data, "<script type='text/javascript'>(.*?)</script>")
+    data = jsunpack.unpack(match)
+    data = data.replace("\\'", "'")
+
+    media_url = scrapertools.find_single_match(data, '{type:"video/mp4",src:"([^"]+)"}')
     logger.info("media_url=" + media_url)
 
     video_urls = list()

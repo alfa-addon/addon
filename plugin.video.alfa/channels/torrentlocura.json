@@ -6,23 +6,12 @@
     "language": "es",
     "banner": "torrentlocura.png",
     "thumbnail": "http://imgur.com/EWmLS3d.png",
+    "fanart": "http://imgur.com/V7QZLAL.jpg",
     "version": 1,
     "changes": [
         {
-            "date": "31/12/2016",
-            "description": "Release"
-        },
-        {
-            "date": "13/01/2017",
-            "description": "Añadida info a cápitulos en bloque"
-        },
-        {
-            "date": "04/04/2017",
-            "description": "Reparación cambios web"
-        },
-        {
-            "date": "28/06/2017",
-            "description": "Corrección código y algunas mejoras"
+            "date": "25/08/2017",
+            "description": "revamp"
         }
     ],
     "categories": [

@@ -113,6 +113,7 @@ class platform(Platformtools):
         JsonData["data"]["viewmode"] = parent_item.viewmode
         JsonData["data"]["category"] = parent_item.category.capitalize()
         JsonData["data"]["host"] = self.controller.host
+        if parent_item.url: JsonData["data"]["url"] = parent_item.url
 
         # Recorremos el itemlist
         for item in itemlist:
@@ -676,16 +677,17 @@ class platform(Platformtools):
             if not "label" in c: continue
 
             # Obtenemos el valor
-            if not c["id"] in dict_values:
-                if not callback:
-                    c["value"] = config.get_setting(c["id"], **kwargs)
+            if "id" in c:
+                if not c["id"] in dict_values:
+                    if not callback:
+                        c["value"] = config.get_setting(c["id"], **kwargs)
+                    else:
+                        c["value"] = c["default"]
+
+                    dict_values[c["id"]] = c["value"]
+
                 else:
-                    c["value"] = c["default"]
-
-                dict_values[c["id"]] = c["value"]
-
-            else:
-                c["value"] = dict_values[c["id"]]
+                    c["value"] = dict_values[c["id"]]
 
             # Translation
             if c['label'].startswith('@') and unicode(c['label'][1:]).isnumeric():

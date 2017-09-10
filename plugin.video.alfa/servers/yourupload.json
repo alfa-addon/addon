@@ -15,9 +15,9 @@
     }
   ],
   "find_videos": {
-    "ignore_urls": {
-      "value": "http://www.yourupload.com/embed/embed"
-    },
+    "ignore_urls": [
+      "http://www.yourupload.com/embed/embed"
+    ],
     "patterns": [
       {
         "pattern": "yourupload.com/embed/([A-z0-9]+)",

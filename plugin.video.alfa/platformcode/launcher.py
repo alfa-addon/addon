@@ -42,14 +42,13 @@ def run(item=None):
     logger.info(item.tostring())
 
     try:
-
         # If item has no action, stops here
         if item.action == "":
             logger.info("Item sin accion")
             return
 
         # Action for main menu in channelselector
-        if item.action == "getmainlist":
+        elif item.action == "getmainlist":
             import channelselector
 
             # # Check for updates only on first screen
@@ -121,6 +120,13 @@ def run(item=None):
             play_from_library(item)
             return
 
+        elif item.action == "keymap":
+            from platformcode import keymaptools
+            if item.open:
+                return keymaptools.open_shortcut_menu()
+            else:
+                return keymaptools.set_key()
+
         # Action in certain channel specified in "action" and "channel" parameters
         else:
 
@@ -129,9 +135,9 @@ def run(item=None):
 
                 # Parental control
                 # If it is an adult channel, and user has configured pin, asks for it
-                if channeltools.is_adult(item.channel) and config.get_setting("adult_pin") != "":
+                if channeltools.is_adult(item.channel) and config.get_setting("adult_request_password"):
                     tecleado = platformtools.dialog_input("", "Contraseña para canales de adultos", True)
-                    if tecleado is None or tecleado != config.get_setting("adult_pin"):
+                    if tecleado is None or tecleado != config.get_setting("adult_password"):
                         return
 
             # # Actualiza el canal individual

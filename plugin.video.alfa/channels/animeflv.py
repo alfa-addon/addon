@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import re
+import time
 import urlparse
+import urllib
 
 from channels import renumbertools
 from core import httptools
 from core import jsontools
+from core import servertools
 from core import scrapertools
 from core.item import Item
-from platformcode import logger
+from platformcode import config, logger
 
 HOST = "https://animeflv.net/"
 
@@ -223,7 +226,7 @@ def episodios(item):
         item.plot = scrapertools.find_single_match(data, 'Description[^>]+><p>(.*?)</p>')
 
     matches = re.compile('href="([^"]+)"><figure><img class="[^"]+" data-original="([^"]+)".+?</h3>'
-                         '<p>(.*?)</p>', re.DOTALL).findall(data)
+                         '\s*<p>(.*?)</p>', re.DOTALL).findall(data)
 
     if matches:
         for url, thumb, title in matches:
@@ -239,7 +242,7 @@ def episodios(item):
             else:
                 season, episode = renumbertools.numbered_for_tratk(item.channel, item.show, 1, episode)
 
-            title = "%s: %sx%s" % (item.title, season, str(episode).zfill(2))
+            title = "%sx%s : %s" % (season, str(episode).zfill(2), item.title)
 
             itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumb, fulltitle=title,
                                        fanart=item.thumbnail, contentType="episode"))
@@ -260,10 +263,14 @@ def episodios(item):
             else:
                 season, episode = renumbertools.numbered_for_tratk(item.channel, item.show, 1, episode)
 
-            title = "%s: %sx%s" % (item.title, season, str(episode).zfill(2))
+            title = "%sx%s : %s" % (season, str(episode).zfill(2), item.title)
 
             itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumb, fulltitle=title,
                                        fanart=item.thumbnail, contentType="episode"))
+
+    if config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca",
+                             action="add_serie_to_library", extra="episodios"))
 
     return itemlist
 
@@ -273,42 +280,52 @@ def findvideos(item):
 
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
+    data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", httptools.downloadpage(item.url).data)
+
     list_videos = scrapertools.find_multiple_matches(data, 'video\[\d\]\s=\s\'<iframe.+?src="([^"]+)"')
-    list_videos.extend(scrapertools.find_multiple_matches(data, 'href="http://ouo.io/s/y0d65LCP\?s=([^"]+)"'))
-    # logger.info("data=%s " % list_videos)
-
+    download_list = scrapertools.find_multiple_matches(data, 'href="http://ouo.io/s/y0d65LCP\?s=([^"]+)"')
+    for i in download_list:
+        list_videos.append(urllib.unquote_plus(i))
     aux_url = []
+    cldup = False
     for e in list_videos:
-        if e.startswith("https://s3.animeflv.com/embed.php?"):
-            server = scrapertools.find_single_match(e, 'server=(.*?)&')
-            e = e.replace("embed", "check").replace("https", "http")
-            data = httptools.downloadpage(e).data.replace("\\", "")
+        url_api = "https://s3.animeflv.com/check.php?server=%s&v=%s"
+        # izanagi, yourupload, hyperion
+        if e.startswith("https://s3.animeflv.com/embed"):
+            server, v = scrapertools.find_single_match(e, 'server=([^&]+)&v=(.*?)$')
+            data = httptools.downloadpage(url_api % (server, v)).data.replace("\\", "")
+
             if '{"error": "Por favor intenta de nuevo en unos segundos", "sleep": 3}' in data:
-                import time
                 time.sleep(3)
-                data = httptools.downloadpage(e).data.replace("\\", "")
+                data = httptools.downloadpage(url_api % (server, v)).data.replace("\\", "")
 
-            video_urls = []
-            if server == "gdrive":
-                data = jsontools.load(data)
-                for s in data.get("sources", []):
-                    video_urls.append([s["label"], s["type"], s["file"]])
-
-                if video_urls:
-                    video_urls.sort(key=lambda v: int(v[0]))
-                    itemlist.append(item.clone(title="Enlace encontrado en %s" % server, action="play",
-                                               video_urls=video_urls))
-            else:
+            if server != "hyperion":
                 url = scrapertools.find_single_match(data, '"file":"([^"]+)"')
                 if url:
                     itemlist.append(item.clone(title="Enlace encontrado en %s" % server, url=url, action="play"))
 
+            else:
+                # pattern = '"direct":"([^"]+)"'
+                # url = scrapertools.find_single_match(data, pattern)
+                # itemlist.append(item.clone(title="Enlace encontrado en %s" % server, url=url, action="play"))
+
+                pattern = '"label":([^,]+),"type":"video/mp4","file":"([^"]+)"'
+                matches = scrapertools.find_multiple_matches(data, pattern)
+
+                video_urls = []
+                for label, url in matches:
+                    video_urls.append([label, "mp4", url])
+                if video_urls:
+                    video_urls.sort(key=lambda u: int(u[0]))
+                    itemlist.append(item.clone(title="Enlace encontrado en %s" % server, action="play",
+                                               video_urls=video_urls))
+
         else:
+            if e.startswith("https://cldup.com") and not cldup:
+                itemlist.append(item.clone(title="Enlace encontrado en Cldup", action="play", url=e))
+                cldup = True
             aux_url.append(e)
 
-    from core import servertools
     itemlist.extend(servertools.find_video_items(data=",".join(aux_url)))
     for videoitem in itemlist:
         videoitem.fulltitle = item.fulltitle

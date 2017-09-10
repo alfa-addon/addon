@@ -5,8 +5,11 @@ import sys
 
 from core import httptools
 from core import scrapertools
+from core import servertools
 from core.item import Item
 from platformcode import logger
+from core import tmdb
+
 
 thumbnail_host = 'https://github.com/master-1970/resources/raw/master/images/squares/pelis24.PNG'
 
@@ -18,14 +21,14 @@ def mainlist(item):
     item.action = "peliculas"
     itemlist.append(item.clone(title="Novedades", url="http://www.pelis24.tv/ultimas-peliculas/"))
     itemlist.append(item.clone(title="Estrenos", url="http://pelis24.tv/estrenos/"))
-    itemlist.append(item.clone(title="", folder=False))
+    itemlist.append(item.clone(title="Calidad HD", url="https://pelis24.tv/xfsearch/calidad/HD"))
+    itemlist.append(item.clone(title="Calidad HQ", url="https://pelis24.tv/xfsearch/calidad/HQ"))
+    itemlist.append(item.clone(title="Calidad SD", url="https://pelis24.tv/xfsearch/calidad/SD"))
     itemlist.append(item.clone(title="Castellano", url="http://pelis24.tv/pelicula-ca/"))
-    itemlist.append(item.clone(title="Latino", url="http://pelis24.tv/pelicula-latino/"))
+    itemlist.append(item.clone(title="Latino", url="https://pelis24.tv/pelicula-la/"))
     itemlist.append(item.clone(title="Versión original", url="http://pelis24.tv/peliculasvo/"))
-    itemlist.append(item.clone(title="Versión original subtitulada", url="http://pelis24.tv/peliculasvose/"))
-
-    itemlist.append(item.clone(title="", folder=False))
-    itemlist.append(item.clone(title="Filtrar por género", action="genero", url="http://pelis24.tv/tags/"))
+    itemlist.append(item.clone(title="Versión original subtitulada", url="http://pelis24.tv/peliculas-su/"))
+    itemlist.append(item.clone(title="Filtrar por género", action="genero", url="http://pelis24.tv"))
     itemlist.append(item.clone(title="Buscar", action="search", url="http://www.pelis24.tv/"))
     return itemlist
 
@@ -105,12 +108,15 @@ def buscar(item):
 def genero(item):
     logger.info()
     itemlist = []
-    generos = ["Animación", "Aventuras", "Bélico", "Ciencia+ficción", "Crimen", "Comedia",
-               "Deporte", "Drama", "Fantástico", "Infantil", "Musical", "Romance", "Terror", "Thriller"]
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+    patron = '<li><a href="\/xfsearch\/genero\/([^"]+)"(?: title=".*?").*?(.*?)<\/a><\/li>'
+    matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for g in generos:
-        itemlist.append(Item(channel=item.channel, action="peliculas", title=g.replace('+', ' '),
-                             thumbnail=thumbnail_host, url=item.url + g + "/"))
+    for scrapedurl, scrapedtitle in matches:
+        url = '%s/xfsearch/genero/%s' % (item.url, scrapedurl)
+        itemlist.append(Item(channel=item.channel, action="peliculas", title=scrapedurl,
+                             thumbnail=thumbnail_host, url=url))
 
     return itemlist
 
@@ -126,8 +132,8 @@ def peliculas(item):
     patron = '<div class="movie-img img-box">.*?'
     patron += '<img src="([^"]+).*?'
     patron += 'href="([^"]+).*?'
-    patron += '<div class="movie-series">([^<]+)</div>'
-    patron += '<span><a href=[^>]+>([^<]+)</a>'
+    patron += '<div class="movie-series">(.*?)<\/.*?'
+    patron += '<a href=[^>]+>([^<]+)</a>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -139,16 +145,71 @@ def peliculas(item):
         if not thumbnail.startswith("http"):
             thumbnail = "http://www.pelis24.tv" + thumbnail
         contentTitle = title.split("/")[0]
+        year = scrapertools.find_single_match(contentTitle, '\((\d{4})\)')
+        contentTitle= contentTitle.replace (' (%s)'%year, '')
         title = "%s (%s)" % (contentTitle, quality)
-
         itemlist.append(
             Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
-                 contentQuality=quality, contentTitle=contentTitle))
+                 quality=quality, contentTitle=contentTitle, infoLabels = {'year':year}))
+    if item.title != 'Versión original':
+        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     # Extrae el paginador
-    next_page = scrapertools.find_single_match(data, '<span class="pnext"><a href="([^"]+)')
+    next_page = scrapertools.find_single_match(data, '<span class="pnext".*?<a href="([^"]+)')
     if next_page:
         itemlist.append(Item(channel=item.channel, action="peliculas", title=">> Página siguiente",
                              thumbnail=thumbnail_host, url=next_page))
+    return itemlist
+
+def findvideos(item):
+    itemlist=[]
+    duplicated =[]
+
+    data = httptools.downloadpage(item.url).data
+    patron = '<div class="player-box" id="tabs-(\d+)"><iframe data-src="(.*?)".*?allowfullscreen'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for id, scrapedurl in matches:
+        lang = scrapertools.find_single_match(data, '<li><a href="#tabs-%s"><img src=".*?"  alt="(.*?)".*?\/>'%id)
+        server = servertools.get_server_from_url(scrapedurl)
+        title = '%s (%s) (%s)' % (item.title, server, lang)
+        thumbnail = ''
+        if 'enlac' in scrapedurl:
+
+            if 'google' in scrapedurl:
+                server = 'gvideo'
+            elif 'openload' in scrapedurl:
+                server = 'openload'
+
+            title = '%s (%s) (%s)'%(item.title, server, lang)
+            scrapedurl = scrapedurl.replace('embed','stream')
+            gdata = httptools.downloadpage(scrapedurl).data
+            url_list = servertools.findvideosbyserver(gdata, server)
+            for url in url_list:
+                if url[1] not in duplicated:
+                    thumbnail = servertools.guess_server_thumbnail(server)
+                    itemlist.append(item.clone(title=title, url=url[1], action='play', server=server,
+                                               thumbnail = thumbnail))
+                    duplicated.append(url[1])
+
+        elif '.html' in scrapedurl:
+            url_list = servertools.findvideosbyserver(data, server)
+            for url in url_list:
+                if url[1] not in duplicated:
+                    thumbnail = servertools.guess_server_thumbnail(server)
+                    itemlist.append(item.clone(title = title, url=url[1], action='play', server=server,
+                                               thumbnail = thumbnail))
+                    duplicated.append(url[1])
+        else:
+            url = scrapedurl
+            if url not in duplicated:
+                thumbnail = servertools.guess_server_thumbnail(server)
+                itemlist.append(item.clone(title= title, url=url, action='play', server=server, thumbnail =
+                thumbnail))
+                duplicated.append(url)
 
     return itemlist
+
+
+
+

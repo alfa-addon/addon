@@ -220,7 +220,7 @@ def episodios(item):
     itemlist = []
 
     data = get_data(item.url)
-    patron = '(<ul class="menu" id="seasons-list">.*?<div class="section-box related-posts">)'
+    patron = '(<ul class="menu ses" id="seasons-list">.*?<div class="section-box related-posts">)'
     bloque = scrapertools.find_single_match(data, patron)
     matches = scrapertools.find_multiple_matches(bloque, '<div class="polo".*?>(.*?)</div>')
     for scrapedtitle in matches:
@@ -261,6 +261,7 @@ def epienlaces(item):
 
     data = get_data(item.url)
     data = data.replace("\n", "").replace("\t", "")
+
     # Bloque de enlaces
     patron = '<div class="polo".*?>%s(.*?)(?:<div class="polo"|</li>)' % item.extra.strip()
     bloque = scrapertools.find_single_match(data, patron)

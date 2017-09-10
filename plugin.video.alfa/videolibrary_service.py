@@ -235,12 +235,10 @@ if __name__ == "__main__":
     import xbmc
 
     # modo adulto:
-    # Conversion de False y True al sitema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie Kodi
-    # y si es == 2 lo desactivamos.
-    if config.get_setting("adult_mode") == False or config.get_setting("adult_mode") == 2:
+    # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie Kodi
+    # si es == 2 lo desactivamos.
+    if config.get_setting("adult_mode") == 2:
         config.set_setting("adult_mode", 0)
-    elif config.get_setting("adult_mode") == True:
-        config.set_setting("adult_mode", 1)
 
     update_wait = [0, 10000, 20000, 30000, 60000]
     wait = update_wait[int(config.get_setting("update_wait", "videolibrary"))]

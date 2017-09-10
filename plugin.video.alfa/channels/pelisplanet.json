@@ -38,18 +38,12 @@
       "visible": true,
       "lvalues": [
         "Sin color",
+        "Perfil 5",
+        "Perfil 4",
         "Perfil 3",
         "Perfil 2",
         "Perfil 1"
       ]
-    },
-    {
-      "id": "orden_episodios",
-      "type": "bool",
-      "label": "Mostrar los episodios de las series en orden descendente",
-      "default": false,
-      "enabled": true,
-      "visible": true
     },
     {
       "id": "include_in_newest_peliculas",

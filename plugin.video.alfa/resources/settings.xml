@@ -19,24 +19,10 @@
         <setting id="adult_request_password" type="bool" label="Solicitar contraseña para abrir canales de adultos"  enable="!eq(-1,0)+!eq(-2,)" default="true"/>
         <setting id="adult_aux_new_password1" type="text" label="Nueva contraseña:" option="hidden" enable="!eq(-3,)" default=""/>
         <setting id="adult_aux_new_password2" type="text" label="Confirmar nueva contraseña:" option="hidden" enable="!eq(-1,)" default=""/>
-
-
-        <!--<setting type="sep"/>-->
-        <!--<setting label="Actualizaciones" type="lsep"/>-->
-        <!--<setting id="plugin_updates_available" type="number" label="Number of updates available" default="0" visible="false"/>-->
-        <!--<setting id="check_for_plugin_updates" type="bool" label="30001" default="true"/>-->
-        <!--<setting id="check_for_channel_updates" type="bool" label="30004" default="true"/>-->
     </category>
 
     <!-- Path downloads and subtitles -->
     <category label="30501">
-        <!--setting id="subtitulo" type="bool" label="30021" default="false"/>
-        <setting id="subtitle_type" type="enum" lvalues="30432|30434|30433" label ="30431" enable ="eq(-1,true)" default="0"/>
-        <setting id="subtitlepath_folder" type="folder" source="" enable = "eq(-1,0)+eq(-2,true)" label="30435" default=""/>
-        <setting id="subtitlepath_file" type="file" source="" enable = "eq(-2,2)+eq(-3,true)" label="30436" default=""/>
-        <setting id="subtitlepath_keyboard" type="text" enable ="eq(-3,1)+eq(-4,true)" label="30437" default=""/>
-        <setting type="sep"/-->
-
         <setting id="path_selection" type="enum" values="Escribir ruta|Examinar ruta" default="0" label="Tipo de ruta"/>
         <setting id="downloadpath" type="text" label="30017" default="" visible="eq(-1,0)"/>
         <setting id="downloadpath" type="folder" label="30017" default="" visible="eq(-2,1)"/>
@@ -53,17 +39,12 @@
         <setting id="videolibrary_kodi" type="bool" label="Autoconfigurar videoteca de XBMC/Kodi para contenido de Alfa" enable="lt(-1,2)+eq(0,false)" default="false"/>
     </category>
 
-    <category label="Otros"><!--30503 -->
-        <!--
-        <setting label="Filtros" type="lsep"/>
-        <setting id="filter_servers" type="bool" label="30068" default="false"/>
-
-        <setting label="30071" type="lsep"/>
-        <setting id="whitelist" type="text" label="30069" enable="eq(-2,true)" default=""/>
-        <setting id="blacklist" type="text" label="30070" enable="eq(-3,true)" default=""/>
-        -->
+    <category label="Otros">
         <setting label="Info de películas/series en menú contextual" type="lsep"/>
         <setting id="infoplus" type="bool" label="Mostrar opción Infoplus:" default="true"/>
         <setting id="extended_info" type="bool" label="Mostrar opción ExtendedInfo (Necesario addon externo):" default="false"/>
-    </category>
+		
+		<setting label="Botones/Teclas de acceso (Cambios requieren reiniciar Kodi)" type="lsep"/>
+		<setting id="shortcut_key" type="action" label="30999" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAia2V5bWFwIg0KfQ==)" />
+   </category>
 </settings>

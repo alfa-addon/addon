@@ -271,7 +271,7 @@ def findvideos(item):
 
         idioma = IDIOMAS.get(idiomas_videos.get(language))
         titulo = "%s  [" + idioma + "] [" + calidad_videos.get(calidad) + "]"
-        itemlist.append(item.clone(action="play", title=titulo, url=url, extra=idioma))
+        itemlist.append(item.clone(action="play", title=titulo, url=url, language = idioma, extra=idioma))
 
     # Enlace Descarga
     patron = '<span class="movie-downloadlink-list" id_movies_types="([^"]+)" id_movies_servers="([^"]+)".*?id_lang=' \
@@ -280,7 +280,7 @@ def findvideos(item):
     for calidad, servidor_num, language, url in matches:
         idioma = IDIOMAS.get(idiomas_videos.get(language))
         titulo = "[%s]  [" + idioma + "] [" + calidad_videos.get(calidad) + "]"
-        itemlist.append(item.clone(action="play", title=titulo, url=url, extra=idioma))
+        itemlist.append(item.clone(action="play", title=titulo, url=url, language = idioma, extra=idioma))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     itemlist.sort(key=lambda item: (item.extra, item.server))
@@ -401,7 +401,7 @@ def findvideostv(item):
         idioma = IDIOMAS.get(idiomas_videos.get(language))
         titulo = "%s [" + idioma + "] (" + calidad_videos.get(quality) + ")"
 
-        itemlist.append(item.clone(action="play", title=titulo, url=url, contentType="episode"))
+        itemlist.append(item.clone(action="play", title=titulo, url=url, language = idioma, contentType="episode"))
 
     # Enlace Descarga
     patron = '<span class="movie-downloadlink-list" id_movies_types="([^"]+)" id_movies_servers="([^"]+)".*?episode="%s' \
@@ -412,7 +412,7 @@ def findvideostv(item):
     for quality, servidor_num, episode, language, url in matches:
         idioma = IDIOMAS.get(idiomas_videos.get(language))
         titulo = "%s [" + idioma + "] (" + calidad_videos.get(quality) + ")"
-        itemlist.append(item.clone(action="play", title=titulo, url=url, contentType="episode", server=server))
+        itemlist.append(item.clone(action="play", title=titulo, url=url, language = idioma,contentType="episode", server=server))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     itemlist.sort(key=lambda item: (int(item.infoLabels['episode']), item.title))

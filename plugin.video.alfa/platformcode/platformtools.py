@@ -143,6 +143,13 @@ def render_items(itemlist, parent_item):
         # TODO: ¿Se puede eliminar esta linea? yo no he visto que haga ningun efecto.
         xbmcplugin.setPluginFanart(int(sys.argv[1]), os.path.join(config.get_runtime_path(), "fanart.jpg"))
 
+        # Esta opcion es para poder utilizar el xbmcplugin.setResolvedUrl()
+        # if item.isPlayable == True or (config.get_setting("player_mode") == 1 and item.action == "play"):
+        if config.get_setting("player_mode") == 1 and item.action == "play":
+            if item.folder:
+                item.folder = False
+            listitem.setProperty('IsPlayable', 'true')
+
         # Añadimos los infoLabels
         set_infolabels(listitem, item)
 
@@ -445,7 +452,7 @@ def is_playing():
     return xbmc.Player().isPlaying()
 
 
-def play_video(item, strm=False):
+def play_video(item, strm=False, force_direct=False):
     logger.info()
     # logger.debug(item.tostring('\n'))
 
@@ -496,7 +503,17 @@ def play_video(item, strm=False):
         xlistitem.setProperty('inputstream.adaptive.manifest_type', 'mpd')
 
     # se lanza el reproductor
-    set_player(item, xlistitem, mediaurl, view, strm)
+    if force_direct:  # cuando viene de una ventana y no directamente de la base del addon
+        # Añadimos el listitem a una lista de reproducción (playlist)
+        playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+        playlist.clear()
+        playlist.add(mediaurl, xlistitem)
+
+        # Reproduce
+        xbmc_player = xbmc.Player()
+        xbmc_player.play(playlist, xlistitem)
+    else:
+        set_player(item, xlistitem, mediaurl, view, strm)
 
 
 def stop_video():
@@ -640,7 +657,7 @@ def get_dialogo_opciones(item, default_action, strm):
                 # "Añadir a videoteca"
                 opciones.append(config.get_localized_string(30161))
 
-        if default_action == "3":
+        if default_action == 3:
             seleccion = len(opciones) - 1
 
         # Busqueda de trailers en youtube
@@ -800,11 +817,16 @@ def set_player(item, xlistitem, mediaurl, view, strm):
             # Reproduce
             xbmc_player = xbmc.Player()
             xbmc_player.play(playlist, xlistitem)
-
+        # elif config.get_setting("player_mode") == 1 or item.isPlayable:
         elif config.get_setting("player_mode") == 1:
             logger.info("mediaurl :" + mediaurl)
             logger.info("Tras setResolvedUrl")
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, xbmcgui.ListItem(path=mediaurl))
+            # si es un archivo de la videoteca enviar a marcar como visto
+            if strm or item.strm_path:
+                from platformcode import xbmc_videolibrary
+                xbmc_videolibrary.mark_auto_as_watched(item)
+            xlistitem.setPath(mediaurl)
+            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, xlistitem)
 
         elif config.get_setting("player_mode") == 2:
             xbmc.executebuiltin("PlayMedia(" + mediaurl + ")")

@@ -34,7 +34,7 @@ CALIDADES = {"micro1080p": "[COLOR plum]Micro1080p[/COLOR]", "dvds": "[COLOR lim
              "hdtv-rip": "[COLOR black]Hdtv-rip[/COLOR]", "micro720p": "[COLOR yellow]Micro720p[/COLOR]",
              "ts-hq": "[COLOR mediumspringgreen]Ts-Hq[/COLOR]", "camrip": "[COLOR royalblue]Camp-Rip[/COLOR]",
              "webs": "[COLOR lightsalmon]Webs[/COLOR]", "hd": "[COLOR mediumseagreen]HD[/COLOR]"}
-IDIOMAS = {"castellano": "[COLOR yellow]Castelllano[/COLOR]", "latino": "[COLOR orange]Latino[/COLOR]",
+IDIOMAS = {"castellano": "[COLOR yellow]Castellano[/COLOR]", "latino": "[COLOR orange]Latino[/COLOR]",
            "vose": "[COLOR lightsalmon]Subtitulada[/COLOR]", "vo": "[COLOR crimson]Ingles[/COLOR]",
            "en": "[COLOR crimson]Ingles[/COLOR]"}
 IDIOMASP = {"es": "[COLOR yellow]CAST[/COLOR]", "la": "[COLOR orange]LAT[/COLOR]",
@@ -147,10 +147,13 @@ def scraper(item):
         matches = scrapertools.find_multiple_matches(bloque_enlaces,
                                                      '<a class="i" href="([^"]+)".*?src="([^"]+)".*?">([^<]+)<.*?<div class="l">(.*?)<\/a><h3>.*?title[^<]+>([^<]+)<\/a><\/h3> <span>(.*?)<')
     for url, thumb, quality, check_idioma, title, check_year in matches:
+
+        logger.debug('check_idioma: %s' % check_idioma)
         title_fan = title
         title_item = "[COLOR cornflowerblue][B]" + title + "[/B][/COLOR]"
         if item.contentType != "movie":
-            title = "[COLOR cornflowerblue][B]" + title + "[/B][/COLOR]"
+            title = title
+            idiomas = ''
         else:
             if quality == "ts":
                 quality = re.sub(r'ts', 'ts-hq', quality)
@@ -158,37 +161,14 @@ def scraper(item):
                 quality = CALIDADES.get(quality)
             else:
                 quality = quality
-            idiomas = scrapertools.find_multiple_matches(check_idioma, '<div class="id (.*?)">')
-            if len(idiomas) == 1:
-                idioma1 = idiomas[0].strip()
-                if IDIOMASP.get(idioma1):
-                    idiomas = "-" + IDIOMASP.get(idioma1)
-            elif len(idiomas) == 2:
-                idioma1, idioma2 = idiomas[0], idiomas[1]
-                if IDIOMASP.get(idioma1, idioma2):
-                    idioma1 = IDIOMASP.get(idioma1)
-                    idioma2 = IDIOMASP.get(idioma2)
-                    idiomas = "-" + idioma1 + "|" + idioma2
-            elif len(idiomas) == 3:
-                idioma1, idioma2, idioma3 = idiomas[0], idiomas[1], idiomas[2]
-                idioma1 = IDIOMASP.get(idioma1)
-                idioma2 = IDIOMASP.get(idioma2)
-                idioma3 = IDIOMASP.get(idioma3)
-                idiomas = "-" + idioma1 + "|" + idioma2 + "|" + idioma3
-            elif len(idiomas) >= 4:
-                idioma1, idioma2, idioma3, idioma4 = idiomas[0], idiomas[1], idiomas[2], idiomas[3]
-                idioma1 = IDIOMASP.get(idioma1)
-                idioma2 = IDIOMASP.get(idioma2)
-                idioma3 = IDIOMASP.get(idioma3)
-                idioma4 = IDIOMASP.get(idioma4)
-                idiomas = "-" + idioma1 + "|" + idioma2 + "|" + idioma3 + "|" + idioma4
 
-            title = "[COLOR cornflowerblue][B]" + title + "[/B][/COLOR]" + " " + quality + " " + idiomas
+            idiomas = scrapertools.find_multiple_matches(check_idioma, '<div class="id (.*?)">')
+            title = title
 
         itemlist.append(
             Item(channel=item.channel, title=title, url=urlparse.urljoin(host, url), action="fanart", thumbnail=thumb,
                  fanart="http://imgur.com/nqmJozd.jpg", extra=title_fan + "|" + title_item + "|" + check_year.strip(),
-                 contentType=item.contentType, folder=True))
+                 contentType=item.contentType, folder=True, language = idiomas))
     ## Paginación
     if check_year:
         next = scrapertools.find_single_match(data, 'href="([^"]+)" title="Siguiente página">')
@@ -631,20 +611,14 @@ def findvideos(item):
             icon_server = icon_server.replace('streamin', 'streaminto')
             if not os.path.exists(icon_server):
                 icon_server = thumb
-            if CALIDADES.get(calidad):
-                calidad = CALIDADES.get(calidad)
-            else:
-                calidad = "[COLOR brown]" + calidad + "[/COLOR]"
-            if IDIOMAS.get(idioma):
-                idioma = IDIOMAS.get(idioma)
-            else:
-                idioma = "[COLOR brown]" + idioma + "[/COLOR]"
-
+            #calidad = calidad
+            #idioma = idioma
+            server = servertools.get_server_name(server_name)
             extra = "online"
             itemlist.append(Item(channel=item.channel,
-                                 title="[COLOR lightcyan][B]" + server + "[/B][/COLOR] " + calidad + " " + idioma,
-                                 url=url, action="play", thumbnail=icon_server, fanart="", contentType=item.contentType,
-                                 folder=True, id=url_post))
+                                 title="server", url=url, action="play", fanart="",
+                                 contentType=item.contentType, folder=True, id=url_post, language=idioma,
+                                 quality=calidad, server = server))
     else:
         bloque_dd = scrapertools.find_single_match(data, '<\/i>Descargar(.*?)<div class="enlaces">')
         links_dd = scrapertools.find_multiple_matches(bloque_dd,

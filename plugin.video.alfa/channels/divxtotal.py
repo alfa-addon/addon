@@ -232,7 +232,6 @@ def findtemporadas(item):
         th.start()
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-
     if len(item.extra.split("|")):
         if len(item.extra.split("|")) >= 4:
             fanart = item.extra.split("|")[2]
@@ -266,7 +265,7 @@ def findtemporadas(item):
         fanart_extra = item.fanart
         fanart_info = item.fanart
 
-    bloque_episodios = scrapertools.find_multiple_matches(data, 'Temporada (\d+) </a>(.*?)</table>')
+    bloque_episodios = scrapertools.find_multiple_matches(data, 'Temporada.*?(\d+).*?<\/a>(.*?)<\/table>')
     for temporada, bloque_epis in bloque_episodios:
         item.infoLabels = item.InfoLabels
         item.infoLabels['season'] = temporada
@@ -299,9 +298,8 @@ def epis(item):
     itemlist = []
     if item.extra == "serie_add":
         item.url = item.datalibrary
-
     patron = scrapertools.find_multiple_matches(item.url,
-                                                '<td><img src=".*?images/(.*?)\.png.*?<a href="([^"]+)" title="">.*?(\d+x\d+).*?td>')
+                                                '<td><img src=".*?images\/(.*?)\.png".*?href="([^"]+)" title="">.*?(\d+x\d+).*?td>')
     for idioma, url, epi in patron:
         episodio = scrapertools.find_single_match(epi, '\d+x(\d+)')
         item.infoLabels['episode'] = episodio

@@ -17,7 +17,8 @@ def test_video_exists(page_url):
     data = httptools.downloadpage(page_url, headers={'Referer': referer}).data
     if data == "File was deleted":
         return False, "[Streamplay] El archivo no existe o ha sido borrado"
-
+    elif "Video is processing now" in data:
+        return False, "[Streamplay] El archivo se está procesando"
     return True, ""
 
 
@@ -26,12 +27,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     referer = re.sub(r"embed-|player-", "", page_url)[:-5]
     data = httptools.downloadpage(page_url, headers={'Referer': referer}).data
 
-    for list in scrapertools.find_multiple_matches(data, '_[^=]+=(\[[^\]]+\]);'):
-        if len(list) == 703 or len(list) == 711:
-            key = "".join(eval(list)[7:9])
-            break
-    if key.startswith("embed"):
-        key = key[6:] + key[:6]
     matches = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
     data = jsunpack.unpack(matches).replace("\\", "")
 
@@ -40,7 +35,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     for video_url in matches:
         _hash = scrapertools.find_single_match(video_url, '[A-z0-9\_\-]{40,}')
-        hash = decrypt(_hash, key)
+        hash = _hash[::-1]
+        hash = hash.replace(hash[2:3],"",1)
         video_url = video_url.replace(_hash, hash)
 
         filename = scrapertools.get_filename_from_url(video_url)[-4:]

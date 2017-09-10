@@ -10,7 +10,7 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 
-HOST = 'http://seriesdanko.to/'
+HOST = 'https://seriesdanko.info/'
 IDIOMAS = {'es': 'Español', 'la': 'Latino', 'vos': 'VOS', 'vo': 'VO'}
 list_idiomas = IDIOMAS.values()
 CALIDADES = ['SD', 'MicroHD', 'HD/MKV']
