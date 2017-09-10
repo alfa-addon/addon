@@ -369,7 +369,7 @@ configfilepath = os.path.join(get_data_path(), "settings.xml")
 if not os.path.exists(get_data_path()):
     os.mkdir(get_data_path())
 # Literales
-TRANSLATION_FILE_PATH = os.path.join(get_runtime_path(), "resources", "language", "resource.language.es_es", "strings.po")
+TRANSLATION_FILE_PATH = os.path.join(get_runtime_path(), "resources", "language", "Spanish", "strings.po")
 load_settings()
 
 # modo adulto:
