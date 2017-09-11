@@ -10,6 +10,17 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channels import autoplay
+
+IDIOMAS = {'latino': 'Latino'}
+list_language = IDIOMAS.values()
+list_servers = ['openload',
+                'okru',
+                'netutv',
+                'rapidvideo'
+                ]
+list_quality = ['default']
+
 
 host = "https://serieslan.com"
 
@@ -17,12 +28,14 @@ host = "https://serieslan.com"
 def mainlist(item):
     logger.info()
     thumb_series = get_thumb("channels_tvshow.png")
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()
 
     itemlist.append(
         Item(channel=item.channel, action="lista", title="Series", url=host, thumbnail=thumb_series, page=0))
     itemlist = renumbertools.show_option(item.channel, itemlist)
+    autoplay.show_option(item.channel, itemlist)
     return itemlist
 
 
@@ -48,8 +61,9 @@ def lista(item):
         title = name
         url = host + link
         scrapedthumbnail = host + img
+        context1=[renumbertools.context(item), autoplay.context]
         itemlist.append(item.clone(title=title, url=url, action="episodios", thumbnail=scrapedthumbnail, show=title,
-                                   context=renumbertools.context(item)))
+                                   context=context1))
 
     itemlist.append(
         Item(channel=item.channel, title="Página Siguiente >>", url=item.url, action="lista", page=item.page + 1))
@@ -76,7 +90,7 @@ def episodios(item):
     for cap, link, name in matches:
 
         title = ""
-        pat = "as/sd"
+        pat = "/"
         # varios episodios en un enlace
         if len(name.split(pat)) > 1:
             i = 0
@@ -164,6 +178,7 @@ def findvideos(item):
         itemlist.append(Item(channel=item.channel, action="play", title=title, show=show, url=video_url, plot=item.plot,
                              thumbnail=thumbnail, server=server, folder=False))
 
+        autoplay.start(itemlist, item)
         return itemlist
     else:
         return []
