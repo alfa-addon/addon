@@ -12,18 +12,29 @@ from core.item import Item
 from platformcode import config, logger
 
 host = "http://www.cartoon-latino.com/"
+from channels import autoplay
 
+IDIOMAS = {'latino': 'Latino'}
+list_language = IDIOMAS.values()
+list_servers = ['openload',
+                'vimple',
+                'gvideo',
+                'rapidvideo'
+                ]
+list_quality = ['default']
 
 def mainlist(item):
     logger.info()
 
     thumb_series = get_thumb("channels_tvshow.png")
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()
 
     itemlist.append(Item(channel=item.channel, action="lista", title="Series", url=host,
                          thumbnail=thumb_series))
     itemlist = renumbertools.show_option(item.channel, itemlist)
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -87,9 +98,10 @@ def lista(item):
     for link, name in matches:
         title = name + " [Latino]"
         url = link
+        context1=[renumbertools.context(item), autoplay.context]
         itemlist.append(
             item.clone(title=title, url=url, plot=title, action="episodios", show=title,
-                       context=renumbertools.context(item)))
+                       context=context1))
     tmdb.set_infoLabels(itemlist)
     return itemlist
 
@@ -171,11 +183,13 @@ def findvideos(item):
             if server in link:
                 url = link.replace('" + ID' + server + ' + "', str(id))
             if "drive" in server:
-                server1 = 'googlevideo'
+                server1 = 'Gvideo'
             else:
                 server1 = server
         itemlist.append(item.clone(url=url, action="play", server=server1,
                                    title="Enlace encontrado en %s " % (server1.capitalize())))
+
+    autoplay.start(itemlist, item)
     return itemlist
 
 
