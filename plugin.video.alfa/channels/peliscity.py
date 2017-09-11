@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 import urlparse
@@ -136,33 +136,26 @@ def findvideos(item):
 
     # Descarga la pagina
     data = scrapertools.cache_page(item.url)
-    patron = 'class="optxt"><span>(.*?)<.*?width.*?class="q">(.*?)</span.*?cursor: hand" rel="(.*?)"'
+    patron = 'cursor: hand" rel="(.*?)".*?class="optxt"><span>(.*?)<.*?width.*?class="q">(.*?)</span'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedidioma, scrapedcalidad, scrapedurl in matches:
+    for scrapedurl, scrapedidioma, scrapedcalidad in matches:
         idioma = ""
-        title = item.title + " [" + scrapedcalidad + "][" + scrapedidioma +"]"
+        title = "%s [" + scrapedcalidad + "][" + scrapedidioma +"]"
+        if "youtube" in scrapedurl:
+            scrapedurl += "&"
         quality = scrapedcalidad
         language = scrapedidioma
         if not ("omina.farlante1" in scrapedurl or "404" in scrapedurl):
             itemlist.append(
-                Item(channel=item.channel, action="play", title=title, fulltitle=title, url=scrapedurl,
-                     thumbnail="", plot=plot, show=item.show, quality= quality, language=language))
+                Item(channel=item.channel, action="play", title=title, fulltitle=item.title, url=scrapedurl,
+                     thumbnail=item.thumbnail, plot=plot, show=item.show, quality= quality, language=language, extra = item.thumbnail))
 
-    itemlist=servertools.get_servers_itemlist(itemlist)
-
+    itemlist=servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
 def play(item):
     logger.info()
-
-    itemlist = servertools.find_video_items(data=item.url)
-
-    for videoitem in itemlist:
-        videoitem.title = item.title
-        videoitem.fulltitle = item.fulltitle
-        videoitem.thumbnail = item.thumbnail
-        videoitem.channel = item.channel
-
-    return itemlist
+    item.thumbnail = item.extra
+    return [item]
