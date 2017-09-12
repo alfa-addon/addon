@@ -277,11 +277,11 @@ def start(itemlist, item):
                 platformtools.dialog_notification("AutoPlay", "Nueva Calidad/Servidor disponible en la "
                                                               "configuracion", sound=False)
 
-                # Restaura si es necesario el valor previo de "Accion y Player Mode" en preferencias
-                if user_config_setting_action != 2:
-                    config.set_setting("default_action", user_config_setting_action)
-                if user_config_setting_player != 0:
-                    config.set_setting("player_mode", user_config_setting_player)
+            # Restaura si es necesario el valor previo de "Accion y Player Mode" en preferencias
+            if user_config_setting_action != 2:
+                config.set_setting("default_action", user_config_setting_action)
+            if user_config_setting_player != 0:
+                config.set_setting("player_mode", user_config_setting_player)
 
         # devuelve la lista de enlaces para la eleccion manual
         return itemlist
