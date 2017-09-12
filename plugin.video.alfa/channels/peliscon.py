@@ -154,35 +154,34 @@ def scraper(item):
     data = httptools.downloadpage(item.url).data
 
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-
     if item.contentType == "movie":
 
         patron = scrapertools.find_multiple_matches(data,
-                                                    '<div class="poster"><a href="([^"]+)"><img src="([^"]+)" alt="([^"]+)".*?/flags/(.*?).png.*?<span>(.*?)</span>')
+                                                    '<div class="poster">.*?src="(.*?)" alt=.*?href="(.*?)">.*?'
+                                                    '<h4>(.*?)<\/h4>.*?img\/flags\/(.*?)\.png.*?imdb.*?<span>(.*?)>')
 
-        for url, thumb, title, idioma, year in patron:
+        for thumb, url, title, language, year in patron:
             titulo = title
             title = re.sub(r"!|¡", "", title)
             title = title.replace("Autosia", "Autopsia")
             title = re.sub(r"&#8217;|PRE-Estreno", "'", title)
             new_item = item.clone(action="findvideos", title="[COLOR aqua]" + titulo + "[/COLOR]", url=url,
-                                  fulltitle=title, contentTitle=title, contentType="movie", extra=year, library=True)
-            new_item.infoLabels['year'] = year
+                                  fulltitle=title, contentTitle=title, contentType="movie", extra=year, library=True,
+                                  language= language, infoLabels={'year':year})
             itemlist.append(new_item)
-
 
     else:
 
         patron = scrapertools.find_multiple_matches(data,
-                                                    '<div class="poster"><a href="([^"]+)"><img src="([^"]+)" alt="([^"]+)".*?<span>(.*?)</span>')
+                                                    '<div class="poster">.*?src="(.*?)" alt=.*?href="(.*?)">.*?'
+                                                    '<h4>(.*?)<\/h4>.*?<span>(.*?)<')
 
-        for url, thumb, title, year in patron:
+        for thumb, url, title, year in patron:
             titulo = title.strip()
             title = re.sub(r"\d+x.*", "", title)
             new_item = item.clone(action="findtemporadas", title="[COLOR aqua]" + titulo + "[/COLOR]", url=url,
                                   thumbnail=thumb, fulltitle=title, contentTitle=title, show=title,
-                                  contentType="tvshow", library=True)
-            new_item.infoLabels['year'] = year
+                                  contentType="tvshow", library=True, infoLabels={'year':year})
             itemlist.append(new_item)
 
     ## Paginación
@@ -282,7 +281,6 @@ def findtemporadas(item):
         check_temp = "yes"
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-
     if len(item.extra.split("|")):
         if len(item.extra.split("|")) >= 4:
             fanart = item.extra.split("|")[2]
@@ -423,6 +421,7 @@ def findvideos(item):
                 new_item.infoLabels['episode'] = item.epi
                 new_item.infoLabels['season'] = item.temp
                 itemlist.append(new_item)
+                itemlist = servertools.get_servers_itemlist(itemlist)
             else:
                 title = "[COLOR darkcyan][B]Ver capítulo [/B][/COLOR]" + "[COLOR red][B]" + capitulo + "[/B][/COLOR]" + "  " + "[COLOR darkred]" + server + " ( " + idioma + " )" + "[/COLOR]"
                 itemlist.append(Item(channel=item.channel, title=title, url=url, action="play", fanart=fanart,

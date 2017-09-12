@@ -6,6 +6,7 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core import tmdb
+from core import jsontools
 from core.item import Item
 from platformcode import config, logger
 
@@ -217,56 +218,29 @@ def findvideos(item):
     duplicados = []
 
     data = get_source(item.url)
-    data = data.replace('amp;', '')
-    data_page = data
-
-    patron = 'class=TPlayerTb  id=(.*?)>&lt;iframe width=&quot;560&quot; height=&quot;315&quot; src=&quot;(.*?)&quot;'
+    patron = '<div class=TPlayerTbCurrent id=(.*?)><iframe.*?src=(.*?) frameborder'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for option, video_page in matches:
-        language = scrapertools.find_single_match(data_page, 'TPlayerNv=%s><span>.*?<center>(.*?)<\/center>' % option)
-        if language == 'Castellano':
-            language = 'Español'
-        if language in audio:
-            id_audio = audio[language]
-        else:
-            id_audio = language
-        if 'redirect' in video_page or 'yourplayer' in video_page:
-            data = get_source('http:%s' % video_page)
-
-            patron = 'label:(.*?),.*?file:(.*?)&app.*?}'
-            matches = re.compile(patron, re.DOTALL).findall(data)
-            for video_url in matches:
-
-                url = video_url[1]
-                url = url.replace('\/', '/')
-                title = item.contentTitle + ' [%s][%s]' % (video_url[0], id_audio)
-                server = 'directo'
-                if url not in duplicados:
-                    itemlist.append(item.clone(action='play',
-                                               title=title,
-                                               url=url,
-                                               server=server
-                                               ))
-                    duplicados.append(url)
-        else:
-            if video_page not in duplicados:
-                itemlist.extend(servertools.find_video_items(data=video_page))
-                duplicados.append(video_page)
-
-        for video_item in itemlist:
-            if video_item.server != 'directo':
-                video_item.channel = item.channel
-                video_item.quality = item.quality
-                video_item.title = item.contentTitle + ' [%s][%s]' % (video_item.server, id_audio)
-
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
-        itemlist.append(item.clone(title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                                   url=item.url,
-                                   action="add_pelicula_to_library",
-                                   extra="findvideos",
-                                   contentTitle=item.contentTitle
-                                   ))
+    for opt, urls_page in matches:
+        language = scrapertools.find_single_match (data,'data-TPlayerNv=%s><span>Opción <strong>.*?'
+                                                        '<\/strong><\/span>.*?<span>(.*?)<\/span'%opt)
+        data = httptools.downloadpage(urls_page).data
+        servers = scrapertools.find_multiple_matches(data,'<button id="(.*?)"')
+        for server in servers:
+            info_urls = urls_page.replace('embed','get')
+            video_info=httptools.downloadpage(info_urls+'/'+server).data
+            video_info =  jsontools.load(video_info)
+            video_id = video_info['extid']
+            video_server = video_info['server']
+            video_status = video_info['status']
+            if video_status in ['finished', 'propio']:
+                if video_status == 'finished':
+                    url = 'https://'+video_server+'/embed/'+video_id
+                else:
+                    url = 'https://'+video_server+'/e/'+video_id
+                title = item.title
+                itemlist.append(item.clone(title=title, url=url, action='play', language=language))
+    itemlist = servertools.get_servers_itemlist(itemlist)
     return itemlist
 
 

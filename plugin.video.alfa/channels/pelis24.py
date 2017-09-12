@@ -150,7 +150,7 @@ def peliculas(item):
         title = "%s (%s)" % (contentTitle, quality)
         itemlist.append(
             Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
-                 contentQuality=quality, contentTitle=contentTitle, infoLabels = {'year':year}))
+                 quality=quality, contentTitle=contentTitle, infoLabels = {'year':year}))
     if item.title != 'Versión original':
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
