@@ -60,18 +60,15 @@ def todas(item):
         idioma = scrapertools.decodeHtmlentities(idioma)
         url = urlparse.urljoin(item.url, scrapedurl)
         year = scrapedyear
-        if idioma in audio:
-            idioma = audio[idioma]
-        else:
-            idioma = audio['Sub Español']
 
-        title = scrapertools.decodeHtmlentities(scrapedtitle) + ' (' + idioma + ')'
+        title = scrapertools.decodeHtmlentities(scrapedtitle)
         thumbnail = scrapedthumbnail
         plot = scrapedplot
         fanart = 'https://s31.postimg.org/dousrbu9n/qserie.png'
         itemlist.append(
             Item(channel=item.channel, action="temporadas", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                 fanart=fanart, extra=idioma, contentSerieName=scrapedtitle, infoLabels={'year': year}))
+                 fanart=fanart, extra=idioma, contentSerieName=scrapedtitle, infoLabels={'year': year},
+                 language=idioma))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     # Paginacion
     siguiente = ''
