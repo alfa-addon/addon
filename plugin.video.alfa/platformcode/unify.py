@@ -35,10 +35,10 @@ def set_lang(language):
     lang_color_4 = 'orange'
     lang_color_5 = 'white'
 
-    cast =['castellano','espanol','cast','esp','espaol', 'es','']
-    lat=['latino','lat','la', 'espanol latino', 'espaol latino']
-    vose=['subtitulado','subtitulada','sub','sub espanol','vose','espsub','su','ingles','subs castellano',
-          'sub: español', 'vs']
+    cast =['castellano','espanol','cast','esp','espaol', 'es','zc']
+    lat=['latino','lat','la', 'espanol latino', 'espaol latino', 'zl']
+    vose=['subtitulado','subtitulada','sub','sub espanol','vose','espsub','su','subs castellano',
+          'sub: español', 'vs', 'zs']
     vos=['vos', 'sub ingles', 'engsub', 'vosi','ingles subtitulado', 'sub: ingles']
     vo=['ingles', 'en','vo', 'ovos']
 
@@ -75,7 +75,7 @@ def title_format(item):
     color_scheme = {'movie': 'white', 'tvshow': 'white', 'server': 'white', 'quality': 'white', 'year': 'white',
                     'library': 'white'}
 
-    excluded = ['Enlaces Online', 'Enlaces Descargas']
+    excluded = ['Enlaces Online', 'Enlaces Descargas', 'Online', 'Downloads']
 
     lang = False
 
