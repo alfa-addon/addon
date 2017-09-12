@@ -6,6 +6,7 @@ import urllib
 from core import httptools
 from core import jsontools
 from core import scrapertools
+from core import servertools
 from core.item import Item
 from platformcode import config, logger
 
@@ -144,7 +145,7 @@ def series(item):
 
         infoLabels = {'plot': plot, 'year': i.get("year"), 'tmdb_id': i.get("id"), 'mediatype': 'tvshow'}
 
-        itemlist.append(Item(channel=item.channel, action="episodios", title=title, url=url, server="torrent",
+        itemlist.append(Item(channel=item.channel, action="episodios", title=title, url=url,
                              thumbnail=thumbnail, fanart=fanart, infoLabels=infoLabels, contentTitle=i.get("nom"),
                              show=i.get("nom")))
 
@@ -220,9 +221,9 @@ def episodios(item):
         title = "%s %s [%s]" % (key, value["title"], "][".join(list_no_duplicate))
 
         itemlist.append(
-            Item(channel=item.channel, action="findvideos", title=title, url=url, server="torrent",
+            Item(channel=item.channel, action="findvideos", title=title, url=url,
                  thumbnail=item.thumbnail, fanart=item.fanart, show=item.show, data=value,
-                 contentTitle=item.contentTitle, contentSeason=value["season"],
+                 contentSerieName=item.contentTitle, contentSeason=value["season"],
                  contentEpisodeNumber=value["episode"]))
 
     # order list
@@ -259,10 +260,10 @@ def pelis(item):
 
         if i.get("magnets", {}).get("M1080", {}).get("magnet", ""):
             url = i.get("magnets", {}).get("M1080", {}).get("magnet", "")
-            calidad = "[%s]" % i.get("magnets", {}).get("M1080", {}).get("quality", "")
+            calidad = "%s" % i.get("magnets", {}).get("M1080", {}).get("quality", "")
         else:
             url = i.get("magnets", {}).get("M720", {}).get("magnet", "")
-            calidad = "[%s]" % (i.get("magnets", {}).get("M720", {}).get("quality", ""))
+            calidad = "%s" % (i.get("magnets", {}).get("M720", {}).get("quality", ""))
 
         if not url:
             continue
@@ -283,7 +284,7 @@ def pelis(item):
 
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, server="torrent",
                              contentType="movie", thumbnail=thumbnail, fanart=fanart, infoLabels=infoLabels,
-                             contentTitle=i.get("nom")))
+                             contentTitle=i.get("nom"), quality=calidad))
 
     from core import tmdb
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
@@ -327,7 +328,9 @@ def findvideos(item):
         data = item.data
 
         for index, url in enumerate(data["url"]):
-            title = "Enlace torrent [%s]" % data["quality"][index]
-            itemlist.append(item.clone(action="play", title=title, url=url))
+            quality = data["quality"][index]
+            title = "Enlace torrent [%s]" % quality
+            itemlist.append(item.clone(action="play", title=title, url=url, quality=quality))
+            servertools.get_servers_itemlist(itemlist)
 
     return itemlist
