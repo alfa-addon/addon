@@ -355,8 +355,6 @@ def findvideos(item):
     except:
         return itemlist  # Devolvemos lista vacia
 
-    lista_servers = servertools.get_servers_list()
-
     for link in data_dict["link"]:
         if item.contentType == 'episode' \
                 and (item.contentSeason != link['season'] or item.contentEpisodeNumber != link['episode']):
@@ -367,17 +365,17 @@ def findvideos(item):
         flag = scrapertools.find_single_match(link["label"], '(\s*\<img src=.*\>)')
         idioma = link["label"].replace(flag, "")
         if link["quality"] != "?":
-            calidad = (' [' + link["quality"] + ']')
+            calidad = (link["quality"])
         else:
             calidad = ""
-        video = find_videos(link["url"], lista_servers)
+        itemlist.extend(servertools.find_video_items(data=url))
 
-        if video["servidor"] != "":
-            servidor = video["servidor"]
-            url = video["url"]
-            title = "Ver en " + servidor.capitalize() + calidad + ' (' + idioma + ')'
-            itemlist.append(item.clone(action="play", viewmode="list", server=servidor, title=title,
-                                       text_color="0xFF994D00", url=url, folder=False))
+        for videoitem in itemlist:
+            videoitem.channel = item.channel
+            videoitem.quality = calidad
+            videoitem.language = idioma
+            videoitem.contentTitle = item.title
+        itemlist = servertools.get_servers_itemlist(itemlist)
 
     if config.get_videolibrary_support() and itemlist and item.contentType == "movie":
         infoLabels = {'tmdb_id': item.infoLabels['tmdb_id'],
@@ -388,40 +386,6 @@ def findvideos(item):
                              thumbnail='https://raw.githubusercontent.com/master-1970/resources/master/images/channels/pepecine/tv.png'))
 
     return itemlist
-
-
-def find_videos(url, lista_servers):
-    # logger.info()
-    ret = {'titulo': "",
-           'url': "",
-           'servidor': ""}
-
-    # Ejecuta el find_videos en cada servidor hasta que encuentra una coicidencia
-    for serverid in lista_servers:
-        try:
-            servers_module = __import__("servers." + serverid)
-            server_module = getattr(servers_module, serverid)
-            devuelve = server_module.find_videos(url)
-
-            if devuelve:
-                ret["titulo"] = devuelve[0][0]
-                ret["url"] = devuelve[0][1]
-                ret["servidor"] = devuelve[0][2]
-                # reordenar el listado, es probable q el proximo enlace sea del mismo servidor
-                lista_servers.remove(serverid)
-                lista_servers.insert(0, serverid)
-                break
-
-        except ImportError:
-            logger.error("No existe conector para #" + serverid + "#")
-            # import traceback
-            # logger.info(traceback.format_exc())
-        except:
-            logger.error("Error en el conector #" + serverid + "#")
-            import traceback
-            logger.error(traceback.format_exc())
-
-    return ret
 
 
 def episodios(item):
