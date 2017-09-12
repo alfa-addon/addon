@@ -196,7 +196,7 @@ def episodios(item):
         idiomas = " ".join(["[%s]" % IDIOMAS.get(language, "OVOS") for language in
                             re.findall("banderas/([^\.]+)", flags, re.MULTILINE)])
         filter_lang = idiomas.replace("[", "").replace("]", "").split(" ")
-        display_title = "%s - %s %s" % (item.show, title, idiomas)
+        display_title = "%s - %s" % (item.show, title)
         # logger.debug("Episode found %s: %s" % (display_title, urlparse.urljoin(HOST, url)))
         itemlist.append(item.clone(title=display_title, url=urlparse.urljoin(HOST, url),
                                    action="findvideos", plot=plot, fanart=fanart, language=filter_lang))
@@ -241,14 +241,14 @@ def parse_videos(item, type_str, data):
                 regex = re.compile('microhd', re.I)
                 quality = regex.sub("Micro-HD-", quality)
                 # quality = re.sub(r"microhd", "Micro-HD-", quality, flags=re.IGNORECASE)
-
+            server = v_fields.get("server")
             title = "%s en %s [%s] [%s] (%s: %s)" % (type_str, v_fields.get("server"),
                                                      IDIOMAS.get(v_fields.get("language"), "OVOS"), quality,
                                                      v_fields.get("uploader"), v_fields.get("date"))
             itemlist.append(
                 item.clone(title=title, fulltitle=item.title, url=urlparse.urljoin(HOST, v_fields.get("link")),
                            action="play", language=IDIOMAS.get(v_fields.get("language"), "OVOS"),
-                           quality=quality))
+                           quality=quality, server= server))
 
         if len(itemlist) > 0:
             return itemlist
