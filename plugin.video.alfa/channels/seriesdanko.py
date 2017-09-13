@@ -40,7 +40,7 @@ def novedades(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<Br>|<BR>|<br>|<br/>|<br />|-\s", "", data)
     data = re.sub(r"<!--.*?-->", "", data)
-
+    logger.debug(data)
     patron = '<a title="([^"]+)" href="([^"]+)".*?>'
     patron += "<img.*?src='([^']+)'"
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -49,11 +49,19 @@ def novedades(item):
         # patron = "^(.*?)(?:Ya Disponible|Disponible|Disponbile|disponible|\(Actualizada\))$"
         # match = re.compile(patron, re.DOTALL).findall(scrapedtitle)
         title = scrapertools.decodeHtmlentities(scrapedtitle)
+        language=''
+        # language = scrapertools.find_multiple_matches(title,'(Vose|Español|Latino)')
+        # for lang in language:
+        #     title = title.replace(lang,'')
+        # title = title.replace ('Disponible','')
+        # title = title.replace('Ya', '')
+        # title = title.strip()
+
         show = scrapertools.find_single_match(title, "^(.+?) \d+[x|X]\d+")
 
         itemlist.append(Item(channel=item.channel, title=title, url=urlparse.urljoin(HOST, scrapedurl), show=show,
                              action="episodios", thumbnail=scrapedthumb,
-                             context=filtertools.context(item, list_idiomas, CALIDADES)))
+                             context=filtertools.context(item, list_idiomas, CALIDADES), language=language))
 
     return itemlist
 
@@ -225,7 +233,7 @@ def parse_videos(item, tipo, data):
 
         itemlist.append(Item(channel=item.channel, title=title, url=urlparse.urljoin(HOST, link), action="play",
                              show=item.show, language=IDIOMAS.get(language, "OVOS"), quality=quality,
-                             fulltitle=item.title))
+                             fulltitle=item.title, server=server))
 
     return itemlist
 

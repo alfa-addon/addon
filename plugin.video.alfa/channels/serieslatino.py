@@ -56,7 +56,7 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
 
-    itemlist.append(item.clone(title="Series", action="lista", thumbnail='https://s27.postimg.org/iahczwgrn/series.png',
+    itemlist.append(Item(channel= item.channel, title="Series", action="lista", thumbnail='https://s27.postimg.org/iahczwgrn/series.png',
                                fanart='https://s27.postimg.org/iahczwgrn/series.png', extra='peliculas/',
                                url=host + 'lista-de-series/'))
 
@@ -136,7 +136,7 @@ def temporadas(item):
 
         itemlist.append(Item(channel=item.channel, action='episodiosxtemp', url=item.url, title=title,
                              contentSerieName=item.contentSerieName, thumbnail=thumbnail, plot=plot, fanart=fanart,
-                             contentSeasonNumber=contentSeasonNumber, infoLabels=item.infoLabels))
+                             contentSeasonNumber=contentSeasonNumber, infoLabels=infoLabels))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
