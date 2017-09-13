@@ -7,9 +7,20 @@ from channels import renumbertools
 from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
+from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channels import autoplay
+
+IDIOMAS = {'latino': 'Latino', 'español':'Español'}
+list_language = IDIOMAS.values()
+list_servers = ['openload',
+                'sendvid',
+                'netutv',
+                'rapidvideo'
+                ]
+list_quality = ['default']
 
 host = "https://seriesmeme.com/"
 
@@ -19,7 +30,7 @@ def mainlist(item):
 
     thumb_series = get_thumb("channels_tvshow.png")
     thumb_series_az = get_thumb("channels_tvshow_az.png")
-
+    autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
 
     itemlist.append(Item(channel=item.channel, action="lista_gen", title="Novedades", url=host,
@@ -33,6 +44,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="top", title="Top Series", url=host,
                          thumbnail=thumb_series))
     itemlist = renumbertools.show_option(item.channel, itemlist)
+    autoplay.show_option(item.channel, itemlist)
     return itemlist
 
 
@@ -129,9 +141,10 @@ def lista_gen(item):
         if 'HD' in scrapedlang:
             scrapedlang = scrapedlang.replace('HD', '')
         title = scrapedtitle + " [ " + scrapedlang + "]"
+        context1=[renumbertools.context(item), autoplay.context]
         itemlist.append(
             Item(channel=item.channel, title=title, url=scrapedurl, thumbnail=scrapedthumbnail, action="episodios",
-                 show=scrapedtitle, context=renumbertools.context(item)))
+                 show=scrapedtitle, context=context1))
     tmdb.set_infoLabels(itemlist)
     # Paginacion
     
@@ -192,5 +205,20 @@ def episodios(item):
         itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=item.url,
 
                              action="add_serie_to_library", extra="episodios", show=show))
+
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+
+    itemlist = []
+
+    data = httptools.downloadpage(item.url).data
+    itemlist.extend(servertools.find_video_items(data=data))
+    for videoitem in itemlist:
+        videoitem.channel=item.channel
+
+    autoplay.start(itemlist, item)
 
     return itemlist
