@@ -106,7 +106,6 @@ def novedades(item):
     logger.info()
     data = httptools.downloadpage(HOST).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    logger.debug(data)
     patron = 'sidebarestdiv><a title=(.*?\d+X\d+) (.*?) href=(.*?)>.*?src=(.*?)>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -148,7 +147,6 @@ def episodios(item):
 
     itemlist = []
     for url, title, langs in episodes:
-        logger.debug("langs %s" % langs)
         languages = " ".join(
             ["[%s]" % IDIOMAS.get(lang, lang) for lang in re.findall('images/s-([^\.]+)', langs)])
         filter_lang = languages.replace("[", "").replace("]", "").split(" ")
@@ -221,6 +219,5 @@ def play(item):
     logger.info("play: %s" % item.url)
     data = httptools.downloadpage(item.url).data
     video_url = scrapertools.find_single_match(data, "location.href='([^']+)")
-    logger.debug("Video URL = %s" % video_url)
     itemlist = servertools.find_video_items(data=video_url)
     return itemlist
