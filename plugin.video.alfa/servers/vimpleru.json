@@ -20,7 +20,12 @@
     ]
   },
   "free": true,
-  "id": "vimpleru",
+  "id": {
+    "value": [
+      "vimpleru",
+      "vimple"
+    ]
+  },
   "name": "vimpleru",
   "settings": [
     {
