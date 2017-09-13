@@ -14,6 +14,7 @@ import re
 
 import config
 from core.item import Item
+from core import scrapertools
 from platformcode import logger
 
 
@@ -41,7 +42,7 @@ def set_lang(language):
           'sub: español', 'vs', 'zs']
     vos=['vos', 'sub ingles', 'engsub', 'vosi','ingles subtitulado', 'sub: ingles']
     vo=['ingles', 'en','vo', 'ovos']
-
+    language = scrapertools.decodeHtmlentities(language)
     old_lang = language
     logger.debug('language: %s'%language)
     language = re.sub(r'\[*.?COLOR.*?\]|\[|\]|\(|\)', '', language)
@@ -70,12 +71,12 @@ def set_lang(language):
 def title_format(item):
     logger.info()
     #color_scheme={'movie':'cyan', 'tvshow':'goldenrod','server':'orange', 'quality':'gold', 'year':'orchid',
-    #              'library':'hotpink'}
+    #              'library':'hotpink', 'rating':'blue'}
 
     color_scheme = {'movie': 'white', 'tvshow': 'white', 'server': 'white', 'quality': 'white', 'year': 'white',
-                    'library': 'white'}
+                    'library': 'white', 'rating':'gold'}
 
-    excluded = ['Enlaces Online', 'Enlaces Descargas', 'Online', 'Downloads']
+    excluded = ['Enlaces Online', 'Enlaces Descargas', 'Online', 'Downloads', 'Buscar Tráiler']
 
     lang = False
 
@@ -120,6 +121,11 @@ def title_format(item):
                 item.title = item.title = '%s %s' % (item.title, year)
             except:
                 logger.debug('infoLabels: %s'%item.infoLabels)
+
+        # Damos formato al puntaje si existiera
+        if item.infoLabels and item.infoLabels['rating'] and item.infoLabels['rating']!='0.0':
+            rating = '[COLOR %s][%s][/COLOR]' % (color_scheme['rating'], item.infoLabels['rating'])
+            item.title = '%s %s' % (item.title, rating)
 
         # Damos formato a la calidad si existiera
         if item.quality:
