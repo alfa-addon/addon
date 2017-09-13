@@ -172,13 +172,15 @@ def findvideos(item):
     duplicated = []
 
     data = get_source(item.url)
+    logger.debug(data)
     video_info = scrapertools.find_single_match(data, "load_player\('(.*?)','(.*?)'\);")
-    movie_info = scrapertools.find_single_match(item.url, 'http:\/\/ver-peliculas\.org\/peliculas\/(\d+)-(.*?)-\d{'
-                                                          '4}-online\.')
-    movie_id = movie_info[0]
-    movie_name = movie_info[1]
+    movie_info = scrapertools.find_single_match(item.url,
+                                            'http:\/\/ver-peliculas\.(io|org)\/peliculas\/(\d+)-(.*?)-\d{4}-online\.')
+    movie_host = movie_info[0]
+    movie_id = movie_info[1]
+    movie_name = movie_info[2]
     sub = video_info[1]
-    url_base = 'http://ver-peliculas.org/core/api.php?id=%s&slug=%s' % (movie_id, movie_name)
+    url_base = 'http://ver-peliculas.%s/core/api.php?id=%s&slug=%s' % (movie_host, movie_id, movie_name)
     data = httptools.downloadpage(url_base).data
     json_data = jsontools.load(data)
     video_list = json_data['lista']

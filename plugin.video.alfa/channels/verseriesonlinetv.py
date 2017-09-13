@@ -611,7 +611,7 @@ def findvideos(item):
     patron = '<td><a href="([^"]+)".*?<img src="([^"]+)" title="([^<]+)" .*?<td>([^<]+)</td>.*?<td>([^<]+)</td>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     print matches
-    for scrapedurl, scrapedthumbnail, scrapedserver, scrapedidioma, scrapedcalidad in matches:
+    for scrapedurl, scrapedthumbnail, scrapedserver, language, quality in matches:
 
         server = scrapertools.get_match(scrapedserver, '(.*?)[.]')
         icon_server = os.path.join(config.get_runtime_path(), "resources", "images", "servers",
@@ -623,16 +623,18 @@ def findvideos(item):
         if not os.path.exists(icon_server):
             icon_server = scrapedthumbnail
 
+        #TODO eliminar esta seccion
         scrapedserver = scrapedserver.replace(scrapedserver,
                                               "[COLOR darkorange][B]" + "[" + scrapedserver + "]" + "[/B][/COLOR]")
-        scrapedidioma = scrapedidioma.replace(scrapedidioma,
-                                              "[COLOR lawngreen][B]" + "--" + scrapedidioma + "--" + "[/B][/COLOR]")
-        scrapedcalidad = scrapedcalidad.replace(scrapedcalidad,
-                                                "[COLOR floralwhite][B]" + scrapedcalidad + "[/B][/COLOR]")
+        language = language.replace(language,
+                                              "[COLOR lawngreen][B]" + "--" + language + "--" + "[/B][/COLOR]")
+        quality = quality.replace(quality,
+                                                "[COLOR floralwhite][B]" + quality + "[/B][/COLOR]")
 
-        title = scrapedserver + scrapedidioma + scrapedcalidad
+        title = scrapedserver + language + quality
         itemlist.append(Item(channel=item.channel, title=title, action="play", url=scrapedurl, thumbnail=icon_server,
-                             fanart=item.show.split("|")[6], extra=item.thumbnail, folder=True))
+                             fanart=item.show.split("|")[6], extra=item.thumbnail, language= language,
+                             quality=quality))
 
     return itemlist
 

@@ -154,6 +154,9 @@ def listado(item):
                     replace("Descarga Serie HD", "", 1).strip()
 
             show = title
+
+            #TODO quitar calidad del titulo
+
             if quality:
                 title = "%s [%s]" % (title, quality)
 
