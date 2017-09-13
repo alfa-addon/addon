@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 import re
 
@@ -10,6 +10,17 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channels import autoplay
+
+IDIOMAS = {'latino': 'Latino'}
+list_language = IDIOMAS.values()
+list_servers = ['openload',
+                'okru',
+                'netutv',
+                'rapidvideo'
+                ]
+list_quality = ['default']
+
 
 host = "http://www.anitoonstv.com"
 
@@ -17,6 +28,7 @@ host = "http://www.anitoonstv.com"
 def mainlist(item):
     logger.info()
     thumb_series = get_thumb("channels_tvshow.png")
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()
 
@@ -29,6 +41,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="lista", title="Pokemon", url=host,
                          thumbnail=thumb_series))
     itemlist = renumbertools.show_option(item.channel, itemlist)
+    autoplay.show_option(item.channel, itemlist)
     return itemlist
 
 
@@ -73,10 +86,10 @@ def lista(item):
                 if "&" in show:
                     cad = title.split("xy")
                     show = cad[0]
-
+        context1=[renumbertools.context(item), autoplay.context]
         itemlist.append(
             item.clone(title=title, url=url, plot=show, action="episodios", show=show,
-                       context=renumbertools.context(item)))
+                       context=context1))
     tmdb.set_infoLabels(itemlist)
     return itemlist
 
@@ -144,6 +157,8 @@ def findvideos(item):
         itemlist.append(item.clone(url=url, action="play", server=server, contentQuality=quality,
                                    thumbnail=scrapedthumbnail, plot=scrapedplot,
                                    title="Enlace encontrado en %s: [%s]" % (server.capitalize(), quality)))
+
+    autoplay.start(itemlist, item)
     return itemlist
 
 
