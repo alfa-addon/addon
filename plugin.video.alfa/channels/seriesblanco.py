@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 import re
 import urlparse
@@ -10,11 +10,28 @@ from core import scrapertoolsV2
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
+from channels import autoplay
+
+
 
 HOST = "https://seriesblanco.com/"
 IDIOMAS = {'es': 'Español', 'en': 'Inglés', 'la': 'Latino', 'vo': 'VO', 'vos': 'VOS', 'vosi': 'VOSI', 'otro': 'OVOS'}
 list_idiomas = IDIOMAS.values()
+list_language = ['default']
 CALIDADES = ['SD', 'HDiTunes', 'Micro-HD-720p', 'Micro-HD-1080p', '1080p', '720p']
+list_quality = CALIDADES
+
+list_servers = ['streamix',
+                'powvideo',
+                'streamcloud',
+                'openload',
+                'flashx',
+                'streamplay',
+                'nowvideo',
+                'gamovideo',
+                'kingvid',
+                'vidabc'
+                ]
 
 
 def mainlist(item):
@@ -25,6 +42,8 @@ def mainlist(item):
     thumb_buscar = get_thumb("search.png")
 
     itemlist = list()
+
+    autoplay.init(item.channel, list_servers, list_quality)
     itemlist.append(Item(channel=item.channel, title="Listado alfabético", action="series_listado_alfabetico",
                          thumbnail=thumb_series_az))
     itemlist.append(Item(channel=item.channel, title="Todas las series", action="series",
@@ -45,6 +64,7 @@ def mainlist(item):
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, CALIDADES)
 
+    autoplay.show_option(item.channel, itemlist)
     return itemlist
 
 
@@ -83,10 +103,11 @@ def extract_series_from_data(item, data):
         else:
             action = "findvideos"
 
+        context1=[filtertools.context(item, list_idiomas, CALIDADES), autoplay.context]
         itemlist.append(item.clone(title=name, url=urlparse.urljoin(HOST, url),
                                    action=action, show=name,
                                    thumbnail=img,
-                                   context=filtertools.context(item, list_idiomas, CALIDADES)))
+                                   context=context1))
 
     more_pages = re.search('pagina=([0-9]+)">>>', data)
     if more_pages:
@@ -196,7 +217,7 @@ def episodios(item):
         idiomas = " ".join(["[%s]" % IDIOMAS.get(language, "OVOS") for language in
                             re.findall("banderas/([^\.]+)", flags, re.MULTILINE)])
         filter_lang = idiomas.replace("[", "").replace("]", "").split(" ")
-        display_title = "%s - %s %s" % (item.show, title, idiomas)
+        display_title = "%s - %s" % (item.show, title)
         # logger.debug("Episode found %s: %s" % (display_title, urlparse.urljoin(HOST, url)))
         itemlist.append(item.clone(title=display_title, url=urlparse.urljoin(HOST, url),
                                    action="findvideos", plot=plot, fanart=fanart, language=filter_lang))
@@ -241,14 +262,14 @@ def parse_videos(item, type_str, data):
                 regex = re.compile('microhd', re.I)
                 quality = regex.sub("Micro-HD-", quality)
                 # quality = re.sub(r"microhd", "Micro-HD-", quality, flags=re.IGNORECASE)
-
+            server = v_fields.get("server")
             title = "%s en %s [%s] [%s] (%s: %s)" % (type_str, v_fields.get("server"),
                                                      IDIOMAS.get(v_fields.get("language"), "OVOS"), quality,
                                                      v_fields.get("uploader"), v_fields.get("date"))
             itemlist.append(
                 item.clone(title=title, fulltitle=item.title, url=urlparse.urljoin(HOST, v_fields.get("link")),
                            action="play", language=IDIOMAS.get(v_fields.get("language"), "OVOS"),
-                           quality=quality))
+                           quality=quality, server= server))
 
         if len(itemlist) > 0:
             return itemlist
@@ -268,7 +289,6 @@ def findvideos(item):
     # logger.info(data)
 
     online = extract_videos_section(data)
-
     try:
         filtro_enlaces = config.get_setting("filterlinks", item.channel)
     except:
@@ -283,6 +303,16 @@ def findvideos(item):
         list_links.extend(parse_videos(item, "Descargar", online[-1]))
 
     list_links = filtertools.get_links(list_links, item, list_idiomas, CALIDADES)
+
+    for i in range(len(list_links)):
+        a=list_links[i].title
+        b=a.lstrip('Ver en')
+        c=b.split('[')
+        d=c[0].rstrip( )
+        d=d.lstrip( )
+        list_links[i].server=d
+
+    autoplay.start(list_links, item)
 
     return list_links
 

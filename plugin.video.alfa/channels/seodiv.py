@@ -20,7 +20,7 @@ list_servers = ['openload',
 list_quality = ['default']
 
 host = 'http://www.seodiv.com'
-
+language = 'latino'
 
 def mainlist(item):
     logger.info()
@@ -35,7 +35,6 @@ def mainlist(item):
              url=host,
              thumbnail='https://s27.postimg.org/iahczwgrn/series.png',
              fanart='https://s27.postimg.org/iahczwgrn/series.png',
-             language='latino'
              ))
     autoplay.show_option(item.channel, itemlist)
     return itemlist
@@ -65,8 +64,7 @@ def todas(item):
                  fanart=fanart,
                  contentSerieName=title,
                  extra='',
-                 language=item.language,
-                 quality='default',
+                 language=language,
                  context=autoplay.context
                  ))
 
@@ -102,8 +100,6 @@ def temporadas(item):
                      plot=plot, fanart=fanart,
                      temp=str(temp),
                      contentSerieName=item.contentSerieName,
-                     language=item.language,
-                     quality=item.quality,
                      context=item.context
                      ))
             temp = temp + 1
@@ -158,16 +154,14 @@ def episodiosxtemp(item):
 
     logger.info()
     itemlist = []
+    item.title = 'Temporada %s' % item.temp.zfill(2)
     patron_temp = '<li class=item\d+><a href=#>%s <\/a><ul><!--initiate accordion-->.*?<!--initiate ' \
                   'accordion-->' % item.title
     all_data = get_source(item.url)
     data = scrapertools.find_single_match(all_data, patron_temp)
     tempo = item.title
     if 'Temporada' in item.title:
-        item.title = item.title.replace('Temporada', 'temporada')
-        item.title = item.title.strip()
-        item.title = item.title.replace(' ', '-')
-
+        item.title = 'temporada-%s'%item.temp.zfill(2)
     patron = '<li><a href=(.*?)>.*?(Capitulo|Pelicula).*?(\d+).*?<'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -185,8 +179,7 @@ def episodiosxtemp(item):
                      url=url,
                      thumbnail=item.thumbnail,
                      plot=plot,
-                     language=item.language,
-                     quality=item.quality,
+                     language=language,
                      contentSerieName=item.contentSerieName,
                      context=item.context
                      ))
@@ -218,7 +211,7 @@ def episodiosxtemp(item):
                      url=url,
                      thumbnail=item.thumbnail,
                      plot=plot,
-                     language=item.language,
+                     language=language,
                      contentSerieName=item.contentSerieName,
                      context=item.context
                      ))

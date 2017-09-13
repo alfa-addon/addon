@@ -97,8 +97,8 @@ def sub_search(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     # logger.info(data)
-    patron = '<div class="img">.*?<a href="(?P<url>[^"]+)" title="(?P<name>[^"]+)".*?'
-    patron += '<img.+?src="(?P<img>[^"]+)".*?\(([^\)]+)\)"> </a></div>.*?'
+    patron = '<div class="img">.*?<a href="([^"]+)" title="([^"]+)".*?'
+    patron += '<img.+?src="([^"]+)".*?\(([^\)]+)\)"> </a></div>.*?'
     patron += 'Ver\s(.*?)\sOnline'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -165,11 +165,11 @@ def peliculas(item):
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
     patron_todas = '<div class="home-movies">(.*?)<footer>'
     data = scrapertools.find_single_match(data, patron_todas)
-    patron = 'col-sm-5"><a href="(?P<scrapedurl>[^"]+)".+?'
-    patron += 'browse-movie-link-qd.*?>(?P<calidad>[^>]+)</.+?'
-    patron += '<p>(?P<year>[^>]+)</p>.+?'
-    patron += 'title one-line">(?P<scrapedtitle>[^>]+)</h2>.+?'
-    patron += 'img-responsive" src="(?P<scrapedthumbnail>[^"]+)".*?'
+    patron = 'col-sm-5"><a href="([^"]+)".+?'
+    patron += 'browse-movie-link-qd.*?>([^>]+)</.+?'
+    patron += '<p>([^>]+)</p>.+?'
+    patron += 'title one-line">([^>]+)</h2>.+?'
+    patron += 'img-responsive" src="([^"]+)".*?'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -185,13 +185,16 @@ def peliculas(item):
         director = scrapertools.find_single_match(datas, '<div class="list-cast-info tableCell"><a href="[^"]+" rel="tag">([^<]+)</a></div>')
         title = "%s [COLOR yellow][%s][/COLOR]" % (scrapedtitle.strip(), calidad.upper())
 
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, plot='',
+        new_item = Item(channel=item.channel, action="findvideos", title=title, plot='', contentType='movie',
                              url=scrapedurl, contentQuality=calidad, thumbnail=scrapedthumbnail,
                              contentTitle=contentTitle, infoLabels={"year": year, 'rating': rating, 'director': director},
-                             text_color=color3))
+                             text_color=color3)
 
-    tmdb.set_infoLabels(itemlist, __modo_grafico__)
-    tmdb.set_infoLabels(itemlist, __modo_grafico__)
+    # tmdb.set_infoLabels(itemlist, __modo_grafico__)
+    # tmdb.set_infoLabels(itemlist, __modo_grafico__)
+        if year:
+            tmdb.set_infoLabels_item(new_item, __modo_grafico__)
+        itemlist.append(new_item)
 
     paginacion = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)">')
     if paginacion:
@@ -237,70 +240,77 @@ def findvideos(item):
 
     datas = httptools.downloadpage(item.url).data
     datas = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", datas)
-    # logger.info(data)
-    patron = '<a style="cursor:pointer; cursor: hand;" rel="([^"]+)".*?'
-    patron += 'clearfix colores title_calidad">.*?<span>([^<]+)</span></a>'
+    # logger.info(datas)
+    patron = '<a id="[^"]+" style="cursor:pointer; cursor: hand" rel="([^"]+)".*?'
+    patron += '<span class="optxt"><span>([^<]+)</span>.*?'
+    patron += '<span class="q">([^<]+)</span>'
 
     matches = re.compile(patron, re.DOTALL).findall(datas)
 
-    for scrapedurl, servidores, in matches:
-        if 'youtube' in scrapedurl:
-            video_urls = []
+    for scrapedurl, lang, servidores in matches:
+        # doc_url = ''
+        doc_id = ''
+        video_urls = []
+        if 'drive' in scrapedurl:            
+            doc_id = httptools.downloadpage(scrapedurl).data
+            doc_id = scrapertools.find_single_match(doc_id, "docid=(\w+)")
+        elif 'youtube' in scrapedurl:
             doc_id = scrapertools.find_single_match(scrapedurl, "docid=(\w+)")
-            doc_url = "http://docs.google.com/get_video_info?docid=%s" % doc_id
-            response = httptools.downloadpage(doc_url, cookies=False)
-            cookies = ""
-            cookie = response.headers["set-cookie"].split("HttpOnly, ")
-            for c in cookie:
-                cookies += c.split(";", 1)[0] + "; "
-            data = response.data.decode('unicode-escape')
-            data = urllib.unquote_plus(urllib.unquote_plus(data))
-            headers_string = "|Cookie=" + cookies
-            url_streams = scrapertools.find_single_match(data, 'url_encoded_fmt_stream_map=(.*)')
-            streams = scrapertools.find_multiple_matches(url_streams,
-                                             'itag=(\d+)&url=(.*?)(?:;.*?quality=.*?(?:,|&)|&quality=.*?(?:,|&))')
-            itags = {'18':'360p', '22':'720p', '34':'360p', '35':'480p', '37':'1080p', '43':'360p', '59':'480p'}
-            for itag, video_url in streams:
-                video_url += headers_string
-                video_urls.append([video_url, itags[itag]])
+        doc_url = "http://docs.google.com/get_video_info?docid=%s" % doc_id
+        response = httptools.downloadpage(doc_url, cookies=False)
+        cookies = ""
+        cookie = response.headers["set-cookie"].split("HttpOnly, ")
+        for c in cookie:
+            cookies += c.split(";", 1)[0] + "; "
+        data = response.data.decode('unicode-escape')
+        data = urllib.unquote_plus(urllib.unquote_plus(data))
+        headers_string = "|Cookie=" + cookies
+        url_streams = scrapertools.find_single_match(data, 'url_encoded_fmt_stream_map=(.*)')
+        streams = scrapertools.find_multiple_matches(url_streams,
+                                         'itag=(\d+)&url=(.*?)(?:;.*?quality=.*?(?:,|&)|&quality=.*?(?:,|&))')
+        itags = {'18':'360p', '22':'720p', '34':'360p', '35':'480p', '37':'1080p', '43':'360p', '59':'480p'}
+        for itag, video_url in streams:
+            video_url += headers_string
+            video_urls.append([video_url, itags[itag]])
 
-            for video_item in video_urls:
-                calidad = video_item[1]
-                title = '%s [COLOR green](%s)[/COLOR] [COLOR green]([/COLOR][COLOR black]You[/COLOR][COLOR red]tube[/COLOR][COLOR green])[/COLOR]'%(item.contentTitle, calidad)
-                url = video_item[0]
+        for video_item in video_urls:
+            calidad = video_item[1]
+            title = '%s [COLOR green](%s)[/COLOR] [COLOR green]([/COLOR][COLOR black]You[/COLOR][COLOR red]tube[/COLOR][COLOR green])[/COLOR]'%(item.contentTitle, calidad)
+            url = video_item[0]
 
-                itemlist.append(
-                    item.clone(channel=item.channel,
-                         action='play',
-                         title=title,
-                         url= url,
-                         thumbnail=item.thumbnail,
-                         plot=item.plot,
-                         fanart=item.fanart,
-                         contentTitle=item.contentTitle,
-                         server='directo',
-                         context = item.context
-                         ))
-                itemlist.sort(key=lambda it: it.title, reverse=True)
-        if 'pelispp.com' or 'ultrapelis' in scrapedurl:
+            itemlist.append(
+                item.clone(channel=item.channel,
+                           action='play',
+                           title=title,
+                           url= url,
+                           thumbnail=item.thumbnail,
+                           quality = calidad,
+                           plot=item.plot,
+                           fanart=item.fanart,
+                           contentTitle=item.contentTitle,
+                           language=lang.replace('Español ', ''),
+                           server='directo',
+                           context = item.context
+                     ))
+            itemlist.sort(key=lambda it: it.title, reverse=True)
+        if 'pelispp.com' in scrapedurl or 'ultrapelis' in scrapedurl:
             data = httptools.downloadpage(scrapedurl, headers=headers).data
             patronr = 'file: "([^"]+)",label:"([^"]+)",type'
             matchesr = re.compile(patronr, re.DOTALL).findall(data)
             for scrapedurl, label in matchesr:
                 url = scrapedurl.replace('\\', '')
-                language = 'latino'
                 quality = label.decode('cp1252').encode('utf8')
                 title = item.contentTitle + ' (' + str(label) + ') ([COLOR blue]G[/COLOR][COLOR red]o[/COLOR][COLOR yellow]o[/COLOR][COLOR blue]g[/COLOR][COLOR green]l[/COLOR][COLOR red]e[/COLOR])'
                 thumbnail = item.thumbnail
                 fanart = item.fanart
                 itemlist.append(item.clone(action="play", title=title, url=url, server='directo',
                                            thumbnail=thumbnail, fanart=fanart, extra='directo',
-                                           quality=quality, language=language,))
+                                           quality=quality, language=lang.replace('Español ', '')))
                 itemlist.sort(key=lambda it: it.title, reverse=True)
 
         # if 'youtube' not in scrapedurl:
         servidores.lower()
-        if 'youtube' not in scrapedurl and 'pelispp.com' not in scrapedurl and 'streamplus' not in servidores:
+        if 'drive' not in scrapedurl and 'pelispp.com' not in scrapedurl and 'youtube' not in scrapedurl and 'streamplus' not in servidores:
             quality = scrapertools.find_single_match(
                 datas, '<p class="hidden-xs hidden-sm">.*?class="magnet-download">([^<]+)p</a>')
             title = "[COLOR green]%s[/COLOR] [COLOR yellow][%s][/COLOR] [COLOR yellow][%s][/COLOR]" % (
@@ -309,14 +319,9 @@ def findvideos(item):
             thumbnail = item.thumbnail
             server = servertools.get_server_from_url(url)
 
-            itemlist.append(item.clone(action='play', title=title, url=url, quality=quality,
+            itemlist.append(item.clone(action='play', title=title, url=url, quality=quality, language=lang.replace('Español ', ''),
                                        server=server, text_color=color3, thumbnail=thumbnail))
 
-    for videoitem in itemlist:
-        videoitem.infoLabels = item.infoLabels
-        videoitem.channel = item.channel
-        videoitem.action = 'play'
-        videoitem.fulltitle = item.title
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel,
