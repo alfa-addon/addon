@@ -84,6 +84,9 @@ def start(itemlist, item):
             # Obtiene el nodo AUTOPLAY desde el json
             autoplay_node = jsontools.get_node_from_file('autoplay', 'AUTOPLAY')
 
+        if not item.channel in autoplay_node:
+            return itemlist
+
         # Agrega servidores y calidades que no estaban listados a autoplay_node
         new_options = check_value(item.channel, itemlist)
 
