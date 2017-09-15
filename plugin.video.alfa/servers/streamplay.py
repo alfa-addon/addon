@@ -36,7 +36,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     for video_url in matches:
         _hash = scrapertools.find_single_match(video_url, '[A-z0-9\_\-]{40,}')
         hash = _hash[::-1]
-        hash = hash.replace(hash[0:1],"",1)
+        hash = hash.replace(hash[1:2],"",1)
         video_url = video_url.replace(_hash, hash)
 
         filename = scrapertools.get_filename_from_url(video_url)[-4:]
