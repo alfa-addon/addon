@@ -217,7 +217,7 @@ def episodios(item):
         idiomas = " ".join(["[%s]" % IDIOMAS.get(language, "OVOS") for language in
                             re.findall("banderas/([^\.]+)", flags, re.MULTILINE)])
         filter_lang = idiomas.replace("[", "").replace("]", "").split(" ")
-        display_title = "%s - %s" % (item.show, title)
+        display_title = "%s - %s %s" % (item.show, title, idiomas)
         # logger.debug("Episode found %s: %s" % (display_title, urlparse.urljoin(HOST, url)))
         itemlist.append(item.clone(title=display_title, url=urlparse.urljoin(HOST, url),
                                    action="findvideos", plot=plot, fanart=fanart, language=filter_lang))
