@@ -8,10 +8,12 @@ from platformcode import logger
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    data = httptools.downloadpage(page_url).data
+    data = httptools.downloadpage(page_url)
 
-    if "Object not found" in data or "longer exists on our servers" in data:
+    if "Object not found" in data.data or "longer exists on our servers" in data.data:
         return False, "[Fastplay] El archivo no existe o ha sido borrado"
+    if data.code == 500:
+        return False, "[Fastplay] Error interno del servidor"
     return True, ""
 
 
