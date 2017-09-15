@@ -351,16 +351,12 @@ def init(channel, list_servers, list_quality):
         if change:
             result, json_data = jsontools.update_node(autoplay_node, 'autoplay', 'AUTOPLAY')
 
-            if result:
-                heading = "AutoPlay Disponible"
-                msj = "Seleccione '<Configurar AutoPlay>' para activarlo."
-                icon = 0
-            else:
-                heading = "Error al iniciar AutoPlay"
+            if not result:
+				heading = "Error al iniciar AutoPlay"
                 msj = "Consulte su log para obtener mas información."
                 icon = 1
 
-            platformtools.dialog_notification(heading, msj, icon, sound=False)
+            	platformtools.dialog_notification(heading, msj, icon, sound=False)
 
     return result
 
