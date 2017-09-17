@@ -175,8 +175,10 @@ def findvideos(item):
     for scrapedurl, server_name, language, quality in matches:
         language = language.strip()
         quality = quality.strip()
-        if "youapihd" in server_name.lower():
+        if server_name.lower() in ["youapihd","drive"]:
             server_name = "gvideo"
+        if server_name.lower() in ["tvad"]:
+            server_name = "thevideome"
         if "pelismundo" in scrapedurl:
             data = httptools.downloadpage(scrapedurl, add_referer = True).data
             patron = 'sources.*?}],'
@@ -193,7 +195,7 @@ def findvideos(item):
                                      fulltitle = item.title,
                                      server = "directo",
                                      thumbnail = item.thumbnail,
-                                     title = server_name + " (" + language + ") (Calidad " + videoitem[0] + ")",
+                                     title = server_name + " (" + language + ") (" + videoitem[0] + ")",
                                      url = videoitem[1],
                                      language = language,
                                      quality = videoitem[0]
@@ -203,8 +205,7 @@ def findvideos(item):
                                  action = "play",
                                  extra = "",
                                  fulltitle = item.title,
-                                 server = "",
-                                 title = server_name + " (" + language + ") (Calidad " + quality + ")",
+                                 title = server_name + " (" + language + ") (" + quality + ")",
                                  thumbnail = item.thumbnail,
                                  url = scrapedurl,
                                  folder = False,
