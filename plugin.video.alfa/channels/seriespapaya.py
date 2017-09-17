@@ -11,12 +11,14 @@ from core import httptools
 from core import jsontools
 from core import scrapertools
 from core import servertools
+from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
 HOST = "http://www.seriespapaya.com"
 
-IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán', 'sub': 'VOS'}
+IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán', 'sub': 'VOSE', 'Español Latino':'lat',
+           'Español Castellano':'es', 'Sub Español':'VOSE'}
 list_idiomas = IDIOMAS.values()
 CALIDADES = ['360p', '480p', '720p HD', '1080p HD']
 
@@ -67,22 +69,31 @@ def series_por_letra_y_grupo(item):
         "letra": item.letter.lower()
     }
     data = httptools.downloadpage(url, post=urllib.urlencode(post_request)).data
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    patron = '<div class=list_imagen><img src=(.*?) \/>.*?<div class=list_titulo><a href=(.*?) style=.*?inherit;>(.*?)'
+    patron +='<.*?justify>(.*?)<.*?Año:<\/b>.*?(\d{4})<'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    #series = re.findall(
+    #    'list_imagen.+?src="(?P<img>[^"]+).+?<div class="list_titulo"><a[^>]+href="(?P<url>[^"]+)[^>]+>(.*?)</a>', data,
+    #    re.MULTILINE | re.DOTALL)
 
-    series = re.findall(
-        'list_imagen.+?src="(?P<img>[^"]+).+?<div class="list_titulo"><a[^>]+href="(?P<url>[^"]+)[^>]+>(.*?)</a>', data,
-        re.MULTILINE | re.DOTALL)
-
-    for img, url, name in series:
-        itemlist.append(item.clone(
+    for img, url, name, plot, year in matches:
+        new_item= Item(
+            channel = item.channel,
             action="episodios",
             title=name,
             show=name,
             url=urlparse.urljoin(HOST, url),
             thumbnail=urlparse.urljoin(HOST, img),
-            context=filtertools.context(item, list_idiomas, CALIDADES)
-        ))
+            context=filtertools.context(item, list_idiomas, CALIDADES),
+            plot = plot,
+            infoLabels={'year':year}
+        )
+        if year:
+           tmdb.set_infoLabels_item(new_item)
+        itemlist.append(new_item)
 
-    if len(series) == 8:
+    if len(matches) == 8:
         itemlist.append(item.clone(title="Siguiente >>", action="series_por_letra_y_grupo", extra=item.extra + 1))
 
     if item.extra > 0:
@@ -94,13 +105,16 @@ def series_por_letra_y_grupo(item):
 def novedades(item):
     logger.info()
     data = httptools.downloadpage(HOST).data
-    shows = re.findall('sidebarestdiv[^<]+<a[^<]+title="([^"]*)[^<]+href="([^"]*)[^<]+<img[^<]+src="([^"]+)', data,
-                       re.MULTILINE | re.DOTALL)
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    patron = 'sidebarestdiv><a title=(.*?\d+X\d+) (.*?) href=(.*?)>.*?src=(.*?)>'
+    matches = re.compile(patron, re.DOTALL).findall(data)
 
     itemlist = []
 
-    for title, url, img in shows:
-        itemlist.append(item.clone(action="findvideos", title=title, url=urlparse.urljoin(HOST, url), thumbnail=img))
+    for title, language,url, img in matches:
+        language = IDIOMAS[language]
+        itemlist.append(item.clone(action="findvideos", title=title, url=urlparse.urljoin(HOST, url), thumbnail=img,
+                                   language=language))
 
     return itemlist
 
@@ -133,7 +147,6 @@ def episodios(item):
 
     itemlist = []
     for url, title, langs in episodes:
-        logger.debug("langs %s" % langs)
         languages = " ".join(
             ["[%s]" % IDIOMAS.get(lang, lang) for lang in re.findall('images/s-([^\.]+)', langs)])
         filter_lang = languages.replace("[", "").replace("]", "").split(" ")
@@ -206,6 +219,5 @@ def play(item):
     logger.info("play: %s" % item.url)
     data = httptools.downloadpage(item.url).data
     video_url = scrapertools.find_single_match(data, "location.href='([^']+)")
-    logger.debug("Video URL = %s" % video_url)
     itemlist = servertools.find_video_items(data=video_url)
     return itemlist

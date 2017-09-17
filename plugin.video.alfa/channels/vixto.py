@@ -298,7 +298,7 @@ def findvideos(item):
     if filtro_enlaces != 1:
         list_enlaces = bloque_enlaces(data, filtro_idioma, dict_idiomas, "Descarga Directa", item)
         if list_enlaces:
-            itemlist.append(item.clone(action="", title="Enlaces Descarga", text_color=color1,
+            itemlist.append(item.clone(action="", title="Enlaces Descargas", text_color=color1,
                                        text_bold=True))
             itemlist.extend(list_enlaces)
 
@@ -344,12 +344,13 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, tipo, item):
                 title = "   Mirror en " + server + " (" + language + ") (Calidad " + calidad.strip() + ")"
                 if filtro_idioma == 3 or item.filtro:
                     lista_enlaces.append(item.clone(title=title, action="play", server=server, text_color=color2,
-                                                    url=scrapedurl, idioma=language, orden=orden))
+                                                    url=scrapedurl, idioma=language, orden=orden, language=language))
                 else:
                     idioma = dict_idiomas[language]
                     if idioma == filtro_idioma:
                         lista_enlaces.append(item.clone(title=title, text_color=color2, action="play",
-                                                        url=scrapedurl, server=server, idioma=language, orden=orden))
+                                                        url=scrapedurl, server=server, idioma=language, orden=orden,
+                                                        language=language))
                     else:
                         if language not in filtrados:
                             filtrados.append(language)

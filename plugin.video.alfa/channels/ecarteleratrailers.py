@@ -41,7 +41,7 @@ def mainlist(item):
         logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
         itemlist.append(
             Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, fanart=thumbnail,
-                 plot=plot, server="directo", folder=False))
+                 plot=plot,folder=False))
 
     # ------------------------------------------------------
     # Extrae la página siguiente

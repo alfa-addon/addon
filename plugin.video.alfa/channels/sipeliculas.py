@@ -6,6 +6,7 @@ import urlparse
 from core import httptools
 from core import scrapertools
 from core import servertools
+from core import tmdb
 from core.item import Item
 from platformcode import logger
 
@@ -60,18 +61,18 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    # data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>', "", data)
-
     listado = scrapertools.find_single_match(data,
                                              '<div id="sipeliculas" class="borde"><div class="izquierda">(.*?)<div class="derecha"><h2')
-    logger.info('vergas' + listado)
-    patron = '<li class="[^"]+"><a class="[^"]+" href="([^"]+)" title="Ver Película([^"]+)"><i></i><img.*?src="([^"]+)" alt="[^"]+"/>(.*?)</li>'
-    matches = re.compile(patron, re.DOTALL).findall(listado)
-    for scrapedurl, scrapedtitle, scrapedthumbnail, dataplot in matches:
-        dataplot = scrapertools.find_single_match(data, '<div class="ttip"><h5>[^<]+</h5><p><span>([^<]+)</span>')
-        itemlist.append(Item(channel=item.channel, action='findvideos', title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, plot=dataplot, contentTitle=scrapedtitle, extra=item.extra))
+    patron = '<a class="i" href="(.*?)".*?src="(.*?)".*?title=.*?>(.*?)<.*?span>(.*?)<.*?<p><span>(.*?)<'
 
+    matches = re.compile(patron, re.DOTALL).findall(listado)
+
+    for scrapedurl, scrapedthumbnail, scrapedtitle, year,  plot in matches:
+        itemlist.append(Item(channel=item.channel, action='findvideos', title=scrapedtitle, url=scrapedurl,
+                             thumbnail=scrapedthumbnail, plot=plot, contentTitle=scrapedtitle, extra=item.extra,
+                             infoLabels ={'year':year}))
+
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     # Paginacion
     if itemlist != []:
         patron = '<li[^<]+<a href="([^"]+)" title="[^"]+">Siguiente[^<]+</a></li>'
@@ -96,22 +97,26 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    # data = re.sub(r"'|\n|\r|\t|&nbsp;|<br>", "", data)
 
     listado1 = scrapertools.find_single_match(data,
                                               '<div class="links" id="ver-mas-opciones"><h2 class="h2"><i class="[^"]+"></i>[^<]+</h2><ul class="opciones">(.*?)</ul>')
     patron1 = '<li ><a id="([^"]+)" rel="nofollow" href="([^"]+)" title="[^"]+" alt="([^"]+)"><span class="opcion"><i class="[^"]+"></i><u>[^<]+</u>[^<]+</span><span class="ico"><img src="[^"]+" alt="[^"]+"/>[^<]+</span><span>([^"]+)</span><span>([^"]+)</span></a></li>'
     matches = matches = re.compile(patron1, re.DOTALL).findall(listado1)
-    for vidId, vidUrl, vidServer, idioma, calidad in matches:
+    for vidId, vidUrl, vidServer, language, quality in matches:
+        server = servertools.get_server_name(vidServer)
+        if 'Sub' in language:
+            language='sub'
         itemlist.append(Item(channel=item.channel, action='play', url=vidUrl, extra=vidId,
-                             title='Ver en ' + vidServer + ' | ' + idioma + ' | ' + calidad, thumbnail=item.thumbnail))
+                             title='Ver en ' + vidServer + ' | ' + language + ' | ' + quality,
+                             thumbnail=item.thumbnail, server=server, language=language, quality=quality ))
 
     listado2 = scrapertools.find_single_match(data, '<ul class="opciones-tab">(.*?)</ul>')
     patron2 = '<li ><a id="([^"]+)" rel="nofollow" href="([^"]+)" title="[^"]+" alt="([^"]+)"><img src="[^"]+" alt="[^"]+"/>[^<]+</a></li>'
     matches = matches = re.compile(patron2, re.DOTALL).findall(listado2)
     for vidId, vidUrl, vidServer in matches:
+        server = servertools.get_server_name(vidServer)
         itemlist.append(Item(channel=item.channel, action='play', url=vidUrl, extra=vidId, title='Ver en ' + vidServer,
-                             thumbnail=item.thumbnail))
+                             thumbnail=item.thumbnail, server=server))
 
     for videoitem in itemlist:
         videoitem.fulltitle = item.title
