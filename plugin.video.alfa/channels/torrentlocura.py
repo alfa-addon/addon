@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import re
+import urllib
+import urlparse
+
+
 
 from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
+from core import servertools
 from core.item import Item
 from platformcode import logger
 
@@ -360,5 +365,102 @@ def episodios(item):
     # order list
     if len(itemlist) > 1:
         return sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
+
+    return itemlist
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+
+    # Descarga la pagina
+    data = httptools.downloadpage(item.url).data
+    item.plot = scrapertools.find_single_match(data, '<div class="post-entry" style="height:300px;">(.*?)</div>')
+    item.plot = scrapertools.htmlclean(item.plot).strip()
+    item.contentPlot = item.plot
+
+    link = scrapertools.find_single_match(data, 'href.*?=.*?"http:\/\/(?:tumejorserie|tumejorjuego).*?link=([^"]+)"')
+    if link != "":
+        link = host + link
+        logger.info("torrent=" + link)
+        itemlist.append(
+            Item(channel=item.channel, action="play", server="torrent", title="Vídeo en torrent", fulltitle=item.title,
+                 url=link, thumbnail=servertools.guess_server_thumbnail("torrent"), plot=item.plot, folder=False,
+                 parentContent=item))
+
+    patron = '<div class=\"box1\"[^<]+<img[^<]+<\/div[^<]+<div class="box2">([^<]+)<\/div[^<]+<div class="box3">([^<]+)'
+    patron += '<\/div[^<]+<div class="box4">([^<]+)<\/div[^<]+<div class="box5"><a href=(.*?) rel.*?'
+    patron += '<\/div[^<]+<div class="box6">([^<]+)<'
+
+    #patron = "<div class=\"box1\"[^<]+<img[^<]+</div[^<]+"
+    #patron += '<div class="box2">([^<]+)</div[^<]+'
+    #patron += '<div class="box3">([^<]+)</div[^<]+'
+    #patron += '<div class="box4">([^<]+)</div[^<]+'
+    #patron += '<div class="box5">(.*?)</div[^<]+'
+    #patron += '<div class="box6">([^<]+)<'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    scrapertools.printMatches(matches)
+
+    itemlist_ver = []
+    itemlist_descargar = []
+
+    for servername, idioma, calidad, scrapedurl, comentarios in matches:
+        title = "Mirror en " + servername + " (" + calidad + ")" + " (" + idioma + ")"
+        servername = servername.replace("uploaded", "uploadedto").replace("1fichier", "onefichier")
+        if comentarios.strip() != "":
+            title = title + " (" + comentarios.strip() + ")"
+        url = urlparse.urljoin(item.url, scrapedurl)
+        mostrar_server = servertools.is_server_enabled(servername)
+        if mostrar_server:
+            thumbnail = servertools.guess_server_thumbnail(title)
+            plot = ""
+            logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
+            action = "play"
+            if "partes" in title:
+                action = "extract_url"
+            new_item = Item(channel=item.channel, action=action, title=title, fulltitle=title, url=url,
+                            thumbnail=thumbnail, plot=plot, parentContent=item, server = servername)
+            if comentarios.startswith("Ver en"):
+                itemlist_ver.append(new_item)
+            else:
+                itemlist_descargar.append(new_item)
+
+    for new_item in itemlist_ver:
+        itemlist.append(new_item)
+
+    for new_item in itemlist_descargar:
+        itemlist.append(new_item)
+
+    return itemlist
+
+
+def extract_url(item):
+    logger.info()
+
+    itemlist = servertools.find_video_items(data=item.url)
+
+    for videoitem in itemlist:
+        videoitem.title = "Enlace encontrado en " + videoitem.server + " (" + scrapertools.get_filename_from_url(
+            videoitem.url) + ")"
+        videoitem.fulltitle = item.fulltitle
+        videoitem.thumbnail = item.thumbnail
+        videoitem.channel = item.channel
+
+    return itemlist
+
+
+def play(item):
+    logger.info()
+
+    if item.server != "torrent":
+        itemlist = servertools.find_video_items(data=item.url)
+
+        for videoitem in itemlist:
+            videoitem.title = "Enlace encontrado en " + videoitem.server + " (" + scrapertools.get_filename_from_url(
+                videoitem.url) + ")"
+            videoitem.fulltitle = item.fulltitle
+            videoitem.thumbnail = item.thumbnail
+            videoitem.channel = item.channel
+    else:
+        itemlist = [item]
 
     return itemlist
