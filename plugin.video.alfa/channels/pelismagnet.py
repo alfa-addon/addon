@@ -22,28 +22,28 @@ def mainlist(item):
 
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="pelis", title="[B]Peliculas[/B]",
-                         url=api + "?sort_by=''&page=0"))
+                         url=api + "?sort_by=''&page=0", thumbnail="https://github.com/devalls/media/raw/master/genres/Peliculas.png"))
     itemlist.append(Item(channel=item.channel, action="pelis", title="     Estrenos",
-                         url=api + "?sort_by=date_added&page=0"))
-    itemlist.append(Item(channel=item.channel, action="pelis", title="     + Populares", url=api + "?page=0"))
+                         url=api + "?sort_by=date_added&page=0", thumbnail="https://github.com/devalls/media/raw/master/genres/Estrenos.png"))
+    itemlist.append(Item(channel=item.channel, action="pelis", title="     + Populares", url=api + "?page=0", thumbnail="https://github.com/devalls/media/raw/master/genres/Populares.png"))
     itemlist.append(Item(channel=item.channel, action="pelis", title="     + Valoradas",
-                         url=api + "?sort_by=rating&page=0"))
+                         url=api + "?sort_by=rating&page=0", thumbnail="https://github.com/devalls/media/raw/master/genres/Valoradas.png"))
     itemlist.append(Item(channel=item.channel, action="menu_ord", title="     Ordenado por...",
-                         url=api))
+                         url=api, thumbnail="https://github.com/devalls/media/raw/master/genres/Ordenar.png"))
     itemlist.append(
-        Item(channel=item.channel, action="search", title="     Buscar...", url=api + "?keywords=%s&page=0"))
+        Item(channel=item.channel, action="search", title="     Buscar...", url=api + "?keywords=%s&page=0", thumbnail="https://github.com/devalls/media/raw/master/genres/Buscar.png"))
     itemlist.append(Item(channel=item.channel, action="series", title="[B]Series[/B]",
-                         url=api_serie + "?sort_by=''&page=0"))
+                         url=api_serie + "?sort_by=''&page=0", thumbnail="https://github.com/devalls/media/raw/master/genres/Series.png"))
     itemlist.append(Item(channel=item.channel, action="series", title="     Recientes",
-                         url=api_serie + "?sort_by=date_added&page=0"))
-    itemlist.append(Item(channel=item.channel, action="series", title="     + Populares", url=api_serie + "?page=0"))
+                         url=api_serie + "?sort_by=date_added&page=0", thumbnail="https://github.com/devalls/media/raw/master/genres/Recientes.png"))
+    itemlist.append(Item(channel=item.channel, action="series", title="     + Populares", url=api_serie + "?page=0", thumbnail="https://github.com/devalls/media/raw/master/genres/Populares.png"))
     itemlist.append(Item(channel=item.channel, action="series", title="     + Valoradas",
-                         url=api_serie + "?sort_by=rating&page=0"))
+                         url=api_serie + "?sort_by=rating&page=0", thumbnail="https://github.com/devalls/media/raw/master/genres/Valoradas.png"))
     itemlist.append(Item(channel=item.channel, action="menu_ord", title="     Ordenado por...",
-                         url=api_serie))
+                         url=api_serie, thumbnail="https://github.com/devalls/media/raw/master/genres/Ordenar.png"))
     itemlist.append(Item(channel=item.channel, action="search", title="     Buscar...",
-                         url=api_serie + "?keywords=%s&page=0"))
-    itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal"))
+                         url=api_serie + "?keywords=%s&page=0", thumbnail="https://github.com/devalls/media/raw/master/genres/Buscar.png"))
+    itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", thumbnail="https://github.com/devalls/media/raw/master/genres/Config.png"))
 
     return itemlist
 
