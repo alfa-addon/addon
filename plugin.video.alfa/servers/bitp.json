@@ -12,6 +12,10 @@
       {
         "pattern": "https://www.bitporno.com/e/([A-z0-9]+)",
         "url": "https://www.bitporno.com/e/\\1"
+      },
+      {
+        "pattern": "raptu.com/(?:\\?v=|embed/|e/)([A-z0-9]+)",
+        "url": "https://www.bitporno.com/e/\\1"
       }
     ]
   },
