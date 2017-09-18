@@ -186,39 +186,17 @@ def findvideos(item):
         encontrados.append(scrapedurl)
         language = language.strip()
         quality = quality.strip()
-        if "pelismundo" in scrapedurl:
-            data = httptools.downloadpage(scrapedurl, add_referer = True).data
-            patron = 'sources.*?}],'
-            bloque = scrapertools.find_single_match(data, patron)
-            patron = 'file.*?"([^"]+)".*?label:"([^"]+)"'
-            match = scrapertools.find_multiple_matches(bloque, patron)
-            for scrapedurl1, scrapedlabel1 in match:
-               itemtemp.append([scrapedlabel1, scrapedurl1])
-            itemtemp.sort(key=lambda it: int(it[0].replace("p", "")))
-            for videoitem in itemtemp:
-                itemlist.append(Item(channel = item.channel,
-                                     action = "play",
-                                     extra = "hdvids",
-                                     fulltitle = item.fulltitle,
-                                     server = "directo",
-                                     thumbnail = item.thumbnail,
-                                     title = "%s (" + language + ") (" + videoitem[0] + ")",
-                                     url = videoitem[1],
-                                     language = language,
-                                     quality = videoitem[0]
-                                     ))
-        else:
-            itemlist.append(Item(channel=item.channel,
-                                 action = "play",
-                                 extra = "",
-                                 fulltitle = item.fulltitle,
-                                 title = "%s (" + language + ") (" + quality + ")",
-                                 thumbnail = item.thumbnail,
-                                 url = scrapedurl,
-                                 folder = False,
-                                 language = language,
-                                 quality = quality
-                                 ))
+        itemlist.append(Item(channel=item.channel,
+                             action = "play",
+                             extra = "",
+                             fulltitle = item.fulltitle,
+                             title = "%s (" + language + ") (" + quality + ")",
+                             thumbnail = item.thumbnail,
+                             url = scrapedurl,
+                             folder = False,
+                             language = language,
+                             quality = quality
+                             ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
