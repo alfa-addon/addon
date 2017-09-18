@@ -151,8 +151,15 @@ def peliculas(item):
     itemlist = []
 
     for scrapedthumbnail, scrapedtitle, scrapedurl in matches:
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, plot="", fulltitle=scrapedtitle))
+        fulltitle = scrapedtitle.replace(scrapertools.find_single_match(scrapedtitle, '\([0-9]+\)' ), "")
+        itemlist.append(Item(channel = item.channel,
+                             action = "findvideos",
+                             title = scrapedtitle,
+                             url = scrapedurl,
+                             thumbnail = scrapedthumbnail, 
+                             plot = "",
+                             fulltitle = fulltitle
+                             ))
 
     next_page = scrapertools.find_single_match(data, 'rel="next" href="([^"]+)')
     if next_page != "":
@@ -170,15 +177,15 @@ def findvideos(item):
     patron = 'hand" rel="([^"]+).*?title="(.*?)".*?<span>([^<]+)</span>.*?</span><span class="q">(.*?)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
     itemlist = []
+    encontrados = []
     itemtemp = []
 
     for scrapedurl, server_name, language, quality in matches:
+        if scrapedurl in encontrados:
+            continue
+        encontrados.append(scrapedurl)
         language = language.strip()
         quality = quality.strip()
-        if server_name.lower() in ["youapihd","drive"]:
-            server_name = "gvideo"
-        if server_name.lower() in ["tvad"]:
-            server_name = "thevideome"
         if "pelismundo" in scrapedurl:
             data = httptools.downloadpage(scrapedurl, add_referer = True).data
             patron = 'sources.*?}],'
@@ -192,10 +199,10 @@ def findvideos(item):
                 itemlist.append(Item(channel = item.channel,
                                      action = "play",
                                      extra = "hdvids",
-                                     fulltitle = item.title,
+                                     fulltitle = item.fulltitle,
                                      server = "directo",
                                      thumbnail = item.thumbnail,
-                                     title = server_name + " (" + language + ") (" + videoitem[0] + ")",
+                                     title = "%s (" + language + ") (" + videoitem[0] + ")",
                                      url = videoitem[1],
                                      language = language,
                                      quality = videoitem[0]
@@ -204,13 +211,18 @@ def findvideos(item):
             itemlist.append(Item(channel=item.channel,
                                  action = "play",
                                  extra = "",
-                                 fulltitle = item.title,
-                                 title = server_name + " (" + language + ") (" + quality + ")",
+                                 fulltitle = item.fulltitle,
+                                 title = "%s (" + language + ") (" + quality + ")",
                                  thumbnail = item.thumbnail,
                                  url = scrapedurl,
                                  folder = False,
                                  language = language,
                                  quality = quality
                                  ))
-    itemlist = servertools.get_servers_itemlist(itemlist)
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
+
+
+def play(item):
+    item.thumbnail = item.contentThumbnail
+    return [item]
