@@ -35,7 +35,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         
         if not media_url.startswith("http"):
             media_url = "http:" + media_url
-        video_urls.append([".%s %sp [streamango]" % (ext, quality), media_url])
+        video_urls.append([".%s %sp [streamcherry]" % (ext, quality), media_url])
 
     video_urls.reverse()
     for video_url in video_urls:

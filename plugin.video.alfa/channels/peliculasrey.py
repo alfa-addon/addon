@@ -151,8 +151,15 @@ def peliculas(item):
     itemlist = []
 
     for scrapedthumbnail, scrapedtitle, scrapedurl in matches:
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, plot="", fulltitle=scrapedtitle))
+        fulltitle = scrapedtitle.replace(scrapertools.find_single_match(scrapedtitle, '\([0-9]+\)' ), "")
+        itemlist.append(Item(channel = item.channel,
+                             action = "findvideos",
+                             title = scrapedtitle,
+                             url = scrapedurl,
+                             thumbnail = scrapedthumbnail, 
+                             plot = "",
+                             fulltitle = fulltitle
+                             ))
 
     next_page = scrapertools.find_single_match(data, 'rel="next" href="([^"]+)')
     if next_page != "":
@@ -170,46 +177,30 @@ def findvideos(item):
     patron = 'hand" rel="([^"]+).*?title="(.*?)".*?<span>([^<]+)</span>.*?</span><span class="q">(.*?)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
     itemlist = []
+    encontrados = []
     itemtemp = []
 
     for scrapedurl, server_name, language, quality in matches:
+        if scrapedurl in encontrados:
+            continue
+        encontrados.append(scrapedurl)
         language = language.strip()
         quality = quality.strip()
-        if "youapihd" in server_name.lower():
-            server_name = "gvideo"
-        if "pelismundo" in scrapedurl:
-            data = httptools.downloadpage(scrapedurl, add_referer = True).data
-            patron = 'sources.*?}],'
-            bloque = scrapertools.find_single_match(data, patron)
-            patron = 'file.*?"([^"]+)".*?label:"([^"]+)"'
-            match = scrapertools.find_multiple_matches(bloque, patron)
-            for scrapedurl1, scrapedlabel1 in match:
-               itemtemp.append([scrapedlabel1, scrapedurl1])
-            itemtemp.sort(key=lambda it: int(it[0].replace("p", "")))
-            for videoitem in itemtemp:
-                itemlist.append(Item(channel = item.channel,
-                                     action = "play",
-                                     extra = "hdvids",
-                                     fulltitle = item.title,
-                                     server = "directo",
-                                     thumbnail = item.thumbnail,
-                                     title = server_name + " (" + language + ") (Calidad " + videoitem[0] + ")",
-                                     url = videoitem[1],
-                                     language = language,
-                                     quality = videoitem[0]
-                                     ))
-        else:
-            itemlist.append(Item(channel=item.channel,
-                                 action = "play",
-                                 extra = "",
-                                 fulltitle = item.title,
-                                 server = "",
-                                 title = server_name + " (" + language + ") (Calidad " + quality + ")",
-                                 thumbnail = item.thumbnail,
-                                 url = scrapedurl,
-                                 folder = False,
-                                 language = language,
-                                 quality = quality
-                                 ))
-    itemlist = servertools.get_servers_itemlist(itemlist)
+        itemlist.append(Item(channel=item.channel,
+                             action = "play",
+                             extra = "",
+                             fulltitle = item.fulltitle,
+                             title = "%s (" + language + ") (" + quality + ")",
+                             thumbnail = item.thumbnail,
+                             url = scrapedurl,
+                             folder = False,
+                             language = language,
+                             quality = quality
+                             ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
+
+
+def play(item):
+    item.thumbnail = item.contentThumbnail
+    return [item]

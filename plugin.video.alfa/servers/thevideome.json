@@ -14,7 +14,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "thevideo.me/(?:embed-|)([A-z0-9]+)",
+        "pattern": "(?:thevideo.me|tvad.me)/(?:embed-|)([A-z0-9]+)",
         "url": "http://thevideo.me/embed-\\1.html"
       }
     ]
@@ -48,5 +48,6 @@
       "visible": false
     }
   ],
+  "thumbnail": "https://s26.postimg.org/fzmu2c761/thevideo.me1.png",
   "version": 1
 }
