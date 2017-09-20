@@ -18,7 +18,7 @@ list_language = IDIOMAS.values()
 
 CALIDADES = {'1080p': '1080p', '720p': '720p', '480p': '480p', '360p': '360p'}
 list_quality = CALIDADES.values()
-list_servers = ['directo']
+list_servers = ['directo', 'openload']
 
 host = 'http://doomtv.net/'
 headers = {
@@ -32,10 +32,10 @@ tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
            "Aventura": "https://s10.postimg.org/6su40czih/aventura.png",
            "Romance": "https://s15.postimg.org/fb5j8cl63/romance.png",
            "Animación": "https://s13.postimg.org/5on877l87/animacion.png",
-           "Ciencia Ficción": "https://s9.postimg.org/diu70s7j3/cienciaficcion.png",
+           "Ciencia ficción": "https://s9.postimg.org/diu70s7j3/cienciaficcion.png",
            "Terror": "https://s7.postimg.org/yi0gij3gb/terror.png",
-           "Documentales": "https://s16.postimg.org/7xjj4bmol/documental.png",
-           "Musical": "https://s29.postimg.org/bbxmdh9c7/musical.png",
+           "Documental": "https://s16.postimg.org/7xjj4bmol/documental.png",
+           "Música": "https://s29.postimg.org/bbxmdh9c7/musical.png",
            "Fantasía": "https://s13.postimg.org/65ylohgvb/fantasia.png",
            "Bélico Guerra": "https://s23.postimg.org/71itp9hcr/belica.png",
            "Misterio": "https://s1.postimg.org/w7fdgf2vj/misterio.png",
@@ -56,7 +56,6 @@ tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
 def mainlist(item):
     logger.info()
 
-    autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
 
     itemlist.append(
@@ -64,7 +63,7 @@ def mainlist(item):
                    action="lista",
                    thumbnail='https://s18.postimg.org/fwvaeo6qh/todas.png',
                    fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
-                   url=host
+                   url='%s%s'%(host,'peliculas/page/1')
                    ))
 
     itemlist.append(
@@ -72,34 +71,15 @@ def mainlist(item):
                    action="seccion",
                    thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
                    fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
-                   url=host,
-                   extra='generos'
+                   url='%s%s' % (host, 'peliculas/page/1'),
                    ))
 
     itemlist.append(
-        item.clone(title="Mas vistas",
-                   action="seccion",
+        item.clone(title="Mas Vistas",
+                   action="lista",
                    thumbnail='https://s9.postimg.org/wmhzu9d7z/vistas.png',
                    fanart='https://s9.postimg.org/wmhzu9d7z/vistas.png',
-                   url=host,
-                   extra='masvistas'
-                   ))
-
-    itemlist.append(
-        item.clone(title="Recomendadas",
-                   action="lista",
-                   thumbnail='https://s12.postimg.org/s881laywd/recomendadas.png',
-                   fanart='https://s12.postimg.org/s881laywd/recomendadas.png',
-                   url=host,
-                   extra='recomendadas'
-                   ))
-
-    itemlist.append(
-        item.clone(title="Por año",
-                   action="seccion",
-                   thumbnail='https://s8.postimg.org/7eoedwfg5/pora_o.png',
-                   fanart='https://s8.postimg.org/7eoedwfg5/pora_o.png',
-                   url=host, extra='poraño'
+                   url='%s%s'%(host,'top-imdb/page/1'),
                    ))
 
     itemlist.append(
@@ -109,8 +89,6 @@ def mainlist(item):
                    thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
                    fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
                    ))
-
-    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -123,23 +101,11 @@ def lista(item):
     next_page_url = ''
 
     data = httptools.downloadpage(item.url).data
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
 
-    if item.extra == 'recomendadas':
-        patron = '<a href="(.*?)">.*?'
-        patron += '<div class="imgss">.*?'
-        patron += '<img src="(.*?)" alt="(.*?)(?:–.*?|\(.*?|&#8211;|").*?'
-        patron += '<div class="imdb">.*?'
-        patron += '<\/a>.*?'
-        patron += '<span class="ttps">.*?<\/span>.*?'
-        patron += '<span class="ytps">(.*?)<\/span><\/div>'
-    elif item.extra in ['generos', 'poraño', 'buscar']:
-        patron = '<div class=movie>.*?<img src=(.*?) alt=(.*?)(?:\s|\/)><a href=(.*?)>.*?'
-        patron += '<h2>.*?<\/h2>.*?(?:<span class=year>(.*?)<\/span>)?.*?<\/div>'
-    else:
-        patron = '<div class="imagen">.*?'
-        patron += '<img src="(.*?)" alt="(.*?)(?:–.*?|\(.*?|&#8211;|").*?'
-        patron += '<a href="([^"]+)"><(?:span) class="player"><\/span><\/a>.*?'
-        patron += 'h2>\s*.*?(?:year)">(.*?)<\/span>.*?<\/div>'
+    patron = 'movie-id=.*?href=(.*?) data-url.*?quality>(.*?)'
+    patron += '<img data-original=(.*?) class.*?<h2>(.*?)<\/h2>.*?<p>(.*?)<\/p>'
+
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     if item.next_page != 'b':
@@ -150,39 +116,36 @@ def lista(item):
     else:
         matches = matches[max_items:]
         next_page = 'a'
-        patron_next_page = '<div class="siguiente"><a href="(.*?)"|\/\?'
-        matches_next_page = re.compile(patron_next_page, re.DOTALL).findall(data)
-        if len(matches_next_page) > 0:
-            next_page_url = urlparse.urljoin(item.url, matches_next_page[0])
+        next_page_str = scrapertools.find_single_match(data,"<li class='active'><a class=''>(\d+)</a>")
+        next_page_num = int(next_page_str)+1
+        page_base = re.sub(r'(page\/\d+)','', item.url)
+        next_page_url = '%s%s%s'%(page_base,'page/',next_page_num)
 
-    for scrapedthumbnail, scrapedtitle, scrapedurl, scrapedyear in matches:
-        if item.extra == 'recomendadas':
-            url = scrapedthumbnail
-            title = scrapedurl
-            thumbnail = scrapedtitle
-        else:
-            url = scrapedurl
-            thumbnail = scrapedthumbnail
-            title = scrapedtitle
-        year = scrapedyear
+        if next_page_url:
+            next_page_url =  next_page_url
+
+    for scrapedurl, quality, scrapedthumbnail, scrapedtitle, plot in matches:
+
+        url = scrapedurl
+        thumbnail = scrapedthumbnail
+        filtro_thumb = scrapedthumbnail.replace("https://image.tmdb.org/t/p/w185", "")
+        filtro_list = {"poster_path": filtro_thumb.strip()}
+        filtro_list = filtro_list.items()
+        title = scrapedtitle
         fanart = ''
-        plot = ''
-
-        if 'serie' not in url:
-            itemlist.append(
-                Item(channel=item.channel,
-                     action='findvideos',
-                     title=title,
-                     url=url,
-                     thumbnail=thumbnail,
-                     plot=plot,
-                     fanart=fanart,
-                     contentTitle=title,
-                     infoLabels={'year': year},
-                     context=autoplay.context
-                     ))
-
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+        plot = plot
+        itemlist.append(
+            Item(channel=item.channel,
+                 action='findvideos',
+                 title=title,
+                 url=url,
+                 thumbnail=thumbnail,
+                 plot=plot,
+                 infoLabels={'filtro': filtro_list},
+                 fanart=fanart,
+                 contentTitle=title
+                 ))
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True)
     # Paginacion
     if next_page_url != '':
         itemlist.append(
@@ -203,17 +166,8 @@ def seccion(item):
     itemlist = []
     duplicado = []
     data = httptools.downloadpage(item.url).data
-
-    if item.extra == 'generos':
-        data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    accion = 'lista'
-    if item.extra == 'masvistas':
-        patron = '<b>\d*<\/b>\s*<a href="(.*?)">(.*?<\/a>\s*<span>.*?<\/span>\s*<i>.*?<\/i><\/li>)'
-        accion = 'findvideos'
-    elif item.extra == 'poraño':
-        patron = '<li><a class="ito" HREF="(.*?)">(.*?)<\/a><\/li>'
-    else:
-        patron = '<li class=cat-item cat-item-.*?><a href=(.*?)>(.*?)<\/i>'
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    patron = 'menu-item-object-category menu-item-\d+><a href=(.*?)>(.*?)<\/a><\/li>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -221,59 +175,17 @@ def seccion(item):
         url = scrapedurl
         title = scrapedtitle
         thumbnail = ''
-        fanart = ''
-        plot = ''
-        year = ''
-        contentTitle = ''
-        if item.extra == 'masvistas':
-            year = re.findall(r'\b\d{4}\b', scrapedtitle)
-            title = re.sub(r'<\/a>\s*<span>.*?<\/span>\s*<i>.*?<\/i><\/li>', '', scrapedtitle)
-            contentTitle = title
-            title = title + ' (' + year[0] + ')'
-
-        elif item.extra == 'generos':
-            title = re.sub(r'<\/a> <i>\d+', '', scrapedtitle)
-            cantidad = re.findall(r'.*?<\/a> <i>(\d+)', scrapedtitle)
-            th_title = title
-            title = title + ' (' + cantidad[0] + ')'
-            thumbnail = tgenero[th_title]
-            fanart = thumbnail
-
+        if title in tgenero:
+            thumbnail = tgenero[title]
         if url not in duplicado:
             itemlist.append(
                 Item(channel=item.channel,
-                     action=accion,
+                     action='lista',
                      title=title,
                      url=url,
-                     thumbnail=thumbnail,
-                     plot=plot,
-                     fanart=fanart,
-                     contentTitle=contentTitle,
-                     infoLabels={'year': year}
+                     thumbnail = thumbnail
                      ))
-            duplicado.append(url)
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
-
-
-def unpack(packed):
-    p, c, k = re.search("}\('(.*)', *\d+, *(\d+), *'(.*)'\.", packed, re.DOTALL).groups()
-    for c in reversed(range(int(c))):
-        if k.split('|')[c]: p = re.sub(r'(\b%s\b)' % c, k.split('|')[c], p)
-        p = p.replace('\\', '')
-        p = p.decode('string_escape')
-    return p
-
-
-def getinfo(page_url):
-    info = ()
-    logger.info()
-    data = httptools.downloadpage(page_url).data
-    thumbnail = scrapertools.find_single_match(data, '<div class="cover" style="background-image: url\((.*?)\);')
-    plot = scrapertools.find_single_match(data, '<h2>Synopsis<\/h2>\s*<p>(.*?)<\/p>')
-    info = (plot, thumbnail)
-
-    return info
 
 
 def search(item, texto):
@@ -305,98 +217,47 @@ def newest(categoria):
 
     return itemlist
 
-
-def get_url(item):
-    logger.info()
-    itemlist = []
-    duplicado = []
-    patrones = ["{'label':(.*?),.*?'file':'(.*?)'}", "{file:'(.*?redirector.*?),label:'(.*?)'}"]
-    data = httptools.downloadpage(item.url, headers=headers, cookies=False).data
-    patron = 'class="player-content"><iframe src="(.*?)"'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for option in matches:
-        if 'allplayer' in option:
-            url = 'http:/' + option.replace('//', '/')
-            data = httptools.downloadpage(url, headers=headers, cookies=False).data
-            packed = scrapertools.find_single_match(data, "<div id='allplayer'>.*?(eval\(function\(p,a,c,k.*?\)\)\))")
-            if packed:
-                unpacked = unpack(packed)
-                video_urls = []
-                if "vimeocdn" in unpacked:
-
-                    streams = scrapertools.find_multiple_matches(unpacked,
-                                                                 "{file:'(.*?)',type:'video/.*?',label:'(.*?)'")
-                    for video_url, quality in streams:
-                        video_urls.append([video_url, quality])
-                else:
-                    doc_id = scrapertools.find_single_match(unpacked, 'driveid=(.*?)&')
-                    doc_url = "http://docs.google.com/get_video_info?docid=%s" % doc_id
-                    response = httptools.downloadpage(doc_url, cookies=False)
-                    cookies = ""
-                    cookie = response.headers["set-cookie"].split("HttpOnly, ")
-                    for c in cookie:
-                        cookies += c.split(";", 1)[0] + "; "
-
-                    data = response.data.decode('unicode-escape')
-                    data = urllib.unquote_plus(urllib.unquote_plus(data))
-                    headers_string = "|Cookie=" + cookies
-
-                    url_streams = scrapertools.find_single_match(data, 'url_encoded_fmt_stream_map=(.*)')
-                    streams = scrapertools.find_multiple_matches(url_streams,
-                                                                 'itag=(\d+)&url=(.*?)(?:;.*?quality=.*?(?:,|&)|&quality=.*?(?:,|&))')
-
-                    itags = {'18': '360p', '22': '720p', '34': '360p', '35': '480p', '37': '1080p', '59': '480p'}
-                    for itag, video_url in streams:
-                        video_url += headers_string
-                        video_urls.append([video_url, itags[itag]])
-
-                for video_item in video_urls:
-                    calidad = video_item[1]
-                    title = '%s [%s]' % (item.contentTitle, calidad)
-                    url = video_item[0]
-
-                    if url not in duplicado:
-                        itemlist.append(
-                            Item(channel=item.channel,
-                                 action='play',
-                                 title=title,
-                                 url=url,
-                                 thumbnail=item.thumbnail,
-                                 plot=item.plot,
-                                 fanart=item.fanart,
-                                 contentTitle=item.contentTitle,
-                                 language=IDIOMAS['latino'],
-                                 server='directo',
-                                 quality=CALIDADES[calidad],
-                                 context=item.context
-                                 ))
-                        duplicado.append(url)
-        else:
-            itemlist.extend(servertools.find_video_items(data=option))
-
-    for videoitem in itemlist:
-
-        if 'Enlace' in videoitem.title:
-            videoitem.channel = item.channel
-            videoitem.title = item.contentTitle + ' (' + videoitem.server + ')'
-            videoitem.language = 'latino'
-            videoitem.quality = 'default'
-    return itemlist
-
-
 def findvideos(item):
     logger.info()
     itemlist = []
-    itemlist = get_url(item)
+    #itemlist = get_url(item)
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    patron = 'id=(tab\d+)><div class=movieplay><(?:iframe|script) src=(.*?)(?:scrolling|><\/script>)'
+    matches = re.compile(patron, re.DOTALL).findall(data)
 
-    # Requerido para FilterTools
+    for option, urls in matches:
+        quality = scrapertools.find_single_match(data, '<div class=les-content><a href=#%s>(.*?)<\/a><\/div>'%option)
+        title = '%s (%s)' % (item.title, quality)
+        if 'content' in urls:
+            urls = '%s%s'%('http:',urls)
+            hidden_data = httptools.downloadpage(urls).data
+            hidden_data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", hidden_data)
+            patron = 'sources: \[{file: (.*?),'
+            matches = re.compile(patron, re.DOTALL).findall(hidden_data)
 
-    itemlist = filtertools.get_links(itemlist, item, list_language)
+            for videoitem in matches:
 
-    # Requerido para AutoPlay
-
-    autoplay.start(itemlist, item)
+                new_item = Item(
+                                channel = item.channel,
+                                url = videoitem,
+                                title = title,
+                                contentTitle = item.title,
+                                action = 'play',
+                                quality = quality
+                                )
+                itemlist.append(new_item)
+        else:
+            new_item = Item(
+                            channel=item.channel,
+                            url=urls,
+                            title=title,
+                            contentTitle=item.title,
+                            action='play',
+                            quality = quality
+                            )
+            itemlist.append(new_item)
+    itemlist = servertools.get_servers_itemlist(itemlist)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(

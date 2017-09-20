@@ -12,6 +12,8 @@ def test_video_exists(page_url):
         return False, "[gvideo] El video no existe o ha sido borrado"
     if "Se+ha+excedido+el" in response.data:
         return False, "[gvideo] Se ha excedido el número de reproducciones permitidas"
+    if "No+tienes+permiso" in response.data:
+        return False, "[gvideo] No tienes permiso para acceder a este video"
 
     return True, ""
 
@@ -19,17 +21,36 @@ def test_video_exists(page_url):
 def get_video_url(page_url, user="", password="", video_password=""):
     video_urls = []
     urls = []
-    response = httptools.downloadpage(page_url, cookies=False, headers={"Referer": page_url})
-    cookies = ""
-    cookie = response.headers["set-cookie"].split("HttpOnly, ")
-    for c in cookie:
-        cookies += c.split(";", 1)[0] + "; "
-    data = response.data.decode('unicode-escape')
-    data = urllib.unquote_plus(urllib.unquote_plus(data))
-    headers_string = "|Cookie=" + cookies
-    url_streams = scrapertools.find_single_match(data, 'url_encoded_fmt_stream_map=(.*)')
-    streams = scrapertools.find_multiple_matches(url_streams,
-                                                 'itag=(\d+)&url=(.*?)(?:;.*?quality=.*?(?:,|&)|&quality=.*?(?:,|&))')
+    streams =[]
+    logger.debug('page_url: %s'%page_url)
+    if 'googleusercontent' in page_url:
+        logger.info("Intel77")
+        data = httptools.downloadpage(page_url, follow_redirects = False, headers={"Referer": page_url})
+        logger.info("Intel88")
+        url=data.headers['location']
+        logger.debug('url: %s' % url)
+        logger.debug("data.headers: %s" % data.headers)
+        quality = scrapertools.find_single_match (url, '.itag=(\d+).')
+        logger.debug('quality: %s' % quality)
+
+        streams.append((quality, url))
+        logger.debug('streams: %s' % streams)
+        headers_string=""
+
+    else:
+        response = httptools.downloadpage(page_url, cookies=False, headers={"Referer": page_url})
+        cookies = ""
+        cookie = response.headers["set-cookie"].split("HttpOnly, ")
+        for c in cookie:
+            cookies += c.split(";", 1)[0] + "; "
+        data = response.data.decode('unicode-escape')
+        data = urllib.unquote_plus(urllib.unquote_plus(data))
+        logger.info("Intel88 %s" %data)
+        headers_string = "|Cookie=" + cookies
+        url_streams = scrapertools.find_single_match(data, 'url_encoded_fmt_stream_map=(.*)')
+        streams = scrapertools.find_multiple_matches(url_streams,
+                                                     'itag=(\d+)&url=(.*?)(?:;.*?quality=.*?(?:,|&)|&quality=.*?(?:,|&))')
+
     itags = {'18': '360p', '22': '720p', '34': '360p', '35': '480p', '37': '1080p', '43': '360p', '59': '480p'}
     for itag, video_url in streams:
         if not video_url in urls:
