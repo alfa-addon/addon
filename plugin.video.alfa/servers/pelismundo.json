@@ -1,0 +1,49 @@
+{
+  "active": true,
+  "changes": [
+    {
+      "date": "18/09/2017",
+      "description": "Versión inicial"
+    }
+  ],
+  "find_videos": {
+    "ignore_urls": [],
+    "patterns": [
+      {
+        "pattern": "http://www.pelismundo.com/gkvip/vip/playervip3/.*?id=([A-z0-9]+)",
+        "url": "http://www.pelismundo.com/gkvip/vip/playervip3/player.php?id=\\1"
+      }
+    ]
+  },
+  "free": true,
+  "id": "pelismundo",
+  "name": "pelismundo",
+  "settings": [
+    {
+      "default": false,
+      "enabled": true,
+      "id": "black_list",
+      "label": "Incluir en lista negra",
+      "type": "bool",
+      "visible": true
+    },
+    {
+      "default": 0,
+      "enabled": true,
+      "id": "favorites_servers_list",
+      "label": "Incluir en lista de favoritos",
+      "lvalues": [
+        "No",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "type": "list",
+      "visible": false
+    }
+  ],
+  "thumbnail": "https://s26.postimg.org/72c9mr3ux/pelismundo1.png",
+  "version": 1
+}

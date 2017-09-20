@@ -4,16 +4,19 @@ import urllib
 
 from core import httptools
 from core import scrapertools
+from platformcode import logger
 
 
 def test_video_exists(page_url):
+    if 'googleusercontent' in page_url:
+      return True, ""
     response = httptools.downloadpage(page_url, cookies=False, headers={"Referer": page_url})
     if "no+existe" in response.data:
         return False, "[gvideo] El video no existe o ha sido borrado"
     if "Se+ha+excedido+el" in response.data:
         return False, "[gvideo] Se ha excedido el número de reproducciones permitidas"
     if "No+tienes+permiso" in response.data:
-        return False, "[gvideo] No tienes permiso para acceder a este video"
+        return False, "[gvideo] No tiene permiso para acceder a este video"
 
     return True, ""
 
@@ -24,9 +27,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
     streams =[]
     logger.debug('page_url: %s'%page_url)
     if 'googleusercontent' in page_url:
-        logger.info("Intel77")
         data = httptools.downloadpage(page_url, follow_redirects = False, headers={"Referer": page_url})
-        logger.info("Intel88")
         url=data.headers['location']
         logger.debug('url: %s' % url)
         logger.debug("data.headers: %s" % data.headers)
@@ -45,7 +46,6 @@ def get_video_url(page_url, user="", password="", video_password=""):
             cookies += c.split(";", 1)[0] + "; "
         data = response.data.decode('unicode-escape')
         data = urllib.unquote_plus(urllib.unquote_plus(data))
-        logger.info("Intel88 %s" %data)
         headers_string = "|Cookie=" + cookies
         url_streams = scrapertools.find_single_match(data, 'url_encoded_fmt_stream_map=(.*)')
         streams = scrapertools.find_multiple_matches(url_streams,
@@ -57,5 +57,6 @@ def get_video_url(page_url, user="", password="", video_password=""):
             video_url += headers_string
             video_urls.append([itags[itag], video_url])
             urls.append(video_url)
-    video_urls.sort(key=lambda video_urls: int(video_urls[0].replace("p", "")))
+        video_urls.sort(key=lambda video_urls: int(video_urls[0].replace("p", "")))
+
     return video_urls
