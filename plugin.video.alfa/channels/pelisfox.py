@@ -7,6 +7,7 @@ from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
+from core import jsontools
 from core.item import Item
 from platformcode import config, logger
 
@@ -237,36 +238,40 @@ def findvideos(item):
                                    language=lang,
                                    url=url
                                    ))
-    logger.debug('templist: %s' % templist)
     for videoitem in templist:
-        logger.debug('videoitem.language: %s' % videoitem.language)
         data = httptools.downloadpage(videoitem.url).data
-        data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-        id = scrapertools.find_single_match(data, 'var _SOURCE =.*?source:(.*?),')
-        if videoitem.language == 'SUB':
-            sub = scrapertools.find_single_match(data, 'var _SOURCE =.*?srt:(.*?),')
-            sub = sub.replace('\\', '')
-        else:
-            sub = ''
-        new_url = 'https://onevideo.tv/api/player?key=90503e3de26d45e455b55e9dc54f015b3d1d4150&link' \
-                  '=%s&srt=%s' % (id, sub)
+        urls_list = scrapertools.find_multiple_matches(data, '({"type":.*?})')
+        for element in urls_list:
+            json_data=jsontools.load(element)
 
-        data = httptools.downloadpage(new_url).data
+            id = json_data['id']
+            sub = json_data['srt']
+            url = json_data['source']
 
-        url = scrapertools.find_single_match(data, '<iframe src="(.*?preview)"')
-        title = videoitem.contentTitle + ' (' + audio[videoitem.language] + ')'
-        logger.debug('url: %s' % url)
-        video_list.extend(servertools.find_video_items(data=url))
-        for urls in video_list:
-            if urls.language == '':
-                urls.language = videoitem.language
-            urls.title = item.title + '(%s) (%s)' % (urls.language, urls.server)
-        logger.debug('video_list: %s' % video_list)
-        # itemlist.append(item.clone(title= title, url = url, action = 'play', subtitle = sub))
+            quality = json_data['quality']
+            if 'http' not in url :
 
-    for video_url in video_list:
-        video_url.channel = item.channel
-        video_url.action = 'play'
+                new_url = 'https://onevideo.tv/api/player?key=90503e3de26d45e455b55e9dc54f015b3d1d4150&link' \
+                          '=%s&srt=%s' % (url, sub)
+
+                data = httptools.downloadpage(new_url).data
+                data = re.sub(r'\\', "", data)
+                video_list.extend(servertools.find_video_items(data=data))
+                for urls in video_list:
+                    if urls.language == '':
+                        urls.language = videoitem.language
+                    urls.title = item.title + '(%s) (%s)' % (urls.language, urls.server)
+
+
+                for video_url in video_list:
+                    video_url.channel = item.channel
+                    video_url.action = 'play'
+                    video_url.quality = quality
+            else:
+                server = servertools.get_server_from_url(url)
+                video_list.append(item.clone(title=item.title, url=url, action='play', quality = quality,
+                                             server=server))
+
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(
