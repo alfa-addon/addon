@@ -10,7 +10,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
     data = httptools.downloadpage(page_url).data
-    if "<title>watch </title>" in data.lower():
+    if "<title>watch </title>" in data.lower() or "File was deleted" in data:
         return False, "[kingvid] El archivo no existe o ha sido borrado"
 
     return True, ""
