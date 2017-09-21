@@ -1,0 +1,39 @@
+{
+  "id": "pelisplusco",
+  "name": "PelisPlus.co",
+  "active": true,
+  "adult": false,
+  "thumbnail": "https://s13.postimg.org/z5dbzfasn/pelisplus.png",
+  "banner": "https://s16.postimg.org/p9xz2vlo5/pelisplus_banner.png",
+  "version": 1,
+  "categories": [
+    "latino",
+    "movie",
+    "tvshow",
+    "documentary",
+    "direct"
+
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": false,
+      "visible": false
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "Latino"
+      ]
+    }
+  ]
+}

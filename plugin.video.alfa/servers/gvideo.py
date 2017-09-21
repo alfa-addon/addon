@@ -8,8 +8,9 @@ from platformcode import logger
 
 
 def test_video_exists(page_url):
+
     if 'googleusercontent' in page_url:
-      return True, ""
+        return True, ""
     response = httptools.downloadpage(page_url, cookies=False, headers={"Referer": page_url})
     if "no+existe" in response.data:
         return False, "[gvideo] El video no existe o ha sido borrado"
@@ -27,17 +28,12 @@ def get_video_url(page_url, user="", password="", video_password=""):
     streams =[]
     logger.debug('page_url: %s'%page_url)
     if 'googleusercontent' in page_url:
-        logger.info("Intel77")
         data = httptools.downloadpage(page_url, follow_redirects = False, headers={"Referer": page_url})
-        logger.info("Intel88")
+        logger.debug('data gvideo lh3 headers: %s'%data.headers)
         url=data.headers['location']
-        logger.debug('url: %s' % url)
-        logger.debug("data.headers: %s" % data.headers)
         quality = scrapertools.find_single_match (url, '.itag=(\d+).')
-        logger.debug('quality: %s' % quality)
 
         streams.append((quality, url))
-        logger.debug('streams: %s' % streams)
         headers_string=""
 
     else:
