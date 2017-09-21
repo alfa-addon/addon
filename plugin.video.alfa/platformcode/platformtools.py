@@ -19,6 +19,7 @@ import xbmcplugin
 from core.item import Item
 from platformcode import logger
 from platformcode import unify
+from core import channeltools
 
 
 def dialog_ok(heading, line1, line2="", line3=""):
@@ -103,7 +104,9 @@ def render_items(itemlist, parent_item):
         itemlist.append(Item(title="No hay elementos que mostrar"))
 
     # Recorremos el itemlist
+
     for item in itemlist:
+        channel_parameters = channeltools.get_channel_parameters(item.channel)
         # logger.debug(item)
         # Si el item no contiene categoria, le ponemos la del item padre
         if item.category == "":
@@ -113,15 +116,17 @@ def render_items(itemlist, parent_item):
         if item.fanart == "":
             item.fanart = parent_item.fanart
 
-        item = unify.title_format(item)
-
-        # Formatear titulo
-        # if item.text_color:
-        #     item.title = '[COLOR %s]%s[/COLOR]' % (item.text_color, item.title)
-        # if item.text_bold:
-        #     item.title = '[B]%s[/B]' % item.title
-        # if item.text_italic:
-        #     item.title = '[I]%s[/I]' % item.title
+        if not channel_parameters['adult']:
+            # Formatear titulo con unify
+            item = unify.title_format(item)
+        else:
+            #Formatear titulo metodo old school
+            if item.text_color:
+                item.title = '[COLOR %s]%s[/COLOR]' % (item.text_color, item.title)
+            if item.text_bold:
+                item.title = '[B]%s[/B]' % item.title
+            if item.text_italic:
+                item.title = '[I]%s[/I]' % item.title
 
         # Añade headers a las imagenes si estan en un servidor con cloudflare
         from core import httptools
