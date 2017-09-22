@@ -541,3 +541,10 @@ def newest(categoria):
     return itemlist
 
     itemlist = filtertools.get_links(itemlist, item, list_language)
+    return itemlist
+
+
+def play(item):
+    item.thumbnail = item.contentThumbnail
+    return [item]
+   
