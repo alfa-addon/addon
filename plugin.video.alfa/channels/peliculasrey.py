@@ -198,6 +198,17 @@ def findvideos(item):
                              quality = quality
                              ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    if itemlist:
+        itemlist.append(Item(channel = item.channel))
+        itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
+                                   text_color="magenta"))
+        # Opción "Añadir esta película a la biblioteca de KODI"
+        if item.extra != "library":
+            if config.get_videolibrary_support():
+                itemlist.append(Item(channel=item.channel, title="Añadir pelicula a la videoteca", text_color="green",
+                                     filtro=True, action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
+                                     infoLabels={'title': item.fulltitle}, fulltitle=item.fulltitle,
+                                     extra="library"))
     return itemlist
 
 
