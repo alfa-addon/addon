@@ -463,3 +463,9 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
+    return itemlist
+
+
+def play(item):
+    item.thumbnail = item.contentThumbnail
+    return [item]
