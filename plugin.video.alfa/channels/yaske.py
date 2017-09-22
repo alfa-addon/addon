@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import base64
 import re
 
 from core import channeltools
 from core import httptools
 from core import scrapertoolsV2
+from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
@@ -27,22 +27,13 @@ def mainlist(item):
     thumbnail = "https://raw.githubusercontent.com/master-1970/resources/master/images/genres/4/verdes/%s.png"
 
     itemlist.append(item.clone(title="Novedades", action="peliculas", text_bold=True, viewcontent='movies',
-                               url=HOST + "/ultimas-y-actualizadas",
+                               url=HOST,
                                thumbnail=thumbnail % 'novedades', viewmode="movie_with_plot"))
     itemlist.append(item.clone(title="Estrenos", action="peliculas", text_bold=True,
-                               url=HOST + "/genre/premieres", thumbnail=thumbnail % 'estrenos'))
-    itemlist.append(item.clone(title="", folder=False))
-
-    itemlist.append(Item(channel=item.channel, title="Filtrar por:", fanart=fanart_host, folder=False,
-                         text_color=color3, text_bold=True, thumbnail=thumbnail_host))
-    itemlist.append(item.clone(title="    Género", action="menu_buscar_contenido", text_color=color1, text_italic=True,
-                               extra="genre", thumbnail=thumbnail % 'generos', viewmode="thumbnails"))
-    itemlist.append(item.clone(title="    Idioma", action="menu_buscar_contenido", text_color=color1, text_italic=True,
-                               extra="audio", thumbnail=thumbnail % 'idiomas'))
-    itemlist.append(item.clone(title="    Calidad", action="menu_buscar_contenido", text_color=color1, text_italic=True,
-                               extra="quality", thumbnail=thumbnail % 'calidad'))
-    itemlist.append(item.clone(title="    Año", action="menu_buscar_contenido", text_color=color1, text_italic=True,
-                               extra="year", thumbnail=thumbnail % 'year'))
+                               url=HOST + "/premiere", thumbnail=thumbnail % 'estrenos'))
+    itemlist.append(item.clone(title="Género", action="menu_buscar_contenido", text_bold=True,thumbnail=thumbnail % 'generos', viewmode="thumbnails",
+                               url=HOST
+                               ))
 
     itemlist.append(item.clone(title="", folder=False))
     itemlist.append(item.clone(title="Buscar por título", action="search", thumbnail=thumbnail % 'buscar'))
@@ -55,8 +46,7 @@ def search(item, texto):
     itemlist = []
 
     try:
-        # http://www.yaske.ro/search/?q=los+pitufos
-        item.url = HOST + "/search/?q=" + texto.replace(' ', '+')
+        item.url = HOST + "/search/?query=" + texto.replace(' ', '+')
         item.extra = ""
         itemlist.extend(peliculas(item))
         if itemlist[-1].title == ">> Página siguiente":
@@ -80,9 +70,9 @@ def newest(categoria):
     item = Item()
     try:
         if categoria == 'peliculas':
-            item.url = HOST + "/ultimas-y-actualizadas"
+            item.url = HOST
         elif categoria == 'infantiles':
-            item.url = HOST + "/search/?q=&genre%5B%5D=animation"
+            item.url = HOST + "/genre/16/"
         else:
             return []
 
@@ -103,59 +93,46 @@ def newest(categoria):
 def peliculas(item):
     logger.info()
     itemlist = []
-    url_next_page = ""
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
 
-    patron = '<article class.*?'
-    patron += '<a href="([^"]+)">.*?'
-    patron += '<img src="([^"]+)".*?'
-    patron += '<aside class="item-control down">(.*?)</aside>.*?'
-    patron += '<small class="pull-right text-muted">([^<]+)</small>.*?'
-    patron += '<h2 class.*?>([^<]+)</h2>'
+    patron = 'class="post-item-image btn-play-item".*?'
+    patron += 'href="([^"]+)">.*?'
+    patron += '<img data-original="([^"]+)".*?'
+    patron += 'glyphicon-calendar"></i>([^<]+).*?'
+    patron += 'post-item-flags"> (.*?)</div.*?'
+    patron += 'text-muted f-14">(.*?)</h3'
 
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = scrapertools.find_multiple_matches(data, patron)
 
-    # Paginacion
-    if item.next_page != 'b':
-        if len(matches) > 30:
-            url_next_page = item.url
-        matches = matches[:30]
-        next_page = 'b'
-    else:
-        matches = matches[30:]
-        next_page = 'a'
-        patron_next_page = 'Anteriores</a> <a href="([^"]+)" class="btn btn-default ".*?Siguiente'
-        matches_next_page = re.compile(patron_next_page, re.DOTALL).findall(data)
-        if len(matches_next_page) > 0:
-            url_next_page = matches_next_page[0]
+    patron_next_page = 'href="([^"]+)"> &raquo;'
+    matches_next_page = scrapertools.find_single_match(data, patron_next_page)
+    if len(matches_next_page) > 0:
+        url_next_page = item.url + matches_next_page
 
-    for scrapedurl, scrapedthumbnail, idiomas, year, scrapedtitle in matches:
-        patronidiomas = "<img src='([^']+)'"
-        matchesidiomas = re.compile(patronidiomas, re.DOTALL).findall(idiomas)
-
+    for scrapedurl, scrapedthumbnail, year, idiomas, scrapedtitle in matches:
+        year = year.strip()
+        patronidiomas = '<img src="([^"]+)"'
+        matchesidiomas = scrapertools.find_multiple_matches(idiomas, patronidiomas)
         idiomas_disponibles = []
         for idioma in matchesidiomas:
-            if idioma.endswith("la_la.png"):
+            if idioma.endswith("/la.png"):
                 idiomas_disponibles.append("LAT")
-            elif idioma.endswith("en_en.png"):
+            elif idioma.endswith("/en.png"):
                 idiomas_disponibles.append("VO")
-            elif idioma.endswith("en_es.png"):
+            elif idioma.endswith("/en_es.png"):
                 idiomas_disponibles.append("VOSE")
-            elif idioma.endswith("es_es.png"):
+            elif idioma.endswith("/es.png"):
                 idiomas_disponibles.append("ESP")
 
         if idiomas_disponibles:
             idiomas_disponibles = "[" + "/".join(idiomas_disponibles) + "]"
-
-        contentTitle = scrapertoolsV2.decodeHtmlentities(scrapedtitle.strip())
+        contentTitle = scrapertoolsV2.htmlclean(scrapedtitle.strip())
         title = "%s %s" % (contentTitle, idiomas_disponibles)
-
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
                              thumbnail=scrapedthumbnail, contentTitle=contentTitle,
                              infoLabels={"year": year}, text_color=color1))
-
     # Obtenemos los datos basicos de todas las peliculas mediante multihilos
     tmdb.set_infoLabels(itemlist)
 
@@ -163,48 +140,32 @@ def peliculas(item):
     if url_next_page:
         itemlist.append(
             Item(channel=item.channel, action="peliculas", title=">> Página siguiente", thumbnail=thumbnail_host,
-                 url=url_next_page, next_page=next_page, folder=True, text_color=color3, text_bold=True))
+                 url=url_next_page, folder=True, text_color=color3, text_bold=True))
 
     return itemlist
 
 
 def menu_buscar_contenido(item):
     logger.info(item)
+    itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    patron = '<select name="' + item.extra + '(.*?)</select>'
-    data = scrapertoolsV2.get_match(data, patron)
-
+    patron = 'Generos.*?</ul>'
+    data = scrapertools.find_single_match(data, patron)
     # Extrae las entradas
-    patron = "<option value='([^']+)'>([^<]+)</option>"
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    itemlist = []
-    for scrapedvalue, scrapedtitle in matches:
-        thumbnail = ""
-
-        if item.extra == 'genre':
-            if scrapedtitle.strip() in ['Documental', 'Short', 'News']:
-                continue
-
-            url = HOST + "/search/?q=&genre%5B%5D=" + scrapedvalue
-            filename = scrapedtitle.lower().replace(' ', '%20')
-            if filename == "ciencia%20ficción":
-                filename = "ciencia%20ficcion"
-            thumbnail = "https://raw.githubusercontent.com/master-1970/resources/master/images/genres/4/verdes/%s.png" \
-                        % filename
-
-        elif item.extra == 'year':
-            url = HOST + "/search/?q=&year=" + scrapedvalue
-            thumbnail = item.thumbnail
-        else:
-            # http://www.yaske.ro/search/?q=&quality%5B%5D=c9
-            # http://www.yaske.ro/search/?q=&audio%5B%5D=es
-            url = HOST + "/search/?q=&" + item.extra + "%5B%5D=" + scrapedvalue
-            thumbnail = item.thumbnail
-
-        itemlist.append(Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=url, text_color=color1,
-                             thumbnail=thumbnail, contentType='movie', folder=True, viewmode="movie_with_plot"))
+    patron = 'href="([^"]+)">([^<]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl, scrapedtitle in matches:
+        url = HOST + scrapedurl
+        itemlist.append(Item(channel = item.channel,
+                             action = "peliculas",
+                             title = scrapedtitle,
+                             url = url,
+                             text_color = color1,
+                             contentType = 'movie',
+                             folder = True,
+                             viewmode = "movie_with_plot"
+                             ))
 
     if item.extra in ['genre', 'audio', 'year']:
         return sorted(itemlist, key=lambda i: i.title.lower(), reverse=item.extra == 'year')
@@ -214,29 +175,28 @@ def menu_buscar_contenido(item):
 
 def findvideos(item):
     logger.info()
-    itemlist = list()
-    sublist = list()
+    itemlist = []
+    sublist = []
 
     # Descarga la página
-    data = httptools.downloadpage(item.url).data
-
+    url = "http://widget.olimpo.link/playlist/?tmdb=" + scrapertools.find_single_match(item.url, 'yaske.ro/([0-9]+)')
+    data = httptools.downloadpage(url).data
     if not item.plot:
         item.plot = scrapertoolsV2.find_single_match(data, '>Sinopsis</dt> <dd>([^<]+)</dd>')
         item.plot = scrapertoolsV2.decodeHtmlentities(item.plot)
 
-    patron = '<option value="([^"]+)"[^>]+'
-    patron += '>([^<]+).*?</i>([^<]+)'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    patron  = '(/embed/[^"]+).*?'
+    patron += 'quality text-overflow ">([^<]+).*?'
+    patron += 'title="([^"]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
 
-    for url, idioma, calidad in matches:
-        if 'yaske' in url:
+    for url, calidad, idioma in matches:
+        if 'embed' in url:
+            url = "http://widget.olimpo.link" + url
             data = httptools.downloadpage(url).data
-            url_enc = scrapertoolsV2.find_single_match(data, "eval.*?'(.*?)'")
-            url_dec = base64.b64decode(url_enc)
-            url = scrapertoolsV2.find_single_match(url_dec, 'iframe src="(.*?)"')
-        sublist.append(item.clone(action="play", url=url, folder=False, text_color=color1, quality=calidad.strip(),
+            url = scrapertools.find_single_match(data, 'iframe src="([^"]+)')
+            sublist.append(item.clone(channel=item.channel, action="play", url=url, folder=False, text_color=color1, quality=calidad.strip(),
                                   language=idioma.strip()))
-
     sublist = servertools.get_servers_itemlist(sublist, lambda i: "Ver en %s %s" % (i.server, i.quality), True)
 
     # Añadir servidores encontrados, agrupandolos por idioma
