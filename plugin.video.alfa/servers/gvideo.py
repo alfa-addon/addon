@@ -29,7 +29,6 @@ def get_video_url(page_url, user="", password="", video_password=""):
     logger.debug('page_url: %s'%page_url)
     if 'googleusercontent' in page_url:
         data = httptools.downloadpage(page_url, follow_redirects = False, headers={"Referer": page_url})
-        logger.debug('data gvideo lh3 headers: %s'%data.headers)
         url=data.headers['location']
         quality = scrapertools.find_single_match (url, '.itag=(\d+).')
 

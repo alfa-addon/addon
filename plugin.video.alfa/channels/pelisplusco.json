@@ -3,8 +3,8 @@
   "name": "PelisPlus.co",
   "active": true,
   "adult": false,
-  "thumbnail": "https://s13.postimg.org/z5dbzfasn/pelisplus.png",
-  "banner": "https://s16.postimg.org/p9xz2vlo5/pelisplus_banner.png",
+  "thumbnail": "https://s26.postimg.org/jov1pmbh5/pelisplusco.png",
+  "banner": "https://s26.postimg.org/4hf259jmh/pelisplusco-banner.png",
   "version": 1,
   "categories": [
     "latino",
@@ -19,21 +19,9 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": true,
+      "default": false,
       "enabled": false,
       "visible": false
-    },
-    {
-      "id": "filter_languages",
-      "type": "list",
-      "label": "Mostrar enlaces en idioma...",
-      "default": 0,
-      "enabled": true,
-      "visible": true,
-      "lvalues": [
-        "No filtrar",
-        "Latino"
-      ]
     }
   ]
 }
