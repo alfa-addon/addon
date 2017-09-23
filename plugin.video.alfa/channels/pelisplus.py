@@ -471,7 +471,7 @@ def findvideos(item):
            videoitem.quality = 'default'
            videoitem.language = 'Latino'
         if videoitem.server != '':
-           videoitem.thumbnail = servertools.guess_server_thumbnail(videoitem.server)
+           videoitem.thumbnail = item.contentThumbnail
         else:
            videoitem.thumbnail = item.thumbnail
            videoitem.server = 'directo'
@@ -539,10 +539,5 @@ def newest(categoria):
         return []
 
     itemlist = filtertools.get_links(itemlist, item, list_language)
-    return itemlist
-
-
-def play(item):
-    item.thumbnail = item.contentThumbnail
-    return [item]
+ 
    
