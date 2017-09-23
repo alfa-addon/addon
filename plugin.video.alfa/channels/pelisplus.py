@@ -422,7 +422,6 @@ def findvideos(item):
     itemlist = []
     duplicados = []
     data = httptools.downloadpage(item.url).data
-    logger.debug('data: %s'%data)
     video_page = scrapertools.find_single_match(data, "<iframe width='100%' height='500' src='(.*?)' frameborder='0'")
     data = httptools.downloadpage(video_page).data
     patron = '<li data-id=".*?">\s+<a href="(.*?)" >'
