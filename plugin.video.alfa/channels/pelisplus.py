@@ -422,7 +422,6 @@ def findvideos(item):
     itemlist = []
     duplicados = []
     data = httptools.downloadpage(item.url).data
-    logger.debug('data: %s'%data)
     video_page = scrapertools.find_single_match(data, "<iframe width='100%' height='500' src='(.*?)' frameborder='0'")
     data = httptools.downloadpage(video_page).data
     patron = '<li data-id=".*?">\s+<a href="(.*?)" >'
@@ -471,7 +470,7 @@ def findvideos(item):
            videoitem.quality = 'default'
            videoitem.language = 'Latino'
         if videoitem.server != '':
-           videoitem.thumbnail = servertools.guess_server_thumbnail(videoitem.server)
+           videoitem.thumbnail = item.contentThumbnail
         else:
            videoitem.thumbnail = item.thumbnail
            videoitem.server = 'directo'
@@ -538,6 +537,6 @@ def newest(categoria):
             logger.error("{0}".format(line))
         return []
 
-    return itemlist
-
     itemlist = filtertools.get_links(itemlist, item, list_language)
+ 
+   
