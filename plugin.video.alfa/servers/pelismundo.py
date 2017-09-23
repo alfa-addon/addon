@@ -12,8 +12,8 @@ from platformcode import logger
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    data = httptools.downloadpage(page_url).data
-    if "Object not found" in data or "no longer exists" in data or '"sources": [false]' in data:
+    data = httptools.downloadpage(page_url, add_referer = True).data
+    if "Object not found" in data or "no longer exists" in data or '"sources": [false]' in data or 'sources: []' in data:
         return False, "[pelismundo] El archivo no existe o ha sido borrado"
 
     return True, ""
