@@ -538,8 +538,6 @@ def newest(categoria):
             logger.error("{0}".format(line))
         return []
 
-    return itemlist
-
     itemlist = filtertools.get_links(itemlist, item, list_language)
     return itemlist
 
