@@ -1,27 +1,38 @@
 # -*- coding: utf-8 -*-
 
 import re
-import urlparse
 
+from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import logger
+from platformcode import config, logger
 
+host = "http://peliscity.com"
 
 def mainlist(item):
     logger.info()
-
     itemlist = []
+
+    data = httptools.downloadpage(host).data
+    patron = 'cat-item.*?span>([^<]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    can = 0
+    for cantidad in matches:
+        can += int(cantidad.replace(".", ""))
+
+
     itemlist.append(
-        Item(channel=item.channel, title="Últimas agregadas", action="agregadas", url="http://peliscity.com",
+        Item(channel=item.channel, title="Películas: (%s)" %can, text_bold=True))
+    itemlist.append(
+        Item(channel=item.channel, title="    Últimas agregadas", action="agregadas", url= host,
              viewmode="movie_with_plot"))
-    itemlist.append(Item(channel=item.channel, title="Peliculas HD", action="agregadas",
-                         url="http://peliscity.com/calidad/hd-real-720", viewmode="movie_with_plot"))
+    itemlist.append(Item(channel=item.channel, title="    Peliculas HD", action="agregadas",
+                         url= host + "/calidad/hd-real-720", viewmode="movie_with_plot"))
     itemlist.append(
-        Item(channel=item.channel, title="Listado por género", action="porGenero", url="http://peliscity.com"))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url="http://peliscity.com/?s="))
-    itemlist.append(Item(channel=item.channel, title="Idioma", action="porIdioma", url="http://peliscity.com/"))
+        Item(channel=item.channel, title="    Listado por género", action="porGenero", url= host))
+    itemlist.append(Item(channel=item.channel, title="    Buscar", action="search", url= host + "/?s="))
+    itemlist.append(Item(channel=item.channel, title="    Idioma", action="porIdioma", url= host))
 
     return itemlist
 
@@ -29,12 +40,12 @@ def mainlist(item):
 def porIdioma(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Castellano", action="agregadas",
-                         url="http://www.peliscity.com/idioma/espanol-castellano/", viewmode="movie_with_plot"))
+                         url= host + "/idioma/espanol-castellano/", viewmode="movie_with_plot"))
     itemlist.append(
-        Item(channel=item.channel, title="VOS", action="agregadas", url="http://www.peliscity.com/idioma/subtitulada/",
+        Item(channel=item.channel, title="VOS", action="agregadas", url= host + "/idioma/subtitulada/",
              viewmode="movie_with_plot"))
     itemlist.append(Item(channel=item.channel, title="Latino", action="agregadas",
-                         url="http://www.peliscity.com/idioma/espanol-latino/", viewmode="movie_with_plot"))
+                         url= host + "/idioma/espanol-latino/", viewmode="movie_with_plot"))
 
     return itemlist
 
@@ -43,15 +54,16 @@ def porGenero(item):
     logger.info()
 
     itemlist = []
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
 
-    logger.info("data=" + data)
-    patron = 'cat-item.*?href="([^"]+).*?>(.*?)<'
+    patron = 'cat-item.*?href="([^"]+).*?>(.*?)<.*?span>([^<]+)'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for urlgen, genero in matches:
-        itemlist.append(Item(channel=item.channel, action="agregadas", title=genero, url=urlgen, folder=True,
+    for urlgen, genero, cantidad in matches:
+        cantidad = cantidad.replace(".", "")
+        titulo = genero + " (" + cantidad + ")"
+        itemlist.append(Item(channel=item.channel, action="agregadas", title=titulo, url=urlgen, folder=True,
                              viewmode="movie_with_plot"))
 
     return itemlist
@@ -60,7 +72,7 @@ def porGenero(item):
 def search(item, texto):
     logger.info()
     texto_post = texto.replace(" ", "+")
-    item.url = "http://www.peliscity.com/?s=" + texto_post
+    item.url = host + "/?s=" + texto_post
 
     try:
         return listaBuscar(item)
@@ -76,7 +88,7 @@ def agregadas(item):
     logger.info()
     itemlist = []
 
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r'\n|\r|\t|\s{2}|&nbsp;|"', "", data)
 
     patron = scrapertools.find_multiple_matches (data,'<divclass=col-mt-5 postsh>.*?Duración')
@@ -92,10 +104,18 @@ def agregadas(item):
         plot = info[4]
         year = info[5].strip()
 
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel,
+                             action='findvideos',
+                             contentType = "movie",
+                             fulltitle = title,
+                             infoLabels={'year':year},
                              plot=plot,
-                             quality=quality, infoLabels={'year':year}))
-
+                             quality=quality,
+                             thumbnail=thumbnail,
+                             title=title,
+                             contentTitle = title,
+                             url=url
+                             ))
     # Paginación
     try:
         next_page = scrapertools.find_single_match(data,'tima>.*?href=(.*?) ><i')
@@ -113,7 +133,7 @@ def listaBuscar(item):
     logger.info()
     itemlist = []
 
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n", " ", data)
     logger.info("data=" + data)
 
@@ -135,7 +155,7 @@ def findvideos(item):
     plot = item.plot
 
     # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     patron = 'cursor: hand" rel="(.*?)".*?class="optxt"><span>(.*?)<.*?width.*?class="q">(.*?)</span'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -150,8 +170,14 @@ def findvideos(item):
             itemlist.append(
                 Item(channel=item.channel, action="play", title=title, fulltitle=item.title, url=scrapedurl,
                      thumbnail=item.thumbnail, plot=plot, show=item.show, quality= quality, language=language, extra = item.thumbnail))
-
     itemlist=servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    # Opción "Añadir esta película a la biblioteca de KODI"
+    if item.extra != "library":
+        if config.get_videolibrary_support():
+            itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                                 filtro=True, action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
+                                 infoLabels={'title': item.fulltitle}, fulltitle=item.title,
+                                 extra="library"))
     return itemlist
 
 
