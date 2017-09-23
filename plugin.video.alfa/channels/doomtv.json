@@ -10,31 +10,10 @@
   "thumbnail": "https://s2.postimg.org/jivgi4ak9/doomtv.png",
   "banner": "https://s32.postimg.org/6gxyripvp/doomtv_banner.png",
   "version": 1,
-  "changes": [
-    {
-      "date": "24/06/2017",
-      "description": "Cambios para autoplay"
-    },
-    {
-      "date": "06/06/2017",
-      "description": "COmpatibilida con AutoPlay"
-    },
-    {
-      "date": "12/05/2017",
-      "description": "Fix generos y enlaces"
-    },
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "01/02/2017",
-      "description": "Release."
-    }
-  ],
   "categories": [
     "latino",
-    "movie"
+    "movie",
+    "direct"
   ],
   "settings": [
     {
