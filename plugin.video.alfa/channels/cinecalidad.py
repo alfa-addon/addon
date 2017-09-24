@@ -298,7 +298,7 @@ def findvideos(item):
 
         if server_id in server_url:
             server = server_id.lower()
-            thumbnail = servertools.guess_server_thumbnail(server_id)
+            thumbnail = item.contentThumbnail
             if server_id == 'TVM':
                 server = 'thevideo.me'
                 url = server_url[server_id] + video_id + '.html'
@@ -367,7 +367,7 @@ def play(item):
         for videoitem in itemlist:
             videoitem.title = item.fulltitle
             videoitem.fulltitle = item.fulltitle
-            videoitem.thumbnail = item.extra
+            videoitem.thumbnail = item.contentThumbnail
             videoitem.channel = item.channel
     else:
         itemlist.append(item)
@@ -463,9 +463,4 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
-    return itemlist
-
-
-def play(item):
-    item.thumbnail = item.contentThumbnail
-    return [item]
+    
