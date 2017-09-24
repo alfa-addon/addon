@@ -422,7 +422,6 @@ def findvideos(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    lang = {'mx': 'LAT', 'pe': 'LAT'}
     # logger.info(data)
     patron = '<div id="option-(\d+)" class="[^"]+"><iframe.*?src="([^"]+)".*?</iframe>'  #
     matches = re.compile(patron, re.DOTALL).findall(data)
