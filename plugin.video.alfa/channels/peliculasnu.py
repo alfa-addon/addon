@@ -89,7 +89,7 @@ def newest(categoria):
     except:
         import sys
         for line in sys.exc_info():
-            logger.error("{0}".format(line))
+            logger.error("%s" % line)
         return []
 
     return itemlist
@@ -215,14 +215,14 @@ def findvideos(item):
             url = url + '|' + item.url
 
         title = "%s - %s" % ('%s', title)
-        itemlist.append(Item (channel=item.channel, action="play", url=url, title=title, text_color=color3))
+        itemlist.append(Item(channel=item.channel, action="play", url=url, title=title, text_color=color3))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 
     if item.extra != "findvideos" and config.get_videolibrary_support():
-        itemlist.append(Item (channel=item.channel, title="Añadir película a la videoteca", \
-                                                      action="add_pelicula_to_library",
-                                   extra="findvideos", text_color="green"))
+        itemlist.append(
+            item.clone(title="Añadir película a la videoteca", action="add_pelicula_to_library", extra="findvideos",
+                       text_color="green"))
 
     return itemlist
 

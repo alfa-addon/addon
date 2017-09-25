@@ -1,7 +1,7 @@
 {
   "id": "pelis24",
   "name": "Pelis24",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": "es",
   "thumbnail": "pelis24.png",
