@@ -279,7 +279,6 @@ def findvideos(item):
 
     else:
         itemlist.append(item.clone(title="No hay enlaces disponibles", action="", text_color=color3))
-
     return itemlist
 
 
@@ -331,12 +330,12 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
         if filtro_idioma == 3 or item.filtro:
             lista_enlaces.append(item.clone(title=title, action="play", text_color=color2,
                                             url=scrapedurl, server=scrapedserver, idioma=scrapedlanguage,
-                                            extra=item.url))
+                                            extra=item.url, contentThumbnail = item.thumbnail))
         else:
             idioma = dict_idiomas[language]
             if idioma == filtro_idioma:
                 lista_enlaces.append(item.clone(title=title, text_color=color2, action="play", url=scrapedurl,
-                                                extra=item.url))
+                                                extra=item.url, contentThumbnail = item.thumbnail))
             else:
                 if language not in filtrados:
                     filtrados.append(language)
