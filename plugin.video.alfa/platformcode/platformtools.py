@@ -131,17 +131,26 @@ def render_items(itemlist, parent_item):
         else:
             icon_image = "DefaultVideo.png"
 
-        # Creamos el listitem
-        listitem = xbmcgui.ListItem(item.title, iconImage=icon_image, thumbnailImage=item.thumbnail)
-
         # Ponemos el fanart
         if item.fanart:
-            listitem.setProperty('fanart_image', item.fanart)
+            fanart = item.fanart
         else:
-            listitem.setProperty('fanart_image', os.path.join(config.get_runtime_path(), "fanart.jpg"))
+            fanart = os.path.join(config.get_runtime_path(), "fanart.jpg")
 
-        # TODO: ¿Se puede eliminar esta linea? yo no he visto que haga ningun efecto.
-        xbmcplugin.setPluginFanart(int(sys.argv[1]), os.path.join(config.get_runtime_path(), "fanart.jpg"))
+        # Creamos el listitem
+        listitem = xbmcgui.ListItem(item.title)
+
+        # values icon, thumb or poster are skin dependent.. so we set all to avoid problems
+        # if not exists thumb it's used icon value
+        if config.get_platform(True)['num_version'] >= 16.0:
+            listitem.setArt({'icon': icon_image, 'thumb': item.thumbnail, 'poster': item.thumbnail, 'fanart': fanart})
+        else:
+            listitem.setIconImage(icon_image)
+            listitem.setThumbnailImage(item.thumbnail)
+            listitem.setProperty('fanart_image', fanart)
+
+        # No need it, use fanart instead
+        # xbmcplugin.setPluginFanart(int(sys.argv[1]), os.path.join(config.get_runtime_path(), "fanart.jpg"))
 
         # Esta opcion es para poder utilizar el xbmcplugin.setResolvedUrl()
         # if item.isPlayable == True or (config.get_setting("player_mode") == 1 and item.action == "play"):
@@ -157,7 +166,10 @@ def render_items(itemlist, parent_item):
         context_commands = set_context_commands(item, parent_item)
 
         # Añadimos el item
-        listitem.addContextMenuItems(context_commands, replaceItems=True)
+        if config.get_platform(True)['num_version'] >= 17.0:
+            listitem.addContextMenuItems(context_commands)
+        else:
+            listitem.addContextMenuItems(context_commands, replaceItems=True)
 
         if not item.totalItems:
             item.totalItems = 0
@@ -166,7 +178,7 @@ def render_items(itemlist, parent_item):
                                     totalItems=item.totalItems)
 
     # Fijar los tipos de vistas...
-    if config.get_setting("forceview") == True:
+    if config.get_setting("forceview"):
         # ...forzamos segun el viewcontent
         xbmcplugin.setContent(int(sys.argv[1]), parent_item.viewcontent)
         # logger.debug(parent_item)
@@ -184,7 +196,7 @@ def render_items(itemlist, parent_item):
     xbmcplugin.endOfDirectory(handle=int(sys.argv[1]), succeeded=True)
 
     # Fijar la vista
-    if config.get_setting("forceview") == True:
+    if config.get_setting("forceview"):
         viewmode_id = get_viewmode_id(parent_item)
         xbmc.executebuiltin("Container.SetViewMode(%s)" % viewmode_id)
 
@@ -255,10 +267,6 @@ def set_infolabels(listitem, item, player=False):
 
     elif not player:
         listitem.setInfo("video", {"Title": item.title})
-
-    # Añadido para Kodi Krypton (v17)
-    if config.get_platform(True)['num_version'] >= 17.0:
-        listitem.setArt({"poster": item.thumbnail})
 
 
 def set_context_commands(item, parent_item):
@@ -458,7 +466,12 @@ def play_video(item, strm=False, force_direct=False):
 
     if item.channel == 'downloads':
         logger.info("Reproducir video local: %s [%s]" % (item.title, item.url))
-        xlistitem = xbmcgui.ListItem(path=item.url, thumbnailImage=item.thumbnail)
+        xlistitem = xbmcgui.ListItem(path=item.url)
+        if config.get_platform(True)['num_version'] >= 16.0:
+            xlistitem.setArt({"thumb": item.thumbnail})
+        else:
+            xlistitem.setThumbnailImage(item.thumbnail)
+
         set_infolabels(xlistitem, item, True)
         xbmc.Player().play(item.url, xlistitem)
         return
@@ -491,9 +504,16 @@ def play_video(item, strm=False, force_direct=False):
 
     # se obtiene la información del video.
     if not item.contentThumbnail:
-        xlistitem = xbmcgui.ListItem(path=mediaurl, thumbnailImage=item.thumbnail)
+        thumb = item.thumbnail
     else:
-        xlistitem = xbmcgui.ListItem(path=mediaurl, thumbnailImage=item.contentThumbnail)
+        thumb = item.contentThumbnail
+
+    xlistitem = xbmcgui.ListItem(path=item.url)
+    if config.get_platform(True)['num_version'] >= 16.0:
+        xlistitem.setArt({"thumb": thumb})
+    else:
+        xlistitem.setThumbnailImage(thumb)
+
     set_infolabels(xlistitem, item, True)
 
     # si se trata de un vídeo en formato mpd, se configura el listitem para reproducirlo
@@ -695,7 +715,14 @@ def set_opcion(item, seleccion, opciones, video_urls):
 
     if seleccion == -1:
         # Para evitar el error "Uno o más elementos fallaron" al cancelar la selección desde fichero strm
-        listitem = xbmcgui.ListItem(item.title, iconImage="DefaultVideo.png", thumbnailImage=item.thumbnail)
+        listitem = xbmcgui.ListItem(item.title)
+
+        if config.get_platform(True)['num_version'] >= 16.0:
+            listitem.setArt({'icon':"DefaultVideo.png", 'thumb': item.thumbnail})
+        else:
+            listitem.setIconImage("DefaultVideo.png")
+            listitem.setThumbnailImage(item.thumbnail)
+
         xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, listitem)
 
     # "Descargar"
