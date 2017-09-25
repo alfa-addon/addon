@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import urlparse
-
 from core import httptools
 from core import scrapertools
 from core import servertools
@@ -48,13 +46,11 @@ def mainlist(item):
                                          "/0/Genre.png",
                                text_color=color1))
 
-    url = urlparse.urljoin(CHANNEL_HOST, "genero/documental/")
     itemlist.append(item.clone(title="Documentales", text_bold=True, text_color=color2, action=""))
-    itemlist.append(item.clone(action="peliculas", title="      Novedades", url=url, text_color=color1,
+    itemlist.append(item.clone(action="peliculas", title="      Novedades", url=CHANNEL_HOST + "genero/documental/", text_color=color1,
                                thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
                                          "/0/Documentaries.png"))
-    url = urlparse.urljoin(CHANNEL_HOST, "genero/documental/?orderby=title&order=asc&gdsr_order=asc")
-    itemlist.append(item.clone(action="peliculas", title="      Por orden alfabético", text_color=color1, url=url,
+    itemlist.append(item.clone(action="peliculas", title="      Por orden alfabético", text_color=color1, url=CHANNEL_HOST + "genero/documental/?orderby=title&order=asc&gdsr_order=asc",
                                thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
                                          "/0/A-Z.png"))
     itemlist.append(item.clone(title="", action=""))
@@ -100,7 +96,7 @@ def newest(categoria):
                 itemlist.pop()
 
         elif categoria == 'documentales':
-            item.url = urlparse.urljoin(CHANNEL_HOST, "genero/documental/")
+            item.url = CHANNEL_HOST + "genero/documental/"
             item.action = "peliculas"
             itemlist = peliculas(item)
 
@@ -108,7 +104,7 @@ def newest(categoria):
                 itemlist.pop()
 
         elif categoria == 'infantiles':
-            item.url = urlparse.urljoin(CHANNEL_HOST, "genero/infantil/")
+            item.url = CHANNEL_HOST + "genero/infantil/"
             item.action = "peliculas"
             itemlist = peliculas(item)
 
@@ -130,7 +126,6 @@ def peliculas(item):
     itemlist = []
     item.text_color = color2
 
-    # Descarga la página
     data = httptools.downloadpage(item.url).data
     patron = '(?s)class="(?:result-item|item movies)">.*?<img src="([^"]+)'
     patron += '.*?alt="([^"]+)"'
@@ -156,11 +151,6 @@ def peliculas(item):
         if year:
             new_item.infoLabels['year'] = int(year)
         itemlist.append(new_item)
-    try:
-        # tmdb.set_infoLabels(itemlist, __modo_grafico__)
-        a = 1
-    except:
-        pass
 
     # Extrae el paginador
     next_page_link = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)')
@@ -218,7 +208,6 @@ def generos(item):
         scrapedtitle = unicode(scrapedtitle, "utf8").capitalize().encode("utf8")
         if scrapedtitle == "Erotico" and config.get_setting("adult_mode") == 0:
             continue
-
         itemlist.append(item.clone(action="peliculas", title=scrapedtitle, url=scrapedurl))
 
     return itemlist
@@ -228,9 +217,9 @@ def idioma(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(action="peliculas", title="Español", url="http://www.cinetux.net/idioma/espanol/"))
-    itemlist.append(item.clone(action="peliculas", title="Latino", url="http://www.cinetux.net/idioma/latino/"))
-    itemlist.append(item.clone(action="peliculas", title="VOSE", url="http://www.cinetux.net/idioma/subtitulado/"))
+    itemlist.append(item.clone(action="peliculas", title="Español", url= CHANNEL_HOST + "idioma/espanol/"))
+    itemlist.append(item.clone(action="peliculas", title="Latino", url= CHANNEL_HOST + "idioma/latino/"))
+    itemlist.append(item.clone(action="peliculas", title="VOSE", url= CHANNEL_HOST + "idioma/subtitulado/"))
 
     return itemlist
 
@@ -363,7 +352,6 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
 def play(item):
     logger.info()
     itemlist = []
-    video_urls = []
     if "api.cinetux" in item.url:
         data = httptools.downloadpage(item.url, headers={'Referer': item.extra}).data.replace("\\", "")
         id = scrapertools.find_single_match(data, 'img src="[^#]+#(.*?)"')
@@ -379,15 +367,6 @@ def play(item):
             scrapedurl = httptools.downloadpage(scrapedurl, follow_redirects=False, only_headers=True).headers.get(
                 "location", "")
         item.url = scrapedurl
-    else:
-        return [item]
-    itemlist.append(
-             Item(channel = item.channel,
-             action = "play",
-             fulltitle = item.fulltitle,
-             thumbnail = item.thumbnail,
-             server = "",
-             url = item.url
-             ))
-    itemlist = servertools.get_servers_itemlist(itemlist)
-    return itemlist
+    item.thumbnail = item.contentThumbnail
+    item.server = servertools.get_server_from_url(item.url)
+    return [item]
