@@ -3,7 +3,7 @@
   "name": "Beeg",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "thumbnail": "beeg.png",
   "banner": "beeg.png",
   "version": 1,

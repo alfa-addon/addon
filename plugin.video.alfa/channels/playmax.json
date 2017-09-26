@@ -1,7 +1,7 @@
 {
   "id": "playmax",
   "name": "PlayMax",
-  "language": "es",
+  "language": ["cast", "lat"],
   "active": true,
   "adult": false,
   "version": 1,

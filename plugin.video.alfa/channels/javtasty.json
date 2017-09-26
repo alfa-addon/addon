@@ -1,7 +1,7 @@
 {
   "id": "javtasty",
   "name": "JavTasty",
-  "language": "es",
+  "language": ["*"],
   "active": true,
   "adult": true,
   "version": 1,

@@ -1,7 +1,7 @@
 {
   "id": "allpeliculas",
   "name": "Allpeliculas",
-  "language": "es",
+  "language": ["lat"],
   "active": true,
   "adult": false,
   "version": 1,
@@ -31,7 +31,6 @@
   "banner": "allpeliculas.png",
   "categories": [
     "movie",
-    "latino",
     "vos",
     "tvshow"
   ],

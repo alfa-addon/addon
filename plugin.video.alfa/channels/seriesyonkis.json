@@ -3,7 +3,7 @@
   "name": "Seriesyonkis",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "seriesyonkis.png",
   "banner": "seriesyonkis.png",
   "fanart": "seriesyonkis.jpg",

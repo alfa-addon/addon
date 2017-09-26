@@ -3,7 +3,7 @@
   "name": "Veriesonlinetv",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["lat"],
   "banner": "verseriesonlinetv.png",
   "thumbnail": "http://s6.postimg.org/gl0ok4t01/verserieslogo.png",
   "version": 1,

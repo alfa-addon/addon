@@ -3,7 +3,7 @@
   "name": "HDFull",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "hdfull.png",
   "banner": "hdfull.png",
   "version": 1,

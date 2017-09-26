@@ -3,7 +3,7 @@
   "name": "PelisPlanet",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "fanart": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/pelisplanetbg.png",
   "thumbnail": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/pelisplanet.png",
   "banner": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/pelisplanetbaner.png",

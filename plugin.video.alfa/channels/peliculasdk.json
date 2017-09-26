@@ -3,7 +3,7 @@
   "name": "PeliculasDK",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "http://s29.postimg.org/wzw749oon/pldklog.jpg",
   "banner": "peliculasdk.png",
   "version": 1,

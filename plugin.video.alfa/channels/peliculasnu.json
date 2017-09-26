@@ -1,7 +1,7 @@
 {
   "id": "peliculasnu",
   "name": "Peliculas.Nu",
-  "language": "es",
+  "language": ["cast", "lat"],
   "active": true,
   "adult": false,
   "version": 1,
@@ -27,8 +27,7 @@
   "banner": "peliculasnu.png",
   "categories": [
     "movie",
-    "vos",
-    "latino"
+    "vos"
   ],
   "settings": [
     {

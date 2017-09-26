@@ -1,7 +1,7 @@
 {
   "id": "areadocumental",
   "name": "Area-Documental",
-  "language": "es",
+  "language": ["cast", "lat"],
   "adult": false,
   "active": true,
   "version": 1,

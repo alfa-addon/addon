@@ -3,7 +3,7 @@
   "name": "Hentai ID",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "thumbnail": "https://dl.dropboxusercontent.com/u/30248079/hentai_id.png",
   "banner": "https://dl.dropboxusercontent.com/u/30248079/hentai_id2.png",
   "version": 1,

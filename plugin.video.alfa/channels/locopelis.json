@@ -1,12 +1,9 @@
 {
   "id": "locopelis",
   "name": "LOCOPELIS",
-  "compatible": {
-    "addon_version": "4.3"
-  },
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "https://s31.postimg.org/5worjw2nv/locopelis.png",
   "banner": "https://s31.postimg.org/ng87bb9jv/locopelis_banner.png",
   "version": 1,
@@ -33,7 +30,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie"
   ],
   "settings": [

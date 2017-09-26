@@ -3,7 +3,7 @@
   "name": "Bajui2",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "bajui.png",
   "banner": "bajui.png",
   "fanart": "bajui.png",

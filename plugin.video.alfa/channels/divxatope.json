@@ -3,7 +3,7 @@
   "name": "Divxatope",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "divxatope.png",
   "banner": "divxatope.png",
   "version": 1,
