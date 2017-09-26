@@ -306,7 +306,6 @@ def fichas(item):
              '<div class="c_fichas_data".*?marked="([^"]*)".*?serie="([^"]*)".*?' \
              '<div class="c_fichas_title">(?:<div class="c_fichas_episode">([^<]+)</div>|)([^<]+)</div>'
     matches = scrapertools.find_multiple_matches(data, patron)
-
     for scrapedurl, scrapedthumbnail, marca, serie, episodio, scrapedtitle in matches:
         tipo = "movie"
         scrapedurl = host + scrapedurl.rsplit("-dc=")[0]
