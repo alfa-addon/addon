@@ -399,7 +399,7 @@ def episodios(item):
         for i in itemlist:
             if i.infoLabels['title']:
                 # Si el capitulo tiene nombre propio añadírselo al titulo del item
-                i.title = "%sx%s %s" % (i.infoLabels['season'], i.infoLabels['episode'], i.infoLabels['title'])
+                i.title = "%sx%s: %s" % (i.infoLabels['season'], i.infoLabels['episode'], i.infoLabels['title'])
             if i.infoLabels.has_key('poster_path'):
                 # Si el capitulo tiene imagen propia remplazar al poster
                 i.thumbnail = i.infoLabels['poster_path']
@@ -423,7 +423,7 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     # logger.info(data)
-    patron = '<div id="option-(\d+)" class="[^"]+"><iframe.*?src="([^"]+)".*?</iframe>'  #
+    patron = '<div id="option-(\d+)" class="[^"]+"><iframe.*?src="([^"]+)".*?</iframe>'  # lang, url
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for option, url in matches:

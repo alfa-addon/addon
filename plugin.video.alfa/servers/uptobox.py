@@ -2,6 +2,7 @@
 
 import urllib
 
+from core import httptools
 from core import scrapertools
 from platformcode import logger
 
@@ -9,11 +10,11 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
-    data = scrapertools.cache_page(page_url)
+    data = httptools.downloadpage(page_url).data
 
     if "Streaming link:" in data:
         return True, ""
-    elif "Unfortunately, the file you want is not available." in data:
+    elif "Unfortunately, the file you want is not available." in data or "Unfortunately, the video you want to see is not available" in data:
         return False, "[Uptobox] El archivo no existe o ha sido borrado"
     wait = scrapertools.find_single_match(data, "You have to wait ([0-9]+) (minute|second)")
     if len(wait) > 0:
@@ -27,20 +28,20 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("(page_url='%s')" % page_url)
     # Si el enlace es directo de upstream
     if "uptobox" not in page_url:
-        data = scrapertools.cache_page(page_url)
+        data = httptools.downloadpage(page_url).data
         if "Video not found" in data:
             page_url = page_url.replace("uptostream.com/iframe/", "uptobox.com/")
-            data = scrapertools.cache_page(page_url)
+            data = httptools.downloadpage(page_url).data
             video_urls = uptobox(page_url, data)
         else:
             video_urls = uptostream(data)
     else:
-        data = scrapertools.cache_page(page_url)
+        data = httptools.downloadpage(page_url).data
         # Si el archivo tiene enlace de streaming se redirige a upstream
         if "Streaming link:" in data:
             page_url = "http://uptostream.com/iframe/" + scrapertools.find_single_match(page_url,
                                                                                         'uptobox.com/([a-z0-9]+)')
-            data = scrapertools.cache_page(page_url)
+            data = httptools.downloadpage(page_url).data
             video_urls = uptostream(data)
         else:
             # Si no lo tiene se utiliza la descarga normal
@@ -76,7 +77,7 @@ def uptobox(url, data):
     for inputname, inputvalue in matches:
         post += inputname + "=" + inputvalue + "&"
 
-    data = scrapertools.cache_page(url, post=post[:-1])
+    data = httptools.downloadpage(url, post=post[:-1]).data
     media = scrapertools.find_single_match(data, '<a href="([^"]+)">\s*<span class="button_upload green">')
     # Solo es necesario codificar la ultima parte de la url
     url_strip = urllib.quote(media.rsplit('/', 1)[1])
