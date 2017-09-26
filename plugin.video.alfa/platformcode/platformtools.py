@@ -153,8 +153,10 @@ def render_items(itemlist, parent_item):
 
         # values icon, thumb or poster are skin dependent.. so we set all to avoid problems
         # if not exists thumb it's used icon value
+        item.thumbnail = unify.thumbnail_type(item)
         if config.get_platform(True)['num_version'] >= 16.0:
-            listitem.setArt({'icon': icon_image, 'thumb': item.thumbnail, 'poster': item.thumbnail, 'fanart': fanart})
+            listitem.setArt({'icon': icon_image, 'thumb': item.Thumbnail, 'poster': item.contentThumbnail,
+                             'fanart': fanart})
         else:
             listitem.setIconImage(icon_image)
             listitem.setThumbnailImage(item.thumbnail)
@@ -474,7 +476,7 @@ def is_playing():
 def play_video(item, strm=False, force_direct=False):
     logger.info()
     # logger.debug(item.tostring('\n'))
-
+    logger.debug('item play: %s'%play)
     if item.channel == 'downloads':
         logger.info("Reproducir video local: %s [%s]" % (item.title, item.url))
         xlistitem = xbmcgui.ListItem(path=item.url)

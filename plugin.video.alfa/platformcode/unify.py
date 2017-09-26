@@ -90,6 +90,11 @@ def title_format(item):
 
             if item.contentSerieName:
                 if item.contentType == 'episode' and info['episode'] != '':
+                    if info['title'] == '':
+                        info['title'] = 'Episodio %s'% info['episode']
+                    elif 'Episode' in info['title']:
+                        info['title'] = info['title'].replace('Episode', 'Episodio')
+
                     title = ''
                     item.title = '[COLOR %s]%sx%s - %s[/COLOR]' % (color_scheme['tvshow'], info['season'],
                                                                    info['episode'], info['title'])
@@ -181,7 +186,7 @@ def thumbnail_type(item):
         elif thumb_type == 1:
             from core.servertools import get_server_parameters
             logger.debug('item.server: %s'%item.server)
-            server_parameters = get_server_parameters(item.server)
+            server_parameters = get_server_parameters(item.server.lower())
             item.thumbnail = server_parameters.get("thumbnail", "")
             logger.debug('thumbnail: %s' % item.thumb)
 
