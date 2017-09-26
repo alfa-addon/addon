@@ -427,7 +427,7 @@ def episodios(item):
         for episode in episodes:
 
             thumbnail = host + "/thumbs/" + episode['thumbnail']
-
+            language = episode['languages']
             temporada = episode['season']
             episodio = episode['episode']
             if len(episodio) == 1: episodio = '0' + episodio
@@ -468,7 +468,8 @@ def episodios(item):
                 'id'] + ";3"
 
             itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url,
-                                 thumbnail=thumbnail, show=item.show, folder=True, contentType="episode"))
+                                 thumbnail=thumbnail, show=item.show, folder=True, contentType="episode",
+                                 language=language))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=url_targets,

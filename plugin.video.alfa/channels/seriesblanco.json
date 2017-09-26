@@ -3,7 +3,7 @@
   "name": "Seriesblanco",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "seriesblanco.png",
   "banner": "seriesblanco.png",
   "version": 1,
@@ -23,8 +23,7 @@
   ],
   "categories": [
     "tvshow",
-    "vos",
-    "latino"
+    "vos"
   ],
   "settings": [
     {

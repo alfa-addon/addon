@@ -3,7 +3,7 @@
   "name": "Serviporno",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "thumbnail": "serviporno.png",
   "banner": "serviporno.png",
   "version": 1,

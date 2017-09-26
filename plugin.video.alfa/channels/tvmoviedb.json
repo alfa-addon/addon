@@ -3,7 +3,7 @@
   "name": "TvMovieDB",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["*"],
   "thumbnail": "http://i.imgur.com/HA7fvgD.png",
   "version": 1,
   "changes": [

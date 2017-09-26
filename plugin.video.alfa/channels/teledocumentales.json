@@ -3,7 +3,7 @@
   "name": "Teledocumentales",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "banner": "teledocumentales.png",
   "thumbnail": "teledocumentales.png",
   "version": 1,

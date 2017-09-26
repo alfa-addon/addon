@@ -3,7 +3,7 @@
   "name": "Maxipelis",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "version": 1,
   "thumbnail": "http://www.maxipelis.net/wp-content/uploads/2016/12/applogo.png",
   "banner": "",

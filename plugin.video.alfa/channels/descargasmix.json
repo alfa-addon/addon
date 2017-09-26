@@ -1,7 +1,7 @@
 {
   "id": "descargasmix",
   "name": "DescargasMIX",
-  "language": "es",
+  "language": ["cast", "lat"],
   "active": true,
   "version": 1,
   "adult": false,
@@ -31,7 +31,6 @@
   "banner": "descargasmix.png",
   "categories": [
     "movie",
-    "latino",
     "vos",
     "torrent",
     "documentary",

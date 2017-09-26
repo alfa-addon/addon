@@ -3,7 +3,7 @@
   "name": "Submit Your Flicks",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "banner": "submityouflicks.png",
   "thumbnail": "submityouflicks.png",
   "version": 1,

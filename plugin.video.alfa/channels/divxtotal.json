@@ -3,7 +3,7 @@
   "name": "Divxtotal",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "http://imgur.com/Madj03A.jpg",
   "version": 1,
   "changes": [

@@ -1,12 +1,9 @@
 {
   "id": "estadepelis",
   "name": "Estadepelis",
-  "compatible": {
-    "addon_version": "4.3"
-  },
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["lat"],
   "thumbnail": "https://s24.postimg.org/nsgit7fhh/estadepelis.png",
   "banner": "https://s28.postimg.org/ud0l032ul/estadepelis_banner.png",
   "version": 1,
@@ -33,7 +30,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie"
   ],
   "settings": [

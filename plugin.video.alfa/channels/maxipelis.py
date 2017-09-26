@@ -1,7 +1,7 @@
-# -*- coding: iso-8859-1 -*-
-#------------------------------------------------------------
+# -*- coding: utf-8 -*-
+# ------------------------------------------------------------
 # Alfa
-#------------------------------------------------------------
+# ------------------------------------------------------------
 import urlparse,urllib2,urllib,re
 import os, sys
 
@@ -13,9 +13,8 @@ from platformcode import config, logger
 from core import httptools
 from core import tmdb
 
-
-
 host = 'http://www.maxipelis.net'
+
 
 def mainlist(item):
     logger.info()
