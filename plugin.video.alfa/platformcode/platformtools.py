@@ -140,8 +140,8 @@ def render_items(itemlist, parent_item):
             icon_image = "DefaultVideo.png"
 
         # Creamos el listitem
+        #listitem = xbmcgui.ListItem(item.title, iconImage=icon_image, thumbnailImage=unify.thumbnail_type(item))
         listitem = xbmcgui.ListItem(item.title, iconImage=icon_image, thumbnailImage=item.thumbnail)
-
         # Ponemos el fanart
         if item.fanart:
             listitem.setProperty('fanart_image', item.fanart)

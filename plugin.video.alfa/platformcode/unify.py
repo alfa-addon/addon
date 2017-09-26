@@ -37,11 +37,11 @@ def set_lang(language):
     lang_color_5 = 'white'
 
     cast =['castellano','espanol','cast','esp','espaol', 'es','zc']
-    lat=['latino','lat','la', 'espanol latino', 'espaol latino', 'zl']
+    lat=['latino','lat','la', 'espanol latino', 'espaol latino', 'zl', 'mx', 'co']
     vose=['subtitulado','subtitulada','sub','sub espanol','vose','espsub','su','subs castellano',
           'sub: español', 'vs', 'zs']
     vos=['vos', 'sub ingles', 'engsub', 'vosi','ingles subtitulado', 'sub: ingles']
-    vo=['ingles', 'en','vo', 'ovos']
+    vo=['ingles', 'en','vo', 'ovos', 'eng']
     language = scrapertools.decodeHtmlentities(language)
     old_lang = language
     logger.debug('language: %s'%language)
@@ -64,7 +64,6 @@ def set_lang(language):
         language = '[COLOR %s][VO][/COLOR]' % lang_color_4
     else:
         language = '[COLOR %s][OTRO](%s)[/COLOR]' % (lang_color_5, old_lang)
-    #language = '%s, %s'%(language, old_lang)
 
     return language
 
@@ -83,48 +82,49 @@ def title_format(item):
     if item.action == 'mainlist':
         item.language =''
 
-
+    info = item.infoLabels
+    logger.debug('item: %s'%item)
     if item.title not in excluded:
-        if item.contentTitle and 'library' not in item.action:
-            item.title = '[COLOR %s]%s[/COLOR]'%(color_scheme['movie'],item.contentTitle)
-            #item.title = item.title
-        elif item.contentSerieName:
-            item.title = '[COLOR %s]%s[/COLOR]' %(color_scheme['tvshow'], item.title)
-        elif 'library' in item.action:
+
+        if not 'library' in item.action:
+
+            if item.contentSerieName:
+                if item.contentType == 'episode' and info['episode'] != '':
+                    title = ''
+                    item.title = '[COLOR %s]%sx%s - %s[/COLOR]' % (color_scheme['tvshow'], info['season'],
+                                                                   info['episode'], info['title'])
+                else:
+                    item.title = '[COLOR %s]%s[/COLOR]' % (color_scheme['tvshow'], item.title)
+            elif item.contentTitle:
+                item.title = '[COLOR %s]%s[/COLOR]'%(color_scheme['movie'],item.contentTitle)
+
+        else:
             item.title = '[COLOR %s]%s[/COLOR]' % (color_scheme['library'], item.title)
 
         if isinstance(item.language,list):
             language_list =[]
             for language in item.language:
-                #language = re.sub(r'\[COLOR .*?\]|\[/COLOR\]', '', language)
                 if language != '':
                     lang = True
-                    old_lang = language
                     language_list.append(set_lang(language))
                     logger.debug('language_list: %s' % language_list)
             item.language = language_list
-        elif not isinstance(item.language,list):
-            #item.language = re.sub(r'\[COLOR .*?\]|\[/COLOR\]', '', item.language)
+        else:
             if item.language != '':
                 lang = True
-                old_lang = item.lang
                 item.language = set_lang(item.language)
-        else:
-            item.language = ''
-            logger.debug('item.language: %s' % item.language)
-
 
         # Damos formato al año si existiera
-        if item.infoLabels.get("year", "") != "":
+        if item.info and item.info.get("year", "") != "":
             try:
-                year = '[COLOR %s][%s][/COLOR]' % (color_scheme['year'], item.infoLabels['year'])
+                year = '[COLOR %s][%s][/COLOR]' % (color_scheme['year'], info['year'])
                 item.title = item.title = '%s %s' % (item.title, year)
             except:
-                logger.debug('infoLabels: %s'%item.infoLabels)
+                logger.debug('infoLabels: %s'%info)
 
         # Damos formato al puntaje si existiera
-        if item.infoLabels and item.infoLabels['rating'] and item.infoLabels['rating']!='0.0':
-            rating = '[COLOR %s][%s][/COLOR]' % (color_scheme['rating'], item.infoLabels['rating'])
+        if info and info['rating'] and info['rating']!='0.0':
+            rating = '[COLOR %s][%s][/COLOR]' % (color_scheme['rating'], info['rating'])
             item.title = '%s %s' % (item.title, rating)
 
         # Damos formato a la calidad si existiera
@@ -144,8 +144,8 @@ def title_format(item):
         if item.server:
             server = '[COLOR %s][%s][/COLOR]' % (color_scheme['server'], item.server.strip())
 
-        #compureba si estamos en findvideos, y si hay server, si es asi no se muestra el
-        #titulo sino el server, en caso contrario se muestra el titulo normalmente.
+        # Compureba si estamos en findvideos, y si hay server, si es asi no se muestra el
+        # titulo sino el server, en caso contrario se muestra el titulo normalmente.
 
         if item.action != 'play' and item.server:
             item.title ='%s %s'%(item.title, server.strip())
@@ -155,11 +155,35 @@ def title_format(item):
         else:
             item.title = '%s' % item.title
 
-        # Formatear titulo
-    
-        if item.text_bold:
-            item.title = '[B]%s[/B]' % item.title
-        if item.text_italic:
-            item.title = '[I]%s[/I]' % item.title
+    # Formatear titulo
+
+    if item.text_bold:
+        item.title = '[B]%s[/B]' % item.title
+    if item.text_italic:
+        item.title = '[I]%s[/I]' % item.title
 
     return item
+
+def thumbnail_type(item):
+    logger.info()
+
+    # Se comprueba que tipo de thumbnail se utilizara en findvideos,
+    # Poster o logo del servidor
+
+    thumb_type = config.get_setting('video_thumbnail_type')
+    logger.debug('thumb_type: %s' % thumb_type)
+    info = item.infoLabels
+    logger.debug('item.thumbnail: %s'%item.thumbnail)
+    if item.action == 'play':
+        if thumb_type == 0:
+            if info and info['thumbnail'] != '':
+                item.thumbnail = info['thumbnail']
+        elif thumb_type == 1:
+            from core.servertools import get_server_parameters
+            logger.debug('item.server: %s'%item.server)
+            server_parameters = get_server_parameters(item.server)
+            item.thumbnail = server_parameters.get("thumbnail", "")
+            logger.debug('thumbnail: %s' % item.thumb)
+
+
+    return item.thumbnail
