@@ -428,7 +428,6 @@ def episodios(item):
 
             thumbnail = host + "/thumbs/" + episode['thumbnail']
             language = episode['languages']
-            logger.debug('language: %s'%episode['languages'])
             temporada = episode['season']
             episodio = episode['episode']
             if len(episodio) == 1: episodio = '0' + episodio
