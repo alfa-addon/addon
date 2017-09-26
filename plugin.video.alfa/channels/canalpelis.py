@@ -338,7 +338,7 @@ def episodios(item):
 
     itemlist.sort(key=lambda it: int(it.infoLabels['episode']),
                   reverse=config.get_setting('orden_episodios', __channel__))
-
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     # Opción "Añadir esta serie a la videoteca"
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=__channel__, title="Añadir esta serie a la videoteca", url=item.url,
