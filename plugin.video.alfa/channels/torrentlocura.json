@@ -3,7 +3,7 @@
     "name": "Torrentlocura",
     "active": true,
     "adult": false,
-    "language": "es",
+    "language": ["cast", "lat"],
     "banner": "torrentlocura.png",
     "thumbnail": "http://imgur.com/EWmLS3d.png",
     "fanart": "http://imgur.com/V7QZLAL.jpg",

@@ -3,13 +3,12 @@
   "name": "AnimeFLV.RU",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/5nRR9qq.png",
   "banner": "animeflv_ru.png",
   "version": 1,
   "compatible": {
-    "python": "2.7.9",
-    "addon_version": "4.2.1"
+    "python": "2.7.9"
   },
   "changes": {
     "change": [

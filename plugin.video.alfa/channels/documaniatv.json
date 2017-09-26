@@ -3,7 +3,7 @@
   "name": "DocumaniaTV",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/qMR9sg9.png",
   "banner": "documaniatv.png",
   "version": 1,

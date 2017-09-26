@@ -3,7 +3,7 @@
   "name": "Descargas",
   "active": false,
   "adult": false,
-  "language": "es",
+  "language": ["*"],
   "version": 1,
   "changes": [
     {

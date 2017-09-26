@@ -3,7 +3,7 @@
   "name": "pymovie",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "https://s27.postimg.org/hvmvz7vab/pymovie.png",
   "banner": "https://s28.postimg.org/3k0wjnwul/pymovie_banner.png",
   "version": 1,
@@ -22,7 +22,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie",
     "tvshow",
     "documentary"

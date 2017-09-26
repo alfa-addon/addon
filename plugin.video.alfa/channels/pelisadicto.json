@@ -3,7 +3,7 @@
   "name": "Pelisadicto",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "pelisadicto.png",
   "banner": "pelisadicto.png",
   "version": 1,
@@ -18,8 +18,7 @@
     }
   ],
   "categories": [
-    "movie",
-    "latino"
+    "movie"
   ],
   "settings": [
     {

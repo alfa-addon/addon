@@ -3,7 +3,7 @@
   "name": "BorrachodeTorrent",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "http://imgur.com/BePrYmy.png",
   "version": 1,
   "changes": [

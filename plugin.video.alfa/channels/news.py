@@ -93,10 +93,7 @@ def get_channels_list():
 
     # Rellenar listas de canales disponibles
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
-    channel_language = config.get_setting("channel_language")
-
-    if channel_language == "":
-        channel_language = "all"
+    channel_language = config.get_setting("channel_language", default="all")
 
     for infile in sorted(glob.glob(channels_path)):
         channel_id = os.path.basename(infile)[:-5]
@@ -111,7 +108,8 @@ def get_channels_list():
             continue
 
         # No incluir si el canal es en un idioma filtrado
-        if channel_language != "all" and channel_parameters["language"] != channel_language:
+        if channel_language != "all" and channel_language not in channel_parameters["language"] \
+                and "*" not in channel_parameters["language"]:
             continue
 
         # Incluir en cada categoria, si en su configuracion el canal esta activado para mostrar novedades
@@ -424,10 +422,7 @@ def settings(item):
 
 def setting_channel(item):
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
-    channel_language = config.get_setting("channel_language")
-
-    if channel_language == "":
-        channel_language = "all"
+    channel_language = config.get_setting("channel_language", default="all")
 
     list_controls = []
     for infile in sorted(glob.glob(channels_path)):
@@ -443,7 +438,8 @@ def setting_channel(item):
             continue
 
         # No incluir si el canal es en un idioma filtrado
-        if channel_language != "all" and channel_parameters["language"] != channel_language:
+        if channel_language != "all" and channel_language not in channel_parameters["language"] \
+                and "*" not in channel_parameters["language"]:
             continue
 
         # No incluir si en su configuracion el canal no existe 'include_in_newest'

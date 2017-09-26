@@ -3,7 +3,7 @@
   "name": "peliculasrey",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "peliculasrey.png",
   "banner": "peliculasrey.png",
   "version": 1,

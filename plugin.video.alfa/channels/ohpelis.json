@@ -1,17 +1,13 @@
 {
   "id": "ohpelis",
   "name": "OH-PELIS",
-  "compatible": {
-    "addon_version": "4.3"
-  },
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["lat"],
   "thumbnail": "https://s28.postimg.org/6v7ig831p/oh-pelis.png",
   "banner": "https://s27.postimg.org/bz0fh8jpf/oh-pelis-banner.png",
   "version": 1,
   "categories": [
-    "latino",
     "movie"
   ],
   "settings": [

@@ -3,7 +3,7 @@
   "name": "tuporno.tv",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "banner": "tupornotv.png",
   "thumbnail": "tupornotv.png",
   "version": 1,

@@ -1,7 +1,7 @@
 {
   "id": "lacajita",
   "name": "LaCajita",
-  "language": "es",
+  "language": ["cast", "lat"],
   "active": true,
   "adult": false,
   "version": 1,
@@ -14,7 +14,6 @@
   "thumbnail": "http://i.imgur.com/LVdupxc.png",
   "categories": [
     "movie",
-    "latino",
     "vos"
   ],
   "settings": [

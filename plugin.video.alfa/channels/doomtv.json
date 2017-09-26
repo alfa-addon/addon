@@ -1,17 +1,13 @@
 {
   "id": "doomtv",
   "name": "doomtv",
-  "compatible": {
-    "addon_version": "4.3"
-  },
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["lat"],
   "thumbnail": "https://s2.postimg.org/jivgi4ak9/doomtv.png",
   "banner": "https://s32.postimg.org/6gxyripvp/doomtv_banner.png",
   "version": 1,
   "categories": [
-    "latino",
     "movie",
     "direct"
   ],

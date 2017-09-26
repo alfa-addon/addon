@@ -3,7 +3,7 @@
     "name": "tubehentai",
     "active": true,
     "adult": true,
-    "language": "es",
+    "language": ["*"],
     "banner": "tubehentai.png",
     "thumbnail": "tubehentai.png",
     "version": 1,

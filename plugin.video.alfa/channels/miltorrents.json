@@ -3,7 +3,7 @@
   "name": "Miltorrents",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "version": 1,
   "changes": [
     {

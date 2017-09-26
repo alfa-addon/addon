@@ -61,17 +61,17 @@ def getchanneltypes(view="thumb_"):
     logger.info()
 
     # Lista de categorias
-    channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent", "latino"]
+    channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent"]
     dict_types_lang = {'movie': config.get_localized_string(30122), 'tvshow': config.get_localized_string(30123),
                        'anime': config.get_localized_string(30124), 'documentary': config.get_localized_string(30125),
                        'vos': config.get_localized_string(30136), 'adult': config.get_localized_string(30126),
-                       'latino': config.get_localized_string(30127), 'direct': config.get_localized_string(30137)}
+                       'direct': config.get_localized_string(30137)}
 
     if config.get_setting("adult_mode") != 0:
         channel_types.append("adult")
 
-    channel_language = config.get_setting("channel_language")
-    logger.info("channel_language=" + channel_language)
+    channel_language = config.get_setting("channel_language", default="all")
+    logger.info("channel_language=%s" % channel_language)
 
     # Ahora construye el itemlist ordenadamente
     itemlist = list()
@@ -81,11 +81,11 @@ def getchanneltypes(view="thumb_"):
                          viewmode="thumbnails"))
 
     for channel_type in channel_types:
-        logger.info("channel_type=" + channel_type)
+        logger.info("channel_type=%s" % channel_type)
         title = dict_types_lang.get(channel_type, channel_type)
         itemlist.append(Item(title=title, channel="channelselector", action="filterchannels", category=title,
                              channel_type=channel_type, viewmode="thumbnails",
-                             thumbnail=get_thumb("channels_" + channel_type + ".png", view)))
+                             thumbnail=get_thumb("channels_%s.png" % channel_type, view)))
 
     return itemlist
 
@@ -103,19 +103,16 @@ def filterchannels(category, view="thumb_"):
 
     # Lee la lista de canales
     channel_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
-    logger.info("channel_path=" + channel_path)
+    logger.info("channel_path=%s" % channel_path)
 
     channel_files = glob.glob(channel_path)
-    logger.info("channel_files encontrados " + str(len(channel_files)))
+    logger.info("channel_files encontrados %s" % (len(channel_files)))
 
-    channel_language = config.get_setting("channel_language")
-    logger.info("channel_language=" + channel_language)
-    if channel_language == "":
-        channel_language = "all"
-        logger.info("channel_language=" + channel_language)
+    channel_language = config.get_setting("channel_language", default="all")
+    logger.info("channel_language=%s" % channel_language)
 
     for channel_path in channel_files:
-        logger.info("channel=" + channel_path)
+        logger.info("channel=%s" % channel_path)
 
         channel = os.path.basename(channel_path).replace(".json", "")
 
@@ -129,7 +126,7 @@ def filterchannels(category, view="thumb_"):
             # Si no es un canal lo saltamos
             if not channel_parameters["channel"]:
                 continue
-            logger.info("channel_parameters=" + repr(channel_parameters))
+            logger.info("channel_parameters=%s" % repr(channel_parameters))
 
             # Si prefiere el banner y el canal lo tiene, cambia ahora de idea
             if view == "banner_" and "banner" in channel_parameters:
@@ -159,8 +156,11 @@ def filterchannels(category, view="thumb_"):
                 continue
 
             # Se salta el canal si está en un idioma filtrado
-            if channel_language != "all" \
-                    and channel_parameters["language"] != config.get_setting("channel_language"):
+            # Se muestran todos los canales si se elige "all" en el filtrado de idioma
+            # Se muestran sólo los idiomas filtrados, cast o lat
+            # Los canales de adultos se mostrarán siempre que estén activos
+            if channel_language != "all" and channel_language not in channel_parameters["language"] \
+                    and "*" not in channel_parameters["language"]:
                 continue
 
             # Se salta el canal si está en una categoria filtrado
@@ -181,7 +181,7 @@ def filterchannels(category, view="thumb_"):
                                      version=channel_parameters["version"], context=context))
 
         except:
-            logger.error("Se ha producido un error al leer los datos del canal " + channel)
+            logger.error("Se ha producido un error al leer los datos del canal '%s'" % channel)
             import traceback
             logger.error(traceback.format_exc())
 

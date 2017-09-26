@@ -3,7 +3,7 @@
   "name": "PedroPolis",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "fanart": "https://scontent-lht6-1.xx.fbcdn.net/v/t31.0-8/21056316_670362456502498_8317422545691005578_o.png?oh=1f13a23a931d82e944a7ec743a19f583&oe=5A599F4D",
   "thumbnail": "https://scontent-lht6-1.xx.fbcdn.net/v/t1.0-9/20292600_467501756957771_6794721577753226614_n.jpg?oh=bba1479eccf0adceeb8c0d3450cc2531&oe=5A4EE0F5",
   "banner": "",
@@ -15,7 +15,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie",
     "tvshow",
     "vos"

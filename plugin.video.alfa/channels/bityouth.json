@@ -3,7 +3,7 @@
   "name": "Bityouth",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "http://s6.postimg.org/6ash180up/bityoulogo.png",
   "banner": "bityouth.png",
   "version": 1,
