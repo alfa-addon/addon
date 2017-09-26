@@ -11,6 +11,7 @@ from core.item import Item
 from platformcode import logger
 
 host = "http://xdvideos.org/"
+hosts = "http://xdvideos.org/dragon-ball-super/"
 
 
 def mainlist(item):
@@ -20,6 +21,8 @@ def mainlist(item):
     itemlist = list()
 
     itemlist.append(Item(channel=item.channel, action="categorias", title="Categorias", url=host,
+                         thumbnail=thumb_series))
+    itemlist.append(Item(channel=item.channel, action="episodios", title="Dragon Ball Super", url=hosts,
                          thumbnail=thumb_series))
     return itemlist
 
