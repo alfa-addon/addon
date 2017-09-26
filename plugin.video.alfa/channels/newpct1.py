@@ -412,8 +412,6 @@ def episodios(item):
 
             season = match['season']
             episode = match['episode']
-            infoLabels['season']= season
-            infoLabels['episode'] = episode
             itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumb,
                                  quality=item.quality, multi=multi, contentSeason=season,
                                  contentEpisodeNumber=episode, infoLabels = infoLabels))
@@ -421,8 +419,12 @@ def episodios(item):
     # order list
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True)
     if len(itemlist) > 1:
-        return sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
+        itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
 
+    if config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(
+            item.clone(title="Añadir esta serie a la videoteca", action="add_serie_to_library", extra="episodios"))
+      
     return itemlist
 
 def search(item, texto):

@@ -1,0 +1,44 @@
+{
+  "id": "thumbzilla",
+  "name": "ThumbZilla",
+  "active": true,
+  "adult": true,
+  "language": "en",
+  "fanart": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/xthearebg.jpg",
+  "thumbnail": "https://image.spreadshirtmedia.com/image-server/v1/designs/1002274824,width=178,height=178/thumbzilla-womens-white-tee-big-logo.png",
+  "banner": "",
+  "version": 1,
+  "changes": [
+    {
+      "date": "07/06/17",
+      "description": "Canal Nuevo"
+    }
+  ],
+   "categories": [
+   "adult"
+ ],
+ "settings": [
+    {
+      "id": "modo_grafico",
+      "type": "bool",
+      "label": "Buscar información extra",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "perfil",
+      "type": "list",
+      "label": "Perfil de color",
+      "default": 3,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Sin color",
+        "Perfil 3",
+        "Perfil 2",
+        "Perfil 1"
+      ]
+    }
+  ]
+}

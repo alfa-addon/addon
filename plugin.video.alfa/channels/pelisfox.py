@@ -273,8 +273,8 @@ def findvideos(item):
                                              server=server))
 
 
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
-        itemlist.append(
+    if config.get_videolibrary_support() and len(video_list) > 0 and item.extra != 'findvideos':
+        video_list.append(
             Item(channel=item.channel,
                  title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
                  url=item.url,
