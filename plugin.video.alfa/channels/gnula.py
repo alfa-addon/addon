@@ -1,24 +1,24 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
-import urlparse
 
+from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import logger
 
+host = "http://gnula.nu/"
 
 def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Estrenos", action="peliculas",
-                         url="http://gnula.nu/peliculas-online/lista-de-peliculas-online-parte-1/", viewmode="movie"))
+                         url= host +"peliculas-online/lista-de-peliculas-online-parte-1/", viewmode="movie"))
     itemlist.append(
-        Item(channel=item.channel, title="Generos", action="generos", url="http://gnula.nu/generos/lista-de-generos/"))
+        Item(channel=item.channel, title="Generos", action="generos", url= host + "generos/lista-de-generos/"))
     itemlist.append(Item(channel=item.channel, title="Recomendadas", action="peliculas",
-                         url="http://gnula.nu/peliculas-online/lista-de-peliculas-recomendadas/", viewmode="movie"))
-    # itemlist.append( Item(channel=item.channel, title="Portada"       , action="portada"    , url="http://gnula.nu/"))
+                         url= host + "peliculas-online/lista-de-peliculas-recomendadas/", viewmode="movie"))
     return itemlist
 
 
@@ -26,23 +26,23 @@ def generos(item):
     logger.info()
     itemlist = []
 
-    data = scrapertools.cache_page(item.url)
-
-    # <span style="font-weight: bold;">Lista de géneros</span><br/>
+    data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, '<spa[^>]+>Lista de g(.*?)/table')
 
-    # <strong>Historia antigua</strong> [<a href="http://gnula.nu/generos/lista-de-peliculas-del-genero-historia-antigua/"
     patron = '<strong>([^<]+)</strong> .<a href="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for genero, scrapedurl in matches:
         title = scrapertools.htmlclean(genero)
         plot = ""
-        url = urlparse.urljoin(item.url, scrapedurl)
+        url = item.url + scrapedurl
         thumbnail = ""
-        logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
-        itemlist.append(
-            Item(channel=item.channel, action='peliculas', title=title, url=url, thumbnail=thumbnail, plot=plot,
-                 extra=title, viewmode="movie"))
+        itemlist.append(Item(channel = item.channel,
+                             action = 'peliculas',
+                             title = title,
+                             url = url,
+                             thumbnail = thumbnail,
+                             plot = plot,
+                             viewmode = "movie"))
 
     itemlist = sorted(itemlist, key=lambda item: item.title)
 
@@ -52,17 +52,9 @@ def generos(item):
 def peliculas(item):
     logger.info()
 
-    '''
-    <a class="Ntooltip" href="http://gnula.nu/comedia-romantica/ver-with-this-ring-2015-online/">With This Ring<span><br/>
-    <img src="http://gnula.nu/wp-content/uploads/2015/06/With_This_Ring2.gif"></span></a> [<span style="color: #33ccff;">18/07/15</span> <span style="color: #33ff33;">(VS)</span><span style="color: red;">(VC)</span><span style="color: #cc66cc;">(VL)</span>] [<span style="color: #ffcc99;">HD-R</span>]&#8212;&#8211;<strong>Comedia, Romántica</strong><br/>
-    '''
-    '''
-    <a class="Ntooltip" href="http://gnula.nu/aventuras/ver-las-aventuras-de-tintin-el-secreto-del-unicornio-2011-online/">The Adventures of Tintin<span><br />
-    <img src="http://gnula.nu/wp-content/uploads/2015/07/The_Adventures_of_Tintin_Secret_of_the_Unicorn2.gif"></span></a> (2011) [<span style="color: #33ccff;">10/07/15</span> <span style="color: #33ff33;">(VS)</span><span style="color: red;">(VC)</span><span style="color: #cc66cc;">(VL)</span>] [<span style="color: #ffcc99;">DVD-R</span>]&#8212;&#8211;<strong>Animación, Infantil, Aventuras</strong><br />
-    '''
     # Descarga la página
-    data = scrapertools.cachePage(item.url)
-    patron = '<a class="Ntooltip" href="([^"]+)">([^<]+)<span><br[^<]+'
+    data = httptools.downloadpage(item.url).data
+    patron  = '<a class="Ntooltip" href="([^"]+)">([^<]+)<span><br[^<]+'
     patron += '<img src="([^"]+)"></span></a>(.*?)<br'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -70,34 +62,57 @@ def peliculas(item):
     for scrapedurl, scrapedtitle, scrapedthumbnail, resto in matches:
         plot = scrapertools.htmlclean(resto).strip()
         title = scrapedtitle + " " + plot
-        fulltitle = title
         contentTitle = scrapedtitle
-        url = urlparse.urljoin(item.url, scrapedurl)
-        thumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
-        logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
-        itemlist.append(Item(channel=item.channel, action='findvideos', title=title, fulltitle=fulltitle, url=url,
-                             thumbnail=thumbnail, plot=plot, extra=title, hasContentDetails=True,
-                             contentTitle=contentTitle, contentThumbnail=thumbnail,
-                             contentType="movie", context=["buscar_trailer"]))
-
+        url = item.url + scrapedurl
+        itemlist.append(Item(channel = item.channel,
+                             action = 'findvideos',
+                             title = title,
+                             url = url,
+                             thumbnail = scrapedthumbnail,
+                             plot = plot,
+                             hasContentDetails = True,
+                             contentTitle = contentTitle,
+                             contentType = "movie",
+                             context = ["buscar_trailer"]
+                             ))
     return itemlist
 
 
 def findvideos(item):
     logger.info("item=" + item.tostring())
+    itemlist = []
 
     # Descarga la página para obtener el argumento
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     item.plot = scrapertools.find_single_match(data, '<div class="entry">(.*?)<div class="iframes">')
     item.plot = scrapertools.htmlclean(item.plot).strip()
     item.contentPlot = item.plot
+    patron = 'Ver película online.*?>.*?>([^<]+)'
+    scrapedopcion = scrapertools.find_single_match(data, patron)
+    titulo_opcional = scrapertools.find_single_match(scrapedopcion, ".*?, (.*)").upper()
+    bloque  = scrapertools.find_multiple_matches(data, 'contenedor_tab.*?/table')
+    cuenta = 0
+    for datos in bloque:
+        cuenta = cuenta + 1
+        patron = '<em>(opción %s.*?)</em>' %cuenta
+        scrapedopcion = scrapertools.find_single_match(data, patron)
+        titulo_opcion = "(" + scrapertools.find_single_match(scrapedopcion, "op.*?, (.*)").upper() + ")"
+        if "TRAILER" in titulo_opcion or titulo_opcion == "()":
+            titulo_opcion = "(" + titulo_opcional + ")"
+        urls = scrapertools.find_multiple_matches(datos, '(?:src|href)="([^"]+)')
+        titulo = "Ver en %s " + titulo_opcion
+        for url in urls:
+            itemlist.append(Item(channel = item.channel,
+                                 action = "play",
+                                 contentThumbnail = item.thumbnail,
+                                 fulltitle = item.contentTitle,
+                                 title = titulo,
+                                 url = url
+                                 ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist
 
-    newthumbnail = scrapertools.find_single_match(data,
-                                                  '<div class="entry"[^<]+<p align="center"><img alt="[^"]+" src="([^"]+)"')
-    if newthumbnail != "":
-        item.thumbnail = newthumbnail
-        item.contentThumbnail = newthumbnail
 
-    logger.info("plot=" + item.plot)
-
-    return servertools.find_video_items(item=item, data=data)
+def play(item):
+    item.thumbnail = item.contentThumbnail
+    return [item]
