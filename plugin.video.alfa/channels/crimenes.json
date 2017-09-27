@@ -3,7 +3,7 @@
   "name": "Crimenes Imperfectos",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "banner": "crimenes.png",
   "thumbnail": "crimenes.png",
   "version": 1,

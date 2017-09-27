@@ -3,7 +3,7 @@
   "name": "PelisPekes",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["lat"],
   "thumbnail": "pelispekes.png",
   "banner": "pelispekes.png",
   "version": 1,

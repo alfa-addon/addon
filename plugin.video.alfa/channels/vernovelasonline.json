@@ -3,7 +3,7 @@
   "name": "Ver Novelas Online",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "https://s16.postimg.org/g4lzydrmd/vernovelasonline1.png",
   "banner": "https://s16.postimg.org/w44nhxno5/vernovelasonline2.png",
   "version": 1,
@@ -14,8 +14,7 @@
     }
   ],
   "categories": [
-    "tvshow",
-    "latino"
+    "tvshow"
   ],
   "settings": [
     {

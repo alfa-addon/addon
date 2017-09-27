@@ -3,7 +3,7 @@
   "name": "CineHindi",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "cinehindi.png",
   "banner": "http://i.imgur.com/cau9TVe.png",
   "version": 1,

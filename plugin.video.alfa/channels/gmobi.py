@@ -1,7 +1,7 @@
-# -*- coding: iso-8859-1 -*-
-#------------------------------------------------------------
+# -*- coding: utf-8 -*-
+# ------------------------------------------------------------
 # Alfa 
-#------------------------------------------------------------
+# ------------------------------------------------------------
 
 import urlparse,urllib2,urllib,re
 import os, sys
@@ -18,11 +18,11 @@ from platformcode import config, logger
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Novedades" , action="peliculas", url="http://gnula.mobi/"))
-    itemlist.append(item.clone(title="Castellano" , action="peliculas",
+    itemlist.append(item.clone(title="Novedades", action="peliculas", url="http://gnula.mobi/"))
+    itemlist.append(item.clone(title="Castellano", action="peliculas",
                                      url="http://www.gnula.mobi/tag/esp)anol/"))
-    itemlist.append(item.clone(title="Latino" , action="peliculas", url="http://gnula.mobi/tag/latino/"))
-    itemlist.append(item.clone(title="VOSE" , action="peliculas", url="http://gnula.mobi/tag/subtitulada/"))
+    itemlist.append(item.clone(title="Latino", action="peliculas", url="http://gnula.mobi/tag/latino/"))
+    itemlist.append(item.clone(title="VOSE", action="peliculas", url="http://gnula.mobi/tag/subtitulada/"))
 
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist

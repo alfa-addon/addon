@@ -27,8 +27,6 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
 
-    page_url = page_url.replace("playvid-", "")
-
     headers = {'Host': 'www.flashx.tv',
                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36',
                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -60,8 +58,18 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     headers['Content-Type'] = 'application/x-www-form-urlencoded'
     data = httptools.downloadpage('https://www.flashx.tv/dl?playnow', post, headers, replace_headers=True).data
 
+    # Si salta aviso, se carga la pagina de comprobacion y luego la inicial
+    # LICENSE GPL3, de alfa-addon: https://github.com/alfa-addon/ ES OBLIGATORIO AÑADIR ESTAS LÍNEAS
+    if "You try to access this video with Kodi" in data:
+        url_reload = scrapertools.find_single_match(data, 'try to reload the page.*?href="([^"]+)"')
+        try:
+            data = httptools.downloadpage(url_reload, cookies=False).data
+            data = httptools.downloadpage('https://www.flashx.tv/dl?playnow', post, headers, replace_headers=True).data
+        # LICENSE GPL3, de alfa-addon: https://github.com/alfa-addon/ ES OBLIGATORIO AÑADIR ESTAS LÍNEAS
+        except:
+            pass
+    
     matches = scrapertools.find_multiple_matches(data, "(eval\(function\(p,a,c,k.*?)\s+</script>")
-
     video_urls = []
     for match in matches:
         try:

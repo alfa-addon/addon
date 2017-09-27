@@ -1,7 +1,7 @@
 {
   "id": "copiapop",
   "name": "Copiapop/Diskokosmiko",
-  "language": "es",
+  "language": ["cast", "lat"],
   "active": true,
   "adult": false,
   "version": 1,

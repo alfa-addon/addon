@@ -3,10 +3,7 @@
   "name": "VerPeliculasNuevas",
   "active": true,
   "adult": false,
-  "language": "es",
-  "compatible": {
-    "addon_version": "4.3"
-  },
+  "language": ["cast", "lat"],
   "banner": "https://s23.postimg.org/4uyyz6w4b/verpeliculasnuevas_banner.png",
   "thumbnail": "https://s27.postimg.org/atgs5erab/verpeliculasnuevas.png",
   "version": 1,
@@ -33,7 +30,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie"
   ],
   "settings": [

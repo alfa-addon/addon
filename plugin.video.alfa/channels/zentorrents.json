@@ -3,7 +3,7 @@
     "name": "Zentorrent",
     "active": true,
     "adult": false,
-    "language": "es",
+    "language": ["cast"],
     "banner": "zentorrents.png",
     "thumbnail": "http://s6.postimg.org/9zv90yjip/zentorrentlogo.jpg",
     "version": 1,

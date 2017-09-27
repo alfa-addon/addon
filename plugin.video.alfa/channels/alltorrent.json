@@ -3,7 +3,7 @@
   "name": "Alltorrent",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "http://imgur.com/sLaXHvp.png",
   "version": 1,
   "changes": [

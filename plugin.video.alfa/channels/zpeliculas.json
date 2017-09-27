@@ -3,7 +3,7 @@
   "name": "Zpeliculas",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "banner": "zpeliculas.png",
   "thumbnail": "zpeliculas.png",
   "version": 1,

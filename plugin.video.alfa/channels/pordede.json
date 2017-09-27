@@ -3,7 +3,7 @@
   "name": "Pordede",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "pordede.png",
   "banne": "pordede.png",
   "version": 1,

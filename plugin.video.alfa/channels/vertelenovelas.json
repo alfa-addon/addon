@@ -3,7 +3,7 @@
   "name": "Ver Telenovelas",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "vertelenovelas.png",
   "banner": "vertelenovelas.png",
   "version": 1,

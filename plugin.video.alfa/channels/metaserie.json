@@ -1,12 +1,9 @@
 {
   "id": "metaserie",
   "name": "MetaSerie (Latino)",
-  "compatible": {
-    "addon_version": "4.3"
-  },
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["lat"],
   "thumbnail": "https://s32.postimg.org/7g50yo39h/metaserie.png",
   "banner": "https://s31.postimg.org/u6yddil8r/metaserie_banner.png",
   "version": 1,
@@ -33,7 +30,6 @@
     }
   ],
   "categories": [
-    "latino",
     "tvshow"
   ],
   "settings": [
