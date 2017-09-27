@@ -211,10 +211,6 @@ msgctxt "#30126"
 msgid "Adult"
 msgstr ""
 
-msgctxt "#30127"
-msgid "Latin"
-msgstr "Latino"
-
 msgctxt "#30137"
 msgid "Direct"
 msgstr "Directos"

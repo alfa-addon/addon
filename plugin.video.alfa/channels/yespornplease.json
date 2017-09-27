@@ -3,7 +3,7 @@
   "name": "YesPornPlease",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "thumbnail": "yespornplease.png",
   "banner": "yespornplease.png",
   "version": 1,

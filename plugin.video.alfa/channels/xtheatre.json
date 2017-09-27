@@ -3,7 +3,7 @@
   "name": "xTheatre",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "fanart": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/xthearebg.jpg",
   "thumbnail": "https://xtheatre.net/wp-content/uploads/xtlogo.jpg",
   "banner": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/xthearebm.png",

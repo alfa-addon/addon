@@ -1,7 +1,7 @@
 {
   "id": "datoporn",
   "name": "DatoPorn",
-  "language": "es",
+  "language": ["*"],
   "active": true,
   "adult": true,
   "changes": [

@@ -3,7 +3,7 @@
     "name": "Ver-pelis",
     "active": true,
     "adult": false,
-    "language": "es",
+    "language": ["cast", "lat"],
     "thumbnail": "http://imgur.com/lmYQgOu.png",
     "version": 1,
     "changes": [

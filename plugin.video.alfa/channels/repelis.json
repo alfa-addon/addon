@@ -3,7 +3,7 @@
   "name": "Repelis",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "repelis.png",
   "banner": "repelis.png",
   "version": 1,
@@ -23,7 +23,8 @@
   ],
   "categories": [
     "movie",
-    "documentary"
+    "documentary",
+    "vos"
   ],
   "settings": [
     {

@@ -3,7 +3,7 @@
   "name": "Cinetemagay",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "thumbnail": "cinetemagay.png",
   "banner": "cinetemagay.png",
   "version": 1,

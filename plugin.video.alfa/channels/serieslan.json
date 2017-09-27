@@ -3,7 +3,7 @@
   "name": "SeriesLan",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["lat"],
   "thumbnail": "http://i.imgur.com/s6CBxlw.png",
   "banner": "http://i.imgur.com/c1YTgNT.png",
   "version": 1,
@@ -14,7 +14,6 @@
     }
   ],
   "categories": [
-    "tvshow",
-    "latino"
+    "tvshow"
   ]
 }

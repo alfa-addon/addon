@@ -3,7 +3,7 @@
   "name": "PeliculasEroticas",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "thumbnail": "peliculaseroticas.png",
   "banner": "peliculaseroticas.png",
   "version": 1,

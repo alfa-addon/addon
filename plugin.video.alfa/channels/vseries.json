@@ -3,7 +3,7 @@
   "name": "V Serie",
   "active": false,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "banner": "vseries.png",
   "thumbnail": "vseries.png",
   "version": 1,

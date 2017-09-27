@@ -3,7 +3,7 @@
   "name": "PasateaTorrent",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "http://imgur.com/iLeISt0.png",
   "banner": "pasateatorrent.png",
   "version": 1,

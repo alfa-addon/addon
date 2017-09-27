@@ -3,7 +3,7 @@
   "name": "MiraDeTodo",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["lat"],
   "thumbnail": "https://s17.postimg.org/e8kp12mcv/miradetodo.png",
   "banner": "https://s7.postimg.org/it21t0dej/miradetodo-banner.png",
   "version": 1,
@@ -18,7 +18,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie"
   ],
   "settings": [

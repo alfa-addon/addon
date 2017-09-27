@@ -1,7 +1,7 @@
 {
   "id": "descargacineclasico",
   "name": "descargacineclasico",
-  "language": "es",
+  "language": ["cast"],
   "active": true,
   "adult": false,
   "version": 1,

@@ -3,7 +3,7 @@
   "name": "PornHub",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "fanart": "http://i.imgur.com/PwFvoss.jpg",
   "thumbnail": "http://s22.postimg.org/5lzcocfqp/pornhub_logo.jpg",
   "banner": "pornhub.png",
