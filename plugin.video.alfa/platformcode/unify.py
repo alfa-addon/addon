@@ -190,5 +190,4 @@ def thumbnail_type(item):
             item.thumbnail = server_parameters.get("thumbnail", "")
             logger.debug('thumbnail: %s' % item.thumb)
 
-
     return item.thumbnail
