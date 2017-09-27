@@ -130,10 +130,10 @@ def render_items(itemlist, parent_item):
 
         # Añade headers a las imagenes si estan en un servidor con cloudflare
         from core import httptools
-        item.thumbnail = unify.thumbnail_type(item)
+
         item.thumbnail = httptools.get_url_headers(item.thumbnail)
         item.fanart = httptools.get_url_headers(item.fanart)
-
+        item.thumbnail = unify.thumbnail_type(item)
         # IconImage para folder y video
         if item.folder:
             icon_image = "DefaultFolder.png"
@@ -865,9 +865,7 @@ def set_player(item, xlistitem, mediaurl, view, strm):
             if strm or item.strm_path:
                 from platformcode import xbmc_videolibrary
                 xbmc_videolibrary.mark_auto_as_watched(item)
-            #logger.debug('xlistitem: %s'%xlistitem['thumb'])
             logger.debug(item)
-            xlistitem.setArt({'poster':item.contentThumbnail})
             xlistitem.setPath(mediaurl)
             xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, xlistitem)
 

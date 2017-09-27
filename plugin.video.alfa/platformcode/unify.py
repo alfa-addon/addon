@@ -36,7 +36,7 @@ def set_lang(language):
     lang_color_4 = 'orange'
     lang_color_5 = 'white'
 
-    cast =['castellano','espanol','cast','esp','espaol', 'es','zc']
+    cast =['castellano','espanol','cast','esp','espaol', 'es','zc', 'spa']
     lat=['latino','lat','la', 'espanol latino', 'espaol latino', 'zl', 'mx', 'co']
     vose=['subtitulado','subtitulada','sub','sub espanol','vose','espsub','su','subs castellano',
           'sub: español', 'vs', 'zs']
@@ -147,7 +147,7 @@ def title_format(item):
                 item.title = '%s %s' % (item.title, item.language)
 
         if item.server:
-            server = '[COLOR %s][%s][/COLOR]' % (color_scheme['server'], item.server.strip())
+            server = '[COLOR %s][%s][/COLOR]' % (color_scheme['server'], item.server.strip().capitalize())
 
         # Compureba si estamos en findvideos, y si hay server, si es asi no se muestra el
         # titulo sino el server, en caso contrario se muestra el titulo normalmente.
@@ -156,7 +156,7 @@ def title_format(item):
             item.title ='%s %s'%(item.title, server.strip())
         elif item.action == 'play' and item.server:
             #item.title = 'S:%s  Q:%s I:%s' % (server, quality, item.language)
-            item.title = '%s %s %s' % (server.strip(), quality.strip(), item.language)
+            item.title = '%s %s %s' % (server, quality.strip(), item.language)
         else:
             item.title = '%s' % item.title
 
@@ -179,6 +179,7 @@ def thumbnail_type(item):
     logger.debug('thumb_type: %s' % thumb_type)
     info = item.infoLabels
     logger.debug('item.thumbnail: %s'%item.thumbnail)
+    item.contentThumbnail = item.thumbnail
     if item.action == 'play':
         if thumb_type == 0:
             if info and info['thumbnail'] != '':
