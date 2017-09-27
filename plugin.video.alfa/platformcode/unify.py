@@ -179,7 +179,12 @@ def thumbnail_type(item):
     logger.debug('thumb_type: %s' % thumb_type)
     info = item.infoLabels
     logger.debug('item.thumbnail: %s'%item.thumbnail)
-    item.contentThumbnail = item.thumbnail
+
+    if info['thumbnail'] !='':
+        item.contentThumbnail = info['thumbnail']
+    else:
+        item.contentThumbnail = item.thumbnail
+
     if item.action == 'play':
         if thumb_type == 0:
             if info and info['thumbnail'] != '':
