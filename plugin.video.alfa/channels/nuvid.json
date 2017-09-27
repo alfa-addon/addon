@@ -1,7 +1,7 @@
 {
   "id": "nuvid",
   "name": "Nuvid",
-  "language": "es",
+  "language": ["*"],
   "active": true,
   "adult": true,
   "version": 1,

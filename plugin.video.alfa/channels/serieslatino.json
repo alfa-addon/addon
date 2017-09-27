@@ -1,12 +1,9 @@
 {
   "id": "serieslatino",
   "name": "SeriesLatino",
-  "compatible": {
-    "addon_version": "4.3"
-  },
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["lat"],
   "thumbnail": "https://s17.postimg.org/rpmc90y9r/serieslatino.png",
   "banner": "https://s8.postimg.org/ka707waat/serieslatino_banner.png",
   "version": 1,
@@ -33,7 +30,6 @@
     }
   ],
   "categories": [
-    "latino",
     "tvshow"
   ],
   "settings": [

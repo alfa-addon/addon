@@ -3,7 +3,7 @@
   "name": "Canalporno",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "thumbnail": "http://i.imgur.com/gAbPcvT.png?1",
   "banner": "canalporno.png",
   "version": 1,

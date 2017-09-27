@@ -1,12 +1,9 @@
 {
   "id": "seodiv",
   "name": "Seodiv",
-  "compatible": {
-    "addon_version": "4.3"
-  },
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["lat"],
   "thumbnail": "https://s32.postimg.org/gh8lhbkb9/seodiv.png",
   "banner": "https://s31.postimg.org/klwjzp7t7/seodiv_banner.png",
   "version": 1,

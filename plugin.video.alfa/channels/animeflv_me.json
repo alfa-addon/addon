@@ -3,7 +3,7 @@
   "name": "Animeflv.ME",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/x9AdvBx.png",
   "banner": "http://i.imgur.com/dTZwCPq.png",
   "version": 1,

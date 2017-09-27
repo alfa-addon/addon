@@ -3,7 +3,7 @@
   "name": "Seriesdanko",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "seriesdanko.png",
   "banner": "seriesdanko.png",
   "version": 1,

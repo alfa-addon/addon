@@ -70,10 +70,7 @@ def settings(item):
 
 def setting_channel(item):
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
-    channel_language = config.get_setting("channel_language")
-
-    if channel_language == "":
-        channel_language = "all"
+    channel_language = config.get_setting("channel_language", default="all")
 
     list_controls = []
     for infile in sorted(glob.glob(channels_path)):
@@ -89,7 +86,8 @@ def setting_channel(item):
             continue
 
         # No incluir si el canal es en un idioma filtrado
-        if channel_language != "all" and channel_parameters["language"] != channel_language:
+        if channel_language != "all" and channel_language not in channel_parameters["language"] \
+                and "*" not in channel_parameters["language"]:
             continue
 
         # No incluir si en la configuracion del canal no existe "include_in_global_search"
@@ -292,11 +290,8 @@ def do_search(item, categories=None):
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
     logger.info("channels_path=%s" % channels_path)
 
-    channel_language = config.get_setting("channel_language")
+    channel_language = config.get_setting("channel_language", default="all")
     logger.info("channel_language=%s" % channel_language)
-    if channel_language == "":
-        channel_language = "all"
-        logger.info("channel_language=%s" % channel_language)
 
     # Para Kodi es necesario esperar antes de cargar el progreso, de lo contrario
     # el cuadro de progreso queda "detras" del cuadro "cargando..." y no se le puede dar a cancelar
@@ -347,7 +342,8 @@ def do_search(item, categories=None):
                 continue
 
             # No busca si el canal es en un idioma filtrado
-            if channel_language != "all" and channel_parameters["language"] != channel_language:
+            if channel_language != "all" and channel_language not in channel_parameters["language"] \
+                    and "*" not in channel_parameters["language"]:
                 logger.info("%s -idioma no válido-" % basename_without_extension)
                 continue
 

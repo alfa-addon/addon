@@ -1,7 +1,7 @@
 {
   "id": "freecambay",
   "name": "FreeCamBay",
-  "language": "es",
+  "language": ["*"],
   "active": true,
   "adult": true,
   "version": 1,

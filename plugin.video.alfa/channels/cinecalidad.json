@@ -1,12 +1,9 @@
 {
   "id": "cinecalidad",
   "name": "CineCalidad",
-  "compatible": {
-    "addon_version": "4.3"
-  },
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "https://s31.postimg.org/puxmvsi7v/cinecalidad.png",
   "banner": "https://s32.postimg.org/kihkdpx1x/banner_cinecalidad.png",
   "version": 1,
@@ -33,7 +30,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie"
   ],
   "settings": [

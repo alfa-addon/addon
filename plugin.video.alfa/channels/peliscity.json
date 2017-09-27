@@ -3,7 +3,7 @@
   "name": "Peliscity",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "peliscity.png",
   "banner": "peliscity.png",
   "version": 1,
@@ -19,7 +19,6 @@
   ],
   "categories": [
     "movie",
-    "latino",
     "direct",
     "VOS"
   ]

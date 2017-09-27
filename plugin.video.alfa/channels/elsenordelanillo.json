@@ -3,7 +3,7 @@
   "name": "El señor del anillo",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "elsenordelanillo.png",
   "banner": "elsenordelanillo.png",
   "version": 1,
@@ -18,7 +18,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie"
   ]
 }

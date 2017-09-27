@@ -3,7 +3,7 @@
   "name": "Seriesadicto",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "seriesadicto.png",
   "banner": "seriesadicto.png",
   "version": 1,

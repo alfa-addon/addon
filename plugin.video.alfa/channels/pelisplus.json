@@ -1,12 +1,9 @@
 {
   "id": "pelisplus",
   "name": "PelisPlus",
-  "compatible": {
-    "addon_version": "4.3"
-  },
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["lat"],
   "thumbnail": "https://s13.postimg.org/z5dbzfasn/pelisplus.png",
   "banner": "https://s16.postimg.org/p9xz2vlo5/pelisplus_banner.png",
   "version": 1,
@@ -41,7 +38,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie",
     "tvshow",
     "documentary",

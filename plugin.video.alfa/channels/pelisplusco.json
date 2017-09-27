@@ -3,11 +3,11 @@
   "name": "PelisPlus.co",
   "active": true,
   "adult": false,
+  "language": ["cast", "lat"],
   "thumbnail": "https://s26.postimg.org/jov1pmbh5/pelisplusco.png",
   "banner": "https://s26.postimg.org/4hf259jmh/pelisplusco-banner.png",
   "version": 1,
   "categories": [
-    "latino",
     "movie",
     "tvshow",
     "documentary",

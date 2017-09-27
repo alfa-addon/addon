@@ -3,7 +3,7 @@
     "name": "Unsoloclic",
     "active": true,
     "adult": false,
-    "language": "es",
+    "language": ["cast", "lat"],
     "banner": "unsoloclic.png",
     "thumbnail": "unsoloclic.png",
     "version": 1,

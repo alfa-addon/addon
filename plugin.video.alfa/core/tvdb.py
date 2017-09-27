@@ -350,7 +350,7 @@ class Tvdb:
             if not self.list_results and config.get_setting("tvdb_retry_eng", "videolibrary"):
                 from platformcode import platformtools
                 platformtools.dialog_notification("No se ha encontrado en idioma '%s'" % DEFAULT_LANG,
-                                                  "Se busca en idioma 'en'")
+                                                  "Se busca en idioma 'en'", sound=False)
                 self.__get_by_id(kwargs.get('tvdb_id', ''), "en")
                 self.lang = "en"
 

@@ -3,7 +3,7 @@
   "name": "SeriesPapaya",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/P1D92cf.png",
   "banner": "http://i.imgur.com/OHHvi5z.png",
   "version": 1,

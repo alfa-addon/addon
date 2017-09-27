@@ -3,7 +3,7 @@
   "name": "Cinefox",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "version": 1,
   "thumbnail": "cinefox.png",
   "banner": "cinefox.png",
@@ -28,7 +28,6 @@
   "categories": [
     "movie",
     "tvshow",
-    "latino",
     "vos"
   ],
   "settings": [

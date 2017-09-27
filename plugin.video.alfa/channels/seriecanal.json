@@ -3,7 +3,7 @@
   "name": "Seriecanal",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "http://i.imgur.com/EwMK8Yd.png",
   "banner": "seriecanal.png",
   "version": 1,
