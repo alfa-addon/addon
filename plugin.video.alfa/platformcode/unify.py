@@ -135,7 +135,7 @@ def title_format(item):
 
             # Damos formato al año si existiera y lo agregamos
             # al titulo excepto que sea un episodio
-            if item.info and item.info.get("year", "") != "" and item.contentType != 'episode':
+            if info and info.get("year", "") != "" and item.contentType != 'episode':
                 try:
                     year = '[COLOR %s][%s][/COLOR]' % (color_scheme['year'], info['year'])
                     item.title = item.title = '%s %s' % (item.title, year)
