@@ -3,7 +3,7 @@
   "name": "XDVideos",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["lat"],
   "thumbnail": "http://i.imgur.com/vKcZxXS.png",
   "version": 1,
   "changes": [
@@ -13,7 +13,6 @@
     }
   ],
   "categories": [
-    "tvshow",
-    "latino"
+    "tvshow"
   ]
 }

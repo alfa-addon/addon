@@ -3,7 +3,7 @@
   "name": "Inkapelis",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "changes": [
     {
       "date": "12/03/2017",
@@ -23,8 +23,7 @@
   "banner": "inkapelis.png",
   "categories": [
     "movie",
-    "vos",
-    "latino"
+    "vos"
   ],
   "settings": [
     {

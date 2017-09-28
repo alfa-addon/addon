@@ -273,13 +273,13 @@ def listado_series(item):
 def fichas(item):
     logger.info()
     itemlist = []
-
+    textoidiomas=''
+    infoLabels=dict()
     ## Carga estados
     status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
 
     if item.title == "Buscar...":
         data = agrupa_datos(httptools.downloadpage(item.url, post=item.extra).data)
-
         s_p = scrapertools.get_match(data, '<h3 class="section-title">(.*?)<div id="footer-wrapper">').split(
             '<h3 class="section-title">')
 
@@ -320,10 +320,12 @@ def fichas(item):
 
         if scrapedlangs != ">":
             textoidiomas = extrae_idiomas(scrapedlangs)
+            #Todo Quitar el idioma
             title += bbcode_kodi2html(" ( [COLOR teal][B]" + textoidiomas + "[/B][/COLOR])")
 
         if scrapedrating != ">":
             valoracion = re.sub(r'><[^>]+>(\d+)<b class="dec">(\d+)</b>', r'\1,\2', scrapedrating)
+            infoLabels['rating']=valoracion
             title += bbcode_kodi2html(" ([COLOR orange]" + valoracion + "[/COLOR])")
 
         url = urlparse.urljoin(item.url, scrapedurl)
@@ -348,7 +350,8 @@ def fichas(item):
 
         itemlist.append(
             Item(channel=item.channel, action=action, title=title, url=url, fulltitle=title, thumbnail=thumbnail,
-                 show=show, folder=True, contentType=contentType, contentTitle=contentTitle))
+                 show=show, folder=True, contentType=contentType, contentTitle=contentTitle,
+                 language =textoidiomas, infoLabels=infoLabels))
 
     ## Paginación
     next_page_url = scrapertools.find_single_match(data, '<a href="([^"]+)">.raquo;</a>')
@@ -424,7 +427,7 @@ def episodios(item):
         for episode in episodes:
 
             thumbnail = host + "/thumbs/" + episode['thumbnail']
-
+            language = episode['languages']
             temporada = episode['season']
             episodio = episode['episode']
             if len(episodio) == 1: episodio = '0' + episodio
@@ -465,7 +468,8 @@ def episodios(item):
                 'id'] + ";3"
 
             itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url,
-                                 thumbnail=thumbnail, show=item.show, folder=True, contentType="episode"))
+                                 thumbnail=thumbnail, show=item.show, folder=True, contentType="episode",
+                                 language=language))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=url_targets,
@@ -610,7 +614,6 @@ def findvideos(item):
     itemlist = []
     ## Carga estados
     status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
-
     url_targets = item.url
 
     ## Vídeos
@@ -794,11 +797,14 @@ def agrupa_datos(data):
 
 def extrae_idiomas(bloqueidiomas):
     logger.info("idiomas=" + bloqueidiomas)
+    # Todo cambiar por lista
+    #textoidiomas=[]
+    textoidiomas = ''
     patronidiomas = '([a-z0-9]+).png"'
     idiomas = re.compile(patronidiomas, re.DOTALL).findall(bloqueidiomas)
-    textoidiomas = ""
     for idioma in idiomas:
-        textoidiomas = textoidiomas + idioma.upper() + " "
+        textoidiomas = textoidiomas + idioma +" "
+        #textoidiomas.append(idioma.upper())
 
     return textoidiomas
 

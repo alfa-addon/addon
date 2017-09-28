@@ -3,7 +3,7 @@
   "name": "Documentales Online",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/fsrnC4m.jpg",
   "version": 1,
   "changes": [

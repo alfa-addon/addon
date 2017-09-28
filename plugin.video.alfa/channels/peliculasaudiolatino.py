@@ -7,7 +7,7 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import logger
+from platformcode import logger, config
 
 HOST = 'http://peliculasaudiolatino.com'
 
@@ -153,10 +153,19 @@ def findvideos(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     for servidor, idioma, calidad, scrapedurl in matches:
         url = scrapedurl
-        title = "Ver en " + servidor + " [" + idioma + "][" + calidad + "]"
+        server = servertools.get_server_name(servidor)
+        title = "Enlace encontrado en %s" % (server)
         itemlist.append(Item(channel=item.channel, action="play", title=title, fulltitle=item.fulltitle, url=url,
-                             thumbnail=scrapedthumbnail, folder=False))
-
+                             thumbnail=scrapedthumbnail, language=idioma, quality=calidad, server=server))
+    if itemlist:
+        itemlist.append(Item(channel=item.channel))
+        itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer",
+                                   text_color="magenta"))
+        # Opción "Añadir esta película a la biblioteca de KODI"
+        if config.get_videolibrary_support():
+            itemlist.append(Item(channel=item.channel, title="Añadir pelicula a la videoteca", text_color="green",
+                                 action="add_pelicula_to_library", url=item.url, thumbnail=item.thumbnail,
+                                 fulltitle=item.fulltitle))
     return itemlist
 
 

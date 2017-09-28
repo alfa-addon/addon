@@ -3,7 +3,7 @@
   "name": "Discoverymx",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "discoverymx.png",
   "banner": "discoverymx.png",
   "version": 1,
@@ -18,7 +18,6 @@
     }
   ],
   "categories": [
-    "latino",
     "documentary"
   ]
 }

@@ -3,23 +3,24 @@
 import re
 import urlparse
 
+from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import logger
+from platformcode import logger, config
 
+host = "http://www.peliculasrey.com/"
 
 def mainlist(item):
     logger.info()
 
     itemlist = []
-    itemlist.append(
-        Item(channel=item.channel, action="PorFecha", title="Año de Lanzamiento", url="http://www.peliculasrey.com"))
-    itemlist.append(Item(channel=item.channel, action="Idiomas", title="Idiomas", url="http://www.peliculasrey.com"))
-    itemlist.append(
-        Item(channel=item.channel, action="calidades", title="Por calidad", url="http://www.peliculasrey.com"))
-    itemlist.append(Item(channel=item.channel, action="generos", title="Por género", url="http://www.peliculasrey.com"))
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar...", url="http://www.peliculasrey.com"))
+    itemlist.append(Item(channel=item.channel, action="peliculas", title="Recientes", url=host))
+    itemlist.append(Item(channel=item.channel, action="PorFecha", title="Año de Lanzamiento", url=host))
+    itemlist.append(Item(channel=item.channel, action="Idiomas", title="Idiomas", url=host))
+    itemlist.append(Item(channel=item.channel, action="calidades", title="Por calidad", url=host))
+    itemlist.append(Item(channel=item.channel, action="generos", title="Por género", url=host))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar...", url=host))
 
     return itemlist
 
@@ -28,9 +29,8 @@ def PorFecha(item):
     logger.info()
 
     # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, '<section class="lanzamiento">(.*?)</section>')
-    logger.info("data=" + data)
 
     # Extrae las entradas (carpetas)
     patron = '<a href="([^"]+).*?title="([^"]+)'
@@ -42,7 +42,6 @@ def PorFecha(item):
         thumbnail = ""
         plot = ""
         url = urlparse.urljoin(item.url, scrapedurl)
-        logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
         itemlist.append(
             Item(channel=item.channel, action="peliculas", title=title, url=url, thumbnail=thumbnail, plot=plot,
                  fulltitle=title, viewmode="movie"))
@@ -54,9 +53,8 @@ def Idiomas(item):
     logger.info()
 
     # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, '<section class="idioma">(.*?)</section>')
-    logger.info("data=" + data)
 
     # Extrae las entradas (carpetas)
     patron = '<a href="([^"]+).*?title="([^"]+)'
@@ -68,7 +66,6 @@ def Idiomas(item):
         thumbnail = ""
         plot = ""
         url = urlparse.urljoin(item.url, scrapedurl)
-        logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
         itemlist.append(
             Item(channel=item.channel, action="peliculas", title=title, url=url, thumbnail=thumbnail, plot=plot,
                  fulltitle=title, viewmode="movie"))
@@ -80,9 +77,8 @@ def calidades(item):
     logger.info()
 
     # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, '<section class="calidades">(.*?)</section>')
-    logger.info("data=" + data)
 
     # Extrae las entradas (carpetas)
     patron = '<a href="([^"]+).*?title="([^"]+)'
@@ -94,7 +90,6 @@ def calidades(item):
         thumbnail = ""
         plot = ""
         url = urlparse.urljoin(item.url, scrapedurl)
-        logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
         itemlist.append(
             Item(channel=item.channel, action="peliculas", title=title, url=url, thumbnail=thumbnail, plot=plot,
                  fulltitle=title, viewmode="movie"))
@@ -105,12 +100,8 @@ def calidades(item):
 def generos(item):
     logger.info()
 
-    # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, '<section class="generos">(.*?)</section>')
-    logger.info("data=" + data)
-
-    # Extrae las entradas (carpetas)
     patron = '<a href="([^"]+).*?title="([^"]+)'
     matches = re.compile(patron, re.DOTALL).findall(data)
     itemlist = []
@@ -120,7 +111,8 @@ def generos(item):
         thumbnail = ""
         plot = ""
         url = urlparse.urljoin(item.url, scrapedurl)
-        logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
+        if "Adulto" in title and config.get_setting("adult_mode") == 0:
+            continue
         itemlist.append(
             Item(channel=item.channel, action="peliculas", title=title, url=url, thumbnail=thumbnail, plot=plot,
                  fulltitle=title, viewmode="movie"))
@@ -131,7 +123,7 @@ def generos(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "http://www.peliculasrey.com/?s=" + texto
+    item.url = host + "?s=" + texto
 
     try:
         # return buscar(item)
@@ -148,8 +140,7 @@ def peliculas(item):
     logger.info()
 
     # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
-    logger.info("data=" + data)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
 
     tabla_pelis = scrapertools.find_single_match(data,
@@ -160,13 +151,18 @@ def peliculas(item):
     itemlist = []
 
     for scrapedthumbnail, scrapedtitle, scrapedurl in matches:
-        logger.debug("title=[" + scrapedtitle + "], url=[" + scrapedurl + "], thumbnail=[" + scrapedthumbnail + "]")
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, plot="", fulltitle=scrapedtitle))
+        fulltitle = scrapedtitle.replace(scrapertools.find_single_match(scrapedtitle, '\([0-9]+\)' ), "")
+        itemlist.append(Item(channel = item.channel,
+                             action = "findvideos",
+                             title = scrapedtitle,
+                             url = scrapedurl,
+                             thumbnail = scrapedthumbnail, 
+                             plot = "",
+                             fulltitle = fulltitle
+                             ))
 
     next_page = scrapertools.find_single_match(data, 'rel="next" href="([^"]+)')
     if next_page != "":
-        #    itemlist.append( Item(channel=item.channel, action="peliculas" , title=">> Página siguiente" , url=item.url+next_page, folder=True, viewmode="movie"))
         itemlist.append(
             Item(channel=item.channel, action="peliculas", title=">> Página siguiente", url=next_page, folder=True,
                  viewmode="movie"))
@@ -177,40 +173,43 @@ def peliculas(item):
 def findvideos(item):
     logger.info()
 
-    # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
-    # logger.info("data="+data)
-
-    # Extrae las entradas (carpetas)  
+    data = httptools.downloadpage(item.url).data
     patron = 'hand" rel="([^"]+).*?title="(.*?)".*?<span>([^<]+)</span>.*?</span><span class="q">(.*?)<'
-
     matches = re.compile(patron, re.DOTALL).findall(data)
     itemlist = []
+    encontrados = []
+    itemtemp = []
 
-    for scrapedurl, nombre_servidor, idioma, calidad in matches:
-        idioma = idioma.strip()
-        calidad = calidad.strip()
-
-        title = "Ver en " + nombre_servidor + " (" + idioma + ") (Calidad " + calidad + ")"
-        url = scrapedurl
-        thumbnail = ""
-        plot = ""
-        logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
-        itemlist.append(Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                             folder=False))
-
+    for scrapedurl, server_name, language, quality in matches:
+        if scrapedurl in encontrados:
+            continue
+        encontrados.append(scrapedurl)
+        language = language.strip()
+        quality = quality.strip()
+        itemlist.append(Item(channel=item.channel,
+                             action = "play",
+                             extra = "",
+                             fulltitle = item.fulltitle,
+                             title = "%s (" + language + ") (" + quality + ")",
+                             thumbnail = item.thumbnail,
+                             url = scrapedurl,
+                             folder = False,
+                             language = language,
+                             quality = quality
+                             ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    if itemlist:
+        itemlist.append(Item(channel=item.channel))
+        itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer",
+                                   text_color="magenta"))
+        # Opción "Añadir esta película a la biblioteca de KODI"
+        if config.get_videolibrary_support():
+            itemlist.append(Item(channel=item.channel, title="Añadir pelicula a la videoteca", text_color="green",
+                                 action="add_pelicula_to_library", url=item.url, thumbnail=item.thumbnail,
+                                 fulltitle=item.fulltitle))   
     return itemlist
 
 
 def play(item):
-    logger.info("url=" + item.url)
-
-    itemlist = servertools.find_video_items(data=item.url)
-
-    for videoitem in itemlist:
-        videoitem.title = item.title
-        videoitem.fulltitle = item.fulltitle
-        videoitem.thumbnail = item.thumbnail
-        videoitem.channel = item.channel
-
-    return itemlist
+    item.thumbnail = item.contentThumbnail
+    return [item]

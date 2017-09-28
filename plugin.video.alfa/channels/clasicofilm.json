@@ -3,7 +3,7 @@
   "name": "ClasicoFilm",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "http://i.imgur.com/F7sevVu.jpg?1",
   "banner": "clasicofilm.png",
   "version": 1,

@@ -3,7 +3,7 @@
   "name": "javus.net",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "thumbnail": "https://s15.postimg.org/pzd3h4vy3/javus.png",
   "banner": "https://s21.postimg.org/5pqzedp2f/javus_banner.png",
   "version": 1,

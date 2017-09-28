@@ -3,7 +3,7 @@
   "name": "Vixto",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "banner": "vixto.png",
   "thumbnail": "http://i.imgur.com/y4c4HT2.png",
   "version": 1,
@@ -22,7 +22,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie",
     "tvshow",
     "vos"

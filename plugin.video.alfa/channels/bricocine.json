@@ -3,7 +3,7 @@
   "name": "Bricocine",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "http://s6.postimg.org/9u8m1ep8x/bricocine.jpg",
   "banner": "bricocine.png",
   "version": 1,

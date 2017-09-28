@@ -3,7 +3,7 @@
   "name": "PelisMagnet",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "pelismagnet.png",
   "banner": "pelismagnet.png",
   "changes": {

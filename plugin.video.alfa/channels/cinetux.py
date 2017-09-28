@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import urlparse
-
 from core import httptools
 from core import scrapertools
 from core import servertools
@@ -48,13 +46,11 @@ def mainlist(item):
                                          "/0/Genre.png",
                                text_color=color1))
 
-    url = urlparse.urljoin(CHANNEL_HOST, "genero/documental/")
     itemlist.append(item.clone(title="Documentales", text_bold=True, text_color=color2, action=""))
-    itemlist.append(item.clone(action="peliculas", title="      Novedades", url=url, text_color=color1,
+    itemlist.append(item.clone(action="peliculas", title="      Novedades", url=CHANNEL_HOST + "genero/documental/", text_color=color1,
                                thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
                                          "/0/Documentaries.png"))
-    url = urlparse.urljoin(CHANNEL_HOST, "genero/documental/?orderby=title&order=asc&gdsr_order=asc")
-    itemlist.append(item.clone(action="peliculas", title="      Por orden alfabético", text_color=color1, url=url,
+    itemlist.append(item.clone(action="peliculas", title="      Por orden alfabético", text_color=color1, url=CHANNEL_HOST + "genero/documental/?orderby=title&order=asc&gdsr_order=asc",
                                thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
                                          "/0/A-Z.png"))
     itemlist.append(item.clone(title="", action=""))
@@ -100,7 +96,7 @@ def newest(categoria):
                 itemlist.pop()
 
         elif categoria == 'documentales':
-            item.url = urlparse.urljoin(CHANNEL_HOST, "genero/documental/")
+            item.url = CHANNEL_HOST + "genero/documental/"
             item.action = "peliculas"
             itemlist = peliculas(item)
 
@@ -108,7 +104,7 @@ def newest(categoria):
                 itemlist.pop()
 
         elif categoria == 'infantiles':
-            item.url = urlparse.urljoin(CHANNEL_HOST, "genero/infantil/")
+            item.url = CHANNEL_HOST + "genero/infantil/"
             item.action = "peliculas"
             itemlist = peliculas(item)
 
@@ -130,7 +126,6 @@ def peliculas(item):
     itemlist = []
     item.text_color = color2
 
-    # Descarga la página
     data = httptools.downloadpage(item.url).data
     patron = '(?s)class="(?:result-item|item movies)">.*?<img src="([^"]+)'
     patron += '.*?alt="([^"]+)"'
@@ -156,11 +151,6 @@ def peliculas(item):
         if year:
             new_item.infoLabels['year'] = int(year)
         itemlist.append(new_item)
-    try:
-        # tmdb.set_infoLabels(itemlist, __modo_grafico__)
-        a = 1
-    except:
-        pass
 
     # Extrae el paginador
     next_page_link = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)')
@@ -218,7 +208,6 @@ def generos(item):
         scrapedtitle = unicode(scrapedtitle, "utf8").capitalize().encode("utf8")
         if scrapedtitle == "Erotico" and config.get_setting("adult_mode") == 0:
             continue
-
         itemlist.append(item.clone(action="peliculas", title=scrapedtitle, url=scrapedurl))
 
     return itemlist
@@ -228,9 +217,9 @@ def idioma(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(action="peliculas", title="Español", url="http://www.cinetux.net/idioma/espanol/"))
-    itemlist.append(item.clone(action="peliculas", title="Latino", url="http://www.cinetux.net/idioma/latino/"))
-    itemlist.append(item.clone(action="peliculas", title="VOSE", url="http://www.cinetux.net/idioma/subtitulado/"))
+    itemlist.append(item.clone(action="peliculas", title="Español", url= CHANNEL_HOST + "idioma/espanol/"))
+    itemlist.append(item.clone(action="peliculas", title="Latino", url= CHANNEL_HOST + "idioma/latino/"))
+    itemlist.append(item.clone(action="peliculas", title="VOSE", url= CHANNEL_HOST + "idioma/subtitulado/"))
 
     return itemlist
 
@@ -290,7 +279,6 @@ def findvideos(item):
 
     else:
         itemlist.append(item.clone(title="No hay enlaces disponibles", action="", text_color=color3))
-
     return itemlist
 
 
@@ -307,6 +295,7 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
         patron = '(?is)#(option-[^"]+).*?png">([^<]+)'
         match = scrapertools.find_multiple_matches(data, patron)
         for scrapedoption, language in match:
+            scrapedserver = ""
             lazy = ""
             if "lazy" in bloque1:
                 lazy = "lazy-"
@@ -314,15 +303,13 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
             url = scrapertools.find_single_match(bloque1, patron)
             if "goo.gl" in url:
                 url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
-            if "www.cinetux.me" in url:
-                server = scrapertools.find_single_match(url, "player/(.*?)\.")
-            else:
-                server = servertools.get_server_from_url(url)
-            matches.append([url, server, "", language.strip(), t_tipo])
+            if "player" in url:
+                scrapedserver = scrapertools.find_single_match(url, 'player/(\w+)')
+            matches.append([url, scrapedserver, "", language.strip(), t_tipo])
     bloque2 = scrapertools.find_single_match(data, '(?s)box_links.*?dt_social_single')
     bloque2 = bloque2.replace("\t", "").replace("\r", "")
     patron = '(?s)optn" href="([^"]+)'
-    patron += '.*?title="([^"]+)'
+    patron += '.*?title="([^\.]+)'
     patron += '.*?src.*?src="[^>]+"?/>([^<]+)'
     patron += '.*?src="[^>]+"?/>([^<]+)'
     patron += '.*?/span>([^<]+)'
@@ -336,19 +323,19 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
         scrapedtipo = match[4]
         if t_tipo.upper() not in scrapedtipo.upper():
             continue
-        title = "   Mirror en " + scrapedserver.split(".")[0] + " (" + scrapedlanguage + ")"
+        title = "   Mirror en %s (" + scrapedlanguage + ")"
         if len(scrapedcalidad.strip()) > 0:
             title += " (Calidad " + scrapedcalidad.strip() + ")"
 
         if filtro_idioma == 3 or item.filtro:
             lista_enlaces.append(item.clone(title=title, action="play", text_color=color2,
                                             url=scrapedurl, server=scrapedserver, idioma=scrapedlanguage,
-                                            extra=item.url))
+                                            extra=item.url, contentThumbnail = item.thumbnail))
         else:
             idioma = dict_idiomas[language]
             if idioma == filtro_idioma:
                 lista_enlaces.append(item.clone(title=title, text_color=color2, action="play", url=scrapedurl,
-                                                extra=item.url))
+                                                extra=item.url, contentThumbnail = item.thumbnail))
             else:
                 if language not in filtrados:
                     filtrados.append(language)
@@ -357,30 +344,28 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
             title = "Mostrar enlaces filtrados en %s" % ", ".join(filtrados)
             lista_enlaces.append(item.clone(title=title, action="findvideos", url=item.url, text_color=color3,
                                             filtro=True))
+    lista_enlaces = servertools.get_servers_itemlist(lista_enlaces, lambda i: i.title % i.server.capitalize())
     return lista_enlaces
 
 
 def play(item):
     logger.info()
     itemlist = []
-    video_urls = []
     if "api.cinetux" in item.url:
         data = httptools.downloadpage(item.url, headers={'Referer': item.extra}).data.replace("\\", "")
         id = scrapertools.find_single_match(data, 'img src="[^#]+#(.*?)"')
         item.url = "https://youtube.googleapis.com/embed/?status=ok&hl=es&allow_embed=1&ps=docs&partnerid=30&hd=1&autoplay=0&cc_load_policy=1&showinfo=0&docid=" + id
-        itemlist = servertools.find_video_items(data=item.url)
     elif "links" in item.url or "www.cinetux.me" in item.url:
         data = httptools.downloadpage(item.url).data
         scrapedurl = scrapertools.find_single_match(data, '<a href="(http[^"]+)')
         if scrapedurl == "":
-            scrapedurl = scrapertools.find_single_match(data, '(?i)<frame src="(http[^"]+)')
+            scrapedurl = scrapertools.find_single_match(data, '(?i)frame.*?src="(http[^"]+)')
             if scrapedurl == "":
                 scrapedurl = scrapertools.find_single_match(data, 'replace."([^"]+)"')
         elif "goo.gl" in scrapedurl:
             scrapedurl = httptools.downloadpage(scrapedurl, follow_redirects=False, only_headers=True).headers.get(
                 "location", "")
         item.url = scrapedurl
-        itemlist = servertools.find_video_items(data=item.url)
-    else:
-        return [item]
-    return itemlist
+    item.thumbnail = item.contentThumbnail
+    item.server = servertools.get_server_from_url(item.url)
+    return [item]

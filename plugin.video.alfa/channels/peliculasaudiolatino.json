@@ -3,7 +3,7 @@
   "name": "Peliculasaudiolatino",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["lat"],
   "thumbnail": "peliculasaudiolatino.png",
   "banner": "peliculasaudiolatino.png",
   "version": 1,
@@ -22,7 +22,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie"
   ],
   "settings": [

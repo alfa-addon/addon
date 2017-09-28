@@ -3,7 +3,7 @@
   "name": "VePelis",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "banner": "vepelis.png",
   "thumbnail": "vepelis.png",
   "version": 1,
@@ -18,7 +18,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie"
   ],
   "settings": [

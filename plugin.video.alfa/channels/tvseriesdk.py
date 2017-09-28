@@ -4,7 +4,7 @@
 # -*- By the Alfa Develop Group -*-
 
 import re
-
+from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
 from core import servertools
@@ -66,7 +66,7 @@ def list_all(item):
                                    plot=plot,
                                    contentErieName=contentSerieName
                                    ))
-    itemlist = get_thumb(templist)
+    itemlist = serie_thumb(templist)
     #  Paginación
     if url_next_page:
         itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, next_page=next_page, i=item.i))
@@ -110,7 +110,7 @@ def episodios(item):
     return itemlist
 
 
-def get_thumb(itemlist):
+def serie_thumb(itemlist):
     logger.info()
     for item in itemlist:
         data = get_source(item.url)
@@ -135,7 +135,7 @@ def search_list(item):
     next_page = scrapertools.find_single_match(data, '<link rel=next href=(.*?) />')
     if next_page:
         itemlist.append(Item(channel=item.channel, action="search_list", title='>> Pagina Siguiente', url=next_page,
-                             thumbnail=config.get_thumb("thumb_next.png")))
+                             thumbnail = get_thumb('thumb_next.png')))
 
     return itemlist
 

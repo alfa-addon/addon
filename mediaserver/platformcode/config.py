@@ -233,9 +233,12 @@ def get_localized_string(code):
     translationsfile = open(TRANSLATION_FILE_PATH, "r")
     translations = translationsfile.read()
     translationsfile.close()
-    cadenas = re.findall('<string id="%s">([^<]+)<' % code, translations)
+    cadenas = re.findall('msgctxt\s*"#%s"\nmsgid\s*"(.*?)"\nmsgstr\s*"(.*?)"' % code, translations)
+
     if len(cadenas) > 0:
-        dev = cadenas[0]
+        dev = cadenas[0][1]
+        if not dev:
+            dev = cadenas[0][0]
     else:
         dev = "%d" % code
 
@@ -366,7 +369,7 @@ configfilepath = os.path.join(get_data_path(), "settings.xml")
 if not os.path.exists(get_data_path()):
     os.mkdir(get_data_path())
 # Literales
-TRANSLATION_FILE_PATH = os.path.join(get_runtime_path(), "resources", "language", "Spanish", "strings.xml")
+TRANSLATION_FILE_PATH = os.path.join(get_runtime_path(), "resources", "language", "Spanish", "strings.po")
 load_settings()
 
 # modo adulto:

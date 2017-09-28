@@ -3,7 +3,7 @@
   "name": "Plusdede",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "plusdede.png",
   "banner": "plusdede.png",
   "version": 1,

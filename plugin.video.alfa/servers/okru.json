@@ -28,7 +28,12 @@
     ]
   },
   "free": true,
-  "id": "okru",
+  "id": {
+    "value": [
+      "okru",
+      "ok.ru"
+    ]
+  },
   "name": "okru",
   "settings": [
     {

@@ -4,7 +4,7 @@
         <setting id="player_mode" type="enum" values="Direct|SetResolvedUrl|Built-In|Download and Play" label="30044" default="0"/>
         <setting id="default_action" type="enum" lvalues="30006|30007|30008" label="30005" default="0"/>
         <setting id="thumbnail_type" type="enum" lvalues="30011|30012|30200" label="30010" default="2"/>
-        <setting id="channel_language" type="labelenum" values="all|es|en|it" label="30019" default="all"/>
+        <setting id="channel_language" type="labelenum" values="all|cast|lat" label="30019" default="all"/>
         <setting id="forceview" type="bool" label="30043" default="false"/>
         <setting id="debug" type="bool" label="30003" default="false"/>
         <setting label="Uso de servidores" type="lsep"/>
@@ -19,12 +19,6 @@
         <setting id="adult_request_password" type="bool" label="Solicitar contraseña para abrir canales de adultos"  enable="!eq(-1,0)+!eq(-2,)" default="true"/>
         <setting id="adult_aux_new_password1" type="text" label="Nueva contraseña:" option="hidden" enable="!eq(-3,)" default=""/>
         <setting id="adult_aux_new_password2" type="text" label="Confirmar nueva contraseña:" option="hidden" enable="!eq(-1,)" default=""/>
-
-        <!--<setting type="sep"/>-->
-        <!--<setting label="Actualizaciones" type="lsep"/>-->
-        <!--<setting id="plugin_updates_available" type="number" label="Number of updates available" default="0" visible="false"/>-->
-        <!--<setting id="check_for_plugin_updates" type="bool" label="30001" default="true"/>-->
-        <!--<setting id="check_for_channel_updates" type="bool" label="30004" default="true"/>-->
     </category>
 
     <!-- Path downloads and subtitles -->
@@ -45,9 +39,12 @@
         <setting id="videolibrary_kodi" type="bool" label="Autoconfigurar videoteca de XBMC/Kodi para contenido de Alfa" enable="lt(-1,2)+eq(0,false)" default="false"/>
     </category>
 
-    <category label="Otros"><!--30503 -->
+    <category label="Otros">
         <setting label="Info de películas/series en menú contextual" type="lsep"/>
         <setting id="infoplus" type="bool" label="Mostrar opción Infoplus:" default="true"/>
         <setting id="extended_info" type="bool" label="Mostrar opción ExtendedInfo (Necesario addon externo):" default="false"/>
-    </category>
+		
+		<setting label="Botones/Teclas de acceso (Cambios requieren reiniciar Kodi)" type="lsep"/>
+		<setting id="shortcut_key" type="action" label="30999" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAia2V5bWFwIg0KfQ==)" />
+   </category>
 </settings>

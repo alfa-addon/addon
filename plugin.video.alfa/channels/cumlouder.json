@@ -3,7 +3,7 @@
   "name": "Cumlouder",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "thumbnail": "cumlouder.png",
   "banner": "cumlouder.png",
   "version": 1,

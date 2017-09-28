@@ -6,6 +6,7 @@ import urllib
 from core import httptools
 from core import jsontools
 from core import scrapertools
+from core import servertools
 from core.item import Item
 from platformcode import config, logger
 
@@ -84,7 +85,7 @@ def menu_genero(item):
 
     itemlist = []
 
-    response = httptools.downloadpage("https://kproxy.com/")
+    httptools.downloadpage("https://kproxy.com/")
     url = "https://kproxy.com/doproxy.jsp"
     post = "page=%s&x=34&y=14" % urllib.quote(host + "/principal")
     response = httptools.downloadpage(url, post, follow_redirects=False).data
@@ -108,7 +109,7 @@ def series(item):
     logger.info()
     itemlist = []
 
-    response = httptools.downloadpage("https://kproxy.com/")
+    httptools.downloadpage("https://kproxy.com/")
     url = "https://kproxy.com/doproxy.jsp"
     post = "page=%s&x=34&y=14" % urllib.quote(item.url)
     response = httptools.downloadpage(url, post, follow_redirects=False).data
@@ -126,17 +127,17 @@ def series(item):
         punt = i.get("puntuacio", "")
         valoracion = ""
         if punt and not 0:
-            valoracion = "  (Val: {punt})".format(punt=punt)
+            valoracion = "  (Val: %s)" % punt
 
-        title = "{nombre}{val}".format(nombre=i.get("nom", ""), val=valoracion)
-        url = "{url}?id={id}".format(url=api_temp, id=i.get("id", ""))
+        title = "%s%s" % (i.get("nom", ""), valoracion)
+        url = "%s?id=%s" % (api_temp, i.get("id", ""))
 
         thumbnail = ""
         fanart = ""
         if i.get("posterurl", ""):
-            thumbnail = "http://image.tmdb.org/t/p/w342{file}".format(file=i.get("posterurl", ""))
+            thumbnail = "http://image.tmdb.org/t/p/w342%s" % i.get("posterurl", "")
         if i.get("backurl", ""):
-            fanart = "http://image.tmdb.org/t/p/w1280{file}".format(file=i.get("backurl", ""))
+            fanart = "http://image.tmdb.org/t/p/w1280%s" % i.get("backurl", "")
 
         plot = i.get("info", "")
         if plot is None:
@@ -144,7 +145,7 @@ def series(item):
 
         infoLabels = {'plot': plot, 'year': i.get("year"), 'tmdb_id': i.get("id"), 'mediatype': 'tvshow'}
 
-        itemlist.append(Item(channel=item.channel, action="episodios", title=title, url=url, server="torrent",
+        itemlist.append(Item(channel=item.channel, action="episodios", title=title, url=url,
                              thumbnail=thumbnail, fanart=fanart, infoLabels=infoLabels, contentTitle=i.get("nom"),
                              show=i.get("nom")))
 
@@ -165,7 +166,7 @@ def episodios(item):
     logger.info()
     itemlist = []
 
-    response = httptools.downloadpage("https://kproxy.com/")
+    httptools.downloadpage("https://kproxy.com/")
     url = "https://kproxy.com/doproxy.jsp"
     post = "page=%s&x=34&y=14" % urllib.quote(item.url)
     response = httptools.downloadpage(url, post, follow_redirects=False).data
@@ -173,48 +174,61 @@ def episodios(item):
     data = httptools.downloadpage(url).data
 
     data = jsontools.load(data)
-    for i in data.get("temporadas", []):
 
-        titulo = "{temporada} ({total} Episodios)".format(temporada=i.get("nomtemporada", ""),
-                                                          total=len(i.get("capituls", "0")))
-        itemlist.append(Item(channel=item.channel, action="episodios", title=titulo, url=item.url,
-                             server="torrent", fanart=item.fanart, thumbnail=item.thumbnail, plot=data.get("info", ""),
-                             folder=False))
+    dict_episodes = dict()
+
+    for i in data.get("temporadas", []):
 
         for j in i.get("capituls", []):
 
-            numero = j.get("infocapitul", "")
-            if not numero:
-                numero = "{temp}x{cap}".format(temp=i.get("numerotemporada", ""), cap=j.get("numerocapitul", ""))
+            numero = j.get("infocapitul", "%sx%s" % (i.get("numerotemporada", 0), j.get("numerocapitul", 0)))
 
-            titulo = j.get("nomcapitul", "")
-            if not titulo:
-                titulo = "Capítulo {num}".format(num=j.get("numerocapitul", ""))
+            if numero not in dict_episodes:
+                dict_episodes[numero] = {}
+                dict_episodes[numero]["title"] = j.get("nomcapitul", "Episodio %s" % j.get("numerocapitul", ""))
 
-            calidad = ""
-            if j.get("links", {}).get("calitat", ""):
-                calidad = " [{calidad}]".format(calidad=j.get("links", {}).get("calitat", ""))
+                season = i.get("numerotemporada", 0)
+                if type(season) == str:
+                    season = 0
+                dict_episodes[numero]["season"] = season
 
-            title = "     {numero} {titulo}{calidad}".format(numero=numero, titulo=titulo, calidad=calidad)
+                episode = j.get("numerocapitul", 0)
+                if type(episode) == str:
+                    episode = 0
+                dict_episodes[numero]["episode"] = episode
 
-            if j.get("links", {}).get("magnet", ""):
-                url = j.get("links", {}).get("magnet", "")
+                if j.get("links", {}).get("magnet"):
+                    dict_episodes[numero]["url"] = [j.get("links", {}).get("magnet")]
+                    dict_episodes[numero]["quality"] = [j.get("links", {}).get("calitat", "")]
+
+                dict_episodes[numero]["plot"] = j.get("overviewcapitul", "")
+
             else:
-                return [Item(channel=item.channel, title='No hay enlace magnet disponible para este capitulo')]
+                if dict_episodes[numero]["title"] == "":
+                    dict_episodes[numero]["title"] = j.get("nomcapitul", "Episodio %s" % j.get("numerocapitul", ""))
 
-            plot = i.get("overviewcapitul", "")
-            if plot is None:
-                plot = ""
+                if j.get("links", {}).get("magnet"):
+                    dict_episodes[numero]["url"].append(j.get("links", {}).get("magnet"))
+                    dict_episodes[numero]["quality"].append(j.get("links", {}).get("calitat", ""))
 
-            infoLabels = item.infoLabels
-            if plot:
-                infoLabels["plot"] = plot
-            infoLabels["season"] = i.get("numerotemporada")
-            infoLabels["episode"] = j.get("numerocapitul")
-            itemlist.append(
-                Item(channel=item.channel, action="play", title=title, url=url, server="torrent", infoLabels=infoLabels,
-                     thumbnail=item.thumbnail, fanart=item.fanart, show=item.show, contentTitle=item.contentTitle,
-                     contentSeason=i.get("numerotemporada"), contentEpisodeNumber=j.get("numerocapitul")))
+                if dict_episodes[numero]["plot"] == "":
+                    dict_episodes[numero]["plot"] = j.get("overviewcapitul", "")
+
+    # logger.debug("\n\n\n dict_episodes: %s " % dict_episodes)
+
+    for key, value in dict_episodes.items():
+        list_no_duplicate = list(set(value["quality"]))
+        title = "%s %s [%s]" % (key, value["title"], "][".join(list_no_duplicate))
+
+        itemlist.append(
+            Item(channel=item.channel, action="findvideos", title=title, url=url,
+                 thumbnail=item.thumbnail, fanart=item.fanart, show=item.show, data=value,
+                 contentSerieName=item.contentTitle, contentSeason=value["season"],
+                 contentEpisodeNumber=value["episode"]))
+
+    # order list
+    if len(itemlist) > 1:
+        itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
 
     return itemlist
 
@@ -224,7 +238,7 @@ def pelis(item):
 
     itemlist = []
 
-    response = httptools.downloadpage("https://kproxy.com/")
+    httptools.downloadpage("https://kproxy.com/")
     url = "https://kproxy.com/doproxy.jsp"
     post = "page=%s&x=34&y=14" % urllib.quote(item.url)
     response = httptools.downloadpage(url, post, follow_redirects=False).data
@@ -242,34 +256,35 @@ def pelis(item):
         valoracion = ""
 
         if punt and not 0:
-            valoracion = "  (Val: {punt})".format(punt=punt)
+            valoracion = "  (Val: %s)" % punt
 
         if i.get("magnets", {}).get("M1080", {}).get("magnet", ""):
             url = i.get("magnets", {}).get("M1080", {}).get("magnet", "")
-            calidad = "[{calidad}]".format(calidad=i.get("magnets", {}).get("M1080", {}).get("quality", ""))
+            calidad = "%s" % i.get("magnets", {}).get("M1080", {}).get("quality", "")
         else:
             url = i.get("magnets", {}).get("M720", {}).get("magnet", "")
-            calidad = "[{calidad}]".format(calidad=i.get("magnets", {}).get("M720", {}).get("quality", ""))
+            calidad = "%s" % (i.get("magnets", {}).get("M720", {}).get("quality", ""))
 
         if not url:
             continue
 
-        title = "{nombre} {calidad}{val}".format(nombre=i.get("nom", ""), val=valoracion, calidad=calidad)
+        title = "%s %s%s" % (i.get("nom", ""), valoracion, calidad)
 
         thumbnail = ""
         fanart = ""
         if i.get("posterurl", ""):
-            thumbnail = "http://image.tmdb.org/t/p/w342{file}".format(file=i.get("posterurl", ""))
+            thumbnail = "http://image.tmdb.org/t/p/w342%s" % i.get("posterurl", "")
         if i.get("backurl", ""):
-            fanart = "http://image.tmdb.org/t/p/w1280{file}".format(file=i.get("backurl", ""))
+            fanart = "http://image.tmdb.org/t/p/w1280%s" % i.get("backurl", "")
 
         plot = i.get("info", "")
         if plot is None:
             plot = ""
         infoLabels = {'plot': plot, 'year': i.get("year"), 'tmdb_id': i.get("id")}
 
-        itemlist.append(Item(channel=item.channel, action="play", title=title, url=url, server="torrent",
-                             thumbnail=thumbnail, fanart=fanart, infoLabels=infoLabels, contentTitle=i.get("nom")))
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, server="torrent",
+                             contentType="movie", thumbnail=thumbnail, fanart=fanart, infoLabels=infoLabels,
+                             contentTitle=i.get("nom"), quality=calidad))
 
     from core import tmdb
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
@@ -298,3 +313,24 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
+
+
+def findvideos(item):
+    logger.info()
+
+    itemlist = []
+
+    if item.contentType == "movie":
+        item.title = "Enlace Torrent"
+        item.action = "play"
+        itemlist.append(item)
+    else:
+        data = item.data
+
+        for index, url in enumerate(data["url"]):
+            quality = data["quality"][index]
+            title = "Enlace torrent [%s]" % quality
+            itemlist.append(item.clone(action="play", title=title, url=url, quality=quality))
+            servertools.get_servers_itemlist(itemlist)
+
+    return itemlist

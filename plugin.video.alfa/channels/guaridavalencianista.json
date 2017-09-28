@@ -3,7 +3,7 @@
   "name": "La Guarida valencianista",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "guaridavalencianista.png",
   "banner": "guaridavalencianista.png",
   "version": 1,

@@ -258,12 +258,11 @@ def findvideos(item):
 
     # Descarga la pagina
     data = httptools.downloadpage(item.url).data
-
     item.plot = scrapertools.find_single_match(data, '<div class="post-entry" style="height:300px;">(.*?)</div>')
     item.plot = scrapertools.htmlclean(item.plot).strip()
     item.contentPlot = item.plot
 
-    link = scrapertools.find_single_match(data, 'href="http://(?:tumejorserie|tumejorjuego).*?link=([^"]+)"')
+    link = scrapertools.find_single_match(data, 'href.*?=.*?"http:\/\/(?:tumejorserie|tumejorjuego).*?link=([^"]+)"')
     if link != "":
         link = "http://www.divxatope1.com/" + link
         logger.info("torrent=" + link)
@@ -272,12 +271,16 @@ def findvideos(item):
                  url=link, thumbnail=servertools.guess_server_thumbnail("torrent"), plot=item.plot, folder=False,
                  parentContent=item))
 
-    patron = "<div class=\"box1\"[^<]+<img[^<]+</div[^<]+"
-    patron += '<div class="box2">([^<]+)</div[^<]+'
-    patron += '<div class="box3">([^<]+)</div[^<]+'
-    patron += '<div class="box4">([^<]+)</div[^<]+'
-    patron += '<div class="box5">(.*?)</div[^<]+'
-    patron += '<div class="box6">([^<]+)<'
+    patron = '<div class=\"box1\"[^<]+<img[^<]+<\/div[^<]+<div class="box2">([^<]+)<\/div[^<]+<div class="box3">([^<]+)'
+    patron += '<\/div[^<]+<div class="box4">([^<]+)<\/div[^<]+<div class="box5"><a href=(.*?) rel.*?'
+    patron += '<\/div[^<]+<div class="box6">([^<]+)<'
+
+    #patron = "<div class=\"box1\"[^<]+<img[^<]+</div[^<]+"
+    #patron += '<div class="box2">([^<]+)</div[^<]+'
+    #patron += '<div class="box3">([^<]+)</div[^<]+'
+    #patron += '<div class="box4">([^<]+)</div[^<]+'
+    #patron += '<div class="box5">(.*?)</div[^<]+'
+    #patron += '<div class="box6">([^<]+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
     scrapertools.printMatches(matches)
 
@@ -299,7 +302,7 @@ def findvideos(item):
             if "partes" in title:
                 action = "extract_url"
             new_item = Item(channel=item.channel, action=action, title=title, fulltitle=title, url=url,
-                            thumbnail=thumbnail, plot=plot, parentContent=item)
+                            thumbnail=thumbnail, plot=plot, parentContent=item, server = servername)
             if comentarios.startswith("Ver en"):
                 itemlist_ver.append(new_item)
             else:

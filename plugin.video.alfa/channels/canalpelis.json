@@ -3,7 +3,7 @@
   "name": "CanalPelis",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "fanart": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/canalpelisbg.jpg",
   "thumbnail": "http://www.canalpelis.com/wp-content/uploads/2016/11/logo_web.gif",
   "banner": "",
@@ -15,7 +15,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie",
     "tvshow",
     "vos"
@@ -38,6 +37,8 @@
       "visible": true,
       "lvalues": [
         "Sin color",
+        "Perfil 5",
+        "Perfil 4",
         "Perfil 3",
         "Perfil 2",
         "Perfil 1"

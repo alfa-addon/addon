@@ -3,7 +3,7 @@
   "name": "Peliscon",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast"],
   "thumbnail": "http://imgur.com/yTQRPUJ.png",
   "version": 1,
   "changes": [

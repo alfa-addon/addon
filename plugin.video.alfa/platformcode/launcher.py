@@ -42,14 +42,13 @@ def run(item=None):
     logger.info(item.tostring())
 
     try:
-
         # If item has no action, stops here
         if item.action == "":
             logger.info("Item sin accion")
             return
 
         # Action for main menu in channelselector
-        if item.action == "getmainlist":
+        elif item.action == "getmainlist":
             import channelselector
 
             # # Check for updates only on first screen
@@ -120,6 +119,13 @@ def run(item=None):
         elif item.action == "play_from_library":
             play_from_library(item)
             return
+
+        elif item.action == "keymap":
+            from platformcode import keymaptools
+            if item.open:
+                return keymaptools.open_shortcut_menu()
+            else:
+                return keymaptools.set_key()
 
         # Action in certain channel specified in "action" and "channel" parameters
         else:

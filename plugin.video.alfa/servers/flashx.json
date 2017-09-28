@@ -19,7 +19,7 @@
     "patterns": [
       {
         "pattern": "flashx.(?:tv|pw)/(?:embed.php\\?c=|embed-|playvid-|)([A-z0-9]+)",
-        "url": "https://www.flashx.tv/playvid-\\1.html"
+        "url": "https://www.flashx.tv/\\1.html"
       }
     ]
   },

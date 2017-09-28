@@ -49,10 +49,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
         var_r = scrapertools.find_single_match(text_decode, "window\.[A-z]+\s*=\s*['\"]([^'\"]+)['\"]")
         var_encodes = scrapertools.find_multiple_matches(data, 'id="%s[^"]*">([^<]+)<' % var_r)
-        numeros = scrapertools.find_multiple_matches(data,
-                                                     '_[A-f0-9]+x[A-f0-9]+\s*(?:=|\^)\s*([0-9]{4,}|0x[A-f0-9]{4,})')
+        numeros = scrapertools.find_single_match(data, '_[A-f0-9]+x[A-f0-9]+\s*(?:=|\^)\s*([0-9]{4,}|0x[A-f0-9]{4,})')
         op1, op2 = scrapertools.find_single_match(data, '\(0x(\d),0x(\d)\);')
-        idparse = scrapertools.find_single_match(data, "\^parseInt\('([0-9]+)'")
+        idparse, hexparse = scrapertools.find_multiple_matches(data, "parseInt\('([0-9]+)'")
+        # numeros = [numeros, str(int(hexparse, 8))]
+        rangos, rangos2 = scrapertools.find_single_match(data, "\)-([0-9]+).0x4\)/\(([0-9]+)")
         videourl = ""
         for encode in var_encodes:
             text_decode = ""
@@ -81,11 +82,12 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                         if value3 < index1:
                             break
 
-                    value4 = value2 ^ decode1[j % (mult / 8)] ^ int(idparse,8)
-                    for n in numeros:
-                        if not n.isdigit():
-                            n = int(n, 16)
-                        value4 ^= int(n)
+                    # value4 = value2 ^ decode1[j % (mult / 8)] ^ int(idparse,8)
+                    # for n in numeros:
+                    #     if not n.isdigit():
+                    #         n = int(n, 16)
+                    #     value4 ^= int(n)
+                    value4 = value2 ^ decode1[(j % 9)] ^ (int(idparse, 8) - int(rangos) + 4) / (int(rangos2) - 8) ^ int(hexparse, 8)
                     value5 = index1 * 2 + 127
                     for h in range(4):
                         valorfinal = (value4 >> 8 * h) & (value5)

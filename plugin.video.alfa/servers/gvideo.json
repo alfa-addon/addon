@@ -16,6 +16,10 @@
       {
         "pattern": "(?s)https://drive.google.com/file/d/([^/]+)/preview",
         "url": "http://docs.google.com/get_video_info?docid=\\1"
+      },
+      {
+        "pattern": "(?s)\"https://(?!docs)(.*?).googleusercontent.com/([^\"]+)",
+        "url": "https://\\1.googleusercontent.com/\\2"
       }
     ]
   },
@@ -48,5 +52,6 @@
       "visible": false
     }
   ],
+  "thumbnail": "https://s11.postimg.org/giobzkprz/logo-google1.png",
   "version": 1
 }

@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------------------------------
 # Scraper tools for reading and processing web elements
 # --------------------------------------------------------------------------------
@@ -214,6 +214,7 @@ def htmlclean(cadena):
     cadena = cadena.replace("<tr>", "")
     cadena = cadena.replace("</tr>", "")
     cadena = cadena.replace("<![CDATA[", "")
+    cadena = cadena.replace("<wbr>", "")
     cadena = cadena.replace("<Br />", " ")
     cadena = cadena.replace("<BR />", " ")
     cadena = cadena.replace("<Br>", " ")

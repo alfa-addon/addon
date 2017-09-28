@@ -3,7 +3,7 @@
   "name": "HentaiEnEspañol",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "thumbnail": "https://s11.postimg.org/cmuwcvvpf/hentaienespanol.png",
   "banner": "https://s3.postimg.org/j3qkfut8z/hentaienespanol_banner.png",
   "version": 1,

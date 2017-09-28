@@ -3,7 +3,7 @@
   "name": "PelisGratis",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": ["cast", "lat"],
   "thumbnail": "https://s30.postimg.org/kilh4lr4x/pelisgratis.png",
   "banner": "https://s15.postimg.org/nztottswb/pelisgratis-banner.png",
   "version": 1,
@@ -14,7 +14,6 @@
     }
   ],
   "categories": [
-    "latino",
     "movie"
   ],
   "settings": [

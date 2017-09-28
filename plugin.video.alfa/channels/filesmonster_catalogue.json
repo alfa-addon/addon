@@ -3,7 +3,7 @@
   "name": "Filesmonster Catalogue",
   "active": true,
   "adult": true,
-  "language": "es",
+  "language": ["*"],
   "thumbnail": "filesmonster_catalogue.png",
   "banner": "filesmonster_catalogue.png",
   "version": 1,

@@ -81,6 +81,7 @@ def htmlclean(cadena):
     cadena = cadena.replace("<tr>", "")
     cadena = cadena.replace("</tr>", "")
     cadena = cadena.replace("<![CDATA[", "")
+    cadena = cadena.replace("<wbr>", "")
     cadena = cadena.replace("<Br />", " ")
     cadena = cadena.replace("<BR />", " ")
     cadena = cadena.replace("<Br>", " ")

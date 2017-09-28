@@ -13,7 +13,7 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
-    if "borrado" in data:
+    if "borrado" in data or "Deleted" in data:
         return False, "[vidlox] El fichero ha sido borrado"
 
     return True, ""
