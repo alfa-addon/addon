@@ -81,7 +81,6 @@ def title_format(item):
 
     lang = False
     value = ''
-
     if item.action == 'mainlist':
         item.language =''
 
