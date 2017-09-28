@@ -69,96 +69,116 @@ def set_lang(language):
 
 def title_format(item):
     logger.info()
-    #color_scheme={'movie':'cyan', 'tvshow':'goldenrod','server':'orange', 'quality':'gold', 'year':'orchid',
-    #              'library':'hotpink', 'rating':'blue'}
+    color_scheme={'movie':'white', 'tvshow':'goldenrod','server':'salmon', 'quality':'gold', 'year':'orchid',
+                  'library':'hotpink', 'rating':'cyan'}
 
-    color_scheme = {'movie': 'white', 'tvshow': 'white', 'server': 'white', 'quality': 'white', 'year': 'white',
-                    'library': 'white', 'rating':'gold'}
+    #color_scheme = {'movie': 'white', 'tvshow': 'white', 'server': 'white', 'quality': 'white', 'year': 'white',
+    #                'library': 'white', 'rating':'gold'}
 
-    excluded = ['Enlaces Online', 'Enlaces Descargas', 'Online', 'Downloads', 'Buscar Tráiler']
+
+    # TODO se deberia quitar cualquier elemento que no sea un enlace de la lista de findvideos para quitar esto
+    excluded = ['Enlaces Online', 'Enlaces Descargas', 'Online', 'Downloads', 'Buscar Tráiler', 'Trailer']
 
     lang = False
+    value = ''
 
     if item.action == 'mainlist':
         item.language =''
 
     info = item.infoLabels
     logger.debug('item: %s'%item)
-    if item.title not in excluded:
 
+    #TODO se deberia quitar cualquier elemento que no sea un enlace de la lista de findvideos para quitar esto
+    if item.title not in excluded and item.action != 'buscartrailer' and item.channel != 'trailertools':
+
+        # Evitamos modificar el titulo de la videoteca
         if not 'library' in item.action:
 
+            # Formamos el titulo para serie, se debe definir contentSerieName
+            # o show en el item para que esto funcione.
             if item.contentSerieName:
+
+                # Si se tiene la informacion en infolabels se utiliza
                 if item.contentType == 'episode' and info['episode'] != '':
                     if info['title'] == '':
-                        info['title'] = 'Episodio %s'% info['episode']
+                        info['title'] = '%s - Episodio %s'% (info['tvshowtitle'], info['episode'])
                     elif 'Episode' in info['title']:
-                        info['title'] = info['title'].replace('Episode', 'Episodio')
+                        episode = info['title'].replace('Episode', 'Episodio')
+                        info['title'] = '%s - %s' % (info['tvshowtitle'], episode)
 
-                    title = ''
                     item.title = '[COLOR %s]%sx%s - %s[/COLOR]' % (color_scheme['tvshow'], info['season'],
                                                                    info['episode'], info['title'])
                 else:
+
+                    # En caso contrario se utiliza el titulo proporcionado por el canal
                     item.title = '[COLOR %s]%s[/COLOR]' % (color_scheme['tvshow'], item.title)
+
             elif item.contentTitle:
+                # Si el titulo no tiene contentSerieName entonces se formatea como pelicula
                 item.title = '[COLOR %s]%s[/COLOR]'%(color_scheme['movie'],item.contentTitle)
 
+
+            # Verificamos si item.language es una lista, si lo es se toma
+            # cada valor y se normaliza formado una nueva lista
+            if isinstance(item.language,list):
+                language_list =[]
+                for language in item.language:
+                    if language != '':
+                        lang = True
+                        language_list.append(set_lang(language))
+                        logger.debug('language_list: %s' % language_list)
+                item.language = language_list
+            else:
+                # Si item.language es un string se normaliza
+                if item.language != '':
+                    lang = True
+                    item.language = set_lang(item.language)
+
+            # Damos formato al año si existiera y lo agregamos
+            # al titulo excepto que sea un episodio
+            if item.info and item.info.get("year", "") != "" and item.contentType != 'episode':
+                try:
+                    year = '[COLOR %s][%s][/COLOR]' % (color_scheme['year'], info['year'])
+                    item.title = item.title = '%s %s' % (item.title, year)
+                except:
+                    logger.debug('infoLabels: %s'%info)
+
+            # Damos formato al puntaje si existiera y lo agregamos al titulo
+            if info and info['rating'] and info['rating']!='0.0':
+                rating = '[COLOR %s][%s][/COLOR]' % (color_scheme['rating'], info['rating'])
+                item.title = '%s %s' % (item.title, rating)
+
+            # Damos formato a la calidad si existiera y lo agregamos al titulo
+            if item.quality:
+                quality = '[COLOR %s][%s][/COLOR]' % (color_scheme['quality'], item.quality.strip())
+                item.title = '%s %s' % (item.title, quality)
+            else:
+                quality = ''
+
+            # Damos formato al idioma si existiera y lo agregamos al titulo
+            if lang:
+                if isinstance(item.language, list):
+                    for language in item.language:
+                        item.title = '%s %s' % (item.title, language)
+                else:
+                    item.title = '%s %s' % (item.title, item.language)
+
+            # Damos formato al servidor si existiera
+            if item.server:
+                server = '[COLOR %s][%s][/COLOR]' % (color_scheme['server'], item.server.strip().capitalize())
+
+            # Compureba si estamos en findvideos, y si hay server, si es asi no se muestra el
+            # titulo sino el server, en caso contrario se muestra el titulo normalmente.
+
+            if item.action != 'play' and item.server:
+                item.title ='%s %s'%(item.title, server.strip())
+            elif item.action == 'play' and item.server:
+                #item.title = 'S:%s  Q:%s I:%s' % (server, quality, item.language)
+                item.title = '%s %s %s' % (server, quality.strip(), item.language)
+            else:
+                item.title = '%s' % item.title
         else:
             item.title = '[COLOR %s]%s[/COLOR]' % (color_scheme['library'], item.title)
-
-        if isinstance(item.language,list):
-            language_list =[]
-            for language in item.language:
-                if language != '':
-                    lang = True
-                    language_list.append(set_lang(language))
-                    logger.debug('language_list: %s' % language_list)
-            item.language = language_list
-        else:
-            if item.language != '':
-                lang = True
-                item.language = set_lang(item.language)
-
-        # Damos formato al año si existiera
-        if item.info and item.info.get("year", "") != "":
-            try:
-                year = '[COLOR %s][%s][/COLOR]' % (color_scheme['year'], info['year'])
-                item.title = item.title = '%s %s' % (item.title, year)
-            except:
-                logger.debug('infoLabels: %s'%info)
-
-        # Damos formato al puntaje si existiera
-        if info and info['rating'] and info['rating']!='0.0':
-            rating = '[COLOR %s][%s][/COLOR]' % (color_scheme['rating'], info['rating'])
-            item.title = '%s %s' % (item.title, rating)
-
-        # Damos formato a la calidad si existiera
-        if item.quality:
-            quality = '[COLOR %s][%s][/COLOR]' % (color_scheme['quality'], item.quality.strip())
-            item.title = '%s %s' % (item.title, quality)
-        else:
-            quality = ''
-        # Damos formato al idioma si existiera
-        if lang:
-            if isinstance(item.language, list):
-                for language in item.language:
-                    item.title = '%s %s' % (item.title, language)
-            else:
-                item.title = '%s %s' % (item.title, item.language)
-
-        if item.server:
-            server = '[COLOR %s][%s][/COLOR]' % (color_scheme['server'], item.server.strip().capitalize())
-
-        # Compureba si estamos en findvideos, y si hay server, si es asi no se muestra el
-        # titulo sino el server, en caso contrario se muestra el titulo normalmente.
-
-        if item.action != 'play' and item.server:
-            item.title ='%s %s'%(item.title, server.strip())
-        elif item.action == 'play' and item.server:
-            #item.title = 'S:%s  Q:%s I:%s' % (server, quality, item.language)
-            item.title = '%s %s %s' % (server, quality.strip(), item.language)
-        else:
-            item.title = '%s' % item.title
 
     # Formatear titulo
 
@@ -173,7 +193,7 @@ def thumbnail_type(item):
     logger.info()
 
     # Se comprueba que tipo de thumbnail se utilizara en findvideos,
-    # Poster o logo del servidor
+    # Poster o Logo del servidor
 
     thumb_type = config.get_setting('video_thumbnail_type')
     logger.debug('thumb_type: %s' % thumb_type)
