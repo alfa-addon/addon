@@ -364,7 +364,7 @@ def peliculas(item):
 
                 itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, extra="media",
                                      thumbnail=scrapedthumbnail, contentTitle=scrapedtitle, fulltitle=scrapedtitle,
-                                     text_color=color2, contentType="movie"))
+                                     text_color=color2, contentType="movie", quality=calidad, language=audios))
 
     next_page = scrapertools.find_single_match(data, 'href="([^"]+)"[^>]+>Siguiente')
     if next_page != "" and item.title != "":
@@ -676,7 +676,7 @@ def get_enlaces(item, url, type):
             titulo = " [%s/%s]" % (language, scrapedcalidad.strip())
             itemlist.append(
                 item.clone(action="play", url=google_url, title="    Ver en Gvideo" + titulo, text_color=color2,
-                           extra="", server="gvideo"))
+                           extra="", server="gvideo", language=language, quality=scrapedcalidad.strip()))
     patron = '<div class="available-source".*?data-url="([^"]+)".*?class="language.*?title="([^"]+)"' \
              '.*?class="source-name.*?>\s*([^<]+)<.*?<span class="quality-text">([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)

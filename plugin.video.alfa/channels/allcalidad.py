@@ -91,7 +91,8 @@ def peliculas(item):
                             thumbnail = thumbnail,
                             url = url,
                             contentTitle = titulo,
-                            contentType="movie"
+                            contentType="movie",
+                            language = idioma
 							)
         if year:
             new_item.infoLabels['year'] = int(year)

@@ -127,9 +127,8 @@ def findvideos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for url, server, calidad, idioma in matches:
-        title = item.contentTitle
         server = servertools.get_server_from_url(url)
-
+        title = '%s [%s] [%s] [%s]' % (item.contentTitle, server, calidad, idioma)
         itemlist.append(item.clone(action="play", title=title, fulltitle = item.title, url=url, language = idioma,
                                    contentTitle = item.contentTitle, quality = calidad, server = server))
 
