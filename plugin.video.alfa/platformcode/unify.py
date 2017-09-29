@@ -70,10 +70,10 @@ def set_lang(language):
 def title_format(item):
     logger.info()
     color_scheme={'movie':'white', 'tvshow':'goldenrod','server':'salmon', 'quality':'gold', 'year':'orchid',
-                  'library':'hotpink', 'rating':'cyan'}
+                  'library':'hotpink', 'rating_1':'red', 'rating_2':'cyan', 'rating_3':'gold'}
 
     #color_scheme = {'movie': 'white', 'tvshow': 'white', 'server': 'white', 'quality': 'white', 'year': 'white',
-    #                'library': 'white', 'rating':'gold'}
+    #                'library': 'white', 'rating':'gold','rating_1':'white', 'rating_2':'white', 'rating_3':'white'}
 
 
     # TODO se deberia quitar cualquier elemento que no sea un enlace de la lista de findvideos para quitar esto
@@ -149,7 +149,16 @@ def title_format(item):
 
             # Damos formato al puntaje si existiera y lo agregamos al titulo
             if info and info['rating'] and info['rating']!='0.0':
-                rating = '[COLOR %s][%s][/COLOR]' % (color_scheme['rating'], info['rating'])
+                str_value= str(info['rating'])
+                rating = str_value[0]
+                value = int(rating)
+                if value <= 3:
+                    color_rating = color_scheme['rating_1']
+                elif value >3 and value <=7:
+                    color_rating = color_scheme['rating_2']
+                else:
+                    color_rating = color_scheme['rating_3']
+                rating = '[COLOR %s][%s/10][/COLOR]' % (color_rating, value)
                 item.title = '%s %s' % (item.title, rating)
 
             # Damos formato a la calidad si existiera y lo agregamos al titulo

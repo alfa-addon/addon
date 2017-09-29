@@ -47,7 +47,7 @@
 		<setting label="Botones/Teclas de acceso (Cambios requieren reiniciar Kodi)" type="lsep"/>
 		<setting id="shortcut_key" type="action" label="30999" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAia2V5bWFwIg0KfQ==)" />
         <setting label="Opciones Visuales" type="lsep"/>
-        <setting id="unify" type=bool label="Probar nueva vista" default="false"/>
+        <setting id="unify" type=bool label="Titulos Inteligentes" default="false"/>
         <setting id="video_thumbnail_type" type="enum" label="Thumbnail para videos" values="Poster|Logo del servidor" default="0"/>
    </category>
 </settings>
