@@ -108,9 +108,9 @@ def peliculas(item):
         infolab = {'year': year}
         itemlist.append(item.clone(action="findvideos", title=scrapedtitle, url=scrapedurl,
                                    thumbnail=scrapedthumbnail, infoLabels=infolab,
-                                   contentTitle=title, contentType="movie"))
+                                   contentTitle=title, contentType="movie", quality=calidad))
 
-    next_page = scrapertools.find_single_match(data, '<a class="nextpostslink" href="([^"]+)"')
+    next_page = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)"')
     if next_page:
         itemlist.append(item.clone(title=">> Página Siguiente", url=next_page))
 
