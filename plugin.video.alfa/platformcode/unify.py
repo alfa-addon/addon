@@ -77,7 +77,7 @@ def title_format(item):
 
 
     # TODO se deberia quitar cualquier elemento que no sea un enlace de la lista de findvideos para quitar esto
-    excluded = ['online', 'descarga', 'downloads', 'trailer', 'videoteca']
+    excluded = ['online', 'descarga', 'downloads', 'trailer', 'videoteca', 'gb']
 
     lang = False
     valid = True
