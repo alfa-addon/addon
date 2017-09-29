@@ -106,6 +106,8 @@ def lista(item):
     optiones = ""
     params = '{"genero":genero,"ano":ano,"countries":countries,"sort":sort,"optiones":optiones}'
     params = '{"genereo":"64"}'
+    #genereo es a propósito, porque "genero" me da error de array :P 
+    #como que detectara que "genero" es válido pero le falta algún dato mas
     #params = urllib.urlencode(params)
     #logger.info("Intel55 %s" %params)
     #req = urllib2.Request(item.url, data=params)
