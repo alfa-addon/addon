@@ -77,18 +77,23 @@ def title_format(item):
 
 
     # TODO se deberia quitar cualquier elemento que no sea un enlace de la lista de findvideos para quitar esto
-    excluded = ['Enlaces Online', 'Enlaces Descargas', 'Online', 'Downloads', 'Buscar Tráiler', 'Trailer']
+    excluded = ['online', 'descarga', 'downloads', 'trailer', 'videoteca']
 
     lang = False
-    value = ''
+    valid = True
+
     if item.action == 'mainlist':
         item.language =''
 
     info = item.infoLabels
     logger.debug('item: %s'%item)
+    for word in excluded:
+        if word in item.title.lower():
+            valid = False
+            break
 
     #TODO se deberia quitar cualquier elemento que no sea un enlace de la lista de findvideos para quitar esto
-    if item.title not in excluded and item.action != 'buscartrailer' and item.channel != 'trailertools':
+    if valid and item.action != 'buscartrailer' and item.channel != 'trailertools':
 
         # Evitamos modificar el titulo de la videoteca
         if not 'library' in item.action:
