@@ -136,6 +136,10 @@ def start(itemlist, item):
         server_list = channel_node.get('servers', [])
         quality_list = channel_node.get('quality', [])
 
+        # Si no se definen calidades la se asigna default como calidad unica
+        if len(quality_list) == 0:
+            quality_list =['default']
+
         # Se guardan los textos de cada servidor y calidad en listas p.e. favorite_servers = ['openload',
         # 'streamcloud']
         for num in range(1, 4):
@@ -325,6 +329,8 @@ def init(channel, list_servers, list_quality):
             change = True
 
             # Se comprueba que no haya calidades ni servidores duplicados
+            if 'default' not in list_quality:
+                list_quality.append('default')
             list_servers = list(set(list_servers))
             list_quality = list(set(list_quality))
 
