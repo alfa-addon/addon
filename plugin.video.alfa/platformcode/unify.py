@@ -74,7 +74,7 @@ def title_format(item):
 
 
     # TODO se deberia quitar cualquier elemento que no sea un enlace de la lista de findvideos para quitar esto
-    excluded = ['online', 'descarga', 'downloads', 'trailer', 'videoteca', 'gb']
+    excluded = ['online', 'descarga', 'downloads', 'trailer', 'videoteca', 'gb', 'autoplay']
 
     lang = False
     valid = True
@@ -82,7 +82,8 @@ def title_format(item):
         item.language =''
 
     info = item.infoLabels
-    #logger.debug('item: %s'%item)
+    logger.debug('item: %s'%item)
+    logger.debug('item.title: %s' % item.title.lower())
     for word in excluded:
         if word in item.title.lower():
             valid = False
@@ -192,6 +193,8 @@ def title_format(item):
                 item.title ='%s %s'%(item.title, server.strip())
             elif item.action == 'play' and item.server:
                 #item.title = 'S:%s  Q:%s I:%s' % (server, quality, item.language)
+                if item.quality == 'default':
+                    quality = ''
                 item.title = '%s %s %s' % (server, quality.strip(), simple_language)
             else:
                 item.title = '%s' % item.title
@@ -199,7 +202,8 @@ def title_format(item):
             item.title = '[COLOR %s]%s[/COLOR]' % (color_scheme['library'], item.title)
 
     # Formatear titulo
-
+    if item.text_color !='':
+        item.title = '[COLOR %s]%s[/COLOR]'%(item.text_color, item.title)
     if item.text_bold:
         item.title = '[B]%s[/B]' % item.title
     if item.text_italic:
