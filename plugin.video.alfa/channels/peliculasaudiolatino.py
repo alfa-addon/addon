@@ -154,7 +154,7 @@ def findvideos(item):
     for servidor, idioma, calidad, scrapedurl in matches:
         url = scrapedurl
         server = servertools.get_server_name(servidor)
-        title = "Enlace encontrado en %s" % (server)
+        title = "Ver en "+servidor+" ["+idioma+"]["+calidad+"]"
         itemlist.append(Item(channel=item.channel, action="play", title=title, fulltitle=item.fulltitle, url=url,
                              thumbnail=scrapedthumbnail, language=idioma, quality=calidad, server=server))
     if itemlist:
@@ -185,7 +185,7 @@ def play(item):
     # logger.info("videoUrl = "+videoUrl)
     enlaces = servertools.findvideos(videoUrl)
     if enlaces:
-        thumbnail = servertools.guess_server_thumbnail(videoUrl)
+        thumbnail = item.thumbnail
         # Añade al listado de XBMC
         itemlist.append(
             Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=enlaces[0][1],
