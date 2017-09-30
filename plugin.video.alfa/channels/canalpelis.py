@@ -137,18 +137,18 @@ def peliculas(item):
 
     matches = scrapertools.find_multiple_matches(data, patron)
 
-    for scrapedthumbnail, scrapedtitle, rating, calidad, scrapedurl, year in matches[item.page:item.page + 20]:
-        if 'Próximamente' not in calidad and '-XXX.jpg' not in scrapedthumbnail:
+    for scrapedthumbnail, scrapedtitle, rating, quality, scrapedurl, year in matches[item.page:item.page + 20]:
+        if 'Próximamente' not in quality and '-XXX.jpg' not in scrapedthumbnail:
 
             scrapedtitle = scrapedtitle.replace('Ver ', '').strip()
             contentTitle = scrapedtitle.partition(':')[0].partition(',')[0]
             title = "%s [COLOR green][%s][/COLOR] [COLOR yellow][%s][/COLOR]" % (
-                scrapedtitle, year, calidad)
+                scrapedtitle, year, quality)
 
             itemlist.append(item.clone(channel=__channel__, action="findvideos", text_color=color3,
                                        url=scrapedurl, infoLabels={'year': year, 'rating': rating},
                                        contentTitle=contentTitle, thumbnail=scrapedthumbnail,
-                                       title=title, context="buscar_trailer"))
+                                       title=title, context="buscar_trailer", quality = quality))
 
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
@@ -367,7 +367,7 @@ def findvideos(item):
         server = servertools.get_server_from_url(url)
         title = "%s [COLOR yellow](%s) (%s)[/COLOR]" % (item.contentTitle, server.title(), lang)
         itemlist.append(item.clone(action='play', url=url, title=title, extra1=title,
-                                   server=server, text_color=color3))
+                                   server=server, language = lang, text_color=color3))
 
     itemlist.append(Item(channel=item.channel,
                          title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
