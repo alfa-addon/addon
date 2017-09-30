@@ -46,6 +46,13 @@ def mainlist(item):
 
         set_category_context(new_item)
         itemlist.append(new_item)
+    logger.debug('list_canales: %s'%list_canales)
+    if list_canales['terror']:
+        thumbnail = get_thumb("channels_horror.png")
+        new_item = Item(channel=item.channel, action="novedades", extra="terror", title="Peliculas de miedo!",
+                        thumbnail=thumbnail)
+        set_category_context(new_item)
+        itemlist.append(new_item)
 
     if list_canales['infantiles']:
         thumbnail = get_thumb("channels_children.png")
@@ -89,7 +96,7 @@ def set_category_context(item):
 def get_channels_list():
     logger.info()
 
-    list_canales = {'peliculas': [], 'infantiles': [], 'series': [], 'anime': [], 'documentales': []}
+    list_canales = {'peliculas': [], 'terror': [], 'infantiles': [], 'series': [], 'anime': [], 'documentales': []}
 
     # Rellenar listas de canales disponibles
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
