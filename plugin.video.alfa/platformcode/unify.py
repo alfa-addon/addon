@@ -44,13 +44,13 @@ def set_lang(language):
     vo=['ingles', 'en','vo', 'ovos', 'eng']
     language = scrapertools.decodeHtmlentities(language)
     old_lang = language
-    logger.debug('language: %s'%language)
+    #logger.debug('language: %s'%language)
     language = re.sub(r'\[*.?COLOR.*?\]|\[|\]|\(|\)', '', language)
-    logger.debug('language re.sub: x%sx' % language)
+    #logger.debug('language re.sub: x%sx' % language)
 
     language = simplify(language)
 
-    logger.debug('language simplify: %s' % language)
+    #logger.debug('language simplify: %s' % language)
 
     if language in cast:
         language = '[COLOR %s][CAST][/COLOR]'% lang_color_1
@@ -86,7 +86,7 @@ def title_format(item):
         item.language =''
 
     info = item.infoLabels
-    logger.debug('item: %s'%item)
+    #logger.debug('item: %s'%item)
     for word in excluded:
         if word in item.title.lower():
             valid = False
@@ -130,7 +130,7 @@ def title_format(item):
                     if language != '':
                         lang = True
                         language_list.append(set_lang(language))
-                        logger.debug('language_list: %s' % language_list)
+                        #logger.debug('language_list: %s' % language_list)
                 item.language = language_list
             else:
                 # Si item.language es un string se normaliza
@@ -140,7 +140,7 @@ def title_format(item):
 
             # Damos formato al año si existiera y lo agregamos
             # al titulo excepto que sea un episodio
-            if info and info.get("year", "") != "" and item.contentType != 'episode':
+            if info and info.get("year", "") != "" and item.contentType != 'episode' and not info['season']:
                 try:
                     year = '[COLOR %s][%s][/COLOR]' % (color_scheme['year'], info['year'])
                     item.title = item.title = '%s %s' % (item.title, year)
@@ -148,17 +148,26 @@ def title_format(item):
                     logger.debug('infoLabels: %s'%info)
 
             # Damos formato al puntaje si existiera y lo agregamos al titulo
-            if info and info['rating'] and info['rating']!='0.0':
-                str_value= str(info['rating'])
-                rating = str_value[0]
-                value = int(rating)
-                if value <= 3:
-                    color_rating = color_scheme['rating_1']
-                elif value >3 and value <=7:
-                    color_rating = color_scheme['rating_2']
+            if info and info['rating'] and info['rating']!='0.0' and not info['season']:
+
+                # Se normaliza el puntaje del rating
+
+                rating_value = check_rating(info['rating'])
+
+                # Asignamos el color dependiendo el puntaje, malo, bueno, muy bueno, en caso de que exista
+
+                if rating_value:
+                    value = float(rating_value)
+                    if value <= 3:
+                        color_rating = color_scheme['rating_1']
+                    elif value > 3 and value <= 7:
+                        color_rating = color_scheme['rating_2']
+                    else:
+                        color_rating = color_scheme['rating_3']
+
+                    rating = '[COLOR %s][%s][/COLOR]' % (color_rating, rating_value)
                 else:
-                    color_rating = color_scheme['rating_3']
-                rating = '[COLOR %s][%s/10][/COLOR]' % (color_rating, value)
+                    rating = ''
                 item.title = '%s %s' % (item.title, rating)
 
             # Damos formato a la calidad si existiera y lo agregamos al titulo
@@ -209,9 +218,9 @@ def thumbnail_type(item):
     # Poster o Logo del servidor
 
     thumb_type = config.get_setting('video_thumbnail_type')
-    logger.debug('thumb_type: %s' % thumb_type)
+    #logger.debug('thumb_type: %s' % thumb_type)
     info = item.infoLabels
-    logger.debug('item.thumbnail: %s'%item.thumbnail)
+    #logger.debug('item.thumbnail: %s'%item.thumbnail)
 
     if info['thumbnail'] !='':
         item.contentThumbnail = info['thumbnail']
@@ -224,9 +233,91 @@ def thumbnail_type(item):
                 item.thumbnail = info['thumbnail']
         elif thumb_type == 1:
             from core.servertools import get_server_parameters
-            logger.debug('item.server: %s'%item.server)
+            #logger.debug('item.server: %s'%item.server)
             server_parameters = get_server_parameters(item.server.lower())
             item.thumbnail = server_parameters.get("thumbnail", "")
-            logger.debug('thumbnail: %s' % item.thumb)
+            #logger.debug('thumbnail: %s' % item.thumb)
 
     return item.thumbnail
+
+
+from decimal import *
+
+
+def check_rating(rating):
+    # logger.debug("\n\nrating %s" % rating)
+
+    def check_decimal_length(_rating):
+        """
+       Dejamos que el float solo tenga un elemento en su parte decimal, "7.10" --> "7.1"
+       @param _rating: valor del rating
+       @type _rating: float
+       @return: devuelve el valor modificado si es correcto, si no devuelve None
+       @rtype: float|None
+       """
+        # logger.debug("rating %s" % _rating)
+
+        try:
+            # convertimos los deciamles p.e. 7.1
+            return "%.1f" % round(_rating, 1)
+        except Exception, ex_dl:
+            template = "An exception of type %s occured. Arguments:\n%r"
+            message = template % (type(ex_dl).__name__, ex_dl.args)
+            logger.error(message)
+            return None
+
+    def check_range(_rating):
+        """
+       Comprobamos que el rango de rating sea entre 0.0 y 10.0
+       @param _rating: valor del rating
+       @type _rating: float
+       @return: devuelve el valor si está dentro del rango, si no devuelve None
+       @rtype: float|None
+       """
+        # logger.debug("rating %s" % _rating)
+        # fix para comparacion float
+        dec = Decimal(_rating)
+        if 0.0 <= dec <= 10.0:
+            # logger.debug("estoy en el rango!")
+            return _rating
+        else:
+            # logger.debug("NOOO estoy en el rango!")
+            return None
+
+    def convert_float(_rating):
+        try:
+            return float(_rating)
+        except ValueError, ex_ve:
+            template = "An exception of type %s occured. Arguments:\n%r"
+            message = template % (type(ex_ve).__name__, ex_ve.args)
+            logger.error(message)
+            return None
+
+    if type(rating) != float:
+        # logger.debug("no soy float")
+        if type(rating) == int:
+            # logger.debug("soy int")
+            rating = convert_float(rating)
+        elif type(rating) == str:
+            # logger.debug("soy str")
+
+            rating = rating.replace("<", "")
+            rating = convert_float(rating)
+
+            if rating is None:
+                # logger.debug("error al convertir str, rating no es un float")
+                # obtenemos los valores de numericos
+                new_rating = scrapertools.find_single_match(rating, "(\d+)[,|:](\d+)")
+                if len(new_rating) > 0:
+                    rating = convert_float("%s.%s" % (new_rating[0], new_rating[1]))
+
+        else:
+            logger.error("no se que soy!!")
+            # obtenemos un valor desconocido no devolvemos nada
+            return None
+
+    if rating:
+        rating = check_decimal_length(rating)
+        rating = check_range(rating)
+
+    return rating
