@@ -20,6 +20,7 @@ from platformcode import logger
 
 def simplify(string):
     logger.info()
+    string = re.sub(r'\[*.?COLOR.*?\]|\[|\]|\(|\)', '', string)
     string = string.strip()
     string = string.decode('utf-8')
     notilde = ''.join((c for c in unicodedata.normalize('NFD', unicode(string)) if unicodedata.category(c) != 'Mn'))
@@ -44,10 +45,6 @@ def set_lang(language):
     vo=['ingles', 'en','vo', 'ovos', 'eng']
     language = scrapertools.decodeHtmlentities(language)
     old_lang = language
-    #logger.debug('language: %s'%language)
-    language = re.sub(r'\[*.?COLOR.*?\]|\[|\]|\(|\)', '', language)
-    #logger.debug('language re.sub: x%sx' % language)
-
     language = simplify(language)
 
     #logger.debug('language simplify: %s' % language)
@@ -81,7 +78,6 @@ def title_format(item):
 
     lang = False
     valid = True
-
     if item.action == 'mainlist':
         item.language =''
 
@@ -131,12 +127,12 @@ def title_format(item):
                         lang = True
                         language_list.append(set_lang(language))
                         #logger.debug('language_list: %s' % language_list)
-                item.language = language_list
+                simple_language = language_list
             else:
                 # Si item.language es un string se normaliza
                 if item.language != '':
                     lang = True
-                    item.language = set_lang(item.language)
+                    simple_language = set_lang(item.language)
 
             # Damos formato al año si existiera y lo agregamos
             # al titulo excepto que sea un episodio
@@ -179,11 +175,11 @@ def title_format(item):
 
             # Damos formato al idioma si existiera y lo agregamos al titulo
             if lang:
-                if isinstance(item.language, list):
-                    for language in item.language:
+                if isinstance(simple_language, list):
+                    for language in simple_language:
                         item.title = '%s %s' % (item.title, language)
                 else:
-                    item.title = '%s %s' % (item.title, item.language)
+                    item.title = '%s %s' % (item.title, simple_language)
 
             # Damos formato al servidor si existiera
             if item.server:
@@ -196,7 +192,7 @@ def title_format(item):
                 item.title ='%s %s'%(item.title, server.strip())
             elif item.action == 'play' and item.server:
                 #item.title = 'S:%s  Q:%s I:%s' % (server, quality, item.language)
-                item.title = '%s %s %s' % (server, quality.strip(), item.language)
+                item.title = '%s %s %s' % (server, quality.strip(), simple_language)
             else:
                 item.title = '%s' % item.title
         else:
