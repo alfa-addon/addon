@@ -6,8 +6,9 @@ import urllib
 from core import httptools
 from core import scrapertools
 from core import servertools
+from core import tmdb
 from core.item import Item
-from platformcode import logger
+from platformcode import logger, config
 
 tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
            "Drama": "https://s16.postimg.org/94sia332d/drama.png",
@@ -110,7 +111,7 @@ def lista(item):
                              url=next_page_url,
                              thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'
                              ))
-
+    tmdb.set_infoLabels(itemlist)
     return itemlist
 
 
@@ -157,29 +158,16 @@ def episodios(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<li id=epi-.*? class=list-group-item ><a href=(.*?) class=badge.*?width=25 title=(.*?)> <\/span>(.*?)<\/li>'
+    patron = '<li id=epi-.*? class=list-group-item ><a href=(.*?) class=badge.*?width=25 title=(.*?)> <\/span>(.*?) (\d+)<\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedlang, scrapedtitle in matches:
+    for scrapedurl, scrapedlang, scrapedtitle, episode in matches:
         language = scrapedlang
-        title = scrapedtitle
+        title = scrapedtitle + " " + "1x" + episode
         url = scrapedurl
         itemlist.append(item.clone(title=title, url=url, action='findvideos', language=language))
-    return itemlist
-
-
-def findvideos(item):
-    logger.info()
-    itemlist = []
-
-    data = get_source(item.url)
-    itemlist.extend(servertools.find_video_items(data=data))
-
-    for videoitem in itemlist:
-        title = item.title
-        videoitem.channel = item.channel
-        videoitem.title = title
-        videoitem.action = 'play'
-
-
+           
+    if config.get_videolibrary_support():
+        itemlist.append(Item(channel=item.channel, title="Añadir serie a la biblioteca", url=item.url, action="add_serie_to_library", extra="episodios", fanart=item.thumbnail, thumbnail=item.thumbnail, contentTitle=item.show, show=item.show)) 
+    
     return itemlist
