@@ -302,7 +302,7 @@ def findvideos(item):
             if "partes" in title:
                 action = "extract_url"
             new_item = Item(channel=item.channel, action=action, title=title, fulltitle=title, url=url,
-                            thumbnail=thumbnail, plot=plot, parentContent=item, server = servername)
+                            thumbnail=thumbnail, plot=plot, parentContent=item, server = servername, quality=calidad)
             if comentarios.startswith("Ver en"):
                 itemlist_ver.append(new_item)
             else:

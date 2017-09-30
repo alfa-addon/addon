@@ -470,7 +470,7 @@ def findvideos(item):
            videoitem.quality = 'default'
            videoitem.language = 'Latino'
         if videoitem.server != '':
-           videoitem.thumbnail = item.contentThumbnail
+           videoitem.thumbnail = item.thumbnail
         else:
            videoitem.thumbnail = item.thumbnail
            videoitem.server = 'directo'
