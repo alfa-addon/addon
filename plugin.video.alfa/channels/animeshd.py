@@ -171,3 +171,8 @@ def episodios(item):
         itemlist.append(Item(channel=item.channel, title="Añadir serie a la biblioteca", url=item.url, action="add_serie_to_library", extra="episodios", fanart=item.thumbnail, thumbnail=item.thumbnail, contentTitle=item.show, show=item.show)) 
     
     return itemlist
+
+
+def play(item):
+    item.thumbnail = item.contentThumbnail
+    return [item]
