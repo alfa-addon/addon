@@ -174,11 +174,12 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     data_function = scrapertools.find_single_match(data, '<!\[CDATA\[function (.+?)\]\]')
-    data_id = scrapertools.find_single_match(data, "<p><center><br />.*?</center>")
+    data_id = scrapertools.find_single_match(data,
+                                             "<script>\(adsbygoogle = window\.adsbygoogle \|\| \[\]\)\.push\({}\);<\/script><\/div><br \/>(.+?)<\/ins>")
+    if data_id == "":
+        data_id = scrapertools.find_single_match(data, "<p><center><br />.*?</center>")
     itemla = scrapertools.find_multiple_matches(data_function, "src='(.+?)'")
     serverid = scrapertools.find_multiple_matches(data_id, '<script>([^"]+)\("([^"]+)"\)')
-    #logger.info("Intel33 %s" %data_function)
-    #logger.info("Intel44 %s" %data_id)
     for server, id in serverid:
         for link in itemla:
             if server in link:
