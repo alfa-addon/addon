@@ -6,10 +6,18 @@ from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
 from core import servertools
+from core import tmdb
 from core.item import Item
 from platformcode import logger
 
+__channel__ = "zonatorrent"
+
 HOST = 'https://zonatorrent.org'
+
+try:
+    __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
+except:
+    __modo_grafico__ = True
 
 
 def mainlist(item):
@@ -90,7 +98,8 @@ def listado(item):
     matches = re.compile(pattern, re.DOTALL).findall(data)
 
     for url, thumb, title, duration, year, quality, plot in matches:
-        title = title.strip().replace("Spanish Online Torrent", "").replace("Latino Online Torrent", "")
+        #title = title.strip().replace("Spanish Online Torrent", "").replace("Latino Online Torrent", "").replace(r'\d{4}','')
+        title = re.sub('Online|Spanish|Latino|Torrent|\d{4}','',title)
         infoLabels = {"year": year}
 
         aux = scrapertools.find_single_match(duration, "(\d+)h\s*(\d+)m")
@@ -98,8 +107,8 @@ def listado(item):
         infoLabels["duration"] = duration
 
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumb,
-                             plot=plot, infoLabels=infoLabels))
-
+                             contentTitle=title, plot=plot, infoLabels=infoLabels))
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     if item.page:
         pattern = "<span class='page-numbers current'>[^<]+</span><a class='page-numbers' href='([^']+)'"
         url = scrapertools.find_single_match(data, pattern)
