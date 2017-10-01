@@ -19,6 +19,14 @@
             "default": true,
             "enabled": true,
             "visible": true
-        }
+        },
+        {
+            "id": "modo_grafico",
+            "type": "bool",
+            "label": "Buscar información extra",
+            "default": true,
+            "enabled": true,
+            "visible": true
+    }
     ]
 }
