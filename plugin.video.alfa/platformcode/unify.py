@@ -31,11 +31,6 @@ def simplify(string):
 
 def set_lang(language):
     logger.info()
-    lang_color_1 = 'yellow'
-    lang_color_2 = 'limegreen'
-    lang_color_3 = 'red'
-    lang_color_4 = 'orange'
-    lang_color_5 = 'white'
 
     cast =['castellano','espanol','cast','esp','espaol', 'es','zc', 'spa']
     lat=['latino','lat','la', 'espanol latino', 'espaol latino', 'zl', 'mx', 'co']
@@ -47,27 +42,30 @@ def set_lang(language):
     old_lang = language
     language = simplify(language)
 
-    #logger.debug('language simplify: %s' % language)
-
+    logger.debug('language before simplify: %s' % language)
+    logger.debug('old language: %s' % old_lang)
     if language in cast:
-        language = '[COLOR %s][CAST][/COLOR]'% lang_color_1
+        language = 'cast'
     elif language in lat:
-        language = '[COLOR %s][LAT][/COLOR]' % lang_color_2
+        language = 'lat'
     elif language in vose:
-        language = '[COLOR %s][VOSE][/COLOR]'% lang_color_3
+        language = 'vose'
     elif language in vos:
-        language = '[COLOR %s][VOS][/COLOR]' % lang_color_4
+        language = 'vos'
     elif language in vo:
-        language = '[COLOR %s][VO][/COLOR]' % lang_color_4
+        language = 'vo'
     else:
-        language = '[COLOR %s][OTRO](%s)[/COLOR]' % (lang_color_5, old_lang)
+        language = 'otro'
+
+    logger.debug('language after simplify: %s' % language)
 
     return language
 
 def title_format(item):
     logger.info()
     color_scheme={'movie':'white', 'tvshow':'goldenrod','server':'salmon', 'quality':'gold', 'year':'orchid',
-                  'library':'hotpink', 'rating_1':'red', 'rating_2':'cyan', 'rating_3':'gold'}
+                  'library':'hotpink', 'rating_1':'red', 'rating_2':'cyan', 'rating_3':'gold', 'cast':'yellow',
+                  'lat':'limegreen', 'vose':'orange', 'vos':'red', 'vo':'red', 'otro':'white'}
 
     #color_scheme = {'movie': 'white', 'tvshow': 'white', 'server': 'white', 'quality': 'white', 'year': 'white',
     #                'library': 'white', 'rating':'gold','rating_1':'white', 'rating_2':'white', 'rating_3':'white'}
@@ -78,6 +76,7 @@ def title_format(item):
 
     lang = False
     valid = True
+    language_color = 'otro'
     if item.action == 'mainlist':
         item.language =''
 
@@ -121,19 +120,24 @@ def title_format(item):
 
             # Verificamos si item.language es una lista, si lo es se toma
             # cada valor y se normaliza formado una nueva lista
-            if isinstance(item.language,list):
+
+            if isinstance(item.language, list):
                 language_list =[]
                 for language in item.language:
                     if language != '':
                         lang = True
-                        language_list.append(set_lang(language))
+                        language_list.append(set_lang(language).upper())
                         #logger.debug('language_list: %s' % language_list)
                 simple_language = language_list
             else:
                 # Si item.language es un string se normaliza
                 if item.language != '':
                     lang = True
-                    simple_language = set_lang(item.language)
+                    simple_language = set_lang(item.language).upper()
+                else:
+                    simple_language = ''
+
+            item.language = simple_language
 
             # Damos formato al año si existiera y lo agregamos
             # al titulo excepto que sea un episodio
@@ -178,9 +182,11 @@ def title_format(item):
             if lang:
                 if isinstance(simple_language, list):
                     for language in simple_language:
-                        item.title = '%s %s' % (item.title, language)
+                        language_color = language.lower()
+                        item.title = '%s [COLOR %s][%s][/COLOR]' % (item.title, color_scheme[language_color], language)
                 else:
-                    item.title = '%s %s' % (item.title, simple_language)
+                    language_color = simple_language.lower()
+                    item.title = '%s [COLOR %s][%s][/COLOR]' % (item.title, color_scheme[language_color], simple_language)
 
             # Damos formato al servidor si existiera
             if item.server:
@@ -195,7 +201,15 @@ def title_format(item):
                 #item.title = 'S:%s  Q:%s I:%s' % (server, quality, item.language)
                 if item.quality == 'default':
                     quality = ''
-                item.title = '%s %s %s' % (server, quality.strip(), simple_language)
+                if lang:
+                    simple_language = '[%s]'%simple_language
+                else:
+                    simple_language = ''
+
+                logger.debug('language_color: %s'%language_color)
+                item.title = '%s %s [COLOR %s]%s[/COLOR]' % (server, quality.strip(), color_scheme[language_color],
+                                                               simple_language)
+                logger.debug('item.title: %s' % item.title)
             else:
                 item.title = '%s' % item.title
         else:
