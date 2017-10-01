@@ -40,7 +40,7 @@ def lista(item):
                                    server="datoporn", fanart=scrapedthumbnail.replace("_t.jpg", ".jpg")))
 
         # Extrae la marca de siguiente página
-    next_page = scrapertools.find_single_match(data, '<a href="([^"]+)">Next')
+    next_page = scrapertools.find_single_match(data, '<a href=["|\']([^["|\']+)["|\']>Next')
     if next_page and itemlist:
         itemlist.append(item.clone(action="lista", title=">> Página Siguiente", url=next_page))
 
