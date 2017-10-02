@@ -91,7 +91,8 @@ def peliculas(item):
                             thumbnail = thumbnail,
                             url = url,
                             contentTitle = titulo,
-                            contentType="movie"
+                            contentType="movie",
+                            language = idioma
 							)
         if year:
             new_item.infoLabels['year'] = int(year)
@@ -137,8 +138,8 @@ def findvideos(item):
             if config.get_videolibrary_support():
                 itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
                                      filtro=True, action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                     infoLabels={'title': item.fulltitle}, fulltitle=item.fulltitle,
-                                     extra="library"))
+                                     infoLabels={'title': item.fulltitle}, fulltitle=item.fulltitle
+                                     ))
     return itemlist
 
 

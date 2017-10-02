@@ -3,7 +3,9 @@
 import re
 import urlparse
 
+from core import httptools
 from core import scrapertools
+from core import servertools
 from core.item import Item
 from platformcode import logger
 
@@ -38,7 +40,7 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}", "", data)
     patron = '<li><a href="([^"]+)">(.*?)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -52,7 +54,7 @@ def lista(item):
     logger.info()
 
     # Descarga la página
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}", "", data)
 
     # Extrae las entradas de la pagina seleccionada
@@ -83,10 +85,8 @@ def play(item):
     logger.info()
     itemlist = []
     # Descarga la página
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     data = scrapertools.unescape(data)
-    logger.info(data)
-    from core import servertools
     itemlist.extend(servertools.find_video_items(data=data))
     for videoitem in itemlist:
         videoitem.thumbnail = item.thumbnail

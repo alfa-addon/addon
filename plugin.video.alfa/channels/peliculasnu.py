@@ -213,9 +213,10 @@ def findvideos(item):
 
         if 'openload' in url:
             url = url + '|' + item.url
-
+        extra_info = title.split(' - ')
         title = "%s - %s" % ('%s', title)
-        itemlist.append(Item(channel=item.channel, action="play", url=url, title=title, text_color=color3))
+        itemlist.append(Item(channel=item.channel, action="play", url=url, title=title, language=extra_info[0],
+                             quality=extra_info[1],text_color=color3))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 

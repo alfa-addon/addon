@@ -319,7 +319,7 @@ def fichas(item):
         contentTitle = scrapedtitle.strip()
 
         if scrapedlangs != ">":
-            textoidiomas = extrae_idiomas(scrapedlangs)
+            textoidiomas, language = extrae_idiomas(scrapedlangs)
             #Todo Quitar el idioma
             title += bbcode_kodi2html(" ( [COLOR teal][B]" + textoidiomas + "[/B][/COLOR])")
 
@@ -351,7 +351,7 @@ def fichas(item):
         itemlist.append(
             Item(channel=item.channel, action=action, title=title, url=url, fulltitle=title, thumbnail=thumbnail,
                  show=show, folder=True, contentType=contentType, contentTitle=contentTitle,
-                 language =textoidiomas, infoLabels=infoLabels))
+                 language =language, infoLabels=infoLabels))
 
     ## Paginación
     next_page_url = scrapertools.find_single_match(data, '<a href="([^"]+)">.raquo;</a>')
@@ -797,16 +797,17 @@ def agrupa_datos(data):
 
 def extrae_idiomas(bloqueidiomas):
     logger.info("idiomas=" + bloqueidiomas)
-    # Todo cambiar por lista
-    #textoidiomas=[]
+    language=[]
     textoidiomas = ''
     patronidiomas = '([a-z0-9]+).png"'
     idiomas = re.compile(patronidiomas, re.DOTALL).findall(bloqueidiomas)
     for idioma in idiomas:
+        # TODO quitar esto
         textoidiomas = textoidiomas + idioma +" "
-        #textoidiomas.append(idioma.upper())
+        # TODO y dejar esto
+        language.append(idioma)
 
-    return textoidiomas
+    return textoidiomas, language
 
 
 def bbcode_kodi2html(text):

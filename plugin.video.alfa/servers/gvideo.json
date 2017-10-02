@@ -14,7 +14,7 @@
         "url": "http://docs.google.com/get_video_info?docid=\\1"
       },
       {
-        "pattern": "(?s)https://drive.google.com/file/d/([^/]+)/preview",
+        "pattern": "(?s)https://(?:docs|drive).google.com/file/d/([^/]+)/preview",
         "url": "http://docs.google.com/get_video_info?docid=\\1"
       },
       {

@@ -133,8 +133,8 @@ def peliculas(item):
     patron += 'href="([^"]+)"'
     patron += '.*?(?:<span>|<span class="year">)([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedthumbnail, scrapedtitle, calidad, scrapedurl, scrapedyear in matches:
-        calidad = scrapertools.find_single_match(calidad, '.*?quality">([^<]+)')
+    for scrapedthumbnail, scrapedtitle, quality, scrapedurl, scrapedyear in matches:
+        quality = scrapertools.find_single_match(quality, '.*?quality">([^<]+)')
         try:
             fulltitle = scrapedtitle
             year = scrapedyear.replace("&nbsp;", "")
@@ -143,11 +143,11 @@ def peliculas(item):
             scrapedtitle = "%s (%s)" % (fulltitle, year)
         except:
             fulltitle = scrapedtitle
-        if calidad:
-            scrapedtitle += "  [%s]" % calidad
+        if quality:
+            scrapedtitle += "  [%s]" % quality
         new_item = item.clone(action="findvideos", title=scrapedtitle, fulltitle=fulltitle,
                               url=scrapedurl, thumbnail=scrapedthumbnail,
-                              contentTitle=fulltitle, contentType="movie")
+                              contentTitle=fulltitle, contentType="movie", quality=quality)
         if year:
             new_item.infoLabels['year'] = int(year)
         itemlist.append(new_item)
@@ -330,12 +330,14 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
         if filtro_idioma == 3 or item.filtro:
             lista_enlaces.append(item.clone(title=title, action="play", text_color=color2,
                                             url=scrapedurl, server=scrapedserver, idioma=scrapedlanguage,
-                                            extra=item.url, contentThumbnail = item.thumbnail))
+                                            extra=item.url, contentThumbnail = item.thumbnail,
+                                            language=scrapedlanguage))
         else:
             idioma = dict_idiomas[language]
             if idioma == filtro_idioma:
                 lista_enlaces.append(item.clone(title=title, text_color=color2, action="play", url=scrapedurl,
-                                                extra=item.url, contentThumbnail = item.thumbnail))
+                                                extra=item.url, contentThumbnail = item.thumbnail,
+                                                language=scrapedlanguage))
             else:
                 if language not in filtrados:
                     filtrados.append(language)

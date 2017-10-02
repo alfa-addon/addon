@@ -51,24 +51,21 @@ def mainlist(item):
                    host="http://cinecalidad.com/",
                    thumbnail=thumbmx,
                    extra="peliculas",
-                   language='latino'
                    ))
 
-    itemlist.append(item.clone(title="CineCalidad España",
+    itemlist.append(item.clone(title="CineCalidad Castellano",
                                action="submenu",
                                host="http://cinecalidad.com/espana/",
                                thumbnail=thumbes,
                                extra="peliculas",
-                               language='castellano'
                                ))
 
     itemlist.append(
-        item.clone(title="CineCalidad Brasil",
+        item.clone(title="CineCalidad Portugues",
                    action="submenu",
                    host="http://cinemaqualidade.com/",
                    thumbnail=thumbbr,
                    extra="filmes",
-                   language='portugues'
                    ))
 
     autoplay.show_option(item.channel, itemlist)
@@ -91,7 +88,6 @@ def submenu(item):
                          url=host,
                          thumbnail='https://s8.postimg.org/6wqwy2c2t/peliculas.png',
                          fanart='https://s8.postimg.org/6wqwy2c2t/peliculas.png',
-                         language=item.language
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Destacadas",
@@ -99,7 +95,6 @@ def submenu(item):
                          url=host + "/genero-" + idioma + "/" + idioma2 + "/",
                          thumbnail='https://s30.postimg.org/humqxklsx/destacadas.png',
                          fanart='https://s30.postimg.org/humqxklsx/destacadas.png',
-                         language=item.language
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Generos",
@@ -107,7 +102,6 @@ def submenu(item):
                          url=host + "/genero-" + idioma,
                          thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
                          fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
-                         language=item.language
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Por Año",
@@ -115,7 +109,6 @@ def submenu(item):
                          url=host + "/" + idioma + "-por-ano",
                          thumbnail='https://s8.postimg.org/7eoedwfg5/pora_o.png',
                          fanart='https://s8.postimg.org/7eoedwfg5/pora_o.png',
-                         language=item.language
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Buscar",
@@ -124,7 +117,6 @@ def submenu(item):
                          url=host + '/apiseries/seriebyword/',
                          fanart='https://s30.postimg.org/pei7txpa9/buscar.png',
                          host=item.host,
-                         language=item.language
                          ))
 
     return itemlist
@@ -199,6 +191,12 @@ def generos(item):
 def peliculas(item):
     logger.info()
     itemlist = []
+    if 'espana' in host:
+        item.language = 'castellano'
+    elif 'cinecalidad' in host:
+        item.language = 'latino'
+    else:
+        item.language = 'portugues'
     data = httptools.downloadpage(item.url).data
     patron = '<div class="home_post_cont.*? post_box">.*?<a href="(.*?)".*?'
     patron += 'src="(.*?)".*?title="(.*?) \((.*?)\).*?".*?p&gt;(.*?)&lt'
@@ -298,7 +296,7 @@ def findvideos(item):
 
         if server_id in server_url:
             server = server_id.lower()
-            thumbnail = item.contentThumbnail
+            thumbnail = item.thumbnail
             if server_id == 'TVM':
                 server = 'thevideo.me'
                 url = server_url[server_id] + video_id + '.html'
@@ -367,7 +365,7 @@ def play(item):
         for videoitem in itemlist:
             videoitem.title = item.fulltitle
             videoitem.fulltitle = item.fulltitle
-            videoitem.thumbnail = item.contentThumbnail
+            videoitem.thumbnail = item.thumbnail
             videoitem.channel = item.channel
     else:
         itemlist.append(item)
