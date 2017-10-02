@@ -404,6 +404,9 @@ def newest(categoria):
         elif categoria == 'infantiles':
             item.url = host + 'categoria/animacion-e-infantil/'
             item.extra = 'peliculas'
+        elif categoria == 'terror':
+            item.url = host + 'categoria/terror/'
+            item.extra = 'peliculas'
         itemlist = todas(item)
         if itemlist[-1].title == 'Siguiente >>>':
             itemlist.pop()

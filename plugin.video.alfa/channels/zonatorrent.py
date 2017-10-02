@@ -157,3 +157,30 @@ def findvideos(item):
                                  fulltitle=item.title, thumbnail=get_thumb("channels_torrent.png")))
 
     return itemlist
+
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == 'peliculas':
+            item.url = HOST
+        elif categoria == 'infantiles':
+            item.url = HOST + "/animacion"
+        elif categoria == 'terror':
+            item.url = HOST + "/terror/"
+        else:
+            return []
+
+        itemlist = listado(item)
+        if itemlist[-1].title == ">> Página siguiente":
+            itemlist.pop()
+
+    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist

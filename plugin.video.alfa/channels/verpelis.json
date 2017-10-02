@@ -23,21 +23,37 @@
         "direct"
     ],
     "settings": [
-        {
-            "id": "modo_grafico",
-            "type": "bool",
-            "label": "Buscar información extra",
-            "default": true,
-            "enabled": true,
-            "visible": true
-        },
-        {
-            "id": "include_in_global_search",
-            "type": "bool",
-            "label": "Incluir en busqueda global",
-            "default": true,
-            "enabled": true,
-            "visible": true
-        }
+    {
+        "id": "modo_grafico",
+        "type": "bool",
+        "label": "Buscar información extra",
+        "default": true,
+        "enabled": true,
+        "visible": true
+    },
+    {
+        "id": "include_in_global_search",
+        "type": "bool",
+        "label": "Incluir en busqueda global",
+        "default": true,
+        "enabled": true,
+        "visible": true
+    },
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_terror",
+      "type": "bool",
+      "label": "Incluir en Novedades - terror",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    }
     ]
 }

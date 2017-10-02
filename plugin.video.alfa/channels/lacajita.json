@@ -47,6 +47,14 @@
         "Perfil 2",
         "Perfil 1"
       ]
+    },
+    {
+      "id": "include_in_newest_terror",
+      "type": "bool",
+      "label": "Incluir en Novedades - terror",
+      "default": true,
+      "enabled": true,
+      "visible": true
     }
   ]
 }

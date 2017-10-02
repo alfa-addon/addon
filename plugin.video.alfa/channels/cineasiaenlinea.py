@@ -5,10 +5,18 @@ import re
 from core import httptools
 from core import scrapertools
 from core import servertools
+from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
 host = "http://www.cineasiaenlinea.com/"
+__channel__='cineasiaenlinea'
+
+try:
+    __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
+except:
+    __modo_grafico__ = True
+
 # Configuracion del canal
 __perfil__ = int(config.get_setting('perfil', 'cineasiaenlinea'))
 
@@ -75,11 +83,13 @@ def newest(categoria):
     try:
         if categoria == 'peliculas':
             item.url = host + "archivos/peliculas"
-            item.action = "peliculas"
-            itemlist = peliculas(item)
+        elif categoria == 'terror':
+            item.url = host + "genero/terror"
+        item.action = "peliculas"
+        itemlist = peliculas(item)
 
-            if itemlist[-1].action == "peliculas":
-                itemlist.pop()
+        if itemlist[-1].action == "peliculas":
+            itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
     except:
@@ -110,6 +120,7 @@ def peliculas(item):
                                    thumbnail=scrapedthumbnail, infoLabels=infolab,
                                    contentTitle=title, contentType="movie", quality=calidad))
 
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     next_page = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)"')
     if next_page:
         itemlist.append(item.clone(title=">> Página Siguiente", url=next_page))
