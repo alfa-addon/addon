@@ -6,23 +6,12 @@
   "language": ["cast"],
   "thumbnail": "http://imgur.com/iLeISt0.png",
   "banner": "pasateatorrent.png",
+  "fanart": "http://imgur.com/uexmGEg.png",
   "version": 1,
   "changes": [
     {
-      "date": "06/12/2016",
-      "description": "Release"
-    },
-    {
-      "date": "13/01/2017",
-      "description": "Arreglo sagas en peliculas que no se mostraban.Mejoras en series/info-capitulos"
-    },
-    {
-      "date": "04/04/2017",
-      "description": "Migración httptools.Adaptación proxy según Kodi sea igual o menor v.17.Pequeñas mejoras código"
-    },
-    {
-      "date": "28/06/2017",
-      "description": "Correciones código y algunas mejoras"
+      "date": "25/08/2017",
+      "description": "Revamp"
     }
   ],
   "categories": [
@@ -35,6 +24,14 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "modo_grafico",
+      "type": "bool",
+      "label": "Buscar información extra (TMDB)",
       "default": true,
       "enabled": true,
       "visible": true

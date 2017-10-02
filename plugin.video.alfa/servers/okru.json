@@ -22,7 +22,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "//(?:www.)?ok.../(?:videoembed|video)/(\\d+)",
+        "pattern": "(?:www.)?ok.../(?:videoembed|video)/(\\d+)",
         "url": "http://ok.ru/videoembed/\\1"
       }
     ]
