@@ -18,7 +18,7 @@ headers = [['User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/2
 IDIOMAS = {'Latino': 'Latino', 'Sub Español': 'VOS'}
 list_language = IDIOMAS.values()
 list_quality = []
-list_servers = ['yourupload', 'openload', 'sendvid', '']
+list_servers = ['yourupload', 'openload', 'sendvid']
 
 vars = {
     'ef5ca18f089cf01316bbc967fa10f72950790c39ef5ca18f089cf01316bbc967fa10f72950790c39': 'http://www.estadepelis.com/',
