@@ -123,7 +123,8 @@ def findvideos(item):
     logger.info()
 
     itemlist = []
-
+    language = ''
+    quality = ''
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
     data = re.sub(r"&quot;", '"', data)
     data = re.sub(r"&lt;", '<', data)
@@ -134,7 +135,9 @@ def findvideos(item):
     if len(titles) == len(urls):
         for i in range(0, len(titles)):
             if i > 0:
-                title = "Online %s " % titles[i].strip()
+                logger.debug('titles: %s' % titles[i].strip())
+                language, quality = titles[i].split(' - ')
+                title = "%s" % titles[i].strip()
             else:
                 title = titles[0]
 
@@ -143,8 +146,11 @@ def findvideos(item):
                     .headers.get("location", "")
             videourl = servertools.findvideos(urls[i])
             if len(videourl) > 0:
+                server = videourl[0][0].capitalize()
+                title = '%s %s' % (server, title)
                 itemlist.append(Item(channel=item.channel, action="play", title=title, url=videourl[0][1],
-                                     server=videourl[0][0], thumbnail=videourl[0][3], fulltitle=item.title))
+                                     server=server, thumbnail=videourl[0][3], fulltitle=item.title,
+                                     language=language, quality=quality ))
 
     pattern = '<a[^>]+href="([^"]+)"[^<]+</a></td><td><span><img[^>]+>(.*?)</span></td><td><span><img[^>]+>(.*?)' \
               '</span></td><td><span>(.*?)</span>'

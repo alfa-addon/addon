@@ -46,7 +46,6 @@ def mainlist(item):
 
         set_category_context(new_item)
         itemlist.append(new_item)
-    logger.debug('list_canales: %s'%list_canales)
     if list_canales['terror']:
         thumbnail = get_thumb("channels_horror.png")
         new_item = Item(channel=item.channel, action="novedades", extra="terror", title="Peliculas de miedo!",
