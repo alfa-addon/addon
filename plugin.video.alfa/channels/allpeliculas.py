@@ -60,7 +60,6 @@ def generos(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    infoLabels = {}
     data = httptools.downloadpage(item.url).data
     patron  = 'data-link="([^"]+).*?'
     patron += '>([^<]+)'
