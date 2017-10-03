@@ -78,12 +78,14 @@ def newest(categoria):
     try:
         if categoria == "peliculas":
             item.url = host
-            item.from_newest = True
-            item.action = "entradas"
-            itemlist = entradas(item)
+        elif categoria == "terror":
+            item.url = host+"terror/"
+        item.from_newest = True
+        item.action = "entradas"
+        itemlist = entradas(item)
 
-            if itemlist[-1].action == "entradas":
-                itemlist.pop()
+        if itemlist[-1].action == "entradas":
+            itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
     except:

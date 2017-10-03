@@ -7,7 +7,15 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
+__channel__='allcalidad'
+
 host = "http://allcalidad.com/"
+
+try:
+    __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
+except:
+    __modo_grafico__ = True
+
 
 def mainlist(item):
     logger.info()
@@ -29,6 +37,8 @@ def newest(categoria):
             item.url = host
         elif categoria == 'infantiles':
             item.url = host + 'category/animacion/'
+        elif categoria == 'terror':
+            item.url = host + 'category/torror/'
         itemlist = peliculas(item)
         if "Pagina" in itemlist[-1].title:
             itemlist.pop()
@@ -99,6 +109,7 @@ def peliculas(item):
                                    ))
     tmdb.set_infoLabels(itemlist, True)
     url_pagina = scrapertools.find_single_match(data, 'next" href="([^"]+)')
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     if url_pagina != "":
         pagina = "Pagina: " + scrapertools.find_single_match(url_pagina, "page/([0-9]+)")
         itemlist.append(Item(channel = item.channel, action = "peliculas", title = pagina, url = url_pagina))

@@ -61,10 +61,14 @@ def newest(categoria):
             item.url = "http://www.inkapelis.com/"
             item.action = "entradas"
             item.extra = "Novedades"
-            itemlist = entradas(item)
 
-            if itemlist[-1].action == "entradas":
-                itemlist.pop()
+        if categoria == "terror":
+            item.url = "https://www.inkapelis.com/genero/terror/"
+            item.action = "entradas"
+        itemlist = entradas(item)
+
+        if itemlist[-1].action == "entradas":
+            itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
     except:
@@ -278,9 +282,15 @@ def entradas(item):
                     title += " [Próximamente]"
                 thumbnail = scrapedthumbnail.replace("w185", "original")
 
+                filtro_thumb = scrapedthumbnail.replace("https://image.tmdb.org/t/p/w185", "")
+                filtro_list = {"poster_path": filtro_thumb}
+                filtro_list = filtro_list.items()
+
                 itemlist.append(item.clone(action="findvideos", title=title, url=url, contentTitle=scrapedtitle,
                                            fulltitle=scrapedtitle, thumbnail=thumbnail, context=["buscar_trailer"],
-                                           contentType="movie"))
+                                           contentType="movie", infoLabels={'filtro': filtro_list}))
+
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
     # Extrae la marca de la siguiente página
     next_page = scrapertools.find_single_match(data, '<span class="current">.*?<\/span><a href="([^"]+)"')

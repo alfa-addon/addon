@@ -72,14 +72,6 @@
       "visible": true
     },
     {
-      "id": "include_in_newest_infantiles",
-      "type": "bool",
-      "label": "Incluir en Novedades - Infantiles",
-      "default": false,
-      "enabled": true,
-      "visible": true
-    },
-    {
       "id": "modo_grafico",
       "type": "bool",
       "color": "0xFFd50b0b",
