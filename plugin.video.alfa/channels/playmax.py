@@ -211,7 +211,7 @@ def newest(categoria):
         elif categoria == 'infantiles':
             item.channel = "playmax"
             item.extra = "newest"
-            item.url = host + "/catalogo.php?tipo[]=2&genero[]=60&ad=2&ordenar=novedades&con_dis=on"
+            item.url = host + "/catalogo.php?tipo[]=2&generos[]=60&ad=2&ordenar=novedades&con_dis=on"
             item.contentType = "movie"
             itemlist = fichas(item)
 
