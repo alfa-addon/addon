@@ -241,14 +241,7 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     year = scrapertools.find_single_match(item.title, "\(([0-9]+)")
 
-    if year and item.extra != "library":
-        item.infoLabels['year'] = int(year)
-        # Ampliamos datos en tmdb
-        if not item.infoLabels['plot']:
-            try:
-                tmdb.set_infoLabels(item, __modo_grafico__)
-            except:
-                pass
+    tmdb.set_infoLabels(item, __modo_grafico__)
 
     if not item.infoLabels.get('plot'):
         plot = scrapertools.find_single_match(data, '<div class="sinopsis"><p>(.*?)</p>')
