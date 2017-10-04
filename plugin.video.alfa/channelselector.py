@@ -202,14 +202,12 @@ def filterchannels(category, view="thumb_"):
 
 def get_thumb(thumb_name, view="thumb_"):
 
-    path = os.path.join(config.get_runtime_path(), "resources", "media", "general")
+    icon_pack_name = config.get_setting('icon_set')
+    if icon_pack_name == "default":
+        resource_path = os.path.join(config.get_runtime_path(), "resources", "media", "themes")
+    else:
+        resource_path = "https://raw.githubusercontent.com/alfa-addon/media/master/themes/"
 
-    # if config.get_setting("icons"):  # TODO obtener de la configuración el pack de thumbs seleccionado
-    #     selected_icon = config.get_setting("icons")
-    # else:
-    #     selected_icon = os.sep + "default"
+    media_path = os.path.join(resource_path, icon_pack_name)
 
-    selected_icon = os.sep + "default"
-    web_path = path + selected_icon + os.sep
-
-    return os.path.join(web_path, view + thumb_name)
+    return os.path.join(media_path, view + thumb_name)
