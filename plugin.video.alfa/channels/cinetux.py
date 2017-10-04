@@ -7,7 +7,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
-CHANNEL_HOST = "http://www.cinetux.net/"
+CHANNEL_HOST = "http://www.cinetux.io/"
 
 # Configuracion del canal
 __modo_grafico__ = config.get_setting('modo_grafico', 'cinetux')
@@ -36,7 +36,7 @@ def mainlist(item):
                                thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
                                          "/0/Directors%20Chair.png",
                                text_color=color1))
-    itemlist.append(item.clone(action="destacadas", title="      Destacadas", url="http://www.cinetux.net/mas-vistos/",
+    itemlist.append(item.clone(action="destacadas", title="      Destacadas", url=CHANNEL_HOST + "mas-vistos/",
                                thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
                                          "/0/Favorites.png",
                                text_color=color1))
@@ -69,7 +69,7 @@ def configuracion(item):
 
 def search(item, texto):
     logger.info()
-    item.url = "http://www.cinetux.net/?s="
+    item.url = CHANNEL_HOST + "?s="
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
     try:
@@ -147,7 +147,7 @@ def peliculas(item):
             scrapedtitle += "  [%s]" % quality
         new_item = item.clone(action="findvideos", title=scrapedtitle, fulltitle=fulltitle,
                               url=scrapedurl, thumbnail=scrapedthumbnail,
-                              contentTitle=fulltitle, contentType="movie", quality=quality)
+                              contentType="movie", quality=quality)
         if year:
             new_item.infoLabels['year'] = int(year)
         itemlist.append(new_item)
@@ -177,11 +177,11 @@ def destacadas(item):
     patron += '.*?src="([^"]+)'
     matches = scrapertools.find_multiple_matches(bloque, patron)
     for scrapedtitle, scrapedurl, scrapedthumbnail in matches:
-        scrapedurl = "http://www.cinetux.net" + scrapedurl
+        scrapedurl = CHANNEL_HOST + scrapedurl
         scrapedtitle = scrapedtitle.replace("Ver ", "")
         new_item = item.clone(action="findvideos", title=scrapedtitle, fulltitle=scrapedtitle,
                               url=scrapedurl, thumbnail=scrapedthumbnail,
-                              contentTitle=scrapedtitle, contentType="movie")
+                              contentType="movie")
         itemlist.append(new_item)
 
     # Extrae el paginador
@@ -274,7 +274,7 @@ def findvideos(item):
         if item.extra != "library":
             if config.get_videolibrary_support():
                 itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
-                                     action="add_pelicula_to_library", url=item.url
+                                     action="add_pelicula_to_library", url=item.url, fulltitle = item.fulltitle
                                      ))
 
     else:
