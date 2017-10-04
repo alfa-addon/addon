@@ -40,6 +40,14 @@
       "default": true,
       "enabled": true,
       "visible": true
+    },
+    {
+      "id": "include_in_newest_terror",
+      "type": "bool",
+      "label": "Incluir en Novedades - terror",
+      "default": true,
+      "enabled": true,
+      "visible": true
     }
   ]
 }

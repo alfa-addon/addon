@@ -198,3 +198,28 @@ def play(item):
         ))
 
     return itemlist
+
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == 'peliculas':
+            item.url = host + '/ver/'
+        elif categoria == 'terror':
+            item.url = host + "/categoria/de-terror.htm"
+        else:
+            return []
+
+        itemlist = scraper(item)
+        if itemlist[-1].title == "» Siguiente »":
+            itemlist.pop()
+
+    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist
