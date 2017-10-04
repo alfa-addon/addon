@@ -65,25 +65,31 @@ def findvideos(item):
     patron += '>([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, calidad in matches:
-        itemlist.append(Item(
+        itemlist.append(item.clone(
                              channel = item.channel,
                              action = "play",
                              title = calidad,
+                             fulltitle = item.title,
+                             contentThumbnail = item.thumbnail,
                              url = url,
-                             ))
-    itemlist = servertools.get_servers_itemlist(itemlist)
-    itemlist.append(Item(channel=item.channel))
-    if config.get_videolibrary_support():
-        itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
-                             filtro=True, action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                             infoLabels={'title': item.fulltitle}, fulltitle=item.fulltitle
                              ))
     try:
         tmdb.set_infoLabels(itemlist, __modo_grafico__)
     except:
         pass
-
+    itemlist = servertools.get_servers_itemlist(itemlist)
+    itemlist.append(Item(channel=item.channel))
+    if config.get_videolibrary_support():
+        itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                             action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
+                             ))
     return itemlist
+
+
+def play(item):
+    logger.info()
+    item.thumbnail = item.contentThumbnail
+    return [item]
 
 
 def lista(item):
@@ -112,6 +118,10 @@ def lista(item):
         itemlist.append(item.clone(action="findvideos", title=title, fulltitle=title, url=url, thumbnail=thumb,
                                    plot=plot, context=["buscar_trailer"], contentTitle=title, contentType="movie"))
 
+    try:
+        tmdb.set_infoLabels(itemlist, __modo_grafico__)
+    except:
+        pass
     pagina = scrapertools.find_single_match(item.url, 'page=([0-9]+)')
     item.url = item.url.replace(pagina, "")
     if pagina == "":
@@ -121,12 +131,6 @@ def lista(item):
     if item.extra != "busqueda":
         itemlist.append(Item(channel = item.channel, action="lista", title="Pagina %s" %pagina, url=item.url, extra1 = item.extra1
                              ))
-    try:
-        # Obtenemos los datos basicos de todas las peliculas mediante multihilos
-        tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
-    except:
-        pass
-
     return itemlist
 
 def search(item, texto):

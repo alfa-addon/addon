@@ -140,6 +140,8 @@ def newest(categoria):
             item.url = host
         elif categoria == 'infantiles':
             item.url = host + "genero/animacion-e-infantil/"
+        elif categoria == 'terror':
+            item.url = host + "genero/terror/"
         else:
             return []
 

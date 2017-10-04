@@ -382,6 +382,8 @@ def newest(categoria):
             item.url = 'http://www.cinecalidad.to'
         elif categoria == 'infantiles':
             item.url = 'http://www.cinecalidad.to/genero-peliculas/infantil/'
+        elif categoria == 'terror':
+            item.url = 'http://www.cinecalidad.to/genero-peliculas/terror/'
         itemlist = peliculas(item)
         if itemlist[-1].title == 'Página siguiente >>':
             itemlist.pop()

@@ -10,6 +10,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
+host = 'http://vepelis.com/'
 
 def mainlist(item):
     logger.info()
@@ -250,3 +251,29 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
+
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == 'peliculas':
+            item.url = host + 'ultimas-peliculas'
+            itemlist = listarpeliculas(item)
+        elif categoria == 'terror':
+            item.url = host + "categoria-terror/"
+            itemlist = listado2(item)
+        else:
+            return []
+
+        if itemlist[-1].title == "!Pagina Siguiente ->":
+            itemlist.pop()
+
+    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist
