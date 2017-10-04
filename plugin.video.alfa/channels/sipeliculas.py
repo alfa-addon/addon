@@ -141,3 +141,30 @@ def play(item):
                  server=enlaces[0][2], thumbnail=thumbnail, folder=False))
 
     return itemlist
+
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == 'peliculas':
+            item.url = host + '/cartelera/'
+        elif categoria == 'infantiles':
+            item.url = host + "/online/animacion"
+        elif categoria == 'terror':
+            item.url = host + "/online/terror/"
+        else:
+            return []
+
+        itemlist = lista(item)
+        if itemlist[-1].title == "» Siguiente »":
+            itemlist.pop()
+
+    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist

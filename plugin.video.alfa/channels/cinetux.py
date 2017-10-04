@@ -152,6 +152,7 @@ def peliculas(item):
             new_item.infoLabels['year'] = int(year)
         itemlist.append(new_item)
 
+    tmdb.set_infoLabels(itemlist, __modo_grafico__)
     # Extrae el paginador
     next_page_link = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)')
     if next_page_link:
@@ -273,9 +274,8 @@ def findvideos(item):
         if item.extra != "library":
             if config.get_videolibrary_support():
                 itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
-                                     filtro=True, action="add_pelicula_to_library", url=item.url,
-                                     infoLabels={'title': item.fulltitle}, fulltitle=item.fulltitle,
-                                     extra="library"))
+                                     action="add_pelicula_to_library", url=item.url
+                                     ))
 
     else:
         itemlist.append(item.clone(title="No hay enlaces disponibles", action="", text_color=color3))
@@ -319,34 +319,35 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
         scrapedurl = match[0]
         scrapedserver = match[1]
         scrapedcalidad = match[2]
-        scrapedlanguage = match[3]
+        language = match[3]
         scrapedtipo = match[4]
         if t_tipo.upper() not in scrapedtipo.upper():
             continue
-        title = "   Mirror en %s (" + scrapedlanguage + ")"
+        title = "   Mirror en %s (" + language + ")"
         if len(scrapedcalidad.strip()) > 0:
             title += " (Calidad " + scrapedcalidad.strip() + ")"
 
         if filtro_idioma == 3 or item.filtro:
             lista_enlaces.append(item.clone(title=title, action="play", text_color=color2,
-                                            url=scrapedurl, server=scrapedserver, idioma=scrapedlanguage,
+                                            url=scrapedurl, server=scrapedserver,
                                             extra=item.url, contentThumbnail = item.thumbnail,
-                                            language=scrapedlanguage))
+                                            language=language))
         else:
             idioma = dict_idiomas[language]
             if idioma == filtro_idioma:
-                lista_enlaces.append(item.clone(title=title, text_color=color2, action="play", url=scrapedurl,
+                lista_enlaces.append(item.clone(title=title, action="play", text_color=color2,
+                                                url=scrapedurl, server=scrapedserver,
                                                 extra=item.url, contentThumbnail = item.thumbnail,
-                                                language=scrapedlanguage))
+                                                language=language))
             else:
                 if language not in filtrados:
                     filtrados.append(language)
+    lista_enlaces = servertools.get_servers_itemlist(lista_enlaces, lambda i: i.title % i.server.capitalize())
     if filtro_idioma != 3:
         if len(filtrados) > 0:
-            title = "Mostrar enlaces filtrados en %s" % ", ".join(filtrados)
+            title = "Mostrar también enlaces filtrados en %s" % ", ".join(filtrados)
             lista_enlaces.append(item.clone(title=title, action="findvideos", url=item.url, text_color=color3,
                                             filtro=True))
-    lista_enlaces = servertools.get_servers_itemlist(lista_enlaces, lambda i: i.title % i.server.capitalize())
     return lista_enlaces
 
 

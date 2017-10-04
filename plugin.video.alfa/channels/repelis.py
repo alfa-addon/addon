@@ -259,7 +259,15 @@ def findvideos(item):
         itemlist.append(Item(channel=item.channel, action="play", title=scrapedtitle, extra=title, url=url,
                              fanart=item.thumbnail, thumbnail=item.thumbnail, plot=splot, language=scrapedlang,
                              quality=scrapedquality, server=server))
-
+    if itemlist:
+        itemlist.append(Item(channel=item.channel))
+        itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer",
+                                   text_color="magenta"))
+        # Opción "Añadir esta película a la biblioteca de KODI"
+        if config.get_videolibrary_support():
+            itemlist.append(Item(channel=item.channel, title="Añadir pelicula a la videoteca", text_color="green",
+                                 action="add_pelicula_to_library", url=item.url, thumbnail=item.thumbnail,
+                                 fulltitle=item.fulltitle))
     return itemlist
 
 

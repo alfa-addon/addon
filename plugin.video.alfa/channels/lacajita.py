@@ -260,3 +260,27 @@ def play(item):
             itemlist.append(item.clone(action="play", server=enlaces[0][2], url=enlaces[0][1]))
 
     return itemlist
+
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == "terror":
+            item.url = host +"/listado/terror/"
+            item.action = "updated"
+            item.page = 0
+        itemlist = updated(item)
+
+        if itemlist[-1].action == "updated":
+            itemlist.pop()
+
+    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist
+

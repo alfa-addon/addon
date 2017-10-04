@@ -459,10 +459,12 @@ def newest(categoria):
     try:
         if categoria == 'peliculas':
             item.url = host
-            item.extra = 'peliculas'
         elif categoria == 'infantiles':
             item.url = host + 'search?q=animación'
-            item.extra = 'peliculas'
+        elif categoria == 'terror':
+            item.url = host + 'search?q=terror'
+
+        item.extra = 'peliculas'
         itemlist = lista(item)
         if itemlist[-1].title == 'Siguiente >>>':
             itemlist.pop()
