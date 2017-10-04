@@ -38,13 +38,16 @@
         <setting id="videolibrary_kodi_flag" type="number" label="" default="0" visible="false"/>
         <setting id="videolibrary_kodi" type="bool" label="Autoconfigurar videoteca de XBMC/Kodi para contenido de Alfa" enable="lt(-1,2)+eq(0,false)" default="false"/>
     </category>
-
+    <category label="Opciones Visuales">
+        <setting id="icon_set" type="labelenum" label="Set de iconos" lvalues="default|dark" default="default"/>
+   </category>
     <category label="Otros">
         <setting label="Info de películas/series en menú contextual" type="lsep"/>
         <setting id="infoplus" type="bool" label="Mostrar opción Infoplus:" default="true"/>
         <setting id="extended_info" type="bool" label="Mostrar opción ExtendedInfo (Necesario addon externo):" default="false"/>
-		
+
 		<setting label="Botones/Teclas de acceso (Cambios requieren reiniciar Kodi)" type="lsep"/>
 		<setting id="shortcut_key" type="action" label="30999" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAia2V5bWFwIg0KfQ==)" />
    </category>
+
 </settings>

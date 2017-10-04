@@ -12,10 +12,10 @@
     <assets>
       <icon>icon.png</icon>
       <fanart>fanart.jpg</fanart>
-      <screenshot>resources/media/general/ss/1.jpg</screenshot>
-      <screenshot>resources/media/general/ss/2.jpg</screenshot>
-      <screenshot>resources/media/general/ss/3.jpg</screenshot>
-      <screenshot>resources/media/general/ss/4.jpg</screenshot>
+      <screenshot>resources/media/themes/ss/1.jpg</screenshot>
+      <screenshot>resources/media/themes/ss/2.jpg</screenshot>
+      <screenshot>resources/media/themes/ss/3.jpg</screenshot>
+      <screenshot>resources/media/themes/ss/4.jpg</screenshot>
     </assets>
       <news>[B]Estos son los cambios para esta versión:[/B]
       [COLOR green][B]Canales agregados y arreglos[/B][/COLOR]
