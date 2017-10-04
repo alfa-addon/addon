@@ -18,6 +18,8 @@ def test_video_exists(page_url):
         return False, "[gvideo] Se ha excedido el número de reproducciones permitidas"
     if "No+tienes+permiso" in response.data:
         return False, "[gvideo] No tienes permiso para acceder a este video"
+    if "Se ha producido un error" in response.data:
+        return False, "[gvideo] Se ha producido un error en el reproductor de google"
 
     return True, ""
 
@@ -43,7 +45,6 @@ def get_video_url(page_url, user="", password="", video_password=""):
             cookies += c.split(";", 1)[0] + "; "
         data = response.data.decode('unicode-escape')
         data = urllib.unquote_plus(urllib.unquote_plus(data))
-        logger.info("Intel88 %s" %data)
         headers_string = "|Cookie=" + cookies
         url_streams = scrapertools.find_single_match(data, 'url_encoded_fmt_stream_map=(.*)')
         streams = scrapertools.find_multiple_matches(url_streams,
