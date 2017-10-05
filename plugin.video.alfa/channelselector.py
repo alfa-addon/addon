@@ -202,7 +202,7 @@ def filterchannels(category, view="thumb_"):
 
 def get_thumb(thumb_name, view="thumb_"):
 
-    icon_pack_name = config.get_setting('icon_set')
+    icon_pack_name = config.get_setting('icon_set', default="default")
     if icon_pack_name == "default":
         resource_path = os.path.join(config.get_runtime_path(), "resources", "media", "themes")
     else:
