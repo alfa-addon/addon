@@ -64,6 +64,14 @@
       "visible": true
     },
     {
+      "id": "include_in_newest_infantiles",
+      "type": "bool",
+      "label": "Incluir en Novedades - Infantiles",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
       "id": "include_in_newest_series",
       "type": "bool",
       "label": "Incluir en Novedades - Series",
