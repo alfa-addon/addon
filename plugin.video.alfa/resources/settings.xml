@@ -40,6 +40,52 @@
     </category>
     <category label="Opciones Visuales">
         <setting id="icon_set" type="labelenum" label="Set de iconos" lvalues="default|dark" default="default"/>
+        <setting id="video_thumbnail_type" type="enum" label="Thumbnail para videos" values="Poster|Logo del servidor" default="0"/>
+        <setting label="Titulos Inteligentes" type="lsep"/>
+        <setting id="unify" type="bool" label="Titulos Inteligentes" default="false"/>
+        <setting id="title_color" type="bool" label="Colores Personalizados" default="false" visible="eq(-1,true)"/>
+        <setting id="movie_color" type="labelenum" label="Pelicula"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-1,true)+eq(-2,true)"/>
+        <setting id="tv_color" type="labelenum" label="Serie"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-2,true)+eq(-3,true)"/>
+        <setting id="year_color" type="labelenum" label="Año"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-3,true)+eq(-4,true)"/>
+        <setting id="rating1_color" type="labelenum" label="Valoracion Alta"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-4,true)+eq(-5,true)"/>
+        <setting id="rating2_color" type="labelenum" label="Valoracion Media"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-5,true)+eq(-6,true)"/>
+        <setting id="rating3_color" type="labelenum" label="Valoracion Baja"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-6,true)+eq(-7,true)"/>
+        <setting id="quality_color" type="labelenum" label="Calidad"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-7,true)+eq(-8,true)"/>
+        <setting id="cast_color" type="labelenum" label="Castellano"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-8,true)+eq(-9,true)"/>
+        <setting id="lat_color" type="labelenum" label="Latino"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-9,true)+eq(-10,true)"/>
+        <setting id="vose_color" type="labelenum" label="VOSE (Video Original Subtitulado Español)"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-10,true)+eq(-11,true)"/>
+        <setting id="vos_color" type="labelenum" label="VOS (Video Original Subtitulado)"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-11,true)+eq(-12,true)"/>
+        <setting id="vo_color" type="labelenum" label="VO (Video Original)"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-12,true)+eq(-13,true)"/>
+        <setting id="server_color" type="labelenum" label="Servidores"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-13,true)+eq(-14,true)"/>
+        <setting id="library_color" type="labelenum" label="Videoteca"
+                 lvalues="30900|30901|30902|30903|30904|30905|30906|30907|30908|30909|30910|30911"
+                 default="30900" visible="eq(-14,true)+eq(-15,true)"/>
    </category>
     <category label="Otros">
         <setting label="Info de películas/series en menú contextual" type="lsep"/>
@@ -48,9 +94,7 @@
 
 		<setting label="Botones/Teclas de acceso (Cambios requieren reiniciar Kodi)" type="lsep"/>
 		<setting id="shortcut_key" type="action" label="30999" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAia2V5bWFwIg0KfQ==)" />
-        <setting label="Opciones Visuales" type="lsep"/>
-        <setting id="unify" type=bool label="Titulos Inteligentes" default="false"/>
-        <setting id="video_thumbnail_type" type="enum" label="Thumbnail para videos" values="Poster|Logo del servidor" default="0"/>
+
    </category>
 
 </settings>

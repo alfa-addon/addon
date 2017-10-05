@@ -65,7 +65,7 @@ def title_format(item):
     logger.info()
     color_scheme={'movie':'white', 'tvshow':'goldenrod','server':'salmon', 'quality':'gold', 'year':'orchid',
                   'library':'hotpink', 'rating_1':'red', 'rating_2':'cyan', 'rating_3':'gold', 'cast':'yellow',
-                  'lat':'limegreen', 'vose':'orange', 'vos':'red', 'vo':'red', 'otro':'white'}
+                  'lat':'limegreen', 'vose':'orange', 'vos':'red', 'vo':'red', 'otro':'white', 'videoteca':'yellow'}
 
     #color_scheme = {'movie': 'white', 'tvshow': 'white', 'server': 'white', 'quality': 'white', 'year': 'white',
     #                'library': 'white', 'rating':'gold','rating_1':'white', 'rating_2':'white', 'rating_3':'white'}
@@ -94,6 +94,7 @@ def title_format(item):
         # Evitamos modificar el titulo de la videoteca
         if not 'library' in item.action:
 
+
             # Formamos el titulo para serie, se debe definir contentSerieName
             # o show en el item para que esto funcione.
             if item.contentSerieName:
@@ -117,6 +118,10 @@ def title_format(item):
                 # Si el titulo no tiene contentSerieName entonces se formatea como pelicula
                 item.title = '[COLOR %s]%s[/COLOR]'%(color_scheme['movie'],item.contentTitle)
 
+
+            if 'Novedades' in item.category:
+                logger.debug('novedades')
+                item.title = '%s [%s]'%(item.title, item.channel)
 
             # Verificamos si item.language es una lista, si lo es se toma
             # cada valor y se normaliza formado una nueva lista

@@ -262,3 +262,51 @@ msgstr "Acceso directo"
 msgctxt "#30999"
 msgid "Add key to open Shortcut"
 msgstr "Añadir tecla para acceso directo"
+
+msgctxt "#30900"
+msgid "[COLOR white]white[/COLOR]"
+msgstr "[COLOR white]white[/COLOR]"
+
+msgctxt "#30901"
+msgid "[COLOR firebrick]firebrick[/COLOR]"
+msgstr "[COLOR firebrick]firebrick[/COLOR]"
+
+msgctxt "#30902"
+msgid "[COLOR goldenrod]goldenrod[/COLOR]"
+msgstr "[COLOR goldenrod]goldenrod[/COLOR]"
+
+msgctxt "#30903"
+msgid "[COLOR salmon]salmon[/COLOR]"
+msgstr "[COLOR salmon]salmon[/COLOR]"
+
+msgctxt "#30904"
+msgid "[COLOR gold]gold[/COLOR]"
+msgstr "[COLOR gold]gold[/COLOR]"
+
+msgctxt "#30905"
+msgid "[COLOR orchid]orchid[/COLOR]"
+msgstr "[COLOR orchid]orchid[/COLOR]"
+
+msgctxt "#30906"
+msgid "[COLOR hotpink]hotpink[/COLOR]"
+msgstr "[COLOR hotpink]hotpink[/COLOR]"
+
+msgctxt "#30907"
+msgid "[COLOR cyan]cyan[/COLOR]"
+msgstr "[COLOR cyan]cyan[/COLOR]"
+
+msgctxt "#30908"
+msgid "[COLOR yellow]yellow[/COLOR]"
+msgstr "[COLOR yellow]yellow[/COLOR]"
+
+msgctxt "#30909"
+msgid "[COLOR limegreen]limegreen[/COLOR]"
+msgstr "[COLOR limegreen]limegreen[/COLOR]"
+
+msgctxt "#30910"
+msgid "[COLOR orange]orange[/COLOR]"
+msgstr "[COLOR orange]orange[/COLOR]"
+
+msgctxt "#30911"
+msgid "[COLOR deepskyblue]deepskyblue[/COLOR]"
+msgstr "[COLOR deepskyblue]deepskyblue[/COLOR]"
