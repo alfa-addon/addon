@@ -5,7 +5,7 @@ from threading import Timer
 import xbmc
 import xbmcaddon
 import xbmcgui
-from core import filetools
+from channelselector import get_thumb
 from platformcode import config
 
 
@@ -82,27 +82,13 @@ def set_key():
 
 
 MAIN_MENU = {
-    "news": {"label": "Novedades",
-             "icon": filetools.join(config.get_runtime_path(), "resources", "media", "general", "default",
-                                    "thumb_news.png"), "order": 0},
-    "channels": {"label": "Canales",
-                 "icon": filetools.join(config.get_runtime_path(), "resources", "media", "general", "default",
-                                        "thumb_channels.png"), "order": 1},
-    "search": {"label": "Buscador",
-               "icon": filetools.join(config.get_runtime_path(), "resources", "media", "general", "default",
-                                      "thumb_search.png"), "order": 2},
-    "favorites": {"label": "Favoritos",
-                  "icon": filetools.join(config.get_runtime_path(), "resources", "media", "general", "default",
-                                         "thumb_favorites.png"), "order": 3},
-    "videolibrary": {"label": "Videoteca",
-                     "icon": filetools.join(config.get_runtime_path(), "resources", "media", "general", "default",
-                                            "thumb_videolibrary.png"), "order": 4},
-    "downloads": {"label": "Descargas",
-                  "icon": filetools.join(config.get_runtime_path(), "resources", "media", "general", "default",
-                                         "thumb_downloads.png"), "order": 5},
-    "settings": {"label": "Configuración",
-                 "icon": filetools.join(config.get_runtime_path(), "resources", "media", "general", "default",
-                                        "thumb_setting_0.png"), "order": 6},
+    "news": {"label": "Novedades", "icon": get_thumb("news.png"), "order": 0},
+    "channels": {"label": "Canales", "icon": get_thumb("channels.png"), "order": 1},
+    "search": {"label": "Buscador", "icon": get_thumb("search.png"), "order": 2},
+    "favorites": {"label": "Favoritos", "icon": get_thumb("favorites.png"), "order": 3},
+    "videolibrary": {"label": "Videoteca", "icon": get_thumb("videolibrary.png"), "order": 4},
+    "downloads": {"label": "Descargas", "icon": get_thumb("downloads.png"), "order": 5},
+    "settings": {"label": "Configuración", "icon": get_thumb("setting_0.png"), "order": 6}
 }
 
 
