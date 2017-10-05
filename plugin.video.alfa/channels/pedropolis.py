@@ -203,7 +203,7 @@ def sub_search(item):
                                    action=action, infoLabels={"year": year}, contentType=contentType,
                                    thumbnail=scrapedthumbnail, text_color=color1, contentSerieName=scrapedtitle))
 
-        tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     paginacion = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
 
     if paginacion:

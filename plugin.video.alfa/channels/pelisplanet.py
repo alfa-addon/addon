@@ -37,6 +37,7 @@ if __perfil__ < 3:
 else:
     color1 = color2 = color3 = color4 = color5 = ""
 
+
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -178,22 +179,21 @@ def peliculas(item):
     for scrapedurl, calidad, year, scrapedtitle, scrapedthumbnail in matches:
         datas = httptools.downloadpage(scrapedurl).data
         datas = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", datas)
-        #logger.info(datas)
+        # logger.info(datas)
         if '/ ' in scrapedtitle:
             scrapedtitle = scrapedtitle.partition('/ ')[2]
         contentTitle = scrapertools.find_single_match(datas, '<em class="pull-left">Titulo original: </em>([^<]+)</p>')
         contentTitle = scrapertools.decodeHtmlentities(contentTitle.strip())
         rating = scrapertools.find_single_match(datas, 'alt="Puntaje MPA IMDb" /></a><span>([^<]+)</span>')
-        director = scrapertools.find_single_match(datas, '<div class="list-cast-info tableCell"><a href="[^"]+" rel="tag">([^<]+)</a></div>')
+        director = scrapertools.find_single_match(
+            datas, '<div class="list-cast-info tableCell"><a href="[^"]+" rel="tag">([^<]+)</a></div>')
         title = "%s [COLOR yellow][%s][/COLOR]" % (scrapedtitle.strip(), calidad.upper())
 
         new_item = Item(channel=item.channel, action="findvideos", title=title, plot='', contentType='movie',
-                             url=scrapedurl, contentQuality=calidad, thumbnail=scrapedthumbnail,
-                             contentTitle=contentTitle, infoLabels={"year": year, 'rating': rating, 'director': director},
-                             text_color=color3)
+                        url=scrapedurl, contentQuality=calidad, thumbnail=scrapedthumbnail,
+                        contentTitle=contentTitle, infoLabels={"year": year, 'rating': rating, 'director': director},
+                        text_color=color3)
 
-    # tmdb.set_infoLabels(itemlist, __modo_grafico__)
-    # tmdb.set_infoLabels(itemlist, __modo_grafico__)
         if year:
             tmdb.set_infoLabels_item(new_item, __modo_grafico__)
         itemlist.append(new_item)
@@ -202,8 +202,8 @@ def peliculas(item):
     if paginacion:
 
         itemlist.append(Item(channel=item.channel, action="peliculas",
-                                   title="» Siguiente »", url=paginacion, plot="Página Siguiente",
-                                   thumbnail='https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/next.png'))
+                             title="» Siguiente »", url=paginacion, plot="Página Siguiente",
+                             thumbnail='https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/next.png'))
 
     for item in itemlist:
         if item.infoLabels['plot'] == '':
@@ -250,80 +250,32 @@ def findvideos(item):
     matches = re.compile(patron, re.DOTALL).findall(datas)
 
     for scrapedurl, lang, servidores in matches:
-        # doc_url = ''
-        doc_id = ''
-        video_urls = []
-        if 'drive' in scrapedurl:            
-            doc_id = httptools.downloadpage(scrapedurl).data
-            doc_id = scrapertools.find_single_match(doc_id, "docid=(\w+)")
-        elif 'youtube' in scrapedurl:
-            doc_id = scrapertools.find_single_match(scrapedurl, "docid=(\w+)")
-        doc_url = "http://docs.google.com/get_video_info?docid=%s" % doc_id
-        response = httptools.downloadpage(doc_url, cookies=False)
-        cookies = ""
-        cookie = response.headers["set-cookie"].split("HttpOnly, ")
-        for c in cookie:
-            cookies += c.split(";", 1)[0] + "; "
-        data = response.data.decode('unicode-escape')
-        data = urllib.unquote_plus(urllib.unquote_plus(data))
-        headers_string = "|Cookie=" + cookies
-        url_streams = scrapertools.find_single_match(data, 'url_encoded_fmt_stream_map=(.*)')
-        streams = scrapertools.find_multiple_matches(url_streams,
-                                         'itag=(\d+)&url=(.*?)(?:;.*?quality=.*?(?:,|&)|&quality=.*?(?:,|&))')
-        itags = {'18':'360p', '22':'720p', '34':'360p', '35':'480p', '37':'1080p', '43':'360p', '59':'480p'}
-        for itag, video_url in streams:
-            video_url += headers_string
-            video_urls.append([video_url, itags[itag]])
-
-        for video_item in video_urls:
-            calidad = video_item[1]
-            title = '%s [COLOR green](%s)[/COLOR] [COLOR green]([/COLOR][COLOR black]You[/COLOR][COLOR red]tube[/COLOR][COLOR green])[/COLOR]'%(item.contentTitle, calidad)
-            url = video_item[0]
-
-            itemlist.append(
-                item.clone(channel=item.channel,
-                           action='play',
-                           title=title,
-                           url= url,
-                           thumbnail=item.thumbnail,
-                           quality = calidad,
-                           plot=item.plot,
-                           fanart=item.fanart,
-                           contentTitle=item.contentTitle,
-                           language=lang.replace('Español ', ''),
-                           server='directo',
-                           context = item.context
-                     ))
-            itemlist.sort(key=lambda it: it.title, reverse=True)
-        if 'pelispp.com' in scrapedurl or 'ultrapelis' in scrapedurl:
+        servidores = servidores.lower().strip()
+        if 'streamvips' or 'mediastream' or 'ultrastream' in servidores:
             data = httptools.downloadpage(scrapedurl, headers=headers).data
-            patronr = 'file: "([^"]+)",label:"([^"]+)",type'
+            patronr = "file:'([^']+)',label:'([^']+)',type"
             matchesr = re.compile(patronr, re.DOTALL).findall(data)
             for scrapedurl, label in matchesr:
-                url = scrapedurl.replace('\\', '')
-                quality = label.decode('cp1252').encode('utf8')
-                title = item.contentTitle + ' (' + str(label) + ') ([COLOR blue]G[/COLOR][COLOR red]o[/COLOR][COLOR yellow]o[/COLOR][COLOR blue]g[/COLOR][COLOR green]l[/COLOR][COLOR red]e[/COLOR])'
-                thumbnail = item.thumbnail
-                fanart = item.fanart
-                itemlist.append(item.clone(action="play", title=title, url=url, server='directo',
-                                           thumbnail=thumbnail, fanart=fanart, extra='directo',
-                                           quality=quality, language=lang.replace('Español ', '')))
+                title = 'Ver en: [COLOR yellowgreen][%s][/COLOR] [COLOR yellow][%s][/COLOR]' % (servidores.title(),
+                                                                                                item.contentQuality.upper())
+
+                itemlist.append(item.clone(action="play", title=title, url=scrapedurl, server='directo',
+                                           thumbnail=item.thumbnail, fanart=item.fanart, extra='directo',
+                                           quality=item.contentQuality, language=lang.replace('Español ', '')))
+
                 itemlist.sort(key=lambda it: it.title, reverse=True)
 
-        # if 'youtube' not in scrapedurl:
-        servidores.lower()
-        if 'drive' not in scrapedurl and 'pelispp.com' not in scrapedurl and 'youtube' not in scrapedurl and 'streamplus' not in servidores:
-            quality = scrapertools.find_single_match(
-                datas, '<p class="hidden-xs hidden-sm">.*?class="magnet-download">([^<]+)p</a>')
-            title = "[COLOR green]%s[/COLOR] [COLOR yellow][%s][/COLOR] [COLOR yellow][%s][/COLOR]" % (
-                item.contentTitle, quality.upper(), servidores.capitalize())
-            url = scrapedurl.replace('\\', '')
-            thumbnail = item.thumbnail
-            server = servertools.get_server_from_url(url)
+        if 'drive' not in servidores and 'streamvips' not in servidores and 'mediastream' not in servidores:
+            if 'ultrastream' not in servidores:
+                server = servertools.get_server_from_url('scrapedurl')
+                quality = scrapertools.find_single_match(
+                    datas, '<p class="hidden-xs hidden-sm">.*?class="magnet-download">([^<]+)p</a>')
+                title = "Ver en: [COLOR yellowgreen][{}][/COLOR] [COLOR yellow][{}][/COLOR]".format(servidores.capitalize(),
+                                                                                                    quality.upper())
 
-            itemlist.append(item.clone(action='play', title=title, url=url, quality=quality, language=lang.replace('Español ', ''),
-                                       server=server, text_color=color3, thumbnail=thumbnail))
-
+                itemlist.append(item.clone(action='play', title=title, url='url', quality=item.quality,
+                                           server=server, language=lang.replace('Español ', ''),
+                                           text_color=color3, thumbnail=item.thumbnail))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel,
