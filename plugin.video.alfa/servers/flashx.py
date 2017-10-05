@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import base64
 import os
 import time
 import urllib
@@ -37,17 +36,18 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     flashx_id = scrapertools.find_single_match(data, 'name="id" value="([^"]+)"')
     fname = scrapertools.find_single_match(data, 'name="fname" value="([^"]+)"')
     hash_f = scrapertools.find_single_match(data, 'name="hash" value="([^"]+)"')
-    post = 'op=download1&usr_login=&id=%s&fname=%s&referer=&hash=%s&imhuman=Proceed to the video' % (
-        flashx_id, urllib.quote(fname), hash_f)
+    imhuman = scrapertools.find_single_match(data, "value='([^']+)' name='imhuman'")
+    post = 'op=download1&usr_login=&id=%s&fname=%s&referer=&hash=%s&imhuman=%s' % (
+        flashx_id, urllib.quote(fname), hash_f, imhuman)
     wait_time = scrapertools.find_single_match(data, "<span id='xxc2'>(\d+)")
 
     headers['Referer'] = "https://www.flashx.tv/"
     headers['Accept'] = "*/*"
     headers['Host'] = "www.flashx.tv"
 
-    coding_url = 'https://www.flashx.tv/flashx.php?fxfx=5'
+    coding_url = 'https://www.flashx.tv/flashx.php?fxfx=7'
     headers['X-Requested-With'] = 'XMLHttpRequest'
-    httptools.downloadpage(coding_url, headers=headers, replace_headers=True)
+    httptools.downloadpage(coding_url, headers=headers)
 
     try:
         time.sleep(int(wait_time) + 1)

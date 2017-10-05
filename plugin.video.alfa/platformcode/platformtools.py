@@ -2,7 +2,7 @@
 # ------------------------------------------------------------
 # platformtools
 # ------------------------------------------------------------
-# Herramientas responsables de adaptar los diferentes 
+# Herramientas responsables de adaptar los diferentes
 # cuadros de dialogo a una plataforma en concreto,
 # en este caso Kodi.
 # version 2.0
@@ -135,7 +135,7 @@ def render_items(itemlist, parent_item):
         if item.fanart:
             fanart = item.fanart
         else:
-            fanart = os.path.join(config.get_runtime_path(), "fanart.jpg")
+            fanart = os.path.join(config.get_runtime_path(), "fanart1.jpg")
 
         # Creamos el listitem
         listitem = xbmcgui.ListItem(item.title)
