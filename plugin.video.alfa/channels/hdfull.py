@@ -709,12 +709,11 @@ def findvideos(item):
     itemlist.extend(enlaces)
     ## 2 = película
     if type == "2" and item.category != "Cine":
-        ## STRM para todos los enlaces de servidores disponibles
-        ## Si no existe el archivo STRM de la peícula muestra el item ">> Añadir a la videoteca..."
-        try:
-            itemlist.extend(file_cine_library(item, url_targets))
-        except:
-            pass
+        if config.get_videolibrary_support():
+            itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                                 action="add_pelicula_to_library", url=url_targets, thumbnail = item.thumbnail,
+                                 fulltitle = item.contentTitle
+                                 ))
 
     return itemlist
 
@@ -735,33 +734,6 @@ def trailer(item):
     # itemlist.pop(-1)
     return itemlist
 
-
-def file_cine_library(item, url_targets):
-    import os
-    from core import filetools
-    videolibrarypath = os.path.join(config.get_videolibrary_path(), "CINE")
-    archivo = item.show.strip()
-    strmfile = archivo + ".strm"
-    strmfilepath = filetools.join(videolibrarypath, strmfile)
-
-    if not os.path.exists(strmfilepath):
-        itemlist = []
-        itemlist.append(Item(channel=item.channel, title=">> Añadir a la videoteca...", url=url_targets,
-                             action="add_file_cine_library", extra="episodios", show=archivo))
-
-    return itemlist
-
-
-def add_file_cine_library(item):
-    from core import videolibrarytools
-    new_item = item.clone(title=item.show, action="play_from_library")
-    videolibrarytools.save_movie(new_item)
-    itemlist = []
-    itemlist.append(Item(title='El vídeo ' + item.show + ' se ha añadido a la videoteca'))
-    # xbmctools.renderItems(itemlist, "", "", "")
-    platformtools.render_items(itemlist, "")
-
-    return
 
 
 def play(item):
