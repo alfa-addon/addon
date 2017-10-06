@@ -676,37 +676,27 @@ def findvideos(item):
 
         matches.append([match["lang"], match["quality"], url, embed])
 
-    enlaces = []
     for idioma, calidad, url, embed in matches:
-        servername = scrapertools.find_single_match(url, "(?:http:|https:)//(?:www.|)([^.]+).")
-        if servername == "streamin": servername = "streaminto"
-        if servername == "waaw": servername = "netutv"
-        if servername == "uploaded" or servername == "ul": servername = "uploadedto"
         mostrar_server = True
-        if config.get_setting("hidepremium") == True:
-            mostrar_server = servertools.is_server_enabled(servername)
-        if mostrar_server:
-            option = "Ver"
-            if re.search(r'return ([\'"]{2,}|\})', embed):
-                option = "Descargar"
-            calidad = unicode(calidad, "utf8").upper().encode("utf8")
-            servername_c = unicode(servername, "utf8").capitalize().encode("utf8")
-            title = option + ": " + servername_c + " (" + calidad + ")" + " (" + idioma + ")"
-            thumbnail = item.thumbnail
-            plot = item.title + "\n\n" + scrapertools.find_single_match(data,
-                                                                        '<meta property="og:description" content="([^"]+)"')
-            plot = scrapertools.htmlclean(plot)
-            fanart = scrapertools.find_single_match(data, '<div style="background-image.url. ([^\s]+)')
-            if account:
-                url += "###" + id + ";" + type
+        option = "Ver"
+        if re.search(r'return ([\'"]{2,}|\})', embed):
+            option = "Descargar"
+        calidad = unicode(calidad, "utf8").upper().encode("utf8")
+        title = option + ": %s (" + calidad + ")" + " (" + idioma + ")"
+        thumbnail = item.thumbnail
+        plot = item.title + "\n\n" + scrapertools.find_single_match(data,
+                                                                    '<meta property="og:description" content="([^"]+)"')
+        plot = scrapertools.htmlclean(plot)
+        fanart = scrapertools.find_single_match(data, '<div style="background-image.url. ([^\s]+)')
+        if account:
+            url += "###" + id + ";" + type
 
-            enlaces.append(
-                Item(channel=item.channel, action="play", title=title, fulltitle=title, url=url, thumbnail=thumbnail,
-                     plot=plot, fanart=fanart, show=item.show, folder=True, server=servername, infoLabels=infolabels,
-                     contentTitle=item.contentTitle, contentType=item.contentType, tipo=option))
+        itemlist.append(
+            Item(channel=item.channel, action="play", title=title, fulltitle=title, url=url, thumbnail=thumbnail,
+                 plot=plot, fanart=fanart, show=item.show, folder=True, infoLabels=infolabels,
+                 contentTitle=item.contentTitle, contentType=item.contentType, tipo=option))
 
-    enlaces.sort(key=lambda it: it.tipo, reverse=True)
-    itemlist.extend(enlaces)
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     ## 2 = película
     if type == "2" and item.category != "Cine":
         if config.get_videolibrary_support():
@@ -752,7 +742,8 @@ def play(item):
         if devuelve:
             item.url = devuelve[0][1]
             item.server = devuelve[0][2]
-
+    item.thumbnail = item.contentThumbnail
+    item.fulltitle = item.contentTitle
     return [item]
 
 
