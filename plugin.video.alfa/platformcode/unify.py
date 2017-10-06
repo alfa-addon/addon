@@ -19,24 +19,52 @@ from platformcode import logger
 
 def remove_format(string):
     logger.info()
-    logger.debug('entra en remove: %s' % string)
+    #logger.debug('entra en remove: %s' % string)
     string = string.strip()
     string = re.sub(r'(\[|\[\/)(?:color|COLOR|b|B|i|I).*?\]|\s{2,}|\[|\]|\(|\)', '', string)
-    logger.debug('sale de remove: %s' % string)
+    #logger.debug('sale de remove: %s' % string)
     return string
 
 def simplify(string):
     logger.info()
-    logger.debug('entra en simplify: %s'%string)
+    #logger.debug('entra en simplify: %s'%string)
     string = remove_format(string)
     string = string.strip()
     string = string.decode('utf-8')
     notilde = ''.join((c for c in unicodedata.normalize('NFD', unicode(string)) if unicodedata.category(c) != 'Mn'))
     string = notilde.decode()
     string = string.lower()
-    logger.debug('sale de simplify: %s' % string)
+    #logger.debug('sale de simplify: %s' % string)
 
     return string
+
+def set_color(title, category):
+    logger.info()
+
+    color_scheme = {'otro': 'white'}
+
+    category = remove_format(category).lower()
+
+    # Lista de elementos posibles en el titulo
+    color_list = ['movie', 'tvshow', 'year', 'rating_1', 'rating_2', 'rating_3', 'quality', 'cast', 'lat', 'vose',
+                  'vos', 'vo', 'server', 'library']
+
+    # Se verifica el estado de la opcion de colores personalizados
+    custom_colors = config.get_setting('title_color')
+
+    # Se Forma el diccionario de colores para cada elemento, la opcion esta activas utiliza la configuracion del
+    #  usuario, si no  pone el titulo en blanco.
+    if title not in ['', ' ']:
+        for element in color_list:
+            if custom_colors:
+                color_scheme[element] = remove_format(config.get_setting('%s_color' % element))
+            else:
+                color_scheme[element] = 'white'
+        if category not in ['movie', 'tvshow', 'library', 'otro']:
+            title = "[COLOR %s][%s][/COLOR]"%(color_scheme[category], title)
+        else:
+            title = "[COLOR %s]%s[/COLOR]" % (color_scheme[category], title)
+    return title
 
 def set_lang(language):
     logger.info()
@@ -75,7 +103,7 @@ def set_lang(language):
 def title_format(item):
     logger.info()
 
-    color_scheme={'otro':'white'}
+
     lang = False
     valid = True
     language_color = 'otro'
@@ -85,24 +113,8 @@ def title_format(item):
     # Se elimina cualquier formato previo en el titulo
     item.title=remove_format(item.title)
 
-    #Lista de elementos posibles en el titulo
-    color_list = ['movie', 'tvshow', 'year', 'rating_1', 'rating_2', 'rating_3', 'quality', 'cast',
-                  'lat', 'vose', 'vos', 'vo', 'server', 'library']
-
-    #Se verifica el estado de la opcion de colores personalizados
-    custom_colors = config.get_setting('title_color')
-
-    # Se Forma el diccionario de colores para cada elemento, la opcion esta activas utiliza la configuracion del
-    #  usuario, si no  pone el titulo en blanco.
-    for element in color_list:
-        if custom_colors:
-            color_scheme[element] = remove_format(config.get_setting('%s_color'%element))
-        else:
-            color_scheme[element] = 'white'
-
     # TODO se deberia quitar cualquier elemento que no sea un enlace de la lista de findvideos para quitar esto
     excluded = ['online', 'descarga', 'downloads', 'trailer', 'videoteca', 'gb', 'autoplay']
-
 
     # Evita que aparezcan los idiomas en los mainlist de cada canal
     if item.action == 'mainlist':
@@ -110,7 +122,6 @@ def title_format(item):
 
     info = item.infoLabels
     logger.debug('item antes de formatear: %s'%item)
-
 
     if hasattr(item,'text_color'):
         item.text_color=''
@@ -136,18 +147,17 @@ def title_format(item):
                     episode = info['title'].replace('Episode', 'Episodio')
                     info['title'] = '%s - %s' % (info['tvshowtitle'], episode)
 
-                item.title = '[COLOR %s]%sx%s - %s[/COLOR]' % (color_scheme['tvshow'], info['season'],
-                                                               info['episode'], info['title'])
+                item.title = '%sx%s - %s' % (info['season'],info['episode'], info['title'])
+                item.title = set_color(item.title, 'tvshow')
             else:
 
                 # En caso contrario se utiliza el titulo proporcionado por el canal
-                logger.debug ('color_scheme[tvshow]: %s' % color_scheme['tvshow'])
-                item.title = '[COLOR %s]%s[/COLOR]' % (color_scheme['tvshow'], item.title)
+                #logger.debug ('color_scheme[tvshow]: %s' % color_scheme['tvshow'])
+                item.title = '%s' % set_color(item.title, 'tvshow')
 
         elif item.contentTitle:
             # Si el titulo no tiene contentSerieName entonces se formatea como pelicula
-            item.title = '[COLOR %s]%s[/COLOR]'%(color_scheme['movie'],item.contentTitle)
-
+            item.title = '%s' % set_color(item.contentTitle, 'movie')
 
         if 'Novedades' in item.category and item.from_channel=='news':
             logger.debug('novedades')
@@ -180,7 +190,7 @@ def title_format(item):
         # al titulo excepto que sea un episodio
         if info and info.get("year", "") not in [""," "] and item.contentType != 'episode' and not info['season']:
             try:
-                year = '[COLOR %s][%s][/COLOR]' % (color_scheme['year'], info['year'])
+                year = '%s' % set_color(info['year'], 'year')
                 item.title = item.title = '%s %s' % (item.title, year)
             except:
                 logger.debug('infoLabels: %s'%info)
@@ -197,21 +207,22 @@ def title_format(item):
             if rating_value:
                 value = float(rating_value)
                 if value <= 3:
-                    color_rating = color_scheme['rating_1']
+                    color_rating = 'rating_1'
                 elif value > 3 and value <= 7:
-                    color_rating = color_scheme['rating_2']
+                    color_rating = 'rating_2'
                 else:
-                    color_rating = color_scheme['rating_3']
+                    color_rating = 'rating_3'
 
-                rating = '[COLOR %s][%s][/COLOR]' % (color_rating, rating_value)
+                rating = '%s' % rating_value
             else:
                 rating = ''
-            item.title = '%s %s' % (item.title, rating)
+                color_rating = 'otro'
+            item.title = '%s %s' % (item.title, set_color(rating, color_rating))
 
         # Damos formato a la calidad si existiera y lo agregamos al titulo
         if item.quality:
-            quality = '[COLOR %s][%s][/COLOR]' % (color_scheme['quality'], item.quality.strip())
-            item.title = '%s %s' % (item.title, quality)
+            quality = item.quality.strip()
+            item.title = '%s %s' % (item.title, set_color(quality, 'quality'))
         else:
             quality = ''
 
@@ -219,17 +230,13 @@ def title_format(item):
         if lang:
             if isinstance(simple_language, list):
                 for language in simple_language:
-                    language_color = language.lower()
-                    item.title = '%s [COLOR %s][%s][/COLOR]' % (item.title, color_scheme[language_color],
-                                                                language)
+                    item.title = '%s %s' % (item.title, set_color(language, language))
             else:
-                language_color = simple_language.lower()
-                item.title = '%s [COLOR %s][%s][/COLOR]' % (item.title, color_scheme[language_color],
-                                                            simple_language)
+                item.title = '%s %s' % (item.title, set_color(simple_language, simple_language))
 
         # Damos formato al servidor si existiera
         if item.server:
-            server = '[COLOR %s][%s][/COLOR]' % (color_scheme['server'], item.server.strip().capitalize())
+            server = '%s' % set_color(item.server.strip().capitalize(), 'server')
 
         # Compureba si estamos en findvideos, y si hay server, si es asi no se muestra el
         # titulo sino el server, en caso contrario se muestra el titulo normalmente.
@@ -238,33 +245,24 @@ def title_format(item):
         if item.action != 'play' and item.server:
             item.title ='%s %s'%(item.title, server.strip())
         elif item.action == 'play' and item.server:
-            #item.title = 'S:%s  Q:%s I:%s' % (server, quality, item.language)
             if item.quality == 'default':
                 quality = ''
             if lang:
-                simple_language = '[%s]'%simple_language
+                simple_language = '%s'%simple_language
             else:
                 simple_language = ''
 
             logger.debug('language_color: %s'%language_color)
-            item.title = '%s %s [COLOR %s]%s[/COLOR]' % (server, quality.strip(), color_scheme[language_color],
-                                                           simple_language)
+            item.title = '%s %s %s' % (server, set_color(quality,'quality'), set_color(simple_language,
+                                                                                       simple_language))
             logger.debug('item.title: %s' % item.title)
         else:
             item.title = '%s' % item.title
         logger.debug('item.title despues de server: %s' % item.title)
     elif 'library' in item.action:
-        item.title = '[COLOR %s]%s[/COLOR]' % (color_scheme['library'], item.title)
+        item.title = '%s' % set_color(item.title, 'library')
     else:
-        item.title = '[COLOR %s]%s[/COLOR]' % (color_scheme['otro'], item.title)
-
-    # Formatear titulo
-    if item.text_color !='':
-        item.title = '[COLOR %s]%s[/COLOR]'%(item.text_color, item.title)
-    if item.text_bold:
-        item.title = '[B]%s[/B]' % item.title
-    if item.text_italic:
-        item.title = '[I]%s[/I]' % item.title
+        item.title = '%s' % set_color(item.title, 'otro')
 
     return item
 

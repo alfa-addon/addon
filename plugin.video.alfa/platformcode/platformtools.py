@@ -134,8 +134,7 @@ def render_items(itemlist, parent_item):
 
         item.thumbnail = httptools.get_url_headers(item.thumbnail)
         item.fanart = httptools.get_url_headers(item.fanart)
-        if item.contentType!='list':
-            item.thumbnail = unify.thumbnail_type(item)
+        item.thumbnail = unify.thumbnail_type(item)
         # IconImage para folder y video
         if item.folder:
             icon_image = "DefaultFolder.png"
