@@ -634,7 +634,7 @@ def findvideos(item):
             title_label = bbcode_kodi2html(" ( [COLOR green][B]Tráiler[/B][/COLOR] )")
 
             itemlist.append(
-                Item(channel=item.channel, action="trailer", title=title_label, fulltitle=title_label, url=url_targets,
+                Item(channel=item.channel, action="buscartrailer", title=title_label, fulltitle=title_label, url=url_targets,
                      thumbnail=item.thumbnail, show=item.show))
 
         itemlist.append(Item(channel=item.channel, action="set_status", title=title, fulltitle=title, url=url_targets,
@@ -697,6 +697,7 @@ def findvideos(item):
                  contentTitle=item.contentTitle, contentType=item.contentType, tipo=option))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    itemlist.sort(key=lambda it: it.title, reverse=True)
     ## 2 = película
     if type == "2" and item.category != "Cine":
         if config.get_videolibrary_support():
@@ -705,23 +706,6 @@ def findvideos(item):
                                  fulltitle = item.contentTitle
                                  ))
 
-    return itemlist
-
-
-def trailer(item):
-    import youtube
-    itemlist = []
-    item.url = "https://www.googleapis.com/youtube/v3/search" + \
-               "?q=" + item.show.replace(" ", "+") + "+trailer+HD+Español" \
-                                                     "&regionCode=ES" + \
-               "&part=snippet" + \
-               "&hl=es_ES" + \
-               "&key=AIzaSyAd-YEOqZz9nXVzGtn3KWzYLbLaajhqIDA" + \
-               "&type=video" + \
-               "&maxResults=50" + \
-               "&pageToken="
-    itemlist.extend(youtube.fichas(item))
-    # itemlist.pop(-1)
     return itemlist
 
 
@@ -746,9 +730,6 @@ def play(item):
     item.fulltitle = item.contentTitle
     return [item]
 
-
-## --------------------------------------------------------------------------------
-## --------------------------------------------------------------------------------
 
 def agrupa_datos(data):
     ## Agrupa los datos
