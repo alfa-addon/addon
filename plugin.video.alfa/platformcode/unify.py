@@ -69,10 +69,10 @@ def set_color(title, category):
 def set_lang(language):
     logger.info()
 
-    cast =['castellano','espanol','cast','esp','espaol', 'es','zc', 'spa', 'spanish']
-    lat=['latino','lat','la', 'espanol latino', 'espaol latino', 'zl', 'mx', 'co']
+    cast =['castellano','espanol','cast','esp','espaol', 'es','zc', 'spa', 'spanish', 'vc']
+    lat=['latino','lat','la', 'espanol latino', 'espaol latino', 'zl', 'mx', 'co', 'vl']
     vose=['subtitulado','subtitulada','sub','sub espanol','vose','espsub','su','subs castellano',
-          'sub: español', 'vs', 'zs']
+          'sub: español', 'vs', 'zs', 'vs']
     vos=['vos', 'sub ingles', 'engsub', 'vosi','ingles subtitulado', 'sub: ingles']
     vo=['ingles', 'en','vo', 'ovos', 'eng','v.o']
 
