@@ -21,12 +21,12 @@ CHANNEL_DEFAULT_HEADERS = [
 
 REGEX_NEXT_PAGE = r"class='current'>\d+?</li><li><a href=\"([^']+?)\""
 REGEX_TITLE = r'(?:bigChar_a" href=.+?>)(.+?)(?:</a>)'
-REGEX_THUMB = r'src="(http://media.animeflv\.me/uploads/thumbs/[^"]+?)"'
+REGEX_THUMB = r'src="(http://media.animeflv\.co/uploads/thumbs/[^"]+?)"'
 REGEX_PLOT = r'<span class="info">Línea de historia:</span><p><span>(.*?)</span>'
-REGEX_URL = r'href="(http://animeflv\.me/Anime/[^"]+)">'
+REGEX_URL = r'href="(http://animeflv\.co/Anime/[^"]+)">'
 REGEX_SERIE = r'%s.+?%s([^<]+?)</a><p>(.+?)</p>' % (REGEX_THUMB, REGEX_URL)
-REGEX_EPISODE = r'href="(http://animeflv\.me/Ver/[^"]+?)">(?:<span.+?</script>)?(.+?)</a></td><td>(\d+/\d+/\d+)</td></tr>'
-REGEX_GENERO = r'<a href="(http://animeflv\.me/genero/[^\/]+/)">([^<]+)</a>'
+REGEX_EPISODE = r'href="(http://animeflv\.co/Ver/[^"]+?)">(?:<span.+?</script>)?(.+?)</a></td><td>(\d+/\d+/\d+)</td></tr>'
+REGEX_GENERO = r'<a href="(http://animeflv\.co/genero/[^\/]+/)">([^<]+)</a>'
 
 
 def get_url_contents(url):
@@ -309,7 +309,7 @@ def findvideos(item):
     itemlist = []
 
     page_html = get_url_contents(item.url)
-    regex_api = r'http://player\.animeflv\.me/[^\"]+'
+    regex_api = r'http://player\.animeflv\.co/[^\"]+'
     iframe_url = scrapertools.find_single_match(page_html, regex_api)
 
     iframe_html = get_url_contents(iframe_url)

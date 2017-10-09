@@ -5,6 +5,7 @@ import re
 from core import httptools
 from core import scrapertools
 from core import servertools
+from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
@@ -58,7 +59,7 @@ def porGenero(item):
 
     patron = 'cat-item.*?href="([^"]+).*?>(.*?)<.*?span>([^<]+)'
 
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = scrapertools.find_multiple_matches(data, patron)
 
     for urlgen, genero, cantidad in matches:
         cantidad = cantidad.replace(".", "")
@@ -103,7 +104,6 @@ def agregadas(item):
         title = info[3]
         plot = info[4]
         year = info[5].strip()
-
         itemlist.append(Item(channel=item.channel,
                              action='findvideos',
                              contentType = "movie",
@@ -116,15 +116,11 @@ def agregadas(item):
                              contentTitle = title,
                              url=url
                              ))
-    # Paginación
-    try:
-        next_page = scrapertools.find_single_match(data,'tima>.*?href=(.*?) ><i')
-
-        itemlist.append(Item(channel=item.channel, action="agregadas", title='Pagina Siguiente >>',
-                             url=next_page.strip(),
-                             viewmode="movie_with_plot"))
-    except:
-        pass
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+    next_page = scrapertools.find_single_match(data,'tima>.*?href=(.*?) ><i')
+    itemlist.append(Item(channel=item.channel, action="agregadas", title='Pagina Siguiente >>',
+                         url=next_page.strip(),
+                         viewmode="movie_with_plot"))
 
     return itemlist
 
@@ -135,11 +131,9 @@ def listaBuscar(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n", " ", data)
-    logger.info("data=" + data)
-
     patron = 'class="row"> <a.*?="([^"]+).*?src="([^"]+).*?title="([^"]+).*?class="text-list">(.*?)</p>'
 
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = scrapertools.find_multiple_matches(data, patron)
 
     for url, thumbnail, title, sinopsis in matches:
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title + " ", fulltitle=title, url=url,
@@ -157,7 +151,7 @@ def findvideos(item):
     # Descarga la pagina
     data = httptools.downloadpage(item.url).data
     patron = 'cursor: hand" rel="(.*?)".*?class="optxt"><span>(.*?)<.*?width.*?class="q">(.*?)</span'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = scrapertools.find_multiple_matches(data, patron)
 
     for scrapedurl, scrapedidioma, scrapedcalidad in matches:
         idioma = ""
@@ -168,16 +162,17 @@ def findvideos(item):
         language = scrapedidioma
         if not ("omina.farlante1" in scrapedurl or "404" in scrapedurl):
             itemlist.append(
-                Item(channel=item.channel, action="play", title=title, fulltitle=item.title, url=scrapedurl,
-                     thumbnail=item.thumbnail, plot=plot, show=item.show, quality= quality, language=language, extra = item.thumbnail))
+                item.clone(channel=item.channel, action="play", title=title, fulltitle=item.title, url=scrapedurl,
+                     plot=plot, quality= quality, language=language, extra = item.thumbnail))
+    tmdb.set_infoLabels_itemlist(itemlist, True)
     itemlist=servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Opción "Añadir esta película a la biblioteca de KODI"
     if item.extra != "library":
         if config.get_videolibrary_support():
             itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
-                                 filtro=True, action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                 infoLabels={'title': item.fulltitle}, fulltitle=item.title,
-                                 extra="library"))
+                                 action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
+                                 fulltitle=item.title
+                                 ))
     return itemlist
 
 
