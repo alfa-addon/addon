@@ -127,7 +127,6 @@ def peliculas(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
-    logger.info(data)
 
     patron = '<div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'  # img, title.strip()
     patron += '<span class="icon-star2"></span>(.*?)/div>.*?'  # rating
@@ -144,14 +143,17 @@ def peliculas(item):
             contentTitle = scrapedtitle.partition(':')[0].partition(',')[0]
             title = "%s [COLOR green][%s][/COLOR] [COLOR yellow][%s][/COLOR]" % (
                 scrapedtitle, year, quality)
+            thumb_id = scrapertools.find_single_match(scrapedthumbnail, '.*?\/uploads\/(.*?)-')
+            thumbnail = "/%s.jpg" % thumb_id
+            filtro_list = {"poster_path": thumbnail}
+            filtro_list = filtro_list.items()
 
             itemlist.append(item.clone(channel=__channel__, action="findvideos", text_color=color3,
-                                       url=scrapedurl, infoLabels={'year': year, 'rating': rating},
-                                       contentTitle=contentTitle, thumbnail=scrapedthumbnail,
+                                       url=scrapedurl, infoLabels={'filtro':filtro_list},
+                                       contentTitle=contentTitle, thumbnail=thumbnail,
                                        title=title, context="buscar_trailer", quality = quality))
 
-    tmdb.set_infoLabels(itemlist, __modo_grafico__)
-    tmdb.set_infoLabels(itemlist, __modo_grafico__)
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
     if item.page + 20 < len(matches):
         itemlist.append(item.clone(page=item.page + 20,

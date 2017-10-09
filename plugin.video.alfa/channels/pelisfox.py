@@ -240,7 +240,8 @@ def findvideos(item):
                                    ))
     for videoitem in templist:
         data = httptools.downloadpage(videoitem.url).data
-        urls_list = scrapertools.find_multiple_matches(data, '({"type":.*?})')
+        logger.debug(data)
+        urls_list = scrapertools.find_multiple_matches(data, '{"reorder":1,"type":.*?}')
         for element in urls_list:
             json_data=jsontools.load(element)
 
@@ -253,6 +254,7 @@ def findvideos(item):
 
                 new_url = 'https://onevideo.tv/api/player?key=90503e3de26d45e455b55e9dc54f015b3d1d4150&link' \
                           '=%s&srt=%s' % (url, sub)
+                logger.debug('new_url: %s' % new_url)
 
                 data = httptools.downloadpage(new_url).data
                 data = re.sub(r'\\', "", data)
