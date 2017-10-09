@@ -240,7 +240,6 @@ def findvideos(item):
                                    ))
     for videoitem in templist:
         data = httptools.downloadpage(videoitem.url).data
-        logger.debug(data)
         urls_list = scrapertools.find_multiple_matches(data, '{"reorder":1,"type":.*?}')
         for element in urls_list:
             json_data=jsontools.load(element)
