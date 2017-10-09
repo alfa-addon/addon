@@ -291,7 +291,7 @@ def findvideos(item):
                 title = "Ver en: [COLOR yellowgreen][{}][/COLOR] [COLOR yellow][{}][/COLOR]".format(servidores.capitalize(),
                                                                                                     quality.upper())
 
-                itemlist.append(item.clone(action='play', title=title, url=url, quality=item.quality,
+                itemlist.append(item.clone(action='play', title=title, url=scrapedurl, quality=item.quality,
                                            server=server, language=lang.replace('Español ', ''),
                                            text_color=color3, thumbnail=item.thumbnail))
 
