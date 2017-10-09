@@ -689,7 +689,7 @@ def get_enlaces(item, url, type):
             if servertools.is_server_enabled(server):
                 scrapedtitle = "    Ver en " + server.capitalize() + " [" + idioma + "/" + calidad + "]"
                 itemlist.append(item.clone(action="play", url=scrapedurl, title=scrapedtitle, text_color=color2,
-                                           extra="", server=server))
+                                           extra="", server=server, language=idioma))
 
     if len(itemlist) == 1:
         itemlist.append(item.clone(title="   No hay enlaces disponibles", action="", text_color=color2))

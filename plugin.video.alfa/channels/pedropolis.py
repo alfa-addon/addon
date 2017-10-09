@@ -120,40 +120,51 @@ def peliculas(item):
         if len(matches_next_page) > 0:
             url_next_page = urlparse.urljoin(item.url, matches_next_page[0])
 
-    for scrapedthumbnail, scrapedtitle, rating, calidad, scrapedurl, year in matches:
-        if 'Proximamente' not in calidad:
+    for scrapedthumbnail, scrapedtitle, rating, quality, scrapedurl, year in matches:
+        if 'Proximamente' not in quality:
             scrapedtitle = scrapedtitle.replace('Ver ', '').partition(' /')[0].partition(':')[0].replace(
                 'Español Latino', '').strip()
-            title = "%s [COLOR green][%s][/COLOR] [COLOR yellow][%s][/COLOR]" % (scrapedtitle, year, calidad)
+            title = "%s [COLOR green][%s][/COLOR] [COLOR yellow][%s][/COLOR]" % (scrapedtitle, year, quality)
 
-            new_item = Item(channel=__channel__, action="findvideos", contentTitle=scrapedtitle,
-                            infoLabels={'year': year, 'rating': rating}, thumbnail=scrapedthumbnail,
-                            url=scrapedurl, next_page=next_page, quality=calidad, title=title)
-            if year:
-                tmdb.set_infoLabels_item(new_item, __modo_grafico__)
-                itemlist.append(new_item)
+
+
+            itemlist.append(Item(channel=item.channel, action="findvideos", contentTitle=scrapedtitle,
+                            infoLabels={"year":year, "rating":rating}, thumbnail=scrapedthumbnail,
+                            url=scrapedurl, next_page=next_page, quality=quality, title=title))
+
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
     if url_next_page:
         itemlist.append(Item(channel=__channel__, action="peliculas", title="» Siguiente »",
                              url=url_next_page, next_page=next_page, folder=True, text_blod=True,
                              thumbnail=get_thumb("next.png")))
 
-    for item in itemlist:
-        if item.infoLabels['plot'] == '':
-            data = httptools.downloadpage(item.url).data
-            data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-            # logger.info(data)
-            item.fanart = scrapertools.find_single_match(data,
-                                                         "<meta property='og:image' content='([^']+)' />").replace(
-                'w780', 'original')
-            item.plot = scrapertools.find_single_match(data, '<div itemprop="description" class="wp-content">.*?<p>(['
-                                                             '^<]+)</p>')
-            item.plot = scrapertools.htmlclean(item.plot)
-            item.infoLabels['director'] = scrapertools.find_single_match(data,
-                                                                         '<div class="name"><a href="[^"]+">([^<]+)</a>')
-            item.infoLabels['rating'] = scrapertools.find_single_match(data, '<b id="repimdb"><strong>([^<]+)</strong>')
-            item.infoLabels['votes'] = scrapertools.find_single_match(data, '<b id="repimdb"><strong>['
-                                                                            '^<]+</strong>\s(.*?) votos</b>')
+    for no_plot in itemlist:
+        if no_plot.infoLabels['plot'] == '':
+            thumb_id = scrapertools.find_single_match(no_plot.thumbnail, '.*?\/\d{2}\/(.*?)-')
+            thumbnail = "/%s.jpg" % thumb_id
+            filtro_list = {"poster_path": thumbnail}
+            filtro_list = filtro_list.items()
+            no_plot.infoLabels={'filtro':filtro_list}
+            tmdb.set_infoLabels_item(no_plot, __modo_grafico__)
+
+            if no_plot.infoLabels['plot'] == '':
+                data = httptools.downloadpage(no_plot.url).data
+                data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+                # logger.info(data)
+                no_plot.fanart = scrapertools.find_single_match(data,
+                                                             "<meta property='og:image' content='([^']+)' />").replace(
+                    'w780', 'original')
+                no_plot.plot = scrapertools.find_single_match(data, '<div itemprop="description" '
+                                                                    'class="wp-content">.*?<p>(['
+                                                                 '^<]+)</p>')
+                no_plot.plot = scrapertools.htmlclean(no_plot.plot)
+                no_plot.infoLabels['director'] = scrapertools.find_single_match(data,
+                                                                             '<div class="name"><a href="[^"]+">([^<]+)</a>')
+                no_plot.infoLabels['rating'] = scrapertools.find_single_match(data, '<b id="repimdb"><strong>(['
+                                                                                  '^<]+)</strong>')
+                no_plot.infoLabels['votes'] = scrapertools.find_single_match(data, '<b id="repimdb"><strong>['
+                                                                                '^<]+</strong>\s(.*?) votos</b>')
 
     return itemlist
 
