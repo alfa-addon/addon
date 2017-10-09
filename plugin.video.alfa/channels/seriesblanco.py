@@ -232,11 +232,9 @@ def episodios(item):
 		    season, episode = renumbertools.numbered_for_tratk(
 		        item.channel, item.show, season, episode)
 		    cap=cap+1
-        if episode<10:
-            display_title = "%sx0%s - %s %s" % (season, episode, item.title,idiomas)
-        else:
-            display_title = "%sx%s - %s %s" % (season, episode, item.title,idiomas)
-        
+	episode=episode.zfill(2)
+        display_title = "%sx%s - %s %s" % (season, episode, item.title,idiomas)
+                
         itemlist.append(item.clone(title=display_title, url=urlparse.urljoin(HOST, url),
                                    action="findvideos", plot=plot, fanart=fanart, language=filter_lang))
 
