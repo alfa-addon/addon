@@ -56,11 +56,17 @@ def peliculas(item):
     data = httptools.downloadpage(item.url).data
     patron  = '<a class="Ntooltip" href="([^"]+)">([^<]+)<span><br[^<]+'
     patron += '<img src="([^"]+)"></span></a>(.*?)<br'
-
     matches = re.compile(patron, re.DOTALL).findall(data)
     itemlist = []
     for scrapedurl, scrapedtitle, scrapedthumbnail, resto in matches:
+        language = []
         plot = scrapertools.htmlclean(resto).strip()
+        logger.debug('plot: %s' % plot)
+        languages = scrapertools.find_multiple_matches(plot, r'\((V.)\)')
+        quality = scrapertools.find_single_match(plot, r'(?:\[.*?\].*?)\[(.*?)\]')
+        for lang in languages:
+            language.append(lang)
+        logger.debug('languages: %s' % languages)
         title = scrapedtitle + " " + plot
         contentTitle = scrapedtitle
         url = item.url + scrapedurl
@@ -73,7 +79,9 @@ def peliculas(item):
                              hasContentDetails = True,
                              contentTitle = contentTitle,
                              contentType = "movie",
-                             context = ["buscar_trailer"]
+                             context = ["buscar_trailer"],
+                             language=language,
+                             quality=quality
                              ))
     return itemlist
 
