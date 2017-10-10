@@ -119,14 +119,15 @@ def episodios(item):
     scrapertools.printMatches(matches)
 
     for scrapedurl, scrapedtitle, bloqueidiomas in matches:
-        title = scrapedtitle.strip() + " (" + extrae_idiomas(bloqueidiomas) + ")"
+        idiomas, language = extrae_idiomas(bloqueidiomas)
+        title = scrapedtitle.strip() + " (" + idiomas + ")"
         url = urlparse.urljoin(item.url, scrapedurl)
         thumbnail = ""
         plot = ""
         logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
         itemlist.append(
             Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url, thumbnail=thumbnail,
-                 plot=plot, show=item.show, folder=True))
+                 plot=plot, show=item.show, folder=True, language=language))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=item.url,
@@ -142,18 +143,19 @@ def extrae_idiomas(bloqueidiomas):
     patronidiomas = '([a-z0-9]+).png"'
     idiomas = re.compile(patronidiomas, re.DOTALL).findall(bloqueidiomas)
     textoidiomas = ""
+    language=[]
     for idioma in idiomas:
         if idioma == "1":
             textoidiomas = textoidiomas + "Español" + "/"
         if idioma == "2":
             textoidiomas = textoidiomas + "Latino" + "/"
         if idioma == "3":
-            textoidiomas = textoidiomas + "VOS" + "/"
+            textoidiomas = textoidiomas + "VOSE" + "/"
         if idioma == "4":
             textoidiomas = textoidiomas + "VO" + "/"
-
+        language.append(codigo_a_idioma(idioma))
     textoidiomas = textoidiomas[:-1]
-    return textoidiomas
+    return textoidiomas, language
 
 
 def codigo_a_idioma(codigo):
@@ -163,7 +165,7 @@ def codigo_a_idioma(codigo):
     if codigo == "2":
         idioma = "Latino"
     if codigo == "3":
-        idioma = "VOS"
+        idioma = "VOSE"
     if codigo == "4":
         idioma = "VO"
 
@@ -195,14 +197,15 @@ def findvideos(item):
 
     for idioma, servername, scrapedurl in matches:
         title = "Mirror en " + servername + " (" + codigo_a_idioma(idioma) + ")"
+        language = codigo_a_idioma(idioma)
         url = urlparse.urljoin(item.url, scrapedurl)
         thumbnail = ""
         plot = ""
         logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
         itemlist.append(
             Item(channel=item.channel, action="play", title=title, fulltitle=title, url=url, thumbnail=thumbnail,
-                 plot=plot, folder=False))
-
+                 plot=plot, folder=False, language=language))
+    itemlist = servertools.get_servers_itemlist(itemlist)
     return itemlist
 
 
