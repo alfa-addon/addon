@@ -634,7 +634,7 @@ def findvideos(item):
             title_label = bbcode_kodi2html(" ( [COLOR green][B]Tráiler[/B][/COLOR] )")
 
             itemlist.append(
-                Item(channel=item.channel, action="trailer", title=title_label, fulltitle=title_label, url=url_targets,
+                Item(channel=item.channel, action="buscartrailer", title=title_label, fulltitle=title_label, url=url_targets,
                      thumbnail=item.thumbnail, show=item.show))
 
         itemlist.append(Item(channel=item.channel, action="set_status", title=title, fulltitle=title, url=url_targets,
@@ -676,92 +676,38 @@ def findvideos(item):
 
         matches.append([match["lang"], match["quality"], url, embed])
 
-    enlaces = []
     for idioma, calidad, url, embed in matches:
-        servername = scrapertools.find_single_match(url, "(?:http:|https:)//(?:www.|)([^.]+).")
-        if servername == "streamin": servername = "streaminto"
-        if servername == "waaw": servername = "netutv"
-        if servername == "uploaded" or servername == "ul": servername = "uploadedto"
         mostrar_server = True
-        if config.get_setting("hidepremium") == True:
-            mostrar_server = servertools.is_server_enabled(servername)
-        if mostrar_server:
-            option = "Ver"
-            if re.search(r'return ([\'"]{2,}|\})', embed):
-                option = "Descargar"
-            calidad = unicode(calidad, "utf8").upper().encode("utf8")
-            servername_c = unicode(servername, "utf8").capitalize().encode("utf8")
-            title = option + ": " + servername_c + " (" + calidad + ")" + " (" + idioma + ")"
-            thumbnail = item.thumbnail
-            plot = item.title + "\n\n" + scrapertools.find_single_match(data,
-                                                                        '<meta property="og:description" content="([^"]+)"')
-            plot = scrapertools.htmlclean(plot)
-            fanart = scrapertools.find_single_match(data, '<div style="background-image.url. ([^\s]+)')
-            if account:
-                url += "###" + id + ";" + type
+        option = "Ver"
+        if re.search(r'return ([\'"]{2,}|\})', embed):
+            option = "Descargar"
+        calidad = unicode(calidad, "utf8").upper().encode("utf8")
+        title = option + ": %s (" + calidad + ")" + " (" + idioma + ")"
+        thumbnail = item.thumbnail
+        plot = item.title + "\n\n" + scrapertools.find_single_match(data,
+                                                                    '<meta property="og:description" content="([^"]+)"')
+        plot = scrapertools.htmlclean(plot)
+        fanart = scrapertools.find_single_match(data, '<div style="background-image.url. ([^\s]+)')
+        if account:
+            url += "###" + id + ";" + type
 
-            enlaces.append(
-                Item(channel=item.channel, action="play", title=title, fulltitle=title, url=url, thumbnail=thumbnail,
-                     plot=plot, fanart=fanart, show=item.show, folder=True, server=servername, infoLabels=infolabels,
-                     contentTitle=item.contentTitle, contentType=item.contentType, tipo=option))
+        itemlist.append(
+            Item(channel=item.channel, action="play", title=title, fulltitle=title, url=url, thumbnail=thumbnail,
+                 plot=plot, fanart=fanart, show=item.show, folder=True, infoLabels=infolabels,
+                 contentTitle=item.contentTitle, contentType=item.contentType, tipo=option))
 
-    enlaces.sort(key=lambda it: it.tipo, reverse=True)
-    itemlist.extend(enlaces)
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    itemlist.sort(key=lambda it: it.title, reverse=True)
     ## 2 = película
     if type == "2" and item.category != "Cine":
-        ## STRM para todos los enlaces de servidores disponibles
-        ## Si no existe el archivo STRM de la peícula muestra el item ">> Añadir a la videoteca..."
-        try:
-            itemlist.extend(file_cine_library(item, url_targets))
-        except:
-            pass
+        if config.get_videolibrary_support():
+            itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                                 action="add_pelicula_to_library", url=url_targets, thumbnail = item.thumbnail,
+                                 fulltitle = item.contentTitle
+                                 ))
 
     return itemlist
 
-
-def trailer(item):
-    import youtube
-    itemlist = []
-    item.url = "https://www.googleapis.com/youtube/v3/search" + \
-               "?q=" + item.show.replace(" ", "+") + "+trailer+HD+Español" \
-                                                     "&regionCode=ES" + \
-               "&part=snippet" + \
-               "&hl=es_ES" + \
-               "&key=AIzaSyAd-YEOqZz9nXVzGtn3KWzYLbLaajhqIDA" + \
-               "&type=video" + \
-               "&maxResults=50" + \
-               "&pageToken="
-    itemlist.extend(youtube.fichas(item))
-    # itemlist.pop(-1)
-    return itemlist
-
-
-def file_cine_library(item, url_targets):
-    import os
-    from core import filetools
-    videolibrarypath = os.path.join(config.get_videolibrary_path(), "CINE")
-    archivo = item.show.strip()
-    strmfile = archivo + ".strm"
-    strmfilepath = filetools.join(videolibrarypath, strmfile)
-
-    if not os.path.exists(strmfilepath):
-        itemlist = []
-        itemlist.append(Item(channel=item.channel, title=">> Añadir a la videoteca...", url=url_targets,
-                             action="add_file_cine_library", extra="episodios", show=archivo))
-
-    return itemlist
-
-
-def add_file_cine_library(item):
-    from core import videolibrarytools
-    new_item = item.clone(title=item.show, action="play_from_library")
-    videolibrarytools.save_movie(new_item)
-    itemlist = []
-    itemlist.append(Item(title='El vídeo ' + item.show + ' se ha añadido a la videoteca'))
-    # xbmctools.renderItems(itemlist, "", "", "")
-    platformtools.render_items(itemlist, "")
-
-    return
 
 
 def play(item):
@@ -780,12 +726,10 @@ def play(item):
         if devuelve:
             item.url = devuelve[0][1]
             item.server = devuelve[0][2]
-
+    item.thumbnail = item.contentThumbnail
+    item.fulltitle = item.contentTitle
     return [item]
 
-
-## --------------------------------------------------------------------------------
-## --------------------------------------------------------------------------------
 
 def agrupa_datos(data):
     ## Agrupa los datos
