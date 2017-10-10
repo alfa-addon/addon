@@ -49,8 +49,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="menuseries", title="Series", url=host, folder=True))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar..."))
     if not account:
-        itemlist.append(Item(channel=item.channel, title=bbcode_kodi2html(
-            "[COLOR orange][B]Habilita tu cuenta para activar los items de usuario...[/B][/COLOR]"),
+        itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]Habilita tu cuenta para activar los items de usuario...[/B][/COLOR]",
                              action="settingCanal", url=""))
     else:
         login()
@@ -66,10 +65,10 @@ def menupeliculas(item):
 
     if account:
         itemlist.append(Item(channel=item.channel, action="items_usuario",
-                             title=bbcode_kodi2html("[COLOR orange][B]Favoritos[/B][/COLOR]"),
+                             title="[COLOR orange][B]Favoritos[/B][/COLOR]",
                              url=host + "/a/my?target=movies&action=favorite&start=-28&limit=28", folder=True))
         itemlist.append(Item(channel=item.channel, action="items_usuario",
-                             title=bbcode_kodi2html("[COLOR orange][B]Pendientes[/B][/COLOR]"),
+                             title="[COLOR orange][B]Pendientes[/B][/COLOR]",
                              url=host + "/a/my?target=movies&action=pending&start=-28&limit=28", folder=True))
 
     itemlist.append(Item(channel=item.channel, action="fichas", title="ABC", url=host + "/peliculas/abc", folder=True))
@@ -86,7 +85,7 @@ def menupeliculas(item):
     itemlist.append(Item(channel=item.channel, action="generos", title="Películas por Género", url=host, folder=True))
     if account:
         itemlist.append(Item(channel=item.channel, action="items_usuario",
-                             title=bbcode_kodi2html("[COLOR orange][B]Vistas[/B][/COLOR]"),
+                             title="[COLOR orange][B]Vistas[/B][/COLOR]",
                              url=host + "/a/my?target=movies&action=seen&start=-28&limit=28", folder=True))
 
     return itemlist
@@ -99,10 +98,10 @@ def menuseries(item):
 
     if account:
         itemlist.append(Item(channel=item.channel, action="items_usuario",
-                             title=bbcode_kodi2html("[COLOR orange][B]Siguiendo[/B][/COLOR]"),
+                             title="[COLOR orange][B]Siguiendo[/B][/COLOR]",
                              url=host + "/a/my?target=shows&action=following&start=-28&limit=28", folder=True))
         itemlist.append(Item(channel=item.channel, action="items_usuario",
-                             title=bbcode_kodi2html("[COLOR orange][B]Para Ver[/B][/COLOR]"),
+                             title="[COLOR orange][B]Para Ver[/B][/COLOR]",
                              url=host + "/a/my?target=shows&action=watch&start=-28&limit=28", folder=True))
 
     itemlist.append(Item(channel=item.channel, action="series_abc", title="A-Z", folder=True))
@@ -123,13 +122,13 @@ def menuseries(item):
                          url=host + "/series/list", folder=True))
     if account:
         itemlist.append(Item(channel=item.channel, action="items_usuario",
-                             title=bbcode_kodi2html("[COLOR orange][B]Favoritas[/B][/COLOR]"),
+                             title="[COLOR orange][B]Favoritas[/B][/COLOR]",
                              url=host + "/a/my?target=shows&action=favorite&start=-28&limit=28", folder=True))
         itemlist.append(Item(channel=item.channel, action="items_usuario",
-                             title=bbcode_kodi2html("[COLOR orange][B]Pendientes[/B][/COLOR]"),
+                             title="[COLOR orange][B]Pendientes[/B][/COLOR]",
                              url=host + "/a/my?target=shows&action=pending&start=-28&limit=28", folder=True))
         itemlist.append(Item(channel=item.channel, action="items_usuario",
-                             title=bbcode_kodi2html("[COLOR orange][B]Vistas[/B][/COLOR]"),
+                             title="[COLOR orange][B]Vistas[/B][/COLOR]",
                              url=host + "/a/my?target=shows&action=seen&start=-28&limit=28", folder=True))
 
     return itemlist
@@ -222,7 +221,7 @@ def items_usuario(item):
                     serie = ficha['show_title']['en'].strip()
                 temporada = ficha['season']
                 episodio = ficha['episode']
-                serie = bbcode_kodi2html("[COLOR whitesmoke][B]" + serie + "[/B][/COLOR]")
+                serie = "[COLOR whitesmoke][B]" + serie + "[/B][/COLOR]"
                 if len(episodio) == 1: episodio = '0' + episodio
                 try:
                     title = temporada + "x" + episodio + " - " + serie + ": " + title
@@ -286,9 +285,8 @@ def fichas(item):
         if len(s_p) == 1:
             data = s_p[0]
             if 'Lo sentimos</h3>' in s_p[0]:
-                return [Item(channel=item.channel, title=bbcode_kodi2html(
-                    "[COLOR gold][B]HDFull:[/B][/COLOR] [COLOR blue]" + texto.replace('%20',
-                                                                                      ' ') + "[/COLOR] sin resultados"))]
+                return [Item(channel=item.channel, title="[COLOR gold][B]HDFull:[/B][/COLOR] [COLOR blue]" + texto.replace('%20',
+                                                                                      ' ') + "[/COLOR] sin resultados")]
         else:
             data = s_p[0] + s_p[1]
     else:
@@ -321,12 +319,12 @@ def fichas(item):
         if scrapedlangs != ">":
             textoidiomas, language = extrae_idiomas(scrapedlangs)
             #Todo Quitar el idioma
-            title += bbcode_kodi2html(" ( [COLOR teal][B]" + textoidiomas + "[/B][/COLOR])")
+            title += " ( [COLOR teal][B]" + textoidiomas + "[/B][/COLOR])"
 
         if scrapedrating != ">":
             valoracion = re.sub(r'><[^>]+>(\d+)<b class="dec">(\d+)</b>', r'\1,\2', scrapedrating)
             infoLabels['rating']=valoracion
-            title += bbcode_kodi2html(" ([COLOR orange]" + valoracion + "[/COLOR])")
+            title += " ([COLOR orange]" + valoracion + "[/COLOR])"
 
         url = urlparse.urljoin(item.url, scrapedurl)
 
@@ -346,7 +344,7 @@ def fichas(item):
 
         if item.title == "Buscar...":
             tag_type = scrapertools.get_match(url, 'l.tv/([^/]+)/')
-            title += bbcode_kodi2html(" - [COLOR blue]" + tag_type.capitalize() + "[/COLOR]")
+            title += " - [COLOR blue]" + tag_type.capitalize() + "[/COLOR]"
 
         itemlist.append(
             Item(channel=item.channel, action=action, title=title, url=url, fulltitle=title, thumbnail=thumbnail,
@@ -388,7 +386,7 @@ def episodios(item):
     str = get_status(status, "shows", id)
     if str != "" and account and item.category != "Series" and "XBMC" not in item.title:
         if config.get_videolibrary_support():
-            title = bbcode_kodi2html(" ( [COLOR gray][B]" + item.show + "[/B][/COLOR] )")
+            title = " ( [COLOR gray][B]" + item.show + "[/B][/COLOR] )"
             itemlist.append(
                 Item(channel=item.channel, action="episodios", title=title, fulltitle=title, url=url_targets,
                      thumbnail=item.thumbnail, show=item.show, folder=False))
@@ -397,11 +395,11 @@ def episodios(item):
                              thumbnail=item.thumbnail, show=item.show, folder=True))
     elif account and item.category != "Series" and "XBMC" not in item.title:
         if config.get_videolibrary_support():
-            title = bbcode_kodi2html(" ( [COLOR gray][B]" + item.show + "[/B][/COLOR] )")
+            title = " ( [COLOR gray][B]" + item.show + "[/B][/COLOR] )"
             itemlist.append(
                 Item(channel=item.channel, action="episodios", title=title, fulltitle=title, url=url_targets,
                      thumbnail=item.thumbnail, show=item.show, folder=False))
-        title = bbcode_kodi2html(" ( [COLOR orange][B]Seguir[/B][/COLOR] )")
+        title = " ( [COLOR orange][B]Seguir[/B][/COLOR] )"
         itemlist.append(Item(channel=item.channel, action="set_status", title=title, fulltitle=title, url=url_targets,
                              thumbnail=item.thumbnail, show=item.show, folder=True))
 
@@ -436,7 +434,7 @@ def episodios(item):
                 idiomas = "( [COLOR teal][B]"
                 for idioma in episode['languages']: idiomas += idioma + " "
                 idiomas += "[/B][/COLOR])"
-                idiomas = bbcode_kodi2html(idiomas)
+                idiomas = idiomas
             else:
                 idiomas = ""
 
@@ -513,7 +511,7 @@ def novedades_episodios(item):
             idiomas = "( [COLOR teal][B]"
             for idioma in episode['languages']: idiomas += idioma + " "
             idiomas += "[/B][/COLOR])"
-            idiomas = bbcode_kodi2html(idiomas)
+            idiomas = idiomas
         else:
             idiomas = ""
 
@@ -522,7 +520,7 @@ def novedades_episodios(item):
         except:
             show = episode['show']['title']['en'].strip()
 
-        show = bbcode_kodi2html("[COLOR whitesmoke][B]" + show + "[/B][/COLOR]")
+        show = "[COLOR whitesmoke][B]" + show + "[/B][/COLOR]"
 
         if episode['title']:
             try:
@@ -612,6 +610,8 @@ def findvideos(item):
     logger.info()
 
     itemlist = []
+    it1 = []
+    it2 = []
     ## Carga estados
     status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
     url_targets = item.url
@@ -623,21 +623,21 @@ def findvideos(item):
         item.url = item.url.split("###")[0]
 
     if type == "2" and account and item.category != "Cine":
-        title = bbcode_kodi2html(" ( [COLOR orange][B]Agregar a Favoritos[/B][/COLOR] )")
+        title = " ( [COLOR orange][B]Agregar a Favoritos[/B][/COLOR] )"
         if "Favorito" in item.title:
-            title = bbcode_kodi2html(" ( [COLOR red][B]Quitar de Favoritos[/B][/COLOR] )")
+            title = " ( [COLOR red][B]Quitar de Favoritos[/B][/COLOR] )"
         if config.get_videolibrary_support():
-            title_label = bbcode_kodi2html(" ( [COLOR gray][B]" + item.show + "[/B][/COLOR] )")
-            itemlist.append(Item(channel=item.channel, action="findvideos", title=title_label, fulltitle=title_label,
+            title_label = " ( [COLOR gray][B]" + item.show + "[/B][/COLOR] )"
+            it1.append(Item(channel=item.channel, action="findvideos", title=title_label, fulltitle=title_label,
                                  url=url_targets, thumbnail=item.thumbnail, show=item.show, folder=False))
 
-            title_label = bbcode_kodi2html(" ( [COLOR green][B]Tráiler[/B][/COLOR] )")
+            title_label = " ( [COLOR green][B]Tráiler[/B][/COLOR] )"
 
-            itemlist.append(
-                Item(channel=item.channel, action="buscartrailer", title=title_label, fulltitle=title_label, url=url_targets,
+            it1.append(
+                item.clone(channel="trailertools", action="buscartrailer", title=title_label, contentTitle=item.show, url=item.url,
                      thumbnail=item.thumbnail, show=item.show))
 
-        itemlist.append(Item(channel=item.channel, action="set_status", title=title, fulltitle=title, url=url_targets,
+        it1.append(Item(channel=item.channel, action="set_status", title=title, fulltitle=title, url=url_targets,
                              thumbnail=item.thumbnail, show=item.show, folder=True))
 
     data_js = httptools.downloadpage("http://hdfull.tv/templates/hdfull/js/jquery.hdfull.view.min.js").data
@@ -663,7 +663,6 @@ def findvideos(item):
     infolabels = {}
     year = scrapertools.find_single_match(data, '<span>A&ntilde;o:\s*</span>.*?(\d{4})')
     infolabels["year"] = year
-
     matches = []
     for match in data_decrypt:
         prov = eval(scrapertools.find_single_match(data_js, 'p\[%s\]\s*=\s*(\{.*?\}[\'"]\})' % match["provider"]))
@@ -691,13 +690,15 @@ def findvideos(item):
         if account:
             url += "###" + id + ";" + type
 
-        itemlist.append(
-            Item(channel=item.channel, action="play", title=title, fulltitle=title, url=url, thumbnail=thumbnail,
+        it2.append(
+            item.clone(channel=item.channel, action="play", title=title, fulltitle=title, url=url, thumbnail=thumbnail,
                  plot=plot, fanart=fanart, show=item.show, folder=True, infoLabels=infolabels,
                  contentTitle=item.contentTitle, contentType=item.contentType, tipo=option))
 
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    itemlist.sort(key=lambda it: it.title, reverse=True)
+    it2 = servertools.get_servers_itemlist(it2, lambda i: i.title % i.server.capitalize())
+    it2.sort(key=lambda it: it.title, reverse=True)
+    itemlist.extend(it1)
+    itemlist.extend(it2)
     ## 2 = película
     if type == "2" and item.category != "Cine":
         if config.get_videolibrary_support():
@@ -754,22 +755,6 @@ def extrae_idiomas(bloqueidiomas):
     return textoidiomas, language
 
 
-def bbcode_kodi2html(text):
-    if config.get_platform().startswith("plex") or config.get_platform().startswith("mediaserver"):
-        import re
-        text = re.sub(r'\[COLOR\s([^\]]+)\]',
-                      r'<span style="color: \1">',
-                      text)
-        text = text.replace('[/COLOR]', '</span>')
-        text = text.replace('[CR]', '<br>')
-        text = re.sub(r'\[([^\]]+)\]',
-                      r'<\1>',
-                      text)
-        text = text.replace('"color: white"', '"color: auto"')
-
-    return text
-
-
 ## --------------------------------------------------------------------------------
 
 def set_status(item):
@@ -797,7 +782,7 @@ def set_status(item):
 
     data = httptools.downloadpage(host + path, post=post).data
 
-    title = bbcode_kodi2html("[COLOR green][B]OK[/B][/COLOR]")
+    title = "[COLOR green][B]OK[/B][/COLOR]"
 
     return [Item(channel=item.channel, action="episodios", title=title, fulltitle=title, url=item.url,
                  thumbnail=item.thumbnail, show=item.show, folder=False)]
@@ -815,15 +800,14 @@ def get_status(status, type, id):
 
     try:
         if id in status['favorites'][type]:
-            str1 = bbcode_kodi2html(" [COLOR orange][B]Favorito[/B][/COLOR]")
+            str1 = " [COLOR orange][B]Favorito[/B][/COLOR]"
     except:
         str1 = ""
 
     try:
         if id in status['status'][type]:
             str2 = state[status['status'][type][id]]
-            if str2 != "": str2 = bbcode_kodi2html(
-                " [COLOR green][B]" + state[status['status'][type][id]] + "[/B][/COLOR]")
+            if str2 != "": str2 = "[COLOR green][B]" + state[status['status'][type][id]] + "[/B][/COLOR]"
     except:
         str2 = ""
 
