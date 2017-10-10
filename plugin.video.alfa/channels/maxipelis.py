@@ -104,9 +104,10 @@ def peliculas(item):
         new_item = Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail, plot=plot,
                         contentTitle = contentTitle , infoLabels={'year':year} )
 
-        if year:
-            tmdb.set_infoLabels_item(new_item)
+        #if year:
+        #    tmdb.set_infoLabels_item(new_item)
         itemlist.append(new_item)
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     try:
         patron  = '<a href="([^"]+)" ><span class="icon-chevron-right"></span></a></div>'
         next_page = re.compile(patron,re.DOTALL).findall(data)

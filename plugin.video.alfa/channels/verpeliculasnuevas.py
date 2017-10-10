@@ -13,7 +13,7 @@ from platformcode import config, logger
 
 host = 'http://verpeliculasnuevas.com'
 
-IDIOMAS = {'latino': 'Latino', 'castellano': 'Español', 'sub': 'VOS'}
+IDIOMAS = {'latino': 'Latino', 'castellano': 'Español', 'sub': 'VOSE'}
 list_language = IDIOMAS.values()
 
 taudio = {'latino': '[COLOR limegreen]LATINO[/COLOR]',

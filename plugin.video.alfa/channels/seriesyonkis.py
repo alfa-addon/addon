@@ -171,12 +171,13 @@ def findvideos(item):
 
     matches = re.compile(pattern, re.S).findall(data)
 
-    for url, server, lang in matches:
-        title = "[%s] - [%s]" % (lang, server)
+    for url, server, language in matches:
+        title = "[%s] - [%s]" % (language, server)
         url = host + url
+        server = re.sub('(\..*)', '', server)
         logger.debug("url %s" % url)
         itemlist.append(Item(channel=item.channel, action="play", title=title, fulltitle=item.fulltitle, url=url,
-                        thumbnail=item.thumbnail, lang=lang))
+                        thumbnail=item.thumbnail, language=language, server=server))
 
     return itemlist
 
@@ -191,5 +192,6 @@ def play(item):
     for video_item in itemlist:
         video_item.title = "%s [%s]" % (item.fulltitle, item.lang)
         video_item.thumbnail = item.thumbnail
+        video_item.language = item.language
 
     return itemlist

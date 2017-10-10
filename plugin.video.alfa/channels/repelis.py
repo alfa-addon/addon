@@ -108,13 +108,12 @@ def menupelis(item):
             language = scrapertools.find_multiple_matches(extra_info, 'class="(latino|espanol|subtitulado)"')
             # if language = 'ingles':
             #    language='vo'
-            new_item=Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url,
+            itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url,
                                  thumbnail=thumbnail, fanart=thumbnail, language=language, quality=quality,
-                                 infoLabels={'year': year})
-            if year:
-                tmdb.set_infoLabels_item(new_item)
+                                 infoLabels={'year': year}))
 
-            itemlist.append(new_item)
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+
 
     try:
         next_page = scrapertools.get_match(data, '<span class="current">\d+</span><a href="([^"]+)"')
@@ -190,10 +189,12 @@ def menuestre(item):
                                  thumbnail=thumbnail, fanart=thumbnail, language=language, quality=quality,
                                  infoLabels={'year': year}))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     ## PaginaciÃ³n
     # <span class="current">2</span><a href="http://www.repelis.tv/page/3"
 
     # Si falla no muestra ">> PÃ¡gina siguiente"
+
     try:
         next_page = scrapertools.get_match(data, '<span class="current">\d+</span><a href="([^"]+)"')
         title = "[COLOR red][B]Pagina siguiente »[/B][/COLOR]"
@@ -258,7 +259,7 @@ def findvideos(item):
 
         itemlist.append(Item(channel=item.channel, action="play", title=scrapedtitle, extra=title, url=url,
                              fanart=item.thumbnail, thumbnail=item.thumbnail, plot=splot, language=scrapedlang,
-                             quality=scrapedquality, server=server))
+                             quality=scrapedquality, server=server, infoLabels=item.infoLabels))
     if itemlist:
         itemlist.append(Item(channel=item.channel))
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer",

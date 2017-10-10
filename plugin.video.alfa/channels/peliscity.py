@@ -42,7 +42,7 @@ def porIdioma(item):
     itemlist.append(Item(channel=item.channel, title="Castellano", action="agregadas",
                          url= host + "/idioma/espanol-castellano/", viewmode="movie_with_plot"))
     itemlist.append(
-        Item(channel=item.channel, title="VOS", action="agregadas", url= host + "/idioma/subtitulada/",
+        Item(channel=item.channel, title="VOSE", action="agregadas", url= host + "/idioma/subtitulada/",
              viewmode="movie_with_plot"))
     itemlist.append(Item(channel=item.channel, title="Latino", action="agregadas",
                          url= host + "/idioma/espanol-latino/", viewmode="movie_with_plot"))
