@@ -21,7 +21,7 @@ def remove_format(string):
     logger.info()
     #logger.debug('entra en remove: %s' % string)
     string = string.strip()
-    string = re.sub(r'(\[|\[\/)(?:color|COLOR|b|B|i|I).*?\]|\s{2,}|\[|\]|\(|\)', '', string)
+    string = re.sub(r'(\[|\[\/)(?:color|COLOR|b|B|i|I).*?\]|\s{2,}|\[|\]|\(|\)|\:', '', string)
     #logger.debug('sale de remove: %s' % string)
     return string
 
@@ -72,9 +72,9 @@ def set_lang(language):
     cast =['castellano','espanol','cast','esp','espaol', 'es','zc', 'spa', 'spanish', 'vc']
     lat=['latino','lat','la', 'espanol latino', 'espaol latino', 'zl', 'mx', 'co', 'vl']
     vose=['subtitulado','subtitulada','sub','sub espanol','vose','espsub','su','subs castellano',
-          'sub: español', 'vs', 'zs', 'vs']
+          'sub: español', 'vs', 'zs', 'vs', 'english-spanish subs', 'ingles sub espanol']
     vos=['vos', 'sub ingles', 'engsub', 'vosi','ingles subtitulado', 'sub: ingles']
-    vo=['ingles', 'en','vo', 'ovos', 'eng','v.o']
+    vo=['ingles', 'en','vo', 'ovos', 'eng','v.o', 'english']
 
     language = scrapertools.decodeHtmlentities(language)
     old_lang = language
