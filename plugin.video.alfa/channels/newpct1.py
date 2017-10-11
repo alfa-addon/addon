@@ -339,20 +339,20 @@ def episodios(item):
     infoLabels = item.infoLabels
     data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url).data)
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
-    logger.debug('data: %s'%data)
     pattern = '<ul class="%s">(.*?)</ul>' % "pagination"  # item.pattern
     pagination = scrapertools.find_single_match(data, pattern)
     if pagination:
         pattern = '<li><a href="([^"]+)">Last<\/a>'
         full_url = scrapertools.find_single_match(pagination, pattern)
         url, last_page = scrapertools.find_single_match(full_url, r'(.*?\/pg\/)(\d+)')
-        list_pages = []
-        for x in range(1, int(last_page) + 1):
-            list_pages.append("%s%s" % (url, x))
+        list_pages = [item.url]
+        for x in range(2, int(last_page) + 1):
+            response = httptools.downloadpage('%s%s'% (url,x))
+            if response.sucess:
+                list_pages.append("%s%s" % (url, x))
     else:
         list_pages = [item.url]
 
-    logger.debug ('pattern: %s'%pattern)
     for index, page in enumerate(list_pages):
         logger.debug("Loading page %s/%s url=%s" % (index, len(list_pages), page))
         data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(page).data)
@@ -424,7 +424,7 @@ def episodios(item):
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
             item.clone(title="Añadir esta serie a la videoteca", action="add_serie_to_library", extra="episodios"))
-      
+
     return itemlist
 
 def search(item, texto):
