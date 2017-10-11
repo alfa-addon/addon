@@ -223,7 +223,6 @@ def save_tvshow(item, episodelist):
         return 0, 0, -1  # Salimos sin guardar
 
     scraper_return = scraper.find_and_set_infoLabels(item)
-
     # Llegados a este punto podemos tener:
     #  scraper_return = True: Un item con infoLabels con la información actualizada de la serie
     #  scraper_return = False: Un item sin información de la peli (se ha dado a cancelar en la ventana)
@@ -238,6 +237,8 @@ def save_tvshow(item, episodelist):
 
     if config.get_setting("original_title_folder", "videolibrary") == 1 and item.infoLabels['originaltitle']:
         base_name = item.infoLabels['originaltitle']
+    elif item.infoLabels['tvshowtitle']:
+        base_name = item.infoLabels['tvshowtitle']
     elif item.infoLabels['title']:
         base_name = item.infoLabels['title']
     else:
@@ -566,7 +567,6 @@ def add_tvshow(item, channel=None):
 
         # Obtiene el listado de episodios
         itemlist = getattr(channel, item.action)(item)
-
     insertados, sobreescritos, fallidos, path = save_tvshow(item, itemlist)
 
     if not insertados and not sobreescritos and not fallidos:

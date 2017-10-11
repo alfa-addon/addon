@@ -1,0 +1,43 @@
+{
+  "active": true,
+  "find_videos": {
+    "ignore_urls": [],
+    "patterns": [
+      {
+        "pattern": "((?:kbagi.com|diskokosmiko.mx)/[^\\s'\"]+)",
+        "url": "http://\\1"
+      }
+    ]
+  },
+  "free": true,
+  "id": "kbagi",
+  "name": "kbagi",
+  "settings": [
+    {
+      "default": false,
+      "enabled": true,
+      "id": "black_list",
+      "label": "Incluir en lista negra",
+      "type": "bool",
+      "visible": true
+    },
+    {
+      "default": 0,
+      "enabled": true,
+      "id": "favorites_servers_list",
+      "label": "Incluir en lista de favoritos",
+      "lvalues": [
+        "No",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "type": "list",
+      "visible": false
+    }
+  ],
+  "thumbnail": "http://i.imgur.com/EjbfM7p.png?1",
+  "version": 1
+}
