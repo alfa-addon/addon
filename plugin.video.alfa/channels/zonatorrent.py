@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# -*- Channel TioTorrent -*-
+# -*- Created for Alfa-addon -*-
+# -*- By the Alfa Develop Group -*-
 
 import re
 
