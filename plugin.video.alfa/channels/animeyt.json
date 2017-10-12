@@ -1,0 +1,36 @@
+{
+  "id": "animeyt",
+  "name": "AnimeYT",
+  "active": true,
+  "adult": false,
+  "language": "es",
+  "thumbnail": "http://i.imgur.com/dHpupFk.png",
+  "version": 1,
+  "changes": [
+    {
+      "date": "17/05/2017",
+      "description": "Fix novedades y replace en findvideos"
+    }
+  ],
+  "categories": [
+    "anime"
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "modo_grafico",
+      "type": "bool",
+      "label": "información extra",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}
