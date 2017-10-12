@@ -92,9 +92,14 @@ def peliculas(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, thumbnail, titulo, varios in matches:
         idioma = scrapertools.find_single_match(varios, '(?s)Idioma.*?kinopoisk">([^<]+)')
+        number_idioma = scrapertools.find_single_match(idioma, '[0-9]')
+        mtitulo = titulo
+        if number_idioma != "":
+            idioma = ""
+        else:
+            mtitulo += " (" + idioma + ")"
         year = scrapertools.find_single_match(varios, 'Año.*?kinopoisk">([^<]+)')
         year = scrapertools.find_single_match(year, '[0-9]{4}')
-        mtitulo = titulo + " (" + idioma + ")"
         if year:
             mtitulo += " (" + year + ")"
             item.infoLabels['year'] = int(year)
