@@ -608,7 +608,6 @@ def generos_series(item):
 
 def findvideos(item):
     logger.info()
-
     itemlist = []
     it1 = []
     it2 = []
@@ -678,8 +677,10 @@ def findvideos(item):
     for idioma, calidad, url, embed in matches:
         mostrar_server = True
         option = "Ver"
+        option1 = 1
         if re.search(r'return ([\'"]{2,}|\})', embed):
             option = "Descargar"
+            option1 = 2
         calidad = unicode(calidad, "utf8").upper().encode("utf8")
         title = option + ": %s (" + calidad + ")" + " (" + idioma + ")"
         thumbnail = item.thumbnail
@@ -691,12 +692,12 @@ def findvideos(item):
             url += "###" + id + ";" + type
 
         it2.append(
-            item.clone(channel=item.channel, action="play", title=title, fulltitle=title, url=url, thumbnail=thumbnail,
+            item.clone(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
                  plot=plot, fanart=fanart, show=item.show, folder=True, infoLabels=infolabels,
-                 contentTitle=item.contentTitle, contentType=item.contentType, tipo=option))
+                 contentTitle=item.title, contentType=item.contentType, tipo=option, tipo1=option1, idioma=idioma))
 
     it2 = servertools.get_servers_itemlist(it2, lambda i: i.title % i.server.capitalize())
-    it2.sort(key=lambda it: it.title, reverse=True)
+    it2.sort(key=lambda it: (it.tipo1, it.idioma, it.server))
     itemlist.extend(it1)
     itemlist.extend(it2)
     ## 2 = película
