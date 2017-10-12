@@ -14,18 +14,19 @@ from core.item import Item
 from platformcode import config, logger
 
 host = 'http://www.ohpelis.com'
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0 Chrome/58.0.3029.110',
-    'Referer': host}
-
 
 def mainlist(item):
     logger.info()
-
     itemlist = []
+    data = httptools.downloadpage(host).data
+    patron = '<li class="cat-item cat-item-\d+"><a href="(.*?)" >(.*?)<\/a> <i>(\d+)<\/i>'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    mcantidad = 0
+    for scrapedurl, scrapedtitle, cantidad in matches:
+        mcantidad += int(cantidad)
 
     itemlist.append(
-        item.clone(title="Peliculas",
+        item.clone(title="Peliculas (%s)" %mcantidad,
                    action='movies_menu'
                    ))
 
@@ -95,14 +96,14 @@ def list_all(item):
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedplot in matches:
         title = scrapedtitle
-        plot = scrapedplot
         thumbnail = scrapedthumbnail
         url = scrapedurl
         year = scrapedyear
         new_item = (item.clone(title=title,
                                url=url,
                                thumbnail=thumbnail,
-                               plot=plot,
+                               fulltitle=title,
+                               contentTitle=title,
                                infoLabels={'year': year}
                                ))
         if item.extra == 'serie':
@@ -114,7 +115,7 @@ def list_all(item):
 
         itemlist.append(new_item)
 
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    tmdb.set_infoLabels(itemlist, True)
     # Paginacion
     next_page = scrapertools.find_single_match(data, '<link rel="next" href="(.*?) />')
     if next_page:
@@ -162,7 +163,6 @@ def search_list(item):
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedtype, scrapedyear, scrapedplot in matches:
         title = scrapedtitle
-        plot = scrapedplot
         thumbnail = scrapedthumbnail
         url = scrapedurl
         year = scrapedyear
@@ -170,7 +170,6 @@ def search_list(item):
                               title=title,
                               url=url,
                               thumbnail=thumbnail,
-                              plot=plot,
                               infoLabels={'year': year})
         if scrapedtype == 'movies':
             new_item.action = 'findvideos'
@@ -275,11 +274,14 @@ def findvideos(item):
     itemlist.extend(servertools.find_video_items(data=data))
     for videoitem in itemlist:
         videoitem.channel = item.channel
+        videoitem.contentTitle = item.fulltitle
+        videoitem.infoLabels = item.infoLabels
         if videoitem.server != 'youtube':
             videoitem.title = item.title + ' (%s)' % videoitem.server
         else:
             videoitem.title = 'Trailer en %s' % videoitem.server
         videoitem.action = 'play'
+        videoitem.server = ""
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(
@@ -288,9 +290,9 @@ def findvideos(item):
                  url=item.url,
                  action="add_pelicula_to_library",
                  extra="findvideos",
-                 contentTitle=item.contentTitle,
                  ))
-
+    tmdb.set_infoLabels(itemlist, True)
+    itemlist = servertools.get_servers_itemlist(itemlist)
     return itemlist
 
 
@@ -314,3 +316,8 @@ def newest(categoria):
         return []
 
     return itemlist
+
+def play(item):
+    logger.info()
+    item.thumbnail = item.contentThumbnail
+    return [item]
