@@ -298,6 +298,7 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
                 url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
             if "player" in url:
                 scrapedserver = scrapertools.find_single_match(url, 'player/(\w+)')
+                if "ok" in scrapedserver: scrapedserver = "okru"
             matches.append([url, scrapedserver, "", language.strip(), t_tipo])
     bloque2 = scrapertools.find_single_match(data, '(?s)box_links.*?dt_social_single')
     bloque2 = bloque2.replace("\t", "").replace("\r", "")
@@ -347,10 +348,12 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
 def play(item):
     logger.info()
     itemlist = []
-    if "api.cinetux" in item.url:
+    if "api.cinetux" in item.url or item.server == "okru":
         data = httptools.downloadpage(item.url, headers={'Referer': item.extra}).data.replace("\\", "")
         id = scrapertools.find_single_match(data, 'img src="[^#]+#(.*?)"')
         item.url = "https://youtube.googleapis.com/embed/?status=ok&hl=es&allow_embed=1&ps=docs&partnerid=30&hd=1&autoplay=0&cc_load_policy=1&showinfo=0&docid=" + id
+        if item.server == "okru":
+            item.url = "https://ok.ru/videoembed/" + id
     elif "links" in item.url or "www.cinetux.me" in item.url:
         data = httptools.downloadpage(item.url).data
         scrapedurl = scrapertools.find_single_match(data, '<a href="(http[^"]+)')
