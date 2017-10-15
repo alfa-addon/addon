@@ -58,9 +58,8 @@ def get_cookie_value():
     return cookies_value
 
 
-header_string = "|User-Agent=Mozilla/5.0&Referer=http://animeflv.me&Cookie=" + \
+header_string = "|User-Agent=Mozilla/5.0&Referer=http://animeflv.co&Cookie=" + \
                 get_cookie_value()
-
 
 def __find_next_page(html):
     """
@@ -71,12 +70,6 @@ def __find_next_page(html):
 
 
 def __extract_info_from_serie(html):
-    """
-        Extrae la información de una serie o pelicula desde su página
-        Util para cuando una busqueda devuelve un solo resultado y animeflv.me
-        redirecciona a la página de este.
-    """
-
     title = scrapertools.find_single_match(html, REGEX_TITLE)
     title = clean_title(title)
     url = scrapertools.find_single_match(html, REGEX_URL)
@@ -156,7 +149,7 @@ def mainlist(item):
 def letras(item):
     logger.info()
 
-    base_url = 'http://animeflv.me/ListadeAnime?c='
+    base_url = 'http://animeflv.co/ListadeAnime?c='
 
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="series", title="#", url=base_url + "#"))
