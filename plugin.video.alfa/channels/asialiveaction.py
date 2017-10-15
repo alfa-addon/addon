@@ -1,4 +1,4 @@
-﻿# -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
 
 import re
 import urlparse
@@ -66,7 +66,7 @@ def estrenos(item):
     for scrapedtype, scrapedthumbnail,scrapedtitle,scrapedurl in matches:
         title = "%s [%s]" % (scrapedtitle, scrapedtype)
         if scrapedtype == "pelicula":
-            itemlist.append(item.clone(title=title, url=host+scrapedurl, action="bitly", extra=scrapedtitle,
+            itemlist.append(item.clone(title=title, url=host+scrapedurl, action="findvideos", extra=scrapedtype,
                             show=scrapedtitle, thumbnail=scrapedthumbnail, contentType="movie",
                             context=["buscar_trailer"]))
         else:
@@ -102,6 +102,7 @@ def capitulos(item):
         itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]", url=item.url,
                         action="add_serie_to_library", extra="episodios", show=item.show))
     return itemlist
+
 def bitly(item):
     logger.info()
     itemlist = list()
@@ -119,9 +120,8 @@ def bitly(item):
         contentType="movie"
     else:
         contentType="serie"
-    itemlist.append(item.clone(action='findvideos', title="Click aqui para desencriptar "+item.title, 
-                    url=url,show=item.show,thumbnail=item.thumbnail,contentType=contentType))
-    return itemlist
+    item=(item.clone(action='findvideos',url=url,show=item.show, thumbnail=item.thumbnail, contentType=contentType))
+    return item
 
 def lista(item):
     logger.info()
@@ -147,12 +147,12 @@ def lista(item):
         for calidad in quality:
             qual=qual+"["+calidad+"] "
         title="%s [%s] %s" % (scrapedtitle,scrapedyear,qual)
-        if item.title=="Series":
+        if item.title =="Series":
             itemlist.append(item.clone(title=title, url=host+scrapedurl, extra=scrapedtitle, plot=scrapedtitle,
                            show=scrapedtitle, thumbnail=scrapedthumbnail, contentType="serie", action="capitulos"))
-        else:
+        elif scrapedtype != 'serie':
             itemlist.append(
-                item.clone(title=title, url=host+scrapedurl, action="bitly", extra=scrapedtitle, plot=scrapedtitle,
+                item.clone(title=title, url=host+scrapedurl, action="findvideos", extra=scrapedtype, plot=scrapedtitle,
                            show=scrapedtitle, thumbnail=scrapedthumbnail, contentType="movie", context=["buscar_trailer"]))
 
     # Paginacion
@@ -176,6 +176,9 @@ def findvideos(item):
     logger.info()
 
     itemlist = []
+
+    if item.extra == 'pelicula':
+        item = bitly(item)
 
     data = httptools.downloadpage(item.url).data
     itemlist.extend(servertools.find_video_items(data=data))
