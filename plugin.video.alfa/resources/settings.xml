@@ -38,10 +38,10 @@
         <setting id="videolibrary_kodi_flag" type="number" label="" default="0" visible="false"/>
         <setting id="videolibrary_kodi" type="bool" label="Autoconfigurar videoteca de XBMC/Kodi para contenido de Alfa" enable="lt(-1,2)+eq(0,false)" default="false"/>
     </category>
-    <category label="Opciones para titulos">
+    <category label="Opciones Visuales">
         <setting id="icon_set" type="labelenum" label="Set de iconos" lvalues="default|dark" default="default"/>
         <setting id="video_thumbnail_type" type="enum" label="Thumbnail para videos" values="Poster|Logo del servidor" default="0"/>
-        <setting label="Titulos Inteligentes" type="lsep"/>
+        <setting label="Opciones para Titulos" type="lsep"/>
         <setting id="unify" type="bool" label="Titulos Inteligentes" default="false"/>
         <setting id="title_color" type="bool" label="Colores Personalizados" default="false" visible="eq(-1,true)"/>
         <setting id="movie_color" type="labelenum" label="Pelicula"
