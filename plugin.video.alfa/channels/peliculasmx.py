@@ -76,14 +76,11 @@ def peliculas(item):
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     # Extrae la marca de siguiente página
-    paginador = scrapertools.find_single_match(data, "<div class='paginado'>.*?lateral")
+    next_page = scrapertools.find_single_match(data, 'class="nextpostslink" rel="next" href="(.*?)">')
 
-    patron = "<li.*?<a class='current'>.*?href='([^']+)"
-    scrapedurl = scrapertools.find_single_match(paginador, patron)
-
-    if scrapedurl:
+    if next_page:
         scrapedtitle = "!Pagina Siguiente ->"
-        itemlist.append(Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl, folder=True))
+        itemlist.append(Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=next_page, folder=True))
 
     return itemlist
 

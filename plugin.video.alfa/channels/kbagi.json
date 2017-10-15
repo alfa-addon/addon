@@ -1,0 +1,81 @@
+{
+  "id": "kbagi",
+  "name": "Kbagi/Diskokosmiko",
+  "language": ["cast", "lat"],
+  "active": true,
+  "adult": false,
+  "version": 1,
+  "thumbnail": "http://i.imgur.com/EjbfM7p.png?1",
+  "banner": "copiapop.png",
+  "categories": [
+    "movie",
+    "tvshow"
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+   {
+      "id": "kbagiuser",
+      "type": "text",
+      "color": "0xFF25AA48",
+      "label": "Usuario Kbagi",
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "kbagipassword",
+      "type": "text",
+      "color": "0xFF25AA48",
+      "hidden": true,
+      "label": "Password Kbagi",
+      "enabled": "!eq(-1,'')",
+      "visible": true
+    },
+    {
+      "id": "diskokosmikouser",
+      "type": "text",
+      "color": "0xFFC52020",
+      "label": "Usuario Diskokosmiko",
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "diskokosmikopassword",
+      "type": "text",
+      "color": "0xFFC52020",
+      "hidden": true,
+      "label": "Password Diskokosmiko",
+      "enabled": "!eq(-1,'')",
+      "visible": true
+    },
+    {
+      "id": "adult_content",
+      "type": "bool",
+      "color": "0xFFd50b0b",
+      "label": "Mostrar contenido adulto en las búsquedas",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "perfil",
+      "type": "list",
+      "label": "Perfil de color",
+      "default": 3,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Sin color",
+        "Perfil 3",
+        "Perfil 2",
+        "Perfil 1"
+      ]
+    }
+  ]
+}
