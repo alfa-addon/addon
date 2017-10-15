@@ -225,7 +225,7 @@ def episodios(item):
         season = 1
         if cap==0:
 		    season=0
-		    episode=cap
+		    episode=cap+1
 		    cap=cap+1
         else:
 		    episode=cap
