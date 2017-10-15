@@ -8,15 +8,15 @@ from platformcode import logger
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    if "copiapop.com" in page_url:
-        from channels import copiapop
-        logueado, error_message = copiapop.login("copiapop.com")
+    if "kbagi.com" in page_url:
+        from channels import kbagi
+        logueado, error_message = kbagi.login("kbagi.com")
         if not logueado:
             return False, error_message
 
     data = httptools.downloadpage(page_url).data
     if ("File was deleted" or "Not Found" or "File was locked by administrator") in data:
-        return False, "[Copiapop] El archivo no existe o ha sido borrado"
+        return False, "[kbagi] El archivo no existe o ha sido borrado"
 
     return True, ""
 
@@ -26,8 +26,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    host = "http://copiapop.com"
-    host_string = "copiapop"
+    host = "http://kbagi.com"
+    host_string = "kbagi"
     if "diskokosmiko.mx" in page_url:
         host = "http://diskokosmiko.mx"
         host_string = "diskokosmiko"

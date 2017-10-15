@@ -1,0 +1,25 @@
+{
+  "id": "tiotorrent",
+  "name": "TioTorrent",
+  "active": true,
+  "adult": false,
+  "language": ["cast","lat"],
+  "thumbnail": "https://s1.postimg.org/29eths1fi7/tiotorrent.png",
+  "banner": "https://s1.postimg.org/9gkc73lxb3/tiotorrent-banner.png",
+  "version": 1,
+  "categories": [
+    "movie",
+    "tvshow",
+    "torrent"
+  ],
+  "settings": [
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}

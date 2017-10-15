@@ -144,7 +144,7 @@ def lista_gen(item):
         context1=[renumbertools.context(item), autoplay.context]
         itemlist.append(
             Item(channel=item.channel, title=title, url=scrapedurl, thumbnail=scrapedthumbnail, action="episodios",
-                 show=scrapedtitle, context=context1))
+                 show=scrapedtitle, context=context1, language=scrapedlang))
     tmdb.set_infoLabels(itemlist)
     # Paginacion
     

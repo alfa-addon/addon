@@ -2,7 +2,7 @@
   "active": true,
   "changes": [
     {
-      "date": "18/09/2017",
+      "date": "09/10/2017",
       "description": "Versión inicial"
     }
   ],
@@ -10,18 +10,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://www.bitporno.com/(?:e|embed)/([A-z0-9]+)",
-        "url": "https://www.bitporno.com/e/\\1"
-      },
-      {
-        "pattern": "raptu.com/(?:\\?v=|embed/|e/)([A-z0-9]+)",
-        "url": "https://www.bitporno.com/e/\\1"
+        "pattern": "cloudsany.com/i/([A-z0-9]+)",
+        "url": "https://cloudsany.com/i/\\1"
       }
     ]
   },
   "free": true,
-  "id": "bitp",
-  "name": "bitp",
+  "id": "cloudsany",
+  "name": "cloudsany",
   "settings": [
     {
       "default": false,
@@ -48,6 +44,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s26.postimg.org/maiur9tmx/bitp1.png",
+  "thumbnail": "https://s1.postimg.org/6wixo35myn/cloudsany1.png",
   "version": 1
 }

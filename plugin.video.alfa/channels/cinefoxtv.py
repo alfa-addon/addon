@@ -169,6 +169,7 @@ def findvideos(item):
         videoitem.plot = info
         videoitem.action = "play"
         videoitem.folder = False
+        videoitem.infoLabels=item.infoLabels
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(

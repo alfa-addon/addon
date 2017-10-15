@@ -10,7 +10,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(rapidgator.net/file/.*?(?:\\.html))",
+        "pattern": "(rapidgator.net/file/\\w+(?:\\.html|))",
         "url": "http://\\1"
       }
     ]
