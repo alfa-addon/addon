@@ -91,11 +91,7 @@ def capitulos(item):
         data_other = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data_other)
         patron='<A title="http:\/\/privatelink.de\/\?(.+?)"'
         url = scrapertools.find_single_match(data_other, patron)
-        if cap<10:
-            title="1x0"
-        else:
-            title="1x"
-        title="%s%s - %s" % (title,cap,item.show)
+        title="%s%s - %s" % (title,str(cap).zfill(2),item.show)
         itemlist.append(item.clone(action='findvideos', title=title, 
                         url=url,show=item.show,thumbnail=scrapedthumbnail))
     if config.get_videolibrary_support() and len(itemlist) > 0:
