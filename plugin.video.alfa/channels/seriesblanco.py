@@ -1,9 +1,8 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 import urlparse
 
-from channels import renumbertools
 from channels import filtertools
 from channelselector import get_thumb
 from core import httptools
@@ -64,7 +63,6 @@ def mainlist(item):
              thumbnail=thumb_buscar))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, CALIDADES)
-    itemlist = renumbertools.show_option(item.channel, itemlist)
 
     autoplay.show_option(item.channel, itemlist)
     return itemlist
@@ -105,7 +103,7 @@ def extract_series_from_data(item, data):
         else:
             action = "findvideos"
 
-        context1=[filtertools.context(item, list_idiomas, CALIDADES), autoplay.context,renumbertools.context(item)]
+        context1=[filtertools.context(item, list_idiomas, CALIDADES), autoplay.context]
         itemlist.append(item.clone(title=name, url=urlparse.urljoin(HOST, url),
                                    action=action, show=name,
                                    thumbnail=img,
@@ -214,27 +212,13 @@ def episodios(item):
 
     episodes = re.findall("<tr.*?href=['\"](?P<url>[^'\"]+).+?>(?P<title>.+?)</a>.*?<td>(?P<flags>.*?)</td>", data,
                           re.MULTILINE | re.DOTALL)
-    cap=0
     for url, title, flags in episodes:
         title = re.sub("<span[^>]+>", "", title).replace("</span>", "")
         idiomas = " ".join(["[%s]" % IDIOMAS.get(language, "OVOS") for language in
                             re.findall("banderas/([^\.]+)", flags, re.MULTILINE)])
         filter_lang = idiomas.replace("[", "").replace("]", "").split(" ")
+        display_title = "%s - %s %s" % (item.show, title, idiomas)
         # logger.debug("Episode found %s: %s" % (display_title, urlparse.urljoin(HOST, url)))
-        show=title
-        season = 1
-        if cap==0:
-		    season=0
-		    episode=cap+1
-		    cap=cap+1
-        else:
-		    episode=cap
-		    season, episode = renumbertools.numbered_for_tratk(
-		        item.channel, item.show, season, episode)
-		    cap=cap+1
-	episode=episode.zfill(2)
-        display_title = "%sx%s - %s %s" % (season, episode, item.title,idiomas)
-                
         itemlist.append(item.clone(title=display_title, url=urlparse.urljoin(HOST, url),
                                    action="findvideos", plot=plot, fanart=fanart, language=filter_lang))
 
