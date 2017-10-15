@@ -24,7 +24,7 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
-    data = httptools.downloadpage(page_url, add_referer = True).data
+    data = httptools.downloadpage(page_url, add_referer = True, headers=headers).data
 
     packer = scrapertools.find_single_match(data,
                                             "<script type='text/javascript'>(eval.function.p,a,c,k,e,d..*?)</script>")
@@ -32,7 +32,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         data = jsunpack.unpack(packer)
 
     data = re.sub(r'\n|\t|\s+', '', data)
-
     host = scrapertools.find_single_match(data, '\[\{image:"(http://[^/]+/)')
     mediaurl = scrapertools.find_single_match(data, ',\{file:"([^"]+)"')
     if not mediaurl.startswith(host):

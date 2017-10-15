@@ -1,22 +1,10 @@
 {
-  "id": "copiapop",
-  "name": "Copiapop/Diskokosmiko",
+  "id": "kbagi",
+  "name": "Kbagi/Diskokosmiko",
   "language": ["cast", "lat"],
   "active": true,
   "adult": false,
   "version": 1,
-  "changes": [
-    {
-      "date": "15/03/2017",
-      "autor": "SeiTaN",
-      "description": "limpieza código"
-    },
-    {
-      "date": "16/02/2017",
-      "autor": "Cmos",
-      "description": "Primera versión"
-    }
-  ],
   "thumbnail": "http://i.imgur.com/EjbfM7p.png?1",
   "banner": "copiapop.png",
   "categories": [
@@ -33,19 +21,19 @@
       "visible": true
     },
    {
-      "id": "copiapopuser",
+      "id": "kbagiuser",
       "type": "text",
       "color": "0xFF25AA48",
-      "label": "Usuario Copiapop",
+      "label": "Usuario Kbagi",
       "enabled": true,
       "visible": true
     },
     {
-      "id": "copiapoppassword",
+      "id": "kbagipassword",
       "type": "text",
       "color": "0xFF25AA48",
       "hidden": true,
-      "label": "Password Copiapop",
+      "label": "Password Kbagi",
       "enabled": "!eq(-1,'')",
       "visible": true
     },
