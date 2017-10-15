@@ -23,12 +23,12 @@ def mainlist(item):
     itemlist = []
     item.text_color = color1
     itemlist.append(item.clone(title="Novedades", action="entradas",
-                               url="http://www.area-documental.com/resultados-reciente.php?buscar=&genero=",
+                               url= host + "/resultados-reciente.php?buscar=&genero=",
                                fanart="http://i.imgur.com/Q7fsFI6.png"))
     itemlist.append(item.clone(title="Destacados", action="entradas",
-                               url="http://www.area-documental.com/resultados-destacados.php?buscar=&genero=",
+                               url= host + "/resultados-destacados.php?buscar=&genero=",
                                fanart="http://i.imgur.com/Q7fsFI6.png"))
-    itemlist.append(item.clone(title="Categorías", action="cat", url="http://www.area-documental.com/index.php",
+    itemlist.append(item.clone(title="Categorías", action="cat", url= host + "/index.php",
                                fanart="http://i.imgur.com/Q7fsFI6.png"))
     itemlist.append(item.clone(title="Ordenados por...", action="indice", fanart="http://i.imgur.com/Q7fsFI6.png"))
 
@@ -47,7 +47,7 @@ def configuracion(item):
 
 def search(item, texto):
     logger.info()
-    item.url = "http://www.area-documental.com/resultados.php?buscar=%s&genero=&x=0&y=0" % texto
+    item.url = host + "/resultados.php?buscar=%s&genero=&x=0&y=0" % texto
     item.action = "entradas"
     try:
         itemlist = entradas(item)
@@ -65,7 +65,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria == "documentales":
-            item.url = "http://www.area-documental.com/resultados-reciente.php?buscar=&genero="
+            item.url = host + "/resultados-reciente.php?buscar=&genero="
             item.action = "entradas"
             itemlist = entradas(item)
 
@@ -86,9 +86,9 @@ def indice(item):
     logger.info()
     itemlist = []
     itemlist.append(item.clone(title="Título", action="entradas",
-                               url="http://www.area-documental.com/resultados-titulo.php?buscar=&genero="))
+                               url= host + "/resultados-titulo.php?buscar=&genero="))
     itemlist.append(item.clone(title="Año", action="entradas",
-                               url="http://www.area-documental.com/resultados-anio.php?buscar=&genero="))
+                               url= host + "/resultados-anio.php?buscar=&genero="))
     return itemlist
 
 
@@ -125,9 +125,13 @@ def entradas(item):
         data2 = ""
     data = data.replace("\n", "").replace("\t", "")
 
-    patron = '<div id="peliculas">.*?<a href="([^"]+)".*?<img src="([^"]+)".*?' \
-             'target="_blank">(.*?)</a>(.*?)<p>(.*?)</p>' \
-             '.*?</strong>: (.*?)<strong>.*?</strong>(.*?)</div>'
+    patron  = '(?s)<div id="peliculas">.*?a href="([^"]+)".*?'
+    patron += '<img src="([^"]+)".*?'
+    patron += 'target="_blank">(.*?)</a></span>'
+    patron += '(.*?)<p>'
+    patron += '(.*?)</p>.*?'
+    patron += '</strong>:(.*?)<strong>.*?'
+    patron += '</strong>(.*?)</div>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedtitle, year, scrapedplot, genero, extra in matches:
         infolab = {'plot': scrapedplot, 'genre': genero}
@@ -200,6 +204,5 @@ def play(item):
 
     extension = item.url.rsplit("|", 1)[0][-4:]
     itemlist.append(['%s %s [directo]' % (extension, item.calidad), item.url, 0, subtitle])
-    # itemlist.append(item.clone(subtitle=subtitle))
 
     return itemlist
