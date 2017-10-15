@@ -39,7 +39,7 @@
         <setting id="videolibrary_kodi" type="bool" label="Autoconfigurar videoteca de XBMC/Kodi para contenido de Alfa" enable="lt(-1,2)+eq(0,false)" default="false"/>
     </category>
     <category label="Opciones Visuales">
-        <setting id="icon_set" type="labelenum" label="Set de iconos" lvalues="default|dark" default="default"/>
+        <setting id="icon_set" type="labelenum" label="Set de iconos" values="default|dark" default="default"/>
    </category>
     <category label="Otros">
         <setting label="Info de películas/series en menú contextual" type="lsep"/>

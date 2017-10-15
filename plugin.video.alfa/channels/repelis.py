@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import re
-import urlparse
 
 from core import scrapertools
 from core import servertools
@@ -10,58 +9,57 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
+host = "http://www.repelis.tv"
 
 # Main list manual
 def mainlist(item):
     logger.info()
     itemlist = []
 
-    item.url = "http://www.repelis.tv/pag/1"
-
     mifan = "http://www.psicocine.com/wp-content/uploads/2013/08/Bad_Robot_Logo.jpg"
 
-    itemlist.append(Item(channel=item.channel, action="menupelis", title="Peliculas", url="http://www.repelis.tv/pag/1",
+    itemlist.append(Item(channel=item.channel, action="menupelis", title="Peliculas", url= host + "/pag/1",
                          thumbnail="http://www.gaceta.es/sites/default/files/styles/668x300/public"
                                    "/metro_goldwyn_mayer_1926-web.png?itok=-lRSR9ZC",
                          fanart=mifan))
     itemlist.append(Item(channel=item.channel, action="menuestre", title="Estrenos",
-                         url="http://www.repelis.tv/archivos/estrenos/pag/1",
+                         url= host + "/archivos/estrenos/pag/1",
                          thumbnail="http://t0.gstatic.com/images?q=tbn"
                                    ":ANd9GcS4g68rmeLQFuX7iCrPwd00FI_OlINZXCYXEFrJHTZ0VSHefIIbaw",
                          fanart=mifan))
     itemlist.append(
-            Item(channel=item.channel, action="menudesta", title="Destacadas", url="http://www.repelis.tv/pag/1",
+            Item(channel=item.channel, action="menudesta", title="Destacadas", url= host + "/pag/1",
                  thumbnail="http://img.irtve.es/v/1074982/", fanart=mifan))
     itemlist.append(Item(channel=item.channel, action="menupelis", title="Proximos estrenos",
-                         url="http://www.repelis.tv/archivos/proximos-estrenos/pag/1",
+                         url= host + "/archivos/proximos-estrenos/pag/1",
                          thumbnail="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTpsRC"
                                    "-GTYzCqhor2gIDfAB61XeymwgXWSVBHoRAKs2c5HAn29f&reload=on",
                          fanart=mifan))
     itemlist.append(Item(channel=item.channel, action="menupelis", title="Todas las Peliculas",
-                         url="http://www.repelis.tv/pag/1",
+                         url= host + "/pag/1",
                          thumbnail="https://freaksociety.files.wordpress.com/2012/02/logos-cine.jpg", fanart=mifan))
 
     if config.get_setting("adult_mode") != 0:
         itemlist.append(Item(channel=item.channel, action="menupelis", title="Eroticas +18",
-                             url="http://www.repelis.tv/genero/eroticas/pag/1",
+                             url= host + "/genero/eroticas/pag/1",
                              thumbnail="http://www.topkamisetas.com/catalogo/images/TB0005.gif",
                              fanart="http://www.topkamisetas.com/catalogo/images/TB0005.gif", extra='adult'))
         # Quito la busqueda por aÃ±o si no esta enabled el adultmode, porque no hay manera de filtrar los enlaces
         # eroticos72
         itemlist.append(
-                Item(channel=item.channel, action="poranyo", title="Por Año", url="http://www.repelis.tv/anio/2016",
+                Item(channel=item.channel, action="poranyo", title="Por Año", url= host + "/anio/2016",
                      thumbnail="http://t3.gstatic.com/images?q=tbn:ANd9GcSkxiYXdBcI0cvBLsb_nNlz_dWXHRl2Q"
                                "-ER9dPnP1gNUudhrqlR",
                      fanart=mifan))
 
     # Por categoria si que filtra la categoria de eroticos
     itemlist.append(Item(channel=item.channel, action="porcateg", title="Por Categoria",
-                         url="http://www.repelis.tv/genero/accion/pag/1",
+                         url= host + "/genero/accion/pag/1",
                          thumbnail="http://www.logopro.it/blog/wp-content/uploads/2013/07/categoria-sigaretta"
                                    "-elettronica.png",
                          fanart=mifan))
     itemlist.append(
-            Item(channel=item.channel, action="search", title="Buscar...", url="http://www.repelis.tv/search/?s=",
+            Item(channel=item.channel, action="search", title="Buscar...", url= host + "/search/?s=",
                  thumbnail="http://thumbs.dreamstime.com/x/buscar-pistas-13159747.jpg", fanart=mifan))
 
     return itemlist
@@ -70,9 +68,7 @@ def mainlist(item):
 
 def menupelis(item):
     logger.info(item.url)
-
     itemlist = []
-
     data = httptools.downloadpage(item.url).data.decode('iso-8859-1').encode('utf-8')
 
     if item.extra == '':
@@ -85,8 +81,6 @@ def menupelis(item):
         section = 'de %s'%item.extra
 
     patronenlaces = '<h.>Películas %s<\/h.>.*?>(.*?)<\/section>'%section
-
-
     matchesenlaces = re.compile(patronenlaces, re.DOTALL).findall(data)
 
     for bloque_enlaces in matchesenlaces:
@@ -97,24 +91,18 @@ def menupelis(item):
         matches = re.compile(patron, re.DOTALL).findall(bloque_enlaces)
 
         for scrapedurl, scrapedtitle, extra_info, scrapedthumbnail in matches:
-            logger.info("He encontrado el segundo bloque")
-            logger.info("extra_info: %s" % extra_info)
             title = scrapertools.remove_show_from_title(scrapedtitle, "Ver Película")
             title = title.replace("Online", "");
-            url = urlparse.urljoin(item.url, scrapedurl)
-            thumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
+            url = scrapedurl
+            thumbnail = scrapedthumbnail
             quality = scrapertools.find_single_match(extra_info, 'calidad.*?>Calidad (.*?)<')
             year = scrapertools.find_single_match(extra_info, '"anio">(\d{4})<')
             language = scrapertools.find_multiple_matches(extra_info, 'class="(latino|espanol|subtitulado)"')
-            # if language = 'ingles':
-            #    language='vo'
             itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url,
-                                 thumbnail=thumbnail, fanart=thumbnail, language=language, quality=quality,
+                                 thumbnail=thumbnail, language=language, quality=quality,
                                  infoLabels={'year': year}))
 
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
-
+    tmdb.set_infoLabels(itemlist)
     try:
         next_page = scrapertools.get_match(data, '<span class="current">\d+</span><a href="([^"]+)"')
         title = "[COLOR red][B]Pagina siguiente »[/B][/COLOR]"
@@ -138,9 +126,6 @@ def menudesta(item):
     matchesenlaces = re.compile(patronenlaces, re.DOTALL).findall(data)
 
     for bloque_enlaces in matchesenlaces:
-
-        # patron = '<a href="([^"]+)" title="([^"]+)"> <div class="poster".*?<img src="([^"]+)"'
-
         patron = '<div class="poster-media-card">.*?'
         patron += '<a href="(.*?)".*?title="(.*?)".*?'
         patron += '<img src="(.*?)"'
@@ -149,11 +134,10 @@ def menudesta(item):
         for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
             title = scrapertools.remove_show_from_title(scrapedtitle, "Ver Película")
             title = title.replace("Online", "");
-            url = urlparse.urljoin(item.url, scrapedurl)
-            thumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
+            url = scrapedurl
+            thumbnail = scrapedthumbnail
             itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url,
-                                 thumbnail=thumbnail, fanart=thumbnail))
-
+                                 thumbnail=thumbnail, fanart = thumbnail))
     return itemlist
 
 
@@ -179,8 +163,8 @@ def menuestre(item):
         for scrapedurl, scrapedtitle, extra_info, scrapedthumbnail in matches:
             title = scrapertools.remove_show_from_title(scrapedtitle, "Ver Película")
             title = title.replace("Online", "");
-            url = urlparse.urljoin(item.url, scrapedurl)
-            thumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
+            url = scrapedurl
+            thumbnail = scrapedthumbnail
             quality = scrapertools.find_single_match(extra_info, 'calidad.*?>Calidad (.*?)<')
             year = scrapertools.find_single_match(extra_info, '"anio">(\d{4})<')
             language = scrapertools.find_single_match(extra_info, 'class="(latino|espanol|subtitulado)"')
@@ -188,12 +172,6 @@ def menuestre(item):
             itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url,
                                  thumbnail=thumbnail, fanart=thumbnail, language=language, quality=quality,
                                  infoLabels={'year': year}))
-
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    ## PaginaciÃ³n
-    # <span class="current">2</span><a href="http://www.repelis.tv/page/3"
-
-    # Si falla no muestra ">> PÃ¡gina siguiente"
 
     try:
         next_page = scrapertools.get_match(data, '<span class="current">\d+</span><a href="([^"]+)"')
@@ -206,48 +184,25 @@ def menuestre(item):
 
 def findvideos(item):
     logger.info(item.url)
-
     itemlist = []
-
     data = httptools.downloadpage(item.url).data.decode('iso-8859-1').encode('utf-8')
 
     patron = '<h2>Sinopsis</h2>.*?<p>(.*?)</p>.*?<div id="informacion".*?</h2>.*?<p>(.*?)</p>'  # titulo
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = scrapertools.find_multiple_matches(data, patron)
     for sinopsis, title in matches:
         title = "[COLOR white][B]" + title + "[/B][/COLOR]"
 
-    patron = '<div id="informacion".*?>(.*?)</div>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedplot in matches:
-        splot = title + "\n\n"
-        plot = scrapedplot
-        plot = re.sub('<h2>', "[COLOR red][B]", plot)
-        plot = re.sub('</h2>', "[/B][/COLOR] : ", plot)
-        plot = re.sub('<p>', "[COLOR green]", plot)
-        plot = re.sub('</p>', "[/COLOR]\n", plot)
-        plot = re.sub('<[^>]+>', "", plot)
-        splot += plot + "\n[COLOR red][B] Sinopsis[/B][/COLOR]\n " + sinopsis
-
-    # datos de los enlaces
-    '''
-    <a rel="nofollow" href="(.*?)".*?<td><img.*?</td><td>(.*?)</td><td>(.*?)</td></tr>
- 
-    ">Vimple</td>
-    '''
-
     patron = '<tbody>(.*?)</tbody>'
-    matchesx = re.compile(patron, re.DOTALL).findall(data)
+    matchesx = scrapertools.find_multiple_matches(data, patron)
 
     for bloq in matchesx:
         patron = 'href="(.*?)".*?0 0">(.*?)</.*?<td>(.*?)</.*?<td>(.*?)<'
-
-        matches = re.compile(patron, re.DOTALL).findall(bloq)
+        matches = scrapertools.find_multiple_matches(bloq, patron)
 
     for scrapedurl, scrapedserver, scrapedlang, scrapedquality in matches:
-        url = urlparse.urljoin(item.url, scrapedurl)
-        logger.info("Lang:[" + scrapedlang + "] Quality[" + scrapedquality + "] URL[" + url + "]")
+        url = scrapedurl
         patronenlaces = '.*?://(.*?)/'
-        matchesenlaces = re.compile(patronenlaces, re.DOTALL).findall(scrapedurl)
+        matchesenlaces = scrapertools.find_multiple_matches(scrapedurl, patronenlaces)
         scrapedtitle = ""
         if scrapedserver == 'Vimple':
             scrapedserver = 'vimpleru'
@@ -255,13 +210,14 @@ def findvideos(item):
             scrapedserver = 'okru'
         server = servertools.get_server_name(scrapedserver)
         for scrapedenlace in matchesenlaces:
-            scrapedtitle = title + "  [COLOR white][ [/COLOR]" + "[COLOR green]" + scrapedquality + "[/COLOR]" + "[COLOR white] ][/COLOR]" + " [COLOR red] [" + scrapedlang + "][/COLOR]  » " + scrapedserver
+            scrapedtitle = "[COLOR white][ [/COLOR][COLOR green]" + scrapedquality + "[/COLOR]" + "[COLOR white] ][/COLOR] [COLOR red] [" + scrapedlang + "][/COLOR]  » " + scrapedserver
 
-        itemlist.append(Item(channel=item.channel, action="play", title=scrapedtitle, extra=title, url=url,
-                             fanart=item.thumbnail, thumbnail=item.thumbnail, plot=splot, language=scrapedlang,
-                             quality=scrapedquality, server=server, infoLabels=item.infoLabels))
+        itemlist.append(item.clone(action="play", title=scrapedtitle, extra=title, url=url,
+                             fanart=item.thumbnail, language=scrapedlang,
+                             quality=scrapedquality, server = server))
+    tmdb.set_infoLabels(itemlist)
     if itemlist:
-        itemlist.append(Item(channel=item.channel))
+        itemlist.append(Item(channel=item.channel)) 
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer",
                                    text_color="magenta"))
         # Opción "Añadir esta película a la biblioteca de KODI"
@@ -271,18 +227,15 @@ def findvideos(item):
                                  fulltitle=item.fulltitle))
     return itemlist
 
-
 def play(item):
     logger.info()
     itemlist =[]
-
     data = httptools.downloadpage(item.url).data
-
     enc = scrapertools.find_multiple_matches(data, "Player\.decode\('(.*?)'\)")
     dec=''
     for cod in enc:
         dec+=decode(cod)
-    url = scrapertools.find_single_match(dec,'src="(.*?)"')
+    url = scrapertools.find_single_match(dec, 'src="(.*?)"')
     itemlist.append(item.clone(url=url))
 
     return itemlist
@@ -291,7 +244,7 @@ def play(item):
 def search(item, texto):
     logger.info(item.url)
     texto = texto.replace(" ", "+")
-    item.url = 'http://www.repelis.tv/buscar/?s=%s' % (texto)
+    item.url = host + '/buscar/?s=%s' % (texto)
     logger.info(item.url)
 
     data = httptools.downloadpage(item.url).data.decode('iso-8859-1').encode('utf-8')
@@ -312,8 +265,8 @@ def search(item, texto):
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
         title = scrapertools.remove_show_from_title(scrapedtitle, "Ver Película")
         title = title.replace("Online", "")
-        url = urlparse.urljoin(item.url, scrapedurl)
-        thumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
+        url = item.url + scrapedurl
+        thumbnail = item.url + scrapedthumbnail
         logger.info(url)
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url,
                              thumbnail=thumbnail, fanart=thumbnail))
@@ -333,7 +286,7 @@ def poranyo(item):
     for scrapedurl, scrapedtitle in matches:
         title = scrapertools.remove_show_from_title(scrapedtitle, "Ver Película")
         title = title.replace("Online", "")
-        url = urlparse.urljoin(item.url, scrapedurl)
+        url = item.url + scrapedurl
         itemlist.append(Item(channel=item.channel, action="menupelis", title=title, fulltitle=title, url=url,
                              fanart=item.fanart, extra='year'))
 
@@ -346,13 +299,12 @@ def porcateg(item):
 
     data = httptools.downloadpage(item.url).data.decode('iso-8859-1').encode('utf-8')
     patron = '<li class="cat-item cat-item-3">.*?<a href="([^"]+)" title="([^"]+)">'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    itemlist = []
+    matches = scrapertools.find_multiple_matches(data, patron)
 
     for scrapedurl, scrapedtitle in matches:
         title = scrapertools.remove_show_from_title(scrapedtitle, "Ver Película")
         title = title.replace("Online", "")
-        url = urlparse.urljoin(item.url, scrapedurl)
+        url = scrapedurl
         logger.info(url)
         # si no esta permitidas categoria adultos, la filtramos
         extra = title

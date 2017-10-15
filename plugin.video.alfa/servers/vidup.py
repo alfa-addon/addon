@@ -20,10 +20,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
 
     data = httptools.downloadpage(page_url).data
-
     key = scrapertools.find_single_match(data, "var mpri_Key\s*=\s*'([^']+)'")
     data_vt = httptools.downloadpage("http://vidup.me/jwv/%s" % key).data
-    vt = scrapertools.find_single_match(data_vt, 'direct\|([^\|]+)\|')
+    vt = scrapertools.find_single_match(data_vt, 'file\|(.*?)\|direct')
 
     # Extrae la URL
     video_urls = []
