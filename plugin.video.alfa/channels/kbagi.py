@@ -9,7 +9,7 @@ from core import scrapertools
 from core.item import Item
 from platformcode import config, logger
 
-__perfil__ = config.get_setting('perfil', "copiapop")
+__perfil__ = config.get_setting('perfil', "kbagi")
 
 # Fijar perfil de color            
 perfil = [['0xFFFFE6CC', '0xFFFFCE9C', '0xFF994D00', '0xFFFE2E2E', '0xFF088A08'],
@@ -21,20 +21,20 @@ if __perfil__ - 1 >= 0:
 else:
     color1 = color2 = color3 = color4 = color5 = ""
 
-adult_content = config.get_setting("adult_content", "copiapop")
+adult_content = config.get_setting("adult_content", "kbagi")
 
 
 def login(pagina):
     logger.info()
 
     try:
-        user = config.get_setting("%suser" % pagina.split(".")[0], "copiapop")
-        password = config.get_setting("%spassword" % pagina.split(".")[0], "copiapop")
-        if pagina == "copiapop.com":
+        user = config.get_setting("%suser" % pagina.split(".")[0], "kbagi")
+        password = config.get_setting("%spassword" % pagina.split(".")[0], "kbagi")
+        if pagina == "kbagi.com":
             if user == "" and password == "":
-                return False, "Para ver los enlaces de copiapop es necesario registrarse en copiapop.com"
+                return False, "Para ver los enlaces de kbagi es necesario registrarse en kbagi.com"
             elif user == "" or password == "":
-                return False, "Copiapop: Usuario o contraseña en blanco. Revisa tus credenciales"
+                return False, "kbagi: Usuario o contraseña en blanco. Revisa tus credenciales"
         else:
             if user == "" or password == "":
                 return False, "DiskoKosmiko: Usuario o contraseña en blanco. Revisa tus credenciales"
@@ -65,19 +65,19 @@ def mainlist(item):
     itemlist = []
     item.text_color = color1
 
-    logueado, error_message = login("copiapop.com")
+    logueado, error_message = login("kbagi.com")
 
     if not logueado:
         itemlist.append(item.clone(title=error_message, action="configuracion", folder=False))
     else:
-        item.extra = "http://copiapop.com"
-        itemlist.append(item.clone(title="Copiapop", action="", text_color=color2))
+        item.extra = "http://kbagi.com"
+        itemlist.append(item.clone(title="kbagi", action="", text_color=color2))
         itemlist.append(
-            item.clone(title="     Búsqueda", action="search", url="http://copiapop.com/action/SearchFiles"))
+            item.clone(title="     Búsqueda", action="search", url="http://kbagi.com/action/SearchFiles"))
         itemlist.append(item.clone(title="     Colecciones", action="colecciones",
-                                   url="http://copiapop.com/action/home/MoreNewestCollections?pageNumber=1"))
+                                   url="http://kbagi.com/action/home/MoreNewestCollections?pageNumber=1"))
         itemlist.append(item.clone(title="     Búsqueda personalizada", action="filtro",
-                                   url="http://copiapop.com/action/SearchFiles"))
+                                   url="http://kbagi.com/action/SearchFiles"))
         itemlist.append(item.clone(title="     Mi cuenta", action="cuenta"))
 
     item.extra = "http://diskokosmiko.mx/"
@@ -90,7 +90,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="     Mi cuenta", action="cuenta"))
     itemlist.append(item.clone(action="", title=""))
 
-    folder_thumb = filetools.join(config.get_data_path(), 'thumbs_copiapop')
+    folder_thumb = filetools.join(config.get_data_path(), 'thumbs_kbagi')
     files = filetools.listdir(folder_thumb)
     if files:
         itemlist.append(
@@ -133,7 +133,7 @@ def listado(item):
     data = httptools.downloadpage(item.url, item.post).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<br>", "", data)
 
-    folder = filetools.join(config.get_data_path(), 'thumbs_copiapop')
+    folder = filetools.join(config.get_data_path(), 'thumbs_kbagi')
     patron = '<div class="size">(.*?)</div></div></div>'
     bloques = scrapertools.find_multiple_matches(data, patron)
     for block in bloques:
@@ -204,7 +204,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(action="play", title="Reproducir/Descargar", server="copiapop"))
+    itemlist.append(item.clone(action="play", title="Reproducir/Descargar", server="kbagi"))
     usuario = scrapertools.find_single_match(item.url, '%s/([^/]+)/' % item.extra)
     url_usuario = item.extra + "/" + usuario
 
@@ -265,7 +265,7 @@ def colecciones(item):
         matches = matches[:20]
         index = 20
 
-    folder = filetools.join(config.get_data_path(), 'thumbs_copiapop')
+    folder = filetools.join(config.get_data_path(), 'thumbs_kbagi')
     for url, scrapedtitle, thumb, info in matches:
         url = item.extra + url + "/gallery,1,1?ref=pager"
         title = "%s  (%s)" % (scrapedtitle, scrapertools.htmlclean(info))
@@ -313,7 +313,7 @@ def cuenta(item):
     import urllib
     itemlist = []
 
-    web = "copiapop"
+    web = "kbagi"
     if "diskokosmiko" in item.extra:
         web = "diskokosmiko"
         logueado, error_message = login("diskokosmiko.mx")
@@ -321,7 +321,7 @@ def cuenta(item):
             itemlist.append(item.clone(title=error_message, action="configuracion", folder=False))
             return itemlist
 
-    user = config.get_setting("%suser" % web, "copiapop")
+    user = config.get_setting("%suser" % web, "kbagi")
     user = unicode(user, "utf8").lower().encode("utf8")
     url = item.extra + "/" + urllib.quote(user)
     data = httptools.downloadpage(url).data
@@ -364,7 +364,7 @@ def filtro(item):
                           'type': 'text', 'default': '0', 'visible': True})
 
     # Se utilizan los valores por defecto/guardados
-    web = "copiapop"
+    web = "kbagi"
     if "diskokosmiko" in item.extra:
         web = "diskokosmiko"
     valores_guardados = config.get_setting("filtro_defecto_" + web, item.channel)
@@ -378,7 +378,7 @@ def filtro(item):
 
 def filtrado(item, values):
     values_copy = values.copy()
-    web = "copiapop"
+    web = "kbagi"
     if "diskokosmiko" in item.extra:
         web = "diskokosmiko"
     # Guarda el filtro para que sea el que se cargue por defecto
@@ -407,7 +407,7 @@ def download_thumb(filename, url):
 
     lock = threading.Lock()
     lock.acquire()
-    folder = filetools.join(config.get_data_path(), 'thumbs_copiapop')
+    folder = filetools.join(config.get_data_path(), 'thumbs_kbagi')
     if not filetools.exists(folder):
         filetools.mkdir(folder)
     lock.release()
@@ -419,7 +419,7 @@ def download_thumb(filename, url):
 
 
 def delete_cache(url):
-    folder = filetools.join(config.get_data_path(), 'thumbs_copiapop')
+    folder = filetools.join(config.get_data_path(), 'thumbs_kbagi')
     filetools.rmdirtree(folder)
     if config.is_xbmc():
         import xbmc

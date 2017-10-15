@@ -32,8 +32,8 @@ def mainlist(item):
                          url= host + "/calidad/hd-real-720", viewmode="movie_with_plot"))
     itemlist.append(
         Item(channel=item.channel, title="    Listado por género", action="porGenero", url= host))
-    itemlist.append(Item(channel=item.channel, title="    Buscar", action="search", url= host + "/?s="))
     itemlist.append(Item(channel=item.channel, title="    Idioma", action="porIdioma", url= host))
+    itemlist.append(Item(channel=item.channel, title="    Buscar", action="search", url= host + "/?s="))
 
     return itemlist
 
@@ -43,7 +43,7 @@ def porIdioma(item):
     itemlist.append(Item(channel=item.channel, title="Castellano", action="agregadas",
                          url= host + "/idioma/espanol-castellano/", viewmode="movie_with_plot"))
     itemlist.append(
-        Item(channel=item.channel, title="VOS", action="agregadas", url= host + "/idioma/subtitulada/",
+        Item(channel=item.channel, title="VOSE", action="agregadas", url= host + "/idioma/subtitulada/",
              viewmode="movie_with_plot"))
     itemlist.append(Item(channel=item.channel, title="Latino", action="agregadas",
                          url= host + "/idioma/espanol-latino/", viewmode="movie_with_plot"))
@@ -53,14 +53,10 @@ def porIdioma(item):
 
 def porGenero(item):
     logger.info()
-
     itemlist = []
     data = httptools.downloadpage(item.url).data
-
     patron = 'cat-item.*?href="([^"]+).*?>(.*?)<.*?span>([^<]+)'
-
     matches = scrapertools.find_multiple_matches(data, patron)
-
     for urlgen, genero, cantidad in matches:
         cantidad = cantidad.replace(".", "")
         titulo = genero + " (" + cantidad + ")"
@@ -74,10 +70,9 @@ def search(item, texto):
     logger.info()
     texto_post = texto.replace(" ", "+")
     item.url = host + "/?s=" + texto_post
-
     try:
         return listaBuscar(item)
-    # Se captura la excepci?n, para no interrumpir al buscador global si un canal falla
+    # Se captura la excepcion, para no interrumpir al buscador global si un canal falla
     except:
         import sys
         for line in sys.exc_info():
@@ -88,12 +83,9 @@ def search(item, texto):
 def agregadas(item):
     logger.info()
     itemlist = []
-
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'\n|\r|\t|\s{2}|&nbsp;|"', "", data)
-
     patron = scrapertools.find_multiple_matches (data,'<divclass=col-mt-5 postsh>.*?Duración')
-
     for element in patron:
         info = scrapertools.find_single_match(element,
                                               "calidad>(.*?)<.*?ahref=(.*?)>.*?'reflectMe' src=(.*?)\/>.*?<h2>(.*?)"
@@ -107,16 +99,15 @@ def agregadas(item):
         itemlist.append(Item(channel=item.channel,
                              action='findvideos',
                              contentType = "movie",
+                             contentTitle = title,
                              fulltitle = title,
                              infoLabels={'year':year},
-                             plot=plot,
                              quality=quality,
                              thumbnail=thumbnail,
                              title=title,
-                             contentTitle = title,
                              url=url
                              ))
-    tmdb.set_infoLabels_itemlist(itemlist, True)
+    tmdb.set_infoLabels(itemlist, True)
     next_page = scrapertools.find_single_match(data,'tima>.*?href=(.*?) ><i')
     itemlist.append(Item(channel=item.channel, action="agregadas", title='Pagina Siguiente >>',
                          url=next_page.strip(),
@@ -144,17 +135,13 @@ def listaBuscar(item):
 
 def findvideos(item):
     logger.info()
-
     itemlist = []
-    plot = item.plot
-
     # Descarga la pagina
     data = httptools.downloadpage(item.url).data
     patron = 'cursor: hand" rel="(.*?)".*?class="optxt"><span>(.*?)<.*?width.*?class="q">(.*?)</span'
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for scrapedurl, scrapedidioma, scrapedcalidad in matches:
-        idioma = ""
         title = "%s [" + scrapedcalidad + "][" + scrapedidioma +"]"
         if "youtube" in scrapedurl:
             scrapedurl += "&"
@@ -163,8 +150,8 @@ def findvideos(item):
         if not ("omina.farlante1" in scrapedurl or "404" in scrapedurl):
             itemlist.append(
                 item.clone(channel=item.channel, action="play", title=title, fulltitle=item.title, url=scrapedurl,
-                     plot=plot, quality= quality, language=language, extra = item.thumbnail))
-    tmdb.set_infoLabels_itemlist(itemlist, True)
+                     quality= quality, language=language, extra = item.thumbnail))
+    tmdb.set_infoLabels(itemlist, True)
     itemlist=servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Opción "Añadir esta película a la biblioteca de KODI"
     if item.extra != "library":

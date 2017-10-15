@@ -45,7 +45,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     headers['Accept'] = "*/*"
     headers['Host'] = "www.flashx.tv"
 
-    coding_url = 'https://www.flashx.tv/flashx.php?fxfx=7'
+    coding_url = 'https://www.flashx.tv/flashx.php?f=x&fxfx=6'
     headers['X-Requested-With'] = 'XMLHttpRequest'
     httptools.downloadpage(coding_url, headers=headers)
 
