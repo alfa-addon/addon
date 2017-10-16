@@ -87,7 +87,7 @@ def sub_search(item):
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedlanguages, scrapedquality in match:
         year = scrapertools.find_single_match(scrapedtitle, '[0-9]{4}')
         scrapedquality = scrapertools.find_single_match(scrapedquality, 'rel="tag">([^<]+)<')
-        st = scrapertools.find_single_match(scrapedtitle, 'Online.*')
+        st = scrapertools.find_single_match(scrapedtitle, '(?i)Online.*')
         scrapedtitle = scrapedtitle.replace(st, "")
         st = scrapertools.find_single_match(scrapedtitle, '\(.*?\)')
         scrapedtitle = scrapedtitle.replace(st, "")
@@ -162,7 +162,7 @@ def peliculas(item):
     match = scrapertools.find_multiple_matches(bloque, patron)
     for scrapedurl, scrapedtitle, scrapedquality, scrapedthumbnail, scrapedlanguages, year in match:
         year = scrapertools.find_single_match(year, '[0-9]{4}')
-        st = scrapertools.find_single_match(scrapedtitle, 'Online.*')
+        st = scrapertools.find_single_match(scrapedtitle, '(?i)Online.*')
         scrapedtitle = scrapedtitle.replace(st, "").strip()
         st = scrapertools.find_single_match(scrapedtitle, '\(.*?\)')
         scrapedtitle = scrapedtitle.replace(st, "")
