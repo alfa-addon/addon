@@ -298,18 +298,20 @@ def episodios(item):
 
 def findvideos(item):
     logger.info()
-
     itemlist = []
-
+    encontrados = []
     page_html = get_url_contents(item.url)
     regex_api = r'http://player\.animeflv\.co/[^\"]+'
     iframe_url = scrapertools.find_single_match(page_html, regex_api)
 
     iframe_html = get_url_contents(iframe_url)
     itemlist.extend(servertools.find_video_items(data=iframe_html))
-
+    
     qualities = ["360", "480", "720", "1080"]
     for videoitem in itemlist:
+        if videoitem.url in encontrados:
+            continue
+        encontrados.append(videoitem.url)
         videoitem.fulltitle = item.fulltitle
         videoitem.title = "%s en calidad [%s]" % (videoitem.server, qualities[1])
         videoitem.channel = item.channel
@@ -319,10 +321,11 @@ def findvideos(item):
 
     videos_html = scrapertools.find_single_match(iframe_html, regex_video_list)
     videos = re.findall('"([^"]+)"', videos_html, re.DOTALL)
-
     for quality_id, video_url in enumerate(videos):
+        if video_url in encontrados:
+            continue
+        encontrados.append(video_url)
         itemlist.append(Item(channel=item.channel, action="play", url=video_url, show=re.escape(item.show),
                              title="Ver en calidad [%s]" % (qualities[quality_id]), plot=item.plot,
                              fulltitle=item.title))
-
     return __sort_by_quality(itemlist)
