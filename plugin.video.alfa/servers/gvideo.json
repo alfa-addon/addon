@@ -10,7 +10,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?s)https://youtube.googleapis.com.*?docid=([^(?:&|\")]+)",
+        "pattern": "(?s)https://youtube.googleapis.com.*?docid=([0-9a-zA-Z-_]+)",
         "url": "http://docs.google.com/get_video_info?docid=\\1"
       },
       {
