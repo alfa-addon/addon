@@ -140,11 +140,8 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     patron = 'cursor: hand" rel="(.*?)".*?class="optxt"><span>(.*?)<.*?width.*?class="q">(.*?)</span'
     matches = scrapertools.find_multiple_matches(data, patron)
-
     for scrapedurl, scrapedidioma, scrapedcalidad in matches:
         title = "%s [" + scrapedcalidad + "][" + scrapedidioma +"]"
-        if "youtube" in scrapedurl:
-            scrapedurl += "&"
         quality = scrapedcalidad
         language = scrapedidioma
         if not ("omina.farlante1" in scrapedurl or "404" in scrapedurl):
