@@ -132,7 +132,7 @@ def lista(item):
     patron += "<h5>(.+?)<\/h5>"  # scrapedyear
     patron += '<a href="(.+?)"'  # scrapedurl
     #patron += "<\/a>.+?<div class='item-snippet'>(.+?)<"  # scrapedplot
-    if item.title!="Peliculas":
+    if item.title!="Prueba":
         pat='<div id="tab-1"><ul class="post-gallery">(.+?)<\/ul><\/div>'
         data=scrapertools.find_single_match(data, pat)
     matches = scrapertools.find_multiple_matches(data, patron)
