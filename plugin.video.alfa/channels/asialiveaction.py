@@ -102,7 +102,6 @@ def capitulos(item):
 def bitly(item):
     logger.info()
     itemlist = list()
-    logger.info("likingf "+item.url)
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     patron = '<a href="http:\/\/bit.ly\/(.+?)"'
