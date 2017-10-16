@@ -255,10 +255,10 @@ def findvideos(item):
     dic_servers = {'ntfof': 'Servidor Desconocido', 'stramango': 'streamango', 'flasht': 'flashx'}
 
     data1 = downloadpage(item.url)
-    patron = 'onclick="redir\(([^\)]+).*?'
+    patron = '(?s)onclick="redir\(([^\)]+).*?'
     patron += '<img style="float:left" src="./[^/]+/([^\.]+).+?'
     patron += '<span[^>]+>([^<]+).*?'
-    patron += '<img(.*?)onerror'
+    patron += '<img(.*?)on'
 
     if "Descarga:</h1>" in data1:
         list_showlinks = [('Online:', 'Online:</h1>(.*?)Descarga:</h1>'),
