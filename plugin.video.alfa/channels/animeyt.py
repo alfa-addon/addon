@@ -3,7 +3,7 @@
 import re
 import urlparse
 
-
+from channels import renumbertools
 from core import httptools
 from core import scrapertools
 from core import servertools
@@ -28,6 +28,7 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Búsqueda", action="search", url=urlparse.urljoin(HOST, "busqueda?terminos=")))
 
+    itemlist = renumbertools.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -113,7 +114,7 @@ def recientes(item):
     matches = scrapertools.find_multiple_matches(data_recientes, patron)
 
     for url, thumbnail, plot, title, cat in matches:
-        itemlist.append(item.clone(title=title, url=url, action="episodios", show=title, thumbnail=thumbnail, plot=plot, cat=cat))
+        itemlist.append(item.clone(title=title, url=url, action="episodios", show=title, thumbnail=thumbnail, plot=plot, cat=cat, context=renumbertools.context(item)))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True)
 
@@ -137,8 +138,11 @@ def episodios(item):
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for url, scrapedtitle, episode in matches:
-
-        title = "1x" + episode + " " + "Episodio" 
+		
+        season = 1
+        episode = int(episode)
+        season, episode = renumbertools.numbered_for_tratk(item.channel, scrapedtitle, season, episode)
+        title = "%sx%s %s" % (season, str(episode).zfill(2), scrapedtitle)
         itemlist.append(item.clone(title=title, url=url, action='findvideos'))
         
     if config.get_videolibrary_support:
