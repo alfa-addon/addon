@@ -98,10 +98,10 @@ def listado(item):
         fichas = data
         page_extra = item.extra
 
-    patron = '<li><a href="([^"]+).*?'  # url
-    patron += 'title="([^"]+).*?'  # titulo
-    patron += '<img src="([^"]+)"[^>]+>.*?'  # thumbnail
-    patron += '<span>([^<]*)</span>'  # calidad
+    patron = '<a href="([^"]+).*?'  # la url
+    patron += 'title="([^"]+).*?'  # el titulo
+    patron += '<img src="([^"]+)"[^>]+>.*?'  # el thumbnail
+    patron += '<span>([^<].*?)<'  # la calidad
 
     matches = re.compile(patron, re.DOTALL).findall(fichas)
     logger.debug('item.next_page: %s'%item.next_page)
@@ -167,14 +167,12 @@ def listado(item):
 
         logger.debug('context: %s' % context)
         if not 'array' in title:
-            new_item = Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
+            itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                             extra = extra,
                      show = context_title, contentTitle=context_title, contentType=context,
-                     context=["buscar_trailer"], infoLabels= {'year':year})
-            if year:
-                tmdb.set_infoLabels_item(new_item, seekTmdb = True)
-            itemlist.append(new_item)
+                     context=["buscar_trailer"], infoLabels= {'year':year}))
 
+    tmdb.set_infoLabels(itemlist, True)
 
 
 
