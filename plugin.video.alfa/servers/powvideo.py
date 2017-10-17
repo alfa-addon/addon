@@ -58,7 +58,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     matches = scrapertools.find_multiple_matches(data, "[src|file]:'([^']+)'")
     video_urls = []
     for video_url in matches:
-        _hash = scrapertools.find_single_match(video_url, '[A-z0-9\_\-]{40,}')
+        _hash = scrapertools.find_single_match(video_url, '[A-z0-9\_\-]{78,}')
         hash = decrypt(_hash, key)
         video_url = video_url.replace(_hash, hash)
 

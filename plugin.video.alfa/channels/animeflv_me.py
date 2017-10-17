@@ -58,9 +58,8 @@ def get_cookie_value():
     return cookies_value
 
 
-header_string = "|User-Agent=Mozilla/5.0&Referer=http://animeflv.me&Cookie=" + \
+header_string = "|User-Agent=Mozilla/5.0&Referer=http://animeflv.co&Cookie=" + \
                 get_cookie_value()
-
 
 def __find_next_page(html):
     """
@@ -71,12 +70,6 @@ def __find_next_page(html):
 
 
 def __extract_info_from_serie(html):
-    """
-        Extrae la información de una serie o pelicula desde su página
-        Util para cuando una busqueda devuelve un solo resultado y animeflv.me
-        redirecciona a la página de este.
-    """
-
     title = scrapertools.find_single_match(html, REGEX_TITLE)
     title = clean_title(title)
     url = scrapertools.find_single_match(html, REGEX_URL)
@@ -156,7 +149,7 @@ def mainlist(item):
 def letras(item):
     logger.info()
 
-    base_url = 'http://animeflv.me/ListadeAnime?c='
+    base_url = 'http://animeflv.co/ListadeAnime?c='
 
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="series", title="#", url=base_url + "#"))
@@ -305,18 +298,20 @@ def episodios(item):
 
 def findvideos(item):
     logger.info()
-
     itemlist = []
-
+    encontrados = []
     page_html = get_url_contents(item.url)
     regex_api = r'http://player\.animeflv\.co/[^\"]+'
     iframe_url = scrapertools.find_single_match(page_html, regex_api)
 
     iframe_html = get_url_contents(iframe_url)
     itemlist.extend(servertools.find_video_items(data=iframe_html))
-
+    
     qualities = ["360", "480", "720", "1080"]
     for videoitem in itemlist:
+        if videoitem.url in encontrados:
+            continue
+        encontrados.append(videoitem.url)
         videoitem.fulltitle = item.fulltitle
         videoitem.title = "%s en calidad [%s]" % (videoitem.server, qualities[1])
         videoitem.channel = item.channel
@@ -326,10 +321,11 @@ def findvideos(item):
 
     videos_html = scrapertools.find_single_match(iframe_html, regex_video_list)
     videos = re.findall('"([^"]+)"', videos_html, re.DOTALL)
-
     for quality_id, video_url in enumerate(videos):
+        if video_url in encontrados:
+            continue
+        encontrados.append(video_url)
         itemlist.append(Item(channel=item.channel, action="play", url=video_url, show=re.escape(item.show),
                              title="Ver en calidad [%s]" % (qualities[quality_id]), plot=item.plot,
                              fulltitle=item.title))
-
     return __sort_by_quality(itemlist)
