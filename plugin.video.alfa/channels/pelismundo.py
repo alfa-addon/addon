@@ -1,0 +1,244 @@
+# -*- coding: utf-8 -*-
+# ------------------------------------------------------------
+# Alfa addon - KODI Plugin
+# Canal para pelismundo
+# https://github.com/alfa-addon
+# ------------------------------------------------------------
+
+from core import httptools
+from core import scrapertools
+from core import servertools
+from core import tmdb
+from core.item import Item
+from platformcode import config, logger
+
+__channel__='allcalidad'
+
+host = "http://www.pelismundo.com/"
+
+try:
+    __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
+except:
+    __modo_grafico__ = True
+
+
+def mainlist(item):
+    logger.info()
+    itemlist = []
+    itemlist.append(Item(channel = item.channel, title = "Recientes", action = "peliculas", url = host))
+    itemlist.append(Item(channel = item.channel, title = "Por audio", action = "filtro", url = host, filtro = "Películas por audio"))
+    itemlist.append(Item(channel = item.channel, title = "Por género", action = "filtro", url = host, filtro = "Películas por género"))
+    itemlist.append(Item(channel = item.channel))
+    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host))
+    return itemlist
+
+
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == 'peliculas':
+            item.url = host
+        elif categoria == 'infantiles':
+            item.url = host + 'genero/infantil/'
+        elif categoria == 'terror':
+            item.url = host + 'genero/terror/'
+        itemlist = peliculas(item)
+        if "Pagina" in itemlist[-1].title:
+            itemlist.pop()
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist
+
+
+def search(item, texto):
+    logger.info()
+    item.url += "?s="
+    texto = texto.replace(" ", "+")
+    item.url = item.url + texto
+    try:
+        return sub_search(item)
+    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("%s" % line)
+        return []
+
+
+def sub_search(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron = 'search-results-content infinite.*?</ul>'
+    bloque = scrapertools.find_single_match(data, patron)
+    patron  = '(?s)href="([^"]+)".*?'
+    patron += 'title="([^"]+)".*?'
+    patron += 'src="([^"]+)".*?'
+    patron += 'Idioma.*?tag">([^<]+).*?'
+    patron += 'Calidad(.*?<)\/'
+    match = scrapertools.find_multiple_matches(bloque, patron)
+    scrapertools.printMatches(match)
+    for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedlanguages, scrapedquality in match:
+        year = scrapertools.find_single_match(scrapedtitle, '[0-9]{4}')
+        scrapedquality = scrapertools.find_single_match(scrapedquality, 'rel="tag">([^<]+)<')
+        st = scrapertools.find_single_match(scrapedtitle, '(?i)Online.*')
+        scrapedtitle = scrapedtitle.replace(st, "")
+        st = scrapertools.find_single_match(scrapedtitle, '\(.*?\)')
+        scrapedtitle = scrapedtitle.replace(st, "")
+        title = scrapedtitle
+        if year:
+            title += " (" + year + ")"
+        if scrapedquality:
+            title += " (" + scrapedquality + ")"
+        patronidiomas = ''
+        idiomas_disponibles = []
+        matchidioma = scrapertools.find_single_match(scrapedlanguages, 'Castellano')
+        if matchidioma:
+            idiomas_disponibles.append("ESP")
+        matchidioma = scrapertools.find_single_match(scrapedlanguages, 'Subtitulado')
+        if matchidioma:
+            idiomas_disponibles.append("VOSE")
+        matchidioma = scrapertools.find_single_match(scrapedlanguages, 'Latino')
+        if matchidioma:
+            idiomas_disponibles.append("LAT")
+        idiomas_disponibles1 = ""
+        if idiomas_disponibles:
+            idiomas_disponibles1 = "[" + "/".join(idiomas_disponibles) + "]"
+        title += " %s" %idiomas_disponibles1
+        itemlist.append(Item(channel = item.channel,
+                             action = "findvideos",
+                             title = title,
+                             contentTitle = scrapedtitle,
+                             thumbnail = scrapedthumbnail,
+                             quality = scrapedquality,
+                             language = idiomas_disponibles,
+                             infoLabels={"year": year},
+                             url = scrapedurl
+                             ))
+    tmdb.set_infoLabels(itemlist)
+    url_pagina = scrapertools.find_single_match(data, 'next" href="([^"]+)')
+    if url_pagina != "":
+        pagina = "Pagina: " + scrapertools.find_single_match(url_pagina, "page/([0-9]+)")
+        itemlist.append(Item(channel = item.channel, action = "peliculas", title = pagina, url = url_pagina))
+    return itemlist
+
+    
+def filtro(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron = 'class="sbi-header">%s.*?</ul>' %item.filtro
+    bloque = scrapertools.find_single_match(data, patron)
+    patron = '(?s)href="([^"]+)".*?'
+    patron += '</span>([^<]+)</a>'
+    matches = scrapertools.find_multiple_matches(bloque, patron)
+    for url, title in matches:
+        if "eroti33cas" in title and config.get_setting("adult_mode") == 0:
+            continue
+        itemlist.append(item.clone(action = "peliculas",
+                                   title = title.title(),
+                                   url = url
+                                   ))
+    return itemlist
+
+def peliculas(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron = 'movie-list" class="clearfix.*?pagination movie-pagination clearfix'
+    bloque = scrapertools.find_single_match(data, patron)
+    patron  = '(?s)href="([^"]+)".*?'
+    patron += 'title="([^"]+)".*?'
+    patron += 'class="mq([^"]+)".*?'
+    patron += 'src="([^"]+)".*?'
+    patron += '_audio(.*?)class.*?'
+    patron += 'label_year">([^<]+)<'
+    match = scrapertools.find_multiple_matches(bloque, patron)
+    for scrapedurl, scrapedtitle, scrapedquality, scrapedthumbnail, scrapedlanguages, year in match:
+        year = scrapertools.find_single_match(year, '[0-9]{4}')
+        st = scrapertools.find_single_match(scrapedtitle, '(?i)Online.*')
+        scrapedtitle = scrapedtitle.replace(st, "").strip()
+        st = scrapertools.find_single_match(scrapedtitle, '\(.*?\)')
+        scrapedtitle = scrapedtitle.replace(st, "")
+        title = scrapedtitle
+        if year:
+            title += " (" + year + ")"
+        if scrapedquality:
+            title += " (" + scrapedquality + ")"
+        patronidiomas = ''
+        idiomas_disponibles = []
+        matchidioma = scrapertools.find_single_match(scrapedlanguages, 'Castellano')
+        if matchidioma:
+            idiomas_disponibles.append("ESP")
+        matchidioma = scrapertools.find_single_match(scrapedlanguages, 'Subtitulado')
+        if matchidioma:
+            idiomas_disponibles.append("VOSE")
+        matchidioma = scrapertools.find_single_match(scrapedlanguages, 'Latino')
+        if matchidioma:
+            idiomas_disponibles.append("LAT")
+        idiomas_disponibles1 = ""
+        if idiomas_disponibles:
+            idiomas_disponibles1 = "[" + "/".join(idiomas_disponibles) + "]"
+        title += " %s" %idiomas_disponibles1
+        itemlist.append(Item(channel = item.channel,
+                             action = "findvideos",
+                             title = title,
+                             contentTitle = scrapedtitle,
+                             thumbnail = scrapedthumbnail,
+                             quality = scrapedquality,
+                             language = idiomas_disponibles,
+                             infoLabels={"year": year},
+                             url = scrapedurl
+                             ))
+    tmdb.set_infoLabels(itemlist)
+    url_pagina = scrapertools.find_single_match(data, 'next" href="([^"]+)')
+    if url_pagina != "":
+        pagina = "Pagina: " + scrapertools.find_single_match(url_pagina, "page/([0-9]+)")
+        itemlist.append(Item(channel = item.channel, action = "peliculas", title = pagina, url = url_pagina))
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron = 'SegundaParte.*?ventana-flotante'
+    bloque = scrapertools.find_single_match(data, patron)
+    patron  = 'hand" rel="([^"]+)".*?'
+    patron += 'optxt"><span>([^<]+)</span>.*?'
+    matches = scrapertools.find_multiple_matches(bloque, patron)
+    for scrapedurl, scrapedlanguage in matches:
+        if "youtube" in scrapedurl:
+            scrapedurl += "&"
+        title = "Ver en: %s " + "(" + scrapedlanguage + ")"
+        itemlist.append(item.clone(action = "play",
+                                   title = title,
+                                   language = item.language,
+                                   quality = item.quality,
+                                   url = scrapedurl
+                                   ))
+    tmdb.set_infoLabels(itemlist)
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    if itemlist:
+        itemlist.append(Item(channel = item.channel))
+        itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
+                                   text_color="magenta"))
+        # Opción "Añadir esta película a la biblioteca de KODI"
+        if item.extra != "library":
+            if config.get_videolibrary_support():
+                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                                     action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
+                                     fulltitle = item.contentTitle
+                                     ))
+    return itemlist
+
+
+def play(item):
+    item.thumbnail = item.contentThumbnail
+    return [item]
