@@ -12,15 +12,8 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
-__channel__='allcalidad'
-
-host = "http://www.pelismundo.com/"
-
-try:
-    __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
-except:
-    __modo_grafico__ = True
-
+host = "http://www.pelismundo.com"
+idiomas = [["Castellano","ESP"],["Subtitulad","VOSE"],["Latino","LAT"]]
 
 def mainlist(item):
     logger.info()
@@ -80,10 +73,9 @@ def sub_search(item):
     patron  = '(?s)href="([^"]+)".*?'
     patron += 'title="([^"]+)".*?'
     patron += 'src="([^"]+)".*?'
-    patron += 'Idioma.*?tag">([^<]+).*?'
-    patron += 'Calidad(.*?<)\/'
+    patron += 'Idioma(.*?)Cal'
+    patron += 'idad(.*?<)\/'
     match = scrapertools.find_multiple_matches(bloque, patron)
-    scrapertools.printMatches(match)
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedlanguages, scrapedquality in match:
         year = scrapertools.find_single_match(scrapedtitle, '[0-9]{4}')
         scrapedquality = scrapertools.find_single_match(scrapedquality, 'rel="tag">([^<]+)<')
@@ -93,21 +85,14 @@ def sub_search(item):
         scrapedtitle = scrapedtitle.replace(st, "")
         title = scrapedtitle
         if year:
-            title += " (" + year + ")"
+            title += "(" + year + ")"
         if scrapedquality:
             title += " (" + scrapedquality + ")"
-        patronidiomas = ''
         idiomas_disponibles = []
-        matchidioma = scrapertools.find_single_match(scrapedlanguages, 'Castellano')
-        if matchidioma:
-            idiomas_disponibles.append("ESP")
-        matchidioma = scrapertools.find_single_match(scrapedlanguages, 'Subtitulado')
-        if matchidioma:
-            idiomas_disponibles.append("VOSE")
-        matchidioma = scrapertools.find_single_match(scrapedlanguages, 'Latino')
-        if matchidioma:
-            idiomas_disponibles.append("LAT")
         idiomas_disponibles1 = ""
+        for lang in range(len(idiomas)):
+            if idiomas[lang][0] in scrapedlanguages:
+                idiomas_disponibles.append(idiomas[lang][1])
         if idiomas_disponibles:
             idiomas_disponibles1 = "[" + "/".join(idiomas_disponibles) + "]"
         title += " %s" %idiomas_disponibles1
@@ -171,18 +156,11 @@ def peliculas(item):
             title += " (" + year + ")"
         if scrapedquality:
             title += " (" + scrapedquality + ")"
-        patronidiomas = ''
         idiomas_disponibles = []
-        matchidioma = scrapertools.find_single_match(scrapedlanguages, 'Castellano')
-        if matchidioma:
-            idiomas_disponibles.append("ESP")
-        matchidioma = scrapertools.find_single_match(scrapedlanguages, 'Subtitulado')
-        if matchidioma:
-            idiomas_disponibles.append("VOSE")
-        matchidioma = scrapertools.find_single_match(scrapedlanguages, 'Latino')
-        if matchidioma:
-            idiomas_disponibles.append("LAT")
         idiomas_disponibles1 = ""
+        for lang in range(len(idiomas)):
+            if idiomas[lang][0] in scrapedlanguages:
+                idiomas_disponibles.append(idiomas[lang][1])
         if idiomas_disponibles:
             idiomas_disponibles1 = "[" + "/".join(idiomas_disponibles) + "]"
         title += " %s" %idiomas_disponibles1
