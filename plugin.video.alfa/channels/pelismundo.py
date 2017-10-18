@@ -197,7 +197,7 @@ def findvideos(item):
         title = "Ver en: %s " + "(" + scrapedlanguage + ")"
         itemlist.append(item.clone(action = "play",
                                    title = title,
-                                   language = item.language,
+                                   language = scrapedlanguage,
                                    quality = item.quality,
                                    url = scrapedurl
                                    ))
