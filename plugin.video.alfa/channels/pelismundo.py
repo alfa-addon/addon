@@ -13,7 +13,7 @@ from core.item import Item
 from platformcode import config, logger
 
 host = "http://www.pelismundo.com"
-idiomas = [["Castellano","ESP"],["Subtitulad","VOSE"],["Latino","LAT"]]
+idiomas = {"Castellano":"CAST","Subtitulad":"VOSE","Latino":"LAT"}
 
 def mainlist(item):
     logger.info()
@@ -90,9 +90,9 @@ def sub_search(item):
             title += " (" + scrapedquality + ")"
         idiomas_disponibles = []
         idiomas_disponibles1 = ""
-        for lang in range(len(idiomas)):
-            if idiomas[lang][0] in scrapedlanguages:
-                idiomas_disponibles.append(idiomas[lang][1])
+        for lang in idiomas.keys():
+            if lang in scrapedlanguages:
+                idiomas_disponibles.append(idiomas[lang])
         if idiomas_disponibles:
             idiomas_disponibles1 = "[" + "/".join(idiomas_disponibles) + "]"
         title += " %s" %idiomas_disponibles1
@@ -157,10 +157,10 @@ def peliculas(item):
         if scrapedquality:
             title += " (" + scrapedquality + ")"
         idiomas_disponibles = []
+        for lang in idiomas.keys():
+            if lang in scrapedlanguages:
+                idiomas_disponibles.append(idiomas[lang])
         idiomas_disponibles1 = ""
-        for lang in range(len(idiomas)):
-            if idiomas[lang][0] in scrapedlanguages:
-                idiomas_disponibles.append(idiomas[lang][1])
         if idiomas_disponibles:
             idiomas_disponibles1 = "[" + "/".join(idiomas_disponibles) + "]"
         title += " %s" %idiomas_disponibles1
