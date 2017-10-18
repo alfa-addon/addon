@@ -14,8 +14,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
     data = httptools.downloadpage(page_url, cookies=False).data
-
-    if 'File Not Found' in data or 'file was deleted' in data:
+    if 'file was deleted' in data:
         return False, "[FlashX] El archivo no existe o ha sido borrado"
     elif 'Video is processing now' in data:
         return False, "[FlashX] El archivo se está procesando"
@@ -45,7 +44,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     headers['Accept'] = "*/*"
     headers['Host'] = "www.flashx.tv"
 
-    coding_url = 'https://www.flashx.tv/flashx.php?f=x&fxfx=6'
+    coding_url = 'https://www.flashx.tv/flashx.php?f=y&fxfx=6'
     headers['X-Requested-With'] = 'XMLHttpRequest'
     httptools.downloadpage(coding_url, headers=headers)
 
@@ -56,7 +55,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     headers.pop('X-Requested-With')
     headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    data = httptools.downloadpage('https://www.flashx.tv/dl?playnow', post, headers, replace_headers=True).data
+    data = httptools.downloadpage('https://www.flashx.tv/dl?playitnow', post, headers, replace_headers=True).data
 
     # Si salta aviso, se carga la pagina de comprobacion y luego la inicial
     # LICENSE GPL3, de alfa-addon: https://github.com/alfa-addon/ ES OBLIGATORIO AÑADIR ESTAS LÍNEAS
@@ -64,7 +63,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         url_reload = scrapertools.find_single_match(data, 'try to reload the page.*?href="([^"]+)"')
         try:
             data = httptools.downloadpage(url_reload, cookies=False).data
-            data = httptools.downloadpage('https://www.flashx.tv/dl?playnow', post, headers, replace_headers=True).data
+            data = httptools.downloadpage('https://www.flashx.tv/dl?playitnow', post, headers, replace_headers=True).data
         # LICENSE GPL3, de alfa-addon: https://github.com/alfa-addon/ ES OBLIGATORIO AÑADIR ESTAS LÍNEAS
         except:
             pass
