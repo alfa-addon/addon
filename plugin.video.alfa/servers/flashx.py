@@ -24,7 +24,7 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
-
+    pfxfx = ""
     headers = {'Host': 'www.flashx.tv',
                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36',
                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -32,6 +32,14 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                'Accept-Encoding': 'gzip, deflate, br', 'Connection': 'keep-alive', 'Upgrade-Insecure-Requests': '1',
                'Cookie': ''}
     data = httptools.downloadpage(page_url, headers=headers, replace_headers=True).data
+    # Para obtener el f y el fxfx
+    js_fxfx = scrapertools.find_single_match(data, 'src="(https://www.flashx.tv/js/code.js\?cache=[0-9]+)')
+    data_fxfx = httptools.downloadpage(js_fxfx).data
+    mfxfx = scrapertools.find_single_match(data_fxfx, 'get.*?({.*?})').replace("'","").replace(" ","")
+    matches = scrapertools.find_multiple_matches(mfxfx, '(\w+):(\w+)')
+    for f, v in matches:
+        pfxfx += f + "=" + v + "&"
+    # {f: 'y', fxfx: '6'}
     flashx_id = scrapertools.find_single_match(data, 'name="id" value="([^"]+)"')
     fname = scrapertools.find_single_match(data, 'name="fname" value="([^"]+)"')
     hash_f = scrapertools.find_single_match(data, 'name="hash" value="([^"]+)"')
@@ -44,7 +52,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     headers['Accept'] = "*/*"
     headers['Host'] = "www.flashx.tv"
 
-    coding_url = 'https://www.flashx.tv/flashx.php?f=y&fxfx=6'
+    coding_url = 'https://www.flashx.tv/flashx.php?%s' %pfxfx
     headers['X-Requested-With'] = 'XMLHttpRequest'
     httptools.downloadpage(coding_url, headers=headers)
 
