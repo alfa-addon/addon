@@ -110,11 +110,15 @@ def title_format(item):
 
     logger.debug('item.title antes de formatear: %s' % item.title.lower())
 
-    # Se elimina cualquier formato previo en el titulo
-    item.title=remove_format(item.title)
+
 
     # TODO se deberia quitar cualquier elemento que no sea un enlace de la lista de findvideos para quitar esto
-    excluded = ['online', 'descarga', 'downloads', 'trailer', 'videoteca', 'gb', 'autoplay']
+    excluded_words = ['online', 'descarga', 'downloads', 'trailer', 'videoteca', 'gb', 'autoplay']
+    excluded_actions = ['buscartrailer', '']
+
+    # Se elimina cualquier formato previo en el titulo
+    if item.action != '':
+        item.title = remove_format(item.title)
 
     # Evita que aparezcan los idiomas en los mainlist de cada canal
     if item.action == 'mainlist':
@@ -127,13 +131,13 @@ def title_format(item):
         item.text_color=''
 
     #Verifica si el titulo tiene palabra de la lista de exclusion
-    for word in excluded:
+    for word in excluded_words:
         if word in item.title.lower():
             valid = False
             break
 
     #TODO se deberia quitar cualquier elemento que no sea un enlace de la lista de findvideos para quitar esto
-    if valid and item.action != 'buscartrailer' and item.channel != 'trailertools':
+    if valid and item.action not in excluded_actions and item.channel != 'trailertools':
 
         # Formamos el titulo para serie, se debe definir contentSerieName
         # o show en el item para que esto funcione.
@@ -261,6 +265,8 @@ def title_format(item):
         logger.debug('item.title despues de server: %s' % item.title)
     elif 'library' in item.action:
         item.title = '%s' % set_color(item.title, 'library')
+    elif item.action == '' and item.title !='':
+        item.title='**- %s -**'%item.title
     else:
         item.title = '%s' % set_color(item.title, 'otro')
 
