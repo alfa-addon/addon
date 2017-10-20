@@ -266,7 +266,6 @@ def lista(item):
                  contentTitle=scrapedtitle,
                  extra=item.extra,
                  infoLabels={'year': year},
-                 show=scrapedtitle,
                  list_language=list_language,
                  context=autoplay.context
                  ))
