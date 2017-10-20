@@ -712,7 +712,6 @@ def acciones_fichas(item, sid, ficha, season=False):
 
 def acciones_cuenta(item):
     logger.info()
-    logger.debug("item es %s" % item.tostring("\n"))
     itemlist = []
 
     if "Tus fichas" in item.title:
@@ -772,7 +771,6 @@ def acciones_cuenta(item):
 
     data = httptools.downloadpage("https://playmax.mx/tusfichas.php").data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<br>", "", data)
-    logger.debug("data %s" % data)
 
     bloque = scrapertools.find_single_match(data, item.url + '">(.*?)(?:<div class="tf_blocks|<div class="tf_o_move">)')
     matches = scrapertools.find_multiple_matches(bloque, '<div class="tf_menu_mini">([^<]+)<(.*?)<cb></cb></div>')
