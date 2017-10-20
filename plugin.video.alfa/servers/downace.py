@@ -10,7 +10,8 @@ def test_video_exists(page_url):
     data = httptools.downloadpage(page_url).data
     if "no longer exists" in data:
         return False, "[Downace] El fichero ha sido borrado"
-
+    if "please+try+again+later." in data:
+        return False, "[Downace] Error de downace, no se puede generar el enlace al video"
     return True, ""
 
 
