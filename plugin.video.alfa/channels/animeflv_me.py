@@ -12,14 +12,14 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 
-CHANNEL_HOST = "http://animeflv.me/"
+CHANNEL_HOST = "http://animeflv.co"
 CHANNEL_DEFAULT_HEADERS = [
     ["User-Agent", "Mozilla/5.0"],
     ["Accept-Encoding", "gzip, deflate"],
     ["Referer", CHANNEL_HOST]
 ]
 
-REGEX_NEXT_PAGE = r"class='current'>\d+?</li><li><a href=\"([^']+?)\""
+REGEX_NEXT_PAGE = "class='current'>\d+?</li><li><a href='([^']+?)'"
 REGEX_TITLE = r'(?:bigChar_a" href=.+?>)(.+?)(?:</a>)'
 REGEX_THUMB = r'src="(http://media.animeflv\.co/uploads/thumbs/[^"]+?)"'
 REGEX_PLOT = r'<span class="info">Línea de historia:</span><p><span>(.*?)</span>'
@@ -60,14 +60,6 @@ def get_cookie_value():
 
 header_string = "|User-Agent=Mozilla/5.0&Referer=http://animeflv.co&Cookie=" + \
                 get_cookie_value()
-
-def __find_next_page(html):
-    """
-        Busca el enlace a la pagina siguiente
-    """
-
-    return scrapertools.find_single_match(html, REGEX_NEXT_PAGE)
-
 
 def __extract_info_from_serie(html):
     title = scrapertools.find_single_match(html, REGEX_TITLE)
@@ -131,15 +123,15 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="letras",
                          title="Por orden alfabético"))
     itemlist.append(Item(channel=item.channel, action="generos", title="Por géneros",
-                         url=urlparse.urljoin(CHANNEL_HOST, "ListadeAnime")))
+                         url= CHANNEL_HOST + "/ListadeAnime"))
     itemlist.append(Item(channel=item.channel, action="series", title="Por popularidad",
-                         url=urlparse.urljoin(CHANNEL_HOST, "/ListadeAnime/MasVisto")))
+                         url=CHANNEL_HOST + "/ListadeAnime/MasVisto"))
     itemlist.append(Item(channel=item.channel, action="series", title="Novedades",
-                         url=urlparse.urljoin(CHANNEL_HOST, "ListadeAnime/Nuevo")))
+                         url=CHANNEL_HOST + "/ListadeAnime/Nuevo"))
     itemlist.append(Item(channel=item.channel, action="series", title="Últimos",
-                         url=urlparse.urljoin(CHANNEL_HOST, "ListadeAnime/LatestUpdate")))
+                         url=CHANNEL_HOST + "/ListadeAnime/LatestUpdate"))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar...",
-                         url=urlparse.urljoin(CHANNEL_HOST, "Buscar?s=")))
+                         url=CHANNEL_HOST + "/Buscar?s="))
 
     itemlist = renumbertools.show_option(item.channel, itemlist)
 
@@ -148,15 +140,11 @@ def mainlist(item):
 
 def letras(item):
     logger.info()
-
     base_url = 'http://animeflv.co/ListadeAnime?c='
-
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="series", title="#", url=base_url + "#"))
 
     for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-        logger.debug("title=[%s], url=[%s], thumbnail=[]" % (letter, base_url + letter))
-
         itemlist.append(Item(channel=item.channel, action="series", title=letter, url=base_url + letter))
 
     return itemlist
@@ -172,8 +160,6 @@ def generos(item):
     list_genre = re.findall(REGEX_GENERO, html)
 
     for url, genero in list_genre:
-        logger.debug("title=[%s], url=[%s], thumbnail=[]" % (genero, url))
-
         itemlist.append(Item(channel=item.channel, action="series", title=genero, url=url))
 
     return itemlist
@@ -181,12 +167,9 @@ def generos(item):
 
 def search(item, texto):
     logger.info()
-
     texto = texto.replace(" ", "%20")
     item.url = "%s%s" % (item.url, texto)
-
     html = get_url_contents(item.url)
-
     try:
         # Se encontro un solo resultado y se redicciono a la página de la serie
         if html.find('<title>Ver') >= 0:
@@ -198,9 +181,6 @@ def search(item, texto):
         items = []
         for show in show_list:
             title, url, thumbnail, plot = show
-
-            logger.debug("title=[%s], url=[%s], thumbnail=[%s]" % (title, url, thumbnail))
-
             items.append(Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
                               plot=plot, show=title, viewmode="movies_with_plot", context=renumbertools.context(item)))
     except:
@@ -214,35 +194,25 @@ def search(item, texto):
 
 def series(item):
     logger.info()
-
     page_html = get_url_contents(item.url)
-
     show_list = __find_series(page_html)
-
     items = []
     for show in show_list:
         title, url, thumbnail, plot = show
-
-        logger.debug("title=[%s], url=[%s], thumbnail=[%s]" % (title, url, thumbnail))
-
         items.append(Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
                           plot=plot, show=title, viewmode="movies_with_plot", context=renumbertools.context(item)))
 
-    url_next_page = __find_next_page(page_html)
-
+    url_next_page = scrapertools.find_single_match(page_html, REGEX_NEXT_PAGE)
     if url_next_page:
-        items.append(Item(channel=item.channel, action="series", title=">> Página Siguiente", url=url_next_page))
+        items.append(Item(channel=item.channel, action="series", title=">> Página Siguiente", url= CHANNEL_HOST + url_next_page))
 
     return items
 
 
 def episodios(item):
     logger.info()
-
     itemlist = []
-
     html_serie = get_url_contents(item.url)
-
     info_serie = __extract_info_from_serie(html_serie)
     if info_serie[3]:
         plot = info_serie[3]
@@ -250,11 +220,9 @@ def episodios(item):
         plot = ''
 
     episodes = re.findall(REGEX_EPISODE, html_serie, re.DOTALL)
-
     es_pelicula = False
     for url, title, date in episodes:
         episode = scrapertools.find_single_match(title, r'Episodio (\d+)')
-
         # El enlace pertenece a un episodio
         if episode:
             season = 1
@@ -268,9 +236,6 @@ def episodios(item):
             title = "%s (%s)" % (title, date)
             item.url = url
             es_pelicula = True
-
-        logger.debug("title=[%s], url=[%s], thumbnail=[%s]" % (title, url, item.thumbnail))
-
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=item.thumbnail,
                              plot=plot, show=item.show, fulltitle="%s %s" % (item.show, title)))
 
@@ -318,7 +283,6 @@ def findvideos(item):
         videoitem.thumbnail = item.thumbnail
 
     regex_video_list = r'var part = \[([^\]]+)'
-
     videos_html = scrapertools.find_single_match(iframe_html, regex_video_list)
     videos = re.findall('"([^"]+)"', videos_html, re.DOTALL)
     for quality_id, video_url in enumerate(videos):
