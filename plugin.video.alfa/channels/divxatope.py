@@ -157,11 +157,10 @@ def lista(item):
     # logger.info("data="+data)
 
     bloque = scrapertools.find_single_match(data, '(?:<ul class="pelilist">|<ul class="buscar-list">)(.*?)</ul>')
-    patron = '<li[^<]+'
-    patron += '<a href="([^"]+)".*?'
-    patron += 'src="([^"]+)".*?'
-    patron += '<h2[^>]*>(.*?)</h2.*?'
-    patron += '(?:<strong[^>]*>|<span[^>]*>)(.*?)(?:</strong>|</span>)'
+    patron = '<a href="([^"]+).*?'  # la url
+    patron += '<img src="([^"]+)"[^>]+>.*?'  # el thumbnail
+    patron += '<h2[^>]*>(.*?)</h2.*?' # el titulo
+    patron += '<span>([^<].*?)<'  # la calidad
 
     matches = re.compile(patron, re.DOTALL).findall(bloque)
     scrapertools.printMatches(matches)
@@ -175,7 +174,7 @@ def lista(item):
         thumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
         plot = ""
         logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
-
+        year = scrapertools.find_single_match(scrapedthumbnail, r'-(\d{4})')
         contentTitle = scrapertools.htmlclean(scrapedtitle).strip()
         patron = '([^<]+)<br>'
         matches = re.compile(patron, re.DOTALL).findall(calidad + '<br>')
@@ -196,7 +195,7 @@ def lista(item):
             itemlist.append(Item(channel=item.channel, action="episodios", title=title, fulltitle=title, url=url,
                                  thumbnail=thumbnail, plot=plot, folder=True, contentTitle=contentTitle,
                                  language=idioma, contentSeason=int(temporada),
-                                 contentEpisodeNumber=int(episodio), contentQuality=calidad))
+                                 contentEpisodeNumber=int(episodio), quality=calidad))
 
         else:
             if len(matches) == 2:
@@ -205,7 +204,7 @@ def lista(item):
 
             itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url,
                                  thumbnail=thumbnail, plot=plot, folder=True, contentTitle=contentTitle,
-                                 language=idioma, contentThumbnail=thumbnail, contentQuality=calidad))
+                                 language=idioma, contentThumbnail=thumbnail, quality=calidad))
 
     next_page_url = scrapertools.find_single_match(data, '<li><a href="([^"]+)">Next</a></li>')
     if next_page_url != "":
@@ -262,7 +261,7 @@ def findvideos(item):
     item.plot = scrapertools.htmlclean(item.plot).strip()
     item.contentPlot = item.plot
 
-    link = scrapertools.find_single_match(data, 'href.*?=.*?"http:\/\/(?:tumejorserie|tumejorjuego).*?link=([^"]+)"')
+    link = scrapertools.find_single_match(data, 'location\.href.*?=.*?"http:\/\/(?:tumejorserie|tumejorjuego).*?link=(.*?)"')
     if link != "":
         link = "http://www.divxatope1.com/" + link
         logger.info("torrent=" + link)
@@ -275,14 +274,7 @@ def findvideos(item):
     patron += '<\/div[^<]+<div class="box4">([^<]+)<\/div[^<]+<div class="box5"><a href=(.*?) rel.*?'
     patron += '<\/div[^<]+<div class="box6">([^<]+)<'
 
-    #patron = "<div class=\"box1\"[^<]+<img[^<]+</div[^<]+"
-    #patron += '<div class="box2">([^<]+)</div[^<]+'
-    #patron += '<div class="box3">([^<]+)</div[^<]+'
-    #patron += '<div class="box4">([^<]+)</div[^<]+'
-    #patron += '<div class="box5">(.*?)</div[^<]+'
-    #patron += '<div class="box6">([^<]+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
 
     itemlist_ver = []
     itemlist_descargar = []
@@ -308,11 +300,8 @@ def findvideos(item):
             else:
                 itemlist_descargar.append(new_item)
 
-    for new_item in itemlist_ver:
-        itemlist.append(new_item)
-
-    for new_item in itemlist_descargar:
-        itemlist.append(new_item)
+    itemlist.extend(itemlist_ver)
+    itemlist.extend(itemlist_descargar)
 
     return itemlist
 

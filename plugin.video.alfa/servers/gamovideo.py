@@ -7,7 +7,8 @@ from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
 
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0'}
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:40.0) Gecko/20100101 ' \
+                                             'Firefox/40.0'}
 
 
 def test_video_exists(page_url):
@@ -24,8 +25,8 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
-    data = httptools.downloadpage(page_url, add_referer = True, headers=headers).data
-
+    data = httptools.downloadpage(page_url, headers=headers).data
+    logger.debug(data)
     packer = scrapertools.find_single_match(data,
                                             "<script type='text/javascript'>(eval.function.p,a,c,k,e,d..*?)</script>")
     if packer != "":
