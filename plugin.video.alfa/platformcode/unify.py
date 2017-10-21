@@ -38,37 +38,49 @@ def simplify(string):
 
     return string
 
+def add_languages(title, languages):
+    logger.info()
+
+    if isinstance(languages, list):
+        for language in languages:
+            title = '%s %s' % (title, set_color(language, language))
+    else:
+        title = '%s %s' % (title, set_color(languages, languages))
+    return title
+
 def set_color(title, category):
     logger.info()
 
-    color_scheme = {'otro': 'white'}
+    if isinstance(title,str) and isinstance(category,str):
+        color_scheme = {'otro': 'white'}
 
-    category = remove_format(category).lower()
+        logger.debug('category antes de remove: %s' % category)
+        category = remove_format(category).lower()
+        logger.debug('category despues de remove: %s' % category)
+        # Lista de elementos posibles en el titulo
+        color_list = ['movie', 'tvshow', 'year', 'rating_1', 'rating_2', 'rating_3', 'quality', 'cast', 'lat', 'vose',
+                      'vos', 'vo', 'server', 'library', 'update', 'no_update']
 
-    # Lista de elementos posibles en el titulo
-    color_list = ['movie', 'tvshow', 'year', 'rating_1', 'rating_2', 'rating_3', 'quality', 'cast', 'lat', 'vose',
-                  'vos', 'vo', 'server', 'library', 'update', 'no_update']
+        # Se verifica el estado de la opcion de colores personalizados
+        custom_colors = config.get_setting('title_color')
 
-    # Se verifica el estado de la opcion de colores personalizados
-    custom_colors = config.get_setting('title_color')
+        # Se Forma el diccionario de colores para cada elemento, la opcion esta activas utiliza la configuracion del
+        #  usuario, si no  pone el titulo en blanco.
+        if title not in ['', ' ']:
 
-    # Se Forma el diccionario de colores para cada elemento, la opcion esta activas utiliza la configuracion del
-    #  usuario, si no  pone el titulo en blanco.
-    if title not in ['', ' ']:
-
-        for element in color_list:
-            if custom_colors:
-                color_scheme[element] = remove_format(config.get_setting('%s_color' % element))
+            for element in color_list:
+                if custom_colors:
+                    color_scheme[element] = remove_format(config.get_setting('%s_color' % element))
+                else:
+                    color_scheme[element] = 'white'
+            if category in ['update', 'no_update']:
+               logger.debug('title antes de updates: %s' % title)
+               title= re.sub(r'\[COLOR .*?\]','[COLOR %s]' % color_scheme[category],title)
             else:
-                color_scheme[element] = 'white'
-        if category in ['update', 'no_update']:
-           logger.debug('title antes de updates: %s' % title)
-           title= re.sub(r'\[COLOR .*?\]','[COLOR %s]' % color_scheme[category],title)
-        else:
-            if category not in ['movie', 'tvshow', 'library', 'otro']:
-                title = "[COLOR %s][%s][/COLOR]"%(color_scheme[category], title)
-            else:
-                title = "[COLOR %s]%s[/COLOR]" % (color_scheme[category], title)
+                if category not in ['movie', 'tvshow', 'library', 'otro']:
+                    title = "[COLOR %s][%s][/COLOR]"%(color_scheme[category], title)
+                else:
+                    title = "[COLOR %s]%s[/COLOR]" % (color_scheme[category], title)
     return title
 
 def set_lang(language):
@@ -108,19 +120,19 @@ def set_lang(language):
 def title_format(item):
     logger.info()
 
-
     lang = False
     valid = True
     language_color = 'otro'
 
     logger.debug('item.title antes de formatear: %s' % item.title.lower())
 
-
-
     # TODO se deberia quitar cualquier elemento que no sea un enlace de la lista de findvideos para quitar esto
-    excluded_words = ['online', 'descarga', 'downloads', 'trailer', 'videoteca', 'gb', 'autoplay']
-    excluded_actions = ['buscartrailer', '']
 
+    #Palabras "prohibidas" en los titulos (cualquier titulo que contengas estas no se procesara en unify)
+    excluded_words = ['online', 'descarga', 'downloads', 'trailer', 'videoteca', 'gb', 'autoplay']
+
+    # Actions excluidos, (se define canal y action) los titulos que contengan ambos valores no se procesaran en unify
+    excluded_actions = [('videolibrary','get_episodes')]
 
     # Se elimina cualquier formato previo en el titulo
     if item.action != '':
@@ -136,14 +148,18 @@ def title_format(item):
     if hasattr(item,'text_color'):
         item.text_color=''
 
-    #Verifica si el titulo tiene palabra de la lista de exclusion
-    for word in excluded_words:
-        if word in item.title.lower():
-            valid = False
-            break
+    #Verifica el item sea valido para ser formateado por unify
 
-    #TODO se deberia quitar cualquier elemento que no sea un enlace de la lista de findvideos para quitar esto
-    if valid and item.action not in excluded_actions and item.channel != 'trailertools':
+    if item.channel == 'trailertools' or (item.channel.lower(), item.action.lower()) in excluded_actions or \
+            item.action=='':
+        valid = False
+    else:
+        for word in excluded_words:
+            if word in item.title.lower():
+                valid = False
+                break
+
+    if valid:
 
         # Formamos el titulo para serie, se debe definir contentSerieName
         # o show en el item para que esto funcione.
@@ -245,11 +261,7 @@ def title_format(item):
 
         # Damos formato al idioma si existiera y lo agregamos al titulo
         if lang:
-            if isinstance(simple_language, list):
-                for language in simple_language:
-                    item.title = '%s %s' % (item.title, set_color(language, language))
-            else:
-                item.title = '%s %s' % (item.title, set_color(simple_language, simple_language))
+            item.title = add_languages(item.title, simple_language)
 
         # Formato para actualizaciones de series en la videoteca sobreescribe los colores anteriores
 
@@ -273,14 +285,10 @@ def title_format(item):
         elif item.action == 'play' and item.server:
             if item.quality == 'default':
                 quality = ''
-            if lang:
-                simple_language = '%s'%simple_language
-            else:
-                simple_language = ''
-
             logger.debug('language_color: %s'%language_color)
-            item.title = '%s %s %s' % (server, set_color(quality,'quality'), set_color(simple_language,
-                                                                                       simple_language))
+            item.title = '%s %s' % (server, set_color(quality,'quality'))
+            if lang:
+                item.title = add_languages(item.title, simple_language)
             logger.debug('item.title: %s' % item.title)
         else:
             item.title = '%s' % item.title
