@@ -47,7 +47,7 @@ def set_color(title, category):
 
     # Lista de elementos posibles en el titulo
     color_list = ['movie', 'tvshow', 'year', 'rating_1', 'rating_2', 'rating_3', 'quality', 'cast', 'lat', 'vose',
-                  'vos', 'vo', 'server', 'library']
+                  'vos', 'vo', 'server', 'library', 'update', 'no_update']
 
     # Se verifica el estado de la opcion de colores personalizados
     custom_colors = config.get_setting('title_color')
@@ -55,15 +55,20 @@ def set_color(title, category):
     # Se Forma el diccionario de colores para cada elemento, la opcion esta activas utiliza la configuracion del
     #  usuario, si no  pone el titulo en blanco.
     if title not in ['', ' ']:
+
         for element in color_list:
             if custom_colors:
                 color_scheme[element] = remove_format(config.get_setting('%s_color' % element))
             else:
                 color_scheme[element] = 'white'
-        if category not in ['movie', 'tvshow', 'library', 'otro']:
-            title = "[COLOR %s][%s][/COLOR]"%(color_scheme[category], title)
+        if category in ['update', 'no_update']:
+           logger.debug('title antes de updates: %s' % title)
+           title= re.sub(r'\[COLOR .*?\]','[COLOR %s]' % color_scheme[category],title)
         else:
-            title = "[COLOR %s]%s[/COLOR]" % (color_scheme[category], title)
+            if category not in ['movie', 'tvshow', 'library', 'otro']:
+                title = "[COLOR %s][%s][/COLOR]"%(color_scheme[category], title)
+            else:
+                title = "[COLOR %s]%s[/COLOR]" % (color_scheme[category], title)
     return title
 
 def set_lang(language):
@@ -116,6 +121,7 @@ def title_format(item):
     excluded_words = ['online', 'descarga', 'downloads', 'trailer', 'videoteca', 'gb', 'autoplay']
     excluded_actions = ['buscartrailer', '']
 
+
     # Se elimina cualquier formato previo en el titulo
     if item.action != '':
         item.title = remove_format(item.title)
@@ -148,10 +154,17 @@ def title_format(item):
                 if info['title'] == '':
                     info['title'] = '%s - Episodio %s'% (info['tvshowtitle'], info['episode'])
                 elif 'Episode' in info['title']:
-                    episode = info['title'].replace('Episode', 'Episodio')
-                    info['title'] = '%s - %s' % (info['tvshowtitle'], episode)
-
-                item.title = '%sx%s - %s' % (info['season'],info['episode'], info['title'])
+                    episode = info['title'].lower().replace('episode', 'episodio')
+                    info['title'] = '%s - %s' % (info['tvshowtitle'], episode.capitalize())
+                elif info['episodio_titulo']!='':
+                    logger.debug('info[episode_titulo]: %s' % info['episodio_titulo'])
+                    if 'episode' in info['episodio_titulo'].lower():
+                        episode = info['episodio_titulo'].lower().replace('episode', 'episodio')
+                        item.title = '%sx%s - %s' % (info['season'],info['episode'], episode.capitalize())
+                    else:
+                        item.title = '%sx%s - %s' % (info['season'], info['episode'], info['episodio_titulo'].capitalize())
+                else:
+                    item.title = '%sx%s - %s' % (info['season'],info['episode'], info['title'])
                 item.title = set_color(item.title, 'tvshow')
             else:
 
@@ -237,6 +250,15 @@ def title_format(item):
                     item.title = '%s %s' % (item.title, set_color(language, language))
             else:
                 item.title = '%s %s' % (item.title, set_color(simple_language, simple_language))
+
+        # Formato para actualizaciones de series en la videoteca sobreescribe los colores anteriores
+
+        if item.channel=='videolibrary' and item.context!='':
+            if item.action=='get_seasons':
+                if 'Desactivar' in item.context[1]['title']:
+                    item.title= '%s' % (set_color(item.title, 'update'))
+                if 'Activar' in item.context[1]['title']:
+                    item.title= '%s' % (set_color(item.title, 'no_update'))
 
         # Damos formato al servidor si existiera
         if item.server:
