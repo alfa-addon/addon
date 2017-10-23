@@ -73,6 +73,7 @@ def lista_gen(item):
             Item(channel=item.channel, title=title, url=scrapedurl, thumbnail=scrapedthumbnail, action="episodios",
                  show=scrapedtitle, context=renumbertools.context(item)))
     tmdb.set_infoLabels(itemlist)
+    logger.info("Prueba git"+item.title)
     # Paginacion
     patron_pag = '<a class="nextpostslink" rel="next" href="([^"]+)">'
     next_page_url = scrapertools.find_single_match(data, patron_pag)
