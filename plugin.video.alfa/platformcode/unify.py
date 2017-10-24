@@ -51,36 +51,35 @@ def add_languages(title, languages):
 def set_color(title, category):
     logger.info()
 
-    if isinstance(title,str) and isinstance(category,str):
-        color_scheme = {'otro': 'white'}
+    color_scheme = {'otro': 'white'}
 
-        logger.debug('category antes de remove: %s' % category)
-        category = remove_format(category).lower()
-        logger.debug('category despues de remove: %s' % category)
-        # Lista de elementos posibles en el titulo
-        color_list = ['movie', 'tvshow', 'year', 'rating_1', 'rating_2', 'rating_3', 'quality', 'cast', 'lat', 'vose',
-                      'vos', 'vo', 'server', 'library', 'update', 'no_update']
+    logger.debug('category antes de remove: %s' % category)
+    category = remove_format(category).lower()
+    logger.debug('category despues de remove: %s' % category)
+    # Lista de elementos posibles en el titulo
+    color_list = ['movie', 'tvshow', 'year', 'rating_1', 'rating_2', 'rating_3', 'quality', 'cast', 'lat', 'vose',
+                  'vos', 'vo', 'server', 'library', 'update', 'no_update']
 
-        # Se verifica el estado de la opcion de colores personalizados
-        custom_colors = config.get_setting('title_color')
+    # Se verifica el estado de la opcion de colores personalizados
+    custom_colors = config.get_setting('title_color')
 
-        # Se Forma el diccionario de colores para cada elemento, la opcion esta activas utiliza la configuracion del
-        #  usuario, si no  pone el titulo en blanco.
-        if title not in ['', ' ']:
+    # Se Forma el diccionario de colores para cada elemento, la opcion esta activas utiliza la configuracion del
+    #  usuario, si no  pone el titulo en blanco.
+    if title not in ['', ' ']:
 
-            for element in color_list:
-                if custom_colors:
-                    color_scheme[element] = remove_format(config.get_setting('%s_color' % element))
-                else:
-                    color_scheme[element] = 'white'
-            if category in ['update', 'no_update']:
-               logger.debug('title antes de updates: %s' % title)
-               title= re.sub(r'\[COLOR .*?\]','[COLOR %s]' % color_scheme[category],title)
+        for element in color_list:
+            if custom_colors:
+                color_scheme[element] = remove_format(config.get_setting('%s_color' % element))
             else:
-                if category not in ['movie', 'tvshow', 'library', 'otro']:
-                    title = "[COLOR %s][%s][/COLOR]"%(color_scheme[category], title)
-                else:
-                    title = "[COLOR %s]%s[/COLOR]" % (color_scheme[category], title)
+                color_scheme[element] = 'white'
+        if category in ['update', 'no_update']:
+           logger.debug('title antes de updates: %s' % title)
+           title= re.sub(r'\[COLOR .*?\]','[COLOR %s]' % color_scheme[category],title)
+        else:
+            if category not in ['movie', 'tvshow', 'library', 'otro']:
+                title = "[COLOR %s][%s][/COLOR]"%(color_scheme[category], title)
+            else:
+                title = "[COLOR %s]%s[/COLOR]" % (color_scheme[category], title)
     return title
 
 def set_lang(language):
@@ -159,7 +158,7 @@ def title_format(item):
                 valid = False
                 break
 
-    if valid:
+    if valid and item.unify!=False:
 
         # Formamos el titulo para serie, se debe definir contentSerieName
         # o show en el item para que esto funcione.
@@ -191,6 +190,8 @@ def title_format(item):
         elif item.contentTitle:
             # Si el titulo no tiene contentSerieName entonces se formatea como pelicula
             item.title = '%s' % set_color(item.contentTitle, 'movie')
+            if item.contentType=='movie':
+                item.context='Buscar esta pelicula en otros canales'
 
         if 'Novedades' in item.category and item.from_channel=='news':
             logger.debug('novedades')
