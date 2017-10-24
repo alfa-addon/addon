@@ -14,8 +14,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
     data = httptools.downloadpage(page_url, cookies=False).data
-
-    if 'File Not Found' in data or 'file was deleted' in data:
+    if 'file was deleted' in data:
         return False, "[FlashX] El archivo no existe o ha sido borrado"
     elif 'Video is processing now' in data:
         return False, "[FlashX] El archivo se está procesando"
@@ -25,7 +24,7 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
-
+    pfxfx = ""
     headers = {'Host': 'www.flashx.tv',
                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36',
                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -33,6 +32,14 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                'Accept-Encoding': 'gzip, deflate, br', 'Connection': 'keep-alive', 'Upgrade-Insecure-Requests': '1',
                'Cookie': ''}
     data = httptools.downloadpage(page_url, headers=headers, replace_headers=True).data
+    # Para obtener el f y el fxfx
+    js_fxfx = scrapertools.find_single_match(data, 'src="(https://www.flashx.tv/js/code.js\?cache=[0-9]+)')
+    data_fxfx = httptools.downloadpage(js_fxfx).data
+    mfxfx = scrapertools.find_single_match(data_fxfx, 'get.*?({.*?})').replace("'","").replace(" ","")
+    matches = scrapertools.find_multiple_matches(mfxfx, '(\w+):(\w+)')
+    for f, v in matches:
+        pfxfx += f + "=" + v + "&"
+    # {f: 'y', fxfx: '6'}
     flashx_id = scrapertools.find_single_match(data, 'name="id" value="([^"]+)"')
     fname = scrapertools.find_single_match(data, 'name="fname" value="([^"]+)"')
     hash_f = scrapertools.find_single_match(data, 'name="hash" value="([^"]+)"')
@@ -45,7 +52,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     headers['Accept'] = "*/*"
     headers['Host'] = "www.flashx.tv"
 
-    coding_url = 'https://www.flashx.tv/flashx.php?f=x&fxfx=6'
+    coding_url = 'https://www.flashx.tv/flashx.php?%s' %pfxfx
     headers['X-Requested-With'] = 'XMLHttpRequest'
     httptools.downloadpage(coding_url, headers=headers)
 
@@ -56,7 +63,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     headers.pop('X-Requested-With')
     headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    data = httptools.downloadpage('https://www.flashx.tv/dl?playnow', post, headers, replace_headers=True).data
+    data = httptools.downloadpage('https://www.flashx.tv/dl?playitnow', post, headers, replace_headers=True).data
 
     # Si salta aviso, se carga la pagina de comprobacion y luego la inicial
     # LICENSE GPL3, de alfa-addon: https://github.com/alfa-addon/ ES OBLIGATORIO AÑADIR ESTAS LÍNEAS
@@ -64,7 +71,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         url_reload = scrapertools.find_single_match(data, 'try to reload the page.*?href="([^"]+)"')
         try:
             data = httptools.downloadpage(url_reload, cookies=False).data
-            data = httptools.downloadpage('https://www.flashx.tv/dl?playnow', post, headers, replace_headers=True).data
+            data = httptools.downloadpage('https://www.flashx.tv/dl?playitnow', post, headers, replace_headers=True).data
         # LICENSE GPL3, de alfa-addon: https://github.com/alfa-addon/ ES OBLIGATORIO AÑADIR ESTAS LÍNEAS
         except:
             pass
