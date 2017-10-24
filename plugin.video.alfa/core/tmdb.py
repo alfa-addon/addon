@@ -104,41 +104,50 @@ def cache_response(fn):
 
             valided = False
 
-            cache_expire = config.get_setting("tmdb_cache", default=0)
+            cache_expire = config.get_setting("tmdb_cache_expire", default=0)
 
             saved_date = datetime.datetime.fromtimestamp(ts)
             current_date = datetime.datetime.fromtimestamp(time.time())
-
-            logger.debug("saved date %s" % saved_date)
-            logger.debug("current date %s" % current_date)
-
             elapsed = current_date - saved_date
-            logger.debug("elapsed %s" % elapsed)
 
-            # 7 days
-            if cache_expire == 1:
-                if elapsed > datetime.timedelta(days=7):
+            # 1 day
+            if cache_expire == 0:
+                if elapsed > datetime.timedelta(days=1):
                     valided = False
-                    logger.debug("ha pasado MÁS de 7 dias")
                 else:
                     valided = True
-                    logger.debug("ha pasado MENOS de 7 dias")
-            # 1 month - 30 days
+            # 7 days
+            elif cache_expire == 1:
+                if elapsed > datetime.timedelta(days=7):
+                    valided = False
+                else:
+                    valided = True
+
+            # 15 days
             elif cache_expire == 2:
+                if elapsed > datetime.timedelta(days=15):
+                    valided = False
+                else:
+                    valided = True
+
+            # 1 month - 30 days
+            elif cache_expire == 3:
                 # no tenemos en cuenta febrero o meses con 31 días
                 if elapsed > datetime.timedelta(days=30):
                     valided = False
                 else:
                     valided = True
+            # no expire
+            elif cache_expire == 4:
+                valided = True
 
             return valided
 
         result = {}
         try:
 
-            # no cache - no guarda en la BD
-            # if option selected is "no cached"
-            if config.get_setting("tmdb_cache", default=0) == 0:
+            # no está activa la cache
+            if not config.get_setting("tmdb_cache", default=False):
                 result = fn(*args)
             else:
 
