@@ -777,7 +777,7 @@ def acciones_cuenta(item):
     for category, contenido in matches:
         itemlist.append(item.clone(action="", title=category, text_color=color3))
 
-        patron = '<div class="c_fichas_image"[^>]*>[^<]*<[^>]+href="\.([^"]+)".*?src="\.([^"]+)".*?serie="([^"]*)".*?' \
+        patron = '<div class="c_fichas_image"[^>]*>[^<]*<[^>]+href="\.([^"]+)".*?src="([^"]+)".*?serie="([^"]*)".*?' \
                  '<div class="c_fichas_title">(?:<div class="c_fichas_episode">([^<]+)</div>|)([^<]+)</div>'
         entradas = scrapertools.find_multiple_matches(contenido, patron)
         for scrapedurl, scrapedthumbnail, serie, episodio, scrapedtitle in entradas:

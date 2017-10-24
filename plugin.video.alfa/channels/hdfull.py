@@ -616,6 +616,8 @@ def findvideos(item):
     url_targets = item.url
 
     ## Vídeos
+    id = ""
+    type = ""
     if "###" in item.url:
         id = item.url.split("###")[1].split(";")[0]
         type = item.url.split("###")[1].split(";")[1]
@@ -698,6 +700,9 @@ def findvideos(item):
 
     it2 = servertools.get_servers_itemlist(it2, lambda i: i.title % i.server.capitalize())
     it2.sort(key=lambda it: (it.tipo1, it.idioma, it.server))
+    for item in it2:
+        if "###" not in item.url:
+            item.url += "###" + id + ";" + type
     itemlist.extend(it1)
     itemlist.extend(it2)
     ## 2 = película
@@ -707,7 +712,6 @@ def findvideos(item):
                                  action="add_pelicula_to_library", url=url_targets, thumbnail = item.thumbnail,
                                  fulltitle = item.contentTitle
                                  ))
-
     return itemlist
 
 
