@@ -43,7 +43,7 @@ def findvideos(item):
     for thumbnail, title, url, time in matches:
         scrapedtitle = time + " - " + title
         scrapedurl = host + url
-        scrapedthumbnail = "http:" + thumbnail
+        scrapedthumbnail = thumbnail
         itemlist.append(item.clone(action="play", title=scrapedtitle, url=scrapedurl,
                                    thumbnail=scrapedthumbnail))
 
@@ -80,7 +80,7 @@ def play(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    url = "http:" + scrapertools.find_single_match(data, '<source src="([^"]+)"')
+    url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
     itemlist.append(item.clone(url=url, server="directo"))
 
     return itemlist
