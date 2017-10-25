@@ -195,8 +195,9 @@ def lista(item):
         #  de tmdb
         filtro_list = filtro_list.items()
 
+
         if item.title != 'Buscar':
-            itemlist.append(
+            new_item=(
                 Item(channel=item.channel,
                      contentType=tipo,
                      action=accion,
@@ -205,11 +206,14 @@ def lista(item):
                      thumbnail=thumbnail,
                      fulltitle=scrapedtitle,
                      infoLabels={'filtro': filtro_list},
-                     contentTitle=scrapedtitle,
-                     contentSerieName=scrapedtitle,
                      extra=item.extra,
                      context=autoplay.context
                      ))
+            if 'serie' in scrapedurl:
+                new_item.contentSerieName=scrapedtitle
+            else:
+                new_item.contentTitle = scrapedtitle
+            itemlist.append(new_item)
         else:
             item.extra = item.extra.rstrip('s/')
             if item.extra in url:
@@ -222,11 +226,14 @@ def lista(item):
                          thumbnail=scrapedthumbnail,
                          fulltitle=scrapedtitle,
                          infoLabels={'filtro': filtro_list},
-                         contentTitle=scrapedtitle,
-                         contentSerieName=scrapedtitle,
                          extra=item.extra,
                          context=autoplay.context
                          ))
+                if 'serie' in scrapedurl:
+                    new_item.contentSerieName=scrapedtitle
+                else:
+                    new_item.contentTitle = scrapedtitle
+                itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
