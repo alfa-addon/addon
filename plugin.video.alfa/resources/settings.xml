@@ -51,11 +51,11 @@
 
         <setting type="sep"/>
         <setting label="TheMovieDB (obtiene datos de las películas o series)" type="lsep"/>
-        <setting id="tmdb_threads" type="enum" values="5|10|20" label="Búsquedas simultáneas (puede causar inestabilidad)" default="2"/>
+        <setting id="tmdb_threads" type="labelenum" values="5|10|15|20|25|30" label="Búsquedas simultáneas (puede causar inestabilidad)" default="20"/>
         <setting id="tmdb_plus_info" type="bool" label="Buscar información extendida (datos de actores) Aumenta el tiempo de búsqueda" default="false"/>
         <setting id="tmdb_cache" type="bool" label="Usar caché (mejora las búsquedas recurrentes)" default="true"/>
         <setting id="tmdb_cache_expire" type="enum" lvalues="cada 1 día|cada 7 días|cada 15 días|cada 30 días|No" label="¿Renovar caché?" enable="eq(-1,true)" default="4"/>
-        <setting id="db_clean_tmdb_cache" type="action" label="Pulse para 'Borrar caché' guardada" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAic2NyaXB0Ig0KfQ==)" />
+        <setting id="tmdb_clean_db_cache" type="action" label="Pulse para 'Borrar caché' guardada" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAic2NyaXB0Ig0KfQ==)" />
 
    </category>
 
