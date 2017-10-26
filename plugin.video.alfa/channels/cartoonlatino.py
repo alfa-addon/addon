@@ -9,6 +9,7 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channels import autoplay
 
 host = "http://www.cartoon-latino.com/"
 from channels import autoplay
@@ -150,7 +151,6 @@ def episodios(item):
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir " + show + " a la videoteca", url=item.url,
-
                              action="add_serie_to_library", extra="episodios", show=show))
 
     return itemlist
@@ -185,29 +185,19 @@ def findvideos(item):
                 server1 = server
         itemlist.append(item.clone(url=url, action="play", server=server1,
                                    title="Enlace encontrado en %s " % (server1.capitalize())))
-
+    for videoitem in itemlist:
+        #Nos dice de donde viene si del addon o videolibrary
+        if item.contentChannel=='videolibrary':
+            videoitem.contentEpisodeNumber=item.contentEpisodeNumber
+            videoitem.contentPlot=item.contentPlot
+            videoitem.contentSeason=item.contentSeason
+            videoitem.contentSerieName=item.contentSerieName
+            videoitem.contentTitle=item.contentTitle
+            videoitem.contentType=item.contentType
+            videoitem.episode_id=item.episode_id
+            videoitem.hasContentDetails=item.hasContentDetails
+            videoitem.infoLabels=item.infoLabels
+            videoitem.thumbnail=item.thumbnail
+            videoitem.title=item.title
     autoplay.start(itemlist, item)
-    return itemlist
-
-
-def play(item):
-    logger.info()
-
-    itemlist = []
-
-    # Buscamos video por servidor ...
-
-    devuelve = servertools.findvideosbyserver(item.url, item.server)
-
-    if not devuelve:
-        # ...sino lo encontramos buscamos en todos los servidores disponibles
-
-        devuelve = servertools.findvideos(item.url, skip=True)
-
-    if devuelve:
-        # logger.debug(devuelve)
-        itemlist.append(Item(channel=item.channel, title=item.contentTitle, action="play", server=devuelve[0][2],
-
-                             url=devuelve[0][1], thumbnail=item.thumbnail, folder=False))
-
     return itemlist
