@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 import urlparse
@@ -52,10 +52,9 @@ def temporada(item):
     patron = '<a href="([^"]+)"><div class="item-temporada"><img alt=".+?" src="([^"]+)"><div .+?>Ver ([^"]+)<\/div><\/a>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for link,thumbnail,name in matches:
-        title=name
         url=host+link
         thumbnail=host+thumbnail
-        itemlist.append(item.clone(title=title, url=url, thumbnail=thumbnail,action="episodios",context=autoplay.context))
+        itemlist.append(item.clone(title=name, url=url, thumbnail=thumbnail,action="episodios",context=autoplay.context))
     return itemlist
 
 def episodios(item):
@@ -92,8 +91,6 @@ def findvideos(item):
     itemlist = []
     id = ""
     type = ""
-  
-    data = httptools.downloadpage(item.url).data
     it2 = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     itemlist.extend(servertools.find_video_items(data=data))
     
