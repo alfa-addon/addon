@@ -116,8 +116,10 @@ def render_items(itemlist, parent_item):
         if item.fanart == "":
             item.fanart = parent_item.fanart
         unify_enabled = config.get_setting('unify')
+
         logger.debug('unify_enabled: %s' % unify_enabled)
-        if not channel_parameters['adult'] and unify_enabled:
+
+        if unify_enabled and not channel_parameters['adult'] and 'skip_unify' not in channel_parameters:
             # Formatear titulo con unify
             item = unify.title_format(item)
         else:
