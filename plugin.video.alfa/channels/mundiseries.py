@@ -10,15 +10,19 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from core import httptools
+from channels import autoplay
 
 host = "http://mundiseries.com"
-
+list_servers = ['okru']
+list_quality = ['default']
                 
 def mainlist(item):
     logger.info()
-    itemlist = list()    
+    itemlist = list()
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, action="lista", title="Series", url=urlparse.urljoin(host, "/lista-de-series")))
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -51,7 +55,7 @@ def temporada(item):
         title=name
         url=host+link
         thumbnail=host+thumbnail
-        itemlist.append(item.clone(title=title, url=url, thumbnail=thumbnail,action="episodios"))
+        itemlist.append(item.clone(title=title, url=url, thumbnail=thumbnail,action="episodios",context=autoplay.context))
     return itemlist
 
 def episodios(item):
@@ -63,7 +67,7 @@ def episodios(item):
     patron_caps = 'href="http:.+?\/mundiseries.+?com([^"]+)" alt="([^"]+) Capitulo ([^"]+) Temporada ([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron_caps)
     patron_show='<h1 class="h-responsive center">.+?'
-    patron_show+='<font color=".+?>([^"]+)<\/font>'
+    patron_show+='<font color=".+?>([^"]+)<\/a><\/font>'
     show = scrapertools.find_single_match(data,patron_show)
     for link, name,cap,temp in matches:
         if '|' in cap:
@@ -80,7 +84,6 @@ def episodios(item):
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir Temporada/Serie a la biblioteca de Kodi", url=item.url,
                              action="add_serie_to_library", extra="episodios", show=show))
-
     return itemlist
 
 def findvideos(item):
@@ -89,7 +92,7 @@ def findvideos(item):
     itemlist = []
     id = ""
     type = ""
-
+  
     data = httptools.downloadpage(item.url).data
     it2 = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     itemlist.extend(servertools.find_video_items(data=data))
@@ -99,5 +102,18 @@ def findvideos(item):
             item.url += "###" + id + ";" + type
     for videoitem in itemlist:
         videoitem.channel=item.channel
+        if item.contentChannel=='videolibrary':
+            videoitem.contentEpisodeNumber=item.contentEpisodeNumber
+            videoitem.contentPlot=item.contentPlot
+            videoitem.contentSeason=item.contentSeason
+            videoitem.contentSerieName=item.contentSerieName
+            videoitem.contentTitle=item.contentTitle
+            videoitem.contentType=item.contentType
+            videoitem.episode_id=item.episode_id
+            videoitem.hasContentDetails=item.hasContentDetails
+            videoitem.infoLabels=item.infoLabels
+            videoitem.thumbnail=item.thumbnail
+            #videoitem.title=item.title
+    logger.info(itemlist[0])
+    autoplay.start(itemlist, item)
     return itemlist
-    
