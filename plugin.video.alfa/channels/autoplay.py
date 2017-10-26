@@ -7,6 +7,7 @@ from core import jsontools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
+from platformcode import launcher
 
 __channel__ = "autoplay"
 
@@ -261,8 +262,11 @@ def start(itemlist, item):
                             else:
                                 videoitem = resolved_item[0]
 
-                    # si no directamente reproduce
-                    platformtools.play_video(videoitem)
+                    # si no directamente reproduce y marca como visto
+                    from platformcode import xbmc_videolibrary
+                    xbmc_videolibrary.mark_auto_as_watched(item)
+                    #platformtools.play_video(videoitem)
+                    launcher.run(videoitem1[0])
 
                     try:
                         if platformtools.is_playing():
