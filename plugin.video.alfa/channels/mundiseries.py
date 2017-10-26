@@ -19,11 +19,7 @@ def mainlist(item):
     itemlist = list()    
 
     itemlist.append(Item(channel=item.channel, action="lista", title="Series", url=urlparse.urljoin(host, "/lista-de-series")))
-    #itemlist.append(Item(channel=item.channel, action="lista", title="Series", url=urlparse.urljoin(host, "lista-de-series")))
-    #itemlist.append(Item(channel=item.channel, action="categorias", title="Categorias", url=host))
-    #itemlist.append(Item(channel=item.channel, action="alfabetico", title="Listado Alfabetico", url=host))
-    #itemlist.append(Item(channel=item.channel, action="top", title="Top Series", url=host))
-    #itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=urlparse.urljoin(host, "?s="))
+
     return itemlist
 
 def categorias(item):
@@ -120,7 +116,9 @@ def episodios(item):
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     patron_caps = 'href="http:.+?\/mundiseries.+?com([^"]+)" alt="([^"]+) Capitulo ([^"]+) Temporada ([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron_caps)
-    show = scrapertools.find_single_match(data,'<h1 class="h-responsive center">.+?<font color=".+?>([^"]+)<\/font>')
+    patron_show='<h1 class="h-responsive center">.+?'
+    patron_show+='<font color=".+?>([^"]+)<\/font>'
+    show = scrapertools.find_single_match(data,patron_show)
     for link, name,cap,temp in matches:
         if '|' in cap:
             cap = cap.replace('|','')
@@ -128,15 +126,13 @@ def episodios(item):
             temp = temp.replace('|','')
         if '|' in name:
             name = name.replace('|','')
-        if int(cap)<10:
-            cap="0"+cap
-        title = temp+"x"+cap+" "+name
+        title = "%sx%s %s"%(temp, str(cap).zfill(2),name)
         url=host+link
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, show=show))
+        itemlist.append(Item(channel=item.channel, action="findvideos", 
+                             title=title, url=url, show=show))
     if config.get_videolibrary_support() and len(itemlist) > 0:
 
         itemlist.append(Item(channel=item.channel, title="Añadir Temporada/Serie a la biblioteca de Kodi", url=item.url,
-
                              action="add_serie_to_library", extra="episodios", show=show))
 
     return itemlist
@@ -157,9 +153,5 @@ def findvideos(item):
             item.url += "###" + id + ";" + type
     for videoitem in itemlist:
         videoitem.channel=item.channel
-    if len(itemlist)==1:
-	    platformtools.play_video(videoitem)
-    else:
-        return itemlist
-    #return itemlist
+    return itemlist
     
