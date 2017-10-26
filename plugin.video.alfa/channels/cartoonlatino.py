@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 import re
 
-from channels import renumbertools
 from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
@@ -33,7 +32,6 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, action="lista", title="Series", url=host,
                          thumbnail=thumb_series))
-    itemlist = renumbertools.show_option(item.channel, itemlist)
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
@@ -71,7 +69,7 @@ def lista_gen(item):
         title = scrapedtitle + " [ " + scrapedlang + "]"
         itemlist.append(
             Item(channel=item.channel, title=title, url=scrapedurl, thumbnail=scrapedthumbnail, action="episodios",
-                 show=scrapedtitle, context=renumbertools.context(item)))
+                 show=scrapedtitle))
     tmdb.set_infoLabels(itemlist)
     # Paginacion
     patron_pag = '<a class="nextpostslink" rel="next" href="([^"]+)">'
@@ -98,7 +96,7 @@ def lista(item):
     for link, name in matches:
         title = name + " [Latino]"
         url = link
-        context1=[renumbertools.context(item), autoplay.context]
+        context1=[autoplay.context]
         itemlist.append(
             item.clone(title=title, url=url, plot=title, action="episodios", show=title,
                        context=context1))
@@ -129,31 +127,23 @@ def episodios(item):
     number = 0
     ncap = 0
     A = 1
+    tempo=1
     for temp, link, name in matches:
-        if A != temp:
+        if A != temp and "Ranma" not in show:
             number = 0
+        number = number + 1
         if "Ranma" in show:
-            number = int(temp)
-            temp = str(1)
-        else:
-            number = number + 1
-        if number < 10:
-            capi = "0" + str(number)
-        else:
-            capi = str(number)
+            number,tempo=renumerar_ranma(number,tempo,18+1,1)
+            number,tempo=renumerar_ranma(number,tempo,22+1,2)
+            number,tempo=renumerar_ranma(number,tempo,24+1,3)
+            number,tempo=renumerar_ranma(number,tempo,24+1,4)
+            number,tempo=renumerar_ranma(number,tempo,24+1,5)
+            number,tempo=renumerar_ranma(number,tempo,24+1,6)
+        capi=str(number).zfill(2)
         if "Ranma" in show:
-            season = 1
-            episode = number
-            season, episode = renumbertools.numbered_for_tratk(
-                item.channel, item.show, season, episode)
-            date = name
-            if episode < 10:
-                capi = "0" + str(episode)
-            else:
-                capi = episode
-            title = str(season) + "x" + str(capi) + " - " + name  # "{0}x{1} - ({2})".format(season, episode, date)
+            title = "{0}x{1} - ({2})".format(str(tempo), capi, name)
         else:
-            title = str(temp) + "x" + capi + " - " + name
+            title = "{0}x{1} - ({2})".format(str(temp), capi, name)
         url = link
         A = temp
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, show=show))
@@ -165,6 +155,11 @@ def episodios(item):
 
     return itemlist
 
+def renumerar_ranma(number,tempo,final,actual):
+    if number==final and tempo==actual:
+        tempo=tempo+1
+        number=1
+    return number, tempo
 
 def findvideos(item):
     logger.info()

@@ -55,6 +55,7 @@ def lista(item):
     # Paginacion
     num_items_x_pagina = 30
     min = item.page * num_items_x_pagina
+    min=min-item.page
     max = min + num_items_x_pagina - 1
 
     for link, img, name in matches[min:max]:

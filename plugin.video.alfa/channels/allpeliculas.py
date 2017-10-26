@@ -35,9 +35,59 @@ def mainlist(item):
                                url= host + "movies/newmovies?page=1", extra1 = 0))
     itemlist.append(item.clone(title="Por genero", action="generos", fanart="http://i.imgur.com/c3HS8kj.png",
                                url= host + "movies/getGanres"))
+    itemlist.append(item.clone(title="Colecciones", action="colecciones", fanart="http://i.imgur.com/c3HS8kj.png",
+                               url= host))
     itemlist.append(item.clone(title="", action=""))
     itemlist.append(item.clone(title="Buscar...", action="search"))
 
+    return itemlist
+
+
+def colecciones(item):
+    logger.info()
+    itemlist = []
+
+    data = httptools.downloadpage(item.url).data
+    patron  = 'href="(/peliculas[^"]+).*?'
+    patron += 'title_geo"><span>([^<]+).*?'
+    patron += 'title_eng"><span>([^<]+).*?'
+    patron += 'src="([^"]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl, scrapedtitle, scrapedcantidad, scrapedthumbnail in matches:
+        if scrapedtitle == "LGTB" and config.get_setting("adult_mode") == 0:
+            continue
+        title = scrapedtitle.capitalize() + " (" + scrapedcantidad + ")"
+        itemlist.append(Item(channel = item.channel,
+                             action = "listado_colecciones",
+                             thumbnail = host + scrapedthumbnail,
+                             title = title,
+                             url = host + scrapedurl
+                             ))
+    return itemlist
+
+
+def listado_colecciones(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data_url = scrapertools.find_single_match(data, "data_url: '([^']+)")
+    post = "page=1"
+    data = httptools.downloadpage(host + data_url, post=post).data
+    patron  = 'a href="(/peli[^"]+).*?'
+    patron += 'src="([^"]+).*?'
+    patron += 'class="c_fichas_title">([^<]+).*?'
+    patron += 'Año:.*?href="">([^<]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear in matches:
+        item.infoLabels['year'] = scrapedyear
+        itemlist.append(item.clone(channel = item.channel,
+                             action = "findvideos",
+                             contentTitle = scrapedtitle,
+                             thumbnail = scrapedthumbnail,
+                             title = scrapedtitle,
+                             url = host + scrapedurl
+                             ))
+    tmdb.set_infoLabels(itemlist)
     return itemlist
 
 
@@ -61,6 +111,9 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
+    if "Próximamente" in data:
+        itemlist.append(Item(channel = item.channel, title = "Próximamente"))
+        return itemlist
     patron  = 'data-link="([^"]+).*?'
     patron += '>([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -137,7 +190,7 @@ def lista(item):
 def search(item, texto):
     logger.info()
     if texto != "":
-        texto = texto.replace(" ", "+")
+        texto = texto.replace(" ", "%20")
     item.url = host + "/movies/search/" + texto
     item.extra = "busqueda"
     try:
