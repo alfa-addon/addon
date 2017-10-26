@@ -98,10 +98,11 @@ def peliculas(item):
     url_next_page = ''
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
+    # logger.info(data)
 
     patron = '<div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'    # img, title
     patron += '<div class="rating"><span class="[^"]+"></span>([^<]+).*?'  # rating
-    patron += '<span class="quality">([^<]+)</span><a href="([^"]+)">.*?'  # calidad, url
+    patron += '<span class="quality">([^<]+)</span></div><a href="([^"]+)">.*?'  # calidad, url
     patron += '<span>([^<]+)</span>'                                       # year
 
     matches = scrapertools.find_multiple_matches(data, patron)
