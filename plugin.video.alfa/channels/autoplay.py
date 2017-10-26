@@ -266,7 +266,8 @@ def start(itemlist, item):
                     from platformcode import xbmc_videolibrary
                     xbmc_videolibrary.mark_auto_as_watched(item)
                     #platformtools.play_video(videoitem)
-                    launcher.run(videoitem1[0])
+                    videoitem.contentChannel='videolibrary'
+                    launcher.run(videoitem)
 
                     try:
                         if platformtools.is_playing():
