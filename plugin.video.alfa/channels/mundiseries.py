@@ -22,60 +22,6 @@ def mainlist(item):
 
     return itemlist
 
-def categorias(item):
-    logger.info()
-
-    itemlist = []
-
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron_cat='<li id="menu-item-15068" class=".+?"><.+?>.+?<\/a>(.+?)<\/ul><\/li>'
-    categorias=scrapertools.find_single_match(data,patron_cat)
-    patron = '<li id="menu-item-.+?" class=".+?"><a href="([^"]+)">([^"]+)<\/a><\/li>'
-    matches = scrapertools.find_multiple_matches(categorias, patron)
-    for link, name in matches:
-        title=name
-        url=link
-        itemlist.append(item.clone(title=title, url=url, plot=title, action="lista_gen", show=title))
-    return itemlist
-
-def alfabetico(item):
-    logger.info()
-
-    itemlist = []
-
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron_alf1='<li id="menu-item-15069" class=".+?"><.+?>.+?<\/a>(.+?)<\/ul><\/li>'
-    patron_alf2='<li id="menu-item-15099" class=".+?"><.+?>.+?<\/a>(.+?)<\/ul><\/li>'
-    alfabeto1=scrapertools.find_single_match(data,patron_alf1)
-    alfabeto2=scrapertools.find_single_match(data,patron_alf2)
-    alfabeto=alfabeto1+alfabeto2
-    patron = '<li id="menu-item-.+?" class=".+?"><a href="([^"]+)">([^"]+)<\/a><\/li>'
-    matches = scrapertools.find_multiple_matches(alfabeto, patron)
-    for link, name in matches:
-        title=name
-        url=link
-        itemlist.append(item.clone(title=title, url=url, plot=title, action="lista_gen", show=title))
-    return itemlist
-
-def top(item):
-    logger.info()
-
-    itemlist = []
-
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron_top='<li id="menu-item-15087" class=".+?"><.+?>.+?<\/a>(.+?)<\/ul><\/li>'
-    top=scrapertools.find_single_match(data,patron_top)
-    patron = '<a href="([^"]+)">([^"]+)<\/a>'
-    matches = scrapertools.find_multiple_matches(top, patron)
-    for link, name in matches:
-        title=name
-        url=link
-        itemlist.append(item.clone(title=title, url=url, plot=title, action="lista_gen", show=title))
-    return itemlist
-
 def lista(item):
     logger.info()
 
@@ -130,8 +76,8 @@ def episodios(item):
         url=host+link
         itemlist.append(Item(channel=item.channel, action="findvideos", 
                              title=title, url=url, show=show))
-    if config.get_videolibrary_support() and len(itemlist) > 0:
 
+    if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir Temporada/Serie a la biblioteca de Kodi", url=item.url,
                              action="add_serie_to_library", extra="episodios", show=show))
 
