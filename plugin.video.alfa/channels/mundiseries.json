@@ -1,0 +1,20 @@
+{
+  "id": "mundiseries",
+  "name": "Mundiseries",
+  "active": true,
+  "adult": false,
+  "language": ["cast", "lat"],
+  "thumbnail": "mundiseries.png",
+  "banner": "https://imgur.com/1bDbYY1",
+  "version": 1,
+  "changes": [
+    {
+      "date": "23/10/2017",
+      "description": "Primera versión del canal"
+    }
+  ],
+  "categories": [
+    "movie",
+    "serie"
+  ]
+}
