@@ -9,14 +9,22 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channels import autoplay
 
 host = "http://www.danimados.com/"
+
+list_servers = ['openload',
+                'okru',
+                'rapidvideo'
+                ]
+list_quality = ['default']
 
 
 def mainlist(item):
     logger.info()
 
     thumb_series = get_thumb("channels_tvshow.png")
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()
 
@@ -30,6 +38,7 @@ def mainlist(item):
                          thumbnail=thumb_series))
     #itemlist.append(Item(channel=item.channel, action="movies", title="Peliculas Animadas", url=host,
     #                     thumbnail=thumb_series))
+    autoplay.show_option(item.channel, itemlist)
     return itemlist
 
 
@@ -102,7 +111,7 @@ def lista(item):
     for scrapedthumbnail,scrapedtitle, scrapedurl, scrapedplot in matches:
         itemlist.append(
             item.clone(title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, 
-                       plot=scrapedplot, action="episodios", show=scrapedtitle))
+                       context=autoplay.context,plot=scrapedplot, action="episodios", show=scrapedtitle))
     tmdb.set_infoLabels(itemlist)
     return itemlist
 
@@ -128,8 +137,8 @@ def episodios(item):
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="[COLOR blue]Añadir " + show + " a la videoteca[/COLOR]", url=item.url,
-
                              action="add_serie_to_library", extra="episodios", show=show))
+
 
     return itemlist
 
@@ -163,7 +172,24 @@ def findvideos(item):
                 server='streamango'
             itemlist.append(item.clone(url=url, action="play", server=server,
                         title="Enlace encontrado en %s " % (server.capitalize())))
+            
+    for videoitem in itemlist:
+        #Nos dice de donde viene si del addon o videolibrary
+        if item.contentChannel=='videolibrary':
+            videoitem.contentEpisodeNumber=item.contentEpisodeNumber
+            videoitem.contentPlot=item.contentPlot
+            videoitem.contentSeason=item.contentSeason
+            videoitem.contentSerieName=item.contentSerieName
+            videoitem.contentTitle=item.contentTitle
+            videoitem.contentType=item.contentType
+            videoitem.episode_id=item.episode_id
+            videoitem.hasContentDetails=item.hasContentDetails
+            videoitem.infoLabels=item.infoLabels
+            videoitem.thumbnail=item.thumbnail
+            #videoitem.title=item.title
+    autoplay.start(itemlist, item)
     return itemlist
+
 
 def verificar_video(url):
     codigo=httptools.downloadpage(url).code
