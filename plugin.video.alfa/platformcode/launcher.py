@@ -127,6 +127,11 @@ def run(item=None):
             else:
                 return keymaptools.set_key()
 
+        elif item.action == "script":
+            from core import tmdb
+            if tmdb.drop_bd():
+                platformtools.dialog_notification("Alfa", "caché eliminada", time=2000, sound=False)
+
         # Action in certain channel specified in "action" and "channel" parameters
         else:
 

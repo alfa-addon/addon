@@ -124,7 +124,7 @@ def filtro(item):
     patron += '</span>([^<]+)</a>'
     matches = scrapertools.find_multiple_matches(bloque, patron)
     for url, title in matches:
-        if "eroti33cas" in title and config.get_setting("adult_mode") == 0:
+        if "eroticas" in title and config.get_setting("adult_mode") == 0:
             continue
         itemlist.append(item.clone(action = "peliculas",
                                    title = title.title(),

@@ -30,7 +30,7 @@ def mainlist(item):
 
     data = httptools.downloadpage(CHANNEL_HOST).data
     total = scrapertools.find_single_match(data, "TENEMOS\s<b>(.*?)</b>")
-    titulo = "Peliculas (%s)" % total
+    titulo = "Peliculas"
     itemlist.append(item.clone(title=titulo, text_color=color2, action="", text_bold=True))
     itemlist.append(item.clone(action="peliculas", title="      Novedades", url=CHANNEL_HOST + "pelicula",
                                thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
@@ -283,7 +283,7 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
     if type == "descarga": t_tipo = "Descargar"
     data = data.replace("\n", "")
     if type == "online":
-        patron = '(?is)class="playex.*?visualizaciones'
+        patron = '(?is)class="playex.*?sheader'
         bloque1 = scrapertools.find_single_match(data, patron)
         patron = '(?is)#(option-[^"]+).*?png">([^<]+)'
         match = scrapertools.find_multiple_matches(data, patron)
@@ -303,7 +303,7 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
     bloque2 = scrapertools.find_single_match(data, '(?s)box_links.*?dt_social_single')
     bloque2 = bloque2.replace("\t", "").replace("\r", "")
     patron = '(?s)optn" href="([^"]+)'
-    patron += '.*?title="([^\.]+)'
+    patron += '.*?alt="([^\.]+)'
     patron += '.*?src.*?src="[^>]+"?/>([^<]+)'
     patron += '.*?src="[^>]+"?/>([^<]+)'
     patron += '.*?/span>([^<]+)'

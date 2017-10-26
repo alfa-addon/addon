@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 from channelselector import get_thumb
@@ -53,8 +53,7 @@ def listado(item):
     patron += '<b>Categoria:\s*</b>([^&]+)&raquo;\s*([^<]+).*?'
     patron += '<div class="OpcionesDescargasMini">(.*?)</div>'
 
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
+    matches = scrapertools.find_multiple_matches(data, patron)
     for thumbnail, title, cat_padres, cat_hijos, opciones in matches:
         # logger.debug(thumbnail + "\n" + title + "\n" + cat_padres + "\n" + cat_hijos + "\n" + opciones)
         # Obtenemos el año del titulo y eliminamos lo q sobre
@@ -70,7 +69,7 @@ def listado(item):
         thumbnail = HOST + thumbnail[:-5] + 'b' + thumbnail[-4:]
 
         # Buscamos opcion de ver online
-        patron = '<a href="http://estrenosly.org/ver-online-([^"]+)'
+        patron = '<a href="http://estrenos.*?/ver-online-([^"]+)'
         url_ver = scrapertools.find_single_match(opciones, patron)
         if url_ver:
             new_item = Item(channel=item.channel, action="findvideos", title=title,

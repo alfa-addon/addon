@@ -19,12 +19,7 @@ from platformcode import platformtools
 HOST = "https://api.thetvdb.com"
 HOST_IMAGE = "http://thetvdb.com/banners/"
 
-# comprobación tras el cambio de tipos en config.get_setting
-if config.get_setting("tvdb_token") is not None:
-    TOKEN = config.get_setting("tvdb_token")
-else:
-    TOKEN = ""
-
+TOKEN = config.get_setting("tvdb_token", default="")
 DEFAULT_LANG = "es"
 DEFAULT_HEADERS = {
     'Content-Type': 'application/json',
@@ -97,7 +92,7 @@ def find_and_set_infoLabels(item):
             otvdb_global = Tvdb(imdb_id=item.infoLabels.get("imdb_id"))
 
     elif not otvdb_global or otvdb_global.get_id() != item.infoLabels['tvdb_id']:
-        otvdb_global = Tvdb(tvdb_id=item.infoLabels['tvdb_id'])  # , tipo=tipo_busqueda, idioma_busqueda="es")
+        otvdb_global = Tvdb(tvdb_id=item.infoLabels['tvdb_id'])
 
     if not item.contentSeason:
         p_dialog.update(50, "Buscando información de la serie", "Obteniendo resultados...")

@@ -1,0 +1,50 @@
+{
+  "id": "animemovil",
+  "name": "Animemovil",
+  "active": true,
+  "adult": false,
+  "language": ["*"],
+  "thumbnail": "https://s1.postimg.org/92ji7stii7/animemovil1.png",
+  "banner": "",
+  "version": 1,
+  "changes": [
+    {
+      "date": "24/10/2017",
+      "description": "Primera version"
+    }
+  ],
+  "categories": [
+    "anime"
+  ],
+  "settings": [
+    {
+      "id": "modo_grafico",
+      "type": "bool",
+      "label": "Buscar información extra",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "perfil",
+      "type": "list",
+      "label": "Perfil de color",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Perfil 3",
+        "Perfil 2",
+        "Perfil 1"
+      ]
+    }
+  ]
+}
