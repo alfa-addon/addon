@@ -4,13 +4,6 @@
   "language": ["cast", "lat"],
   "active": true,
   "adult": false,
-  "version": 1,
-  "changes": [
-    {
-      "date": "16/05/2017",
-      "description": "Primera version"
-    }
-  ],
   "thumbnail": "http://i.imgur.com/LVdupxc.png",
   "categories": [
     "movie",

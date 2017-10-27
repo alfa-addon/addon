@@ -5,13 +5,6 @@
   "adult": false,
   "language": ["cast"],
   "thumbnail": "http://imgur.com/sLaXHvp.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "26/04/2017",
-      "description": "Release"
-    }
-  ],
   "categories": [
     "torrent",
     "movie"

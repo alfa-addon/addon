@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "25/03/2016",
-      "description": "Versión incial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -59,6 +53,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_mega.png",
-  "version": 1
+  "thumbnail": "server_mega.png"
 }

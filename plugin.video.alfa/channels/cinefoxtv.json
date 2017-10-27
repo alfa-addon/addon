@@ -6,21 +6,6 @@
   "language": ["lat"],
   "thumbnail": "https://s28.postimg.org/lytn2q1tp/cinefoxtv.png",
   "banner": "cinefoxtv.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "22/05/2017",
-      "description": "fix por cambio en la estructura"
-    },
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "09/02/2017",
-      "description": "First release."
-    }
-  ],
   "categories": [
     "movie"
   ],

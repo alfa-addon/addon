@@ -1,23 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "28/05/2017",
-      "description": "Reparado por cambio de dominio"
-    },
-    {
-      "date": "06/04/2017",
-      "description": "Añadido deteccion de subtítulos en español e inglés"
-    },
-    {
-      "date": "29/01/2017",
-      "description": "Reparado por cambios, se elimina la detección de enlaces de yaske que ya no se usa"
-    },
-    {
-      "date": "31/08/2015",
-      "description": "Versión inicial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -71,6 +53,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_netutv.png",
-  "version": 1
+  "thumbnail": "server_netutv.png"
 }

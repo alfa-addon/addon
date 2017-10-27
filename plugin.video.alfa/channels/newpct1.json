@@ -6,25 +6,6 @@
   "language": ["cast", "lat"],
   "thumbnail": "newpct1.png",
   "banner": "newpct1.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "12/05/17",
-      "description": "Modificado listado para evitar errores con infoplus"
-    },
-    {
-      "date": "17/04/17",
-      "description": "Arreglada seccion series"
-    },
-    {
-      "date": "29/12/16",
-      "description": "Adaptado, por cambios en la web, seccion Series"
-    },
-    {
-      "date": "01/07/2016",
-      "description": "Eliminado código innecesario."
-    }
-  ],
   "categories": [
     "movie",
     "tvshow",

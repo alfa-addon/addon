@@ -6,17 +6,6 @@
     "adult": false,
     "banner": "https://s9.postimg.org/5yxsq205r/ultrapeliculashd_banner.png",
     "thumbnail": "https://s13.postimg.org/d042quw9j/ultrapeliculashd.png",
-    "version": 1,
-    "changes": [
-        {
-            "date": "25/05/2017",
-            "description": "cambios esteticos"
-        },
-        {
-            "date": "09/05/2017",
-            "description": "Fix por cambio de estructra de la pagina"
-        }
-    ],
     "categories": [
         "movie"
     ],

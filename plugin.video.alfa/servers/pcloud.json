@@ -1,20 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "07/05/2016",
-      "description": "Versión incial"
-    }
-  ],
-  "find_videos": {
-    "ignore_urls": [],
-    "patterns": [
-      {
-        "pattern": "(my.pcloud.com/publink/show\\?code=[A-z0-9]+)",
-        "url": "https://\\1"
-      }
-    ]
-  },
   "free": true,
   "id": "pcloud",
   "name": "pcloud",
@@ -43,6 +28,5 @@
       "type": "list",
       "visible": false
     }
-  ],
-  "version": 1
+  ]
 }

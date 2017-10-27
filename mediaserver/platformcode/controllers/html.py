@@ -12,11 +12,17 @@ import channelselector
 from controller import Controller
 from controller import Platformtools
 from platformcode import config
-from core import versiontools
 from core.item import Item
 from core.tmdb import Tmdb
 from platformcode import launcher, logger
+from core import filetools
 
+# <addon id="plugin.video.alfa" name="Alfa" version="2.3.0" provider-name="Alfa Addon">
+data = filetools.read(filetools.join(config.get_runtime_path(), "addon.xml"))
+aux = re.findall('<addon id="plugin.video.alfa" name="Alfa" version="([^"]+)"', data, re.MULTILINE | re.DOTALL)
+version = "???"
+if len(aux) > 0:
+    version = aux[0]
 
 class html(Controller):
     pattern = re.compile("##")
@@ -29,8 +35,8 @@ class html(Controller):
         if self.handler:
             self.client_ip = handler.client.getpeername()[0]
             self.send_message({"action": "connect",
-                               "data": {"version": "Alfa %s" % versiontools.get_current_plugin_version_tag(),
-                                        "date": versiontools.get_current_plugin_date()}})
+                               "data": {"version": "Alfa %s" % version,
+                                        "date": "--/--/----"}})
             t = threading.Thread(target=launcher.start, name=ID)
             t.setDaemon(True)
             t.start()

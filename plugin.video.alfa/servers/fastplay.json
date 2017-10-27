@@ -1,27 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "14/06/2017",
-      "description": "Patrón reparado"
-    },
-    {
-      "date": "07/06/2017",
-      "description": "Reparado detección de subtitulos"
-    },
-    {
-      "date": "05/06/2017",
-      "description": "Enlaces a videos encriptados"
-    },
-    {
-      "date": "29/05/2017",
-      "description": "Detección de subtítulos y reparado detección de resolución de videos"
-    },
-    {
-      "date": "16/02/2017",
-      "description": "Primera versión"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -60,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "http://i.imgur.com/vHDcd6Y.png?1",
-  "version": 1
+  "thumbnail": "http://i.imgur.com/vHDcd6Y.png?1"
 }

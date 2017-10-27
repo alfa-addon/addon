@@ -6,21 +6,6 @@
   "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/5KOU8uy.png?3",
   "banner": "cineasiaenlinea.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "07/02/17",
-      "description": "Fix bug in newest"
-    },
-    {
-      "date": "09/01/2017",
-      "description": "Primera version"
-    }
-  ],
   "categories": [
     "movie",
     "vos"

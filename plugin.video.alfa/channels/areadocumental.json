@@ -4,21 +4,6 @@
   "language": ["cast", "lat"],
   "adult": false,
   "active": true,
-  "version": 1,
-  "changes": [
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "16/02/2017",
-      "description": "Canal reparado ya que no funcionaban los enlaces"
-    },
-    {
-      "date": "01/07/2016",
-      "description": "Eliminado código innecesario."
-    }
-  ],
   "banner": "areadocumental.png",
   "thumbnail": "areadocumental.png",
   "categories": [

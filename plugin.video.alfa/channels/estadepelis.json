@@ -6,29 +6,6 @@
   "language": ["lat"],
   "thumbnail": "https://s24.postimg.org/nsgit7fhh/estadepelis.png",
   "banner": "https://s28.postimg.org/ud0l032ul/estadepelis_banner.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "24/06/2017",
-      "description": "Cambios para autoplay"
-    },
-    {
-      "date": "22/06/2017",
-      "description": "ajustes para AutoPlay"
-    },
-    {
-      "date": "25/05/2017",
-      "description": "cambios esteticos"
-    },
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "07/02/2017",
-      "description": "Release"
-    }
-  ],
   "categories": [
     "movie"
   ],

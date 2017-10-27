@@ -1,19 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "09/05/2017",
-      "description": "Ampliado regex para detección de enlaces"
-    },
-    {
-      "date": "29/04/2017",
-      "description": "Corregido, usa proxy en caso de error con https"
-    },
-    {
-      "date": "25/03/2016",
-      "description": "Versión inicial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -52,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s26.postimg.org/y5arjad1l/rapidvideo1.png",
-  "version": 1
+  "thumbnail": "https://s26.postimg.org/y5arjad1l/rapidvideo1.png"
 }

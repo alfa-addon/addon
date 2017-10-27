@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "27/02/2017",
-      "description": "Primera versión"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -44,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "http://i.imgur.com/yIAQurm.png",
-  "version": 1
+  "thumbnail": "http://i.imgur.com/yIAQurm.png"
 }

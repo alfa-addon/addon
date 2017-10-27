@@ -6,29 +6,6 @@
   "language": ["cast", "lat"],
   "banner": "https://s23.postimg.org/4uyyz6w4b/verpeliculasnuevas_banner.png",
   "thumbnail": "https://s27.postimg.org/atgs5erab/verpeliculasnuevas.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "23/06/2017",
-      "description": "añadidos servidores favoritos en find_videos"
-    },
-    {
-      "date": "06/06/2017",
-      "description": "compatibilidad con AutoPlay"
-    },
-    {
-      "date": "25/05/2017",
-      "description": "cambios esteticos"
-    },
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "06/01/2017",
-      "description": "Release."
-    }
-  ],
   "categories": [
     "movie"
   ],

@@ -1,15 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "03/02/2017",
-      "description": "Adaptado para el uso de mpd (calidades 1080p y superiores) en Kodi 17. Reestructurado parte del código"
-    },
-    {
-      "date": "25/03/2016",
-      "description": "Versión inicial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -60,6 +50,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_youtube.png",
-  "version": 1
+  "thumbnail": "server_youtube.png"
 }

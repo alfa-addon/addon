@@ -5,13 +5,6 @@
   "adult": false,
   "language": ["cast"],
   "thumbnail": "http://imgur.com/yTQRPUJ.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "28/06/2017",
-      "description": "Release"
-    }
-  ],
   "categories": [
     "movie",
     "tvshow"
