@@ -22,14 +22,9 @@
         <setting id="adult_aux_new_password1" type="text" label="Nueva contraseña:" option="hidden" enable="!eq(-3,)" default=""/>
         <setting id="adult_aux_new_password2" type="text" label="Confirmar nueva contraseña:" option="hidden" enable="!eq(-1,)" default=""/>
 
-        <!--<setting type="sep"/>-->
-        <!--<setting label="Actualizaciones" type="lsep"/>-->
-        <!--<setting id="plugin_updates_available" type="number" label="Number of updates available" default="0" visible="false"/>-->
-        <!--<setting id="check_for_plugin_updates" type="bool" label="30001" default="true"/>-->
-        <!--<setting id="check_for_channel_updates" type="bool" label="30004" default="true"/>-->
     </category>
 
-    <!-- Path downloads and subtitles -->
+    <!-- Path downloads -->
     <category label="30501">
         <setting type="sep"/>
         <setting id="downloadpath" type="text" label="30017" default=""/>
