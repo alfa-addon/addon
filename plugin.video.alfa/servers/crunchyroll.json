@@ -1,15 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "12/05/2017",
-      "description": "Se añade libreria jscrypto para que funcione en cualquier sistema y deteccion enlaces rtmpe"
-    },
-    {
-      "date": "11/01/2017",
-      "description": "Versión inicial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -90,6 +80,5 @@
       "visible": true
     }
   ],
-  "thumbnail": "http://i.imgur.com/SglkLAb.png?1",
-  "version": 1
+  "thumbnail": "http://i.imgur.com/SglkLAb.png?1"
 }

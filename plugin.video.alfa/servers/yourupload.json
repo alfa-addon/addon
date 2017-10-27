@@ -1,19 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "05/03/2017",
-      "description": "Reparado por cambios"
-    },
-    {
-      "date": "09/02/2017",
-      "description": "Reparado y adaptado al uso de httptools"
-    },
-    {
-      "date": "25/03/2016",
-      "description": "Versión inicial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [
       "http://www.yourupload.com/embed/embed"
@@ -58,6 +44,5 @@
       "visible": false
     }
   ],
-  "thumbnail" : "https://s1.postimg.org/4wje61el4f/yourupload1.png",
-  "version": 1
+  "thumbnail" : "https://s1.postimg.org/4wje61el4f/yourupload1.png"
 }

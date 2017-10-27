@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "16/03/2017",
-      "description": "Versión incial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -47,6 +41,5 @@
       "type": "list",
       "visible": false
     }
-  ],
-  "version": 1
+  ]
 }

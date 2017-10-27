@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "03/08/2017",
-      "description": "Versión inicial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -44,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s1.postimg.org/wathgtvin/logo-vidlox1.png",
-  "version": 1
+  "thumbnail": "https://s1.postimg.org/wathgtvin/logo-vidlox1.png"
 }
