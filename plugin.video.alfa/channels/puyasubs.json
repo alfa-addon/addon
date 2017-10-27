@@ -6,21 +6,6 @@
   "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/aad4psi.png",
   "banner": "http://i.imgur.com/trFDT39.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "28/05/2017",
-      "description": "Cambio de dominio"
-    },
-    {
-      "date": "09/05/2017",
-      "description": "Corregida seccion lista de torrents y regex de listados"
-    },
-    {
-      "date": "10/11/2016",
-      "description": "Primera versión"
-    }
-  ],
   "categories": [
     "anime"
   ],

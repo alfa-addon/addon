@@ -7,13 +7,6 @@
     "banner": "torrentlocura.png",
     "thumbnail": "http://imgur.com/EWmLS3d.png",
     "fanart": "http://imgur.com/V7QZLAL.jpg",
-    "version": 1,
-    "changes": [
-        {
-            "date": "25/08/2017",
-            "description": "revamp"
-        }
-    ],
     "categories": [
         "torrent",
         "movie",

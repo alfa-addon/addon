@@ -4,13 +4,6 @@
   "language": ["*"],
   "active": true,
   "adult": true,
-  "version": 1,
-  "changes": [
-    {
-      "date": "29/04/2017",
-      "description": "Primera versión"
-    }
-  ],
   "thumbnail": "http://i.imgur.com/OTYwbAa.png?1",
   "categories": [
     "adult"

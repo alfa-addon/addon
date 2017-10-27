@@ -6,21 +6,6 @@
   "language": ["cast", "lat"],
   "thumbnail": "seriesblanco.png",
   "banner": "seriesblanco.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "11/05/2017",
-      "description": "Fix merge"
-    },
-    {
-      "date": "06/04/2017",
-      "description": "Mejoras en filtertools, fix calidades"
-    },
-    {
-      "date": "01/04/2017",
-      "description": "Cambiado canal."
-    }
-  ],
   "categories": [
     "tvshow",
     "vos"

@@ -6,17 +6,6 @@
   "language": ["cast", "lat"],
   "thumbnail": "seriesdanko.png",
   "banner": "seriesdanko.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "06/04/2017",
-      "description": "Mejoras en filtertools"
-    },
-    {
-      "date": "27/01/2017",
-      "description": "Fix añadir serie desde la búsqueda.."
-    }
-  ],
   "categories": [
     "tvshow",
     "vos"

@@ -177,8 +177,7 @@ def filterchannels(category, view="thumb_"):
             channelslist.append(Item(title=channel_parameters["title"], channel=channel_parameters["channel"],
                                      action="mainlist", thumbnail=channel_parameters["thumbnail"],
                                      fanart=channel_parameters["fanart"], category=channel_parameters["title"],
-                                     language=channel_parameters["language"], viewmode="list",
-                                     version=channel_parameters["version"], context=context))
+                                     language=channel_parameters["language"], viewmode="list", context=context))
 
         except:
             logger.error("Se ha producido un error al leer los datos del canal '%s'" % channel)

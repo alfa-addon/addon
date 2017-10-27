@@ -6,29 +6,6 @@
   "language": ["cast", "lat"],
   "thumbnail": "hdfull.png",
   "banner": "hdfull.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "30/05/2017",
-      "description": "Arreglada la extracción de enlaces por cambios en la web"
-    },
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "21/03/2017",
-      "description": "Pequeño fix para corregir algunas urls de los vídeos que se extraían mal"
-    },
-    {
-      "date": "02/02/2017",
-      "description": "Arreglada la extracción de enlaces por cambios en la web"
-    },
-    {
-      "date": "05/01/2017",
-      "description": "Corregido debido a cloudflare"
-    }
-  ],
   "categories": [
     "movie",
     "tvshow"

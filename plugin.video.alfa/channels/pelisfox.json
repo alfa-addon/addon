@@ -6,21 +6,6 @@
   "language": ["lat"],
   "thumbnail": "https://s14.postimg.org/c43etc1lt/pelisfox.png",
   "banner": "https://s30.postimg.org/p6twg905d/pelisfox-banner.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "16/06/2017",
-      "description": "Fix pagina siguiente"
-    },
-    {
-      "date": "25/05/2017",
-      "description": "cambios esteticos"
-    },
-    {
-      "date": "05/05/2017",
-      "description": "First release"
-    }
-  ],
   "categories": [
     "direct",
     "movie"

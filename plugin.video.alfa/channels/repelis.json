@@ -6,21 +6,6 @@
   "language": ["cast", "lat"],
   "thumbnail": "repelis.png",
   "banner": "repelis.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "18/05/2017",
-      "description": "Cambiado patrón en búsqueda de videos"
-    },
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "01/07/2016",
-      "description": "Eliminado código innecesario."
-    }
-  ],
   "categories": [
     "movie",
     "documentary",

@@ -4,33 +4,6 @@
   "active": false,
   "adult": false,
   "language": ["*"],
-  "version": 1,
-  "changes": [
-    {
-      "date": "25/05/17",
-      "description": "añadido control parental"
-    },
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "17/02/17",
-      "description": "Cambios de detalles visuales"
-    },
-    {
-      "date": "06/12/16",
-      "description": "Añadir al menu: 'Recordar última búsqueda'"
-    },
-    {
-      "date": "01/07/16",
-      "description": "Eliminado código innecesario."
-    },
-    {
-      "date": "???",
-      "description": "Multihilos y seleccion de canales"
-    }
-  ],
   "categories": [
     "movie"
   ],

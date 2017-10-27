@@ -6,17 +6,6 @@
   "language": ["*"],
   "thumbnail": "https://s15.postimg.org/pzd3h4vy3/javus.png",
   "banner": "https://s21.postimg.org/5pqzedp2f/javus_banner.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "01/12/2016",
-      "description": "Release."
-    }
-  ],
   "categories": [
     "adult"
   ],
