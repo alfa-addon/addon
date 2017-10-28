@@ -1,23 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "22/06/17",
-      "description": "Detectado archivo borrado"
-    },
-    {
-      "date": "05/06/17",
-      "description": "Detectado que el archivo se está procesando"
-    },
-    {
-      "date": "10/05/17",
-      "description": "Reparado por robalo, yo solo lo subí al github"
-    },
-    {
-      "date": "24/12/2016",
-      "description": "Versión incial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -55,6 +37,5 @@
       "type": "list",
       "visible": false
     }
-  ],
-  "version": 1
+  ]
 }

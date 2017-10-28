@@ -4,21 +4,6 @@
   "active": true,
   "adult": false,
   "language": ["cast"],
-  "version": 1,
-  "changes": [
-    {
-      "date": "10/12/2016",
-      "description": "Reparado fanart y thumbs y correción código.Adaptado a Infoplus"
-    },
-    {
-      "date": "04/04/2017",
-      "description": "Migración a Httptools"
-    },
-    {
-      "date": "28/06/2017",
-      "description": "Correciones código.Algunas mejoras"
-    }
-  ],
   "thumbnail": "cuelgame.png",
   "banner": "cuelgame.png",
   "categories": [

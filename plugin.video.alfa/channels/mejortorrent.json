@@ -6,17 +6,6 @@
   "language": ["cast"],
   "thumbnail": "mejortorrent.png",
   "banner": "mejortorrent.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "17/04/2017",
-      "description": "Arreglado error que impedía el uso del canal"
-    },
-    {
-      "date": "01/07/2016",
-      "description": "Eliminado código innecesario."
-    }
-  ],
   "categories": [
     "torrent",
     "movie",

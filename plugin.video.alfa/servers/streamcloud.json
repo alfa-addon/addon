@@ -1,15 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "09/03/2017",
-      "description": "No detectaba\"archivo no encontrado\""
-    },
-    {
-      "date": "25/03/2016",
-      "description": "Version inicial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [
       "http://streamcloud.eu/stylesheets",
@@ -62,6 +52,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_streamcloud.png",
-  "version": 1
+  "thumbnail": "server_streamcloud.png"
 }

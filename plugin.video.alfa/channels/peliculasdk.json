@@ -6,21 +6,6 @@
   "language": ["cast"],
   "thumbnail": "http://s29.postimg.org/wzw749oon/pldklog.jpg",
   "banner": "peliculasdk.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "06/12/2016",
-      "description": "Corrección código. Adaptación Infoplus"
-    },
-    {
-      "date": "26/04/2017",
-      "description": "Adaptación videoteca"
-    },
-    {
-      "date": "28/06/2017",
-      "description": "Corrección código y algunas mejoras"
-    }
-  ],
   "categories": [
     "torrent",
     "movie"

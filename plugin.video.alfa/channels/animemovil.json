@@ -3,16 +3,9 @@
   "name": "Animemovil",
   "active": true,
   "adult": false,
-  "language": ["*"],
+  "language": ["cat", "lat"],
   "thumbnail": "https://s1.postimg.org/92ji7stii7/animemovil1.png",
   "banner": "",
-  "version": 1,
-  "changes": [
-    {
-      "date": "24/10/2017",
-      "description": "Primera version"
-    }
-  ],
   "categories": [
     "anime"
   ],

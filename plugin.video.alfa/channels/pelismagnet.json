@@ -6,23 +6,6 @@
   "language": ["cast"],
   "thumbnail": "pelismagnet.png",
   "banner": "pelismagnet.png",
-  "changes": {
-    "change": [
-      {
-        "date": "15/03/2017",
-        "description": "limpieza código"
-      },
-      {
-        "date": "21/02/2017",
-        "description": "Reparado a causa del cambio a https y añadida opcion para buscar info en tmdb"
-      },
-      {
-        "date": "01/07/2016",
-        "description": "Eliminado código innecesario."
-      }
-    ]
-  },
-  "version": 1,
   "categories": [
     "torrent",
     "movie",

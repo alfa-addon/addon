@@ -100,17 +100,7 @@ def get_channel_parameters(channel_name):
                         if sys.version_info < tuple(map(int, (python_condition.split(".")))):
                             python_compatible = False
 
-                    # compatible addon_version
-                    addon_version_compatible = True
-                    if 'addon_version' in channel_parameters["compatible"]:
-                        import versiontools
-                        addon_version_condition = channel_parameters["compatible"]['addon_version']
-                        addon_version = int(addon_version_condition.replace(".", "").ljust(len(str(
-                            versiontools.get_current_plugin_version())), '0'))
-                        if versiontools.get_current_plugin_version() < addon_version:
-                            addon_version_compatible = False
-
-                    channel_parameters["compatible"] = python_compatible and addon_version_compatible
+                    channel_parameters["compatible"] = python_compatible
                 else:
                     channel_parameters["compatible"] = True
 
@@ -284,41 +274,3 @@ def set_channel_setting(name, value, channel):
         return None
 
     return value
-
-
-def get_channel_module(channel_name, package="channels"):
-    # Sustituye al que hay en servertools.py ...
-    # ...pero añade la posibilidad de incluir un paquete diferente de "channels"
-    if "." not in channel_name:
-        channel_module = __import__('%s.%s' % (package, channel_name), None, None, ['%s.%s' % (package, channel_name)])
-    else:
-        channel_module = __import__(channel_name, None, None, [channel_name])
-    return channel_module
-
-
-def get_channel_remote_url(channel_name):
-    channel_parameters = get_channel_parameters(channel_name)
-    remote_channel_url = channel_parameters["update_url"] + channel_name + ".py"
-    remote_version_url = channel_parameters["update_url"] + channel_name + ".json"
-
-    logger.info("remote_channel_url=" + remote_channel_url)
-    logger.info("remote_version_url=" + remote_version_url)
-
-    return remote_channel_url, remote_version_url
-
-
-def get_channel_local_path(channel_name):
-    if channel_name != "channelselector":
-        local_channel_path = os.path.join(config.get_runtime_path(), 'channels', channel_name + ".py")
-        local_version_path = os.path.join(config.get_runtime_path(), 'channels', channel_name + ".json")
-        local_compiled_path = os.path.join(config.get_runtime_path(), 'channels', channel_name + ".pyo")
-    else:
-        local_channel_path = os.path.join(config.get_runtime_path(), channel_name + ".py")
-        local_version_path = os.path.join(config.get_runtime_path(), channel_name + ".json")
-        local_compiled_path = os.path.join(config.get_runtime_path(), channel_name + ".pyo")
-
-    logger.info("local_channel_path=" + local_channel_path)
-    logger.info("local_version_path=" + local_version_path)
-    logger.info("local_compiled_path=" + local_compiled_path)
-
-    return local_channel_path, local_version_path, local_compiled_path

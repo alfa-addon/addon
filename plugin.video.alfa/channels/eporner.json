@@ -6,21 +6,6 @@
   "language": ["*"],
   "thumbnail": "eporner.png",
   "banner": "eporner.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "03/06/2017",
-      "description": "reparada seccion categorias"
-    },
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "28/12/16",
-      "description": "First version"
-    }
-  ],
   "categories": [
     "adult"
   ]

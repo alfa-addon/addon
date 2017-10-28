@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "18/07/2017",
-      "description": "Versión incial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -52,6 +46,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s11.postimg.org/giobzkprz/logo-google1.png",
-  "version": 1
+  "thumbnail": "https://s11.postimg.org/giobzkprz/logo-google1.png"
 }

@@ -1,15 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "22/06/2017",
-      "description": "Actualizado a httptools"
-    },
-    {
-      "date": "25/03/2016",
-      "description": "Versión incial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [
       "http://streamin.to/embed-theme.html",
@@ -64,6 +54,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_streaminto.png",
-  "version": 1
+  "thumbnail": "server_streaminto.png"
 }

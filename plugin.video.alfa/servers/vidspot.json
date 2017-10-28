@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "04/06/2016",
-      "description": "Reparado, utiliza proxy en caso que salte el geobloqueo"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [
       "http://vidspot.net/embed-theme.html",
@@ -75,6 +69,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_vidspot.png",
-  "version": 1
+  "thumbnail": "server_vidspot.png"
 }

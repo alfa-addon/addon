@@ -1,15 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "03/03/2017",
-      "description": "Corregido por cambios en el servidor y limpieza de código"
-    },
-    {
-      "date": "25/03/2016",
-      "description": "Versión inicial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -77,6 +67,5 @@
       "visible": true
     }
   ],
-  "thumbnail": "server_nowvideo.png",
-  "version": 1
+  "thumbnail": "server_nowvideo.png"
 }

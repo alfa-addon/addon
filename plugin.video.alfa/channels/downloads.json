@@ -4,21 +4,6 @@
   "active": false,
   "adult": false,
   "language": ["*"],
-  "version": 1,
-  "changes": [
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "12/03/17",
-      "description": "Añadidas mas opciones de configuracion y corregidos fallos"
-    },
-    {
-      "date": "12/01/17",
-      "description": "release"
-    }
-  ],
   "categories": [
     "movie"
   ],

@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "12/07/2017",
-      "description": "Versión inicial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -44,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s12.postimg.org/4n9fmdy7x/logo-downace.png",
-  "version": 1
+  "thumbnail": "https://s12.postimg.org/4n9fmdy7x/logo-downace.png"
 }

@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "25/03/2016",
-      "description": "Versión incial"
-    }
-  ],
   "free": false,
   "id": "alldebrid",
   "name": "All-Debrid",
@@ -33,6 +27,5 @@
       "type": "text",
       "visible": true
     }
-  ],
-  "version": 1
+  ]
 }

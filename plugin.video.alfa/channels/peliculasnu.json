@@ -4,25 +4,6 @@
   "language": ["cast", "lat"],
   "active": true,
   "adult": false,
-  "version": 1,
-  "changes": [
-    {
-      "date": "12/05/2017",
-      "description": "Corregidos enlaces directos"
-    },
-    {
-      "date": "07/04/2017",
-      "description": "Subtitulos en videos directos"
-    },
-    {
-      "date": "12/03/2017",
-      "description": "Añadida info de idiomas"
-    },
-    {
-      "date": "16/02/2017",
-      "description": "Versión inicial"
-    }
-  ],
   "thumbnail": "http://i.imgur.com/2iupwXE.png",
   "banner": "peliculasnu.png",
   "categories": [

@@ -6,13 +6,6 @@
   "language": ["lat"],
   "thumbnail": "https://s22.postimg.org/irnlwuizh/allcalidad1.png",
   "banner": "https://s22.postimg.org/9y1athlep/allcalidad2.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "14/07/2017",
-      "description": "Primera version"
-    }
-  ],
   "categories": [
     "movie",
     "direct"

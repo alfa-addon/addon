@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "25/03/2016",
-      "description": "Versión incial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [
       "http://www.mp4upload.com/embed/embed"
@@ -45,6 +39,5 @@
       "type": "list",
       "visible": false
     }
-  ],
-  "version": 1
+  ]
 }

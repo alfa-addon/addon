@@ -1,15 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "28/01/2017",
-      "description": "Arreglado por cambios en la web"
-    },
-    {
-      "date": "09/07/2016",
-      "description": "Version inicial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -48,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "http://i.imgur.com/mTYCw5E.png",
-  "version": 1
+  "thumbnail": "http://i.imgur.com/mTYCw5E.png"
 }

@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "28/06/2017",
-      "description": "Nuevo conector"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -44,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "http://i.imgur.com/l45Tk0G.png",
-  "version": 1
+  "thumbnail": "http://i.imgur.com/l45Tk0G.png"
 }

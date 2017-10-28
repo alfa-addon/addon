@@ -1,19 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "12/05/2017",
-      "description": "Corregido por cambios en el servidor"
-    },
-    {
-      "date": "07/02/2017",
-      "description": "Corregido por cambios en el servidor y adaptado al uso de httptools"
-    },
-    {
-      "date": "11/01/2017",
-      "description": "Reparado por cambios en el servidor"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -55,6 +41,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_openload.png",
-  "version": 1
+  "thumbnail": "server_openload.png"
 }

@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "25/03/2016",
-      "description": "Versión incial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [
       "http://uploaded.net/file/ref"
@@ -86,6 +80,5 @@
       "visible": true
     }
   ],
-  "thumbnail": "server_uploadedto.png",
-  "version": 1
+  "thumbnail": "server_uploadedto.png"
 }

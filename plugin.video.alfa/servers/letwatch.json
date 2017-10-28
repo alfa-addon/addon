@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "04/06/2016",
-      "description": "Reparado porque a veces devuelve enlace directo al video y no ofuscado"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -43,6 +37,5 @@
       "type": "list",
       "visible": false
     }
-  ],
-  "version": 1
+  ]
 }

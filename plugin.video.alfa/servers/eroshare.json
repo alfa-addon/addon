@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "27/02/2017",
-      "description": "Versión incial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -44,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s31.postimg.org/cewftt397/eroshare.png",
-  "version": 1
+  "thumbnail": "https://s31.postimg.org/cewftt397/eroshare.png"
 }
