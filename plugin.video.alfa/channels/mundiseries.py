@@ -97,20 +97,6 @@ def findvideos(item):
     for item in it2:
         if "###" not in item.url:
             item.url += "###" + id + ";" + type
-    for videoitem in itemlist:
-        videoitem.channel=item.channel
-        if item.contentChannel=='videolibrary':
-            videoitem.contentEpisodeNumber=item.contentEpisodeNumber
-            videoitem.contentPlot=item.contentPlot
-            videoitem.contentSeason=item.contentSeason
-            videoitem.contentSerieName=item.contentSerieName
-            videoitem.contentTitle=item.contentTitle
-            videoitem.contentType=item.contentType
-            videoitem.episode_id=item.episode_id
-            videoitem.hasContentDetails=item.hasContentDetails
-            videoitem.infoLabels=item.infoLabels
-            videoitem.thumbnail=item.thumbnail
-            #videoitem.title=item.title
     logger.info(itemlist[0])
     autoplay.start(itemlist, item)
     return itemlist
