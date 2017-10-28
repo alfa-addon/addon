@@ -114,7 +114,7 @@ def setting_channel(item):
         custom_button_label = "Todos"
 
     return platformtools.show_channel_settings(list_controls=list_controls,
-                                               caption="Canales incluidos en la búsqueda global",
+                                               caption="Canales incluidos en la búsqueda",
                                                callback="save_settings", item=item,
                                                custom_button={'visible': True,
                                                               'function': "cb_custom_button",
@@ -277,6 +277,13 @@ def channel_search(search_results, channel_parameters, tecleado):
 def do_search(item, categories=None):
     logger.info("blaa categorias %s" % categories)
 
+    if item.contextual==True:
+        categories = ["Películas"]
+        setting_item = Item(channel=item.channel, title="Elegir canales incluidos en la búsqueda", folder=False,
+                            thumbnail=get_thumb("search.png"))
+        setting_channel(setting_item)
+
+
     if categories is None:
         categories = []
 
@@ -417,6 +424,8 @@ def do_search(item, categories=None):
             title = channel
 
             # resultados agrupados por canales
+            if item.contextual == True:
+                result_mode = 1
             if result_mode == 0:
                 if len(search_results[channel]) > 1:
                     title += " [%s]" % element["item"].title.strip()
@@ -432,7 +441,7 @@ def do_search(item, categories=None):
             else:
                 title = " [ Resultados del canal %s ] " % channel
                 itemlist.append(Item(title=title, channel="search", action="",
-                                     folder=False, text_bold=True))
+                                     folder=False, text_bold=True, from_channel=channel))
                 for i in element["itemlist"]:
                     if i.action:
                         title = "    " + i.title
@@ -444,6 +453,24 @@ def do_search(item, categories=None):
     itemlist.insert(0, Item(title=title, text_color='yellow'))
 
     progreso.close()
+
+    #Para opcion Buscar en otros canales
+    if item.contextual == True:
+        return exact_results(itemlist, tecleado)
+    else:
+        return itemlist
+
+
+def exact_results(results, wanted):
+    logger.info()
+    itemlist =[]
+
+    for item in results:
+        if item.action=='':
+            channel=item.from_channel
+        if item.action != '' and item.contentTitle==wanted:
+            item.title = '%s [%s]' % (item.title, channel)
+            itemlist.append(item)
 
     return itemlist
 
