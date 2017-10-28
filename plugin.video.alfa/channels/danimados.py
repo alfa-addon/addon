@@ -190,17 +190,3 @@ def verificar_video(url):
     else:
 		codigo1=200
     return codigo1
-
-def play(item):
-    logger.info()
-    itemlist = []
-    # Buscamos video por servidor ...
-    devuelve = servertools.findvideosbyserver(item.url, item.server)
-    if not devuelve:
-        # ...sino lo encontramos buscamos en todos los servidores disponibles
-        devuelve = servertools.findvideos(item.url, skip=True)
-    if devuelve:
-        # logger.debug(devuelve)
-        itemlist.append(Item(channel=item.channel, title=item.contentTitle, action="play", server=devuelve[0][2],
-                             url=devuelve[0][1], thumbnail=item.thumbnail, folder=False))
-    return itemlist
