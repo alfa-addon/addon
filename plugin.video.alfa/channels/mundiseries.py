@@ -35,10 +35,7 @@ def lista(item):
     patron = '<a href="([^"]+)"><img src="([^"]+)" alt="ver ([^"]+) online'
     matches = scrapertools.find_multiple_matches(data, patron)
     for link, thumbnail, name in matches:
-        title=name
-        url=host+link
-        thumbnail=host+thumbnail
-        itemlist.append(item.clone(title=title, url=url, thumbnail=thumbnail, action="temporada"))
+        itemlist.append(item.clone(title=name, url=host+link, thumbnail=host+thumbnail, action="temporada"))
     return itemlist
 
 def temporada(item):
@@ -52,9 +49,7 @@ def temporada(item):
     patron = '<a href="([^"]+)"><div class="item-temporada"><img alt=".+?" src="([^"]+)"><div .+?>Ver ([^"]+)<\/div><\/a>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for link,thumbnail,name in matches:
-        url=host+link
-        thumbnail=host+thumbnail
-        itemlist.append(item.clone(title=name, url=url, thumbnail=thumbnail,action="episodios",context=autoplay.context))
+        itemlist.append(item.clone(title=name, url=host+link, thumbnail=host+thumbnail,action="episodios",context=autoplay.context))
     return itemlist
 
 def episodios(item):
