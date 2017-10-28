@@ -185,7 +185,5 @@ def findvideos(item):
                 server1 = server
         itemlist.append(item.clone(url=url, action="play", server=server1,
                                    title="Enlace encontrado en %s " % (server1.capitalize())))
-    for videoitem in itemlist:
-        #Nos dice de donde viene si del addon o videolibrary
     autoplay.start(itemlist, item)
     return itemlist
