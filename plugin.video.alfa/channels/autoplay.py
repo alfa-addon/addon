@@ -79,7 +79,20 @@ def start(itemlist, item):
     :return: intenta autoreproducir, en caso de fallar devuelve el itemlist que recibio en un principio
     '''
     logger.info()
-
+    for videoitem in itemlist:
+        #Nos dice de donde viene si del addon o videolibrary
+        if item.contentChannel=='videolibrary':
+            videoitem.contentEpisodeNumber=item.contentEpisodeNumber
+            videoitem.contentPlot=item.contentPlot
+            videoitem.contentSeason=item.contentSeason
+            videoitem.contentSerieName=item.contentSerieName
+            videoitem.contentTitle=item.contentTitle
+            videoitem.contentType=item.contentType
+            videoitem.episode_id=item.episode_id
+            videoitem.hasContentDetails=item.hasContentDetails
+            videoitem.infoLabels=item.infoLabels
+            videoitem.thumbnail=item.thumbnail
+            #videoitem.title=item.title
     if not config.is_xbmc():
         #platformtools.dialog_notification('AutoPlay ERROR', 'Sólo disponible para XBMC/Kodi')
         return itemlist
