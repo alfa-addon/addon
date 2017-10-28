@@ -32,7 +32,7 @@
     <forum>foro</forum>
     <website>web</website>
     <email>my@email.com</email>
-    <source>https://github.com/alfa-addon/addon</source>
+    <source>https://github.com/pitunti/alfaPitunti</source>
   </extension>
   <extension point="xbmc.service" library="videolibrary_service.py" start="login|startup">
   </extension>
