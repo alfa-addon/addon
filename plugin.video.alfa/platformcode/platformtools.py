@@ -394,6 +394,21 @@ def set_context_commands(item, parent_item):
                                                               from_channel=item.channel,
                                                               from_action=item.action).tourl())))
 
+        #Buscar en otros canales
+        if item.contentType in ['movie','tvshow']and item.channel != 'search':
+            # Buscar en otros canales
+            if item.contentSerieName!='':
+                item.extra=item.contentSerieName
+            else:
+                item.extra = item.contentTitle
+            context_commands.append(("[COLOR yellow]Buscar en otros canales[/COLOR]",
+                                     "XBMC.Container.Update (%s?%s)" % (sys.argv[0],
+                                                                        item.clone(channel='search',
+                                                                                   action="do_search",
+                                                                                   from_channel=item.channel,
+                                                                                   contextual=True).tourl())))
+
+
         if item.channel != "videolibrary":
             # Añadir Serie a la videoteca
             if item.action in ["episodios", "get_episodios"] and item.contentSerieName:

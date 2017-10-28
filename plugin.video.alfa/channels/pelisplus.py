@@ -423,6 +423,21 @@ def generos(item):
                  ))
     return itemlist
 
+def get_vip(url):
+    logger.info()
+    itemlist =[]
+    url= url.replace('reproductor','vip')
+    data = httptools.downloadpage(url).data
+    patron = '<a href="(.*?)"> '
+    video_urls = scrapertools.find_multiple_matches(data,'<a href="(.*?)">')
+    for item in video_urls:
+        id, tipo, lang= scrapertools.find_single_match(item,'plus\/(\d+)\/.*?=(\d+).*?=(.*)')
+        new_url = 'https://www.elreyxhd.com/pelisplus.php?id=%s&tipo=%s&idioma=%s' % (id, tipo, lang)
+        data=httptools.downloadpage(new_url, follow_redirects=False).headers
+        itemlist.extend(servertools.find_video_items(data=str(data)))
+
+    return itemlist
+
 
 def findvideos(item):
     logger.info()
@@ -430,43 +445,12 @@ def findvideos(item):
     duplicados = []
     data = httptools.downloadpage(item.url).data
     video_page = scrapertools.find_single_match(data, "<iframe width='100%' height='500' src='(.*?)' frameborder='0'")
+
+    itemlist.extend(get_vip(video_page))
+
     data = httptools.downloadpage(video_page).data
     patron = '<li data-id=".*?">\s+<a href="(.*?)" >'
     matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedurl in matches:
-
-        if 'tipo' in scrapedurl:
-            server = 'gvideo'
-            gvideo_data = httptools.downloadpage(scrapedurl).data
-            video_url = scrapertools.find_single_match(gvideo_data,'<div id="player">.*?border: none" src="\/\/(.*?)" ')
-            video_url= 'http://%s'%video_url
-            gvideo_url = httptools.downloadpage(video_url).data
-            videourl = servertools.findvideosbyserver(gvideo_url, server)
-
-            logger.debug('videourl: %s'%videourl)
-            language = 'latino'
-            quality = 'default'
-            url = videourl[0][1]
-            title = '%s (%s)'%(item.contentTitle, server)
-            thumbnail = item.thumbnail
-            fanart = item.fanart
-            if video_url not in duplicados:
-                itemlist.append(item.clone(action="play",
-                                           title=title,
-                                           url=url,
-                                           thumbnail=thumbnail,
-                                           fanart=fanart,
-                                           show=title,
-                                           extra='gvideo',
-                                           language=language,
-                                           quality=quality,
-                                           server=server
-                                           ))
-                duplicados.append(video_url)
-
-
-
 
     itemlist.extend(servertools.find_video_items(data=data))
 
