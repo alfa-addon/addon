@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 
@@ -157,19 +157,6 @@ def findvideos(item):
         itemlist.append(item.clone(url=url, action="play", server=server, contentQuality=quality,
                                    thumbnail=scrapedthumbnail, plot=scrapedplot,
                                    title="Enlace encontrado en %s: [%s]" % (server.capitalize(), quality)))
-    for videoitem in itemlist:
-        #Nos dice de donde viene si del addon o videolibrary
-        if item.contentChannel=='videolibrary':
-            videoitem.contentEpisodeNumber=item.contentEpisodeNumber
-            videoitem.contentPlot=item.contentPlot
-            videoitem.contentSeason=item.contentSeason
-            videoitem.contentSerieName=item.contentSerieName
-            videoitem.contentTitle=item.contentTitle
-            videoitem.contentType=item.contentType
-            videoitem.episode_id=item.episode_id
-            videoitem.hasContentDetails=item.hasContentDetails
-            videoitem.infoLabels=item.infoLabels
-            videoitem.thumbnail=item.thumbnail
-            #videoitem.title=item.title
+    
     autoplay.start(itemlist, item)
     return itemlist
