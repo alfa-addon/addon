@@ -311,18 +311,6 @@ def findvideos(item):
         d=c[0].rstrip( )
         d=d.lstrip( )
         list_links[i].server=d
-        if item.contentChannel=='videolibrary':
-            list_links[i].contentEpisodeNumber=item.contentEpisodeNumber
-            list_links[i].contentPlot=item.contentPlot
-            list_links[i].contentSeason=item.contentSeason
-            list_links[i].contentSerieName=item.contentSerieName
-            list_links[i].contentTitle=item.contentTitle
-            list_links[i].contentType=item.contentType
-            list_links[i].episode_id=item.episode_id
-            list_links[i].hasContentDetails=item.hasContentDetails
-            list_links[i].infoLabels=item.infoLabels
-            list_links[i].thumbnail=item.thumbnail
-
     autoplay.start(list_links, item)
 
     return list_links
@@ -357,17 +345,6 @@ def play(item):
         titulo += " [%s]" % item.language
 
     for videoitem in itemlist:
-        if item.contentChannel=='videolibrary':
-            videoitem.contentEpisodeNumber=item.contentEpisodeNumber
-            videoitem.contentPlot=item.contentPlot
-            videoitem.contentSeason=item.contentSeason
-            videoitem.contentSerieName=item.contentSerieName
-            videoitem.contentTitle=item.contentTitle
-            videoitem.contentType=item.contentType
-            videoitem.episode_id=item.episode_id
-            videoitem.hasContentDetails=item.hasContentDetails
-            videoitem.infoLabels=item.infoLabels
-            videoitem.thumbnail=item.thumbnail
         if titulo:
             videoitem.title = titulo
         else:
