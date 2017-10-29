@@ -6,17 +6,6 @@
   "language": ["cast", "lat"],
   "thumbnail": "https://s27.postimg.org/pjq3y552b/idocumentales.png",
   "banner": "https://s16.postimg.org/6d8bh1z1x/idocumentales_banner.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "25/05/2017",
-      "description": "cambios esteticos"
-    },
-    {
-      "date": "18/06/2016",
-      "description": "First release"
-    }
-  ],
   "categories": [
     "documentary"
   ],

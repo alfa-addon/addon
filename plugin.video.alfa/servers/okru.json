@@ -1,23 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "22/06/2017",
-      "description": "Actualizado mensaje de archivo borrado"
-    },
-    {
-      "date": "09/05/2017",
-      "description": "Corregido, ha cambiado la web desde la que extraer los enlaces"
-    },
-    {
-      "date": "28/01/2017",
-      "description": "Mejorada detección de enlaces caídos, adaptado a los últimos cambios"
-    },
-    {
-      "date": "07/09/2015",
-      "description": "Version inicial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -61,6 +43,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_okru.png",
-  "version": 1
+  "thumbnail": "server_okru.png"
 }

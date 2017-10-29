@@ -1,15 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "13/06/2017",
-      "description": "Actualizado patrón del get_video()"
-    },
-    {
-      "date": "15/02/2017",
-      "description": "Versión incial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -48,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s31.postimg.org/ijne6piij/filescdn.png",
-  "version": 1
+  "thumbnail": "https://s31.postimg.org/ijne6piij/filescdn.png"
 }

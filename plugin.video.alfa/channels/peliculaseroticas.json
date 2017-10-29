@@ -6,17 +6,6 @@
   "language": ["*"],
   "thumbnail": "peliculaseroticas.png",
   "banner": "peliculaseroticas.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "05/08/2016",
-      "description": "Eliminado de sección peliculas."
-    }
-  ],
   "categories": [
     "adult"
   ]

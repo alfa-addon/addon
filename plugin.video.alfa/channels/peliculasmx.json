@@ -6,17 +6,6 @@
   "language": ["lat"],
   "thumbnail": "peliculasmx.png",
   "banner": "peliculasmx.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "01/11/2016",
-      "description": "Adaptado por cambios en la web."
-    }
-  ],
   "categories": [
     "movie"
   ],

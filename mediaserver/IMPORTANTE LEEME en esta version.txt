@@ -1,2 +1,2 @@
-Debe ejecutar primero el archivo "script.py".
+Debe ejecutar primero el archivo "script.py", si no lo hizo antes.
 Una vez realizado el proceso podrá ejecutar como siempre "alfa.py" para iniciar el addon.

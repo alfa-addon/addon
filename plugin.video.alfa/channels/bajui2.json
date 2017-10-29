@@ -7,21 +7,6 @@
   "thumbnail": "bajui.png",
   "banner": "bajui.png",
   "fanart": "bajui.png",
-  "version": 2,
-  "changes": [
-    {
-      "date": "07/08/2017",
-      "description": "Fix URL HOST changed to Bajui2"
-    },
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "01/07/2016",
-      "description": "Eliminado código innecesario."
-    }
-  ],
   "categories": [
     "movie",
     "tvshow",

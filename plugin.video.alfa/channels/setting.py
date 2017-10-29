@@ -3,8 +3,6 @@
 # Configuracion
 # ------------------------------------------------------------
 
-import os
-
 from channelselector import get_thumb
 from core import filetools
 from core import servertools
@@ -15,26 +13,12 @@ from platformcode import platformtools
 CHANNELNAME = "setting"
 
 
-# todo revisar elementos de update
 def mainlist(item):
     logger.info()
 
     itemlist = list()
     itemlist.append(Item(channel=CHANNELNAME, title="Preferencias", action="settings", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
-
-    # if config.get_setting("plugin_updates_available") == 0:
-    #     nuevas = ""
-    # elif config.get_setting("plugin_updates_available") == 1:
-    #     nuevas = " (1 nueva)"
-    # else:
-    #     nuevas = " (%s nuevas)" % config.get_setting("plugin_updates_available")
-    #
-    # thumb_configuracion = "setting_%s.png" % config.get_setting("plugin_updates_available")
-    #
-    # itemlist.append(Item(channel=CHANNELNAME, title="Descargar e instalar otras versiones" + nuevas,
-    #                      action="get_all_versions", folder=True,
-    #                      thumbnail=get_thumb(thumb_configuracion)))
 
     itemlist.append(Item(channel=CHANNELNAME, title="", action="", folder=False, thumbnail=get_thumb("setting_0.png")))
 
@@ -59,8 +43,6 @@ def mainlist(item):
         itemlist.append(Item(channel=CHANNELNAME, title="   Ajustes de cliente Torrent", action="setting_torrent",
                              folder=True, thumbnail=get_thumb("channels_torrent.png")))
 
-    # itemlist.append(Item(channel=CHANNELNAME, title="   Añadir o Actualizar canal/conector desde una URL",
-    #                      action="menu_addchannels"))
     itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))
     itemlist.append(Item(channel=CHANNELNAME, title="Otras herramientas", action="submenu_tools", folder=True,
                          thumbnail=get_thumb("setting_0.png")))
@@ -263,7 +245,7 @@ def servers_favorites(item):
     for x in range(1, 6):
         control = {'id': x,
                    'type': "list",
-                   'label': "    Servidor #%s" % (x),
+                   'label': "    Servidor #%s" % x,
                    'lvalues': server_names,
                    'default': 0,
                    'enabled': "eq(-%s,True)" % x,
@@ -301,261 +283,13 @@ def cb_servers_favorites(server_names, dict_values):
     progreso.close()
 
 
-def get_all_versions(item):
-    logger.info()
-
-    itemlist = []
-
-    # Lee la versión local
-    from core import versiontools
-
-    # Descarga la lista de versiones
-    from core import api
-    api_response = api.plugins_get_all_packages()
-
-    if api_response["error"]:
-        platformtools.dialog_ok("Error", "Se ha producido un error al descargar la lista de versiones")
-        return
-
-    for entry in api_response["body"]:
-
-        if entry["package"] == "plugin":
-            title = "alfa " + entry["tag"] + " (Publicada " + entry["date"] + ")"
-            local_version_number = versiontools.get_current_plugin_version()
-        elif entry["package"] == "channels":
-            title = "Canales (Publicada " + entry["date"] + ")"
-            local_version_number = versiontools.get_current_channels_version()
-        elif entry["package"] == "servers":
-            title = "Servidores (Publicada " + entry["date"] + ")"
-            local_version_number = versiontools.get_current_servers_version()
-        else:
-            title = entry["package"] + " (Publicada " + entry["date"] + ")"
-            local_version_number = None
-
-        title_color = ""
-
-        if local_version_number is None:
-            title = title
-
-        elif entry["version"] == local_version_number:
-            title += " ACTUAL"
-
-        elif entry["version"] > local_version_number:
-            title_color = "yellow"
-
-        else:
-            title_color = "0xFF666666"
-
-        itemlist.append(Item(channel=CHANNELNAME, title=title, url=entry["url"], filename=entry["filename"],
-                             package=entry["package"], version=str(entry["version"]), text_color=title_color,
-                             action="download_and_install_package", folder=False))
-
-    return itemlist
-
-
-def download_and_install_package(item):
-    logger.info()
-
-    from core import updater
-    from core import versiontools
-
-    if item.package == "plugin":
-        if int(item.version) < versiontools.get_current_plugin_version():
-            if not platformtools.dialog_yesno("Instalando versión anterior",
-                                              "¿Seguro que quieres instalar una versión anterior?"):
-                return
-        elif int(item.version) == versiontools.get_current_plugin_version():
-            if not platformtools.dialog_yesno("Reinstalando versión actual",
-                                              "¿Seguro que quieres reinstalar la misma versión que ya tienes?"):
-                return
-        elif int(item.version) > versiontools.get_current_plugin_version():
-            if not platformtools.dialog_yesno("Instalando nueva versión",
-                                              "¿Seguro que quieres instalar esta nueva versión?"):
-                return
-    else:
-        if not platformtools.dialog_yesno("Instalando paquete", "¿Seguro que quieres instalar este paquete?"):
-            return
-
-    local_file_name = os.path.join(config.get_data_path(), item.filename)
-    updater.download_and_install(item.url, local_file_name)
-
-    if config.is_xbmc():
-        import xbmc
-        xbmc.executebuiltin("Container.Refresh")
-
-
 def settings(item):
     config.open_settings()
 
 
-def menu_addchannels(item):
-    logger.info()
-    itemlist = list()
-    itemlist.append(Item(channel=CHANNELNAME, title="# Copia de seguridad automática en caso de sobrescritura",
-                         action="", text_color="green"))
-    itemlist.append(Item(channel=CHANNELNAME, title="Añadir o actualizar canal", action="addchannel", folder=False))
-    itemlist.append(Item(channel=CHANNELNAME, title="Añadir o actualizar conector", action="addchannel", folder=False))
-    itemlist.append(Item(channel=CHANNELNAME, title="Mostrar ruta de carpeta para copias de seguridad",
-                         action="backups", folder=False))
-    itemlist.append(Item(channel=CHANNELNAME, title="Eliminar copias de seguridad guardadas", action="backups",
-                         folder=False))
-
-    return itemlist
-
-
-def addchannel(item):
-    import os
-    import time
-    logger.info()
-
-    tecleado = platformtools.dialog_input("", "Introduzca la URL")
-    if not tecleado:
-        return
-    logger.info("url=%s" % tecleado)
-
-    local_folder = config.get_runtime_path()
-    if "canal" in item.title:
-        local_folder = filetools.join(local_folder, 'channels')
-        folder_to_extract = "channels"
-        info_accion = "canal"
-    else:
-        local_folder = filetools.join(local_folder, 'servers')
-        folder_to_extract = "servers"
-        info_accion = "conector"
-
-    # Detecta si es un enlace a un .py o .xml (pensado sobre todo para enlaces de github)
-    try:
-        extension = tecleado.rsplit(".", 1)[1]
-    except:
-        extension = ""
-
-    files = []
-    zip = False
-    if extension == "py" or extension == "xml":
-        filename = tecleado.rsplit("/", 1)[1]
-        localfilename = filetools.join(local_folder, filename)
-        files.append([tecleado, localfilename, filename])
-    else:
-        import re
-        from core import scrapertools
-        # Comprueba si la url apunta a una carpeta completa (channels o servers) de github
-        if re.search(r'https://github.com/[^\s]+/' + folder_to_extract, tecleado):
-            try:
-                data = scrapertools.downloadpage(tecleado)
-                matches = scrapertools.find_multiple_matches(data,
-                                                             '<td class="content">.*?href="([^"]+)".*?title="([^"]+)"')
-                for url, filename in matches:
-                    url = "https://raw.githubusercontent.com" + url.replace("/blob/", "/")
-                    localfilename = filetools.join(local_folder, filename)
-                    files.append([url, localfilename, filename])
-            except:
-                import traceback
-                logger.error("Detalle del error: %s" % traceback.format_exc())
-                platformtools.dialog_ok("Error", "La url no es correcta o no está disponible")
-                return
-        else:
-            filename = 'new%s.zip' % info_accion
-            localfilename = filetools.join(config.get_data_path(), filename)
-            files.append([tecleado, localfilename, filename])
-            zip = True
-
-    logger.info("localfilename=%s" % localfilename)
-    logger.info("descarga fichero...")
-
-    try:
-        if len(files) > 1:
-            lista_opciones = ["No", "Sí", "Sí (Sobrescribir todos)"]
-            overwrite_all = False
-        from core import downloadtools
-        for url, localfilename, filename in files:
-            result = downloadtools.downloadfile(url, localfilename, continuar=False, resumir=False)
-            if result == -3:
-                if len(files) == 1:
-                    dyesno = platformtools.dialog_yesno("El archivo ya existe", "Ya existe el %s %s. "
-                                                                                "¿Desea sobrescribirlo?" %
-                                                        (info_accion, filename))
-                else:
-                    if not overwrite_all:
-                        dyesno = platformtools.dialog_select("El archivo %s ya existe, ¿desea sobrescribirlo?"
-                                                             % filename, lista_opciones)
-                    else:
-                        dyesno = 1
-                # Diálogo cancelado
-                if dyesno == -1:
-                    return
-                # Caso de carpeta github, opción sobrescribir todos
-                elif dyesno == 2:
-                    overwrite_all = True
-                elif dyesno:
-                    hora_folder = "Copia seguridad [%s]" % time.strftime("%d-%m_%H-%M", time.localtime())
-                    backup = filetools.join(config.get_data_path(), 'backups', hora_folder, folder_to_extract)
-                    if not filetools.exists(backup):
-                        os.makedirs(backup)
-                    import shutil
-                    shutil.copy2(localfilename, filetools.join(backup, filename))
-                    downloadtools.downloadfile(url, localfilename, continuar=True, resumir=False)
-                else:
-                    if len(files) == 1:
-                        return
-                    else:
-                        continue
-    except:
-        import traceback
-        logger.error("Detalle del error: %s" % traceback.format_exc())
-        return
-
-    if zip:
-        try:
-            # Lo descomprime
-            logger.info("descomprime fichero...")
-            from core import ziptools
-            unzipper = ziptools.ziptools()
-            logger.info("destpathname=%s" % local_folder)
-            unzipper.extract(localfilename, local_folder, folder_to_extract, True, True)
-        except:
-            import traceback
-            logger.error("Detalle del error: %s" % traceback.format_exc())
-            # Borra el zip descargado
-            filetools.remove(localfilename)
-            platformtools.dialog_ok("Error", "Se ha producido un error extrayendo el archivo")
-            return
-
-        # Borra el zip descargado
-        logger.info("borra fichero...")
-        filetools.remove(localfilename)
-        logger.info("...fichero borrado")
-
-    platformtools.dialog_ok("Éxito", "Actualización/Instalación realizada correctamente")
-
-
-def backups(item):
-    logger.info()
-
-    ruta = filetools.join(config.get_data_path(), 'backups')
-    ruta_split = ""
-    if "ruta" in item.title:
-        heading = "Ruta de copias de seguridad"
-        if not filetools.exists(ruta):
-            folders = "Carpeta no creada"
-        else:
-            folders = str(len(filetools.listdir(ruta))) + " copia/s de seguridad guardadas"
-        if len(ruta) > 55:
-            ruta_split = ruta[55:]
-            ruta = ruta[:55]
-        platformtools.dialog_ok(heading, ruta, ruta_split, folders)
-    else:
-        if not filetools.exists(ruta):
-            platformtools.dialog_ok("La carpeta no existe", "No hay copias de seguridad guardadas")
-        else:
-            dyesno = platformtools.dialog_yesno("Las copias de seguridad se eliminarán", "¿Está seguro?")
-            if dyesno:
-                import shutil
-                shutil.rmtree(ruta, ignore_errors=True)
-
-
 def submenu_tools(item):
     logger.info()
-    itemlist = []
+    itemlist = list()
 
     itemlist.append(Item(channel=CHANNELNAME, title="Herramientas de canales", action="", folder=False,
                          thumbnail=get_thumb("channels.png")))
@@ -699,7 +433,7 @@ def conf_tools(item):
                         # logger.info(channel.channel + " No tiene archivo _data.json")
                         channeljson_exists = False
 
-                    if channeljson_exists == True:
+                    if channeljson_exists:
                         try:
                             datajson_size = filetools.getsize(file_settings)
                         except:
@@ -709,7 +443,7 @@ def conf_tools(item):
                         datajson_size = None
 
                     # Si el _data.json esta vacio o no existe...
-                    if (len(dict_settings) and datajson_size) == 0 or channeljson_exists == False:
+                    if (len(dict_settings) and datajson_size) == 0 or not channeljson_exists:
                         # Obtenemos controles del archivo ../channels/channel.json
                         needsfix = True
                         try:
@@ -723,7 +457,7 @@ def conf_tools(item):
                             # default_settings = {}
 
                         # Si _data.json necesita ser reparado o no existe...
-                        if needsfix == True or channeljson_exists == False:
+                        if needsfix or not channeljson_exists:
                             if default_settings is not None:
                                 # Creamos el channel_data.json
                                 default_settings.update(dict_settings)
@@ -748,8 +482,8 @@ def conf_tools(item):
 
                     # Si se ha establecido el estado del canal se añade a la lista
                     if needsfix is not None:
-                        if needsfix == True:
-                            if channeljson_exists == False:
+                        if needsfix:
+                            if not channeljson_exists:
                                 list_status = " - Ajustes creados"
                                 list_colour = "red"
                             else:

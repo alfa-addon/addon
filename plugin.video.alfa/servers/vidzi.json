@@ -1,15 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "22/04/2017",
-      "description": "Corregido por cambios"
-    },
-    {
-      "date": "25/03/2016",
-      "description": "Versión incial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -52,6 +42,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s1.postimg.org/597or3a31b/vidzi1.png",
-  "version": 1
+  "thumbnail": "https://s1.postimg.org/597or3a31b/vidzi1.png"
 }

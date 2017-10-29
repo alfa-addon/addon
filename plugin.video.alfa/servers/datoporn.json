@@ -1,19 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "13/05/2017",
-      "description": "Corregido orden y calidades"
-    },
-    {
-      "date": "21/02/2017",
-      "description": "Corregido y añadida opcion m3u8"
-    },
-    {
-      "date": "28/07/2016",
-      "description": "Versión inicial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -52,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "http://i.imgur.com/tBSWudd.png?1",
-  "version": 1
+  "thumbnail": "http://i.imgur.com/tBSWudd.png?1"
 }

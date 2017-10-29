@@ -6,25 +6,6 @@
   "language": ["lat"],
   "thumbnail": "https://s32.postimg.org/gh8lhbkb9/seodiv.png",
   "banner": "https://s31.postimg.org/klwjzp7t7/seodiv_banner.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "24/06/2017",
-      "description": "Cambios para autoplay"
-    },
-    {
-      "date": "06/06/2017",
-      "description": "compatibilidad con AutoPlay"
-    },
-    {
-      "date": "25/05/2017",
-      "description": "cambios esteticos"
-    },
-    {
-      "date": "09/05/2017",
-      "description": "Fix temporadas"
-    }
-  ],
   "categories": [
     "tvshows"
   ],

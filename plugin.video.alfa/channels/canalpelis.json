@@ -7,13 +7,6 @@
   "fanart": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/canalpelisbg.jpg",
   "thumbnail": "http://www.canalpelis.com/wp-content/uploads/2016/11/logo_web.gif",
   "banner": "",
-  "version": 1,
-  "changes": [
-    {
-      "date": "15/08/17",
-      "description": "Nuevo Canal"
-    }
-  ],
   "categories": [
     "movie",
     "tvshow",

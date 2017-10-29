@@ -4,21 +4,6 @@
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "changes": [
-    {
-      "date": "12/03/2017",
-      "description": "Reparados enlaces directos"
-    },
-    {
-      "date": "27/02/2017",
-      "description": "Añadidos enlaces directos y adaptado al uso de httptools"
-    },
-    {
-      "date": "16/01/2016",
-      "description": "Corregido por cambios en el enmascaramiento de enlaces"
-    }
-  ],
-  "version": 1,
   "thumbnail": "http://i.imgur.com/I7MxHZI.png",
   "banner": "inkapelis.png",
   "categories": [
