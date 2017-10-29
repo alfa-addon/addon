@@ -381,6 +381,7 @@ def findvideos(item):
                     item_json.show = item.library_filter_show.get(nom_canal, "")
 
             # Ejecutamos find_videos, del canal o común
+            item_json.contentChannel='videolibrary'
             if hasattr(channel, 'findvideos'):
                 from core import servertools
                 list_servers = getattr(channel, 'findvideos')(item_json)
