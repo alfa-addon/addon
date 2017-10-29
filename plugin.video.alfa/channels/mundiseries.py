@@ -93,6 +93,7 @@ def findvideos(item):
     for item in it2:
         if "###" not in item.url:
             item.url += "###" + id + ";" + type
-    logger.info(itemlist[0])
+    for videoitem in itemlist:
+        videoitem.channel= item.channel
     autoplay.start(itemlist, item)
     return itemlist

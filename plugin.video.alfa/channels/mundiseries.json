@@ -4,8 +4,8 @@
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "thumbnail": "mundiseries.png",
-  "banner": "https://imgur.com/1bDbYY1",
+  "thumbnail": "https://imgur.com/GdGMFi1.png",
+  "banner": "https://imgur.com/1bDbYY1.png",
   "version": 1,
   "changes": [
     {
@@ -14,7 +14,6 @@
     }
   ],
   "categories": [
-    "movie",
-    "serie"
+    "tvshow"
   ]
 }
