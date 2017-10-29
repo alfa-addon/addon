@@ -33,11 +33,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                'Cookie': ''}
     data = httptools.downloadpage(page_url, headers=headers, replace_headers=True).data
     data = data.replace("\n","")
-    cgi_counter = scrapertools.find_single_match(data, '(?s)SRC="(https://www.flashx.tv/counter.cgi\?fx=[^"]+)')
+    cgi_counter = scrapertools.find_single_match(data, '(?is)src=.(https://www.flashx.tv/counter.cgi.*?fx=[0-9a-zA-Z=]+)')
     cgi_counter = cgi_counter.replace("%0A","").replace("%22","")
     playnow = scrapertools.find_single_match(data, 'https://www.flashx.tv/dl[^"]+')
     # Para obtener el f y el fxfx
-    js_fxfx = scrapertools.find_single_match(data, 'src="(https://www.flashx.tv/js/code.js.*?cache=[0-9]+)')
+    js_fxfx = scrapertools.find_single_match(data, '(?is)src=.(https://www.flashx.tv/js/code.js.*?=[0-9]+)')
     data_fxfx = httptools.downloadpage(js_fxfx).data
     mfxfx = scrapertools.find_single_match(data_fxfx, 'get.*?({.*?})').replace("'","").replace(" ","")
     matches = scrapertools.find_multiple_matches(mfxfx, '(\w+):(\w+)')

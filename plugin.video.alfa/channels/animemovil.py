@@ -138,7 +138,7 @@ def listado(item):
 
         itemlist.append(item.clone(action=action, title=scrapedtitle, url=url, thumbnail=thumb, text_color=color3,
                                    contentTitle=title, contentSerieName=show, infoLabels=infoLabels,
-                                   context=renumbertools.context, contentType=tipo))
+                                   context=renumbertools.context(item), contentType=tipo))
             
     
     try:
@@ -205,7 +205,7 @@ def completo(item):
         infoLabels = {'filtro': {"original_language": "ja"}.items()}
         itemlist.append(Item(channel=item.channel, action=action, title=scrapedtitle, url=url, thumbnail=thumb,
                              text_color=color3, contentTitle=title, contentSerieName=show, extra="completo",
-                             context=renumbertools.context, contentType=tipo, infoLabels=infoLabels))
+                             context=renumbertools.context(item), contentType=tipo, infoLabels=infoLabels))
 
     return itemlist
 
@@ -227,7 +227,7 @@ def episodios(item):
     for url, title in matches:
         url = host + url
         epi = scrapertools.find_single_match(title, '(?i)%s.*? (\d+) (?:Sub|Audio|Español)' % item.contentSerieName)
-        new_item = item.clone(action="findvideos", url=url, title=title, extra="", context=renumbertools.context)
+        new_item = item.clone(action="findvideos", url=url, title=title, extra="")
         if epi:
             season, episode = renumbertools.numbered_for_tratk(
                 item.channel, show, 1, int(epi))
@@ -301,7 +301,7 @@ def emision(item):
             infoLabels = {'filtro': {"original_language": "ja"}.items()}
             itemlist.append(item.clone(action="episodios", title=scrapedtitle, url=url, thumbnail=thumb, text_color=color3,
                                        contentTitle=title, contentSerieName=title, extra="recientes",
-                                       context=renumbertools.context, infoLabels=infoLabels))
+                                       context=renumbertools.context(item), infoLabels=infoLabels))
 
     return itemlist
 
