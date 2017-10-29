@@ -28,8 +28,6 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, action="mainpage", title="Géneros", url=host,
-                         thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, action="mainpage", title="Categorías", url=host,
                          thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, action="mainpage", title="Más Populares", url=host,
@@ -57,13 +55,9 @@ def mainpage(item):
 
     data1 = httptools.downloadpage(item.url).data
     data1 = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data1)
-    logger.info("datasad "+data1)
-    if item.title=="Géneros":
-        patron_sec='<nav class="genres">(.+?)<\/nav>'
-        patron='<a href="([^"]+)">([^"]+)<\/a>'#scrapedurl, #scrapedtitle
     if item.title=="Más Populares":
-        patron_sec='<h2 class="widget-title">Las más populares<\/h2>(.+?)<\/aside>'
-        patron='<a href="([^"]+)">.+?<img src="([^"]+)" .+?>.+?<h3>([^"]+)<\/h3>' #scrapedurl, #scrapedthumbnail, #scrapedtitle
+        patron_sec='<a class="lglossary" data-type.+?>(.+?)<\/ul>'
+        patron='<img .+? src="([^"]+)".+?<a href="([^"]+)".+?>([^"]+)<\/a>' #scrapedthumbnail, #scrapedurl, #scrapedtitle
     if item.title=="Categorías":
         patron_sec='<ul id="main_header".+?>(.+?)<\/ul><\/div>'
         patron='<a href="([^"]+)">([^"]+)<\/a>'#scrapedurl, #scrapedtitle
@@ -79,12 +73,8 @@ def mainpage(item):
         return itemlist
     else:
         for scraped1, scraped2, scrapedtitle in matches:
-            if item.title=="Novedades":
-                scrapedthumbnail=scraped1
-                scrapedurl=scraped2
-            else:
-                scrapedthumbnail=scraped2
-                scrapedurl=scraped1
+            scrapedthumbnail=scraped1
+            scrapedurl=scraped2
             itemlist.append(
                     Item(channel=item.channel, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, action="episodios",
                          show=scrapedtitle))
@@ -127,6 +117,8 @@ def episodios(item):
     matches = scrapertools.find_multiple_matches(data_lista, patron_caps)
     for scrapedthumbnail, scrapedtempepi, scrapedurl, scrapedtitle in matches:
         tempepi=scrapedtempepi.split(" - ")
+        if tempepi[0]=='Pel':
+            tempepi[0]=0
         title="{0}x{1} - ({2})".format(tempepi[0], tempepi[1].zfill(2), scrapedtitle)
         itemlist.append(Item(channel=item.channel, thumbnail=scrapedthumbnail,
                         action="findvideos", title=title, url=scrapedurl, show=show))
@@ -158,6 +150,8 @@ def findvideos(item):
         if codigo==200:
             if "ok.ru" in url:
                 server='okru'
+            else:
+                server=''
             if "openload" in url:
                 server='openload'
             if "google" in url:
@@ -166,8 +160,12 @@ def findvideos(item):
                 server='rapidvideo'
             if "streamango" in url:
                 server='streamango'
-            itemlist.append(item.clone(url=url, action="play", server=server,
-                        title="Enlace encontrado en %s " % (server.capitalize())))
+            if server!='':
+                title="Enlace encontrado en %s " % (server.capitalize())
+            else:
+                title="NO DISPONIBLE"
+            if title!="NO DISPONIBLE":
+                itemlist.append(item.clone(title=title,url=url, action="play", server=server))
             
     autoplay.start(itemlist, item)
     return itemlist
