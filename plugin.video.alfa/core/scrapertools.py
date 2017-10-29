@@ -29,19 +29,19 @@ def downloadpage(url, post=None, headers=None, follow_redirects=True, timeout=No
         return response.data
 
 
-def downloadpageWithResult(url, post=None, headers=None, follow_redirects=True, timeout=None, header_to_get=None):
-    response = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=follow_redirects,
-                                      timeout=timeout)
+# def downloadpageWithResult(url, post=None, headers=None, follow_redirects=True, timeout=None, header_to_get=None):
+#     response = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=follow_redirects,
+#                                       timeout=timeout)
+#
+#     if header_to_get:
+#         return response.headers.get(header_to_get)
+#     else:
+#         return response.data, response.code
 
-    if header_to_get:
-        return response.headers.get(header_to_get)
-    else:
-        return response.data, response.code
 
-
-def downloadpageWithoutCookies(url):
-    response = httptools.downloadpage(url, cookies=False)
-    return response.data
+# def downloadpageWithoutCookies(url):
+#     response = httptools.downloadpage(url, cookies=False)
+#     return response.data
 
 
 def downloadpageGzip(url):
@@ -60,9 +60,9 @@ def get_header_from_response(url, header_to_get="", post=None, headers=None):
     return response.headers.get(header_to_get)
 
 
-def get_headers_from_response(url, post=None, headers=None):
-    response = httptools.downloadpage(url, post=post, headers=headers, only_headers=True)
-    return response.headers.items()
+# def get_headers_from_response(url, post=None, headers=None):
+#     response = httptools.downloadpage(url, post=post, headers=headers, only_headers=True)
+#     return response.headers.items()
 
 
 def read_body_and_headers(url, post=None, headers=None, follow_redirects=False, timeout=None):
@@ -71,10 +71,10 @@ def read_body_and_headers(url, post=None, headers=None, follow_redirects=False, 
     return response.data, response.headers
 
 
-def anti_cloudflare(url, host="", headers=None, post=None, location=False):
-    # anti_cloudfare ya integrado en httptools por defecto
-    response = httptools.downloadpage(url, post=post, headers=headers)
-    return response.data
+# def anti_cloudflare(url, host="", headers=None, post=None, location=False):
+#     # anti_cloudfare ya integrado en httptools por defecto
+#     response = httptools.downloadpage(url, post=post, headers=headers)
+#     return response.data
 
 
 def printMatches(matches):
@@ -385,24 +385,24 @@ def remove_show_from_title(title, show):
     return title
 
 
-def getRandom(str):
-    return get_md5(str)
+# def getRandom(str):
+#     return get_md5(str)
 
 
-def unseo(cadena):
-    if cadena.upper().startswith("VER GRATIS LA PELICULA "):
-        cadena = cadena[23:]
-    elif cadena.upper().startswith("VER GRATIS PELICULA "):
-        cadena = cadena[20:]
-    elif cadena.upper().startswith("VER ONLINE LA PELICULA "):
-        cadena = cadena[23:]
-    elif cadena.upper().startswith("VER GRATIS "):
-        cadena = cadena[11:]
-    elif cadena.upper().startswith("VER ONLINE "):
-        cadena = cadena[11:]
-    elif cadena.upper().startswith("DESCARGA DIRECTA "):
-        cadena = cadena[17:]
-    return cadena
+# def unseo(cadena):
+#     if cadena.upper().startswith("VER GRATIS LA PELICULA "):
+#         cadena = cadena[23:]
+#     elif cadena.upper().startswith("VER GRATIS PELICULA "):
+#         cadena = cadena[20:]
+#     elif cadena.upper().startswith("VER ONLINE LA PELICULA "):
+#         cadena = cadena[23:]
+#     elif cadena.upper().startswith("VER GRATIS "):
+#         cadena = cadena[11:]
+#     elif cadena.upper().startswith("VER ONLINE "):
+#         cadena = cadena[11:]
+#     elif cadena.upper().startswith("DESCARGA DIRECTA "):
+#         cadena = cadena[17:]
+#     return cadena
 
 
 # scrapertools.get_filename_from_url(media_url)[-4:]
@@ -424,19 +424,19 @@ def get_filename_from_url(url):
     return filename
 
 
-def get_domain_from_url(url):
-    import urlparse
-    parsed_url = urlparse.urlparse(url)
-    try:
-        filename = parsed_url.netloc
-    except:
-        # Si falla es porque la implementación de parsed_url no reconoce los atributos como "path"
-        if len(parsed_url) >= 4:
-            filename = parsed_url[1]
-        else:
-            filename = ""
-
-    return filename
+# def get_domain_from_url(url):
+#     import urlparse
+#     parsed_url = urlparse.urlparse(url)
+#     try:
+#         filename = parsed_url.netloc
+#     except:
+#         # Si falla es porque la implementación de parsed_url no reconoce los atributos como "path"
+#         if len(parsed_url) >= 4:
+#             filename = parsed_url[1]
+#         else:
+#             filename = ""
+#
+#     return filename
 
 
 def get_season_and_episode(title):
@@ -475,25 +475,25 @@ def get_season_and_episode(title):
     return filename
 
 
-def get_sha1(cadena):
-    try:
-        import hashlib
-        devuelve = hashlib.sha1(cadena).hexdigest()
-    except:
-        import sha
-        import binascii
-        devuelve = binascii.hexlify(sha.new(cadena).digest())
+# def get_sha1(cadena):
+#     try:
+#         import hashlib
+#         devuelve = hashlib.sha1(cadena).hexdigest()
+#     except:
+#         import sha
+#         import binascii
+#         devuelve = binascii.hexlify(sha.new(cadena).digest())
+#
+#     return devuelve
 
-    return devuelve
 
-
-def get_md5(cadena):
-    try:
-        import hashlib
-        devuelve = hashlib.md5(cadena).hexdigest()
-    except:
-        import md5
-        import binascii
-        devuelve = binascii.hexlify(md5.new(cadena).digest())
-
-    return devuelve
+# def get_md5(cadena):
+#     try:
+#         import hashlib
+#         devuelve = hashlib.md5(cadena).hexdigest()
+#     except:
+#         import md5
+#         import binascii
+#         devuelve = binascii.hexlify(md5.new(cadena).digest())
+#
+#     return devuelve

@@ -7,25 +7,6 @@
   "thumbnail": "cinetux.png",
   "banner": "cinetux.png",
   "fanart": "cinetux.jpg",
-  "version": 1,
-  "changes": [
-    {
-      "date": "31/07/2017",
-      "description": "Actualizado por cambio de estructura de la página"
-    },
-    {
-      "date": "12/05/2017",
-      "description": "Arreglada paginación y enlaces directos"
-    },
-    {
-      "date": "16/02/2017",
-      "description": "Adaptado a httptools y añadidos enlaces directos"
-    },
-    {
-      "date": "08/07/2016",
-      "description": "Correciones y adaptaciones a la nueva version"
-    }
-  ],
   "categories": [
     "direct",
     "movie"

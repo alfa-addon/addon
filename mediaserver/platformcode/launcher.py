@@ -87,32 +87,15 @@ def run(item):
         if item.action == "mainlist":
             itemlist = channelselector.getmainlist("banner_")
 
-            # if config.get_setting("check_for_plugin_updates"):
-            #     logger.info("channelselector.mainlist Verificar actualizaciones activado")
-            #
-            #     from core import updater
-            #     try:
-            #         version = updater.checkforupdates()
-            #
-            #         if version:
-            #             platformtools.dialog_ok("Versión " + version + " disponible",
-            #                                     "Ya puedes descargar la nueva versión del plugin\ndesde el listado principal")
-            #             itemlist.insert(0, Item(title="Actualizar Alfa a la versión " + version, version=version,
-            #                                     channel="updater", action="update",
-            #                                     thumbnail=os.path.join(config.get_runtime_path(), "resources", "images",
-            #                                                            "banner", "thumb_update.png")))
-            #     except:
-            #         platformtools.dialog_ok("No se puede conectar", "No ha sido posible comprobar",
-            #                                 "si hay actualizaciones")
-            #         logger.info("Fallo al verificar la actualización")
-            #
-            # else:
-            #     logger.info("Verificar actualizaciones desactivado")
-
         if item.action == "getchanneltypes":
             itemlist = channelselector.getchanneltypes("banner_")
         if item.action == "filterchannels":
             itemlist = channelselector.filterchannels(item.channel_type, "banner_")
+
+    elif item.action == "script":
+        from core import tmdb
+        if tmdb.drop_bd():
+            platformtools.dialog_notification("Alfa", "caché eliminada", time=2000, sound=False)
 
     # Todas las demas las intenta ejecturaren el siguiente orden:
     # 1. En el canal

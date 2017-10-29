@@ -4,15 +4,8 @@
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "version": 1,
   "thumbnail": "http://www.maxipelis.net/wp-content/uploads/2016/12/applogo.png",
   "banner": "",
-  "changes": [
-    {
-      "date": "25/08/2017",
-      "description": "Nuevo canal"
-    }
-  ],
   "categories": [
     "movie"
   ],

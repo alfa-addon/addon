@@ -6,13 +6,6 @@
   "language": ["lat"],
   "thumbnail": "https://s26.postimg.org/72c9mr3ux/pelismundo1.png",
   "banner": "",
-  "version": 1,
-  "changes": [
-    {
-      "date": "12/10/2017",
-      "description": "Primera version"
-    }
-  ],
   "categories": [
     "movie"
   ],

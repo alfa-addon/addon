@@ -6,25 +6,6 @@
   "language": ["cast", "lat"],
   "thumbnail": "animeflv.png",
   "banner": "animeflv.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "18/05/2017",
-      "description": "fix ultimos animes, episodios"
-    },
-    {
-      "date": "06/04/2017",
-      "description": "fix ultimos episodios"
-    },
-    {
-      "date": "01/03/2017",
-      "description": "fix nueva web"
-    },
-    {
-      "date": "09/07/2016",
-      "description": "Arreglo viewmode"
-    }
-  ],
   "categories": [
     "anime"
   ],

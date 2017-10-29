@@ -5,13 +5,6 @@
   "adult": false,
   "language": "es",
   "thumbnail": "http://i.imgur.com/dHpupFk.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "17/05/2017",
-      "description": "Fix novedades y replace en findvideos"
-    }
-  ],
   "categories": [
     "anime"
   ],

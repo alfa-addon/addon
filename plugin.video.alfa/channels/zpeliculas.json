@@ -6,21 +6,6 @@
   "language": ["cast", "lat"],
   "banner": "zpeliculas.png",
   "thumbnail": "zpeliculas.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "01/07/16",
-      "description": "Eliminado código innecesario."
-    },
-    {
-      "date": "29/04/16",
-      "description": "Adaptar a Buscador global y Novedades Peliculas e Infantiles"
-    }
-  ],
   "categories": [
     "movie"
   ],

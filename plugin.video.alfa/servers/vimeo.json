@@ -1,11 +1,5 @@
 {
   "active": true,
-  "changes": [
-    {
-      "date": "25/03/2016",
-      "description": "Versión incial"
-    }
-  ],
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -48,6 +42,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s26.postimg.org/vo685y2bt/vimeo1.png",
-  "version": 1
+  "thumbnail": "https://s26.postimg.org/vo685y2bt/vimeo1.png"
 }

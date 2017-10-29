@@ -5,13 +5,6 @@
   "adult": false,
   "language": ["lat"],
   "thumbnail": "http://i.imgur.com/vKcZxXS.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "18/05/2017",
-      "description": "Primera Version"
-    }
-  ],
   "categories": [
     "tvshow"
   ]

@@ -6,13 +6,6 @@
   "language": ["cast", "lat"],
   "thumbnail": "cinehindi.png",
   "banner": "http://i.imgur.com/cau9TVe.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "25/05/2017",
-      "description": "Primera versión completa del canal"
-    }
-  ],
   "categories": [
     "movie"
   ]

@@ -7,37 +7,6 @@
   "fanart": "http://i.imgur.com/9QbyJrf.jpg",
   "thumbnail": "pelispedia.png",
   "banner": "pelispedia.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "07/06/17",
-      "description": "Reconoce servidor raptu"
-    },
-    {
-      "date": "21/04/17",
-      "description": "Corregido método play, fix ordenación de episodios"
-    },
-    {
-      "date": "06/04/17",
-      "description": "Se permite configurar sin color, varias correcciones"
-    },
-    {
-      "date": "01/02/17",
-      "description": "Corregido método play"
-    },
-    {
-      "date": "19/07/16",
-      "description": "Corregido el método play"
-    },
-    {
-      "date": "01/07/16",
-      "description": "Eliminado código innecesario."
-    },
-    {
-      "date": "06/06/16",
-      "description": "Añadida info extra de tmdb. Añadido el canal en la busqueda de novedades"
-    }
-  ],
   "categories": [
     "movie",
     "tvshow",

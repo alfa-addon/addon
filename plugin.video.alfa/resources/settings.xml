@@ -21,7 +21,7 @@
         <setting id="adult_aux_new_password2" type="text" label="Confirmar nueva contraseña:" option="hidden" enable="!eq(-1,)" default=""/>
     </category>
 
-    <!-- Path downloads and subtitles -->
+    <!-- Path downloads -->
     <category label="30501">
         <setting id="path_selection" type="enum" values="Escribir ruta|Examinar ruta" default="0" label="Tipo de ruta"/>
         <setting id="downloadpath" type="text" label="30017" default="" visible="eq(-1,0)"/>

@@ -6,37 +6,6 @@
   "language": ["lat"],
   "thumbnail": "https://s13.postimg.org/z5dbzfasn/pelisplus.png",
   "banner": "https://s16.postimg.org/p9xz2vlo5/pelisplus_banner.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "24/06/2017",
-      "description": "Cambios para autoplay"
-    },
-    {
-      "date": "06/06/2017",
-      "description": "compatibilidad con AutoPlay"
-    },
-    {
-      "date": "03/06/2017",
-      "description": "Reparado por falla del canal"
-    },
-    {
-      "date": "25/05/2017",
-      "description": "cambios esteticos"
-    },
-    {
-      "date": "02/05/2017",
-      "description": "fix findvideos"
-    },
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "06/12/2016",
-      "description": "Release."
-    }
-  ],
   "categories": [
     "movie",
     "tvshow",

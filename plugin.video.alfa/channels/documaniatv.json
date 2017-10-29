@@ -6,17 +6,6 @@
   "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/qMR9sg9.png",
   "banner": "documaniatv.png",
-  "version": 1,
-  "changes": [
-    {
-      "date": "15/03/2017",
-      "description": "limpieza código"
-    },
-    {
-      "date": "11/07/2016",
-      "description": "Reparadas cuentas de usuario."
-    }
-  ],
   "categories": [
     "documentary"
   ],

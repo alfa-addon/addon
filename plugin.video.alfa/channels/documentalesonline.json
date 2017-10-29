@@ -5,17 +5,6 @@
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/fsrnC4m.jpg",
-  "version": 1,
-  "changes": [
-    {
-      "date": "15/04/2017",
-      "description": "fix novedades"
-    },
-    {
-      "date": "09/03/2017",
-      "description": "nueva web"
-    }
-  ],
   "categories": [
     "documentary"
   ],

@@ -1251,7 +1251,6 @@ class Tmdb(object):
             buscando = "id_Tmdb: " + str(self.result["id"]) + " temporada: " + str(numtemporada) + "\nURL: " + url
             logger.info("[Tmdb.py] Buscando " + buscando)
             try:
-                # self.temporada[numtemporada] = jsontools.load(scrapertools.downloadpageWithoutCookies(url))
                 self.temporada[numtemporada] = self.get_json(url)
 
             except:
