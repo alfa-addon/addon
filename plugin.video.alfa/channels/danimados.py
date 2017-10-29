@@ -28,8 +28,6 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, action="mainpage", title="Novedades", url=host,
-                         thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, action="mainpage", title="Géneros", url=host,
                          thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, action="mainpage", title="Categorías", url=host,
@@ -59,9 +57,7 @@ def mainpage(item):
 
     data1 = httptools.downloadpage(item.url).data
     data1 = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data1)
-    if item.title=="Novedades":
-        patron_sec='<div id="genre_en-estreno" class="list_genres items">(.+?)<\/article><\/div>'
-        patron='<img src="([^"]+)".+?>.+?<a href=.+?>.+?<a href="([^"]+)">([^"]+)<\/a>' #scrapedthumbnail, #scrapedurl, #scrapedtitle
+    logger.info("datasad "+data1)
     if item.title=="Géneros":
         patron_sec='<nav class="genres">(.+?)<\/nav>'
         patron='<a href="([^"]+)">([^"]+)<\/a>'#scrapedurl, #scrapedtitle
