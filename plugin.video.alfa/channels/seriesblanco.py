@@ -338,7 +338,7 @@ def play(item):
     else:
         url = item.url
 
-    itemlist = servertools.find_video_items(data=url)
+    itemlist = servertools.find_video_items(item=item,data=url)
 
     titulo = scrapertoolsV2.find_single_match(item.fulltitle, "^(.*?)\s\[.+?$")
     if titulo:
