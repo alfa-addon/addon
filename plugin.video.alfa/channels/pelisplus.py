@@ -176,7 +176,7 @@ def lista(item):
         patron = '<img.*?width="147" heigh="197".*?src="([^"]+)".*?>.*?.<i class="icon online-play"><\/i>.*?.<h2 ' \
                  'class="title title-.*?">.*?.<a href="([^"]+)" title="([^"]+)">.*?>'
         actual = scrapertools.find_single_match(data,
-                                                '<a href="http:\/\/www.pelisplus.tv\/.*?\/pag-([^p]+)pag-2" '
+                                                '<a href="https:\/\/www.pelisplus.tv\/.*?\/pag-([^p]+)pag-2" '
                                                 'class="page bicon last"><<\/a>')
     else:
         patron = '<img data-original="([^"]+)".*?width="147" heigh="197".*?src=.*?>.*?\n<i class="icon ' \
