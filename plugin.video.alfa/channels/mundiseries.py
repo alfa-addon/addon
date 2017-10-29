@@ -86,6 +86,7 @@ def findvideos(item):
     itemlist = []
     id = ""
     type = ""
+    data = httptools.downloadpage(item.url).data
     it2 = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     itemlist.extend(servertools.find_video_items(data=data))
     
