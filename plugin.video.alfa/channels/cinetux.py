@@ -28,9 +28,9 @@ def mainlist(item):
     itemlist = []
     item.viewmode = viewmode
 
-    data = httptools.downloadpage(CHANNEL_HOST).data
-    total = scrapertools.find_single_match(data, "TENEMOS\s<b>(.*?)</b>")
-    titulo = "Peliculas"
+    data = httptools.downloadpage(CHANNEL_HOST + "pelicula").data
+    total = scrapertools.find_single_match(data, "Películas</h1><span>(.*?)</span>")
+    titulo = "Peliculas (%s)" %total
     itemlist.append(item.clone(title=titulo, text_color=color2, action="", text_bold=True))
     itemlist.append(item.clone(action="peliculas", title="      Novedades", url=CHANNEL_HOST + "pelicula",
                                thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
