@@ -311,7 +311,6 @@ def findvideos(item):
         d=c[0].rstrip( )
         d=d.lstrip( )
         list_links[i].server=d
-
     autoplay.start(list_links, item)
 
     return list_links
@@ -319,7 +318,6 @@ def findvideos(item):
 
 def play(item):
     logger.info("%s - %s = %s" % (item.show, item.title, item.url))
-
     if item.url.startswith(HOST):
         data = httptools.downloadpage(item.url).data
 
