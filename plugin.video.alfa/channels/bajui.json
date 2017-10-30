@@ -1,0 +1,26 @@
+{
+  "id": "bajui",
+  "name": "Bajui",
+  "active": true,
+  "adult": false,
+  "language": ["cast"],
+  "thumbnail": "bajui.png",
+  "banner": "bajui.png",
+  "fanart": "bajui.png",
+  "categories": [
+    "movie",
+    "tvshow",
+    "documentary",
+    "vos"
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}
