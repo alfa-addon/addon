@@ -1,0 +1,19 @@
+{
+  "id": "danimados",
+  "name": "Danimados",
+  "active": true,
+  "adult": false,
+  "language": ["lat"],
+  "thumbnail": "https://imgur.com/kU5Lx1S.png",
+  "banner": "https://imgur.com/xG5xqBq.png",
+  "version": 1,
+  "changes": [
+    {
+      "date": "24/10/2017",
+      "description": "Primera version del canal"
+    }
+  ],
+  "categories": [
+    "tvshow"
+  ]
+}

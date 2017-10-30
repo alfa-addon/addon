@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 
@@ -149,34 +149,14 @@ def findvideos(item):
     for server, quality, url in itemla:
         if "Calidad Alta" in quality:
             quality = quality.replace("Calidad Alta", "HQ")
-            server = server.lower().strip()
-            if "ok" == server:
-                server = 'okru'
-            if "netu" == server:
-                continue
+        if " Calidad media - Carga mas rapido" in quality:
+            quality = quality.replace(" Calidad media - Carga mas rapido", "360p")
+        server = server.lower().strip()
+        if "ok" == server:
+            server = 'okru'
         itemlist.append(item.clone(url=url, action="play", server=server, contentQuality=quality,
                                    thumbnail=scrapedthumbnail, plot=scrapedplot,
                                    title="Enlace encontrado en %s: [%s]" % (server.capitalize(), quality)))
-
+    
     autoplay.start(itemlist, item)
-    return itemlist
-
-
-def play(item):
-    logger.info()
-
-    itemlist = []
-
-    # Buscamos video por servidor ...
-    devuelve = servertools.findvideosbyserver(item.url, item.server)
-
-    if not devuelve:
-        # ...sino lo encontramos buscamos en todos los servidores disponibles
-        devuelve = servertools.findvideos(item.url, skip=True)
-
-    if devuelve:
-        # logger.debug(devuelve)
-        itemlist.append(Item(channel=item.channel, title=item.contentTitle, action="play", server=devuelve[0][2],
-                             url=devuelve[0][1], thumbnail=item.thumbnail))
-
     return itemlist
