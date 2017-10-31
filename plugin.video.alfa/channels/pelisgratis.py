@@ -215,18 +215,20 @@ def search(item, texto):
 def findvideos(item):
     logger.info()
     itemlist = []
-    duplicados = []
 
     data = get_source(item.url)
-    patron = '<div class=TPlayerTbCurrent id=(.*?)><iframe.*?src=(.*?) frameborder'
+    patron = '<div class=TPlayer.*?\s+id=(.*?)><iframe width=560 height=315 src=(.*?) frameborder=0'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for opt, urls_page in matches:
-        language = scrapertools.find_single_match (data,'data-TPlayerNv=%s><span>Opción <strong>.*?'
+        logger.debug ('option: %s' % opt)
+        language = scrapertools.find_single_match (data,'data-TPlayerNv=%s><span>Opción <strong>.'
                                                         '<\/strong><\/span>.*?<span>(.*?)<\/span'%opt)
-        data = httptools.downloadpage(urls_page).data
-        servers = scrapertools.find_multiple_matches(data,'<button id="(.*?)"')
+
+        video_data = httptools.downloadpage(urls_page).data
+        servers = scrapertools.find_multiple_matches(video_data,'<button id="(.*?)"')
         for server in servers:
+            quality = item.quality
             info_urls = urls_page.replace('embed','get')
             video_info=httptools.downloadpage(info_urls+'/'+server).data
             video_info =  jsontools.load(video_info)
@@ -238,8 +240,13 @@ def findvideos(item):
                     url = 'https://'+video_server+'/embed/'+video_id
                 else:
                     url = 'https://'+video_server+'/e/'+video_id
-                title = item.title
-                itemlist.append(item.clone(title=title, url=url, action='play', language=language))
+                title = item.contentTitle + ' [%s] [%s]'%(quality, language)
+                itemlist.append(item.clone(title=title,
+                                           url=url,
+                                           action='play',
+                                           language=language,
+                                           quality=quality
+                                           ))
     itemlist = servertools.get_servers_itemlist(itemlist)
     return itemlist
 

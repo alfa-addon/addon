@@ -21,8 +21,7 @@ list_language = ['default']
 CALIDADES = ['SD', 'HDiTunes', 'Micro-HD-720p', 'Micro-HD-1080p', '1080p', '720p']
 list_quality = CALIDADES
 
-list_servers = ['streamix',
-                'powvideo',
+list_servers = ['powvideo',
                 'streamcloud',
                 'openload',
                 'flashx',
@@ -311,6 +310,8 @@ def findvideos(item):
         d=c[0].rstrip( )
         d=d.lstrip( )
         list_links[i].server=d
+
+    list_links = servertools.get_servers_itemlist(list_links)
     autoplay.start(list_links, item)
 
     return list_links
