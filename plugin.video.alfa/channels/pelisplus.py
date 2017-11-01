@@ -428,13 +428,17 @@ def get_vip(url):
     itemlist =[]
     url= url.replace('reproductor','vip')
     data = httptools.downloadpage(url).data
-    patron = '<a href="(.*?)"> '
-    video_urls = scrapertools.find_multiple_matches(data,'<a href="(.*?)">')
+    video_urls = scrapertools.find_multiple_matches(data,'<a href="(.*?)".*?>')
     for item in video_urls:
-        id, tipo, lang= scrapertools.find_single_match(item,'plus\/(\d+)\/.*?=(\d+).*?=(.*)')
-        new_url = 'https://www.elreyxhd.com/pelisplus.php?id=%s&tipo=%s&idioma=%s' % (id, tipo, lang)
-        data=httptools.downloadpage(new_url, follow_redirects=False).headers
-        itemlist.extend(servertools.find_video_items(data=str(data)))
+        if 'elreyxhd' in item:
+            if 'plus'in item:
+                id, tipo, lang= scrapertools.find_single_match(item,'plus\/(\d+)\/.*?=(\d+).*?=(.*)')
+                new_url = 'https://www.elreyxhd.com/pelisplus.php?id=%s&tipo=%s&idioma=%s' % (id, tipo, lang)
+            else:
+                id = scrapertools.find_single_match(item,'episodes\/(\d+)')
+                new_url = 'https://www.elreyxhd.com/samir.php?id=%s&tipo=capitulo&idioma=latino&x=&sv=' % id
+            data=httptools.downloadpage(new_url, follow_redirects=False).headers
+            itemlist.extend(servertools.find_video_items(data=str(data)))
 
     return itemlist
 
