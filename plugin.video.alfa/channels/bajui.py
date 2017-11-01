@@ -13,7 +13,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Películas", action="menupeliculas",
-                         url="http://www.bajui2.com/descargas/categoria/2/peliculas",
+                         url="http://www.bajui.org/descargas/categoria/2/peliculas",
                          fanart=item.fanart))
     itemlist.append(Item(channel=item.channel, title="Series", action="menuseries",
                          fanart=item.fanart))
@@ -51,13 +51,13 @@ def menuseries(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Series - Novedades", action="peliculas",
-                         url="http://www.bajui2.com/descargas/categoria/3/series",
+                         url="http://www.bajui.org/descargas/categoria/3/series",
                          fanart=item.fanart, viewmode="movie_with_plot"))
     itemlist.append(Item(channel=item.channel, title="Series - A-Z", action="peliculas",
-                         url="http://www.bajui2.com/descargas/categoria/3/series/orden:nombre",
+                         url="http://www.bajui.org/descargas/categoria/3/series/orden:nombre",
                          fanart=item.fanart, viewmode="movie_with_plot"))
     itemlist.append(Item(channel=item.channel, title="Series - HD", action="peliculas",
-                         url="http://www.bajui2.com/descargas/subcategoria/11/hd/orden:nombre",
+                         url="http://www.bajui.org/descargas/subcategoria/11/hd/orden:nombre",
                          fanart=item.fanart, viewmode="movie_with_plot"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url="",
                          fanart=item.fanart))
@@ -68,10 +68,10 @@ def menudocumentales(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Documentales - Novedades", action="peliculas",
-                         url="http://www.bajui2.com/descargas/categoria/7/docus-y-tv",
+                         url="http://www.bajui.org/descargas/categoria/7/docus-y-tv",
                          fanart=item.fanart, viewmode="movie_with_plot"))
     itemlist.append(Item(channel=item.channel, title="Documentales - A-Z", action="peliculas",
-                         url="http://www.bajui2.com/descargas/categoria/7/docus-y-tv/orden:nombre",
+                         url="http://www.bajui.org/descargas/categoria/7/docus-y-tv/orden:nombre",
                          fanart=item.fanart, viewmode="movie_with_plot"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url="",
                          fanart=item.fanart))
@@ -86,7 +86,7 @@ def search(item, texto, categoria=""):
     texto = texto.replace(" ", "+")
     logger.info("categoria: " + categoria + " url: " + url)
     try:
-        item.url = "http://www.bajui2.com/descargas/busqueda/%s"
+        item.url = "http://www.bajui.org/descargas/busqueda/%s"
         item.url = item.url % texto
         itemlist.extend(peliculas(item))
         return itemlist
@@ -118,7 +118,7 @@ def peliculas(item, paginacion=True):
         scrapedtitle = title
         scrapedplot = clean_plot(plot)
         scrapedurl = urlparse.urljoin(item.url, url)
-        scrapedthumbnail = urlparse.urljoin("http://www.bajui2.com/", thumbnail.replace("_m.jpg", "_g.jpg"))
+        scrapedthumbnail = urlparse.urljoin("http://www.bajui.org/", thumbnail.replace("_m.jpg", "_g.jpg"))
         logger.debug("title=[" + scrapedtitle + "], url=[" + scrapedurl + "], thumbnail=[" + scrapedthumbnail + "]")
 
         # Añade al listado de XBMC
@@ -133,7 +133,7 @@ def peliculas(item, paginacion=True):
     scrapertools.printMatches(matches)
 
     if len(matches) > 0:
-        scrapedurl = urlparse.urljoin("http://www.bajui2.com/", matches[0])
+        scrapedurl = urlparse.urljoin("http://www.bajui.org/", matches[0])
         pagitem = Item(channel=item.channel, action="peliculas", title=">> Página siguiente", url=scrapedurl,
                        fanart=item.fanart, viewmode="movie_with_plot")
         if not paginacion:
@@ -197,7 +197,7 @@ def enlaces(item):
 
     try:
         item.thumbnail = scrapertools.get_match(data, '<div class="ficha-imagen"[^<]+<img src="([^"]+)"')
-        item.thumbnail = urlparse.urljoin("http://www.bajui2.com/", item.thumbnail)
+        item.thumbnail = urlparse.urljoin("http://www.bajui.org/", item.thumbnail)
     except:
         pass
 
@@ -234,8 +234,8 @@ def enlaces(item):
         lista_servidores = lista_servidores[:-2]
 
         scrapedthumbnail = item.thumbnail
-        # http://www.bajui2.com/ajax/mostrar-enlaces.php?id=330582&code=124767d31bfbf14c3861
-        scrapedurl = "http://www.bajui2.com/ajax/mostrar-enlaces.php?id=" + id + "&code=" + id2
+        # http://www.bajui.org/ajax/mostrar-enlaces.php?id=330582&code=124767d31bfbf14c3861
+        scrapedurl = "http://www.bajui.org/ajax/mostrar-enlaces.php?id=" + id + "&code=" + id2
         scrapedplot = item.plot
         scrapedtitle = "Enlaces de " + usuario + " (" + fecha + ") (" + lista_servidores + ")"
 

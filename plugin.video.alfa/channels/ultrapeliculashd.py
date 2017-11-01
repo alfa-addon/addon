@@ -192,27 +192,24 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
 
-    patron = '<iframe class=metaframe rptss src=(.*?) frameborder=0 allowfullscreen><\/iframe>'
-    matches = matches = re.compile(patron, re.DOTALL).findall(data)
+    patron = '<iframe class=metaframe rptss src=(.*?) (?:width=.*?|frameborder=0) allowfullscreen><\/iframe>'
+    matches = re.compile(patron, re.DOTALL).findall(data)
 
     for video_url in matches:
+        if 'stream' in video_url:
+            data = httptools.downloadpage('https:'+video_url).data
+            new_url=scrapertools.find_single_match(data, 'iframe src="(.*?)"')
+            new_data = httptools.downloadpage(new_url).data
 
-        # TODO Reparar directos
-        # if 'stream' in video_url:
-        #     data = httptools.downloadpage('https:'+video_url).data
-        #     new_url=scrapertools.find_single_match(data, 'iframe src="(.*?)"')
-        #     new_data = httptools.downloadpage(new_url).data
-        #     logger.debug(new_data)
-        #
-        #     url, quality = scrapertools.find_single_match(new_data, "file:'(.*?)',label:'(.*?)'")
-        #     headers_string = '|Referer=%s' % url
-        #     url = url.replace('download', 'preview')+headers_string
-        #     sub = scrapertools.find_single_match(new_data, "file:.*?'(.*?srt)'")
-        #     new_item = (Item(title=item.title, url=url, quality=quality, server='directo',
-        #                      subtitle=sub))
-        #     itemlist.append(new_item)
-        # else:
-        itemlist.extend(servertools.find_video_items(data=video_url))
+            url, quality = scrapertools.find_single_match(new_data, 'file:.*?"(.*?)",label:.*?"(.*?)"')
+            headers_string = '|Referer=%s' % url
+            url = url.replace('download', 'preview')+headers_string
+            sub = scrapertools.find_single_match(new_data, 'file:.*?"(.*?srt)"')
+            new_item = (Item(title=item.title, url=url, quality=quality, server='directo',
+                             subtitle=sub))
+            itemlist.append(new_item)
+        else:
+            itemlist.extend(servertools.find_video_items(data=video_url))
 
     for videoitem in itemlist:
         videoitem.channel = item.channel
