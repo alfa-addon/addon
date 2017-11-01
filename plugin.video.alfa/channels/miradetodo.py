@@ -319,61 +319,34 @@ def findvideos(item):
     duplicados = []
     data = get_source(item.url)
     src = data
-    patron = 'id=(?:div|player)(\d+)>.*?<iframe src=.*? data-lazy-src=(.*?) marginheight'
+    patron = 'id=(?:div|player)(\d+)>.*?data-lazy-src=(.*?) scrolling'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for option, videoitem in matches:
         lang = scrapertools.find_single_match(src,
-                                              '<a href=#(?:div|player)%s.*?>.*?(Doblado|Subtitulado)<\/a>' % option)
+                                              '<a href=#(?:div|player)%s.*?>.*?(.*?)<\/a>' % option)
+        if 'audio ' in lang.lower():
+            lang=lang.lower().replace('audio ','')
+            lang=lang.capitalize()
+
         data = get_source(videoitem)
-        if 'play' in videoitem:
-            url = scrapertools.find_single_match(data, '<span>Ver Online<.*?<li><a href=(.*?)><span class=icon>')
-        else:
-            url = scrapertools.find_single_match(data, '<iframe src=(.*?) scrolling=')
+        video_urls = scrapertools.find_multiple_matches(data, '<li><a href=(.*?)><span')
+        for video in video_urls:
+            video_data = get_source(video)
+            if not 'fastplay' in video:
+                new_url= scrapertools.find_single_match(video_data,'<li><a href=(.*?srt)><span')
+                data_final = get_source(new_url)
+            else:
+                data_final=video_data
+            url = scrapertools.find_single_match(data_final,'iframe src=(.*?) scrolling')
+            quality = item.quality
+            server = servertools.get_server_from_url(url)
+            title = item.contentTitle + ' [%s] [%s]' % (server, lang)
+            if item.quality != '':
+                title = item.contentTitle + ' [%s] [%s] [%s]' % (server, quality, lang)
 
-        url_list.append([url, lang])
-
-    for video_url in url_list:
-        language = video_url[1]
-        if 'jw.miradetodo' in video_url[0]:
-            data = get_source('http:' + video_url[0])
-            patron = 'label:.*?(.*?),.*?file:.*?(.*?)&app.*?\}'
-            matches = re.compile(patron, re.DOTALL).findall(data)
-
-            for quality, scrapedurl in matches:
-                quality = quality
-                title = item.contentTitle + ' (%s) %s' % (quality, language)
-                server = 'directo'
-                url = scrapedurl
-                url = url.replace('\/', '/')
-                subtitle = scrapertools.find_single_match(data, "tracks: \[\{file: '.*?linksub=(.*?)',label")
-                if url not in duplicados:
-                    itemlist.append(item.clone(title=title,
-                                               action='play',
-                                               url=url,
-                                               quality=quality,
-                                               server=server,
-                                               subtitle=subtitle,
-                                               language=language
-                                               ))
-                    duplicados.append(url)
-        elif video_url != '':
-            itemlist.extend(servertools.find_video_items(data=video_url[0]))
-
-        import os
-        for videoitem in itemlist:
-            if videoitem.server != 'directo':
-
-                quality = item.quality
-                title = item.contentTitle + ' (%s) %s' % (videoitem.server, language)
-                if item.quality != '':
-                    title = item.contentTitle + ' (%s) %s' % (quality, language)
-                videoitem.title = title
-                videoitem.channel = item.channel
-
-                videoitem.thumbnail = os.path.join(config.get_runtime_path(), "resources", "media", "servers",
-                                                   "server_%s.png" % videoitem.server)
-                videoitem.quality = item.quality
+            if url!='':
+                itemlist.append(item.clone(title=title, url=url, action='play', server=server, language=lang))
 
     if item.infoLabels['mediatype'] == 'movie':
         if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':

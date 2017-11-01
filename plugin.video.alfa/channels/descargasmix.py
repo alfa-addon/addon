@@ -302,7 +302,7 @@ def epienlaces(item):
 
 def findvideos(item):
     logger.info()
-    if (item.extra and item.extra != "findvideos") or item.path:
+    if item.contentSeason!='':
         return epienlaces(item)
 
     itemlist = []
