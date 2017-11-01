@@ -37,7 +37,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     cgi_counter = cgi_counter.replace("%0A","").replace("%22","")
     playnow = scrapertools.find_single_match(data, 'https://www.flashx.tv/dl[^"]+')
     # Para obtener el f y el fxfx
-    js_fxfx = scrapertools.find_single_match(data, """(?is)src=.(https://www.flashx.tv/js/code.js.*?[^(?:'|")]+)""")
+    js_fxfx = "https://www." + scrapertools.find_single_match(data, """(?is)(flashx.tv/js/code.js.*?[^(?:'|")]+)""")
     data_fxfx = httptools.downloadpage(js_fxfx).data
     mfxfx = scrapertools.find_single_match(data_fxfx, 'get.*?({.*?})').replace("'","").replace(" ","")
     matches = scrapertools.find_multiple_matches(mfxfx, '(\w+):(\w+)')
