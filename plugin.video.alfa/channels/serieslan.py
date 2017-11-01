@@ -14,10 +14,7 @@ from channels import autoplay
 
 IDIOMAS = {'latino': 'Latino'}
 list_language = IDIOMAS.values()
-list_servers = ['openload',
-                'okru',
-                'netutv',
-                'rapidvideo'
+list_servers = ['openload'
                 ]
 list_quality = ['default']
 
@@ -49,7 +46,11 @@ def lista(item):
     patron = '<a href="([^"]+)" '
     patron += 'class="link">.+?<img src="([^"]+)".*?'
     patron += 'title="([^"]+)">'
-
+    if item.url==host:
+        a=1
+    else:
+        num=(item.url).split('-')
+        a=int(num[1])
     matches = scrapertools.find_multiple_matches(data, patron)
 
     # Paginacion
@@ -57,17 +58,28 @@ def lista(item):
     min = item.page * num_items_x_pagina
     min=min-item.page
     max = min + num_items_x_pagina - 1
-
+    b=0
     for link, img, name in matches[min:max]:
-        title = name
+        b=b+1
+        if " y " in name:
+            title=name.replace(" y "," & ")
+        else:
+            title = name
         url = host + link
         scrapedthumbnail = host + img
         context1=[renumbertools.context(item), autoplay.context]
         itemlist.append(item.clone(title=title, url=url, action="episodios", thumbnail=scrapedthumbnail, show=title,
                                    context=context1))
-
-    itemlist.append(
-        Item(channel=item.channel, title="Página Siguiente >>", url=item.url, action="lista", page=item.page + 1))
+    logger.info("gasdfsa "+str(b))
+    if b<29:
+        a=a+1
+        url="https://serieslan.com/pag-"+str(a)
+        if b>10:
+            itemlist.append(
+                Item(channel=item.channel, title="Página Siguiente >>", url=url, action="lista", page=0))
+    else:    
+        itemlist.append(
+             Item(channel=item.channel, title="Página Siguiente >>", url=item.url, action="lista", page=item.page + 1))
 
     tmdb.set_infoLabels(itemlist)
     return itemlist
@@ -93,6 +105,10 @@ def episodios(item):
 
         title = ""
         pat = "/"
+        if "Mike, Lu & Og"==item.title:
+            pat="&/"
+        if "KND" in item.title:
+            pat="-"
         # varios episodios en un enlace
         if len(name.split(pat)) > 1:
             i = 0
@@ -134,7 +150,7 @@ def findvideos(item):
     itemlist = []
 
     url_server = "https://openload.co/embed/%s/"
-    url_api_get_key = "https://serieslan.com/ide.php?i=%s&k=%s"
+    url_api_get_key = "https://serieslan.com/idx.php?i=%s&k=%s"
 
     def txc(key, _str):
         s = range(256)
@@ -157,7 +173,7 @@ def findvideos(item):
         return res
 
     data = httptools.downloadpage(item.url).data
-    pattern = '<div id="video" idv="([^"]*)" ide="([^"]*)" ids="[^"]*" class="video">'
+    pattern = "<script type=.+?>.+?\['(.+?)','(.+?)','.+?'\]"
     idv, ide = scrapertools.find_single_match(data, pattern)
     thumbnail = scrapertools.find_single_match(data,
                                                '<div id="tab-1" class="tab-content current">.+?<img src="([^"]*)">')
