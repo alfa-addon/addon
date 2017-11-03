@@ -30,11 +30,6 @@ def mainlist(item):
     itemlist.append(
             Item(channel=item.channel, action="menudesta", title="Destacadas", url= host + "/pag/1",
                  thumbnail="http://img.irtve.es/v/1074982/", fanart=mifan))
-    itemlist.append(Item(channel=item.channel, action="menupelis", title="Proximos estrenos",
-                         url= host + "/archivos/proximos-estrenos/pag/1",
-                         thumbnail="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTpsRC"
-                                   "-GTYzCqhor2gIDfAB61XeymwgXWSVBHoRAKs2c5HAn29f&reload=on",
-                         fanart=mifan))
     itemlist.append(Item(channel=item.channel, action="menupelis", title="Todas las Peliculas",
                          url= host + "/pag/1",
                          thumbnail="https://freaksociety.files.wordpress.com/2012/02/logos-cine.jpg", fanart=mifan))
@@ -70,7 +65,8 @@ def menupelis(item):
     logger.info(item.url)
     itemlist = []
     data = httptools.downloadpage(item.url).data.decode('iso-8859-1').encode('utf-8')
-
+    if item.genre:
+        item.extra = item.genre
     if item.extra == '':
         section = 'Recién Agregadas'
     elif item.extra == 'year':
@@ -79,17 +75,13 @@ def menupelis(item):
         section = 'de Eróticas \+18'
     else:
         section = 'de %s'%item.extra
-
-    patronenlaces = '<h.>Películas %s<\/h.>.*?>(.*?)<\/section>'%section
-    matchesenlaces = re.compile(patronenlaces, re.DOTALL).findall(data)
-
+    patronenlaces = '<h.>Películas %s</h.>.*?>(.*?)</section>'%section
+    matchesenlaces = scrapertools.find_multiple_matches(data, patronenlaces)
     for bloque_enlaces in matchesenlaces:
-
         patron = '<div class="poster-media-card">.*?'
         patron += '<a href="(.*?)".*?title="(.*?)"(.*?)'
         patron += '<img src="(.*?)"'
         matches = re.compile(patron, re.DOTALL).findall(bloque_enlaces)
-
         for scrapedurl, scrapedtitle, extra_info, scrapedthumbnail in matches:
             title = scrapertools.remove_show_from_title(scrapedtitle, "Ver Película")
             title = title.replace("Online", "");
@@ -144,21 +136,14 @@ def menudesta(item):
 # Peliculas de Estreno
 def menuestre(item):
     logger.info(item.url)
-
     itemlist = []
-
     data = httptools.downloadpage(item.url).data.decode('iso-8859-1').encode('utf-8')
     patronenlaces = '<h1>Estrenos</h1>(.*?)</section>'
-    matchesenlaces = re.compile(patronenlaces, re.DOTALL).findall(data)
-
+    matchesenlaces = scrapertools.find_multiple_matches(data, patronenlaces)
     for bloque_enlaces in matchesenlaces:
-
-        # patron = '<a href="([^"]+)" title="([^"]+)"> <div class="poster".*?<img src="([^"]+)"'
-
         patron = '<div class="poster-media-card">.*?'
         patron += '<a href="(.*?)".*?title="(.*?)"(.*?)'
         patron += '<img src="(.*?)"'
-
         matches = re.compile(patron, re.DOTALL).findall(bloque_enlaces)
         for scrapedurl, scrapedtitle, extra_info, scrapedthumbnail in matches:
             title = scrapertools.remove_show_from_title(scrapedtitle, "Ver Película")
@@ -255,32 +240,22 @@ def search(item, texto):
     patron += '<div class="row">.*?'
     patron += '<a href="(.*?)" title="(.*?)">.*?'
     patron += '<img src="(.*?)"'
-
-    logger.info(patron)
-
     matches = re.compile(patron, re.DOTALL).findall(data)
-
     itemlist = []
-
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
         title = scrapertools.remove_show_from_title(scrapedtitle, "Ver Película")
         title = title.replace("Online", "")
-        url = item.url + scrapedurl
-        thumbnail = item.url + scrapedthumbnail
-        logger.info(url)
+        url = scrapedurl
+        thumbnail = scrapedthumbnail
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url,
                              thumbnail=thumbnail, fanart=thumbnail))
-
     return itemlist
 
 
 def poranyo(item):
     logger.info(item.url)
-
     itemlist = []
-
     data = httptools.downloadpage(item.url).data.decode('iso-8859-1').encode('utf-8')
-
     patron = '<option value="([^"]+)">(.*?)</option>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle in matches:
@@ -289,7 +264,6 @@ def poranyo(item):
         url = item.url + scrapedurl
         itemlist.append(Item(channel=item.channel, action="menupelis", title=title, fulltitle=title, url=url,
                              fanart=item.fanart, extra='year'))
-
     return itemlist
 
 
@@ -300,24 +274,25 @@ def porcateg(item):
     data = httptools.downloadpage(item.url).data.decode('iso-8859-1').encode('utf-8')
     patron = '<li class="cat-item cat-item-3">.*?<a href="([^"]+)" title="([^"]+)">'
     matches = scrapertools.find_multiple_matches(data, patron)
-
+    adult_mode = config.get_setting("adult_mode")
     for scrapedurl, scrapedtitle in matches:
+        if "18" in scrapedtitle and adult_mode == 0:
+            continue
         title = scrapertools.remove_show_from_title(scrapedtitle, "Ver Película")
         title = title.replace("Online", "")
         url = scrapedurl
         logger.info(url)
         # si no esta permitidas categoria adultos, la filtramos
-        extra = title
-        adult_mode = config.get_setting("adult_mode")
+        extra1 = title
         if adult_mode != 0:
             if 'erotic' in scrapedurl:
-                extra = 'adult'
+                extra1 = 'adult'
         else:
-            extra=title
+            extra1=title
 
-        if (extra=='adult' and adult_mode != 0) or extra != 'adult':
+        if (extra1=='adult' and adult_mode != 0) or extra1 != 'adult':
             itemlist.append(Item(channel=item.channel, action="menupelis", title=title, fulltitle=title, url=url,
-                                 fanart=item.fanart, extra = extra))
+                                 fanart=item.fanart, genre = extra1))
 
     return itemlist
 
@@ -338,7 +313,6 @@ def decode(string):
         i += 1
         enc4 = keyStr.index(input[i])
         i += 1
-
         chr1 = (enc1 << 2) | (enc2 >> 4)
         chr2 = ((enc2 & 15) << 4) | (enc3 >> 2)
         chr3 = ((enc3 & 3) << 6) | enc4
