@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import urlparse
-
 from core import httptools
 from core import jsontools
 from core import scrapertools
@@ -59,6 +57,7 @@ def colecciones(item):
         title = scrapedtitle.capitalize() + " (" + scrapedcantidad + ")"
         itemlist.append(Item(channel = item.channel,
                              action = "listado_colecciones",
+                             page = 1,
                              thumbnail = host + scrapedthumbnail,
                              title = title,
                              url = host + scrapedurl
@@ -69,9 +68,10 @@ def colecciones(item):
 def listado_colecciones(item):
     logger.info()
     itemlist = []
+    logger.info("Intel66 %s" %item.tostring())
     data = httptools.downloadpage(item.url).data
     data_url = scrapertools.find_single_match(data, "data_url: '([^']+)")
-    post = "page=1"
+    post = "page=%s" %item.page
     data = httptools.downloadpage(host + data_url, post=post).data
     patron  = 'a href="(/peli[^"]+).*?'
     patron += 'src="([^"]+).*?'
@@ -88,6 +88,16 @@ def listado_colecciones(item):
                              url = host + scrapedurl
                              ))
     tmdb.set_infoLabels(itemlist)
+    item.page += 1
+    post = "page=%s" %item.page
+    data = httptools.downloadpage(host + data_url, post=post).data
+    if len(data) > 50:
+        itemlist.append(Item(channel = item.channel,
+                            action = "listado_colecciones",
+                            title = "Pagina siguiente>>",
+                            page = item.page,
+                            url = item.url
+                            ))
     return itemlist
 
 
@@ -159,6 +169,7 @@ def lista(item):
         params = jsontools.dump(dict_param)
 
     data = httptools.downloadpage(item.url, post=params).data
+    data = data.replace("<mark>","").replace("<\/mark>","")
     dict_data = jsontools.load(data)
 
     for it in dict_data["items"]:
@@ -167,11 +178,12 @@ def lista(item):
         rating = it["imdb"]
         year = it["year"]
         url = host + "pelicula/" + it["slug"]
-        thumb = urlparse.urljoin(host, it["image"])
+        thumb = host + it["image"]
         item.infoLabels['year'] = year
         itemlist.append(item.clone(action="findvideos", title=title, fulltitle=title, url=url, thumbnail=thumb,
                                    plot=plot, context=["buscar_trailer"], contentTitle=title, contentType="movie"))
 
+    scrapertools.printMatches(itemlist)
     try:
         tmdb.set_infoLabels(itemlist, __modo_grafico__)
     except:
