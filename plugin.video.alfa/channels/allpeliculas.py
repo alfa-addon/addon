@@ -68,7 +68,6 @@ def colecciones(item):
 def listado_colecciones(item):
     logger.info()
     itemlist = []
-    logger.info("Intel66 %s" %item.tostring())
     data = httptools.downloadpage(item.url).data
     data_url = scrapertools.find_single_match(data, "data_url: '([^']+)")
     post = "page=%s" %item.page
@@ -183,7 +182,6 @@ def lista(item):
         itemlist.append(item.clone(action="findvideos", title=title, fulltitle=title, url=url, thumbnail=thumb,
                                    plot=plot, context=["buscar_trailer"], contentTitle=title, contentType="movie"))
 
-    scrapertools.printMatches(itemlist)
     try:
         tmdb.set_infoLabels(itemlist, __modo_grafico__)
     except:
