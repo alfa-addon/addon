@@ -46,7 +46,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("mfxfxfx1= %s" %js_fxfx)
     logger.info("mfxfxfx2= %s" %pfxfx)
     if pfxfx == "":
-        pfxfx = "f=fail&fxfx=6"
+        pfxfx = "ss=yes&f=fail&fxfx=6"
     coding_url = 'https://www.flashx.tv/flashx.php?%s' %pfxfx
     # {f: 'y', fxfx: '6'}
     flashx_id = scrapertools.find_single_match(data, 'name="id" value="([^"]+)"')
