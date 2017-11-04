@@ -150,11 +150,11 @@ def findvideos(item):
         if "Calidad Alta" in quality:
             quality = "HQ"
         if "HQ" in quality:
-            quality = "HQ"
+            quality = "HD"
         if " Calidad media - Carga mas rapido" in quality:
             quality = "360p"
         server = server.lower().strip()
-        if "ok" == server:
+        if "ok" in server:
             server = 'okru'
         if "rapid" in server:
             server = 'rapidvideo'
