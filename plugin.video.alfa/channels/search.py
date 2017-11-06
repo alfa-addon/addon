@@ -290,7 +290,10 @@ def do_search(item, categories=None):
     multithread = config.get_setting("multithread", "search")
     result_mode = config.get_setting("result_mode", "search")
 
-    tecleado = item.extra
+    if item.wanted!='':
+        tecleado=item.wanted
+    else:
+        tecleado = item.extra
 
     itemlist = []
 
