@@ -30,12 +30,20 @@ def get_video_url(page_url, user="", password="", video_password=""):
     streams =[]
     logger.debug('page_url: %s'%page_url)
     if 'googleusercontent' in page_url:
-        data = httptools.downloadpage(page_url, follow_redirects = False, headers={"Referer": page_url})
-        url=data.headers['location']
+
+        response = httptools.downloadpage(page_url, follow_redirects = False, cookies=False, headers={"Referer": page_url})
+        url=response.headers['location']
+        cookies = ""
+        cookie = response.headers["set-cookie"].split("HttpOnly, ")
+        for c in cookie:
+            cookies += c.split(";", 1)[0] + "; "
+        data = response.data.decode('unicode-escape')
+        data = urllib.unquote_plus(urllib.unquote_plus(data))
+        headers_string = "|Cookie=" + cookies
+
         quality = scrapertools.find_single_match (url, '.itag=(\d+).')
 
         streams.append((quality, url))
-        headers_string=""
 
     else:
         response = httptools.downloadpage(page_url, cookies=False, headers={"Referer": page_url})

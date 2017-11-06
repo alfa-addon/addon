@@ -8,7 +8,6 @@ from platformcode import logger
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-
     data = httptools.downloadpage(page_url).data
     if "Not Found" in data:
         return False, "[streamixcloud] El archivo no existe o ha sido borrado"
@@ -21,7 +20,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
     video_urls = []
-    packed = scrapertools.find_single_match(data,
+    patron = "<script type='text/javascript'>(eval\(function\(p,a,c,k,e,d.*?)</script"
+    packed = scrapertools.find_single_match(data, patron)
     data = jsunpack.unpack(packed)
     media_url = scrapertools.find_multiple_matches(data, '\{file:"([^"]+)",')
     ext = scrapertools.get_filename_from_url(media_url[0])[-4:]
