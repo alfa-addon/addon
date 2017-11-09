@@ -7,8 +7,8 @@ from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
 
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:57.0) Gecko/20100101 ' \
-                                             'Firefox/57.0'}
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:58.0) Gecko/20100101 ' \
+                                             'Firefox/58.0'}
 
 
 def test_video_exists(page_url):

@@ -102,11 +102,14 @@ def extract_series_from_data(item, data):
         else:
             action = "findvideos"
 
-        context1=[filtertools.context(item, list_idiomas, CALIDADES), autoplay.context]
+        context = filtertools.context(item, list_idiomas, CALIDADES)
+        context2 = autoplay.context
+        context.extend(context2)
+
         itemlist.append(item.clone(title=name, url=urlparse.urljoin(HOST, url),
                                    action=action, show=name,
                                    thumbnail=img,
-                                   context=context1))
+                                   context=context))
 
     more_pages = re.search('pagina=([0-9]+)">>>', data)
     if more_pages:
