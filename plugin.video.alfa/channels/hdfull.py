@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 
 import base64
@@ -363,7 +364,7 @@ def fichas(item):
 
 def episodios(item):
     logger.info()
-    A_F = L_A
+    # A_F = L_A
     id = "0"
     itemlist = []
 
@@ -587,7 +588,7 @@ def generos(item):
 
 def generos_series(item):
     logger.info()
-    A_F= L_A
+    # A_F= L_A
     itemlist = []
 
     data = agrupa_datos(httptools.downloadpage(item.url, headers=A_A).data)
