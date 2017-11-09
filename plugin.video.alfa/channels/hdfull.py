@@ -15,6 +15,7 @@ from platformcode import platformtools
 
 host = "http://hdfull.tv"
 
+A_A = {'User-Agent':'Mozilla/5.0 AppLeWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 SaFAri/537.36'}
 if config.get_setting('hdfulluser', 'hdfull'):
     account = True
 else:
@@ -28,7 +29,7 @@ def settingCanal(item):
 def login():
     logger.info()
 
-    data = agrupa_datos(httptools.downloadpage(host).data)
+    data = agrupa_datos(httptools.downloadpage(host, headers=A_A).data)
 
     patron = "<input type='hidden' name='__csrf_magic' value=\"([^\"]+)\" />"
     sid = scrapertools.find_single_match(data, patron)
@@ -37,7 +38,7 @@ def login():
                                                                                        'hdfull') + "&password=" + config.get_setting(
         'hdfullpassword', 'hdfull') + "&action=login"
 
-    httptools.downloadpage(host, post=post)
+    httptools.downloadpage(host, post=post, headers=A_A)
 
 
 def mainlist(item):
@@ -137,7 +138,7 @@ def menuseries(item):
 def search(item, texto):
     logger.info()
 
-    data = agrupa_datos(httptools.downloadpage(host).data)
+    data = agrupa_datos(httptools.downloadpage(host, headers=A_A).data)
 
     sid = scrapertools.get_match(data, '.__csrf_magic. value="(sid:[^"]+)"')
     item.extra = urllib.urlencode({'__csrf_magic': sid}) + '&menu=search&query=' + texto
@@ -173,7 +174,7 @@ def items_usuario(item):
 
     itemlist = []
     ## Carga estados
-    status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
+    status = jsontools.load(httptools.downloadpage(host + '/a/status/all', headers=A_A).data)
 
     ## Fichas usuario
     url = item.url.split("?")[0]
@@ -187,7 +188,7 @@ def items_usuario(item):
     next_page = url + "?" + post
 
     ## Carga las fichas de usuario
-    data = httptools.downloadpage(url, post=post).data
+    data = httptools.downloadpage(url, post=post, headers=A_A).data
     fichas_usuario = jsontools.load(data)
 
     for ficha in fichas_usuario:
@@ -255,7 +256,7 @@ def listado_series(item):
 
     itemlist = []
 
-    data = agrupa_datos(httptools.downloadpage(item.url).data)
+    data = agrupa_datos(httptools.downloadpage(item.url, headers=A_A).data)
 
     patron = '<div class="list-item"><a href="([^"]+)"[^>]+>([^<]+)</a></div>'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -275,10 +276,10 @@ def fichas(item):
     textoidiomas=''
     infoLabels=dict()
     ## Carga estados
-    status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
+    status = jsontools.load(httptools.downloadpage(host + '/a/status/all', headers=A_A).data)
 
     if item.title == "Buscar...":
-        data = agrupa_datos(httptools.downloadpage(item.url, post=item.extra).data)
+        data = agrupa_datos(httptools.downloadpage(item.url, post=item.extra, headers=A_A).data)
         s_p = scrapertools.get_match(data, '<h3 class="section-title">(.*?)<div id="footer-wrapper">').split(
             '<h3 class="section-title">')
 
@@ -290,7 +291,7 @@ def fichas(item):
         else:
             data = s_p[0] + s_p[1]
     else:
-        data = agrupa_datos(httptools.downloadpage(item.url).data)
+        data = agrupa_datos(httptools.downloadpage(item.url, headers=A_A).data)
 
     data = re.sub(
         r'<div class="span-6[^<]+<div class="item"[^<]+' + \
@@ -362,11 +363,12 @@ def fichas(item):
 
 def episodios(item):
     logger.info()
+    A_F = L_A
     id = "0"
     itemlist = []
 
     ## Carga estados
-    status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
+    status = jsontools.load(httptools.downloadpage(host + '/a/status/all', headers=A_A).data)
 
     url_targets = item.url
 
@@ -376,7 +378,7 @@ def episodios(item):
         item.url = item.url.split("###")[0]
 
     ## Temporadas
-    data = agrupa_datos(httptools.downloadpage(item.url).data)
+    data = agrupa_datos(httptools.downloadpage(item.url, headers=A_A).data)
 
     if id == "0":
         ## Se saca el id de la serie de la página cuando viene de listado_series
@@ -410,7 +412,7 @@ def episodios(item):
     for scrapedurl in matches:
 
         ## Episodios
-        data = agrupa_datos(httptools.downloadpage(scrapedurl).data)
+        data = agrupa_datos(httptools.downloadpage(scrapedurl, headers=A_A).data)
 
         sid = scrapertools.get_match(data, "<script>var sid = '(\d+)'")
         ssid = scrapertools.get_match(scrapedurl, "temporada-(\d+)")
@@ -418,7 +420,7 @@ def episodios(item):
 
         url = host + "/a/episodes"
 
-        data = httptools.downloadpage(url, post=post).data
+        data = httptools.downloadpage(url, post=post, headers=A_A).data
 
         episodes = jsontools.load(data)
 
@@ -480,10 +482,9 @@ def episodios(item):
 
 def novedades_episodios(item):
     logger.info()
-
     itemlist = []
     ## Carga estados
-    status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
+    status = jsontools.load(httptools.downloadpage(host + '/a/status/all', headers=A_A).data)
 
     ## Episodios
     url = item.url.split("?")[0]
@@ -495,7 +496,7 @@ def novedades_episodios(item):
     post = post.replace("start=" + old_start, "start=" + start)
     next_page = url + "?" + post
 
-    data = httptools.downloadpage(url, post=post).data
+    data = httptools.downloadpage(url, post=post, headers=A_A).data
 
     episodes = jsontools.load(data)
 
@@ -567,7 +568,7 @@ def generos(item):
 
     itemlist = []
 
-    data = agrupa_datos(httptools.downloadpage(item.url).data)
+    data = agrupa_datos(httptools.downloadpage(item.url, headers=A_A).data)
     data = scrapertools.find_single_match(data, '<li class="dropdown"><a href="http://hdfull.tv/peliculas"(.*?)</ul>')
 
     patron = '<li><a href="([^"]+)">([^<]+)</a></li>'
@@ -586,10 +587,10 @@ def generos(item):
 
 def generos_series(item):
     logger.info()
-
+    A_F= L_A
     itemlist = []
 
-    data = agrupa_datos(httptools.downloadpage(item.url).data)
+    data = agrupa_datos(httptools.downloadpage(item.url, headers=A_A).data)
     data = scrapertools.find_single_match(data, '<li class="dropdown"><a href="http://hdfull.tv/series"(.*?)</ul>')
 
     patron = '<li><a href="([^"]+)">([^<]+)</a></li>'
@@ -612,7 +613,7 @@ def findvideos(item):
     it1 = []
     it2 = []
     ## Carga estados
-    status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
+    status = jsontools.load(httptools.downloadpage(host + '/a/status/all', headers=A_A).data)
     url_targets = item.url
 
     ## Vídeos
@@ -641,10 +642,10 @@ def findvideos(item):
         it1.append(Item(channel=item.channel, action="set_status", title=title, fulltitle=title, url=url_targets,
                              thumbnail=item.thumbnail, show=item.show, folder=True))
 
-    data_js = httptools.downloadpage("http://hdfull.tv/templates/hdfull/js/jquery.hdfull.view.min.js").data
+    data_js = httptools.downloadpage("http://hdfull.tv/templates/hdfull/js/jquery.hdfull.view.min.js", headers=A_A).data
     key = scrapertools.find_single_match(data_js, 'JSON.parse\(atob.*?substrings\((.*?)\)')
 
-    data_js = httptools.downloadpage("http://hdfull.tv/js/providers.js").data
+    data_js = httptools.downloadpage("http://hdfull.tv/js/providers.js", headers=A_A).data
     try:
         data_js = jhexdecode(data_js)
     except:
@@ -657,7 +658,7 @@ def findvideos(item):
         data_js = re.sub(r':(function.*?\})', r':"\g<1>"', decode_aa)
         data_js = re.sub(r':(var[^,]+),', r':"\g<1>",', data_js)
 
-    data = agrupa_datos(httptools.downloadpage(item.url).data)
+    data = agrupa_datos(httptools.downloadpage(item.url, headers=A_A).data)
     data_obf = scrapertools.find_single_match(data, "var ad\s*=\s*'([^']+)'")
     data_decrypt = jsontools.load(obfs(base64.b64decode(data_obf), 126 - int(key)))
 
@@ -722,7 +723,7 @@ def play(item):
         type = item.url.split("###")[1].split(";")[1]
         item.url = item.url.split("###")[0]
         post = "target_id=%s&target_type=%s&target_status=1" % (id, type)
-        data = httptools.downloadpage(host + "/a/status", post=post).data
+        data = httptools.downloadpage(host + "/a/status", post=post, headers=A_A).data
 
     devuelve = servertools.findvideosbyserver(item.url, item.server)
     if devuelve:
@@ -785,7 +786,7 @@ def set_status(item):
         path = "/a/favorite"
         post = "like_id=" + id + "&like_type=" + type + "&like_comment=&vote=-1"
 
-    data = httptools.downloadpage(host + path, post=post).data
+    data = httptools.downloadpage(host + path, post=post, headers=A_A).data
 
     title = "[COLOR green][B]OK[/B][/COLOR]"
 
