@@ -309,7 +309,7 @@ def findvideos(item):
 
     for i in range(len(list_links)):
         a=list_links[i].title
-        b=a.lstrip('Ver en')
+        b=a[a.find("en") + 2:]
         c=b.split('[')
         d=c[0].rstrip( )
         d=d.lstrip( )
