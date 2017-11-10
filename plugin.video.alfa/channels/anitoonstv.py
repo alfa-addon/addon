@@ -139,7 +139,7 @@ def googl(url):
     link="http://www.trueurl.net/?q=http%3A%2F%2Fgoo.gl%2F"+link+"&lucky=on&Uncloak=Find+True+URL"
     data_other = httptools.downloadpage(link).data
     data_other = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data_other)
-    patron='<td class="withbg">Destination URL<\/td><td><A title=(.+?)"'
+    patron='<td class="withbg">Destination URL<\/td><td><A title="(.+?)"'
     trueurl = scrapertools.find_single_match(data_other, patron)
     return trueurl
 
