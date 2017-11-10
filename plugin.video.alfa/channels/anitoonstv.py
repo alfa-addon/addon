@@ -134,7 +134,6 @@ def episodios(item):
 
 def googl(url):
     logger.info()
-    url="http://goo.gl/Y2Xus4"
     a=url.split("/")
     link=a[3]
     link="http://www.trueurl.net/?q=http%3A%2F%2Fgoo.gl%2F"+link+"&lucky=on&Uncloak=Find+True+URL"
