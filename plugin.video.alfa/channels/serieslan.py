@@ -67,10 +67,12 @@ def lista(item):
             title = name
         url = host + link
         scrapedthumbnail = host + img
-        context1=[renumbertools.context(item), autoplay.context]
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
+        
         itemlist.append(item.clone(title=title, url=url, action="episodios", thumbnail=scrapedthumbnail, show=title,
-                                   context=context1))
-    logger.info("gasdfsa "+str(b))
+                                   context=context))
     if b<29:
         a=a+1
         url="https://serieslan.com/pag-"+str(a)
