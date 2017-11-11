@@ -3,8 +3,8 @@
   "find_videos": {
     "patterns": [
       {
-        "pattern": "(http://vshare.io/v/[\\w]+[^\"']*)[\"']",
-        "url": "\\1"
+        "pattern": "(vshare.io/v/[a-zA-Z0-9/-]+)",
+        "url": "http://\\1"
       }
     ]
   },

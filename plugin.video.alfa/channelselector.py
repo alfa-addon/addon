@@ -45,15 +45,15 @@ def getmainlist(view="thumb_"):
                          context=[{"title": "Configurar Descargas", "channel": "setting", "config": "downloads",
                                    "action": "channel_config"}]))
 
-    thumb_configuracion = "setting_%s.png" % 0  # config.get_setting("plugin_updates_available")
+    thumb_setting = "setting_%s.png" % 0  # config.get_setting("plugin_updates_available")
 
     itemlist.append(Item(title=config.get_localized_string(30100), channel="setting", action="mainlist",
-                         thumbnail=get_thumb(thumb_configuracion, view),
+                         thumbnail=get_thumb(thumb_setting, view),
                          category=config.get_localized_string(30100), viewmode="list"))
-    # TODO REVISAR LA OPCION AYUDA
-    # itemlist.append(Item(title=config.get_localized_string(30104), channel="help", action="mainlist",
-    #                      thumbnail=get_thumb("help.png", view),
-    #                      category=config.get_localized_string(30104), viewmode="list"))
+
+    itemlist.append(Item(title=config.get_localized_string(30104), channel="help", action="mainlist",
+                         thumbnail=get_thumb("help.png", view),
+                         category=config.get_localized_string(30104), viewmode="list"))
     return itemlist
 
 
