@@ -148,15 +148,21 @@ def findvideos(item):
     itemla = scrapertools.find_multiple_matches(data_vid, '<div class="serv">.+?-(.+?)-(.+?)<\/div><.+? src="(.+?)"')
     for server, quality, url in itemla:
         if "Calidad Alta" in quality:
-            quality = quality.replace("Calidad Alta", "HQ")
+            quality = "HQ"
+        if "HQ" in quality:
+            quality = "HD"
         if " Calidad media - Carga mas rapido" in quality:
-            quality = quality.replace(" Calidad media - Carga mas rapido", "360p")
+            quality = "360p"
         server = server.lower().strip()
-        if "ok" == server:
+        if "ok" in server:
             server = 'okru'
+        if "rapid" in server:
+            server = 'rapidvideo'
+        if "netu" in server:
+            server = 'netutv'
         itemlist.append(item.clone(url=url, action="play", server=server, contentQuality=quality,
                                    thumbnail=scrapedthumbnail, plot=scrapedplot,
-                                   title="Enlace encontrado en %s: [%s]" % (server.capitalize(), quality)))
+                                   title="Enlace encontrado en: %s [%s]" % (server.capitalize(), quality)))
     
     autoplay.start(itemlist, item)
     return itemlist

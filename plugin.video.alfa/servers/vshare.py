@@ -40,11 +40,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         arrayResult = [chr(int(value) - substract) for value in fields.group(1).split(",")]
         strResult = "".join(arrayResult)
         logger.debug(strResult)
-
         videoSources = re.findall("<source[\s]+src=[\"'](?P<url>[^\"']+)[^>]+label=[\"'](?P<label>[^\"']+)", strResult)
-
         for url, label in videoSources:
-            logger.debug("[" + label + "] " + url)
             video_urls.append([label, url])
-
+    video_urls.sort(key=lambda i: int(i[0].replace("p","")))
     return video_urls
