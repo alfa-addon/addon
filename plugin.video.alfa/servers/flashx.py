@@ -37,12 +37,16 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     cgi_counter = cgi_counter.replace("%0A","").replace("%22","")
     playnow = scrapertools.find_single_match(data, 'https://www.flashx.tv/dl[^"]+')
     # Para obtener el f y el fxfx
-    js_fxfx = "https://www." + scrapertools.find_single_match(data, """(?is)(flashx.tv/js/code.js.*?[^(?:'|")]+)""")
+    js_fxfx = "https://www." + scrapertools.find_single_match(data.replace("//","/"), """(?is)(flashx.tv/js/code.js.*?[^(?:'|")]+)""")
     data_fxfx = httptools.downloadpage(js_fxfx).data
     mfxfx = scrapertools.find_single_match(data_fxfx, 'get.*?({.*?})').replace("'","").replace(" ","")
     matches = scrapertools.find_multiple_matches(mfxfx, '(\w+):(\w+)')
     for f, v in matches:
         pfxfx += f + "=" + v + "&"
+    logger.info("mfxfxfx1= %s" %js_fxfx)
+    logger.info("mfxfxfx2= %s" %pfxfx)
+    if pfxfx == "":
+        pfxfx = "ss=yes&f=fail&fxfx=6"
     coding_url = 'https://www.flashx.tv/flashx.php?%s' %pfxfx
     # {f: 'y', fxfx: '6'}
     flashx_id = scrapertools.find_single_match(data, 'name="id" value="([^"]+)"')

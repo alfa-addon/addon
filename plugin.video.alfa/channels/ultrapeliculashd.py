@@ -252,10 +252,13 @@ def newest(categoria):
     item.extra = 'estrenos/'
     try:
         if categoria == 'peliculas':
-            item.url = host + '/category/estrenos/'
+            item.url = host + '/genre/estrenos/'
 
         elif categoria == 'infantiles':
-            item.url = host + '/category/infantil/'
+            item.url = host + '/genre/animacion/'
+
+        elif categoria == 'terror':
+            item.url = host + '/genre/terror/'
 
         itemlist = lista(item)
         if itemlist[-1].title == 'Siguiente >>>':

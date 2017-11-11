@@ -2,7 +2,7 @@
   "id": "playmax",
   "name": "PlayMax",
   "language": ["cast", "lat"],
-  "active": true,
+  "active": false,
   "adult": false,
   "thumbnail": "playmax.png",
   "banner": "playmax.png",
