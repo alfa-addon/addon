@@ -132,6 +132,16 @@ def episodios(item):
 
     return itemlist
 
+def googl(url):
+    logger.info()
+    a=url.split("/")
+    link=a[3]
+    link="http://www.trueurl.net/?q=http%3A%2F%2Fgoo.gl%2F"+link+"&lucky=on&Uncloak=Find+True+URL"
+    data_other = httptools.downloadpage(link).data
+    data_other = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data_other)
+    patron='<td class="withbg">Destination URL<\/td><td><A title="(.+?)"'
+    trueurl = scrapertools.find_single_match(data_other, patron)
+    return trueurl
 
 def findvideos(item):
     logger.info()
@@ -147,10 +157,10 @@ def findvideos(item):
     scrapedthumbnail = scrapertools.find_single_match(data, '<div class="caracteristicas"><img src="([^<]+)">')
     itemla = scrapertools.find_multiple_matches(data_vid, '<div class="serv">.+?-(.+?)-(.+?)<\/div><.+? src="(.+?)"')
     for server, quality, url in itemla:
-        if "Calidad Alta" in quality:
-            quality = "HQ"
         if "HQ" in quality:
             quality = "HD"
+        if "Calidad Alta" in quality:
+            quality = "HQ"
         if " Calidad media - Carga mas rapido" in quality:
             quality = "360p"
         server = server.lower().strip()
@@ -160,6 +170,7 @@ def findvideos(item):
             server = 'rapidvideo'
         if "netu" in server:
             server = 'netutv'
+            url = googl(url)
         itemlist.append(item.clone(url=url, action="play", server=server, contentQuality=quality,
                                    thumbnail=scrapedthumbnail, plot=scrapedplot,
                                    title="Enlace encontrado en: %s [%s]" % (server.capitalize(), quality)))
