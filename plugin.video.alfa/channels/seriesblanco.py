@@ -29,7 +29,8 @@ list_servers = ['powvideo',
                 'nowvideo',
                 'gamovideo',
                 'kingvid',
-                'vidabc'
+                'vidabc',
+                'streamixcloud'
                 ]
 
 
@@ -308,11 +309,11 @@ def findvideos(item):
 
     for i in range(len(list_links)):
         a=list_links[i].title
-        b=a.lstrip('Ver en')
+        b=a[a.find("en") + 2:]
         c=b.split('[')
         d=c[0].rstrip( )
         d=d.lstrip( )
-        list_links[i].server=d
+        list_links[i].server=d.replace("streamix", "streamixcloud")
 
     list_links = servertools.get_servers_itemlist(list_links)
     autoplay.start(list_links, item)

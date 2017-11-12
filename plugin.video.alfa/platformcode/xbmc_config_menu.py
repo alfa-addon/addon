@@ -412,8 +412,12 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
         self.addControl(control)
 
         control.setVisible(False)
-        control.setLabel(c["label"])
-        control.setText(self.values[c["id"]])
+        # frodo fix
+        s = self.values[c["id"]]
+        if s is None:
+            s = ''
+        control.setText(s)
+        # control.setText(self.values[c["id"]])
         control.setWidth(self.controls_width - 5)
         control.setHeight(self.height_control)
 

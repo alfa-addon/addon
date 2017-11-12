@@ -67,10 +67,12 @@ def lista(item):
             title = name
         url = host + link
         scrapedthumbnail = host + img
-        context1=[renumbertools.context(item), autoplay.context]
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
+        
         itemlist.append(item.clone(title=title, url=url, action="episodios", thumbnail=scrapedthumbnail, show=title,
-                                   context=context1))
-    logger.info("gasdfsa "+str(b))
+                                   context=context))
     if b<29:
         a=a+1
         url="https://serieslan.com/pag-"+str(a)
@@ -136,7 +138,7 @@ def episodios(item):
                      thumbnail=scrapedthumbnail))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=item.url,
+        itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]", url=item.url,
                              action="add_serie_to_library", extra="episodios", show=show))
 
     return itemlist
@@ -201,17 +203,3 @@ def findvideos(item):
     else:
         return []
 
-
-def play(item):
-    logger.info()
-    itemlist = []
-    # Buscamos video por servidor ...
-    devuelve = servertools.findvideosbyserver(item.url, item.server)
-    if not devuelve:
-        # ...sino lo encontramos buscamos en todos los servidores disponibles
-        devuelve = servertools.findvideos(item.url, skip=True)
-    if devuelve:
-        # logger.debug(devuelve)
-        itemlist.append(Item(channel=item.channel, title=item.contentTitle, action="play", server=devuelve[0][2],
-                             url=devuelve[0][1], thumbnail=item.thumbnail, folder=False))
-    return itemlist
