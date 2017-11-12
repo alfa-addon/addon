@@ -132,14 +132,18 @@ def findvideos(item):
     logger.info()
 
     itemlist = []
+    itemlist1 = []
 
     data = httptools.downloadpage(item.url).data
-    itemlist.extend(servertools.find_video_items(data=data))
+    itemlist1.extend(servertools.find_video_items(data=data))
     patron_show = '<div class="data"><h1 itemprop="name">([^<]+)<\/h1>'
     show = scrapertools.find_single_match(data, patron_show)
-    for videoitem in itemlist:
+    for videoitem in itemlist1:
         videoitem.channel = item.channel
-    if config.get_videolibrary_support() and len(itemlist) > 0:
+    for i in range(len(itemlist1)):
+        if not 'youtube' in itemlist1[i].title:
+            itemlist.append(itemlist1[i])
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentChannel!='videolibrary':
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
                  action="add_pelicula_to_library", extra="findvideos", contentTitle=show))
