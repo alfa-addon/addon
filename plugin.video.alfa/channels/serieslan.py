@@ -78,10 +78,10 @@ def lista(item):
         url="https://serieslan.com/pag-"+str(a)
         if b>10:
             itemlist.append(
-                Item(channel=item.channel, title="Página Siguiente >>", url=url, action="lista", page=0))
+                Item(channel=item.channel, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=url, action="lista", page=0))
     else:    
         itemlist.append(
-             Item(channel=item.channel, title="Página Siguiente >>", url=item.url, action="lista", page=item.page + 1))
+             Item(channel=item.channel, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=item.url, action="lista", page=item.page + 1))
 
     tmdb.set_infoLabels(itemlist)
     return itemlist

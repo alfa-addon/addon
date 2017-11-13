@@ -93,7 +93,7 @@ def lista(item):
 
     if paginasig != "":
         item.url = next_page_url
-        itemlist.append(Item(channel=item.channel, action="lista", title=">> Página siguiente", url=next_page_url,
+        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=next_page_url,
                              thumbnail='https://s32.postimg.org/4zppxf5j9/siguiente.png'))
     return itemlist
 
