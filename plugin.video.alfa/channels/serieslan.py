@@ -92,7 +92,6 @@ def episodios(item):
 
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    logger.debug("info %s " % data)
     # obtener el numero total de episodios
     total_episode = 0
 
@@ -185,7 +184,6 @@ def findvideos(item):
     data = eval(data)
 
     if type(data) == list:
-        logger.debug("inside")
         video_url = url_server % (txc(ide, base64.decodestring(data[2])))
         server = "openload"
         if " SUB" in item.title:
@@ -195,7 +193,11 @@ def findvideos(item):
         else:
             lang = "Latino"
         title = "Enlace encontrado en " + server + " [" + lang + "]"
-        itemlist.append(Item(channel=item.channel, action="play", title=title, show=show, url=video_url, plot=item.plot,
+        if item.contentChannel=='videolibrary':
+            itemlist.append(item.clone(channel=item.channel, action="play", url=video_url,
+                             thumbnail=thumbnail, server=server, folder=False))
+        else:
+            itemlist.append(Item(channel=item.channel, action="play", title=title, show=show, url=video_url, plot=item.plot,
                              thumbnail=thumbnail, server=server, folder=False))
 
         autoplay.start(itemlist, item)
