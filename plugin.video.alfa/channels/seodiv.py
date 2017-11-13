@@ -8,6 +8,7 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
+from core import tmdb
 from platformcode import config, logger
 
 IDIOMAS = {'latino': 'Latino'}
@@ -35,6 +36,7 @@ def mainlist(item):
              url=host,
              thumbnail='https://s27.postimg.org/iahczwgrn/series.png',
              fanart='https://s27.postimg.org/iahczwgrn/series.png',
+             page=0
              ))
     autoplay.show_option(item.channel, itemlist)
     return itemlist
@@ -49,15 +51,21 @@ def todas(item):
              'Serie><span>(.*?)<\/span>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedthumbnail, scrapedcalidad, scrapedtitle in matches:
+    # Paginacion
+    num_items_x_pagina = 30
+    min = item.page * num_items_x_pagina
+    min=int(min)-int(item.page)
+    max = min + num_items_x_pagina - 1
+    
+    for scrapedurl, scrapedthumbnail, scrapedcalidad, scrapedtitle in matches[min:max]:
         url = host + scrapedurl
         calidad = scrapedcalidad
         title = scrapedtitle.decode('utf-8')
         thumbnail = scrapedthumbnail
         fanart = 'https://s32.postimg.org/gh8lhbkb9/seodiv.png'
-
-        itemlist.append(
-            Item(channel=item.channel,
+        if not 'xxxxxx' in scrapedtitle:
+            itemlist.append(
+                Item(channel=item.channel,
                  action="temporadas",
                  title=title, url=url,
                  thumbnail=thumbnail,
@@ -67,7 +75,13 @@ def todas(item):
                  language=language,
                  context=autoplay.context
                  ))
-
+    tmdb.set_infoLabels(itemlist)
+    if len(itemlist)>28:
+        itemlist.append(
+             Item(channel=item.channel, 
+                title="[COLOR cyan]Página Siguiente >>[/COLOR]", 
+                url=item.url, action="todas", 
+                page=item.page + 1))
     return itemlist
 
 
@@ -222,16 +236,31 @@ def episodiosxtemp(item):
 def findvideos(item):
     logger.info()
     itemlist = []
+    lang=[]
     data = httptools.downloadpage(item.url).data
     video_items = servertools.find_video_items(item)
-
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    language_items=scrapertools.find_single_match(data,
+                 '<ul class=tabs-sidebar-ul>(.+?)<\/ul>')
+    matches=scrapertools.find_multiple_matches(language_items,
+                 '<li><a href=#ts(.+?)><span>(.+?)<\/span><\/a><\/li>')
+    for idl,scrapedlang in matches:
+        if int(idl)<5 and int(idl)!=1:
+            lang.append(scrapedlang)
+    i=0
+    logger.info(lang)
     for videoitem in video_items:
         videoitem.thumbnail = servertools.guess_server_thumbnail(videoitem.server)
-        videoitem.language = scrapertools.find_single_match(data, '<span class="f-info-title">Idioma:<\/span>\s*<span '
-                                                                  'class="f-info-text">(.*?)<\/span>')
+        #videoitem.language = scrapertools.find_single_match(data, '<span class="f-info-title">Idioma:<\/span>\s*<span '
+        #                                                          'class="f-info-text">(.*?)<\/span>')
+        if len(lang)<=i:
+            videoitem.language=lang[i]
+        else:
+            videoitem.language=lang[len(lang)-1]
         videoitem.title = item.contentSerieName + ' (' + videoitem.server + ') (' + videoitem.language + ')'
         videoitem.quality = 'default'
         videoitem.context = item.context
+        i=i+1
         itemlist.append(videoitem)
 
     # Requerido para FilterTools
