@@ -168,11 +168,11 @@ def episodios(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'\n|\t|\s{2,}', '', data)
-    patron = '<li id="showview_videos.*?href="([^"]+)".*?(?:src|data-thumbnailUrl)="([^"]+)".*?media_id="([^"]+)" ' \
-             'style="width: (.*?)%.*?<span class="series-title.*?>\s*(.*?)</span>.*?<p class="short-desc".*?>' \
+    patron = '<li id="showview_videos.*?href="([^"]+)".*?(?:src|data-thumbnailUrl)="([^"]+)".*?media_id="([^"]+)"' \
+             'style="width:(.*?)%.*?<span class="series-title.*?>\s*(.*?)</span>.*?<p class="short-desc".*?>' \
              '\s*(.*?)</p>.*?description":"([^"]+)"'
     if data.count('class="season-dropdown') > 1:
-        bloques = scrapertools.find_multiple_matches(data, 'class="season-dropdown[^"]+" title="([^"]+)"(.*?)</ul>')
+        bloques = scrapertools.find_multiple_matches(data, 'class="season-dropdown[^"]+".*?title="([^"]+)"(.*?)</ul>')
         for season, b in bloques:
             matches = scrapertools.find_multiple_matches(b, patron)
             if matches:
@@ -209,7 +209,6 @@ def episodios(item):
                 Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumb, media_id=media_id,
                      server="crunchyroll", text_color=item.text_color, contentTitle=item.contentTitle,
                      contentSerieName=item.contentSerieName, contentType="tvshow"))
-
     return itemlist
 
 
