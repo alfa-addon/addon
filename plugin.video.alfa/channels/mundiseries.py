@@ -76,7 +76,7 @@ def episodios(item):
                              title=title, url=url, show=show))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=item.channel, title="Añadir Temporada/Serie a la biblioteca de Kodi", url=item.url,
+        itemlist.append(Item(channel=item.channel, title="[COLOR blue]Añadir Temporada/Serie a la biblioteca de Kodi[/COLOR]", url=item.url,
                              action="add_serie_to_library", extra="episodios", show=show))
     return itemlist
 
