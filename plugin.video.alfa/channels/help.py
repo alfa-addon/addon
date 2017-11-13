@@ -136,7 +136,7 @@ def faq(item):
                 "Puedes intentar subsanar estos problemas en 'Configuración'>'Ajustes de "
                 "la videoteca', cambiando el ajuste 'Realizar búsqueda de contenido en' "
                 "de 'La carpeta de cada serie' a 'Toda la videoteca'."
-                "También puedes acudir a 'http://alfa-addon.ga' en busca de ayuda.")
+                "También puedes acudir a 'http://alfa-addon.com' en busca de ayuda.")
 
         return TextBox("DialogTextViewer.xml", os.getcwd(), "Default", title=title, text=text)
 
@@ -145,7 +145,7 @@ def faq(item):
         text = ("Puede ser que la página web del canal no funcione. "
                 "En caso de que funcione la página web puede que no seas el primero"
                 " en haberlo visto y que el canal este arreglado. "
-                "Puedes mirar en 'alfa-addon.ga' o en el "
+                "Puedes mirar en 'alfa-addon.com' o en el "
                 "repositorio de GitHub (github.com/alfa-addon/addon). "
                 "Si no encuentras el canal arreglado puedes reportar un "
                 "problema en el foro.")
@@ -198,7 +198,7 @@ def faq(item):
             log_name = "kodi.log"
         ruta = xbmc.translatePath("special://logpath") + log_name
         title = "Alfa - FAQ - %s" % item.title[6:]
-        text = ("Para reportar un problema en 'http://alfa-addon.ga' es necesario:\n"
+        text = ("Para reportar un problema en 'http://alfa-addon.com' es necesario:\n"
                 "  - Versión que usas de Alfa.\n"
                 "  - Versión que usas de kodi, mediaserver, etc.\n"
                 "  - Nombre del skin (en el caso que uses Kodi) y si se "
@@ -214,6 +214,6 @@ def faq(item):
     else:
         platformtools.dialog_ok("Alfa",
                                 "Entérate de novedades, consejos u opciones que desconoces en Telegram: @alfa_addon.\n"
-                                "Si tienes problemas o dudas, puedes acudir al Foro: http://alfa-addon.ga")
+                                "Si tienes problemas o dudas, puedes acudir al Foro: http://alfa-addon.com")
 
 
