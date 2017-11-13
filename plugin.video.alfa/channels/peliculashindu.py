@@ -33,15 +33,14 @@ def mainlist(item):
 def explorar(item):
     logger.info()
     itemlist = list()
-    url1 = str(item.url)
+    url1 = item.title
     data = httptools.downloadpage(host).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    # logger.info("loca :"+url1+"             aaa"+data)
-    if 'genero' in url1:
-        patron = '<div class="d"><h3>Pel.+?neros<\/h3>(.+?)<\/h3>'
-    if 'alfabetico' in url1:
-        patron = '<\/li><\/ul><h3>Pel.+?tico<\/h3>(.+?)<\/h3>'
-    if 'año' in url1:
+    if 'Género' in url1:
+        patron = '<div class="d">.+?<h3>Pel.+?neros<\/h3>(.+?)<\/h3>'
+    if 'Listado Alfabético' in url1:
+        patron = '<\/li><\/ul>.+?<h3>Pel.+?tico<\/h3>(.+?)<\/h3>'
+    if 'Año' in url1:
         patron = '<ul class="anio"><li>(.+?)<\/ul>'
     data_explorar = scrapertools.find_single_match(data, patron)
     patron_explorar = '<a href="([^"]+)">([^"]+)<\/a>'
@@ -79,22 +78,18 @@ def lista(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)  # Eliminamos tabuladores, dobles espacios saltos de linea, etc...
-    url1 = str(item.url)
-    if 'http://www.peliculashindu.com/' in url1:
-        url1 = url1.replace("http://www.peliculashindu.com/", "")
-    if url1 != 'estrenos':
-        data = scrapertools.find_single_match(data, '<div id="cuerpo"><div class="iz">.+>Otras')
-    # data= scrapertools.find_single_match(data,'<div id="cuerpo"><div class="iz">.+>Otras')
+    data_mov= scrapertools.find_single_match(data,'<div id="cuerpo"><div class="iz">(.+)<ul class="pag">')
     patron = '<a href="([^"]+)"><img src="([^"]+)" alt="([^"]+)"'  # scrapedurl, scrapedthumbnail, scrapedtitle
-    matches = scrapertools.find_multiple_matches(data, patron)
+    matches = scrapertools.find_multiple_matches(data_mov, patron)
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:  # scrapedthumbnail, scrapedtitle in matches:
         itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, action="findvideos",
                                    show=scrapedtitle))
     # Paginacion
     patron_pag = '<a href="([^"]+)" title="Siguiente .+?">'
     paginasig = scrapertools.find_single_match(data, patron_pag)
+    logger.info("algoooosadf "+paginasig)
 
-    next_page_url = item.url + paginasig
+    next_page_url = host + paginasig
 
     if paginasig != "":
         item.url = next_page_url
@@ -114,10 +109,9 @@ def findvideos(item):
     logger.info("holaa" + data)
     patron_show = '<strong>Ver Pel.+?a([^<]+) online<\/strong>'
     show = scrapertools.find_single_match(data, patron_show)
-    logger.info("holaa" + show)
     for videoitem in itemlist:
         videoitem.channel = item.channel
-    if config.get_videolibrary_support() and len(itemlist) > 0:
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentChannel!='videolibrary':
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
                  action="add_pelicula_to_library", extra="findvideos", contentTitle=show))
