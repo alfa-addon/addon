@@ -201,12 +201,17 @@ def faq(item):
         text = ("Para reportar un problema en 'http://alfa-addon.com' es necesario:\n"
                 "  - Versión que usas de Alfa.\n"
                 "  - Versión que usas de kodi, mediaserver, etc.\n"
+                "  - Versión y nombre del sistema operativo que usas.\n"
                 "  - Nombre del skin (en el caso que uses Kodi) y si se "
                 "te ha resuelto el problema al usar el skin por defecto.\n"
                 "  - Descripción del problema y algún caso de prueba.\n"
                 "  - Agregar el log en modo detallado, una vez hecho esto, "
                 "zipea el log y lo puedes adjuntar en un post.\n\n"
-                "El log se encuentra en: \n\n"
+                "Para activar el log en modo detallado, ingresar a:\n"
+                "  - Configuración.\n"
+                "  - Preferencias.\n"
+                "  - En la pestaña General - Marcar la opción: Generar log detallado.\n\n"
+                "El archivo de log detallado se encuentra en la siguiente ruta: \n\n"
                 "%s" % ruta)
 
         return TextBox("DialogTextViewer.xml", os.getcwd(), "Default", title=title, text=text)
