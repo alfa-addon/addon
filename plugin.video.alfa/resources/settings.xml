@@ -40,6 +40,7 @@
     </category>
     <category label="Opciones Visuales">
         <setting id="icon_set" type="labelenum" label="Set de iconos" values="default|dark" default="default"/>
+        <setting id="infoplus_set" type="labelenum" label="Opción visual Infoplus" values="Sin animación|Con animación" default="Sin animación"/>
    </category>
     <category label="Otros">
         <setting label="Info de películas/series en menú contextual" type="lsep"/>
