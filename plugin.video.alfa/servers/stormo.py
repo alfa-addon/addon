@@ -8,9 +8,11 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
-    data = httptools.downloadpage(page_url).data
-    if "video_error.mp4" in data:
+    response = httptools.downloadpage(page_url)
+    if "video_error.mp4" in response.data:
         return False, "[Stormo] El archivo no existe o ha sido borrado"
+    if response.code == 451:
+        return False, "[Stormo] El archivo ha sido borrado por problemas legales."
 
     return True, ""
 
