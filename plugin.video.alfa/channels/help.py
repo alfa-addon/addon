@@ -136,7 +136,7 @@ def faq(item):
                 "Puedes intentar subsanar estos problemas en 'Configuración'>'Ajustes de "
                 "la videoteca', cambiando el ajuste 'Realizar búsqueda de contenido en' "
                 "de 'La carpeta de cada serie' a 'Toda la videoteca'."
-                "También puedes acudir a 'http://alfa-addon.ga' en busca de ayuda.")
+                "También puedes acudir a 'http://alfa-addon.com' en busca de ayuda.")
 
         return TextBox("DialogTextViewer.xml", os.getcwd(), "Default", title=title, text=text)
 
@@ -145,7 +145,7 @@ def faq(item):
         text = ("Puede ser que la página web del canal no funcione. "
                 "En caso de que funcione la página web puede que no seas el primero"
                 " en haberlo visto y que el canal este arreglado. "
-                "Puedes mirar en 'alfa-addon.ga' o en el "
+                "Puedes mirar en 'alfa-addon.com' o en el "
                 "repositorio de GitHub (github.com/alfa-addon/addon). "
                 "Si no encuentras el canal arreglado puedes reportar un "
                 "problema en el foro.")
@@ -198,15 +198,20 @@ def faq(item):
             log_name = "kodi.log"
         ruta = xbmc.translatePath("special://logpath") + log_name
         title = "Alfa - FAQ - %s" % item.title[6:]
-        text = ("Para reportar un problema en 'http://alfa-addon.ga' es necesario:\n"
+        text = ("Para reportar un problema en 'http://alfa-addon.com' es necesario:\n"
                 "  - Versión que usas de Alfa.\n"
                 "  - Versión que usas de kodi, mediaserver, etc.\n"
+                "  - Versión y nombre del sistema operativo que usas.\n"
                 "  - Nombre del skin (en el caso que uses Kodi) y si se "
                 "te ha resuelto el problema al usar el skin por defecto.\n"
                 "  - Descripción del problema y algún caso de prueba.\n"
                 "  - Agregar el log en modo detallado, una vez hecho esto, "
                 "zipea el log y lo puedes adjuntar en un post.\n\n"
-                "El log se encuentra en: \n\n"
+                "Para activar el log en modo detallado, ingresar a:\n"
+                "  - Configuración.\n"
+                "  - Preferencias.\n"
+                "  - En la pestaña General - Marcar la opción: Generar log detallado.\n\n"
+                "El archivo de log detallado se encuentra en la siguiente ruta: \n\n"
                 "%s" % ruta)
 
         return TextBox("DialogTextViewer.xml", os.getcwd(), "Default", title=title, text=text)
@@ -214,6 +219,6 @@ def faq(item):
     else:
         platformtools.dialog_ok("Alfa",
                                 "Entérate de novedades, consejos u opciones que desconoces en Telegram: @alfa_addon.\n"
-                                "Si tienes problemas o dudas, puedes acudir al Foro: http://alfa-addon.ga")
+                                "Si tienes problemas o dudas, puedes acudir al Foro: http://alfa-addon.com")
 
 

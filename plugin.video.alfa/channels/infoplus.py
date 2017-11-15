@@ -34,9 +34,13 @@ ACTION_MOVE_LEFT = 1
 ACTION_MOVE_RIGHT = 2
 ACTION_MOVE_DOWN = 4
 ACTION_MOVE_UP = 3
-OPTION_PANEL = 6
-OPTIONS_OK = 5
 
+set_animation = False
+xinfoplus_set = config.get_setting("infoplus_set")
+if xinfoplus_set == "Sin animación":
+    set_animation = False
+if xinfoplus_set == "Con animación":
+    set_animation = True
 
 def start(item, recomendaciones=[], from_window=False):
     global mainWindow
@@ -50,8 +54,8 @@ def start(item, recomendaciones=[], from_window=False):
         global SearchWindows
         SearchWindows = list()
 
-    dialog = platformtools.dialog_progress("[COLOR darkturquoise][B]Cargando nuevos datos[/B][/COLOR]",
-                                           "[COLOR lightyellow]Buscando en  [/COLOR][COLOR springgreen][B]Tmdb.......[/B][/COLOR]")
+    dialog = platformtools.dialog_progress("Cargando nuevos datos",
+                                           "Buscandoen Tmdb.......")
 
     principal_window = main(item=item, recomendaciones=recomendaciones, dialog=dialog, from_window=from_window)
     try:
@@ -87,7 +91,6 @@ class main(xbmcgui.WindowDialog):
                 self.infoLabels["tmdb_id"] = self.item.extra.split("|")[1]
             else:
                 self.infoLabels["tmdb_id"] = self.item.extra.split("|")[2]
-            critica = self.item.critica
             rating = self.infoLabels.get("rating")
             titulo = self.infoLabels["title"]
             self.images = []
@@ -96,6 +99,13 @@ class main(xbmcgui.WindowDialog):
             info_copy = dict(self.item.infoLabels)
             self.item.infoLabels.pop("season", None)
             self.item.infoLabels.pop("episode", None)
+            if not self.item.infoLabels["year"]:
+                self.dialog.close()
+                platformtools.dialog_notification("Sin resultados. Falta información del año del video", "No hay info de la %s solicitada" % tipo)
+                global mainWindow
+                self.close()
+                del mainWindow
+                return
             tmdb.set_infoLabels_item(self.item, True)
             self.infoLabels = self.item.infoLabels
             self.infoLabels["season"] = info_copy.get("season", None)
@@ -112,7 +122,7 @@ class main(xbmcgui.WindowDialog):
             titulo = "[COLOR olive][B]%s[/B][/COLOR]" % self.infoLabels.get("title")
             try:
                 if not self.infoLabels.get("rating"):
-                    rating = "[COLOR crimson][B]Sin puntuación[/B][/COLOR]"
+                    rating = "[COLOR crimson][B]N/A[/B][/COLOR]"
                 elif self.infoLabels.get("rating") >= 5 and self.infoLabels.get("rating") < 8:
                     rating = "[COLOR springgreen][B]%s[/B][/COLOR]" % self.infoLabels["rating"]
                 elif self.infoLabels.get("rating") >= 8:
@@ -123,8 +133,8 @@ class main(xbmcgui.WindowDialog):
                 rating = "[COLOR crimson][B]%s[/B][/COLOR]" % self.infoLabels["rating"]
 
             self.dialog.update(40,
-                               '[COLOR teal]Registrando[/COLOR]' + '[COLOR yellow][B]  film[/B][/COLOR]' + '[COLOR floralwhite][B]affinity.......[/B][/COLOR]')
-            critica, rating_fa, plot_fa = get_filmaf(self.item, self.infoLabels)
+                               'Registrando filmaffinity.......')
+            rating_fa, plot_fa = get_filmaf(self.item, self.infoLabels)
             if not self.infoLabels.get("plot") and plot_fa:
                 self.infoLabels["plot"] = "[COLOR moccasin][B]%s[/B][/COLOR]" % plot_fa
             elif not self.infoLabels["plot"]:
@@ -132,7 +142,7 @@ class main(xbmcgui.WindowDialog):
             else:
                 self.infoLabels["plot"] = "[COLOR moccasin][B]%s[/B][/COLOR]" % self.infoLabels.get("plot")
 
-            self.dialog.update(60, '[COLOR khaki]Indagando recomendaciones.......[/COLOR]')
+            self.dialog.update(60, 'Indagando recomendaciones.......')
             thread1 = Thread(target=get_recomendations, args=[self.item, self.infoLabels, self.recomendaciones])
             thread1.setDaemon(True)
             thread1.start()
@@ -173,7 +183,7 @@ class main(xbmcgui.WindowDialog):
 
         if self.item.contentType != "movie":
             self.dialog.update(60,
-                               '[COLOR teal]Recopilando imágenes en [/COLOR]' + '[COLOR floralwhite][B]FAN[/B][/COLOR]' + '[COLOR slategray][B]ART.[/B][/COLOR]' + '[COLOR darkgray]TV.......[/COLOR]')
+                               'Recopilando imágenes en FANART.TV')
             try:
                 ###Busca música serie
                 titulo = re.sub('\[.*?\]', '', titulo)
@@ -199,11 +209,9 @@ class main(xbmcgui.WindowDialog):
                 logger.error(traceback.format_exc())
 
         if xbmc.Player().isPlaying():
-            self.dialog.update(80,
-                               '[COLOR teal]Afinado instrumentos en [/COLOR]' + '[COLOR cyan][B]T[/B][/COLOR]' + '[COLOR paleturquoise][B]V[/B][/COLOR]' + '[COLOR floralwhite]tu[/COLOR]' + '[COLOR darkgray][B]n[/B][/COLOR]' + '[COLOR slategray][B]es[/B][/COLOR]')
+            self.dialog.update(80, 'Afinado instrumentos en Vtunes')
         else:
-            self.dialog.update(80,
-                               '[COLOR teal]Recopilando imágenes en [/COLOR]' + '[COLOR floralwhite][B]FAN[/B][/COLOR]' + '[COLOR slategray][B]ART.[/B][/COLOR]' + '[COLOR darkgray]TV.......[/COLOR]')
+            self.dialog.update(80, 'Recopilando imágenes en FANART.TV')
 
         while thread2.isAlive():
             xbmc.sleep(100)
@@ -267,49 +275,44 @@ class main(xbmcgui.WindowDialog):
         skin = xbmc.getSkinDir()
         self.fonts = get_fonts(skin)
         self.setCoordinateResolution(2)
-        self.actorButton = xbmcgui.ControlButton(650, 50, 60, 60, '', font='Font40', alignment=0x00000006,
-                                                 noFocusTexture='http://i.imgur.com/yK4LCqB.png',
-                                                 focusTexture='http://s6.postimg.org/djdkrpz0x/starzen.png',
+        self.actorButton = xbmcgui.ControlButton(995, 475, 55, 55, '', font='Font40', alignment=0x00000006,
+                                                 noFocusTexture='https://s17.postimg.org/40acsuihb/thumb_search_star_no.png',
+                                                 focusTexture='https://s33.postimg.org/ikk0qyvrj/thumb_search_star.png',
                                                  focusedColor='0xFFAAAAAA')
-        self.trailerButton = xbmcgui.ControlButton(550, 50, 60, 60, '', font='Font40', alignment=0x00000006,
-                                                   noFocusTexture='http://s6.postimg.org/dbs8k30r5/zentrailer.png',
-                                                   focusTexture='http://s6.postimg.org/jqr9gr7gx/zentrailerfocused.png')
+        self.trailerButton = xbmcgui.ControlButton(910, 475, 55, 55, '', font='Font40', alignment=0x00000006,
+                                                   noFocusTexture='https://s17.postimg.org/774wcgv7j/thumb_search_trailer_no.png',
+                                                   focusTexture='https://s17.postimg.org/o9tfjmqvz/thumb_search_trailer.png')
 
         self.background = xbmcgui.ControlImage(-40, -40, 1500, 830, 'http://imgur.com/ur6H9Ps.png')
-        self.title = xbmcgui.ControlTextBox(120, 0, 1130, 50)
-        self.rating = xbmcgui.ControlTextBox(415, 37, 1040, 50)
+        self.title = xbmcgui.ControlTextBox(120, 8, 1130, 50, self.fonts["16"])
+        self.rating = xbmcgui.ControlTextBox(260, 112, 1040, 50)
         self.rating_filma = xbmcgui.ControlTextBox(417, 112, 1043, 50)
-        self.tagline = xbmcgui.ControlFadeLabel(120, 70, 420, 45, self.fonts["12"])
-        self.plot = xbmcgui.ControlTextBox(117, 150, 1056, 150)
-        self.critica = xbmcgui.ControlTextBox(20, 386, 1056, 100, self.fonts["12"])
+        self.tagline = xbmcgui.ControlFadeLabel(117, 50, 420, 45, self.fonts["12"])
+        self.plot = xbmcgui.ControlTextBox(117, 145, 700, 600)
         self.fanart = xbmcgui.ControlImage(-40, -40, 1500, 830, self.infoLabels.get("fanart", ""))
-        self.critica_image = xbmcgui.ControlImage(120, 300, 200, 90, 'http://imgur.com/kGmaIER.png')
-        self.icon = xbmcgui.ControlImage(360, 30, 40, 40, icono)
+        self.poster = xbmcgui.ControlImage(860, 140, 350, 330, self.item.thumbnail)
+        self.icon = xbmcgui.ControlImage(200, 100, 40, 40, icono)
         self.fa_icon = xbmcgui.ControlImage(350, 100, 60, 60, "http://s6.postimg.org/6yhe5fgy9/filma.png")
 
         self.addControl(self.fanart)
-        self.fanart.setAnimations([('conditional', 'effect=rotatey start=100% end=0% time=1500 condition=true',),
+        if set_animation:
+            self.fanart.setAnimations([('conditional', 'effect=rotatey start=100% end=0% time=1500 condition=true',),
                                    ('unfocus', 'effect=zoom start=110% end=100% time=1000 tween=elastic easing=out',), (
                                        'WindowClose',
                                        'effect=rotatey delay= 1000 start=0% end=-300% time=800 condition=true',)])
-
         self.addControl(self.background)
-        self.addControl(self.critica_image)
-        self.critica_image.setAnimations(
-            [('conditional', 'effect=rotatey center=500 start=300% end=0% time=3000 condition=true ',),
-             ('unfocus', 'effect=zoom start=110% end=100% time=1000 tween=elastic easing=out',),
-             ('focus', 'effect=zoom start=80% end=110% time=700',),
-             ('WindowClose', 'effect=rotatey center=500 start=0% end=-300% time=800 condition=true',)])
         self.addControl(self.trailerButton)
         self.botones.append(self.trailerButton)
-        self.trailerButton.setAnimations(
+        if set_animation:
+            self.trailerButton.setAnimations(
             [('conditional', 'effect=slide start=-1500% end=0% delay=1200 time=4000 condition=true tween=elastic',),
              ('unfocus', 'effect=zoom start=110% end=100% time=1000 tween=elastic easing=out',),
              ('focus', 'effect=zoom start=80% end=110% time=700',),
              ('WindowClose', 'effect=slide start=0% end=-1500% time=800 condition=true',)])
         self.addControl(self.actorButton)
         self.botones.append(self.actorButton)
-        self.actorButton.setAnimations(
+        if set_animation:
+            self.actorButton.setAnimations(
             [('conditional', 'effect=slide start=1500% end=0% delay=1200 time=4000 condition=true tween=elastic',),
              ('unfocus', 'effect=zoom start=110% end=100% time=1000 tween=elastic easing=out',),
              ('focus', 'effect=zoom start=80% end=110% time=700',),
@@ -317,50 +320,55 @@ class main(xbmcgui.WindowDialog):
 
         self.setFocus(self.trailerButton)
         self.addControl(self.title)
-        self.title.setAnimations([('conditional', 'effect=fade start=0% end=100% delay=1500 time=1500 condition=true',),
+        if set_animation:
+            self.title.setAnimations([('conditional', 'effect=fade start=0% end=100% delay=1500 time=1500 condition=true',),
                                   ('WindowClose', 'effect=fade start=100% end=0% time=800 condition=true',)])
         self.addControl(self.tagline)
-        self.tagline.setAnimations(
+        if set_animation:
+            self.tagline.setAnimations(
             [('conditional', 'effect=fade start=0% end=100% delay=2000 time=1500 condition=true',),
              ('WindowClose', 'effect=fade start=100% end=0% time=800 condition=true',)])
         if self.item.contentType == "movie" and self.infoLabels.get("duration", 0):
-            self.duration = xbmcgui.ControlTextBox(120, 100, 420, 45, self.fonts["12"])
+            self.duration = xbmcgui.ControlTextBox(120, 70, 420, 45, self.fonts["12"])
             self.addControl(self.duration)
-            self.duration.setAnimations(
+            if set_animation:
+                self.duration.setAnimations(
                 [('conditional', 'effect=fade start=0% end=100% delay=2000 time=1500 condition=true',),
                  ('WindowClose', 'effect=fade start=100% end=0% time=800 condition=true',)])
             self.duration.setText(
                 "[COLOR mediumturquoise][B]Duración: %s minutos[/B][/COLOR]" % self.infoLabels["duration"])
         self.addControl(self.rating)
-        self.rating.setAnimations(
+        if set_animation:
+            self.rating.setAnimations(
             [('conditional', 'effect=rotatey start=100% end=0% delay=3000 time=1500 condition=true',),
              ('WindowClose', 'effect=rotatey start=0% end=100% time=800 condition=true',)])
         self.addControl(self.rating_filma)
-        self.rating_filma.setAnimations(
+        if set_animation:
+            self.rating_filma.setAnimations(
             [('conditional', 'effect=rotatey start=100% end=0% delay=3000 time=1500 condition=true',),
              ('WindowClose', 'effect=rotatey start=0% end=100% time=800 condition=true',)])
         self.addControl(self.plot)
-        self.plot.setAnimations(
+        if set_animation:
+            self.plot.setAnimations(
             [('conditional', 'effect=slide delay=2000 start=1500 time=3600 tween=elastic easing=inout condition=true',),
              ('WindowClose', 'effect=zoom center=auto start=100% end=0% time=800 condition=true',)])
-        self.addControl(self.critica)
-        self.critica.setAnimations([('conditional',
-                                     'effect=slide delay=1800 start=-1500% end=100% time=3600 tween=elastic easing=inout condition=true',),
-                                    ('WindowClose', 'effect=slide start=100% end=-1500% time=800 condition=true',)])
 
+        self.addControl(self.poster)
         if not self.infoLabels.get("images") and not self.images:
-            self.thumbnail = xbmcgui.ControlImage(813, 0, 390, 150, 'http://i.imgur.com/oMjtYni.png')
+            self.thumbnail = xbmcgui.ControlImage(860, 0, 390, 150, 'http://i.imgur.com/oMjtYni.png')
             self.addControl(self.thumbnail)
-            self.thumbnail.setAnimations(
+            if set_animation:
+                self.thumbnail.setAnimations(
                 [('conditional', 'effect=zoom delay=2000 center=auto start=0 end=100 time=800 condition=true',), (
                     'conditional',
                     'effect=rotate delay=2000 center=auto aceleration=6000 start=0% end=360% time=800 condition=true',),
                  ('WindowClose', 'effect=zoom start=100% end=0% time=600 condition=true',)])
         else:
-            self.thumbnail = xbmcgui.ControlButton(813, 0, 390, 150, '', self.infoLabels.get("thumbnail", ""),
+            self.thumbnail = xbmcgui.ControlButton(860, 0, 350, 150, '', self.infoLabels.get("thumbnail", ""),
                                                    self.infoLabels.get("thumbnail", ""))
             self.addControl(self.thumbnail)
-            self.thumbnail.setAnimations(
+            if set_animation:
+                self.thumbnail.setAnimations(
                 [('conditional', 'effect=zoom delay=2000 center=auto start=0 end=100 time=800 condition=true',), (
                     'conditional',
                     'effect=rotate delay=2000 center=auto aceleration=6000 start=0% end=360% time=800 condition=true',),
@@ -370,13 +378,15 @@ class main(xbmcgui.WindowDialog):
             self.botones.append(self.thumbnail)
 
         self.addControl(self.icon)
-        self.icon.setAnimations(
+        if set_animation:
+            self.icon.setAnimations(
             [('conditional', 'effect=slide start=0,-700 delay=2000 time=2500 tween=bounce condition=true',), (
                 'conditional',
                 'effect=rotate center=auto start=0% end=360% delay=3000 time=2500 tween=bounce condition=true',),
              ('WindowClose', 'effect=slide end=0,-700% time=1000 condition=true',)])
         self.addControl(self.fa_icon)
-        self.fa_icon.setAnimations(
+        if set_animation:
+            self.fa_icon.setAnimations(
             [('WindowOpen', 'effect=slide start=0,-700 delay=3000 time=2500 tween=bounce condition=true',),
              ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
 
@@ -387,14 +397,10 @@ class main(xbmcgui.WindowDialog):
 
         try:
             self.plot.autoScroll(11000, 6000, 30000)
-            self.critica.autoScroll(11000, 2500, 13000)
         except:
             xbmc.executebuiltin(
                 'Notification([COLOR red][B]Actualiza Kodi a su última versión[/B][/COLOR], [COLOR skyblue]para mejor info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")')
         self.plot.setText(dhe(self.infoLabels.get("plot", "")))
-        self.critica.setText(critica)
-        self.critica_butt = xbmcgui.ControlButton(20, 386, 1056, 100, '', '', '')
-        self.addControl(self.critica_butt)
 
         xbmc.sleep(200)
         self.mas_pelis = 8
@@ -406,7 +412,8 @@ class main(xbmcgui.WindowDialog):
         self.btn_left = xbmcgui.ControlButton(90, 490, 70, 29, '', "http://s6.postimg.org/i3pnobu6p/redarrow.png",
                                               "http://s6.postimg.org/i3pnobu6p/redarrow.png")
         self.addControl(self.btn_left)
-        self.btn_left.setAnimations(
+        if set_animation:
+            self.btn_left.setAnimations(
             [('conditional', 'effect=zoom start=-100 end=100 delay=5000 time=2000 condition=true tween=bounce',), (
                 'conditional',
                 'effect=zoom start=720,642,70,29 end=640,642,69,29 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
@@ -431,7 +438,8 @@ class main(xbmcgui.WindowDialog):
             if len(self.recomendaciones) != 0:
                 self.tpi = xbmcgui.ControlImage(200, 490, 100, 41, 'http://imgur.com/GNP2QcB.png')
                 self.addControl(self.tpi)
-                self.tpi.setAnimations([('conditional',
+                if set_animation:
+                    self.tpi.setAnimations([('conditional',
                                          'effect=rotatey start=200 end=0 delay=6200 time=900 tween=elastic condition=true',),
                                         ('unfocus',
                                          'effect=zoom center=auto start=70% end=100% time=700 reversible=false',),
@@ -439,7 +447,8 @@ class main(xbmcgui.WindowDialog):
                                         ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
             if count < 8:
                 self.addControl(self.image)
-                self.image.setAnimations([('conditional',
+                if set_animation:
+                    self.image.setAnimations([('conditional',
                                            'effect=rotatey start=200 end=0 delay=6200 time=900 tween=elastic condition=true',),
                                           ('unfocus',
                                            'effect=zoom center=auto start=70% end=100% time=700 reversible=false',), (
@@ -448,13 +457,15 @@ class main(xbmcgui.WindowDialog):
                                           ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
                 self.addControl(fadelabel)
                 fadelabel.addLabel(peli)
-                fadelabel.setAnimations([('conditional',
+                if set_animation:
+                    fadelabel.setAnimations([('conditional',
                                           'effect=rotatey start=200 end=0 delay=6200 time=900 tween=elastic condition=true',),
                                          ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
 
                 self.addControl(self.neon)
                 self.neon.setVisibleCondition('[Control.HasFocus(' + str(self.image.getId()) + ')]')
-                self.neon.setAnimations([('conditional',
+                if set_animation:
+                    self.neon.setAnimations([('conditional',
                                           'effect=rotate center=auto start=0% end=360% time=650 tween=bounce condition=Control.HasFocus(' + str(
                                               self.image.getId()) + ')',),
                                          ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
@@ -472,7 +483,8 @@ class main(xbmcgui.WindowDialog):
                                                    "http://s6.postimg.org/j4uhr70k1/greenarrow.png",
                                                    "http://s6.postimg.org/j4uhr70k1/greenarrow.png")
             self.addControl(self.btn_right)
-            self.btn_right.setAnimations(
+            if set_animation:
+                self.btn_right.setAnimations(
                 [('conditional', 'effect=slide start=-3000 end=0 delay=6200 time=2000 condition=true tween=bounce',), (
                     'conditional',
                     'effect=zoom start=230,490, 60, 27, 29 end=1230,642,61,27 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
@@ -480,17 +492,11 @@ class main(xbmcgui.WindowDialog):
                  ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
             self.botones.append(self.btn_right)
         xbmc.sleep(200)
-
-        self.lupam = xbmcgui.ControlImage(820, 320, 60, 60, "http://imgur.com/VDdB0Uw.png")
-        self.addControl(self.lupam)
-        self.lupam.setAnimations(
-            [('conditional', 'effect=slide start=1500 delay=7020 time=200 tween=elastic condition=true',),
-             ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
-
-        self.global_search = xbmcgui.ControlButton(916, 320, 140, 53, '', 'http://imgur.com/hoOvpHV.png',
-                                                   'http://imgur.com/hoOvpHV.png')
+        self.global_search = xbmcgui.ControlButton(1080, 475, 55, 55, '', noFocusTexture='https://s17.postimg.org/u9vfbj1sv/thumb_search_no.png',
+                                                                          focusTexture='https://s17.postimg.org/gc289lvvz/thumb_search.png')
         self.addControl(self.global_search)
-        self.global_search.setAnimations(
+        if set_animation:
+            self.global_search.setAnimations(
             [('conditional', 'effect=slide start=0,700 delay=6200 time=900 condition=true',),
              ('unfocus', 'effect=zoom center=auto start=70% end=100% time=700 reversible=false',),
              ('focus', 'effect=zoom center=auto end=130% reversible=false',),
@@ -510,7 +516,8 @@ class main(xbmcgui.WindowDialog):
                                                     self.item.thumb_busqueda)
                 self.addControl(self.buscar)
                 self.botones.insert(4, self.buscar)
-                self.buscar.setAnimations(
+                if set_animation:
+                    self.buscar.setAnimations(
                     [('conditional', 'effect=slide start=0,700 delay=6200 time=900 condition=true',),
                      ('unfocus', 'effect=zoom center=auto start=70% end=100% time=700 reversible=false',),
                      ('focus', 'effect=zoom center=auto end=130% reversible=false',),
@@ -619,13 +626,15 @@ class main(xbmcgui.WindowDialog):
                     self.buscar.setVisible(False)
                     self.notfound = xbmcgui.ControlImage(800, 520, 300, 120, "http://imgur.com/V1xs9pT.png")
                     self.addControl(self.notfound)
-                    self.notfound.setAnimations(
+                    if set_animation:
+                        self.notfound.setAnimations(
                         [('conditional', 'effect=zoom center=auto start=500% end=0% time=2000 condition=true',)])
                 else:
                     self.global_search.setVisible(False)
                     self.notfound = xbmcgui.ControlImage(800, 520, 300, 120, "http://imgur.com/V1xs9pT.png")
                     self.addControl(self.notfound)
-                    self.notfound.setAnimations(
+                    if set_animation:
+                        self.notfound.setAnimations(
                         [('conditional', 'effect=zoom center=auto start=500% end=0% time=2000 condition=true',)])
         elif control == self.btn_right:
             try:
@@ -637,7 +646,8 @@ class main(xbmcgui.WindowDialog):
                         count += 1
                     elif i > self.mas_pelis and count < 16:
                         self.addControl(afoto)
-                        afoto.setAnimations([('conditional',
+                        if set_animation:
+                            afoto.setAnimations([('conditional',
                                               'effect=rotatey start=200 end=0 time=900 delay=200 tween=elastic condition=true',),
                                              ('unfocus',
                                               'effect=zoom center=auto start=70% end=100% time=700 reversible=false',),
@@ -646,13 +656,15 @@ class main(xbmcgui.WindowDialog):
                                              ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
                         self.addControl(fadelabel)
                         fadelabel.addLabel(peli)
-                        fadelabel.setAnimations(
+                        if set_animation:
+                            fadelabel.setAnimations(
                             [('conditional', 'effect=rotatey start=200 end=0 time=900 tween=elastic condition=true',),
                              ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
 
                         self.addControl(neon)
                         neon.setVisibleCondition('[Control.HasFocus(' + str(afoto.getId()) + ')]')
-                        neon.setAnimations([('conditional',
+                        if set_animation:
+                            neon.setAnimations([('conditional',
                                              'effect=rotate center=auto start=0% end=360% time=650 tween=bounce condition=Control.HasFocus(' + str(
                                                  afoto.getId()) + ')',),
                                             ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
@@ -692,20 +704,23 @@ class main(xbmcgui.WindowDialog):
                         resta2 = 8
                     if i > len_pelis - resta and count < 8:
                         self.addControl(afoto)
-                        afoto.setAnimations(
+                        if set_animation:
+                            afoto.setAnimations(
                             [('conditional', 'effect=rotatey start=200 end=0 time=900 tween=elastic condition=true',),
                              ('unfocus', 'effect=zoom center=auto start=70% end=100% time=700 reversible=false',),
                              ('focus', 'effect=rotate center=auto start=0% end=360% time=650 tween=bounce',),
                              ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
                         self.addControl(fadelabel)
                         fadelabel.addLabel(peli)
-                        fadelabel.setAnimations(
+                        if set_animation:
+                            fadelabel.setAnimations(
                             [('conditional', 'effect=rotatey start=200 end=0 time=900 tween=elastic condition=true',),
                              ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
 
                         self.addControl(neon)
                         neon.setVisibleCondition('[Control.HasFocus(' + str(afoto.getId()) + ')]')
-                        neon.setAnimations([('conditional',
+                        if set_animation:
+                            neon.setAnimations([('conditional',
                                              'effect=rotate center=auto start=0% end=360% time=650 tween=bounce condition=Control.HasFocus(' + str(
                                                  afoto.getId()) + ')',),
                                             ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
@@ -725,8 +740,8 @@ class main(xbmcgui.WindowDialog):
         else:
             for boton, peli, id, poster2 in self.idps:
                 if control == boton:
-                    dialog = platformtools.dialog_progress("[COLOR darkturquoise][B]Cargando nueva info[/B][/COLOR]",
-                                                           "[COLOR lightyellow]Buscando en  [/COLOR][COLOR springgreen][B]Tmdb.......[/B][/COLOR]")
+                    dialog = platformtools.dialog_progress("Cargando nueva info",
+                                                           "Buscando en Tmdb.......")
                     tipo = self.item.contentType
                     if tipo != "movie":
                         tipo = "tv"
@@ -753,7 +768,7 @@ class related(xbmcgui.WindowDialog):
 
         try:
             if not self.infoLabels.get("rating"):
-                rating = "[COLOR crimson][B]Sin puntuación[/B][/COLOR]"
+                rating = "[COLOR crimson][B]N/A[/B][/COLOR]"
             elif self.infoLabels["rating"] >= 5 and self.infoLabels["rating"] < 8:
                 rating = "[COLOR springgreen][B]%s[/B][/COLOR]" % self.infoLabels["rating"]
             elif self.infoLabels["rating"] >= 8:
@@ -790,27 +805,31 @@ class related(xbmcgui.WindowDialog):
             logger.error(traceback.format_exc())
 
         self.setCoordinateResolution(2)
-        self.background = xbmcgui.ControlImage(78, 50, 1053, 634, self.infoLabels.get("fanart",
+        self.background = xbmcgui.ControlImage(178, 50, 1053, 634, self.infoLabels.get("fanart",
                                                                                       "http://s6.postimg.org/fflvear2p/nofanart.png"))
         self.addControl(self.background)
-        self.background.setAnimations(
-            [('conditional', 'effect=slide start=1000% end=100% delay=670 time=2500 condition=true',),
+        if set_animation:
+            self.background.setAnimations(
+            [('conditional', 'effect=slide start=1000% end=0% delay=670 time=2500 condition=true',),
              ('WindowClose', 'effect=slide end=-2000% time=1000 condition=true',)])
 
-        self.shadow = xbmcgui.ControlImage(75, 43, 1061, 649, 'http://s6.postimg.org/k05dw264x/marc_fanart.png')
+        self.shadow = xbmcgui.ControlImage(175, 43, 1061, 649, 'http://s6.postimg.org/k05dw264x/marc_fanart.png')
         self.addControl(self.shadow)
-        self.shadow.setAnimations(
-            [('conditional', 'effect=slide start=1000% end=100% delay=660 time=2500 condition=true',),
+        if set_animation:
+            self.shadow.setAnimations(
+            [('conditional', 'effect=slide start=1000% end=0% delay=660 time=2500 condition=true',),
              ('WindowClose', 'effect=slide end=-2000% time=1000 condition=true',)])
         self.star = xbmcgui.ControlImage(955, 55, 67, 67, "http://s6.postimg.org/jzn0d3clt/star.png")
-        self.addControl(self.star)
-        self.star.setAnimations([('conditional', 'effect=slide delay=6000 start=2000 time=800 condition=true',),
+        self.addControl(self.star) 
+        if set_animation:
+            self.star.setAnimations([('conditional', 'effect=slide delay=6000 start=2000 time=800 condition=true',),
                                  ('WindowClose', 'effect=slide end=0,-700% time=1000 condition=true',)])
 
         self.puntuacion_peli = xbmcgui.ControlTextBox(977, 78, 35, 35, self.fonts["12"])
         self.addControl(self.puntuacion_peli)
         self.puntuacion_peli.setText(rating)
-        self.puntuacion_peli.setAnimations(
+        if set_animation:
+            self.puntuacion_peli.setAnimations(
             [('conditional', 'effect=slide delay=6000 start=2000 time=800 condition=true',),
              ('WindowClose', 'effect=slide end=0,-700% time=1000 condition=true',)])
 
@@ -824,7 +843,8 @@ class related(xbmcgui.WindowDialog):
             xbmc.executebuiltin(
                 'Notification([COLOR red][B]Actualiza Kodi a su última versión[/B][/COLOR], [COLOR skyblue]para mejor info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")')
         self.info_peli.setText(self.info)
-        self.info_peli.setAnimations(
+        if set_animation:
+           self.info_peli.setAnimations(
             [('conditional', 'effect=fade start=0% end=100%  delay=3600 time=800  condition=true',), (
                 'conditional',
                 'effect=slide  delay=1000  start=0,-500  delay=2600 time=2200 tween=bounce condition=true',),
@@ -832,7 +852,8 @@ class related(xbmcgui.WindowDialog):
 
         self.poster_peli = xbmcgui.ControlImage(210, 90, 230, 260, self.infoLabels.get("thumbnail", ""))
         self.addControl(self.poster_peli)
-        self.poster_peli.setAnimations([('conditional',
+        if set_animation:
+            self.poster_peli.setAnimations([('conditional',
                                          'effect=zoom center=auto start=0% end=100%  delay=2000 time=3000 tween=bounce condition=true',),
                                         ('WindowClose', 'effect=zoom end=0% time=1000 condition=true',)])
 
@@ -852,7 +873,8 @@ class related(xbmcgui.WindowDialog):
             self.tagline_peli = xbmcgui.ControlFadeLabel(290, 55, 490, 260)
             self.addControl(self.tagline_peli)
             self.tagline_peli.addLabel(self.infoLabels["tagline"])
-            self.tagline_peli.setAnimations(
+            if set_animation:
+                self.tagline_peli.setAnimations(
                 [('conditional', 'effect=fade center=auto start=0% end=100%  delay=3800 time=2000  condition=true',),
                  ('WindowClose', 'effect=fade end=0% time=500 condition=true',)])
 
@@ -861,66 +883,75 @@ class related(xbmcgui.WindowDialog):
             self.addControl(self.title_peli)
             self.title_peli.addLabel(
                 "[COLOR yellow][B]%s[/B][/COLOR]" % self.infoLabels.get("title", self.infoLabels.get("originaltitle")))
-            self.title_peli.setAnimations(
+            if set_animation:
+                self.title_peli.setAnimations(
                 [('conditional', 'effect=fade start=0% end=100%  delay=2500 time=5000  condition=true',),
                  ('WindowClose', 'effect=fade end=0% time=1000 condition=true',)])
 
         self.gt_peli = xbmcgui.ControlTextBox(210, 385, 1100, 60, self.fonts["12"])
         self.addControl(self.gt_peli)
         self.gt_peli.setText("[COLOR limegreen][B]Género: [/B][/COLOR]")
-        self.gt_peli.setAnimations(
+        if set_animation:
+            self.gt_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-7000 delay=5750 time=700 condition=true tween=circle easing=in',),
              ('WindowClose', 'effect=slide end=0,-7000% time=700 condition=true',)])
 
         self.genero_peli = xbmcgui.ControlFadeLabel(271, 385, 400, 60, self.fonts["12"])
         self.addControl(self.genero_peli)
         self.genero_peli.addLabel("  [COLOR yellowgreen][B]%s[/B][/COLOR]" % self.infoLabels.get("genre", "---"))
-        self.genero_peli.setAnimations(
+        if set_animation:
+            self.genero_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-7000 delay=5750 time=700 condition=true tween=circle easing=in',),
              ('WindowClose', 'effect=slide end=0,-7000% time=700 condition=true',)])
 
         self.pt_peli = xbmcgui.ControlTextBox(210, 410, 307, 60, self.fonts["12"])
         self.addControl(self.pt_peli)
         self.pt_peli.setText("[COLOR limegreen][B]Productora: [/B][/COLOR]")
-        self.pt_peli.setAnimations(
+        if set_animation:
+            self.pt_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-7000 delay=5700 time=700 condition=true tween=circle easing=in',),
              ('WindowClose', 'effect=slide end=0,-7000% delay=100 time=700 condition=true',)])
 
-        self.productora_peli = xbmcgui.ControlFadeLabel(310, 410, 400, 60, self.fonts["12"])
+        self.productora_peli = xbmcgui.ControlFadeLabel(320, 410, 400, 60, self.fonts["12"])
         self.addControl(self.productora_peli)
         self.productora_peli.addLabel("[COLOR yellowgreen][B]%s[/B][/COLOR]" % self.infoLabels.get("studio", "---"))
-        self.productora_peli.setAnimations(
+        if set_animation:
+            self.productora_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-700 delay=5700 time=700 condition=true tween=circle easing=in',),
              ('WindowClose', 'effect=slide end=0,-7000% delay=100 time=700 condition=true',)])
 
         self.paist_peli = xbmcgui.ControlTextBox(210, 435, 400, 60, self.fonts["12"])
         self.addControl(self.paist_peli)
         self.paist_peli.setText("[COLOR limegreen][B]País: [/B][/COLOR]")
-        self.paist_peli.setAnimations(
+        if set_animation:
+            self.paist_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-700 delay=5650 time=700 condition=true tween=circle easing=in',),
              ('WindowClose', 'effect=slide end=0,-7000% delay=200 time=700 condition=true',)])
 
         self.pais_peli = xbmcgui.ControlFadeLabel(247, 435, 400, 60, self.fonts["12"])
         self.addControl(self.pais_peli)
         self.pais_peli.addLabel("  [COLOR yellowgreen][B]%s[/B][/COLOR]" % self.infoLabels.get("country", "---"))
-        self.pais_peli.setAnimations(
+        if set_animation:
+            self.pais_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-700 delay=5650 time=700 condition=true tween=circle easing=in',),
              ('WindowClose', 'effect=slide end=0,-7000% delay=200 time=700 condition=true',)])
 
         self.ft_peli = xbmcgui.ControlTextBox(210, 460, 1100, 60, self.fonts["12"])
         self.addControl(self.ft_peli)
         self.ft_peli.setText("[COLOR limegreen][B]Estreno: [/B][/COLOR]")
-        self.ft_peli.setAnimations(
+        if set_animation:
+            self.ft_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-700 delay=5600 time=700 condition=true tween=circle easing=in',),
              ('WindowClose', 'effect=slide end=0,-7000% delay=300 time=700 condition=true',)])
 
-        self.fecha_peli = xbmcgui.ControlFadeLabel(273, 460, 400, 60, self.fonts["12"])
+        self.fecha_peli = xbmcgui.ControlFadeLabel(280, 460, 400, 60, self.fonts["12"])
         self.addControl(self.fecha_peli)
         release_date = "  [COLOR yellowgreen][B]%s[/B][/COLOR]" % self.infoLabels.get("release_date",
                                                                                       self.infoLabels.get("premiered",
                                                                                                           "---"))
         self.fecha_peli.addLabel(release_date)
-        self.fecha_peli.setAnimations(
+        if set_animation:
+            self.fecha_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-700 delay=5600 time=700 condition=true tween=circle easing=in',),
              ('WindowClose', 'effect=slide end=0,-7000% delay=300 time=700 condition=true',)])
 
@@ -928,7 +959,8 @@ class related(xbmcgui.WindowDialog):
             self.seasons_txt = xbmcgui.ControlTextBox(210, 485, 200, 60, self.fonts["12"])
             self.addControl(self.seasons_txt)
             self.seasons_txt.setText("[COLOR limegreen][B]Temporadas/Episodios: [/B][/COLOR]")
-            self.seasons_txt.setAnimations([('conditional',
+            if set_animation:
+                self.seasons_txt.setAnimations([('conditional',
                                              'effect=slide start=0,-700 delay=5600 time=700 condition=true tween=circle easing=in',),
                                             ('WindowClose', 'effect=slide end=0,-7000% time=700 condition=true',)])
 
@@ -937,7 +969,8 @@ class related(xbmcgui.WindowDialog):
             temporadas = "  [COLOR yellowgreen][B]%s/%s[/B][/COLOR]" % (
                 self.infoLabels.get("number_of_seasons"), self.infoLabels.get("number_of_episodes", "---"))
             self.seasons.addLabel(temporadas)
-            self.seasons.setAnimations([('conditional',
+            if set_animation:
+                self.seasons.setAnimations([('conditional',
                                          'effect=slide start=0,-700 delay=5600 time=700 condition=true tween=circle easing=in',),
                                         (
                                             'WindowClose',
@@ -953,20 +986,16 @@ class related(xbmcgui.WindowDialog):
                 image = "http://i.imgur.com/xQRgLkO.jpg"
             self.actor = xbmcgui.ControlImage(215 + i, 529, 63, 63, image)
             self.addControl(self.actor)
-            self.actor.setAnimations([('conditional',
+            if set_animation:
+                self.actor.setAnimations([('conditional',
                                        'effect=zoom center=auto start=0% end=100% delay=5800 time=1500 tween=bounce condition=true ',),
                                       ('WindowClose',
                                        'effect=zoom end=0  center=auto delay=100+i time=700 condition=true',)])
-            self.circle = xbmcgui.ControlImage(195 + i, 511, 102, 103, "http://s6.postimg.org/u1jewuxzl/act_marco.png")
-            self.addControl(self.circle)
-            self.circle.setAnimations([('conditional',
-                                        'effect=zoom center=auto start=0 end=100 delay=5800 time=1500 tween=bounce condition=true ',),
-                                       ('WindowClose',
-                                        'effect=zoom end=0  center=auto delay=100+i time=700 condition=true',)])
             self.nombre_actor = xbmcgui.ControlFadeLabel(206 + i, 605, 102, 60, self.fonts["12"])
             self.addControl(self.nombre_actor)
             self.nombre_actor.addLabel("[COLOR floralwhite][B]%s[/B][/COLOR]" % actor.get("name"))
-            self.nombre_actor.setAnimations(
+            if set_animation:
+                self.nombre_actor.setAnimations(
                 [('conditional', 'effect=fade start=0 end=100 delay=5800 time=1500 tween=bounce condition=true ',),
                  ('WindowClose', 'effect=fade end=0  center=auto time=700 condition=true',)])
             xbmc.sleep(200)
@@ -993,22 +1022,17 @@ class related(xbmcgui.WindowDialog):
 
                 self.td = xbmcgui.ControlImage(880 + i, 390, 63, 63, image)
                 self.addControl(self.td)
-                self.td.setAnimations(
+                if set_animation:
+                    self.td.setAnimations(
                     [('conditional', 'effect=fade start=0% end=100%  delay=4200 time=200  condition=true',),
                      ('conditional', 'effect=slide start=-150,-60 delay=4200 time=450 condition=true tween=elastic',),
                      ('WindowClose', 'effect=slide end=-2000  center=auto time=700 condition=true',)])
 
-                self.circle = xbmcgui.ControlImage(860 + i, 372, 102, 103,
-                                                   "http://s6.postimg.org/u1jewuxzl/act_marco.png")
-                self.addControl(self.circle)
-                self.circle.setAnimations(
-                    [('conditional', 'effect=fade start=0% end=100%  delay=4200 time=200  condition=true',),
-                     ('conditional', 'effect=slide start=-200,-200 delay=4200 time=450 condition=true tween=elastic',),
-                     ('WindowClose', 'effect=slide end=-2000  center=auto time=700 condition=true',)])
                 self.nd = xbmcgui.ControlFadeLabel(860 + i, 464, 105, 60, self.fonts["12"])
                 self.addControl(self.nd)
                 self.nd.addLabel("[COLOR floralwhite][B]%s[/B][/COLOR]" % crew["name"])
-                self.nd.setAnimations(
+                if set_animation:
+                    self.nd.setAnimations(
                     [('conditional', 'effect=fade start=0 end=100 delay=4200 time=1500 tween=bounce condition=true',),
                      ('WindowClose', 'effect=slide end=2000  center=auto time=700 condition=true',)])
                 i += 130
@@ -1017,7 +1041,8 @@ class related(xbmcgui.WindowDialog):
             if self.nd:
                 self.img_dir = xbmcgui.ControlImage(740, 380, 100, 90, "http://s6.postimg.org/k8kl30pe9/director.png")
                 self.addControl(self.img_dir)
-                self.img_dir.setAnimations(
+                if set_animation:
+                    self.img_dir.setAnimations(
                     [('conditional', 'effect=fade start=0 end=100 delay=3200 time=700  condition=true ',),
                      ('WindowClose', 'effect=rotate end=-2000   time=700 condition=true',)])
         except:
@@ -1027,7 +1052,8 @@ class related(xbmcgui.WindowDialog):
         self.trailer_r = xbmcgui.ControlButton(790, 62, 55, 55, '', 'http://i.imgur.com/cGI2fxC.png',
                                                'http://i.imgur.com/cGI2fxC.png')
         self.addControl(self.trailer_r)
-        self.trailer_r.setAnimations([('conditional', 'effect=slide start=-2000 delay=4000 time=2500 condition=true',),
+        if set_animation:
+            self.trailer_r.setAnimations([('conditional', 'effect=slide start=-2000 delay=4000 time=2500 condition=true',),
                                       ('conditional',
                                        'effect=rotate delay=4000 center=auto  start=0% end=360% time=2500  condition=true ',),
                                       ('unfocus',
@@ -1038,10 +1064,11 @@ class related(xbmcgui.WindowDialog):
                                       ('WindowClose', 'effect=slide end=2000 time=700 condition=true',)])
         self.botones.append(self.trailer_r)
 
-        self.plusinfo = xbmcgui.ControlButton(1090, 20, 100, 100, '', 'http://i.imgur.com/1w5CFCL.png',
+        self.plusinfo = xbmcgui.ControlButton(1090, 50, 100, 100, '', 'http://i.imgur.com/1w5CFCL.png',
                                               'http://i.imgur.com/1w5CFCL.png')
         self.addControl(self.plusinfo)
-        self.plusinfo.setAnimations(
+        if set_animation:
+            self.plusinfo.setAnimations(
             [('conditional', 'effect=slide start=0,-700 delay=5600 time=700 condition=true tween=elastic easing=out',),
              ('unfocus', 'effect=zoom center=auto start=70% end=100% time=700 reversible=false',), ('conditional',
                                                                                                     'effect=rotate center=auto start=0% end=360% reversible=false  time=2000 loop=true condition=Control.HasFocus(' + str(
@@ -1051,7 +1078,8 @@ class related(xbmcgui.WindowDialog):
 
         self.lupam = xbmcgui.ControlImage(950, 580, 60, 60, "http://imgur.com/VDdB0Uw.png")
         self.addControl(self.lupam)
-        self.lupam.setAnimations(
+        if set_animation:
+            self.lupam.setAnimations(
             [('conditional', 'effect=slide start=1500 delay=7020 time=200 tween=elastic condition=true',),
              ('WindowClose', 'effect=zoom end=0 center=auto time=700 condition=true',)])
 
@@ -1069,18 +1097,20 @@ class related(xbmcgui.WindowDialog):
                                                 self.item.thumb_busqueda)
             self.addControl(self.buscar)
             self.botones.append(self.buscar)
-            self.buscar.setAnimations([('conditional', 'effect=slide start=0,700 delay=6000 time=200 condition=true',),
+            if set_animation:
+                self.buscar.setAnimations([('conditional', 'effect=slide start=0,700 delay=6000 time=200 condition=true',),
                                        ('unfocus',
                                         'effect=zoom center=auto start=70% end=100% time=700 reversible=false',), (
                                            'conditional',
                                            'effect=zoom center=auto start=100% end=120% reversible=false tween=bounce time=1000 loop=true condition=Control.HasFocus(' + str(
                                                self.buscar.getId()) + ')'),
                                        ('WindowClose', 'effect=rotatey end=-300 time=1500 condition=true',)])
-        self.global_search = xbmcgui.ControlButton(1046, 620, 140, 53, '', 'http://imgur.com/hoOvpHV.png',
-                                                   'http://imgur.com/hoOvpHV.png')
+        self.global_search = xbmcgui.ControlButton(1046, 620, 140, 53, '', 'https://s33.postimg.org/3k39ww24f/logo-alfa.png',
+                                                   'https://s33.postimg.org/3k39ww24f/logo-alfa.png')
         self.addControl(self.global_search)
         self.botones.append(self.global_search)
-        self.global_search.setAnimations(
+        if set_animation:
+            self.global_search.setAnimations(
             [('conditional', 'effect=slide start=0,700 delay=6090 time=200 condition=true',),
              ('unfocus', 'effect=zoom center=auto start=70% end=100% time=700 reversible=false',), ('conditional',
                                                                                                     'effect=zoom center=auto start=120% end=100% reversible=false tween=bounce time=1000 loop=true condition=Control.HasFocus(' + str(
@@ -1158,13 +1188,15 @@ class related(xbmcgui.WindowDialog):
                     self.removeControl(self.buscar)
                     self.notfound = xbmcgui.ControlImage(800, 520, 300, 120, "http://imgur.com/V1xs9pT.png")
                     self.addControl(self.notfound)
-                    self.notfound.setAnimations(
+                    if set_animation:
+                        self.notfound.setAnimations(
                         [('conditional', 'effect=zoom center=auto start=500% end=0% time=2000 condition=true',)])
                 else:
                     self.removeControl(self.global_search)
                     self.notfound = xbmcgui.ControlImage(800, 520, 300, 120, "http://imgur.com/V1xs9pT.png")
                     self.addControl(self.notfound)
-                    self.notfound.setAnimations(
+                    if set_animation:
+                        self.notfound.setAnimations(
                         [('conditional', 'effect=zoom center=auto start=500% end=0% time=2000 condition=true',)])
 
 
@@ -1437,8 +1469,8 @@ class Actores(xbmcgui.WindowXMLDialog):
             name_info = selectitem.getProperty("name_info")
             thumbnail = selectitem.getProperty("thumbnail")
             job = selectitem.getProperty("job")
-            dialog = platformtools.dialog_progress("[COLOR darkturquoise][B]Cargando nuevos datos[/B][/COLOR]",
-                                                   "[COLOR yellow]Obteniendo datos del %s...[/COLOR]" % job.lower())
+            dialog = platformtools.dialog_progress("Cargando nuevos datos",
+                                                   "Obteniendo datos del %s..." % job.lower())
 
             global ActorInfoWindow
             ActorInfoWindow = ActorInfo(id=id_actor, name=name_info, thumbnail=thumbnail, item=self.item,
@@ -1516,24 +1548,28 @@ class ActorInfo(xbmcgui.WindowDialog):
         self.setCoordinateResolution(2)
         self.background = xbmcgui.ControlImage(30, -5, 1250, 730, 'http://imgur.com/7ccBX3g.png')
         self.addControl(self.background)
-        self.background.setAnimations(
+        if set_animation:
+            self.background.setAnimations(
             [('conditional', 'effect=fade start=0% end=100% delay=2000 time=1500 condition=true',),
              ('WindowClose', 'effect=slide end=0,-700% time=1000 condition=true',)])
         self.filmo = xbmcgui.ControlImage(330, 470, 230, 45, 'http://s6.postimg.org/rlktamqhd/filmography1.png')
         self.addControl(self.filmo)
-        self.filmo.setAnimations([('conditional',
+        if set_animation:
+            self.filmo.setAnimations([('conditional',
                                    'effect=zoom start=0,700 end=100% center=auto delay=5500 time=1000 condition=true tween=elastic',),
                                   ('WindowClose', 'effect=zoom start=100% end=0% time=1000 condition=true',)])
 
         self.title = xbmcgui.ControlTextBox(470, 30, 730, 250)
         self.addControl(self.title)
-        self.title.setAnimations(
+        if set_animation:
+            self.title.setAnimations(
             [('conditional', 'effect=slide start=-1500% end=0% delay=3000 time=1500 condition=true',),
              ('WindowClose', 'effect=slide end=1500% time=1000 condition=true',)])
         self.title.setText(self.nombre)
         self.info_actor = xbmcgui.ControlTextBox(470, 70, 750, 400)
         self.addControl(self.info_actor)
-        self.info_actor.setAnimations(
+        if set_animation:
+            self.info_actor.setAnimations(
             [('conditional', 'effect=slide start=2000% end=-10% delay=5300 time=1500 tween=bounce condition=true',),
              ('WindowClose', 'effect=slide end=-2000% time=1000 condition=true',)])
         try:
@@ -1575,7 +1611,8 @@ class ActorInfo(xbmcgui.WindowDialog):
         self.btn_left = xbmcgui.ControlButton(90, 490, 70, 29, '', "http://s6.postimg.org/i3pnobu6p/redarrow.png",
                                               "http://s6.postimg.org/i3pnobu6p/redarrow.png")
         self.addControl(self.btn_left)
-        self.btn_left.setAnimations([('conditional',
+        if set_animation:
+            self.btn_left.setAnimations([('conditional',
                                       'effect=zoom start=720,642,70,29 end=640,642,69,29 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
                                           self.btn_left.getId()) + ')',),
                                      ('WindowClose', 'effect=fade end=0% time=1000 condition=true',)])
@@ -1591,7 +1628,8 @@ class ActorInfo(xbmcgui.WindowDialog):
 
             if count < 8:
                 self.addControl(self.image)
-                self.image.setAnimations([('conditional',
+                if set_animation:
+                    self.image.setAnimations([('conditional',
                                            'effect=rotatey start=200 end=0 delay=2000 time=900 tween=elastic condition=true',),
                                           ('unfocus',
                                            'effect=zoom center=auto start=70% end=100% time=700 reversible=false',), (
@@ -1600,14 +1638,16 @@ class ActorInfo(xbmcgui.WindowDialog):
                                           ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',), ])
                 self.addControl(self.neon)
                 self.neon.setVisibleCondition('[Control.HasFocus(' + str(self.image.getId()) + ')]')
-                self.neon.setAnimations([('conditional',
+                if set_animation:
+                    self.neon.setAnimations([('conditional',
                                           'effect=rotate center=auto start=0% end=360% time=650 tween=bounce condition=Control.HasFocus(' + str(
                                               self.image.getId()) + ')',),
                                          ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',), ])
 
                 self.addControl(fadelabel)
                 fadelabel.addLabel(peli)
-                fadelabel.setAnimations([('conditional',
+                if set_animation:
+                    fadelabel.setAnimations([('conditional',
                                           'effect=rotatey start=200 end=0 delay=6200 time=900 tween=elastic condition=true',),
                                          ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
 
@@ -1622,7 +1662,8 @@ class ActorInfo(xbmcgui.WindowDialog):
                                                    "http://s6.postimg.org/j4uhr70k1/greenarrow.png",
                                                    "http://s6.postimg.org/j4uhr70k1/greenarrow.png")
             self.addControl(self.btn_right)
-            self.btn_right.setAnimations(
+            if set_animation:
+                self.btn_right.setAnimations(
                 [('conditional', 'effect=slide start=-3000 end=0 delay=5000 time=2000 condition=true tween=bounce',), (
                     'conditional',
                     'effect=zoom start=230,490, 60, 27, 29 end=1230,642,61,27 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
@@ -1641,12 +1682,14 @@ class ActorInfo(xbmcgui.WindowDialog):
             self.marco = xbmcgui.ControlImage(100, 23, 330, 425,
                                               'http://s6.postimg.org/nkmk7b8nl/marco_foto2_copia.png')
             self.addControl(self.marco)
-            self.marco.setAnimations(
+            if set_animation:
+                self.marco.setAnimations(
                 [('conditional', 'effect=rotatey start=100% end=0% delay=2400 time=1500 condition=true',),
                  ('WindowClose', 'effect=fade end=0% time=1000 condition=true',)])
             self.thumb = xbmcgui.ControlImage(115, 40, 294, 397, self.thumbnail)
             self.addControl(self.thumb)
-            self.thumb.setAnimations(
+            if set_animation:
+                self.thumb.setAnimations(
                 [('conditional', 'effect=rotatey start=100% end=0% delay=2380 time=1500 condition=true',),
                  ('WindowClose', 'effect=fade end=0% time=1000 condition=true',)])
             xbmc.sleep(300)
@@ -1672,12 +1715,14 @@ class ActorInfo(xbmcgui.WindowDialog):
                     self.thumb = xbmcgui.ControlImage(115, 40, 294, 397, "")
                     xbmc.sleep(500)
                     self.addControl(self.marco)
-                    self.marco.setAnimations(
+                    if set_animation:
+                        self.marco.setAnimations(
                         [('conditional', 'effect=rotatey start=100% end=0% delay=2300 time=1500 condition=true',),
                          ('WindowClose', 'effect=fade end=0% time=1000 condition=true',)])
                     self.addControl(self.thumb)
                     self.thumb.setImage(self.thumbnail)
-                    self.thumb.setAnimations(
+                    if set_animation:
+                        self.thumb.setAnimations(
                         [('conditional', 'effect=rotatey start=100% end=0% delay=2280 time=1500 condition=true',),
                          ('WindowClose', 'effect=fade end=0% time=1000 condition=true',)])
                     xbmc.sleep(4000)
@@ -1697,13 +1742,15 @@ class ActorInfo(xbmcgui.WindowDialog):
                     self.marco = xbmcgui.ControlImage(100, 23, 330, 425,
                                                       'http://s6.postimg.org/4syg4krkh/marco_foto.png')
                     self.addControl(self.marco)
-                    self.marco.setAnimations(
+                    if set_animation:
+                        self.marco.setAnimations(
                         [('conditional', 'effect=rotatey start=100% end=0% delay=300 time=1500 condition=true',),
                          ('WindowClose', 'effect=fade end=0% time=1000 condition=true',)])
                     self.thumb = xbmcgui.ControlImage(115, 40, 294, 397, "")
                     self.addControl(self.thumb)
                     self.thumb.setImage(image, True)
-                    self.thumb.setAnimations(
+                    if set_animation:
+                        self.thumb.setAnimations(
                         [('conditional', 'effect=rotatey start=100% end=0% delay=285 time=1500 condition=true',),
                          ('WindowClose', 'effect=fade end=0% time=1000 condition=true',)])
                     imagenes.append([self.thumb, self.marco])
@@ -1775,7 +1822,8 @@ class ActorInfo(xbmcgui.WindowDialog):
                         count += 1
                     elif i > self.mas_pelis and count < 16:
                         self.addControl(afoto)
-                        afoto.setAnimations([('conditional',
+                        if set_animation:
+                            afoto.setAnimations([('conditional',
                                               'effect=rotatey start=200 end=0 time=900 delay=200 tween=elastic condition=true',),
                                              ('unfocus',
                                               'effect=zoom center=auto start=70% end=100% time=700 reversible=false',),
@@ -1784,13 +1832,15 @@ class ActorInfo(xbmcgui.WindowDialog):
                                              ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',), ])
                         self.addControl(neon)
                         neon.setVisibleCondition('[Control.HasFocus(' + str(afoto.getId()) + ')]')
-                        neon.setAnimations([('conditional',
+                        if set_animation:
+                            neon.setAnimations([('conditional',
                                              'effect=rotate center=auto start=0% end=360% time=650 tween=bounce condition=Control.HasFocus(' + str(
                                                  afoto.getId()) + ')',),
                                             ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',), ])
                         self.addControl(fadelabel)
                         fadelabel.addLabel(peli)
-                        fadelabel.setAnimations(
+                        if set_animation:
+                            fadelabel.setAnimations(
                             [('conditional', 'effect=rotatey start=200 end=0 time=900 tween=elastic condition=true',),
                              ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
 
@@ -1830,20 +1880,23 @@ class ActorInfo(xbmcgui.WindowDialog):
                         resta2 = 8
                     if i > len_pelis - resta and count < 8:
                         self.addControl(afoto)
-                        afoto.setAnimations(
+                        if set_animation:
+                            afoto.setAnimations(
                             [('conditional', 'effect=rotatey start=200 end=0 time=900 tween=elastic condition=true',),
                              ('unfocus', 'effect=zoom center=auto start=70% end=100% time=700 reversible=false',),
                              ('focus', 'effect=rotate center=auto start=0% end=360% time=650 tween=bounce',),
                              ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',), ])
                         self.addControl(neon)
                         neon.setVisibleCondition('[Control.HasFocus(' + str(afoto.getId()) + ')]')
-                        neon.setAnimations([('conditional',
+                        if set_animation:
+                            neon.setAnimations([('conditional',
                                              'effect=rotate center=auto start=0% end=360% time=650 tween=bounce condition=Control.HasFocus(' + str(
                                                  afoto.getId()) + ')',),
                                             ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',), ])
                         self.addControl(fadelabel)
                         fadelabel.addLabel(peli)
-                        fadelabel.setAnimations(
+                        if set_animation:
+                            fadelabel.setAnimations(
                             [('conditional', 'effect=rotatey start=200 end=0 time=900 tween=elastic condition=true',),
                              ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
                         count += 1
@@ -1860,8 +1913,8 @@ class ActorInfo(xbmcgui.WindowDialog):
 
         for boton, peli, id, poster2 in self.idps:
             if control == boton:
-                dialog = platformtools.dialog_progress("[COLOR darkturquoise][B]Cargando nueva info[/B][/COLOR]",
-                                                       "[COLOR lightyellow]Buscando en  [/COLOR][COLOR springgreen][B]Tmdb.......[/B][/COLOR]")
+                dialog = platformtools.dialog_progress("Cargando nueva info",
+                                                       "Buscando en Tmdb.......")
                 tipo = self.item.contentType
                 if tipo != "movie":
                     tipo = "tv"
@@ -1899,18 +1952,20 @@ class images(xbmcgui.WindowDialog):
             self.imagenes.append(imagen)
 
         self.setCoordinateResolution(2)
-        self.shadow = xbmcgui.ControlImage(145, 10, 1011, 700, 'http://imgur.com/66VSLTo.png')
+        self.shadow = xbmcgui.ControlImage(245, 10, 1011, 700, 'http://imgur.com/66VSLTo.png')
         self.addControl(self.shadow)
-        self.shadow.setAnimations(
-            [('conditional', 'effect=slide start=1000% end=100% delay=672 time=2500 condition=true',),
-             ('WindowClose', 'effect=slide end=0,-700% time=1000 condition=true',)])
+        if set_animation:
+            self.shadow.setAnimations(
+            [('conditional', 'effect=slide start=1000% delay=672 time=2500 condition=true',),
+             ('WindowClose', 'effect=slide end=0 time=1000 condition=true',)])
         imagen_inicial = self.imagenes[0].replace("/preview/", "/fanart/").replace("-s200", "-large").replace("/w342/",
                                                                                                               "/original/")
-        self.background = xbmcgui.ControlImage(148, 17, 1003, 560, imagen_inicial, 2)
+        self.background = xbmcgui.ControlImage(248, 17, 1003, 560, imagen_inicial, 2)
         self.addControl(self.background)
-        self.background.setAnimations(
-            [('conditional', 'effect=slide start=1000% end=100% delay=670 time=2500 condition=true',),
-             ('WindowClose', 'effect=slide end=0,-700% time=1000 condition=true',)])
+        if set_animation:
+            self.background.setAnimations(
+            [('conditional', 'effect=slide start=1000% delay=670 time=2500 condition=true',),
+             ('WindowClose', 'effect=slide end=0 time=1000 condition=true',)])
 
         self.botones = []
         self.imgcount = 8
@@ -1922,7 +1977,8 @@ class images(xbmcgui.WindowDialog):
         self.btn_left = xbmcgui.ControlButton(293, 550, 70, 29, '', "http://s6.postimg.org/i3pnobu6p/redarrow.png",
                                               "http://s6.postimg.org/i3pnobu6p/redarrow.png")
         self.addControl(self.btn_left)
-        self.btn_left.setAnimations(
+        if set_animation:
+            self.btn_left.setAnimations(
             [('conditional', 'effect=zoom start=-100 end=100 delay=5000 time=2000 condition=true tween=bounce',), (
                 'conditional',
                 'effect=zoom start=293,642,70,29 end=243,642,69,29 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
@@ -1939,14 +1995,16 @@ class images(xbmcgui.WindowDialog):
             self.botones.append(self.image)
             if count < 8:
                 self.addControl(self.image)
-                self.image.setAnimations([('conditional',
-                                           'effect=rotatey start=200 end=0  delay=3500 time=900 tween=elastic condition=true',),
+                if set_animation:
+                    self.image.setAnimations([('conditional',
+                                           'effect=rotatey start=200 end=0 delay=3500 time=900 tween=elastic condition=true',),
                                           ('unfocus',
                                            'effect=zoom center=auto start=70% end=100% time=700 reversible=false',),
                                           ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
                 self.addControl(self.neon)
                 self.neon.setVisibleCondition('[Control.HasFocus(' + str(self.image.getId()) + ')]')
-                self.neon.setAnimations([('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
+                if set_animation:
+                    self.neon.setAnimations([('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
 
             self.urls.append([self.image, img])
             self.botones_imgs.append([self.image, self.neon])
@@ -1959,7 +2017,8 @@ class images(xbmcgui.WindowDialog):
                                                    "http://s6.postimg.org/j4uhr70k1/greenarrow.png",
                                                    "http://s6.postimg.org/j4uhr70k1/greenarrow.png")
             self.addControl(self.btn_right)
-            self.btn_right.setAnimations(
+            if set_animation:
+                self.btn_right.setAnimations(
                 [('conditional', 'effect=slide start=-3000 end=0 delay=3600 time=2000 condition=true tween=bounce',), (
                     'conditional',
                     'effect=zoom start=230,490, 60, 27, 29 end=1190,642,61,27 time=1000 loop=true tween=bounce condition=Control.HasFocus(' + str(
@@ -2025,14 +2084,16 @@ class images(xbmcgui.WindowDialog):
                         count += 1
                     elif i > self.imgcount and count < 16:
                         self.addControl(image)
-                        image.setAnimations([('conditional',
+                        if set_animation:
+                            image.setAnimations([('conditional',
                                               'effect=rotatey start=200 end=0 delay=600 time=900 tween=elastic condition=true',),
                                              ('unfocus',
                                               'effect=zoom center=auto start=70% end=100% time=700 reversible=false',),
                                              ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
                         self.addControl(neon)
                         neon.setVisibleCondition('[Control.HasFocus(' + str(image.getId()) + ')]')
-                        neon.setAnimations([('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
+                        if set_animation:
+                            neon.setAnimations([('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
 
                         count += 1
                         self.imgcount += 1
@@ -2068,14 +2129,16 @@ class images(xbmcgui.WindowDialog):
                         resta2 = 8
                     if i > len_images - resta and count < 8:
                         self.addControl(image)
-                        image.setAnimations([('conditional',
+                        if set_animation:
+                            image.setAnimations([('conditional',
                                               'effect=rotatey start=200 end=0  delay=600 time=900 tween=elastic condition=true',),
                                              ('unfocus',
                                               'effect=zoom center=auto start=70% end=100% time=700 reversible=false',),
                                              ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
                         self.addControl(neon)
                         neon.setVisibleCondition('[Control.HasFocus(' + str(image.getId()) + ')]')
-                        neon.setAnimations([('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
+                        if set_animation:
+                            neon.setAnimations([('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
                         count += 1
                     elif i > len_images - resta2 and i <= len_images and count < 16:
                         self.removeControls([image, neon])
@@ -2198,7 +2261,7 @@ def get_filmaf(item, infoLabels):
 
         rating = scrapertools.find_single_match(data, 'itemprop="ratingValue" content="([^"]+)"')
         if not rating:
-            rating_filma = "[COLOR crimson][B]Sin puntuación[/B][/COLOR]"
+            rating_filma = "[COLOR crimson][B]N/A[/B][/COLOR]"
         else:
             try:
                 if float(rating) >= 5 and float(rating) < 8:
@@ -2214,28 +2277,10 @@ def get_filmaf(item, infoLabels):
         plot = scrapertools.find_single_match(data, '<dd itemprop="description">(.*?)</dd>')
         plot = plot.replace("<br><br />", "\n")
 
-        patron = '<div itemprop="reviewBody">(.*?)</div>.*?itemprop="author">(.*?)\s*<i alt="([^"]+)"'
-        matches_reviews = scrapertools.find_multiple_matches(data, patron)
-        critica = ""
-        if matches_reviews:
-            for review, autor, valoracion in matches_reviews:
-                review = dhe(scrapertools.htmlclean(review))
-                review += "\n" + autor
-                if "positiva" in valoracion:
-                    critica += "[COLOR green][B]%s[/B][/COLOR]\n\n" % review
-                elif "neutral" in valoracion:
-                    critica += "[COLOR yellow][B]%s[/B][/COLOR]\n\n" % review
-                else:
-                    critica += "[COLOR red][B]%s[/B][/COLOR]\n\n" % review
-        else:
-            critica = "[COLOR floralwhite][B]Esta %s no tiene críticas[/B][/COLOR]" % tipo
-
     else:
-        critica = "[COLOR floralwhite][B]Esta %s no tiene críticas[/B][/COLOR]" % tipo
-        rating_filma = "[COLOR crimson][B]Sin puntuación[/B][/COLOR]"
+        rating_filma = "[COLOR crimson][B]N/A[/B][/COLOR]"
         plot = ""
-
-    return critica, rating_filma, plot
+    return rating_filma, plot
 
 
 def fanartv(item, infoLabels, images={}):

@@ -150,7 +150,7 @@ def episodios(item):
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, show=show))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=item.channel, title="Añadir " + show + " a la videoteca", url=item.url,
+        itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir " + show + " a la videoteca[/COLOR]", url=item.url,
                              action="add_serie_to_library", extra="episodios", show=show))
 
     return itemlist
