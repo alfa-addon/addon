@@ -180,7 +180,7 @@ def findvideos(item):
     show = item.show
     for videoitem in itemlist:
         videoitem.channel = item.channel
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentType=="movie":
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentType=="movie" and item.contentChannel!='videolibrary':
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
                  action="add_pelicula_to_library", extra="findvideos", contentTitle=show))

@@ -39,7 +39,8 @@
         <setting id="videolibrary_kodi" type="bool" label="Autoconfigurar videoteca de XBMC/Kodi para contenido de Alfa" enable="lt(-1,2)+eq(0,false)" default="false"/>
     </category>
     <category label="Opciones Visuales">
-        <setting id="icon_set" type="labelenum" label="Set de iconos" lvalues="default|dark" default="default"/>
+        <setting id="icon_set" type="labelenum" label="Set de iconos" values="default|dark" default="default"/>
+        <setting id="infoplus_set" type="labelenum" label="Opción visual Infoplus" values="Sin animación|Con animación" default="Sin animación"/>
         <setting id="video_thumbnail_type" type="enum" label="Thumbnail para videos" values="Poster|Logo del servidor" default="0"/>
         <setting label="Opciones para Titulos" type="lsep"/>
         <setting id="unify" type="bool" label="Titulos Inteligentes" default="false"/>
