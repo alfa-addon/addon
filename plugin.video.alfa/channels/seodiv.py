@@ -236,31 +236,17 @@ def episodiosxtemp(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    lang=[]
     data = httptools.downloadpage(item.url).data
     video_items = servertools.find_video_items(item)
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    language_items=scrapertools.find_single_match(data,
-                 '<ul class=tabs-sidebar-ul>(.+?)<\/ul>')
-    matches=scrapertools.find_multiple_matches(language_items,
-                 '<li><a href=#ts(.+?)><span>(.+?)<\/span><\/a><\/li>')
-    for idl,scrapedlang in matches:
-        if int(idl)<5 and int(idl)!=1:
-            lang.append(scrapedlang)
-    i=0
-    logger.info(lang)
     for videoitem in video_items:
         videoitem.thumbnail = servertools.guess_server_thumbnail(videoitem.server)
-        #videoitem.language = scrapertools.find_single_match(data, '<span class="f-info-title">Idioma:<\/span>\s*<span '
-        #                                                          'class="f-info-text">(.*?)<\/span>')
-        if len(lang)<=i:
-            videoitem.language=lang[i]
-        else:
-            videoitem.language=lang[len(lang)-1]
+        videoitem.language = scrapertools.find_single_match(data, '<span class=f-info-title>Idioma:<\/span>\s*<span '
+                                                                  'class=f-info-text>(.*?)<\/span>')
+
         videoitem.title = item.contentSerieName + ' (' + videoitem.server + ') (' + videoitem.language + ')'
         videoitem.quality = 'default'
         videoitem.context = item.context
-        i=i+1
         itemlist.append(videoitem)
 
     # Requerido para FilterTools
