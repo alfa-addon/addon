@@ -158,14 +158,13 @@ def youtube_search(item):
         titulo = urllib.quote(titulo)
         titulo = titulo.replace("%20", "+")
         data = scrapertools.downloadpage("https://www.youtube.com/results?sp=EgIQAQ%253D%253D&q=" + titulo)
-
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron = '<span class="yt-thumb-simple">.*?(?:src="https://i.ytimg.com/|data-thumb="https://i.ytimg.com/)([^"]+)"' \
-             '.*?<h3 class="yt-lockup-title ">.*?<a href="([^"]+)".*?title="([^"]+)".*?' \
-             '</a><span class="accessible-description".*?>.*?(\d+:\d+)'
+    patron  = """"thumbnails":\[\{"url":"(https://i.ytimg.com/vi[^"]+).*?"""
+    patron += """simpleText":"([^"]+).*?"""
+    patron += """simpleText":"[^"]+.*?simpleText":"([^"]+).*?"""
+    patron += """url":"([^"]+)"""
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedthumbnail, scrapedurl, scrapedtitle, scrapedduration in matches:
-        scrapedthumbnail = urlparse.urljoin("https://i.ytimg.com/", scrapedthumbnail)
+    for scrapedthumbnail, scrapedtitle, scrapedduration, scrapedurl in matches:
         scrapedtitle = scrapedtitle.decode("utf-8")
         scrapedtitle = scrapedtitle + " (" + scrapedduration + ")"
         if item.contextual:
