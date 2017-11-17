@@ -412,6 +412,7 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
         self.addControl(control)
 
         control.setVisible(False)
+        control.setLabel(c["label"])
         # frodo fix
         s = self.values[c["id"]]
         if s is None:
