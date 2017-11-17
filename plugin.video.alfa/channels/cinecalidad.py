@@ -378,12 +378,14 @@ def newest(categoria):
     itemlist = []
     item = Item()
     try:
-        if categoria == 'peliculas':
-            item.url = 'http://www.cinecalidad.to'
+        if categoria in ['peliculas','latino']:
+            item.url = 'http://www.cinecalidad.com'
         elif categoria == 'infantiles':
-            item.url = 'http://www.cinecalidad.to/genero-peliculas/infantil/'
+            item.url = 'http://www.cinecalidad.com/genero-peliculas/infantil/'
         elif categoria == 'terror':
-            item.url = 'http://www.cinecalidad.to/genero-peliculas/terror/'
+            item.url = 'http://www.cinecalidad.com/genero-peliculas/terror/'
+        elif categoria == 'castellano':
+            item.url = 'http://www.cinecalidad.com/espana/'
         itemlist = peliculas(item)
         if itemlist[-1].title == 'Página siguiente >>':
             itemlist.pop()
