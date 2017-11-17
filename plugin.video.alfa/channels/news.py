@@ -75,21 +75,21 @@ def mainlist(item):
     itemlist.append(new_item)
 
     # if list_canales['Castellano']:
-    thumbnail = get_thumb("channels_documentary.png")
+    thumbnail = get_thumb("channels_spanish.png")
     new_item = Item(channel=item.channel, action="novedades", extra="castellano", title="Castellano",
                     thumbnail=thumbnail)
     set_category_context(new_item)
     itemlist.append(new_item)
 
     # if list_canales['Latino']:
-    thumbnail = get_thumb("channels_documentary.png")
+    thumbnail = get_thumb("channels_latino.png")
     new_item = Item(channel=item.channel, action="novedades", extra="latino", title="Latino",
                     thumbnail=thumbnail)
     set_category_context(new_item)
     itemlist.append(new_item)
 
     # if list_canales['Torrent']:
-    thumbnail = get_thumb("channels_documentary.png")
+    thumbnail = get_thumb("channels_torrent.png")
     new_item = Item(channel=item.channel, action="novedades", extra="torrent", title="Torrent", thumbnail=thumbnail)
     set_category_context(new_item)
     itemlist.append(new_item)
