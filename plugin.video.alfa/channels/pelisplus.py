@@ -513,11 +513,14 @@ def newest(categoria):
     item = Item()
     item.extra = 'estrenos/'
     try:
-        if categoria == 'peliculas':
+        if categoria in ['peliculas','latino']:
             item.url = host + 'estrenos/pag-1'
 
         elif categoria == 'infantiles':
             item.url = host + 'peliculas/animacion/pag-1'
+
+        elif categoria == 'terror':
+            item.url = host + 'peliculas/terror/pag-1'
 
         elif categoria == 'documentales':
             item.url = host + 'documentales/pag-1'
@@ -532,6 +535,5 @@ def newest(categoria):
             logger.error("{0}".format(line))
         return []
 
-    itemlist = filtertools.get_links(itemlist, item, list_language)
- 
-   
+    #itemlist = filtertools.get_links(itemlist, item, list_language)
+    return itemlist

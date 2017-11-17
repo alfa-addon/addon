@@ -147,7 +147,7 @@ def newest(categoria):
     itemlist = []
     item = Item()
     try:
-        if categoria == 'peliculas':
+        if categoria in ['peliculas','latino']:
             item.url = host + '/cartelera/'
         elif categoria == 'infantiles':
             item.url = host + "/online/animacion"

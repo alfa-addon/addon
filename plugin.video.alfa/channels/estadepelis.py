@@ -457,7 +457,7 @@ def newest(categoria):
     item = Item()
     # categoria='peliculas'
     try:
-        if categoria == 'peliculas':
+        if categoria in ['peliculas','latino']:
             item.url = host
         elif categoria == 'infantiles':
             item.url = host + 'search?q=animación'
