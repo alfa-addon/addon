@@ -90,26 +90,30 @@ def newest(categoria):
         if categoria == 'peliculas':
             item.url = CHANNEL_HOST
             item.action = "peliculas"
-            itemlist = peliculas(item)
-
-            if itemlist[-1].action == "peliculas":
-                itemlist.pop()
 
         elif categoria == 'documentales':
             item.url = CHANNEL_HOST + "genero/documental/"
             item.action = "peliculas"
-            itemlist = peliculas(item)
-
-            if itemlist[-1].action == "peliculas":
-                itemlist.pop()
 
         elif categoria == 'infantiles':
-            item.url = CHANNEL_HOST + "genero/infantil/"
+            item.url = CHANNEL_HOST + "genero/animacion/"
             item.action = "peliculas"
-            itemlist = peliculas(item)
 
-            if itemlist[-1].action == "peliculas":
-                itemlist.pop()
+        elif categoria == 'terror':
+            item.url = CHANNEL_HOST + "genero/terror/"
+            item.action = "peliculas"
+
+        elif categoria == 'castellano':
+            item.url = CHANNEL_HOST + "idioma/espanol/"
+            item.action = "peliculas"
+
+        elif categoria == 'latino':
+            item.url = CHANNEL_HOST + "idioma/latino/"
+            item.action = "peliculas"
+
+        itemlist = peliculas(item)
+        if itemlist[-1].action == "peliculas":
+            itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
     except:

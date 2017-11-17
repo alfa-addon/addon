@@ -74,6 +74,26 @@ def mainlist(item):
     set_category_context(new_item)
     itemlist.append(new_item)
 
+    # if list_canales['Castellano']:
+    thumbnail = get_thumb("channels_documentary.png")
+    new_item = Item(channel=item.channel, action="novedades", extra="castellano", title="Castellano",
+                    thumbnail=thumbnail)
+    set_category_context(new_item)
+    itemlist.append(new_item)
+
+    # if list_canales['Latino']:
+    thumbnail = get_thumb("channels_documentary.png")
+    new_item = Item(channel=item.channel, action="novedades", extra="latino", title="Latino",
+                    thumbnail=thumbnail)
+    set_category_context(new_item)
+    itemlist.append(new_item)
+
+    # if list_canales['Torrent']:
+    thumbnail = get_thumb("channels_documentary.png")
+    new_item = Item(channel=item.channel, action="novedades", extra="torrent", title="Torrent", thumbnail=thumbnail)
+    set_category_context(new_item)
+    itemlist.append(new_item)
+
     #if list_canales['documentales']:
     thumbnail = get_thumb("channels_documentary.png")
     new_item = Item(channel=item.channel, action="novedades", extra="documentales", title="Documentales",
@@ -95,7 +115,8 @@ def set_category_context(item):
 def get_channels_list():
     logger.info()
 
-    list_canales = {'peliculas': [], 'terror': [], 'infantiles': [], 'series': [], 'anime': [], 'documentales': []}
+    list_canales = {'peliculas': [], 'terror': [], 'infantiles': [], 'series': [], 'anime': [],
+                    'castellano': [], 'latino':[], 'torrent':[], 'documentales': []}
     any_active = False
     # Rellenar listas de canales disponibles
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
@@ -419,6 +440,16 @@ def menu_opciones(item):
                          title="    - Episodios de anime",
                          thumbnail=get_thumb("channels_anime.png"),
                          folder=False))
+    itemlist.append(
+        Item(channel=item.channel, action="setting_channel", extra="castellano", title="    - Castellano",
+             thumbnail=get_thumb("channels_documentary.png"), folder=False))
+
+    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="latino", title="    - Latino",
+                         thumbnail=get_thumb("channels_documentary.png"), folder=False))
+
+    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="Torrent", title="    - Torrent",
+                         thumbnail=get_thumb("channels_documentary.png"), folder=False))
+
     itemlist.append(Item(channel=item.channel, action="setting_channel", extra="documentales",
                          title="    - Documentales",
                          thumbnail=get_thumb("channels_documentary.png"),

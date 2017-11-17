@@ -12,10 +12,11 @@ from core import tmdb
 from core.item import Item
 from platformcode import logger
 
+host = 'http://gnula.mobi/'
 def mainlist(item):
     logger.info()
     itemlist = list()
-    itemlist.append(item.clone(title="Novedades", action="peliculas", url="http://gnula.mobi/"))
+    itemlist.append(item.clone(title="Novedades", action="peliculas", url=host))
     itemlist.append(item.clone(title="Castellano", action="peliculas",
                                url="http://www.gnula.mobi/tag/espanol/"))
     itemlist.append(item.clone(title="Latino", action="peliculas", url="http://gnula.mobi/tag/latino/"))
@@ -113,3 +114,25 @@ def findvideos(item):
 def play(item):
     item.thumbnail = item.contentThumbnail
     return [item]
+
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == 'peliculas':
+            item.url = host
+        elif categoria == 'castellano':
+            item.url = host +'tag/espanol/'
+        elif categoria == 'latino':
+            item.url = host +'tag/latino/'
+        itemlist = peliculas(item)
+        if "Pagina" in itemlist[-1].title:
+            itemlist.pop()
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist

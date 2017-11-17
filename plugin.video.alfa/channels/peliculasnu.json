@@ -36,6 +36,22 @@
       "visible": true
     },
     {
+      "id": "include_in_newest_castellano",
+      "type": "bool",
+      "label": "Incluir en Novedades - Castellano",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_latino",
+      "type": "bool",
+      "label": "Incluir en Novedades - Latino",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
       "id": "modo_grafico",
       "type": "bool",
       "label": "Buscar información extra",
