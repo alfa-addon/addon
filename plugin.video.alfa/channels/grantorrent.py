@@ -194,7 +194,7 @@ def get_episodes(item, dict_data):
             item.infoLabels['year'] = year
 
     links_section = scrapertools.find_single_match(data, 'div id="Tokyo" [^>]+>(.*?)</div>')
-    logger.debug("data %s \n\n" % links_section)
+    # logger.debug("data %s \n\n" % links_section)
 
     pattern = 'icono_.*?png" title="(?P<lang>.*?)" [^>]+></td><td>(?P<s_e>.*?)</td><td>(?P<quality>.*?)</td><td>' \
               '<a class="link" href="(?P<url>[^"]+)"'
@@ -209,7 +209,7 @@ def get_episodes(item, dict_data):
                 dict_data[s_e + lang]["url"].append(url)
 
     url_to_check = scrapertools.find_single_match(links_section, '</table><p><a.*?href="([^"]+)".*?>\s*Temporada.*?</a>')
-    logger.debug("url es %s " % url_to_check)
+    # logger.debug("url es %s " % url_to_check)
 
     # if url doesn't exist we add it into the dict
     if url_to_check and url_to_check not in dict_url_seasons:
