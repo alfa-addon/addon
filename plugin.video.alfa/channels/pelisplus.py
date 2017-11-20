@@ -145,7 +145,9 @@ def menuseries(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = item.url + texto
+    item.url = host + 'busqueda/?s=' + texto
+    if not item.extra:
+        item.extra = 'peliculas/'
     try:
         if texto != '':
             return lista(item)
@@ -217,7 +219,7 @@ def lista(item):
         else:
             item.extra = item.extra.rstrip('s/')
             if item.extra in url:
-                itemlist.append(
+                new_item=(
                     Item(channel=item.channel,
                          contentType=tipo,
                          action=accion,
@@ -237,7 +239,7 @@ def lista(item):
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
-    # Encuentra los elementos que no tienen plot y carga las paginas correspondientes para obtenerlo#
+    #Encuentra los elementos que no tienen plot y carga las paginas correspondientes para obtenerlo#
     for item in itemlist:
         if item.infoLabels['plot'] == '':
             data = httptools.downloadpage(item.url).data
