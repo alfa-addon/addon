@@ -14,7 +14,9 @@ host = "http://powvideo.net/"
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
-    data = httptools.downloadpage(page_url).data
+    referer = page_url.replace('iframe', 'preview')
+    data = httptools.downloadpage(page_url, headers={'referer': referer}).data
+
     if "<title>watch </title>" in data.lower():
         return False, "[powvideo] El archivo no existe o  ha sido borrado"
     if "el archivo ha sido borrado por no respetar" in data.lower():
@@ -26,55 +28,17 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
 
-    url = page_url.replace(host, "http://powvideo.xyz/iframe-") + "-954x562.html"
+    referer = page_url.replace('iframe', 'preview')
+    data = httptools.downloadpage(page_url, headers={'referer': referer}).data
 
-    data = httptools.downloadpage(page_url, cookies=False)
-    cookie = data.headers['set-cookie']
-    data = data.data
+    _0xa3e8 = scrapertools.find_single_match(data, 'var _0xa3e8=(\[[^;]+\]);')
+    packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
+    unpacked = jsunpack.unpack(packed)
 
-    file_id, aff = scrapertools.find_single_match(data, "'file_id', '(\d+)',[^']+'aff', '(\d+)',")
-    _cookie = {"Cookie": cookie.replace("path=/; HttpOnly", "file_id=" + file_id + "; aff=" + aff)}
-
-    id = scrapertools.find_single_match(data, 'name="id" value="([^"]+)"')
-    fname = scrapertools.find_single_match(data, 'name="fname" value="([^"]+)"')
-    hash = scrapertools.find_single_match(data, 'name="hash" value="([^"]+)"')
-
-    post = "op=download1&usr_login=&referer=&fname=%s&id=%s&hash=%s" % (fname, id, hash)
-
-    import time
-    time.sleep(7)
-    data = httptools.downloadpage(page_url, post, headers=_cookie).data
-
-    for list in scrapertools.find_multiple_matches(data, '_[^=]+=(\[[^\]]+\]);'):
-        if len(list) == 703 or len(list) == 711:
-            key = "".join(eval(list)[7:9])
-            break
-    if key.startswith("embed"):
-        key = key[6:] + key[:6]
-    matches = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
-    data = jsunpack.unpack(matches).replace("\\", "")
-
-    data = scrapertools.find_single_match(data.replace('"', "'"), "sources\s*=[^\[]*\[([^\]]+)\]")
-    matches = scrapertools.find_multiple_matches(data, "[src|file]:'([^']+)'")
     video_urls = []
-    for video_url in matches:
-        _hash = scrapertools.find_single_match(video_url, '[A-z0-9\_\-]{78,}')
-        hash = decrypt(_hash, key)
-        video_url = video_url.replace(_hash, hash)
 
-        filename = scrapertools.get_filename_from_url(video_url)[-4:]
-        if video_url.startswith("rtmp"):
-            rtmp, playpath = video_url.split("vod/", 1)
-            video_url = "%svod/ playpath=%s swfUrl=%splayer6/jwplayer.flash.swf pageUrl=%s" % \
-                        (rtmp, playpath, host, page_url)
-            filename = "RTMP"
-        elif video_url.endswith(".m3u8"):
-            video_url += "|User-Agent=" + headers[0][1]
-        elif video_url.endswith("/v.mp4"):
-            video_url_flv = re.sub(r'/v.mp4', '/v.flv', video_url)
-            video_urls.append(["flv [powvideo]", video_url_flv])
-
-        video_urls.append([filename + " [powvideo]", video_url])
+    url = scrapertools.find_single_match(unpacked, "(?:src):\\\\'([^\\\\]+.mp4)\\\\'")
+    video_urls.append([".mp4" + " [powvideo]", S(_0xa3e8).decode(url)])
 
     video_urls.sort(key=lambda x: x[0], reverse=True)
     for video_url in video_urls:
@@ -83,105 +47,323 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     return video_urls
 
 
-def decrypt(h, k):
-    import base64
+class S:
+    def __init__(self, _0xa3e8):
+        self.r = None
+        self.s = None
+        self.k = None
+        self.n = None
+        self.c = None
+        self.b = None
+        self.d = None
 
-    if len(h) % 4:
-        h += "=" * (4 - len(h) % 4)
-    sig = []
-    h = base64.b64decode(h.replace("-", "+").replace("_", "/"))
-    for c in range(len(h)):
-        sig += [ord(h[c])]
+        _0xa3e8 = eval(_0xa3e8)
+        self.t(_0xa3e8[14] + _0xa3e8[15] + _0xa3e8[14] + _0xa3e8[15], _0xa3e8[16])
 
-    sec = []
-    for c in range(len(k)):
-        sec += [ord(k[c])]
+    def decode(self, url):
+        _hash = re.compile('[A-z0-9_-]{40,}', re.DOTALL).findall(url)[0]
+        return url.replace(_hash, self.p(_hash))
 
-    dig = range(256)
-    g = 0
-    v = 128
-    for b in range(len(sec)):
-        a = (v + (sec[b] & 15)) % 256
-        c = dig[(g)]
-        dig[g] = dig[a]
-        dig[a] = c
-        g += 1
+    def t(self, t, i):
+        self.r = 20
+        self.s = [1634760805, 857760878, 2036477234, 1797285236]
+        self.k = []
+        self.n = [0, 0]
+        self.c = [0, 0]
+        self.b = [None] * 64
+        self.d = 64
 
-        a = (v + (sec[b] >> 4 & 15)) % 256
-        c = dig[g]
-        dig[g] = dig[a]
-        dig[a] = c
-        g += 1
+        self.sk(self.sa(t))
+        self.sn(self.sa(i))
 
-    k = 0
-    q = 1
-    p = 0
-    n = 0
-    for b in range(512):
-        k = (k + q) % 256
-        n = (p + dig[(n + dig[k]) % 256]) % 256
-        p = (k + p + dig[n]) % 256
-        c = dig[k]
-        dig[k] = dig[n]
-        dig[n] = c
+    def e(self, t):
+        s = self.gb(len(t))
+        i = [s[h] ^ t[h] for h in range(len(t))]
+        return i
 
-    q = 3
-    for a in range(v):
-        b = 255 - a
-        if dig[a] > dig[b]:
-            c = dig[a]
-            dig[a] = dig[b]
-            dig[b] = c
+    def p(self, t):
+        import base64
+        t += "=" * (4 - len(t) % 4)
+        t = base64.b64decode(t.replace('-', '+').replace('_', '/'))
+        return self._as(self.e(self.sa(t)))
 
-    k = 0
-    for b in range(512):
-        k = (k + q) % 256
-        n = (p + dig[(n + dig[k]) % 256]) % 256
-        p = (k + p + dig[n]) % 256
-        c = dig[k]
-        dig[k] = dig[n]
-        dig[n] = c
+    @staticmethod
+    def sa(t):
+        s = [ord(t[i]) for i in range(len(t))]
+        return s
 
-    q = 5
-    for a in range(v):
-        b = 255 - a
-        if dig[a] > dig[b]:
-            c = dig[a]
-            dig[a] = dig[b]
-            dig[b] = c
+    @staticmethod
+    def _as(t):
+        s = [chr(t[i]) for i in range(len(t))]
+        return ''.join(s)
 
-    k = 0
-    for b in range(512):
-        k = (k + q) % 256
-        n = (p + dig[(n + dig[k]) % 256]) % 256
-        p = (k + p + dig[n]) % 256
-        c = dig[k]
-        dig[k] = dig[n]
-        dig[n] = c
+    def sk(self, t):
+        s = 0
+        for i in range(8):
+            self.k.append(
+                255 & t[s] | self.lshift((255 & t[s + 1]), 8) | self.lshift((255 & t[s + 2]), 16) | self.lshift(
+                    (255 & t[s + 3]), 24))
+            s += 4
+        self._r()
 
-    q = 7
-    k = 0
-    u = 0
-    d = []
-    for b in range(len(dig)):
-        k = (k + q) % 256
-        n = (p + dig[(n + dig[k]) % 256]) % 256
-        p = (k + p + dig[n]) % 256
-        c = dig[k]
-        dig[k] = dig[n]
-        dig[n] = c
-        u = dig[(n + dig[(k + dig[(u + p) % 256]) % 256]) % 256]
-        d += [u]
+    def sn(self, t):
+        self.n[0] = 255 & t[0] | self.lshift((255 & t[1]), 8) | self.lshift((255 & t[2]), 16) | self.lshift(
+            (255 & t[3]), 24)
+        self.n[1] = 255 & t[4] | self.lshift((255 & t[5]), 8) | self.lshift((255 & t[6]), 16) | self.lshift(
+            (255 & t[7]), 24)
+        self._r()
 
-    c = []
-    for f in range(len(d)):
-        try:
-            c += [(256 + (sig[f] - d[f])) % 256]
-        except:
-            break
+    def gb(self, t):
+        i = [None] * t
 
-    h = ""
-    for s in c:
-        h += chr(s)
+        for s in range(t):
+            if 64 == self.d:
+                self._g()
+                self._i()
+                self.d = 0
 
-    return h
+            i[s] = self.b[self.d]
+            self.d += 1
+
+        return i
+
+    def gh(self, t):
+        i = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
+        h = self.gb(t)
+        s = [i[self.rshift(h[b], 4) & 15] for b in range(len(h))]
+        s.append(i[15 & h[len(h)]])
+        return ''.join(s)
+
+    def _r(self):
+        self.c[0] = 0
+        self.c[1] = 0
+        self.d = 64
+
+    def _i(self):
+        self.c[0] = self.c[0] + 1 & 4294967295
+        if 0 == self.c[0]:
+            self.c[1] = self.c[1] + 1 & 4294967295
+
+    def _g(self):
+        i = self.s[0]
+        s = self.k[0]
+        h = self.k[1]
+        b = self.k[2]
+        r = self.k[3]
+        n = self.s[1]
+        o = self.n[0]
+        e = self.n[1]
+        c = self.c[0]
+        p = self.c[1]
+        a = self.s[2]
+        f = self.k[4]
+        u = self.k[5]
+        g = self.k[6]
+        y = self.k[7]
+        k = self.s[3]
+        l = i
+        d = s
+        v = h
+        _ = b
+        A = r
+        w = n
+        C = o
+        S = e
+        j = c
+        m = p
+        q = a
+        x = f
+        z = u
+        B = g
+        D = y
+        E = k
+
+        for F in range(0, self.r, 2):
+            # 0
+            t = l + z
+            A ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = A + l
+            j ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = j + A
+            z ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = z + j
+            l ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 1
+            t = w + d
+            m ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = m + w
+            B ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = B + m
+            d ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = d + B
+            w ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 2
+            t = q + C
+            D ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = D + q
+            v ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = v + D
+            C ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = C + v
+            q ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 3
+            t = E + x
+            _ ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = _ + E
+            S ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = S + _
+            x ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = x + S
+            E ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 4
+            t = l + _
+            d ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = d + l
+            v ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = v + d
+            _ ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = _ + v
+            l ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 5
+            t = w + A
+            C ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = C + w
+            S ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = S + C
+            A ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = A + S
+            w ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 6
+            t = q + m
+            x ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = x + q
+            j ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = j + x
+            m ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = m + j
+            q ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 7
+            t = E + D
+            z ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = z + E
+            B ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = B + z
+            D ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = D + B
+            E ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+        l += i
+        d += s
+        v += h
+        _ += b
+        A += r
+        w += n
+        C += o
+        S += e
+        j += c
+        m += p
+        q += a
+        x += f
+        z += u
+        B += g
+        D += y
+        E += k
+
+        self.b[0] = self.bshift(l, 0) & 255
+        self.b[1] = self.bshift(l, 8) & 255
+        self.b[2] = self.bshift(l, 16) & 255
+        self.b[3] = self.bshift(l, 24) & 255
+        self.b[4] = self.bshift(d, 0) & 255
+        self.b[5] = self.bshift(d, 8) & 255
+        self.b[6] = self.bshift(d, 16) & 255
+        self.b[7] = self.bshift(d, 24) & 255
+        self.b[8] = self.bshift(v, 0) & 255
+        self.b[9] = self.bshift(v, 8) & 255
+        self.b[10] = self.bshift(v, 16) & 255
+        self.b[11] = self.bshift(v, 24) & 255
+        self.b[12] = self.bshift(_, 0) & 255
+        self.b[13] = self.bshift(_, 8) & 255
+        self.b[14] = self.bshift(_, 16) & 255
+        self.b[15] = self.bshift(_, 24) & 255
+        self.b[16] = self.bshift(A, 0) & 255
+        self.b[17] = self.bshift(A, 8) & 255
+        self.b[18] = self.bshift(A, 16) & 255
+        self.b[19] = self.bshift(A, 24) & 255
+        self.b[20] = self.bshift(w, 0) & 255
+        self.b[21] = self.bshift(w, 8) & 255
+        self.b[22] = self.bshift(w, 16) & 255
+        self.b[23] = self.bshift(w, 24) & 255
+        self.b[24] = self.bshift(C, 0) & 255
+        self.b[25] = self.bshift(C, 8) & 255
+        self.b[26] = self.bshift(C, 16) & 255
+        self.b[27] = self.bshift(C, 24) & 255
+        self.b[28] = self.bshift(S, 0) & 255
+        self.b[29] = self.bshift(S, 8) & 255
+        self.b[30] = self.bshift(S, 16) & 255
+        self.b[31] = self.bshift(S, 24) & 255
+        self.b[32] = self.bshift(j, 0) & 255
+        self.b[33] = self.bshift(j, 8) & 255
+        self.b[34] = self.bshift(j, 16) & 255
+        self.b[35] = self.bshift(j, 24) & 255
+        self.b[36] = self.bshift(m, 0) & 255
+        self.b[37] = self.bshift(m, 8) & 255
+        self.b[38] = self.bshift(m, 16) & 255
+        self.b[39] = self.bshift(m, 24) & 255
+        self.b[40] = self.bshift(q, 0) & 255
+        self.b[41] = self.bshift(q, 8) & 255
+        self.b[42] = self.bshift(q, 16) & 255
+        self.b[43] = self.bshift(q, 24) & 255
+        self.b[44] = self.bshift(x, 0) & 255
+        self.b[45] = self.bshift(x, 8) & 255
+        self.b[46] = self.bshift(x, 16) & 255
+        self.b[47] = self.bshift(x, 24) & 255
+        self.b[48] = self.bshift(z, 0) & 255
+        self.b[49] = self.bshift(z, 8) & 255
+        self.b[50] = self.bshift(z, 16) & 255
+        self.b[51] = self.bshift(z, 24) & 255
+        self.b[52] = self.bshift(B, 0) & 255
+        self.b[53] = self.bshift(B, 8) & 255
+        self.b[54] = self.bshift(B, 16) & 255
+        self.b[55] = self.bshift(B, 24) & 255
+        self.b[56] = self.bshift(D, 0) & 255
+        self.b[57] = self.bshift(D, 8) & 255
+        self.b[58] = self.bshift(D, 16) & 255
+        self.b[59] = self.bshift(D, 24) & 255
+        self.b[60] = self.bshift(E, 0) & 255
+        self.b[61] = self.bshift(E, 8) & 255
+        self.b[62] = self.bshift(E, 16) & 255
+        self.b[63] = self.bshift(E, 24) & 255
+
+    def lshift(self, num, other):
+        lnum = self.ToInt32(num)
+        rnum = self.ToUint32(other)
+        shift_count = rnum & 0x1F
+        return self.ToInt32(lnum << shift_count)
+
+    def rshift(self, num, other):
+        lnum = self.ToInt32(num)
+        rnum = self.ToUint32(other)
+        shift_count = rnum & 0x1F
+        return self.ToInt32(lnum >> shift_count)
+
+    def bshift(self, num, other):
+        lnum = self.ToUint32(num)
+        rnum = self.ToUint32(other)
+        shift_count = rnum & 0x1F
+        return self.ToUint32(lnum >> shift_count)
+
+    @staticmethod
+    def ToInt32(num):
+        int32 = num % 2 ** 32
+        return int32 - 2 ** 32 if int32 >= 2 ** 31 else int32
+
+    @staticmethod
+    def ToUint32(num):
+        return num % 2 ** 32
