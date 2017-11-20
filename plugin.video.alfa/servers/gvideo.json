@@ -8,6 +8,10 @@
         "url": "http://docs.google.com/get_video_info?docid=\\1"
       },
       {
+        "pattern": "(?s)http://docs.google.com/get_video_info.*?docid=([0-9a-zA-Z-_]+)",
+        "url": "http://docs.google.com/get_video_info?docid=\\1"
+      },
+      {
         "pattern": "(?s)https://(?:docs|drive).google.com/file/d/([^/]+)/preview",
         "url": "http://docs.google.com/get_video_info?docid=\\1"
       },
