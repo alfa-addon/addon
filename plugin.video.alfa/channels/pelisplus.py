@@ -252,7 +252,9 @@ def lista(item):
     if item.title != 'Buscar' and actual != '':
         if itemlist != []:
             next_page = str(int(actual) + 1)
-            next_page_url = host + item.extra + 'pag-' + next_page
+            next_page_url = item.extra + 'pag-' + next_page
+            if not next_page_url.startswith("http"):
+               next_page_url = host + next_page_url
             itemlist.append(
                 Item(channel=item.channel,
                      action="lista",
