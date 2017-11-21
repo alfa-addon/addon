@@ -145,7 +145,9 @@ def menuseries(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = item.url + texto
+    item.url = host + 'busqueda/?s=' + texto
+    if not item.extra:
+        item.extra = 'peliculas/'
     try:
         if texto != '':
             return lista(item)
@@ -217,7 +219,7 @@ def lista(item):
         else:
             item.extra = item.extra.rstrip('s/')
             if item.extra in url:
-                itemlist.append(
+                new_item=(
                     Item(channel=item.channel,
                          contentType=tipo,
                          action=accion,
@@ -237,7 +239,7 @@ def lista(item):
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
-    # Encuentra los elementos que no tienen plot y carga las paginas correspondientes para obtenerlo#
+    #Encuentra los elementos que no tienen plot y carga las paginas correspondientes para obtenerlo#
     for item in itemlist:
         if item.infoLabels['plot'] == '':
             data = httptools.downloadpage(item.url).data
@@ -250,7 +252,9 @@ def lista(item):
     if item.title != 'Buscar' and actual != '':
         if itemlist != []:
             next_page = str(int(actual) + 1)
-            next_page_url = host + item.extra + 'pag-' + next_page
+            next_page_url = item.extra + 'pag-' + next_page
+            if not next_page_url.startswith("http"):
+               next_page_url = host + next_page_url
             itemlist.append(
                 Item(channel=item.channel,
                      action="lista",
@@ -513,11 +517,14 @@ def newest(categoria):
     item = Item()
     item.extra = 'estrenos/'
     try:
-        if categoria == 'peliculas':
+        if categoria in ['peliculas','latino']:
             item.url = host + 'estrenos/pag-1'
 
         elif categoria == 'infantiles':
             item.url = host + 'peliculas/animacion/pag-1'
+
+        elif categoria == 'terror':
+            item.url = host + 'peliculas/terror/pag-1'
 
         elif categoria == 'documentales':
             item.url = host + 'documentales/pag-1'
@@ -532,6 +539,5 @@ def newest(categoria):
             logger.error("{0}".format(line))
         return []
 
-    itemlist = filtertools.get_links(itemlist, item, list_language)
- 
-   
+    #itemlist = filtertools.get_links(itemlist, item, list_language)
+    return itemlist

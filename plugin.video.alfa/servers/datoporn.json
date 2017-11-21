@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:datoporn.com|dato.porn)/(?:embed-|)([A-z0-9]+)",
+        "pattern": "(?:datoporn.com|dato.porn|datoporn.co)/(?:embed-|)([A-z0-9]+)",
         "url": "http://dato.porn/embed-\\1.html"
       }
     ]

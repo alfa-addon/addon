@@ -1555,3 +1555,28 @@ def busqueda(item):
 
     from channels import search
     return search.do_search(new_item, cat)
+
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == 'torrent':
+            item.url = 'http://www.miltorrents.com'
+
+            itemlist = peliculas(item)
+            if itemlist[-1].title == "[COLOR khaki]siguiente[/COLOR]":
+                itemlist.pop()
+            item.url = 'http://www.miltorrents.com/series'
+            itemlist.extend(peliculas(item))
+            if itemlist[-1].title == "[COLOR khaki]siguiente[/COLOR]":
+                itemlist.pop()
+
+    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist

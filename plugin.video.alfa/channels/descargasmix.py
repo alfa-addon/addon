@@ -535,3 +535,38 @@ def get_data(url_orig, get_host=False):
                 break
 
     return response.data
+
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == 'torrent':
+            item.url = host+'/peliculas'
+
+            itemlist = entradas(item)
+            if itemlist[-1].title == ">> Siguiente":
+                itemlist.pop()
+
+            item.url = host + '/series'
+
+            itemlist.extend(entradas(item))
+            if itemlist[-1].title == ">> Siguiente":
+                itemlist.pop()
+
+            item.url = host + '/anime'
+
+            itemlist.extend(entradas(item))
+
+
+        if itemlist[-1].title == ">> Siguiente":
+            itemlist.pop()
+
+    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist

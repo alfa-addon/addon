@@ -80,6 +80,12 @@ def newest(categoria):
             item.url = host
         elif categoria == "terror":
             item.url = host+"terror/"
+        elif categoria == 'castellano':
+            item.url = host + "?s=Español"
+        elif categoria == 'latino':
+            item.url = host + "?s=Latino"
+
+
         item.from_newest = True
         item.action = "entradas"
         itemlist = entradas(item)

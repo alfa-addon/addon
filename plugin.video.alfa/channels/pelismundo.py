@@ -34,9 +34,14 @@ def newest(categoria):
         if categoria == 'peliculas':
             item.url = host
         elif categoria == 'infantiles':
-            item.url = host + 'genero/infantil/'
+            item.url = host + '/genero/infantil/'
         elif categoria == 'terror':
-            item.url = host + 'genero/terror/'
+            item.url = host + '/genero/terror/'
+        elif categoria == 'castellano':
+            item.url = host +'/lenguaje/castellano/'
+        elif categoria == 'latino':
+            item.url = host +'/lenguaje/latino/'
+        itemlist = peliculas(item)
         itemlist = peliculas(item)
         if "Pagina" in itemlist[-1].title:
             itemlist.pop()
@@ -126,6 +131,7 @@ def filtro(item):
     for url, title in matches:
         if "eroticas" in title and config.get_setting("adult_mode") == 0:
             continue
+        logger.debug('la url: %s' %url)
         itemlist.append(item.clone(action = "peliculas",
                                    title = title.title(),
                                    url = url
