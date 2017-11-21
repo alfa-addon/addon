@@ -164,3 +164,41 @@ def play(item):
     logger.info()
     item.thumbnail = item.extra
     return [item]
+
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == 'peliculas':
+            item.url = host
+
+        elif categoria == 'documentales':
+            item.url = host + "/genero/documental/"
+
+        elif categoria == 'infantiles':
+            item.url = host + "/genero/animacion/"
+
+        elif categoria == 'terror':
+            item.url = host + "/genero/terror/"
+
+        elif categoria == 'castellano':
+            item.url = host + "/idioma/espanol-castellano/"
+
+        elif categoria == 'latino':
+            item.url = host + "/idioma/espanol-latino/"
+
+        itemlist = agregadas(item)
+
+        if itemlist[-1].action == "agregadas":
+            itemlist.pop()
+
+    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist
+

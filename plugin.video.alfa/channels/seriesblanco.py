@@ -13,7 +13,6 @@ from platformcode import config, logger
 from channels import autoplay
 
 
-
 HOST = "https://seriesblanco.com/"
 IDIOMAS = {'es': 'Español', 'en': 'Inglés', 'la': 'Latino', 'vo': 'VO', 'vos': 'VOS', 'vosi': 'VOSI', 'otro': 'OVOS'}
 list_idiomas = IDIOMAS.values()
@@ -97,6 +96,7 @@ def extract_series_from_data(item, data):
         except UnicodeError:
             name = unicode(name, "iso-8859-1", errors="replace").encode("utf-8")
 
+        name = name.strip()
         # logger.debug("Show found: %s -> %s (%s)" % (name, url, img))
         if not episode_pattern.search(url):
             action = "episodios"
@@ -187,6 +187,7 @@ def search(item, texto):
                            "id=['\"]q2[1\"] name=['\"]q2['\"] value=['\"](?P<title>.*?)['\"]", data)
 
         for url, img, title in shows:
+            title = title.strip()
             itemlist.append(item.clone(title=title, url=urlparse.urljoin(HOST, url), action="episodios", show=title,
                                        thumbnail=img, context=filtertools.context(item, list_idiomas, CALIDADES)))
 

@@ -31,6 +31,29 @@ def mainlist(item):
     return itemlist
 
 
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria in ['peliculas','latino']:
+            item.url = HOST
+        elif categoria == 'infantiles':
+            item.url = HOST + '/genero/animacion.html'
+        elif categoria == 'terror':
+            item.url = HOST + '/genero/terror.html'
+        itemlist = peliculas(item)
+        if "Pagina" in itemlist[-1].title:
+            itemlist.pop()
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist
+
+
 def peliculas(item):
     logger.info()
 

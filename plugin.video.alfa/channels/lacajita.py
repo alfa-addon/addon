@@ -265,14 +265,25 @@ def newest(categoria):
     logger.info()
     itemlist = []
     item = Item()
+    item.page = 0
     try:
         if categoria == "terror":
             item.url = host +"/listado/terror/"
             item.action = "updated"
-            item.page = 0
-        itemlist = updated(item)
+            itemlist = updated(item)
+        elif categoria == 'castellano':
+            item.url = host + "/estrenos/es/"
+            item.action = "entradas"
 
-        if itemlist[-1].action == "updated":
+        elif categoria == 'latino':
+            item.url = host + "/estrenos/la/"
+            item.action = "entradas"
+
+        if categoria != 'terror':
+            itemlist = entradas(item)
+
+
+        if itemlist[-1].action == item.action:
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla

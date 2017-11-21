@@ -54,6 +54,7 @@ def browser(url):
 api_key = "2e2160006592024ba87ccdf78c28f49f"
 api_fankey = "dffe90fba4d02c199ae7a9e71330c987"
 
+host = 'http://alltorrent.net/'
 
 def mainlist(item):
     logger.info()
@@ -392,3 +393,26 @@ def get_art(item):
                 item.extra = item.extra + "|" + item.thumbnail
     else:
         item.extra = item.extra + "|" + item.thumbnail
+
+
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == 'torrent':
+            item.url = host
+
+        itemlist = scraper(item)
+
+        if itemlist[-1].action == "[COLOR olivedrab][B]Siguiente >>[/B][/COLOR]":
+            itemlist.pop()
+
+    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist

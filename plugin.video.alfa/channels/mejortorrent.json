@@ -20,6 +20,14 @@
       "default": false,
       "enabled": true,
       "visible": true
+    },
+    {
+      "id": "include_in_newest_torrent",
+      "type": "bool",
+      "label": "Incluir en Novedades - Torrent",
+      "default": true,
+      "enabled": true,
+      "visible": true
     }
   ]
 }

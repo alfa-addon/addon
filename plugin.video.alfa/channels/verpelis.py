@@ -208,6 +208,11 @@ def newest(categoria):
             item.url = host + '/ver/'
         elif categoria == 'terror':
             item.url = host + "/categoria/de-terror.htm"
+        elif categoria == 'castellano':
+            item.url = host + "/ver/espanol/"
+
+        elif categoria == 'latino':
+            item.url = host + "/ver/latino/"
         else:
             return []
 

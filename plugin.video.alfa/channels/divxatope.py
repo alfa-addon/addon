@@ -94,7 +94,7 @@ def newest(categoria):
     itemlist = []
     item = Item()
     try:
-        if categoria == 'peliculas':
+        if categoria in ['peliculas', 'torrent']:
             item.url = "http://www.divxatope1.com/peliculas"
 
         elif categoria == 'series':

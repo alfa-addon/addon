@@ -1223,3 +1223,25 @@ def browser(url):
         response = r.read()
 
     return response
+
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == 'torrent':
+            item.url = 'http://cuelgame.net/?category=4'
+
+        itemlist = scraper(item)
+
+        if itemlist[-1].action == "Página siguiente >>":
+            itemlist.pop()
+
+    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist
