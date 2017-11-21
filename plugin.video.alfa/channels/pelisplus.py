@@ -238,23 +238,12 @@ def lista(item):
                 itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
-    #Encuentra los elementos que no tienen plot y carga las paginas correspondientes para obtenerlo#
-    for item in itemlist:
-        if item.infoLabels['plot'] == '':
-            data = httptools.downloadpage(item.url).data
-            item.fanart = scrapertools.find_single_match(data, 'meta property="og:image" content="([^"]+)" \/>')
-            item.plot = scrapertools.find_single_match(data,
-                                                       '<span>Sinopsis:<\/span>.([^<]+)<span '
-                                                       'class="text-detail-hide"><\/span>.<\/p>')
-
-            # Paginacion
     if item.title != 'Buscar' and actual != '':
         if itemlist != []:
             next_page = str(int(actual) + 1)
             next_page_url = item.extra + 'pag-' + next_page
             if not next_page_url.startswith("http"):
-               next_page_url = host + next_page_url
+                next_page_url = host + next_page_url
             itemlist.append(
                 Item(channel=item.channel,
                      action="lista",
@@ -441,9 +430,8 @@ def get_vip(url):
             else:
                 id = scrapertools.find_single_match(item,'episodes\/(\d+)')
                 new_url = 'https://www.elreyxhd.com/samir.php?id=%s&tipo=capitulo&idioma=latino&x=&sv=' % id
-            data=httptools.downloadpage(new_url, follow_redirects=False).headers
-            itemlist.extend(servertools.find_video_items(data=str(data)))
-
+            data=httptools.downloadpage(new_url, follow_redirects=False).headers.get("location", "")
+            itemlist.append(Item(url=data))
     return itemlist
 
 
@@ -463,22 +451,17 @@ def findvideos(item):
     itemlist.extend(servertools.find_video_items(data=data))
 
     for videoitem in itemlist:
-        # videoitem.infoLabels = item.infoLabels
         videoitem.channel = item.channel
+        videoitem.infoLabels = item.infoLabels
         if videoitem.quality == '' or videoitem.language == '':
            videoitem.quality = 'default'
            videoitem.language = 'Latino'
-        if videoitem.server != '':
-           videoitem.thumbnail = item.thumbnail
-        else:
-           videoitem.thumbnail = item.thumbnail
-           videoitem.server = 'directo'
         videoitem.action = 'play'
         videoitem.fulltitle = item.title
-
         if videoitem.extra != 'directo' and 'youtube' not in videoitem.url:
-           videoitem.title = item.contentTitle + ' (' + videoitem.server + ')'
+           videoitem.title = item.contentTitle + ' (%s)'
 
+    itemlist=servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     n = 0
     for videoitem in itemlist:
         if 'youtube' in videoitem.url:
@@ -490,7 +473,7 @@ def findvideos(item):
         itemlist.pop(1)
 
         # Requerido para FilterTools
-
+    tmdb.set_infoLabels_itemlist(itemlist, True)
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
     # Requerido para AutoPlay
@@ -509,6 +492,11 @@ def findvideos(item):
                      ))
 
     return itemlist
+
+
+def play(item):
+    item.thumbnail = item.contentThumbnail
+    return [item]
 
 
 def newest(categoria):
