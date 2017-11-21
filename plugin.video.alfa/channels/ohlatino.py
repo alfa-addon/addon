@@ -183,7 +183,7 @@ def newest(categoria):
     logger.info()
     item = Item()
     try:
-        if categoria == 'peliculas':
+        if categoria in ['peliculas','latino']:
             item.url = host + '/release/2017/'
 
         elif categoria == 'infantiles':

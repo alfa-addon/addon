@@ -90,26 +90,30 @@ def newest(categoria):
         if categoria == 'peliculas':
             item.url = CHANNEL_HOST
             item.action = "peliculas"
-            itemlist = peliculas(item)
-
-            if itemlist[-1].action == "peliculas":
-                itemlist.pop()
 
         elif categoria == 'documentales':
             item.url = CHANNEL_HOST + "genero/documental/"
             item.action = "peliculas"
-            itemlist = peliculas(item)
-
-            if itemlist[-1].action == "peliculas":
-                itemlist.pop()
 
         elif categoria == 'infantiles':
-            item.url = CHANNEL_HOST + "genero/infantil/"
+            item.url = CHANNEL_HOST + "genero/animacion/"
             item.action = "peliculas"
-            itemlist = peliculas(item)
 
-            if itemlist[-1].action == "peliculas":
-                itemlist.pop()
+        elif categoria == 'terror':
+            item.url = CHANNEL_HOST + "genero/terror/"
+            item.action = "peliculas"
+
+        elif categoria == 'castellano':
+            item.url = CHANNEL_HOST + "idioma/espanol/"
+            item.action = "peliculas"
+
+        elif categoria == 'latino':
+            item.url = CHANNEL_HOST + "idioma/latino/"
+            item.action = "peliculas"
+
+        itemlist = peliculas(item)
+        if itemlist[-1].action == "peliculas":
+            itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
     except:
@@ -263,15 +267,11 @@ def findvideos(item):
     if itemlist:
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
                                    text_color="magenta"))
-        # Opción "Añadir esta película a la videoteca"
         if item.extra != "library":
             if config.get_videolibrary_support():
                 itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
                                      action="add_pelicula_to_library", url=item.url, fulltitle = item.fulltitle
                                      ))
-
-    else:
-        itemlist.append(item.clone(title="No hay enlaces disponibles", action="", text_color=color3))
     return itemlist
 
 
@@ -296,6 +296,8 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
             url = scrapertools.find_single_match(bloque1, patron)
             if "goo.gl" in url:
                 url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
+            if "drive.php" in url:
+                scrapedserver = "gvideo"
             if "player" in url:
                 scrapedserver = scrapertools.find_single_match(url, 'player/(\w+)')
                 if "ok" in scrapedserver: scrapedserver = "okru"
@@ -348,10 +350,10 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
 def play(item):
     logger.info()
     itemlist = []
-    if "api.cinetux" in item.url or item.server == "okru":
+    if "api.cinetux" in item.url or item.server == "okru" or "drive.php" in item.url:
         data = httptools.downloadpage(item.url, headers={'Referer': item.extra}).data.replace("\\", "")
         id = scrapertools.find_single_match(data, 'img src="[^#]+#(.*?)"')
-        item.url = "https://youtube.googleapis.com/embed/?status=ok&hl=es&allow_embed=1&ps=docs&partnerid=30&hd=1&autoplay=0&cc_load_policy=1&showinfo=0&docid=" + id
+        item.url = "http://docs.google.com/get_video_info?docid=" + id
         if item.server == "okru":
             item.url = "https://ok.ru/videoembed/" + id
     elif "links" in item.url or "www.cinetux.me" in item.url:

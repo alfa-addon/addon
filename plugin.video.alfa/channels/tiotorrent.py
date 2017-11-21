@@ -270,10 +270,18 @@ def newest(category):
     logger.info()
     item = Item()
     try:
-        if category == 'peliculas':
+        if category in  ['peliculas', 'torrent']:
             item.url = host + 'estrenos-de-cine'
             item.extra='movie'
-        itemlist = lista(item)
+            itemlist = lista(item)
+        if itemlist[-1].title == 'Siguiente >>>':
+            itemlist.pop()
+        if category == 'torrent':
+
+            item.url = host+'series'
+            item.extra = 'serie'
+            itemlist.extend(lista(item))
+
         if itemlist[-1].title == 'Siguiente >>>':
             itemlist.pop()
     except:

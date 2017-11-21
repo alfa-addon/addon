@@ -217,7 +217,7 @@ def newest(categoria):
     itemlist = []
     item = Item()
     try:
-        if categoria == "peliculas":
+        if categoria in ['peliculas','latino']:
             item.url = host + "movies/newmovies?page=1"
             item.action = "lista"
             itemlist = lista(item)

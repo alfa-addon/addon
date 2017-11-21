@@ -248,15 +248,15 @@ def findvideos(item):
         if int(idl)<5 and int(idl)!=1:
             lang.append(scrapedlang)
     i=0
-    logger.info(lang)
+    if len(lang)!=0:
+        lang.reverse()
     for videoitem in video_items:
         videoitem.thumbnail = servertools.guess_server_thumbnail(videoitem.server)
-        #videoitem.language = scrapertools.find_single_match(data, '<span class="f-info-title">Idioma:<\/span>\s*<span '
-        #                                                          'class="f-info-text">(.*?)<\/span>')
-        if len(lang)<=i:
+        if i<len(lang) and len(lang)!=0:
             videoitem.language=lang[i]
         else:
-            videoitem.language=lang[len(lang)-1]
+            videoitem.language = scrapertools.find_single_match(data, '<span class=f-info-title>Idioma:<\/span>\s*<span '
+                                                                'class=f-info-text>(.*?)<\/span>')
         videoitem.title = item.contentSerieName + ' (' + videoitem.server + ') (' + videoitem.language + ')'
         videoitem.quality = 'default'
         videoitem.context = item.context
