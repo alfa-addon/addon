@@ -11,6 +11,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
+idiomas1 = {"/es.png":"CAST","/en_es.png":"VOSE","/la.png":"LAT","/en.png":"ENG"}
 HOST = 'http://www.yaske.ro'
 parameters = channeltools.get_channel_parameters('yaske')
 fanart_host = parameters['fanart']
@@ -119,15 +120,9 @@ def peliculas(item):
         matchesidiomas = scrapertools.find_multiple_matches(idiomas, patronidiomas)
         idiomas_disponibles = []
         for idioma in matchesidiomas:
-            if idioma.endswith("/la.png"):
-                idiomas_disponibles.append("LAT")
-            elif idioma.endswith("/en.png"):
-                idiomas_disponibles.append("VO")
-            elif idioma.endswith("/en_es.png"):
-                idiomas_disponibles.append("VOSE")
-            elif idioma.endswith("/es.png"):
-                idiomas_disponibles.append("ESP")
-
+            for lang in idiomas1.keys():
+                if idioma.endswith(lang):
+                    idiomas_disponibles.append(idiomas1[lang])
         if idiomas_disponibles:
             idiomas_disponibles = "[" + "/".join(idiomas_disponibles) + "]"
         contentTitle = scrapertoolsV2.htmlclean(scrapedtitle.strip())
@@ -179,29 +174,20 @@ def findvideos(item):
     logger.info()
     itemlist = []
     sublist = []
-
-    # Descarga la página
-    url = "http://widget.olimpo.link/playlist/?tmdb=" + scrapertools.find_single_match(item.url, 'yaske.ro/([0-9]+)')
+    data = httptools.downloadpage(item.url).data
+    mtmdb = scrapertools.find_single_match(item.url, 'yaske.ro/([0-9]+)')
+    patron = '(?s)id="online".*?server="([^"]+)"'
+    mserver = scrapertools.find_single_match(data, patron)
+    url = "http://olimpo.link/?tmdb=%s&server=%s" %(mtmdb, mserver)
     data = httptools.downloadpage(url).data
-    if not item.plot:
-        item.plot = scrapertoolsV2.find_single_match(data, '>Sinopsis</dt> <dd>([^<]+)</dd>')
-        item.plot = scrapertoolsV2.decodeHtmlentities(item.plot)
-
-    patron  = '(/embed/[^"]+).*?'
-    patron += 'quality text-overflow ">([^<]+).*?'
-    patron += 'title="([^"]+)'
+    patron  = '/\?tmdb=[^"]+.*?domain=(?:www\.|)([^\.]+).*?text-overflow.*?href="([^"]+).*?'
+    patron += '\[([^\]]+)\].*?\[([^\]]+)\]'
     matches = scrapertools.find_multiple_matches(data, patron)
-
-    for url, calidad, idioma in matches:
-        if 'embed' in url:
-            url = "http://widget.olimpo.link" + url
-            data = httptools.downloadpage(url).data
-            url = scrapertools.find_single_match(data, 'iframe src="([^"]+)')
-            sublist.append(item.clone(channel=item.channel, action="play", url=url, folder=False, text_color=color1, quality=calidad.strip(),
-                                  language=idioma.strip()))
-    sublist = servertools.get_servers_itemlist(sublist, lambda i: "Ver en %s %s" % (i.server, i.quality), True)
-
-    # Añadir servidores encontrados, agrupandolos por idioma
+    for server, url, idioma, calidad in matches:
+        sublist.append(item.clone(channel=item.channel, action="play", url=url, folder=False, text_color=color1, quality=calidad.strip(),
+                              language=idioma.strip(),
+                              title="Ver en %s %s" %(server, calidad)
+                              ))
     for k in ["Español", "Latino", "Subtitulado", "Ingles"]:
         lista_idioma = filter(lambda i: i.language == k, sublist)
         if lista_idioma:
@@ -221,3 +207,12 @@ def findvideos(item):
                                  contentTitle=item.contentTitle, extra="library", thumbnail=thumbnail_host))
 
     return itemlist
+
+def play(item):
+    logger.info()
+    itemlist = []
+    ddd = httptools.downloadpage(item.url).data
+    url = "http://olimpo.link" + scrapertools.find_single_match(ddd, '<iframe src="([^"]+)')
+    item.url = httptools.downloadpage(url + "&ge=1", follow_redirects=False, only_headers=True).headers.get("location", "")
+    item.server = servertools.get_server_from_url(item.url)
+    return [item]
