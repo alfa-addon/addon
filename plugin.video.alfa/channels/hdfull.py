@@ -692,12 +692,11 @@ def findvideos(item):
         fanart = scrapertools.find_single_match(data, '<div style="background-image.url. ([^\s]+)')
         if account:
             url += "###" + id + ";" + type
-
         it2.append(
             item.clone(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
                  plot=plot, fanart=fanart, show=item.show, folder=True, infoLabels=infolabels,
-                 contentTitle=item.title, contentType=item.contentType, tipo=option, tipo1=option1, idioma=idioma))
-
+                 contentTitle=item.show, contentType=item.contentType, tipo=option, tipo1=option1, idioma=idioma))
+    scrapertools.printMatches(it2)
     it2 = servertools.get_servers_itemlist(it2, lambda i: i.title % i.server.capitalize())
     it2.sort(key=lambda it: (it.tipo1, it.idioma, it.server))
     for item in it2:
