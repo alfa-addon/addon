@@ -96,7 +96,6 @@ def recientes(item):
             action = "peliculas"
         if not thumb.startswith("http"):
             thumb = "http:%s" % thumb
-        action ="findvideos"
         infoLabels = {'filtro': {"original_language": "ja"}.items()}
         itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=thumb, text_color=color3,
                                    contentTitle=contentTitle, contentSerieName=show, infoLabels=infoLabels,

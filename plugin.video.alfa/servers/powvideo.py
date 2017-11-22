@@ -16,9 +16,8 @@ def test_video_exists(page_url):
 
     referer = page_url.replace('iframe', 'preview')
     data = httptools.downloadpage(page_url, headers={'referer': referer}).data
-
-    if "<title>watch </title>" in data.lower():
-        return False, "[powvideo] El archivo no existe o  ha sido borrado"
+    if "File was deleted" in data:
+        return False, "[powvideo] El archivo no existe o ha sido borrado"
     if "el archivo ha sido borrado por no respetar" in data.lower():
         return False, "[powvideo] El archivo no existe o ha sido borrado por no respetar los Terminos de uso"
 
