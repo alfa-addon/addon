@@ -191,10 +191,11 @@ def findvideos(item):
     for k in ["Español", "Latino", "Subtitulado", "Ingles"]:
         lista_idioma = filter(lambda i: i.language == k, sublist)
         if lista_idioma:
-            itemlist.append(Item(channel=item.channel, title=k, fanart=item.fanart, folder=False,
+            itemlist.append(item.clone(title=k, folder=False,
                                  text_color=color2, text_bold=True, thumbnail=thumbnail_host))
             itemlist.extend(lista_idioma)
 
+    tmdb.set_infoLabels(itemlist, True)
     # Insertar items "Buscar trailer" y "Añadir a la videoteca"
     if itemlist and item.extra != "library":
         title = "%s [Buscar trailer]" % (item.contentTitle)
