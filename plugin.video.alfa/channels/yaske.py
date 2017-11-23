@@ -99,14 +99,12 @@ def peliculas(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-
-    patron = 'class="post-item-image btn-play-item".*?'
+    patron = '(?s)class="post-item-image btn-play-item".*?'
     patron += 'href="([^"]+)">.*?'
     patron += '<img data-original="([^"]+)".*?'
     patron += 'glyphicon-calendar"></i>([^<]+).*?'
-    patron += 'post-item-flags"> (.*?)</div.*?'
+    patron += 'post(.*?)</div.*?'
     patron += 'text-muted f-14">(.*?)</h3'
-
     matches = scrapertools.find_multiple_matches(data, patron)
 
     patron_next_page = 'href="([^"]+)"> &raquo;'
@@ -125,11 +123,11 @@ def peliculas(item):
                     idiomas_disponibles.append(idiomas1[lang])
         if idiomas_disponibles:
             idiomas_disponibles = "[" + "/".join(idiomas_disponibles) + "]"
-        contentTitle = scrapertoolsV2.htmlclean(scrapedtitle.strip())
-        title = "%s %s" % (contentTitle, idiomas_disponibles)
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, contentTitle=contentTitle,
-                             infoLabels={"year": year}, text_color=color1))
+            contentTitle = scrapertoolsV2.htmlclean(scrapedtitle.strip())
+            title = "%s %s" % (contentTitle, idiomas_disponibles)
+            itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
+                                 thumbnail=scrapedthumbnail, contentTitle=contentTitle,
+                                 infoLabels={"year": year}, text_color=color1))
     # Obtenemos los datos basicos de todas las peliculas mediante multihilos
     tmdb.set_infoLabels(itemlist)
 
@@ -188,7 +186,7 @@ def findvideos(item):
                               language=idioma.strip(),
                               title="Ver en %s %s" %(server, calidad)
                               ))
-    for k in ["Español", "Latino", "Subtitulado", "Ingles"]:
+    for k in ["Español", "Latino", "Ingles - Sub Español", "Ingles"]:
         lista_idioma = filter(lambda i: i.language == k, sublist)
         if lista_idioma:
             itemlist.append(item.clone(title=k, folder=False,
