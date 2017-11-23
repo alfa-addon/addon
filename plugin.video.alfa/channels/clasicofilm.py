@@ -198,7 +198,7 @@ def generos(item):
 
     # Descarga la página
     data = httptools.downloadpage(item.url).data
-    patron = '<b>([^<]+)</b><br />\s*<script src="([^"]+)"'
+    patron = '<b>([^<]+)</b><br\s*/>\s*<script src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedtitle, scrapedurl in matches:
         scrapedurl = scrapedurl.replace("&amp;","&")
