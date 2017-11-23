@@ -2,11 +2,15 @@
 
 import re
 
+from core import filetools
+from core import jsontools
 from core import httptools
 from core import scrapertools
+from core import servertools
 from core import tmdb
+from core import videolibrarytools
 from core.item import Item
-from platformcode import config, logger
+from platformcode import config, platformtools, logger
 
 host = "http://www.clasicofilm.com/"
 # Configuracion del canal
@@ -47,7 +51,6 @@ def mainlist(item):
 
 
 def configuracion(item):
-    from platformcode import platformtools
     ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
     return ret
@@ -104,7 +107,6 @@ def peliculas(item):
     data = httptools.downloadpage(item.url).data
 
     data = scrapertools.find_single_match(data, 'finddatepost\((\{.*?\]\}\})\);')
-    from core import jsontools
     data = jsontools.load(data)["feed"]
 
     for entry in data["entry"]:
@@ -151,7 +153,6 @@ def busqueda(item):
     # Descarga la página
     data = httptools.downloadpage(item.url).data
 
-    from core import jsontools
     data = jsontools.load(data)
 
     for entry in data["results"]:
@@ -197,9 +198,10 @@ def generos(item):
 
     # Descarga la página
     data = httptools.downloadpage(item.url).data
-    patron = '<b>([^<]+)</b><br/>\s*<script src="([^"]+)"'
+    patron = '<b>([^<]+)</b><br />\s*<script src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedtitle, scrapedurl in matches:
+        scrapedurl = scrapedurl.replace("&amp;","&")
         scrapedurl = scrapedurl.replace("max-results=500", "start-index=1&max-results=20") \
             .replace("recentpostslist", "finddatepost")
         itemlist.append(Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
@@ -210,13 +212,13 @@ def generos(item):
 
 
 def findvideos(item):
-    from core import servertools
 
     if item.infoLabels["tmdb_id"]:
         tmdb.set_infoLabels_item(item, __modo_grafico__)
 
     data = httptools.downloadpage(item.url).data
     iframe = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
+    data = data.replace("googleusercontent","malo")  # para que no busque enlaces erroneos de gvideo
     if "goo.gl/" in iframe:
         data += httptools.downloadpage(iframe, follow_redirects=False, only_headers=True).headers.get("location", "")
     itemlist = servertools.find_video_items(item, data)
@@ -226,13 +228,11 @@ def findvideos(item):
         title = "Añadir película a la videoteca"
         if item.infoLabels["imdb_id"] and not library_path.lower().startswith("smb://"):
             try:
-                from core import filetools
                 movie_path = filetools.join(config.get_videolibrary_path(), 'CINE')
                 files = filetools.walk(movie_path)
                 for dirpath, dirname, filename in files:
                     for f in filename:
                         if item.infoLabels["imdb_id"] in f and f.endswith(".nfo"):
-                            from core import videolibrarytools
                             head_nfo, it = videolibrarytools.read_nfo(filetools.join(dirpath, dirname, f))
                             canales = it.library_urls.keys()
                             canales.sort()
