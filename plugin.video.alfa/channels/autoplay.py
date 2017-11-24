@@ -90,7 +90,7 @@ def start(itemlist, item):
             videoitem.contentType=item.contentType
             videoitem.episode_id=item.episode_id
             videoitem.hasContentDetails=item.hasContentDetails
-            videoitem.infoLabels=item.infoLabels
+            #videoitem.infoLabels=item.infoLabels
             videoitem.thumbnail=item.thumbnail
             #videoitem.title=item.title
     if not config.is_xbmc():

@@ -23,7 +23,7 @@ def test_video_exists(page_url):
 
     if "Object not found" in response.data:
         return False, "[Rapidvideo] El archivo no existe o ha sido borrado"
-    if reponse.code == 500:
+    if response.code == 500:
         return False, "[Rapidvideo] Error de servidor, inténtelo más tarde."
 
     return True, ""
