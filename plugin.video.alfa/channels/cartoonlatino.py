@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 
@@ -25,27 +25,13 @@ list_quality = ['default']
 
 def mainlist(item):
     logger.info()
-
     thumb_series = get_thumb("channels_tvshow.png")
     autoplay.init(item.channel, list_servers, list_quality)
-
     itemlist = list()
-
     itemlist.append(Item(channel=item.channel, action="lista", title="Series", url=host,
                          thumbnail=thumb_series))
     autoplay.show_option(item.channel, itemlist)
-
     return itemlist
-
-
-"""
-def search(item, texto):
-    logger.info()
-    texto = texto.replace(" ","+")
-    item.url = item.url+texto
-    if texto!='':
-       return lista(item)
-"""
 
 
 def lista_gen(item):
@@ -179,11 +165,10 @@ def findvideos(item):
         for link in itemla:
             if server in link:
                 url = link.replace('" + ID' + server + ' + "', str(id))
-            if "drive" in server:
-                server1 = 'Gvideo'
-            else:
-                server1 = server
-        itemlist.append(item.clone(url=url, action="play", server=server1,
-                                   title="Enlace encontrado en %s " % (server1.capitalize())))
+        itemlist.append(item.clone(url=url, action="play",
+                                   title="Enlace encontrado en %s "
+                                   ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    scrapertools.printMatches(itemlist)
     autoplay.start(itemlist, item)
     return itemlist
