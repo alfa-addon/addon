@@ -512,7 +512,7 @@ def episodios(item):
     else:
         action = "menu_info_episode"
 
-    seasons = scrapertools.find_multiple_matches(data, '<a href="([^"]+)"[^>]+><span class="season-toggle')
+    seasons = scrapertools.find_single_match(data, '<a href="([^"]+)"[^>]+><span class="season-toggle')
     for i, url in enumerate(seasons):
         if i != 0:
             data_season = httptools.downloadpage(url, add_referer=True).data

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel TVSeriesdk -*-
+# -*- Channel Ver-peliculas -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -18,7 +18,7 @@ from core import tmdb
 
 __channel__ = "ver-peliculas"
 
-host = "http://ver-peliculas.org/"
+host = "http://ver-peliculas.io/"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -122,10 +122,8 @@ def listado(item):
     logger.info()
     itemlist = []
     data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url).data)
-    # logger.debug(data)
     pattern = '<a href="([^"]+)"[^>]+><img (?:src)?(?:data-original)?="([^"]+)".*?alt="([^"]+)"'
-    matches = re.compile(pattern, re.DOTALL).findall(data)
-
+    matches = scrapertools.find_multiple_matches(data, pattern)
     for url, thumb, title in matches:
         year = scrapertools.find_single_match(url, '-(\d+)-online')
         title = title.replace("Película", "", 1).partition(" /")[0].partition(":")[0]
@@ -135,10 +133,9 @@ def listado(item):
                              infoLabels={"year": year},
                              url=url,
                              thumbnail=thumb,
-                             contentTitle=title
+                             contentTitle=title.strip()
                              ))
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
-
     pagination = scrapertools.find_single_match(data, '<ul class="pagination">(.*?)</ul>')
     if pagination:
         next_page = scrapertools.find_single_match(pagination, '<a href="#">\d+</a>.*?<a href="([^"]+)">')
@@ -172,8 +169,7 @@ def findvideos(item):
     duplicated = []
 
     data = get_source(item.url)
-    logger.debug(data)
-    video_info = scrapertools.find_single_match(data, "load_player\('(.*?)','(.*?)'\);")
+    video_info = scrapertools.find_single_match(data, "load_player\('([^']+).*?([^']+)")
     movie_info = scrapertools.find_single_match(item.url,
                                             'http:\/\/ver-peliculas\.(io|org)\/peliculas\/(\d+)-(.*?)-\d{4}-online\.')
     movie_host = movie_info[0]
@@ -186,7 +182,7 @@ def findvideos(item):
     video_list = json_data['lista']
     itemlist = []
     for videoitem in video_list:
-        video_base_url = 'http://ver-peliculas.org/core/videofinal.php'
+        video_base_url = host + '/core/videofinal.php'
         if video_list[videoitem] != None:
             video_lang = video_list[videoitem]
             languages = ['latino', 'spanish', 'subtitulos']
@@ -200,28 +196,22 @@ def findvideos(item):
                         playlist = jsontools.load(data)
                         sources = playlist[['playlist'][0]]
                         server = playlist['server']
-
                         for video_link in sources:
                             url = video_link['sources']
-                            # if 'onevideo' in url:
-                                # data = get_source(url)
-                                # g_urls = servertools.findvideos(data=data)
-                                # url = g_urls[0][1]
-                                # server = g_urls[0][0]
                             if url not in duplicated and server!='drive':
                                 lang = lang.capitalize()
                                 if lang == 'Spanish':
                                     lang = 'Español'
-                                title = '(%s) %s (%s)' % (server, item.title, lang)
+                                title = 'Ver en %s [' + lang + ']'
                                 thumbnail = servertools.guess_server_thumbnail(server)
                                 itemlist.append(item.clone(title=title,
                                                            url=url,
-                                                           server=server,
                                                            thumbnail=thumbnail,
                                                            action='play'
                                                            ))
                                 duplicated.append(url)
-
+    tmdb.set_infoLabels(itemlist, __modo_grafico__)
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(
             Item(channel=item.channel,
@@ -233,6 +223,11 @@ def findvideos(item):
                  ))
 
     return itemlist
+
+
+def play(item):
+    item.thumbnail = item.contentThumbnail
+    return [item]
 
 
 def newest(category):
