@@ -95,6 +95,7 @@ def render_items(itemlist, parent_item):
     """
     # Si el itemlist no es un list salimos
     if not type(itemlist) == list:
+
         return
 
     # Si no hay ningun item, mostramos un aviso
@@ -103,7 +104,6 @@ def render_items(itemlist, parent_item):
 
     # Recorremos el itemlist
     for item in itemlist:
-        # logger.debug(item)
         # Si el item no contiene categoria, le ponemos la del item padre
         if item.category == "":
             item.category = parent_item.category
@@ -181,7 +181,6 @@ def render_items(itemlist, parent_item):
     if config.get_setting("forceview"):
         # ...forzamos segun el viewcontent
         xbmcplugin.setContent(int(sys.argv[1]), parent_item.viewcontent)
-        # logger.debug(parent_item)
     elif parent_item.channel not in ["channelselector", ""]:
         # ... o segun el canal
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
@@ -199,9 +198,12 @@ def render_items(itemlist, parent_item):
     if config.get_setting("forceview"):
         viewmode_id = get_viewmode_id(parent_item)
         xbmc.executebuiltin("Container.SetViewMode(%s)" % viewmode_id)
+    if parent_item.mode in ['silent', 'get_cached', 'set_cache','finish']:
+        xbmc.executebuiltin("Container.SetViewMode(500)")
 
 
 def get_viewmode_id(parent_item):
+
     # viewmode_json habria q guardarlo en un archivo y crear un metodo para q el user fije sus preferencias en:
     # user_files, user_movies, user_tvshows, user_season y user_episodes.
     viewmode_json = {'skin.confluence': {'default_files': 50,
@@ -393,7 +395,6 @@ def set_context_commands(item, parent_item):
                                      (sys.argv[0], item.clone(channel="favorites", action="addFavourite",
                                                               from_channel=item.channel,
                                                               from_action=item.action).tourl())))
-
         #Buscar en otros canales
         if item.contentType in ['movie','tvshow']and item.channel != 'search':
             # Buscar en otros canales
@@ -468,7 +469,19 @@ def set_context_commands(item, parent_item):
         context_commands.append(("Super Favourites Menu",
                                  "XBMC.RunScript(special://home/addons/plugin.program.super.favourites/LaunchSFMenu.py)"))
 
-    return sorted(context_commands, key=lambda comand: comand[0])
+
+
+    context_commands = sorted(context_commands, key=lambda comand: comand[0])
+    # Menu Rapido
+    context_commands.insert(0,("[COLOR 0xffccff00]<Menú Rápido>[/COLOR]",
+                               "XBMC.Container.Update (%s?%s)" % (sys.argv[0], Item(channel='side_menu',
+                                                                                    action="open_menu",
+                                                                                    parent=parent_item.tourl()).tourl(
+
+                                                                                    ))))
+    return context_commands
+
+
 
 
 def is_playing():

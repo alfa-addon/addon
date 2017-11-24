@@ -38,6 +38,12 @@
         <setting id="videolibrary_kodi_flag" type="number" label="" default="0" visible="false"/>
         <setting id="videolibrary_kodi" type="bool" label="Autoconfigurar videoteca de XBMC/Kodi para contenido de Alfa" enable="lt(-1,2)+eq(0,false)" default="false"/>
     </category>
+     <category label="Menu Inicial">
+        <setting id="custom_menu" type="bool" label="Menu Personal" default="false"/>
+        <setting id="category" type="labelenum" label="Mostrar en inicio"
+                 values="Peliculas|Series|Anime|Infantiles|Documentales|Terror|Castellano|Latino|Torrents"
+                 default="Peliculas" visible="eq(-1,True)"/>
+   </category>
     <category label="Opciones Visuales">
         <setting id="icon_set" type="labelenum" label="Set de iconos" values="default|dark" default="default"/>
         <setting id="infoplus_set" type="labelenum" label="Opción visual Infoplus" values="Sin animación|Con animación" default="Sin animación"/>

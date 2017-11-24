@@ -37,8 +37,11 @@ def run(item=None):
 
         # If no item, this is mainlist
         else:
-            item = Item(channel="channelselector", action="getmainlist", viewmode="movie")
-
+            if config.get_setting("custom_menu") == True:
+                category = config.get_setting("category").lower()
+                item = Item(channel="news", action="novedades", extra=category, mode = 'silent')
+            else:
+                item = Item(channel="channelselector", action="getmainlist", viewmode="movie")
     logger.info(item.tostring())
 
     try:

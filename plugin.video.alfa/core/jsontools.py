@@ -104,7 +104,7 @@ def get_node_from_file(name_file, node, path=None):
         if node in dict_data:
             dict_node = dict_data[node]
 
-    logger.debug("dict_node: %s" % dict_node)
+    #logger.debug("dict_node: %s" % dict_node)
 
     return dict_node
 

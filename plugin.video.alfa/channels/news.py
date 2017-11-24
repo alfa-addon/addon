@@ -15,6 +15,7 @@ from core import scrapertools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
+from core import jsontools
 
 THUMBNAILS = {'0': 'posters', '1': 'banners', '2': 'squares'}
 
@@ -27,10 +28,15 @@ perfil = [['0xFF0B7B92', '0xFF89FDFB', '0xFFACD5D4'],
           ['0xFFA5DEE5', '0xFFE0F9B5', '0xFFFEFDCA'],
           ['0xFFF23557', '0xFF22B2DA', '0xFFF0D43A']]
 
+#color1, color2, color3 = ["white", "white", "white"]
 color1, color2, color3 = perfil[__perfil__]
 
 list_newest = []
+list_newest_tourl = []
 channels_id_name = {}
+
+menu_cache_path = os.path.join(config.get_data_path(), "settings_channels", 'menu_cache_data.json')
+menu_settings_path = os.path.join(config.get_data_path(), "settings_channels", 'menu_settings_data.json')
 
 
 def mainlist(item):
@@ -150,6 +156,64 @@ def get_channels_list():
 
     return list_canales, any_active
 
+def set_cache(item):
+    logger.info()
+    item.mode = 'set_cache'
+    t = Thread(target=novedades, args=[item])
+    t.start()
+    #t.join()
+
+def get_from_cache(item):
+    logger.info()
+    itemlist=[]
+    cache_node = jsontools.get_node_from_file('menu_cache_data.json', 'cached')
+    first=item.last
+    last = first+40
+    #if last >=len(cache_node[item.extra]):
+    #    last = len(cache_node[item.extra])
+
+    for cached_item in cache_node[item.extra][first:last]:
+        new_item= Item()
+        new_item = new_item.fromurl(cached_item)
+        itemlist.append(new_item)
+    if item.mode == 'silent':
+        set_cache(item)
+    if last >= len(cache_node[item.extra]):
+        item.mode='finish'
+        itemlist = add_menu_items(item, itemlist)
+    else:
+        item.mode='get_cached'
+        item.last =last
+        itemlist = add_menu_items(item, itemlist)
+
+    return itemlist
+
+def add_menu_items(item, itemlist):
+    logger.info()
+
+    menu_icon = get_thumb('menu.png')
+    menu = Item(channel="channelselector", action="getmainlist", viewmode="movie", thumbnail=menu_icon, title='Menu')
+    itemlist.insert(0, menu)
+    if item.mode != 'finish':
+        if item.mode == 'get_cached':
+            last=item.last
+        else:
+            last = len(itemlist)
+        refresh_icon = get_thumb('more.png')
+        refresh = item.clone(thumbnail=refresh_icon, mode='get_cached',title='Mas', last=last)
+        itemlist.insert(len(itemlist), refresh)
+
+    return itemlist
+
+def set_menu_settings(item):
+    if os.path.exists(menu_settings_path):
+        menu_node = jsontools.get_node_from_file('menu_settings_data.json', 'menu')
+    else:
+        menu_node = {}
+    menu_node['categoria actual'] = item.extra
+
+    jsontools.update_node(menu_node, 'menu_settings_data.json', "menu")
+
 
 def novedades(item):
     logger.info()
@@ -158,6 +222,14 @@ def novedades(item):
     threads = []
     list_newest = []
     start_time = time.time()
+
+    mode = item.mode
+    if mode == '':
+        mode = 'normal'
+
+    if mode=='get_cached':
+        if os.path.exists(menu_cache_path):
+            return get_from_cache(item)
 
     multithread = config.get_setting("multithread", "news")
     logger.info("multithread= " + str(multithread))
@@ -170,8 +242,22 @@ def novedades(item):
             if config.set_setting("multithread", True, "news"):
                 multithread = True
 
-    progreso = platformtools.dialog_progress(item.category, "Buscando canales...")
+    if mode == 'normal':
+        progreso = platformtools.dialog_progress(item.category, "Buscando canales...")
+
     list_canales, any_active = get_channels_list()
+
+    if mode=='silent' and any_active and len(list_canales[item.extra]) > 0:
+        set_menu_settings(item)
+        aux_list=[]
+        for canal in list_canales[item.extra]:
+            if len(aux_list)<2:
+                aux_list.append(canal)
+        list_canales[item.extra]=aux_list
+
+    if mode == 'set_cache':
+        list_canales[item.extra] = list_canales[item.extra][2:]
+
     if any_active and len(list_canales[item.extra])>0:
         import math
         # fix float porque la division se hace mal en python 2.x
@@ -191,12 +277,14 @@ def novedades(item):
                 t = Thread(target=get_newest, args=[channel_id, item.extra], name=channel_title)
                 t.start()
                 threads.append(t)
-                progreso.update(percentage, "", "Buscando en '%s'..." % channel_title)
+                if mode == 'normal':
+                    progreso.update(percentage, "", "Buscando en '%s'..." % channel_title)
 
             # Modo single Thread
             else:
-                logger.info("Obteniendo novedades de channel_id=" + channel_id)
-                progreso.update(percentage, "", "Buscando en '%s'..." % channel_title)
+                if mode == 'normal':
+                    logger.info("Obteniendo novedades de channel_id=" + channel_id)
+                    progreso.update(percentage, "", "Buscando en '%s'..." % channel_title)
                 get_newest(channel_id, item.extra)
 
         # Modo Multi Thread: esperar q todos los hilos terminen
@@ -208,25 +296,29 @@ def novedades(item):
                 percentage = int(math.ceil(index * t))
 
                 list_pendent_names = [a.getName() for a in pendent]
-                mensaje = "Buscando en %s" % (", ".join(list_pendent_names))
-                progreso.update(percentage, "Finalizado en %d/%d canales..." % (len(threads) - len(pendent), len(threads)),
+                if mode == 'normal':
+                    mensaje = "Buscando en %s" % (", ".join(list_pendent_names))
+                    progreso.update(percentage, "Finalizado en %d/%d canales..." % (len(threads) - len(pendent), len(threads)),
                                 mensaje)
-                logger.debug(mensaje)
+                    logger.debug(mensaje)
 
-                if progreso.iscanceled():
-                    logger.info("Busqueda de novedades cancelada")
-                    break
+                    if progreso.iscanceled():
+                        logger.info("Busqueda de novedades cancelada")
+                        break
 
                 time.sleep(0.5)
                 pendent = [a for a in threads if a.isAlive()]
-
-        mensaje = "Resultados obtenidos: %s | Tiempo: %2.f segundos" % (len(list_newest), time.time() - start_time)
-        progreso.update(100, mensaje, " ", " ")
-        logger.info(mensaje)
-        start_time = time.time()
-        # logger.debug(start_time)
+        if mode == 'normal':
+            mensaje = "Resultados obtenidos: %s | Tiempo: %2.f segundos" % (len(list_newest), time.time() - start_time)
+            progreso.update(100, mensaje, " ", " ")
+            logger.info(mensaje)
+            start_time = time.time()
+            # logger.debug(start_time)
 
         result_mode = config.get_setting("result_mode", "news")
+        if mode != 'normal':
+            result_mode=0
+
         if result_mode == 0:  # Agrupados por contenido
             ret = group_by_content(list_newest)
         elif result_mode == 1:  # Agrupados por canales
@@ -237,13 +329,19 @@ def novedades(item):
         while time.time() - start_time < 2:
             # mostrar cuadro de progreso con el tiempo empleado durante almenos 2 segundos
             time.sleep(0.5)
-
-        progreso.close()
-        return ret
+        if mode == 'normal':
+            progreso.close()
+        if mode == 'silent':
+            set_cache(item)
+            item.mode = 'set_cache'
+            ret = add_menu_items(item, ret)
+        if mode != 'set_cache':
+            return ret
     else:
-        no_channels = platformtools.dialog_ok('Novedades - %s'%item.extra, 'No se ha definido ningun canal para la '
-                                                                           'busqueda.','Utilice el menu contextual '
-                                                                                       'para agregar al menos uno')
+        if mode != 'set_cache':
+            no_channels = platformtools.dialog_ok('Novedades - %s'%item.extra, 'No se ha definido ningun canal para la '
+                                                                               'busqueda.','Utilice el menu contextual '
+                                                                                           'para agregar al menos uno')
         return
 
 
@@ -251,6 +349,7 @@ def get_newest(channel_id, categoria):
     logger.info("channel_id=" + channel_id + ", categoria=" + categoria)
 
     global list_newest
+    global list_newest_tourl
 
     # Solicitamos las novedades de la categoria (item.extra) buscada en el canal channel
     # Si no existen novedades para esa categoria en el canal devuelve una lista vacia
@@ -271,11 +370,22 @@ def get_newest(channel_id, categoria):
         logger.info("running channel " + modulo.__name__ + " " + modulo.__file__)
         list_result = modulo.newest(categoria)
         logger.info("canal= %s %d resultados" % (channel_id, len(list_result)))
-
+        exist=False
+        if os.path.exists(menu_cache_path):
+            cache_node = jsontools.get_node_from_file('menu_cache_data.json', 'cached')
+            exist=True
+        else:
+            cache_node = {}
+        #logger.debug('cache node: %s' % cache_node)
         for item in list_result:
             # logger.info("item="+item.tostring())
             item.channel = channel_id
             list_newest.append(item)
+            list_newest_tourl.append(item.tourl())
+
+        cache_node[categoria] = list_newest_tourl
+
+        jsontools.update_node(cache_node, 'menu_cache_data.json', "cached")
 
     except:
         logger.error("No se pueden recuperar novedades de: " + channel_id)
