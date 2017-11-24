@@ -177,7 +177,8 @@ class main(xbmcgui.WindowDialog):
                 self.infoLabels["originaltitle"] = otmdb.result.get("original_title",
                                                                     otmdb.result.get("original_name", ""))
             self.trailers = otmdb.get_videos()
-            self.infoLabels["duration"] = int(otmdb.result.get("runtime", 0))
+            if otmdb.result.get("runtime", 0):
+                self.infoLabels["duration"] = int(otmdb.result.get("runtime", 0))
         else:
             self.trailers = []
 

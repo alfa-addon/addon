@@ -11,6 +11,12 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
+from channels import autoplay
+
+list_servers = ['openload',
+                'directo'
+                ]
+list_quality = ['default']
 
 CHANNEL_HOST = "http://animeflv.co"
 CHANNEL_DEFAULT_HEADERS = [
@@ -117,7 +123,8 @@ def __find_series(html):
 
 def mainlist(item):
     logger.info()
-
+    
+    autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
 
     itemlist.append(Item(channel=item.channel, action="letras",
@@ -134,6 +141,7 @@ def mainlist(item):
                          url=CHANNEL_HOST + "/Buscar?s="))
 
     itemlist = renumbertools.show_option(item.channel, itemlist)
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -179,10 +187,13 @@ def search(item, texto):
             show_list = __find_series(html)
 
         items = []
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
         for show in show_list:
             title, url, thumbnail, plot = show
             items.append(Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
-                              plot=plot, show=title, viewmode="movies_with_plot", context=renumbertools.context(item)))
+                              plot=plot, show=title, viewmode="movies_with_plot", context=context))
     except:
         import sys
         for line in sys.exc_info():
@@ -197,10 +208,13 @@ def series(item):
     page_html = get_url_contents(item.url)
     show_list = __find_series(page_html)
     items = []
+    context = renumbertools.context(item)
+    context2 = autoplay.context
+    context.extend(context2)
     for show in show_list:
         title, url, thumbnail, plot = show
         items.append(Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
-                          plot=plot, show=title, viewmode="movies_with_plot", context=renumbertools.context(item)))
+                          plot=plot, show=title, viewmode="movies_with_plot", context=context))
 
     url_next_page = scrapertools.find_single_match(page_html, REGEX_NEXT_PAGE)
     if url_next_page:
@@ -292,4 +306,5 @@ def findvideos(item):
         itemlist.append(Item(channel=item.channel, action="play", url=video_url, show=re.escape(item.show),
                              title="Ver en calidad [%s]" % (qualities[quality_id]), plot=item.plot,
                              fulltitle=item.title))
+    autoplay.start(__sort_by_quality(itemlist), item)
     return __sort_by_quality(itemlist)

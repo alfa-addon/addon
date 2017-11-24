@@ -11,6 +11,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
+idiomas1 = {"/es.png":"CAST","/en_es.png":"VOSE","/la.png":"LAT","/en.png":"ENG"}
 HOST = 'http://www.yaske.ro'
 parameters = channeltools.get_channel_parameters('yaske')
 fanart_host = parameters['fanart']
@@ -98,14 +99,12 @@ def peliculas(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-
-    patron = 'class="post-item-image btn-play-item".*?'
+    patron = '(?s)class="post-item-image btn-play-item".*?'
     patron += 'href="([^"]+)">.*?'
     patron += '<img data-original="([^"]+)".*?'
     patron += 'glyphicon-calendar"></i>([^<]+).*?'
-    patron += 'post-item-flags"> (.*?)</div.*?'
+    patron += 'post(.*?)</div.*?'
     patron += 'text-muted f-14">(.*?)</h3'
-
     matches = scrapertools.find_multiple_matches(data, patron)
 
     patron_next_page = 'href="([^"]+)"> &raquo;'
@@ -119,22 +118,16 @@ def peliculas(item):
         matchesidiomas = scrapertools.find_multiple_matches(idiomas, patronidiomas)
         idiomas_disponibles = []
         for idioma in matchesidiomas:
-            if idioma.endswith("/la.png"):
-                idiomas_disponibles.append("LAT")
-            elif idioma.endswith("/en.png"):
-                idiomas_disponibles.append("VO")
-            elif idioma.endswith("/en_es.png"):
-                idiomas_disponibles.append("VOSE")
-            elif idioma.endswith("/es.png"):
-                idiomas_disponibles.append("ESP")
-
+            for lang in idiomas1.keys():
+                if idioma.endswith(lang):
+                    idiomas_disponibles.append(idiomas1[lang])
         if idiomas_disponibles:
             idiomas_disponibles = "[" + "/".join(idiomas_disponibles) + "]"
-        contentTitle = scrapertoolsV2.htmlclean(scrapedtitle.strip())
-        title = "%s %s" % (contentTitle, idiomas_disponibles)
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, contentTitle=contentTitle,
-                             infoLabels={"year": year}, text_color=color1))
+            contentTitle = scrapertoolsV2.htmlclean(scrapedtitle.strip())
+            title = "%s %s" % (contentTitle, idiomas_disponibles)
+            itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
+                                 thumbnail=scrapedthumbnail, contentTitle=contentTitle,
+                                 infoLabels={"year": year}, text_color=color1))
     # Obtenemos los datos basicos de todas las peliculas mediante multihilos
     tmdb.set_infoLabels(itemlist)
 
@@ -179,36 +172,28 @@ def findvideos(item):
     logger.info()
     itemlist = []
     sublist = []
-
-    # Descarga la página
-    url = "http://widget.olimpo.link/playlist/?tmdb=" + scrapertools.find_single_match(item.url, 'yaske.ro/([0-9]+)')
+    data = httptools.downloadpage(item.url).data
+    mtmdb = scrapertools.find_single_match(item.url, 'yaske.ro/([0-9]+)')
+    patron = '(?s)id="online".*?server="([^"]+)"'
+    mserver = scrapertools.find_single_match(data, patron)
+    url = "http://olimpo.link/?tmdb=%s&server=%s" %(mtmdb, mserver)
     data = httptools.downloadpage(url).data
-    if not item.plot:
-        item.plot = scrapertoolsV2.find_single_match(data, '>Sinopsis</dt> <dd>([^<]+)</dd>')
-        item.plot = scrapertoolsV2.decodeHtmlentities(item.plot)
-
-    patron  = '(/embed/[^"]+).*?'
-    patron += 'quality text-overflow ">([^<]+).*?'
-    patron += 'title="([^"]+)'
+    patron  = '/\?tmdb=[^"]+.*?domain=(?:www\.|)([^\.]+).*?text-overflow.*?href="([^"]+).*?'
+    patron += '\[([^\]]+)\].*?\[([^\]]+)\]'
     matches = scrapertools.find_multiple_matches(data, patron)
-
-    for url, calidad, idioma in matches:
-        if 'embed' in url:
-            url = "http://widget.olimpo.link" + url
-            data = httptools.downloadpage(url).data
-            url = scrapertools.find_single_match(data, 'iframe src="([^"]+)')
-            sublist.append(item.clone(channel=item.channel, action="play", url=url, folder=False, text_color=color1, quality=calidad.strip(),
-                                  language=idioma.strip()))
-    sublist = servertools.get_servers_itemlist(sublist, lambda i: "Ver en %s %s" % (i.server, i.quality), True)
-
-    # Añadir servidores encontrados, agrupandolos por idioma
-    for k in ["Español", "Latino", "Subtitulado", "Ingles"]:
+    for server, url, idioma, calidad in matches:
+        sublist.append(item.clone(channel=item.channel, action="play", url=url, folder=False, text_color=color1, quality=calidad.strip(),
+                              language=idioma.strip(),
+                              title="Ver en %s %s" %(server, calidad)
+                              ))
+    for k in ["Español", "Latino", "Ingles - Sub Español", "Ingles"]:
         lista_idioma = filter(lambda i: i.language == k, sublist)
         if lista_idioma:
-            itemlist.append(Item(channel=item.channel, title=k, fanart=item.fanart, folder=False,
+            itemlist.append(item.clone(title=k, folder=False,
                                  text_color=color2, text_bold=True, thumbnail=thumbnail_host))
             itemlist.extend(lista_idioma)
 
+    tmdb.set_infoLabels(itemlist, True)
     # Insertar items "Buscar trailer" y "Añadir a la videoteca"
     if itemlist and item.extra != "library":
         title = "%s [Buscar trailer]" % (item.contentTitle)
@@ -221,3 +206,12 @@ def findvideos(item):
                                  contentTitle=item.contentTitle, extra="library", thumbnail=thumbnail_host))
 
     return itemlist
+
+def play(item):
+    logger.info()
+    itemlist = []
+    ddd = httptools.downloadpage(item.url).data
+    url = "http://olimpo.link" + scrapertools.find_single_match(ddd, '<iframe src="([^"]+)')
+    item.url = httptools.downloadpage(url + "&ge=1", follow_redirects=False, only_headers=True).headers.get("location", "")
+    item.server = servertools.get_server_from_url(item.url)
+    return [item]
