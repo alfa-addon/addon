@@ -42,12 +42,12 @@ def mainlist(item):
                                fanart="http://i.imgur.com/ggFFR8o.png"))
     itemlist.append(item.clone(title="", action=""))
     itemlist.append(item.clone(title="Buscar...", action="search"))
-    itemlist.append(item.clone(action="configuracion", title="Configurar canal...", text_color="gold", folder=False))
+    itemlist.append(item.clone(action="setting_channel", title="Configurar canal...", text_color="gold", folder=False))
 
     return itemlist
 
 
-def configuracion(item):
+def setting_channel(item):
     from platformcode import platformtools
     ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
@@ -108,7 +108,7 @@ def busqueda(item):
 
 def lista(item):
     logger.info()
-    itemlist = []
+    itemlist = list()
 
     itemlist.append(item.clone(title="Novedades", action="entradas", url="%s/peliculas" % host))
     itemlist.append(item.clone(title="Estrenos", action="entradas", url="%s/peliculas/estrenos" % host))
@@ -125,7 +125,7 @@ def lista(item):
 
 def lista_series(item):
     logger.info()
-    itemlist = []
+    itemlist = list()
 
     itemlist.append(item.clone(title="Novedades", action="entradas", url="%s/series/" % host))
     itemlist.append(item.clone(title="Miniseries", action="entradas", url="%s/series/miniseries" % host))
@@ -254,7 +254,7 @@ def episodios(item):
     return itemlist
 
 
-def epienlaces(item):
+def episode_links(item):
     logger.info()
     itemlist = []
     item.text_color = color3
@@ -286,7 +286,7 @@ def epienlaces(item):
         else:
             if servertools.is_server_enabled(scrapedserver):
                 try:
-                    servers_module = __import__("servers." + scrapedserver)
+                    # servers_module = __import__("servers." + scrapedserver)
                     lista_enlaces.append(item.clone(action="play", title=titulo, server=scrapedserver, url=scrapedurl,
                                                     extra=item.url))
                 except:
@@ -302,13 +302,14 @@ def epienlaces(item):
 
 def findvideos(item):
     logger.info()
-    if item.contentSeason!='':
-        return epienlaces(item)
+    if item.contentSeason != '':
+        return episode_links(item)
 
     itemlist = []
     item.text_color = color3
 
     data = get_data(item.url)
+
     item.plot = scrapertools.find_single_match(data, 'SINOPSIS(?:</span>|</strong>):(.*?)</p>')
     year = scrapertools.find_single_match(data, '(?:<span class="bold">|<strong>)AÑO(?:</span>|</strong>):\s*(\d+)')
     if year:
@@ -346,9 +347,9 @@ def findvideos(item):
         patron = 'make_links.*?,[\'"]([^"\']+)["\']'
         matches = scrapertools.find_multiple_matches(data_online, patron)
         for i, code in enumerate(matches):
-            enlace = mostrar_enlaces(code)
-            enlaces = servertools.findvideos(data=enlace[0])
-            if enlaces and "peliculas.nu" not in enlaces:
+            enlace = show_links(code)
+            links = servertools.findvideos(data=enlace[0])
+            if links and "peliculas.nu" not in links:
                 if i == 0:
                     extra_info = scrapertools.find_single_match(data_online, '<span class="tooltiptext">(.*?)</span>')
                     size = scrapertools.find_single_match(data_online, '(?i)TAMAÑO:\s*(.*?)<').strip()
@@ -362,8 +363,8 @@ def findvideos(item):
                         new_item.title += " +INFO"
                     itemlist.append(new_item)
 
-                title = "   Ver vídeo en " + enlaces[0][2]
-                itemlist.append(item.clone(action="play", server=enlaces[0][2], title=title, url=enlaces[0][1]))
+                title = "   Ver vídeo en " + links[0][2]
+                itemlist.append(item.clone(action="play", server=links[0][2], title=title, url=links[0][1]))
     scriptg = scrapertools.find_single_match(data, "<script type='text/javascript'>str='([^']+)'")
     if scriptg:
         gvideo = urllib.unquote_plus(scriptg.replace("@", "%"))
@@ -419,9 +420,9 @@ def findvideos(item):
                 continue
             if servertools.is_server_enabled(scrapedserver):
                 try:
-                    servers_module = __import__("servers." + scrapedserver)
+                    # servers_module = __import__("servers." + scrapedserver)
                     # Saca numero de enlaces
-                    urls = mostrar_enlaces(scrapedurl)
+                    urls = show_links(scrapedurl)
                     numero = str(len(urls))
                     titulo = "   %s - Nº enlaces: %s" % (titulo, numero)
                     itemlist.append(item.clone(action="enlaces", title=titulo, extra=scrapedurl, server=scrapedserver))
@@ -449,12 +450,13 @@ def play(item):
                                       headers=headers, follow_redirects=False).data
 
         url = scrapertools.find_single_match(data, 'url":"([^"]+)"').replace("\\", "")
-        if "enlacesmix" in url:
+
+        if "enlacesmix" in url or "enlacesws.com" in url:
             data = httptools.downloadpage(url, headers={'Referer': item.extra}, follow_redirects=False).data
             url = scrapertools.find_single_match(data, '<iframe.*?src="([^"]+)"')
-        enlaces = servertools.findvideosbyserver(url, item.server)
-        if enlaces:
-            itemlist.append(item.clone(action="play", server=enlaces[0][2], url=enlaces[0][1]))
+        links = servertools.findvideosbyserver(url, item.server)
+        if links:
+            itemlist.append(item.clone(action="play", server=links[0][2], url=links[0][1]))
     else:
         itemlist.append(item.clone())
 
@@ -465,13 +467,13 @@ def enlaces(item):
     logger.info()
     itemlist = []
 
-    urls = mostrar_enlaces(item.extra)
+    urls = show_links(item.extra)
     numero = len(urls)
-    for enlace in urls:
-        enlaces = servertools.findvideos(data=enlace)
-        if enlaces:
-            for link in enlaces:
-                if "/folder/" in enlace:
+    for url in urls:
+        links = servertools.findvideos(data=url)
+        if links:
+            for link in links:
+                if "/folder/" in url:
                     titulo = link[0]
                 else:
                     titulo = "%s - Enlace %s" % (item.title.split("-")[0], str(numero))
@@ -482,7 +484,7 @@ def enlaces(item):
     return itemlist
 
 
-def mostrar_enlaces(data):
+def show_links(data):
     import base64
     data = data.split(",")
     len_data = len(data)
@@ -536,6 +538,7 @@ def get_data(url_orig, get_host=False):
 
     return response.data
 
+
 def newest(categoria):
     logger.info()
     itemlist = []
@@ -558,7 +561,6 @@ def newest(categoria):
 
             itemlist.extend(entradas(item))
 
-
         if itemlist[-1].title == ">> Siguiente":
             itemlist.pop()
 
@@ -566,7 +568,7 @@ def newest(categoria):
     except:
         import sys
         for line in sys.exc_info():
-            logger.error("{0}".format(line))
+            logger.error("%s" % line)
         return []
 
     return itemlist
