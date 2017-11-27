@@ -24,6 +24,13 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="search",
                          title="Buscar por titulo", context=context,
                          thumbnail=get_thumb("search.png")))
+
+    thumbnail = get_thumb("search_star.png")
+
+    itemlist.append(Item(channel='tvmoviedb', title="Buscar actor/actriz", action="search_",
+                         search={'url': 'search/person', 'language': 'es', 'page': 1}, star=True,
+                         thumbnail=thumbnail))
+
     itemlist.append(Item(channel=item.channel, action="search",
                          title="Buscar por categorias (búsqueda avanzada)", extra="categorias",
                          context=context,
