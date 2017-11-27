@@ -310,7 +310,8 @@ def fichas(item):
 
     for scrapedurl, scrapedthumbnail, scrapedlangs, scrapedrating, scrapedtitle, scrapedid in matches:
 
-        thumbnail = scrapedthumbnail.replace("/tthumb/130x190/", "/thumbs/")
+        #thumbnail = scrapedthumbnail.replace("/tthumb/130x190/", "/thumbs/")
+        thumbnail = scrapedthumbnail
         language = ''
         title = scrapedtitle.strip()
         show = title
