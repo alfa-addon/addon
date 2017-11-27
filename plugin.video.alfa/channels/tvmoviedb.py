@@ -74,6 +74,15 @@ def configuracion(item):
     platformtools.itemlist_refresh()
     return ret
 
+def search_star(item):
+    logger.info()
+
+    itemlist = []
+    item.type='movie'
+    itemlist.extend(search_(item))
+    item.type='tvshow'
+    itemlist.extend(search_(item))
+    return itemlist
 
 def search_(item):
     texto = platformtools.dialog_input(heading=item.title)
@@ -95,7 +104,17 @@ def search_(item):
 
         item.search['query'] = texto
         item.action = "listado_tmdb"
-        return listado_tmdb(item)
+
+        if item.star == True:
+            types = ['movie','tv']
+            itemlist = []
+            for type in types:
+                item.contentType = type
+                item.search['type']=type
+                itemlist.extend(listado_tmdb(item))
+            return itemlist
+        else:
+            return listado_tmdb(item)
 
 
 def busqueda(item):
@@ -338,6 +357,7 @@ def listado_tmdb(item):
     # Listado de actores
     if 'nm' in item.infoLabels['imdb_id']:
         try:
+
             ob_tmdb = Tmdb(discover=item.search, tipo=item.extra, idioma_busqueda=langt)
             id_cast = ob_tmdb.result["person_results"][0]["id"]
             if item.contentType == "movie":
@@ -429,12 +449,13 @@ def listado_tmdb(item):
                 else:
                     # Si es una búsqueda de personas se incluye en el título y fanart una película por la que es conocido
                     known_for = ob_tmdb.results[i].get("known_for")
+                    type = item.search['type']
                     if known_for:
                         from random import randint
                         random = randint(0, len(known_for) - 1)
-                        new_item.title = "%s  [COLOR %s](%s)[/COLOR]" \
+                        new_item.title = "%s  [COLOR %s](%s)[/COLOR] (%s)" \
                                          % (new_item.contentTitle, color6,
-                                            known_for[random].get("title", known_for[random].get("name")))
+                                            known_for[random].get("title", known_for[random].get("name")), type)
                         if known_for[random]["backdrop_path"]:
                             new_item.fanart = 'http://image.tmdb.org/t/p/original' + known_for[random]["backdrop_path"]
                     else:
@@ -536,12 +557,12 @@ def detalles(item):
     itemlist.append(item.clone(channel="trailertools", action="buscartrailer", title="Buscar Tráiler",
                                text_color=color5))
 
-    try:
-        images['tmdb'] = ob_tmdb.result["images"]
-        itemlist.append(item.clone(action="imagenes", title="Lista de Imágenes", text_color=color5, images=images,
-                                   extra="menu"))
-    except:
-        pass
+    # try:
+    #     images['tmdb'] = ob_tmdb.result["images"]
+    #     itemlist.append(item.clone(action="imagenes", title="Lista de Imágenes", text_color=color5, images=images,
+    #                                extra="menu"))
+    # except:
+    #     pass
 
     try:
         if item.contentType == "movie" and item.infoLabels["year"] < 2014:
@@ -591,6 +612,7 @@ def detalles(item):
 
     # Películas/Series similares y recomendaciones
     if item.infoLabels['tmdb_id']:
+        item.extra = item.contentType.replace('tvshow', 'tv')
         title = title.replace("película", "Películas").replace("serie", "Series")
         itemlist.append(item.clone(title="%s similares" % title, action="listado_tmdb",
                                    search={'url': '%s/%s/similar' % (item.extra, item.infoLabels['tmdb_id']),
@@ -608,6 +630,7 @@ def reparto(item):
     # Actores y equipo de rodaje de una película/serie
     itemlist = []
     item.text_color = color1
+    item.extra=item.contentType.replace('tvshow','tv')
     item.search = {'url': '%s/%s/credits' % (item.extra, item.infoLabels['tmdb_id'])}
     ob_tmdb = Tmdb(discover=item.search, tipo=item.extra, idioma_busqueda=langt)
 
@@ -1899,6 +1922,8 @@ def newlist(item):
 ##-------------------- LISTADOS DE IMAGENES ------------------------##
 def imagenes(item):
     itemlist = []
+
+
     if item.extra == "menu":
         item.folder = not config.is_xbmc()
         if "tmdb" in item.images:

@@ -74,16 +74,15 @@ def lista(item):
 
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
 
     if item.seccion != 'actor':
-        patron = '<li class=item-serie.*?><a href=(.*?) title=(.*?)><img src=(.*?) alt=><span '
-        patron += 'class=s-title><strong>.*?<\/strong><p>(.*?)<\/p><\/span><\/a><\/li>'
+        patron = '(?s)<li class="item-serie.*?href="([^"]+).*?title="([^"]+).*?data-src="([^"]+).*?<span '
+        patron += 'class="s-title">.*?<p>([^<]+)'
     else:
-        patron = '<li><a href=(\/pelicula\/.*?)><figure><img src=(.*?) alt=><\/figure><p class=title>(.*?)<\/p><p '
-        patron += 'class=year>(.*?)<\/p>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
+        patron = '(?s)<li>.*?<a href="(/pelicula/[^"]+)".*?<figure>.*?data-src="([^"]+)".*?p class="title">([^<]+).*?'
+        patron += 'year">([^<]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedyear in matches:
         url = host + scrapedurl
         if item.seccion != 'actor':
@@ -109,11 +108,11 @@ def lista(item):
     # Paginacion
 
     if itemlist != []:
-        actual_page = scrapertools.find_single_match(data, '<a class=active item href=.*?>(.*?)<\/a>')
+        actual_page = scrapertools.find_single_match(data, '<a class="active item" href=".*?">(.*?)<\/a>')
         if actual_page:
             next_page_num = int(actual_page) + 1
             next_page = scrapertools.find_single_match(data,
-                                                       '<li><a class= item href=(.*?)\?page=.*?&limit=.*?>Siguiente')
+                                                       '<li><a class=" item" href="(.*?)\?page=.*?&limit=.*?">Siguiente')
             next_page_url = host + next_page + '?page=%s' % next_page_num
             if next_page != '':
                 itemlist.append(Item(channel=item.channel,
@@ -129,15 +128,14 @@ def seccion(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     if item.seccion == 'generos':
-        patron = '<a href=(\/peliculas\/[\D].*?\/) title=Películas de .*?>(.*?)<\/a>'
+        patron = '<a href="(\/peliculas\/[\D].*?\/)" title="Películas de .*?>(.*?)<\/a>'
     elif item.seccion == 'anios':
-        patron = '<li class=.*?><a href=(.*?)>(\d{4})<\/a> <\/li>'
+        patron = '<li class=.*?><a href="(.*?)">(\d{4})<\/a> <\/li>'
     elif item.seccion == 'actor':
-        patron = '<li><a href=(.*?)><div.*?<div class=photopurple title=(.*?)><\/div><img src=(.*?)><\/figure>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
+        patron = '<li><a href="(.*?)".*?div.*?<div class="photopurple" title="(.*?)">.*?data-src="([^"]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
     if item.seccion != 'actor':
         for scrapedurl, scrapedtitle in matches:
             title = scrapedtitle.decode('utf-8')
@@ -158,7 +156,6 @@ def seccion(item):
                      ))
     else:
         for scrapedurl, scrapedname, scrapedthumbnail in matches:
-            thumbnail = scrapedthumbnail
             fanart = ''
             title = scrapedname
             url = host + scrapedurl
@@ -168,14 +165,14 @@ def seccion(item):
                                  title=title,
                                  fulltitle=item.title,
                                  url=url,
-                                 thumbnail=thumbnail,
+                                 thumbnail=scrapedthumbnail,
                                  fanart=fanart,
                                  seccion=item.seccion
                                  ))
         # Paginacion
 
         if itemlist != []:
-            next_page = scrapertools.find_single_match(data, '<li><a class= item href=(.*?)&limit=.*?>Siguiente <')
+            next_page = scrapertools.find_single_match(data, '<li><a class=" item" href="(.*?)&limit=.*?>Siguiente <')
             next_page_url = host + next_page
             if next_page != '':
                 itemlist.append(item.clone(action="seccion",
@@ -240,7 +237,6 @@ def findvideos(item):
                                    ))
     for videoitem in templist:
         data = httptools.downloadpage(videoitem.url).data
-
         urls_list = scrapertools.find_multiple_matches(data, 'var.*?_SOURCE\s+=\s+\[(.*?)\]')
         for element in urls_list:
             json_data=jsontools.load(element)
@@ -260,19 +256,19 @@ def findvideos(item):
                 for urls in video_list:
                     if urls.language == '':
                         urls.language = videoitem.language
-                    urls.title = item.title + '(%s) (%s)' % (urls.language, urls.server)
-
+                    urls.title = item.title + urls.language + '(%s)'
 
                 for video_url in video_list:
                     video_url.channel = item.channel
                     video_url.action = 'play'
                     video_url.quality = quality
+                    video_url.server = ""
+                    video_url.infoLabels = item.infoLabels
             else:
-                server = servertools.get_server_from_url(url)
-                video_list.append(item.clone(title=item.title, url=url, action='play', quality = quality,
-                                             server=server))
-
-
+                video_list.append(item.clone(title=item.title, url=url, action='play', quality = quality
+                                             ))
+    video_list = servertools.get_servers_itemlist(video_list, lambda i: i.title % i.server.capitalize())
+    tmdb.set_infoLabels(video_list)
     if config.get_videolibrary_support() and len(video_list) > 0 and item.extra != 'findvideos':
         video_list.append(
             Item(channel=item.channel,
@@ -308,3 +304,8 @@ def newest(categoria):
         return []
 
     return itemlist
+
+
+def play(item):
+    item.thumbnail = item.contentThumbnail
+    return [item]
