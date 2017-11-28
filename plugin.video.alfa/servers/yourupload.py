@@ -9,7 +9,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
     data = httptools.downloadpage(page_url).data
-    if ("File was deleted" or "File not found") in data:
+    if "File was deleted" in data or "File not found" in data:
         return False, "[Yourupload] El archivo no existe o ha sido borrado"
 
     return True, ""

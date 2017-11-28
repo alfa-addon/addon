@@ -367,6 +367,9 @@ def play(item):
             scrapedurl = httptools.downloadpage(scrapedurl, follow_redirects=False, only_headers=True).headers.get(
                 "location", "")
         item.url = scrapedurl
-    item.thumbnail = item.contentThumbnail
-    item.server = servertools.get_server_from_url(item.url)
-    return [item]
+    item.server = ""
+    itemlist.append(item.clone())
+    itemlist = servertools.get_servers_itemlist(itemlist)
+    for i in itemlist:
+        i.thumbnail = i.contentThumbnail
+    return itemlist
