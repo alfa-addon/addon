@@ -16,7 +16,7 @@
         "url": "http://docs.google.com/get_video_info?docid=\\1"
       },
       {
-        "pattern": "(?s)\"https://(lh.*?).googleusercontent.com/([^\"]+)",
+        "pattern": "(?s)https://(lh.).googleusercontent.com/([0-9a-zA-Z-_=]+)",
         "url": "https://\\1.googleusercontent.com/\\2"
       }
     ]

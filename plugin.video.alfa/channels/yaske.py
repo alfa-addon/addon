@@ -4,7 +4,6 @@ import re
 
 from core import channeltools
 from core import httptools
-from core import scrapertoolsV2
 from core import scrapertools
 from core import servertools
 from core import tmdb
@@ -123,7 +122,7 @@ def peliculas(item):
                     idiomas_disponibles.append(idiomas1[lang])
         if idiomas_disponibles:
             idiomas_disponibles = "[" + "/".join(idiomas_disponibles) + "]"
-            contentTitle = scrapertoolsV2.htmlclean(scrapedtitle.strip())
+            contentTitle = scrapertools.htmlclean(scrapedtitle.strip())
             title = "%s %s" % (contentTitle, idiomas_disponibles)
             itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
                                  thumbnail=scrapedthumbnail, contentTitle=contentTitle,
@@ -182,6 +181,8 @@ def findvideos(item):
     patron += '\[([^\]]+)\].*?\[([^\]]+)\]'
     matches = scrapertools.find_multiple_matches(data, patron)
     for server, url, idioma, calidad in matches:
+        if "drive" in server:
+            server = "gvideo"
         sublist.append(item.clone(channel=item.channel, action="play", url=url, folder=False, text_color=color1, quality=calidad.strip(),
                               language=idioma.strip(),
                               title="Ver en %s %s" %(server, calidad)
@@ -189,7 +190,7 @@ def findvideos(item):
     for k in ["Español", "Latino", "Ingles - Sub Español", "Ingles"]:
         lista_idioma = filter(lambda i: i.language == k, sublist)
         if lista_idioma:
-            itemlist.append(item.clone(title=k, folder=False,
+            itemlist.append(item.clone(title=k, folder=False, infoLabels = "",
                                  text_color=color2, text_bold=True, thumbnail=thumbnail_host))
             itemlist.extend(lista_idioma)
 
@@ -204,7 +205,6 @@ def findvideos(item):
             itemlist.append(Item(channel=item.channel, title="Añadir película a la videoteca",
                                  action="add_pelicula_to_library", url=item.url, text_color="green",
                                  contentTitle=item.contentTitle, extra="library", thumbnail=thumbnail_host))
-
     return itemlist
 
 def play(item):
@@ -213,5 +213,6 @@ def play(item):
     ddd = httptools.downloadpage(item.url).data
     url = "http://olimpo.link" + scrapertools.find_single_match(ddd, '<iframe src="([^"]+)')
     item.url = httptools.downloadpage(url + "&ge=1", follow_redirects=False, only_headers=True).headers.get("location", "")
-    item.server = servertools.get_server_from_url(item.url)
-    return [item]
+    itemlist.append(item.clone())
+    itemlist = servertools.get_servers_itemlist(itemlist)
+    return itemlist
