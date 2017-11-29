@@ -135,7 +135,7 @@ def render_items(itemlist, parent_item):
         if item.fanart:
             fanart = item.fanart
         else:
-            fanart = os.path.join(config.get_runtime_path(), "fanart.jpg")
+            fanart = os.path.join(config.get_runtime_path(), "fanart-xmas.jpg")
 
         # Creamos el listitem
         listitem = xbmcgui.ListItem(item.title)
@@ -407,8 +407,15 @@ def set_context_commands(item, parent_item):
                                                                         item.clone(channel='search',
                                                                                    action="do_search",
                                                                                    from_channel=item.channel,
+
                                                                                    contextual=True).tourl())))
 
+        if item.action not in ['findvideos', 'play']:
+            context_commands.insert(0, ("[COLOR 0xffccff00]Definir como Inicio[/COLOR]",
+                                        "XBMC.RunPlugin(%s?%s)" % (
+                                                                    sys.argv[0], Item(channel='side_menu',
+                                                                                      action="set_home",
+                                                                                      parent=item.tourl()).tourl())))
 
         if item.channel != "videolibrary":
             # Añadir Serie a la videoteca

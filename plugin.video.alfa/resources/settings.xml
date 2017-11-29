@@ -41,7 +41,7 @@
      <category label="Menu Inicial">
         <setting id="custom_menu" type="bool" label="Menu Personal" default="false"/>
         <setting id="category" type="labelenum" label="Mostrar en inicio"
-                 values="Peliculas|Series|Anime|Infantiles|Documentales|Terror|Castellano|Latino|Torrents"
+                 values="Peliculas|Series|Anime|Infantiles|Documentales|Terror|Castellano|Latino|Torrent|Definido"
                  default="Peliculas" visible="eq(-1,True)"/>
    </category>
     <category label="Opciones Visuales">

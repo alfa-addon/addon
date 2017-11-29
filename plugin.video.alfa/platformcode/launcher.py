@@ -16,6 +16,7 @@ from platformcode import config, logger
 from platformcode import platformtools
 
 
+
 def start():
     """ Primera funcion que se ejecuta al entrar en el plugin.
     Dentro de esta funcion deberian ir todas las llamadas a las
@@ -39,10 +40,15 @@ def run(item=None):
         else:
             if config.get_setting("custom_menu") == True:
                 category = config.get_setting("category").lower()
-                item = Item(channel="news", action="novedades", extra=category, mode = 'silent')
+                if category != 'definido':
+                    item = Item(channel="news", action="novedades", extra=category, mode = 'silent')
+                else:
+                    from channels import side_menu
+                    item= Item()
+                    item = side_menu.check_user_home(item)
             else:
                 item = Item(channel="channelselector", action="getmainlist", viewmode="movie")
-    logger.info(item.tostring())
+    #logger.info(item.tostring())
 
     try:
         # If item has no action, stops here

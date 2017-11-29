@@ -16,6 +16,7 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 from core import jsontools
+from channels import side_menu
 
 THUMBNAILS = {'0': 'posters', '1': 'banners', '2': 'squares'}
 
@@ -205,16 +206,6 @@ def add_menu_items(item, itemlist):
 
     return itemlist
 
-def set_menu_settings(item):
-    if os.path.exists(menu_settings_path):
-        menu_node = jsontools.get_node_from_file('menu_settings_data.json', 'menu')
-    else:
-        menu_node = {}
-    menu_node['categoria actual'] = item.extra
-
-    jsontools.update_node(menu_node, 'menu_settings_data.json', "menu")
-
-
 def novedades(item):
     logger.info()
 
@@ -248,7 +239,7 @@ def novedades(item):
     list_canales, any_active = get_channels_list()
 
     if mode=='silent' and any_active and len(list_canales[item.extra]) > 0:
-        set_menu_settings(item)
+        side_menu.set_menu_settings(item)
         aux_list=[]
         for canal in list_canales[item.extra]:
             if len(aux_list)<2:
