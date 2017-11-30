@@ -47,25 +47,32 @@ def check_user_home(item):
         item = Item().fromurl(menu_node['user_home'])
     else:
         item = Item(channel="channelselector", action="getmainlist", viewmode="movie")
-
+        from platformcode import platformtools
+        undefined_start = platformtools.dialog_ok('Inicio Personalizado', 'No has definido ninguna seccion para mostrar '
+                                                         'en tu inicio', 'Utiliza el menu contextual para definir una')
     return item
 
-def set_home(item):
+def set_custom_start(item):
     logger.info()
     if os.path.exists(menu_settings_path):
         menu_node = jsontools.get_node_from_file('menu_settings_data.json', 'menu')
+    else:
+        menu_node={}
     parent_item= Item().fromurl(item.parent)
-    logger.debug(item)
-    logger.debug(parent_item)
-    menu_node['user_home']=item.parent
+    parent_item.start=True
+    config.set_setting("custom_start",True)
+    if config.get_setting("news_start"):
+        config.set_setting("news_start", False)
+    menu_node['user_home']=parent_item.tourl()
     jsontools.update_node(menu_node, 'menu_settings_data.json', "menu")
 
 def get_start_page():
     logger.info()
 
     category = config.get_setting('category').lower()
-
-    if category != 'definido':
+    custom_start= config.get_setting("custom_start")
+    #if category != 'definido':
+    if custom_start == False:
         item = Item(channel="news", action="novedades", extra=category, mode='silent')
     else:
         from channels import side_menu
@@ -99,12 +106,13 @@ class Main(xbmcgui.WindowXMLDialog):
         textcolor = "0xffffd700"
         shadow = "0xFF000000"
         offsetx = 30
+        offsety = 0
         font = 'font32_title'
         label = 'Menú Clasico'
         self.button_alfa = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                  noFocusTexture='', focusTexture=media_path+selected, 
                                                  textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
-                                                 textOffsetY=-3)
+                                                 textOffsetY=offsety)
         self.addControl(self.button_alfa)
         self.buttons.append(self.button_alfa)
 
@@ -113,7 +121,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.button_start = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                    noFocusTexture='', focusTexture=media_path + selected,
                                                    textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
-                                                   textOffsetY=-3)
+                                                   textOffsetY=offsety)
         self.addControl(self.button_start)
         self.buttons.append(self.button_start)
 
@@ -122,7 +130,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.button_peliculas = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                       alignment=0x00000000, noFocusTexture='',
                                                       focusTexture=media_path+selected, textColor=textcolor,
-                                                      shadowColor=shadow, textOffsetX=offsetx, textOffsetY=-3)
+                                                      shadowColor=shadow, textOffsetX=offsetx, textOffsetY=offsety)
         self.addControl(self.button_peliculas)
         self.buttons.append(self.button_peliculas)
         posy += space
@@ -130,7 +138,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.button_series = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                    alignment=0x00000000, noFocusTexture='',
                                                    focusTexture=media_path+selected, textColor=textcolor,
-                                                   shadowColor=shadow, textOffsetX=offsetx, textOffsetY=-3)
+                                                   shadowColor=shadow, textOffsetX=offsetx, textOffsetY=offsety)
         self.addControl(self.button_series)
         self.buttons.append(self.button_series)
         posy += space
@@ -138,7 +146,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.button_anime = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                   noFocusTexture='', focusTexture=media_path+selected,
                                                   textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
-                                                  textOffsetY=-3)
+                                                  textOffsetY=offsety)
         self.addControl(self.button_anime)
         self.buttons.append(self.button_anime)
         posy += space
@@ -146,7 +154,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.button_infantil = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                      alignment=0x00000000, noFocusTexture='',
                                                      focusTexture=media_path+selected, textColor=textcolor,
-                                                     shadowColor=shadow, textOffsetX=offsetx, textOffsetY=-3)
+                                                     shadowColor=shadow, textOffsetX=offsetx, textOffsetY=offsety)
         self.addControl(self.button_infantil)
         self.buttons.append(self.button_infantil)
         posy += space
@@ -154,7 +162,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.button_docu = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                      alignment=0x00000000, noFocusTexture='',
                                                      focusTexture=media_path + selected, textColor=textcolor,
-                                                     shadowColor=shadow, textOffsetX=offsetx, textOffsetY=-3)
+                                                     shadowColor=shadow, textOffsetX=offsetx, textOffsetY=offsety)
         self.addControl(self.button_docu)
         self.buttons.append(self.button_docu)
         posy += space
@@ -163,7 +171,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.button_terror = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                    alignment=0x00000000, noFocusTexture='',
                                                    focusTexture=media_path+selected, textColor=textcolor,
-                                                   shadowColor=shadow, textOffsetX=offsetx, textOffsetY=-3)
+                                                   shadowColor=shadow, textOffsetX=offsetx, textOffsetY=offsety)
         self.addControl(self.button_terror)
         self.buttons.append(self.button_terror)
 
@@ -172,7 +180,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.button_lat = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                 noFocusTexture='', focusTexture=media_path+selected,
                                                 textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
-                                                textOffsetY=-3)
+                                                textOffsetY=offsety)
         self.addControl(self.button_lat)
         self.buttons.append(self.button_lat)
         posy += space
@@ -180,7 +188,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.button_cast = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                  noFocusTexture='', focusTexture=media_path + selected,
                                                  textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
-                                                 textOffsetY=-3)
+                                                 textOffsetY=offsety)
         self.addControl(self.button_cast)
         self.buttons.append(self.button_cast)
         posy += space
@@ -188,7 +196,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.button_torrent = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                     alignment=0x00000000, noFocusTexture='',
                                                     focusTexture=media_path+selected, textColor=textcolor,
-                                                    shadowColor=shadow, textOffsetX=offsetx, textOffsetY=-3)
+                                                    shadowColor=shadow, textOffsetX=offsetx, textOffsetY=offsety)
         self.addControl(self.button_torrent)
         self.buttons.append(self.button_torrent)
         posy += space
@@ -196,7 +204,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.button_config = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                    alignment=0x00000000, noFocusTexture='',
                                                    focusTexture=media_path+selected, textColor=textcolor,
-                                                   shadowColor=shadow, textOffsetX=offsetx, textOffsetY=-3)
+                                                   shadowColor=shadow, textOffsetX=offsetx, textOffsetY=offsety)
         self.addControl(self.button_config)
         self.buttons.append(self.button_config)
 
@@ -205,7 +213,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.button_buscar = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                    noFocusTexture='', focusTexture=media_path + selected,
                                                    textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
-                                                   textOffsetY=-3)
+                                                   textOffsetY=offsety)
         self.addControl(self.button_buscar)
         self.buttons.append(self.button_buscar)
         posy += space
@@ -213,7 +221,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.button_actor = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                    noFocusTexture='', focusTexture=media_path + selected,
                                                    textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
-                                                   textOffsetY=-3)
+                                                   textOffsetY=offsety)
         self.addControl(self.button_actor)
         self.buttons.append(self.button_actor)
 
@@ -261,11 +269,11 @@ class Main(xbmcgui.WindowXMLDialog):
                             search={'url': 'search/person', 'language': 'es', 'page': 1}, star=True)
         elif control == '':
             self.close()
-        if new_item !='' and new_item !='definido':
+        if new_item !='':
             self.run_action(new_item)
-        elif new_item == 'definido':
-            self.run_action(new_item)
-            
+        # elif new_item == 'definido':
+        #     self.run_action(new_item)
+
     def onAction(self, action):
         
         if action == ACTION_PREVIOUS_MENU or action == ACTION_GESTURE_SWIPE_LEFT or action == 110 or action == 92:

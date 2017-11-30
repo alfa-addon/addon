@@ -18,6 +18,7 @@ import xbmcgui
 import xbmcplugin
 from core.item import Item
 from platformcode import logger
+from channelselector import get_thumb
 
 
 def dialog_ok(heading, line1, line2="", line3=""):
@@ -97,6 +98,12 @@ def render_items(itemlist, parent_item):
     if not type(itemlist) == list:
 
         return
+
+    if parent_item.start:
+        menu_icon = get_thumb('menu.png')
+        menu = Item(channel="channelselector", action="getmainlist", viewmode="movie", thumbnail=menu_icon,
+                    title='Menu')
+        itemlist.insert(0, menu)
 
     # Si no hay ningun item, mostramos un aviso
     if not len(itemlist):
@@ -409,12 +416,12 @@ def set_context_commands(item, parent_item):
                                                                                    from_channel=item.channel,
 
                                                                                    contextual=True).tourl())))
-
+        #Definir como Pagina de inicio
         if item.action not in ['findvideos', 'play']:
-            context_commands.insert(0, ("[COLOR 0xffccff00]Definir como Inicio[/COLOR]",
+            context_commands.insert(0, ("[COLOR 0xffccff00]Definir como pagina de inicio[/COLOR]",
                                         "XBMC.RunPlugin(%s?%s)" % (
                                                                     sys.argv[0], Item(channel='side_menu',
-                                                                                      action="set_home",
+                                                                                      action="set_custom_start",
                                                                                       parent=item.tourl()).tourl())))
 
         if item.channel != "videolibrary":

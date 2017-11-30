@@ -38,11 +38,15 @@
         <setting id="videolibrary_kodi_flag" type="number" label="" default="0" visible="false"/>
         <setting id="videolibrary_kodi" type="bool" label="Autoconfigurar videoteca de XBMC/Kodi para contenido de Alfa" enable="lt(-1,2)+eq(0,false)" default="false"/>
     </category>
-     <category label="Menu Inicial">
-        <setting id="custom_menu" type="bool" label="Menu Personal" default="false"/>
-        <setting id="category" type="labelenum" label="Mostrar en inicio"
-                 values="Peliculas|Series|Anime|Infantiles|Documentales|Terror|Castellano|Latino|Torrent|Definido"
-                 default="Peliculas" visible="eq(-1,True)"/>
+     <category label="Pagina de inicio">
+        <setting id="start_page" type="bool" label="Activar pagina de inicio" default="false"/>
+        <setting id="custom_start" type="bool" label="Personalizado (seleccionar desde un canal)" default="false"
+                 visible="eq(-1,True)"/>
+        <setting id="news_start" type="bool" label="Mostrar Novedades" default="false" visible="eq(-2,True)"
+                 enable="eq(-1,False)+eq(-2,True"/>
+         <setting id="category" type="labelenum" label="Categoria"
+                 values="Peliculas|Series|Anime|Infantiles|Documentales|Terror|Castellano|Latino|Torrent"
+                 default="Peliculas" visible="eq(-3,True)+eq(-1,True)+eq(-2,False)" enable="eq(-3,True)+eq(-1,True)+(-2,false)"/>
    </category>
     <category label="Opciones Visuales">
         <setting id="icon_set" type="labelenum" label="Set de iconos" values="default|dark" default="default"/>

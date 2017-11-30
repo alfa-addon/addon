@@ -14,6 +14,7 @@ from core import videolibrarytools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
+from channelselector import get_thumb
 
 
 
@@ -38,17 +39,20 @@ def run(item=None):
 
         # If no item, this is mainlist
         else:
-            if config.get_setting("custom_menu") == True:
-                category = config.get_setting("category").lower()
-                if category != 'definido':
+            if config.get_setting("start_page"):
+
+                if not config.get_setting("custom_start"):
+                #if category != 'definido':
+                    category = config.get_setting("category").lower()
                     item = Item(channel="news", action="novedades", extra=category, mode = 'silent')
                 else:
                     from channels import side_menu
                     item= Item()
                     item = side_menu.check_user_home(item)
+                    item.start = True;
             else:
                 item = Item(channel="channelselector", action="getmainlist", viewmode="movie")
-    #logger.info(item.tostring())
+    logger.info(item.tostring())
 
     try:
         # If item has no action, stops here
@@ -273,6 +277,11 @@ def run(item=None):
             else:
                 logger.info("Executing channel '%s' method" % item.action)
                 itemlist = getattr(channel, item.action)(item)
+                # if item.start:
+                #     menu_icon = get_thumb('menu.png')
+                #     menu = Item(channel="channelselector", action="getmainlist", viewmode="movie", thumbnail=menu_icon,
+                #                 title='Menu')
+                #     itemlist.insert(0, menu)
                 platformtools.render_items(itemlist, item)
 
     except urllib2.URLError, e:
