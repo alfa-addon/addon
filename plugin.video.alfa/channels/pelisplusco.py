@@ -97,12 +97,12 @@ def list_all (item):
         contentType = 'pelicula'
         action = 'findvideos'
 
-    patron = 'item-%s><a href=(.*?)><figure><img src=https:(.*?)'%contentType
-    patron += ' alt=><\/figure><p>(.*?)<\/p><span>(.*?)<\/span>'
+    patron = 'item-%s><a href=(.*?)><figure><img.*?data-src=(.*?) alt=.*?<p>(.*?)<\/p><span>(\d{4})<\/span>'%contentType
+
     matches = re.compile(patron,re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear in matches:
-        url = host+scrapedurl
+        url = host+scrapedurl+'p001/'
         thumbnail = scrapedthumbnail
         plot= ''
         contentTitle=scrapedtitle
@@ -263,7 +263,9 @@ def findvideos(item):
     video_list = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = 'data-source=(.*?) data.*?-srt=(.*?) data-iframe=0><a>(.*?) - (.*?)<\/a>'
+
+    patron = 'data-source=(.*?) .*?tab.*?data.*?srt=(.*?) data-iframe=><a>(.*?)\s?-\s?(.*?)<\/a>'
+
     matches = matches = re.compile(patron, re.DOTALL).findall(data)
 
     for url, sub, language, quality in matches:
