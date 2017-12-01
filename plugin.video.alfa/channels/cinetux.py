@@ -244,10 +244,6 @@ def findvideos(item):
     if item.infoLabels["year"]:
         tmdb.set_infoLabels(item, __modo_grafico__)
 
-    if not item.infoLabels.get('plot'):
-        plot = scrapertools.find_single_match(data, '<div class="sinopsis"><p>(.*?)</p>')
-        item.infoLabels['plot'] = plot
-
     if filtro_enlaces != 0:
         list_enlaces = bloque_enlaces(data, filtro_idioma, dict_idiomas, "online", item)
         if list_enlaces:
