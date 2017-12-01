@@ -9,7 +9,7 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
-    if "Not Found" in data:
+    if "Not Found" in data or "File was deleted" in data:
         return False, "[streamixcloud] El archivo no existe o ha sido borrado"
     if "Video is processing" in data:
         return False, "[streamixcloud] El video se está procesando, inténtelo mas tarde"
