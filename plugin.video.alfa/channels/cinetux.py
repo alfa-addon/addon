@@ -182,18 +182,15 @@ def destacadas(item):
     matches = scrapertools.find_multiple_matches(bloque, patron)
     for scrapedtitle, scrapedurl, scrapedthumbnail in matches:
         scrapedurl = CHANNEL_HOST + scrapedurl
-        scrapedtitle = scrapedtitle.replace("Ver ", "")
-        new_item = item.clone(action="findvideos", title=scrapedtitle, fulltitle=scrapedtitle,
+        itemlist.append(item.clone(action="findvideos", title=scrapedtitle, fulltitle=scrapedtitle,
                               url=scrapedurl, thumbnail=scrapedthumbnail,
-                              contentType="movie")
-        itemlist.append(new_item)
-
+                              contentType="movie"
+                              ))
     # Extrae el paginador
     next_page_link = scrapertools.find_single_match(data, '<a href="([^"]+)"\s+><span [^>]+>&raquo;</span>')
     if next_page_link:
         itemlist.append(
             item.clone(action="destacadas", title=">> Página siguiente", url=next_page_link, text_color=color3))
-
     return itemlist
 
 
@@ -243,9 +240,9 @@ def findvideos(item):
 
     # Busca el argumento
     data = httptools.downloadpage(item.url).data
-    year = scrapertools.find_single_match(item.title, "\(([0-9]+)")
 
-    tmdb.set_infoLabels(item, __modo_grafico__)
+    if item.infoLabels["year"]:
+        tmdb.set_infoLabels(item, __modo_grafico__)
 
     if not item.infoLabels.get('plot'):
         plot = scrapertools.find_single_match(data, '<div class="sinopsis"><p>(.*?)</p>')
