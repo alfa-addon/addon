@@ -42,7 +42,6 @@ def run(item=None):
             if config.get_setting("start_page"):
 
                 if not config.get_setting("custom_start"):
-                #if category != 'definido':
                     category = config.get_setting("category").lower()
                     item = Item(channel="news", action="novedades", extra=category, mode = 'silent')
                 else:

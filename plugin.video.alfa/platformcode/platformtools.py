@@ -417,12 +417,13 @@ def set_context_commands(item, parent_item):
 
                                                                                    contextual=True).tourl())))
         #Definir como Pagina de inicio
-        if item.action not in ['findvideos', 'play']:
-            context_commands.insert(0, ("[COLOR 0xffccff00]Definir como pagina de inicio[/COLOR]",
-                                        "XBMC.RunPlugin(%s?%s)" % (
-                                                                    sys.argv[0], Item(channel='side_menu',
-                                                                                      action="set_custom_start",
-                                                                                      parent=item.tourl()).tourl())))
+        if config.get_setting('start_page'):
+            if item.action not in ['findvideos', 'play']:
+                context_commands.insert(0, ("[COLOR 0xffccff00]Definir como pagina de inicio[/COLOR]",
+                                            "XBMC.RunPlugin(%s?%s)" % (
+                                                                        sys.argv[0], Item(channel='side_menu',
+                                                                                          action="set_custom_start",
+                                                                                          parent=item.tourl()).tourl())))
 
         if item.channel != "videolibrary":
             # Añadir Serie a la videoteca

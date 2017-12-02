@@ -17,9 +17,7 @@ else:
     menu_node = {'categoria actual':config.get_setting('category')}
     jsontools.update_node(menu_node, 'menu_settings_data.json', "menu")
 
-menu_node = jsontools.get_node_from_file('menu_settings_data.json', 'menu')
-if 'categoria actual' in menu_node:
-    category = menu_node['categoria actual']
+
 
 ACTION_SHOW_FULLSCREEN = 36
 ACTION_GESTURE_SWIPE_LEFT = 511
@@ -97,17 +95,29 @@ class Main(xbmcgui.WindowXMLDialog):
         self.focus = -1
         self.buttons = []
         posx= 0
-        posy= 170
+        posy= 150
         space = 30
 
         selected = 'selected.png'
         width = 260
         height = 30
         textcolor = "0xffffd700"
+        conditional_textcolor = "0xffff3030"
         shadow = "0xFF000000"
         offsetx = 30
         offsety = 0
-        font = 'font32_title'
+        font = 'font30_title'
+
+        if config.get_setting('start_page'):
+            label = 'Inicio'
+            self.button_start = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
+                                                       noFocusTexture='', focusTexture=media_path + selected,
+                                                       textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
+                                                       textOffsetY=offsety)
+            self.addControl(self.button_start)
+            self.buttons.append(self.button_start)
+
+        posy += space * 2
         label = 'Menú Clasico'
         self.button_alfa = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                  noFocusTexture='', focusTexture=media_path+selected, 
@@ -116,15 +126,15 @@ class Main(xbmcgui.WindowXMLDialog):
         self.addControl(self.button_alfa)
         self.buttons.append(self.button_alfa)
 
-        posy += space*2
-        label = 'Inicio'
-        self.button_start = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
+
+        posy += space
+        label = 'Configuracion'
+        self.button_config = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                    noFocusTexture='', focusTexture=media_path + selected,
                                                    textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
                                                    textOffsetY=offsety)
-        self.addControl(self.button_start)
-        self.buttons.append(self.button_start)
-
+        self.addControl(self.button_config)
+        self.buttons.append(self.button_config)
         posy += space*2
         label = 'Peliculas'
         self.button_peliculas = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
@@ -199,14 +209,17 @@ class Main(xbmcgui.WindowXMLDialog):
                                                     shadowColor=shadow, textOffsetX=offsetx, textOffsetY=offsety)
         self.addControl(self.button_torrent)
         self.buttons.append(self.button_torrent)
-        posy += space
-        label = 'Canales Activos'
-        self.button_config = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
-                                                   alignment=0x00000000, noFocusTexture='',
-                                                   focusTexture=media_path+selected, textColor=textcolor,
-                                                   shadowColor=shadow, textOffsetX=offsetx, textOffsetY=offsety)
-        self.addControl(self.button_config)
-        self.buttons.append(self.button_config)
+
+        start_page_item = get_start_page()
+        if start_page_item.channel =='news':
+            posy += space
+            label = 'Canales Activos'
+            self.button_config = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
+                                                       alignment=0x00000000, noFocusTexture='',
+                                                       focusTexture=media_path+selected, textColor=conditional_textcolor,
+                                                       shadowColor=shadow, textOffsetX=offsetx, textOffsetY=offsety)
+            self.addControl(self.button_config)
+            self.buttons.append(self.button_config)
 
         posy += space*2
         label = 'Buscar'
@@ -225,23 +238,34 @@ class Main(xbmcgui.WindowXMLDialog):
         self.addControl(self.button_actor)
         self.buttons.append(self.button_actor)
 
+        posy += space
+        label = 'Donde Buscar'
+        self.button_config_search = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
+                                                       alignment=0x00000000,
+                                                   noFocusTexture='', focusTexture=media_path + selected,
+                                                   textColor=conditional_textcolor, shadowColor=shadow,
+                                                   textOffsetX=offsetx, textOffsetY=offsety)
+        self.addControl(self.button_config_search)
+        self.buttons.append(self.button_config_search)
+
 
         label=''
         self.button_close = xbmcgui.ControlButton(260, 0, 1020, 725, label, noFocusTexture='', focusTexture='')
         self.addControl(self.button_close)
+
+
 
     def onClick(self, control):
         new_item=''
 
         control = self.getControl(control).getLabel()
 
-        menu_node['categoria actual'] = control.lower()
-        jsontools.update_node(menu_node, 'menu_settings_data.json', "menu")
-
-        if control == u'Menú Clasico':
-            new_item = Item(channel='', action='getmainlist', title='Menú Alfa')
-        elif control == 'Inicio':
+        if control == 'Inicio':
             new_item = get_start_page()
+        elif control == u'Menú Clasico':
+            new_item = Item(channel='', action='getmainlist', title='Menú Alfa')
+        elif control == 'Configuracion':
+            new_item = Item(channel='setting', action="settings")
         elif control == 'Peliculas':
             new_item = Item(channel='news', action="novedades", extra="peliculas", mode='silent')
         elif control == 'Series':
@@ -261,47 +285,51 @@ class Main(xbmcgui.WindowXMLDialog):
         elif control == 'Torrents':
             new_item = Item(channel='news', action="novedades", extra="torrent", mode='silent')
         elif control == 'Canales Activos':
+            menu_node = jsontools.get_node_from_file('menu_settings_data.json', 'menu')
+            if 'categoria actual' in menu_node:
+                category = menu_node['categoria actual']
             new_item = Item(channel='news', action="setting_channel", extra=category, menu=True)
         elif control == 'Buscar':
             new_item = Item(channel='search', action="search")
         elif control == 'Buscar Actor':
             new_item = Item(channel='tvmoviedb', title="Buscar actor/actriz", action="search_",
                             search={'url': 'search/person', 'language': 'es', 'page': 1}, star=True)
+        elif control == 'Donde Buscar':
+            new_item = Item(channel='search', action="setting_channel")
         elif control == '':
             self.close()
         if new_item !='':
             self.run_action(new_item)
-        # elif new_item == 'definido':
-        #     self.run_action(new_item)
+
 
     def onAction(self, action):
-        
+
+
         if action == ACTION_PREVIOUS_MENU or action == ACTION_GESTURE_SWIPE_LEFT or action == 110 or action == 92:
             self.close()
 
         if action == ACTION_MOVE_RIGHT or action == ACTION_MOVE_DOWN:
-            if self.focus < len(self.buttons) - 1:
+            self.focus += 1
+            if self.focus > len(self.buttons)-1:
+                self.focus = 0
+            while True:
+                id_focus = str(self.buttons[self.focus].getId())
+
+                if xbmc.getCondVisibility('[Control.IsVisible(' + id_focus + ')]'):
+                    self.setFocus(self.buttons[self.focus])
+                    break
                 self.focus += 1
-                while True:
-                    id_focus = str(self.buttons[self.focus].getId())
-                    if xbmc.getCondVisibility('[Control.IsVisible(' + id_focus + ')]'):
-                        self.setFocus(self.buttons[self.focus])
-                        break
-                    self.focus += 1
-                    if self.focus == len(self.buttons):
-                        break
 
         if action == ACTION_MOVE_LEFT or action == ACTION_MOVE_UP:
-            if self.focus > 0:
+            self.focus -= 1
+            if self.focus < 0:
+                self.focus = len(self.buttons) - 1
+            while True:
+                id_focus = str(self.buttons[self.focus].getId())
+                if xbmc.getCondVisibility('[Control.IsVisible(' + id_focus + ')]'):
+                    self.setFocus(self.buttons[self.focus])
+                    break
                 self.focus -= 1
-                while True:
-                    id_focus = str(self.buttons[self.focus].getId())
-                    if xbmc.getCondVisibility('[Control.IsVisible(' + id_focus + ')]'):
-                        self.setFocus(self.buttons[self.focus])
-                        break
-                    self.focus -= 1
-                    if self.focus == len(self.buttons):
-                        break
 
     def run_action(self, item):
         logger.info()
