@@ -805,7 +805,7 @@ def ask_set_content(flag, silent=False):
 
     if not silent:
         heading = "Alfa Auto-configuración"
-        linea1 = "¿Desea que Alfa auto-configure la videteoca de Kodi?"
+        linea1 = "¿Desea que Alfa auto-configure la videoteca de Kodi?"
         linea2 = "Si pulsa 'No' podra hacerlo desde 'Configuración > Preferencia > Rutas'."
         if platformtools.dialog_yesno(heading, linea1, linea2):
             do_config()

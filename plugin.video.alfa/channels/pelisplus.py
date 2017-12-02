@@ -146,8 +146,7 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     item.url = host + 'busqueda/?s=' + texto
-    if not item.extra:
-        item.extra = 'peliculas/'
+
     try:
         if texto != '':
             return lista(item)
@@ -174,7 +173,7 @@ def lista(item):
 
     data = httptools.downloadpage(item.url).data
 
-    if item.title != 'Buscar':
+    if item.action != 'search':
         patron = '<img.*?width="147" heigh="197".*?src="([^"]+)".*?>.*?.<i class="icon online-play"><\/i>.*?.<h2 ' \
                  'class="title title-.*?">.*?.<a href="([^"]+)" title="([^"]+)">.*?>'
         actual = scrapertools.find_single_match(data,
@@ -197,8 +196,8 @@ def lista(item):
         #  de tmdb
         filtro_list = filtro_list.items()
 
+        if item.action != 'search':
 
-        if item.title != 'Buscar':
             new_item=(
                 Item(channel=item.channel,
                      contentType=tipo,
@@ -217,6 +216,14 @@ def lista(item):
                 new_item.contentTitle = scrapedtitle
             itemlist.append(new_item)
         else:
+            if item.extra=='':
+                item.extra = scrapertools.find_single_match(url, 'serie|pelicula')+'s/'
+                if 'series/' in item.extra:
+                    accion = 'temporadas'
+                    tipo = 'tvshow'
+                else:
+                    accion = 'findvideos'
+                    tipo = 'movie'
             item.extra = item.extra.rstrip('s/')
             if item.extra in url:
                 new_item=(
@@ -238,7 +245,7 @@ def lista(item):
                 itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    if item.title != 'Buscar' and actual != '':
+    if item.action != 'search' and actual != '':
         if itemlist != []:
             next_page = str(int(actual) + 1)
             next_page_url = item.extra + 'pag-' + next_page

@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------------------------------
 # Server management
 # --------------------------------------------------------------------------------
@@ -75,7 +75,6 @@ def get_servers_itemlist(itemlist, fnc=None, sort=False):
     @param sort: indica si el listado resultante se ha de ordenar en funcion de la lista de servidores favoritos
     @type sort: bool
     """
-    server_stats = {}
     # Recorre los servidores
     for serverid in get_servers_list().keys():
         server_parameters = get_server_parameters(serverid)
@@ -90,7 +89,6 @@ def get_servers_itemlist(itemlist, fnc=None, sort=False):
                 for x in range(len(match.groups())):
                     url = url.replace("\\%s" % (x + 1), match.groups()[x])
 
-                server_stats[serverid] = "found"
                 for item in itemlist:
                     if match.group() in item.url:
                         if not item.contentThumbnail:
@@ -101,8 +99,6 @@ def get_servers_itemlist(itemlist, fnc=None, sort=False):
                             item.url = url + '|' + item.url.split('|')[1]
                         else:
                             item.url = url
-
-    save_server_stats(server_stats, "find_videos")
 
     # Eliminamos los servidores desactivados
     itemlist = filter(lambda i: not i.server or is_server_enabled(i.server), itemlist)
@@ -187,10 +183,6 @@ def findvideosbyserver(data, serverid):
                 if value not in devuelve and url not in server_parameters["find_videos"].get("ignore_urls", []):
                     devuelve.append(value)
                 logger.info(msg)
-
-    # Guardar estadisticas
-    if devuelve:
-        save_server_stats({serverid: "found"}, "find_videos")
 
     return devuelve
 
@@ -324,11 +316,8 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                     try:
                         logger.info("Invocando a %s.get_video_url" % server)
                         response = serverid.get_video_url(page_url=url, video_password=video_password)
-                        if response:
-                            save_server_stats({server: "sucess"}, "resolve")
                         video_urls.extend(response)
                     except:
-                        save_server_stats({server: "error"}, "resolve")
                         logger.error("Error al obtener la url en modo free")
                         error_messages.append("Se ha producido un error en %s" % server_name)
                         import traceback
@@ -343,16 +332,12 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                                                           password=config.get_setting("password", server=opcion),
                                                           video_password=video_password)
                         if response and response[0][1]:
-                            if opcion == server:
-                                save_server_stats({server: "sucess"}, "resolve")
                             video_urls.extend(response)
                         elif response and response[0][0]:
                             error_messages.append(response[0][0])
                         else:
                             error_messages.append("Se ha producido un error en %s" % server_name)
                     except:
-                        if opcion == server:
-                            save_server_stats({server: "error"}, "resolve")
                         logger.error("Error en el servidor: %s" % opcion)
                         error_messages.append("Se ha producido un error en %s" % server_name)
                         import traceback
@@ -720,41 +705,3 @@ def filter_servers(servers_list):
             servers_list = servers_list_filter
 
     return servers_list
-
-
-def save_server_stats(stats, type="find_videos"):
-    if not config.get_setting("server_stats"):
-        return
-
-    stats_file = os.path.join(config.get_data_path(), "server_stats.json")
-    today = datetime.datetime.now().strftime("%Y%m%d")
-
-    # Leemos el archivo
-    try:
-        server_stats = jsontools.load(open(stats_file, "rb").read())
-    except:
-        server_stats = {"created": time.time(), "data": {}}
-
-    # Actualizamos los datos
-    for server in stats:
-        if not server in server_stats["data"]:
-            server_stats["data"][server] = {}
-
-        if not today in server_stats["data"][server]:
-            server_stats["data"][server][today] = {"find_videos": {"found": 0}, "resolve": {"sucess": 0, "error": 0}}
-
-        server_stats["data"][server][today][type][stats[server]] += 1
-
-    # Guardamos el archivo
-    open(stats_file, "wb").write(jsontools.dump(server_stats))
-
-    # Enviamos al servidor
-    return
-    if time.time() - server_stats["created"] > 86400:  # 86400: #1 Dia
-        from core import httptools
-        if httptools.downloadpage("url servidor", headers={'Content-Type': 'application/json'},
-                                  post=jsontools.dump(server_stats)).sucess:
-            os.remove(stats_file)
-            logger.info("Datos enviados correctamente")
-        else:
-            logger.info("No se han podido enviar los datos")
