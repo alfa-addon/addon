@@ -95,7 +95,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.focus = -1
         self.buttons = []
         posx= 0
-        posy= 150
+        posy= 145
         space = 30
 
         selected = 'selected.png'
@@ -106,7 +106,7 @@ class Main(xbmcgui.WindowXMLDialog):
         shadow = "0xFF000000"
         offsetx = 30
         offsety = 0
-        font = 'font30_title'
+        font = 'font25_title'
 
         if config.get_setting('start_page'):
             label = 'Inicio'
@@ -211,7 +211,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.buttons.append(self.button_torrent)
 
         start_page_item = get_start_page()
-        if start_page_item.channel =='news':
+        if config.get_setting('start_page') and start_page_item.channel =='news':
             posy += space
             label = 'Canales Activos'
             self.button_config = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
