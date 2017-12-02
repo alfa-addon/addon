@@ -11,7 +11,6 @@
         <setting id="resolve_priority" type="enum" label="Método prioritario" values="Free primero|Premium primero|Debriders primero" default="0"/>
         <setting id="resolve_stop" type="bool" label="Dejar de buscar cuando encuentre una opción" default="true"/>
         <setting id="hidepremium" type="bool" label="Ocultar servidores de pago sin cuenta" default="false"/>
-        <setting id="server_stats" type="bool" label="Enviar estadisticas sobre el uso de servidores" default="true"/>
         <setting type="sep"/>
         <setting label="Canales para adultos" type="lsep"/>
         <setting id="adult_aux_intro_password" type="text" label="Contraseña (por defecto 0000):" option="hidden"  default=""/>

@@ -20,7 +20,8 @@ def test_video_exists(page_url):
         return False, "[gvideo] No tienes permiso para acceder a este video"
     if "Se ha producido un error" in response.data:
         return False, "[gvideo] Se ha producido un error en el reproductor de google"
-
+    if "No+se+puede+procesar+este" in response.data:
+        return False, "[gvideo] No se puede procesar este video"
     return True, ""
 
 

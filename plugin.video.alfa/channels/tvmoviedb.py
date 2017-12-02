@@ -557,12 +557,12 @@ def detalles(item):
     itemlist.append(item.clone(channel="trailertools", action="buscartrailer", title="Buscar Tráiler",
                                text_color=color5))
 
-    # try:
-    #     images['tmdb'] = ob_tmdb.result["images"]
-    #     itemlist.append(item.clone(action="imagenes", title="Lista de Imágenes", text_color=color5, images=images,
-    #                                extra="menu"))
-    # except:
-    #     pass
+    try:
+        images['tmdb'] = ob_tmdb.result["images"]
+        itemlist.append(item.clone(action="imagenes", title="Lista de Imágenes", text_color=color5, images=images,
+                                   extra="menu"))
+    except:
+        pass
 
     try:
         if item.contentType == "movie" and item.infoLabels["year"] < 2014:
