@@ -105,7 +105,6 @@ def peliculas(item):
     patron += 'post(.*?)</div.*?'
     patron += 'text-muted f-14">(.*?)</h3'
     matches = scrapertools.find_multiple_matches(data, patron)
-
     patron_next_page = 'href="([^"]+)"> &raquo;'
     matches_next_page = scrapertools.find_single_match(data, patron_next_page)
     if len(matches_next_page) > 0:
@@ -131,7 +130,7 @@ def peliculas(item):
     tmdb.set_infoLabels(itemlist)
 
     # Si es necesario añadir paginacion
-    if url_next_page:
+    if matches_next_page:
         itemlist.append(
             Item(channel=item.channel, action="peliculas", title=">> Página siguiente", thumbnail=thumbnail_host,
                  url=url_next_page, folder=True, text_color=color3, text_bold=True))
@@ -175,18 +174,23 @@ def findvideos(item):
     mtmdb = scrapertools.find_single_match(item.url, 'yaske.ro/([0-9]+)')
     patron = '(?s)id="online".*?server="([^"]+)"'
     mserver = scrapertools.find_single_match(data, patron)
-    url = "http://olimpo.link/?tmdb=%s&server=%s" %(mtmdb, mserver)
-    data = httptools.downloadpage(url).data
+    url_m = "http://olimpo.link/?tmdb=%s&server=%s" %(mtmdb, mserver)
     patron  = '/\?tmdb=[^"]+.*?domain=(?:www\.|)([^\.]+).*?text-overflow.*?href="([^"]+).*?'
     patron += '\[([^\]]+)\].*?\[([^\]]+)\]'
+    data = httptools.downloadpage(url_m).data
     matches = scrapertools.find_multiple_matches(data, patron)
-    for server, url, idioma, calidad in matches:
-        if "drive" in server:
-            server = "gvideo"
-        sublist.append(item.clone(channel=item.channel, action="play", url=url, folder=False, text_color=color1, quality=calidad.strip(),
-                              language=idioma.strip(),
-                              title="Ver en %s %s" %(server, calidad)
-                              ))
+    page = 2
+    while len(matches)>0:
+        for server, url, idioma, calidad in matches:
+            if "drive" in server:
+                server = "gvideo"
+            sublist.append(item.clone(channel=item.channel, action="play", url=url, folder=False, text_color=color1, quality=calidad.strip(),
+                                  language=idioma.strip(),
+                                  title="Ver en %s %s" %(server, calidad)
+                                  ))
+        data = httptools.downloadpage(url_m + "&page=%s" %page).data
+        matches = scrapertools.find_multiple_matches(data, patron)
+        page +=1
     for k in ["Español", "Latino", "Ingles - Sub Español", "Ingles"]:
         lista_idioma = filter(lambda i: i.language == k, sublist)
         if lista_idioma:
