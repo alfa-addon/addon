@@ -14,7 +14,7 @@ def test_video_exists(page_url):
 
     if "Streaming link:" in data:
         return True, ""
-    elif "Unfortunately, the file you want is not available." in data or "Unfortunately, the video you want to see is not available" in data:
+    elif "Unfortunately, the file you want is not available." in data or "Unfortunately, the video you want to see is not available" in data or "This stream doesn" in data:
         return False, "[Uptobox] El archivo no existe o ha sido borrado"
     wait = scrapertools.find_single_match(data, "You have to wait ([0-9]+) (minute|second)")
     if len(wait) > 0:
@@ -40,7 +40,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         # Si el archivo tiene enlace de streaming se redirige a upstream
         if "Streaming link:" in data:
             page_url = "http://uptostream.com/iframe/" + scrapertools.find_single_match(page_url,
-                                                                                        'uptobox.com/([a-z0-9]+)')
+                                                                                      'uptobox.com/([a-z0-9]+)')
             data = httptools.downloadpage(page_url).data
             video_urls = uptostream(data)
         else:
@@ -56,17 +56,27 @@ def uptostream(data):
     subtitle = scrapertools.find_single_match(data, "kind='subtitles' src='//([^']+)'")
     if subtitle:
         subtitle = "http://" + subtitle
-
     video_urls = []
-    patron = "<source src='//([^']+)' type='video/([^']+)' data-res='([^']+)' (?:data-default=\"true\" |)(?:lang='([^']+)'|)"
+    videos1 = []
+    data = data.replace("\\","")
+    patron  = 'src":"([^"]+).*?'
+    patron += 'type":"([^"]+).*?'
+    patron += 'res":"([^"]+).*?'
+    patron += 'lang":"([^"]+)'
     media = scrapertools.find_multiple_matches(data, patron)
-    for url, tipo, res, lang in media:
-        media_url = "http://" + url
+    for media_url, tipo, res, lang in media:
+        videos1.append([media_url, tipo, res, lang])
+    videos1.sort(key=lambda videos1: int(videos1[2]))
+    for x in videos1:
+        media_url = x[0]
+        tipo = x[1]
+        res = x[2]
+        lang = x[3]
+        tipo = tipo.replace("video/","")
         extension = ".%s (%s)" % (tipo, res)
         if lang:
             extension = extension.replace(")", "/%s)" % lang[:3])
         video_urls.append([extension + " [uptostream]", media_url, 0, subtitle])
-
     return video_urls
 
 
