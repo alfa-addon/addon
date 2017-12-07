@@ -357,19 +357,24 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
 
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
-    patron = '<div id="option-(\d+)" class="play-box-iframe.*?src="([^"]+)" frameborder="0" scrolling="no" allowfullscreen></iframe>'
-
+    patron = '<div id="option-(\d+)" class="play-box-iframe.*?src="([^"]+)" frameborder="0" scrolling="no" ' \
+             'allowfullscreen></iframe>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for option, url in matches:
-        lang = scrapertools.find_single_match(
-            data, '<li><a class="options" href="#option-%s"><b class="icon-play_arrow"><\/b> (.*?)<span class="dt_flag">' % option)
+        lang = scrapertools.find_single_match(data,
+                '<li><a class="options" href="#option-%s"><b class="icon-play_arrow"><\/b> (.*?)<span '
+                'class="dt_flag">' % option)
         lang = lang.replace('Español ', '').replace('B.S.O. ', '')
 
+        data_b = httptools.downloadpage(urlparse.urljoin(host, url), headers={'Referer': item.url}).data
+        patron = '<iframe[^>]+src="([^"]+)"'
+        matches = re.compile(patron, re.DOTALL).findall(data_b)
+        url = matches[0]
         server = servertools.get_server_from_url(url)
         title = "%s [COLOR yellow](%s) (%s)[/COLOR]" % (item.contentTitle, server.title(), lang)
-        itemlist.append(item.clone(action='play', url=url, title=title, extra1=title,
-                                   server=server, language = lang, text_color=color3))
+        itemlist.append(item.clone(action='play', url=url, title=title, extra1=title, server=server, language=lang,
+                                   text_color=color3))
 
     itemlist.append(Item(channel=item.channel,
                          title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
