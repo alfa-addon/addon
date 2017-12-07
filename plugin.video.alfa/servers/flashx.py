@@ -31,13 +31,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                'Accept-Language': 'en-US,en;q=0.5',
                'Accept-Encoding': 'gzip, deflate, br', 'Connection': 'keep-alive', 'Upgrade-Insecure-Requests': '1',
                'Cookie': ''}
-    data = httptools.downloadpage(page_url, headers=headers, replace_headers=True).data
+    data = httptools.downloadpage(page_url, cookies=False).data
     data = data.replace("\n","")
     cgi_counter = scrapertools.find_single_match(data, """(?is)src=.(https://www.flashx.tv/counter.cgi.*?[^(?:'|")]+)""")
     cgi_counter = cgi_counter.replace("%0A","").replace("%22","")
     playnow = scrapertools.find_single_match(data, 'https://www.flashx.tv/dl[^"]+')
     # Para obtener el f y el fxfx
-    js_fxfx = "https://www." + scrapertools.find_single_match(data.replace("//","/"), """(?is)(flashx.tv/jss/coder.js.*?[^(?:'|")]+)""")
+    js_fxfx = "https://www." + scrapertools.find_single_match(data.replace("//","/"), """(?is)(flashx.tv/js\w+/c\w+.*?[^(?:'|")]+)""")
     data_fxfx = httptools.downloadpage(js_fxfx).data
     mfxfx = scrapertools.find_single_match(data_fxfx, 'get.*?({.*?})').replace("'","").replace(" ","")
     matches = scrapertools.find_multiple_matches(mfxfx, '(\w+):(\w+)')
@@ -63,8 +63,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     headers['X-Requested-With'] = 'XMLHttpRequest'
 
     # Obligatorio descargar estos 2 archivos, porque si no, muestra error
-    httptools.downloadpage(coding_url, headers=headers, replace_headers=True)
-    httptools.downloadpage(cgi_counter, headers=headers, replace_headers=True)
+    httptools.downloadpage(coding_url, cookies=False)
+    httptools.downloadpage(cgi_counter, cookies=False)
 
     try:
         time.sleep(int(wait_time) + 1)
@@ -73,7 +73,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     headers.pop('X-Requested-With')
     headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    data = httptools.downloadpage(playnow, post, headers, replace_headers=True).data
+    data = httptools.downloadpage(playnow, post).data
 
     # Si salta aviso, se carga la pagina de comprobacion y luego la inicial
     # LICENSE GPL3, de alfa-addon: https://github.com/alfa-addon/ ES OBLIGATORIO AÑADIR ESTAS LÍNEAS
@@ -81,7 +81,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         url_reload = scrapertools.find_single_match(data, 'try to reload the page.*?href="([^"]+)"')
         try:
             data = httptools.downloadpage(url_reload, cookies=False).data
-            data = httptools.downloadpage(playnow, post, headers, replace_headers=True).data
+            data = httptools.downloadpage(playnow, post, cookies=False).data
         # LICENSE GPL3, de alfa-addon: https://github.com/alfa-addon/ ES OBLIGATORIO AÑADIR ESTAS LÍNEAS
         except:
             pass
@@ -92,15 +92,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         try:
             match = jsunpack.unpack(match)
             match = match.replace("\\'", "'")
-
-            # {src:\'https://bigcdn.flashx1.tv/cdn25/5k7xmlcjfuvvjuw5lx6jnu2vt7gw4ab43yvy7gmkvhnocksv44krbtawabta/normal.mp4\',type:\'video/mp4\',label:\'SD\',res:360},
             media_urls = scrapertools.find_multiple_matches(match, "{src:'([^']+)'.*?,label:'([^']+)'")
             subtitle = ""
             for media_url, label in media_urls:
                 if media_url.endswith(".srt") and label == "Spanish":
                     try:
                         from core import filetools
-                        data = scrapertools.downloadpage(media_url)
+                        data = httptools.downloadpage(media_url)
                         subtitle = os.path.join(config.get_data_path(), 'sub_flashx.srt')
                         filetools.write(subtitle, data)
                     except:

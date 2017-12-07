@@ -43,7 +43,7 @@ def newest(categoria):
         elif categoria == 'terror':
             item.url = HOST + '/genero/terror.html'
         itemlist = peliculas(item)
-        if "Pagina" in itemlist[-1].title:
+        if ">> Página siguiente" in itemlist[-1].title:
             itemlist.pop()
     except:
         import sys

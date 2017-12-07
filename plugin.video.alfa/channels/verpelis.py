@@ -217,7 +217,7 @@ def newest(categoria):
             return []
 
         itemlist = scraper(item)
-        if itemlist[-1].title == "» Siguiente »":
+        if itemlist[-1].title == "[COLOR crimson]Siguiente >>[/COLOR]":
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
