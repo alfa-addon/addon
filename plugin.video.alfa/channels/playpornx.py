@@ -31,7 +31,7 @@ def lista(item):
     if item.url == '': item.url = host
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = '<div class=item>.*?href=(.*?)><div.*?<img src=(.*?) alt.*?<h2>(.*?)<\/h2>'
+    patron = '<div class=item>.*?href=(.*?)><div.*?<img src=(.*?) alt=(.*?) width'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
