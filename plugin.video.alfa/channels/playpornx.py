@@ -7,7 +7,7 @@ from core import scrapertools
 from core.item import Item
 from platformcode import logger
 
-host = "http://www.playpornx.net/"
+host = "https://watchfreexxx.net/"
 
 
 def mainlist(item):
@@ -17,7 +17,7 @@ def mainlist(item):
                          fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
                          url =host))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url='http://www.playpornx.net/?s=',
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host+'?s=',
                          thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
                          fanart='https://s30.postimg.org/pei7txpa9/buscar.png'))
 
@@ -31,13 +31,21 @@ def lista(item):
     if item.url == '': item.url = host
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = '<div class=item>.*?href=(.*?)><div.*?<img src=(.*?) alt=(.*?) width'
+    if item.extra != 'Buscar':
+        patron = '<div class=item>.*?href=(.*?)><div.*?<img src=(.*?) alt=(.*?) width'
+    else:
+        patron = '<div class=movie>.*?<img src=(.*?) alt=(.*?) \/>.*?href=(.*?)\/>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
-        url = scrapedurl
-        thumbnail = scrapedthumbnail
-        title = scrapedtitle
+    for data_1, data_2, data_3 in matches:
+        if item.extra != 'Buscar':
+            url = data_1
+            thumbnail = data_2
+            title = data_3
+        else:
+            url = data_3
+            thumbnail = data_1
+            title = data_2
 
         itemlist.append(Item(channel=item.channel, action='findvideos', title=title, url=url, thumbnail=thumbnail))
 
@@ -59,6 +67,7 @@ def search(item, texto):
 
     try:
         if texto != '':
+            item.extra = 'Buscar'
             return lista(item)
         else:
             return []
