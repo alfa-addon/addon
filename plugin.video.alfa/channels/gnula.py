@@ -51,8 +51,6 @@ def generos(item):
 
 def peliculas(item):
     logger.info()
-
-    # Descarga la página
     data = httptools.downloadpage(item.url).data
     patron  = '<a class="Ntooltip" href="([^"]+)">([^<]+)<span><br[^<]+'
     patron += '<img src="([^"]+)"></span></a>(.*?)<br'
@@ -61,25 +59,22 @@ def peliculas(item):
     for scrapedurl, scrapedtitle, scrapedthumbnail, resto in matches:
         language = []
         plot = scrapertools.htmlclean(resto).strip()
-        logger.debug('plot: %s' % plot)
         languages = scrapertools.find_multiple_matches(plot, r'\((V.)\)')
         quality = scrapertools.find_single_match(plot, r'(?:\[.*?\].*?)\[(.*?)\]')
         for lang in languages:
             language.append(lang)
-        logger.debug('languages: %s' % languages)
         title = scrapedtitle + " " + plot
-        contentTitle = scrapedtitle
-        url = item.url + scrapedurl
+        if not scrapedurl.startswith("http"):
+            scrapedurl = item.url + scrapedurl
         itemlist.append(Item(channel = item.channel,
                              action = 'findvideos',
                              title = title,
-                             url = url,
+                             url = scrapedurl,
                              thumbnail = scrapedthumbnail,
                              plot = plot,
                              hasContentDetails = True,
-                             contentTitle = contentTitle,
+                             contentTitle = scrapedtitle,
                              contentType = "movie",
-                             context = ["buscar_trailer"],
                              language=language,
                              quality=quality
                              ))
@@ -89,13 +84,11 @@ def peliculas(item):
 def findvideos(item):
     logger.info("item=" + item.tostring())
     itemlist = []
-
-    # Descarga la página para obtener el argumento
     data = httptools.downloadpage(item.url).data
     item.plot = scrapertools.find_single_match(data, '<div class="entry">(.*?)<div class="iframes">')
     item.plot = scrapertools.htmlclean(item.plot).strip()
     item.contentPlot = item.plot
-    patron = 'Ver película online.*?>.*?>([^<]+)'
+    patron = '<strong>Ver película online.*?>.*?>([^<]+)'
     scrapedopcion = scrapertools.find_single_match(data, patron)
     titulo_opcional = scrapertools.find_single_match(scrapedopcion, ".*?, (.*)").upper()
     bloque  = scrapertools.find_multiple_matches(data, 'contenedor_tab.*?/table')
