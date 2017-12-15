@@ -2,6 +2,7 @@
 
 from core import httptools
 from core import scrapertools
+from lib import jsunpack
 from platformcode import logger
 
 
@@ -21,7 +22,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    media_url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
+    packed = scrapertools.find_single_match(data, "function\(p,a,c,k.*?</script>")
+    unpacked = jsunpack.unpack(packed)
+    media_url = scrapertools.find_single_match(unpacked, 'src"value="([^"]+)')
     if not media_url:
         id_ = page_url.rsplit("/", 1)[1]
         rand = scrapertools.find_single_match(data, 'name="rand" value="([^"]+)"')

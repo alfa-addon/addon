@@ -34,7 +34,8 @@ def login():
         config.get_setting("plusdedeuser", "plusdede")) + "&password=" + str(
         config.get_setting("plusdedepassword", "plusdede")) + "&app=2131296469"
     url = "https://www.plusdede.com/"
-    headers = {"Referer": url, "X-Requested-With": "XMLHttpRequest", "X-CSRF-TOKEN": token}
+    headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                                "Chrome/61.0.3163.100 Safari/537.36","Referer": url, "X-Requested-With": "XMLHttpRequest", "X-CSRF-TOKEN": token}
     data = httptools.downloadpage("https://www.plusdede.com/login", post=post, headers=headers,
                                   replace_headers=False).data
     if "redirect" in data:
@@ -771,14 +772,17 @@ def checkseen(item):
     if item.tipo == "8":
         url_temp = "https://www.plusdede.com/set/episode/" + item.data_id + "/seen"
         tipo_str = "series"
-        headers = {"Referer": "https://www.plusdede.com/serie/", "X-Requested-With": "XMLHttpRequest",
-                   "X-CSRF-TOKEN": item.token}
+        headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                                "Chrome/61.0.3163.100 Safari/537.36", "Referer": "https://www.plusdede.com/serie/",
+                                "X-Requested-With": "XMLHttpRequest", "X-CSRF-TOKEN": item.token}
     else:
         url_temp = "https://www.plusdede.com/set/usermedia/" + item.tipo + "/" + item.data_id + "/seen"
         tipo_str = "pelis"
-        headers = {"Referer": "https://www.plusdede.com/" + tipo_str, "X-Requested-With": "XMLHttpRequest",
-                   "X-CSRF-TOKEN": item.token}
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                                 "Chrome/61.0.3163.100 Safari/537.36", "Referer": "https://www.plusdede.com/serie/",
+                   "X-Requested-With": "XMLHttpRequest", "X-CSRF-TOKEN": item.token}
     data = httptools.downloadpage(url_temp, post="id=" + item.idtemp, headers=headers, replace_headers=True).data
+    #logger.debug(data)
     return True
 
 
@@ -927,7 +931,8 @@ def plusdede_check(item):
             tipo_str = "listas"
         else:
             tipo_str = "pelis"
-        headers = {"Referer": "https://www.plusdede.com/" + tipo_str, "X-Requested-With": "XMLHttpRequest",
+        headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                                "Chrome/61.0.3163.100 Safari/537.36","Referer": "https://www.plusdede.com/" + tipo_str, "X-Requested-With": "XMLHttpRequest",
                    "X-CSRF-TOKEN": item.token}
         data = httptools.downloadpage(url_temp, post="id=" + item.idtemp, headers=headers,
                                       replace_headers=True).data.strip()
