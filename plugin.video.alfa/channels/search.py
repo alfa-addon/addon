@@ -267,10 +267,9 @@ def channel_search(search_results, channel_parameters, tecleado):
             if result is None:
                 result = []
             if len(result):
-                if not channel_parameters["title"] in search_results:
-                    search_results[channel_parameters["title"]] = []
-
-                search_results[channel_parameters["title"]].append({"item": item,
+                if not channel_parameters["title"].capitalize() in search_results:
+                    search_results[channel_parameters["title"].capitalize()] = []
+                search_results[channel_parameters["title"].capitalize()].append({"item": item,
                                                                     "itemlist": result,
                                                                     "adult": channel_parameters["adult"]})
 

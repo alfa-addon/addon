@@ -244,7 +244,6 @@ def series(item):
     url_next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
 
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
-    tmdb.set_infoLabels(itemlist, __modo_grafico__)
 
     if url_next_page:
         itemlist.append(Item(channel=__channel__, action="series",
@@ -274,7 +273,7 @@ def temporadas(item):
             itemlist.append(new_item)
 
         tmdb.set_infoLabels(itemlist, __modo_grafico__)
-        tmdb.set_infoLabels(itemlist, __modo_grafico__)
+
         for i in itemlist:
             i.title = "%s. %s" % (i.infoLabels['season'], i.infoLabels['tvshowtitle'])
             if i.infoLabels['title']:
@@ -328,7 +327,6 @@ def episodios(item):
     if not item.extra:
         # Obtenemos los datos de todos los capitulos de la temporada mediante multihilos
         tmdb.set_infoLabels(itemlist, __modo_grafico__)
-        tmdb.set_infoLabels(itemlist, __modo_grafico__)
         for i in itemlist:
             if i.infoLabels['title']:
                 # Si el capitulo tiene nombre propio añadirselo al titulo del item
@@ -355,26 +353,27 @@ def findvideos(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
-    patron = '<div id="option-(\d+)" class="play-box-iframe.*?src="([^"]+)" frameborder="0" scrolling="no" ' \
-             'allowfullscreen></iframe>'
+
+    patron = '<div id="option-(\d+)" class="play-box-iframe.*?src="([^"]+)" frameborder="0" scrolling="no" allowfullscreen></iframe>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
+    # matches = re.compile(patron, re.DOTALL).findall(data)
+
     for option, url in matches:
-        lang = scrapertools.find_single_match(data,
-                '<li><a class="options" href="#option-%s"><b class="icon-play_arrow"><\/b> (.*?)<span '
-                'class="dt_flag">' % option)
+        datas = httptools.downloadpage(urlparse.urljoin(host, url),
+                                                  headers={'Referer': item.url}).data
+
+        patron = '<iframe[^>]+src="([^"]+)"'
+        url = scrapertools.find_single_match(datas, patron)
+        lang = scrapertools.find_single_match(
+            data, '<li><a class="options" href="#option-%s"><b class="icon-play_arrow"><\/b> (.*?)<span class="dt_flag">' % option)
         lang = lang.replace('Español ', '').replace('B.S.O. ', '')
 
-        data_b = httptools.downloadpage(urlparse.urljoin(host, url), headers={'Referer': item.url}).data
-        patron = '<iframe[^>]+src="([^"]+)"'
-        matches = re.compile(patron, re.DOTALL).findall(data_b)
-        url = matches[0]
         server = servertools.get_server_from_url(url)
         title = "%s [COLOR yellow](%s) (%s)[/COLOR]" % (item.contentTitle, server.title(), lang)
-        itemlist.append(item.clone(action='play', url=url, title=title, extra1=title, server=server, language=lang,
-                                   text_color=color3))
+        itemlist.append(item.clone(action='play', url=url, title=title, extra1=title,
+                                   server=server, language = lang, text_color=color3))
 
     itemlist.append(Item(channel=item.channel,
                          title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
