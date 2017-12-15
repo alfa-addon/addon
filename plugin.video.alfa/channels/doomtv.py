@@ -225,6 +225,8 @@ def findvideos(item):
     #itemlist = get_url(item)
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    url_m3u8 = scrapertools.find_single_match(data, '<source src=(.*?) type=application/x-mpegURL/>')
+    itemlist.append(item.clone(url=url_m3u8, action='play'))
     patron = 'id=(tab\d+)><div class=movieplay><(?:iframe|script) src=(.*?)(?:scrolling|><\/script>)'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
