@@ -1,1 +1,401 @@
-import base64;exec base64.b64decode('IyAtKi0gY29kaW5nOiB1dGYtOCAtKi0NCg0KaW1wb3J0IHJlDQoNCmZyb20gY29yZSBpbXBvcnQgaHR0cHRvb2xzDQpmcm9tIGNvcmUgaW1wb3J0IHNjcmFwZXJ0b29scw0KZnJvbSBsaWIgaW1wb3J0IGpzdW5wYWNrDQojZnJvbSBwbGF0Zm9ybWNvZGUgaW1wb3J0IGxvZ2dlcg0KDQpoZWFkZXJzID0gW1snVXNlci1BZ2VudCcsICdNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXT1c2NDsgcnY6NTMuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC81My4wJ11dDQpob3N0ID0gImh0dHA6Ly9wb3d2aWRlby5uZXQvIg0KDQoNCmRlZiB0ZXN0X3ZpZGVvX2V4aXN0cyhwYWdlX3VybCk6DQogICAgcmVmZXJlciA9IHBhZ2VfdXJsLnJlcGxhY2UoJ2lmcmFtZScsICdwcmV2aWV3JykNCiAgICBkYXRhID0gaHR0cHRvb2xzLmRvd25sb2FkcGFnZShwYWdlX3VybCwgaGVhZGVycz17J3JlZmVyZXInOiByZWZlcmVyfSkuZGF0YQ0KICAgIGlmIGRhdGEgPT0gIkZpbGUgd2FzIGRlbGV0ZWQiOg0KICAgICAgICByZXR1cm4gRmFsc2UsICJbcG93dmlkZW9dIEVsIHZpZGVvIGhhIHNpZG8gYm9ycmFkbyINCiAgICByZXR1cm4gVHJ1ZSwgIiINCg0KDQpkZWYgZ2V0X3ZpZGVvX3VybChwYWdlX3VybCwgcHJlbWl1bT1GYWxzZSwgdXNlcj0iIiwgcGFzc3dvcmQ9IiIsIHZpZGVvX3Bhc3N3b3JkPSIiKToNCiAgICAjbG9nZ2VyLmluZm8oIihwYWdlX3VybD0nJXMnKSIgJSBwYWdlX3VybCkNCg0KICAgIHJlZmVyZXIgPSBwYWdlX3VybC5yZXBsYWNlKCdpZnJhbWUnLCAncHJldmlldycpDQogICAgZGF0YSA9IGh0dHB0b29scy5kb3dubG9hZHBhZ2UocGFnZV91cmwsIGhlYWRlcnM9eydyZWZlcmVyJzogcmVmZXJlcn0pLmRhdGENCg0KICAgIF8weGEzZTggPSBzY3JhcGVydG9vbHMuZmluZF9zaW5nbGVfbWF0Y2goZGF0YSwgJ3ZhciBfMHhmNDc1PShcW1teO10rXF0pOycpDQogICAgI2xvZ2dlci5pbmZvKCJJbnRlbDExICVzIiAlXzB4YTNlOCkNCiAgICAjbG9nZ2VyLmluZm8oIkludGVsMjIgJXMiICVkYXRhKQ0KICAgIHBhY2tlZCA9IHNjcmFwZXJ0b29scy5maW5kX3NpbmdsZV9tYXRjaChkYXRhLCAiPHNjcmlwdCB0eXBlPVtcIidddGV4dC9qYXZhc2NyaXB0W1wiJ10+KGV2YWwuKj8pPC9zY3JpcHQ+IikNCiAgICB1bnBhY2tlZCA9IGpzdW5wYWNrLnVucGFjayhwYWNrZWQpDQoNCiAgICB2aWRlb191cmxzID0gW10NCg0KICAgIHVybCA9IHNjcmFwZXJ0b29scy5maW5kX3NpbmdsZV9tYXRjaCh1bnBhY2tlZCwgIig/OnNyYyk6XFxcXCcoW15cXFxcXSsubXA0KVxcXFwnIikNCiAgICB2aWRlb191cmxzLmFwcGVuZChbIi5tcDQiICsgIiBbcG93dmlkZW9dIiwgUyhfMHhhM2U4KS5kZWNvZGUodXJsKV0pDQoNCiAgICB2aWRlb191cmxzLnNvcnQoa2V5PWxhbWJkYSB4OiB4WzBdLCByZXZlcnNlPVRydWUpDQogICAgcmV0dXJuIHZpZGVvX3VybHMNCg0KDQpjbGFzcyBTOg0KICAgIGRlZiBfX2luaXRfXyhzZWxmLCBfMHhhM2U4KToNCiAgICAgICAgc2VsZi5yID0gTm9uZQ0KICAgICAgICBzZWxmLnMgPSBOb25lDQogICAgICAgIHNlbGYuayA9IE5vbmUNCiAgICAgICAgc2VsZi5uID0gTm9uZQ0KICAgICAgICBzZWxmLmMgPSBOb25lDQogICAgICAgIHNlbGYuYiA9IE5vbmUNCiAgICAgICAgc2VsZi5kID0gTm9uZQ0KDQogICAgICAgIF8weGEzZTggPSBldmFsKF8weGEzZTgpDQogICAgICAgIHNlbGYudChfMHhhM2U4WzE0XSArIF8weGEzZThbMTVdICsgXzB4YTNlOFsxNF0gKyBfMHhhM2U4WzE1XSwgXzB4YTNlOFsxNl0pDQoNCiAgICBkZWYgZGVjb2RlKHNlbGYsIHVybCk6DQogICAgICAgIF9oYXNoID0gcmUuY29tcGlsZSgnW0EtejAtOV8tXXs0MCx9JywgcmUuRE9UQUxMKS5maW5kYWxsKHVybClbMF0NCiAgICAgICAgcmV0dXJuIHVybC5yZXBsYWNlKF9oYXNoLCBzZWxmLnAoX2hhc2gpKQ0KDQogICAgZGVmIHQoc2VsZiwgdCwgaSk6DQogICAgICAgIHNlbGYuciA9IDIwDQogICAgICAgIHNlbGYucyA9IFsxNjM0NzYwODA1LCA4NTc3NjA4NzgsIDIwMzY0NzcyMzQsIDE3OTcyODUyMzZdDQogICAgICAgIHNlbGYuayA9IFtdDQogICAgICAgIHNlbGYubiA9IFswLCAwXQ0KICAgICAgICBzZWxmLmMgPSBbMCwgMF0NCiAgICAgICAgc2VsZi5iID0gW05vbmVdICogNjQNCiAgICAgICAgc2VsZi5kID0gNjQNCg0KICAgICAgICBzZWxmLnNrKHNlbGYuc2EodCkpDQogICAgICAgIHNlbGYuc24oc2VsZi5zYShpKSkNCg0KICAgIGRlZiBlKHNlbGYsIHQpOg0KICAgICAgICBzID0gc2VsZi5nYihsZW4odCkpDQogICAgICAgIGkgPSBbc1toXSBeIHRbaF0gZm9yIGggaW4gcmFuZ2UobGVuKHQpKV0NCiAgICAgICAgcmV0dXJuIGkNCg0KICAgIGRlZiBwKHNlbGYsIHQpOg0KICAgICAgICBpbXBvcnQgYmFzZTY0DQogICAgICAgIHQgKz0gIj0iICogKDQgLSBsZW4odCkgJSA0KQ0KICAgICAgICB0ID0gYmFzZTY0LmI2NGRlY29kZSh0LnJlcGxhY2UoJy0nLCAnKycpLnJlcGxhY2UoJ18nLCAnLycpKQ0KICAgICAgICByZXR1cm4gc2VsZi5fYXMoc2VsZi5lKHNlbGYuc2EodCkpKQ0KDQogICAgQHN0YXRpY21ldGhvZA0KICAgIGRlZiBzYSh0KToNCiAgICAgICAgcyA9IFtvcmQodFtpXSkgZm9yIGkgaW4gcmFuZ2UobGVuKHQpKV0NCiAgICAgICAgcmV0dXJuIHMNCg0KICAgIEBzdGF0aWNtZXRob2QNCiAgICBkZWYgX2FzKHQpOg0KICAgICAgICBzID0gW2Nocih0W2ldKSBmb3IgaSBpbiByYW5nZShsZW4odCkpXQ0KICAgICAgICByZXR1cm4gJycuam9pbihzKQ0KDQogICAgZGVmIHNrKHNlbGYsIHQpOg0KICAgICAgICBzID0gMA0KICAgICAgICBmb3IgaSBpbiByYW5nZSg4KToNCiAgICAgICAgICAgIHNlbGYuay5hcHBlbmQoDQogICAgICAgICAgICAgICAgMjU1ICYgdFtzXSB8IHNlbGYubHNoaWZ0KCgyNTUgJiB0W3MgKyAxXSksIDgpIHwgc2VsZi5sc2hpZnQoKDI1NSAmIHRbcyArIDJdKSwgMTYpIHwgc2VsZi5sc2hpZnQoDQogICAgICAgICAgICAgICAgICAgICgyNTUgJiB0W3MgKyAzXSksIDI0KSkNCiAgICAgICAgICAgIHMgKz0gNA0KICAgICAgICBzZWxmLl9yKCkNCg0KICAgIGRlZiBzbihzZWxmLCB0KToNCiAgICAgICAgc2VsZi5uWzBdID0gMjU1ICYgdFswXSB8IHNlbGYubHNoaWZ0KCgyNTUgJiB0WzFdKSwgOCkgfCBzZWxmLmxzaGlmdCgoMjU1ICYgdFsyXSksIDE2KSB8IHNlbGYubHNoaWZ0KA0KICAgICAgICAgICAgKDI1NSAmIHRbM10pLCAyNCkNCiAgICAgICAgc2VsZi5uWzFdID0gMjU1ICYgdFs0XSB8IHNlbGYubHNoaWZ0KCgyNTUgJiB0WzVdKSwgOCkgfCBzZWxmLmxzaGlmdCgoMjU1ICYgdFs2XSksIDE2KSB8IHNlbGYubHNoaWZ0KA0KICAgICAgICAgICAgKDI1NSAmIHRbN10pLCAyNCkNCiAgICAgICAgc2VsZi5fcigpDQoNCiAgICBkZWYgZ2Ioc2VsZiwgdCk6DQogICAgICAgIGkgPSBbTm9uZV0gKiB0DQoNCiAgICAgICAgZm9yIHMgaW4gcmFuZ2UodCk6DQogICAgICAgICAgICBpZiA2NCA9PSBzZWxmLmQ6DQogICAgICAgICAgICAgICAgc2VsZi5fZygpDQogICAgICAgICAgICAgICAgc2VsZi5faSgpDQogICAgICAgICAgICAgICAgc2VsZi5kID0gMA0KDQogICAgICAgICAgICBpW3NdID0gc2VsZi5iW3NlbGYuZF0NCiAgICAgICAgICAgIHNlbGYuZCArPSAxDQoNCiAgICAgICAgcmV0dXJuIGkNCg0KICAgIGRlZiBnaChzZWxmLCB0KToNCiAgICAgICAgaSA9IFsnMCcsICcxJywgJzInLCAnMycsICc0JywgJzUnLCAnNicsICc3JywgJzgnLCAnOScsICdhJywgJ2InLCAnYycsICdkJywgJ2UnLCAnZiddDQogICAgICAgIGggPSBzZWxmLmdiKHQpDQogICAgICAgIHMgPSBbaVtzZWxmLnJzaGlmdChoW2JdLCA0KSAmIDE1XSBmb3IgYiBpbiByYW5nZShsZW4oaCkpXQ0KICAgICAgICBzLmFwcGVuZChpWzE1ICYgaFtsZW4oaCldXSkNCiAgICAgICAgcmV0dXJuICcnLmpvaW4ocykNCg0KICAgIGRlZiBfcihzZWxmKToNCiAgICAgICAgc2VsZi5jWzBdID0gMA0KICAgICAgICBzZWxmLmNbMV0gPSAwDQogICAgICAgIHNlbGYuZCA9IDY0DQoNCiAgICBkZWYgX2koc2VsZik6DQogICAgICAgIHNlbGYuY1swXSA9IHNlbGYuY1swXSArIDEgJiA0Mjk0OTY3Mjk1DQogICAgICAgIGlmIDAgPT0gc2VsZi5jWzBdOg0KICAgICAgICAgICAgc2VsZi5jWzFdID0gc2VsZi5jWzFdICsgMSAmIDQyOTQ5NjcyOTUNCg0KICAgIGRlZiBfZyhzZWxmKToNCiAgICAgICAgaSA9IHNlbGYuc1swXQ0KICAgICAgICBzID0gc2VsZi5rWzBdDQogICAgICAgIGggPSBzZWxmLmtbMV0NCiAgICAgICAgYiA9IHNlbGYua1syXQ0KICAgICAgICByID0gc2VsZi5rWzNdDQogICAgICAgIG4gPSBzZWxmLnNbMV0NCiAgICAgICAgbyA9IHNlbGYublswXQ0KICAgICAgICBlID0gc2VsZi5uWzFdDQogICAgICAgIGMgPSBzZWxmLmNbMF0NCiAgICAgICAgcCA9IHNlbGYuY1sxXQ0KICAgICAgICBhID0gc2VsZi5zWzJdDQogICAgICAgIGYgPSBzZWxmLmtbNF0NCiAgICAgICAgdSA9IHNlbGYua1s1XQ0KICAgICAgICBnID0gc2VsZi5rWzZdDQogICAgICAgIHkgPSBzZWxmLmtbN10NCiAgICAgICAgayA9IHNlbGYuc1szXQ0KICAgICAgICBsID0gaQ0KICAgICAgICBkID0gcw0KICAgICAgICB2ID0gaA0KICAgICAgICBfID0gYg0KICAgICAgICBBID0gcg0KICAgICAgICB3ID0gbg0KICAgICAgICBDID0gbw0KICAgICAgICBTID0gZQ0KICAgICAgICBqID0gYw0KICAgICAgICBtID0gcA0KICAgICAgICBxID0gYQ0KICAgICAgICB4ID0gZg0KICAgICAgICB6ID0gdQ0KICAgICAgICBCID0gZw0KICAgICAgICBEID0geQ0KICAgICAgICBFID0gaw0KDQogICAgICAgIGZvciBGIGluIHJhbmdlKDAsIHNlbGYuciwgMik6DQogICAgICAgICAgICAjIDANCiAgICAgICAgICAgIHQgPSBsICsgeg0KICAgICAgICAgICAgQSBePSBzZWxmLmxzaGlmdCh0LCA3KSB8IHNlbGYuYnNoaWZ0KHQsIDI1KQ0KICAgICAgICAgICAgdCA9IEEgKyBsDQogICAgICAgICAgICBqIF49IHNlbGYubHNoaWZ0KHQsIDkpIHwgc2VsZi5ic2hpZnQodCwgMjMpDQogICAgICAgICAgICB0ID0gaiArIEENCiAgICAgICAgICAgIHogXj0gc2VsZi5sc2hpZnQodCwgMTMpIHwgc2VsZi5ic2hpZnQodCwgMTkpDQogICAgICAgICAgICB0ID0geiArIGoNCiAgICAgICAgICAgIGwgXj0gc2VsZi5sc2hpZnQodCwgMTgpIHwgc2VsZi5ic2hpZnQodCwgMTQpDQoNCiAgICAgICAgICAgICMgMQ0KICAgICAgICAgICAgdCA9IHcgKyBkDQogICAgICAgICAgICBtIF49IHNlbGYubHNoaWZ0KHQsIDcpIHwgc2VsZi5ic2hpZnQodCwgMjUpDQogICAgICAgICAgICB0ID0gbSArIHcNCiAgICAgICAgICAgIEIgXj0gc2VsZi5sc2hpZnQodCwgOSkgfCBzZWxmLmJzaGlmdCh0LCAyMykNCiAgICAgICAgICAgIHQgPSBCICsgbQ0KICAgICAgICAgICAgZCBePSBzZWxmLmxzaGlmdCh0LCAxMykgfCBzZWxmLmJzaGlmdCh0LCAxOSkNCiAgICAgICAgICAgIHQgPSBkICsgQg0KICAgICAgICAgICAgdyBePSBzZWxmLmxzaGlmdCh0LCAxOCkgfCBzZWxmLmJzaGlmdCh0LCAxNCkNCg0KICAgICAgICAgICAgIyAyDQogICAgICAgICAgICB0ID0gcSArIEMNCiAgICAgICAgICAgIEQgXj0gc2VsZi5sc2hpZnQodCwgNykgfCBzZWxmLmJzaGlmdCh0LCAyNSkNCiAgICAgICAgICAgIHQgPSBEICsgcQ0KICAgICAgICAgICAgdiBePSBzZWxmLmxzaGlmdCh0LCA5KSB8IHNlbGYuYnNoaWZ0KHQsIDIzKQ0KICAgICAgICAgICAgdCA9IHYgKyBEDQogICAgICAgICAgICBDIF49IHNlbGYubHNoaWZ0KHQsIDEzKSB8IHNlbGYuYnNoaWZ0KHQsIDE5KQ0KICAgICAgICAgICAgdCA9IEMgKyB2DQogICAgICAgICAgICBxIF49IHNlbGYubHNoaWZ0KHQsIDE4KSB8IHNlbGYuYnNoaWZ0KHQsIDE0KQ0KDQogICAgICAgICAgICAjIDMNCiAgICAgICAgICAgIHQgPSBFICsgeA0KICAgICAgICAgICAgXyBePSBzZWxmLmxzaGlmdCh0LCA3KSB8IHNlbGYuYnNoaWZ0KHQsIDI1KQ0KICAgICAgICAgICAgdCA9IF8gKyBFDQogICAgICAgICAgICBTIF49IHNlbGYubHNoaWZ0KHQsIDkpIHwgc2VsZi5ic2hpZnQodCwgMjMpDQogICAgICAgICAgICB0ID0gUyArIF8NCiAgICAgICAgICAgIHggXj0gc2VsZi5sc2hpZnQodCwgMTMpIHwgc2VsZi5ic2hpZnQodCwgMTkpDQogICAgICAgICAgICB0ID0geCArIFMNCiAgICAgICAgICAgIEUgXj0gc2VsZi5sc2hpZnQodCwgMTgpIHwgc2VsZi5ic2hpZnQodCwgMTQpDQoNCiAgICAgICAgICAgICMgNA0KICAgICAgICAgICAgdCA9IGwgKyBfDQogICAgICAgICAgICBkIF49IHNlbGYubHNoaWZ0KHQsIDcpIHwgc2VsZi5ic2hpZnQodCwgMjUpDQogICAgICAgICAgICB0ID0gZCArIGwNCiAgICAgICAgICAgIHYgXj0gc2VsZi5sc2hpZnQodCwgOSkgfCBzZWxmLmJzaGlmdCh0LCAyMykNCiAgICAgICAgICAgIHQgPSB2ICsgZA0KICAgICAgICAgICAgXyBePSBzZWxmLmxzaGlmdCh0LCAxMykgfCBzZWxmLmJzaGlmdCh0LCAxOSkNCiAgICAgICAgICAgIHQgPSBfICsgdg0KICAgICAgICAgICAgbCBePSBzZWxmLmxzaGlmdCh0LCAxOCkgfCBzZWxmLmJzaGlmdCh0LCAxNCkNCg0KICAgICAgICAgICAgIyA1DQogICAgICAgICAgICB0ID0gdyArIEENCiAgICAgICAgICAgIEMgXj0gc2VsZi5sc2hpZnQodCwgNykgfCBzZWxmLmJzaGlmdCh0LCAyNSkNCiAgICAgICAgICAgIHQgPSBDICsgdw0KICAgICAgICAgICAgUyBePSBzZWxmLmxzaGlmdCh0LCA5KSB8IHNlbGYuYnNoaWZ0KHQsIDIzKQ0KICAgICAgICAgICAgdCA9IFMgKyBDDQogICAgICAgICAgICBBIF49IHNlbGYubHNoaWZ0KHQsIDEzKSB8IHNlbGYuYnNoaWZ0KHQsIDE5KQ0KICAgICAgICAgICAgdCA9IEEgKyBTDQogICAgICAgICAgICB3IF49IHNlbGYubHNoaWZ0KHQsIDE4KSB8IHNlbGYuYnNoaWZ0KHQsIDE0KQ0KDQogICAgICAgICAgICAjIDYNCiAgICAgICAgICAgIHQgPSBxICsgbQ0KICAgICAgICAgICAgeCBePSBzZWxmLmxzaGlmdCh0LCA3KSB8IHNlbGYuYnNoaWZ0KHQsIDI1KQ0KICAgICAgICAgICAgdCA9IHggKyBxDQogICAgICAgICAgICBqIF49IHNlbGYubHNoaWZ0KHQsIDkpIHwgc2VsZi5ic2hpZnQodCwgMjMpDQogICAgICAgICAgICB0ID0gaiArIHgNCiAgICAgICAgICAgIG0gXj0gc2VsZi5sc2hpZnQodCwgMTMpIHwgc2VsZi5ic2hpZnQodCwgMTkpDQogICAgICAgICAgICB0ID0gbSArIGoNCiAgICAgICAgICAgIHEgXj0gc2VsZi5sc2hpZnQodCwgMTgpIHwgc2VsZi5ic2hpZnQodCwgMTQpDQoNCiAgICAgICAgICAgICMgNw0KICAgICAgICAgICAgdCA9IEUgKyBEDQogICAgICAgICAgICB6IF49IHNlbGYubHNoaWZ0KHQsIDcpIHwgc2VsZi5ic2hpZnQodCwgMjUpDQogICAgICAgICAgICB0ID0geiArIEUNCiAgICAgICAgICAgIEIgXj0gc2VsZi5sc2hpZnQodCwgOSkgfCBzZWxmLmJzaGlmdCh0LCAyMykNCiAgICAgICAgICAgIHQgPSBCICsgeg0KICAgICAgICAgICAgRCBePSBzZWxmLmxzaGlmdCh0LCAxMykgfCBzZWxmLmJzaGlmdCh0LCAxOSkNCiAgICAgICAgICAgIHQgPSBEICsgQg0KICAgICAgICAgICAgRSBePSBzZWxmLmxzaGlmdCh0LCAxOCkgfCBzZWxmLmJzaGlmdCh0LCAxNCkNCg0KICAgICAgICBsICs9IGkNCiAgICAgICAgZCArPSBzDQogICAgICAgIHYgKz0gaA0KICAgICAgICBfICs9IGINCiAgICAgICAgQSArPSByDQogICAgICAgIHcgKz0gbg0KICAgICAgICBDICs9IG8NCiAgICAgICAgUyArPSBlDQogICAgICAgIGogKz0gYw0KICAgICAgICBtICs9IHANCiAgICAgICAgcSArPSBhDQogICAgICAgIHggKz0gZg0KICAgICAgICB6ICs9IHUNCiAgICAgICAgQiArPSBnDQogICAgICAgIEQgKz0geQ0KICAgICAgICBFICs9IGsNCg0KICAgICAgICBzZWxmLmJbMF0gPSBzZWxmLmJzaGlmdChsLCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMV0gPSBzZWxmLmJzaGlmdChsLCA4KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMl0gPSBzZWxmLmJzaGlmdChsLCAxNikgJiAyNTUNCiAgICAgICAgc2VsZi5iWzNdID0gc2VsZi5ic2hpZnQobCwgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYls0XSA9IHNlbGYuYnNoaWZ0KGQsIDApICYgMjU1DQogICAgICAgIHNlbGYuYls1XSA9IHNlbGYuYnNoaWZ0KGQsIDgpICYgMjU1DQogICAgICAgIHNlbGYuYls2XSA9IHNlbGYuYnNoaWZ0KGQsIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbN10gPSBzZWxmLmJzaGlmdChkLCAyNCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzhdID0gc2VsZi5ic2hpZnQodiwgMCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzldID0gc2VsZi5ic2hpZnQodiwgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzEwXSA9IHNlbGYuYnNoaWZ0KHYsIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMTFdID0gc2VsZi5ic2hpZnQodiwgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYlsxMl0gPSBzZWxmLmJzaGlmdChfLCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMTNdID0gc2VsZi5ic2hpZnQoXywgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzE0XSA9IHNlbGYuYnNoaWZ0KF8sIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMTVdID0gc2VsZi5ic2hpZnQoXywgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYlsxNl0gPSBzZWxmLmJzaGlmdChBLCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMTddID0gc2VsZi5ic2hpZnQoQSwgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzE4XSA9IHNlbGYuYnNoaWZ0KEEsIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMTldID0gc2VsZi5ic2hpZnQoQSwgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYlsyMF0gPSBzZWxmLmJzaGlmdCh3LCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMjFdID0gc2VsZi5ic2hpZnQodywgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzIyXSA9IHNlbGYuYnNoaWZ0KHcsIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMjNdID0gc2VsZi5ic2hpZnQodywgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYlsyNF0gPSBzZWxmLmJzaGlmdChDLCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMjVdID0gc2VsZi5ic2hpZnQoQywgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzI2XSA9IHNlbGYuYnNoaWZ0KEMsIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMjddID0gc2VsZi5ic2hpZnQoQywgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYlsyOF0gPSBzZWxmLmJzaGlmdChTLCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMjldID0gc2VsZi5ic2hpZnQoUywgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzMwXSA9IHNlbGYuYnNoaWZ0KFMsIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMzFdID0gc2VsZi5ic2hpZnQoUywgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYlszMl0gPSBzZWxmLmJzaGlmdChqLCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMzNdID0gc2VsZi5ic2hpZnQoaiwgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzM0XSA9IHNlbGYuYnNoaWZ0KGosIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMzVdID0gc2VsZi5ic2hpZnQoaiwgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYlszNl0gPSBzZWxmLmJzaGlmdChtLCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMzddID0gc2VsZi5ic2hpZnQobSwgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzM4XSA9IHNlbGYuYnNoaWZ0KG0sIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbMzldID0gc2VsZi5ic2hpZnQobSwgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYls0MF0gPSBzZWxmLmJzaGlmdChxLCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbNDFdID0gc2VsZi5ic2hpZnQocSwgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzQyXSA9IHNlbGYuYnNoaWZ0KHEsIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbNDNdID0gc2VsZi5ic2hpZnQocSwgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYls0NF0gPSBzZWxmLmJzaGlmdCh4LCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbNDVdID0gc2VsZi5ic2hpZnQoeCwgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzQ2XSA9IHNlbGYuYnNoaWZ0KHgsIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbNDddID0gc2VsZi5ic2hpZnQoeCwgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYls0OF0gPSBzZWxmLmJzaGlmdCh6LCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbNDldID0gc2VsZi5ic2hpZnQoeiwgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzUwXSA9IHNlbGYuYnNoaWZ0KHosIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbNTFdID0gc2VsZi5ic2hpZnQoeiwgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYls1Ml0gPSBzZWxmLmJzaGlmdChCLCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbNTNdID0gc2VsZi5ic2hpZnQoQiwgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzU0XSA9IHNlbGYuYnNoaWZ0KEIsIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbNTVdID0gc2VsZi5ic2hpZnQoQiwgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYls1Nl0gPSBzZWxmLmJzaGlmdChELCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbNTddID0gc2VsZi5ic2hpZnQoRCwgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzU4XSA9IHNlbGYuYnNoaWZ0KEQsIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbNTldID0gc2VsZi5ic2hpZnQoRCwgMjQpICYgMjU1DQogICAgICAgIHNlbGYuYls2MF0gPSBzZWxmLmJzaGlmdChFLCAwKSAmIDI1NQ0KICAgICAgICBzZWxmLmJbNjFdID0gc2VsZi5ic2hpZnQoRSwgOCkgJiAyNTUNCiAgICAgICAgc2VsZi5iWzYyXSA9IHNlbGYuYnNoaWZ0KEUsIDE2KSAmIDI1NQ0KICAgICAgICBzZWxmLmJbNjNdID0gc2VsZi5ic2hpZnQoRSwgMjQpICYgMjU1DQoNCiAgICBkZWYgbHNoaWZ0KHNlbGYsIG51bSwgb3RoZXIpOg0KICAgICAgICBsbnVtID0gc2VsZi5Ub0ludDMyKG51bSkNCiAgICAgICAgcm51bSA9IHNlbGYuVG9VaW50MzIob3RoZXIpDQogICAgICAgIHNoaWZ0X2NvdW50ID0gcm51bSAmIDB4MUYNCiAgICAgICAgcmV0dXJuIHNlbGYuVG9JbnQzMihsbnVtIDw8IHNoaWZ0X2NvdW50KQ0KDQogICAgZGVmIHJzaGlmdChzZWxmLCBudW0sIG90aGVyKToNCiAgICAgICAgbG51bSA9IHNlbGYuVG9JbnQzMihudW0pDQogICAgICAgIHJudW0gPSBzZWxmLlRvVWludDMyKG90aGVyKQ0KICAgICAgICBzaGlmdF9jb3VudCA9IHJudW0gJiAweDFGDQogICAgICAgIHJldHVybiBzZWxmLlRvSW50MzIobG51bSA+PiBzaGlmdF9jb3VudCkNCg0KICAgIGRlZiBic2hpZnQoc2VsZiwgbnVtLCBvdGhlcik6DQogICAgICAgIGxudW0gPSBzZWxmLlRvVWludDMyKG51bSkNCiAgICAgICAgcm51bSA9IHNlbGYuVG9VaW50MzIob3RoZXIpDQogICAgICAgIHNoaWZ0X2NvdW50ID0gcm51bSAmIDB4MUYNCiAgICAgICAgcmV0dXJuIHNlbGYuVG9VaW50MzIobG51bSA+PiBzaGlmdF9jb3VudCkNCg0KICAgIEBzdGF0aWNtZXRob2QNCiAgICBkZWYgVG9JbnQzMihudW0pOg0KICAgICAgICBpbnQzMiA9IG51bSAlIDIgKiogMzINCiAgICAgICAgcmV0dXJuIGludDMyIC0gMiAqKiAzMiBpZiBpbnQzMiA+PSAyICoqIDMxIGVsc2UgaW50MzINCg0KICAgIEBzdGF0aWNtZXRob2QNCiAgICBkZWYgVG9VaW50MzIobnVtKToNCiAgICAgICAgcmV0dXJuIG51bSAlIDIgKiogMzINCg==')
+# -*- coding: utf-8 -*-
+
+import re
+import base64
+import urllib
+
+from core import httptools
+from core import scrapertools
+from lib import jsunpack
+from platformcode import logger
+
+headers = [['User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:53.0) Gecko/20100101 Firefox/53.0']]
+host = "http://powvideo.net/"
+
+
+def test_video_exists(page_url):
+    referer = page_url.replace('iframe', 'preview')
+    data = httptools.downloadpage(page_url, headers={'referer': referer}).data
+    if data == "File was deleted":
+        return False, "[powvideo] El video ha sido borrado"
+    return True, ""
+
+
+def get_video_url(page_url, premium=False, user="", password="", video_password=""):
+    #logger.info("(page_url='%s')" % page_url)
+
+    referer = page_url.replace('iframe', 'preview')
+    data = httptools.downloadpage(page_url, headers={'referer': referer}).data
+    _0xa3e8 = scrapertools.find_single_match(data, 'var _0x[0-f]+=(\[[^;]+\]);')
+    packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
+    unpacked = jsunpack.unpack(packed)
+
+    video_urls = []
+
+    url = scrapertools.find_single_match(unpacked, "(?:src):\\\\'([^\\\\]+.mp4)\\\\'")
+    video_urls.append([".mp4" + " [powvideo]", S(_0xa3e8).decode(url)])
+
+    video_urls.sort(key=lambda x: x[0], reverse=True)
+    return video_urls
+
+
+class S:
+    def __init__(self, var):
+        self.r = None
+        self.s = None
+        self.k = None
+        self.n = None
+        self.c = None
+        self.b = None
+        self.d = None
+
+        var = eval(var)
+        for x in range(0x1f0, 0, -1):
+            var.append(var.pop(0))
+
+        self.var = var
+
+        self.t(
+            self.decode_index('0x22', '!UJH') +
+            self.decode_index('0x23', 'NpE)') +
+            self.decode_index('0x24', '4uT2') +
+            self.decode_index('0x23', 'NpE)'),
+            self.decode_index('0x25', '@ZC2')
+        )
+
+    def decode_index(self, index, key):
+        b64_data = self.var[int(index, 16)];
+        result = ''
+        _0xb99338 = 0x0
+        _0x25e3f4 = 0x0
+
+        data = base64.b64decode(b64_data)
+        data = urllib.unquote(data).decode('utf8')
+
+        _0x5da081 = [x for x in range(0x100)]
+
+        for x in range(0x100):
+            _0xb99338 = (_0xb99338 + _0x5da081[x] + ord(key[x % len(key)])) % 0x100
+            _0x139847 = _0x5da081[x]
+            _0x5da081[x] = _0x5da081[_0xb99338]
+            _0x5da081[_0xb99338] = _0x139847
+
+        _0xb99338 = 0x0
+
+        for _0x11ebc5 in range(len(data)):
+            _0x25e3f4 = (_0x25e3f4 + 0x1) % 0x100
+            _0xb99338 = (_0xb99338 + _0x5da081[_0x25e3f4]) % 0x100
+            _0x139847 = _0x5da081[_0x25e3f4]
+            _0x5da081[_0x25e3f4] = _0x5da081[_0xb99338]
+            _0x5da081[_0xb99338] = _0x139847
+            result += chr(ord(data[_0x11ebc5]) ^ _0x5da081[(_0x5da081[_0x25e3f4] + _0x5da081[_0xb99338]) % 0x100])
+
+        return result
+
+    def decode(self, url):
+        _hash = re.compile('[A-z0-9_-]{40,}', re.DOTALL).findall(url)[0]
+        return url.replace(_hash, self.p(_hash))
+
+    def t(self, t, i):
+        self.r = 20
+        self.s = [1634760805, 857760878, 2036477234, 1797285236]
+        self.k = []
+        self.n = [0, 0]
+        self.c = [0, 0]
+        self.b = [None] * 64
+        self.d = 64
+
+        self.sk(self.sa(t))
+        self.sn(self.sa(i))
+
+    def e(self, t):
+        s = self.gb(len(t))
+        i = [s[h] ^ t[h] for h in range(len(t))]
+        return i
+
+    def p(self, t):
+        import base64
+        t += "=" * (4 - len(t) % 4)
+        t = base64.b64decode(t.replace('-', '+').replace('_', '/'))
+        return self._as(self.e(self.sa(t)))
+
+    @staticmethod
+    def sa(t):
+        s = [ord(t[i]) for i in range(len(t))]
+        return s
+
+    @staticmethod
+    def _as(t):
+        s = [chr(t[i]) for i in range(len(t))]
+        return ''.join(s)
+
+    def sk(self, t):
+        s = 0
+        for i in range(8):
+            self.k.append(
+                255 & t[s] | self.lshift((255 & t[s + 1]), 8) | self.lshift((255 & t[s + 2]), 16) | self.lshift(
+                    (255 & t[s + 3]), 24))
+            s += 4
+        self._r()
+
+    def sn(self, t):
+        self.n[0] = 255 & t[0] | self.lshift((255 & t[1]), 8) | self.lshift((255 & t[2]), 16) | self.lshift(
+            (255 & t[3]), 24)
+        self.n[1] = 255 & t[4] | self.lshift((255 & t[5]), 8) | self.lshift((255 & t[6]), 16) | self.lshift(
+            (255 & t[7]), 24)
+        self._r()
+
+    def gb(self, t):
+        i = [None] * t
+
+        for s in range(t):
+            if 64 == self.d:
+                self._g()
+                self._i()
+                self.d = 0
+
+            i[s] = self.b[self.d]
+            self.d += 1
+
+        return i
+
+    def gh(self, t):
+        i = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
+        h = self.gb(t)
+        s = [i[self.rshift(h[b], 4) & 15] for b in range(len(h))]
+        s.append(i[15 & h[len(h)]])
+        return ''.join(s)
+
+    def _r(self):
+        self.c[0] = 0
+        self.c[1] = 0
+        self.d = 64
+
+    def _i(self):
+        self.c[0] = self.c[0] + 1 & 4294967295
+        if 0 == self.c[0]:
+            self.c[1] = self.c[1] + 1 & 4294967295
+
+    def _g(self):
+        i = self.s[0]
+        s = self.k[0]
+        h = self.k[1]
+        b = self.k[2]
+        r = self.k[3]
+        n = self.s[1]
+        o = self.n[0]
+        e = self.n[1]
+        c = self.c[0]
+        p = self.c[1]
+        a = self.s[2]
+        f = self.k[4]
+        u = self.k[5]
+        g = self.k[6]
+        y = self.k[7]
+        k = self.s[3]
+        l = i
+        d = s
+        v = h
+        _ = b
+        A = r
+        w = n
+        C = o
+        S = e
+        j = c
+        m = p
+        q = a
+        x = f
+        z = u
+        B = g
+        D = y
+        E = k
+
+        for F in range(0, self.r, 2):
+            # 0
+            t = l + z
+            A ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = A + l
+            j ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = j + A
+            z ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = z + j
+            l ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 1
+            t = w + d
+            m ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = m + w
+            B ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = B + m
+            d ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = d + B
+            w ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 2
+            t = q + C
+            D ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = D + q
+            v ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = v + D
+            C ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = C + v
+            q ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 3
+            t = E + x
+            _ ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = _ + E
+            S ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = S + _
+            x ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = x + S
+            E ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 4
+            t = l + _
+            d ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = d + l
+            v ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = v + d
+            _ ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = _ + v
+            l ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 5
+            t = w + A
+            C ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = C + w
+            S ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = S + C
+            A ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = A + S
+            w ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 6
+            t = q + m
+            x ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = x + q
+            j ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = j + x
+            m ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = m + j
+            q ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+            # 7
+            t = E + D
+            z ^= self.lshift(t, 7) | self.bshift(t, 25)
+            t = z + E
+            B ^= self.lshift(t, 9) | self.bshift(t, 23)
+            t = B + z
+            D ^= self.lshift(t, 13) | self.bshift(t, 19)
+            t = D + B
+            E ^= self.lshift(t, 18) | self.bshift(t, 14)
+
+        l += i
+        d += s
+        v += h
+        _ += b
+        A += r
+        w += n
+        C += o
+        S += e
+        j += c
+        m += p
+        q += a
+        x += f
+        z += u
+        B += g
+        D += y
+        E += k
+
+        self.b[0] = self.bshift(l, 0) & 255
+        self.b[1] = self.bshift(l, 8) & 255
+        self.b[2] = self.bshift(l, 16) & 255
+        self.b[3] = self.bshift(l, 24) & 255
+        self.b[4] = self.bshift(d, 0) & 255
+        self.b[5] = self.bshift(d, 8) & 255
+        self.b[6] = self.bshift(d, 16) & 255
+        self.b[7] = self.bshift(d, 24) & 255
+        self.b[8] = self.bshift(v, 0) & 255
+        self.b[9] = self.bshift(v, 8) & 255
+        self.b[10] = self.bshift(v, 16) & 255
+        self.b[11] = self.bshift(v, 24) & 255
+        self.b[12] = self.bshift(_, 0) & 255
+        self.b[13] = self.bshift(_, 8) & 255
+        self.b[14] = self.bshift(_, 16) & 255
+        self.b[15] = self.bshift(_, 24) & 255
+        self.b[16] = self.bshift(A, 0) & 255
+        self.b[17] = self.bshift(A, 8) & 255
+        self.b[18] = self.bshift(A, 16) & 255
+        self.b[19] = self.bshift(A, 24) & 255
+        self.b[20] = self.bshift(w, 0) & 255
+        self.b[21] = self.bshift(w, 8) & 255
+        self.b[22] = self.bshift(w, 16) & 255
+        self.b[23] = self.bshift(w, 24) & 255
+        self.b[24] = self.bshift(C, 0) & 255
+        self.b[25] = self.bshift(C, 8) & 255
+        self.b[26] = self.bshift(C, 16) & 255
+        self.b[27] = self.bshift(C, 24) & 255
+        self.b[28] = self.bshift(S, 0) & 255
+        self.b[29] = self.bshift(S, 8) & 255
+        self.b[30] = self.bshift(S, 16) & 255
+        self.b[31] = self.bshift(S, 24) & 255
+        self.b[32] = self.bshift(j, 0) & 255
+        self.b[33] = self.bshift(j, 8) & 255
+        self.b[34] = self.bshift(j, 16) & 255
+        self.b[35] = self.bshift(j, 24) & 255
+        self.b[36] = self.bshift(m, 0) & 255
+        self.b[37] = self.bshift(m, 8) & 255
+        self.b[38] = self.bshift(m, 16) & 255
+        self.b[39] = self.bshift(m, 24) & 255
+        self.b[40] = self.bshift(q, 0) & 255
+        self.b[41] = self.bshift(q, 8) & 255
+        self.b[42] = self.bshift(q, 16) & 255
+        self.b[43] = self.bshift(q, 24) & 255
+        self.b[44] = self.bshift(x, 0) & 255
+        self.b[45] = self.bshift(x, 8) & 255
+        self.b[46] = self.bshift(x, 16) & 255
+        self.b[47] = self.bshift(x, 24) & 255
+        self.b[48] = self.bshift(z, 0) & 255
+        self.b[49] = self.bshift(z, 8) & 255
+        self.b[50] = self.bshift(z, 16) & 255
+        self.b[51] = self.bshift(z, 24) & 255
+        self.b[52] = self.bshift(B, 0) & 255
+        self.b[53] = self.bshift(B, 8) & 255
+        self.b[54] = self.bshift(B, 16) & 255
+        self.b[55] = self.bshift(B, 24) & 255
+        self.b[56] = self.bshift(D, 0) & 255
+        self.b[57] = self.bshift(D, 8) & 255
+        self.b[58] = self.bshift(D, 16) & 255
+        self.b[59] = self.bshift(D, 24) & 255
+        self.b[60] = self.bshift(E, 0) & 255
+        self.b[61] = self.bshift(E, 8) & 255
+        self.b[62] = self.bshift(E, 16) & 255
+        self.b[63] = self.bshift(E, 24) & 255
+
+    def lshift(self, num, other):
+        lnum = self.ToInt32(num)
+        rnum = self.ToUint32(other)
+        shift_count = rnum & 0x1F
+        return self.ToInt32(lnum << shift_count)
+
+    def rshift(self, num, other):
+        lnum = self.ToInt32(num)
+        rnum = self.ToUint32(other)
+        shift_count = rnum & 0x1F
+        return self.ToInt32(lnum >> shift_count)
+
+    def bshift(self, num, other):
+        lnum = self.ToUint32(num)
+        rnum = self.ToUint32(other)
+        shift_count = rnum & 0x1F
+        return self.ToUint32(lnum >> shift_count)
+
+    @staticmethod
+    def ToInt32(num):
+        int32 = num % 2 ** 32
+        return int32 - 2 ** 32 if int32 >= 2 ** 31 else int32
+
+    @staticmethod
+    def ToUint32(num):
+        return num % 2 ** 32

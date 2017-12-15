@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import re
+import base64
+import urllib
+
 
 from core import httptools
 from core import scrapertools
@@ -25,12 +28,11 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
 
-    referer = re.sub(r"embed-|player-", "", page_url)[:-5]
+    referer = page_url.replace('iframe', 'preview')
     data = httptools.downloadpage(page_url, headers={'Referer': referer}).data
-
     packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
     unpacked = jsunpack.unpack(packed)
-    _0xd003 = scrapertools.find_single_match(data, 'var _0xd003=(\[[^;]+\]);')
+    _0xd003 = scrapertools.find_single_match(data, 'var _0x[0-f]+=(\[[^;]+\]);')
 
     video_urls = []
     url = scrapertools.find_single_match(unpacked, '(http[^,]+\.mp4)')
@@ -45,7 +47,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
 
 class S:
-    def __init__(self, _0xd003):
+    def __init__(self, var):
         self.r = None
         self.s = None
         self.k = None
@@ -54,8 +56,48 @@ class S:
         self.b = None
         self.d = None
 
-        _0xd003 = eval(_0xd003)
-        self.t(_0xd003[13] + _0xd003[14] + _0xd003[13] + _0xd003[14], _0xd003[15])
+        var = eval(var)
+        for x in range(0x1f0, 0, -1):
+            var.append(var.pop(0))
+
+        self.var = var
+
+        self.t(
+            self.decode_index('0x22', '!UJH') +
+            self.decode_index('0x23', 'NpE)') +
+            self.decode_index('0x24', '4uT2') +
+            self.decode_index('0x23', 'NpE)'),
+            self.decode_index('0x25', '@ZC2')
+        )
+
+    def decode_index(self, index, key):
+        b64_data = self.var[int(index, 16)];
+        result = ''
+        _0xb99338 = 0x0
+        _0x25e3f4 = 0x0
+
+        data = base64.b64decode(b64_data)
+        data = urllib.unquote(data).decode('utf8')
+
+        _0x5da081 = [x for x in range(0x100)]
+
+        for x in range(0x100):
+            _0xb99338 = (_0xb99338 + _0x5da081[x] + ord(key[x % len(key)])) % 0x100
+            _0x139847 = _0x5da081[x]
+            _0x5da081[x] = _0x5da081[_0xb99338]
+            _0x5da081[_0xb99338] = _0x139847
+
+        _0xb99338 = 0x0
+
+        for _0x11ebc5 in range(len(data)):
+            _0x25e3f4 = (_0x25e3f4 + 0x1) % 0x100
+            _0xb99338 = (_0xb99338 + _0x5da081[_0x25e3f4]) % 0x100
+            _0x139847 = _0x5da081[_0x25e3f4]
+            _0x5da081[_0x25e3f4] = _0x5da081[_0xb99338]
+            _0x5da081[_0xb99338] = _0x139847
+            result += chr(ord(data[_0x11ebc5]) ^ _0x5da081[(_0x5da081[_0x25e3f4] + _0x5da081[_0xb99338]) % 0x100])
+
+        return result
 
     def decode(self, url):
         _hash = re.compile('[A-z0-9_-]{40,}', re.DOTALL).findall(url)[0]
