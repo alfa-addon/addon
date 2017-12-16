@@ -105,7 +105,7 @@ def peliculas(item):
     patron += 'post(.*?)</div.*?'
     patron += 'text-muted f-14">(.*?)</h3'
     matches = scrapertools.find_multiple_matches(data, patron)
-    patron_next_page = 'href="([^"]+)"> &raquo;'
+    patron_next_page = 'href="([^"]+)">\s*&raquo;'
     matches_next_page = scrapertools.find_single_match(data, patron_next_page)
     if len(matches_next_page) > 0:
         url_next_page = item.url + matches_next_page
