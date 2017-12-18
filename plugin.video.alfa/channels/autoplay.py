@@ -89,7 +89,6 @@ def start(itemlist, item):
             videoitem.contentTitle=item.contentTitle
             videoitem.contentType=item.contentType
             videoitem.episode_id=item.episode_id
-            videoitem.hasContentDetails=item.hasContentDetails
             #videoitem.infoLabels=item.infoLabels
             videoitem.thumbnail=item.thumbnail
             #videoitem.title=item.title
