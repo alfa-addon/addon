@@ -10,7 +10,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
-host = 'http://cinefoxtv.net/'
+host = 'http://verhdpelis.com/'
 headers = [['User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0'],
            ['Referer', host]]
 

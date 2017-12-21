@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------------------------------
 # Item is the object we use for representing data 
 # --------------------------------------------------------------------------------
@@ -170,8 +170,6 @@ class Item(object):
         # Al modificar cualquiera de estos atributos content...
         if name in ["contentTitle", "contentPlot", "plot", "contentSerieName", "contentType", "contentEpisodeTitle",
                     "contentSeason", "contentEpisodeNumber", "contentThumbnail", "show", "contentQuality", "quality"]:
-            # ... marcamos hasContentDetails como "true"...
-            self.__dict__["hasContentDetails"] = True
             # ...y actualizamos infoLables
             if name == "contentTitle":
                 self.__dict__["infoLabels"]["title"] = value
@@ -235,10 +233,6 @@ class Item(object):
 
             self.__dict__["viewcontent"] = viewcontent
             return viewcontent
-
-        # Valor por defecto para hasContentDetails
-        elif name == "hasContentDetails":
-            return False
 
         # valores guardados en infoLabels
         elif name in ["contentTitle", "contentPlot", "contentSerieName", "show", "contentType", "contentEpisodeTitle",

@@ -114,7 +114,9 @@ def lista(item):
     itemlist.append(item.clone(title="Estrenos", action="entradas", url="%s/peliculas/estrenos" % host))
     itemlist.append(item.clone(title="Dvdrip", action="entradas", url="%s/peliculas/dvdrip" % host))
     itemlist.append(item.clone(title="HD (720p/1080p)", action="entradas", url="%s/peliculas/hd" % host))
+    itemlist.append(item.clone(title="4K", action="entradas", url="%s/peliculas/4k" % host))
     itemlist.append(item.clone(title="HDRIP", action="entradas", url="%s/peliculas/hdrip" % host))
+
     itemlist.append(item.clone(title="Latino", action="entradas",
                                url="%s/peliculas/latino-peliculas" % host))
     itemlist.append(item.clone(title="VOSE", action="entradas", url="%s/peliculas/subtituladas" % host))
