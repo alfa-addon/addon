@@ -127,13 +127,13 @@ def temporadas(item):
         itemlist.append(Item(channel=item.channel, title =""))
         itemlist.append(item.clone(action = "add_serie_to_library",
                              channel = item.channel,
-                             extra = "get_episodes",
+                             extra = "episodios",
                              title = '[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
                              url = item.url
                              ))
     return itemlist
 
-def get_episodes(item):
+def episodios(item):
     logger.info()
     itemlist = []
     templist = temporadas(item)
