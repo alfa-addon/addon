@@ -3,16 +3,18 @@
 import re
 import urlparse
 
+from core import httptools
 from core import scrapertools
 from core.item import Item
 from platformcode import logger
 
+host = "https://www.serviporno.com"
 
 def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(
-        Item(channel=item.channel, action="videos", title="Útimos videos", url="http://www.serviporno.com/"))
+        Item(channel=item.channel, action="videos", title="Útimos videos", url= host))
     itemlist.append(
         Item(channel=item.channel, action="videos", title="Más vistos", url="http://www.serviporno.com/mas-vistos/"))
     itemlist.append(
@@ -43,15 +45,14 @@ def search(item, texto):
 def videos(item):
     logger.info()
     itemlist = []
-    data = scrapertools.downloadpage(item.url)
+    data = httptools.downloadpage(item.url).data
 
-    patron = '<div class="wrap-box-escena">.*?'
+    patron  = '(?s)<div class="wrap-box-escena">.*?'
     patron += '<div class="box-escena">.*?'
-    patron += '<a href="([^"]+)" data-stats-video-id="[^"]+" data-stats-video-name="([^"]+)" data-stats-video-category="[^"]*" data-stats-list-name="[^"]*" data-stats-list-pos="[^"]*">.*?'
-    patron += '<img src="([^"]+)" data-src="[^"]+" alt="[^"]+" id=\'[^\']+\' class="thumbs-changer" data-thumbs-prefix="[^"]+" height="150px" width="175px" border=0 />'
-
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    logger.info(str(matches))
+    patron += '<a\s*href="([^"]+)".*?'
+    patron += 'data-stats-video-name="([^"]+)".*?'
+    patron += '<img\s*src="([^"]+)"'
+    matches = scrapertools.find_multiple_matches(data, patron)
     for url, title, thumbnail in matches:
         url = urlparse.urljoin(item.url, url)
         itemlist.append(Item(channel=item.channel, action='play', title=title, url=url, thumbnail=thumbnail))
@@ -106,10 +107,9 @@ def categorias(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = scrapertools.downloadpage(item.url)
-    url = scrapertools.get_match(data, "url: '([^']+)',\s*framesURL:")
+    data = httptools.downloadpage(item.url).data
+    url = scrapertools.find_single_match(data, "sendCdnInfo.'([^']+)")
     itemlist.append(
         Item(channel=item.channel, action="play", server="directo", title=item.title, url=url, thumbnail=item.thumbnail,
              plot=item.plot, folder=False))
-
     return itemlist
