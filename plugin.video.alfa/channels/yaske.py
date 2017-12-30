@@ -82,11 +82,11 @@ def series(item):
     for scrapedurl, scrapedthumbnail, scrapedepisodes, year, scrapedtitle in matches:
         scrapedepisodes.strip()
         year = year.strip()
-        contentTitle = scrapertools.htmlclean(scrapedtitle.strip())
-        title = "%s (%s)" %(contentTitle, scrapedepisodes)
+        contentSerieName = scrapertools.htmlclean(scrapedtitle.strip())
+        title = "%s (%s)" %(contentSerieName, scrapedepisodes)
         if "series" in scrapedurl:
             itemlist.append(Item(channel=item.channel, action="temporadas", title=title, url=scrapedurl,
-                                 thumbnail=scrapedthumbnail, show=contentTitle,
+                                 thumbnail=scrapedthumbnail, contentSerieName=contentSerieName,
                                  infoLabels={"year": year}, text_color=color1))
     # Obtenemos los datos basicos de todas las peliculas mediante multihilos
     tmdb.set_infoLabels(itemlist, True)
@@ -123,6 +123,22 @@ def temporadas(item):
                              url = HOST_TVSHOWS_TPL
                              ))
     tmdb.set_infoLabels(itemlist)
+    if config.get_videolibrary_support():
+        itemlist.append(Item(channel=item.channel, title =""))
+        itemlist.append(item.clone(action = "add_serie_to_library",
+                             channel = item.channel,
+                             extra = "episodios",
+                             title = '[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
+                             url = item.url
+                             ))
+    return itemlist
+
+def episodios(item):
+    logger.info()
+    itemlist = []
+    templist = temporadas(item)
+    for tempitem in templist:
+        itemlist += capitulos(tempitem)
     return itemlist
 
 
@@ -138,13 +154,13 @@ def capitulos(item):
     for scrapedurl, scrapedtitle, scrapeddate in matches:
         scrapedtitle = scrapedtitle + " (%s)" %scrapeddate
         episode = scrapertools.find_single_match(scrapedurl, "capitulo-([0-9]+)")
-        query = item.show + " " + str(item.infoLabels["season"]) + "x" + episode.rjust(2, "0")
+        query = item.contentSerieName + " " + scrapertools.find_single_match(scrapedtitle, "\w+")
         item.infoLabels["episode"] = episode
         itemlist.append(item.clone(action = "findvideos",
-                             title = scrapedtitle.decode("unicode-escape"),
-                             query = query.replace(" ","+"),
-                             url = scrapedurl.replace("\\","")
-                             ))
+                            title = scrapedtitle.decode("unicode-escape"),
+                            query = query.replace(" ","+"),
+                            url = scrapedurl.replace("\\","")
+                            ))
     tmdb.set_infoLabels(itemlist)
     return itemlist
 
@@ -237,8 +253,8 @@ def peliculas(item):
             contentTitle = scrapertools.htmlclean(scrapedtitle.strip())
             title = "%s %s" % (contentTitle, idiomas_disponibles)
             itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
-                                 thumbnail=scrapedthumbnail, contentTitle=contentTitle,
-                                 infoLabels={"year": year}, text_color=color1, query = query))
+                                 thumbnail=scrapedthumbnail, contentTitle=contentTitle, query = query,
+                                 infoLabels={"year": year}, text_color=color1))
     # Obtenemos los datos basicos de todas las peliculas mediante multihilos
     tmdb.set_infoLabels(itemlist)
 
@@ -281,6 +297,8 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     patron = '(?s)id="online".*?server="([^"]+)"'
     mserver = scrapertools.find_single_match(data, patron)
+    if not item.query:
+        item.query = scrapertools.find_single_match(item.url, "peliculas.*?/[0-9]+/([^/]+)").replace("-","+")
     url_m = "http://olimpo.link/?q=%s&server=%s" %(item.query, mserver)
     patron  = 'class="favicon.*?domain=(?:www\.|)([^\.]+).*?text-overflow.*?href="([^"]+).*?'
     patron += '\[([^\]]+)\].*?\[([^\]]+)\]'
