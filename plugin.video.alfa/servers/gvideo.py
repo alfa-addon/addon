@@ -21,7 +21,7 @@ def test_video_exists(page_url):
     if "No+se+puede+procesar+este" in response.data:
         return False, "[gvideo] No se puede procesar este video"
     if response.code == 429:
-        return False, "[gvideo] Demasiadas conexiones al servidor, inténtelo despues"
+        return False, "[gvideo] Demasiadas conexiones al servidor, inténtelo después"
     return True, ""
 
 
