@@ -343,12 +343,14 @@ def bloque_enlaces(data, filtro_idioma, dict_idiomas, type, item):
 def play(item):
     logger.info()
     itemlist = []
-    if "api.cinetux" in item.url or item.server == "okru" or "drive.php" in item.url:
+    if "api.cinetux" in item.url or item.server == "okru" or "drive.php" in item.url or "youtube" in item.url:
         data = httptools.downloadpage(item.url, headers={'Referer': item.extra}).data.replace("\\", "")
         id = scrapertools.find_single_match(data, 'img src="[^#]+#(.*?)"')
         item.url = "http://docs.google.com/get_video_info?docid=" + id
         if item.server == "okru":
             item.url = "https://ok.ru/videoembed/" + id
+        if item.server == "youtube":
+            item.url = "https://www.youtube.com/embed/" + id 
     elif "links" in item.url or "www.cinetux.me" in item.url:
         data = httptools.downloadpage(item.url).data
         scrapedurl = scrapertools.find_single_match(data, '<a href="(http[^"]+)')

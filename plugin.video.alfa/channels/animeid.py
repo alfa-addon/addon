@@ -134,8 +134,7 @@ def novedades_episodios(item):
         contentTitle = scrapedtitle.replace('#' + episodio, '')
 
         itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, plot=scrapedplot,
-                             hasContentDetails=True, contentSeason=1, contentTitle=contentTitle))
+                             thumbnail=scrapedthumbnail, plot=scrapedplot, contentSeason=1, contentTitle=contentTitle))
 
     return itemlist
 

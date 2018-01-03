@@ -9,8 +9,6 @@ from platformcode import logger
 
 def test_video_exists(page_url):
 
-    if 'googleusercontent' in page_url:
-        return True, ""
     response = httptools.downloadpage(page_url, cookies=False, headers={"Referer": page_url})
     if "no+existe" in response.data:
         return False, "[gvideo] El video no existe o ha sido borrado"
@@ -22,6 +20,8 @@ def test_video_exists(page_url):
         return False, "[gvideo] Se ha producido un error en el reproductor de google"
     if "No+se+puede+procesar+este" in response.data:
         return False, "[gvideo] No se puede procesar este video"
+    if response.code == 429:
+        return False, "[gvideo] Demasiadas conexiones al servidor, inténtelo después"
     return True, ""
 
 

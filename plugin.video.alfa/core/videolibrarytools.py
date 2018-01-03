@@ -268,8 +268,9 @@ def save_tvshow(item, episodelist):
         # Creamos tvshow.nfo, si no existe, con la head_nfo, info de la serie y marcas de episodios vistos
         logger.info("Creando tvshow.nfo: " + tvshow_path)
         head_nfo = scraper.get_nfo(item)
-
-        item_tvshow = Item(title=item.contentTitle, channel="videolibrary", action="get_seasons",
+        item.infoLabels['mediatype'] = "tvshow"
+        item.infoLabels['title'] = item.contentSerieName
+        item_tvshow = Item(title=item.contentSerieName, channel="videolibrary", action="get_seasons",
                            fanart=item.infoLabels['fanart'], thumbnail=item.infoLabels['thumbnail'],
                            infoLabels=item.infoLabels, path=path.replace(TVSHOWS_PATH, ""))
         item_tvshow.library_playcounts = {}
@@ -294,7 +295,6 @@ def save_tvshow(item, episodelist):
 
     if item.channel != "downloads":
         item_tvshow.active = 1  # para que se actualice a diario cuando se llame a videolibrary_service
-
     filetools.write(tvshow_path, head_nfo + item_tvshow.tojson())
 
     if not episodelist:
@@ -439,7 +439,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                         news_in_playcounts["season %s" % e.contentSeason] = 0
                         # Marcamos la serie como no vista
                         # logger.debug("serie " + serie.tostring('\n'))
-                        news_in_playcounts[serie.contentTitle] = 0
+                        news_in_playcounts[serie.contentSerieName] = 0
 
                     else:
                         logger.info("Sobreescrito: %s" % json_path)
