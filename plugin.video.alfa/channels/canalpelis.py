@@ -143,14 +143,10 @@ def peliculas(item):
             contentTitle = scrapedtitle.partition(':')[0].partition(',')[0]
             title = "%s [COLOR green][%s][/COLOR] [COLOR yellow][%s][/COLOR]" % (
                 scrapedtitle, year, quality)
-            thumb_id = scrapertools.find_single_match(scrapedthumbnail, '.*?\/uploads\/(.*?)-')
-            thumbnail = "/%s.jpg" % thumb_id
-            filtro_list = {"poster_path": thumbnail}
-            filtro_list = filtro_list.items()
 
             itemlist.append(item.clone(channel=__channel__, action="findvideos", text_color=color3,
-                                       url=scrapedurl, infoLabels={'filtro':filtro_list},
-                                       contentTitle=contentTitle, thumbnail=thumbnail,
+                                       url=scrapedurl, infoLabels={'year': year},
+                                       contentTitle=contentTitle, thumbnail=scrapedthumbnail,
                                        title=title, context="buscar_trailer", quality = quality))
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
@@ -168,17 +164,17 @@ def peliculas(item):
 
     for item in itemlist:
         if item.infoLabels['plot'] == '':
-            data = httptools.downloadpage(item.url).data
-            data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+            datas = httptools.downloadpage(item.url).data
+            datas = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", datas)
             item.fanart = scrapertools.find_single_match(
-                data, "<meta property='og:image' content='([^']+)' />")
+                datas, "<meta property='og:image' content='([^']+)' />")
             item.fanart = item.fanart.replace('w780', 'original')
-            item.plot = scrapertools.find_single_match(data, '</span></h4><p>([^*]+)</p><h4')
+            item.plot = scrapertools.find_single_match(datas, '</h4><p>(.*?)</p>')
             item.plot = scrapertools.htmlclean(item.plot)
             item.infoLabels['director'] = scrapertools.find_single_match(
-                data, '<div class="name"><a href="[^"]+">([^<]+)</a>')
+                datas, '<div class="name"><a href="[^"]+">([^<]+)</a>')
             item.infoLabels['genre'] = scrapertools.find_single_match(
-                data, 'rel="tag">[^<]+</a><a href="[^"]+" rel="tag">([^<]+)</a>')
+                datas, 'rel="tag">[^<]+</a><a href="[^"]+" rel="tag">([^<]+)</a>')
 
     return itemlist
 
@@ -189,8 +185,7 @@ def generos(item):
 
     data = scrapertools.cache_page(item.url)
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    # logger.info(data)
-    # url, title, cantidad
+
     patron = '<li class="cat-item cat-item-[^"]+"><a href="([^"]+)" title="[^"]+">([^<]+)</a> <i>([^<]+)</i></li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -216,29 +211,30 @@ def year_release(item):
     for scrapedurl, scrapedtitle in matches:
 
         itemlist.append(item.clone(channel=item.channel, action="peliculas", title=scrapedtitle, page=0,
-                             url=scrapedurl, text_color=color3, viewmode="movie_with_plot", extra='next'))
+                                   url=scrapedurl, text_color=color3, viewmode="movie_with_plot", extra='next'))
 
     return itemlist
 
 
 def series(item):
     logger.info()
-
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    # logger.info(datas)
+    data = re.sub(r"\n|\r|\t|\(.*?\)|&nbsp;|<br>", "", data)
 
-    patron = '<div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?<a href="([^"]+)">'
+    patron = '<div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?<a href="([^"]+)">.*?'
+    patron += '<div class="texto">([^<]+)</div>'
 
     matches = scrapertools.find_multiple_matches(data, patron)
 
-    for scrapedthumbnail, scrapedtitle, scrapedurl in matches:
+    for scrapedthumbnail, scrapedtitle, scrapedurl, plot in matches:
+        if plot == '':
+            plot = scrapertools.find_single_match(data, '<div class="texto">([^<]+)</div>')
         scrapedtitle = scrapedtitle.replace('Ver ', '').replace(
-            ' Online HD', '').replace('ver ', '').replace(' Online', '')
+            ' Online HD', '').replace('ver ', '').replace(' Online', '').replace(' (Serie TV)', '').strip()
         itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, action="temporadas",
-                                   contentSerieName=scrapedtitle, show=scrapedtitle,
+                                   contentSerieName=scrapedtitle, show=scrapedtitle, plot=plot,
                                    thumbnail=scrapedthumbnail, contentType='tvshow'))
 
     url_next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
@@ -258,7 +254,6 @@ def temporadas(item):
 
     data = httptools.downloadpage(item.url).data
     datas = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    # logger.info(datas)
     patron = '<span class="title">([^<]+)<i>.*?'  # numeros de temporadas
     patron += '<img src="([^"]+)"></a></div>'  # capitulos
 
@@ -267,7 +262,7 @@ def temporadas(item):
         for scrapedseason, scrapedthumbnail in matches:
             scrapedseason = " ".join(scrapedseason.split())
             temporada = scrapertools.find_single_match(scrapedseason, '(\d+)')
-            new_item = item.clone(action="episodios", season=temporada, thumbnail=scrapedthumbnail)
+            new_item = item.clone(action="episodios", season=temporada, thumbnail=scrapedthumbnail, extra='temporadas')
             new_item.infoLabels['season'] = temporada
             new_item.extra = ""
             itemlist.append(new_item)
@@ -284,6 +279,11 @@ def temporadas(item):
                 i.thumbnail = i.infoLabels['poster_path']
 
         itemlist.sort(key=lambda it: it.title)
+
+    if config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(Item(channel=__channel__, title="Añadir esta serie a la videoteca", url=item.url,
+                             action="add_serie_to_library", extra="episodios", show=item.show, category="Series",
+                             text_color=color1, thumbnail=thumbnail_host, fanart=fanart_host))
 
         return itemlist
     else:
@@ -358,8 +358,6 @@ def findvideos(item):
     patron = '<div id="option-(\d+)" class="play-box-iframe.*?src="([^"]+)" frameborder="0" scrolling="no" allowfullscreen></iframe>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    # matches = re.compile(patron, re.DOTALL).findall(data)
-
     for option, url in matches:
         datas = httptools.downloadpage(urlparse.urljoin(host, url),
                                                   headers={'Referer': item.url}).data
@@ -375,10 +373,9 @@ def findvideos(item):
         itemlist.append(item.clone(action='play', url=url, title=title, extra1=title,
                                    server=server, language = lang, text_color=color3))
 
-    itemlist.append(Item(channel=item.channel,
-                         title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                         url=item.url, action="add_pelicula_to_library",
-                         thumbnail='https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/libreria.png',
-                         extra="findvideos", contentTitle=item.contentTitle))
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'episodios':
+        itemlist.append(Item(channel=__channel__, url=item.url, action="add_pelicula_to_library", extra="findvideos",
+                             title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                             thumbnail=thumbnail_host, contentTitle=item.contentTitle))
 
     return itemlist
