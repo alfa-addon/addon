@@ -72,7 +72,6 @@ def peliculas(item):
                              url = scrapedurl,
                              thumbnail = scrapedthumbnail,
                              plot = plot,
-                             hasContentDetails = True,
                              contentTitle = scrapedtitle,
                              contentType = "movie",
                              language=language,

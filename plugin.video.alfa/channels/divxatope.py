@@ -260,14 +260,16 @@ def findvideos(item):
     item.plot = scrapertools.find_single_match(data, '<div class="post-entry" style="height:300px;">(.*?)</div>')
     item.plot = scrapertools.htmlclean(item.plot).strip()
     item.contentPlot = item.plot
-
-    link = scrapertools.find_single_match(data, 'location\.href.*?=.*?"http:\/\/(?:tumejorserie|tumejorjuego).*?link=(.*?)"')
-    if link != "":
-        link = "http://www.divxatope1.com/" + link
-        logger.info("torrent=" + link)
+    al_url_fa = scrapertools.find_single_match(data, 'location\.href.*?=.*?"http:\/\/(?:tumejorserie|tumejorjuego).*?link=(.*?)"')
+    if al_url_fa == "":
+        al_url_fa = scrapertools.find_single_match(data,
+                                              'location\.href.*?=.*?"http:\/\/divxatope1.com/(.*?)"')
+    if al_url_fa != "":
+        al_url_fa = "http://www.divxatope1.com/" + al_url_fa
+        logger.info("torrent=" + al_url_fa)
         itemlist.append(
             Item(channel=item.channel, action="play", server="torrent", title="Vídeo en torrent", fulltitle=item.title,
-                 url=link, thumbnail=servertools.guess_server_thumbnail("torrent"), plot=item.plot, folder=False,
+                 url=al_url_fa, thumbnail=servertools.guess_server_thumbnail("torrent"), plot=item.plot, folder=False,
                  parentContent=item))
 
     patron = '<div class=\"box1\"[^<]+<img[^<]+<\/div[^<]+<div class="box2">([^<]+)<\/div[^<]+<div class="box3">([^<]+)'
