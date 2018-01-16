@@ -98,7 +98,7 @@ class Main(xbmcgui.WindowXMLDialog):
         posy= 145
         space = 30
 
-        selected = 'selected.png'
+        selected = 'selected0.png'
         width = 260
         height = 30
         textcolor = "0xffffd700"

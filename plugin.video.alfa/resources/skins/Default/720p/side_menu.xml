@@ -14,7 +14,7 @@
             <top>0</top>
             <width>260</width>
             <height>725</height>
-            <texture border="2">side_menu/bg.png</texture>
+            <texture border="2">side_menu/bg0.png</texture>
         </control>
    <control type="image">
             <left>25</left>
