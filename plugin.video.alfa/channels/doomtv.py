@@ -222,11 +222,14 @@ def newest(categoria):
 def findvideos(item):
     logger.info()
     itemlist = []
-    #itemlist = get_url(item)
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    url_m3u8 = scrapertools.find_single_match(data, '<source src=(.*?) type=application/x-mpegURL\s*/>')
+    player_vip = scrapertools.find_single_match(data, 'src=(https:\/\/content.jwplatform.com\/players.*?js)')
+    data_m3u8 = httptools.downloadpage(player_vip, headers= {'referer':item.url}).data
+    data_m3u8 = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data_m3u8)
+    url_m3u8 = scrapertools.find_single_match(data_m3u8,',sources:.*?file: (.*?),')
     itemlist.append(item.clone(url=url_m3u8, action='play'))
+
     patron = 'id=(tab\d+)><div class=movieplay><(?:iframe|script) src=(.*?)(?:scrolling|><\/script>)'
     matches = re.compile(patron, re.DOTALL).findall(data)
 

@@ -14,8 +14,7 @@ from core import videolibrarytools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
-from channelselector import get_thumb
-
+from platformcode.logger import WebErrorException
 
 
 def start():
@@ -298,7 +297,19 @@ def run(item=None):
             logger.error("Codigo de error HTTP : %d" % e.code)
             # "El sitio web no funciona correctamente (error http %d)"
             platformtools.dialog_ok("alfa", config.get_localized_string(30051) % e.code)
+    except WebErrorException, e:
+        import traceback
+        logger.error(traceback.format_exc())
 
+        patron = 'File "' + os.path.join(config.get_runtime_path(), "channels", "").replace("\\",
+                                                                                            "\\\\") + '([^.]+)\.py"'
+        canal = scrapertools.find_single_match(traceback.format_exc(), patron)
+
+        platformtools.dialog_ok(
+            "Error en el canal " + canal,
+            "La web de la que depende parece no estar disponible, puede volver a intentarlo, "
+            "si el problema persiste verifique mediante un navegador la web: %s. "
+            "Si la web funciona correctamente informe el error en: www.alfa-addon.com" %(e))
     except:
         import traceback
         logger.error(traceback.format_exc())
