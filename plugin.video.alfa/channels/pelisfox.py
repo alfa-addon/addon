@@ -226,6 +226,7 @@ def findvideos(item):
     video_list = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+
     patron = '<li data-quality=(.*?) data-lang=(.*?)><a href=(.*?) title=.*?'
     matches = matches = re.compile(patron, re.DOTALL).findall(data)
     for quality, lang, scrapedurl in matches:
@@ -237,13 +238,20 @@ def findvideos(item):
                                    ))
     for videoitem in templist:
         data = httptools.downloadpage(videoitem.url).data
-        urls_list = scrapertools.find_multiple_matches(data, 'var.*?_SOURCE\s+=\s+\[(.*?)\]')
+        urls_list = scrapertools.find_single_match(data, 'var.*?_SOURCE\s+=\s+\[(.*?)\]')
+        urls_list = urls_list.split("},")
         for element in urls_list:
-            json_data=jsontools.load(element)
-            id = json_data['id']
-            sub = json_data['srt']
-            url = json_data['source']
+            if not element.endswith('}'):
+                element=element+'}'
+            json_data = jsontools.load(element)
+            if 'id' in json_data:
+                id = json_data['id']
+            sub=''
+            if 'srt' in json_data:
+                sub = json_data['srt']
 
+            url = json_data['source'].replace('\\','')
+            server = json_data['server']
             quality = json_data['quality']
             if 'http' not in url :
 
@@ -265,9 +273,9 @@ def findvideos(item):
                     video_url.server = ""
                     video_url.infoLabels = item.infoLabels
             else:
-                video_list.append(item.clone(title=item.title, url=url, action='play', quality = quality
-                                             ))
-    video_list = servertools.get_servers_itemlist(video_list, lambda i: i.title % i.server.capitalize())
+                title = '%s [%s]'% (server, quality)
+                video_list.append(item.clone(title=title, url=url, action='play', quality = quality,
+                                             server=server, subtitle=sub))
     tmdb.set_infoLabels(video_list)
     if config.get_videolibrary_support() and len(video_list) > 0 and item.extra != 'findvideos':
         video_list.append(
