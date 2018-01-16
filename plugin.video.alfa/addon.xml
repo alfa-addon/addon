@@ -10,7 +10,7 @@
   <extension point="xbmc.addon.metadata">
     <summary lang="es">Navega con Kodi por páginas web.</summary>
     <assets>
-      <icon>icon1.png</icon>
+      <icon>icon.png</icon>
       <fanart>fanart.jpg</fanart>
       <screenshot>resources/media/themes/ss/1.jpg</screenshot>
       <screenshot>resources/media/themes/ss/2.jpg</screenshot>
