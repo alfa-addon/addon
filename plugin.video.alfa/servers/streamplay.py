@@ -30,14 +30,24 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     referer = page_url.replace('iframe', 'preview')
     data = httptools.downloadpage(page_url, headers={'Referer': referer}).data
+    _0xd003 = scrapertools.find_single_match(data, 'var _0x[0-f]+=(\[[^;]+\]);')
+    # `forShift` and `forIndex` for Class S ----------------
+    regex = ";\}\([^,]+,([^\)]+)\)\);"
+    forShift = int(scrapertools.find_single_match(data, regex), 16)
+
+    regex = "new _0x[^\(]+\(_0x[^\(]+(\(.*?\))\);"
+    lineKey = scrapertools.find_single_match(data,regex)
+
+    regex = "\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)\s*([\+,]*)"
+    forIndex = scrapertools.find_multiple_matches(lineKey,regex)
+    # ------------------------------------------------------
     packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
     unpacked = jsunpack.unpack(packed)
-    _0xd003 = scrapertools.find_single_match(data, 'var _0x[0-f]+=(\[[^;]+\]);')
 
     video_urls = []
     url = scrapertools.find_single_match(unpacked, '(http[^,]+\.mp4)')
 
-    video_urls.append([".mp4" + " [streamplay]", S(_0xd003).decode(url)])
+    video_urls.append([".mp4" + " [streamplay]", S(_0xd003, forShift, forIndex).decode(url)])
 
     video_urls.sort(key=lambda x: x[0], reverse=True)
     for video_url in video_urls:
@@ -47,7 +57,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
 
 class S:
-    def __init__(self, var):
+    def __init__(self, var, forShift, forIndex):
         self.r = None
         self.s = None
         self.k = None
@@ -57,18 +67,15 @@ class S:
         self.d = None
 
         var = eval(var)
-        for x in range(0x1f0, 0, -1):
+        #for x in range(0x1f0, 0, -1):
+        for x in range(forShift, 0, -1):
             var.append(var.pop(0))
 
         self.var = var
-
-        self.t(
-            self.decode_index('0x22', '!UJH') +
-            self.decode_index('0x23', 'NpE)') +
-            self.decode_index('0x24', '4uT2') +
-            self.decode_index('0x23', 'NpE)'),
-            self.decode_index('0x25', '@ZC2')
-        )
+        _decode_index = "self.t("
+        for i, v, o in forIndex:
+          _decode_index += "self.decode_index('" + i + "','" + v + "') " + o
+        exec _decode_index + ")"
 
     def decode_index(self, index, key):
         b64_data = self.var[int(index, 16)];
