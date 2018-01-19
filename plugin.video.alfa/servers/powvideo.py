@@ -48,19 +48,18 @@ class S:
         self.c = None
         self.b = None
         self.d = None
-
         var = eval(var)
-        for x in range(0x1f0, 0, -1):
+        for x in range(0x0ac, 0, -1):
             var.append(var.pop(0))
 
         self.var = var
 
         self.t(
-            self.decode_index('0x22', '!UJH') +
-            self.decode_index('0x23', 'NpE)') +
-            self.decode_index('0x24', '4uT2') +
-            self.decode_index('0x23', 'NpE)'),
-            self.decode_index('0x25', '@ZC2')
+            self.decode_index('0x21', 'bGw%') +
+            self.decode_index('0x22', 'I&xf') +
+            self.decode_index('0x23', '[THM') +
+            self.decode_index('0x24', 'bGw%'),
+            self.decode_index('0x25', 'nLWZ')
         )
 
     def decode_index(self, index, key):
