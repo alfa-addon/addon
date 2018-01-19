@@ -76,3 +76,8 @@ def error(texto=""):
 
     xbmc.log("######## ERROR #########", xbmc.LOGERROR)
     xbmc.log(texto, xbmc.LOGERROR)
+
+
+class WebErrorException(Exception):
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)

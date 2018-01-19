@@ -136,18 +136,17 @@ def lista(item):
     itemlist = []
     data = get_source(item.url)
     patron = 'class=(?:MvTbImg|TPostMv).*?href=(.*?)\/(?:>| class).*?src=(.*?) class=attachment.*?'
-    patron += '(?:strong|class=Title)>(.*?)<.*?(?:<td|class=Year)>(.*?)<.*?class=Qlty>(.*?)<.*?'
+    patron += '(?:strong|class=Title)>(.*?)<.*?(?:<td|class=Year)>(.*?)<.*?'
     patron += '(?:<td|class=Description)>(.*?)<(?:\/td|\/p)>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedquality, scrapedplot in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedplot in matches:
         url = scrapedurl
         thumbnail = scrapedthumbnail
         plot = scrapedplot
-        quality = scrapedquality
+        quality = ''
         contentTitle = scrapedtitle
-        title = contentTitle + ' (%s)' % quality
+        title = contentTitle
         year = scrapedyear
 
         itemlist.append(item.clone(action='findvideos',
