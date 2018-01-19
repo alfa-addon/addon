@@ -3,6 +3,7 @@
 # httptools
 # --------------------------------------------------------------------------------
 
+import inspect
 import cookielib
 import gzip
 import os
@@ -15,6 +16,7 @@ from threading import Lock
 
 from core.cloudflare import Cloudflare
 from platformcode import config, logger
+from platformcode.logger import WebErrorException
 
 cookies_lock = Lock()
 
@@ -23,7 +25,7 @@ ficherocookies = os.path.join(config.get_data_path(), "cookies.dat")
 
 # Headers por defecto, si no se especifica nada
 default_headers = dict()
-default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3163.100 Safari/537.36"
+default_headers["User-Agent"] = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3163.100 Safari/537.36"
 default_headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
 default_headers["Accept-Language"] = "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3"
 default_headers["Accept-Charset"] = "UTF-8"
@@ -205,8 +207,18 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
     logger.info("Response error: %s" % (response["error"]))
     logger.info("Response data length: %s" % (len(response["data"])))
     logger.info("Response headers:")
+    server_cloudflare = ""
     for header in response["headers"]:
         logger.info("- %s: %s" % (header, response["headers"][header]))
+        if "cloudflare" in response["headers"][header]:
+            server_cloudflare = "cloudflare"
+
+    is_channel = inspect.getmodule(inspect.currentframe().f_back)
+    # error 4xx o 5xx se lanza excepcion
+    # response["code"] = 400
+    if type(response["code"]) ==  int and "\\servers\\" not in str(is_channel):
+        if response["code"] > 399 and (server_cloudflare == "cloudflare" and response["code"] != 503):
+            raise WebErrorException(urlparse.urlparse(url)[1])
 
     if cookies:
         save_cookies()
