@@ -305,7 +305,6 @@ def findvideos(item):
 
     if filtro_enlaces != 1:
         list_links.extend(parse_videos(item, "Descargar", online[-1]))
-
     list_links = filtertools.get_links(list_links, item, list_idiomas, CALIDADES)
 
     for i in range(len(list_links)):
@@ -315,6 +314,7 @@ def findvideos(item):
         d=c[0].rstrip( )
         d=d.lstrip( )
         list_links[i].server=d.replace("streamix", "streamixcloud")
+        list_links[i].server=d.replace("uploaded", "uploadedto")
 
     list_links = servertools.get_servers_itemlist(list_links)
     autoplay.start(list_links, item)
