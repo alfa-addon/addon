@@ -121,7 +121,7 @@ def episodios(item):
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]", url=item.url,
-                             action="add_serie_to_library", extra="episodios", show=show))
+                             action="add_serie_to_library", extra="episodios", show=item.title))
 
     return itemlist
 
@@ -162,7 +162,7 @@ def findvideos(item):
             url = googl(url)
             server='netutv'
         if "ok" in url:
-            url = googl(url)
+            url = "https:"+url
             server='okru'
         quality="360p"
         itemlist.append(item.clone(url=url, action="play",
