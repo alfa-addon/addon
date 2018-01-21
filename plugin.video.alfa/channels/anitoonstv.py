@@ -144,7 +144,6 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     data1 = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     data_vid = scrapertools.find_single_match(data1, 'var q = \[ \[(.+?)\] \]')
-    logger.info("h12ghcvh1  "+data_vid)
     # name = scrapertools.find_single_match(data,'<span>Titulo.+?<\/span>([^<]+)<br>')
     scrapedplot = scrapertools.find_single_match(data, '<br><span>Descrip.+?<\/span>([^<]+)<br>')
     scrapedthumbnail = scrapertools.find_single_match(data, '<div class="caracteristicas"><img src="([^<]+)">')
@@ -162,6 +161,9 @@ def findvideos(item):
         if "goo" in url:
             url = googl(url)
             server='netutv'
+        if "ok" in url:
+            url = googl(url)
+            server='okru'
         quality="360p"
         itemlist.append(item.clone(url=url, action="play",
                                    thumbnail=scrapedthumbnail, server=server, plot=scrapedplot,
