@@ -34,12 +34,12 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, action="lista", title="Series", url=host+"/lista-de-anime.php",
                          thumbnail=thumb_series))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Series Animadas", url=host,
-                         thumbnail=thumb_series))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Novedades", url=host,
-                         thumbnail=thumb_series))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Pokemon", url=host,
-                         thumbnail=thumb_series))
+    #itemlist.append(Item(channel=item.channel, action="lista", title="Series Animadas", url=host,
+    #                     thumbnail=thumb_series))
+    #itemlist.append(Item(channel=item.channel, action="lista", title="Novedades", url=host,
+    #                     thumbnail=thumb_series))
+    #itemlist.append(Item(channel=item.channel, action="lista", title="Pokemon", url=host,
+    #                     thumbnail=thumb_series))
     itemlist = renumbertools.show_option(item.channel, itemlist)
     autoplay.show_option(item.channel, itemlist)
     return itemlist
