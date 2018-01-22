@@ -4,14 +4,12 @@ import re
 import base64
 import urllib
 
-
 from core import httptools
 from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
 
 headers = [['User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:53.0) Gecko/20100101 Firefox/53.0']]
-host = "http://streamplay.to/"
 
 
 def test_video_exists(page_url):
@@ -26,24 +24,25 @@ def test_video_exists(page_url):
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
-    logger.info("(page_url='%s')" % page_url)
+    logger.info()
+    itemlist = []
 
-    referer = page_url.replace('iframe', 'preview')
+    referer = re.sub(r"embed-|player-", "", page_url)[:-5]
+
     data = httptools.downloadpage(page_url, headers={'Referer': referer}).data
+
+    if data == "File was deleted":
+        return "El archivo no existe o ha sido borrado"
+
     packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
     unpacked = jsunpack.unpack(packed)
-    _0xd003 = scrapertools.find_single_match(data, 'var _0x[0-f]+=(\[[^;]+\]);')
+    var = scrapertools.find_single_match(data, 'var _0x[0-f]+=(\[[^;]+\]);')
 
-    video_urls = []
     url = scrapertools.find_single_match(unpacked, '(http[^,]+\.mp4)')
+    itemlist.append([".mp4" + " [streamplay]", S(var).decode(url)])
+    itemlist.sort(key=lambda x: x[0], reverse=True)
 
-    video_urls.append([".mp4" + " [streamplay]", S(_0xd003).decode(url)])
-
-    video_urls.sort(key=lambda x: x[0], reverse=True)
-    for video_url in video_urls:
-        logger.info("%s - %s" % (video_url[0], video_url[1]))
-
-    return video_urls
+    return itemlist
 
 
 class S:
@@ -57,21 +56,21 @@ class S:
         self.d = None
 
         var = eval(var)
-        for x in range(0x1f0, 0, -1):
+        for x in range(0xf8, 0, -1):
             var.append(var.pop(0))
 
         self.var = var
 
         self.t(
-            self.decode_index('0x22', '!UJH') +
-            self.decode_index('0x23', 'NpE)') +
-            self.decode_index('0x24', '4uT2') +
-            self.decode_index('0x23', 'NpE)'),
-            self.decode_index('0x25', '@ZC2')
+            self.decode_index('0xb') +
+            self.decode_index('0xc') +
+            self.decode_index('0xd') +
+            self.decode_index('0xe'),
+            self.decode_index('0xf')
         )
 
-    def decode_index(self, index, key):
-        b64_data = self.var[int(index, 16)];
+    def decode_index(self, index, key=None):
+        b64_data = self.var[int(index, 16)]
         result = ''
         _0xb99338 = 0x0
         _0x25e3f4 = 0x0
@@ -79,25 +78,28 @@ class S:
         data = base64.b64decode(b64_data)
         data = urllib.unquote(data).decode('utf8')
 
-        _0x5da081 = [x for x in range(0x100)]
+        if key:
+            _0x5da081 = [x for x in range(0x100)]
 
-        for x in range(0x100):
-            _0xb99338 = (_0xb99338 + _0x5da081[x] + ord(key[x % len(key)])) % 0x100
-            _0x139847 = _0x5da081[x]
-            _0x5da081[x] = _0x5da081[_0xb99338]
-            _0x5da081[_0xb99338] = _0x139847
+            for x in range(0x100):
+                _0xb99338 = (_0xb99338 + _0x5da081[x] + ord(key[x % len(key)])) % 0x100
+                _0x139847 = _0x5da081[x]
+                _0x5da081[x] = _0x5da081[_0xb99338]
+                _0x5da081[_0xb99338] = _0x139847
 
-        _0xb99338 = 0x0
+            _0xb99338 = 0x0
 
-        for _0x11ebc5 in range(len(data)):
-            _0x25e3f4 = (_0x25e3f4 + 0x1) % 0x100
-            _0xb99338 = (_0xb99338 + _0x5da081[_0x25e3f4]) % 0x100
-            _0x139847 = _0x5da081[_0x25e3f4]
-            _0x5da081[_0x25e3f4] = _0x5da081[_0xb99338]
-            _0x5da081[_0xb99338] = _0x139847
-            result += chr(ord(data[_0x11ebc5]) ^ _0x5da081[(_0x5da081[_0x25e3f4] + _0x5da081[_0xb99338]) % 0x100])
+            for _0x11ebc5 in range(len(data)):
+                _0x25e3f4 = (_0x25e3f4 + 0x1) % 0x100
+                _0xb99338 = (_0xb99338 + _0x5da081[_0x25e3f4]) % 0x100
+                _0x139847 = _0x5da081[_0x25e3f4]
+                _0x5da081[_0x25e3f4] = _0x5da081[_0xb99338]
+                _0x5da081[_0xb99338] = _0x139847
+                result += chr(ord(data[_0x11ebc5]) ^ _0x5da081[(_0x5da081[_0x25e3f4] + _0x5da081[_0xb99338]) % 0x100])
 
-        return result
+            return result
+        else:
+            return data
 
     def decode(self, url):
         _hash = re.compile('[A-z0-9_-]{40,}', re.DOTALL).findall(url)[0]
