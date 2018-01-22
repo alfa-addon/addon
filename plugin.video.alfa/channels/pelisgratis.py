@@ -135,9 +135,8 @@ def lista(item):
     logger.info()
     itemlist = []
     data = get_source(item.url)
-    patron = 'class=(?:MvTbImg|TPostMv).*?href=(.*?)\/(?:>| class).*?src=(.*?) class=attachment.*?'
-    patron += '(?:strong|class=Title)>(.*?)<.*?(?:<td|class=Year)>(.*?)<.*?'
-    patron += '(?:<td|class=Description)>(.*?)<(?:\/td|\/p)>'
+    patron = 'class=(?:MvTbImg|TPostMv).*?href=(.*?)\/(?:>| class).*?src=(.*?) '
+    patron += 'class=Title>(.*?)<.*?(?:<td|class=Year)>(.*?)<.*?(?:<td|class=Description)>(.*?)<(?:\/td|\/p)>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedplot in matches:

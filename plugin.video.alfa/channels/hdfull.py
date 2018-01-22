@@ -646,6 +646,7 @@ def findvideos(item):
     key = scrapertools.find_single_match(data_js, 'JSON.parse\(atob.*?substrings\((.*?)\)')
 
     data_js = httptools.downloadpage("http://hdfull.tv/js/providers.js").data
+
     try:
         data_js = jhexdecode(data_js)
     except:
@@ -667,10 +668,11 @@ def findvideos(item):
     infolabels["year"] = year
     matches = []
     for match in data_decrypt:
-        prov = eval(scrapertools.find_single_match(data_js, 'p\[%s\]\s*=\s*(\{.*?\}[\'"]\})' % match["provider"]))
-        function = prov["l"].replace("code", match["code"]).replace("var_1", match["code"])
+        prov = eval(scrapertools.find_single_match(data_js, 'p\[%s\]\s*=\s*(\{.*?\}[\']\})' % match["provider"]))
 
-        url = scrapertools.find_single_match(function, "return\s*(.*?)[;]*\}")
+        server_url = scrapertools.find_single_match(prov['l'], 'return\s*"(.*?)"')
+
+        url = '%s%s' % (server_url, match['code'])
         url = re.sub(r'\'|"|\s|\+', '', url)
         url = re.sub(r'var_\d+\[\d+\]', '', url)
         embed = prov["e"]
@@ -691,6 +693,8 @@ def findvideos(item):
                                                                     '<meta property="og:description" content="([^"]+)"')
         plot = scrapertools.htmlclean(plot)
         fanart = scrapertools.find_single_match(data, '<div style="background-image.url. ([^\s]+)')
+
+
         if account:
             url += "###" + id + ";" + type
         it2.append(
@@ -826,8 +830,19 @@ def get_status(status, type, id):
 
 
 def jhexdecode(t):
-    r = re.sub(r'_\d+x\w+x(\d+)', 'var_' + r'\1', t)
-    r = re.sub(r'_\d+x\w+', 'var_0', r)
+
+
+
+    k = re.sub(r'(_0x.{4})(?=\(|=)', 'var_0', t).replace('\'','\"')
+    def to_hex(c, type):
+        h = int("%s" % c, 16)
+        if type == '1':
+            return 'p[%s]' % h
+        if type == '2':
+            return '[%s]' % h
+
+    x = re.sub(r'(?:p\[)(0x.{,2})(?:\])', lambda z: to_hex(z.group(1), '1'), k)
+    y = re.sub(r'(?:\(")(0x.{,2})(?:"\))', lambda z: to_hex(z.group(1), '2'), x)
 
     def to_hx(c):
         h = int("%s" % c.groups(0), 16)
@@ -835,8 +850,14 @@ def jhexdecode(t):
             return chr(h)
         else:
             return ""
+    r = re.sub(r'(?:\\|)x(\w{2})(?=[^\w\d])', to_hx, y).replace('var ', '')
+    server_list = eval(scrapertools.find_single_match(r, '=(\[.*?\])'))
 
-    r = re.sub(r'(?:\\|)x(\w{2})', to_hx, r).replace('var ', '')
+    for val in range(475,0, -1):
+        server_list.append(server_list[0])
+        server_list.pop(0)
+
+    r = re.sub(r'=\[(.*?)\]', '=%s' % str(server_list), r)
 
     f = eval(scrapertools.get_match(r, '\s*var_0\s*=\s*([^;]+);'))
     for i, v in enumerate(f):

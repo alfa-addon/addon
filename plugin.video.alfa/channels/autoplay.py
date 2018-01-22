@@ -275,11 +275,23 @@ def start(itemlist, item):
                                 videoitem = resolved_item[0]
 
                     # si no directamente reproduce y marca como visto
-                    from platformcode import xbmc_videolibrary
-                    xbmc_videolibrary.mark_auto_as_watched(item)
-                    #platformtools.play_video(videoitem)
                     videoitem.contentChannel='videolibrary'
-                    launcher.run(videoitem)
+                    import importlib
+                    actual_server="servers."+videoitem.server
+                    i = importlib.import_module(actual_server)
+                    #from servers import streamango
+                    try:
+                        testv=i.test_video_exists(videoitem.url)
+                        logger.info(testv)
+                    except:
+                        testv=(True,'')
+                        logger.debug("La funcion no existe en el conector "+videoitem.server)
+                    testvideo=list(testv)
+                    if testvideo[0]==True:
+                        from platformcode import xbmc_videolibrary
+                        xbmc_videolibrary.mark_auto_as_watched(item)
+                        #platformtools.play_video(videoitem)
+                        launcher.run(videoitem)
 
                     try:
                         if platformtools.is_playing():
