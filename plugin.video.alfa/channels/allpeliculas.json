@@ -8,8 +8,7 @@
   "banner": "allpeliculas.png",
   "categories": [
     "movie",
-    "vos",
-    "tvshow"
+    "vos"
   ],
   "settings": [
     {
