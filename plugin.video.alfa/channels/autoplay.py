@@ -79,19 +79,9 @@ def start(itemlist, item):
     :return: intenta autoreproducir, en caso de fallar devuelve el itemlist que recibio en un principio
     '''
     logger.info()
-    for videoitem in itemlist:
-        #Nos dice de donde viene si del addon o videolibrary
-        if item.contentChannel=='videolibrary':
-            videoitem.contentEpisodeNumber=item.contentEpisodeNumber
-            videoitem.contentPlot=item.contentPlot
-            videoitem.contentSeason=item.contentSeason
-            videoitem.contentSerieName=item.contentSerieName
-            videoitem.contentTitle=item.contentTitle
-            videoitem.contentType=item.contentType
-            videoitem.episode_id=item.episode_id
-            #videoitem.infoLabels=item.infoLabels
-            videoitem.thumbnail=item.thumbnail
-            #videoitem.title=item.title
+    logger.debug('item inicial %s' % item)
+
+
     if not config.is_xbmc():
         #platformtools.dialog_notification('AutoPlay ERROR', 'Sólo disponible para XBMC/Kodi')
         return itemlist
@@ -245,9 +235,10 @@ def start(itemlist, item):
                 platformtools.stop_video()
 
             for autoplay_elem in autoplay_list:
+                play_item = Item
                 if not platformtools.is_playing() and not played:
                     videoitem = autoplay_elem['videoitem']
-
+                    logger.debug('videoitem %s' % videoitem)
                     if videoitem.server not in max_intentos_servers:
                         max_intentos_servers[videoitem.server] = max_intentos
 
@@ -274,24 +265,23 @@ def start(itemlist, item):
                             else:
                                 videoitem = resolved_item[0]
 
-                    # si no directamente reproduce y marca como visto
-                    videoitem.contentChannel='videolibrary'
-                    import importlib
-                    actual_server="servers."+videoitem.server
-                    i = importlib.import_module(actual_server)
-                    #from servers import streamango
+                    # Si no directamente reproduce y marca como visto
+
+                    # Verifica si el item viene de la videoteca
                     try:
-                        testv=i.test_video_exists(videoitem.url)
-                        logger.info(testv)
+                        if item.contentChannel =='videolibrary':
+                            # Marca como visto
+                            from platformcode import xbmc_videolibrary
+                            xbmc_videolibrary.mark_auto_as_watched(item)
+                            # Rellena el video con los datos del item principal y reproduce
+                            play_item = item.clone(url=videoitem)
+                            platformtools.play_video(play_item.url, autoplay=True)
+                        else:
+                            # Si no viene de la videoteca solo reproduce
+                            platformtools.play_video(videoitem, autoplay=True)
                     except:
-                        testv=(True,'')
-                        logger.debug("La funcion no existe en el conector "+videoitem.server)
-                    testvideo=list(testv)
-                    if testvideo[0]==True:
-                        from platformcode import xbmc_videolibrary
-                        xbmc_videolibrary.mark_auto_as_watched(item)
-                        #platformtools.play_video(videoitem)
-                        launcher.run(videoitem)
+                        pass
+
 
                     try:
                         if platformtools.is_playing():
@@ -310,6 +300,9 @@ def start(itemlist, item):
                         if not platformtools.dialog_yesno("AutoPlay", text,
                                                           "¿Desea ignorar todos los enlaces de este servidor?"):
                             max_intentos_servers[videoitem.server] = max_intentos
+                    logger.debug('elem: %s list %s' % (autoplay_list.index(autoplay_elem),autoplay_list[-1]))
+                    if autoplay_elem == autoplay_list[-1]:
+                        platformtools.dialog_notification('AutoPlay', 'No hubo enlaces funcionales')
 
         else:
             platformtools.dialog_notification('AutoPlay No Fue Posible', 'No Hubo Coincidencias')
