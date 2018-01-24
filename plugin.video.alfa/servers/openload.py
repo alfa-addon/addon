@@ -24,7 +24,12 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info()
     itemlist = []
 
-    data = httptools.downloadpage(page_url, cookies=False).data
+    header = {}
+    if "|" in page_url:
+        page_url, referer = page_url.split("|", 1)
+        header = {'Referer': referer}
+
+    data = httptools.downloadpage(page_url, cookies=False, headers=header).data
 
 
     subtitle = scrapertools.find_single_match(data, '<track kind="captions" src="([^"]+)" srclang="es"')
