@@ -272,7 +272,7 @@ def findvideos(item):
                 "http://filescdn.com/": "filescdn",
                 "https://www.yourupload.com/watch/": "yourupload",
                 "http://www.cinecalidad.to/protect/gdredirect.php?l=": "directo",
-                "https://openload.co/embed/": "openload"
+                "https://openload.co/embed/": "openload",
                 }
 
     logger.info()
@@ -298,7 +298,7 @@ def findvideos(item):
             server = server_id.lower()
             thumbnail = item.contentThumbnail
             if server_id == 'TVM':
-                server = 'thevideo.me'
+                server = 'thevideome'
                 url = server_url[server_id] + video_id + '.html'
             else:
                 url = server_url[server_id] + video_id
