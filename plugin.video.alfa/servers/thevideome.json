@@ -6,6 +6,10 @@
       {
         "pattern": "(?:thevideo.me|tvad.me|thevid.net)/(?:embed-|)([A-z0-9]+)",
         "url": "http://thevideo.me/embed-\\1.html"
+      },
+      {
+        "pattern": "(?:thevideo.me|tvad.me|thevid.net|thevideo.us)/(?:embed-|)([A-z0-9]+)",
+        "url": "http://thevideo.me/embed-\\1.html"
       }
     ]
   },
