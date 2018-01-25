@@ -503,7 +503,7 @@ def is_playing():
     return xbmc.Player().isPlaying()
 
 
-def play_video(item, strm=False, force_direct=False):
+def play_video(item, strm=False, force_direct=False, autoplay=False):
     logger.info()
     # logger.debug(item.tostring('\n'))
 
@@ -523,7 +523,7 @@ def play_video(item, strm=False, force_direct=False):
     logger.info("default_action=%s" % default_action)
 
     # Abre el diálogo de selección para ver las opciones disponibles
-    opciones, video_urls, seleccion, salir = get_dialogo_opciones(item, default_action, strm)
+    opciones, video_urls, seleccion, salir = get_dialogo_opciones(item, default_action, strm, autoplay)
     if salir:
         return
 
@@ -669,7 +669,7 @@ def handle_wait(time_to_wait, title, text):
         return True
 
 
-def get_dialogo_opciones(item, default_action, strm):
+def get_dialogo_opciones(item, default_action, strm, autoplay):
     logger.info()
     # logger.debug(item.tostring('\n'))
     from core import servertools
@@ -690,6 +690,7 @@ def get_dialogo_opciones(item, default_action, strm):
 
     # Extrae las URL de los vídeos, y si no puedes verlo te dice el motivo
     # Permitir varias calidades para server "directo"
+
     if item.video_urls:
         video_urls, puedes, motivo = item.video_urls, True, ""
     else:
@@ -730,22 +731,24 @@ def get_dialogo_opciones(item, default_action, strm):
 
     # Si no puedes ver el vídeo te informa
     else:
-        if item.server != "":
-            if "<br/>" in motivo:
-                dialog_ok("No puedes ver ese vídeo porque...", motivo.split("<br/>")[0], motivo.split("<br/>")[1],
-                          item.url)
+        logger.debug('no puedes verlo :P')
+        if not autoplay:
+            if item.server != "":
+                if "<br/>" in motivo:
+                    dialog_ok("No puedes ver ese vídeo porque...", motivo.split("<br/>")[0], motivo.split("<br/>")[1],
+                              item.url)
+                else:
+                    dialog_ok("No puedes ver ese vídeo porque...", motivo, item.url)
             else:
-                dialog_ok("No puedes ver ese vídeo porque...", motivo, item.url)
-        else:
-            dialog_ok("No puedes ver ese vídeo porque...", "El servidor donde está alojado no está",
-                      "soportado en alfa todavía", item.url)
+                dialog_ok("No puedes ver ese vídeo porque...", "El servidor donde está alojado no está",
+                          "soportado en alfa todavía", item.url)
 
-        if item.channel == "favorites":
-            # "Quitar de favoritos"
-            opciones.append(config.get_localized_string(30154))
+            if item.channel == "favorites":
+                # "Quitar de favoritos"
+                opciones.append(config.get_localized_string(30154))
 
-        if len(opciones) == 0:
-            error = True
+            if len(opciones) == 0:
+                error = True
 
     return opciones, video_urls, seleccion, error
 

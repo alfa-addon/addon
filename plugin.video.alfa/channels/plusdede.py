@@ -761,7 +761,10 @@ def play(item):
             videoitem.channel = item.channel
 
         # Marcar como visto
-        checkseen(item)
+        try:
+            checkseen(item)
+        except:
+            pass
 
         return itemlist
 
