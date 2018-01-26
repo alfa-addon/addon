@@ -21,7 +21,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="series", title="Sin Censura",
                          url=urlparse.urljoin(CHANNEL_HOST, "archivos/sin-censura/")))
     itemlist.append(Item(channel=item.channel, action="series", title="High Definition",
-                         url=urlparse.urljoin(CHANNEL_HOST, "archivos/hight-definition/")))
+                         url=urlparse.urljoin(CHANNEL_HOST, "archivos/high-definition/")))
     itemlist.append(Item(channel=item.channel, action="series", title="Mejores Hentais",
                          url=urlparse.urljoin(CHANNEL_HOST, "archivos/ranking-hentai/")))
 
@@ -75,7 +75,7 @@ def series(item):
                              show=show, fulltitle=fulltitle, fanart=thumbnail, folder=True))
 
     if pagination:
-        page = scrapertools.find_single_match(pagination, '>Página\s*(\d+)\s*de\s*\d+<')
+        page = scrapertools.find_single_match(pagination, '>Page\s*(\d+)\s*of\s*\d+<')
         pattern = 'href="([^"]+)">%s<' % (int(page) + 1)
         url_page = scrapertools.find_single_match(pagination, pattern)
 
