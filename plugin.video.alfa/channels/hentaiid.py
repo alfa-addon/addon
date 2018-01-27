@@ -75,7 +75,7 @@ def series(item):
                              show=show, fulltitle=fulltitle, fanart=thumbnail, folder=True))
 
     if pagination:
-        page = scrapertools.find_single_match(pagination, '>Page\s*(\d+)\s*of\s*\d+<')
+        page = scrapertools.find_single_match(pagination, '>(?:Page|Página)\s*(\d+)\s*(?:of|de)\s*\d+<')
         pattern = 'href="([^"]+)">%s<' % (int(page) + 1)
         url_page = scrapertools.find_single_match(pagination, pattern)
 
