@@ -54,7 +54,7 @@ def show_option(channel, itemlist, text_color='yellow', thumbnail=None, fanart=N
         fanart = 'https://s7.postimg.org/65ooga04b/Auto_Play.png'
 
     plot_autoplay = 'AutoPlay permite auto reproducir los enlaces directamente, basándose en la configuracion de tus ' \
-                    'servidores y calidades preferidas. '
+                    'servidores y calidades favoritas. '
     itemlist.append(
         Item(channel=__channel__,
              title="Configurar AutoPlay",
@@ -79,8 +79,6 @@ def start(itemlist, item):
     :return: intenta autoreproducir, en caso de fallar devuelve el itemlist que recibio en un principio
     '''
     logger.info()
-    logger.debug('item inicial %s' % item)
-
 
     if not config.is_xbmc():
         #platformtools.dialog_notification('AutoPlay ERROR', 'Sólo disponible para XBMC/Kodi')
@@ -105,6 +103,7 @@ def start(itemlist, item):
     if settings_node['active']:
         url_list_valid = []
         autoplay_list = []
+        autoplay_b = []
         favorite_servers = []
         favorite_quality = []
 
@@ -118,7 +117,7 @@ def start(itemlist, item):
             config.set_setting("player_mode", 0)
 
         # Informa que AutoPlay esta activo
-        platformtools.dialog_notification('AutoPlay Activo', '', sound=False)
+        #platformtools.dialog_notification('AutoPlay Activo', '', sound=False)
 
         # Prioridades a la hora de ordenar itemlist:
         #       0: Servidores y calidades
@@ -152,6 +151,7 @@ def start(itemlist, item):
         # Se filtran los enlaces de itemlist y que se correspondan con los valores de autoplay
         for item in itemlist:
             autoplay_elem = dict()
+            b_dict = dict()
 
             # Comprobamos q se trata de un item de video
             if 'server' not in item:
@@ -177,6 +177,9 @@ def start(itemlist, item):
                 # descartamos el item
                 if item.server not in favorite_servers or item.quality not in favorite_quality \
                         or item.url in url_list_valid:
+                    item.type_b = True
+                    b_dict['videoitem']= item
+                    autoplay_b.append(b_dict)
                     continue
                 autoplay_elem["indice_server"] = favorite_servers.index(item.server)
                 autoplay_elem["indice_quality"] = favorite_quality.index(item.quality)
@@ -186,6 +189,9 @@ def start(itemlist, item):
                 # si el servidor no se encuentra en la lista de favoritos o la url esta repetida,
                 # descartamos el item
                 if item.server not in favorite_servers or item.url in url_list_valid:
+                    item.type_b = True
+                    b_dict['videoitem'] = item
+                    autoplay_b.append(b_dict)
                     continue
                 autoplay_elem["indice_server"] = favorite_servers.index(item.server)
 
@@ -194,6 +200,9 @@ def start(itemlist, item):
                 # si la calidad no se encuentra en la lista de favoritos o la url esta repetida,
                 # descartamos el item
                 if item.quality not in favorite_quality or item.url in url_list_valid:
+                    item.type_b = True
+                    b_dict['videoitem'] = item
+                    autoplay_b.append(b_dict)
                     continue
                 autoplay_elem["indice_quality"] = favorite_quality.index(item.quality)
 
@@ -205,6 +214,7 @@ def start(itemlist, item):
 
             # Si el item llega hasta aqui lo añadimos al listado de urls validas y a autoplay_list
             url_list_valid.append(item.url)
+            item.plan_b=True
             autoplay_elem['videoitem'] = item
             # autoplay_elem['server'] = item.server
             # autoplay_elem['quality'] = item.quality
@@ -223,9 +233,17 @@ def start(itemlist, item):
         elif priority == 3:  # Solo calidades
             autoplay_list.sort(key=lambda orden: orden['indice_quality'])
 
+        # Se prepara el plan b, en caso de estar activo se agregan los elementos no favoritos al final
+        plan_b = settings_node['plan_b']
+        ready = False
+        text_b = ''
+        if plan_b:
+            autoplay_list.extend(autoplay_b)
         # Si hay elementos en la lista de autoplay se intenta reproducir cada elemento, hasta encontrar uno
         # funcional o fallen todos
-        if autoplay_list:
+
+        if autoplay_list or (plan_b and autoplay_b):
+
             played = False
             max_intentos = 5
             max_intentos_servers = {}
@@ -236,6 +254,10 @@ def start(itemlist, item):
 
             for autoplay_elem in autoplay_list:
                 play_item = Item
+
+                # Si no es un elemento favorito si agrega el texto plan b
+                if autoplay_elem['videoitem'].type_b:
+                    text_b = '(Plan B)'
                 if not platformtools.is_playing() and not played:
                     videoitem = autoplay_elem['videoitem']
                     logger.debug('videoitem %s' % videoitem)
@@ -250,7 +272,7 @@ def start(itemlist, item):
                     if hasattr(videoitem, 'language') and videoitem.language != "":
                         lang = " '%s' " % videoitem.language
 
-                    platformtools.dialog_notification("AutoPlay", "%s%s%s" % (
+                    platformtools.dialog_notification("AutoPlay %s" %text_b, "%s%s%s" % (
                         videoitem.server.upper(), lang, videoitem.quality.upper()), sound=False)
                     # TODO videoitem.server es el id del server, pero podria no ser el nombre!!!
 
@@ -282,12 +304,11 @@ def start(itemlist, item):
                     except:
                         pass
 
-
                     try:
                         if platformtools.is_playing():
                             played = True
                             break
-                    except:  # TODO evitar el informe de que el conector fallo o el video no se encuentra
+                    except:
                         logger.debug(str(len(autoplay_list)))
 
                     # Si hemos llegado hasta aqui es por q no se ha podido reproducir
@@ -300,9 +321,10 @@ def start(itemlist, item):
                         if not platformtools.dialog_yesno("AutoPlay", text,
                                                           "¿Desea ignorar todos los enlaces de este servidor?"):
                             max_intentos_servers[videoitem.server] = max_intentos
-                    logger.debug('elem: %s list %s' % (autoplay_list.index(autoplay_elem),autoplay_list[-1]))
+
+                    # Si no quedan elementos en la lista se informa
                     if autoplay_elem == autoplay_list[-1]:
-                        platformtools.dialog_notification('AutoPlay', 'No hubo enlaces funcionales')
+                         platformtools.dialog_notification('AutoPlay', 'No hubo enlaces funcionales')
 
         else:
             platformtools.dialog_notification('AutoPlay No Fue Posible', 'No Hubo Coincidencias')
@@ -470,7 +492,7 @@ def autoplay_config(item):
                  "type": "label", "enabled": True, "visible": True}
     list_controls.append(separador)
 
-    # Seccion servidores Preferidos
+    # Seccion servidores favoritos
     server_list = channel_node.get("servers", [])
     if not server_list:
         enabled = False
@@ -478,7 +500,7 @@ def autoplay_config(item):
     else:
         enabled = "eq(-3,true)"
 
-    custom_servers_settings = {"id": "custom_servers", "label": "      Servidores Preferidos", "color": "0xff66ffcc",
+    custom_servers_settings = {"id": "custom_servers", "label": "      Servidores favoritos", "color": "0xff66ffcc",
                                "type": "bool", "default": False, "enabled": enabled, "visible": True}
     list_controls.append(custom_servers_settings)
     if dict_values['active'] and enabled:
@@ -501,7 +523,7 @@ def autoplay_config(item):
         if settings_node.get("server_%s" % num, 0) > len(server_list) - 1:
             dict_values["server_%s" % num] = 0
 
-    # Seccion Calidades Preferidas
+    # Seccion Calidades favoritas
     quality_list = channel_node.get("quality", [])
     if not quality_list:
         enabled = False
@@ -509,7 +531,7 @@ def autoplay_config(item):
     else:
         enabled = "eq(-7,true)"
 
-    custom_quality_settings = {"id": "custom_quality", "label": "      Calidades Preferidas", "color": "0xff66ffcc",
+    custom_quality_settings = {"id": "custom_quality", "label": "      Calidades Favoritas", "color": "0xff66ffcc",
                                "type": "bool", "default": False, "enabled": enabled, "visible": True}
     list_controls.append(custom_quality_settings)
     if dict_values['active'] and enabled:
@@ -532,11 +554,20 @@ def autoplay_config(item):
         if settings_node.get("quality_%s" % num, 0) > len(quality_list) - 1:
             dict_values["quality_%s" % num] = 0
 
+    # Plan B
+    dict_values['plan_b'] = settings_node.get('plan_b', False)
+    enabled = "eq(-4,true)|eq(-8,true)"
+    plan_b = {"id": "plan_b", "label": "      Plan B (Si fallan los favoritos prueba otros enlaces)",
+                       "color": "0xffffff99",
+                               "type": "bool", "default": False, "enabled": enabled, "visible": True}
+    list_controls.append(plan_b)
+
+
     # Seccion Prioridades
     priority_list = ["Servidor y Calidad", "Calidad y Servidor"]
     set_priority = {"id": "priority", "label": "   Prioridad (Indica el orden para Auto-Reproducir)",
                     "color": "0xffffff99", "type": "list", "default": 0,
-                    "enabled": True, "visible": "eq(-4,true)+eq(-8,true)+eq(-11,true)", "lvalues": priority_list}
+                    "enabled": True, "visible": "eq(-5,true)+eq(-9,true)+eq(-12,true)", "lvalues": priority_list}
     list_controls.append(set_priority)
     dict_values["priority"] = settings_node.get("priority", 0)
 
