@@ -46,3 +46,8 @@ def debug(texto=""):
 
 def error(texto=""):
     logger_object.error(unicode(str(texto), "utf-8", "ignore").replace("\n", "\n" + " " * 67))
+
+
+class WebErrorException(Exception):
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)

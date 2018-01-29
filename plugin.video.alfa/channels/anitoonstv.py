@@ -95,7 +95,7 @@ def episodios(item):
 
     patron = '<div class="pagina">(.+?)<\/div><div id="fade".+?>'
     data = scrapertools.find_single_match(data, patron)
-    patron_caps = "<li><a href='(.+?)'>Capitulo: (.+?) - (.+?)<\/a>"
+    patron_caps = "<li><a href='(.+?)'>Cap(?:i|í)tulo: (.+?) - (.+?)<\/a>"
     matches = scrapertools.find_multiple_matches(data, patron_caps)
     show = scrapertools.find_single_match(data, '<span>Titulo.+?<\/span>(.+?)<br><span>')
     scrapedthumbnail = scrapertools.find_single_match(data, "<img src='(.+?)'.+?>")
