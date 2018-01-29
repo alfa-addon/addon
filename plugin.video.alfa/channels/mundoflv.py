@@ -641,7 +641,7 @@ def play(item):
     logger.info()
 
     data = httptools.downloadpage(item.url).data
-    if item.server not in ['streamplay','streame']:
+    if item.server not in ['streamplay','streame', 'clipwatching', 'vidoza']:
         url = scrapertools.find_single_match(data, '<(?:IFRAME|iframe).*?(?:SRC|src)=*([^ ]+) (?!style|STYLE)')
     else:
         url = scrapertools.find_single_match(data, '<meta http-equiv="refresh" content="0; url=([^"]+)">')
