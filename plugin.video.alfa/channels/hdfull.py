@@ -13,7 +13,7 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 
-host = "http://hdfull.tv"
+host = "https://hdfull.tv"
 
 if config.get_setting('hdfulluser', 'hdfull'):
     account = True
@@ -569,7 +569,7 @@ def generos(item):
     itemlist = []
 
     data = agrupa_datos(httptools.downloadpage(item.url).data)
-    data = scrapertools.find_single_match(data, '<li class="dropdown"><a href="http://hdfull.tv/peliculas"(.*?)</ul>')
+    data = scrapertools.find_single_match(data, '<li class="dropdown"><a href="https://hdfull.tv/peliculas"(.*?)</ul>')
 
     patron = '<li><a href="([^"]+)">([^<]+)</a></li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -591,7 +591,7 @@ def generos_series(item):
     itemlist = []
 
     data = agrupa_datos(httptools.downloadpage(item.url).data)
-    data = scrapertools.find_single_match(data, '<li class="dropdown"><a href="http://hdfull.tv/series"(.*?)</ul>')
+    data = scrapertools.find_single_match(data, '<li class="dropdown"><a href="https://hdfull.tv/series"(.*?)</ul>')
 
     patron = '<li><a href="([^"]+)">([^<]+)</a></li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -642,10 +642,10 @@ def findvideos(item):
         it1.append(Item(channel=item.channel, action="set_status", title=title, fulltitle=title, url=url_targets,
                              thumbnail=item.thumbnail, show=item.show, folder=True))
 
-    data_js = httptools.downloadpage("http://hdfull.tv/templates/hdfull/js/jquery.hdfull.view.min.js").data
+    data_js = httptools.downloadpage("https://hdfull.tv/templates/hdfull/js/jquery.hdfull.view.min.js").data
     key = scrapertools.find_single_match(data_js, 'JSON.parse\(atob.*?substrings\((.*?)\)')
 
-    data_js = httptools.downloadpage("http://hdfull.tv/js/providers.js").data
+    data_js = httptools.downloadpage("https://hdfull.tv/js/providers.js").data
 
     try:
         data_js = jhexdecode(data_js)
