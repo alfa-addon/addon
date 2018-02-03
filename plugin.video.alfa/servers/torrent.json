@@ -7,6 +7,11 @@
       "url": "plugin://plugin.video.xbmctorrent/play/%s"
     },
     {
+      "id": "plugin.video.elementum",
+      "name": "elementum",
+      "url": "plugin://plugin.video.elementum/play?uri=%s"
+    },
+    {
       "id": "plugin.video.pulsar",
       "name": "pulsar",
       "url": "plugin://plugin.video.pulsar/play?uri=%s"
