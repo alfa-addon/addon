@@ -39,7 +39,6 @@ def get_source(url):
 def list_all(item):
     logger.info()
     itemlist = []
-    data = get_source(item.url)
 
     if item.section == 'alpha':
         patron = '<span class=Num>\d+.*?<a href=(.*?) class.*?<img src=(.*?) alt=.*?<strong>(.*?)</strong>.*?'
@@ -75,7 +74,7 @@ def list_all(item):
 
     #  Paginación
 
-    url_next_page = scrapertools.find_single_match(data,'<a class=next.*?href=(.*?)>.*?»</a></div>')
+    url_next_page = scrapertools.find_single_match(data,'<a class=next.*?href=(.*?)>')
     if url_next_page:
         itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='list_all'))
     return itemlist
@@ -92,7 +91,7 @@ def section(item):
     elif item.section == 'genre':
         patron = '<a href=(http:.*?) class=Button STPb>(.*?)</a>'
     elif item.section == 'year':
-        patron = 'menu-item-15\d+><a href=(.*?\?s.*?)>(\d{4})<\/a><\/li>'
+        patron = 'custom menu-item-15\d+><a href=(.*?\?s.*?)>(\d{4})<\/a><\/li>'
     elif item.section == 'alpha':
         patron = '<li><a href=(.*?letters.*?)>(.*?)</a>'
         action = 'list_all'
