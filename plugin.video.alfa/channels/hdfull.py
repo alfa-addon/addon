@@ -13,7 +13,7 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 
-host = "http://hdfull.tv"
+host = "https://hdfull.tv"
 
 if config.get_setting('hdfulluser', 'hdfull'):
     account = True
@@ -43,7 +43,7 @@ def set_host():
     global host
     logger.info()
 
-    hosts_list= [host, 'https://hdfull.tv', 'https://hdfull.me']
+    hosts_list= [host, 'https://hdfull.me']
     for url in hosts_list:
         data = httptools.downloadpage(url, only_headers=True)
         if data.sucess:
