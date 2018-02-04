@@ -46,20 +46,20 @@ def mainlist(item):
                                        url= host,
                                        thumbnail="http://imgur.com/fN2p6qH.png", fanart="http://imgur.com/b8OuBR2.jpg",
                                        contentType="movie"))
-    itemlist.append(itemlist[-1].clone(title="[COLOR lightskyblue][B]Series[/B][/COLOR]", action="scraper",
-                                       url= host + "/lista-de-series",
-                                       thumbnail="http://imgur.com/Jia27Uc.png", fanart="http://imgur.com/b8OuBR2.jpg",
-                                       contentType="tvshow"))
+    # itemlist.append(itemlist[-1].clone(title="[COLOR lightskyblue][B]Series[/B][/COLOR]", action="scraper",
+    #                                    url= host + "/lista-de-series",
+    #                                    thumbnail="http://imgur.com/Jia27Uc.png", fanart="http://imgur.com/b8OuBR2.jpg",
+    #                                    contentType="tvshow"))
     itemlist.append(itemlist[-1].clone(title="[COLOR lightskyblue][B]Buscar[/B][/COLOR]",
                                        thumbnail="http://imgur.com/mwTwfN7.png", fanart="http://imgur.com/b8OuBR2.jpg"))
     itemlist.append(
         itemlist[-1].clone(title="[COLOR lightskyblue][B]   Buscar Película[/B][/COLOR]", action="search", url="",
                            thumbnail="http://imgur.com/mwTwfN7.png", fanart="http://imgur.com/b8OuBR2.jpg",
                            contentType="movie"))
-    itemlist.append(
-        itemlist[-1].clone(title="[COLOR lightskyblue][B]   Buscar Serie[/B][/COLOR]", action="search", url="",
-                           thumbnail="http://imgur.com/mwTwfN7.png", fanart="http://imgur.com/b8OuBR2.jpg",
-                           contentType="tvshow"))
+    # itemlist.append(
+    #     itemlist[-1].clone(title="[COLOR lightskyblue][B]   Buscar Serie[/B][/COLOR]", action="search", url="",
+    #                        thumbnail="http://imgur.com/mwTwfN7.png", fanart="http://imgur.com/b8OuBR2.jpg",
+    #                        contentType="tvshow"))
 
     return itemlist
 
