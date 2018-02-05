@@ -434,11 +434,20 @@ def get_vip(url):
             if 'plus'in item:
                 id, tipo, lang= scrapertools.find_single_match(item,'plus\/(\d+)\/.*?=(\d+).*?=(.*)')
                 new_url = 'https://www.elreyxhd.com/pelisplus.php?id=%s&tipo=%s&idioma=%s' % (id, tipo, lang)
+                datax=httptools.downloadpage(new_url, follow_redirects=False).headers.get("location", "")
+                itemlist.append(Item(url=datax))
             else:
                 id = scrapertools.find_single_match(item,'episodes\/(\d+)')
-                new_url = 'https://www.elreyxhd.com/samir.php?id=%s&tipo=capitulo&idioma=latino&x=&sv=' % id
-            data=httptools.downloadpage(new_url, follow_redirects=False).headers.get("location", "")
-            itemlist.append(Item(url=data))
+                data_vip = httptools.downloadpage(item).data
+                patron = '<a href="(.*?)">'
+                matches = re.compile(patron, re.DOTALL).findall(data_vip)
+                for urls in matches:
+                    x = scrapertools.find_single_match(urls,r"&x=(\d)&")
+                    if x != '':
+                        new_url = 'https://www.elreyxhd.com/samir.php?id=%s&tipo=capitulo&idioma=latino&x=%s&sv=si' % (id, x)
+                        datax = httptools.downloadpage(new_url, follow_redirects=False).headers.get("location", "")
+                        itemlist.append(Item(url=datax))
+
     return itemlist
 
 

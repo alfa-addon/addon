@@ -46,20 +46,20 @@ def mainlist(item):
                                        url= host,
                                        thumbnail="http://imgur.com/fN2p6qH.png", fanart="http://imgur.com/b8OuBR2.jpg",
                                        contentType="movie"))
-    itemlist.append(itemlist[-1].clone(title="[COLOR lightskyblue][B]Series[/B][/COLOR]", action="scraper",
-                                       url= host + "/lista-de-series",
-                                       thumbnail="http://imgur.com/Jia27Uc.png", fanart="http://imgur.com/b8OuBR2.jpg",
-                                       contentType="tvshow"))
+    # itemlist.append(itemlist[-1].clone(title="[COLOR lightskyblue][B]Series[/B][/COLOR]", action="scraper",
+    #                                    url= host + "/lista-de-series",
+    #                                    thumbnail="http://imgur.com/Jia27Uc.png", fanart="http://imgur.com/b8OuBR2.jpg",
+    #                                    contentType="tvshow"))
     itemlist.append(itemlist[-1].clone(title="[COLOR lightskyblue][B]Buscar[/B][/COLOR]",
                                        thumbnail="http://imgur.com/mwTwfN7.png", fanart="http://imgur.com/b8OuBR2.jpg"))
     itemlist.append(
         itemlist[-1].clone(title="[COLOR lightskyblue][B]   Buscar Película[/B][/COLOR]", action="search", url="",
                            thumbnail="http://imgur.com/mwTwfN7.png", fanart="http://imgur.com/b8OuBR2.jpg",
                            contentType="movie"))
-    itemlist.append(
-        itemlist[-1].clone(title="[COLOR lightskyblue][B]   Buscar Serie[/B][/COLOR]", action="search", url="",
-                           thumbnail="http://imgur.com/mwTwfN7.png", fanart="http://imgur.com/b8OuBR2.jpg",
-                           contentType="tvshow"))
+    # itemlist.append(
+    #     itemlist[-1].clone(title="[COLOR lightskyblue][B]   Buscar Serie[/B][/COLOR]", action="search", url="",
+    #                        thumbnail="http://imgur.com/mwTwfN7.png", fanart="http://imgur.com/b8OuBR2.jpg",
+    #                        contentType="tvshow"))
 
     return itemlist
 
@@ -119,11 +119,11 @@ def scraper(item):
         patron += 'alt="([^"]+)".*?'
         patron += '">([^<]+)<.*?'
         patron += '<div class="l">(.*?)<\/a><h3>.*?'
-        patron += '<\/a><\/h3> <span>(.*?)<'
+        #patron += '<\/a><\/h3> <span>(.*?)<'
         action = "findvideos"
     matches = scrapertools.find_multiple_matches(bloque_enlaces, patron)
-    for url, thumb, title, quality, check_idioma, year in matches:
-        year = year.strip()
+    for url, thumb, title, quality, check_idioma in matches:
+        #year = year.strip()
         title_fan = title
         title_item = "[COLOR cornflowerblue][B]" + title + "[/B][/COLOR]"
         if item.contentType != "movie":
@@ -140,20 +140,20 @@ def scraper(item):
             title = title
         itemlist.append(
             Item(channel=item.channel, title=title, fulltitle=title, url=host + url, action=action, thumbnail=thumb,
-                 fanart="http://imgur.com/nqmJozd.jpg", extra=title_fan + "|" + title_item + "|" + year, show=title,
-                 contentType=item.contentType, folder=True, language = idiomas, infoLabels={"year":year}))
+                 fanart="http://imgur.com/nqmJozd.jpg", extra=title_fan + "|" + title_item + "|", show=title,
+                 contentType=item.contentType, folder=True, language = idiomas))
     ## Paginación
-    tmdb.set_infoLabels(itemlist)
-    if year:
-        next = scrapertools.find_single_match(data, 'href="([^"]+)" title="Siguiente página">')
-        if len(next) > 0:
-            url = next
-            if not "http" in url:
-                url = host + url
-            itemlist.append(
-                Item(channel=item.channel, action="scraper", title="[COLOR floralwhite][B]Siguiente[/B][/COLOR]",
-                     url=url, thumbnail="http://imgur.com/jhRFAmk.png", fanart="http://imgur.com/nqmJozd.jpg",
-                     extra=item.extra, contentType=item.contentType, folder=True))
+    #tmdb.set_infoLabels(itemlist)
+    #if year:
+    next = scrapertools.find_single_match(data, 'href="([^"]+)" title="Siguiente página">')
+    if len(next) > 0:
+        url = next
+        if not "http" in url:
+            url = host + url
+        itemlist.append(
+            Item(channel=item.channel, action="scraper", title="[COLOR floralwhite][B]Siguiente[/B][/COLOR]",
+                 url=url, thumbnail="http://imgur.com/jhRFAmk.png", fanart="http://imgur.com/nqmJozd.jpg",
+                 extra=item.extra, contentType=item.contentType, folder=True))
     return itemlist
 
 
