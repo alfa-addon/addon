@@ -39,23 +39,10 @@ def login():
 
     httptools.downloadpage(host, post=post)
 
-def set_host():
-    global host
-    logger.info()
-
-    hosts_list= [host, 'https://hdfull.me']
-    for url in hosts_list:
-        data = httptools.downloadpage(url, only_headers=True)
-        if data.sucess:
-            host = url
-            break
 
 def mainlist(item):
     logger.info()
-
     itemlist = []
-    set_host()
-
     itemlist.append(Item(channel=item.channel, action="menupeliculas", title="Películas", url=host, folder=True))
     itemlist.append(Item(channel=item.channel, action="menuseries", title="Series", url=host, folder=True))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar..."))
