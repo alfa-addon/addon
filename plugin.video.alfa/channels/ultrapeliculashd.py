@@ -5,6 +5,7 @@ import re
 from core import httptools
 from core import scrapertools
 from core import servertools
+from core import jsontools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
@@ -106,13 +107,19 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     if item.extra != 'buscar':
-        patron = '<article id=post-.*? class=item movies><div class=poster><a href=(.*?)><img src=(.*?) '
-        patron += 'alt=(.*?)>.*?quality>.*?<.*?<\/h3><span>(.*?)<\/span>'
+        patron = '<article id=.*?<img src=(.*?) alt=(.*?)>.*?<a href=(.*?)>.*?</h3><span>(.*?)<'
     else:
         patron = '<article><div class=image>.*?<a href=(.*?)\/><img src=(.*?) alt=(.*?) \/>.*?year>(.*?)<\/span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear in matches:
+    for scrapedthumbnail, scrapedtitle, scrapedurl, scrapedyear in matches:
+        if item.extra == 'buscar':
+            aux = scrapedthumbnail
+            scrapedthumbnail=scrapedtitle
+            scrapedtitle = scrapedurl
+            scrapedurl =  aux
+
+
         url = scrapedurl
         thumbnail = scrapedthumbnail
         contentTitle = re.sub(r'\d{4}', '', scrapedtitle)
@@ -121,6 +128,8 @@ def lista(item):
         title = scrapertools.decodeHtmlentities(contentTitle)
         year = scrapedyear
         fanart = ''
+
+
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=item.title, url=url,
                              thumbnail=thumbnail, fanart=fanart, contentTitle=contentTitle, infoLabels={'year': year}))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -140,15 +149,16 @@ def generos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = '<li class=cat-item cat-item-.*?><a href=(.*?) >(.*?)<\/a> <i>(.*?)<\/i><\/li>'
+    logger.debug(data)
+    patron = 'genres menu-item-.*?><a href=(.*?)>(.*?)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedtitle, cantidad in matches:
+    for scrapedurl, scrapedtitle in matches:
         thumbnail = ''
         fanart = ''
         if scrapedtitle in tgenero:
             thumbnail = tgenero[scrapedtitle]
-        title = scrapedtitle + ' (' + cantidad + ')'
+        title = scrapedtitle
         url = scrapedurl
         if scrapedtitle not in ['PRÓXIMAMENTE', 'EN CINE']:
             itemlist.append(item.clone(action="lista",
@@ -166,23 +176,38 @@ def seccion(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    if item.extra == 'year':
-        patron = '<li><a href=(.*?\/fecha-estreno.*?)>(.*?)<\/a>'
-    else:
-        patron = '<li><a href=(.*?) >(.*?)<\/a><\/li>'
+
+    patron = 'glossary=(.*?)>(.*?)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedtitle in matches:
+    for scrapedid, scrapedtitle in matches:
         thumbnail = ''
         if scrapedtitle.lower() in thumbletras:
             thumbnail = thumbletras[scrapedtitle.lower()]
         fanart = ''
         title = scrapedtitle
-        url = scrapedurl
+        id = scrapedid
 
         itemlist.append(
-            Item(channel=item.channel, action="lista", title=title, fulltitle=item.title, url=url, thumbnail=thumbnail,
-                 fanart=fanart))
+            Item(channel=item.channel, action="alpha", title=title, fulltitle=item.title, thumbnail=thumbnail,
+                 fanart=fanart, id = id))
+    return itemlist
+
+def alpha(item):
+    logger.info()
+
+    itemlist = []
+
+    url = 'https://www.ultrapeliculashd.com/wp-json/dooplay/glossary/?term=%s&nonce=4e850b7d59&type=all' % item.id
+    data = httptools.downloadpage(url).data
+    dict_data = jsontools.load(data)
+    logger.debug(dict_data)
+
+    for elem in dict_data:
+        logger.debug(dict_data[elem])
+        elem = dict_data[elem]
+        itemlist.append(Item(channel=item.channel, action='findvideos', title = elem['title'], url=elem['url'],
+                             thumbnail=elem['img']))
     return itemlist
 
 
@@ -191,23 +216,32 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-
-    patron = '<iframe class=metaframe rptss src=(.*?) (?:width=.*?|frameborder=0) allowfullscreen><\/iframe>'
+    #logger.debug(data)
+    patron = '<iframe.*?rptss src=(.*?) (?:width.*?|frameborder.*?) allowfullscreen><\/iframe>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for video_url in matches:
+        logger.debug('video_url: %s' % video_url)
         if 'stream' in video_url:
             data = httptools.downloadpage('https:'+video_url).data
-            new_url=scrapertools.find_single_match(data, 'iframe src="(.*?)"')
-            new_data = httptools.downloadpage(new_url).data
+            logger.debug(data)
+            if not 'iframe' in video_url:
+                new_url=scrapertools.find_single_match(data, 'iframe src="(.*?)"')
+                new_data = httptools.downloadpage(new_url).data
+            logger.debug('new_data %s' % new_data)
+            url= ''
+            try:
+                url, quality = scrapertools.find_single_match(new_data, 'file:.*?(?:\"|\')(https.*?)(?:\"|\'),'
+                                                                        'label:.*?(?:\"|\')(.*?)(?:\"|\'),')
+            except:
+                pass
+            if url != '':
+                headers_string = '|Referer=%s' % url
+                url = url.replace('download', 'preview')+headers_string
 
-            url, quality = scrapertools.find_single_match(new_data, 'file:.*?"(.*?)",label:.*?"(.*?)"')
-            headers_string = '|Referer=%s' % url
-            url = url.replace('download', 'preview')+headers_string
-            sub = scrapertools.find_single_match(new_data, 'file:.*?"(.*?srt)"')
-            new_item = (Item(title=item.title, url=url, quality=quality, server='directo',
-                             subtitle=sub))
-            itemlist.append(new_item)
+                sub = scrapertools.find_single_match(new_data, 'file:.*?"(.*?srt)"')
+                new_item = (Item(title=item.title, url=url, quality=quality, subtitle=sub, server='directo'))
+                itemlist.append(new_item)
         else:
             itemlist.extend(servertools.find_video_items(data=video_url))
 
@@ -220,6 +254,7 @@ def findvideos(item):
         if 'youtube' in videoitem.url:
             videoitem.title = '[COLOR orange]Trailer en Youtube[/COLOR]'
 
+    itemlist = servertools.get_servers_itemlist(itemlist)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(

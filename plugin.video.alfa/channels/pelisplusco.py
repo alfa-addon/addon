@@ -256,20 +256,16 @@ def season_episodes(item):
 
     return itemlist[::-1]
 
-
-def findvideos(item):
+def get_links_by_language(item, data):
     logger.info()
-    itemlist = []
+
     video_list = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
 
-    patron = 'data-source=(.*?) .*?tab.*?data.*?srt=(.*?) data-iframe=><a>(.*?)\s?-\s?(.*?)<\/a>'
+    language = scrapertools.find_single_match(data, 'ul id=level\d_(.*?)\s*class=')
+    patron = 'data-source=(.*?)data.*?srt=(.*?)data-iframe.*?Opci.*?<.*?hidden>[^\(]\((.*?)\)'
+    matches = re.compile(patron, re.DOTALL).findall(data)
 
-    matches = matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for url, sub, language, quality in matches:
-
+    for url, sub, quality in matches:
         if 'http' not in url:
 
             new_url = 'https://onevideo.tv/api/player?key=90503e3de26d45e455b55e9dc54f015b3d1d4150&link' \
@@ -281,22 +277,34 @@ def findvideos(item):
             for video_url in video_list:
                 video_url.channel = item.channel
                 video_url.action = 'play'
-                video_url.title = item.title + '(%s) (%s)' % (language, video_url.server)
+                video_url.title = item.title + '(%s) (%s)' % ('', video_url.server)
                 if video_url.language == '':
                     video_url.language = language
                 video_url.subtitle = sub
-                video_url.contentTitle=item.contentTitle
+                video_url.contentTitle = item.contentTitle
+
         else:
-            server = servertools.get_server_from_url(url)
-            video_list.append(item.clone(title=item.title,
+            video_list.append(item.clone(title='%s [%s] [%s]',
                                          url=url,
                                          action='play',
-                                         quality = quality,
-                                         language = language,
-                                         server=server,
-                                         subtitle = sub
+                                         quality=quality,
+                                         language=language,
+                                         subtitle=sub
                                          ))
 
+    return video_list
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    video_list = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    patron_language ='(<ul id=level\d_.*?\s*class=.*?ul>)'
+    matches = re.compile(patron_language, re.DOTALL).findall(data)
+
+    for language in matches:
+        video_list.extend(get_links_by_language(item, language))
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(
@@ -307,6 +315,6 @@ def findvideos(item):
                  extra="findvideos",
                  contentTitle=item.contentTitle
                  ))
-
+    video_list = servertools.get_servers_itemlist(video_list, lambda i: i.title % (i.server.capitalize(), i.language,i.quality) )
     return video_list
 
