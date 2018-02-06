@@ -17,9 +17,29 @@ import xbmc
 import xbmcgui
 import xbmcplugin
 from core.item import Item
+from core import scrapertools
+from core import httptools
+from core import jsontools
 from platformcode import logger
 from channelselector import get_thumb
+from core import trakt_tools
 
+
+class XBMCPlayer( xbmc.Player ):
+
+    def __init__( self, *args ):
+        pass
+
+    def onPlaybackEnded(self):
+        logger.info()
+        from time import sleep
+        sleep(20)
+        for mediatype in ['movies', 'shows']:
+            trakt_data = trakt_tools.get_trakt_watched('tmdb', mediatype, True)
+            trakt_tools.update_trakt_data(mediatype, trakt_data)
+
+
+xbmc_player = XBMCPlayer()
 
 def dialog_ok(heading, line1, line2="", line3=""):
     dialog = xbmcgui.Dialog()
@@ -155,6 +175,7 @@ def render_items(itemlist, parent_item):
             listitem.setIconImage(icon_image)
             listitem.setThumbnailImage(item.thumbnail)
             listitem.setProperty('fanart_image', fanart)
+
 
         # No need it, use fanart instead
         # xbmcplugin.setPluginFanart(int(sys.argv[1]), os.path.join(config.get_runtime_path(), "fanart.jpg"))
@@ -500,7 +521,7 @@ def set_context_commands(item, parent_item):
 
 
 def is_playing():
-    return xbmc.Player().isPlaying()
+    return xbmc_player.isPlaying()
 
 
 def play_video(item, strm=False, force_direct=False, autoplay=False):
@@ -516,7 +537,7 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
             xlistitem.setThumbnailImage(item.thumbnail)
 
         set_infolabels(xlistitem, item, True)
-        xbmc.Player().play(item.url, xlistitem)
+        xbmc_player.play(item.url, xlistitem)
         return
 
     default_action = config.get_setting("default_action")
@@ -573,14 +594,17 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
         playlist.add(mediaurl, xlistitem)
 
         # Reproduce
-        xbmc_player = xbmc.Player()
+        xbmc_player = XBMCPlayer()
         xbmc_player.play(playlist, xlistitem)
     else:
         set_player(item, xlistitem, mediaurl, view, strm)
 
 
+
+
 def stop_video():
-    xbmc.Player().stop()
+    from time import sleep
+    xbmc_player.stop()
 
 
 def get_seleccion(default_action, opciones, seleccion, video_urls):
@@ -731,7 +755,6 @@ def get_dialogo_opciones(item, default_action, strm, autoplay):
 
     # Si no puedes ver el vídeo te informa
     else:
-        logger.debug('no puedes verlo :P')
         if not autoplay:
             if item.server != "":
                 if "<br/>" in motivo:
@@ -870,7 +893,7 @@ def set_player(item, xlistitem, mediaurl, view, strm):
         xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, xlistitem)
         if item.subtitle != "":
             xbmc.sleep(2000)
-            xbmc.Player().setSubtitles(item.subtitle)
+            xbmc_player.setSubtitles(item.subtitle)
 
     else:
         logger.info("player_mode=%s" % config.get_setting("player_mode"))
@@ -888,8 +911,11 @@ def set_player(item, xlistitem, mediaurl, view, strm):
             playlist.add(mediaurl, xlistitem)
 
             # Reproduce
-            xbmc_player = xbmc.Player()
+            #xbmc_player = xbmc_player
             xbmc_player.play(playlist, xlistitem)
+            while xbmc_player.isPlaying():
+                xbmc.sleep(200)
+            xbmc_player.onPlaybackEnded()
         # elif config.get_setting("player_mode") == 1 or item.isPlayable:
         elif config.get_setting("player_mode") == 1:
             logger.info("mediaurl :" + mediaurl)
@@ -908,7 +934,7 @@ def set_player(item, xlistitem, mediaurl, view, strm):
     if item.subtitle != "" and view:
         logger.info("Subtítulos externos: " + item.subtitle)
         xbmc.sleep(2000)
-        xbmc.Player().setSubtitles(item.subtitle)
+        xbmc_player.setSubtitles(item.subtitle)
 
     # si es un archivo de la videoteca enviar a marcar como visto
     if strm or item.strm_path:
@@ -977,7 +1003,7 @@ def play_torrent(item, xlistitem, mediaurl):
             client_tmp_path = config.get_data_path()
 
         # Iniciamos el cliente:
-        c = Client(url=mediaurl, is_playing_fnc=xbmc.Player().isPlaying, wait_time=None, timeout=10,
+        c = Client(url=mediaurl, is_playing_fnc=xbmc_player.isPlaying, wait_time=None, timeout=10,
                    temp_path=os.path.join(client_tmp_path, "alfa-torrent"), print_status=debug)
 
         # Mostramos el progreso
@@ -1041,7 +1067,7 @@ def play_torrent(item, xlistitem, mediaurl):
                     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
                     playlist.clear()
                     playlist.add(videourl, xlistitem)
-                    xbmc_player = xbmc.Player()
+                    #xbmc_player = xbmc_player
                     xbmc_player.play(playlist)
 
                     # Marcamos como reproducido para que no se vuelva a iniciar
@@ -1053,7 +1079,7 @@ def play_torrent(item, xlistitem, mediaurl):
                         xbmc_videolibrary.mark_auto_as_watched(item)
 
                     # Y esperamos a que el reproductor se cierre
-                    while xbmc.Player().isPlaying():
+                    while xbmc_player.isPlaying():
                         time.sleep(1)
 
                     # Cuando este cerrado,  Volvemos a mostrar el dialogo
