@@ -1,0 +1,269 @@
+# -*- coding: utf-8 -*-
+# -*- Tools for trakt sync -*-
+# -*- Created for Alfa-addon -*-
+# -*- By the Alfa Develop Group -*
+
+import os
+import xbmc
+from core import httptools
+from core.item import Item
+from platformcode.platformtools import logger, config
+from core import jsontools
+
+client_id = "c40ba210716aee87f6a9ddcafafc56246909e5377b623b72c15909024448e89d"
+client_secret = "999164f25832341f0214453bb11c915adb18e9490d6b5e9a707963a5a1bee43e"
+
+def auth_trakt():
+    item = Item()
+    folder = (config.get_platform() == "plex")
+    item.folder=folder
+    # Autentificación de cuenta Trakt
+    headers = {'Content-Type': 'application/json', 'trakt-api-key': client_id, 'trakt-api-version': '2'}
+    try:
+        post = {'client_id': client_id}
+        post = jsontools.dump(post)
+        # Se solicita url y código de verificación para conceder permiso a la app
+        url = "http://api-v2launch.trakt.tv/oauth/device/code"
+        data = httptools.downloadpage(url, post=post, headers=headers, replace_headers=True).data
+        data = jsontools.load(data)
+        item.verify_url = data["verification_url"]
+        item.user_code = data["user_code"]
+        item.device_code = data["device_code"]
+        item.intervalo = data["interval"]
+        if not item.folder:
+            token_trakt(item)
+
+        else:
+            itemlist = []
+            title = "Accede a esta página: %s" % item.verify_url
+            itemlist.append(item.clone(title=title, action=""))
+            title = "Ingresa este código y acepta: %s" % item.user_code
+            itemlist.append(item.clone(title=title, action=""))
+            title = "Una vez hecho, pulsa aquí!"
+            itemlist.append(item.clone(title=title, action="token_trakt"))
+            return itemlist
+    except:
+        import traceback
+        logger.error(traceback.format_exc())
+
+
+def token_trakt(item):
+
+    from platformcode import platformtools
+
+    headers = {'Content-Type': 'application/json', 'trakt-api-key': client_id, 'trakt-api-version': '2'}
+    try:
+        if item.extra == "renew":
+            refresh = config.get_setting("refresh_token_trakt", "trakt")
+            url = "http://api-v2launch.trakt.tv/oauth/device/token"
+            post = {'refresh_token': refresh, 'client_id': client_id, 'client_secret': client_secret,
+                    'redirect_uri': 'urn:ietf:wg:oauth:2.0:oob', 'grant_type': 'refresh_token'}
+            post = jsontools.dump(post)
+            data = httptools.downloadpage(url, post, headers, replace_headers=True).data
+            data = jsontools.load(data)
+        elif item.action == "token_trakt":
+            url = "http://api-v2launch.trakt.tv/oauth/device/token"
+            post = {'code': item.device_code, 'client_id': client_id, 'client_secret': client_secret}
+            post = jsontools.dump(post)
+            post = "code=%s&client_id=%s&client_secret=%s" % (item.device_code, client_id, client_secret)
+            data = httptools.downloadpage(url, post, headers, replace_headers=True).data
+            data = jsontools.load(data)
+        else:
+            import time
+            dialog_auth = platformtools.dialog_progress("Sincronizar con Trakt. No cierres esta ventana",
+                                                        "1. Entra en la siguiente url: %s" % item.verify_url,
+                                                        "2. Ingresa este código en la página y acepta:  %s" % item.user_code,
+                                                        "3. Espera a que se cierre esta ventana")
+
+            # Generalmente cada 5 segundos se intenta comprobar si el usuario ha introducido el código
+            while True:
+                time.sleep(item.intervalo)
+                try:
+                    if dialog_auth.iscanceled():
+                        config.set_setting("trakt_sync", 'false' )
+                        return
+
+                    url = "http://api-v2launch.trakt.tv/oauth/device/token"
+                    post = {'code': item.device_code, 'client_id': client_id, 'client_secret': client_secret}
+                    post = jsontools.dump(post)
+                    data = httptools.downloadpage(url, post, headers, replace_headers=True).data
+                    data = jsontools.load(data)
+                    if "access_token" in data:
+                        # Código introducido, salimos del bucle
+                        break
+                except:
+                    pass
+
+            try:
+                dialog_auth.close()
+            except:
+                pass
+
+        token = data["access_token"]
+        refresh = data["refresh_token"]
+
+        config.set_setting("token_trakt", token, "trakt")
+        config.set_setting("refresh_token_trakt", refresh, "trakt")
+        if not item.folder:
+            platformtools.dialog_notification("Éxito", "Cuenta vinculada correctamente")
+            if config.is_xbmc():
+                import xbmc
+                xbmc.executebuiltin("Container.Refresh")
+            return
+
+    except:
+        import traceback
+        logger.error(traceback.format_exc())
+        if not item.folder:
+            return platformtools.dialog_notification("Error", "Fallo en el proceso de vinculación")
+        token = ""
+
+    itemlist = []
+    if token:
+        itemlist.append(item.clone("Cuenta vinculada con éxito", action=""))
+    else:
+        itemlist.append(item.clone("Fallo en el proceso de vinculación", action=""))
+
+    return itemlist
+
+
+def get_trakt_watched(id_type, mediatype, update=False):
+
+    logger.info()
+
+    id_list = []
+    id_dict = dict()
+
+    token_auth = config.get_setting("token_trakt", "trakt")
+
+    if token_auth:
+        sync_path = os.path.join(config.get_data_path(), 'settings_channels', 'trakt')
+
+        if os.path.exists(sync_path) and not update:
+            trakt_node = jsontools.get_node_from_file('trakt', "TRAKT")
+            if mediatype == 'shows':
+                return trakt_node['shows']
+            if mediatype == 'movies':
+                return trakt_node['movies']
+
+        else:
+            token_auth = config.get_setting("token_trakt", "trakt")
+            if token_auth:
+                try:
+                    token_auth = config.get_setting("token_trakt", "trakt")
+                    headers = [['Content-Type', 'application/json'], ['trakt-api-key', client_id], ['trakt-api-version', '2']]
+                    if token_auth:
+                        headers.append(['Authorization', "Bearer %s" % token_auth])
+                        url = "https://api.trakt.tv/sync/watched/%s" % mediatype
+                    data = httptools.downloadpage(url, headers=headers, replace_headers=True).data
+                    watched_dict = jsontools.load(data)
+
+                    if mediatype == 'shows':
+
+                        dict_show = dict()
+                        for item in watched_dict:
+                            temp =[]
+                            id = str(item['show']['ids']['tmdb'])
+                            season_dict=dict()
+                            for season in item['seasons']:
+                                ep=[]
+                                number = str(season['number'])
+                                #season_dict = dict()
+                                for episode in season['episodes']:
+                                    ep.append(str(episode['number']))
+                                season_dict[number]=ep
+                                temp.append(season_dict)
+                            dict_show[id] = season_dict
+                            id_dict=dict_show
+                        return id_dict
+
+                    elif mediatype == 'movies':
+                        for item in watched_dict:
+                            id_list.append(str(item['movie']['ids'][id_type]))
+                except:
+                    pass
+
+    return id_list
+
+
+def trakt_check(itemlist):
+    id_result = ''
+    #check = u'\u221a'
+    check = 'v'
+    get_sync_from_file()
+    try:
+        for item in itemlist:
+            info = item.infoLabels
+
+            if info != '' and info['mediatype'] in ['movie', 'episode'] and item.channel !='videolibrary':
+
+                mediatype = 'movies'
+                id_type = 'tmdb'
+
+                if info['mediatype'] == 'episode':
+                    mediatype = 'shows'
+
+                if id_result == '':
+                    id_result = get_trakt_watched(id_type, mediatype)
+                if info['mediatype'] == 'movie':
+                    if info[id_type+'_id'] in id_result:
+                        item.title ='[COLOR limegreen][%s][/COLOR] %s' % (check, item.title)
+
+                elif info['mediatype']=='episode':
+                    if info[id_type+'_id'] in id_result:
+                        id= info[id_type+'_id']
+                        if info['season'] != '' and info['episode'] != '':
+                            season = str(info['season'])
+
+                            if season in id_result[id]:
+                                episode = str(info['episode'])
+
+                                if episode in id_result[id][season]:
+                                    season_watched = id_result[id][season]
+
+                                    if episode in season_watched:
+                                        item.title = '[B][COLOR limegreen][[I]%s[/I]][/COLOR][/B] %s' % (check,
+                                                                                                       item.title)
+            else:
+                break
+    except:
+       pass
+
+    return itemlist
+
+def get_sync_from_file():
+    logger.info()
+    sync_path = os.path.join(config.get_data_path(),'settings_channels' ,'trakt')
+    trakt_node = {}
+    if os.path.exists(sync_path):
+        trakt_node = jsontools.get_node_from_file('trakt', "TRAKT")
+
+    trakt_node['movies']=get_trakt_watched('tmdb', 'movies')
+    trakt_node['shows']=get_trakt_watched('tmdb', 'shows')
+    jsontools.update_node(trakt_node, 'trakt', 'TRAKT')
+
+def update_trakt_data(mediatype, trakt_data):
+    logger.info()
+
+    sync_path = os.path.join(config.get_data_path(), 'settings_channels', 'trakt')
+    trakt_node = {}
+    if os.path.exists(sync_path):
+        trakt_node = jsontools.get_node_from_file('trakt', "TRAKT")
+        trakt_node[mediatype] = trakt_data
+        jsontools.update_node(trakt_node, 'trakt', 'TRAKT')
+
+def ask_install_script():
+    logger.info()
+    import xbmc
+    from platformcode import platformtools
+
+    respuesta = platformtools.dialog_yesno("Alfa", "Puedes instalar el script de Trakt a continuacíon, "
+                                                   "una vez instalado y configurado lo que "
+                                                   "veas se sincronizara con tu cuenta automaticamente.",
+                                           "¿Deseas continuar?")
+    if respuesta:
+        xbmc.executebuiltin("InstallAddon(script.trakt)")
+        return
+    else:
+        config.set_setting('install_trakt','false')
+        return

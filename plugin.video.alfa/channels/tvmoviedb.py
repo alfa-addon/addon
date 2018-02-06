@@ -10,6 +10,7 @@ from core import jsontools
 from core import scrapertools
 from core.item import Item
 from core.tmdb import Tmdb
+from core import trakt_tools
 from platformcode import config, logger
 from platformcode import platformtools
 
@@ -250,7 +251,7 @@ def filmaf(item):
 def trakt(item):
     itemlist = []
     item.text_color = color1
-    token_auth = config.get_setting("token_trakt", "tvmoviedb")
+    token_auth = config.get_setting("token_trakt", "trakt")
     page = "?page=1&limit=20&extended=full"
     if not item.extra:
         item.extra = "movie"
@@ -279,7 +280,7 @@ def trakt(item):
         item.extra = "movie"
         # Se comprueba si existe un token guardado y sino se ejecuta el proceso de autentificación
         if not token_auth:
-            folder = (config.get_platform() == "plex")
+            #folder = (config.get_platform() == "plex")
             itemlist.append(item.clone(title="Vincula tu cuenta trakt", action="auth_trakt", folder=folder))
         else:
             itemlist.append(item.clone(title="Watchlists", action="", text_color=color2))
@@ -589,7 +590,7 @@ def detalles(item):
     except:
         pass
 
-    token_auth = config.get_setting("token_trakt", "tvmoviedb")
+    token_auth = config.get_setting("token_trakt", "trakt")
     if token_auth:
         itemlist.append(item.clone(title="Gestionar con tu cuenta Trakt", action="menu_trakt"))
 
@@ -1550,7 +1551,7 @@ def detalles_fa(item):
     except:
         pass
 
-    token_auth = config.get_setting("token_trakt", "tvmoviedb")
+    token_auth = config.get_setting("token_trakt", "trakt")
     if token_auth and ob_tmdb.result:
         itemlist.append(item.clone(title="[Trakt] Gestionar con tu cuenta", action="menu_trakt"))
     # Acciones si se configura cuenta en FA (Votar y añadir/quitar en listas)
@@ -2065,118 +2066,13 @@ def fanartv(item):
 
 ##-------------------- SECCION TRAKT.TV ------------------------##
 def auth_trakt(item):
-    # Autentificación de cuenta Trakt, proceso parecido a real-debrid
-    client_id = "a83c1a92d1313bd7ac7baa37a3fc83add26833d4b006f9f9562cae213a761260"
-    headers = {'Content-Type': 'application/json', 'trakt-api-key': client_id, 'trakt-api-version': '2'}
-    try:
-        post = {'client_id': client_id}
-        post = jsontools.dump(post)
-        # Se solicita url y código de verificación para conceder permiso a la app
-        url = "http://api-v2launch.trakt.tv/oauth/device/code"
-        data = httptools.downloadpage(url, post=post, headers=headers, replace_headers=True).data
-        data = jsontools.load(data)
-        item.verify_url = data["verification_url"]
-        item.user_code = data["user_code"]
-        item.device_code = data["device_code"]
-        item.intervalo = data["interval"]
-        if not item.folder:
-            token_trakt(item)
-        else:
-            itemlist = []
-            title = "Accede a esta página: %s" % item.verify_url
-            itemlist.append(item.clone(title=title, action=""))
-            title = "Ingresa este código y acepta: %s" % item.user_code
-            itemlist.append(item.clone(title=title, action=""))
-            title = "Una vez hecho, pulsa aquí!"
-            itemlist.append(item.clone(title=title, action="token_trakt"))
-            return itemlist
-    except:
-        import traceback
-        logger.error(traceback.format_exc())
-
-
-def token_trakt(item):
-    client_id = "a83c1a92d1313bd7ac7baa37a3fc83add26833d4b006f9f9562cae213a761260"
-    client_secret = "cb22e3c36547ba375e5de077fa4aa497daf486e29b92a5b9c25bb17ac39b98bf"
-    headers = {'Content-Type': 'application/json', 'trakt-api-key': client_id, 'trakt-api-version': '2'}
-    try:
-        if item.extra == "renew":
-            refresh = config.get_setting("refresh_token_trakt", "tvmoviedb")
-            url = "http://api-v2launch.trakt.tv/oauth/device/token"
-            post = {'refresh_token': refresh, 'client_id': client_id, 'client_secret': client_secret,
-                    'redirect_uri': 'urn:ietf:wg:oauth:2.0:oob', 'grant_type': 'refresh_token'}
-            post = jsontools.dump(post)
-            data = httptools.downloadpage(url, post, headers, replace_headers=True).data
-            data = jsontools.load(data)
-        elif item.action == "token_trakt":
-            url = "http://api-v2launch.trakt.tv/oauth/device/token"
-            post = {'code': item.device_code, 'client_id': client_id, 'client_secret': client_secret}
-            post = jsontools.dump(post)
-            post = "code=%s&client_id=%s&client_secret=%s" % (item.device_code, client_id, client_secret)
-            data = httptools.downloadpage(url, post, headers, replace_headers=True).data
-            data = jsontools.load(data)
-        else:
-            import time
-            dialog_auth = platformtools.dialog_progress("Autentificación. No cierres esta ventana!!",
-                                                        "1. Entra en la siguiente url: %s" % item.verify_url,
-                                                        "2. Ingresa este código en la página y acepta:  %s" % item.user_code,
-                                                        "3. Espera a que se cierre esta ventana")
-
-            # Generalmente cada 5 segundos se intenta comprobar si el usuario ha introducido el código
-            while True:
-                time.sleep(item.intervalo)
-                try:
-                    if dialog_auth.iscanceled():
-                        return
-
-                    url = "http://api-v2launch.trakt.tv/oauth/device/token"
-                    post = {'code': item.device_code, 'client_id': client_id, 'client_secret': client_secret}
-                    post = jsontools.dump(post)
-                    data = httptools.downloadpage(url, post, headers, replace_headers=True).data
-                    data = jsontools.load(data)
-                    if "access_token" in data:
-                        # Código introducido, salimos del bucle
-                        break
-                except:
-                    pass
-
-            try:
-                dialog_auth.close()
-            except:
-                pass
-
-        token = data["access_token"]
-        refresh = data["refresh_token"]
-
-        config.set_setting("token_trakt", token, "tvmoviedb")
-        config.set_setting("refresh_token_trakt", refresh, "tvmoviedb")
-        if not item.folder:
-            platformtools.dialog_notification("Éxito", "Cuenta vinculada correctamente")
-            if config.is_xbmc():
-                import xbmc
-                xbmc.executebuiltin("Container.Refresh")
-            return
-
-    except:
-        import traceback
-        logger.error(traceback.format_exc())
-        if not item.folder:
-            return platformtools.dialog_notification("Error", "Fallo en el proceso de vinculación")
-        token = ""
-
-    itemlist = []
-    if token:
-        itemlist.append(item.clone("Cuenta vinculada con éxito", action=""))
-    else:
-        itemlist.append(item.clone("Fallo en el proceso de vinculación", action=""))
-
-    return itemlist
+    return trakt_tools.auth_trakt()
 
 
 def menu_trakt(item):
     # Menú con acciones de cuenta trakt (vistas, watchlist, coleccion)
     itemlist = []
-    token_auth = config.get_setting("token_trakt", "tvmoviedb")
+    token_auth = config.get_setting("token_trakt", "trakt")
     tipo = item.extra.replace("tv", "show") + "s"
     title = item.contentType.replace("movie", "película").replace("tvshow", "serie")
     try:
@@ -2219,13 +2115,13 @@ def menu_trakt(item):
 
 
 def acciones_trakt(item):
-    token_auth = config.get_setting("token_trakt", "tvmoviedb")
+    token_auth = config.get_setting("token_trakt", "trakt")
     itemlist = []
     item.text_color = color1
 
     item.contentType = item.extra.replace("show", "tvshow")
 
-    client_id = "a83c1a92d1313bd7ac7baa37a3fc83add26833d4b006f9f9562cae213a761260"
+    client_id = "c40ba210716aee87f6a9ddcafafc56246909e5377b623b72c15909024448e89d"
     headers = [['Content-Type', 'application/json'], ['trakt-api-key', client_id],
                ['trakt-api-version', '2']]
     if token_auth:
@@ -2238,8 +2134,8 @@ def acciones_trakt(item):
     url = "http://api-v2launch.trakt.tv/%s" % item.url
     data = httptools.downloadpage(url, post, headers=headers, replace_headers=True)
     if data.code == "401":
-        token_trakt(item.clone(extra="renew"))
-        token_auth = config.get_setting("token_trakt", "tvmoviedb")
+        trakt_tools.token_trakt(item.clone(extra="renew"))
+        token_auth = config.get_setting("token_trakt", "trakt")
         headers[3][1] = "Bearer %s" % token_auth
         data = httptools.downloadpage(url, post, headers=headers, replace_headers=True)
 
@@ -2612,7 +2508,7 @@ def detalles_mal(item):
         except:
             pass
 
-    token_auth = config.get_setting("token_trakt", "tvmoviedb")
+    token_auth = config.get_setting("token_trakt", "trakt")
     if token_auth and ob_tmdb.result:
         itemlist.append(item.clone(title="[Trakt] Gestionar con tu cuenta", action="menu_trakt"))
 
