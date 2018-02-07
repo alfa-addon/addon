@@ -13,7 +13,7 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 
-host = "https://hdfull.tv"
+host = "https://hdfull.me"
 
 if config.get_setting('hdfulluser', 'hdfull'):
     account = True
@@ -39,23 +39,10 @@ def login():
 
     httptools.downloadpage(host, post=post)
 
-def set_host():
-    global host
-    logger.info()
-
-    hosts_list= [host, 'https://hdfull.me']
-    for url in hosts_list:
-        data = httptools.downloadpage(url, only_headers=True)
-        if data.sucess:
-            host = url
-            break
 
 def mainlist(item):
     logger.info()
-
     itemlist = []
-    set_host()
-
     itemlist.append(Item(channel=item.channel, action="menupeliculas", title="Películas", url=host, folder=True))
     itemlist.append(Item(channel=item.channel, action="menuseries", title="Series", url=host, folder=True))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar..."))
@@ -355,14 +342,14 @@ def fichas(item):
         if str != "": title += str
 
         if item.title == "Buscar...":
-            tag_type = scrapertools.get_match(url, 'l.tv/([^/]+)/')
+            bus = host[-4:]
+            tag_type = scrapertools.find_single_match(url, '%s/([^/]+)/' %bus)
             title += " - [COLOR blue]" + tag_type.capitalize() + "[/COLOR]"
 
         itemlist.append(
             Item(channel=item.channel, action=action, title=title, url=url, fulltitle=title, thumbnail=thumbnail,
                  show=show, folder=True, contentType=contentType, contentTitle=contentTitle,
                  language =language, infoLabels=infoLabels))
-
     ## Paginación
     next_page_url = scrapertools.find_single_match(data, '<a href="([^"]+)">.raquo;</a>')
     if next_page_url != "":
@@ -760,7 +747,7 @@ def agrupa_datos(data):
 
 
 def extrae_idiomas(bloqueidiomas):
-    logger.info("idiomas=" + bloqueidiomas)
+    logger.info()
     language=[]
     textoidiomas = ''
     patronidiomas = '([a-z0-9]+).png"'

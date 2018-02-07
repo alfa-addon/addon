@@ -11,6 +11,7 @@ from core import channeltools
 from core import scrapertools
 from core import servertools
 from core import videolibrarytools
+from core import trakt_tools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
@@ -149,6 +150,7 @@ def run(item=None):
             # Entry point for a channel is the "mainlist" action, so here we check parental control
             if item.action == "mainlist":
 
+
                 # Parental control
                 # If it is an adult channel, and user has configured pin, asks for it
                 if channeltools.is_adult(item.channel) and config.get_setting("adult_request_password"):
@@ -280,6 +282,19 @@ def run(item=None):
                 #     menu = Item(channel="channelselector", action="getmainlist", viewmode="movie", thumbnail=menu_icon,
                 #                 title='Menu')
                 #     itemlist.insert(0, menu)
+                if config.get_setting('trakt_sync'):
+                    token_auth = config.get_setting("token_trakt", "trakt")
+                    if not token_auth:
+                        trakt_tools.auth_trakt()
+                    else:
+                        import xbmc
+                        if not xbmc.getCondVisibility('System.HasAddon(script.trakt)') and config.get_setting(
+                                'install_trakt'):
+                            trakt_tools.ask_install_script()
+                    itemlist = trakt_tools.trakt_check(itemlist)
+                else:
+                    config.set_setting('install_trakt', 'true')
+
                 platformtools.render_items(itemlist, item)
 
     except urllib2.URLError, e:

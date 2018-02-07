@@ -423,11 +423,11 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es', lock=None):
 
                         otmdb = Tmdb(texto_buscado=titulo_buscado, tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda,
                                      filtro=item.infoLabels.get('filtro', {}), year=item.infoLabels['year'])
-
-                if otmdb.get_id() and config.get_setting("tmdb_plus_info", default=False):
-                    # Si la busqueda ha dado resultado y no se esta buscando una lista de items,
-                    # realizar otra busqueda para ampliar la informacion
-                    otmdb = Tmdb(id_Tmdb=otmdb.result.get("id"), tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda)
+                if otmdb is not None:
+                    if otmdb.get_id() and config.get_setting("tmdb_plus_info", default=False):
+                        # Si la busqueda ha dado resultado y no se esta buscando una lista de items,
+                        # realizar otra busqueda para ampliar la informacion
+                        otmdb = Tmdb(id_Tmdb=otmdb.result.get("id"), tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda)
 
             if lock and lock.locked():
                 lock.release()
