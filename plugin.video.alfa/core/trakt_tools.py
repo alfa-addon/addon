@@ -4,19 +4,23 @@
 # -*- By the Alfa Develop Group -*
 
 import os
+
 import xbmc
 from core import httptools
-from core.item import Item
-from platformcode.platformtools import logger, config
 from core import jsontools
+from core.item import Item
+from platformcode import config
+from platformcode import logger
+from threading import Thread
 
 client_id = "c40ba210716aee87f6a9ddcafafc56246909e5377b623b72c15909024448e89d"
 client_secret = "999164f25832341f0214453bb11c915adb18e9490d6b5e9a707963a5a1bee43e"
 
+
 def auth_trakt():
     item = Item()
     folder = (config.get_platform() == "plex")
-    item.folder=folder
+    item.folder = folder
     # Autentificación de cuenta Trakt
     headers = {'Content-Type': 'application/json', 'trakt-api-key': client_id, 'trakt-api-version': '2'}
     try:
@@ -48,7 +52,6 @@ def auth_trakt():
 
 
 def token_trakt(item):
-
     from platformcode import platformtools
 
     headers = {'Content-Type': 'application/json', 'trakt-api-key': client_id, 'trakt-api-version': '2'}
@@ -63,8 +66,6 @@ def token_trakt(item):
             data = jsontools.load(data)
         elif item.action == "token_trakt":
             url = "http://api-v2launch.trakt.tv/oauth/device/token"
-            post = {'code': item.device_code, 'client_id': client_id, 'client_secret': client_secret}
-            post = jsontools.dump(post)
             post = "code=%s&client_id=%s&client_secret=%s" % (item.device_code, client_id, client_secret)
             data = httptools.downloadpage(url, post, headers, replace_headers=True).data
             data = jsontools.load(data)
@@ -72,7 +73,8 @@ def token_trakt(item):
             import time
             dialog_auth = platformtools.dialog_progress("Sincronizar con Trakt. No cierres esta ventana",
                                                         "1. Entra en la siguiente url: %s" % item.verify_url,
-                                                        "2. Ingresa este código en la página y acepta:  %s" % item.user_code,
+                                                        "2. Ingresa este código en la página y acepta:  %s"
+                                                        % item.user_code,
                                                         "3. Espera a que se cierre esta ventana")
 
             # Generalmente cada 5 segundos se intenta comprobar si el usuario ha introducido el código
@@ -80,7 +82,7 @@ def token_trakt(item):
                 time.sleep(item.intervalo)
                 try:
                     if dialog_auth.iscanceled():
-                        config.set_setting("trakt_sync", 'false' )
+                        config.set_setting("trakt_sync", 'false')
                         return
 
                     url = "http://api-v2launch.trakt.tv/oauth/device/token"
@@ -128,7 +130,6 @@ def token_trakt(item):
 
 
 def get_trakt_watched(id_type, mediatype, update=False):
-
     logger.info()
 
     id_list = []
@@ -151,35 +152,36 @@ def get_trakt_watched(id_type, mediatype, update=False):
             if token_auth:
                 try:
                     token_auth = config.get_setting("token_trakt", "trakt")
-                    headers = [['Content-Type', 'application/json'], ['trakt-api-key', client_id], ['trakt-api-version', '2']]
+                    headers = [['Content-Type', 'application/json'], ['trakt-api-key', client_id],
+                               ['trakt-api-version', '2']]
                     if token_auth:
                         headers.append(['Authorization', "Bearer %s" % token_auth])
                         url = "https://api.trakt.tv/sync/watched/%s" % mediatype
-                    data = httptools.downloadpage(url, headers=headers, replace_headers=True).data
-                    watched_dict = jsontools.load(data)
+                        data = httptools.downloadpage(url, headers=headers, replace_headers=True).data
+                        watched_dict = jsontools.load(data)
 
-                    if mediatype == 'shows':
+                        if mediatype == 'shows':
 
-                        dict_show = dict()
-                        for item in watched_dict:
-                            temp =[]
-                            id = str(item['show']['ids']['tmdb'])
-                            season_dict=dict()
-                            for season in item['seasons']:
-                                ep=[]
-                                number = str(season['number'])
-                                #season_dict = dict()
-                                for episode in season['episodes']:
-                                    ep.append(str(episode['number']))
-                                season_dict[number]=ep
-                                temp.append(season_dict)
-                            dict_show[id] = season_dict
-                            id_dict=dict_show
-                        return id_dict
+                            dict_show = dict()
+                            for item in watched_dict:
+                                temp = []
+                                id_ = str(item['show']['ids']['tmdb'])
+                                season_dict = dict()
+                                for season in item['seasons']:
+                                    ep = []
+                                    number = str(season['number'])
+                                    # season_dict = dict()
+                                    for episode in season['episodes']:
+                                        ep.append(str(episode['number']))
+                                    season_dict[number] = ep
+                                    temp.append(season_dict)
+                                dict_show[id_] = season_dict
+                                id_dict = dict_show
+                            return id_dict
 
-                    elif mediatype == 'movies':
-                        for item in watched_dict:
-                            id_list.append(str(item['movie']['ids'][id_type]))
+                        elif mediatype == 'movies':
+                            for item in watched_dict:
+                                id_list.append(str(item['movie']['ids'][id_type]))
                 except:
                     pass
 
@@ -188,14 +190,14 @@ def get_trakt_watched(id_type, mediatype, update=False):
 
 def trakt_check(itemlist):
     id_result = ''
-    #check = u'\u221a'
+    # check = u'\u221a'
     check = 'v'
     get_sync_from_file()
     try:
         for item in itemlist:
             info = item.infoLabels
 
-            if info != '' and info['mediatype'] in ['movie', 'episode'] and item.channel !='videolibrary':
+            if info != '' and info['mediatype'] in ['movie', 'episode'] and item.channel != 'videolibrary':
 
                 mediatype = 'movies'
                 id_type = 'tmdb'
@@ -206,12 +208,12 @@ def trakt_check(itemlist):
                 if id_result == '':
                     id_result = get_trakt_watched(id_type, mediatype)
                 if info['mediatype'] == 'movie':
-                    if info[id_type+'_id'] in id_result:
-                        item.title ='[COLOR limegreen][%s][/COLOR] %s' % (check, item.title)
+                    if info[id_type + '_id'] in id_result:
+                        item.title = '[COLOR limegreen][%s][/COLOR] %s' % (check, item.title)
 
-                elif info['mediatype']=='episode':
-                    if info[id_type+'_id'] in id_result:
-                        id= info[id_type+'_id']
+                elif info['mediatype'] == 'episode':
+                    if info[id_type + '_id'] in id_result:
+                        id = info[id_type + '_id']
                         if info['season'] != '' and info['episode'] != '':
                             season = str(info['season'])
 
@@ -223,38 +225,40 @@ def trakt_check(itemlist):
 
                                     if episode in season_watched:
                                         item.title = '[B][COLOR limegreen][[I]%s[/I]][/COLOR][/B] %s' % (check,
-                                                                                                       item.title)
+                                                                                                         item.title)
             else:
                 break
     except:
-       pass
+        pass
 
     return itemlist
 
+
 def get_sync_from_file():
     logger.info()
-    sync_path = os.path.join(config.get_data_path(),'settings_channels' ,'trakt')
+    sync_path = os.path.join(config.get_data_path(), 'settings_channels', 'trakt')
     trakt_node = {}
     if os.path.exists(sync_path):
         trakt_node = jsontools.get_node_from_file('trakt', "TRAKT")
 
-    trakt_node['movies']=get_trakt_watched('tmdb', 'movies')
-    trakt_node['shows']=get_trakt_watched('tmdb', 'shows')
+    trakt_node['movies'] = get_trakt_watched('tmdb', 'movies')
+    trakt_node['shows'] = get_trakt_watched('tmdb', 'shows')
     jsontools.update_node(trakt_node, 'trakt', 'TRAKT')
+
 
 def update_trakt_data(mediatype, trakt_data):
     logger.info()
 
     sync_path = os.path.join(config.get_data_path(), 'settings_channels', 'trakt')
-    trakt_node = {}
     if os.path.exists(sync_path):
         trakt_node = jsontools.get_node_from_file('trakt', "TRAKT")
         trakt_node[mediatype] = trakt_data
         jsontools.update_node(trakt_node, 'trakt', 'TRAKT')
 
+
 def ask_install_script():
     logger.info()
-    import xbmc
+
     from platformcode import platformtools
 
     respuesta = platformtools.dialog_yesno("Alfa", "Puedes instalar el script de Trakt a continuacíon, "
@@ -265,5 +269,24 @@ def ask_install_script():
         xbmc.executebuiltin("InstallAddon(script.trakt)")
         return
     else:
-        config.set_setting('install_trakt','false')
+        config.set_setting('install_trakt', 'false')
         return
+
+
+def wait_for_update_trakt():
+    logger.info()
+    t = Thread(update_all)
+    t.setDaemon(True)
+    t.start()
+    t.isAlive()
+
+def update_all():
+    from time import sleep
+    logger.info()
+    sleep(20)
+    while xbmc.Player().isPlaying():
+        sleep(20)
+    for mediatype in ['movies', 'shows']:
+        trakt_data = get_trakt_watched('tmdb', mediatype, True)
+        update_trakt_data(mediatype, trakt_data)
+
