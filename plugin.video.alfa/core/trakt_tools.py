@@ -82,7 +82,7 @@ def token_trakt(item):
                 time.sleep(item.intervalo)
                 try:
                     if dialog_auth.iscanceled():
-                        config.set_setting("trakt_sync", 'false')
+                        config.set_setting("trakt_sync", False)
                         return
 
                     url = "http://api-v2launch.trakt.tv/oauth/device/token"
@@ -269,7 +269,7 @@ def ask_install_script():
         xbmc.executebuiltin("InstallAddon(script.trakt)")
         return
     else:
-        config.set_setting('install_trakt', 'false')
+        config.set_setting('install_trakt', False)
         return
 
 
