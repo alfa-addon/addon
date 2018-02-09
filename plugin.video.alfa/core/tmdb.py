@@ -1258,13 +1258,13 @@ class Tmdb(object):
                 self.temporada[numtemporada] = {"status_code": 15, "status_message": "Failed"}
                 self.temporada[numtemporada] = {"episodes": {}}
 
-            # if "status_code" in self.temporada[numtemporada]:
-            #     # Se ha producido un error
-            #     msg = "La busqueda de " + buscando + " no dio resultados."
-            #     msg += "\nError de tmdb: %s %s" % (
-            #     self.temporada[numtemporada]["status_code"], self.temporada[numtemporada]["status_message"])
-            #     logger.debug(msg)
-            #     self.temporada[numtemporada] = {"episodes": {}}
+            if "status_code" in self.temporada[numtemporada]:
+                #Se ha producido un error
+                msg = "La busqueda de " + buscando + " no dio resultados."
+                msg += "\nError de tmdb: %s %s" % (
+                self.temporada[numtemporada]["status_code"], self.temporada[numtemporada]["status_message"])
+                logger.debug(msg)
+                self.temporada[numtemporada] = {"episodes": {}}
 
         return self.temporada[numtemporada]
 
