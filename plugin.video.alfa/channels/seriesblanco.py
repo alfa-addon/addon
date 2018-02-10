@@ -10,6 +10,7 @@ from core import scrapertoolsV2
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
+from core import tmdb
 from channels import autoplay
 
 
@@ -108,7 +109,7 @@ def extract_series_from_data(item, data):
         context.extend(context2)
 
         itemlist.append(item.clone(title=name, url=urlparse.urljoin(HOST, url),
-                                   action=action, show=name,
+                                   action=action, show=name, contentSerieName=name,
                                    thumbnail=img,
                                    context=context))
 
@@ -121,6 +122,7 @@ def extract_series_from_data(item, data):
         # logger.debug("Adding previous page item")
         itemlist.append(item.clone(title="<< Anterior", extra=item.extra - 1))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -189,7 +191,8 @@ def search(item, texto):
         for url, img, title in shows:
             title = title.strip()
             itemlist.append(item.clone(title=title, url=urlparse.urljoin(HOST, url), action="episodios", show=title,
-                                       thumbnail=img, context=filtertools.context(item, list_idiomas, CALIDADES)))
+                                       thumbnail=img, context=filtertools.context(item, list_idiomas, CALIDADES),
+                                       contentSerieName=title))
 
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
     except:
@@ -222,11 +225,17 @@ def episodios(item):
                             re.findall("banderas/([^\.]+)", flags, re.MULTILINE)])
         filter_lang = idiomas.replace("[", "").replace("]", "").split(" ")
         display_title = "%s - %s %s" % (item.show, title, idiomas)
+
+        season_episode = scrapertoolsV2.get_season_and_episode(title).split('x')
+        item.infoLabels['season']= season_episode[0]
+        item.infoLabels['episode'] = season_episode[1]
         # logger.debug("Episode found %s: %s" % (display_title, urlparse.urljoin(HOST, url)))
         itemlist.append(item.clone(title=display_title, url=urlparse.urljoin(HOST, url),
                                    action="findvideos", plot=plot, fanart=fanart, language=filter_lang))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     itemlist = filtertools.get_links(itemlist, item, list_idiomas, CALIDADES)
+
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
