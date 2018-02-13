@@ -185,7 +185,7 @@ def listado(item):
 
         itemlist.append(new_item)
 
-    next_page = scrapertools.find_single_match(data, '<div class="pageSplitterBorder" data-nextpage-number="([^"]+)"')
+    next_page = scrapertools.find_single_match(data, 'class="pageSplitter" data-nextpage-number="([^"]+)"')
     if next_page:
         if item.post:
             post = re.sub(r'pageNumber=(\d+)', "pageNumber=" + next_page, item.post)
