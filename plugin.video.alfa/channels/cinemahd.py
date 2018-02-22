@@ -46,7 +46,7 @@ def list_all(item):
     else:
         patron = '<article id=post-.*?<a href=(.*?)>.*?<img src=(.*?) alt=.*?'
         patron += '<h2 class=Title>(.*?)<\/h2>.*?<span class=Year>(.*?)<\/span>.*?Qlty>(.*?)<\/span>'
-
+    data = get_source(item.url)
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, year, quality in matches:
