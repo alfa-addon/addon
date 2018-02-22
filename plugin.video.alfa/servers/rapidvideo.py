@@ -35,11 +35,17 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = httptools.downloadpage(page_url).data
     patron = 'https://www.rapidvideo.com/e/[^"]+'
     match = scrapertools.find_multiple_matches(data, patron)
-    for url1 in match:
-       res = scrapertools.find_single_match(url1, '=(\w+)')
-       data = httptools.downloadpage(url1).data
-       url = scrapertools.find_single_match(data, 'source src="([^"]+)')
-       ext = scrapertools.get_filename_from_url(url)[-4:]
-       video_urls.append(['%s %s [rapidvideo]' % (ext, res), url])
-
+    if match:
+        for url1 in match:
+           res = scrapertools.find_single_match(url1, '=(\w+)')
+           data = httptools.downloadpage(url1).data
+           url = scrapertools.find_single_match(data, 'source src="([^"]+)')
+           ext = scrapertools.get_filename_from_url(url)[-4:]
+           video_urls.append(['%s %s [rapidvideo]' % (ext, res), url])
+    else:
+        patron = 'data-setup.*?src="([^"]+)".*?'
+        patron += 'type="([^"]+)"'
+        match = scrapertools.find_multiple_matches(data, patron)
+        for url, ext in match:
+            video_urls.append(['%s [rapidvideo]' % (ext), url])
     return video_urls
