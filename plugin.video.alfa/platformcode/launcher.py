@@ -63,55 +63,9 @@ def run(item=None):
         elif item.action == "getmainlist":
             import channelselector
 
-            # # Check for updates only on first screen
-            # if config.get_setting("check_for_plugin_updates") == True:
-            #     logger.info("Check for plugin updates enabled")
-            #     from core import updater
-            #
-            #     try:
-            #         config.set_setting("plugin_updates_available", 0)
-            #         new_published_version_tag, number_of_updates = updater.get_available_updates()
-            #
-            #         config.set_setting("plugin_updates_available", number_of_updates)
-            #         itemlist = channelselector.getmainlist()
-            #
-            #         if new_published_version_tag != "":
-            #             platformtools.dialog_notification(new_published_version_tag + " disponible",
-            #                                               "Ya puedes descargar la nueva versión del plugin\n"
-            #                                               "desde el listado principal")
-            #
-            #             itemlist = channelselector.getmainlist()
-            #             itemlist.insert(0, Item(title="Descargar version " + new_published_version_tag,
-            #                                     version=new_published_version_tag, channel="updater",
-            #                                     action="update",
-            #                                     thumbnail=channelselector.get_thumb("update.png")))
-            #     except:
-            #         import traceback
-            #         logger.error(traceback.format_exc())
-            #         platformtools.dialog_ok("No se puede conectar", "No ha sido posible comprobar",
-            #                                 "si hay actualizaciones")
-            #         logger.error("Fallo al verificar la actualización")
-            #         config.set_setting("plugin_updates_available", 0)
-            #         itemlist = channelselector.getmainlist()
-            #
-            # else:
-            #     logger.info("Check for plugin updates disabled")
-            #     config.set_setting("plugin_updates_available", 0)
-            #     itemlist = channelselector.getmainlist()
-
             itemlist = channelselector.getmainlist()
 
             platformtools.render_items(itemlist, item)
-
-        # # Action for updating plugin
-        # elif item.action == "update":
-        #
-        #     from core import updater
-        #     updater.update(item)
-        #     config.set_setting("plugin_updates_available", 0)
-        #
-        #     import xbmc
-        #     xbmc.executebuiltin("Container.Refresh")
 
         # Action for channel types on channelselector: movies, series, etc.
         elif item.action == "getchanneltypes":
@@ -277,11 +231,6 @@ def run(item=None):
             else:
                 logger.info("Executing channel '%s' method" % item.action)
                 itemlist = getattr(channel, item.action)(item)
-                # if item.start:
-                #     menu_icon = get_thumb('menu.png')
-                #     menu = Item(channel="channelselector", action="getmainlist", viewmode="movie", thumbnail=menu_icon,
-                #                 title='Menu')
-                #     itemlist.insert(0, menu)
                 if config.get_setting('trakt_sync'):
                     token_auth = config.get_setting("token_trakt", "trakt")
                     if not token_auth:
@@ -293,7 +242,7 @@ def run(item=None):
                             trakt_tools.ask_install_script()
                     itemlist = trakt_tools.trakt_check(itemlist)
                 else:
-                    config.set_setting('install_trakt', 'true')
+                    config.set_setting('install_trakt', True)
 
                 platformtools.render_items(itemlist, item)
 

@@ -7,6 +7,7 @@ import urlparse
 from channels import autoplay
 from channels import filtertools
 from core import httptools
+from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
@@ -219,23 +220,38 @@ def newest(categoria):
 
     return itemlist
 
+def get_vip(item, url):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(url+'/videocontent').data
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    video_id = scrapertools.find_single_match(data, 'id=videoInfo ><span >(.*?)</span>')
+    new_url = 'https://v.d0stream.com/api/videoinfo/%s?src-url=https://Fv.d0stream.com' % video_id
+    json_data = httptools.downloadpage(new_url).data
+    dict_data = jsontools.load(json_data)
+    sources = dict_data['sources']
+
+    for vip_item in sources['mp4_cdn']:
+        vip_url= vip_item['url']
+        vip_quality = vip_item['label']
+        title ='%s [%s]' % (item.title, vip_quality)
+        itemlist.append(item.clone(title = title, url=vip_url, action='play', quality=vip_quality, server='directo'))
+
+    return itemlist
+
 def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    player_vip = scrapertools.find_single_match(data, 'src=(https:\/\/content.jwplatform.com\/players.*?js)')
-    data_m3u8 = httptools.downloadpage(player_vip, headers= {'referer':item.url}).data
-    data_m3u8 = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data_m3u8)
-    url_m3u8 = scrapertools.find_single_match(data_m3u8,',sources:.*?file: (.*?),')
-    itemlist.append(item.clone(url=url_m3u8, action='play'))
+    player_vip = scrapertools.find_single_match(data, 'class=movieplay><iframe src=(https://v.d0stream.com.*?) frameborder')
+    itemlist.extend(get_vip(item, player_vip))
 
     patron = 'id=(tab\d+)><div class=movieplay><(?:iframe|script) src=(.*?)(?:scrolling|><\/script>)'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for option, urls in matches:
-        quality = scrapertools.find_single_match(data, '<div class=les-content><a href=#%s>(.*?)<\/a><\/div>'%option)
-        title = '%s (%s)' % (item.title, quality)
+
         if 'content' in urls:
             urls = '%s%s'%('http:',urls)
             hidden_data = httptools.downloadpage(urls).data
@@ -248,20 +264,18 @@ def findvideos(item):
                 new_item = Item(
                                 channel = item.channel,
                                 url = videoitem,
-                                title = title,
+                                title = item.title,
                                 contentTitle = item.title,
                                 action = 'play',
-                                quality = quality
                                 )
                 itemlist.append(new_item)
         else:
             new_item = Item(
                             channel=item.channel,
                             url=urls,
-                            title=title,
+                            title=item.title,
                             contentTitle=item.title,
                             action='play',
-                            quality = quality
                             )
             itemlist.append(new_item)
     itemlist = servertools.get_servers_itemlist(itemlist)
