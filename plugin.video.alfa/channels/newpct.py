@@ -97,6 +97,4 @@ def findvideos(item):
     itemlist.extend(new_item)
     for it in itemlist:
         it.channel = item.channel
-
-    scrapertools.printMatches(itemlist)
     return itemlist
