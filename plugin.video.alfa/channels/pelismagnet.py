@@ -84,13 +84,13 @@ def menu_genero(item):
     logger.info()
 
     itemlist = []
-
-    httptools.downloadpage("https://kproxy.com/")
-    url = "https://kproxy.com/doproxy.jsp"
-    post = "page=%s&x=34&y=14" % urllib.quote(host + "/principal")
-    response = httptools.downloadpage(url, post, follow_redirects=False).data
-    url = scrapertools.find_single_match(response, '<meta http-equiv="refresh".*?url=([^"]+)"')
-    data = httptools.downloadpage(url).data
+    # TODO: SOLO FUNCIONA POR AHORA A PARTIR DE KODI 17
+    # httptools.downloadpage("https://kproxy.com/")
+    # url = "https://kproxy.com/doproxy.jsp"
+    # post = "page=%s&x=34&y=14" % urllib.quote(host + "/principal")
+    # response = httptools.downloadpage(url, post, follow_redirects=False).data
+    # url = scrapertools.find_single_match(response, '<meta http-equiv="refresh".*?url=([^"]+)"')
+    data = httptools.downloadpage(host + "/principal").data
 
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<Br>|<BR>|<br>|<br/>|<br />|-\s", "", data)
 
@@ -108,13 +108,13 @@ def menu_genero(item):
 def series(item):
     logger.info()
     itemlist = []
-
-    httptools.downloadpage("https://kproxy.com/")
-    url = "https://kproxy.com/doproxy.jsp"
-    post = "page=%s&x=34&y=14" % urllib.quote(item.url)
-    response = httptools.downloadpage(url, post, follow_redirects=False).data
-    url = scrapertools.find_single_match(response, '<meta http-equiv="refresh".*?url=([^"]+)"')
-    data = httptools.downloadpage(url).data
+    # TODO: SOLO FUNCIONA POR AHORA A PARTIR DE KODI 17
+    # httptools.downloadpage("https://kproxy.com/")
+    # url = "https://kproxy.com/doproxy.jsp"
+    # post = "page=%s&x=34&y=14" % urllib.quote(item.url)
+    # response = httptools.downloadpage(url, post, follow_redirects=False).data
+    # url = scrapertools.find_single_match(response, '<meta http-equiv="refresh".*?url=([^"]+)"')
+    data = httptools.downloadpage(item.url).data
 
     lista = jsontools.load(data)
     if item.extra == "next":
@@ -165,13 +165,13 @@ def series(item):
 def episodios(item):
     logger.info()
     itemlist = []
-
-    httptools.downloadpage("https://kproxy.com/")
-    url = "https://kproxy.com/doproxy.jsp"
-    post = "page=%s&x=34&y=14" % urllib.quote(item.url)
-    response = httptools.downloadpage(url, post, follow_redirects=False).data
-    url = scrapertools.find_single_match(response, '<meta http-equiv="refresh".*?url=([^"]+)"')
-    data = httptools.downloadpage(url).data
+    # TODO: SOLO FUNCIONA POR AHORA A PARTIR DE KODI 17
+    # httptools.downloadpage("https://kproxy.com/")
+    # url = "https://kproxy.com/doproxy.jsp"
+    # post = "page=%s&x=34&y=14" % urllib.quote(item.url)
+    # response = httptools.downloadpage(url, post, follow_redirects=False).data
+    # url = scrapertools.find_single_match(response, '<meta http-equiv="refresh".*?url=([^"]+)"')
+    # data = httptools.downloadpage(item.url).data
 
     data = jsontools.load(data)
 
@@ -237,13 +237,13 @@ def pelis(item):
     logger.info()
 
     itemlist = []
-
-    httptools.downloadpage("https://kproxy.com/")
-    url = "https://kproxy.com/doproxy.jsp"
-    post = "page=%s&x=34&y=14" % urllib.quote(item.url)
-    response = httptools.downloadpage(url, post, follow_redirects=False).data
-    url = scrapertools.find_single_match(response, '<meta http-equiv="refresh".*?url=([^"]+)"')
-    data = httptools.downloadpage(url).data
+    # TODO: SOLO FUNCIONA POR AHORA A PARTIR DE KODI 17
+    # httptools.downloadpage("https://kproxy.com/", add_referer=True)
+    # url = "https://kproxy.com/doproxy.jsp"
+    # post = "page=%s&x=34&y=14" % urllib.quote(item.url)
+    # response = httptools.downloadpage(url, post, follow_redirects=False).data
+    # url = scrapertools.find_single_match(response, '<meta http-equiv="refresh".*?url=([^"]+)"')
+    data = httptools.downloadpage(item.url).data
 
     lista = jsontools.load(data)
     if item.extra == "next":

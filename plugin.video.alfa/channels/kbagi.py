@@ -134,7 +134,7 @@ def listado(item):
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<br>", "", data)
 
     folder = filetools.join(config.get_data_path(), 'thumbs_kbagi')
-    patron = 'data-file-id(.*?)</div></div></li>'
+    patron = 'data-file-id(.*?</p>)</div></div>'
     bloques = scrapertools.find_multiple_matches(data, patron)
     for block in bloques:
         if "adult_info" in block and not adult_content:
@@ -184,8 +184,7 @@ def listado(item):
             new_item.fanart = item.thumbnail
 
         itemlist.append(new_item)
-
-    next_page = scrapertools.find_single_match(data, 'class="pageSplitter" data-nextpage-number="([^"]+)"')
+    next_page = scrapertools.find_single_match(data, 'class="pageSplitter.*?" data-nextpage-number="([^"]+)"')
     if next_page:
         if item.post:
             post = re.sub(r'pageNumber=(\d+)', "pageNumber=" + next_page, item.post)
