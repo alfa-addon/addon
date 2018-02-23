@@ -17,7 +17,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         page_url = "http://www.youtube.com/watch?v=%s" % page_url
         logger.info(" page_url->'%s'" % page_url)
 
-    video_id = scrapertools.find_single_match(page_url, 'v=([A-z0-9_-]{11})')
+    video_id = scrapertools.find_single_match(page_url, '(?:v=|embed/)([A-z0-9_-]{11})')
     video_urls = extract_videos(video_id)
     video_urls.reverse()
 

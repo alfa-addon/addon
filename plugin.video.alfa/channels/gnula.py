@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import re
-
 from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import logger
+from platformcode import config, logger
 
 host = "http://gnula.nu/"
+host_search = "https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=small&num=10&hl=es&prettyPrint=false&source=gcsc&gss=.es&sig=45e50696e04f15ce6310843f10a3a8fb&cx=014793692610101313036:vwtjajbclpq&q=%s&cse_tok=AOdTmaBgzSiy5RxoV4cZSGGEr17reWoGLg:1519145966291&googlehost=www.google.com&callback=google.search.Search.apiary10745&nocache=1519145965573&start=0"
+
 
 def mainlist(item):
     logger.info()
@@ -19,43 +19,87 @@ def mainlist(item):
         Item(channel=item.channel, title="Generos", action="generos", url= host + "generos/lista-de-generos/"))
     itemlist.append(Item(channel=item.channel, title="Recomendadas", action="peliculas",
                          url= host + "peliculas-online/lista-de-peliculas-recomendadas/", viewmode="movie"))
+    itemlist.append(Item(channel = item.channel, action = ""))
+    itemlist.append(
+        Item(channel=item.channel, title="Buscar", action="search", url = host_search))
+    return itemlist
+
+
+def search(item, texto):
+    logger.info()
+    texto = texto.replace(" ", "+")
+    item.url = item.url %texto
+    try:
+        return sub_search(item)
+    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("%s" % line)
+        return []
+
+
+def sub_search(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron =  '(?s)clicktrackUrl":".*?q=(.*?)".*?'
+    patron += 'title":"([^"]+)".*?'
+    patron += 'cseImage":{"src":"([^"]+)"'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
+        scrapedurl = scrapertools.find_single_match(scrapedurl, ".*?online/")
+        scrapedtitle = scrapedtitle.decode("unicode-escape").replace(" online", "").replace("<b>", "").replace("</b>", "")
+        if "ver-" not in scrapedurl:
+            continue
+        year = scrapertools.find_single_match(scrapedtitle, "\d{4}")
+        contentTitle = scrapedtitle.replace("(%s)" %year,"").replace("Ver","").strip()
+        itemlist.append(Item(action = "findvideos",
+                             channel = item.channel,
+                             contentTitle = contentTitle,
+                             infoLabels = {"year":year},
+                             title = scrapedtitle,
+                             thumbnail = scrapedthumbnail,
+                             url = scrapedurl
+                             ))
+    if itemlist:
+        page = int(scrapertools.find_single_match(item.url, ".*?start=(\d+)")) + 10
+        npage = (page / 10) + 1
+        item_page = scrapertools.find_single_match(item.url, "(.*?start=)") + str(page)
+        itemlist.append(Item(action = "sub_search",
+                             channel = item.channel,
+                             title = "[COLOR green]Página %s[/COLOR]" %npage,
+                             url = item_page
+                             ))
     return itemlist
 
 
 def generos(item):
     logger.info()
     itemlist = []
-
     data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, '<spa[^>]+>Lista de g(.*?)/table')
-
     patron = '<strong>([^<]+)</strong> .<a href="([^"]+)"'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = scrapertools.find_multiple_matches(data, patron)
     for genero, scrapedurl in matches:
         title = scrapertools.htmlclean(genero)
-        plot = ""
         url = item.url + scrapedurl
-        thumbnail = ""
         itemlist.append(Item(channel = item.channel,
                              action = 'peliculas',
                              title = title,
                              url = url,
-                             thumbnail = thumbnail,
-                             plot = plot,
                              viewmode = "movie"))
-
     itemlist = sorted(itemlist, key=lambda item: item.title)
-
     return itemlist
 
 
 def peliculas(item):
     logger.info()
+    itemlist = []
     data = httptools.downloadpage(item.url).data
     patron  = '<a class="Ntooltip" href="([^"]+)">([^<]+)<span><br[^<]+'
     patron += '<img src="([^"]+)"></span></a>(.*?)<br'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    itemlist = []
+    matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle, scrapedthumbnail, resto in matches:
         language = []
         plot = scrapertools.htmlclean(resto).strip()
@@ -110,6 +154,13 @@ def findvideos(item):
                                  url = url
                                  ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    if itemlist:
+        if config.get_videolibrary_support():
+                itemlist.append(Item(channel = item.channel, action = ""))
+                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                                     action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
+                                     fulltitle = item.contentTitle
+                                     ))
     return itemlist
 
 
