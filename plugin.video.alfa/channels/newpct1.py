@@ -4,6 +4,7 @@ import re
 import urllib
 import urlparse
 
+from core import servertools
 from core import scrapertools
 from core.item import Item
 from platformcode import logger
