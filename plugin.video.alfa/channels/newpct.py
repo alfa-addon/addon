@@ -93,8 +93,6 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     itemlist = servertools.find_video_items(data = data)
     url = scrapertools.find_single_match( data, 'location.href = "([^"]+)"')
-    data = httptools.downloadpage(url, follow_redirects=False).headers['location']
-    data = httptools.downloadpage(url).data
     new_item.append(Item(url = url, title = "Torrent", server = "torrent", action = "play"))
     itemlist.extend(new_item)
     for it in itemlist:
