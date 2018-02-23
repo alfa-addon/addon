@@ -6,6 +6,7 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channelselector import get_thumb
 
 CHANNEL_HOST = "http://www.cinetux.io/"
 
@@ -32,28 +33,25 @@ def mainlist(item):
     titulo = "Peliculas (%s)" %total
     itemlist.append(item.clone(title=titulo, text_color=color2, action="", text_bold=True))
     itemlist.append(item.clone(action="peliculas", title="      Novedades", url=CHANNEL_HOST + "pelicula",
-                               thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
-                                         "/0/Directors%20Chair.png",
+                               thumbnail=get_thumb('newest', auto=True),
                                text_color=color1))
     itemlist.append(item.clone(action="destacadas", title="      Destacadas", url=CHANNEL_HOST + "mas-vistos/",
-                               thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
-                                         "/0/Favorites.png",
+                               thumbnail=get_thumb('hot', auto=True),
                                text_color=color1))
-    itemlist.append(item.clone(action="idioma", title="      Por idioma", text_color=color1))
+    itemlist.append(item.clone(action="idioma", title="      Por idioma", text_color=color1,
+                               thumbnail=get_thumb('language', auto=True)))
     itemlist.append(item.clone(action="generos", title="      Por géneros", url=CHANNEL_HOST,
-                               thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
-                                         "/0/Genre.png",
+                               thumbnail=get_thumb('genres', auto=True),
                                text_color=color1))
 
     itemlist.append(item.clone(title="Documentales", text_bold=True, text_color=color2, action=""))
     itemlist.append(item.clone(action="peliculas", title="      Novedades", url=CHANNEL_HOST + "genero/documental/", text_color=color1,
-                               thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
-                                         "/0/Documentaries.png"))
+                               thumbnail=get_thumb('newest', auto=True)))
     itemlist.append(item.clone(action="peliculas", title="      Por orden alfabético", text_color=color1, url=CHANNEL_HOST + "genero/documental/?orderby=title&order=asc&gdsr_order=asc",
-                               thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
-                                         "/0/A-Z.png"))
+                               thumbnail=get_thumb('alphabet', auto=True)))
     itemlist.append(item.clone(title="", action=""))
-    itemlist.append(item.clone(action="search", title="Buscar...", text_color=color3))
+    itemlist.append(item.clone(action="search", title="Buscar...", text_color=color3,
+                               thumbnail=get_thumb('search', auto=True)))
     itemlist.append(item.clone(action="configuracion", title="Configurar canal...", text_color="gold", folder=False))
     return itemlist
 

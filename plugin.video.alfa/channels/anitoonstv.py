@@ -27,7 +27,7 @@ host = "http://www.anitoonstv.com"
 
 def mainlist(item):
     logger.info()
-    thumb_series = get_thumb("channels_tvshow.png")
+    thumb_series = get_thumb("tvshows", auto=True)
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()

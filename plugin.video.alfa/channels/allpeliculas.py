@@ -6,6 +6,7 @@ from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
+from channelselector import get_thumb
 from platformcode import config, logger
 
 __modo_grafico__ = config.get_setting('modo_grafico', "allpeliculas")
@@ -30,13 +31,14 @@ def mainlist(item):
     item.text_color = color1
 
     itemlist.append(item.clone(title="Películas", action="lista", fanart="http://i.imgur.com/c3HS8kj.png",
-                               url= host + "movies/newmovies?page=1", extra1 = 0))
+                               url= host + "movies/newmovies?page=1", extra1 = 0,
+                               thumbnail=get_thumb('movies', auto=True)))
     itemlist.append(item.clone(title="Por genero", action="generos", fanart="http://i.imgur.com/c3HS8kj.png",
-                               url= host + "movies/getGanres"))
+                               url= host + "movies/getGanres", thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(item.clone(title="Colecciones", action="colecciones", fanart="http://i.imgur.com/c3HS8kj.png",
-                               url= host))
+                               url= host, thumbnail=get_thumb('colections', auto=True)))
     itemlist.append(item.clone(title="", action=""))
-    itemlist.append(item.clone(title="Buscar...", action="search"))
+    itemlist.append(item.clone(title="Buscar...", action="search", thumbnail=get_thumb('search', auto=True)))
 
     return itemlist
 

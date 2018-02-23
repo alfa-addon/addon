@@ -6,7 +6,7 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
-
+from channelselector import get_thumb
 __channel__='ciberpeliculashd'
 
 host = "http://ciberpeliculashd.net"
@@ -21,16 +21,23 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel = item.channel, title = "Películas", text_bold = True, folder = False))
-    itemlist.append(Item(channel = item.channel, title = "   Novedades", action = "peliculas", url = host + "/?peli=1"))
-    itemlist.append(Item(channel = item.channel, title = "   Por género", action = "filtro", url = host, extra = "categories" ))
-    itemlist.append(Item(channel = item.channel, title = "   Por calidad", action = "filtro", url = host, extra = "qualitys"))
-    itemlist.append(Item(channel = item.channel, title = "   Por idioma", action = "filtro", url = host, extra = "languages"))
+    itemlist.append(Item(channel = item.channel, title = "   Novedades", action = "peliculas", url = host + "/?peli=1",
+                         thumbnail=get_thumb('newest', auto=True)))
+    itemlist.append(Item(channel = item.channel, title = "   Por género", action = "filtro", url = host,
+                         extra = "categories", thumbnail=get_thumb('genres', auto=True)))
+    itemlist.append(Item(channel = item.channel, title = "   Por calidad", action = "filtro", url = host,
+                         extra = "qualitys", thumbnail=get_thumb('quality', auto=True)))
+    itemlist.append(Item(channel = item.channel, title = "   Por idioma", action = "filtro", url = host,
+                         extra = "languages", thumbnail=get_thumb('language', auto=True)))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Series", text_bold = True, folder = False))
-    itemlist.append(Item(channel = item.channel, title = "   Novedades", action = "series", url = host + "/series/?peli=1"))
-    itemlist.append(Item(channel = item.channel, title = "   Nuevos Capitulos", action = "nuevos_capitulos", url = host + "/series/?peli=1"))
+    itemlist.append(Item(channel = item.channel, title = "   Novedades", action = "series",
+                         url = host +"/series/?peli=1", thumbnail=get_thumb('newest', auto=True)))
+    itemlist.append(Item(channel = item.channel, title = "   Nuevos Capitulos", action = "nuevos_capitulos",
+                         url = host + "/series/?peli=1", thumbnail=get_thumb('new episodes', auto=True)))
     itemlist.append(Item(channel = item.channel, title = ""))
-    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "/?s="))
+    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "/?s=",
+                         thumbnail=get_thumb('search', auto=True)))
     return itemlist
 
 def nuevos_capitulos(item):
