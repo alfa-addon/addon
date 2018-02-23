@@ -120,11 +120,18 @@ def render_items(itemlist, parent_item):
     if not len(itemlist):
         itemlist.append(Item(title="No hay elementos que mostrar"))
 
+    genre = False
+    if 'nero' in parent_item.title:
+        genre = True
+        anime = False
+        if 'anime' in channeltools.get_channel_parameters(parent_item.channel)['categories']:
+            anime = True
+
     # Recorremos el itemlist
 
     for item in itemlist:
         channel_parameters = channeltools.get_channel_parameters(item.channel)
-        # logger.debug(item)
+        #logger.debug(item)
         # Si el item no contiene categoria, le ponemos la del item padre
         if item.category == "":
             item.category = parent_item.category
@@ -132,9 +139,23 @@ def render_items(itemlist, parent_item):
         # Si el item no contiene fanart, le ponemos el del item padre
         if item.fanart == "":
             item.fanart = parent_item.fanart
+
+
+        if genre:
+
+            valid_genre = True
+            thumb = get_thumb(item.title, auto=True)
+            if thumb != '':
+                item.thumbnail = thumb
+                valid_genre = True
+            elif anime:
+                valid_genre = True
+
+
         unify_enabled = config.get_setting('unify')
 
-        logger.debug('unify_enabled: %s' % unify_enabled)
+        #logger.debug('unify_enabled: %s' % unify_enabled)
+
 
         if unify_enabled and not channel_parameters['adult'] and 'skip_unify' not in channel_parameters:
             # Formatear titulo con unify
@@ -160,6 +181,7 @@ def render_items(itemlist, parent_item):
         else:
             icon_image = "DefaultVideo.png"
 
+        #if not genre or (genre and valid_genre):
         # Creamos el listitem
         #listitem = xbmcgui.ListItem(item.title, iconImage=icon_image, thumbnailImage=unify.thumbnail_type(item))
         listitem = xbmcgui.ListItem(item.title, iconImage=icon_image, thumbnailImage=item.thumbnail)
@@ -209,6 +231,7 @@ def render_items(itemlist, parent_item):
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url='%s?%s' % (sys.argv[0], item.tourl()),
                                     listitem=listitem, isFolder=item.folder,
                                     totalItems=item.totalItems)
+
 
     # Fijar los tipos de vistas...
     if config.get_setting("forceview"):

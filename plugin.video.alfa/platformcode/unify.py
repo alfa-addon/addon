@@ -17,18 +17,133 @@ from core.item import Item
 from core import scrapertools
 from platformcode import logger
 
+thumb_dict = {"movies": "https://s10.postimg.org/fxtqzdog9/peliculas.png",
+    "tvshows": "https://s10.postimg.org/kxvslawe1/series.png",
+    "all": "https://s10.postimg.org/h1igpgw0p/todas.png",
+    "genres": "https://s10.postimg.org/6c4rx3x1l/generos.png",
+    "search": "https://s10.postimg.org/v985e2izd/buscar.png",
+    "quality": "https://s10.postimg.org/9bbojsbjd/calidad.png",
+    "audio": "https://s10.postimg.org/b34nern7d/audio.png",
+    "newest": "https://s10.postimg.org/g1s5tf1bt/novedades.png",
+    "last": "https://s10.postimg.org/i6ciuk0eh/ultimas.png",
+    "hot": "https://s10.postimg.org/yu40x8q2x/destacadas.png",
+    "year": "https://s10.postimg.org/egcw1womh/a_o.png",
+    "alphabet": "https://s10.postimg.org/4dy3ytmgp/a-z.png",
+    "recomended": "https://s10.postimg.org/7xk1oqccp/recomendadas.png",
+    "more_watched": "https://s10.postimg.org/c6orr5neh/masvistas.png",
+    "more_voted": "https://s10.postimg.org/c6orr5neh/masvistas.png",
+    "favorites": "https://s10.postimg.org/rtg147gih/favoritas.png",
+    "colections": "https://s10.postimg.org/ywnwjvytl/colecciones.png",
+    "categories": "https://s10.postimg.org/v0ako5lmh/categorias.png",
+    "premieres": "https://s10.postimg.org/sk8r9xdq1/estrenos.png",
+    "documentaries": "https://s10.postimg.org/68aygmmcp/documentales.png",
+    "language": "https://s10.postimg.org/hknjykfnt/idioma.png",
+    "new_episodes": "https://s10.postimg.org/fu4iwpnqh/nuevoscapitulos.png",
+    "country": "https://s10.postimg.org/hlxhrrjzt/pais.png",
+    "adults": "https://s10.postimg.org/s8raxc51l/adultos.png",
+    "accion": "https://s14.postimg.org/sqy3q2aht/action.png",
+    "adolescente" : "https://s10.postimg.org/inq7u4p61/teens.png",
+    "adultos": "https://s10.postimg.org/s8raxc51l/adultos.png",
+    "animacion": "https://s14.postimg.org/vl193mupd/animation.png",
+    "anime" : "https://s10.postimg.org/n9mc2ikzt/anime.png",
+    "artes marciales" : "https://s10.postimg.org/4u1v51tzt/martial_arts.png",
+    "aventura": "https://s14.postimg.org/ky7fy5he9/adventure.png",
+    "belico": "https://s14.postimg.org/5e027lru9/war.png",
+    "biografia" : "https://s10.postimg.org/jq0ecjxnt/biographic.png",
+    "carreras": "https://s14.postimg.org/yt5qgdr69/races.png",
+    "ciencia ficcion": "https://s14.postimg.org/8kulr2jy9/scifi.png",
+    "cine negro" : "https://s10.postimg.org/6ym862qgp/noir.png",
+    "comedia": "https://s14.postimg.org/9ym8moog1/comedy.png",
+    "cortometraje" : "https://s10.postimg.org/qggvlxndl/shortfilm.png",
+    "crimen": "https://s14.postimg.org/duzkipjq9/crime.png",
+    "de la tv": "https://s10.postimg.org/94gj0iwh5/image.png",
+    "deporte": "https://s14.postimg.org/x1crlnnap/sports.png",
+    "destacadas": "https://s10.postimg.org/yu40x8q2x/destacadas.png",
+    "documental": "https://s10.postimg.org/68aygmmcp/documentales.png",
+    "drama": "https://s14.postimg.org/fzjxjtnxt/drama.png",
+    "erotica" : "https://s10.postimg.org/dcbb9bfx5/erotic.png",
+    "espanolas" : "https://s10.postimg.org/x1y6zikx5/spanish.png",
+    "estrenos" : "https://s10.postimg.org/sk8r9xdq1/estrenos.png",
+    "extranjera": "https://s10.postimg.org/f44a4eerd/foreign.png",
+    "familiar": "https://s14.postimg.org/jj5v9ndsx/family.png",
+    "fantasia": "https://s14.postimg.org/p7c60ksg1/fantasy.png",
+    "fantastico" : "https://s10.postimg.org/tedufx5eh/fantastic.png",
+    "historica": "https://s10.postimg.org/p1faxj6yh/historic.png",
+    "horror" : "https://s10.postimg.org/8exqo6yih/horror2.png",
+    "infantil": "https://s14.postimg.org/4zyq842mp/childish.png",
+    "intriga": "https://s14.postimg.org/5qrgdimw1/intrigue.png",
+    "latino" : "https://s10.postimg.org/swip0b86h/latin.png",
+    "mexicanas" : "https://s10.postimg.org/swip0b86h/latin.png",
+    "misterio": "https://s14.postimg.org/3m73cg8ep/mistery.png",
+    "musical": "https://s10.postimg.org/hy7fhtecp/musical.png",
+    "peleas" : "https://s10.postimg.org/7a3ojbjwp/Fight.png",
+    "policial" : "https://s10.postimg.org/wsw0wbgbd/cops.png",
+    "recomendadas": "https://s10.postimg.org/7xk1oqccp/recomendadas.png",
+    "religion" : "https://s10.postimg.org/44j2skquh/religion.png",
+    "romance" : "https://s10.postimg.org/yn8vdll6x/romance.png",
+    "romantica": "https://s14.postimg.org/8xlzx7cht/romantic.png",
+    "suspenso": "https://s10.postimg.org/7peybxdfd/suspense.png",
+    "terror": "https://s14.postimg.org/thqtvl52p/horror.png",
+    "thriller": "https://s14.postimg.org/uwsekl8td/thriller.png",
+    "western": "https://s10.postimg.org/5wc1nokjt/western.png"
+    }
+
+def set_genre(string):
+    logger.info()
+
+    genres_dict = {'accion':['accion', 'action', 'accion y aventura', 'action & adventure'],
+                   'adultos':['adultos', 'adultos +', 'adulto'],
+                   'animacion':['animacion', 'animacion e infantil', 'dibujos animados'],
+                   'adolescente':['adolescente', 'adolescentes', 'adolescencia', 'adolecentes'],
+                   'aventura':['aventura', 'aventuras'],
+                   'belico':['belico', 'belica', 'belicas', 'guerra', 'belico guerra'],
+                   'biografia':['biografia', 'biografias', 'biografica', 'biograficas', 'biografico'],
+                   'ciencia ficcion':['ciencia ficcion', 'cienciaficcion', 'sci fi', 'c ficcion'],
+                   'cine negro':['film noir', 'negro'],
+                   'comedia':['comedia', 'comedias'],
+                   'cortometraje':['cortometraje', 'corto', 'cortos'],
+                   'de la tv':['de la tv', 'television', 'tv'],
+                   'deporte':['deporte', 'deportes'],
+                   'destacadas':['destacada', 'destacadas'],
+                   'documental':['documental', 'documentales'],
+                   'erotica':['erotica', 'erotica +', 'eroticas', 'eroticas +', 'erotico', 'erotico +'],
+                   'estrenos':['estrenos', 'estrenos'],
+                   'extranjera':['extrajera', 'extrajeras', 'foreign'],
+                   'familiar':['familiar', 'familia'],
+                   'fantastico':['fantastico', 'fantastica', 'fantasticas'],
+                   'historica':['historica', 'historicas', 'historico', 'historia'],
+                   'infantil':['infantil', 'kids'],
+                   'musical':['musical', 'musicales', 'musica'],
+                   'policial':['policial', 'policiaco', 'policiaca'],
+                   'recomendadas':['recomedada', 'recomendadas'],
+                   'religion':['religion', 'religiosa', 'religiosas'],
+                   'romantica':['romantica', 'romanticas', 'romantico'],
+                   'suspenso':['suspenso', 'suspense'],
+                   'thriller':['thriller', 'thrillers'],
+                   'western':['western', 'westerns', 'oeste western']
+                   }
+    string = re.sub(r'peliculas de |pelicula de la |peli |cine ','', string)
+    for genre, variants in genres_dict.items():
+        if string in variants:
+            string = genre
+
+    return string
+
 def remove_format(string):
     logger.info()
     #logger.debug('entra en remove: %s' % string)
-    string = string.strip()
-    string = re.sub(r'(\[|\[\/)(?:color|COLOR|b|B|i|I).*?\]|\s{2,}|\[|\]|\(|\)|\:', '', string)
+    string = string.rstrip()
+    string = re.sub(r'(\[|\[\/)(?:color|COLOR|b|B|i|I).*?\]|\[|\]|\(|\)|\:|\.', '', string)
     #logger.debug('sale de remove: %s' % string)
     return string
 
 def simplify(string):
+
     logger.info()
     #logger.debug('entra en simplify: %s'%string)
     string = remove_format(string)
+    string = string.replace('-',' ').replace('_',' ')
+    string = re.sub(r'\d+','', string)
     string = string.strip()
     string = string.decode('utf-8')
     notilde = ''.join((c for c in unicodedata.normalize('NFD', unicode(string)) if unicodedata.category(c) != 'Mn'))
@@ -53,9 +168,9 @@ def set_color(title, category):
 
     color_scheme = {'otro': 'white'}
 
-    logger.debug('category antes de remove: %s' % category)
+    #logger.debug('category antes de remove: %s' % category)
     category = remove_format(category).lower()
-    logger.debug('category despues de remove: %s' % category)
+    #logger.debug('category despues de remove: %s' % category)
     # Lista de elementos posibles en el titulo
     color_list = ['movie', 'tvshow', 'year', 'rating_1', 'rating_2', 'rating_3', 'quality', 'cast', 'lat', 'vose',
                   'vos', 'vo', 'server', 'library', 'update', 'no_update']
@@ -73,7 +188,7 @@ def set_color(title, category):
             else:
                 color_scheme[element] = 'white'
         if category in ['update', 'no_update']:
-           logger.debug('title antes de updates: %s' % title)
+           #logger.debug('title antes de updates: %s' % title)
            title= re.sub(r'\[COLOR .*?\]','[COLOR %s]' % color_scheme[category],title)
         else:
             if category not in ['movie', 'tvshow', 'library', 'otro']:
@@ -97,8 +212,8 @@ def set_lang(language):
 
     language = simplify(language)
 
-    logger.debug('language before simplify: %s' % language)
-    logger.debug('old language: %s' % old_lang)
+    #logger.debug('language before simplify: %s' % language)
+    #logger.debug('old language: %s' % old_lang)
     if language in cast:
         language = 'cast'
     elif language in lat:
@@ -112,9 +227,13 @@ def set_lang(language):
     else:
         language = 'otro'
 
-    logger.debug('language after simplify: %s' % language)
+    #logger.debug('language after simplify: %s' % language)
 
     return language
+
+
+
+
 
 def title_format(item):
     logger.info()
@@ -123,7 +242,7 @@ def title_format(item):
     valid = True
     language_color = 'otro'
 
-    logger.debug('item.title antes de formatear: %s' % item.title.lower())
+    #logger.debug('item.title antes de formatear: %s' % item.title.lower())
 
     # TODO se deberia quitar cualquier elemento que no sea un enlace de la lista de findvideos para quitar esto
 
@@ -133,16 +252,26 @@ def title_format(item):
     # Actions excluidos, (se define canal y action) los titulos que contengan ambos valores no se procesaran en unify
     excluded_actions = [('videolibrary','get_episodes')]
 
+    # Verifica si hay marca de visto de trakt
+
+    visto = False
+    #logger.debug('titlo con visto? %s' % item.title)
+
+    if '[[I]v[/I]]' in item.title or '[COLOR limegreen][v][/COLOR]' in item.title:
+        visto = True
+
     # Se elimina cualquier formato previo en el titulo
     if item.action != '':
         item.title = remove_format(item.title)
+
+    #logger.debug('visto? %s' % visto)
 
     # Evita que aparezcan los idiomas en los mainlist de cada canal
     if item.action == 'mainlist':
         item.language =''
 
     info = item.infoLabels
-    logger.debug('item antes de formatear: %s'%item)
+    #logger.debug('item antes de formatear: %s'%item)
 
     if hasattr(item,'text_color'):
         item.text_color=''
@@ -172,7 +301,7 @@ def title_format(item):
                     episode = info['title'].lower().replace('episode', 'episodio')
                     info['title'] = '%s - %s' % (info['tvshowtitle'], episode.capitalize())
                 elif info['episodio_titulo']!='':
-                    logger.debug('info[episode_titulo]: %s' % info['episodio_titulo'])
+                    #logger.debug('info[episode_titulo]: %s' % info['episodio_titulo'])
                     if 'episode' in info['episodio_titulo'].lower():
                         episode = info['episodio_titulo'].lower().replace('episode', 'episodio')
                         item.title = '%sx%s - %s' % (info['season'],info['episode'], episode.capitalize())
@@ -181,6 +310,7 @@ def title_format(item):
                 else:
                     item.title = '%sx%s - %s' % (info['season'],info['episode'], info['title'])
                 item.title = set_color(item.title, 'tvshow')
+
             else:
 
                 # En caso contrario se utiliza el titulo proporcionado por el canal
@@ -194,14 +324,14 @@ def title_format(item):
                 item.context='Buscar esta pelicula en otros canales'
 
         if 'Novedades' in item.category and item.from_channel=='news':
-            logger.debug('novedades')
+            #logger.debug('novedades')
             item.title = '%s [%s]'%(item.title, item.channel)
 
         # Verificamos si item.language es una lista, si lo es se toma
         # cada valor y se normaliza formado una nueva lista
 
         if hasattr(item,'language') and item.language !='':
-            logger.debug('tiene language: %s'%item.language)
+            #logger.debug('tiene language: %s'%item.language)
             if isinstance(item.language, list):
                 language_list =[]
                 for language in item.language:
@@ -280,26 +410,37 @@ def title_format(item):
         # Compureba si estamos en findvideos, y si hay server, si es asi no se muestra el
         # titulo sino el server, en caso contrario se muestra el titulo normalmente.
 
-        logger.debug('item.title antes de server: %s'%item.title)
+        #logger.debug('item.title antes de server: %s'%item.title)
         if item.action != 'play' and item.server:
             item.title ='%s %s'%(item.title, server.strip())
         elif item.action == 'play' and item.server:
             if item.quality == 'default':
                 quality = ''
-            logger.debug('language_color: %s'%language_color)
+            #logger.debug('language_color: %s'%language_color)
             item.title = '%s %s' % (server, set_color(quality,'quality'))
             if lang:
                 item.title = add_languages(item.title, simple_language)
-            logger.debug('item.title: %s' % item.title)
+            #logger.debug('item.title: %s' % item.title)
         else:
             item.title = '%s' % item.title
-        logger.debug('item.title despues de server: %s' % item.title)
+        #logger.debug('item.title despues de server: %s' % item.title)
     elif 'library' in item.action:
         item.title = '%s' % set_color(item.title, 'library')
     elif item.action == '' and item.title !='':
         item.title='**- %s -**'%item.title
     else:
         item.title = '%s' % set_color(item.title, 'otro')
+    #logger.debug('antes de salir %s' % item.title)
+    if visto:
+        try:
+            check = u'\u221a'
+
+            title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, item.title.decode('utf-8'))
+            item.title = title.encode('utf-8')
+        except:
+            check = 'v'
+            title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, item.title.decode('utf-8'))
+            item.title = title.encode('utf-8')
 
     return item
 
