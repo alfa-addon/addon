@@ -4,6 +4,7 @@ import re
 import urllib
 import urlparse
 
+from core import servertools
 from core import scrapertools
 from core.item import Item
 from platformcode import logger
@@ -48,15 +49,12 @@ def listado(item):
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     patron_data='<ul class="pelilist">(.+?)</ul>'
     data_listado = scrapertools.find_single_match(data, patron_data)
-    logger.info("sadas"+data_listado)
     patron_listado='<li><a href="(.+?)" title=".+?"><img src="(.+?)".+?><h2'
     if 'Serie' in item.title:
     	patron_listado+='.+?>'
     else:
     	patron_listado+='>'
     patron_listado+='(.+?)<\/h2><span>(.+?)<\/span><\/a><\/li>'
-    logger.info("sasssss"+patron_listado)
-
     matches = scrapertools.find_multiple_matches(data_listado, patron_listado)
     for scrapedurl, scrapedthumbnail,scrapedtitle,scrapedquality in matches:
     	if 'Serie' in item.title:
@@ -86,4 +84,21 @@ def episodios(item):
     		titulo=scrapedurl.split('http')
     		scrapedurl="http"+titulo[1]
     	itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl,thumbnail=scrapedthumbnail, action="findvideos", show=scrapedtitle))
+    return itemlist
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    new_item = []
+    data = httptools.downloadpage(item.url).data
+    itemlist = servertools.find_video_items(data = data)
+    url = scrapertools.find_single_match( data, 'location.href = "([^"]+)"')
+    data = httptools.downloadpage(url, follow_redirects=False).headers['location']
+    data = httptools.downloadpage(url).data
+    new_item.append(Item(url = url, title = "Torrent", server = "torrent", action = "play"))
+    itemlist.extend(new_item)
+    for it in itemlist:
+        it.channel = item.channel
+
+    scrapertools.printMatches(itemlist)
     return itemlist
