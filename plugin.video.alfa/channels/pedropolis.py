@@ -100,7 +100,7 @@ def peliculas(item):
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
     # logger.info(data)
 
-    patron = '<div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'    # img, title
+    patron = '<div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'  # img, title
     patron += '<div class="rating"><span class="[^"]+"></span>([^<]+).*?'  # rating
     patron += '<span class="quality">([^<]+)</span></div><a href="([^"]+)">.*?'  # calidad, url
     patron += '<span>([^<]+)</span>'                                       # year
@@ -285,7 +285,7 @@ def series(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     # logger.info(data)
 
-    patron = '<div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?<a href="([^"]+)">'  # img, title, url
+    patron = '<div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?<a href="([^"]+)">'
 
     matches = scrapertools.find_multiple_matches(data, patron)
 
@@ -337,8 +337,8 @@ def temporadas(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     # logger.info(data)
-    patron = '<span class="title">([^<]+)<i>.*?'  # season
-    patron += '<img src="([^"]+)"></a></div>'     # img
+    patron = '<span class="title">([^<]+)<i>.*?'  # numeros de temporadas
+    patron += '<img src="([^"]+)"></a></div>'  # capítulos
 
     matches = scrapertools.find_multiple_matches(data, patron)
     if len(matches) > 1:
@@ -379,9 +379,9 @@ def episodios(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     # logger.info(data)
-    patron = '<div class="imagen"><a href="([^"]+)">.*?'  # url
-    patron += '<div class="numerando">(.*?)</div>.*?'     # numerando cap
-    patron += '<a href="[^"]+">([^<]+)</a>'               # title de episodios
+    patron = '<div class="imagen"><a href="([^"]+)">.*?'  # url cap, img
+    patron += '<div class="numerando">(.*?)</div>.*?'  # numerando cap
+    patron += '<a href="[^"]+">([^<]+)</a>'  # title de episodios
 
     matches = scrapertools.find_multiple_matches(data, patron)
 
@@ -404,6 +404,7 @@ def episodios(item):
         new_item.infoLabels['episode'] = episode.zfill(2)
 
         itemlist.append(new_item)
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
     # TODO no hacer esto si estamos añadiendo a la videoteca
     if not item.extra:
@@ -419,8 +420,6 @@ def episodios(item):
 
     itemlist.sort(key=lambda it: int(it.infoLabels['episode']),
                   reverse=config.get_setting('orden_episodios', __channel__))
-
-    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
     # Opción "Añadir esta serie a la videoteca"
     if config.get_videolibrary_support() and len(itemlist) > 0:
@@ -442,13 +441,12 @@ def findvideos(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for option, url in matches:
-        lang = scrapertools.find_single_match(data, '<li><a class="options" href="#option-%s">.*?</b>-->(\w+)' % option)
-        lang = lang.lower()
-        idioma = {'latino': '[COLOR cornflowerblue](LAT)[/COLOR]',
-                  'drive': '[COLOR cornflowerblue](LAT)[/COLOR]',
-                  'castellano': '[COLOR green](CAST)[/COLOR]',
-                  'subtitulado': '[COLOR red](VOS)[/COLOR]',
-                  'ingles': '[COLOR red](VOS)[/COLOR]'}
+        lang = scrapertools.find_single_match(data, '<li><a class="options" href="#option-%s">.*?<img '
+                                                    'src="http://pedropolis.com/wp-content/themes/dooplay/assets/img'
+                                                    '/flags/(\w+)' % option)
+        idioma = {'mx': '[COLOR cornflowerblue](LAT)[/COLOR]', 'pe': '[COLOR cornflowerblue](LAT)[/COLOR]',
+                  'co': '[COLOR cornflowerblue](LAT)[/COLOR]', 'es': '[COLOR green](CAST)[/COLOR]',
+                  'en': '[COLOR red](VOS)[/COLOR]', 'jp': '[COLOR green](VOS)[/COLOR]'}
         if lang in idioma:
             lang = idioma[lang]
 
@@ -471,8 +469,10 @@ def findvideos(item):
                     x.server.title(), x.quality, x.language)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'serie':
-        itemlist.append(Item(channel=__channel__, url=item.url, action="add_pelicula_to_library", extra="findvideos",
+        itemlist.append(Item(channel=__channel__,
                              title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                             thumbnail=get_thumb("videolibrary_movie.png"), contentTitle=item.contentTitle))
+                             url=item.url, action="add_pelicula_to_library",
+                             thumbnail=get_thumb("videolibrary_movie.png"),
+                             extra="findvideos", contentTitle=item.contentTitle))
 
     return itemlist

@@ -414,9 +414,9 @@ def no_group(list_result_canal):
     for i in list_result_canal:
         i.title = get_title(i) + " [" + channels_id_name[i.channel] + "]"
         i.text_color = color3
-
+        i.from_channel = 'news'
         itemlist.append(i.clone())
-
+    logger.debug('itemlist: %s'%itemlist)
     return sorted(itemlist, key=lambda it: it.title.lower())
 
 
@@ -435,7 +435,8 @@ def group_by_channel(list_result_canal):
 
     # Añadimos el contenido encontrado en la lista list_result
     for c in sorted(dict_canales):
-        itemlist.append(Item(channel="news", title=channels_id_name[c] + ':', text_color=color1, text_bold=True))
+        itemlist.append(Item(channel="news", title=channels_id_name[c] + ':', text_color=color1, text_bold=True,
+                             from_channel='news'))
 
         for i in dict_canales[c]:
             if i.contentQuality:
@@ -495,6 +496,7 @@ def group_by_content(list_result_canal):
             new_item = v[0].clone(title=title)
 
         new_item.text_color = color3
+        new_item.from_channel = 'news'
         list_result.append(new_item)
 
     return sorted(list_result, key=lambda it: it.title.lower())

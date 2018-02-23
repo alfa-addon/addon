@@ -248,7 +248,7 @@ def findvideos(item):
     for videoitem in itemlist:
         videoitem.channel = item.channel
         videoitem.action = 'play'
-        videoitem.thumbnail = item.thumbnail
+        videoitem.thumbnail = servertools.guess_server_thumbnail(videoitem.server)
         videoitem.infoLabels = item.infoLabels
         videoitem.title = item.contentTitle + ' (' + videoitem.server + ')'
         if 'youtube' in videoitem.url:
