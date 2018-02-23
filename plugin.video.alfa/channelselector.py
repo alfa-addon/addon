@@ -5,7 +5,8 @@ import os
 
 from core import channeltools
 from core.item import Item
-from platformcode import config, logger
+from platformcode.unify import thumb_dict
+from platformcode import config, logger, unify
 
 
 def getmainlist(view="thumb_"):
@@ -199,14 +200,24 @@ def filterchannels(category, view="thumb_"):
     return channelslist
 
 
-def get_thumb(thumb_name, view="thumb_"):
+def get_thumb(thumb_name, view="thumb_", auto=False):
 
-    icon_pack_name = config.get_setting('icon_set', default="default")
-    if icon_pack_name == "default":
-        resource_path = os.path.join(config.get_runtime_path(), "resources", "media", "themes")
+    if auto:
+        thumbnail = ''
+
+        thumb_name = unify.set_genre(unify.simplify(thumb_name))
+
+
+        if thumb_name in thumb_dict:
+            thumbnail = thumb_dict[thumb_name]
+        return thumbnail
     else:
-        resource_path = "https://raw.githubusercontent.com/alfa-addon/media/master/themes/"
+        icon_pack_name = config.get_setting('icon_set', default="default")
+        if icon_pack_name == "default":
+            resource_path = os.path.join(config.get_runtime_path(), "resources", "media", "themes")
+        else:
+            resource_path = "https://raw.githubusercontent.com/alfa-addon/media/master/themes/"
 
-    media_path = os.path.join(resource_path, icon_pack_name)
+        media_path = os.path.join(resource_path, icon_pack_name)
 
-    return os.path.join(media_path, view + thumb_name)
+        return os.path.join(media_path, view + thumb_name)
