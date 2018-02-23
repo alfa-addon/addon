@@ -11,6 +11,7 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channelselector import get_thumb
 
 IDIOMAS = {'latino': 'Latino', 'castellano': 'Español', 'portugues': 'Portugues'}
 list_language = IDIOMAS.values()
@@ -85,34 +86,34 @@ def submenu(item):
                          title=idioma.capitalize(),
                          action="peliculas",
                          url=host,
-                         thumbnail='https://s8.postimg.org/6wqwy2c2t/peliculas.png',
+                         thumbnail=get_thumb('movies', auto=True),
                          fanart='https://s8.postimg.org/6wqwy2c2t/peliculas.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Destacadas",
                          action="peliculas",
                          url=host + "/genero-" + idioma + "/" + idioma2 + "/",
-                         thumbnail='https://s30.postimg.org/humqxklsx/destacadas.png',
+                         thumbnail=get_thumb('hot', auto=True),
                          fanart='https://s30.postimg.org/humqxklsx/destacadas.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Generos",
                          action="generos",
                          url=host + "/genero-" + idioma,
-                         thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                         thumbnail=get_thumb('genres', auto=True),
                          fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Por Año",
                          action="anyos",
                          url=host + "/" + idioma + "-por-ano",
-                         thumbnail='https://s8.postimg.org/7eoedwfg5/pora_o.png',
+                         thumbnail=get_thumb('year', auto=True),
                          fanart='https://s8.postimg.org/7eoedwfg5/pora_o.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Buscar",
                          action="search",
-                         thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
+                         thumbnail=get_thumb('search', auto=True),
                          url=host + '/?s=',
                          fanart='https://s30.postimg.org/pei7txpa9/buscar.png',
                          host=item.host,

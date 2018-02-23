@@ -19,12 +19,17 @@ def mainlist(item):
     logger.info()
 
     itemlist = list()
-    itemlist.append(item.clone(title="Ultimas", action="list_all", url=host))
-    itemlist.append(item.clone(title="Generos", action="section", section='genre'))
-    itemlist.append(item.clone(title="Por Calidad", action="section", section='quality'))
-    itemlist.append(item.clone(title="Por Año", action="section", section='year'))
-    itemlist.append(item.clone(title="Alfabetico", action="section", section='alpha'))
-    itemlist.append(item.clone(title="Buscar", action="search", url=host+'?s='))
+    itemlist.append(item.clone(title="Ultimas", action="list_all", url=host, thumbnail=get_thumb('last', auto=True)))
+    itemlist.append(item.clone(title="Generos", action="section", section='genre',
+                               thumbnail=get_thumb('genres', auto=True)))
+    itemlist.append(item.clone(title="Por Calidad", action="section", section='quality',
+                               thumbnail=get_thumb('quality', auto=True)))
+    itemlist.append(item.clone(title="Por Año", action="section", section='year',
+                               thumbnail=get_thumb('year', auto=True)))
+    itemlist.append(item.clone(title="Alfabetico", action="section", section='alpha',
+                               thumbnail=get_thumb('alphabet', auto=True)))
+    itemlist.append(item.clone(title="Buscar", action="search", url=host+'?s=',
+                               thumbnail=get_thumb('search', auto=True)))
 
     return itemlist
 
@@ -39,6 +44,8 @@ def get_source(url):
 def list_all(item):
     logger.info()
     itemlist = []
+
+    data = get_source(item.url)
 
     if item.section == 'alpha':
         patron = '<span class=Num>\d+.*?<a href=(.*?) class.*?<img src=(.*?) alt=.*?<strong>(.*?)</strong>.*?'

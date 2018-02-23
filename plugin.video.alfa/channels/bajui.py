@@ -8,6 +8,7 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import logger
+from channelselector import get_thumb
 
 
 def mainlist(item):
@@ -15,13 +16,13 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Películas", action="menupeliculas",
                          url="http://www.bajui.org/descargas/categoria/2/peliculas",
-                         fanart=item.fanart))
+                         fanart=item.fanart, thumbnail=get_thumb('movies', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Series", action="menuseries",
-                         fanart=item.fanart))
+                         fanart=item.fanart, thumbnail=get_thumb('tvshows', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Documentales", action="menudocumentales",
-                         fanart=item.fanart))
+                         fanart=item.fanart, thumbnail=get_thumb('documentaries', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search",
-                         fanart=item.fanart))
+                         fanart=item.fanart, thumbnail=get_thumb('search', auto=True)))
     return itemlist
 
 

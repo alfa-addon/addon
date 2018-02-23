@@ -15,6 +15,7 @@ from core.item import Item
 from core import channeltools
 from core import tmdb
 from platformcode import config, logger
+from channelselector import get_thumb
 
 __channel__ = "canalpelis"
 
@@ -51,24 +52,24 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(title="Peliculas", action="peliculas",thumbnail=thumbnail % 'peliculas',
+    itemlist.append(item.clone(title="Peliculas", action="peliculas",thumbnail=get_thumb('movies', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
                                url=host + 'movies/', viewmode="movie_with_plot"))
 
-    itemlist.append(item.clone(title="Géneros", action="generos",thumbnail=thumbnail % 'generos',
+    itemlist.append(item.clone(title="Géneros", action="generos",thumbnail=get_thumb('genres', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
                                url=host + 'genre/', viewmode="movie_with_plot"))
 
-    itemlist.append(item.clone(title="Año de Estreno", action="year_release",
-                               text_blod=True, page=0, viewcontent='movies',
-                               url=host + 'release/', viewmode="movie_with_plot"))
+    itemlist.append(item.clone(title="Año de Estreno", action="year_release", thumbnail=get_thumb('year', auto=True),
+                               text_blod=True, page=0, viewcontent='movies', url=host + 'release/',
+                               viewmode="movie_with_plot"))
 
-    itemlist.append(item.clone(title="Buscar", action="search",thumbnail=thumbnail % 'busqueda',
+    itemlist.append(item.clone(title="Buscar", action="search",thumbnail=get_thumb('search', auto=True),
                                text_blod=True, url=host, page=0))
 
     itemlist.append(item.clone(title="Series", action="series", extra='serie', url=host + 'tvshows/',
                                viewmode="movie_with_plot", text_blod=True, viewcontent='movies',
-                               thumbnail=thumbnail % 'series', page=0))
+                               thumbnail=get_thumb('tvshows', auto=True), page=0))
 
     return itemlist
 
