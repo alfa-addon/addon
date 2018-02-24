@@ -4,6 +4,7 @@ import re
 
 from channels import renumbertools
 from core import httptools
+from core import servertools
 from core import jsontools
 from core import scrapertools
 from core.item import Item
@@ -11,7 +12,7 @@ from platformcode import platformtools, config, logger
 
 
 __modo_grafico__ = config.get_setting('modo_grafico', 'animemovil')
-__perfil__ = int(config.get_setting('perfil', "animemovil"))
+__perfil__ = ''
 
 # Fijar perfil de color            
 perfil = [['0xFFFFE6CC', '0xFFFFCE9C', '0xFF994D00', '0xFFFE2E2E', '0xFFFFD700'],
@@ -31,10 +32,12 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, action="recientes", title="Episodios Recientes", thumbnail=item.thumbnail,
                          url=host, text_color=color1, contentType="tvshow", extra="recientes"))
-    itemlist.append(Item(channel=item.channel, action="listado", title="Animes", thumbnail=item.thumbnail,
-                         url="%s/_API/?src=animesRecientes&offset=0" % host, text_color=color1))
-    itemlist.append(Item(channel=item.channel, action="emision", title="En emisión", thumbnail=item.thumbnail,
-                         url="%s/anime/emision" % host, text_color=color2, contentType="tvshow"))
+
+    itemlist.append(Item(channel=item.channel, action="listado", title="Anime", thumbnail=item.thumbnail,
+             url=host+'/api/buscador?q=&letra=ALL&genero=ALL&estado=2&offset=0&limit=20', text_color=color1, contentType="tvshow", extra="recientes"))
+
+    itemlist.append(Item(channel=item.channel, action="list_by_json", title="En emisión", thumbnail=item.thumbnail,
+                         text_color=color2, contentType="tvshow"))
     itemlist.append(Item(channel=item.channel, action="indices", title="Índices", thumbnail=item.thumbnail,
                          text_color=color2))
 
@@ -55,14 +58,8 @@ def openconfig(item):
 
 
 def search(item, texto):
-    item.url = "%s/?s=%s" % (host, texto.replace(" ", "+"))
-    try:
-        return recientes(item)
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("%s" % line)
-        return []
+    item.url = "%s/api/buscador?q=%s&letra=ALL&genero=ALL&estado=2&offset=0&limit=30" % (host, texto.replace(" ", "+"))
+    return list_by_json(item)
 
 
 def recientes(item):
@@ -71,7 +68,9 @@ def recientes(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.find_single_match(data, '<ul class="emision"(.*?)</ul>')
+    data = re.sub(r'\n|\s{2,}','', data)
+
+    bloque = scrapertools.find_single_match(data, '<ul class="hover">(.*?)</ul>')
     patron = '<li><a href="([^"]+)" title="([^"]+)".*?src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(bloque, patron)
     for url, title, thumb in matches:
@@ -116,13 +115,13 @@ def recientes(item):
 def listado(item):
     logger.info()
     itemlist = []
-
     data = jsontools.load(httptools.downloadpage(item.url).data)
-
+    status = data.get('status')
+    data= data.get('result')
     for it in data.get("items", []):
         scrapedtitle = it["title"]
-        url = "%s/%s" % (host, it["url"])
-        thumb = "http://img.animemovil.com/w440-h250-c/%s" % it["img"]
+        url = "%s/%s/" % (host, it["slug"])
+        thumb = 'http://media.animemovil.com/animes/%s/wallpaper_small.jpg' % it['id']
         title = re.sub(r"(?i) Ova| Especiales| \(Pelicula[s]*\)| \(Película[s]*\)| Sub| Español| Peliculas| Audio| Latino", "", scrapedtitle)
 
         tipo = "tvshow"
@@ -132,22 +131,22 @@ def listado(item):
             tipo = "movie"
             show = ""
             action = "peliculas"
-        
         infoLabels = {'filtro': {"original_language": "ja"}.items()}
-
         itemlist.append(item.clone(action=action, title=scrapedtitle, url=url, thumbnail=thumb, text_color=color3,
                                    contentTitle=title, contentSerieName=show, infoLabels=infoLabels,
                                    context=renumbertools.context(item), contentType=tipo))
-            
-    
     try:
         from core import tmdb
         tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     except:
         pass
 
-    if data["buttom"] and itemlist:
-        offset = int(scrapertools.find_single_match(item.url, 'offset=(\d+)')) + 1
+    if status and itemlist:
+        offset = scrapertools.find_single_match(item.url, 'offset=(\d+)')
+        if offset:
+            offset = int(offset) + 2
+        else:
+            offset = 0
         url = re.sub(r'offset=\d+', 'offset=%s' % offset, item.url)
         itemlist.append(Item(channel=item.channel, action="listado", url=url, title=">> Página Siguiente",
                              thumbnail=item.thumbnail, text_color=color2))
@@ -160,52 +159,32 @@ def indices(item):
     itemlist = []
     
     if "Índices" in item.title:
-        itemlist.append(item.clone(title="Por Género", url="%s/anime/generos/" % host))
-        itemlist.append(item.clone(title="Por Letra", url="%s/anime/" % host))
-        itemlist.append(item.clone(action="completo", title="Lista completa de Animes",
-                        url="%s/anime/lista/" % host))
+        itemlist.append(item.clone(title="Por Género", url="%s/anime" % host))
+        itemlist.append(item.clone(title="Por Letra", url="%s/anime" % host))
+        itemlist.append(item.clone(action="list_by_json", title="Lista completa de Animes",
+                        url="%s/api/buscador?q=&letra=ALL&genero=ALL&estado=2&offset=0&limit=20" % host))
     else:
         data = httptools.downloadpage(item.url).data
-        bloque = scrapertools.find_single_match(data, '<div class="letras">(.*?)</div>')
+        data = re.sub('\n|\s{2,}', '', data)
+        if 'Letra' in item.title:
+            bloque = scrapertools.find_single_match(data, '<select name="letra"(.*?)</select>')
+            patron = '<option value="(\w)"'
+        elif 'Género' in item.title:
+            bloque = scrapertools.find_single_match(data, '<select name="genero"(.*?)</select>')
+            patron = '<option value="(\d+.*?)/'
 
-        patron = '<a title="([^"]+)"'
         matches = scrapertools.find_multiple_matches(bloque, patron)
+
         for title in matches:
             if "Letra" in item.title:
-                url = "%s/_API/?src=animesLetra&offset=0&letra=%s" % (host, title)
+                url = '%s/api/buscador?q=&letra=%s&genero=ALL&estado=2&offset=0&limit=20' % (host, title)
             else:
-                url = "%s/_API/?src=animesGenero&offset=0&genero=%s" % (host, title)
-            itemlist.append(item.clone(action="listado", url=url, title=title))
+                value = scrapertools.find_single_match(title, '(\d+)"')
+                title = scrapertools.find_single_match(title, '\d+">(.*?)<')
+                url = '%s/api/buscador?q=&letra=ALL&genero=%s&estado=2&offset=0&limit=20' % (host, value)
+
+            itemlist.append(item.clone(action="list_by_json", url=url, title=title))
         
-    return itemlist
-
-
-def completo(item):
-    logger.info()
-    itemlist = []
-
-    data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.find_single_match(data, '<ul class="listadoAnime">(.*?)</ul>')
-    patron = '<li><a href="([^"]+)" title="([^"]+)".*?src="([^"]+)"'
-    matches = scrapertools.find_multiple_matches(bloque, patron)
-    for url, title, thumb in matches:
-        url = host + url
-        scrapedtitle = title
-        thumb = thumb.replace("s90-c", "w440-h250-c")
-        title = re.sub(r"(?i) Ova| Especiales| \(Pelicula[s]*\)| \(Película[s]*\)| Sub Español| Peliculas", "", scrapedtitle)
-
-        tipo = "tvshow"
-        show = title
-        action = "episodios"
-        if url.endswith("-pelicula/") or url.endswith("-pelicula"):
-            tipo = "movie"
-            show = ""
-            action = "peliculas"
-        infoLabels = {'filtro': {"original_language": "ja"}.items()}
-        itemlist.append(Item(channel=item.channel, action=action, title=scrapedtitle, url=url, thumbnail=thumb,
-                             text_color=color3, contentTitle=title, contentSerieName=show, extra="completo",
-                             context=renumbertools.context(item), contentType=tipo, infoLabels=infoLabels))
-
     return itemlist
 
 
@@ -214,14 +193,14 @@ def episodios(item):
 
     itemlist = []
     data = httptools.downloadpage(item.url).data
-
-    show = scrapertools.find_single_match(data, '<title>\s*([^<]+)\s*</title>')
+    data = re.sub('\n|\s{2,}', '', data)
+    show = scrapertools.find_single_match(data, '<div class="x-title">(.*?)</div>')
     show = re.sub(r"(?i) Ova| Especiales| \(Pelicula[s]*\)| \(Película[s]*\)| Sub| Español| Peliculas| Audio| Latino", "", show)
     
     if not item.infoLabels["plot"]:
-        item.infoLabels["plot"] = scrapertools.find_single_match(data, '<div class="InfoSipnosis">.*?<p>(.*?)</p>')
+        item.infoLabels["plot"] = scrapertools.find_single_match(data, '<div class="x-sinopsis">\s*(.*?)</div>')
 
-    bloque = scrapertools.find_single_match(data, 'ul class="lista"(.*?)</ul>')
+    bloque = scrapertools.find_single_match(data, '<ul class="list"(.*?)</ul>')
     matches = scrapertools.find_multiple_matches(bloque, '<li><a href="([^"]+)" title="([^"]+)"')
     for url, title in matches:
         url = host + url
@@ -252,56 +231,44 @@ def episodios(item):
     return itemlist
 
 
-def peliculas(item):
+def list_by_json(item):
     logger.info()
     itemlist = []
+    repeat = 1
+    status = False
+    if item.url =='':
+        item.url = host+"/api/buscador?limit=30&estado=1&dia=%s"
+        repeat = 6
+    for element in range(0,repeat):
+        if repeat != 1:
+            data = jsontools.load(httptools.downloadpage(item.url % element).data)
+        else:
+            data = jsontools.load(httptools.downloadpage(item.url).data)
 
-    if item.extra == "completo":
-        try:
-            from core import tmdb
-            tmdb.set_infoLabels_item(item, __modo_grafico__)
-        except:
-            pass
+        status = data.get('status')
+        json_data = data.get('result')
+        elem_data = json_data['items']
 
-    data = httptools.downloadpage(item.url).data
-    if not item.infoLabels["plot"]:
-        item.infoLabels["plot"] = scrapertools.find_single_match(data, '<div class="InfoSipnosis">.*?<p>(.*?)</p>')
-
-    bloque = scrapertools.find_single_match(data, 'ul class="lista"(.*?)</ul>')
-    matches = scrapertools.find_multiple_matches(bloque, '<li><a href="([^"]+)" title="([^"]+)"')
-    if len(matches) == 1:
-        item.url = host + matches[0][0]
-        itemlist = findvideos(item)
-    else:
-        for url, title in matches:
-            itemlist.append(item.clone(action="findvideos", title=title, url=url, extra=""))
-
-    return itemlist
-
-
-def emision(item):
-    logger.info()
-    itemlist = []
-
-    data = httptools.downloadpage(item.url).data
-    bloques = scrapertools.find_multiple_matches(data, '<div class="horario">.*?</i>\s*(.*?)</span>(.*?)</ul>')
-    patron = '<li><a href="([^"]+)" title="([^"]+)".*?src="([^"]+)"'
-    for dia, b in bloques:
-        matches = scrapertools.find_multiple_matches(b, patron)
-        if matches:
-            itemlist.append(item.clone(action="", title=dia, text_color=color1))
-        for url, title, thumb in matches:
-            url = host + url
-            scrapedtitle = "    %s" % title
-            title = re.sub(r"(?i) Ova| Especiales| \(Pelicula[s]*\)| \(Película[s]*\)| Sub Español| Peliculas", "", title)
-            if not thumb.startswith("http"):
-                thumb = "http:%s" % thumb
-
+        for item_data in elem_data:
+            url = '%s/%s/' % (host, item_data['slug'])
+            title = item_data['title']
+            title = re.sub(r"(?i) Ova| Especiales| \(Pelicula[s]*\)| \(Película[s]*\)| Sub Español| Peliculas", "",
+                           title)
+            thumb = 'http://media.animemovil.com/animes/%s/wallpaper_small.jpg' % item_data['id']
             infoLabels = {'filtro': {"original_language": "ja"}.items()}
-            itemlist.append(item.clone(action="episodios", title=scrapedtitle, url=url, thumbnail=thumb, text_color=color3,
-                                       contentTitle=title, contentSerieName=title, extra="recientes",
-                                       context=renumbertools.context(item), infoLabels=infoLabels))
-
+            itemlist.append(
+                item.clone(action="episodios", title=title, url=url, thumbnail=thumb, text_color=color3,
+                           contentTitle=title, contentSerieName=title, extra="recientes",
+                           context=renumbertools.context(item), infoLabels=infoLabels))
+    if status and itemlist:
+        offset = scrapertools.find_single_match(item.url, 'offset=(\d+)')
+        if offset:
+            offset = int(offset) + 2
+        else:
+            offset = 0
+        url = re.sub(r'offset=\d+', 'offset=%s' % offset, item.url)
+        itemlist.append(Item(channel=item.channel, action="listado", url=url, title=">> Página Siguiente",
+                             thumbnail=item.thumbnail, text_color=color2))
     return itemlist
 
     
@@ -310,80 +277,69 @@ def findvideos(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
+    data = re.sub(r'\n|\s{2,}', '', data)
 
-    id = scrapertools.find_single_match(data, '"id":"([^"]+)"')
-    bloque = scrapertools.find_single_match(data, 'ul class="controles">(.*?)</ul>')
-    patron = '<li title="([^"]+)" id="[^"]*" host="([^"]+)">'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for title, server in matches:
-        if title == "Vizard":
-            continue
-        title = "%s - %s" % (title, item.title)
-        post = "host=%s&id=%s" % (server, id)
-        itemlist.append(item.clone(action="play", url="http://server-2-stream.animemovil.com/V2/", title=title,
-                                   post=post))
+    akiba_url = scrapertools.find_single_match(data, '<div class="x-link"><a href="(.*?)"')
+    url = httptools.downloadpage('http:'+akiba_url, follow_redirects=False).headers.get('location')
+    title = '%s (%s)' % (item.title, 'akiba')
+    itemlist.append(item.clone(title=title, url=url, action='play'))
 
-    downl = scrapertools.find_single_match(data, '<div class="descargarCap">.*?<a href="([^"]+)"')
-    if downl:
-        downl = downl.replace("&amp;", "&")
-        itemlist.append(item.clone(action="play", title="Descarga - %s" % item.title, url=downl, server="directo"))
-                
-    if not itemlist:
-        itemlist.append(Item(channel=item.channel, title="No hay vídeos disponibles", action=""))
-    if item.extra == "recientes":
-        url = scrapertools.find_single_match(data, '<a class="CapList".*?href="([^"]+)"')
-        if url:
-            url = host + url
-            itemlist.append(item.clone(action="episodios", title="Ir a lista de capítulos", url=url, text_color=color1))
-    elif item.contentType == "movie" and config.get_library_support():
-        if "No hay vídeos disponibles" not in itemlist[0].title:
-            itemlist.append(Item(channel=item.channel, title="Añadir película a la biblioteca", url=item.url,
-                                 action="add_pelicula_to_library", contentTitle=item.contentTitle, text_color=color4,
-                                 thumbnail=item.thumbnail, fanart=item.fanart))
+    info = scrapertools.find_single_match(data, 'episodio_info=(.*?);')
+    dict_info = jsontools.load(info)
 
-    return itemlist
+    servers = dict_info['stream']['servers']
+    id = dict_info['id']
+    access_point = dict_info['stream']['accessPoint']
+    expire = dict_info['stream']['expire']
+    callback = dict_info['stream']['callback']
+    signature = dict_info['stream']['signature']
+    last_modify = dict_info['stream']['last_modify']
 
+    for server in servers:
+        stream_info = 'http:%s/%s/%s?expire=%s&callback=%s&signature=%s&last_modify=%s' % \
+                      (access_point, id, server, expire, callback, signature, last_modify)
 
-def play(item):
-    logger.info()
+        dict_stream = jsontools.load(httptools.downloadpage(stream_info).data)
 
-    if item.server:
-        return [item]
+        if dict_stream['status']:
+            kind = dict_stream['result']['kind']
+            try:
+                if kind == 'iframe':
+                    url = dict_stream['result']['src']
+                    title = '%s (%s)' % (item.title, server)
+                elif kind == 'jwplayer':
+                    url_style = dict_stream['result']['setup']
+                    if server != 'rin':
 
-    itemlist = []
+                        if 'playlist' in url_style:
+                            part = 1
+                            for media_list in url_style['playlist']:
+                                url = media_list['file']
+                                title = '%s (%s) - parte %s' % (item.title, server, part)
+                                itemlist.append(item.clone(title=title, url=url, action='play'))
+                                part += 1
+                        else:
+                            url = url_style['file']
+                            title = '%s (%s)' % (item.title, server)
+                    else:
+                        src_list = url_style['sources']
+                        for source in src_list:
+                            url = source['file']
+                            quality = source['label']
+                            title = '%s [%s](%s)' % (item.title, quality, server)
+                            itemlist.append(item.clone(title=title, url=url, action='play'))
 
-    data = jsontools.load(httptools.downloadpage(item.url, item.post).data)
-    if data["jwplayer"] == False:
-        content = data["eval"]["contenido"]
-        urls = scrapertools.find_multiple_matches(content, 'file\s*:\s*"([^"]+)"')
-        if not urls:
-            urls = scrapertools.find_multiple_matches(content, '"GET","([^"]+)"')    
-        for url in urls:
-            if "mediafire" in url:
-                data_mf = httptools.downloadpage(url).data
-                url = scrapertools.find_single_match(data_mf, 'kNO\s*=\s*"([^"]+)"')
-            ext = url[-4:]
-            itemlist.insert(0, ["%s [directo]" % ext, url])
-    else:
-        if data["jwplayer"].get("sources"):
-            for source in data["jwplayer"]["sources"]:
-                label = source.get("label", "")
-                ext = source.get("type", "")
-                if ext and "/" in ext:
-                    ext = ".%s " % ext.rsplit("/", 1)[1]
-                url = source.get("file")
-                if "server-3-stream" in url:
-                    url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location")
-                itemlist.insert(0, ["%s%s [directo]" % (ext, label), url])
-        elif data["jwplayer"].get("file"):
-            label = data["jwplayer"].get("label", "")
-            url = data["jwplayer"]["file"]
-            ext = data["jwplayer"].get("type", "")
-            if ext and "/" in ext:
-                ext = "%s " % ext.rsplit("/", 1)[1]
-            if "server-3-stream" in url:
-                url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location")
-            itemlist.insert(0, [".%s%s [directo]" % (ext, label), url])
+                elif kind == 'javascript':
+                    if 'jsCode' in dict_stream['result']:
+                        jscode = dict_stream['result']['jsCode']
+                        url = scrapertools.find_single_match(jscode, 'xmlhttp.open\("GET", "(.*?)"')
+                        title = '%s (%s)' % (item.title, server)
+
+                if url != '':
+                    itemlist.append(item.clone(title=title, url=url, action='play'))
+            except:
+                pass
+    itemlist = servertools.get_servers_itemlist(itemlist)
 
     return itemlist
 
@@ -392,7 +348,7 @@ def newest(categoria):
     logger.info()
     item = Item()
     try:
-        item.url = "http://skanime.net/"
+        item.url = host
         item.extra = "novedades"
         itemlist = recientes(item)
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
