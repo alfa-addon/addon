@@ -9,6 +9,7 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
+from channelselector import get_thumb
 
 __modo_grafico__ = config.get_setting('modo_grafico', 'cinefox')
 __perfil__ = int(config.get_setting('perfil', "cinefox"))
@@ -32,20 +33,22 @@ def mainlist(item):
     itemlist = []
 
     itemlist.append(item.clone(action="seccion_peliculas", title="Películas", fanart="http://i.imgur.com/PjJaW8o.png",
-                               url=host + "/catalogue?type=peliculas"))
+                               url=host + "/catalogue?type=peliculas", thumbnail=get_thumb('movies', auto=True)))
     # Seccion series
     itemlist.append(item.clone(action="seccion_series", title="Series",
-                               url=host + "/ultimos-capitulos", fanart="http://i.imgur.com/9loVksV.png"))
+                               url=host + "/ultimos-capitulos", fanart="http://i.imgur.com/9loVksV.png",
+                               thumbnail=get_thumb('tvshows', auto=True)))
 
     itemlist.append(item.clone(action="peliculas", title="Documentales", fanart="http://i.imgur.com/Q7fsFI6.png",
-                               url=host + "/catalogue?type=peliculas&genre=documental"))
+                               url=host + "/catalogue?type=peliculas&genre=documental",
+                               thumbnail=get_thumb('documentaries', auto=True)))
 
     if config.get_setting("adult_mode") != 0:
         itemlist.append(item.clone(action="peliculas", title="Sección Adultos +18",
                                    url=host + "/catalogue?type=adultos",
-                                   fanart="http://i.imgur.com/kIvE1Zh.png"))
+                                   fanart="http://i.imgur.com/kIvE1Zh.png", thumbnail=get_thumb('adults', auto=True)))
 
-    itemlist.append(item.clone(title="Buscar...", action="local_search"))
+    itemlist.append(item.clone(title="Buscar...", action="local_search", thumbnail=get_thumb('search', auto=True)))
     itemlist.append(item.clone(title="Configurar canal...", text_color="gold", action="configuracion", folder=False))
 
     return itemlist
@@ -254,9 +257,10 @@ def seccion_peliculas(item):
     itemlist = []
     # Seccion peliculas
     itemlist.append(item.clone(action="peliculas", title="Novedades", fanart="http://i.imgur.com/PjJaW8o.png",
-                               url=host + "/catalogue?type=peliculas"))
+                               url=host + "/catalogue?type=peliculas", thumbnail=get_thumb('newest', auto=True)))
     itemlist.append(item.clone(action="peliculas", title="Estrenos",
-                               url=host + "/estrenos-de-cine", fanart="http://i.imgur.com/PjJaW8o.png"))
+                               url=host + "/estrenos-de-cine", fanart="http://i.imgur.com/PjJaW8o.png",
+                               thumbnail=get_thumb('premieres', auto=True)))
     itemlist.append(item.clone(action="filtro", title="Filtrar películas", extra="peliculas",
                                url=host + "/catalogue?type=peliculas",
                                fanart="http://i.imgur.com/PjJaW8o.png"))
@@ -281,10 +285,11 @@ def seccion_series(item):
     itemlist = []
     # Seccion series
     itemlist.append(item.clone(action="ultimos", title="Últimos capítulos",
-                               url=host + "/ultimos-capitulos", fanart="http://i.imgur.com/9loVksV.png"))
+                               url=host + "/ultimos-capitulos", fanart="http://i.imgur.com/9loVksV.png",
+                               thumbnail=get_thumb('new episodes', auto=True)))
     itemlist.append(item.clone(action="series", title="Series recientes",
                                url=host + "/catalogue?type=series",
-                               fanart="http://i.imgur.com/9loVksV.png"))
+                               fanart="http://i.imgur.com/9loVksV.png", thumbnail=get_thumb('recents', auto=True)))
     itemlist.append(item.clone(action="filtro", title="Filtrar series", extra="series",
                                url=host + "/catalogue?type=series",
                                fanart="http://i.imgur.com/9loVksV.png"))

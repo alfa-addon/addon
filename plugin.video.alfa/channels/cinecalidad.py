@@ -11,10 +11,10 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channelselector import get_thumb
 
 IDIOMAS = {'latino': 'Latino', 'castellano': 'Español', 'portugues': 'Portugues'}
 list_language = IDIOMAS.values()
-logger.debug('lista_language: %s' % list_language)
 
 list_quality = ['1080p', '720p', '480p', '360p', '240p', 'default']
 list_servers = [
@@ -86,35 +86,35 @@ def submenu(item):
                          title=idioma.capitalize(),
                          action="peliculas",
                          url=host,
-                         thumbnail='https://s8.postimg.org/6wqwy2c2t/peliculas.png',
+                         thumbnail=get_thumb('movies', auto=True),
                          fanart='https://s8.postimg.org/6wqwy2c2t/peliculas.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Destacadas",
                          action="peliculas",
                          url=host + "/genero-" + idioma + "/" + idioma2 + "/",
-                         thumbnail='https://s30.postimg.org/humqxklsx/destacadas.png',
+                         thumbnail=get_thumb('hot', auto=True),
                          fanart='https://s30.postimg.org/humqxklsx/destacadas.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Generos",
                          action="generos",
                          url=host + "/genero-" + idioma,
-                         thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                         thumbnail=get_thumb('genres', auto=True),
                          fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Por Año",
                          action="anyos",
                          url=host + "/" + idioma + "-por-ano",
-                         thumbnail='https://s8.postimg.org/7eoedwfg5/pora_o.png',
+                         thumbnail=get_thumb('year', auto=True),
                          fanart='https://s8.postimg.org/7eoedwfg5/pora_o.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Buscar",
                          action="search",
-                         thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
-                         url=host + '/apiseries/seriebyword/',
+                         thumbnail=get_thumb('search', auto=True),
+                         url=host + '/?s=',
                          fanart='https://s30.postimg.org/pei7txpa9/buscar.png',
                          host=item.host,
                          ))
@@ -350,15 +350,12 @@ def get_urls(item, link):
 
     data = httptools.downloadpage(url, post=post, headers=headers).data
     dict_data = jsontools.load(data)
-    logger.debug(dict_data['link'])
-    logger.debug(data)
     return dict_data['link']
 
 
 def play(item):
     logger.info()
     itemlist = []
-    logger.debug('item: %s' % item)
     if 'juicyapi' not in item.url:
         itemlist = servertools.find_video_items(data=item.url)
 
@@ -397,72 +394,9 @@ def newest(categoria):
 
     return itemlist
 
-
-def busqueda(item):
-    logger.info()
-    itemlist = []
-
-    # Descarga la página
-    data = httptools.downloadpage(item.url).data
-
-    from core import jsontools
-    data = jsontools.load(data)
-
-    for entry in data["results"]:
-        title = entry["richSnippet"]["metatags"]["ogTitle"]
-        url = entry["url"]
-        plot = entry["content"]
-        plot = scrapertools.htmlclean(plot)
-        thumbnail = entry["richSnippet"]["metatags"]["ogImage"]
-        title = scrapertools.find_single_match(title, '(.*?) \(.*?\)')
-        year = re.sub(r'.*?\((\d{4})\)', '', title)
-        title = year
-        fulltitle = title
-
-        new_item = item.clone(action="findvideos",
-                              title=title,
-                              fulltitle=fulltitle,
-                              url=url,
-                              thumbnail=thumbnail,
-                              contentTitle=title,
-                              contentType="movie",
-                              plot=plot,
-                              infoLabels={'year': year, 'sinopsis': plot}
-                              )
-        itemlist.append(new_item)
-
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
-    actualpage = int(scrapertools.find_single_match(item.url, 'start=(\d+)'))
-    totalresults = int(data["cursor"]["resultCount"])
-    if actualpage + 20 <= totalresults:
-        url_next = item.url.replace("start=" + str(actualpage), "start=" + str(actualpage + 20))
-        itemlist.append(
-            Item(channel=item.channel,
-                 action="busqueda",
-                 title=">> Página Siguiente",
-                 url=url_next
-                 ))
-
-    return itemlist
-
-
 def search(item, texto):
     logger.info()
-
-    data = httptools.downloadpage(host).data
-    cx = scrapertools.find_single_match(data, 'name="cx" value="(.*?)"')
-    texto = texto.replace(" ", "%20")
-    item.url = "https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz" \
-               "=filtered_cse&num=20&hl=es&sig=0c3990ce7a056ed50667fe0c3873c9b6&cx=%s&q=%s&sort=&googlehost=www" \
-               ".google.com&start=0" % (cx, texto)
-
-    try:
-        return busqueda(item)
-    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("%s" % line)
-        return []
-    
+    texto = texto.replace(" ", "-")
+    item.url = host + '/?s=' + texto
+    if texto != '':
+        return peliculas(item)

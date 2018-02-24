@@ -8,6 +8,7 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channelselector import get_thumb
 
 host = "http://www.cineasiaenlinea.com/"
 __channel__='cineasiaenlinea'
@@ -36,19 +37,19 @@ def mainlist(item):
     itemlist = []
 
     itemlist.append(item.clone(action="peliculas", title="Novedades", url=host + "archivos/peliculas",
-                               thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
-                                         "/0/Directors%20Chair.png", text_color=color1))
+                               thumbnail=get_thumb('newest', auto=True), text_color=color1,))
     itemlist.append(item.clone(action="peliculas", title="Estrenos", url=host + "archivos/estrenos",
-                               thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
-                                         "/0/Directors%20Chair.png", text_color=color1))
+                               thumbnail=get_thumb('premieres', auto=True), text_color=color1))
     itemlist.append(item.clone(action="indices", title="Por géneros", url=host,
-                               thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
-                                         "/0/Genre.png", text_color=color1))
-    itemlist.append(item.clone(action="indices", title="Por país", url=host, text_color=color1))
-    itemlist.append(item.clone(action="indices", title="Por año", url=host, text_color=color1))
+                               thumbnail=get_thumb('genres', auto=True), text_color=color1))
+    itemlist.append(item.clone(action="indices", title="Por país", url=host, text_color=color1,
+                               thumbnail=get_thumb('country', auto=True)))
+    itemlist.append(item.clone(action="indices", title="Por año", url=host, text_color=color1,
+                               thumbnail=get_thumb('year', auto=True)))
 
     itemlist.append(item.clone(title="", action=""))
-    itemlist.append(item.clone(action="search", title="Buscar...", text_color=color3))
+    itemlist.append(item.clone(action="search", title="Buscar...", text_color=color3,
+                               thumbnail=get_thumb('search', auto=True)))
     itemlist.append(item.clone(action="configuracion", title="Configurar canal...", text_color="gold", folder=False))
 
     return itemlist

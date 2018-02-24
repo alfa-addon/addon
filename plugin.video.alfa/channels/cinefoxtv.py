@@ -9,6 +9,7 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channelselector import get_thumb
 
 host = 'http://verhdpelis.com/'
 headers = [['User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0'],
@@ -49,21 +50,20 @@ def mainlist(item):
 
     itemlist = []
 
-    itemlist.append(item.clone(title="Todas", action="lista", thumbnail='https://s18.postimg.org/fwvaeo6qh/todas.png',
+    itemlist.append(item.clone(title="Todas", action="lista", thumbnail=get_thumb('all', auto=True),
                                fanart='https://s18.postimg.org/fwvaeo6qh/todas.png', extra='peliculas/',
                                url=host + 'page/1.html'))
 
     itemlist.append(
-        itemlist[-1].clone(title="Generos", action="generos", thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
+        itemlist[-1].clone(title="Generos", action="generos", thumbnail=get_thumb('genres', auto=True),
                            fanart='https://s3.postimg.org/5s9jg2wtf/generos.png', url=host))
 
     itemlist.append(
-        itemlist[-1].clone(title="Mas Vistas", action="lista", thumbnail='https://s9.postimg.org/wmhzu9d7z/vistas.png',
+        itemlist[-1].clone(title="Mas Vistas", action="lista", thumbnail=get_thumb('more watched', auto=True),
                            fanart='https://s9.postimg.org/wmhzu9d7z/vistas.png',
                            url=host + 'top-peliculas-online/1.html'))
 
-    itemlist.append(itemlist[-1].clone(title="Buscar", action="search",
-                                       thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
+    itemlist.append(itemlist[-1].clone(title="Buscar", action="search", thumbnail=get_thumb('search', auto=True),
                                        fanart='https://s30.postimg.org/pei7txpa9/buscar.png', url=host + 'search/'))
 
     return itemlist

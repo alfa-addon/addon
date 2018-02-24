@@ -17,6 +17,8 @@ import xbmc
 import xbmcgui
 import xbmcplugin
 from channelselector import get_thumb
+from platformcode import unify
+from core import channeltools
 from core import trakt_tools
 from core.item import Item
 from platformcode import logger
@@ -118,8 +120,18 @@ def render_items(itemlist, parent_item):
     if not len(itemlist):
         itemlist.append(Item(title="No hay elementos que mostrar"))
 
+    genre = False
+    if 'nero' in parent_item.title:
+        genre = True
+        anime = False
+        if 'anime' in channeltools.get_channel_parameters(parent_item.channel)['categories']:
+            anime = True
+
     # Recorremos el itemlist
+
     for item in itemlist:
+        channel_parameters = channeltools.get_channel_parameters(item.channel)
+        #logger.debug(item)
         # Si el item no contiene categoria, le ponemos la del item padre
         if item.category == "":
             item.category = parent_item.category
@@ -128,25 +140,51 @@ def render_items(itemlist, parent_item):
         if item.fanart == "":
             item.fanart = parent_item.fanart
 
-        # Formatear titulo
-        if item.text_color:
-            item.title = '[COLOR %s]%s[/COLOR]' % (item.text_color, item.title)
-        if item.text_bold:
-            item.title = '[B]%s[/B]' % item.title
-        if item.text_italic:
-            item.title = '[I]%s[/I]' % item.title
+
+        if genre:
+
+            valid_genre = True
+            thumb = get_thumb(item.title, auto=True)
+            if thumb != '':
+                item.thumbnail = thumb
+                valid_genre = True
+            elif anime:
+                valid_genre = True
+
+
+        unify_enabled = config.get_setting('unify')
+
+        #logger.debug('unify_enabled: %s' % unify_enabled)
+
+
+        if unify_enabled and not channel_parameters['adult'] and 'skip_unify' not in channel_parameters:
+            # Formatear titulo con unify
+            item = unify.title_format(item)
+        else:
+            #Formatear titulo metodo old school
+            if item.text_color:
+                item.title = '[COLOR %s]%s[/COLOR]' % (item.text_color, item.title)
+            if item.text_bold:
+                item.title = '[B]%s[/B]' % item.title
+            if item.text_italic:
+                item.title = '[I]%s[/I]' % item.title
 
         # Añade headers a las imagenes si estan en un servidor con cloudflare
         from core import httptools
+
         item.thumbnail = httptools.get_url_headers(item.thumbnail)
         item.fanart = httptools.get_url_headers(item.fanart)
-
+        item.thumbnail = unify.thumbnail_type(item)
         # IconImage para folder y video
         if item.folder:
             icon_image = "DefaultFolder.png"
         else:
             icon_image = "DefaultVideo.png"
 
+        #if not genre or (genre and valid_genre):
+        # Creamos el listitem
+        #listitem = xbmcgui.ListItem(item.title, iconImage=icon_image, thumbnailImage=unify.thumbnail_type(item))
+        listitem = xbmcgui.ListItem(item.title, iconImage=icon_image, thumbnailImage=item.thumbnail)
         # Ponemos el fanart
         if item.fanart:
             fanart = item.fanart
@@ -159,7 +197,8 @@ def render_items(itemlist, parent_item):
         # values icon, thumb or poster are skin dependent.. so we set all to avoid problems
         # if not exists thumb it's used icon value
         if config.get_platform(True)['num_version'] >= 16.0:
-            listitem.setArt({'icon': icon_image, 'thumb': item.thumbnail, 'poster': item.thumbnail, 'fanart': fanart})
+            listitem.setArt({'icon': icon_image, 'thumb': item.contentThumbnail, 'poster': item.thumbnail,
+                             'fanart': fanart})
         else:
             listitem.setIconImage(icon_image)
             listitem.setThumbnailImage(item.thumbnail)
@@ -192,6 +231,7 @@ def render_items(itemlist, parent_item):
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url='%s?%s' % (sys.argv[0], item.tourl()),
                                     listitem=listitem, isFolder=item.folder,
                                     totalItems=item.totalItems)
+
 
     # Fijar los tipos de vistas...
     if config.get_setting("forceview"):
@@ -510,7 +550,7 @@ def is_playing():
 def play_video(item, strm=False, force_direct=False, autoplay=False):
     logger.info()
     # logger.debug(item.tostring('\n'))
-
+    logger.debug('item play: %s'%item)
     if item.channel == 'downloads':
         logger.info("Reproducir video local: %s [%s]" % (item.title, item.url))
         xlistitem = xbmcgui.ListItem(path=item.url)
@@ -890,6 +930,7 @@ def set_player(item, xlistitem, mediaurl, view, strm):
             if strm or item.strm_path:
                 from platformcode import xbmc_videolibrary
                 xbmc_videolibrary.mark_auto_as_watched(item)
+            logger.debug(item)
             xlistitem.setPath(mediaurl)
             xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, xlistitem)
 

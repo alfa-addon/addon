@@ -13,21 +13,13 @@ from platformcode import config, logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
-    data = httptools.downloadpage(page_url, cookies=False).data
-    if 'file was deleted' in data:
-        return False, "[FlashX] El archivo no existe o ha sido borrado"
-    elif 'File Not Found' in data:
-        return False, "[FlashX] El archivo no existe"
-    elif 'Video is processing now' in data:
-        return False, "[FlashX] El archivo se está procesando"
-
     return True, ""
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     pfxfx = ""
-    headers = {'Host': 'www.flashx.tv',
+    headers = {'Host': 'www.flashx.sx',
                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36',
                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                'Accept-Language': 'en-US,en;q=0.5',
@@ -35,11 +27,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                'Cookie': ''}
     data = httptools.downloadpage(page_url, cookies=False).data
     data = data.replace("\n","")
-    cgi_counter = scrapertools.find_single_match(data, """(?is)src=.(https://www.flashx.tv/counter.cgi.*?[^(?:'|")]+)""")
+    cgi_counter = scrapertools.find_single_match(data, """(?is)src=.(https://www.flashx.sx/counter.cgi.*?[^(?:'|")]+)""")
     cgi_counter = cgi_counter.replace("%0A","").replace("%22","")
-    playnow = scrapertools.find_single_match(data, 'https://www.flashx.tv/dl[^"]+')
+    playnow = scrapertools.find_single_match(data, 'https://www.flashx.sx/dl[^"]+')
     # Para obtener el f y el fxfx
-    js_fxfx = "https://www." + scrapertools.find_single_match(data.replace("//","/"), """(?is)(flashx.tv/js\w+/c\w+.*?[^(?:'|")]+)""")
+    js_fxfx = "https://www." + scrapertools.find_single_match(data.replace("//","/"), """(?is)(flashx.sx/js\w+/c\w+.*?[^(?:'|")]+)""")
     data_fxfx = httptools.downloadpage(js_fxfx).data
     mfxfx = scrapertools.find_single_match(data_fxfx, 'get.*?({.*?})').replace("'","").replace(" ","")
     matches = scrapertools.find_multiple_matches(mfxfx, '(\w+):(\w+)')
@@ -49,19 +41,20 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("mfxfxfx2= %s" %pfxfx)
     if pfxfx == "":
         pfxfx = "ss=yes&f=fail&fxfx=6"
-    coding_url = 'https://www.flashx.tv/flashx.php?%s' %pfxfx
+    coding_url = 'https://www.flashx.sx/flashx.php?%s' %pfxfx
     # {f: 'y', fxfx: '6'}
-    flashx_id = scrapertools.find_single_match(data, 'name="id" value="([^"]+)"')
-    fname = scrapertools.find_single_match(data, 'name="fname" value="([^"]+)"')
-    hash_f = scrapertools.find_single_match(data, 'name="hash" value="([^"]+)"')
-    imhuman = scrapertools.find_single_match(data, "value='([^']+)' name='imhuman'")
+    bloque = scrapertools.find_single_match(data, '(?s)Form method="POST" action(.*?)<!--')
+    flashx_id = scrapertools.find_single_match(bloque, 'name="id" value="([^"]+)"')
+    fname = scrapertools.find_single_match(bloque, 'name="fname" value="([^"]+)"')
+    hash_f = scrapertools.find_single_match(bloque, 'name="hash" value="([^"]+)"')
+    imhuman = scrapertools.find_single_match(bloque, "value='([^']+)' name='imhuman'")
     post = 'op=download1&usr_login=&id=%s&fname=%s&referer=&hash=%s&imhuman=%s' % (
         flashx_id, urllib.quote(fname), hash_f, imhuman)
     wait_time = scrapertools.find_single_match(data, "<span id='xxc2'>(\d+)")
 
-    headers['Referer'] = "https://www.flashx.tv/"
+    headers['Referer'] = "https://www.flashx.sx/"
     headers['Accept'] = "*/*"
-    headers['Host'] = "www.flashx.tv"
+    headers['Host'] = "www.flashx.sx"
     headers['X-Requested-With'] = 'XMLHttpRequest'
 
     # Obligatorio descargar estos 2 archivos, porque si no, muestra error
@@ -76,7 +69,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     headers.pop('X-Requested-With')
     headers['Content-Type'] = 'application/x-www-form-urlencoded'
     data = httptools.downloadpage(playnow, post).data
-
     # Si salta aviso, se carga la pagina de comprobacion y luego la inicial
     # LICENSE GPL3, de alfa-addon: https://github.com/alfa-addon/ ES OBLIGATORIO AÑADIR ESTAS LÍNEAS
     if "You try to access this video with Kodi" in data:

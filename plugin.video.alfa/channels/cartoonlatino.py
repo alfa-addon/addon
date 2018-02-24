@@ -25,7 +25,7 @@ list_quality = ['default']
 
 def mainlist(item):
     logger.info()
-    thumb_series = get_thumb("channels_tvshow.png")
+    thumb_series = get_thumb('tvshows', auto=True)
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="lista", title="Series", url=host,

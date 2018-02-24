@@ -6,6 +6,7 @@ import urllib
 from core import httptools
 from core import scrapertools
 from core import servertools
+from channelselector import get_thumb
 from core import tmdb
 from core.item import Item
 from platformcode import logger, config
@@ -40,14 +41,14 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Ultimas",
                                action="lista",
-                               thumbnail='https://s22.postimg.org/cb7nmhwv5/ultimas.png',
+                               thumbnail=get_thumb('last', auto=True),
                                fanart='https://s22.postimg.org/cb7nmhwv5/ultimas.png',
                                url=host + '/ultimos'
                                ))
 
     itemlist.append(item.clone(title="Todas",
                                action="lista",
-                               thumbnail='https://s18.postimg.org/fwvaeo6qh/todas.png',
+                               thumbnail=get_thumb('all', auto=True),
                                fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
                                url=host + '/buscar?t=todos&q='
                                ))
@@ -55,14 +56,14 @@ def mainlist(item):
     itemlist.append(item.clone(title="Generos",
                                action="generos",
                                url=host,
-                               thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                               thumbnail=get_thumb('genres', auto=True),
                                fanart='https://s3.postimg.org/5s9jg2wtf/generos.png'
                                ))
 
     itemlist.append(item.clone(title="Buscar",
                                action="search",
                                url=host + '/buscar?t=todos&q=',
-                               thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
+                               thumbnail=get_thumb('search', auto=True),
                                fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
                                ))
 
