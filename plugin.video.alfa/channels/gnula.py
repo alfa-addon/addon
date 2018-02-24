@@ -7,7 +7,7 @@ from core.item import Item
 from platformcode import config, logger
 
 host = "http://gnula.nu/"
-host_search = "https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=small&num=10&hl=es&prettyPrint=false&source=gcsc&gss=.es&sig=45e50696e04f15ce6310843f10a3a8fb&cx=014793692610101313036:vwtjajbclpq&q=%s&cse_tok=AOdTmaBgzSiy5RxoV4cZSGGEr17reWoGLg:1519145966291&googlehost=www.google.com&callback=google.search.Search.apiary10745&nocache=1519145965573&start=0"
+host_search = "https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=small&num=10&hl=es&prettyPrint=false&source=gcsc&gss=.es&sig=45e50696e04f15ce6310843f10a3a8fb&cx=014793692610101313036:vwtjajbclpq&q=%s&cse_tok=%s&googlehost=www.google.com&callback=google.search.Search.apiary10745&nocache=1519145965573&start=0"
 
 
 def mainlist(item):
@@ -28,7 +28,16 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = item.url %texto
+    data = httptools.downloadpage(host).data
+    url_cse = scrapertools.find_single_match(data, '<form action="([^"]+)"') + "?"
+    bloque = scrapertools.find_single_match(data, '<form action=.*?</form>').replace('name="q"', "")
+    matches = scrapertools.find_multiple_matches(bloque, 'name="([^"]+).*?value="([^"]+)')
+    post = "q=" + texto + "&"
+    for name, value in matches:
+        post += name + "=" + value + "&"
+    data = httptools.downloadpage(url_cse + post).data
+    cse_token = scrapertools.find_single_match(data, "var cse_token='([^']+)'")
+    item.url = host_search %(texto, cse_token)
     try:
         return sub_search(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
