@@ -7,7 +7,8 @@ from core.item import Item
 from platformcode import config, logger
 
 host = "http://gnula.nu/"
-host_search = "https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=small&num=10&hl=es&prettyPrint=false&source=gcsc&gss=.es&sig=45e50696e04f15ce6310843f10a3a8fb&cx=014793692610101313036:vwtjajbclpq&q=%s&cse_tok=%s&googlehost=www.google.com&callback=google.search.Search.apiary10745&nocache=1519145965573&start=0"
+host_search = "https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=small&num=20&hl=es&prettyPrint=false&source=gcsc&gss=.es&sig=45e50696e04f15ce6310843f10a3a8fb&cx=014793692610101313036:vwtjajbclpq&q=%s&cse_tok=%s&googlehost=www.google.com&callback=google.search.Search.apiary10745&nocache=1519145965573&start=0"
+item_per_page = 20
 
 
 def mainlist(item):
@@ -51,35 +52,31 @@ def search(item, texto):
 def sub_search(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron =  '(?s)clicktrackUrl":".*?q=(.*?)".*?'
-    patron += 'title":"([^"]+)".*?'
-    patron += 'cseImage":{"src":"([^"]+)"'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
-        scrapedurl = scrapertools.find_single_match(scrapedurl, ".*?online/")
-        scrapedtitle = scrapedtitle.decode("unicode-escape").replace(" online", "").replace("<b>", "").replace("</b>", "")
-        if "ver-" not in scrapedurl:
-            continue
-        year = scrapertools.find_single_match(scrapedtitle, "\d{4}")
-        contentTitle = scrapedtitle.replace("(%s)" %year,"").replace("Ver","").strip()
-        itemlist.append(Item(action = "findvideos",
-                             channel = item.channel,
-                             contentTitle = contentTitle,
-                             infoLabels = {"year":year},
-                             title = scrapedtitle,
-                             thumbnail = scrapedthumbnail,
-                             url = scrapedurl
-                             ))
-    if itemlist:
-        page = int(scrapertools.find_single_match(item.url, ".*?start=(\d+)")) + 10
-        npage = (page / 10) + 1
-        item_page = scrapertools.find_single_match(item.url, "(.*?start=)") + str(page)
-        itemlist.append(Item(action = "sub_search",
-                             channel = item.channel,
-                             title = "[COLOR green]Página %s[/COLOR]" %npage,
-                             url = item_page
-                             ))
+    while True:
+        data = httptools.downloadpage(item.url).data
+        if len(data) < 500 :
+            break
+        page = int(scrapertools.find_single_match(item.url, ".*?start=(\d+)")) + item_per_page
+        item.url = scrapertools.find_single_match(item.url, "(.*?start=)") + str(page)
+        patron =  '(?s)clicktrackUrl":".*?q=(.*?)".*?'
+        patron += 'title":"([^"]+)".*?'
+        patron += 'cseImage":{"src":"([^"]+)"'
+        matches = scrapertools.find_multiple_matches(data, patron)
+        for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
+            scrapedurl = scrapertools.find_single_match(scrapedurl, ".*?online/")
+            scrapedtitle = scrapedtitle.decode("unicode-escape").replace(" online", "").replace("<b>", "").replace("</b>", "")
+            if "ver-" not in scrapedurl:
+                continue
+            year = scrapertools.find_single_match(scrapedtitle, "\d{4}")
+            contentTitle = scrapedtitle.replace("(%s)" %year,"").replace("Ver","").strip()
+            itemlist.append(Item(action = "findvideos",
+                                 channel = item.channel,
+                                 contentTitle = contentTitle,
+                                 infoLabels = {"year":year},
+                                 title = scrapedtitle,
+                                 thumbnail = scrapedthumbnail,
+                                 url = scrapedurl,
+                                 ))
     return itemlist
 
 
