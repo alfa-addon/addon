@@ -131,7 +131,7 @@ def peliculas(item):
 
 
 def findvideos(item):
-    logger.info("item=" + item.tostring())
+    logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     item.plot = scrapertools.find_single_match(data, '<div class="entry">(.*?)<div class="iframes">')
