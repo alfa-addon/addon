@@ -5,8 +5,6 @@
 # Herramientas responsables de unificar diferentes tipos de
 # datos obtenidos de las paginas
 # ----------------------------------------------------------
-# -*- Created for Alfa-addon -*-
-# -*- By the Alfa Develop Group -*-
 
 import os
 import sys
@@ -134,7 +132,6 @@ def set_genre(string):
 
 def remove_format(string):
     #logger.info()
-
     #logger.debug('entra en remove: %s' % string)
     string = string.rstrip()
     string = re.sub(r'(\[|\[\/)(?:color|COLOR|b|B|i|I).*?\]|\[|\]|\(|\)|\:|\.', '', string)
@@ -142,8 +139,8 @@ def remove_format(string):
     return string
 
 def simplify(string):
-    #logger.info()
 
+    #logger.info()
     #logger.debug('entra en simplify: %s'%string)
     string = remove_format(string)
     string = string.replace('-',' ').replace('_',' ')
@@ -158,6 +155,7 @@ def simplify(string):
     return string
 
 def add_languages(title, languages):
+    #logger.info()
 
     if isinstance(languages, list):
         for language in languages:
@@ -167,6 +165,7 @@ def add_languages(title, languages):
     return title
 
 def set_color(title, category):
+    #logger.info()
 
     color_scheme = {'otro': 'white'}
 
@@ -200,6 +199,7 @@ def set_color(title, category):
     return title
 
 def set_lang(language):
+    #logger.info()
 
     cast =['castellano','espanol','cast','esp','espaol', 'es','zc', 'spa', 'spanish', 'vc']
     lat=['latino','lat','la', 'espanol latino', 'espaol latino', 'zl', 'mx', 'co', 'vl']
@@ -231,6 +231,8 @@ def set_lang(language):
     #logger.debug('language after simplify: %s' % language)
 
     return language
+
+
 
 
 
@@ -347,7 +349,7 @@ def title_format(item):
                 else:
                     simple_language = ''
 
-            item.language = simple_language
+            #item.language = simple_language
 
         # Damos formato al año si existiera y lo agregamos
         # al titulo excepto que sea un episodio
@@ -444,6 +446,7 @@ def title_format(item):
     return item
 
 def thumbnail_type(item):
+    #logger.info()
 
     # Se comprueba que tipo de thumbnail se utilizara en findvideos,
     # Poster o Logo del servidor
