@@ -28,6 +28,8 @@ list_servers = [
     'pcloud',
     'usersfiles',
     'vidbull',
+    'rapidvideo',
+    'streamango',
     'openload',
     'directo'
 ]
@@ -273,6 +275,8 @@ def findvideos(item):
                 "https://www.yourupload.com/watch/": "yourupload",
                 "http://www.cinecalidad.to/protect/gdredirect.php?l=": "directo",
                 "https://openload.co/embed/": "openload",
+                "https://streamango.com/embed/": "streamango",
+                "https://www.rapidvideo.com/embed/": "rapidvideo",
                 }
 
     logger.info()
@@ -284,6 +288,8 @@ def findvideos(item):
 
     server_url = {'YourUpload': 'https://www.yourupload.com/embed/',
                   'Openload': 'https://openload.co/embed/',
+                  'Streamango': 'https://streamango.com/embed/',
+                  'RapidVideo': 'https://www.rapidvideo.com/embed/',
                   'TVM': 'https://thevideo.me/embed-',
                   'Trailer': '',
                   'BitTorrent': '',
