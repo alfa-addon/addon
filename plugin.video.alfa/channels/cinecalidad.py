@@ -28,19 +28,21 @@ list_servers = [
     'pcloud',
     'usersfiles',
     'vidbull',
+    'openload',
     'rapidvideo',
     'streamango',
-    'openload',
-    'directo'
+    'directo',
+    'torrent'
 ]
 
 host = 'http://www.cinecalidad.to'
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
 thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'
 thumbbr = 'http://flags.fmcdn.net/data/flags/normal/br.png'
-
+current_lang = ''
 
 def mainlist(item):
+    global host
     idioma2 = "destacadas"
     logger.info()
 
@@ -50,14 +52,14 @@ def mainlist(item):
     itemlist.append(
         item.clone(title="CineCalidad Latino",
                    action="submenu",
-                   host="http://cinecalidad.com/",
+                   host="http://cinecalidad.to/",
                    thumbnail=thumbmx,
                    extra="peliculas",
                    ))
 
     itemlist.append(item.clone(title="CineCalidad Castellano",
                                action="submenu",
-                               host="http://cinecalidad.com/espana/",
+                               host="http://cinecalidad.to/espana/",
                                thumbnail=thumbes,
                                extra="peliculas",
                                ))
@@ -65,7 +67,7 @@ def mainlist(item):
     itemlist.append(
         item.clone(title="CineCalidad Portugues",
                    action="submenu",
-                   host="http://cinemaqualidade.com/",
+                   host="http://cinemaqualidade.to/",
                    thumbnail=thumbbr,
                    extra="filmes",
                    ))
@@ -79,7 +81,7 @@ def submenu(item):
     idioma = 'peliculas'
     idioma2 = "destacada"
     host = item.host
-    if item.host == "http://cinemaqualidade.com/":
+    if item.host == "http://cinemaqualidade.to/":
         idioma = "filmes"
         idioma2 = "destacado"
     logger.info()
@@ -108,7 +110,7 @@ def submenu(item):
     itemlist.append(Item(channel=item.channel,
                          title="Por Año",
                          action="anyos",
-                         url=host + "/" + idioma + "-por-ano",
+                         url=host + idioma + "-por-ano",
                          thumbnail=get_thumb('year', auto=True),
                          fanart='https://s8.postimg.org/7eoedwfg5/pora_o.png',
                          ))
@@ -128,7 +130,7 @@ def anyos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<a href="([^"]+)">([^<]+)</a> '
+    patron = '<a href="([^"]+)">([^<]+)</a><br'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
@@ -175,7 +177,7 @@ def generos(item):
     for scrapedurl, scrapedtitle in matches:
         url = urlparse.urljoin(item.url, scrapedurl)
         title = scrapedtitle
-        thumbnail = tgenero[scrapedtitle]
+        thumbnail = ''
         plot = item.plot
         itemlist.append(
             Item(channel=item.channel,
@@ -192,13 +194,17 @@ def generos(item):
 
 def peliculas(item):
     logger.info()
+    global current_lang
     itemlist = []
-    if 'espana' in host:
-        item.language = 'castellano'
-    elif 'cinecalidad' in host:
-        item.language = 'latino'
-    else:
-        item.language = 'portugues'
+
+    if 'cinemaqualidade' in item.url:
+        current_lang = 'portugues'
+    elif 'espana' in item.url:
+        current_lang = 'castellano'
+    elif 'cinecalidad' in item.url:
+        current_lang = 'latino'
+
+
     data = httptools.downloadpage(item.url).data
     patron = '<div class="home_post_cont.*? post_box">.*?<a href="(.*?)".*?'
     patron += 'src="(.*?)".*?title="(.*?) \((.*?)\).*?".*?p&gt;(.*?)&lt'
@@ -221,7 +227,7 @@ def peliculas(item):
                  fanart='https://s31.postimg.org/puxmvsi7v/cinecalidad.png',
                  contentTitle=contentTitle,
                  infoLabels={'year': year},
-                 language=item.language,
+                 language=current_lang,
                  context=autoplay.context
                  ))
 
@@ -247,7 +253,7 @@ def dec(item):
     val = item.split(' ')
     link = map(int, val)
     for i in range(len(link)):
-        link[i] = link[i] - 7
+        link[i] = link[i] - 6
         real = ''.join(map(chr, link))
     return (real)
 
@@ -275,9 +281,10 @@ def findvideos(item):
                 "https://www.yourupload.com/watch/": "yourupload",
                 "http://www.cinecalidad.to/protect/gdredirect.php?l=": "directo",
                 "https://openload.co/embed/": "openload",
-                "https://streamango.com/embed/": "streamango",
+                "https://streamango.com/embed/f/": "streamango",
                 "https://www.rapidvideo.com/embed/": "rapidvideo",
                 }
+
 
     logger.info()
     itemlist = []
@@ -288,40 +295,53 @@ def findvideos(item):
 
     server_url = {'YourUpload': 'https://www.yourupload.com/embed/',
                   'Openload': 'https://openload.co/embed/',
+                  'TVM': 'https://thevideo.me/embed-',
                   'Streamango': 'https://streamango.com/embed/',
                   'RapidVideo': 'https://www.rapidvideo.com/embed/',
-                  'TVM': 'https://thevideo.me/embed-',
                   'Trailer': '',
                   'BitTorrent': '',
                   'Mega': '',
                   'MediaFire': ''}
 
     for video_cod, server_id in matches:
-        if server_id not in ['BitTorrent', 'Mega', 'MediaFire', 'Trailer', '']:
+        if server_id not in ['Mega', 'MediaFire', 'Trailer', '']:
             video_id = dec(video_cod)
 
+        logger.debug('server_id %s' % server_id)
         if server_id in server_url:
             server = server_id.lower()
             thumbnail = item.thumbnail
             if server_id == 'TVM':
                 server = 'thevideome'
                 url = server_url[server_id] + video_id + '.html'
+            elif server_id == 'BitTorrent':
+                base_url = 'http://www.cinecalidad.to/protect/contenido.php'
+                post = 'i=%s&title=%s' % (video_id, item.contentTitle)
+                protect = httptools.downloadpage(base_url, post=post).data
+                url = scrapertools.find_single_match(protect, 'value="(magnet.*?)"')
+                server = 'torrent'
             else:
                 url = server_url[server_id] + video_id
         title = item.contentTitle + ' (%s)' % server
         quality = 'default'
 
-        if server_id not in ['BitTorrent', 'Mega', 'MediaFire', 'Trailer']:
+        if server_id not in ['Mega', 'MediaFire', 'Trailer']:
+            if server != 'torrent':
+                language = IDIOMAS[item.language]
+            else:
+                language = [IDIOMAS[item.language], 'vose']
             if url not in duplicados:
-                itemlist.append(item.clone(action='play',
-                                           title=title,
-                                           fulltitle=item.contentTitle,
-                                           url=url,
-                                           language=IDIOMAS[item.language],
-                                           thumbnail=thumbnail,
-                                           quality=quality,
-                                           server=server
-                                           ))
+                new_item = Item(channel=item.channel,
+                                action='play',
+                                title=title,
+                                fulltitle=item.contentTitle,
+                                url=url,
+                                language= language,
+                                thumbnail=thumbnail,
+                                quality=quality,
+                                server=server
+                                )
+                itemlist.append(new_item)
                 duplicados.append(url)
 
     # Requerido para FilterTools
