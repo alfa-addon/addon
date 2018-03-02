@@ -146,8 +146,6 @@ def scraper(item):
 
     except:
         pass
-    for item_tmdb in itemlist:
-        logger.info(str(item_tmdb.infoLabels['tmdb_id']))
     return itemlist
 
 

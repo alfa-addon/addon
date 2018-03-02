@@ -14,7 +14,7 @@ from core import tmdb
 from core.item import Item, InfoLabels
 from platformcode import config, logger
 
-host = "https://pepecine.tv"
+host = "https://pepecine.info"
 perpage = 20
 
 def mainlist1(item):
@@ -29,7 +29,7 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel,
                          title="Ultimas",
-                         url=host+'/tv-peliculas-online',
+                         url=host+'/peliculas-tv-online',
                          action='list_latest',
                          indexp=1,
                          type='movie'))
