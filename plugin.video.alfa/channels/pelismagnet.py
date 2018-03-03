@@ -171,7 +171,7 @@ def episodios(item):
     # post = "page=%s&x=34&y=14" % urllib.quote(item.url)
     # response = httptools.downloadpage(url, post, follow_redirects=False).data
     # url = scrapertools.find_single_match(response, '<meta http-equiv="refresh".*?url=([^"]+)"')
-    # data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url).data
 
     data = jsontools.load(data)
 
@@ -214,14 +214,12 @@ def episodios(item):
                 if dict_episodes[numero]["plot"] == "":
                     dict_episodes[numero]["plot"] = j.get("overviewcapitul", "")
 
-    # logger.debug("\n\n\n dict_episodes: %s " % dict_episodes)
-
     for key, value in dict_episodes.items():
         list_no_duplicate = list(set(value["quality"]))
         title = "%s %s [%s]" % (key, value["title"], "][".join(list_no_duplicate))
 
         itemlist.append(
-            Item(channel=item.channel, action="findvideos", title=title, url=url,
+            Item(channel=item.channel, action="findvideos", title=title, url=dict_episodes[numero]["url"],
                  thumbnail=item.thumbnail, fanart=item.fanart, show=item.show, data=value,
                  contentSerieName=item.contentTitle, contentSeason=value["season"],
                  contentEpisodeNumber=value["episode"]))

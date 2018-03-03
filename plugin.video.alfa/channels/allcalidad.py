@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
 from core import servertools
@@ -20,12 +21,12 @@ except:
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host))
-    itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos_years", url = host, extra = "Genero" ))
-    itemlist.append(Item(channel = item.channel, title = "Por año", action = "generos_years", url = host, extra = ">Año<"))
-    itemlist.append(Item(channel = item.channel, title = "Favoritas", action = "peliculas", url = host + "/favorites" ))
+    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host, thumbnail = get_thumb("newest", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos_years", url = host, extra = "Genero", thumbnail = get_thumb("genres", auto = True) ))
+    itemlist.append(Item(channel = item.channel, title = "Por año", action = "generos_years", url = host, extra = ">Año<", thumbnail = get_thumb("year", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Favoritas", action = "peliculas", url = host + "/favorites", thumbnail = get_thumb("favorites", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = ""))
-    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "?s="))
+    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "?s=", thumbnail = get_thumb("search", auto = True)))
     return itemlist
 
 def newest(categoria):
