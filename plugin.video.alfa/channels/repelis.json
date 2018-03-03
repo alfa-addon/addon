@@ -1,7 +1,7 @@
 {
   "id": "repelis",
   "name": "Repelis",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "repelis.png",
