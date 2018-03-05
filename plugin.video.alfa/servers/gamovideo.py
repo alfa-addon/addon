@@ -7,12 +7,12 @@ from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
 
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:58.0) Gecko/20100101 Firefox/58.0'}
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36'}
 
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    data = httptools.downloadpage(page_url).data
+    data = httptools.downloadpage(page_url, headers=headers).data
 
     if "File was deleted" in data or "Not Found" in data or "File was locked by administrator" in data:
         return False, "[Gamovideo] El archivo no existe o ha sido borrado"
@@ -25,7 +25,8 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
-    data = httptools.downloadpage(page_url).data
+    data = httptools.downloadpage(page_url, headers=headers).data
+
     packer = scrapertools.find_single_match(data,
                                             "<script type='text/javascript'>(eval.function.p,a,c,k,e,d..*?)</script>")
     if packer != "":
