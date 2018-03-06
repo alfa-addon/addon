@@ -548,19 +548,18 @@ def newest(categoria):
     try:
         if categoria == 'torrent':
             item.url = host+'/peliculas'
-
             itemlist = entradas(item)
-            if itemlist[-1].title == ">> Siguiente":
-                itemlist.pop()
 
+        if categoria == 'series':
             item.url = host + '/series'
-
             itemlist.extend(entradas(item))
-            if itemlist[-1].title == ">> Siguiente":
-                itemlist.pop()
 
+        if categoria == '4k':
+            item.url = host + '/peliculas/4k'
+            itemlist.extend(entradas(item))
+
+        if categoria == 'anime':
             item.url = host + '/anime'
-
             itemlist.extend(entradas(item))
 
         if itemlist[-1].title == ">> Siguiente":
