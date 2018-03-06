@@ -134,7 +134,7 @@ def findvideos(item):
             url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
         if "youtube" in url:
             titulo = "[COLOR = yellow]Ver trailer: %s[/COLOR]"
-        if "ad.js" in url or "script" in url:
+        if "ad.js" in url or "script" in url or "jstags.js" in url:
             continue
         elif "vimeo" in url:
             url += "|" + "http://www.allcalidad.com"
