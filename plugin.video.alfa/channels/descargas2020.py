@@ -72,9 +72,11 @@ def listado(item):
         if 'Serie' in item.title:
             new_item.action="episodios"
             new_item.contentSerieName = scrapedtitle
+            new_item.contentType = 'tvshow'
         else:
             new_item.action="findvideos"
             new_item.contentTitle = scrapedtitle
+            new_item.contentType = 'movie'
         itemlist.append(new_item)
     # Página siguiente
     patron_pag='<ul class="pagination"><li><a class="current" href=".+?">.+?<\/a>.+?<a href="(.+?)">'
