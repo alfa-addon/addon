@@ -53,6 +53,13 @@ def mainlist(item):
 
     set_category_context(new_item)
     itemlist.append(new_item)
+
+    thumbnail = get_thumb("channels_movie_4k.png")
+    new_item = Item(channel=item.channel, action="novedades", extra="4k", title="Películas 4K", thumbnail=thumbnail)
+
+    set_category_context(new_item)
+    itemlist.append(new_item)
+
     #if list_canales['terror']:
     thumbnail = get_thumb("channels_horror.png")
     new_item = Item(channel=item.channel, action="novedades", extra="terror", title="Peliculas de miedo!",
@@ -122,7 +129,7 @@ def set_category_context(item):
 def get_channels_list():
     logger.info()
 
-    list_canales = {'peliculas': [], 'terror': [], 'infantiles': [], 'series': [], 'anime': [],
+    list_canales = {'peliculas': [], '4k': [], 'terror': [], 'infantiles': [], 'series': [], 'anime': [],
                     'castellano': [], 'latino':[], 'torrent':[], 'documentales': []}
     any_active = False
     # Rellenar listas de canales disponibles
@@ -530,6 +537,8 @@ def menu_opciones(item):
     itemlist.append(Item(channel=item.channel, action="setting_channel", extra="peliculas", title="    - Películas ",
                          thumbnail=get_thumb("channels_movie.png"),
                          folder=False))
+    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="4K", title="    - Películas 4K ",
+                         thumbnail=get_thumb("channels_movie.png"), folder=False))
     itemlist.append(Item(channel=item.channel, action="setting_channel", extra="infantiles", title="    - Para niños",
                          thumbnail=get_thumb("channels_children.png"),
                          folder=False))
