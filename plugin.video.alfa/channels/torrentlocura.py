@@ -96,6 +96,11 @@ def submenu(item):
                 item.clone(channel=item.channel, action="alfabeto", title=title + " [A-Z]", url=url,
                            thumbnail=item.thumbnail[:-4] + "_az.png", pattern="pelilist"))
 
+    if 'Películas' in item.title:
+        new_item = item.clone(title='Peliculas 4K', url=host+'buscar', post='q=4k', action='listado2',
+                              pattern='buscar-list')
+        itemlist.append(new_item)
+
     return itemlist
 
 
@@ -473,14 +478,20 @@ def newest(categoria):
         item.pattern = 'pelilist'
         if categoria == 'torrent':
             item.url = host+'peliculas/'
-
-            itemlist = listado(item)
-            if itemlist[-1].title == ">> Página siguiente":
-                itemlist.pop()
+            action = listado(item)
+        elif categoria == 'series':
             item.url = host+'series/'
-            itemlist.extend(listado(item))
-            if itemlist[-1].title == ">> Página siguiente":
-                itemlist.pop()
+            action = listado(item)
+        elif categoria == '4k':
+            item.url = host + 'buscar/'
+            item.post = 'q=4k'
+            item.pattern = 'buscar-list'
+            action = listado2(item)
+
+        itemlist = action
+
+        if itemlist[-1].title == ">> Página siguiente":
+            itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
     except:
