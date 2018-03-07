@@ -5,6 +5,7 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
+from channelselector import get_thumb
 
 host = "http://gnula.nu/"
 host_search = "https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=small&num=20&hl=es&prettyPrint=false&source=gcsc&gss=.es&sig=45e50696e04f15ce6310843f10a3a8fb&cx=014793692610101313036:vwtjajbclpq&q=%s&cse_tok=%s&googlehost=www.google.com&callback=google.search.Search.apiary10745&nocache=1519145965573&start=0"
@@ -15,14 +16,18 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Estrenos", action="peliculas",
-                         url= host +"peliculas-online/lista-de-peliculas-online-parte-1/", viewmode="movie"))
+                         url= host +"peliculas-online/lista-de-peliculas-online-parte-1/", viewmode="movie",
+                         thumbnail=get_thumb('premieres', auto=True),))
     itemlist.append(
-        Item(channel=item.channel, title="Generos", action="generos", url= host + "generos/lista-de-generos/"))
+        Item(channel=item.channel, title="Generos", action="generos", url= host + "generos/lista-de-generos/",
+             thumbnail=get_thumb('genres', auto=True),))
     itemlist.append(Item(channel=item.channel, title="Recomendadas", action="peliculas",
-                         url= host + "peliculas-online/lista-de-peliculas-recomendadas/", viewmode="movie"))
+                         url= host + "peliculas-online/lista-de-peliculas-recomendadas/", viewmode="movie",
+                         thumbnail=get_thumb('recomended', auto=True),))
     itemlist.append(Item(channel = item.channel, action = ""))
     itemlist.append(
-        Item(channel=item.channel, title="Buscar", action="search", url = host_search))
+        Item(channel=item.channel, title="Buscar", action="search", url = host_search,
+             thumbnail=get_thumb('search', auto=True),))
     return itemlist
 
 

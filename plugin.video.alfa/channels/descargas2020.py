@@ -9,6 +9,7 @@ from core import scrapertools
 from core.item import Item
 from platformcode import logger
 from core import httptools
+from channelselector import get_thumb
 
 Host='http://descargas2020.com'
 
@@ -17,14 +18,17 @@ def mainlist(item):
     logger.info()
 
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas",url=Host+"/peliculas/"))
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Series",url=Host+"/series/"))
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas",url=Host+"/peliculas/",
+                         thumbnail=get_thumb('movies', auto=True)))
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Series",url=Host+"/series/",
+                         thumbnail=get_thumb('tvshows', auto=True)))
     #itemlist.append(Item(channel=item.channel, action="listado", title="Anime", url=Host+"/anime/",
     #                     viewmode="movie_with_plot"))
     #itemlist.append(
     #    Item(channel=item.channel, action="listado", title="Documentales", url=Host+"/documentales/",
     #         viewmode="movie_with_plot"))
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", url= Host+'/buscar'))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", url= Host+'/buscar',
+                         thumbnail=get_thumb('search', auto=True)))
     return itemlist
 
 def submenu(item):

@@ -9,6 +9,7 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import logger
+from channelselector import get_thumb
 
 host = 'http://mispelisyseries.com/'
 def mainlist(item):
@@ -16,11 +17,12 @@ def mainlist(item):
 
     itemlist = []
     itemlist.append(Item(channel=item.channel, action="menu", title="Películas", url=host,
-                         extra="Peliculas", folder=True))
+                         extra="Peliculas", folder=True, thumbnail=get_thumb('movies', auto=True)))
     itemlist.append(
         Item(channel=item.channel, action="menu", title="Series", url=host, extra="Series",
-             folder=True))
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", url=host + 'buscar'))
+             folder=True, thumbnail=get_thumb('tvshows', auto=True)))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", url=host + 'buscar',
+                         thumbnail=get_thumb('search', auto=True)))
     return itemlist
 
 

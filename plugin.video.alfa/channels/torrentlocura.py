@@ -26,15 +26,15 @@ def mainlist(item):
 
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url=host,
-                         thumbnail=thumb_movie, pattern="peliculas"))
+                         pattern="peliculas", thumbnail=get_thumb('movies', auto=True)))
     itemlist.append(
         Item(channel=item.channel, action="submenu", title="Series", url=host,
-             thumbnail=thumb_tvshow, pattern="series"))
+             pattern="series", thumbnail=get_thumb('tvshows', auto=True)))
     itemlist.append(
         Item(channel=item.channel, action="anime", title="Anime", url=host,
-             thumbnail=thumb_anime, pattern="anime"))
+             pattern="anime", thumbnail=get_thumb('anime', auto=True)))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar", url=host + "buscar",
-                         thumbnail=thumb_search))
+                         thumbnail=get_thumb('search', auto=True)))
 
     return itemlist
 

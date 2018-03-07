@@ -9,6 +9,7 @@ from core import scrapertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channelselector import get_thumb
 
 header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0'}
 host = "http://www.divxtotal.co"
@@ -20,17 +21,17 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(item.clone(title="[COLOR orange][B]Películas[/B][/COLOR]", action="scraper",
-                               url = host + "/peliculas/", thumbnail="http://imgur.com/A4zN3OP.png",
+                               url = host + "/peliculas/", thumbnail=get_thumb('movies', auto=True),
                                fanart="http://imgur.com/fdntKsy.jpg", contentType="movie"))
     itemlist.append(item.clone(title="[COLOR orange][B]        Películas HD[/B][/COLOR]", action="scraper",
                                url = host + "/peliculas-hd/", thumbnail="http://imgur.com/A4zN3OP.png",
                                fanart="http://imgur.com/fdntKsy.jpg", contentType="movie"))
     itemlist.append(itemlist[-1].clone(title="[COLOR orange][B]Series[/B][/COLOR]", action="scraper",
-                                       url = host + "/series/", thumbnail="http://imgur.com/GPX2wLt.png",
+                                       url = host + "/series/", thumbnail=get_thumb('tvshows', auto=True),
                                        contentType="tvshow"))
 
     itemlist.append(itemlist[-1].clone(title="[COLOR orangered][B]Buscar[/B][/COLOR]", action="search",
-                                       thumbnail="http://imgur.com/aiJmi3Z.png"))
+                                       thumbnail=get_thumb('search', auto=True)))
     return itemlist
 
 
