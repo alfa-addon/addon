@@ -13,6 +13,7 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channelselector import get_thumb
 
 IDIOMAS = {'latino': 'Latino'}
 list_language = IDIOMAS.values()
@@ -62,7 +63,7 @@ def mainlist(item):
     itemlist.append(
         item.clone(title="Todas",
                    action="lista",
-                   thumbnail='https://s18.postimg.org/fwvaeo6qh/todas.png',
+                   thumbnail=get_thumb('all', auto=True),
                    fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
                    url='%s%s'%(host,'peliculas/page/1')
                    ))
@@ -70,7 +71,7 @@ def mainlist(item):
     itemlist.append(
         item.clone(title="Generos",
                    action="seccion",
-                   thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                   thumbnail=get_thumb('genres', auto=True),
                    fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
                    url='%s%s' % (host, 'peliculas/page/1'),
                    ))
@@ -78,7 +79,7 @@ def mainlist(item):
     itemlist.append(
         item.clone(title="Mas Vistas",
                    action="lista",
-                   thumbnail='https://s9.postimg.org/wmhzu9d7z/vistas.png',
+                   thumbnail=get_thumb('more watched', auto=True),
                    fanart='https://s9.postimg.org/wmhzu9d7z/vistas.png',
                    url='%s%s'%(host,'top-imdb/page/1'),
                    ))
@@ -87,7 +88,7 @@ def mainlist(item):
         item.clone(title="Buscar",
                    action="search",
                    url='http://doomtv.net/?s=',
-                   thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
+                   thumbnail=get_thumb('search', auto=True),
                    fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
                    ))
 

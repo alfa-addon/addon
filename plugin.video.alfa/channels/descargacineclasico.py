@@ -27,12 +27,14 @@ def mainlist(item):
 
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Últimas agregadas", action="agregadas",
-                         url="http://www.descargacineclasico.net/", viewmode="movie_with_plot"))
+                         url="http://www.descargacineclasico.net/", viewmode="movie_with_plot",
+                               thumbnail=get_thumb('last', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Listado por género", action="porGenero",
-                         url="http://www.descargacineclasico.net/"))
+                         url="http://www.descargacineclasico.net/",
+                               thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(
         Item(channel=item.channel, title="Buscar", action="search", url="http://www.descargacineclasico.net/",
-             thumbnail=thumb_buscar))
+                               thumbnail=get_thumb('search', auto=True)))
 
     return itemlist
 

@@ -9,18 +9,20 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import logger
+from channelselector import get_thumb
 
-
+host = 'http://mispelisyseries.com/'
 def mainlist(item):
     logger.info()
 
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="menu", title="Películas", url="http://www.divxatope1.com/",
-                         extra="Peliculas", folder=True))
+    itemlist.append(Item(channel=item.channel, action="menu", title="Películas", url=host,
+                         extra="Peliculas", folder=True, thumbnail=get_thumb('movies', auto=True)))
     itemlist.append(
-        Item(channel=item.channel, action="menu", title="Series", url="http://www.divxatope1.com", extra="Series",
-             folder=True))
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar..."))
+        Item(channel=item.channel, action="menu", title="Series", url=host, extra="Series",
+             folder=True, thumbnail=get_thumb('tvshows', auto=True)))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", url=host + 'buscar',
+                         thumbnail=get_thumb('search', auto=True)))
     return itemlist
 
 
@@ -44,61 +46,64 @@ def menu(item):
         plot = ""
         itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, thumbnail=thumbnail, plot=plot,
                              folder=True))
+
+
         if title != "Todas las Peliculas":
             itemlist.append(
                 Item(channel=item.channel, action="alfabetico", title=title + " [A-Z]", url=url, thumbnail=thumbnail,
                      plot=plot, folder=True))
 
-    if item.extra == "Peliculas":
-        title = "4k UltraHD"
-        url = "http://divxatope1.com/peliculas-hd/4kultrahd/"
-        thumbnail = ""
-        plot = ""
-        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                             folder=True))
+
         itemlist.append(
             Item(channel=item.channel, action="alfabetico", title=title + " [A-Z]", url=url, thumbnail=thumbnail,
                  plot=plot,
                  folder=True))
 
+    if 'películas' in item.title.lower():
+        new_item = item.clone(title='Peliculas 4K', url=host+'buscar', post='q=4k', action='listado2',
+                              pattern='buscar-list')
+        itemlist.append(new_item)
+
     return itemlist
 
 
 def search(item, texto):
-    logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = "http://www.divxatope1.com/buscar/descargas"
-    item.extra = urllib.urlencode({'q': texto})
+    logger.info("search:" + texto)
+    # texto = texto.replace(" ", "+")
 
-    try:
-        itemlist = lista(item)
+    #try:
+    item.post = "q=%s" % texto
+    item.pattern = "buscar-list"
+    itemlist = listado2(item)
 
-        # Esta pagina coloca a veces contenido duplicado, intentamos descartarlo
-        dict_aux = {}
-        for i in itemlist:
-            if not i.url in dict_aux:
-                dict_aux[i.url] = i
-            else:
-                itemlist.remove(i)
+    return itemlist
 
-        return itemlist
-    # Se captura la excepci?n, para no interrumpir al buscador global si un canal falla
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("%s" % line)
-        return []
-
+    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
+    # except:
+    #     import sys
+    #     for line in sys.exc_info():
+    #         logger.error("%s" % line)
+    #     return []
 
 def newest(categoria):
     itemlist = []
     item = Item()
     try:
         if categoria in ['peliculas', 'torrent']:
-            item.url = "http://www.divxatope1.com/peliculas"
+            item.url = host+"peliculas"
 
         elif categoria == 'series':
-            item.url = "http://www.divxatope1.com/series"
+            item.url = host+"series"
+
+        if categoria == '4k':
+
+            item.url = Host + '/buscar'
+
+            item.post = 'q=4k'
+
+            item.pattern = 'buscar-list'
+
+            action = listado2(item)
 
         else:
             return []
@@ -180,7 +185,7 @@ def lista(item):
         matches = re.compile(patron, re.DOTALL).findall(calidad + '<br>')
         idioma = ''
 
-        if "divxatope1.com/serie" in url:
+        if host+"/serie" in url:
             contentTitle = re.sub('\s+-|\.{3}$', '', contentTitle)
             capitulo = ''
             temporada = 0
@@ -218,6 +223,62 @@ def lista(item):
                                  extra=item.extra + "&pg=" + next_page_url, folder=True))
 
     return itemlist
+
+
+def listado2(item):
+    logger.info()
+    itemlist = []
+
+    data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, post=item.post).data)
+    data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
+
+    list_chars = [["Ã±", "ñ"]]
+    for el in list_chars:
+        data = re.sub(r"%s" % el[0], el[1], data)
+    try:
+        get, post = scrapertools.find_single_match(data, '<ul class="pagination">.*?<a class="current" href.*?'
+                                                         '<a\s*href="([^"]+)"(?:\s*onClick=".*?\'([^"]+)\'.*?")')
+    except:
+        post = False
+
+    if post:
+        if "pg" in item.post:
+            item.post = re.sub(r"pg=(\d+)", "pg=%s" % post, item.post)
+        else:
+            item.post += "&pg=%s" % post
+
+    pattern = '<ul class="%s">(.*?)</ul>' % item.pattern
+    data = scrapertools.get_match(data, pattern)
+
+    logger.debug(data)
+    pattern = '<a href="(?P<url>[^"]+)".*?<img.*?src="(?P<img>[^"]+)"[^>]+>.*?<h2.*?>\s*(?P<title>.*?)\s*</h2>'
+    matches = re.compile(pattern, re.DOTALL).findall(data)
+
+    for url, thumb, title in matches:
+        title = scrapertools.htmlclean(title)
+        title = title.replace("ï¿½", "ñ")
+
+        # no mostramos lo que no sean videos
+        if "descargar-juego/" in url or "/varios/" in url:
+            continue
+
+        if ".com/series" in url:
+
+            show = title
+
+            itemlist.append(Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumb,
+                                 context=["buscar_trailer"], show=show))
+
+        else:
+            itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumb,
+                                     context=["buscar_trailer"]))
+
+    if post:
+        itemlist.append(item.clone(channel=item.channel, action="listado2", title="[COLOR cyan]Página Siguiente >>[/COLOR]",
+                                   thumbnail=''))
+
+    return itemlist
+
 
 
 def episodios(item):
@@ -262,10 +323,9 @@ def findvideos(item):
     item.contentPlot = item.plot
     al_url_fa = scrapertools.find_single_match(data, 'location\.href.*?=.*?"http:\/\/(?:tumejorserie|tumejorjuego).*?link=(.*?)"')
     if al_url_fa == "":
-        al_url_fa = scrapertools.find_single_match(data,
-                                              'location\.href.*?=.*?"http:\/\/divxatope1.com/(.*?)"')
+        al_url_fa = scrapertools.find_single_match(data, 'location\.href.*?=.*?"%s(.*?)" ' % host)
     if al_url_fa != "":
-        al_url_fa = "http://www.divxatope1.com/" + al_url_fa
+        al_url_fa = host + al_url_fa
         logger.info("torrent=" + al_url_fa)
         itemlist.append(
             Item(channel=item.channel, action="play", server="torrent", title="Vídeo en torrent", fulltitle=item.title,
@@ -339,3 +399,4 @@ def play(item):
         itemlist = [item]
 
     return itemlist
+
