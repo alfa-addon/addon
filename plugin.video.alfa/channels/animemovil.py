@@ -299,11 +299,10 @@ def findvideos(item):
         stream_info = 'http:%s/%s/%s?expire=%s&callback=%s&signature=%s&last_modify=%s' % \
                       (access_point, id, server, expire, callback, signature, last_modify)
 
-        dict_stream = jsontools.load(httptools.downloadpage(stream_info).data)
-
-        if dict_stream['status']:
-            kind = dict_stream['result']['kind']
-            try:
+        try:
+            dict_stream = jsontools.load(httptools.downloadpage(stream_info).data)
+            if dict_stream['status']:
+                kind = dict_stream['result']['kind']
                 if kind == 'iframe':
                     url = dict_stream['result']['src']
                     title = '%s (%s)' % (item.title, server)
@@ -337,8 +336,8 @@ def findvideos(item):
 
                 if url != '':
                     itemlist.append(item.clone(title=title, url=url, action='play'))
-            except:
-                pass
+        except:
+            pass
     itemlist = servertools.get_servers_itemlist(itemlist)
 
     return itemlist
