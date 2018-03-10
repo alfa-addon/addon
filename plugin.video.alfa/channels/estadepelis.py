@@ -10,6 +10,7 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channelselector import get_thumb
 
 host = 'http://www.estadepelis.com/'
 headers = [['User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0'],
@@ -60,21 +61,20 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Peliculas",
                                action="menupeliculas",
-                               thumbnail='https://s8.postimg.org/6wqwy2c2t/peliculas.png',
+                               thumbnail=get_thumb('movies', auto=True),
                                fanart='https://s8.postimg.org/6wqwy2c2t/peliculas.png'
                                ))
 
     itemlist.append(item.clone(title="Series",
                                action="lista",
-                               thumbnail='https://s27.postimg.org/iahczwgrn/series.png',
+                               thumbnail=get_thumb('tvshows', auto=True),
                                fanart='https://s27.postimg.org/iahczwgrn/series.png',
                                url=host + 'lista-de-series/',
                                extra='series'
                                ))
 
     itemlist.append(item.clone(title="Doramas",
-                               action="lista",
-                               thumbnail='https://s15.postimg.org/sjcthoa6z/doramas.png',
+                               action="lista", thumbnail=get_thumb('doramas', auto=True),
                                fanart='https://s15.postimg.org/sjcthoa6z/doramas.png',
                                url=host + 'lista-de-doramas/',
                                extra='series'
@@ -82,7 +82,7 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Documentales",
                                action="lista",
-                               thumbnail='https://s16.postimg.org/7xjj4bmol/documental.png',
+                               thumbnail=get_thumb('documentaries', auto=True),
                                fanart='https://s16.postimg.org/7xjj4bmol/documental.png',
                                url=host + 'lista-de-documentales/',
                                extra='peliculas'
@@ -91,7 +91,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Buscar",
                                action="search",
                                url=host + 'search?q=',
-                               thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
+                               thumbnail=get_thumb('search', auto=True),
                                fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
                                ))
 
@@ -107,7 +107,7 @@ def menupeliculas(item):
 
     itemlist.append(item.clone(title="Todas",
                                action="lista",
-                               thumbnail='https://s18.postimg.org/fwvaeo6qh/todas.png',
+                               thumbnail=get_thumb('all', auto=True),
                                fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
                                url=host + 'lista-de-peliculas/',
                                extra='peliculas'
@@ -115,7 +115,7 @@ def menupeliculas(item):
 
     itemlist.append(item.clone(title="Ultimas",
                                action="lista",
-                               thumbnail='https://s22.postimg.org/cb7nmhwv5/ultimas.png',
+                               thumbnail=get_thumb('last', auto=True),
                                fanart='https://s22.postimg.org/cb7nmhwv5/ultimas.png',
                                url=host,
                                extra='peliculas'
@@ -123,7 +123,7 @@ def menupeliculas(item):
 
     itemlist.append(item.clone(title="Generos",
                                action="generos",
-                               thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                               thumbnail=get_thumb('genres', auto=True),
                                fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
                                url=host,
                                extra='peliculas'

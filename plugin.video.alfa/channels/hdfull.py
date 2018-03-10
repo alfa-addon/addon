@@ -12,6 +12,7 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
+from channelselector import get_thumb
 
 host = "https://hdfull.me"
 
@@ -43,9 +44,12 @@ def login():
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="menupeliculas", title="Películas", url=host, folder=True))
-    itemlist.append(Item(channel=item.channel, action="menuseries", title="Series", url=host, folder=True))
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar..."))
+    itemlist.append(Item(channel=item.channel, action="menupeliculas", title="Películas", url=host, folder=True,
+                         thumbnail=get_thumb('movies', auto=True),))
+    itemlist.append(Item(channel=item.channel, action="menuseries", title="Series", url=host, folder=True,
+                         thumbnail=get_thumb('tvshows', auto=True),))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar...",
+                         thumbnail=get_thumb('search', auto=True),))
     if not account:
         itemlist.append(Item(channel=item.channel, title="[COLOR orange][B]Habilita tu cuenta para activar los items de usuario...[/B][/COLOR]",
                              action="settingCanal", url=""))

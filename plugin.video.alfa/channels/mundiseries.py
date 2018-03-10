@@ -11,6 +11,7 @@ from core import servertools
 from core.item import Item
 from core import httptools
 from channels import autoplay
+from channelselector import get_thumb
 
 host = "http://mundiseries.com"
 list_servers = ['okru']
@@ -21,7 +22,8 @@ def mainlist(item):
     itemlist = list()
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, action="lista", title="Series", url=urlparse.urljoin(host, "/lista-de-series")))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Series",
+                         url=urlparse.urljoin(host, "/lista-de-series"), thumbnail=get_thumb('tvshows', auto=True)))
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist

@@ -158,9 +158,13 @@ def newest(categoria):
     itemlist = []
     item = Item()
     try:
-        if categoria in ['peliculas']:
+        if categoria in ['torrent', 'peliculas']:
             item.url = host+'torrents'
+        elif categoria == '4k':
+            item.url = 'http://www.todo-peliculas.com/tags/4k'
+            item.type='section'
         itemlist = list_all(item)
+
         if itemlist[-1].title == 'Siguiente >>':
             itemlist.pop()
     except:

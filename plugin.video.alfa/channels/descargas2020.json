@@ -1,11 +1,11 @@
 {
-  "id": "newpct1",
-  "name": "Newpct1",
+  "id": "descargas2020",
+  "name": "Descargas2020",
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "thumbnail": "newpct1.png",
-  "banner": "newpct1.png",
+  "thumbnail": "http://descargas2020.com/d20/library/content/template/images/_logod2020.png",
+  "banner": "",
   "categories": [
     "movie",
     "tvshow",
@@ -25,6 +25,14 @@
       "id": "include_in_newest_torrent",
       "type": "bool",
       "label": "Incluir en Novedades - Torrent",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_4k",
+      "type": "bool",
+      "label": "Incluir en Novedades - 4K",
       "default": true,
       "enabled": true,
       "visible": true

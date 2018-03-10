@@ -11,6 +11,7 @@ from core import tmdb
 from core import videolibrarytools
 from core.item import Item
 from platformcode import config, platformtools, logger
+from channelselector import get_thumb
 
 host = "http://www.clasicofilm.com/"
 # Configuracion del canal
@@ -35,16 +36,13 @@ def mainlist(item):
     itemlist.append(item.clone(title="Películas", text_color=color2, action="", text_bold=True))
     itemlist.append(item.clone(action="peliculas", title="      Novedades",
                                url="http://www.clasicofilm.com/feeds/posts/summary?start-index=1&max-results=20&alt=json-in-script&callback=finddatepost",
-                               thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
-                                         "/0/Directors%20Chair.png",
-                               text_color=color1))
+                               thumbnail=get_thumb('newest', auto=True), text_color=color1))
     itemlist.append(item.clone(action="generos", title="      Por géneros", url=host,
-                               thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres"
-                                         "/0/Genre.png",
-                               text_color=color1))
+                               thumbnail=get_thumb('genres', auto=True), text_color=color1))
 
     itemlist.append(item.clone(title="", action=""))
-    itemlist.append(item.clone(action="search", title="Buscar...", text_color=color3))
+    itemlist.append(item.clone(action="search", title="Buscar...", text_color=color3,
+                               thumbnail=get_thumb('search', auto=True)))
     itemlist.append(item.clone(action="configuracion", title="Configurar canal...", text_color="gold", folder=False))
 
     return itemlist

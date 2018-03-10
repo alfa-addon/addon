@@ -459,10 +459,12 @@ def download_from_url(url, item):
         return {"downloadStatus": STATUS_CODES.error}
 
     # Obtenemos la ruta de descarga y el nombre del archivo
+    item.downloadFilename = item.downloadFilename.replace('/','-')
     download_path = filetools.dirname(filetools.join(DOWNLOAD_PATH, item.downloadFilename))
     file_name = filetools.basename(filetools.join(DOWNLOAD_PATH, item.downloadFilename))
 
     # Creamos la carpeta si no existe
+
     if not filetools.exists(download_path):
         filetools.mkdir(download_path)
 

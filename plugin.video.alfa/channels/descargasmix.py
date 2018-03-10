@@ -8,7 +8,7 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
-
+from channelselector import get_thumb
 __modo_grafico__ = config.get_setting("modo_grafico", "descargasmix")
 __perfil__ = config.get_setting("perfil", "descargasmix")
 
@@ -32,16 +32,21 @@ def mainlist(item):
     if host_check and host_check.startswith("http"):
         config.set_setting("host", host_check, "descargasmix")
 
-    itemlist.append(item.clone(title="Películas", action="lista", fanart="http://i.imgur.com/c3HS8kj.png"))
-    itemlist.append(item.clone(title="Series", action="lista_series", fanart="http://i.imgur.com/9loVksV.png"))
+    itemlist.append(item.clone(title="Películas", action="lista", fanart="http://i.imgur.com/c3HS8kj.png",
+                               thumbnail=get_thumb('movies', auto=True)))
+    itemlist.append(item.clone(title="Series", action="lista_series", fanart="http://i.imgur.com/9loVksV.png",
+                               thumbnail=get_thumb('tvshows', auto=True)))
     itemlist.append(item.clone(title="Documentales", action="entradas", url="%s/documentales/" % host,
-                               fanart="http://i.imgur.com/Q7fsFI6.png"))
+                               fanart="http://i.imgur.com/Q7fsFI6.png",
+                               thumbnail=get_thumb('documentaries', auto=True)))
     itemlist.append(item.clone(title="Anime", action="entradas", url="%s/anime/" % host,
-                               fanart="http://i.imgur.com/whhzo8f.png"))
+                               fanart="http://i.imgur.com/whhzo8f.png",
+                               thumbnail=get_thumb('anime', auto=True)))
     itemlist.append(item.clone(title="Deportes", action="entradas", url="%s/deportes/" % host,
-                               fanart="http://i.imgur.com/ggFFR8o.png"))
+                               fanart="http://i.imgur.com/ggFFR8o.png",
+                               thumbnail=get_thumb('deporte', auto=True)))
     itemlist.append(item.clone(title="", action=""))
-    itemlist.append(item.clone(title="Buscar...", action="search"))
+    itemlist.append(item.clone(title="Buscar...", action="search", thumbnail=get_thumb('search', auto=True)))
     itemlist.append(item.clone(action="setting_channel", title="Configurar canal...", text_color="gold", folder=False))
 
     return itemlist
@@ -548,19 +553,18 @@ def newest(categoria):
     try:
         if categoria == 'torrent':
             item.url = host+'/peliculas'
-
             itemlist = entradas(item)
-            if itemlist[-1].title == ">> Siguiente":
-                itemlist.pop()
 
+        if categoria == 'series':
             item.url = host + '/series'
-
             itemlist.extend(entradas(item))
-            if itemlist[-1].title == ">> Siguiente":
-                itemlist.pop()
 
+        if categoria == '4k':
+            item.url = host + '/peliculas/4k'
+            itemlist.extend(entradas(item))
+
+        if categoria == 'anime':
             item.url = host + '/anime'
-
             itemlist.extend(entradas(item))
 
         if itemlist[-1].title == ">> Siguiente":

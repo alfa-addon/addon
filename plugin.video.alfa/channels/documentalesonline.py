@@ -6,6 +6,7 @@ from core import httptools
 from core import scrapertools
 from core.item import Item
 from platformcode import logger
+from channelselector import get_thumb
 
 HOST = "http://documentales-online.com/"
 
@@ -15,15 +16,20 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="Novedades", action="listado", url=HOST))
-    itemlist.append(Item(channel=item.channel, title="Destacados", action="seccion", url=HOST, extra="destacados"))
-    itemlist.append(Item(channel=item.channel, title="Series Destacadas", action="seccion", url=HOST, extra="series"))
+    itemlist.append(Item(channel=item.channel, title="Novedades", action="listado", url=HOST,
+                         thumbnail=get_thumb('newest', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Destacados", action="seccion", url=HOST, extra="destacados",
+                         thumbnail=get_thumb('hot', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Series", action="seccion", url=HOST, extra="series",
+                         thumbnail=get_thumb('tvshows', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Categorías", action="categorias", url=HOST,
+                         thumbnail=get_thumb('categories', auto=True)))
     # itemlist.append(Item(channel=item.channel, title="Top 100", action="categorias", url=HOST))
     # itemlist.append(Item(channel=item.channel, title="Populares", action="categorias", url=HOST))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar por:"))
-    itemlist.append(Item(channel=item.channel, title="    Título", action="search"))
-    itemlist.append(Item(channel=item.channel, title="    Categorías", action="categorias", url=HOST))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search",
+                         thumbnail=get_thumb('search', auto=True)))
+
     # itemlist.append(Item(channel=item.channel, title="    Series y Temas", action="categorias", url=HOST))
 
     return itemlist
