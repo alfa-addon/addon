@@ -10,7 +10,7 @@ from core import scrapertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
-
+from channelselector import get_thumb
 IDIOMAS = {'Latino': 'Latino', 'Español': 'Español', 'Sub español': 'VOS'}
 list_language = IDIOMAS.values()
 list_quality = []
@@ -33,7 +33,7 @@ def mainlist(item):
                          title="Peliculas",
                          action="todas",
                          url=host,
-                         thumbnail='https://s8.postimg.org/6wqwy2c2t/peliculas.png',
+                         thumbnail=get_thumb('movies', auto=True),
                          fanart='https://s8.postimg.org/6wqwy2c2t/peliculas.png'
                          ))
 
@@ -41,15 +41,14 @@ def mainlist(item):
                          title="Generos",
                          action="generos",
                          url=host,
-                         thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                         thumbnail=get_thumb('genres', auto=True),
                          fanart='https://s3.postimg.org/5s9jg2wtf/generos.png'
                          ))
 
     itemlist.append(Item(channel=item.channel,
                          title="Alfabetico",
                          action="letras",
-                         url=host,
-                         thumbnail='https://s17.postimg.org/fwi1y99en/a-z.png',
+                         url=host, thumbnail=get_thumb('alphabet', auto=True),
                          fanart='https://s17.postimg.org/fwi1y99en/a-z.png',
                          extra='letras'
                          ))
@@ -57,8 +56,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,
                          title="Ultimas Agregadas",
                          action="ultimas",
-                         url=host,
-                         thumbnail='https://s22.postimg.org/cb7nmhwv5/ultimas.png',
+                         url=host, thumbnail=get_thumb('last', auto=True),
                          fanart='https://s22.postimg.org/cb7nmhwv5/ultimas.png'
                          ))
 
@@ -66,7 +64,7 @@ def mainlist(item):
                          title="Mas Vistas",
                          action="todas",
                          url=host + 'pelicula/peliculas-mas-vistas',
-                         thumbnail='https://s9.postimg.org/wmhzu9d7z/vistas.png',
+                         thumbnail=get_thumb('more watched', auto=True),
                          fanart='https://s9.postimg.org/wmhzu9d7z/vistas.png'
                          ))
 
@@ -74,7 +72,7 @@ def mainlist(item):
                          title="Mas Votadas",
                          action="todas",
                          url=host + 'pelicula/peliculas-mas-votadas',
-                         thumbnail='https://s7.postimg.org/9kg1nthzf/votadas.png',
+                         thumbnail=get_thumb('more voted', auto=True),
                          fanart='https://s7.postimg.org/9kg1nthzf/votadas.png'
                          ))
 
@@ -82,7 +80,7 @@ def mainlist(item):
                          title="Estrenos DVD",
                          action="todas",
                          url=host + 'pelicula/ultimas-peliculas/estrenos-dvd',
-                         thumbnail='https://s1.postimg.org/m89hus1tb/dvd.png',
+                         thumbnail=get_thumb('premieres', auto=True),
                          fanart='https://s1.postimg.org/m89hus1tb/dvd.png'
                          ))
 
@@ -90,7 +88,7 @@ def mainlist(item):
                          title="Actualizadas",
                          action="todas",
                          url=host + 'pelicula/ultimas-peliculas/ultimas/actualizadas',
-                         thumbnail='https://s16.postimg.org/57evw0wo5/actualizadas.png',
+                         thumbnail=get_thumb('updated', auto=True),
                          fanart='https://s16.postimg.org/57evw0wo5/actualizadas.png'
                          ))
 
@@ -98,7 +96,7 @@ def mainlist(item):
                          title="Buscar",
                          action="search",
                          url=host + '/buscar/?q=',
-                         thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
+                         thumbnail=get_thumb('search', auto=True),
                          fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
                          ))
 
@@ -357,6 +355,7 @@ def findvideos(item):
         videoitem.extra = item.thumbnail
         videoitem.fulltitle = item.title
         videoitem.quality = 'default'
+        videoitem.infoLabels = item.infoLabels
 
     # Requerido para FilterTools
 

@@ -12,6 +12,7 @@ from core import tmdb
 from core.item import Item
 from core.scrapertools import decodeHtmlentities as dhe
 from platformcode import config, logger
+from channelselector import get_thumb
 
 
 def mainlist(item):
@@ -23,20 +24,20 @@ def mainlist(item):
     itemlist = []
 
     itemlist.append(Item(channel=item.channel, title="[COLOR yellow][B]Películas[/B][/COLOR]", action="peliculas",
-                         url="http://www.miltorrents.com", thumbnail="http://imgur.com/46ZzwrZ.png",
+                         url="http://www.miltorrents.com", thumbnail=get_thumb('movies', auto=True),
                          fanart="http://imgur.com/y4nJyZh.jpg"))
     title = "[COLOR firebrick][B]Buscar[/B][/COLOR]" + "  " + "[COLOR yellow][B]Peliculas[/B][/COLOR]"
     itemlist.append(Item(channel=item.channel, title="         " + title, action="search", url="",
-                         thumbnail="http://imgur.com/JdSnBeH.png", fanart="http://imgur.com/gwjawWV.jpg",
+                         thumbnail=get_thumb('search', auto=True), fanart="http://imgur.com/gwjawWV.jpg",
                          extra="peliculas" + "|" + check_bg))
 
     itemlist.append(Item(channel=item.channel, title="[COLOR slategray][B]Series[/B][/COLOR]", action="peliculas",
-                         url="http://www.miltorrents.com/series", thumbnail="http://imgur.com/sYpu1KF.png",
+                         url="http://www.miltorrents.com/series", thumbnail=get_thumb('tvshows', auto=True),
                          fanart="http://imgur.com/LwS32zX.jpg"))
 
     title = "[COLOR firebrick][B]Buscar[/B][/COLOR]" + "  " + "[COLOR slategray][B]Series[/B][/COLOR]"
     itemlist.append(Item(channel=item.channel, title="         " + title, action="search", url="",
-                         thumbnail="http://imgur.com/brMIPlT.png", fanart="http://imgur.com/ecPmzDj.jpg",
+                         thumbnail=get_thumb('search', auto=True), fanart="http://imgur.com/ecPmzDj.jpg",
                          extra="series" + "|" + check_bg))
 
     return itemlist

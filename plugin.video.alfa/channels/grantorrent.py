@@ -17,8 +17,8 @@ __modo_grafico__ = config.get_setting('modo_grafico', 'grantorrent')
 def mainlist(item):
     logger.info()
 
-    thumb_movie = get_thumb("channels_movie.png")
-    thumb_tvshow = get_thumb("channels_tvshow.png")
+    thumb_movie = get_thumb("movies", auto=True)
+    thumb_tvshow = get_thumb("tvshows", auto=True)
 
     itemlist = list()
     itemlist.append(

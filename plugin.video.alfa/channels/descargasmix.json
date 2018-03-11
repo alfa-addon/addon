@@ -51,6 +51,30 @@
       "default": true,
       "enabled": true,
       "visible": true
+    },
+    {
+      "id": "include_in_newest_series",
+      "type": "bool",
+      "label": "Incluir en Novedades - series",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_anime",
+      "type": "bool",
+      "label": "Incluir en Novedades - anime",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_4k",
+      "type": "bool",
+      "label": "Incluir en Novedades - 4K",
+      "default": true,
+      "enabled": true,
+      "visible": true
     }
   ]
 }

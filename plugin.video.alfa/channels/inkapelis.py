@@ -8,7 +8,7 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
-
+from channelselector import get_thumb
 __modo_grafico__ = config.get_setting("modo_grafico", "inkapelis")
 __perfil__ = config.get_setting("perfil", "inkapelis")
 
@@ -24,11 +24,12 @@ def mainlist(item):
     itemlist = []
 
     itemlist.append(item.clone(title="Novedades", action="entradas", url="http://www.inkapelis.com/",
-                               extra="Novedades", text_color=color1))
+                               extra="Novedades", text_color=color1, thumbnail=get_thumb('newest', auto=True)))
     itemlist.append(item.clone(title="Estrenos", action="entradas", url="http://www.inkapelis.com/genero/estrenos/",
-                               text_color=color1))
-    itemlist.append(item.clone(title="Géneros", action="generos", url="http://www.inkapelis.com/", text_color=color1))
-    itemlist.append(item.clone(title="Buscar...", action="search", text_color=color1))
+                               text_color=color1, thumbnail=get_thumb('premieres', auto=True)))
+    itemlist.append(item.clone(title="Géneros", action="generos", url="http://www.inkapelis.com/", text_color=color1,
+                               thumbnail=get_thumb('genres', auto=True),))
+    itemlist.append(item.clone(title="Buscar...", action="", text_color=color1))
     itemlist.append(item.clone(action="", title=""))
     itemlist.append(
         item.clone(action="filtro", title="Filtrar películas", url="http://www.inkapelis.com/?s=", text_color=color1))

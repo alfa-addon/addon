@@ -8,6 +8,7 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channelselector import get_thumb
 
 tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
            "Suspense": "https://s13.postimg.org/wmw6vl1cn/suspenso.png",
@@ -50,18 +51,18 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Peliculas",
                                action="menu_peliculas",
-                               thumbnail='https://s8.postimg.org/6wqwy2c2t/peliculas.png',
+                               thumbnail=get_thumb('movies', auto=True),
                                fanart='https://s8.postimg.org/6wqwy2c2t/peliculas.png'
                                ))
 
     itemlist.append(item.clone(title="Series",
                                action="menu_series",
-                               thumbnail='https://s27.postimg.org/iahczwgrn/series.png',
+                               thumbnail=get_thumb('tvshows', auto=True),
                                fanart='https://s27.postimg.org/iahczwgrn/series.png',
                                ))
 
     itemlist.append(item.clone(title="Buscar", action="search",
-                               thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
+                               thumbnail=get_thumb('search', auto=True),
                                fanart='https://s30.postimg.org/pei7txpa9/buscar.png',
                                url=host + '?s='
                                ))
@@ -76,7 +77,7 @@ def menu_peliculas(item):
 
     itemlist.append(item.clone(title="Todas",
                                action="lista",
-                               thumbnail='https://s18.postimg.org/fwvaeo6qh/todas.png',
+                               thumbnail=get_thumb('all', auto=True),
                                fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
                                url=host + 'page/1/?s'
                                ))
@@ -84,7 +85,7 @@ def menu_peliculas(item):
     itemlist.append(item.clone(title="Generos",
                                action="seccion",
                                url=host + 'page/1/?s',
-                               thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                               thumbnail=get_thumb('genres', auto=True),
                                fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
                                seccion='generos-pelicula'
                                ))
@@ -92,7 +93,7 @@ def menu_peliculas(item):
     itemlist.append(item.clone(title="Por Año",
                                action="seccion",
                                url=host + 'page/1/?s',
-                               thumbnail='https://s8.postimg.org/7eoedwfg5/pora_o.png',
+                               thumbnail=get_thumb('year', auto=True),
                                fanart='https://s8.postimg.org/7eoedwfg5/pora_o.png',
                                seccion='fecha-estreno'
                                ))
@@ -100,7 +101,7 @@ def menu_peliculas(item):
     itemlist.append(item.clone(title="Calidad",
                                action="seccion",
                                url=host + 'page/1/?s',
-                               thumbnail='https://s13.postimg.org/6nzv8nlkn/calidad.png',
+                               thumbnail=get_thumb('quality', auto=True),
                                fanart='https://s13.postimg.org/6nzv8nlkn/calidad.png',
                                seccion='calidad'
                                ))
@@ -114,8 +115,7 @@ def menu_series(item):
     itemlist = []
 
     itemlist.append(item.clone(title="Todas",
-                               action="lista",
-                               thumbnail='https://s18.postimg.org/fwvaeo6qh/todas.png',
+                               action="lista", thumbnail=get_thumb('all', auto=True),
                                fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
                                url=host + 'series/page/1/',
                                ))
@@ -123,7 +123,7 @@ def menu_series(item):
     itemlist.append(item.clone(title="Generos",
                                action="seccion",
                                url=host + 'series/page/1/',
-                               thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                               thumbnail=get_thumb('genres', auto=True),
                                fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
                                seccion='generos-serie'
                                ))
@@ -131,7 +131,7 @@ def menu_series(item):
     itemlist.append(item.clone(title="Por Año",
                                action="seccion",
                                url=host + 'series/page/1/',
-                               thumbnail='https://s8.postimg.org/7eoedwfg5/pora_o.png',
+                               thumbnail=get_thumb('year', auto=True),
                                fanart='https://s8.postimg.org/7eoedwfg5/pora_o.png',
                                seccion='series-lanzamiento'
                                ))

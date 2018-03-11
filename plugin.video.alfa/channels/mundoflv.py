@@ -11,6 +11,7 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channelselector import get_thumb
 
 host = "http://mundoflv.com"
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
@@ -60,7 +61,7 @@ def mainlist(item):
                          title="Series",
                          action="todas",
                          url=host,
-                         thumbnail='https://s27.postimg.org/iahczwgrn/series.png',
+                         thumbnail=get_thumb('tvshows', auto=True),
                          fanart='https://s27.postimg.org/iahczwgrn/series.png'
                          ))
 
@@ -68,7 +69,7 @@ def mainlist(item):
                          title="Alfabetico",
                          action="letras",
                          url=host,
-                         thumbnail='https://s17.postimg.org/fwi1y99en/a-z.png',
+                         thumbnail=get_thumb('alphabet', auto=True),
                          fanart='https://s17.postimg.org/fwi1y99en/a-z.png'
                          ))
 
@@ -76,7 +77,7 @@ def mainlist(item):
                          title="Mas vistas",
                          action="masvistas",
                          url=host,
-                         thumbnail='https://s9.postimg.org/wmhzu9d7z/vistas.png',
+                         thumbnail=get_thumb('more watched', auto=True),
                          fanart='https://s9.postimg.org/wmhzu9d7z/vistas.png'
                          ))
 
@@ -84,15 +85,14 @@ def mainlist(item):
                          title="Recomendadas",
                          action="recomendadas",
                          url=host,
-                         thumbnail='https://s12.postimg.org/s881laywd/recomendadas.png',
+                         thumbnail=get_thumb('recomended', auto=True),
                          fanart='https://s12.postimg.org/s881laywd/recomendadas.png'
                          ))
 
     itemlist.append(Item(channel=item.channel,
                          title="Ultimas Agregadas",
                          action="ultimas",
-                         url=host,
-                         thumbnail='https://s22.postimg.org/cb7nmhwv5/ultimas.png',
+                         url=host, thumbnail=get_thumb('last', auto=True),
                          fanart='https://s22.postimg.org/cb7nmhwv5/ultimas.png'
                          ))
 
@@ -100,7 +100,7 @@ def mainlist(item):
                          title="Buscar",
                          action="search",
                          url='http://mundoflv.com/?s=',
-                         thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
+                         thumbnail=get_thumb('search', auto=True),
                          fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
                          ))
 
