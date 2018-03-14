@@ -1,12 +1,21 @@
 # -*- coding: utf-8 -*-
 
 from channelselector import get_thumb
+from channels import autoplay
+from channels import filtertools
 from core import httptools
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+
+
+IDIOMAS = {'Latino': 'LAT'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['rapidvideo', 'streamango', 'fastplay', 'flashx', 'openload', 'vimeo', 'netutv']
+
 
 __channel__='allcalidad'
 
@@ -20,6 +29,7 @@ except:
 
 def mainlist(item):
     logger.info()
+    autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host, thumbnail = get_thumb("newest", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos_years", url = host, extra = "Genero", thumbnail = get_thumb("genres", auto = True) ))
@@ -27,6 +37,7 @@ def mainlist(item):
     itemlist.append(Item(channel = item.channel, title = "Favoritas", action = "peliculas", url = host + "/favorites", thumbnail = get_thumb("favorites", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "?s=", thumbnail = get_thumb("search", auto = True)))
+    autoplay.show_option(item.channel, itemlist)
     return itemlist
 
 def newest(categoria):
@@ -146,6 +157,13 @@ def findvideos(item):
                  ))
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
+
     if itemlist:
         itemlist.append(Item(channel = item.channel))
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
