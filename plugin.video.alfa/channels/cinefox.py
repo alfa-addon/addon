@@ -7,9 +7,20 @@ from core import httptools
 from core import jsontools
 from core import scrapertools
 from core import servertools
+from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
+from channels import autoplay
+from channels import filtertools
+
+
+IDIOMAS = {'Latino': 'LAT', 'Castellano':'CAST', 'Vo':'VO', 'Vose': 'VOSE'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['openload', 'powvideo', 'rapidvideo', 'streamango', 'streamcloud', 'flashx', 'gamovideo', 'streamplay']
+
+
 
 __modo_grafico__ = config.get_setting('modo_grafico', 'cinefox')
 __perfil__ = int(config.get_setting('perfil', "cinefox"))
@@ -24,6 +35,8 @@ if __perfil__ < 3:
 else:
     color1 = color2 = color3 = color4 = color5 = ""
 
+
+
 host = "http://www.cinefox.tv"
 
 
@@ -31,6 +44,8 @@ def mainlist(item):
     logger.info()
     item.text_color = color1
     itemlist = []
+
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(item.clone(action="seccion_peliculas", title="Películas", fanart="http://i.imgur.com/PjJaW8o.png",
                                url=host + "/catalogue?type=peliculas", thumbnail=get_thumb('movies', auto=True)))
@@ -50,6 +65,8 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Buscar...", action="local_search", thumbnail=get_thumb('search', auto=True)))
     itemlist.append(item.clone(title="Configurar canal...", text_color="gold", action="configuracion", folder=False))
+
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -107,29 +124,33 @@ def busqueda(item):
             scrapedtitle = scrapedtitle.capitalize()
             item.infoLabels["year"] = year
             plot = scrapertools.htmlclean(plot)
+            new_item = Item(channel=item.channel, thumbnail= scrapedthumbnail, plot=plot)
             if "/serie/" in scrapedurl:
-                action = "episodios"
-                show = scrapedtitle
+                new_item.show = scrapedtitle
+                new_item.contentType = 'tvshow'
                 scrapedurl += "/episodios"
                 title = " [Serie]"
-                contentType = "tvshow"
+                new_item.action = 'episodios'
             elif "/pelicula/" in scrapedurl:
-                action = "menu_info"
-                show = ""
-                title = " [Película]"
-                contentType = "movie"
+                new_item.action = "findvideos"
+                filter_thumb = scrapedthumbnail.replace("https://image.tmdb.org/t/p/w200_and_h300_bestv2", "")
+                filter_list = {"poster_path": filter_thumb}
+                filter_list = filter_list.items()
+                #title = " [Película]"
+                new_item.contentType = "movie"
+                new_item.extra='media'
+                new_item.contentTitle= scrapedtitle
+                new_item.infoLabels['filtro'] = filter_list
             else:
                 continue
-            title = scrapedtitle + title + " (" + year + ")"
-            itemlist.append(item.clone(action=action, title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
-                                       contentTitle=scrapedtitle, fulltitle=scrapedtitle,
-                                       plot=plot, show=show, text_color=color2, contentType=contentType))
+            new_item.title = scrapedtitle + " (" + year + ")"
+            new_item.url = scrapedurl
+            itemlist.append(new_item)
+            #itemlist.append(item.clone(action=action, title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
+            #                           contentTitle=scrapedtitle, fulltitle=scrapedtitle,
+            #                           plot=plot, show=show, text_color=color2, contentType=contentType))
 
-    try:
-        from core import tmdb
-        tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
-    except:
-        pass
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     next_page = scrapertools.find_single_match(data, 'href="([^"]+)"[^>]+>Más resultados')
     if next_page != "":
@@ -330,10 +351,7 @@ def peliculas(item):
     if "valores" in item and item.valores:
         itemlist.append(item.clone(action="", title=item.valores, text_color=color4))
 
-    if __menu_info__:
-        action = "menu_info"
-    else:
-        action = "findvideos"
+    action = "findvideos"
 
     data = httptools.downloadpage(item.url).data
     bloque = scrapertools.find_multiple_matches(data,
@@ -344,14 +362,15 @@ def peliculas(item):
             matches = scrapertools.find_multiple_matches(match, patron)
             for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
                 url = urlparse.urljoin(host, scrapedurl)
+                filter_thumb = scrapedthumbnail.replace("https://image.tmdb.org/t/p/w200_and_h300_bestv2", "")
+                filter_list = {"poster_path": filter_thumb}
+                filter_list = filter_list.items()
                 itemlist.append(Item(channel=item.channel, action=action, title=scrapedtitle, url=url, extra="media",
                                      thumbnail=scrapedthumbnail, contentTitle=scrapedtitle, fulltitle=scrapedtitle,
-                                     text_color=color2, contentType="movie"))
+                                     text_color=color2, contentType="movie", infoLabels={'filtro':filter_list}))
         else:
-            patron = '<div class="audio-info">(.*?)</div>(.*?)' \
-                     'src="([^"]+)".*?href="([^"]+)">([^<]+)</a>'
+            patron = '<div class="audio-info">(.*?)<div (class="quality.*?)src="([^"]+)".*?href="([^"]+)">([^<]+)</a>'
             matches = scrapertools.find_multiple_matches(match, patron)
-
             for idiomas, calidad, scrapedthumbnail, scrapedurl, scrapedtitle in matches:
                 calidad = scrapertools.find_single_match(calidad, '<div class="quality-info".*?>([^<]+)</div>')
                 if calidad:
@@ -361,17 +380,25 @@ def peliculas(item):
                 if "medium-vs" in idiomas: audios.append('VOSE')
                 if "medium-la" in idiomas: audios.append('LAT')
                 if "medium-en" in idiomas or 'medium-"' in idiomas:
-                    audios.append('V.O')
+                    audios.append('VO')
                 title = "%s  [%s]" % (scrapedtitle, "/".join(audios))
+
                 if calidad:
                     title += " (%s)" % calidad
                 url = urlparse.urljoin(host, scrapedurl)
+                filter_thumb = scrapedthumbnail.replace("https://image.tmdb.org/t/p/w200_and_h300_bestv2", "")
+                filter_list = {"poster_path": filter_thumb}
+                filter_list = filter_list.items()
 
                 itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, extra="media",
                                      thumbnail=scrapedthumbnail, contentTitle=scrapedtitle, fulltitle=scrapedtitle,
-                                     text_color=color2, contentType="movie", quality=calidad, language=audios))
+                                     text_color=color2, contentType="movie", quality=calidad, language=audios,
+                                     infoLabels={'filtro':filter_list}))
 
     next_page = scrapertools.find_single_match(data, 'href="([^"]+)"[^>]+>Siguiente')
+
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+
     if next_page != "" and item.title != "":
         itemlist.append(Item(channel=item.channel, action="peliculas", title=">> Siguiente", url=next_page,
                              thumbnail=item.thumbnail, extra=item.extra, text_color=color3))
@@ -387,10 +414,10 @@ def ultimos(item):
     logger.info()
     item.text_color = color2
 
-    if __menu_info__:
-        action = "menu_info_episode"
-    else:
-        action = "episodios"
+    # if __menu_info__:
+    #     action = "menu_info_episode"
+    # else:
+    action = "episodios"
 
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -407,20 +434,16 @@ def ultimos(item):
             if "medium-vs" in idiomas: audios.append('VOSE')
             if "medium-la" in idiomas: audios.append('LAT')
             if "medium-en" in idiomas or 'medium-"' in idiomas:
-                audios.append('V.O')
+                audios.append('VO')
             title = "%s - %s" % (show, re.sub(show, '', scrapedtitle))
             if audios:
                 title += " [%s]" % "/".join(audios)
             url = urlparse.urljoin(host, scrapedurl)
             itemlist.append(item.clone(action=action, title=title, url=url, thumbnail=scrapedthumbnail,
-                                       contentTitle=show, fulltitle=show, show=show,
+                                       contentSerieName=show, fulltitle=show, show=show,
                                        text_color=color2, extra="ultimos", contentType="tvshow"))
 
-    try:
-        from core import tmdb
-        tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
-    except:
-        pass
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     next_page = scrapertools.find_single_match(data, 'href="([^"]+)"[^>]+>Siguiente')
     if next_page != "":
@@ -444,12 +467,12 @@ def series(item):
         for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
             url = urlparse.urljoin(host, scrapedurl + "/episodios")
             itemlist.append(Item(channel=item.channel, action="episodios", title=scrapedtitle, url=url,
-                                 thumbnail=scrapedthumbnail, contentTitle=scrapedtitle, fulltitle=scrapedtitle,
+                                 thumbnail=scrapedthumbnail, contentSerieName=scrapedtitle, fulltitle=scrapedtitle,
                                  show=scrapedtitle, text_color=color2, contentType="tvshow"))
 
     try:
         from core import tmdb
-        tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
+        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     except:
         pass
 
@@ -512,10 +535,10 @@ def episodios(item):
     data = httptools.downloadpage(item.url).data
     data_season = data[:]
 
-    if "episodios" in item.extra or not __menu_info__ or item.path:
-        action = "findvideos"
-    else:
-        action = "menu_info_episode"
+    #if "episodios" in item.extra or not __menu_info__ or item.path:
+    action = "findvideos"
+    # else:
+    #     action = "menu_info_episode"
 
     seasons = scrapertools.find_single_match(data, '<a href="([^"]+)"[^>]+><span class="season-toggle')
     for i, url in enumerate(seasons):
@@ -534,12 +557,7 @@ def episodios(item):
                 new_item.extra = "episode|"
             itemlist.append(new_item)
 
-    if "episodios" not in item.extra and not item.path:
-        try:
-            from core import tmdb
-            tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
-        except:
-            pass
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     itemlist.reverse()
     if "episodios" not in item.extra and not item.path:
@@ -554,6 +572,8 @@ def episodios(item):
                                  url=item.url, fulltitle=item.fulltitle, fanart=item.fanart,
                                  extra="episodios###episodios",
                                  contentTitle=item.fulltitle))
+
+
 
     return itemlist
 
@@ -612,7 +632,6 @@ def menu_info_episode(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-
     if not "|" in item.extra and not __menu_info__:
         data = httptools.downloadpage(item.url, add_referer=True).data
         year = scrapertools.find_single_match(data, '<div class="media-summary">.*?release.*?>(\d+)<')
@@ -634,7 +653,7 @@ def findvideos(item):
         if "|" in item.extra:
             extra = item.extra[:-1]
         url = host + "/sources/list?id=%s&type=%s&order=%s" % (id, extra, "streaming")
-        itemlist.extend(get_enlaces(item, url, "Online"))
+        itemlist=(get_enlaces(item, url, "Online"))
         url = host + "/sources/list?id=%s&type=%s&order=%s" % (id, extra, "download")
         itemlist.extend(get_enlaces(item, url, "de Descarga"))
 
@@ -658,12 +677,20 @@ def findvideos(item):
         type = item.type.replace("streaming", "Online").replace("download", "de Descarga")
         itemlist.extend(get_enlaces(item, url, type))
 
+        # Requerido para FilterTools
+
+        itemlist = filtertools.get_links(itemlist, item, list_language)
+
+        # Requerido para AutoPlay
+
+        autoplay.start(itemlist, item)
+
     return itemlist
 
 
 def get_enlaces(item, url, type):
     itemlist = []
-    itemlist.append(item.clone(action="", title="Enlaces %s" % type, text_color=color1))
+    #itemlist.append(item.clone(action="", title="Enlaces %s" % type, text_color=color1))
     data = httptools.downloadpage(url, add_referer=True).data
     if type == "Online":
         gg = httptools.downloadpage(item.url, add_referer=True).data
@@ -674,14 +701,15 @@ def get_enlaces(item, url, type):
         matches = scrapertools.find_multiple_matches(bloque, patron)
         for scrapedopcion, scrapedlanguage, scrapedcalidad in matches:
             google_url = scrapertools.find_single_match(bloque, 'id="%s.*?src="([^"]+)' % scrapedopcion)
-            if "medium-es" in scrapedlanguage: language = "Castellano"
-            if "medium-en" in scrapedlanguage: language = "Ingles"
+            if "medium-es" in scrapedlanguage: language = "CAST"
+            if "medium-en" in scrapedlanguage: language = "VO"
             if "medium-vs" in scrapedlanguage: language = "VOSE"
-            if "medium-la" in scrapedlanguage: language = "Latino"
+            if "medium-la" in scrapedlanguage: language = "LAT"
             titulo = " [%s/%s]" % (language, scrapedcalidad.strip())
             itemlist.append(
                 item.clone(action="play", url=google_url, title="    Ver en Gvideo" + titulo, text_color=color2,
                            extra="", server="gvideo", language=language, quality=scrapedcalidad.strip()))
+
     patron = '<div class="available-source".*?data-url="([^"]+)".*?class="language.*?title="([^"]+)"' \
              '.*?class="source-name.*?>\s*([^<]+)<.*?<span class="quality-text">([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -694,10 +722,12 @@ def get_enlaces(item, url, type):
             if servertools.is_server_enabled(server):
                 scrapedtitle = "    Ver en " + server.capitalize() + " [" + idioma + "/" + calidad + "]"
                 itemlist.append(item.clone(action="play", url=scrapedurl, title=scrapedtitle, text_color=color2,
-                                           extra="", server=server, language=idioma))
+                                           extra="", server=server, language=IDIOMAS[idioma]))
 
     if len(itemlist) == 1:
         itemlist.append(item.clone(title="   No hay enlaces disponibles", action="", text_color=color2))
+
+
     return itemlist
 
 
