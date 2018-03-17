@@ -615,8 +615,11 @@ def get_languages(channel):
     list_language = ['No filtrar']
     list_controls, dict_settings = channeltools.get_channel_controls_settings(channel)
     for control in list_controls:
-        if control["id"] == 'filter_languages':
-            list_language = control["lvalues"]
+        try:
+            if control["id"] == 'filter_languages':
+                list_language = control["lvalues"]
+        except:
+            pass
 
     return list_language
 

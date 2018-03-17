@@ -6,6 +6,7 @@ import urllib
 from core import httptools
 from core import scrapertools
 from core import servertools
+from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
@@ -164,6 +165,7 @@ def entradas(item):
             titulo = scrapedtitle + scrapedinfo
             titulo = scrapertools.decodeHtmlentities(titulo)
             scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
+
             scrapedthumbnail = urllib.unquote(re.sub(r'&amp;b=4|/go\.php\?u=', '', scrapedthumbnail))
             if not scrapedthumbnail.startswith("http"):
                 scrapedthumbnail = "http:" + scrapedthumbnail
@@ -201,7 +203,7 @@ def entradas(item):
 
             if info:
                 titulo += " [%s]" % unicode(info, "utf-8").capitalize().encode("utf-8")
-
+            year = scrapertools.find_single_match(titulo,'\[\d{4}\]')
             scrapedthumbnail = urllib.unquote(re.sub(r'&amp;b=4|/go\.php\?u=', '', scrapedthumbnail))
             if not scrapedthumbnail.startswith("http"):
                 scrapedthumbnail = "http:" + scrapedthumbnail
@@ -211,8 +213,8 @@ def entradas(item):
 
             itemlist.append(item.clone(action=action, title=titulo, url=scrapedurl, thumbnail=scrapedthumbnail,
                                        fulltitle=scrapedtitle, contentTitle=scrapedtitle, viewmode="movie_with_plot",
-                                       show=show, contentType="movie"))
-
+                                       show=show, contentType="movie", infoLabels={'year':year}))
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     # Paginación
     next_page = scrapertools.find_single_match(data, '<a class="nextpostslink".*?href="([^"]+)"')
     if next_page:

@@ -27,14 +27,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     referer = page_url.replace('iframe', 'preview')
 
     data = httptools.downloadpage(page_url, headers={'referer': referer}).data
-
     if data == "File was deleted":
         return "El archivo no existe o ha sido borrado"
 
     if 'Video is processing now' in data:
         return "El vídeo está siendo procesado, intentalo de nuevo mas tarde"
 
-    var = scrapertools.find_single_match(data, 'var _0x[0-f]+=(\[[^;]+\]);')
+    var = scrapertools.find_single_match(data, 'var _0x[0-f]{4}=(\[[^;]+\]);')
 
     packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
     unpacked = jsunpack.unpack(packed)

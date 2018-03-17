@@ -248,12 +248,12 @@ def peliculas(item):
     return itemlist
 
 
-def dec(item):
+def dec(item, dec_value):
     link = []
     val = item.split(' ')
     link = map(int, val)
     for i in range(len(link)):
-        link[i] = link[i] - 6
+        link[i] = link[i] - int(dec_value)
         real = ''.join(map(chr, link))
     return (real)
 
@@ -302,10 +302,10 @@ def findvideos(item):
                   'BitTorrent': '',
                   'Mega': '',
                   'MediaFire': ''}
-
+    dec_value = scrapertools.find_single_match(data, 'String\.fromCharCode\(parseInt\(str\[i\]\)-(\d+)\)')
     for video_cod, server_id in matches:
         if server_id not in ['Mega', 'MediaFire', 'Trailer', '']:
-            video_id = dec(video_cod)
+            video_id = dec(video_cod, dec_value)
 
         logger.debug('server_id %s' % server_id)
         if server_id in server_url:
