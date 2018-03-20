@@ -91,7 +91,6 @@ def episodios(item):
    matches = scrapertools.find_multiple_matches(data, patron_caps)
 
    for url, name in matches:
-       logger.info("url A=%s" % url)
        if ("temporada" in url) and (("capitulo" in url) or ("episodio" in url)):
            if ("capitulo" in url):
                season, chapter = scrapertools.find_single_match(
@@ -99,7 +98,7 @@ def episodios(item):
            if ("episodio" in url):
                season, chapter = scrapertools.find_single_match(
                    url, 'temporada-([0-9]+)-?.+episodio-([0-9]+)')
-           title = season + "x" + chapter.zfill(2) + " " + name
+           title = season.zfill(2) + "x" + chapter.zfill(2) + " " + name
        else:
            title = name
 
