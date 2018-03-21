@@ -35,14 +35,14 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     patron = '(?s)<ul id="nav">(.*)<li class="hd-search">'
-    data = scrapertools.find_single_match(data, patron)    
-    patron_cat = '(?s)<li id="menu-item-[^"]+" class=".+?"><a href="([^"]+)">([^"]+)<\/a><ul class="sub-menu">'       
+    data = scrapertools.find_single_match(data, patron)
+    patron_cat = '(?s)<li id="menu-item-[^"]+" class=".+?"><a href="([^"]+)">([^"]+)<\/a><ul class="sub-menu">'
     matches = scrapertools.find_multiple_matches(data, patron_cat)
     for url, name in matches:
-        # if name != 'Clasicos':
+        if name != 'Clasicos':
             title = name
             itemlist.append(item.clone(title=title, url=url,
-                                       action="lista", show=title))
+                                   action="lista", show=title))
     return itemlist
 
 
@@ -55,7 +55,7 @@ def lista(item):
 
     category = item.title
     patron = '<li id="menu-item-[^"]+" class="menu-item menu-item-type-post_type menu-item-object-page current-menu-item page_item page-item-[^"]+ current_page_item menu-item-has-children menu-item-[^"]+"><a href="[^"]+">[^"]+<\/a>(.+?)<\/ul><\/li>'
-    content = scrapertools.find_single_match(data, patron)    
+    content = scrapertools.find_single_match(data, patron)
     patron_lista = '<a href="([^"]+)">([^"]+)<\/a>'
     match_series = scrapertools.find_multiple_matches(content, patron_lista)
     for url, title in match_series:
@@ -92,14 +92,12 @@ def episodios(item):
     matches = scrapertools.find_multiple_matches(data, patron_caps)
 
     for url, name in matches:
-        if ("temporada" in url) and (("capitulo" in url) or ("episodio" in url)):
-            if ("capitulo" in url):
-                season, chapter = scrapertools.find_single_match(
-                    url, 'temporada-([0-9]+)-?.+capitulo-([0-9]+)')
-            if ("episodio" in url):
-                season, chapter = scrapertools.find_single_match(
-                    url, 'temporada-([0-9]+)-?.+episodio-([0-9]+)')
-            title = season.zfill(2) + "x" + chapter.zfill(2) + " " + name
+        patron_validation = 'temporada.*?-([0-9]+).*?[capitulo|episodio]-([0-9]+)'
+        validation = re.compile(patron_validation, re.DOTALL).findall(url)
+        if validation:
+            season, chapter = scrapertools.find_single_match(
+                url, patron_validation)
+            title = season + "x" + chapter.zfill(2) + " " + name
         else:
             title = name
 
