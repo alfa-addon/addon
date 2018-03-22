@@ -46,6 +46,8 @@ def mainlist(item):
     itemlist.append(item.clone(title="Deportes", action="entradas", url="%s/deportes/" % host,
                                fanart="http://i.imgur.com/ggFFR8o.png",
                                thumbnail=get_thumb('deporte', auto=True)))
+    itemlist.append(item.clone(title="Programas de tv", action="entradas", url="%s/otros/programas-de-tv/" % host,
+                               thumbnail=get_thumb('de la tv', auto=True)))
     itemlist.append(item.clone(title="", action=""))
     itemlist.append(item.clone(title="Buscar...", action="search", thumbnail=get_thumb('search', auto=True)))
     itemlist.append(item.clone(action="setting_channel", title="Configurar canal...", text_color="gold", folder=False))
@@ -134,10 +136,8 @@ def lista(item):
 def lista_series(item):
     logger.info()
     itemlist = list()
-
     itemlist.append(item.clone(title="Novedades", action="entradas", url="%s/series/" % host))
     itemlist.append(item.clone(title="Miniseries", action="entradas", url="%s/series/miniseries" % host))
-
     return itemlist
 
 
@@ -149,7 +149,7 @@ def entradas(item):
     data = get_data(item.url)
     bloque = scrapertools.find_single_match(data, '<div id="content" role="main">(.*?)<div id="sidebar" '
                                                   'role="complementary">')
-    contenido = ["series", "deportes", "anime", 'miniseries']
+    contenido = ["series", "deportes", "anime", 'miniseries', 'programas']
     c_match = [True for match in contenido if match in item.url]
     # Patron dependiendo del contenido
     if True in c_match:
