@@ -12,7 +12,7 @@ from core.item import Item
 from core.tmdb import Tmdb
 from platformcode import logger
 
-host = "https://mejortorrent.website"
+host = "http://www.mejortorrent.com"
 
 
 def mainlist(item):
@@ -40,8 +40,8 @@ def mainlist(item):
                          thumbnail=thumb_series_hd))
     itemlist.append(Item(channel=item.channel, title="Series Listado Alfabetico", action="listalfabetico",
                          url= host + "/torrents-de-series.html", thumbnail=thumb_series_az))
-    itemlist.append(Item(channel=item.channel, title="Documentales", action="getlist",
-                         url= host + "/torrents-de-documentales.html", thumbnail=thumb_docus))
+    #itemlist.append(Item(channel=item.channel, title="Documentales", action="getlist",
+    #                     url= host + "/torrents-de-documentales.html", thumbnail=thumb_docus))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", thumbnail=thumb_buscar))
 
     return itemlist
@@ -235,6 +235,8 @@ def episodios(item):
 
     tmdb_title = re.sub(r'(\s*-\s*)?\d+.*?\s*Temporada|(\s*-\s*)?\s*Miniserie\.?|\(.*\)|\[.*\]', '', item.title).strip()
     logger.debug('tmdb_title=' + tmdb_title)
+    #logger.debug(matches)
+    #logger.debug(data)
 
     if item.extra == "series":
         oTmdb = Tmdb(texto_buscado=tmdb_title.strip(), tipo='tv', idioma_busqueda="es")
@@ -248,8 +250,8 @@ def episodios(item):
         #import web_pdb; web_pdb.set_trace()
         title = scrapedtitle + " (" + fecha + ")"
         patron = "<a href='(.*?)'>"
-		
-        url = "https://mejortorrent.website"+scrapertools.find_single_match(data,patron)
+
+        url = host + scrapertools.find_single_match(data,patron)
         # "episodios%5B1%5D=11744&total_capis=5&tabla=series&titulo=Sea+Patrol+-+2%AA+Temporada"
         post = urllib.urlencode({name: value, "total_capis": total_capis, "tabla": tabla, "titulo": titulo})
         logger.debug("post=" + post)
@@ -319,11 +321,11 @@ def show_movie_info(item):
         logger.debug("title=[" + item.title + "], url=[" + url + "], thumbnail=[" + item.thumbnail + "]")
 
         torrent_data = httptools.downloadpage(url).data
-        link = scrapertools.get_match(torrent_data, "<a href='(/uploads/torrents/peliculas/.*?\.torrent)'>")
+        link = scrapertools.get_match(torrent_data, "<a href='(\/uploads\/torrents\/peliculas\/.*?\.torrent)'>")
         link = urlparse.urljoin(url, link)
         logger.debug("link=" + link)
         itemlist.append(Item(channel=item.channel, action="play", server="torrent", title=item.title, url=link,
-                             thumbnail=item.thumbnail, plot=item.plot, fanart=item.fanart, folder=False))
+                             thumbnail=item.thumbnail, plot=item.plot, fanart=item.fanart, folder=False, extra="pelicula"))
 
     return itemlist
 
@@ -334,29 +336,29 @@ def play(item):
     itemlist = []
 
     if item.extra == "pelicula":
-        #itemlist.append(Item(channel=item.channel, action="play", server="torrent", title=item.title, url=item.url,
-        #                    thumbnail=item.thumbnail, plot=item.plot, fanart=item.fanart, folder=False))
-        data = httptools.downloadpage(item.url).data
-        logger.debug("data=" + data)
-        #url https://mejortorrent.website/peli-descargar-torrent-16443-Thor-Ragnarok.html
-        patron = "https://mejortorrent.website/peli-descargar-torrent-((.*?))-"
-        newid = scrapertools.find_single_match(item.url, patron)
+        itemlist.append(Item(channel=item.channel, action="play", server="torrent", title=item.title, url=item.url,
+                            thumbnail=item.thumbnail, plot=item.plot, fanart=item.fanart, folder=False))
+        #data = httptools.downloadpage(item.url).data
+        #logger.debug("data=" + data)
+        #url http://www.mejortorrent.com/peli-descargar-torrent-16443-Thor-Ragnarok.html
+        #patron = host + "/peli-descargar-torrent-((.*?))-"
+        #newid = scrapertools.find_single_match(item.url, patron)
 		
 		
 		
         #params = dict(urlparse.parse_qsl(item.extra))
-        patron = "https://mejortorrent.website/secciones.php?sec=descargas&ap=contar&tabla=peliculas&id=" + newid[0] + "&link_bajar=1"
-		#https://mejortorrent.website/secciones.php?sec=descargas&ap=contar&tabla=peliculas&id=16443&link_bajar=1
+        #patron = host + "/secciones.php?sec=descargas&ap=contar&tabla=peliculas&id=" + newid[0] + "&link_bajar=1"
+		#http://www.mejortorrent.com/secciones.php?sec=descargas&ap=contar&tabla=peliculas&id=16443&link_bajar=1
 		#link=scrapertools.find_single_match(data,patron)
 		#data = httptools.downloadpage(link).data
 		
 		
-        data = httptools.downloadpage(patron).data
-        patron = "Pincha <a href='(.*?)'>"
-        link = "https://mejortorrent.website" + scrapertools.find_single_match(data, patron)
-        logger.info("link=" + link)
-        itemlist.append(Item(channel=item.channel, action="play", server="torrent", title=item.title, url=link,
-                             thumbnail=item.thumbnail, plot=item.plot, folder=False))
+        #data = httptools.downloadpage(patron).data
+        #patron = "Pincha <a href='(.*?)'>"
+        #link = host + scrapertools.find_single_match(data, patron)
+        #logger.info("link=" + link)
+        #itemlist.append(Item(channel=item.channel, action="play", server="torrent", title=item.title, url=link,
+        #                     thumbnail=item.thumbnail, plot=item.plot, folder=False))
 
     else:
         #data = httptools.downloadpage(item.url, post=item.extra).data
@@ -364,14 +366,14 @@ def play(item):
         logger.debug("data=" + data)
 
         params = dict(urlparse.parse_qsl(item.extra))
-        patron = "https://mejortorrent.website/secciones.php?sec=descargas&ap=contar&tabla=" + params["tabla"] + "&id=" + item.id
+        patron = host + "/secciones.php?sec=descargas&ap=contar&tabla=" + params["tabla"] + "&id=" + item.id
 		#link=scrapertools.find_single_match(data,patron)
 		#data = httptools.downloadpage(link).data
 		
 		
         data = httptools.downloadpage(patron).data
         patron = "Pincha <a href='(.*?)'>"
-        link = "https://mejortorrent.website" + scrapertools.find_single_match(data, patron)
+        link = host + scrapertools.find_single_match(data, patron)
         logger.info("link=" + link)
         itemlist.append(Item(channel=item.channel, action="play", server="torrent", title=item.title, url=link,
                              thumbnail=item.thumbnail, plot=item.plot, folder=False))
