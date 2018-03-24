@@ -10,15 +10,15 @@ from platformcode import logger
 
 url_api = ""
 beeg_salt = ""
-
+Host = "https://beeg.com"
 
 def get_api_url():
     global url_api
     global beeg_salt
-    data = scrapertools.downloadpage("http://beeg.com")
-    version = re.compile('<script src="//static.beeg.com/cpl/([\d]+).js"').findall(data)[0]
-    js_url = "http:" + re.compile('<script src="(//static.beeg.com/cpl/[\d]+.js)"').findall(data)[0]
-    url_api = "https://api2.beeg.com/api/v6/" + version
+    data = scrapertools.downloadpage(Host)
+    version = re.compile('<script src="/static/cpl/([\d]+).js"').findall(data)[0]
+    js_url = Host + "/static/cpl/" + version + ".js"
+    url_api = Host + "/api/v6/" + version
     data = scrapertools.downloadpage(js_url)
     beeg_salt = re.compile('beeg_salt="([^"]+)"').findall(data)[0]
 
@@ -53,8 +53,10 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel, action="videos", title="Útimos videos", url=url_api + "/index/main/0/pc",
                          viewmode="movie"))
-    itemlist.append(Item(channel=item.channel, action="listcategorias", title="Listado categorias",
-                         url=url_api + "/index/main/0/pc"))
+    itemlist.append(Item(channel=item.channel, action="listcategorias", title="Listado categorias Populares",
+                         url=url_api + "/index/main/0/pc", extra="popular"))
+    itemlist.append(Item(channel=item.channel, action="listcategorias", title="Listado categorias completo",
+                         url=url_api + "/index/main/0/pc", extra="nonpopular"))
     itemlist.append(
         Item(channel=item.channel, action="search", title="Buscar", url=url_api + "/index/search/0/pc?query=%s"))
     return itemlist
@@ -91,7 +93,7 @@ def listcategorias(item):
     data = scrapertools.cache_page(item.url)
     JSONData = json.load(data)
 
-    for Tag in JSONData["tags"]["popular"]:
+    for Tag in JSONData["tags"][item.extra]:
         url = url_api + "/index/tag/0/pc?tag=" + Tag
         title = Tag
         title = title[:1].upper() + title[1:]
