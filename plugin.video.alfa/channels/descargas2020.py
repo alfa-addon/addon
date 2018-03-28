@@ -91,7 +91,7 @@ def listado(item):
     itemlist = []
     url_next_page =''
 
-    data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
+    data = httptools.downloadpage(item.url).data
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
     #logger.debug(data)
     logger.debug('item.modo: %s'%item.modo)
