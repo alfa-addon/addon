@@ -4,6 +4,7 @@
 # -*- By the Alfa Develop Group -*-
 
 import re
+import urllib
 from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
@@ -58,17 +59,16 @@ def list_all(item):
     itemlist = []
 
     data = get_source(item.url)
-
     if item.section == 'alpha':
         patron = '<span class=Num>\d+.*?<a href=(.*?) class.*?<img src=(.*?) alt=.*?<strong>(.*?)</strong>.*?'
-        patron += '<td>(\d{4})</td>.*?Qlty>(.*?)</span>'
+        patron += '<td>(\d{4})</td>'
     else:
         patron = '<article id=post-.*?<a href=(.*?)>.*?<img src=(.*?) alt=.*?'
-        patron += '<h2 class=Title>(.*?)<\/h2>.*?<span class=Year>(.*?)<\/span>.*?Qlty>(.*?)<\/span>'
+        patron += '<h3 class=Title>(.*?)<\/h3>.*?<span class=Year>(.*?)<\/span>'
     data = get_source(item.url)
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedthumbnail, scrapedtitle, year, quality in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtitle, year in matches:
 
         url = scrapedurl
         if "|" in scrapedtitle:
@@ -79,14 +79,13 @@ def list_all(item):
 
         contentTitle = re.sub('\(.*?\)','', contentTitle)
 
-        title = '%s [%s] [%s]'%(contentTitle, year, quality)
+        title = '%s [%s]'%(contentTitle, year)
         thumbnail = 'http:'+scrapedthumbnail
         itemlist.append(item.clone(action='findvideos',
                                    title=title,
                                    url=url,
                                    thumbnail=thumbnail,
                                    contentTitle=contentTitle,
-                                   quality = quality,
                                    infoLabels={'year':year}
                                    ))
     tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -132,16 +131,16 @@ def findvideos(item):
 
     itemlist = []
     data = get_source(item.url)
+    data = scrapertools.decodeHtmlentities(data)
 
     patron = 'id=(Opt\d+)>.*?src=(.*?) frameborder.*?</iframe>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for option, scrapedurl in matches:
-
-        url= scrapedurl
-        opt_data = scrapertools.find_single_match(data,'%s><span>.*?<strong>\d+<.*?</span>.*?<span>('
-                                                       '.*?)</span>'%option).split('-')
-
+        scrapedurl = scrapedurl.replace('"','').replace('&#038;','&')
+        data_video = get_source(scrapedurl)
+        url = scrapertools.find_single_match(data_video, '<div class=Video>.*?src=(.*?) frameborder')
+        opt_data = scrapertools.find_single_match(data,'%s><span>.*?</span>.*?<span>(.*?)</span>'%option).split('-')
         language = opt_data[0].strip()
         quality = opt_data[1].strip()
         if url != '' and 'youtube' not in url:
@@ -151,7 +150,10 @@ def findvideos(item):
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % '%s [%s] [%s]'%(i.server.capitalize(),
                                                                                               i.language, i.quality))
-    itemlist.append(trailer)
+    try:
+        itemlist.append(trailer)
+    except:
+        pass
 
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
