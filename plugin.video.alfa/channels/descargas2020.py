@@ -26,7 +26,7 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, action="submenu", title="Series", url=host, extra="series",
                          thumbnail=thumb_series))
-                         
+
     itemlist.append(Item(channel=item.channel, action="submenu", title="Documentales", url=host, extra="varios",
                          thumbnail=thumb_series))
     itemlist.append(
@@ -55,12 +55,12 @@ def submenu(item):
         itemlist.append(Item(channel=item.channel, action="listado", title=title, url=url, extra="pelilist"))
         itemlist.append(
             Item(channel=item.channel, action="alfabeto", title=title + " [A-Z]", url=url, extra="pelilist"))
-            
+
     if item.extra == "peliculas":
         itemlist.append(Item(channel=item.channel, action="listado", title="Películas 4K", url=host + "peliculas-hd/4kultrahd/", extra="pelilist"))
         itemlist.append(
             Item(channel=item.channel, action="alfabeto", title="Películas 4K" + " [A-Z]", url=host + "peliculas-hd/4kultrahd/", extra="pelilist"))
-            
+
     return itemlist
 
 
@@ -91,7 +91,7 @@ def listado(item):
     itemlist = []
     url_next_page =''
 
-    data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
+    data = httptools.downloadpage(item.url).data
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
     #logger.debug(data)
     logger.debug('item.modo: %s'%item.modo)
@@ -156,7 +156,7 @@ def listado(item):
 
         show = title
         if item.extra != "buscar-list":
-            title = title + ' ' + calidad
+            title = title + ' [' + calidad + "]"
 
         context = ""
         context_title = scrapertools.find_single_match(url, "http://(?:www.)?descargas2020.com/(.*?)/(.*?)/")
@@ -193,7 +193,7 @@ def listado(item):
                              extra = page_extra))
     return itemlist
 
-def listado2(item):
+def listado_busqueda(item):
     logger.info()
     itemlist = []
     data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, post=item.post).data)
@@ -245,7 +245,7 @@ def listado2(item):
                                      context=["buscar_trailer"]))
 
     if post:
-        itemlist.append(item.clone(channel=item.channel, action="listado2", title=">> Página siguiente",
+        itemlist.append(item.clone(channel=item.channel, action="listado_busqueda", title=">> Página siguiente",
                                    thumbnail=get_thumb("next.png")))
 
     return itemlist
@@ -458,7 +458,7 @@ def search(item, texto):
     try:
         item.post = "q=%s" % texto
         item.pattern = "buscar-list"
-        itemlist = listado2(item)
+        itemlist = listado_busqueda(item)
 
         return itemlist
 
