@@ -1,0 +1,78 @@
+{
+  "id": "neiflix",
+  "name": "NEIFLIX",
+  "active": true,
+  "adult": true,
+  "language": ["cast"],
+  "thumbnail": "neiflix_t.png",
+  "banner" : "neiflix_b.png",
+  "fanart": "neiflix_fart.png",
+  "categories": [
+    "movie",
+    "tvshow"
+  ],
+  "settings": [
+    {
+      "id": "neiflix_user",
+      "type": "text",
+      "label": "Usuario de NOESTASINVITADO.COM",
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "neiflix_password",
+      "type": "text",
+      "hidden": true,
+      "label": "Password de NOESTASINVITADO.COM",
+      "enabled": "!eq(-1,'')",
+      "visible": true
+    },
+    {
+      "id": "neiflix_blacklist_uploaders",
+      "type": "text",
+      "label": "UPLOADERS IGNORADOS (separar por comas)",
+      "default": "",
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir NEIFLIX en la búsqueda global",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "neiflix_mega_premium",
+      "type": "bool",
+      "label": "Usar cuenta PREMIUM de MEGA",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "neiflix_mega_email",
+      "type": "text",
+      "label": "Usuario de MEGA",
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "neiflix_mega_password",
+      "type": "text",
+      "hidden": true,
+      "label": "Password de MEGA",
+      "enabled": "!eq(-1,'')",
+      "visible": true
+    },
+    {
+      "id": "neiflix_mc_reverse_port",
+      "type": "text",
+      "label": "Puerto para MEGACRYPTER REVERSE MODE",
+      "default": "9998",
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}
