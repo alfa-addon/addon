@@ -1,3 +1,5 @@
 from client import Client
 from server import Server
-__all__ = ['Client', 'Server']
+from mega import Mega
+
+__all__ = ['Client', 'Server', 'Mega']
