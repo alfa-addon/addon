@@ -10,6 +10,9 @@ from core.item import Item
 from platformcode import logger
 from core import httptools
 
+from platformcode import config
+__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'newpct')
+
 Host='http://www.tvsinpagar.com'
 
 
@@ -97,4 +100,6 @@ def findvideos(item):
     itemlist.extend(new_item)
     for it in itemlist:
         it.channel = item.channel
+    if __comprueba_enlaces__:
+        itemlist = servertools.check_list_links(itemlist)
     return itemlist
