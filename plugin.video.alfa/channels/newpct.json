@@ -20,6 +20,14 @@
       "default": false,
       "enabled": true,
       "visible": true
+    },
+    {
+      "id": "comprueba_enlaces",
+      "type": "bool",
+      "label": "Verificar si los enlaces existen",
+      "default": true,
+      "enabled": true,
+      "visible": true
     }
   ]
 }
