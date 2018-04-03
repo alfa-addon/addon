@@ -25,6 +25,7 @@ list_servers = ['openload', 'powvideo', 'rapidvideo', 'streamango', 'streamcloud
 __modo_grafico__ = config.get_setting('modo_grafico', 'cinefox')
 __perfil__ = int(config.get_setting('perfil', "cinefox"))
 __menu_info__ = config.get_setting('menu_info', 'cinefox')
+__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'cinefox')
 
 # Fijar perfil de color            
 perfil = [['0xFFFFE6CC', '0xFFFFCE9C', '0xFF994D00', '0xFFFE2E2E', '0xFF088A08'],
@@ -684,6 +685,9 @@ def findvideos(item):
         # Requerido para AutoPlay
 
         autoplay.start(itemlist, item)
+
+    if __comprueba_enlaces__:
+        itemlist = servertools.check_list_links(itemlist)
 
     return itemlist
 
