@@ -204,14 +204,16 @@ def episodios(item):
     matches = scrapertools.find_multiple_matches(bloque, '<li><a href="([^"]+)" title="([^"]+)"')
     for url, title in matches:
         url = host + url
-        epi = scrapertools.find_single_match(title, '(?i)%s.*? (\d+) (?:Sub|Audio|Español)' % item.contentSerieName)
+        epi = scrapertools.find_single_match(title, '.+?(\d+) (?:Sub|Audio|Español)')
+        #epi = scrapertools.find_single_match(title, '(?i)%s.*? (\d+) (?:Sub|Audio|Español)' % item.contentSerieName)
         new_item = item.clone(action="findvideos", url=url, title=title, extra="")
         if epi:
+            if "Especial" in title:
+                epi=0
             season, episode = renumbertools.numbered_for_tratk(
-                item.channel, show, 1, int(epi))
+                item.channel, item.contentSerieName, 1, int(epi))
             new_item.infoLabels["episode"] = episode
             new_item.infoLabels["season"] = season
-
             new_item.title = "%sx%s %s" % (season, episode, title)
         itemlist.append(new_item)
 
