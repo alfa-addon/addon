@@ -334,15 +334,27 @@ def findvideos(item):
     # escraped torrent
     url = scrapertools.find_single_match(data, patron)
 
+    title = re.sub(r'\s(\[.*?\])', ' ', title)      #scrapea calidad y año
+
+    if item.infoLabels['year']:						#añadir el año para series, filtrado por Unify
+        year = '[%s]' % str(item.infoLabels['year'])
+    else:
+        year = ""
+		
+    if item.contentType == "episode":
+        item.contentType = "tvshow"					#forzar contenido a "tvshow" para que Unify no destroce el título
+	
     if "Temp" in title and item.quality != "":		#scrapear información duplicada en Series
         title = re.sub(r'Temp.*?\[', '[', title)
         title = re.sub(r'\[Cap.*?\]', '', title)
-        title = str(item.contentSeason) + "x" + str(item.contentEpisodeNumber) + " - " + item.contentTitle + ", " + title
+        title = '%sx%s - %s, %s, %s' % (str(item.contentSeason), str(item.contentEpisodeNumber), item.contentTitle, year, title)
+    
+    itemlist.append(item.clone(title=title, action="", folder=False))
     
     if url != "":		#Torrent
         itemlist.append(
-            Item(channel=item.channel, action="play", server="torrent", title=title, quality=title, fulltitle=title,
-                 url=url, thumbnail=caratula, plot=item.plot, folder=False))
+            Item(channel=item.channel, action="play", server="torrent", title=title, fulltitle=title,
+                 url=url, thumbnail=caratula, plot=item.plot, infoLabels=item.infoLabels, folder=False))
     
 	logger.debug("url: " + url + " / title: " + title + " / calidad: " + item.quality + " / context: " + str(item.context))
 
@@ -380,8 +392,7 @@ def findvideos(item):
     #logger.debug(enlaces_ver)
     
     if len(enlaces_ver) > 0:
-        itemlist.append(item.clone(title="", action="", folder=False))
-        itemlist.append(item.clone(title=" Enlaces Ver: ", action="", text_color="green", folder=False))
+        itemlist.append(item.clone(title=" Enlaces Ver: ", action="", folder=False))
 
     for logo, servidor, idioma, calidad, enlace, titulo in enlaces_ver:
         if "Ver" in titulo:
@@ -397,14 +408,13 @@ def findvideos(item):
                     if devuelve:
                         enlace = devuelve[0][1]
                         itemlist.append(
-                            Item(fanart=item.fanart, channel=item.channel, action="play", server=servidor, title=titulo, quality=titulo,
-                                fulltitle=titulo, url=enlace, thumbnail=logo, plot=item.plot, folder=False))
+                            Item(fanart=item.fanart, channel=item.channel, action="play", server=servidor, title=titulo,
+                                fulltitle=titulo, url=enlace, thumbnail=logo, plot=item.plot, infoLabels=item.infoLabels, folder=False))
                 except:
                     pass
 
     if len(enlaces_descargar) > 0:
-        itemlist.append(item.clone(title="", action="", folder=False))
-        itemlist.append(item.clone(title=" Enlaces Descargar: ", action="", text_color="green", folder=False))
+        itemlist.append(item.clone(title=" Enlaces Descargar: ", action="", folder=False))
 
     for logo, servidor, idioma, calidad, enlace, titulo in enlaces_descargar:
         if "Ver" not in titulo:
@@ -424,9 +434,9 @@ def findvideos(item):
                         devuelve = servertools.findvideosbyserver(enlace, servidor)
                         if devuelve:
                             enlace = devuelve[0][1]
-                            itemlist.append(Item(fanart=item.fanart, channel=item.channel, action="play", server=servidor, quality=parte_titulo,
+                            itemlist.append(Item(fanart=item.fanart, channel=item.channel, action="play", server=servidor,
                                              title=parte_titulo, fulltitle=parte_titulo, url=enlace, thumbnail=logo,
-                                             plot=item.plot, folder=False))
+                                             plot=item.plot, infoLabels=item.infoLabels, folder=False))
                     except:
                         pass
                     
@@ -587,6 +597,24 @@ def newest(categoria):
             if itemlist[-1].title == ">> Página siguiente":
                 itemlist.pop()
             item.url = host+'series/'
+            itemlist.extend(listado(item))
+            if itemlist[-1].title == ">> Página siguiente":
+                itemlist.pop()
+                
+        if categoria == 'peliculas 4k':
+            item.url = host+'peliculas-hd/4kultrahd/'
+            itemlist.extend(listado(item))
+            if itemlist[-1].title == ">> Página siguiente":
+                 itemlist.pop()
+                
+        if categoria == 'anime':
+            item.url = host+'anime/'
+            itemlist.extend(listado(item))
+            if itemlist[-1].title == ">> Página siguiente":
+                 itemlist.pop()
+                                 
+        if categoria == 'documentales':
+            item.url = host+'documentales/'
             itemlist.extend(listado(item))
             if itemlist[-1].title == ">> Página siguiente":
                 itemlist.pop()
