@@ -412,6 +412,7 @@ def title_format(item):
 
         # Compureba si estamos en findvideos, y si hay server, si es asi no se muestra el
         # titulo sino el server, en caso contrario se muestra el titulo normalmente.
+        # MODIFICADO: muestra también los títulos para findvideos, sino la información es muy escasa
 
         #logger.debug('item.title antes de server: %s'%item.title)
         if item.action != 'play' and item.server:
@@ -420,7 +421,7 @@ def title_format(item):
             if item.quality == 'default':
                 quality = ''
             #logger.debug('language_color: %s'%language_color)
-            item.title = '%s %s' % (server, set_color(quality,'quality'))
+            item.title = '%s %s' % (server, item.title)      #EL TITULO ES NECESARIO porque la calidad sola es insuficiente
             if lang:
                 item.title = add_languages(item.title, simple_language)
             #logger.debug('item.title: %s' % item.title)
