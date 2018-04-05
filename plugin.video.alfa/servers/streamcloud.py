@@ -10,6 +10,10 @@ def test_video_exists(page_url):
     data = scrapertools.cache_page(url=page_url)
     if "<h1>404 Not Found</h1>" in data:
         return False, "El archivo no existe<br/>en streamcloud o ha sido borrado."
+    elif "<h1>File Not Found</h1>" in data:
+        return False, "El archivo no existe<br/>en streamcloud o ha sido borrado."
+    elif "<h1>Archivo no encontrado</h1>" in data:
+        return False, "El archivo no existe<br/>en streamcloud o ha sido borrado."
     else:
         return True, ""
 
