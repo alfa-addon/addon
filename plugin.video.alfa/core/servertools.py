@@ -706,14 +706,17 @@ def filter_servers(servers_list):
 
     return servers_list
 
-def check_list_links(itemlist):
+def check_list_links(itemlist, numero):
     """
     Comprueba una lista de enlaces a videos y la devuelve modificando el titulo con la verificacion.
+    El segundo parametro (numero) indica cuantos enlaces hay que verificar (0:5, 1:10, 2:15, 3:20)
     """
+    numero = ((int(numero) + 1) * 5) if numero != '' else 10
     for it in itemlist:
-        if it.server != '' and it.url != '':
+        if numero > 0 and it.server != '' and it.url != '':
             verificacion = check_video_link(it.url, it.server)
             it.title = verificacion + ', ' + it.title.strip()
+            numero -= 1
     return itemlist
 
 def check_video_link(url, server):
@@ -723,7 +726,6 @@ def check_video_link(url, server):
     :return: str(2) '??':No se ha podido comprobar. 'Ok':Parece que el link funciona. 'NO':Parece que no funciona.
     """
     try:
-        server = server.lower()
         server_module = __import__('servers.%s' % server, None, None, ["servers.%s" % server])
     except:
         server_module = None
@@ -732,8 +734,7 @@ def check_video_link(url, server):
         
     if hasattr(server_module, 'test_video_exists'):
         try:
-            urlcheck = url if server == 'netutv' else get_url_play(url, server)
-            video_exists, message = server_module.test_video_exists(page_url=urlcheck)
+            video_exists, message = server_module.test_video_exists(page_url=url)
             if not video_exists:
                 logger.info("[check_video_link] No existe! %s %s %s" % (message, server, url))
                 return "NO"
@@ -746,13 +747,3 @@ def check_video_link(url, server):
 
     logger.info("[check_video_link] No hay test_video_exists para servidor: %s" % server)
     return "??"
-
-def get_url_play(url, server):
-    """
-    Obtener url que sirva para comprobar si el video existe
-    """
-    url = url.replace("http://miracine.tv/n/?etu=", "http://hqq.tv/player/embed_player.php?vid=")
-    url = url.replace("streamcloud.eu/embed-", "streamcloud.eu/")
-    enlaces = findvideosbyserver(url, server)[0]
-    
-    return enlaces[1]
