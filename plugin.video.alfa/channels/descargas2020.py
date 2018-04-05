@@ -334,23 +334,21 @@ def findvideos(item):
     # escraped torrent
     url = scrapertools.find_single_match(data, patron)
 
-    title = re.sub(r'\s(\[.*?\])', ' ', title)      #scrapea calidad y año
-
     if item.infoLabels['year']:						#añadir el año para series, filtrado por Unify
         year = '[%s]' % str(item.infoLabels['year'])
     else:
         year = ""
-		
-    if item.contentType == "episode":
-        item.contentType = "tvshow"					#forzar contenido a "tvshow" para que Unify no destroce el título
 	
-    if "Temp" in title and item.quality != "":		#scrapear información duplicada en Series
+    if item.contentType == "episode":		#scrapear información duplicada en Series
         title = re.sub(r'Temp.*?\[', '[', title)
         title = re.sub(r'\[Cap.*?\]', '', title)
-        title = '%sx%s - %s, %s, %s' % (str(item.contentSeason), str(item.contentEpisodeNumber), item.contentTitle, year, title)
+        title = '%sx%s - %s %s, %s' % (str(item.contentSeason), str(item.contentEpisodeNumber), item.contentTitle, year, title)
     
-    itemlist.append(item.clone(title=title, action="", folder=False))
-    
+    itemlist.append(item.clone(title=title, action="", folder=False))		#Título con todos los datos del vídeo
+	
+    if item.contentType != "episode":
+        title = re.sub(r'\s(\[.*?\])', ' ', title)      #scrapea calidad en pelis
+			
     if url != "":		#Torrent
         itemlist.append(
             Item(channel=item.channel, action="play", server="torrent", title=title, fulltitle=title,
