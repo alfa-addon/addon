@@ -71,11 +71,11 @@ def lista(item):
         context2 = autoplay.context
         context.extend(context2)
         
-        itemlist.append(item.clone(title=title, url=url, action="episodios", thumbnail=scrapedthumbnail, show=title,
+        itemlist.append(item.clone(title=title, url=url, action="episodios", thumbnail=scrapedthumbnail, show=title,contentSerieName=title,
                                    context=context))
     if b<29:
         a=a+1
-        url="https://serieslan.com/pag-"+str(a)
+        url=host+"/pag-"+str(a)
         if b>10:
             itemlist.append(
                 Item(channel=item.channel, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=url, action="lista", page=0))
@@ -116,14 +116,14 @@ def episodios(item):
             for pos in name.split(pat):
                 i = i + 1
                 total_episode += 1
-                season, episode = renumbertools.numbered_for_tratk(item.channel, item.show, 1, total_episode)
+                season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, total_episode)
                 if len(name.split(pat)) == i:
                     title += "%sx%s " % (season, str(episode).zfill(2))
                 else:
                     title += "%sx%s_" % (season, str(episode).zfill(2))
         else:
             total_episode += 1
-            season, episode = renumbertools.numbered_for_tratk(item.channel, item.show, 1, total_episode)
+            season, episode = renumbertools.numbered_for_tratk(item.channel,item.contentSerieName, 1, total_episode)
 
             title += "%sx%s " % (season, str(episode).zfill(2))
 
