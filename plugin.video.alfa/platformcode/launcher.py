@@ -136,6 +136,11 @@ def run(item=None):
 
             # Special play action
             if item.action == "play":
+                #define la info para trakt
+                try:
+                    trakt_tools.set_trakt_info(item)
+                except:
+                    pass
                 logger.info("item.action=%s" % item.action.upper())
                 # logger.debug("item_toPlay: " + "\n" + item.tostring('\n'))
 
