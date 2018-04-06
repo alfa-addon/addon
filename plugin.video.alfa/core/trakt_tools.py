@@ -129,6 +129,17 @@ def token_trakt(item):
     return itemlist
 
 
+def set_trakt_info(item):
+    logger.info()
+    import xbmcgui
+    # Envia los datos a trakt
+    try:
+        info = item.infoLabels
+        ids = jsontools.dump({'tmdb': info['tmdb_id'] , 'imdb': info['imdb_id'], 'slug': info['title']})
+        xbmcgui.Window(10000).setProperty('script.trakt.ids', ids)
+    except:
+        pass
+
 def get_trakt_watched(id_type, mediatype, update=False):
     logger.info()
 

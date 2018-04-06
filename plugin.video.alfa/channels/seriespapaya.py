@@ -12,6 +12,7 @@ from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
+from channels import autoplay
 from core.item import Item
 from platformcode import config, logger
 
@@ -20,11 +21,15 @@ HOST = "http://www.seriespapaya.com"
 IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán', 'sub': 'VOSE', 'Español Latino':'lat',
            'Español Castellano':'es', 'Sub Español':'VOSE'}
 list_idiomas = IDIOMAS.values()
-CALIDADES = ['360p', '480p', '720p HD', '1080p HD']
+CALIDADES = ['360p', '480p', '720p HD', '1080p HD', 'default']
+list_servers = ['powvideo', 'streamplay', 'filebebo', 'flashx', 'gamovideo', 'nowvideo', 'openload', 'streamango',
+                'streamcloud', 'vidzi', 'clipwatching', ]
 
 
 def mainlist(item):
     logger.info()
+
+    autoplay.init(item.channel, list_servers, CALIDADES)
 
     thumb_series = get_thumb("channels_tvshow.png")
     thumb_series_az = get_thumb("channels_tvshow_az.png")
@@ -38,6 +43,8 @@ def mainlist(item):
     itemlist.append(Item(action="search", title="Buscar", channel=item.channel, thumbnail=thumb_buscar))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, CALIDADES)
+
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -205,12 +212,22 @@ def findvideos(item):
             server=server.rstrip(),
             quality=quality,
             uploader=uploader),
+        server=server.rstrip(),
         url=urlparse.urljoin(HOST, url),
-        language=IDIOMAS.get(lang, lang),
-        quality=quality,
+        language=IDIOMAS.get(lang,lang),
+        quality=quality
     ) for lang, date, server, url, linkType, quality, uploader in links]
 
+
+
+
+    # Requerido para FilterTools
+
     itemlist = filtertools.get_links(itemlist, item, list_idiomas, CALIDADES)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
 
     return itemlist
 
