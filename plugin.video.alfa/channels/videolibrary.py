@@ -398,8 +398,8 @@ def findvideos(item):
         # Cambiarle el titulo a los servers añadiendoles el nombre del canal delante y
         # las infoLabels y las imagenes del item si el server no tiene
         for server in list_servers:
-            if not server.action:  # Ignorar las etiquetas
-                continue
+            #if not server.action:  # Ignorar/PERMITIR las etiquetas
+            #    continue
 
             server.contentChannel = server.channel
             server.channel = "videolibrary"
