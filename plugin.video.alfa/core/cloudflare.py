@@ -62,12 +62,13 @@ class Cloudflare:
     def get_url(self):
         # Metodo #1 (javascript)
         if self.js_data.get("wait", 0):
-            jschl_answer = self.decode(self.js_data["value"])
+            jschl_answer = self.decode2(self.js_data["value"])
 
             for op, v in self.js_data["op"]:
-                jschl_answer = eval(str(jschl_answer) + op + str(self.decode(v)))
+                jschl_answer = eval(str(jschl_answer) + op + str(self.decode2(v)))
 
-            self.js_data["params"]["jschl_answer"] = jschl_answer + len(self.domain)
+            jschl_answer += 0.00000000005 if jschl_answer >= 0 else -0.00000000005
+            self.js_data["params"]["jschl_answer"] = round(jschl_answer, 10) + len(self.domain)
 
             response = "%s://%s%s?%s" % (
             self.protocol, self.domain, self.js_data["auth_url"], urllib.urlencode(self.js_data["params"]))
@@ -84,6 +85,27 @@ class Cloudflare:
             time.sleep(self.header_data["wait"])
 
             return response
+
+    def decode2(self, data):
+        data = re.sub("\!\+\[\]", "1", data)
+        data = re.sub("\!\!\[\]", "1", data)
+        data = re.sub("\[\]", "0", data)
+        
+        pos = data.find("/")
+        numerador = data[:pos]
+        denominador = data[pos+1:]
+        
+        aux = re.compile('\(([0-9\+]+)\)').findall(numerador)
+        num1 = ""
+        for n in aux:
+            num1 += str(eval(n))
+
+        aux = re.compile('\(([0-9\+]+)\)').findall(denominador)
+        num2 = ""
+        for n in aux:
+            num2 += str(eval(n))
+
+        return float(num1) / float(num2)
 
     def decode(self, data):
         t = time.time()
