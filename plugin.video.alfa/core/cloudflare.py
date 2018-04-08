@@ -9,7 +9,7 @@ import urllib
 import urlparse
 
 from platformcode import logger
-
+from decimal import Decimal, ROUND_UP
 
 class Cloudflare:
     def __init__(self, response):
@@ -65,9 +65,16 @@ class Cloudflare:
             jschl_answer = self.decode2(self.js_data["value"])
 
             for op, v in self.js_data["op"]:
-                jschl_answer = eval(str(jschl_answer) + op + str(self.decode2(v)))
+                #jschl_answer = eval(str(jschl_answer) + op + str(self.decode2(v)))
+                if op == '+':
+                    jschl_answer = jschl_answer + self.decode2(v)
+                elif op == '-':
+                    jschl_answer = jschl_answer - self.decode2(v)
+                elif op == '*':
+                    jschl_answer = jschl_answer * self.decode2(v)
+                elif op == '/':
+                    jschl_answer = jschl_answer / self.decode2(v)
 
-            jschl_answer += 0.00000000005 if jschl_answer >= 0 else -0.00000000005
             self.js_data["params"]["jschl_answer"] = round(jschl_answer, 10) + len(self.domain)
 
             response = "%s://%s%s?%s" % (
@@ -105,7 +112,8 @@ class Cloudflare:
         for n in aux:
             num2 += str(eval(n))
 
-        return float(num1) / float(num2)
+        #return float(num1) / float(num2)
+        return Decimal(Decimal(num1) / Decimal(num2)).quantize(Decimal('.0000000000000001'), rounding=ROUND_UP)
 
     def decode(self, data):
         t = time.time()
