@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 import re
 
@@ -10,7 +10,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import tmdb
 
-host = 'http://mispelisyseries.com/'
+host = 'http://www.mispelisyseries.com/'
 
 def mainlist(item):
     logger.info()
@@ -42,9 +42,7 @@ def submenu(item):
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
     data = data.replace("'", "\"").replace("/series\"", "/series/\"")   #Compatibilidad con mispelisy.series.com
 
-    #patron = '<li><a href="http://(?:www.)?mispelisyseries.com/' + item.extra + '/">.*?<ul>(.*?)</ul>'
-    patron = '<li><.*?href="'+item.url+item.extra + '/">.*?<ul.*?>(.*?)</ul>' #Filtrado por url, compatibilidad con mispelisy.series.com
-    #logger.debug("patron: " + patron + " / data: " + data)
+    patron = '<li><a href="http://(?:www.)?mispelisyseries.com/' + item.extra + '/">.*?<ul.*?>(.*?)</ul>'
     if "pelisyseries.com" in host and item.extra == "varios":      #compatibilidad con mispelisy.series.com
         data = '<a href="http://mispelisyseries.com/varios/" title="Documentales"><i class="icon-rocket"></i> Documentales</a>'
     else:
@@ -99,11 +97,8 @@ def listado(item):
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
 	#data = httptools.downloadpage(item.url).data
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
-    logger.debug('item.modo: %s'%item.modo)
-    logger.debug('item.extra: %s'%item.extra)
 
     if item.modo != 'next' or item.modo =='':
-        logger.debug('item.title: %s'% item.title)
         patron = '<ul class="' + item.extra + '">(.*?)</ul>'
         fichas = scrapertools.get_match(data, patron)
         page_extra = item.extra
@@ -118,8 +113,6 @@ def listado(item):
     patron += '<span>([^<].*?)?<'  # la calidad
     #logger.debug("patron: " + patron + " / fichas: " + fichas)
     matches = re.compile(patron, re.DOTALL).findall(fichas)
-    #logger.debug('item.next_page: %s'%item.next_page)
-    #logger.debug(matches)
 
     # Paginacion
     if item.next_page != 'b':
@@ -169,26 +162,6 @@ def listado(item):
         if not config.get_setting("unify"):         #Si Titulos Inteligentes NO seleccionados:
             if calidad:
                 title = title + ' [' + calidad + "]"
-
-        #Este bucle parece obsoleto:
-        #context = ""
-        #context_title = scrapertools.find_single_match(url, "http://(?:www.)?mispelisyseries.com/(.*?)/(.*?)/")
-        #if context_title:
-        #    try:
-        #        context = context_title[0].replace("descargar-", "").replace("descargar", "").replace("pelicula", "movie").replace("series", "tvshow").replace("-hd", "").replace("-vo", "")
-        #        context_title = context_title[1].replace("-", " ")
-        #        if re.search('\d{4}', context_title[-4:]):
-        #            context_title = context_title[:-4]
-        #        elif re.search('\(\d{4}\)', context_title[-6:]):
-        #            context_title = context_title[:-6]
-        #
-        #    except:
-        #        context_title = show
-        #        
-
-        #logger.debug('contxt title: %s'%context_title)
-        #logger.debug('year: %s' % year)
-        #logger.debug('context: %s' % context)
         
         if not 'array' in title:
             itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
@@ -233,8 +206,6 @@ def listado_busqueda(item):
     data = scrapertools.get_match(data, pattern)
     pattern = '<li[^>]*><a href="(?P<url>[^"]+).*?<img.*?src="(?P<thumb>[^"]+)?".*?<h2.*?>(?P<title>.*?)?<\/h2>'
     matches = re.compile(pattern, re.DOTALL).findall(data)
-    #logger.debug("patron: " + pattern)
-    #logger.debug(matches)
 
     for url, thumb, title in matches:
         real_title = scrapertools.find_single_match(title, r'<strong.*?>(.*?)Temporada.*?<\/strong>')        #series
@@ -343,8 +314,6 @@ def findvideos(item):
     # item.url = item.url.replace(".com/",".com/ver-online/")
     # item.url = item.url.replace(".com/",".com/descarga-directa/")
     item.url = item.url.replace(".com/", ".com/descarga-torrent/")
-    #logger.debug("item: ")
-    #logger.debug(item)
 
     # Descarga la página
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
@@ -357,7 +326,6 @@ def findvideos(item):
     caratula = scrapertools.find_single_match(data, '<h1.*?<img.*?src="([^"]+)')
 
     patron = 'openTorrent.*?title=".*?class="btn-torrent">.*?function openTorrent.*?href = "(.*?)";'
-    #logger.debug("patron: " + patron + " / data: " + data)
     # escraped torrent
     url = scrapertools.find_single_match(data, patron)
 
@@ -406,13 +374,11 @@ def findvideos(item):
 
     data = data.replace("http://tumejorserie.com/descargar/url_encript.php?link=", "(")
     data = re.sub(r'javascript:;" onClick="popup\("http:\/\/(?:www.)?mispelisyseries.com\/\w{1,9}\/library\/include\/ajax\/get_modallinks.php\?links=', "", data)
-    #logger.debug("matar %s" % data)
 
     # Nuevo sistema de scrapeo de servidores creado por Torrentlocula, compatible con otros clones de Newpct1
     patron = '<div class=\"box1\"[^<]+<img src=\"([^<]+)?" style[^<]+><\/div[^<]+<div class="box2">([^<]+)?<\/div[^<]+<div class="box3">([^<]+)?'
     patron += '<\/div[^<]+<div class="box4">([^<]+)?<\/div[^<]+<div class="box5"><a href=(.*?)? rel.*?'
     patron += '<\/div[^<]+<div class="box6">([^<]+)?<'
-    #logger.debug("Patron: " + patron)
 
     enlaces_ver = re.compile(patron, re.DOTALL).findall(data)
     enlaces_descargar = enlaces_ver
@@ -507,7 +473,6 @@ def episodios(item):
         list_pages = [item.url]
 
     for index, page in enumerate(list_pages):
-        logger.debug("Loading page %s/%s url=%s" % (index, len(list_pages), page))
         data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(page).data)
         data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
         data = data.replace("chapters", "buscar-list")   #Compatibilidad con mispelisy.series.com
@@ -524,8 +489,8 @@ def episodios(item):
         else:
             pattern = '<li[^>]*><a href="(?P<url>[^"]+).*?<img.*?src="(?P<thumb>[^"]+)?".*?<h2[^>]+>(?P<info>.*?)?<\/h2>'
         matches = re.compile(pattern, re.DOTALL).findall(data)
-        logger.debug("patron: " + pattern)
-        logger.debug(matches)    
+        #logger.debug("patron: " + pattern)
+        #logger.debug(matches)    
         
         season = "1"
 
@@ -542,55 +507,72 @@ def episodios(item):
                           "[\[]\s*(?P<quality>.*?)?\s*[\]]<\/span>"
                 if "Especial" in info: # Capitulos Especiales
                     pattern = ".*?[^>]+>.*?Temporada.*?\[.*?(?P<season>\d+).*?\].*?Capitulo.*?\[\s*(?P<episode>\d+).*?\]?(?:.*?(?P<episode2>\d+)?)<.+?<span[^>]+>(?P<lang>.*?)?<\/span>\s*Calidad\s*<span[^>]+>[\[]\s*(?P<quality>.*?)?\s*[\]]<\/span>"
-                logger.debug("patron: " + pattern)
-                logger.debug(info)
                 r = re.compile(pattern)
                 match = [m.groupdict() for m in r.finditer(info)][0]
 
                 if match['season'] is None: match['season'] = season
                 if match['episode'] is None: match['episode'] = "0"
-                if match['quality']: item.quality = match['quality']
+                if match['quality']: 
+                    item.quality = match['quality']
 
                 if match["episode2"]:
                     multi = True
-                    title = "%s (%sx%s-%s) [%s][%s]" % (item.show, match["season"], str(match["episode"]).zfill(2),
-                                                        str(match["episode2"]).zfill(2), match["lang"],
-                                                        match["quality"])
+                    title = "%s (%sx%s-%s) [%s]" % (item.show, match["season"], str(match["episode"]).zfill(2),
+                                                        str(match["episode2"]).zfill(2), match["lang"])
+                    if not config.get_setting("unify") and match["quality"]:  #Si Titulos Inteligentes NO seleccionados:
+                        title = "%s[%s]" % (title, match["quality"])
                 else:
                     multi = False
-                    title = "%s (%sx%s) [%s][%s]" % (item.show, match["season"], str(match["episode"]).zfill(2),
-                                                     match["lang"], match["quality"])
+                    title = "%s (%sx%s) [%s]" % (item.show, match["season"], str(match["episode"]).zfill(2),
+                                                     match["lang"])
+                    if not config.get_setting("unify") and match["quality"]:  #Si Titulos Inteligentes NO seleccionados:
+                        title = "%s[%s]" % (title, match["quality"])
 
             else:  # old style
-                pattern = "\[(?P<quality>.*?)\].*?\[Cap.(?P<season>\d+).*?(?P<episode>\d{2})(?:_(?P<season2>\d+)" \
+                if scrapertools.find_single_match(info, '\[\d{3}\]'):
+                    info = re.sub(r'\[(\d{3}\])', r'[Cap.\1', info)
+                elif scrapertools.find_single_match(info, '\[Cap.\d{2}_\d{2}\]'):
+                    info = re.sub(r'\[Cap.(\d{2})_(\d{2})\]', r'[Cap.1\1_1\2]', info)
+                elif scrapertools.find_single_match(info, '\[Cap.([A-Za-z]+)\]'):
+                    info = re.sub(r'\[Cap.([A-Za-z]+)\]', '[Cap.100]', info)
+                if scrapertools.find_single_match(info, '\[Cap.\d{2,3}'):
+                    pattern = "\[(?P<quality>.*?)\].*?\[Cap.(?P<season>\d).*?(?P<episode>\d{2})(?:_(?P<season2>\d+)" \
                           "(?P<episode2>\d{2}))?.*?\].*?(?:\[(?P<lang>.*?)\])?"
-                logger.debug("patron: " + pattern)
-                logger.debug(info)
+                elif scrapertools.find_single_match(info, 'Cap.\d{2,3}'):
+                    pattern = ".*?Temp.*?\s(?P<quality>.*?)\s.*?Cap.(?P<season>\d).*?(?P<episode>\d{2})(?:_(?P<season2>\d+)(?P<episode2>\d{2}))?.*?\s(?P<lang>.*)?"
+                else:
+                    logger.debug("patron episodio: " + pattern)
+                    logger.debug(info)
+                    continue
+                
                 r = re.compile(pattern)
                 match = [m.groupdict() for m in r.finditer(info)][0]
-                #logger.debug("data %s" % match)
-                
-                #if match['season'] is "": match['season'] = season
-                #if match['episode'] is "": match['episode'] = "0"
-                #logger.debug(match)
 
                 str_lang = ""
+                if match['quality']: 
+                    item.quality = match['quality']
+
                 if match["lang"] is not None:
                     str_lang = "[%s]" % match["lang"]
-
+                    item.quality = "%s %s" % (item.quality, match['lang'])
+                    
                 if match["season2"] and match["episode2"]:
                     multi = True
                     if match["season"] == match["season2"]:
 
-                        title = "%s (%sx%s-%s) %s[%s]" % (item.show, match["season"], match["episode"],
-                                                          match["episode2"], str_lang, match["quality"])
+                        title = "%s (%sx%s-%s) %s" % (item.show, match["season"], match["episode"],
+                                                          match["episode2"], str_lang)
+                        if not config.get_setting("unify") and match["quality"]:  #Si Titulos Inteligentes NO seleccionados:
+                            title = "%s[%s]" % (title, match["quality"])
                     else:
-                        title = "%s (%sx%s-%sx%s) %s[%s]" % (item.show, match["season"], match["episode"],
-                                                             match["season2"], match["episode2"], str_lang,
-                                                             match["quality"])
+                        title = "%s (%sx%s-%sx%s) %s" % (item.show, match["season"], match["episode"],
+                                                             match["season2"], match["episode2"], str_lang)
+                        if not config.get_setting("unify") and match["quality"]:  #Si Titulos Inteligentes NO seleccionados:
+                            title = "%s[%s]" % (title, match["quality"])
                 else:
-                    title = "%s (%sx%s) %s[%s]" % (item.show, match["season"], match["episode"], str_lang,
-                                                   match["quality"])
+                    title = "%s (%sx%s) %s" % (item.show, match["season"], match["episode"], str_lang)
+                    if not config.get_setting("unify") and match["quality"]:  #Si Titulos Inteligentes NO seleccionados:
+                            title = "%s[%s]" % (title, match["quality"])
                     multi = False
 
             season = match['season']
@@ -619,7 +601,7 @@ def search(item, texto):
         item.post = "q=%s" % texto
         item.pattern = "buscar-list"
         itemlist = listado_busqueda(item)
-
+        
         return itemlist
 
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
