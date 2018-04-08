@@ -113,7 +113,8 @@ class Cloudflare:
             num2 += str(eval(n))
 
         #return float(num1) / float(num2)
-        return Decimal(Decimal(num1) / Decimal(num2)).quantize(Decimal('.0000000000000001'), rounding=ROUND_UP)
+        #return Decimal(Decimal(num1) / Decimal(num2)).quantize(Decimal('.0000000000000001'), rounding=ROUND_UP)
+        return Decimal(Decimal(num1) / Decimal(num2)).quantize(Decimal('.0000000000000001'))
 
     def decode(self, data):
         t = time.time()
