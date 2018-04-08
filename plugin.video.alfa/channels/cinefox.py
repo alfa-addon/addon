@@ -700,7 +700,7 @@ def normalizar_url(url, server):
     # Excepciones copiadas de la funcion play
     url = url.replace("http://miracine.tv/n/?etu=", "http://hqq.tv/player/embed_player.php?vid=")
     url = url.replace("streamcloud.eu/embed-", "streamcloud.eu/")
-    enlaces = findvideosbyserver(url, server)[0]
+    enlaces = servertools.findvideosbyserver(url, server)[0]
     if enlaces[1] != '':
         return enlaces[1]
     return url
