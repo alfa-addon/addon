@@ -68,7 +68,7 @@ load_cookies()
 
 
 def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=True, cookies=True, replace_headers=False,
-                 add_referer=False, only_headers=False, bypass_cloudflare=True):
+                 add_referer=False, only_headers=False, bypass_cloudflare=True, count_retries=0):
     """
     Abre una url y retorna los datos obtenidos
 
@@ -234,13 +234,14 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
             logger.info("No se ha podido descomprimir")
 
     # Anti Cloudflare
-    if bypass_cloudflare:
+    if bypass_cloudflare and count_retries < 5:
         cf = Cloudflare(response)
         if cf.is_cloudflare:
+            count_retries += 1
             logger.info("cloudflare detectado, esperando %s segundos..." % cf.wait_time)
             auth_url = cf.get_url()
-            logger.info("Autorizando... url: %s" % auth_url)
-            if downloadpage(auth_url, headers=request_headers, replace_headers=True, bypass_cloudflare=False).sucess:
+            logger.info("Autorizando... intento %d url: %s" % (count_retries, auth_url))
+            if downloadpage(auth_url, headers=request_headers, replace_headers=True, count_retries=count_retries).sucess:
                 logger.info("Autorización correcta, descargando página")
                 resp = downloadpage(url=response["url"], post=post, headers=headers, timeout=timeout,
                                     follow_redirects=follow_redirects,
