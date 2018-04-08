@@ -25,7 +25,7 @@ ficherocookies = os.path.join(config.get_data_path(), "cookies.dat")
 
 # Headers por defecto, si no se especifica nada
 default_headers = dict()
-default_headers["User-Agent"] = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3163.100 Safari/537.36"
+default_headers["User-Agent"] = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3163.100 Safari/537.36"
 default_headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
 default_headers["Accept-Language"] = "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3"
 default_headers["Accept-Charset"] = "UTF-8"
@@ -68,7 +68,7 @@ load_cookies()
 
 
 def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=True, cookies=True, replace_headers=False,
-                 add_referer=False, only_headers=False, bypass_cloudflare=True):
+                 add_referer=False, only_headers=False, bypass_cloudflare=True, count_retries=0):
     """
     Abre una url y retorna los datos obtenidos
 
@@ -234,13 +234,14 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
             logger.info("No se ha podido descomprimir")
 
     # Anti Cloudflare
-    if bypass_cloudflare:
+    if bypass_cloudflare and count_retries < 5:
         cf = Cloudflare(response)
         if cf.is_cloudflare:
+            count_retries += 1
             logger.info("cloudflare detectado, esperando %s segundos..." % cf.wait_time)
             auth_url = cf.get_url()
-            logger.info("Autorizando... url: %s" % auth_url)
-            if downloadpage(auth_url, headers=request_headers, replace_headers=True).sucess:
+            logger.info("Autorizando... intento %d url: %s" % (count_retries, auth_url))
+            if downloadpage(auth_url, headers=request_headers, replace_headers=True, count_retries=count_retries).sucess:
                 logger.info("Autorización correcta, descargando página")
                 resp = downloadpage(url=response["url"], post=post, headers=headers, timeout=timeout,
                                     follow_redirects=follow_redirects,
