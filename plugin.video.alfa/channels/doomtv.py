@@ -23,36 +23,6 @@ list_quality = CALIDADES.values()
 list_servers = ['directo', 'openload']
 
 host = 'http://doomtv.net/'
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0 Chrome/58.0.3029.110',
-    'Referer': host}
-
-tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
-           "Suspenso": "https://s13.postimg.org/wmw6vl1cn/suspenso.png",
-           "Drama": "https://s16.postimg.org/94sia332d/drama.png",
-           "Acción": "https://s3.postimg.org/y6o9puflv/accion.png",
-           "Aventura": "https://s10.postimg.org/6su40czih/aventura.png",
-           "Romance": "https://s15.postimg.org/fb5j8cl63/romance.png",
-           "Animación": "https://s13.postimg.org/5on877l87/animacion.png",
-           "Ciencia ficción": "https://s9.postimg.org/diu70s7j3/cienciaficcion.png",
-           "Terror": "https://s7.postimg.org/yi0gij3gb/terror.png",
-           "Documental": "https://s16.postimg.org/7xjj4bmol/documental.png",
-           "Música": "https://s29.postimg.org/bbxmdh9c7/musical.png",
-           "Fantasía": "https://s13.postimg.org/65ylohgvb/fantasia.png",
-           "Bélico Guerra": "https://s23.postimg.org/71itp9hcr/belica.png",
-           "Misterio": "https://s1.postimg.org/w7fdgf2vj/misterio.png",
-           "Crimen": "https://s4.postimg.org/6z27zhirx/crimen.png",
-           "Biográfia": "https://s15.postimg.org/5lrpbx323/biografia.png",
-           "Familia": "https://s7.postimg.org/6s7vdhqrf/familiar.png",
-           "Familiar": "https://s7.postimg.org/6s7vdhqrf/familiar.png",
-           "Intriga": "https://s27.postimg.org/v9og43u2b/intriga.png",
-           "Thriller": "https://s22.postimg.org/5y9g0jsu9/thriller.png",
-           "Guerra": "https://s4.postimg.org/n1h2jp2jh/guerra.png",
-           "Estrenos": "https://s21.postimg.org/fy69wzm93/estrenos.png",
-           "Peleas": "https://s14.postimg.org/we1oyg05t/peleas.png",
-           "Policiales": "https://s21.postimg.org/n9e0ci31z/policial.png",
-           "Uncategorized": "https://s30.postimg.org/uj5tslenl/otros.png",
-           "LGBT": "https://s30.postimg.org/uj5tslenl/otros.png"}
 
 
 def mainlist(item):
@@ -177,15 +147,13 @@ def seccion(item):
         url = scrapedurl
         title = scrapedtitle
         thumbnail = ''
-        if title in tgenero:
-            thumbnail = tgenero[title]
         if url not in duplicado:
             itemlist.append(
                 Item(channel=item.channel,
                      action='lista',
                      title=title,
                      url=url,
-                     thumbnail = thumbnail
+                     thumbnail=thumbnail
                      ))
     return itemlist
 
@@ -221,64 +189,25 @@ def newest(categoria):
 
     return itemlist
 
-def get_vip(item, url):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(url+'/videocontent').data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    video_id = scrapertools.find_single_match(data, 'id=videoInfo ><span >(.*?)</span>')
-    new_url = 'https://v.d0stream.com/api/videoinfo/%s?src-url=https://Fv.d0stream.com' % video_id
-    json_data = httptools.downloadpage(new_url).data
-    dict_data = jsontools.load(json_data)
-    sources = dict_data['sources']
-
-    for vip_item in sources['mp4_cdn']:
-        vip_url= vip_item['url']
-        vip_quality = vip_item['label']
-        title ='%s [%s]' % (item.title, vip_quality)
-        itemlist.append(item.clone(title = title, url=vip_url, action='play', quality=vip_quality, server='directo'))
-
-    return itemlist
-
 def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    player_vip = scrapertools.find_single_match(data, 'class=movieplay><iframe src=(https://v.d0stream.com.*?) frameborder')
-    itemlist.extend(get_vip(item, player_vip))
 
-    patron = 'id=(tab\d+)><div class=movieplay><(?:iframe|script) src=(.*?)(?:scrolling|><\/script>)'
+    patron = 'id=(tab\d+)><div class=movieplay><(?:iframe|script) src=(.*?)(?:scrolling|frameborder|><\/script>)'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for option, urls in matches:
 
-        if 'content' in urls:
-            urls = '%s%s'%('http:',urls)
-            hidden_data = httptools.downloadpage(urls).data
-            hidden_data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", hidden_data)
-            patron = 'sources: \[{file: (.*?),'
-            matches = re.compile(patron, re.DOTALL).findall(hidden_data)
-
-            for videoitem in matches:
-
-                new_item = Item(
-                                channel = item.channel,
-                                url = videoitem,
-                                title = item.title,
-                                contentTitle = item.title,
-                                action = 'play',
-                                )
-                itemlist.append(new_item)
-        else:
-            new_item = Item(
-                            channel=item.channel,
-                            url=urls,
-                            title=item.title,
-                            contentTitle=item.title,
-                            action='play',
-                            )
-            itemlist.append(new_item)
+        new_item = Item(
+                        channel=item.channel,
+                        url=urls,
+                        title=item.title,
+                        contentTitle=item.title,
+                        action='play',
+                        )
+        itemlist.append(new_item)
     itemlist = servertools.get_servers_itemlist(itemlist)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
