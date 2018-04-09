@@ -9,7 +9,7 @@ import urllib
 import urlparse
 
 from platformcode import logger
-
+from decimal import Decimal, ROUND_UP
 
 class Cloudflare:
     def __init__(self, response):
@@ -62,12 +62,20 @@ class Cloudflare:
     def get_url(self):
         # Metodo #1 (javascript)
         if self.js_data.get("wait", 0):
-            jschl_answer = self.decode(self.js_data["value"])
+            jschl_answer = self.decode2(self.js_data["value"])
 
             for op, v in self.js_data["op"]:
-                jschl_answer = eval(str(jschl_answer) + op + str(self.decode(v)))
+                #jschl_answer = eval(str(jschl_answer) + op + str(self.decode2(v)))
+                if op == '+':
+                    jschl_answer = jschl_answer + self.decode2(v)
+                elif op == '-':
+                    jschl_answer = jschl_answer - self.decode2(v)
+                elif op == '*':
+                    jschl_answer = jschl_answer * self.decode2(v)
+                elif op == '/':
+                    jschl_answer = jschl_answer / self.decode2(v)
 
-            self.js_data["params"]["jschl_answer"] = jschl_answer + len(self.domain)
+            self.js_data["params"]["jschl_answer"] = round(jschl_answer, 10) + len(self.domain)
 
             response = "%s://%s%s?%s" % (
             self.protocol, self.domain, self.js_data["auth_url"], urllib.urlencode(self.js_data["params"]))
@@ -84,6 +92,29 @@ class Cloudflare:
             time.sleep(self.header_data["wait"])
 
             return response
+
+    def decode2(self, data):
+        data = re.sub("\!\+\[\]", "1", data)
+        data = re.sub("\!\!\[\]", "1", data)
+        data = re.sub("\[\]", "0", data)
+        
+        pos = data.find("/")
+        numerador = data[:pos]
+        denominador = data[pos+1:]
+        
+        aux = re.compile('\(([0-9\+]+)\)').findall(numerador)
+        num1 = ""
+        for n in aux:
+            num1 += str(eval(n))
+
+        aux = re.compile('\(([0-9\+]+)\)').findall(denominador)
+        num2 = ""
+        for n in aux:
+            num2 += str(eval(n))
+
+        #return float(num1) / float(num2)
+        #return Decimal(Decimal(num1) / Decimal(num2)).quantize(Decimal('.0000000000000001'), rounding=ROUND_UP)
+        return Decimal(Decimal(num1) / Decimal(num2)).quantize(Decimal('.0000000000000001'))
 
     def decode(self, data):
         t = time.time()
