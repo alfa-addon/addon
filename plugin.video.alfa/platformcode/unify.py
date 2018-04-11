@@ -430,10 +430,10 @@ def title_format(item):
             #logger.debug('item.title: %s' % item.title)
             # si hay verificacion de enlaces
             if item.alive != '':
-                if item.alive == 'no':
+                if item.alive.lower() == 'no':
                     item.title = '[[COLOR red][B]X[/B][/COLOR]] %s' % item.title
                 elif item.alive == '??':
-                    item.title = '[[COLOR yellow][B]-[/B][/COLOR]] %s' % item.title
+                    item.title = '[[COLOR yellow][B]?[/B][/COLOR]] %s' % item.title
         else:
             item.title = '%s' % item.title
         #logger.debug('item.title despues de server: %s' % item.title)
