@@ -8,6 +8,18 @@ from core import jsontools
 from core import scrapertools
 from platformcode import logger
 
+def test_video_exists(page_url):
+    logger.info("(page_url='%s')" % page_url)
+
+    # http://netu.tv/watch_video.php=XX solo contiene una redireccion, ir directamente a http://hqq.tv/player/embed_player.php?vid=XX
+    page_url = page_url.replace("http://netu.tv/watch_video.php?v=", "http://hqq.tv/player/embed_player.php?vid=")
+
+    data = httptools.downloadpage(page_url).data
+
+    if "var userid = '';" in data.lower():
+        return False, "[netutv] El archivo no existe o  ha sido borrado"
+
+    return True, ""
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)

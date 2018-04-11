@@ -705,3 +705,45 @@ def filter_servers(servers_list):
             servers_list = servers_list_filter
 
     return servers_list
+
+def check_list_links(itemlist, numero):
+    """
+    Comprueba una lista de enlaces a videos y la devuelve modificando el titulo con la verificacion.
+    El segundo parametro (numero) indica cuantos enlaces hay que verificar (0:5, 1:10, 2:15, 3:20)
+    """
+    numero = ((int(numero) + 1) * 5) if numero != '' else 10
+    for it in itemlist:
+        if numero > 0 and it.server != '' and it.url != '':
+            verificacion = check_video_link(it.url, it.server)
+            it.title = verificacion + ', ' + it.title.strip()
+            numero -= 1
+    return itemlist
+
+def check_video_link(url, server):
+    """
+    Comprueba si el enlace a un video es valido y devuelve un string de 2 posiciones con la verificacion.
+    :param url, server: Link y servidor
+    :return: str(2) '??':No se ha podido comprobar. 'Ok':Parece que el link funciona. 'NO':Parece que no funciona.
+    """
+    try:
+        server_module = __import__('servers.%s' % server, None, None, ["servers.%s" % server])
+    except:
+        server_module = None
+        logger.info("[check_video_link] No se puede importar el servidor! %s" % server)
+        return "??"
+        
+    if hasattr(server_module, 'test_video_exists'):
+        try:
+            video_exists, message = server_module.test_video_exists(page_url=url)
+            if not video_exists:
+                logger.info("[check_video_link] No existe! %s %s %s" % (message, server, url))
+                return "NO"
+            else:
+                logger.info("[check_video_link] comprovacion OK %s %s" % (server, url))
+                return "Ok"
+        except:
+            logger.info("[check_video_link] No se puede comprobar ahora! %s %s" % (server, url))
+            return "??"
+
+    logger.info("[check_video_link] No hay test_video_exists para servidor: %s" % server)
+    return "??"

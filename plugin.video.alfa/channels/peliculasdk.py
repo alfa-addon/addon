@@ -11,6 +11,9 @@ from platformcode import logger
 from platformcode import config
 from core import tmdb
 
+__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'peliculasdk')
+__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'peliculasdk')
+
 host = "http://www.peliculasdk.com"
 
 def mainlist(item):
@@ -183,6 +186,8 @@ def findvideos(item):
                          language=idioma, quality=calidad))
     tmdb.set_infoLabels(itemlist)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    if __comprueba_enlaces__:
+        itemlist = servertools.check_list_links(itemlist, __comprueba_enlaces_num__)
     if item.library and config.get_videolibrary_support() and len(itemlist) > 0:
         infoLabels = {'tmdb_id': item.infoLabels['tmdb_id'],
                       'title': item.fulltitle}
