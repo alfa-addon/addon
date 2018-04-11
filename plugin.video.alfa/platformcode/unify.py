@@ -324,7 +324,9 @@ def title_format(item):
             # Si el titulo no tiene contentSerieName entonces se formatea como pelicula
             item.title = '%s' % set_color(item.contentTitle, 'movie')
             if item.contentType=='movie':
-                item.context='Buscar esta pelicula en otros canales'
+                if item.context:
+                    if isinstance(item.context, list):
+                        item.context.append('Buscar esta pelicula en otros canales')
 
         if 'Novedades' in item.category and item.from_channel=='news':
             #logger.debug('novedades')
@@ -406,6 +408,7 @@ def title_format(item):
                 if 'Activar' in item.context[1]['title']:
                     item.title= '%s' % (set_color(item.title, 'no_update'))
 
+        #logger.debug('Despues del formato: %s' % item)
         # Damos formato al servidor si existiera
         if item.server:
             server = '%s' % set_color(item.server.strip().capitalize(), 'server')
@@ -417,6 +420,7 @@ def title_format(item):
         if item.action != 'play' and item.server:
             item.title ='%s %s'%(item.title, server.strip())
         elif item.action == 'play' and item.server:
+
             if item.quality == 'default':
                 quality = ''
             #logger.debug('language_color: %s'%language_color)
@@ -424,6 +428,12 @@ def title_format(item):
             if lang:
                 item.title = add_languages(item.title, simple_language)
             #logger.debug('item.title: %s' % item.title)
+            # si hay verificacion de enlaces
+            if item.alive != '':
+                if item.alive.lower() == 'no':
+                    item.title = '[[COLOR red][B]X[/B][/COLOR]] %s' % item.title
+                elif item.alive == '??':
+                    item.title = '[[COLOR yellow][B]?[/B][/COLOR]] %s' % item.title
         else:
             item.title = '%s' % item.title
         #logger.debug('item.title despues de server: %s' % item.title)

@@ -121,8 +121,8 @@ def episodios(item):
     data_lista = scrapertools.find_single_match(data,
                       '<ul class="episodios">(.+?)<\/ul><\/div><\/div><\/div>')
     show = item.title
-    patron_caps =   '<img alt=".+?" title=".+?" src="([^"]+)">'
-    patron_caps +=  '<\/a><\/div><div class=".+?">([^"]+)<\/div>.+?<a .+? href="([^"]+)">([^"]+)<\/a>'
+    patron_caps =   '<img alt=".+?" src="([^"]+)"><\/a><\/div><div class=".+?">([^"]+)<\/div>.+?'
+    patron_caps +=  '<a .+? href="([^"]+)">([^"]+)<\/a>'
     #scrapedthumbnail,#scrapedtempepi, #scrapedurl, #scrapedtitle
     matches = scrapertools.find_multiple_matches(data_lista, patron_caps)
     for scrapedthumbnail, scrapedtempepi, scrapedurl, scrapedtitle in matches:
