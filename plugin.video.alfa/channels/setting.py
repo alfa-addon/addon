@@ -170,25 +170,26 @@ def servers_blacklist(item):
     server_list = servertools.get_servers_list()
     dict_values = {}
 
-    list_controls = [{'id': 'filter_servers',
-                      'type': "bool",
-                      'label': "@30068",
-                      'default': False,
-                      'enabled': True,
-                      'visible': True}]
+    list_controls = [{"id": "filter_servers",
+                      "type": "bool",
+                      "label": "@30068",
+                      "default": False,
+                      "enabled": True,
+                      "visible": True}]
     dict_values['filter_servers'] = config.get_setting('filter_servers')
-
+    if dict_values['filter_servers'] == None:
+        dict_values['filter_servers'] = False
     for i, server in enumerate(sorted(server_list.keys())):
         server_parameters = server_list[server]
         controls, defaults = servertools.get_server_controls_settings(server)
         dict_values[server] = config.get_setting("black_list", server=server)
 
-        control = {'id': server,
-                   'type': "bool",
-                   'label': '    %s' % server_parameters["name"],
-                   'default': defaults.get("black_list", False),
-                   'enabled': "eq(-%s,True)" % (i + 1),
-                   'visible': True}
+        control = {"id": server,
+                   "type": "bool",
+                   "label": '    %s' % server_parameters["name"],
+                   "default": defaults.get("black_list", False),
+                   "enabled": "eq(-%s,True)" % (i + 1),
+                   "visible": True}
         list_controls.append(control)
 
     return platformtools.show_channel_settings(list_controls=list_controls, dict_values=dict_values,
@@ -228,6 +229,8 @@ def servers_favorites(item):
                       'enabled': True,
                       'visible': True}]
     dict_values['favorites_servers'] = config.get_setting('favorites_servers')
+    if dict_values['favorites_servers'] == None:
+        dict_values['favorites_servers'] = False
 
     server_names = ['Ninguno']
 

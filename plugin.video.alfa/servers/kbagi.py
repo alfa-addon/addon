@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from channels import kbagi
 from core import httptools
 from core import jsontools
 from core import scrapertools
@@ -8,15 +9,16 @@ from platformcode import logger
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
+    domain = "diskokosmiko.mx"
     if "kbagi.com" in page_url:
-        from channels import kbagi
-        logueado, error_message = kbagi.login("kbagi.com")
-        if not logueado:
-            return False, error_message
+        domain = "kbagi.com"
+    logueado, error_message = kbagi.login(domain)
+    if not logueado:
+        return False, error_message
 
     data = httptools.downloadpage(page_url).data
     if ("File was deleted" or "Not Found" or "File was locked by administrator") in data:
-        return False, "[kbagi] El archivo no existe o ha sido borrado"
+        return False, "[%s] El archivo no existe o ha sido borrado" %domain
 
     return True, ""
 

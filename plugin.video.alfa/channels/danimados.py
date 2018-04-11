@@ -117,12 +117,12 @@ def episodios(item):
 
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-   
+    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)   
     data_lista = scrapertools.find_single_match(data,
                       '<ul class="episodios">(.+?)<\/ul><\/div><\/div><\/div>')
     show = item.title
-    patron_caps = '<img src="([^"]+)"><\/a><\/div><div class=".+?">([^"]+)<\/div>.+?<a .+? href="([^"]+)">([^"]+)<\/a>'
+    patron_caps =   '<img alt=".+?" title=".+?" src="([^"]+)">'
+    patron_caps +=  '<\/a><\/div><div class=".+?">([^"]+)<\/div>.+?<a .+? href="([^"]+)">([^"]+)<\/a>'
     #scrapedthumbnail,#scrapedtempepi, #scrapedurl, #scrapedtitle
     matches = scrapertools.find_multiple_matches(data_lista, patron_caps)
     for scrapedthumbnail, scrapedtempepi, scrapedurl, scrapedtitle in matches:
@@ -148,14 +148,24 @@ def findvideos(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    data = scrapertools.find_single_match(data, 
+    data1 = scrapertools.find_single_match(data, 
                       '<div id="playex" .+?>(.+?)<\/nav><\/div><\/div>')
     patron='src="(.+?)"'
-    logger.info("assfxxv "+data)
-    itemla = scrapertools.find_multiple_matches(data,patron)
+    itemla = scrapertools.find_multiple_matches(data1,patron)
+    if "favicons?domain" in itemla[1]:
+        method = 1
+        data2=scrapertools.find_single_match(data, "var \$user_hashs = {(.+?)}")
+        patron='".+?":"(.+?)"'
+        itemla = scrapertools.find_multiple_matches(data2,patron)
+    else:
+        method = 0
     for i in range(len(itemla)):
-        #for url in itemla:
-        url=itemla[i]
+        if method==0:
+            url=itemla[i]
+        else:
+            import base64
+            b=base64.b64decode(itemla[i])
+            url=b.decode('utf8')
         #verificar existencia del video (testing)
         codigo=verificar_video(itemla[i])
         if codigo==200:
@@ -199,5 +209,5 @@ def verificar_video(url):
         else:
             codigo1=200
     else:
-		codigo1=200
+        codigo1=200
     return codigo1

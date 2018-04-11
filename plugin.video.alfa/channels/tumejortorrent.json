@@ -1,0 +1,58 @@
+{
+  "id": "tumejortorrent",
+  "name": "Tumejortorrent",
+  "active": true,
+  "adult": false,
+  "language": ["cast", "lat"],
+  "thumbnail": "tumejortorrent.png",
+  "banner": "tumejortorrent.png",
+  "categories": [
+    "movie",
+    "tvshow",
+    "anime",
+    "torrent",
+    "documentary"
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_series",
+      "type": "bool",
+      "label": "Incluir en Novedades - Episodios de series",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_torrent",
+      "type": "bool",
+      "label": "Incluir en Novedades - Torrent",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_4k",
+      "type": "bool",
+      "label": "Incluir en Novedades - 4K",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}
