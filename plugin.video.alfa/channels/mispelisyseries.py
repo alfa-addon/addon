@@ -10,7 +10,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import tmdb
 
-host = 'http://www.mispelisyseries.com/'
+host = 'http://mispelisyseries.com/'
 
 def mainlist(item):
     logger.info()
@@ -133,7 +133,8 @@ def listado(item):
 
     for scrapedurl, scrapedtitle, scrapedthumbnail, title_alt, calidad in matches:
         url = scrapedurl
-        title = scrapedtitle
+        title = scrapedtitle.replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("Temp", " Temp").replace("Esp", " Esp").replace("Ing", " Ing").replace("Eng", " Eng").replace("Calidad", "")
+        title_alt = title_alt.replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("Temp", " Temp").replace("Esp", " Esp").replace("Ing", " Ing").replace("Eng", " Eng").replace("Calidad", "")
         thumbnail = scrapedthumbnail
         action = "findvideos"
         extra = ""
@@ -209,10 +210,11 @@ def listado_busqueda(item):
 
     for url, thumb, title in matches:
         real_title = scrapertools.find_single_match(title, r'<strong.*?>(.*?)Temporada.*?<\/strong>')        #series
-        if real_title == "":
+        if not real_title:
             real_title = scrapertools.find_single_match(title, r'(.*?)\[.*?]')        #movies
         real_title = scrapertools.remove_htmltags(real_title).decode('iso-8859-1').encode('utf-8')
         real_title = scrapertools.htmlclean(real_title)
+        real_title = real_title.replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("Temp", " Temp").replace("Esp", " Esp").replace("Ing", " Ing").replace("Eng", " Eng").replace("Calidad", "").replace("de la Serie", "")
         calidad = scrapertools.find_single_match(title, r'.*?\s*Calidad.*?<span[^>]+>[\[]\s*(?P<quality>.*?)\s*[\]]<\/span>')       #series
         if calidad == "":
             calidad = scrapertools.find_single_match(title, r'..*?(\[.*?.*\])')          #movies
@@ -220,9 +222,8 @@ def listado_busqueda(item):
         
         # fix encoding for title
         title = scrapertools.htmlclean(title)
-        title = title.replace("ï¿½", "ñ").replace("Temp", " Temp").replace("Esp", " Esp").replace("Ing", " Ing").replace("Eng", " Eng")
         title = re.sub(r'(Calidad.*?\])', '', title)
-        
+        title = title.replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("Temp", " Temp").replace("Esp", " Esp").replace("Ing", " Ing").replace("Eng", " Eng").replace("Calidad", "").replace("de la Serie", "")
         if real_title == "":
             real_title = title
         if calidad == "":
@@ -236,18 +237,22 @@ def listado_busqueda(item):
 
         # Codigo para rescatar lo que se puede en pelisy.series.com de Series para la Videoteca.  la URL apunta al capítulo y no a la Serie.  Nombre de Serie frecuentemente en blanco. Se obtiene de Thumb, así como el id de la serie
         if ("/serie" in url or "-serie" in url) and "pelisyseries.com" in host:
-            calidad_mps = "series/"
             if "seriehd" in url:
                 calidad_mps = "series-hd/"
-            if "serievo" in url:
+            elif "serievo" in url:
                 calidad_mps = "series-vo/"
-            if "serie-vo" in url:
+            elif "serie-vo" in url:
                 calidad_mps = "series-vo/"
+            else:
+                calidad_mps = "series/"
             
-            real_title_mps = re.sub(r'.*?\/\d+_', '', thumb)
-            real_title_mps = re.sub(r'\.\w+.*?', '', real_title_mps)
+            if "no_image" in thumb:
+                real_title_mps = title
+            else:
+                real_title_mps = re.sub(r'.*?\/\d+_', '', thumb)
+                real_title_mps = re.sub(r'\.\w+.*?', '', real_title_mps)
             
-            if "/0_" not in thumb:
+            if "/0_" not in thumb and not "no_image" in thumb:
                 serieid = scrapertools.find_single_match(thumb, r'.*?\/\w\/(?P<serieid>\d+).*?.*')
                 if len(serieid) > 5:
                     serieid = ""
@@ -507,6 +512,11 @@ def episodios(item):
                           "[\[]\s*(?P<quality>.*?)?\s*[\]]<\/span>"
                 if "Especial" in info: # Capitulos Especiales
                     pattern = ".*?[^>]+>.*?Temporada.*?\[.*?(?P<season>\d+).*?\].*?Capitulo.*?\[\s*(?P<episode>\d+).*?\]?(?:.*?(?P<episode2>\d+)?)<.+?<span[^>]+>(?P<lang>.*?)?<\/span>\s*Calidad\s*<span[^>]+>[\[]\s*(?P<quality>.*?)?\s*[\]]<\/span>"
+                
+                if not scrapertools.find_single_match(info, pattern):   #en caso de error de formato, creo uno básico
+                    logger.debug("patron episodioNEW: " + pattern)
+                    logger.debug(info)
+                    info = '><strong>%sTemporada %s Capitulo 0</strong> - <span >Español Castellano</span> Calidad <span >[%s]</span>' % (item.contentTitle, season, item.infoLabels['quality'])
                 r = re.compile(pattern)
                 match = [m.groupdict() for m in r.finditer(info)][0]
 
@@ -540,11 +550,11 @@ def episodios(item):
                           "(?P<episode2>\d{2}))?.*?\].*?(?:\[(?P<lang>.*?)\])?"
                 elif scrapertools.find_single_match(info, 'Cap.\d{2,3}'):
                     pattern = ".*?Temp.*?\s(?P<quality>.*?)\s.*?Cap.(?P<season>\d).*?(?P<episode>\d{2})(?:_(?P<season2>\d+)(?P<episode2>\d{2}))?.*?\s(?P<lang>.*)?"
-                else:
-                    logger.debug("patron episodio: " + pattern)
+
+                if not scrapertools.find_single_match(info, pattern):   #en caso de error de formato, creo uno básico
+                    logger.debug("patron episodioOLD: " + pattern)
                     logger.debug(info)
-                    continue
-                
+                    info = '%s [%s][Cap.%s00][Español]' % (item.contentTitle, item.infoLabels['quality'], season)
                 r = re.compile(pattern)
                 match = [m.groupdict() for m in r.finditer(info)][0]
 
