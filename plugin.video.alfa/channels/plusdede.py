@@ -61,17 +61,17 @@ def mainlist(item):
         item.url = HOST
         item.fanart = fanart_host
 
-        item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/Directors%20Chair.png"
+        item.thumbnail = "https://s18.postimg.cc/r5cylu6rd/12_-_oi_RDsdv.png"
         itemlist.append(item.clone(title="Películas", action="menupeliculas", text_color=color3, text_blod=True))
 
-        item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/TV%20Series.png"
+        item.thumbnail = "https://s18.postimg.cc/ruvqy6zl5/15_-_9m9_Dp1m.png"
         itemlist.append(item.clone(title="Series", action="menuseries", text_color=color3, text_blod=True))
 
-        itemlist.append(item.clone(title="Listas", action="menulistas", text_color=color3, text_blod=True))
+        itemlist.append(item.clone(title="Listas", action="menulistas", text_color=color3, text_blod=True, thumbnail = 'https://s18.postimg.cc/xj21p46ih/10_-_Uf7e_XHE.png'))
 
         itemlist.append(item.clone(title="", folder=False, thumbnail=thumbnail_host))
         item.thumbnail = ""
-        itemlist.append(item.clone(channel=item.channel, action="settingCanal", title="Configuración...", url=""))
+        itemlist.append(item.clone(channel=item.channel, action="settingCanal", title="Configuración...", url="", thumbnail='https://s18.postimg.cc/c9efeassp/3_-_QAHK2_Tc.png'))
     return itemlist
 
 
@@ -86,31 +86,31 @@ def menuseries(item):
     item.fanart = fanart_host
     item.text_color = None
 
-    item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/Directors%20Chair.png"
+    item.thumbnail = "https://s18.postimg.cc/r5cylu6rd/12_-_oi_RDsdv.png"
     itemlist.append(item.clone(title="Películas", action="menupeliculas", text_color=color3, text_blod=True))
 
-    item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/TV%20Series.png"
+    item.thumbnail = "https://s18.postimg.cc/ruvqy6zl5/15_-_9m9_Dp1m.png"
     itemlist.append(item.clone(title="Series:", folder=False, text_color=color3, text_blod=True, select=True))
-    itemlist.append(item.clone(action="peliculas", title="    Novedades", url="https://www.plusdede.com/series"))
-    itemlist.append(item.clone(action="generos", title="    Por géneros", url="https://www.plusdede.com/series"))
+    itemlist.append(item.clone(action="peliculas", title="    Novedades", url="https://www.plusdede.com/series", thumbnail='https://s18.postimg.cc/in3ihji95/11_-_WPg_H5_Kx.png'))
+    itemlist.append(item.clone(action="generos", title="    Por géneros", url="https://www.plusdede.com/series", thumbnail='https://s18.postimg.cc/p0slktaah/5_-_c_Nf_KRvm.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Siguiendo", url="https://www.plusdede.com/series/following"))
+        item.clone(action="peliculas", title="    Siguiendo", url="https://www.plusdede.com/series/following", thumbnail='https://s18.postimg.cc/68gqh7j15/7_-_tqw_AHa5.png'))
     itemlist.append(item.clone(action="peliculas", title="    Capítulos Pendientes",
-                               url="https://www.plusdede.com/series/mypending/0?popup=1", viewmode="movie"))
+                               url="https://www.plusdede.com/series/mypending/0?popup=1", viewmode="movie", thumbnail='https://s18.postimg.cc/9s2o71w1l/2_-_3dbbx7_K.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Favoritas", url="https://www.plusdede.com/series/favorites"))
+        item.clone(action="peliculas", title="    Favoritas", url="https://www.plusdede.com/series/favorites", thumbnail='https://s18.postimg.cc/n8zmpwynd/4_-_JGrig_Ep.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Pendientes", url="https://www.plusdede.com/series/pending"))
-    itemlist.append(item.clone(action="peliculas", title="    Terminadas", url="https://www.plusdede.com/series/seen"))
+        item.clone(action="peliculas", title="    Pendientes", url="https://www.plusdede.com/series/pending", thumbnail='https://s18.postimg.cc/4gnrmacix/13_-_cwl_TDog.png'))
+    itemlist.append(item.clone(action="peliculas", title="    Terminadas", url="https://www.plusdede.com/series/seen", thumbnail='https://s18.postimg.cc/5vpcay0qh/17_-_M2in_Fp_O.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Recomendadas", url="https://www.plusdede.com/series/recommended"))
-    itemlist.append(item.clone(action="search", title="    Buscar...", url="https://www.plusdede.com/series"))
+        item.clone(action="peliculas", title="    Recomendadas", url="https://www.plusdede.com/series/recommended", thumbnail='https://s18.postimg.cc/bwn182sih/14_-_fin32_Kp.png'))
+    itemlist.append(item.clone(action="search", title="    Buscar...", url="https://www.plusdede.com/series", thumbnaiil='https://s18.postimg.cc/s7n54ghvt/1_-_01_ZDYii.png'))
     itemlist.append(item.clone(title="", folder=False, thumbnail=thumbnail_host))
 
-    itemlist.append(item.clone(title="Listas", action="menulistas", text_color=color3, text_blod=True))
+    itemlist.append(item.clone(title="Listas", action="menulistas", text_color=color3, text_blod=True, thumbnail='https://s18.postimg.cc/xj21p46ih/10_-_Uf7e_XHE.png'))
     itemlist.append(item.clone(title="", folder=False, thumbnail=thumbnail_host))
     item.thumbnail = ""
-    itemlist.append(Item(channel=item.channel, action="settingCanal", title="Configuración...", url=""))
+    itemlist.append(Item(channel=item.channel, action="settingCanal", title="Configuración...", url="", thumbnail='https://s18.postimg.cc/c9efeassp/3_-_QAHK2_Tc.png'))
     return itemlist
 
 
@@ -122,29 +122,29 @@ def menupeliculas(item):
     item.fanart = fanart_host
     item.text_color = None
 
-    item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/Directors%20Chair.png"
+    item.thumbnail = "https://s18.postimg.cc/r5cylu6rd/12_-_oi_RDsdv.png"
     itemlist.append(item.clone(title="Películas:", folder=False, text_color=color3, text_blod=True, select=True))
-    itemlist.append(item.clone(action="peliculas", title="    Novedades", url="https://www.plusdede.com/pelis"))
-    itemlist.append(item.clone(action="generos", title="    Por géneros", url="https://www.plusdede.com/pelis"))
-    itemlist.append(item.clone(action="peliculas", title="    Solo HD", url="https://www.plusdede.com/pelis?quality=3"))
+    itemlist.append(item.clone(action="peliculas", title="    Novedades", url="https://www.plusdede.com/pelis", thumbnail='https://s18.postimg.cc/in3ihji95/11_-_WPg_H5_Kx.png'))
+    itemlist.append(item.clone(action="generos", title="    Por géneros", url="https://www.plusdede.com/pelis", thumbnail='https://s18.postimg.cc/p0slktaah/5_-_c_Nf_KRvm.png'))
+    itemlist.append(item.clone(action="peliculas", title="    Solo HD", url="https://www.plusdede.com/pelis?quality=3", thumbnail='https://s18.postimg.cc/e17e95mfd/16_-_qmqn4_Si.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Pendientes", url="https://www.plusdede.com/pelis/pending"))
+        item.clone(action="peliculas", title="    Pendientes", url="https://www.plusdede.com/pelis/pending", thumbnail='https://s18.postimg.cc/4gnrmacix/13_-_cwl_TDog.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Recomendadas", url="https://www.plusdede.com/pelis/recommended"))
+        item.clone(action="peliculas", title="    Recomendadas", url="https://www.plusdede.com/pelis/recommended", thumbnail='https://s18.postimg.cc/bwn182sih/14_-_fin32_Kp.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Favoritas", url="https://www.plusdede.com/pelis/favorites"))
-    itemlist.append(item.clone(action="peliculas", title="    Vistas", url="https://www.plusdede.com/pelis/seen"))
-    itemlist.append(item.clone(action="search", title="    Buscar...", url="https://www.plusdede.com/pelis"))
+        item.clone(action="peliculas", title="    Favoritas", url="https://www.plusdede.com/pelis/favorites", thumbnail='https://s18.postimg.cc/n8zmpwynd/4_-_JGrig_Ep.png'))
+    itemlist.append(item.clone(action="peliculas", title="    Vistas", url="https://www.plusdede.com/pelis/seen", thumbnail='https://s18.postimg.cc/5vpcay0qh/17_-_M2in_Fp_O.png'))
+    itemlist.append(item.clone(action="search", title="    Buscar...", url="https://www.plusdede.com/pelis", thumbnail='https://s18.postimg.cc/s7n54ghvt/1_-_01_ZDYii.png'))
 
     itemlist.append(item.clone(title="", folder=False, thumbnail=thumbnail_host))
     item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/TV%20Series.png"
 
-    itemlist.append(item.clone(title="Series", action="menuseries", text_color=color3, text_blod=True))
+    itemlist.append(item.clone(title="Series", action="menuseries", text_color=color3, text_blod=True, thumbnail='https://s18.postimg.cc/ruvqy6zl5/15_-_9m9_Dp1m.png'))
 
-    itemlist.append(item.clone(title="Listas", action="menulistas", text_color=color3, text_blod=True))
+    itemlist.append(item.clone(title="Listas", action="menulistas", text_color=color3, text_blod=True, thumbnail='https://s18.postimg.cc/xj21p46ih/10_-_Uf7e_XHE.png'))
     itemlist.append(item.clone(title="", folder=False, thumbnail=thumbnail_host))
     item.thumbnail = ""
-    itemlist.append(item.clone(channel=item.channel, action="settingCanal", title="Configuración...", url=""))
+    itemlist.append(item.clone(channel=item.channel, action="settingCanal", title="Configuración...", url="", thumbnail='https://s18.postimg.cc/c9efeassp/3_-_QAHK2_Tc.png'))
     return itemlist
 
 
@@ -156,23 +156,23 @@ def menulistas(item):
     item.fanart = fanart_host
     item.text_color = None
 
-    item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/Directors%20Chair.png"
+    item.thumbnail = "https://s18.postimg.cc/r5cylu6rd/12_-_oi_RDsdv.png"
     itemlist.append(item.clone(title="Películas", action="menupeliculas", text_color=color3, text_blod=True))
 
-    item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/TV%20Series.png"
+    item.thumbnail = "https://s18.postimg.cc/ruvqy6zl5/15_-_9m9_Dp1m.png"
 
     itemlist.append(item.clone(title="Series", action="menuseries", text_color=color3, text_blod=True))
 
-    itemlist.append(item.clone(title="Listas:", folder=False, text_color=color3, text_blod=True))
+    itemlist.append(item.clone(title="Listas:", folder=False, text_color=color3, text_blod=True, thumbnail='https://s18.postimg.cc/xj21p46ih/10_-_Uf7e_XHE.png'))
     itemlist.append(
-        item.clone(action="listas", tipo="populares", title="    Populares", url="https://www.plusdede.com/listas"))
+        item.clone(action="listas", tipo="populares", title="    Populares", url="https://www.plusdede.com/listas", thumbnail='https://s18.postimg.cc/7aqwzrha1/8_-_3rn14_Tq.png'))
     itemlist.append(
-        item.clone(action="listas", tipo="siguiendo", title="    Siguiendo", url="https://www.plusdede.com/listas"))
+        item.clone(action="listas", tipo="siguiendo", title="    Siguiendo", url="https://www.plusdede.com/listas", thumbnail='https://s18.postimg.cc/4tf5sha89/9_-_z_F8c_UBT.png'))
     itemlist.append(
         item.clone(action="listas", tipo="tuslistas", title="    Tus Listas", url="https://www.plusdede.com/listas"))
     itemlist.append(item.clone(title="", folder=False, thumbnail=thumbnail_host))
     item.thumbnail = ""
-    itemlist.append(item.clone(channel=item.channel, action="settingCanal", title="Configuración...", url=""))
+    itemlist.append(item.clone(channel=item.channel, action="settingCanal", title="Configuración...", url="", thumbnail='https://s18.postimg.cc/c9efeassp/3_-_QAHK2_Tc.png'))
     return itemlist
 
 
