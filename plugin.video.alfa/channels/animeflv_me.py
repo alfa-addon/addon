@@ -213,7 +213,7 @@ def series(item):
     context.extend(context2)
     for show in show_list:
         title, url, thumbnail, plot = show
-        items.append(Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
+        items.append(Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail, contentSerieName=title,
                           plot=plot, show=title, viewmode="movies_with_plot", context=context))
 
     url_next_page = scrapertools.find_single_match(page_html, REGEX_NEXT_PAGE)
@@ -237,21 +237,26 @@ def episodios(item):
     es_pelicula = False
     for url, title, date in episodes:
         episode = scrapertools.find_single_match(title, r'Episodio (\d+)')
+        new_item=itemlist.append(Item(channel=item.channel, action="findvideos",
+                    url=url, thumbnail=item.thumbnail, plot=plot, show=item.show))
         # El enlace pertenece a un episodio
         if episode:
             season = 1
             episode = int(episode)
             season, episode = renumbertools.numbered_for_tratk(
-                item.channel, item.show, season, episode)
-
+                item.channel, item.contentSerieName, season, episode)
+            new_item.infoLabels["episode"] = episode
+            new_item.infoLabels["season"] = season
+            new_item.contentSerieName = item.contentSerieName            
             title = "%sx%s %s (%s)" % (season, str(episode).zfill(2), "Episodio %s" % episode, date)
         # El enlace pertenece a una pelicula
         else:
             title = "%s (%s)" % (title, date)
             item.url = url
             es_pelicula = True
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=item.thumbnail,
-                             plot=plot, show=item.show, fulltitle="%s %s" % (item.show, title)))
+        new_item.title=title
+        new_item.fulltitle="%s %s" % (item.show, title)
+        itemlist.append(new_item)
 
     # El sistema soporta la videoteca y se encontro por lo menos un episodio
     # o pelicula
