@@ -14,7 +14,7 @@ from core import tmdb
 from core.item import Item, InfoLabels
 from platformcode import config, logger
 
-host = "https://pepecine.info"
+host = "https://pepecinehd.tv"
 perpage = 20
 
 def mainlist1(item):
@@ -29,7 +29,7 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel,
                          title="Ultimas",
-                         url=host+'/peliculas-tv-online',
+                         url=host+'/tv-peliculas-online',
                          action='list_latest',
                          indexp=1,
                          type='movie'))
@@ -149,7 +149,7 @@ def list_latest(item):
     logger.info()
     itemlist = []
     data = get_source(item.url)
-    data_url= scrapertools.find_single_match(data,'<iframe.*?src=(.*?) style')
+    data_url= scrapertools.find_single_match(data,'<iframe.*?src=(.*?) ')
     data = get_source(data_url)
     patron = "<div class='online'>.*?<img src=(.*?) class=.*?alt=(.*?) title=.*?"
     patron += "<b><a href=(.*?) target=.*?align=right><div class=s7>(.*?) <"

@@ -25,6 +25,8 @@ list_servers = ['openload', 'powvideo', 'rapidvideo', 'streamango', 'streamcloud
 __modo_grafico__ = config.get_setting('modo_grafico', 'cinefox')
 __perfil__ = int(config.get_setting('perfil', "cinefox"))
 __menu_info__ = config.get_setting('menu_info', 'cinefox')
+__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'cinefox')
+__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'cinefox')
 
 # Fijar perfil de color            
 perfil = [['0xFFFFE6CC', '0xFFFFCE9C', '0xFF994D00', '0xFFFE2E2E', '0xFF088A08'],
@@ -685,8 +687,23 @@ def findvideos(item):
 
         autoplay.start(itemlist, item)
 
+    if __comprueba_enlaces__:
+        for it in itemlist:
+            if it.server != '' and it.url != '':
+                it.url = normalizar_url(it.url, it.server)
+        itemlist = servertools.check_list_links(itemlist, __comprueba_enlaces_num__)
+
     return itemlist
 
+def normalizar_url(url, server):
+    # Pasar por findvideosbyserver para para obtener url a partir de los pattern/url de los json de servidores
+    # Excepciones copiadas de la funcion play
+    url = url.replace("http://miracine.tv/n/?etu=", "http://hqq.tv/player/embed_player.php?vid=")
+    url = url.replace("streamcloud.eu/embed-", "streamcloud.eu/")
+    enlaces = servertools.findvideosbyserver(url, server)[0]
+    if enlaces[1] != '':
+        return enlaces[1]
+    return url
 
 def get_enlaces(item, url, type):
     itemlist = []
