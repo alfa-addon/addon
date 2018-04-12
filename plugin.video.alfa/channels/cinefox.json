@@ -68,6 +68,23 @@
       "visible": true
     },
     {
+      "id": "comprueba_enlaces",
+      "type": "bool",
+      "label": "Verificar si los enlaces existen",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "comprueba_enlaces_num",
+      "type": "list",
+      "label": "Número de enlaces a verificar",
+      "default": 1,
+      "enabled": true,
+      "visible": "eq(-1,true)",
+      "lvalues": [ "5", "10", "15", "20" ]
+    },
+    {
       "id": "perfil",
       "type": "list",
       "label": "Perfil de color",
