@@ -12,6 +12,8 @@ def test_video_exists(page_url):
         return False, "[Downace] El video ha sido borrado"
     if "please+try+again+later." in data:
         return False, "[Downace] Error de downace, no se puede generar el enlace al video"
+    if "File has been removed due to inactivity" in data:
+        return False, "[Downace] El archivo ha sido removido por inactividad"
     return True, ""
 
 
