@@ -159,7 +159,6 @@ class UnshortenIt(object):
             r = httptools.downloadpage(
                 uri, timeout=self._timeout, cookies=False)
             html = r.data
-            logger.info("Intel33 %s" %html)
             ysmm = re.findall(r"var ysmm =.*\;?", html)
 
             if len(ysmm) > 0:
