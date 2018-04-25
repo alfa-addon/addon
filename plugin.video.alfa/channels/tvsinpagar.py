@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 import re
 
@@ -140,6 +140,8 @@ def listado(item):
         extra = ""
         context = "movie"
         year = scrapertools.find_single_match(scrapedthumbnail, r'-(\d{4})')
+        if not year or year <= "1900":
+            year = '-'
 
         if ".com/serie" in url and "/miniseries" not in url:
             action = "episodios"
@@ -219,6 +221,8 @@ def listado_busqueda(item):
         if calidad == "":
             calidad = scrapertools.find_single_match(title, r'..*?(\[.*?.*\])')          #movies
         year = scrapertools.find_single_match(thumb, r'-(\d{4})')
+        if not year or year <= "1900":
+            year = '-'
         
         # fix encoding for title
         title = scrapertools.htmlclean(title)
@@ -319,7 +323,14 @@ def findvideos(item):
     # item.url = item.url.replace(".com/",".com/ver-online/")
     # item.url = item.url.replace(".com/",".com/descarga-directa/")
     item.url = item.url.replace(".com/", ".com/descarga-torrent/")
-
+    
+    # Obtener la información actualizada del Episodio
+    if item.contentType == "episode":
+        if not item.contentTitle and (not item.infoLabels['title'] or item.infoLabels['title'] == 'null' or item.infoLabels['title'] == "None"):
+            tmdb.set_infoLabels_item(item, seekTmdb = True)
+    if not item.contentTitle:
+        item.contentTitle = item.infoLabels['title']
+    
     # Descarga la página
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
@@ -367,7 +378,7 @@ def findvideos(item):
     itemlist.append(item.clone(title=title_gen, action="", folder=False))		#Título con todos los datos del vídeo
     
     title = title_torrent	
-    title_torrent = '[COLOR yellow][Torrent]- [/COLOR]%s [online]' % (title_torrent)
+    title_torrent = '[COLOR salmon]??[/COLOR], [COLOR yellow][Torrent]- [/COLOR]%s [online]' % (title_torrent)
     if url != "":		#Torrent
         itemlist.append(
             Item(channel=item.channel, action="play", server="torrent", title=title_torrent, fulltitle=title,
@@ -410,6 +421,14 @@ def findvideos(item):
                     devuelve = servertools.findvideosbyserver(enlace, servidor)
                     if devuelve:
                         enlace = devuelve[0][1]
+                        item.alive = servertools.check_video_link(enlace, servidor)
+                        if item.alive.lower() == "ok":
+                            titulo = '%s, %s' % (item.alive, titulo)
+                        elif item.alive == "??":
+                            titulo = '[COLOR salmon]%s[/COLOR], %s' % (item.alive, titulo)
+                        else:
+                            logger.debug(item.alive + ": / " + titulo + " / " + enlace)
+                            raise
                         itemlist.append(
                             Item(fanart=item.fanart, channel=item.channel, action="play", server=servidor, title=titulo,
                                 fulltitle=title, url=enlace, thumbnail=logo, plot=item.plot, infoLabels=item.infoLabels, folder=False))
@@ -446,6 +465,15 @@ def findvideos(item):
                         devuelve = servertools.findvideosbyserver(enlace, servidor)
                         if devuelve:
                             enlace = devuelve[0][1]
+                            if p <= 2:
+                                item.alive = servertools.check_video_link(enlace, servidor)
+                                if item.alive.lower() == "ok":
+                                    parte_titulo = '%s, %s' % (item.alive, parte_titulo)
+                                elif item.alive == "??":
+                                    parte_titulo = '[COLOR salmon]%s[/COLOR], %s' % (item.alive, parte_titulo)
+                                else:
+                                    logger.debug(item.alive + ": / " + parte_titulo + " / " + enlace)
+                                    break
                             itemlist.append(Item(fanart=item.fanart, channel=item.channel, action="play", server=servidor,
                                              title=parte_titulo, fulltitle=title, url=enlace, thumbnail=logo,
                                              plot=item.plot, infoLabels=item.infoLabels, folder=False))
