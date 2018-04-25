@@ -410,8 +410,7 @@ def findvideos(item):
             if config.get_setting("quit_channel_name", "videolibrary") == 0:
                 server.title = "%s: %s" % (nom_canal.capitalize(), server.title)
 
-            server.infoLabels = item_json.infoLabels
-
+            #server.infoLabels = item_json.infoLabels
             if not server.thumbnail:
                 server.thumbnail = item.thumbnail
 
