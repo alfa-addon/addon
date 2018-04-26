@@ -18,66 +18,14 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
-
-    data = httptools.downloadpage(page_url).data
-
-    cgi_counter = scrapertools.find_single_match(data, """(?is)src=.(https://www.flashx.bz/counter.cgi.*?[^(?:'|")]+)""")
-    cgi_counter = cgi_counter.replace("%0A","").replace("%22","")
-    httptools.downloadpage(cgi_counter, cookies=False)
-
-    time.sleep(6)
-
-    url_playitnow = "https://www.flashx.bz/dl?playitnow"
-    fid = scrapertools.find_single_match(data, 'input type="hidden" name="id" value="([^"]*)"')
-    fname = scrapertools.find_single_match(data, 'input type="hidden" name="fname" value="([^"]*)"')
-    fhash = scrapertools.find_single_match(data, 'input type="hidden" name="hash" value="([^"]*)"')
-
-    headers = {'Content': 'application/x-www-form-urlencoded'}
-    post_parameters = {
-        "op": "download1", 
-        "usr_login": "", 
-        "id": fid,
-        "fname": fname, 
-        "referer": "https://www.flashx.bz/", 
-        "hash": fhash, 
-        "imhuman": "Continue To Video"
-    }
-    data = httptools.downloadpage(url_playitnow, urllib.urlencode(post_parameters), headers=headers).data
-
-    video_urls = []
-    media_urls = scrapertools.find_multiple_matches(data, "{src: '([^']+)'.*?,label: '([^']+)'")
-    subtitle = ""
-    for media_url, label in media_urls:
-        if media_url.endswith(".srt") and label == "Spanish":
-            try:
-                from core import filetools
-                data = httptools.downloadpage(media_url)
-                subtitle = os.path.join(config.get_data_path(), 'sub_flashx.srt')
-                filetools.write(subtitle, data)
-            except:
-                import traceback
-                logger.info("Error al descargar el subtítulo: " + traceback.format_exc())
-
-    for media_url, label in media_urls:
-        if not media_url.endswith("png") and not media_url.endswith(".srt"):
-            video_urls.append(["." + media_url.rsplit('.', 1)[1] + " [flashx]", media_url, 0, subtitle])
-
-    for video_url in video_urls:
-        logger.info("%s - %s" % (video_url[0], video_url[1]))
-
-    return video_urls
-
-
-def get_video_url_anterior(page_url, premium=False, user="", password="", video_password=""):
-    logger.info("url=" + page_url)
     pfxfx = ""
     data = httptools.downloadpage(page_url, cookies=False).data
     data = data.replace("\n","")
-    cgi_counter = scrapertools.find_single_match(data, """(?is)src=.(https://www.flashx.ws/counter.cgi.*?[^(?:'|")]+)""")
+    cgi_counter = scrapertools.find_single_match(data, """(?is)src=.(https://www.flashx.bz/counter.cgi.*?[^(?:'|")]+)""")
     cgi_counter = cgi_counter.replace("%0A","").replace("%22","")
-    playnow = scrapertools.find_single_match(data, 'https://www.flashx.ws/dl[^"]+')
+    playnow = scrapertools.find_single_match(data, 'https://www.flashx.bz/dl[^"]+')
     # Para obtener el f y el fxfx
-    js_fxfx = "https://www." + scrapertools.find_single_match(data.replace("//","/"), """(?is)(flashx.ws/js\w+/c\w+.*?[^(?:'|")]+)""")
+    js_fxfx = "https://www." + scrapertools.find_single_match(data.replace("//","/"), """(?is)(flashx.bz/js\w+/c\w+.*?[^(?:'|")]+)""")
     data_fxfx = httptools.downloadpage(js_fxfx).data
     mfxfx = scrapertools.find_single_match(data_fxfx, 'get.*?({.*?})').replace("'","").replace(" ","")
     matches = scrapertools.find_multiple_matches(mfxfx, '(\w+):(\w+)')
@@ -87,7 +35,7 @@ def get_video_url_anterior(page_url, premium=False, user="", password="", video_
     logger.info("mfxfxfx2= %s" %pfxfx)
     if pfxfx == "":
         pfxfx = "ss=yes&f=fail&fxfx=6"
-    coding_url = 'https://www.flashx.ws/flashx.php?%s' %pfxfx
+    coding_url = 'https://www.flashx.bz/flashx.php?%s' %pfxfx
     # {f: 'y', fxfx: '6'}
     bloque = scrapertools.find_single_match(data, '(?s)Form method="POST" action(.*?)span')
     flashx_id = scrapertools.find_single_match(bloque, 'name="id" value="([^"]+)"')

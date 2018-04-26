@@ -136,6 +136,8 @@ def start(itemlist, item):
 
         # Obtiene las listas servidores, calidades disponibles desde el nodo del json de AutoPlay
         server_list = channel_node.get('servers', [])
+        for server in server_list:
+            server = server.lower()
         quality_list = channel_node.get('quality', [])
 
         # Si no se definen calidades la se asigna default como calidad unica
@@ -145,7 +147,7 @@ def start(itemlist, item):
         # Se guardan los textos de cada servidor y calidad en listas p.e. favorite_servers = ['openload',
         # 'streamcloud']
         for num in range(1, 4):
-            favorite_servers.append(channel_node['servers'][settings_node['server_%s' % num]])
+            favorite_servers.append(channel_node['servers'][settings_node['server_%s' % num]].lower())
             favorite_quality.append(channel_node['quality'][settings_node['quality_%s' % num]])
 
         # Se filtran los enlaces de itemlist y que se correspondan con los valores de autoplay
@@ -175,25 +177,25 @@ def start(itemlist, item):
 
                 # si el servidor y la calidad no se encuentran en las listas de favoritos o la url esta repetida,
                 # descartamos el item
-                if item.server not in favorite_servers or item.quality not in favorite_quality \
+                if item.server.lower() not in favorite_servers or item.quality not in favorite_quality \
                         or item.url in url_list_valid:
                     item.type_b = True
                     b_dict['videoitem']= item
                     autoplay_b.append(b_dict)
                     continue
-                autoplay_elem["indice_server"] = favorite_servers.index(item.server)
+                autoplay_elem["indice_server"] = favorite_servers.index(item.server.lower())
                 autoplay_elem["indice_quality"] = favorite_quality.index(item.quality)
 
             elif priority == 2:  # Solo servidores
 
                 # si el servidor no se encuentra en la lista de favoritos o la url esta repetida,
                 # descartamos el item
-                if item.server not in favorite_servers or item.url in url_list_valid:
+                if item.server.lower() not in favorite_servers or item.url in url_list_valid:
                     item.type_b = True
                     b_dict['videoitem'] = item
                     autoplay_b.append(b_dict)
                     continue
-                autoplay_elem["indice_server"] = favorite_servers.index(item.server)
+                autoplay_elem["indice_server"] = favorite_servers.index(item.server.lower())
 
             elif priority == 3:  # Solo calidades
 
@@ -261,11 +263,11 @@ def start(itemlist, item):
                 if not platformtools.is_playing() and not played:
                     videoitem = autoplay_elem['videoitem']
                     logger.debug('videoitem %s' % videoitem)
-                    if videoitem.server not in max_intentos_servers:
-                        max_intentos_servers[videoitem.server] = max_intentos
+                    if videoitem.server.lower() not in max_intentos_servers:
+                        max_intentos_servers[videoitem.server.lower()] = max_intentos
 
                     # Si se han alcanzado el numero maximo de intentos de este servidor saltamos al siguiente
-                    if max_intentos_servers[videoitem.server] == 0:
+                    if max_intentos_servers[videoitem.server.lower()] == 0:
                         continue
 
                     lang = " "
@@ -312,15 +314,15 @@ def start(itemlist, item):
                         logger.debug(str(len(autoplay_list)))
 
                     # Si hemos llegado hasta aqui es por q no se ha podido reproducir
-                    max_intentos_servers[videoitem.server] -= 1
+                    max_intentos_servers[videoitem.server.lower()] -= 1
 
                     # Si se han alcanzado el numero maximo de intentos de este servidor
                     # preguntar si queremos seguir probando o lo ignoramos
-                    if max_intentos_servers[videoitem.server] == 0:
+                    if max_intentos_servers[videoitem.server.lower()] == 0:
                         text = "Parece que los enlaces de %s no estan funcionando." % videoitem.server.upper()
                         if not platformtools.dialog_yesno("AutoPlay", text,
                                                           "¿Desea ignorar todos los enlaces de este servidor?"):
-                            max_intentos_servers[videoitem.server] = max_intentos
+                            max_intentos_servers[videoitem.server.lower()] = max_intentos
 
                     # Si no quedan elementos en la lista se informa
                     if autoplay_elem == autoplay_list[-1]:
@@ -439,7 +441,7 @@ def check_value(channel, itemlist):
         quality_list = channel_node['quality'] = list()
 
     for item in itemlist:
-        if item.server not in server_list and item.server !='':
+        if item.server.lower() not in server_list and item.server !='':
             server_list.append(item.server)
             change = True
         if item.quality not in quality_list and item.quality !='':

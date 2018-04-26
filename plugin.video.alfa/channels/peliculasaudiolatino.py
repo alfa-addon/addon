@@ -9,7 +9,7 @@ from core import servertools
 from core.item import Item
 from platformcode import logger, config
 
-HOST = 'http://peliculasaudiolatino.com'
+HOST = 'http://verpeliculasenlatino.com'
 
 
 def mainlist(item):

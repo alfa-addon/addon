@@ -24,7 +24,7 @@ def start():
     funciones que deseamos que se ejecuten nada mas abrir el plugin.
     """
     logger.info()
-
+    config.set_setting('show_once', True)
     # Test if all the required directories are created
     config.verify_directories_created()
 
@@ -51,6 +51,11 @@ def run(item=None):
                     item.start = True;
             else:
                 item = Item(channel="channelselector", action="getmainlist", viewmode="movie")
+        if config.get_setting('show_once'):
+            platformtools.dialog_ok('Alfa', 'Alfa recomienda para mejorar tu experiencia:',
+                                    'Palomitas, relajate y disfruta.')
+            config.set_setting('show_once', False)
+
     logger.info(item.tostring())
 
     try:
@@ -308,6 +313,7 @@ def run(item=None):
                 "Se ha producido un error en alfa",
                 "Comprueba el log para ver mas detalles del error.",
                 log_message)
+
 
 
 def reorder_itemlist(itemlist):
