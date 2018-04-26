@@ -716,6 +716,7 @@ def check_list_links(itemlist, numero):
         if numero > 0 and it.server != '' and it.url != '':
             verificacion = check_video_link(it.url, it.server)
             it.title = verificacion + ', ' + it.title.strip()
+            it.alive = verificacion
             numero -= 1
     return itemlist
 

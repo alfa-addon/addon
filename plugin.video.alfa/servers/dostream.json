@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "clipwatching.com/(\\w+)",
-        "url": "http://clipwatching.com/\\1.html"
+        "pattern": "https://.+.d0stream.com/embed/([a-z0-9]+)",
+        "url": "https://v.d0stream.com/embed/\\1"
       }
     ]
   },
   "free": true,
-  "id": "clipwatching",
-  "name": "clipwatching",
+  "id": "dostream",
+  "name": "dostream",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s17.postimg.org/e6kcan0vj/clipwatching1.png"
+  "thumbnail": "https://s14.postimg.org/lczc08bsx/dostream.png"
 }

@@ -121,8 +121,8 @@ def episodios(item):
     data_lista = scrapertools.find_single_match(data,
                       '<ul class="episodios">(.+?)<\/ul><\/div><\/div><\/div>')
     show = item.title
-    patron_caps =   '<img alt=".+?" title=".+?" src="([^"]+)">'
-    patron_caps +=  '<\/a><\/div><div class=".+?">([^"]+)<\/div>.+?<a .+? href="([^"]+)">([^"]+)<\/a>'
+    patron_caps =   '<img alt=".+?" src="([^"]+)"><\/a><\/div><div class=".+?">([^"]+)<\/div>.+?'
+    patron_caps +=  '<a .+? href="([^"]+)">([^"]+)<\/a>'
     #scrapedthumbnail,#scrapedtempepi, #scrapedurl, #scrapedtitle
     matches = scrapertools.find_multiple_matches(data_lista, patron_caps)
     for scrapedthumbnail, scrapedtempepi, scrapedurl, scrapedtitle in matches:
@@ -148,11 +148,11 @@ def findvideos(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    data1 = scrapertools.find_single_match(data, 
+    data1 = scrapertools.find_single_match(data,
                       '<div id="playex" .+?>(.+?)<\/nav><\/div><\/div>')
     patron='src="(.+?)"'
     itemla = scrapertools.find_multiple_matches(data1,patron)
-    if "favicons?domain" in itemla[1]:
+    if "favicons?domain" in itemla[0]:
         method = 1
         data2=scrapertools.find_single_match(data, "var \$user_hashs = {(.+?)}")
         patron='".+?":"(.+?)"'
