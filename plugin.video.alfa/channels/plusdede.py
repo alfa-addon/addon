@@ -24,9 +24,6 @@ color1, color2, color3 = ['0xFFB10021', '0xFFB10021', '0xFFB10004']
 
 def login():
     url_origen = "https://www.plusdede.com/login?popup=1"
-    ficherocookies = os.path.join(config.get_data_path(), "cookies.dat")
-    if os.path.isfile(ficherocookies):
-        os.remove(ficherocookies)
     data = httptools.downloadpage(url_origen, follow_redirects=False).data
     if re.search(r'(?i)%s' % config.get_setting("plusdedeuser", "plusdede"), data):
         return True
