@@ -535,29 +535,24 @@ def episodios(item):
         item.url += "/episodios"
 
     data = httptools.downloadpage(item.url).data
-    data_season = data[:]
 
     #if "episodios" in item.extra or not __menu_info__ or item.path:
     action = "findvideos"
     # else:
     #     action = "menu_info_episode"
 
-    seasons = scrapertools.find_single_match(data, '<a href="([^"]+)"[^>]+><span class="season-toggle')
-    for i, url in enumerate(seasons):
-        if i != 0:
-            data_season = httptools.downloadpage(url, add_referer=True).data
-        patron = '<div class="ep-list-number">.*?href="([^"]+)">([^<]+)</a>.*?<span class="name">([^<]+)</span>'
-        matches = scrapertools.find_multiple_matches(data_season, patron)
-        for scrapedurl, episode, scrapedtitle in matches:
-            new_item = item.clone(action=action, url=scrapedurl, text_color=color2, contentType="episode")
-            new_item.contentSeason = episode.split("x")[0]
-            new_item.contentEpisodeNumber = episode.split("x")[1]
+    patron = '<div class="ep-list-number">.*?href="([^"]+)">([^<]+)</a>.*?<span class="name">([^<]+)</span>'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl, episode, scrapedtitle in matches:
+        new_item = item.clone(action=action, url=scrapedurl, text_color=color2, contentType="episode")
+        new_item.contentSeason = episode.split("x")[0]
+        new_item.contentEpisodeNumber = episode.split("x")[1]
 
-            new_item.title = episode + " - " + scrapedtitle
-            new_item.extra = "episode"
-            if "episodios" in item.extra or item.path:
-                new_item.extra = "episode|"
-            itemlist.append(new_item)
+        new_item.title = episode + " - " + scrapedtitle
+        new_item.extra = "episode"
+        if "episodios" in item.extra or item.path:
+            new_item.extra = "episode|"
+        itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
