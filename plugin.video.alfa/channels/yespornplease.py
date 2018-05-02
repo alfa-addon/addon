@@ -65,7 +65,7 @@ def links(item):
     logger.info()
     data = httptools.downloadpage(item.url).data
 
-    reExpr = "<img\s+src=['\"](?P<img>[^'\"]+)[^>]+title[^'\"]*['\"](?P<title>[^\"]+)[^>]+id[^'\"]*['\"](?P<id>[^'\"]+)[^>]*>(?:[^<]*<[^>]+>(?P<quality>[^<]+)<)?[^<]*<[^>]*duration[^>]*>(?P<duration>[^<]+)"
+    reExpr = "<img\s+src=['\"](?P<img>[^'\"]+)[^>]+(?:title|alt)[^'\"]*['\"](?P<title>[^\"]+)[^>]+id[^'\"]*['\"](?P<id>[^'\"]+)[^>]*>(?:[^<]*<[^>]+>(?P<quality>[^<]+)<)?[^<]*<[^>]*duration[^>]*>(?P<duration>[^<]+)"
     reResults = re.findall(reExpr, data, re.MULTILINE | re.DOTALL)
     result = []
 
@@ -95,6 +95,6 @@ def links(item):
 
 def play(item):
     logger.info(item)
-    embededURL = urljoin(item.url, "/e/%s/width-650/height-400/autoplay-0/" % (item.vID))
+    embededURL = urljoin(item.url, "/view/%s" % (item.vID))
     itemlist = servertools.find_video_items(item.clone(url = embededURL))
     return itemlist
