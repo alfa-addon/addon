@@ -24,20 +24,44 @@ color1, color2, color3 = ['0xFFB10021', '0xFFB10021', '0xFFB10004']
 
 def login():
     url_origen = "https://www.plusdede.com/login?popup=1"
-    data = httptools.downloadpage(url_origen, follow_redirects=True).data
+    data = httptools.downloadpage(url_origen, follow_redirects=False).data
     if re.search(r'(?i)%s' % config.get_setting("plusdedeuser", "plusdede"), data):
         return True
-
     token = scrapertools.find_single_match(data, '<input name="_token" type="hidden" value="([^"]+)"')
-
-    post = "_token=" + str(token) + "&email=" + str(
-        config.get_setting("plusdedeuser", "plusdede")) + "&password=" + str(
-        config.get_setting("plusdedepassword", "plusdede")) + "&app=2131296469"
+    if re.search('Escribe los números de la imagen', data):
+        captcha_url = scrapertools.find_single_match(data, '<img src="([^"]+)" alt="captcha">')
+        imagen_data = httptools.downloadpage(captcha_url).data
+        ficheropng = os.path.join(config.get_data_path(), "captcha_plusdede.png")
+        outfile=open(ficheropng,'wb')
+        outfile.write(imagen_data)
+        outfile.close()
+        img = xbmcgui.ControlImage(450,15,400,130,ficheropng)
+        wdlg = xbmcgui.WindowDialog()
+        wdlg.addControl(img)
+        wdlg.show()
+        time.sleep(4)
+        kb = xbmc.Keyboard('', 'Type the letters in the image', False)
+        kb.doModal()
+        postcaptcha = ""
+        if (kb.isConfirmed()):
+            userInput = kb.getText()
+            if userInput != '':
+                solution = kb.getText()
+                postcaptcha = "&captcha=" + str(solution)
+            elif userInput == '':
+                #Notify('big', 'No text entered', 'You must enter text in the image to access video', '')
+                return False
+            else:
+                return False
+        wdlg.close()
+    else:
+        postcaptcha=""
+    post = "_token=" + str(token) + "&email=" + str(config.get_setting("plusdedeuser", "plusdede")) + "&password=" + str(config.get_setting("plusdedepassword", "plusdede")) + postcaptcha\
+    #+ "&app=2131296469"
     url = "https://www.plusdede.com/"
-    headers = {"User-Agent":"Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) "
-                                "Chrome/61.0.3163.100 Safari/537.36","Referer": url, "X-Requested-With": "XMLHttpRequest", "X-CSRF-TOKEN": token}
-    data = httptools.downloadpage("https://www.plusdede.com/login", post=post, headers=headers,
-                                  replace_headers=False).data
+    headers = {"User-Agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/61.0.3163.100 Safari/537.36", "Referer": url, "X-Requested-With": "XMLHttpRequest","X-CSRF-TOKEN": token}
+    data = httptools.downloadpage("https://www.plusdede.com/login", post=post, headers=headers, replace_headers=False).data
     if "redirect" in data:
         return True
     else:
