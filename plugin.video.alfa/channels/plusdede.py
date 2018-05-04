@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import urlparse
+from time import sleep
 
 from core import channeltools
 from core import httptools
@@ -14,7 +15,7 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 
-HOST = 'http://www.plusdede.com'
+HOST = 'https://www.plusdede.com'
 __channel__ = 'plusdede'
 parameters = channeltools.get_channel_parameters(__channel__)
 fanart_host = parameters['fanart']
@@ -23,20 +24,48 @@ color1, color2, color3 = ['0xFFB10021', '0xFFB10021', '0xFFB10004']
 
 
 def login():
-    url_origen = "https://www.plusdede.com/login?popup=1"
-    data = httptools.downloadpage(url_origen, follow_redirects=True).data
+    url_origen = HOST+"/login?popup=1"
+    try:
+        data = httptools.downloadpage(url_origen).data
+    except:
+        data = httptools.downloadpage(url_origen, follow_redirects=False).data
+
     if re.search(r'(?i)%s' % config.get_setting("plusdedeuser", "plusdede"), data):
-        return True
-
+         return True
     token = scrapertools.find_single_match(data, '<input name="_token" type="hidden" value="([^"]+)"')
+    if re.search('Escribe los números de la imagen', data):
+        captcha_url = scrapertools.find_single_match(data, '<img src="([^"]+)" alt="captcha">')
+        imagen_data = httptools.downloadpage(captcha_url).data
+        ficheropng = os.path.join(config.get_data_path(), "captcha_plusdede.png")
+        outfile=open(ficheropng,'wb')
+        outfile.write(imagen_data)
+        outfile.close()
+        img = xbmcgui.ControlImage(450,15,400,130,ficheropng)
+        wdlg = xbmcgui.WindowDialog()
+        wdlg.addControl(img)
+        wdlg.show()
+        sleep(1)
+        kb = platformtools.dialog_numeric(0, "Escribe los números de la imagen")
 
-    post = "_token=" + str(token) + "&email=" + str(
-        config.get_setting("plusdedeuser", "plusdede")) + "&password=" + str(
-        config.get_setting("plusdedepassword", "plusdede")) + "&app=2131296469"
-    url = "https://www.plusdede.com/"
-    headers = {"User-Agent":"Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) "
-                                "Chrome/61.0.3163.100 Safari/537.36","Referer": url, "X-Requested-With": "XMLHttpRequest", "X-CSRF-TOKEN": token}
-    data = httptools.downloadpage("https://www.plusdede.com/login", post=post, headers=headers,
+        postcaptcha = ""
+        if kb !='':
+                solution = kb
+                postcaptcha = "&captcha=" + str(solution)
+        else:
+             return False
+        wdlg.close()
+    else:
+        postcaptcha=""
+
+    post = "_token=" + str(token) + "&email=" + str(config.get_setting("plusdedeuser", "plusdede")) + \
+           "&password=" + str(config.get_setting("plusdedepassword", "plusdede")) + postcaptcha\
+           #+ "&app=2131296469"
+
+    url = HOST
+    headers = {"User-Agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/66.0.3163.100 Safari/537.36", "Referer": url, "X-Requested-With": "XMLHttpRequest","X-CSRF-TOKEN":
+        token}
+    data = httptools.downloadpage(HOST+"/login", post=post, headers=headers,
                                   replace_headers=False).data
     if "redirect" in data:
         return True
@@ -785,7 +814,6 @@ def checkseen(item):
                                  "Chrome/61.0.3163.100 Safari/537.36", "Referer": "https://www.plusdede.com/serie/",
                    "X-Requested-With": "XMLHttpRequest", "X-CSRF-TOKEN": item.token}
     data = httptools.downloadpage(url_temp, post="id=" + item.idtemp, headers=headers, replace_headers=True).data
-    #logger.debug(data)
     return True
 
 
