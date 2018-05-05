@@ -137,7 +137,7 @@ def lista(item):
 
     if itemlist != []:
         actual_page_url = item.url
-        next_page = scrapertools.find_single_match(data, '<div class=pag_b><a href=(.*?) >Siguiente<\/a>')
+        next_page = scrapertools.find_single_match(data, '<link rel=next href=(.*?) />')
         if next_page != '':
             itemlist.append(Item(channel=item.channel, action="lista", title='Siguiente >>>', url=next_page,
                                  thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'))
@@ -222,7 +222,7 @@ def findvideos(item):
 
     for video_url in matches:
         logger.debug('video_url: %s' % video_url)
-        if 'stream' in video_url:
+        if 'stream' in video_url and 'streamango' not in video_url:
             data = httptools.downloadpage('https:'+video_url).data
             logger.debug(data)
             if not 'iframe' in video_url:
