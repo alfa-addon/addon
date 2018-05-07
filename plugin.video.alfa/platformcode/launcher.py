@@ -24,6 +24,7 @@ def start():
     funciones que deseamos que se ejecuten nada mas abrir el plugin.
     """
     logger.info()
+    #config.set_setting('show_once', True)
     # Test if all the required directories are created
     config.verify_directories_created()
 
