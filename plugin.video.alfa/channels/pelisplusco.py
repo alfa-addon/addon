@@ -257,7 +257,7 @@ def seccion(item):
                 itemlist.append(item.clone(action="seccion",
                                            title='Siguiente >>>',
                                            url=next_page_url,
-                                           thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'
+                                           thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
                                            ))
 
     return itemlist

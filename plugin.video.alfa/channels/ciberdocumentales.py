@@ -16,20 +16,20 @@ def mainlist(item):
 
     itemlist = []
 
-    itemlist.append(item.clone(title="Todas", action="lista", thumbnail='https://s18.postimg.org/fwvaeo6qh/todas.png',
-                               fanart='https://s18.postimg.org/fwvaeo6qh/todas.png', url=host))
+    itemlist.append(item.clone(title="Todas", action="lista", thumbnail='https://s18.postimg.cc/fwvaeo6qh/todas.png',
+                               fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png', url=host))
 
     itemlist.append(Item(channel=item.channel, title="Generos", action="generos", url=host,
-                         thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
-                         fanart='https://s3.postimg.org/5s9jg2wtf/generos.png'))
+                         thumbnail='https://s3.postimg.cc/5s9jg2wtf/generos.png',
+                         fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png'))
 
     itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="lista", url=host,
-                         thumbnail='https://s9.postimg.org/wmhzu9d7z/vistas.png',
-                         fanart='https://s9.postimg.org/wmhzu9d7z/vistas.png', extra='masvistas'))
+                         thumbnail='https://s9.postimg.cc/wmhzu9d7z/vistas.png',
+                         fanart='https://s9.postimg.cc/wmhzu9d7z/vistas.png', extra='masvistas'))
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host,
-                         thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
-                         fanart='https://s30.postimg.org/pei7txpa9/buscar.png'))
+                         thumbnail='https://s30.postimg.cc/pei7txpa9/buscar.png',
+                         fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'))
 
     return itemlist
 
@@ -69,7 +69,7 @@ def lista(item):
         next_page = scrapertools.find_single_match(data, 'class=current>.*?<\/span><a href=(.*?)>.*?<\/a>')
         if next_page != '' and item.extra != 'masvistas':
             itemlist.append(Item(channel=item.channel, action="lista", title='Siguiente >>>', url=host + next_page,
-                                 thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'))
+                                 thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'))
     return itemlist
 
 

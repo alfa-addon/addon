@@ -11,11 +11,11 @@ from core import jsontools
 from core.item import Item
 from platformcode import config, logger
 
-tgenero = {"Drama": "https://s16.postimg.org/94sia332d/drama.png",
-           u"Accción": "https://s3.postimg.org/y6o9puflv/accion.png",
-           u"Animación": "https://s13.postimg.org/5on877l87/animacion.png",
-           u"Ciencia Ficción": "https://s9.postimg.org/diu70s7j3/cienciaficcion.png",
-           "Terror": "https://s7.postimg.org/yi0gij3gb/terror.png",
+tgenero = {"Drama": "https://s16.postimg.cc/94sia332d/drama.png",
+           u"Accción": "https://s3.postimg.cc/y6o9puflv/accion.png",
+           u"Animación": "https://s13.postimg.cc/5on877l87/animacion.png",
+           u"Ciencia Ficción": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png",
+           "Terror": "https://s7.postimg.cc/yi0gij3gb/terror.png",
            }
 
 audio = {'LAT': '[COLOR limegreen]LATINO[/COLOR]', 'SUB': '[COLOR red]Subtitulado[/COLOR]'}
@@ -30,40 +30,40 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Ultimas",
                                action="lista",
-                               thumbnail='https://s22.postimg.org/cb7nmhwv5/ultimas.png',
-                               fanart='https://s22.postimg.org/cb7nmhwv5/ultimas.png',
+                               thumbnail='https://s22.postimg.cc/cb7nmhwv5/ultimas.png',
+                               fanart='https://s22.postimg.cc/cb7nmhwv5/ultimas.png',
                                url=host + '/estrenos/'
                                ))
 
     itemlist.append(item.clone(title="Generos",
                                action="seccion",
                                url=host,
-                               thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
-                               fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                               thumbnail='https://s3.postimg.cc/5s9jg2wtf/generos.png',
+                               fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png',
                                seccion='generos'
                                ))
 
     itemlist.append(item.clone(title="Por Año",
                                action="seccion",
                                url=host + '/peliculas/2017/',
-                               thumbnail='https://s8.postimg.org/7eoedwfg5/pora_o.png',
-                               fanart='https://s8.postimg.org/7eoedwfg5/pora_o.png',
+                               thumbnail='https://s8.postimg.cc/7eoedwfg5/pora_o.png',
+                               fanart='https://s8.postimg.cc/7eoedwfg5/pora_o.png',
                                seccion='anios'
                                ))
 
     itemlist.append(item.clone(title="Por Actor",
                                action="seccion",
                                url=host + '/actores/',
-                               thumbnail='https://s17.postimg.org/w25je5zun/poractor.png',
-                               fanart='https://s17.postimg.org/w25je5zun/poractor.png',
+                               thumbnail='https://s17.postimg.cc/w25je5zun/poractor.png',
+                               fanart='https://s17.postimg.cc/w25je5zun/poractor.png',
                                seccion='actor'
                                ))
 
     itemlist.append(item.clone(title="Buscar",
                                action="search",
                                url=host + '/api/elastic/suggest?query=',
-                               thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
-                               fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
+                               thumbnail='https://s30.postimg.cc/pei7txpa9/buscar.png',
+                               fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
                                ))
 
     return itemlist
@@ -119,7 +119,7 @@ def lista(item):
                                      action="lista",
                                      title='Siguiente >>>',
                                      url=next_page_url,
-                                     thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'
+                                     thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
                                      ))
     return itemlist
 
@@ -178,7 +178,7 @@ def seccion(item):
                 itemlist.append(item.clone(action="seccion",
                                            title='Siguiente >>>',
                                            url=next_page_url,
-                                           thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'
+                                           thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
                                            ))
 
     return itemlist

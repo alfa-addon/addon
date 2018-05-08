@@ -142,7 +142,7 @@ def lista (item):
            itemlist.append(item.clone(action = "lista",
                                       title = 'Siguiente >>>',
                                       url = next_page,
-                                      thumbnail='https://s32.postimg.org/4zppxf5j9/siguiente.png'
+                                      thumbnail='https://s32.postimg.cc/4zppxf5j9/siguiente.png'
                                       ))
     return itemlist
 

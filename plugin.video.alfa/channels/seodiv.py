@@ -34,8 +34,8 @@ def mainlist(item):
              title="Todos",
              action="todas",
              url=host,
-             thumbnail='https://s27.postimg.org/iahczwgrn/series.png',
-             fanart='https://s27.postimg.org/iahczwgrn/series.png',
+             thumbnail='https://s27.postimg.cc/iahczwgrn/series.png',
+             fanart='https://s27.postimg.cc/iahczwgrn/series.png',
              page=0
              ))
     autoplay.show_option(item.channel, itemlist)
@@ -62,7 +62,7 @@ def todas(item):
         calidad = scrapedcalidad
         title = scrapedtitle.decode('utf-8')
         thumbnail = scrapedthumbnail
-        fanart = 'https://s32.postimg.org/gh8lhbkb9/seodiv.png'
+        fanart = 'https://s32.postimg.cc/gh8lhbkb9/seodiv.png'
         if not 'xxxxxx' in scrapedtitle:
             itemlist.append(
                 Item(channel=item.channel,

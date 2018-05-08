@@ -21,24 +21,24 @@ def mainlist(item):
     itemlist = []
     itemlist.append(
         Item(channel=item.channel, title="[COLOR orange]Estrenos[/COLOR]", action="peliculas", url= host + "/ver/estrenos",
-             fanart="http://s24.postimg.org/z6ulldcph/pdkesfan.jpg",
-             thumbnail="http://s16.postimg.org/st4x601d1/pdkesth.jpg"))
+             fanart="http://s24.postimg.cc/z6ulldcph/pdkesfan.jpg",
+             thumbnail="http://s16.postimg.cc/st4x601d1/pdkesth.jpg"))
     itemlist.append(
         Item(channel=item.channel, title="[COLOR orange]PelisHd[/COLOR]", action="peliculas", url= host + "/calidad/HD-720/",
-             fanart="http://s18.postimg.org/wzqonq3w9/pdkhdfan.jpg",
-             thumbnail="http://s8.postimg.org/nn5669ln9/pdkhdthu.jpg"))
+             fanart="http://s18.postimg.cc/wzqonq3w9/pdkhdfan.jpg",
+             thumbnail="http://s8.postimg.cc/nn5669ln9/pdkhdthu.jpg"))
     itemlist.append(
         Item(channel=item.channel, title="[COLOR orange]Pelis HD-Rip[/COLOR]", action="peliculas", url= host + "/calidad/HD-320",
-             fanart="http://s7.postimg.org/3pmnrnu7f/pdkripfan.jpg",
-             thumbnail="http://s12.postimg.org/r7re8fie5/pdkhdripthub.jpg"))
+             fanart="http://s7.postimg.cc/3pmnrnu7f/pdkripfan.jpg",
+             thumbnail="http://s12.postimg.cc/r7re8fie5/pdkhdripthub.jpg"))
     itemlist.append(
         Item(channel=item.channel, title="[COLOR orange]Pelis Audio español[/COLOR]", action="peliculas", url= host + "/idioma/Espanol/",
-             fanart="http://s11.postimg.org/65t7bxlzn/pdkespfan.jpg",
-             thumbnail="http://s13.postimg.org/sh1034ign/pdkhsphtub.jpg"))
+             fanart="http://s11.postimg.cc/65t7bxlzn/pdkespfan.jpg",
+             thumbnail="http://s13.postimg.cc/sh1034ign/pdkhsphtub.jpg"))
     itemlist.append(
         Item(channel=item.channel, title="[COLOR orange]Buscar...[/COLOR]", action="search", url= host + "/calidad/HD-720/",
-             fanart="http://s14.postimg.org/ceqajaw2p/pdkbusfan.jpg",
-             thumbnail="http://s13.postimg.org/o85gsftyv/pdkbusthub.jpg"))
+             fanart="http://s14.postimg.cc/ceqajaw2p/pdkbusfan.jpg",
+             thumbnail="http://s13.postimg.cc/o85gsftyv/pdkbusthub.jpg"))
 
     return itemlist
 
@@ -84,14 +84,14 @@ def buscador(item):
             scrapedtitle = scrapedtitle.split("(")[0].strip()
             itemlist.append(Item(channel=item.channel, title=title, url=scrapedurl, action="findvideos",
                                  thumbnail=scrapedthumbnail, contentTitle = scrapedtitle, infoLabels={'year':year},
-                                 fanart="http://s18.postimg.org/h9kb22mnt/pdkfanart.jpg", library=True, folder=True))
+                                 fanart="http://s18.postimg.cc/h9kb22mnt/pdkfanart.jpg", library=True, folder=True))
     tmdb.set_infoLabels(itemlist, True)
     try:
         next_page = scrapertools.get_match(data,
                                            '<span class="current">.*?<a href="(.*?)".*?>Siguiente &raquo;</a></div>')
         itemlist.append(Item(channel=item.channel, action="buscador", title="[COLOR red]siguiente>>[/COLOR]", url=next_page,
-                             thumbnail="http://s6.postimg.org/uej03x4r5/bricoflecha.png",
-                             fanart="http://s18.postimg.org/h9kb22mnt/pdkfanart.jpg", folder=True))
+                             thumbnail="http://s6.postimg.cc/uej03x4r5/bricoflecha.png",
+                             fanart="http://s18.postimg.cc/h9kb22mnt/pdkfanart.jpg", folder=True))
     except:
         pass
     return itemlist
@@ -124,7 +124,7 @@ def peliculas(item):
                                  url=scrapedurl,
                                  action="findvideos",
                                  thumbnail=scrapedthumbnail,
-                                 fanart="http://s18.postimg.org/h9kb22mnt/pdkfanart.jpg", library=True, folder=True,
+                                 fanart="http://s18.postimg.cc/h9kb22mnt/pdkfanart.jpg", library=True, folder=True,
                                  language=scrapedlenguaje,
                                  quality=scrapedcalidad,
                                  contentTitle = scrapedtitle,
@@ -134,8 +134,8 @@ def peliculas(item):
     ## Paginación
     next_page = scrapertools.get_match(data, '<span class="current">.*?<a href="(.*?)".*?>Siguiente &raquo;</a></div>')
     itemlist.append(Item(channel=item.channel, action="peliculas", title="[COLOR red]siguiente>>[/COLOR]", url=next_page,
-                         thumbnail="http://s6.postimg.org/uej03x4r5/bricoflecha.png",
-                         fanart="http://s18.postimg.org/h9kb22mnt/pdkfanart.jpg", folder=True))
+                         thumbnail="http://s6.postimg.cc/uej03x4r5/bricoflecha.png",
+                         fanart="http://s18.postimg.cc/h9kb22mnt/pdkfanart.jpg", folder=True))
     return itemlist
 
 

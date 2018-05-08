@@ -17,8 +17,8 @@ host = "http://mundoflv.com"
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
 thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'
 thumben = 'http://flags.fmcdn.net/data/flags/normal/gb.png'
-thumbsub = 'https://s32.postimg.org/nzstk8z11/sub.png'
-thumbtodos = 'https://s29.postimg.org/4p8j2pkdj/todos.png'
+thumbsub = 'https://s32.postimg.cc/nzstk8z11/sub.png'
+thumbtodos = 'https://s29.postimg.cc/4p8j2pkdj/todos.png'
 patrones = ['<<meta property="og:image" content="([^"]+)" \/>" \/>', '\/><\/a>([^*]+)<p><\/p>.*']
 
 IDIOMAS = {'la': 'Latino',
@@ -62,7 +62,7 @@ def mainlist(item):
                          action="todas",
                          url=host,
                          thumbnail=get_thumb('tvshows', auto=True),
-                         fanart='https://s27.postimg.org/iahczwgrn/series.png'
+                         fanart='https://s27.postimg.cc/iahczwgrn/series.png'
                          ))
 
     itemlist.append(Item(channel=item.channel,
@@ -70,7 +70,7 @@ def mainlist(item):
                          action="letras",
                          url=host,
                          thumbnail=get_thumb('alphabet', auto=True),
-                         fanart='https://s17.postimg.org/fwi1y99en/a-z.png'
+                         fanart='https://s17.postimg.cc/fwi1y99en/a-z.png'
                          ))
 
     itemlist.append(Item(channel=item.channel,
@@ -78,7 +78,7 @@ def mainlist(item):
                          action="masvistas",
                          url=host,
                          thumbnail=get_thumb('more watched', auto=True),
-                         fanart='https://s9.postimg.org/wmhzu9d7z/vistas.png'
+                         fanart='https://s9.postimg.cc/wmhzu9d7z/vistas.png'
                          ))
 
     itemlist.append(Item(channel=item.channel,
@@ -86,14 +86,14 @@ def mainlist(item):
                          action="recomendadas",
                          url=host,
                          thumbnail=get_thumb('recomended', auto=True),
-                         fanart='https://s12.postimg.org/s881laywd/recomendadas.png'
+                         fanart='https://s12.postimg.cc/s881laywd/recomendadas.png'
                          ))
 
     itemlist.append(Item(channel=item.channel,
                          title="Ultimas Agregadas",
                          action="ultimas",
                          url=host, thumbnail=get_thumb('last', auto=True),
-                         fanart='https://s22.postimg.org/cb7nmhwv5/ultimas.png'
+                         fanart='https://s22.postimg.cc/cb7nmhwv5/ultimas.png'
                          ))
 
     itemlist.append(Item(channel=item.channel,
@@ -101,7 +101,7 @@ def mainlist(item):
                          action="search",
                          url='http://mundoflv.com/?s=',
                          thumbnail=get_thumb('search', auto=True),
-                         fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
+                         fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
                          ))
 
     if autoplay.context:
@@ -130,7 +130,7 @@ def todas(item):
         year = scrapedyear
         plot = ''
 
-        fanart = 'https://s32.postimg.org/h1ewz9hhx/mundoflv.png'
+        fanart = 'https://s32.postimg.cc/h1ewz9hhx/mundoflv.png'
         itemlist.append(
             Item(channel=item.channel,
                  action="temporadas",
@@ -156,42 +156,42 @@ def todas(item):
                              action="todas",
                              title=">> Página siguiente",
                              url=next_page_url,
-                             thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'
+                             thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
                              ))
 
     return itemlist
 
 
 def letras(item):
-    thumbletras = {'0-9': 'https://s32.postimg.org/drojt686d/image.png',
-                   '0 - 9': 'https://s32.postimg.org/drojt686d/image.png',
-                   '#': 'https://s32.postimg.org/drojt686d/image.png',
-                   'a': 'https://s32.postimg.org/llp5ekfz9/image.png',
-                   'b': 'https://s32.postimg.org/y1qgm1yp1/image.png',
-                   'c': 'https://s32.postimg.org/vlon87gmd/image.png',
-                   'd': 'https://s32.postimg.org/3zlvnix9h/image.png',
-                   'e': 'https://s32.postimg.org/bgv32qmsl/image.png',
-                   'f': 'https://s32.postimg.org/y6u7vq605/image.png',
-                   'g': 'https://s32.postimg.org/9237ib6jp/image.png',
-                   'h': 'https://s32.postimg.org/812yt6pk5/image.png',
-                   'i': 'https://s32.postimg.org/6nbbxvqat/image.png',
-                   'j': 'https://s32.postimg.org/axpztgvdx/image.png',
-                   'k': 'https://s32.postimg.org/976yrzdut/image.png',
-                   'l': 'https://s32.postimg.org/fmal2e9yd/image.png',
-                   'm': 'https://s32.postimg.org/m19lz2go5/image.png',
-                   'n': 'https://s32.postimg.org/b2ycgvs2t/image.png',
-                   'o': 'https://s32.postimg.org/c6igsucpx/image.png',
-                   'p': 'https://s32.postimg.org/jnro82291/image.png',
-                   'q': 'https://s32.postimg.org/ve5lpfv1h/image.png',
-                   'r': 'https://s32.postimg.org/nmovqvqw5/image.png',
-                   's': 'https://s32.postimg.org/zd2t89jol/image.png',
-                   't': 'https://s32.postimg.org/wk9lo8jc5/image.png',
-                   'u': 'https://s32.postimg.org/w8s5bh2w5/image.png',
-                   'v': 'https://s32.postimg.org/e7dlrey91/image.png',
-                   'w': 'https://s32.postimg.org/fnp49k15x/image.png',
-                   'x': 'https://s32.postimg.org/dkep1w1d1/image.png',
-                   'y': 'https://s32.postimg.org/um7j3zg85/image.png',
-                   'z': 'https://s32.postimg.org/jb4vfm9d1/image.png'}
+    thumbletras = {'0-9': 'https://s32.postimg.cc/drojt686d/image.png',
+                   '0 - 9': 'https://s32.postimg.cc/drojt686d/image.png',
+                   '#': 'https://s32.postimg.cc/drojt686d/image.png',
+                   'a': 'https://s32.postimg.cc/llp5ekfz9/image.png',
+                   'b': 'https://s32.postimg.cc/y1qgm1yp1/image.png',
+                   'c': 'https://s32.postimg.cc/vlon87gmd/image.png',
+                   'd': 'https://s32.postimg.cc/3zlvnix9h/image.png',
+                   'e': 'https://s32.postimg.cc/bgv32qmsl/image.png',
+                   'f': 'https://s32.postimg.cc/y6u7vq605/image.png',
+                   'g': 'https://s32.postimg.cc/9237ib6jp/image.png',
+                   'h': 'https://s32.postimg.cc/812yt6pk5/image.png',
+                   'i': 'https://s32.postimg.cc/6nbbxvqat/image.png',
+                   'j': 'https://s32.postimg.cc/axpztgvdx/image.png',
+                   'k': 'https://s32.postimg.cc/976yrzdut/image.png',
+                   'l': 'https://s32.postimg.cc/fmal2e9yd/image.png',
+                   'm': 'https://s32.postimg.cc/m19lz2go5/image.png',
+                   'n': 'https://s32.postimg.cc/b2ycgvs2t/image.png',
+                   'o': 'https://s32.postimg.cc/c6igsucpx/image.png',
+                   'p': 'https://s32.postimg.cc/jnro82291/image.png',
+                   'q': 'https://s32.postimg.cc/ve5lpfv1h/image.png',
+                   'r': 'https://s32.postimg.cc/nmovqvqw5/image.png',
+                   's': 'https://s32.postimg.cc/zd2t89jol/image.png',
+                   't': 'https://s32.postimg.cc/wk9lo8jc5/image.png',
+                   'u': 'https://s32.postimg.cc/w8s5bh2w5/image.png',
+                   'v': 'https://s32.postimg.cc/e7dlrey91/image.png',
+                   'w': 'https://s32.postimg.cc/fnp49k15x/image.png',
+                   'x': 'https://s32.postimg.cc/dkep1w1d1/image.png',
+                   'y': 'https://s32.postimg.cc/um7j3zg85/image.png',
+                   'z': 'https://s32.postimg.cc/jb4vfm9d1/image.png'}
 
     logger.info()
     itemlist = []
@@ -581,7 +581,7 @@ def busqueda(item):
                  action="busqueda",
                  title=">> Página siguiente",
                  url=next_page_url,
-                 thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'
+                 thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
                  ))
     return itemlist
 
