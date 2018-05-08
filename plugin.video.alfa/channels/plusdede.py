@@ -29,8 +29,7 @@ def login():
         data = httptools.downloadpage(url_origen).data
     except:
         data = httptools.downloadpage(url_origen, follow_redirects=False).data
-
-    if re.search(r'(?i)%s' % config.get_setting("plusdedeuser", "plusdede"), data):
+    if '<span class="username">' in data:
          return True
     token = scrapertools.find_single_match(data, '<input name="_token" type="hidden" value="([^"]+)"')
     if re.search('Escribe los números de la imagen', data):
@@ -60,7 +59,6 @@ def login():
     post = "_token=" + str(token) + "&email=" + str(config.get_setting("plusdedeuser", "plusdede")) + \
            "&password=" + str(config.get_setting("plusdedepassword", "plusdede")) + postcaptcha\
            #+ "&app=2131296469"
-
     url = HOST
     headers = {"User-Agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/66.0.3163.100 Safari/537.36", "Referer": url, "X-Requested-With": "XMLHttpRequest","X-CSRF-TOKEN":
@@ -76,10 +74,9 @@ def login():
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    if config.get_setting("plusdedeuser", "plusdede") == "":
+    if not config.get_setting("plusdedeuser", "plusdede"):
         itemlist.append(
-            Item(channel=item.channel, title="Habilita tu cuenta en la configuración...", action="settingCanal",
+            Item(channel=item.channel, title="Habilita tu cuenta en la configuración e ingresar de nuevo al canal", action="settingCanal",
                  url=""))
     else:
         result = login()
