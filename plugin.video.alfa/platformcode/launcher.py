@@ -24,7 +24,7 @@ def start():
     funciones que deseamos que se ejecuten nada mas abrir el plugin.
     """
     logger.info()
-    config.set_setting('show_once', False)
+    #config.set_setting('show_once', True)
     # Test if all the required directories are created
     config.verify_directories_created()
 
@@ -51,10 +51,10 @@ def run(item=None):
                     item.start = True;
             else:
                 item = Item(channel="channelselector", action="getmainlist", viewmode="movie")
-        if config.get_setting('show_once'):
+        if not config.get_setting('show_once'):
             platformtools.dialog_ok('Alfa', 'Alfa recomienda para mejorar tu experiencia:',
                                     'Palomitas, relajate y disfruta.')
-            config.set_setting('show_once', False)
+            config.set_setting('show_once', True)
 
     logger.info(item.tostring())
 
