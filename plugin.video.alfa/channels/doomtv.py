@@ -34,7 +34,7 @@ def mainlist(item):
         item.clone(title="Todas",
                    action="lista",
                    thumbnail=get_thumb('all', auto=True),
-                   fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
+                   fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
                    url='%s%s'%(host,'peliculas/page/1')
                    ))
 
@@ -42,7 +42,7 @@ def mainlist(item):
         item.clone(title="Generos",
                    action="seccion",
                    thumbnail=get_thumb('genres', auto=True),
-                   fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                   fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png',
                    url='%s%s' % (host, 'peliculas/page/1'),
                    ))
 
@@ -50,7 +50,7 @@ def mainlist(item):
         item.clone(title="Mas Vistas",
                    action="lista",
                    thumbnail=get_thumb('more watched', auto=True),
-                   fanart='https://s9.postimg.org/wmhzu9d7z/vistas.png',
+                   fanart='https://s9.postimg.cc/wmhzu9d7z/vistas.png',
                    url='%s%s'%(host,'top-imdb/page/1'),
                    ))
 
@@ -59,7 +59,7 @@ def mainlist(item):
                    action="search",
                    url='http://doomtv.net/?s=',
                    thumbnail=get_thumb('search', auto=True),
-                   fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
+                   fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
                    ))
 
     return itemlist
@@ -125,7 +125,7 @@ def lista(item):
                  action="lista",
                  title='Siguiente >>>',
                  url=next_page_url,
-                 thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png',
+                 thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png',
                  extra=item.extra,
                  next_page=next_page
                  ))

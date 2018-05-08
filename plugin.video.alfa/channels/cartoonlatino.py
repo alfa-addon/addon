@@ -65,7 +65,7 @@ def lista_gen(item):
     if next_page_url != "" and i != 1:
         item.url = next_page_url
         itemlist.append(Item(channel=item.channel, action="lista_gen", title=">> Página siguiente", url=next_page_url,
-                             thumbnail='https://s32.postimg.org/4zppxf5j9/siguiente.png'))
+                             thumbnail='https://s32.postimg.cc/4zppxf5j9/siguiente.png'))
 
     return itemlist
 

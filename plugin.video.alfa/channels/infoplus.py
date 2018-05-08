@@ -79,7 +79,7 @@ class main(xbmcgui.WindowDialog):
         else:
             tipo = "serie"
             tipo_busqueda = "tv"
-            icono = "http://s6.postimg.org/hzcjag975/tvdb.png"
+            icono = "http://s6.postimg.cc/hzcjag975/tvdb.png"
 
         if self.item.rating_filma:
             if "|" in self.item.show:
@@ -277,12 +277,12 @@ class main(xbmcgui.WindowDialog):
         self.fonts = get_fonts(skin)
         self.setCoordinateResolution(2)
         self.actorButton = xbmcgui.ControlButton(995, 475, 55, 55, '', font='Font40', alignment=0x00000006,
-                                                 noFocusTexture='https://s17.postimg.org/40acsuihb/thumb_search_star_no.png',
-                                                 focusTexture='https://s33.postimg.org/ikk0qyvrj/thumb_search_star.png',
+                                                 noFocusTexture='https://s17.postimg.cc/40acsuihb/thumb_search_star_no.png',
+                                                 focusTexture='https://s33.postimg.cc/ikk0qyvrj/thumb_search_star.png',
                                                  focusedColor='0xFFAAAAAA')
         self.trailerButton = xbmcgui.ControlButton(910, 475, 55, 55, '', font='Font40', alignment=0x00000006,
-                                                   noFocusTexture='https://s17.postimg.org/774wcgv7j/thumb_search_trailer_no.png',
-                                                   focusTexture='https://s17.postimg.org/o9tfjmqvz/thumb_search_trailer.png')
+                                                   noFocusTexture='https://s17.postimg.cc/774wcgv7j/thumb_search_trailer_no.png',
+                                                   focusTexture='https://s17.postimg.cc/o9tfjmqvz/thumb_search_trailer.png')
 
         self.background = xbmcgui.ControlImage(-40, -40, 1500, 830, 'http://imgur.com/ur6H9Ps.png')
         self.title = xbmcgui.ControlTextBox(120, 8, 1130, 50, self.fonts["16"])
@@ -293,7 +293,7 @@ class main(xbmcgui.WindowDialog):
         self.fanart = xbmcgui.ControlImage(-40, -40, 1500, 830, self.infoLabels.get("fanart", ""))
         self.poster = xbmcgui.ControlImage(860, 140, 350, 330, self.item.thumbnail)
         self.icon = xbmcgui.ControlImage(200, 100, 40, 40, icono)
-        self.fa_icon = xbmcgui.ControlImage(350, 100, 60, 60, "http://s6.postimg.org/6yhe5fgy9/filma.png")
+        self.fa_icon = xbmcgui.ControlImage(350, 100, 60, 60, "http://s6.postimg.cc/6yhe5fgy9/filma.png")
 
         self.addControl(self.fanart)
         if set_animation:
@@ -410,8 +410,8 @@ class main(xbmcgui.WindowDialog):
         self.focus = -1
         i = 0
         count = 0
-        self.btn_left = xbmcgui.ControlButton(90, 490, 70, 29, '', "http://s6.postimg.org/i3pnobu6p/redarrow.png",
-                                              "http://s6.postimg.org/i3pnobu6p/redarrow.png")
+        self.btn_left = xbmcgui.ControlButton(90, 490, 70, 29, '', "http://s6.postimg.cc/i3pnobu6p/redarrow.png",
+                                              "http://s6.postimg.cc/i3pnobu6p/redarrow.png")
         self.addControl(self.btn_left)
         if set_animation:
             self.btn_left.setAnimations(
@@ -433,7 +433,7 @@ class main(xbmcgui.WindowDialog):
             if count % 8 == 0:
                 i = 0
             self.image = xbmcgui.ControlButton(65 + i, 538, 135, 160, '', thumb, thumb)
-            self.neon = xbmcgui.ControlImage(60 + i, 525, 145, 186, "http://s6.postimg.org/x0jspnxch/buttons.png")
+            self.neon = xbmcgui.ControlImage(60 + i, 525, 145, 186, "http://s6.postimg.cc/x0jspnxch/buttons.png")
             fadelabel = xbmcgui.ControlFadeLabel(67 + i, 698, 135, 50)
             self.botones.append(self.image)
             if len(self.recomendaciones) != 0:
@@ -481,8 +481,8 @@ class main(xbmcgui.WindowDialog):
         self.btn_right = None
         if len(self.recomendaciones) > 8:
             self.btn_right = xbmcgui.ControlButton(1150, 495, 60, 27, '',
-                                                   "http://s6.postimg.org/j4uhr70k1/greenarrow.png",
-                                                   "http://s6.postimg.org/j4uhr70k1/greenarrow.png")
+                                                   "http://s6.postimg.cc/j4uhr70k1/greenarrow.png",
+                                                   "http://s6.postimg.cc/j4uhr70k1/greenarrow.png")
             self.addControl(self.btn_right)
             if set_animation:
                 self.btn_right.setAnimations(
@@ -493,8 +493,8 @@ class main(xbmcgui.WindowDialog):
                  ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
             self.botones.append(self.btn_right)
         xbmc.sleep(200)
-        self.global_search = xbmcgui.ControlButton(1080, 475, 55, 55, '', noFocusTexture='https://s17.postimg.org/u9vfbj1sv/thumb_search_no.png',
-                                                                          focusTexture='https://s17.postimg.org/gc289lvvz/thumb_search.png')
+        self.global_search = xbmcgui.ControlButton(1080, 475, 55, 55, '', noFocusTexture='https://s17.postimg.cc/u9vfbj1sv/thumb_search_no.png',
+                                                                          focusTexture='https://s17.postimg.cc/gc289lvvz/thumb_search.png')
         self.addControl(self.global_search)
         if set_animation:
             self.global_search.setAnimations(
@@ -807,20 +807,20 @@ class related(xbmcgui.WindowDialog):
 
         self.setCoordinateResolution(2)
         self.background = xbmcgui.ControlImage(178, 50, 1053, 634, self.infoLabels.get("fanart",
-                                                                                      "http://s6.postimg.org/fflvear2p/nofanart.png"))
+                                                                                      "http://s6.postimg.cc/fflvear2p/nofanart.png"))
         self.addControl(self.background)
         if set_animation:
             self.background.setAnimations(
             [('conditional', 'effect=slide start=1000% end=0% delay=670 time=2500 condition=true',),
              ('WindowClose', 'effect=slide end=-2000% time=1000 condition=true',)])
 
-        self.shadow = xbmcgui.ControlImage(175, 43, 1061, 649, 'http://s6.postimg.org/k05dw264x/marc_fanart.png')
+        self.shadow = xbmcgui.ControlImage(175, 43, 1061, 649, 'http://s6.postimg.cc/k05dw264x/marc_fanart.png')
         self.addControl(self.shadow)
         if set_animation:
             self.shadow.setAnimations(
             [('conditional', 'effect=slide start=1000% end=0% delay=660 time=2500 condition=true',),
              ('WindowClose', 'effect=slide end=-2000% time=1000 condition=true',)])
-        self.star = xbmcgui.ControlImage(955, 55, 67, 67, "http://s6.postimg.org/jzn0d3clt/star.png")
+        self.star = xbmcgui.ControlImage(955, 55, 67, 67, "http://s6.postimg.cc/jzn0d3clt/star.png")
         self.addControl(self.star) 
         if set_animation:
             self.star.setAnimations([('conditional', 'effect=slide delay=6000 start=2000 time=800 condition=true',),
@@ -1040,7 +1040,7 @@ class related(xbmcgui.WindowDialog):
 
         try:
             if self.nd:
-                self.img_dir = xbmcgui.ControlImage(740, 380, 100, 90, "http://s6.postimg.org/k8kl30pe9/director.png")
+                self.img_dir = xbmcgui.ControlImage(740, 380, 100, 90, "http://s6.postimg.cc/k8kl30pe9/director.png")
                 self.addControl(self.img_dir)
                 if set_animation:
                     self.img_dir.setAnimations(
@@ -1106,8 +1106,8 @@ class related(xbmcgui.WindowDialog):
                                            'effect=zoom center=auto start=100% end=120% reversible=false tween=bounce time=1000 loop=true condition=Control.HasFocus(' + str(
                                                self.buscar.getId()) + ')'),
                                        ('WindowClose', 'effect=rotatey end=-300 time=1500 condition=true',)])
-        self.global_search = xbmcgui.ControlButton(1046, 620, 140, 53, '', 'https://s33.postimg.org/3k39ww24f/logo-alfa.png',
-                                                   'https://s33.postimg.org/3k39ww24f/logo-alfa.png')
+        self.global_search = xbmcgui.ControlButton(1046, 620, 140, 53, '', 'https://s33.postimg.cc/3k39ww24f/logo-alfa.png',
+                                                   'https://s33.postimg.cc/3k39ww24f/logo-alfa.png')
         self.addControl(self.global_search)
         self.botones.append(self.global_search)
         if set_animation:
@@ -1553,7 +1553,7 @@ class ActorInfo(xbmcgui.WindowDialog):
             self.background.setAnimations(
             [('conditional', 'effect=fade start=0% end=100% delay=2000 time=1500 condition=true',),
              ('WindowClose', 'effect=slide end=0,-700% time=1000 condition=true',)])
-        self.filmo = xbmcgui.ControlImage(330, 470, 230, 45, 'http://s6.postimg.org/rlktamqhd/filmography1.png')
+        self.filmo = xbmcgui.ControlImage(330, 470, 230, 45, 'http://s6.postimg.cc/rlktamqhd/filmography1.png')
         self.addControl(self.filmo)
         if set_animation:
             self.filmo.setAnimations([('conditional',
@@ -1595,7 +1595,7 @@ class ActorInfo(xbmcgui.WindowDialog):
             if entradas["poster_path"]:
                 thumb += entradas["poster_path"]
             else:
-                thumb = "http://s6.postimg.org/tw1vhymj5/noposter.png"
+                thumb = "http://s6.postimg.cc/tw1vhymj5/noposter.png"
             if self.item.contentType == "movie":
                 self.titulos.append([entradas["id"], entradas.get("title", entradas.get("original_title", "")), thumb])
             else:
@@ -1609,8 +1609,8 @@ class ActorInfo(xbmcgui.WindowDialog):
         self.focus = -1
         i = 0
         count = 0
-        self.btn_left = xbmcgui.ControlButton(90, 490, 70, 29, '', "http://s6.postimg.org/i3pnobu6p/redarrow.png",
-                                              "http://s6.postimg.org/i3pnobu6p/redarrow.png")
+        self.btn_left = xbmcgui.ControlButton(90, 490, 70, 29, '', "http://s6.postimg.cc/i3pnobu6p/redarrow.png",
+                                              "http://s6.postimg.cc/i3pnobu6p/redarrow.png")
         self.addControl(self.btn_left)
         if set_animation:
             self.btn_left.setAnimations([('conditional',
@@ -1623,7 +1623,7 @@ class ActorInfo(xbmcgui.WindowDialog):
             if count % 8 == 0:
                 i = 0
             self.image = xbmcgui.ControlButton(65 + i, 538, 135, 160, '', foto, foto)
-            self.neon = xbmcgui.ControlImage(60 + i, 525, 145, 186, "http://s6.postimg.org/x0jspnxch/buttons.png")
+            self.neon = xbmcgui.ControlImage(60 + i, 525, 145, 186, "http://s6.postimg.cc/x0jspnxch/buttons.png")
             fadelabel = xbmcgui.ControlFadeLabel(67 + i, 698, 135, 50)
             self.botones.append(self.image)
 
@@ -1660,8 +1660,8 @@ class ActorInfo(xbmcgui.WindowDialog):
         xbmc.sleep(200)
         if len(self.titulos) > 8:
             self.btn_right = xbmcgui.ControlButton(1150, 495, 60, 27, '',
-                                                   "http://s6.postimg.org/j4uhr70k1/greenarrow.png",
-                                                   "http://s6.postimg.org/j4uhr70k1/greenarrow.png")
+                                                   "http://s6.postimg.cc/j4uhr70k1/greenarrow.png",
+                                                   "http://s6.postimg.cc/j4uhr70k1/greenarrow.png")
             self.addControl(self.btn_right)
             if set_animation:
                 self.btn_right.setAnimations(
@@ -1681,7 +1681,7 @@ class ActorInfo(xbmcgui.WindowDialog):
 
         if len(self.images) <= 1 or (len(self.images) == 2 and self.images[0] == self.images[1]):
             self.marco = xbmcgui.ControlImage(100, 23, 330, 425,
-                                              'http://s6.postimg.org/nkmk7b8nl/marco_foto2_copia.png')
+                                              'http://s6.postimg.cc/nkmk7b8nl/marco_foto2_copia.png')
             self.addControl(self.marco)
             if set_animation:
                 self.marco.setAnimations(
@@ -1712,7 +1712,7 @@ class ActorInfo(xbmcgui.WindowDialog):
                 if i == 0:
                     xbmc.sleep(300)
                     self.marco = xbmcgui.ControlImage(100, 23, 330, 425,
-                                                      'http://s6.postimg.org/nkmk7b8nl/marco_foto2_copia.png')
+                                                      'http://s6.postimg.cc/nkmk7b8nl/marco_foto2_copia.png')
                     self.thumb = xbmcgui.ControlImage(115, 40, 294, 397, "")
                     xbmc.sleep(500)
                     self.addControl(self.marco)
@@ -1741,7 +1741,7 @@ class ActorInfo(xbmcgui.WindowDialog):
                         break
                     xbmc.sleep(5200)
                     self.marco = xbmcgui.ControlImage(100, 23, 330, 425,
-                                                      'http://s6.postimg.org/4syg4krkh/marco_foto.png')
+                                                      'http://s6.postimg.cc/4syg4krkh/marco_foto.png')
                     self.addControl(self.marco)
                     if set_animation:
                         self.marco.setAnimations(
@@ -1975,8 +1975,8 @@ class images(xbmcgui.WindowDialog):
         self.focus = -1
         i = 0
         count = 0
-        self.btn_left = xbmcgui.ControlButton(293, 550, 70, 29, '', "http://s6.postimg.org/i3pnobu6p/redarrow.png",
-                                              "http://s6.postimg.org/i3pnobu6p/redarrow.png")
+        self.btn_left = xbmcgui.ControlButton(293, 550, 70, 29, '', "http://s6.postimg.cc/i3pnobu6p/redarrow.png",
+                                              "http://s6.postimg.cc/i3pnobu6p/redarrow.png")
         self.addControl(self.btn_left)
         if set_animation:
             self.btn_left.setAnimations(
@@ -1992,7 +1992,7 @@ class images(xbmcgui.WindowDialog):
             if count % 8 == 0:
                 i = 0
             self.image = xbmcgui.ControlButton(280 + i, 590, 100, 98, '', img, img)
-            self.neon = xbmcgui.ControlImage(280 + i, 590, 100, 98, "http://s6.postimg.org/x0jspnxch/buttons.png")
+            self.neon = xbmcgui.ControlImage(280 + i, 590, 100, 98, "http://s6.postimg.cc/x0jspnxch/buttons.png")
             self.botones.append(self.image)
             if count < 8:
                 self.addControl(self.image)
@@ -2015,8 +2015,8 @@ class images(xbmcgui.WindowDialog):
         xbmc.sleep(200)
         if len(self.imagenes) > 8:
             self.btn_right = xbmcgui.ControlButton(1150, 550, 60, 27, '',
-                                                   "http://s6.postimg.org/j4uhr70k1/greenarrow.png",
-                                                   "http://s6.postimg.org/j4uhr70k1/greenarrow.png")
+                                                   "http://s6.postimg.cc/j4uhr70k1/greenarrow.png",
+                                                   "http://s6.postimg.cc/j4uhr70k1/greenarrow.png")
             self.addControl(self.btn_right)
             if set_animation:
                 self.btn_right.setAnimations(

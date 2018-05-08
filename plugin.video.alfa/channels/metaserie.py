@@ -34,22 +34,22 @@ def mainlist(item):
     itemlist.append(item.clone(title="Series",
                                action="todas",
                                url="http://metaserie.com/series-agregadas",
-                               thumbnail='https://s27.postimg.org/iahczwgrn/series.png',
-                               fanart='https://s27.postimg.org/iahczwgrn/series.png'
+                               thumbnail='https://s27.postimg.cc/iahczwgrn/series.png',
+                               fanart='https://s27.postimg.cc/iahczwgrn/series.png'
                                ))
 
     # itemlist.append(item.clone(title="Anime",
     #                            action="todas",
     #                            url="http://metaserie.com/animes-agregados",
-    #                            thumbnail='https://s2.postimg.org/s38borokp/anime.png',
-    #                            fanart='https://s2.postimg.org/s38borokp/anime.png'
+    #                            thumbnail='https://s2.postimg.cc/s38borokp/anime.png',
+    #                            fanart='https://s2.postimg.cc/s38borokp/anime.png'
     #                            ))
 
     itemlist.append(item.clone(title="Buscar",
                                action="search",
                                url="http://www.metaserie.com/?s=",
-                               thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
-                               fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
+                               thumbnail='https://s30.postimg.cc/pei7txpa9/buscar.png',
+                               fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
                                ))
 
     autoplay.show_option(item.channel, itemlist)
@@ -75,7 +75,7 @@ def todas(item):
         title = scrapertools.decodeHtmlentities(scrapedtitle) + ' (%s)' % idioma
         thumbnail = scrapedthumbnail
         plot = scrapedplot
-        fanart = 'https://s32.postimg.org/7g50yo39h/metaserie.png'
+        fanart = 'https://s32.postimg.cc/7g50yo39h/metaserie.png'
         itemlist.append(
             Item(channel=item.channel,
                  action="temporadas",
@@ -98,7 +98,7 @@ def todas(item):
                              action="todas",
                              title=">> Página siguiente",
                              url=next_page_url,
-                             thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'
+                             thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
                              ))
     return itemlist
 
@@ -278,14 +278,14 @@ def findvideos(item):
                                  action="findvideos",
                                  title='Capitulo Anterior',
                                  url=anterior,
-                                 thumbnail='https://s31.postimg.org/k5kpwyrgb/anterior.png'
+                                 thumbnail='https://s31.postimg.cc/k5kpwyrgb/anterior.png'
                                  ))
         if siguiente != '':
             itemlist.append(Item(channel=item.channel,
                                  action="findvideos",
                                  title='Capitulo Siguiente',
                                  url=siguiente,
-                                 thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'
+                                 thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
                                  ))
 
     # Requerido para FilterTools

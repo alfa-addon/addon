@@ -85,7 +85,7 @@ def list_all(item):
         next_page = scrapertools.find_single_match(data, '<li><a href=([^ ]+) ><span aria-hidden=true>&raquo;</span>')
         if next_page != '':
             itemlist.append(Item(channel=item.channel, action="list_all", title='Siguiente >>>', url=next_page,
-                                 thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'))
+                                 thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'))
     return itemlist
 
 

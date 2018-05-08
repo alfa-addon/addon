@@ -49,9 +49,9 @@ def show_option(channel, itemlist, text_color='yellow', thumbnail=None, fanart=N
         return itemlist
 
     if thumbnail == None:
-        thumbnail = 'https://s7.postimg.org/65ooga04b/Auto_Play.png'
+        thumbnail = 'https://s7.postimg.cc/65ooga04b/Auto_Play.png'
     if fanart == None:
-        fanart = 'https://s7.postimg.org/65ooga04b/Auto_Play.png'
+        fanart = 'https://s7.postimg.cc/65ooga04b/Auto_Play.png'
 
     plot_autoplay = 'AutoPlay permite auto reproducir los enlaces directamente, basándose en la configuracion de tus ' \
                     'servidores y calidades favoritas. '
