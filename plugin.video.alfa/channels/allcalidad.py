@@ -136,6 +136,12 @@ def peliculas(item):
 def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
+    if not item.infoLabels["year"]:
+        item.infoLabels["year"] = scrapertools.find_single_match(data, 'dateCreated.*?(\d{4})')
+        if "orig_title" in data:
+            contentTitle = scrapertools.find_single_match(data, 'orig_title.*?>([^<]+)<').strip()
+            if contentTitle != "":
+                item.contentTitle = contentTitle
     patron = '(?s)fmi(.*?)thead'
     bloque = scrapertools.find_single_match(data, patron)
     match = scrapertools.find_multiple_matches(bloque, '(?is)(?:iframe|script) .*?src="([^"]+)')
@@ -173,7 +179,7 @@ def findvideos(item):
             if config.get_videolibrary_support():
                 itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
                                      action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                     fulltitle = item.fulltitle
+                                     contentTitle = item.contentTitle
                                      ))
     return itemlist
 
