@@ -674,19 +674,21 @@ def findvideos(item):
         type = item.type.replace("streaming", "Online").replace("download", "de Descarga")
         itemlist.extend(get_enlaces(item, url, type))
 
-        # Requerido para FilterTools
-
-        itemlist = filtertools.get_links(itemlist, item, list_language)
-
-        # Requerido para AutoPlay
-
-        autoplay.start(itemlist, item)
 
     if __comprueba_enlaces__:
         for it in itemlist:
             if it.server != '' and it.url != '':
                 it.url = normalizar_url(it.url, it.server)
         itemlist = servertools.check_list_links(itemlist, __comprueba_enlaces_num__)
+
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
+
 
     return itemlist
 
