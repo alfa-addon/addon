@@ -322,7 +322,15 @@ def title_format(item):
 
         elif item.contentTitle:
             # Si el titulo no tiene contentSerieName entonces se formatea como pelicula
-            item.title = '%s' % set_color(item.contentTitle, 'movie')
+            saga = False
+            if 'saga' in item.title.lower():
+                item.title = '%s [Saga]' % set_color(item.contentTitle, 'movie')
+            elif 'miniserie' in item.title.lower():
+                item.title = '%s [Miniserie]' % set_color(item.contentTitle, 'movie')
+            elif 'extend' in item.title.lower():
+                item.title = '%s [V.Extend.]' % set_color(item.contentTitle, 'movie')
+            else:
+                item.title = '%s' % set_color(item.contentTitle, 'movie')
             if item.contentType=='movie':
                 if item.context:
                     if isinstance(item.context, list):
@@ -459,30 +467,25 @@ def title_format(item):
 
 def thumbnail_type(item):
     #logger.info()
-
     # Se comprueba que tipo de thumbnail se utilizara en findvideos,
     # Poster o Logo del servidor
 
     thumb_type = config.get_setting('video_thumbnail_type')
-    #logger.debug('thumb_type: %s' % thumb_type)
     info = item.infoLabels
-    #logger.debug('item.thumbnail: %s'%item.thumbnail)
+    item.contentThumbnail = item.thumbnail
+    if info:
+        if info['thumbnail'] !='':
+            item.contentThumbnail = info['thumbnail']
 
-    if info['thumbnail'] !='':
-        item.contentThumbnail = info['thumbnail']
-    else:
-        item.contentThumbnail = item.thumbnail
-
-    if item.action == 'play':
-        if thumb_type == 0:
-            if info and info['thumbnail'] != '':
-                item.thumbnail = info['thumbnail']
-        elif thumb_type == 1:
-            from core.servertools import get_server_parameters
-            #logger.debug('item.server: %s'%item.server)
-            server_parameters = get_server_parameters(item.server.lower())
-            item.thumbnail = server_parameters.get("thumbnail", "")
-            #logger.debug('thumbnail: %s' % item.thumb)
+        if item.action == 'play':
+            if thumb_type == 0:
+                if info['thumbnail'] != '':
+                    item.thumbnail = info['thumbnail']
+            elif thumb_type == 1:
+                from core.servertools import get_server_parameters
+                #logger.debug('item.server: %s'%item.server)
+                server_parameters = get_server_parameters(item.server.lower())
+                item.thumbnail = server_parameters.get("thumbnail", "")
 
     return item.thumbnail
 
