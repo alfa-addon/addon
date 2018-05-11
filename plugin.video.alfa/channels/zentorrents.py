@@ -38,21 +38,21 @@ def mainlist(item):
     itemlist.append(
         Item(channel=item.channel, title="Películas", action="peliculas", url="http://www.zentorrents.com/peliculas",
              thumbnail="http://www.navymwr.org/assets/movies/images/img-popcorn.png",
-             fanart="http://s18.postimg.org/u9wyvm809/zen_peliculas.jpg"))
+             fanart="http://s18.postimg.cc/u9wyvm809/zen_peliculas.jpg"))
     itemlist.append(
         Item(channel=item.channel, title="MicroHD", action="peliculas", url="http://www.zentorrents.com/tags/microhd",
-             thumbnail="http://s11.postimg.org/5s67cden7/microhdzt.jpg",
-             fanart="http://s9.postimg.org/i5qhadsjj/zen_1080.jpg"))
+             thumbnail="http://s11.postimg.cc/5s67cden7/microhdzt.jpg",
+             fanart="http://s9.postimg.cc/i5qhadsjj/zen_1080.jpg"))
     itemlist.append(
         Item(channel=item.channel, title="HDrip", action="peliculas", url="http://www.zentorrents.com/tags/hdrip",
-             thumbnail="http://s10.postimg.org/pft9z4c5l/hdripzent.jpg",
-             fanart="http://s15.postimg.org/5kqx9ln7v/zen_720.jpg"))
+             thumbnail="http://s10.postimg.cc/pft9z4c5l/hdripzent.jpg",
+             fanart="http://s15.postimg.cc/5kqx9ln7v/zen_720.jpg"))
     itemlist.append(
         Item(channel=item.channel, title="Series", action="peliculas", url="http://www.zentorrents.com/series",
-             thumbnail="http://imgur.com/HbM2dt5.png", fanart="http://s10.postimg.org/t0xz1t661/zen_series.jpg"))
+             thumbnail="http://imgur.com/HbM2dt5.png", fanart="http://s10.postimg.cc/t0xz1t661/zen_series.jpg"))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url="",
                          thumbnail="http://newmedia-art.pl/product_picture/full_size/bed9a8589ad98470258899475cf56cca.jpg",
-                         fanart="http://s23.postimg.org/jdutugvrf/zen_buscar.jpg"))
+                         fanart="http://s23.postimg.cc/jdutugvrf/zen_buscar.jpg"))
 
     return itemlist
 
@@ -110,7 +110,7 @@ def buscador(item):
 
             itemlist.append(Item(channel=item.channel, title=scrapedtitulo, url=scrapedurl, action="fanart",
                                  thumbnail=scrapedthumbnail, fulltitle=scrapedtitulo, extra=title_fan,
-                                 fanart="http://s6.postimg.org/4j8vdzy6p/zenwallbasic.jpg", folder=True))
+                                 fanart="http://s6.postimg.cc/4j8vdzy6p/zenwallbasic.jpg", folder=True))
 
     return itemlist
 
@@ -143,7 +143,7 @@ def peliculas(item):
         scrapedurl = "http://zentorrents.com" + scrapedurl
         itemlist.append(
             Item(channel=item.channel, title=scrapedtitulo, url=scrapedurl, action="fanart", thumbnail=scrapedthumbnail,
-                 fulltitle=scrapedtitulo, extra=title_fan, fanart="http://s6.postimg.org/4j8vdzy6p/zenwallbasic.jpg",
+                 fulltitle=scrapedtitulo, extra=title_fan, fanart="http://s6.postimg.cc/4j8vdzy6p/zenwallbasic.jpg",
                  folder=True))
     # 1080,720 y seies
 
@@ -168,7 +168,7 @@ def peliculas(item):
         scrapedurl = "http://zentorrents.com" + scrapedurl
         itemlist.append(
             Item(channel=item.channel, title=scrapedtitulo, url=scrapedurl, action="fanart", thumbnail=scrapedthumbnail,
-                 fulltitle=scrapedtitulo, extra=title_fan, fanart="http://s6.postimg.org/4j8vdzy6p/zenwallbasic.jpg",
+                 fulltitle=scrapedtitulo, extra=title_fan, fanart="http://s6.postimg.cc/4j8vdzy6p/zenwallbasic.jpg",
                  folder=True))
 
     # Extrae el paginador
@@ -180,8 +180,8 @@ def peliculas(item):
         scrapedurl = urlparse.urljoin(item.url, matches[0])
         title = "[COLOR chocolate]siguiente>>[/COLOR]"
         itemlist.append(Item(channel=item.channel, action="peliculas", title=title, url=scrapedurl,
-                             thumbnail="http://s6.postimg.org/9iwpso8k1/ztarrow2.png",
-                             fanart="http://s6.postimg.org/4j8vdzy6p/zenwallbasic.jpg", folder=True))
+                             thumbnail="http://s6.postimg.cc/9iwpso8k1/ztarrow2.png",
+                             fanart="http://s6.postimg.cc/4j8vdzy6p/zenwallbasic.jpg", folder=True))
 
     return itemlist
 
@@ -995,7 +995,7 @@ def info(item):
     print rating_filma
     print rating_tmdba_tvdb
 
-    filma = "http://s6.postimg.org/6yhe5fgy9/filma.png"
+    filma = "http://s6.postimg.cc/6yhe5fgy9/filma.png"
 
     try:
         if "serie" in item.url:
@@ -1069,13 +1069,13 @@ def info(item):
         title = "[COLOR red][B]LO SENTIMOS...[/B][/COLOR]"
         plot = "Esta pelicula no tiene informacion..."
         plot = plot.replace(plot, "[COLOR yellow][B]" + plot + "[/B][/COLOR]")
-        photo = "http://s6.postimg.org/nm3gk1xox/noinfosup2.png"
-        foto = "http://s6.postimg.org/ub7pb76c1/noinfo.png"
+        photo = "http://s6.postimg.cc/nm3gk1xox/noinfosup2.png"
+        foto = "http://s6.postimg.cc/ub7pb76c1/noinfo.png"
         info = ""
 
     if "serie" in item.url:
         check2 = "serie"
-        icon = "http://s6.postimg.org/hzcjag975/tvdb.png"
+        icon = "http://s6.postimg.cc/hzcjag975/tvdb.png"
         foto = item.show.split("|")[1]
         if item.extra.split("|")[5] != "":
             critica = item.extra.split("|")[5]
@@ -1125,7 +1125,7 @@ def info(item):
 
         thumb = re.sub(r'"|}', '', thumb)
         if "null" in thumb:
-            thumb = "http://s6.postimg.org/tw1vhymj5/noposter.png"
+            thumb = "http://s6.postimg.cc/tw1vhymj5/noposter.png"
         else:
             thumb = "https://image.tmdb.org/t/p/original" + thumb
         peliculas.append([idp, peli, thumb])
@@ -1172,8 +1172,8 @@ def info_capitulos(item):
             title = "[COLOR red][B]LO SENTIMOS...[/B][/COLOR]"
             plot = "Este capitulo no tiene informacion..."
             plot = "[COLOR yellow][B]" + plot + "[/B][/COLOR]"
-            image = "http://s6.postimg.org/ub7pb76c1/noinfo.png"
-            foto = "http://s6.postimg.org/nm3gk1xox/noinfosup2.png"
+            image = "http://s6.postimg.cc/ub7pb76c1/noinfo.png"
+            foto = "http://s6.postimg.cc/nm3gk1xox/noinfosup2.png"
             rating = ""
 
 

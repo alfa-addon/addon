@@ -18,28 +18,28 @@ def mainlist(item):
     itemlist = []
 
     itemlist.append(Item(channel=item.channel, title="Series", action="todas", url=host,
-                         thumbnail='https://s27.postimg.org/iahczwgrn/series.png',
-                         fanart='https://s27.postimg.org/iahczwgrn/series.png'))
+                         thumbnail='https://s27.postimg.cc/iahczwgrn/series.png',
+                         fanart='https://s27.postimg.cc/iahczwgrn/series.png'))
 
     itemlist.append(Item(channel=item.channel, title="Generos", action="generos", url=host,
-                         thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
-                         fanart='https://s3.postimg.org/5s9jg2wtf/generos.png'))
+                         thumbnail='https://s3.postimg.cc/5s9jg2wtf/generos.png',
+                         fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png'))
 
     itemlist.append(Item(channel=item.channel, title="Alfabetico", action="lasmas", url=host,
-                         thumbnail='https://s17.postimg.org/fwi1y99en/a-z.png',
-                         fanart='https://s17.postimg.org/fwi1y99en/a-z.png', extra='letras'))
+                         thumbnail='https://s17.postimg.cc/fwi1y99en/a-z.png',
+                         fanart='https://s17.postimg.cc/fwi1y99en/a-z.png', extra='letras'))
 
     itemlist.append(Item(channel=item.channel, title="Ultimas Agregadas", action="ultimas", url=host,
-                         thumbnail='https://s22.postimg.org/cb7nmhwv5/ultimas.png',
-                         fanart='https://s22.postimg.org/cb7nmhwv5/ultimas.png'))
+                         thumbnail='https://s22.postimg.cc/cb7nmhwv5/ultimas.png',
+                         fanart='https://s22.postimg.cc/cb7nmhwv5/ultimas.png'))
 
     itemlist.append(Item(channel=item.channel, title="Mas Vistas", action="lasmas", url=host,
-                         thumbnail='https://s9.postimg.org/wmhzu9d7z/vistas.png',
-                         fanart='https://s9.postimg.org/wmhzu9d7z/vistas.png', extra='Vista'))
+                         thumbnail='https://s9.postimg.cc/wmhzu9d7z/vistas.png',
+                         fanart='https://s9.postimg.cc/wmhzu9d7z/vistas.png', extra='Vista'))
 
     itemlist.append(Item(channel=item.channel, title="Mas Votadas", action="lasmas", url=host,
-                         thumbnail='https://s7.postimg.org/9kg1nthzf/votadas.png',
-                         fanart='https://s7.postimg.org/9kg1nthzf/votadas.png', extra='Votos'))
+                         thumbnail='https://s7.postimg.cc/9kg1nthzf/votadas.png',
+                         fanart='https://s7.postimg.cc/9kg1nthzf/votadas.png', extra='Votos'))
 
     return itemlist
 
@@ -64,7 +64,7 @@ def todas(item):
         title = scrapertools.decodeHtmlentities(scrapedtitle)
         thumbnail = scrapedthumbnail
         plot = scrapedplot
-        fanart = 'https://s31.postimg.org/dousrbu9n/qserie.png'
+        fanart = 'https://s31.postimg.cc/dousrbu9n/qserie.png'
         itemlist.append(
             Item(channel=item.channel, action="temporadas", title=title, url=url, thumbnail=thumbnail, plot=plot,
                  fanart=fanart, extra=idioma, contentSerieName=scrapedtitle, infoLabels={'year': year},
@@ -85,8 +85,8 @@ def todas(item):
             siguiente_url = item.url + '?&page=' + str(siguiente)
     if actual and ultima and siguiente <= int(ultima):
         titlen = 'Pagina Siguiente >>> ' + str(actual) + '/' + str(ultima)
-        fanart = 'https://s32.postimg.org/4q1u1hxnp/qserie.png'
-        thumbnail = 'https://s16.postimg.org/9okdu7hhx/siguiente.png'
+        fanart = 'https://s32.postimg.cc/4q1u1hxnp/qserie.png'
+        thumbnail = 'https://s16.postimg.cc/9okdu7hhx/siguiente.png'
         itemlist.append(Item(channel=item.channel, action="todas", title=titlen, url=siguiente_url, fanart=fanart,
                              thumbnail=thumbnail))
     return itemlist
@@ -186,26 +186,26 @@ def episodiosxtemp(item):
 
 
 def generos(item):
-    tgenero = {"comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
-               "suspenso": "https://s13.postimg.org/wmw6vl1cn/suspenso.png",
-               "drama": "https://s16.postimg.org/94sia332d/drama.png",
-               "acción": "https://s3.postimg.org/y6o9puflv/accion.png",
-               "aventura": "https://s10.postimg.org/6su40czih/aventura.png",
-               "aventuras": "https://s10.postimg.org/6su40czih/aventura.png",
-               "romance": "https://s15.postimg.org/fb5j8cl63/romance.png",
-               "infantil": "https://s23.postimg.org/g5rmazozv/infantil.png",
-               "ciencia ficción": "https://s9.postimg.org/diu70s7j3/cienciaficcion.png",
-               "terror": "https://s7.postimg.org/yi0gij3gb/terror.png",
-               "anime": 'https://s2.postimg.org/s38borokp/anime.png',
-               "animes": "https://s2.postimg.org/s38borokp/anime.png",
-               "dibujos": "https://s2.postimg.org/aqwqksyop/dibujos.png",
-               "documental": "https://s16.postimg.org/7xjj4bmol/documental.png",
-               "fantástico": "https://s10.postimg.org/pbkbs6j55/fantastico.png",
-               "intriga": "https://s27.postimg.org/v9og43u2b/intriga.png",
-               "musical": "https://s29.postimg.org/bbxmdh9c7/musical.png",
-               "secuela": "https://s7.postimg.org/bti0nauh7/secuela.png",
-               "thriller (suspenso)": "https://s22.postimg.org/5y9g0jsu9/thriller.png",
-               "western": "https://s23.postimg.org/lzyfbjzhn/western.png"}
+    tgenero = {"comedia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
+               "suspenso": "https://s13.postimg.cc/wmw6vl1cn/suspenso.png",
+               "drama": "https://s16.postimg.cc/94sia332d/drama.png",
+               "acción": "https://s3.postimg.cc/y6o9puflv/accion.png",
+               "aventura": "https://s10.postimg.cc/6su40czih/aventura.png",
+               "aventuras": "https://s10.postimg.cc/6su40czih/aventura.png",
+               "romance": "https://s15.postimg.cc/fb5j8cl63/romance.png",
+               "infantil": "https://s23.postimg.cc/g5rmazozv/infantil.png",
+               "ciencia ficción": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png",
+               "terror": "https://s7.postimg.cc/yi0gij3gb/terror.png",
+               "anime": 'https://s2.postimg.cc/s38borokp/anime.png',
+               "animes": "https://s2.postimg.cc/s38borokp/anime.png",
+               "dibujos": "https://s2.postimg.cc/aqwqksyop/dibujos.png",
+               "documental": "https://s16.postimg.cc/7xjj4bmol/documental.png",
+               "fantástico": "https://s10.postimg.cc/pbkbs6j55/fantastico.png",
+               "intriga": "https://s27.postimg.cc/v9og43u2b/intriga.png",
+               "musical": "https://s29.postimg.cc/bbxmdh9c7/musical.png",
+               "secuela": "https://s7.postimg.cc/bti0nauh7/secuela.png",
+               "thriller (suspenso)": "https://s22.postimg.cc/5y9g0jsu9/thriller.png",
+               "western": "https://s23.postimg.cc/lzyfbjzhn/western.png"}
 
     logger.info()
     itemlist = []
@@ -249,7 +249,7 @@ def ultimas(item):
         title = scrapedtitle
         title = scrapertools.decodeHtmlentities(title)
         realtitle = scrapedtitle.replace(inutil[0], '')
-        fanart = 'https://s22.postimg.org/cb7nmhwv5/ultimas.png'
+        fanart = 'https://s22.postimg.cc/cb7nmhwv5/ultimas.png'
         itemlist.append(
             Item(channel=item.channel, action="temporadas", title=title, url=url, thumbnail=thumbnail, plot=plot,
                  fanart=fanart, contentSerieName=realtitle))
@@ -258,35 +258,35 @@ def ultimas(item):
 
 
 def lasmas(item):
-    thumbletras = {'0-9': 'https://s32.postimg.org/drojt686d/image.png',
-                   '0 - 9': 'https://s32.postimg.org/drojt686d/image.png',
-                   '#': 'https://s32.postimg.org/drojt686d/image.png',
-                   'a': 'https://s32.postimg.org/llp5ekfz9/image.png',
-                   'b': 'https://s32.postimg.org/y1qgm1yp1/image.png',
-                   'c': 'https://s32.postimg.org/vlon87gmd/image.png',
-                   'd': 'https://s32.postimg.org/3zlvnix9h/image.png',
-                   'e': 'https://s32.postimg.org/bgv32qmsl/image.png',
-                   'f': 'https://s32.postimg.org/y6u7vq605/image.png',
-                   'g': 'https://s32.postimg.org/9237ib6jp/image.png',
-                   'h': 'https://s32.postimg.org/812yt6pk5/image.png',
-                   'i': 'https://s32.postimg.org/6nbbxvqat/image.png',
-                   'j': 'https://s32.postimg.org/axpztgvdx/image.png',
-                   'k': 'https://s32.postimg.org/976yrzdut/image.png',
-                   'l': 'https://s32.postimg.org/fmal2e9yd/image.png',
-                   'm': 'https://s32.postimg.org/m19lz2go5/image.png',
-                   'n': 'https://s32.postimg.org/b2ycgvs2t/image.png',
-                   'o': 'https://s32.postimg.org/c6igsucpx/image.png',
-                   'p': 'https://s32.postimg.org/jnro82291/image.png',
-                   'q': 'https://s32.postimg.org/ve5lpfv1h/image.png',
-                   'r': 'https://s32.postimg.org/nmovqvqw5/image.png',
-                   's': 'https://s32.postimg.org/zd2t89jol/image.png',
-                   't': 'https://s32.postimg.org/wk9lo8jc5/image.png',
-                   'u': 'https://s32.postimg.org/w8s5bh2w5/image.png',
-                   'v': 'https://s32.postimg.org/e7dlrey91/image.png',
-                   'w': 'https://s32.postimg.org/fnp49k15x/image.png',
-                   'x': 'https://s32.postimg.org/dkep1w1d1/image.png',
-                   'y': 'https://s32.postimg.org/um7j3zg85/image.png',
-                   'z': 'https://s32.postimg.org/jb4vfm9d1/image.png'}
+    thumbletras = {'0-9': 'https://s32.postimg.cc/drojt686d/image.png',
+                   '0 - 9': 'https://s32.postimg.cc/drojt686d/image.png',
+                   '#': 'https://s32.postimg.cc/drojt686d/image.png',
+                   'a': 'https://s32.postimg.cc/llp5ekfz9/image.png',
+                   'b': 'https://s32.postimg.cc/y1qgm1yp1/image.png',
+                   'c': 'https://s32.postimg.cc/vlon87gmd/image.png',
+                   'd': 'https://s32.postimg.cc/3zlvnix9h/image.png',
+                   'e': 'https://s32.postimg.cc/bgv32qmsl/image.png',
+                   'f': 'https://s32.postimg.cc/y6u7vq605/image.png',
+                   'g': 'https://s32.postimg.cc/9237ib6jp/image.png',
+                   'h': 'https://s32.postimg.cc/812yt6pk5/image.png',
+                   'i': 'https://s32.postimg.cc/6nbbxvqat/image.png',
+                   'j': 'https://s32.postimg.cc/axpztgvdx/image.png',
+                   'k': 'https://s32.postimg.cc/976yrzdut/image.png',
+                   'l': 'https://s32.postimg.cc/fmal2e9yd/image.png',
+                   'm': 'https://s32.postimg.cc/m19lz2go5/image.png',
+                   'n': 'https://s32.postimg.cc/b2ycgvs2t/image.png',
+                   'o': 'https://s32.postimg.cc/c6igsucpx/image.png',
+                   'p': 'https://s32.postimg.cc/jnro82291/image.png',
+                   'q': 'https://s32.postimg.cc/ve5lpfv1h/image.png',
+                   'r': 'https://s32.postimg.cc/nmovqvqw5/image.png',
+                   's': 'https://s32.postimg.cc/zd2t89jol/image.png',
+                   't': 'https://s32.postimg.cc/wk9lo8jc5/image.png',
+                   'u': 'https://s32.postimg.cc/w8s5bh2w5/image.png',
+                   'v': 'https://s32.postimg.cc/e7dlrey91/image.png',
+                   'w': 'https://s32.postimg.cc/fnp49k15x/image.png',
+                   'x': 'https://s32.postimg.cc/dkep1w1d1/image.png',
+                   'y': 'https://s32.postimg.cc/um7j3zg85/image.png',
+                   'z': 'https://s32.postimg.cc/jb4vfm9d1/image.png'}
 
     logger.info()
     itemlist = []
@@ -317,9 +317,9 @@ def lasmas(item):
         title = scrapedtitle.replace(': ', '')
         title = scrapertools.decodeHtmlentities(title)
         if item.extra == 'letras':
-            fanart = 'https://s17.postimg.org/fwi1y99en/a-z.png'
+            fanart = 'https://s17.postimg.cc/fwi1y99en/a-z.png'
         elif item.extra == 'Vista':
-            fanart = 'https://s9.postimg.org/wmhzu9d7z/vistas.png'
+            fanart = 'https://s9.postimg.cc/wmhzu9d7z/vistas.png'
         else:
             fanart = ''
 
@@ -356,12 +356,12 @@ def findvideos(item):
         existe = scrapertools.find_single_match(data, '<center>La pel.cula que quieres ver no existe.</center>')
         if not existe:
             itemlist.append(Item(channel=item.channel, action="findvideos", title='Capitulo Anterior', url=anterior,
-                                 thumbnail='https://s1.postimg.org/dbq8gvldb/anterior.png', folder=True))
+                                 thumbnail='https://s1.postimg.cc/dbq8gvldb/anterior.png', folder=True))
 
         data = httptools.downloadpage(siguiente).data
         existe = scrapertools.find_single_match(data, '<center>La pel.cula que quieres ver no existe.</center>')
         if not existe:
             itemlist.append(Item(channel=item.channel, action="findvideos", title='Capitulo Siguiente', url=siguiente,
-                                 thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png', folder=True))
+                                 thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png', folder=True))
 
     return itemlist

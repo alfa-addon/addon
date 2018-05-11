@@ -25,7 +25,7 @@ taudio = {'latino': '[COLOR limegreen]LATINO[/COLOR]',
 
 thumbaudio = {'latino': 'http://flags.fmcdn.net/data/flags/normal/mx.png',
               'castellano': 'http://flags.fmcdn.net/data/flags/normal/es.png',
-              'sub': 'https://s32.postimg.org/nzstk8z11/sub.png'
+              'sub': 'https://s32.postimg.cc/nzstk8z11/sub.png'
               }
 
 list_quality = ['HQ',
@@ -55,44 +55,44 @@ tcalidad = {'hq': '[COLOR limegreen]HQ[/COLOR]',
             'cam': '[COLOR red]CAM[/COLOR]'
             }
 
-thumbcalidad = {'hd-1080': 'https://s21.postimg.org/4h1s0t1wn/hd1080.png',
-                'dvd': 'https://s1.postimg.org/m89hus1tb/dvd.png',
-                'cam': 'https://s11.postimg.org/ad4o5wpz7/cam.png',
-                'hq': 'https://s23.postimg.org/j76ldf8qz/image.png',
-                'hd': 'https://s27.postimg.org/m2dhhkrur/image.png'
+thumbcalidad = {'hd-1080': 'https://s21.postimg.cc/4h1s0t1wn/hd1080.png',
+                'dvd': 'https://s1.postimg.cc/m89hus1tb/dvd.png',
+                'cam': 'https://s11.postimg.cc/ad4o5wpz7/cam.png',
+                'hq': 'https://s23.postimg.cc/j76ldf8qz/image.png',
+                'hd': 'https://s27.postimg.cc/m2dhhkrur/image.png'
                 }
 
-thumbletras = {'0-9': 'https://s32.postimg.org/drojt686d/image.png', '1': 'https://s32.postimg.org/drojt686d/image.png',
-               'a': 'https://s32.postimg.org/llp5ekfz9/image.png', 'b': 'https://s32.postimg.org/y1qgm1yp1/image.png',
-               'c': 'https://s32.postimg.org/vlon87gmd/image.png', 'd': 'https://s32.postimg.org/3zlvnix9h/image.png',
-               'e': 'https://s32.postimg.org/bgv32qmsl/image.png', 'f': 'https://s32.postimg.org/y6u7vq605/image.png',
-               'g': 'https://s32.postimg.org/9237ib6jp/image.png', 'h': 'https://s32.postimg.org/812yt6pk5/image.png',
-               'i': 'https://s32.postimg.org/6nbbxvqat/image.png', 'j': 'https://s32.postimg.org/axpztgvdx/image.png',
-               'k': 'https://s32.postimg.org/976yrzdut/image.png', 'l': 'https://s32.postimg.org/fmal2e9yd/image.png',
-               'm': 'https://s32.postimg.org/m19lz2go5/image.png', 'n': 'https://s32.postimg.org/b2ycgvs2t/image.png',
-               "ñ": "https://s30.postimg.org/ayy8g02xd/image.png", 'o': 'https://s32.postimg.org/c6igsucpx/image.png',
-               'p': 'https://s32.postimg.org/jnro82291/image.png', 'q': 'https://s32.postimg.org/ve5lpfv1h/image.png',
-               'r': 'https://s32.postimg.org/nmovqvqw5/image.png', 's': 'https://s32.postimg.org/zd2t89jol/image.png',
-               't': 'https://s32.postimg.org/wk9lo8jc5/image.png', 'u': 'https://s32.postimg.org/w8s5bh2w5/image.png',
-               'v': 'https://s32.postimg.org/e7dlrey91/image.png', 'w': 'https://s32.postimg.org/fnp49k15x/image.png',
-               'x': 'https://s32.postimg.org/dkep1w1d1/image.png', 'y': 'https://s32.postimg.org/um7j3zg85/image.png',
-               'z': 'https://s32.postimg.org/jb4vfm9d1/image.png'}
+thumbletras = {'0-9': 'https://s32.postimg.cc/drojt686d/image.png', '1': 'https://s32.postimg.cc/drojt686d/image.png',
+               'a': 'https://s32.postimg.cc/llp5ekfz9/image.png', 'b': 'https://s32.postimg.cc/y1qgm1yp1/image.png',
+               'c': 'https://s32.postimg.cc/vlon87gmd/image.png', 'd': 'https://s32.postimg.cc/3zlvnix9h/image.png',
+               'e': 'https://s32.postimg.cc/bgv32qmsl/image.png', 'f': 'https://s32.postimg.cc/y6u7vq605/image.png',
+               'g': 'https://s32.postimg.cc/9237ib6jp/image.png', 'h': 'https://s32.postimg.cc/812yt6pk5/image.png',
+               'i': 'https://s32.postimg.cc/6nbbxvqat/image.png', 'j': 'https://s32.postimg.cc/axpztgvdx/image.png',
+               'k': 'https://s32.postimg.cc/976yrzdut/image.png', 'l': 'https://s32.postimg.cc/fmal2e9yd/image.png',
+               'm': 'https://s32.postimg.cc/m19lz2go5/image.png', 'n': 'https://s32.postimg.cc/b2ycgvs2t/image.png',
+               "ñ": "https://s30.postimg.cc/ayy8g02xd/image.png", 'o': 'https://s32.postimg.cc/c6igsucpx/image.png',
+               'p': 'https://s32.postimg.cc/jnro82291/image.png', 'q': 'https://s32.postimg.cc/ve5lpfv1h/image.png',
+               'r': 'https://s32.postimg.cc/nmovqvqw5/image.png', 's': 'https://s32.postimg.cc/zd2t89jol/image.png',
+               't': 'https://s32.postimg.cc/wk9lo8jc5/image.png', 'u': 'https://s32.postimg.cc/w8s5bh2w5/image.png',
+               'v': 'https://s32.postimg.cc/e7dlrey91/image.png', 'w': 'https://s32.postimg.cc/fnp49k15x/image.png',
+               'x': 'https://s32.postimg.cc/dkep1w1d1/image.png', 'y': 'https://s32.postimg.cc/um7j3zg85/image.png',
+               'z': 'https://s32.postimg.cc/jb4vfm9d1/image.png'}
 
-tgenero = {"comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
-           "suspenso": "https://s13.postimg.org/wmw6vl1cn/suspenso.png",
-           "drama": "https://s16.postimg.org/94sia332d/drama.png",
-           "accion": "https://s3.postimg.org/y6o9puflv/accion.png",
-           "aventura": "https://s10.postimg.org/6su40czih/aventura.png",
-           "romance": "https://s15.postimg.org/fb5j8cl63/romance.png",
-           "thriller": "https://s22.postimg.org/5y9g0jsu9/thriller.png",
-           "ciencia-ficcion": "https://s9.postimg.org/diu70s7j3/cienciaficcion.png",
-           "terror": "https://s7.postimg.org/yi0gij3gb/terror.png",
-           "documental": "https://s16.postimg.org/7xjj4bmol/documental.png",
-           "musical": "https://s29.postimg.org/bbxmdh9c7/musical.png",
-           "fantastico": "https://s10.postimg.org/pbkbs6j55/fantastico.png",
-           "deporte": "https://s13.postimg.org/xuxf5h06v/deporte.png",
-           "infantil": "https://s23.postimg.org/g5rmazozv/infantil.png",
-           "animacion": "https://s13.postimg.org/5on877l87/animacion.png"
+tgenero = {"comedia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
+           "suspenso": "https://s13.postimg.cc/wmw6vl1cn/suspenso.png",
+           "drama": "https://s16.postimg.cc/94sia332d/drama.png",
+           "accion": "https://s3.postimg.cc/y6o9puflv/accion.png",
+           "aventura": "https://s10.postimg.cc/6su40czih/aventura.png",
+           "romance": "https://s15.postimg.cc/fb5j8cl63/romance.png",
+           "thriller": "https://s22.postimg.cc/5y9g0jsu9/thriller.png",
+           "ciencia-ficcion": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png",
+           "terror": "https://s7.postimg.cc/yi0gij3gb/terror.png",
+           "documental": "https://s16.postimg.cc/7xjj4bmol/documental.png",
+           "musical": "https://s29.postimg.cc/bbxmdh9c7/musical.png",
+           "fantastico": "https://s10.postimg.cc/pbkbs6j55/fantastico.png",
+           "deporte": "https://s13.postimg.cc/xuxf5h06v/deporte.png",
+           "infantil": "https://s23.postimg.cc/g5rmazozv/infantil.png",
+           "animacion": "https://s13.postimg.cc/5on877l87/animacion.png"
            }
 
 patrones = ['', '<span class="clms">Sinopsis:<\/span>([^<]+)<div class="info_movie">']
@@ -107,8 +107,8 @@ def mainlist(item):
     itemlist.append(
         item.clone(title="Todas",
                    action="lista",
-                   thumbnail='https://s18.postimg.org/fwvaeo6qh/todas.png',
-                   fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
+                   thumbnail='https://s18.postimg.cc/fwvaeo6qh/todas.png',
+                   fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
                    extra='peliculas/',
                    url=host
                    ))
@@ -116,8 +116,8 @@ def mainlist(item):
     itemlist.append(
         itemlist[-1].clone(title="Generos",
                            action="menuseccion",
-                           thumbnail='https://s3.postimg.org/5s9jg2wtf/generos.png',
-                           fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                           thumbnail='https://s3.postimg.cc/5s9jg2wtf/generos.png',
+                           fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png',
                            url=host,
                            extra='/genero'
                            ))
@@ -125,16 +125,16 @@ def mainlist(item):
     itemlist.append(
         itemlist[-1].clone(title="Alfabetico",
                            action="menuseccion",
-                           thumbnail='https://s17.postimg.org/fwi1y99en/a-z.png',
-                           fanart='https://s17.postimg.org/fwi1y99en/a-z.png',
+                           thumbnail='https://s17.postimg.cc/fwi1y99en/a-z.png',
+                           fanart='https://s17.postimg.cc/fwi1y99en/a-z.png',
                            url=host, extra='/tag'
                            ))
 
     itemlist.append(
         itemlist[-1].clone(title="Audio",
                            action="menuseccion",
-                           thumbnail='https://s27.postimg.org/avs17iuw3/audio.png',
-                           fanart='https://s27.postimg.org/avs17iuw3/audio.png',
+                           thumbnail='https://s27.postimg.cc/avs17iuw3/audio.png',
+                           fanart='https://s27.postimg.cc/avs17iuw3/audio.png',
                            url=host,
                            extra='/audio'
                            ))
@@ -142,16 +142,16 @@ def mainlist(item):
     itemlist.append(
         itemlist[-1].clone(title="Calidad",
                            action="menuseccion",
-                           thumbnail='https://s13.postimg.org/6nzv8nlkn/calidad.png',
-                           fanart='https://s13.postimg.org/6nzv8nlkn/calidad.png',
+                           thumbnail='https://s13.postimg.cc/6nzv8nlkn/calidad.png',
+                           fanart='https://s13.postimg.cc/6nzv8nlkn/calidad.png',
                            extra='/calidad'
                            ))
 
     itemlist.append(
         itemlist[-1].clone(title="Año",
                            action="menuseccion",
-                           thumbnail='https://s8.postimg.org/7eoedwfg5/pora_o.png',
-                           fanart='https://s8.postimg.org/7eoedwfg5/pora_o.png',
+                           thumbnail='https://s8.postimg.cc/7eoedwfg5/pora_o.png',
+                           fanart='https://s8.postimg.cc/7eoedwfg5/pora_o.png',
                            url=host,
                            extra='/fecha-estreno'
                            ))
@@ -160,8 +160,8 @@ def mainlist(item):
         itemlist[-1].clone(title="Buscar",
                            action="search",
                            url=host + '?s=',
-                           thumbnail='https://s30.postimg.org/pei7txpa9/buscar.png',
-                           fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
+                           thumbnail='https://s30.postimg.cc/pei7txpa9/buscar.png',
+                           fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
                            ))
 
     autoplay.show_option(item.channel, itemlist)
@@ -283,7 +283,7 @@ def lista(item):
                      action="lista",
                      title='Siguiente >>>',
                      url=next_page,
-                     thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png',
+                     thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png',
                      extra=item.extra
                      ))
 

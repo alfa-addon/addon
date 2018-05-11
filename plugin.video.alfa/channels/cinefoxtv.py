@@ -20,29 +20,29 @@ global itemlist
 global temp_list
 canal = 'cinefoxtv'
 
-tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
-           "Suspenso": "https://s13.postimg.org/wmw6vl1cn/suspenso.png",
-           "Drama": "https://s16.postimg.org/94sia332d/drama.png",
-           "Acción": "https://s3.postimg.org/y6o9puflv/accion.png",
-           "Aventuras": "https://s10.postimg.org/6su40czih/aventura.png",
-           "Animacion": "https://s13.postimg.org/5on877l87/animacion.png",
-           "Ciencia Ficcion": "https://s9.postimg.org/diu70s7j3/cienciaficcion.png",
-           "Terror": "https://s7.postimg.org/yi0gij3gb/terror.png",
-           "Documentales": "https://s16.postimg.org/7xjj4bmol/documental.png",
-           "Musical": "https://s29.postimg.org/bbxmdh9c7/musical.png",
-           "Western": "https://s23.postimg.org/lzyfbjzhn/western.png",
-           "Belico": "https://s23.postimg.org/71itp9hcr/belica.png",
-           "Crimen": "https://s4.postimg.org/6z27zhirx/crimen.png",
-           "Biográfica": "https://s15.postimg.org/5lrpbx323/biografia.png",
-           "Deporte": "https://s13.postimg.org/xuxf5h06v/deporte.png",
-           "Fantástico": "https://s10.postimg.org/pbkbs6j55/fantastico.png",
-           "Estrenos": "https://s21.postimg.org/fy69wzm93/estrenos.png",
-           "Película 18+": "https://s15.postimg.org/exz7kysjf/erotica.png",
-           "Thriller": "https://s22.postimg.org/5y9g0jsu9/thriller.png",
-           "Familiar": "https://s7.postimg.org/6s7vdhqrf/familiar.png",
-           "Romanticas": "https://s21.postimg.org/xfsj7ua0n/romantica.png",
-           "Intriga": "https://s27.postimg.org/v9og43u2b/intriga.png",
-           "Infantil": "https://s23.postimg.org/g5rmazozv/infantil.png"}
+tgenero = {"Comedia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
+           "Suspenso": "https://s13.postimg.cc/wmw6vl1cn/suspenso.png",
+           "Drama": "https://s16.postimg.cc/94sia332d/drama.png",
+           "Acción": "https://s3.postimg.cc/y6o9puflv/accion.png",
+           "Aventuras": "https://s10.postimg.cc/6su40czih/aventura.png",
+           "Animacion": "https://s13.postimg.cc/5on877l87/animacion.png",
+           "Ciencia Ficcion": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png",
+           "Terror": "https://s7.postimg.cc/yi0gij3gb/terror.png",
+           "Documentales": "https://s16.postimg.cc/7xjj4bmol/documental.png",
+           "Musical": "https://s29.postimg.cc/bbxmdh9c7/musical.png",
+           "Western": "https://s23.postimg.cc/lzyfbjzhn/western.png",
+           "Belico": "https://s23.postimg.cc/71itp9hcr/belica.png",
+           "Crimen": "https://s4.postimg.cc/6z27zhirx/crimen.png",
+           "Biográfica": "https://s15.postimg.cc/5lrpbx323/biografia.png",
+           "Deporte": "https://s13.postimg.cc/xuxf5h06v/deporte.png",
+           "Fantástico": "https://s10.postimg.cc/pbkbs6j55/fantastico.png",
+           "Estrenos": "https://s21.postimg.cc/fy69wzm93/estrenos.png",
+           "Película 18+": "https://s15.postimg.cc/exz7kysjf/erotica.png",
+           "Thriller": "https://s22.postimg.cc/5y9g0jsu9/thriller.png",
+           "Familiar": "https://s7.postimg.cc/6s7vdhqrf/familiar.png",
+           "Romanticas": "https://s21.postimg.cc/xfsj7ua0n/romantica.png",
+           "Intriga": "https://s27.postimg.cc/v9og43u2b/intriga.png",
+           "Infantil": "https://s23.postimg.cc/g5rmazozv/infantil.png"}
 
 
 def mainlist(item):
@@ -51,20 +51,20 @@ def mainlist(item):
     itemlist = []
 
     itemlist.append(item.clone(title="Todas", action="lista", thumbnail=get_thumb('all', auto=True),
-                               fanart='https://s18.postimg.org/fwvaeo6qh/todas.png', extra='peliculas/',
+                               fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png', extra='peliculas/',
                                url=host + 'page/1.html'))
 
     itemlist.append(
         itemlist[-1].clone(title="Generos", action="generos", thumbnail=get_thumb('genres', auto=True),
-                           fanart='https://s3.postimg.org/5s9jg2wtf/generos.png', url=host))
+                           fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png', url=host))
 
     itemlist.append(
         itemlist[-1].clone(title="Mas Vistas", action="lista", thumbnail=get_thumb('more watched', auto=True),
-                           fanart='https://s9.postimg.org/wmhzu9d7z/vistas.png',
+                           fanart='https://s9.postimg.cc/wmhzu9d7z/vistas.png',
                            url=host + 'top-peliculas-online/1.html'))
 
     itemlist.append(itemlist[-1].clone(title="Buscar", action="search", thumbnail=get_thumb('search', auto=True),
-                                       fanart='https://s30.postimg.org/pei7txpa9/buscar.png', url=host + 'search/'))
+                                       fanart='https://s30.postimg.cc/pei7txpa9/buscar.png', url=host + 'search/'))
 
     return itemlist
 
@@ -113,7 +113,7 @@ def lista(item):
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     if next_page_url != '':
         itemlist.append(Item(channel=item.channel, action="lista", title='Siguiente >>>', url=next_page_url,
-                             thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png', extra=item.extra,
+                             thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png', extra=item.extra,
                              next_page=next_page))
     return itemlist
 

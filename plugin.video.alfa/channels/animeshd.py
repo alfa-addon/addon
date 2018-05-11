@@ -11,23 +11,23 @@ from core import tmdb
 from core.item import Item
 from platformcode import logger, config
 
-tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
-           "Drama": "https://s16.postimg.org/94sia332d/drama.png",
-           "Acción": "https://s3.postimg.org/y6o9puflv/accion.png",
-           "Aventura": "https://s10.postimg.org/6su40czih/aventura.png",
-           "Romance": "https://s15.postimg.org/fb5j8cl63/romance.png",
-           "Ciencia ficción": "https://s9.postimg.org/diu70s7j3/cienciaficcion.png",
-           "Terror": "https://s7.postimg.org/yi0gij3gb/terror.png",
-           "Fantasía": "https://s13.postimg.org/65ylohgvb/fantasia.png",
-           "Misterio": "https://s1.postimg.org/w7fdgf2vj/misterio.png",
-           "Crimen": "https://s4.postimg.org/6z27zhirx/crimen.png",
-           "Hentai": "https://s29.postimg.org/aamrngu2f/hentai.png",
-           "Magia": "https://s9.postimg.org/nhkfzqffj/magia.png",
-           "Psicológico": "https://s13.postimg.org/m9ghzr86f/psicologico.png",
-           "Sobrenatural": "https://s9.postimg.org/6hxbvd4ov/sobrenatural.png",
-           "Torneo": "https://s2.postimg.org/ajoxkk9ih/torneo.png",
-           "Thriller": "https://s22.postimg.org/5y9g0jsu9/thriller.png",
-           "Otros": "https://s30.postimg.org/uj5tslenl/otros.png"}
+tgenero = {"Comedia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
+           "Drama": "https://s16.postimg.cc/94sia332d/drama.png",
+           "Acción": "https://s3.postimg.cc/y6o9puflv/accion.png",
+           "Aventura": "https://s10.postimg.cc/6su40czih/aventura.png",
+           "Romance": "https://s15.postimg.cc/fb5j8cl63/romance.png",
+           "Ciencia ficción": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png",
+           "Terror": "https://s7.postimg.cc/yi0gij3gb/terror.png",
+           "Fantasía": "https://s13.postimg.cc/65ylohgvb/fantasia.png",
+           "Misterio": "https://s1.postimg.cc/w7fdgf2vj/misterio.png",
+           "Crimen": "https://s4.postimg.cc/6z27zhirx/crimen.png",
+           "Hentai": "https://s29.postimg.cc/aamrngu2f/hentai.png",
+           "Magia": "https://s9.postimg.cc/nhkfzqffj/magia.png",
+           "Psicológico": "https://s13.postimg.cc/m9ghzr86f/psicologico.png",
+           "Sobrenatural": "https://s9.postimg.cc/6hxbvd4ov/sobrenatural.png",
+           "Torneo": "https://s2.postimg.cc/ajoxkk9ih/torneo.png",
+           "Thriller": "https://s22.postimg.cc/5y9g0jsu9/thriller.png",
+           "Otros": "https://s30.postimg.cc/uj5tslenl/otros.png"}
 
 host = "http://www.animeshd.tv"
 
@@ -42,14 +42,14 @@ def mainlist(item):
     itemlist.append(item.clone(title="Ultimas",
                                action="lista",
                                thumbnail=get_thumb('last', auto=True),
-                               fanart='https://s22.postimg.org/cb7nmhwv5/ultimas.png',
+                               fanart='https://s22.postimg.cc/cb7nmhwv5/ultimas.png',
                                url=host + '/ultimos'
                                ))
 
     itemlist.append(item.clone(title="Todas",
                                action="lista",
                                thumbnail=get_thumb('all', auto=True),
-                               fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
+                               fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
                                url=host + '/buscar?t=todos&q='
                                ))
 
@@ -57,14 +57,14 @@ def mainlist(item):
                                action="generos",
                                url=host,
                                thumbnail=get_thumb('genres', auto=True),
-                               fanart='https://s3.postimg.org/5s9jg2wtf/generos.png'
+                               fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png'
                                ))
 
     itemlist.append(item.clone(title="Buscar",
                                action="search",
                                url=host + '/buscar?t=todos&q=',
                                thumbnail=get_thumb('search', auto=True),
-                               fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
+                               fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
                                ))
 
     return itemlist
@@ -110,7 +110,7 @@ def lista(item):
                              action="lista",
                              title=">> Página siguiente",
                              url=next_page_url,
-                             thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'
+                             thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
                              ))
     tmdb.set_infoLabels(itemlist)
     return itemlist

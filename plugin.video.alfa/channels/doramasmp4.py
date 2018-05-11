@@ -97,7 +97,7 @@ def list_all(item):
         next_page = scrapertools.find_single_match(data, '<a href=([^ ]+) aria-label=Netx>')
         if next_page != '':
             itemlist.append(Item(channel=item.channel, action="list_all", title='Siguiente >>>',
-                                 url=page_base+next_page, thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png',
+                                 url=page_base+next_page, thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png',
                                  type=item.type))
     return itemlist
 

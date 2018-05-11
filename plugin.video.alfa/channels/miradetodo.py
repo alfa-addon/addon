@@ -10,36 +10,36 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
-           "Suspense": "https://s13.postimg.org/wmw6vl1cn/suspenso.png",
-           "Drama": "https://s16.postimg.org/94sia332d/drama.png",
-           "Acción": "https://s3.postimg.org/y6o9puflv/accion.png",
-           "Aventura": "https://s10.postimg.org/6su40czih/aventura.png",
-           "Romance": "https://s15.postimg.org/fb5j8cl63/romance.png",
-           "Animación": "https://s13.postimg.org/5on877l87/animacion.png",
-           "Ciencia ficción": "https://s9.postimg.org/diu70s7j3/cienciaficcion.png",
-           "Terror": "https://s7.postimg.org/yi0gij3gb/terror.png",
-           "Documental": "https://s16.postimg.org/7xjj4bmol/documental.png",
-           "Música": "https://s29.postimg.org/bbxmdh9c7/musical.png",
-           "Western": "https://s23.postimg.org/lzyfbjzhn/western.png",
-           "Fantasía": "https://s13.postimg.org/65ylohgvb/fantasia.png",
-           "Guerra": "https://s4.postimg.org/n1h2jp2jh/guerra.png",
-           "Misterio": "https://s1.postimg.org/w7fdgf2vj/misterio.png",
-           "Crimen": "https://s4.postimg.org/6z27zhirx/crimen.png",
-           "Historia": "https://s15.postimg.org/fmc050h1n/historia.png",
-           "película de la televisión": "https://s9.postimg.org/t8xb14fb3/delatv.png",
-           "Action & Adventure": "https://s4.postimg.org/neu65orz1/action_adventure.png",
-           "Sci-Fi & Fantasy": "https://s23.postimg.org/ys5if2oez/scifi_fantasy.png",
-           "Suspenso": "https://s13.postimg.org/wmw6vl1cn/suspenso.png",
-           "Familia": "https://s7.postimg.org/6s7vdhqrf/familiar.png",
-           "Foreign": "https://s29.postimg.org/jdc2m158n/extranjera.png",
-           "Cartelera MDT": "https://s1.postimg.org/6yle12szj/cartelera.png",
-           "Romanticas": "https://s21.postimg.org/xfsj7ua0n/romantica.png"
+tgenero = {"Comedia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
+           "Suspense": "https://s13.postimg.cc/wmw6vl1cn/suspenso.png",
+           "Drama": "https://s16.postimg.cc/94sia332d/drama.png",
+           "Acción": "https://s3.postimg.cc/y6o9puflv/accion.png",
+           "Aventura": "https://s10.postimg.cc/6su40czih/aventura.png",
+           "Romance": "https://s15.postimg.cc/fb5j8cl63/romance.png",
+           "Animación": "https://s13.postimg.cc/5on877l87/animacion.png",
+           "Ciencia ficción": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png",
+           "Terror": "https://s7.postimg.cc/yi0gij3gb/terror.png",
+           "Documental": "https://s16.postimg.cc/7xjj4bmol/documental.png",
+           "Música": "https://s29.postimg.cc/bbxmdh9c7/musical.png",
+           "Western": "https://s23.postimg.cc/lzyfbjzhn/western.png",
+           "Fantasía": "https://s13.postimg.cc/65ylohgvb/fantasia.png",
+           "Guerra": "https://s4.postimg.cc/n1h2jp2jh/guerra.png",
+           "Misterio": "https://s1.postimg.cc/w7fdgf2vj/misterio.png",
+           "Crimen": "https://s4.postimg.cc/6z27zhirx/crimen.png",
+           "Historia": "https://s15.postimg.cc/fmc050h1n/historia.png",
+           "película de la televisión": "https://s9.postimg.cc/t8xb14fb3/delatv.png",
+           "Action & Adventure": "https://s4.postimg.cc/neu65orz1/action_adventure.png",
+           "Sci-Fi & Fantasy": "https://s23.postimg.cc/ys5if2oez/scifi_fantasy.png",
+           "Suspenso": "https://s13.postimg.cc/wmw6vl1cn/suspenso.png",
+           "Familia": "https://s7.postimg.cc/6s7vdhqrf/familiar.png",
+           "Foreign": "https://s29.postimg.cc/jdc2m158n/extranjera.png",
+           "Cartelera MDT": "https://s1.postimg.cc/6yle12szj/cartelera.png",
+           "Romanticas": "https://s21.postimg.cc/xfsj7ua0n/romantica.png"
            }
 
-tcalidad = {"FULL HD": "https://s18.postimg.org/qszt3n6tl/fullhd.png",
-            "HD": "https://s27.postimg.org/m2dhhkrur/image.png",
-            "SD": "https://s29.postimg.org/l66t2pfqf/image.png"
+tcalidad = {"FULL HD": "https://s18.postimg.cc/qszt3n6tl/fullhd.png",
+            "HD": "https://s27.postimg.cc/m2dhhkrur/image.png",
+            "SD": "https://s29.postimg.cc/l66t2pfqf/image.png"
             }
 host = 'http://miradetodo.io/'
 
@@ -52,18 +52,18 @@ def mainlist(item):
     itemlist.append(item.clone(title="Peliculas",
                                action="menu_peliculas",
                                thumbnail=get_thumb('movies', auto=True),
-                               fanart='https://s8.postimg.org/6wqwy2c2t/peliculas.png'
+                               fanart='https://s8.postimg.cc/6wqwy2c2t/peliculas.png'
                                ))
 
     itemlist.append(item.clone(title="Series",
                                action="menu_series",
                                thumbnail=get_thumb('tvshows', auto=True),
-                               fanart='https://s27.postimg.org/iahczwgrn/series.png',
+                               fanart='https://s27.postimg.cc/iahczwgrn/series.png',
                                ))
 
     itemlist.append(item.clone(title="Buscar", action="search",
                                thumbnail=get_thumb('search', auto=True),
-                               fanart='https://s30.postimg.org/pei7txpa9/buscar.png',
+                               fanart='https://s30.postimg.cc/pei7txpa9/buscar.png',
                                url=host + '?s='
                                ))
 
@@ -78,7 +78,7 @@ def menu_peliculas(item):
     itemlist.append(item.clone(title="Todas",
                                action="lista",
                                thumbnail=get_thumb('all', auto=True),
-                               fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
+                               fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
                                url=host + 'page/1/?s'
                                ))
 
@@ -86,7 +86,7 @@ def menu_peliculas(item):
                                action="seccion",
                                url=host + 'page/1/?s',
                                thumbnail=get_thumb('genres', auto=True),
-                               fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                               fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png',
                                seccion='generos-pelicula'
                                ))
 
@@ -94,7 +94,7 @@ def menu_peliculas(item):
                                action="seccion",
                                url=host + 'page/1/?s',
                                thumbnail=get_thumb('year', auto=True),
-                               fanart='https://s8.postimg.org/7eoedwfg5/pora_o.png',
+                               fanart='https://s8.postimg.cc/7eoedwfg5/pora_o.png',
                                seccion='fecha-estreno'
                                ))
 
@@ -102,7 +102,7 @@ def menu_peliculas(item):
                                action="seccion",
                                url=host + 'page/1/?s',
                                thumbnail=get_thumb('quality', auto=True),
-                               fanart='https://s13.postimg.org/6nzv8nlkn/calidad.png',
+                               fanart='https://s13.postimg.cc/6nzv8nlkn/calidad.png',
                                seccion='calidad'
                                ))
 
@@ -116,7 +116,7 @@ def menu_series(item):
 
     itemlist.append(item.clone(title="Todas",
                                action="lista", thumbnail=get_thumb('all', auto=True),
-                               fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
+                               fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
                                url=host + 'series/page/1/',
                                ))
 
@@ -124,7 +124,7 @@ def menu_series(item):
                                action="seccion",
                                url=host + 'series/page/1/',
                                thumbnail=get_thumb('genres', auto=True),
-                               fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                               fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png',
                                seccion='generos-serie'
                                ))
 
@@ -132,7 +132,7 @@ def menu_series(item):
                                action="seccion",
                                url=host + 'series/page/1/',
                                thumbnail=get_thumb('year', auto=True),
-                               fanart='https://s8.postimg.org/7eoedwfg5/pora_o.png',
+                               fanart='https://s8.postimg.cc/7eoedwfg5/pora_o.png',
                                seccion='series-lanzamiento'
                                ))
 
@@ -191,7 +191,7 @@ def lista(item):
                                  action="lista",
                                  title='Siguiente >>>',
                                  url=next_page,
-                                 thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'
+                                 thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
                                  ))
     return itemlist
 

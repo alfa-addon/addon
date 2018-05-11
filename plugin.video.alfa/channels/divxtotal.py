@@ -356,8 +356,8 @@ def info_capitulos(item, images={}):
         title = "[COLOR red][B]LO SENTIMOS...[/B][/COLOR]"
         plot = "Este capitulo no tiene informacion..."
         plot = "[COLOR yellow][B]" + plot + "[/B][/COLOR]"
-        image = "http://s6.postimg.org/ub7pb76c1/noinfo.png"
-        foto = "http://s6.postimg.org/nm3gk1xox/noinfosup2.png"
+        image = "http://s6.postimg.cc/ub7pb76c1/noinfo.png"
+        foto = "http://s6.postimg.cc/nm3gk1xox/noinfosup2.png"
         rating = ""
     ventana = TextBox2(title=title, plot=plot, thumbnail=image, fanart=foto, rating=rating)
     ventana.doModal()
