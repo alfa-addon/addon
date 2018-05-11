@@ -404,7 +404,8 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es', lock=None):
                     otmdb = Tmdb(external_id=item.infoLabels['tvrage_id'], external_source="tvrage_id",
                                  tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda)
 
-            if otmdb is None:
+            #if otmdb is None:
+            if not item.infoLabels['tmdb_id'] and not item.infoLabels['imdb_id'] and not item.infoLabels['tvdb_id'] and not item.infoLabels['freebase_mid'] and not item.infoLabels['freebase_id'] and not item.infoLabels['tvrage_id']:
                 # No se ha podido buscar por ID...
                 # hacerlo por titulo
                 if tipo_busqueda == 'tv':
