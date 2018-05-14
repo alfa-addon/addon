@@ -323,6 +323,7 @@ def findvideos(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for option, videoitem in matches:
+        sub = ''
         lang = scrapertools.find_single_match(src,
                                               '<a href=#(?:div|player)%s.*?>.*?(.*?)<\/a>' % option)
         if 'audio ' in lang.lower():
@@ -333,12 +334,21 @@ def findvideos(item):
         video_urls = scrapertools.find_multiple_matches(data, '<li><a href=(.*?)><span')
         for video in video_urls:
             video_data = get_source(video)
-            if not 'fastplay' in video:
+            if sub == '' and 'sub' in lang:
+                sub_file = scrapertools.find_single_match(video, '&sub=([^+]+)')
+                sub = 'http://miradetodo.io/stream/subt/%s' % sub_file
+                                
+            if 'openload' in video or 'your' in video:
                 new_url= scrapertools.find_single_match(video_data,'<li><a href=(.*?srt)><span')
                 data_final = get_source(new_url)
             else:
                 data_final=video_data
+            
             url = scrapertools.find_single_match(data_final,'iframe src=(.*?) scrolling')
+            if url == '':
+                url = scrapertools.find_single_match(data_final, "'file':'(.*?)'")
+            
+            
             quality = item.quality
             server = servertools.get_server_from_url(url)
             title = item.contentTitle + ' [%s] [%s]' % (server, lang)
@@ -346,8 +356,8 @@ def findvideos(item):
                 title = item.contentTitle + ' [%s] [%s] [%s]' % (server, quality, lang)
 
             if url!='':
-                itemlist.append(item.clone(title=title, url=url, action='play', server=server, language=lang))
-
+                itemlist.append(item.clone(title=title, url=url, action='play', language=lang, subtitle=sub))
+    itemlist = servertools.get_servers_itemlist(itemlist)
     if item.infoLabels['mediatype'] == 'movie':
         if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
             itemlist.append(Item(channel=item.channel,
