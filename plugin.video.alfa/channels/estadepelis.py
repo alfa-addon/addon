@@ -22,7 +22,7 @@ list_quality = []
 list_servers = ['yourupload', 'openload', 'sendvid']
 
 vars = {
-    'ef5ca18f089cf01316bbc967fa10f72950790c39ef5ca18f089cf01316bbc967fa10f72950790c39': 'http://www.estadepelis.com/',
+    'ef5ca18f089cf01316bbc967fa10f72950790c39ef5ca18f089cf01316bbc967fa10f72950790c39': 'http://tawnestdplsnetps.pw/',
     'b48699bb49d4550f27879deeb948d4f7d9c5949a8': 'embed',
     'JzewJkLlrvcFnLelj2ikbA': 'php?url=',
     'p889c6853a117aca83ef9d6523335dc065213ae86': 'player',
@@ -194,8 +194,8 @@ def generos(item):
     itemlist = []
     norep = []
     data = httptools.downloadpage(item.url).data
-
-    patron = '<li class="cat-item cat-item-.*?"><a href="([^"]+)">([^<]+)<\/a>'
+    logger.debug(data)
+    patron = '<li class="cat-item cat-item-.*?"><a href="([^"]+)".*?>([^<]+)<\/a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
@@ -342,7 +342,6 @@ def findvideos(item):
     langs = dict()
 
     data = httptools.downloadpage(item.url).data
-    logger.debug('data: %s' % data)
     patron = '<a onclick="return (play\d+).*?;"> (.*?) <\/a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -365,26 +364,28 @@ def findvideos(item):
             url = dec(encurl)
         title = ''
         server = ''
-        servers = {'/opl': 'openload', '/your': 'yourupload', '/sen': 'senvid', '/face': 'netutv', '/vk': 'vk'}
+        servers = {'/opl': 'openload', '/your': 'yourupload', '/sen': 'senvid', '/face': 'netutv', '/vk': 'vk',
+                   '/jk':'streamcherry'}
         server_id = re.sub(r'.*?embed|\.php.*', '', url)
         if server_id and server_id in servers:
             server = servers[server_id]
-        logger.debug('server_id: %s' % server_id)
 
-        if langs[scrapedlang] in list_language:
+
+        if (scrapedlang in langs) and langs[scrapedlang] in list_language:
             language = IDIOMAS[langs[scrapedlang]]
         else:
             language = 'Latino'
-        if langs[scrapedlang] == 'Latino':
-            idioma = '[COLOR limegreen]LATINO[/COLOR]'
-        elif langs[scrapedlang] == 'Sub Español':
-            idioma = '[COLOR red]SUB[/COLOR]'
+        #
+        # if langs[scrapedlang] == 'Latino':
+        #     idioma = '[COLOR limegreen]LATINO[/COLOR]'
+        # elif langs[scrapedlang] == 'Sub Español':
+        #     idioma = '[COLOR red]SUB[/COLOR]'
 
         if item.extra == 'peliculas':
-            title = item.contentTitle + ' (' + server + ') ' + idioma
+            title = item.contentTitle + ' (' + server + ') ' + language
             plot = scrapertools.find_single_match(data, '<p>([^<]+)<\/p>')
         else:
-            title = item.contentSerieName + ' (' + server + ') ' + idioma
+            title = item.contentSerieName + ' (' + server + ') ' + language
             plot = item.plot
 
         thumbnail = servertools.guess_server_thumbnail(title)
@@ -399,7 +400,6 @@ def findvideos(item):
                                        quality='',
                                        language=language
                                        ))
-        logger.debug('url: %s' % url)
     # Requerido para FilterTools
 
     itemlist = filtertools.get_links(itemlist, item, list_language)
@@ -423,22 +423,12 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, add_referer=True).data
+    data = httptools.downloadpage(item.url).data
     if 'your' in item.url:
         item.url = 'http://www.yourupload.com/embed/' + scrapertools.find_single_match(data, 'src=".*?code=(.*?)"')
         itemlist.append(item)
     else:
-
         itemlist = servertools.find_video_items(data=data)
-
-    if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=item.channel,
-                             title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                             url=item.url,
-                             action="add_pelicula_to_library",
-                             extra="findvideos",
-                             contentTitle=item.contentTitle
-                             ))
 
     return itemlist
 
