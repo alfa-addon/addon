@@ -169,7 +169,7 @@ def add_languages(title, languages):
 def set_color(title, category):
     #logger.info()
 
-    color_scheme = {'otro': 'white'}
+    color_scheme = {'otro': 'white', 'dual': 'white'}
 
     #logger.debug('category antes de remove: %s' % category)
     category = remove_format(category).lower()
@@ -209,6 +209,7 @@ def set_lang(language):
           'sub: español', 'vs', 'zs', 'vs', 'english-spanish subs', 'ingles sub espanol']
     vos=['vos', 'sub ingles', 'engsub', 'vosi','ingles subtitulado', 'sub: ingles']
     vo=['ingles', 'en','vo', 'ovos', 'eng','v.o', 'english']
+    dual=['dual']
 
     language = scrapertools.decodeHtmlentities(language)
     old_lang = language
@@ -227,6 +228,8 @@ def set_lang(language):
         language = 'vos'
     elif language in vo:
         language = 'vo'
+    elif language in dual:
+        language = 'dual'
     else:
         language = 'otro'
 
