@@ -105,7 +105,7 @@ def listado(item):
         item.action = "findvideos"
         item.contentType = "movie"
         pag = False                                 #No hay paginación
-    elif item.extra == "peliculas" and not item.tipo:       #Desde Menún principal
+    elif item.extra == "peliculas" and not item.tipo:       #Desde Menú principal
         patron = '<a href="(/peli-descargar-torrent[^"]+)">?'
         patron += '<img src="([^"]+)"[^<]+</a>'
         patron_enlace = "/peli-descargar-torrent-\d+-(.*?)\.html"
@@ -279,23 +279,23 @@ def listado(item):
 
         title_subs = ""
         item_local.language = ""
-        if "[subs" in title or "[Subs" in title  or "[VOS" in title or "[VOSE" in title or "(V.O.S.E" in title:
+        if "[subs" in title.lower() or "[vos" in title.lower()  or "v.o.s" in title.lower():
             item_local.language = "VOS"
-            title = title.replace(" [Subs. integrados]", "").replace(" [subs. Integrados]", "").replace(" [VOSE", "").replace(" (V.O.S.E)", "")
-        if "latino" in title or "Latino" in title or "rgentina" in title:
+        title = title.replace(" [Subs. integrados]", "").replace(" [subs. Integrados]", "").replace(" [VOSE", "").replace(" [VOS", "").replace(" (V.O.S.E)", "")
+        if "latino" in title.lower() or "argentina" in title.lower():
             item_local.language = "LAT"
             title = title.replace(" Latino", "").replace(" latino", "").replace(" Argentina", "").replace(" argentina", "")
         title = title.replace("Castellano", "").replace("castellano", "").replace("inglés", "").replace("ingles", "").replace("Inglés", "").replace("Ingles", "")
         
-        if "3d" in title or "3D" in title:        #Reservamos info de subtítulos para después de TMDB
-            title_subs = "[3D]"
+        if "3d" in title.lower():        #Reservamos info para después de TMDB
+            title_subs = " 3D"
             title = title.replace(" [3d]", "").replace(" 3d", "").replace(" [3D]", "").replace(" 3D", "")
-        if "Temp" in title or "temp" in title:        #Reservamos info de Temporada para después de TMDB
+        if "temp" in title.lower():        #Reservamos info de Temporada para después de TMDB
             title_subs = "[Temp.]"
-        if "Audio" in title or "audio" in title:        #Reservamos info de subtítulos para después de TMDB
+        if "audio" in title.lower():        #Reservamos info de audio para después de TMDB
             title_subs = '[%s]' % scrapertools.find_single_match(title, r'(\[[a|A]udio.*?\])')
             title = re.sub(r'\[[a|A]udio.*?\]', '', title)
-        if "[Dual" in title or "[dual" in title:
+        if "[dual" in title.lower():
             title_subs = "[Dual]"
             title = title = re.sub(r'\[D|dual.*?\]', '', title)
         
@@ -325,7 +325,7 @@ def listado(item):
         
         if info != "" and not item_local.quality:
             item_local.quality = info
-        if "(HDRip" in title or "(BR" in title or "(HDRip" in title or "(VHSRip" in title or "(DVDRip" in title or "(FullB" in title or "(fullb" in title or "(Blu" in title or "(4K" in title or "(4k" in title or "(HEVC" in title or "(IMAX" in title or "Extendida" in title or "[720p]" in title  or "[1080p]" in title:
+        if "(hdrip" in title.lower() or "(br" in title.lower() or "(vhsrip" in title.lower() or "(dvdrip" in title.lower() or "(fullb" in title.lower() or "(blu" in title.lower() or "(4k" in title.lower() or "(hevc" in title.lower() or "(imax" in title.lower() or "extendida" in title.lower() or "[720p]" in title.lower()  or "[1080p]" in title.lower():
             if not item_local.quality:
                 item_local.quality = scrapertools.find_single_match(title, r'\(.*?\)?\(.*?\)')
                 if not item_local.quality:
@@ -333,10 +333,10 @@ def listado(item):
             title = re.sub(r'\(.*?\)?\(.*?\)', '', title)
             title = re.sub(r'[\[|\(].*?[\)|\]]', '', title)
         if not item_local.quality:
-            if "FullBluRay" in title or "fullbluray" in title:
+            if "fullbluray" in title.lower():
                 item_local.quality = "FullBluRay"
                 title = title.replace("FullBluRay", "").replace("fullbluray", "")
-            if "4K" in title or "4k" in title or "HDR" in title or "hdr" in title:
+            if "4k" in title.lower() or "hdr" in title.lower():
                 item_local.quality = "4K"
                 title = title.replace("4k-hdr", "").replace("4K-HDR", "").replace("hdr", "").replace("HDR", "").replace("4k", "").replace("4K", "")
         title = title.replace("(", "").replace(")", "").replace("[", "").replace("]", "")
@@ -347,15 +347,19 @@ def listado(item):
         if item_local.extra == "peliculas":  
             item_local.contentTitle = title
 
-        if "Saga" in item_local.contentTitle or "Saga" in item_local.contentSerieName:
+        if "saga" in item_local.contentTitle.lower() or "saga" in item_local.contentSerieName.lower():
             item_local.contentTitle = item_local.contentTitle.replace("Saga ", "").replace("Saga", "")
             item_local.contentSerieName = item_local.contentSerieName.replace("Saga ", "").replace("Saga", "")
             title_subs = "[Saga]"
-        if "Colecc" in item_local.contentTitle or "Colecc" in item_local.contentSerieName:
+        if "colecc" in item_local.contentTitle.lower() or "colecc" in item_local.contentSerieName.lower():
             item_local.contentTitle = item_local.contentTitle.replace("Coleccion ", "").replace("Coleccion", "")
             item_local.contentSerieName = item_local.contentSerieName.replace("Coleccion ", "").replace("Coleccion", "")
             title_subs = "[Coleccion]"
         
+        if "3D" in title_subs:      #Si es 3D lo añadimos a calidad
+            item_local.quality = item_local.quality + title_subs
+            title_subs = ''
+            
         # Guardamos temporalmente info extra, si lo hay
         item_local.extra = item_local.extra + title_subs
         
@@ -386,6 +390,15 @@ def listado(item):
         if item_local.infoLabels['year'] == "-":
             item_local.infoLabels['year'] = ''
             item_local.infoLabels['aired'] = ''
+            
+        # Preparamos el título para series, con los núm. de temporadas, si las hay
+        if item_local.contentType == "season" or item_local.contentType == "tvshow":
+            item_local.contentTitle= ''
+
+        rating = ''
+        if item_local.infoLabels['rating'] and item_local.infoLabels['rating'] != '0.0':
+            rating = float(item_local.infoLabels['rating'])
+            rating = round(rating, 1)
         
         #Cambiamos el título si son capítulos múltiples
         if scrapertools.find_single_match(item_local.url, r'\d+x\d+.*?(\w+.*?\d+x\d+)'):
@@ -402,13 +415,13 @@ def listado(item):
             
             elif item_local.contentType == "season" or item_local.contentType == "tvshow":
                 if item_local.extra == "series" or temporada == "[Temp.]":
-                    title = '%s - Temporada %s [%s][%s][%s]' % (item_local.contentSerieName, str(item_local.contentSeason), scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})'), item_local.quality, item_local.language)
+                    title = '%s - Temporada %s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red][%s][/COLOR]' % (item_local.contentSerieName, str(item_local.contentSeason), scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})'), rating, item_local.quality, item_local.language)
                 else:
-                    title = '%s [%s][%s][%s]' % (item_local.contentSerieName, scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})'), item_local.quality, item_local.language)
+                    title = '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red][%s][/COLOR]' % (item_local.contentSerieName, scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})'), rating, item_local.quality, item_local.language)
             
             elif item_local.contentType == "movie":
-                title = '%s [%s][%s][%s]' % (title, str(item_local.infoLabels['year']), item_local.quality, item_local.language)
-
+                title = '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red][%s][/COLOR]' % (title, str(item_local.infoLabels['year']), rating, item_local.quality, item_local.language)
+                
         if config.get_setting("unify"):         #Si Titulos Inteligentes SÍ seleccionados:
             if item_local.contentType == "episode":
                 if item_local.infoLabels['episodio_titulo']:
@@ -424,7 +437,9 @@ def listado(item):
                     title = '%s -%s-' % (item_local.contentSerieName, scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})'))
             title_subs = title_subs.replace("[", "-").replace("]", "-")
         
-        title = title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "")
+        title = title.replace("--", "").replace(" []", "").replace("()", "").replace("(/)", "").replace("[/]", "")
+        title = re.sub(r'\s\[COLOR \w+\]\[\]\[\/COLOR\]', '', title)
+        title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', title)
         item_local.title = title + title_subs
         item_local.contentTitle += title_subs       #añadimos info adicional para display
         
@@ -531,13 +546,16 @@ def listado_busqueda(item):
         # Limpiamos títulos, Sacamos datos de calidad, audio y lenguaje
         scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf8').strip()
         title = scrapedtitle
+        title = title.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ï¿½", "ñ").replace("Ã±", "ñ")
 
         title_subs = ""
+        
+        #Determinamos y marcamos idiomas distintos del castellano
         item_local.language = ""
-        if "[subs" in title or "[Subs" in title  or "[VOS" in title or "[VOSE" in title or "(V.O.S.E" in title:
+        if "[vos" in title.lower()  or "v.o.s" in title.lower() or "vo" in title.lower():
             item_local.language = "VOS"
-            title = title.replace(" [Subs. integrados]", "").replace(" [subs. Integrados]", "").replace(" [VOSE", "").replace(" (V.O.S.E)", "")
-        if "latino" in title or "Latino" in title or "rgentina" in title:
+        title = title.replace(" [Subs. integrados]", "").replace(" [subs. Integrados]", "").replace(" [VOSE", "").replace(" [VOS", "").replace(" (V.O.S.E)", "").replace(" VO", "")
+        if "latino" in title.lower() or "argentina" in title.lower():
             item_local.language = "LAT"
             title = title.replace(" Latino", "").replace(" latino", "").replace(" Argentina", "").replace(" argentina", "")
         title = title.replace("Castellano", "").replace("castellano", "").replace("inglés", "").replace("ingles", "").replace("Inglés", "").replace("Ingles", "")
@@ -552,11 +570,11 @@ def listado_busqueda(item):
             title = re.sub(r'\[[a|A]udio.*?\]', '', title)
         if "[Dual" in title or "[dual" in title:
             title_subs = "[Dual]"
-            title = title = re.sub(r'\[D|dual.*?\]', '', title)
+            title = title = re.sub(r'\[[D|d]ual.*?\]', '', title)
         
         if title.endswith('.'):
             title = title[:-1]
-        title = title.replace("á", "a", 1).replace("é", "e", 1).replace("í", "i", 1).replace("ó", "o", 1).replace("ú", "u", 1).replace("ü", "u", 1)
+        
         if not title:
             title = "dummy"
         title = scrapertools.remove_htmltags(title)
@@ -655,16 +673,25 @@ def listado_busqueda(item):
             item_local.infoLabels['year'] = ''
             item_local.infoLabels['aired'] = ''
         
+        # Preparamos el título para series, con los núm. de temporadas, si las hay
+        if item_local.contentType == "season" or item_local.contentType == "tvshow":
+            item_local.contentTitle= ''
+
+        rating = ''
+        if item_local.infoLabels['rating'] and item_local.infoLabels['rating'] != '0.0':
+            rating = float(item_local.infoLabels['rating'])
+            rating = round(rating, 1)
+        
         # Ahora maquillamos un poco los titulos dependiendo de si se han seleccionado títulos inteleigentes o no
         if not config.get_setting("unify"):         #Si Titulos Inteligentes NO seleccionados:
             if item_local.contentType == "season" or item_local.contentType == "tvshow":
                 if item_local.extra == "series" or temporada == "[Temp.]":
-                    title = '%s - Temporada %s [%s][%s][%s]' % (item_local.contentSerieName, str(item_local.contentSeason), scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})'), item_local.quality, item_local.language)
+                    title = '%s - Temporada %s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red][%s][/COLOR]' % (item_local.contentSerieName, str(item_local.contentSeason), scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})'), rating, item_local.quality, item_local.language)
                 else:
-                    title = '%s [%s][%s][%s]' % (item_local.contentSerieName, scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})'), item_local.quality, item_local.language)
+                    title = '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red][%s][/COLOR]' % (item_local.contentSerieName, scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})'), rating, item_local.quality, item_local.language)
             
             elif item_local.contentType == "movie":
-                title = '%s [%s][%s][%s]' % (title, str(item_local.infoLabels['year']), item_local.quality, item_local.language)
+                title = '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red][%s][/COLOR]' % (title, str(item_local.infoLabels['year']), rating, item_local.quality, item_local.language)
 
         if config.get_setting("unify"):         #Si Titulos Inteligentes SÍ seleccionados:
             if item_local.contentType == "season" or item_local.contentType == "tvshow":
@@ -674,7 +701,9 @@ def listado_busqueda(item):
                     title = '%s -%s-' % (item_local.contentSerieName, scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})'))
             title_subs = title_subs.replace("[", "-").replace("]", "-")
         
-        title = title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "")
+        title = title.replace("--", "").replace(" []", "").replace("()", "").replace("(/)", "").replace("[/]", "")
+        title = re.sub(r'\s\[COLOR \w+\]\[\]\[\/COLOR\]', '', title)
+        title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', title)
         item_local.title = title + title_subs
         item_local.contentTitle += title_subs       #añadimos info adicional para display
         
@@ -703,7 +732,7 @@ def findvideos(item):
     unify_status = config.get_setting("unify")
     
     # Obtener la información actualizada del Episodio, si no la hay
-    if not item.infoLabels['tmdb_id']:
+    if not item.infoLabels['tmdb_id'] or (not item.infoLabels['episodio_titulo'] and item.contentType == 'episode'):
         tmdb.set_infoLabels(item, True)
 
     if item.post:      #Puede traer datos para una llamada "post".  De momento usado para documentales, pero podrían ser series
@@ -720,74 +749,83 @@ def findvideos(item):
     #logger.debug(matches)
 
     for scrapedurl in matches:
+        #Generamos una copia de Item para trabajar sobre ella
+        item_local = item.clone()
         url = urlparse.urljoin(item.url, scrapedurl)
         
         # Localiza el .torrent en el siguiente link
         if not item.post:       # Si no es llamada con Post, hay que bajar un nivel más
             torrent_data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url).data)
             #logger.debug(torrent_data)
-            link = scrapertools.get_match(torrent_data, ">Pincha.*?<a href='(.*?\/uploads\/torrents\/\w+\/.*?\.torrent)'")
-            link = urlparse.urljoin(url, link)
+            item_local.url = scrapertools.get_match(torrent_data, ">Pincha.*?<a href='(.*?\/uploads\/torrents\/\w+\/.*?\.torrent)'")
+            item_local.url = urlparse.urljoin(url, item_local.url)
         else:
-            link = url          # Ya teníamos el link desde el primer nivel (documentales)
-        link = link.replace(" ", "%20")
+            item_local.url = url          # Ya teníamos el link desde el primer nivel (documentales)
+        item_local.url = item_local.url.replace(" ", "%20")
         
-        # Añadir el año del episodio para series y pelis, si hace falta
-        year = item.infoLabels['year']
-        if item.contentType == 'episode':
-            if item.infoLabels['aired']:		
-                year = scrapertools.find_single_match(str(item.infoLabels['aired']), r'\/(\d{4})')
-            if item.infoLabels['episodio_titulo']:
-                title_torrent = '%sx%s - %s' % (str(item.contentSeason), str(item.contentEpisodeNumber), item.infoLabels['episodio_titulo'])
-            else:
-                title_torrent = '%sx%s' % (str(item.contentSeason), str(item.contentEpisodeNumber))
-            if not scrapertools.find_single_match(title_torrent, r'(\d{4})'):
-                title = '%s [%s] %s' % (title_torrent, year, item.contentSerieName)
-            else:
-                title = '%s, %s' % (title_torrent, item.contentSerieName)
-            item.infoLabels['year'] = year
+        #Pintamos el pseudo-título con toda la información disponible del vídeo
+        item_local.action = ""
+        item_local.server = "torrent"
         
-        else:
-            title = item.title
-            title_torrent = item.contentTitle
-        title_torrent = re.sub(r"\[\d+\]", "", title_torrent)
-        
-        # Pone la calidad y lenguaje si es necesario
-        if not item.infoLabels['quality']:
-            if "HDTV" in link or "720p" in link or "1080p" in link or "4K" in link:
-                item.infoLabels['quality'] = scrapertools.find_single_match(link, '.*?_([H|7|1|4].*?)\.torrent')
-                item.infoLabels['quality'] = item.infoLabels['quality'].replace("_", " ")
-        if item.infoLabels['quality']:
-            if item.infoLabels['quality'] not in title:
-                title = '%s [%s]' % (title, item.infoLabels['quality'])
-            if item.infoLabels['quality'] not in title_torrent:
-                if not unify_status or item.contentChannel == "videolibrary":
-                    title_torrent = '%s [%s]' % (title_torrent, item.infoLabels['quality'])
-        if item.language:
-            title = '%s [%s]' % (title, item.language)            
-        
-        # Extrae la dimensión del vídeo
-        if scrapertools.find_single_match(link, '.*?(\d{1,3},\d{1,2}\w+)\.torrent'):
-            if not unify_status:         #Si Titulos Inteligentes NO seleccionados:
-                title = '%s[%s]' % (title, scrapertools.find_single_match(link, '.*?(\d{1,3},\d{1,2}\w+)\.torrent'))
-            else:
-                title = '%s - %s' % (title, scrapertools.find_single_match(link, '.*?(\d{1,3},\d{1,2}\w+)\.torrent'))
-        
-        # Maquilla la seudo-etiqueta de Enlances Ver, incluyendo el Servidor cuando es llamado desde Videoteca        
-        if not unify_status:         #Si Titulos Inteligentes NO seleccionados:
-            title = '[COLOR gold]**- Enlaces Ver: [/COLOR]%s -**' % (title)
-            title_torrent = '[COLOR yellow][Torrent]:[/COLOR] %s' % (title_torrent)
-        else:
-            title = '[COLOR gold]Enlaces Ver: [/COLOR]%s' % (title)
+        #Limpiamos de año y rating de episodios
+        if item_local.infoLabels['episodio_titulo']:
+            item_local.infoLabels['episodio_titulo'] = re.sub(r'\s?\[.*?\]', '', item_local.infoLabels['episodio_titulo'])
+    
+        rating = ''     #Ponemos el rating
+        if item_local.infoLabels['rating'] and item_local.infoLabels['rating'] != '0.0':
+            rating = float(item_local.infoLabels['rating'])
+            rating = round(rating, 1)
             
-        if config.get_setting("quit_channel_name", "videolibrary") == 1 and item.contentChannel == "videolibrary":
-            title = '%s: %s' % (item.channel.capitalize(), title)
+        # Extrae la dimensión del vídeo
+        size  = scrapertools.find_single_match(item_local.url, '(\d{1,3},\d{1,2}?\w+)\.torrent')
+        size = size.upper().replace(".", ",").replace("G", " G").replace("M", " M") #sustituimos . por , porque Unify lo borra
+        item_local.quality = re.sub('\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.quality) #Quitamos size de calidad, si lo traía
+        if size:
+            item_local.title = re.sub('\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title) #Quitamos size de título, si lo traía
+            item_local.title = '%s [%s]' % (item_local.title, size)                     #Agregamos size al final del título
+        
+        # Poner la calidad, si es necesario
+        if not item_local.quality:
+            if "HDTV" in item_local.url or "720p" in item_local.url or "1080p" in item_local.url or "4K" in item_local.url:
+                item_local.quality = scrapertools.find_single_match(item_local.url, '.*?_([H|7|1|4].*?)\.torrent')
+                item_local.quality = item_local.quality.replace("_", " ")
+        
+        if item_local.contentType == "episode":
+            title = '%sx%s' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
+            if item_local.infoLabels['temporada_num_episodios']:
+                title = '%s (de %s)' % (title, str(item_local.infoLabels['temporada_num_episodios']))
+            title = '%s %s' % (title, item_local.infoLabels['episodio_titulo'])
+            title_gen = '%s, %s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red][%s][/COLOR] [%s]' % (title, item_local.contentSerieName, item_local.infoLabels['year'], rating, item_local.quality, item_local.language, size)
+        else:
+            title = item_local.title
+            title_gen = title
+            #title_gen = re.sub(r"\[\d+\]", "", title_gen)
 
-        itemlist.append(item.clone(title=title, action=""))		#Título con todos los datos del vídeo
+        title_gen = re.sub(r'\s\[COLOR \w+\]\[\]\[\/COLOR\]', '', title_gen)    #Quitamos etiquetas vacías
+        title_gen = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', title_gen)        #Quitamos colores vacíos
+        title_gen = title_gen.replace(" []", "")                                #Quitamos etiquetas vacías
+        
+        if not unify_status:         #Si Titulos Inteligentes NO seleccionados:
+            title_gen = '[COLOR gold]**- Enlaces Ver: [/COLOR]%s [COLOR gold]-**[/COLOR]' % (title_gen)
+        else:
+            title_gen = '[COLOR gold]Enlaces Ver: [/COLOR]%s' % (title_gen)    
 
-        itemlist.append(item.clone(action="play", server="torrent", title=title_torrent, url=link))
+        if config.get_setting("quit_channel_name", "videolibrary") == 1 and item_local.contentChannel == "videolibrary":
+            title_gen = '%s: %s' % (item_local.channel.capitalize(), title)
 
-        logger.debug("title=[" + title + "], torrent=[ " + link + " ], url=[ " + url + " ], post=[" + item.post + "], thumbnail=[ " + item.thumbnail + " ]")
+        itemlist.append(item_local.clone(title=title_gen))		#Título con todos los datos del vídeo        
+                
+        #Ahora pintamos el link del Torrent, si lo hay
+        if item_local.url:		# Hay Torrent ?
+            item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red][%s][/COLOR]' % (item_local.quality, item_local.language)        #Preparamos título de Torrent
+            item_local.title = re.sub(r'\s\[COLOR \w+\]\[\]\[\/COLOR\]', '', item_local.title)  #Quitamos etiquetas vacías
+            item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)      #Quitamos colores vacíos
+            item_local.alive = "??"         #Calidad del link sin verificar
+            item_local.action = "play"      #Visualizar vídeo
+        
+            itemlist.append(item_local.clone())     #Pintar pantalla        
+
+        logger.debug("title=[" + title + "], torrent=[ " + item_local.url + " ], url=[ " + url + " ], post=[" + item.post + "], thumbnail=[ " + item.thumbnail + " ]")
 
     return itemlist
  
@@ -809,7 +847,7 @@ def episodios(item):
                                   "(<form name='episodios' action='secciones.php\?sec=descargas\&ap=contar_varios' method='post'>.*?)</form>")
     
     # Prepara el patrón de búsqueda de: URL, título, fechas y dos valores mas sin uso
-    if item.extra == 'series':
+    if '/serie' in item.url:
         patron = ".*?<td bgcolor[^>]+><a href='(.*?)'>?([^>]+)<\/a><\/td>.*?"
     else:
         patron = "<form name='episodios' action='(.*?)' method='post'>.*?<td bgcolor[^>]+>(.*?)<\/td>.*?"
@@ -824,7 +862,7 @@ def episodios(item):
     #logger.debug(data)
 
     # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
-    for scrapedurl, scrapedtitle, fecha, name, value in matches:
+    for scrapedurl, scrapedtitle, year, name, value in matches:
         item_local = item.clone()
         item_local.action = "findvideos"
         item_local.contentType = "episode"
@@ -837,9 +875,9 @@ def episodios(item):
         if scrapedtitle.endswith('.'):
             scrapedtitle = scrapedtitle[:-1]
         if not scrapedtitle:
-            scrapedtitle = "dummy"
+            scrapedtitle = "SIN TITULO"
 
-        if item.extra == 'series':
+        if '/serie' in item.url:
             title = scrapedtitle.lower()
             epi = title.split("x")
             if len(epi) > 1:
@@ -855,6 +893,9 @@ def episodios(item):
             item_local.url = host + "/secciones.php?sec=descargas&ap=contar_varios"
             item_local.post = urllib.urlencode({name: value, "total_capis": total_capis, "tabla": tabla, "titulo": titulo_post})
         
+        if year:
+            item_local.infoLabels['year'] = scrapertools.find_single_match(year, r'(\d{4})')
+        
         item_local.title = scrapedtitle
         
         itemlist.append(item_local.clone())
@@ -864,41 +905,53 @@ def episodios(item):
 
     # Pasada para maqullaje de los títulos obtenidos desde TMDB
     for item_local in itemlist:
-        title = item_local.title
         
         # Si no hay datos de TMDB, pongo los datos locales que conozco
         if item_local.infoLabels['aired']:
-            year = scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})')
-        else:
-            year = scrapertools.find_single_match(fecha, r'(\d{4})')
-        if not item_local.infoLabels['year']:
-            item_local.infoLabels['year'] = year
-        
+            item_local.infoLabels['year'] = scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})')
+
         # Si son episodios múltiples, se toman los datos locales para nombre de episodio
-        if scrapertools.find_single_match(title, r'\d+x\d+.*?(\w+.*?\d+x\d+)'):
-            item_local.infoLabels['episodio_titulo'] = scrapertools.find_single_match(title, r'\d+x\d+.*?(\w+.*?\d+x\d+)')
+        if scrapertools.find_single_match(item_local.title, r'\d+x\d+.*?(\w+.*?\d+x\d+)'):
+            item_local.infoLabels['episodio_titulo'] = scrapertools.find_single_match(item_local.title, r'\d+x\d+.*?(\w+.*?\d+x\d+)')
+            item_local.title = '%sx%s - %s' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2), item_local.infoLabels['episodio_titulo'])
+        else:
+            item_local.title = '%sx%s -' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
+        
+        rating = ''
+        if item_local.infoLabels['rating'] and item_local.infoLabels['rating'] != '0.0':
+            rating = float(item_local.infoLabels['rating'])
+            rating = round(rating, 1)
             
         #Preparamos el título para que sea compatible con Añadir Serie a Videoteca
         if item_local.infoLabels['episodio_titulo']:
-            item_local.title = '%sx%s %s, %s [%s]' % (str(item_local.contentSeason), item_local.contentEpisodeNumber, item_local.infoLabels['episodio_titulo'], item_local.contentSerieName, year)
-            item_local.infoLabels['episodio_titulo'] = '%s [%s]' % (item_local.infoLabels['episodio_titulo'], year)
+            if "al" in item_local.title:        #Si son episodios múltiples, ponemos nombre de serie
+                item_local.title = '%s %s' % (item_local.title, item_local.contentSerieName)
+                item_local.infoLabels['episodio_titulo'] = '%s %s' % (scrapertools.find_single_match(item_local.title, r'(al \d+)'), item_local.contentSerieName)
+            else:
+                item_local.title = '%s %s' % (item_local.title, item_local.infoLabels['episodio_titulo'])
+            if item_local.infoLabels['year']:
+                item_local.infoLabels['episodio_titulo'] = '%s [%s]' % (item_local.infoLabels['episodio_titulo'], item_local.infoLabels['year'])
+            if rating:
+                item_local.infoLabels['episodio_titulo'] = '%s [%s]' % (item_local.infoLabels['episodio_titulo'], rating)
         else:
-            item_local.title = '%sx%s %s [%s]' % (str(item_local.contentSeason), item_local.contentEpisodeNumber, item_local.contentSerieName, year)
-        
-        #Ahora maquillamos un poco los titulos dependiendo de si se han seleccionado títulos inteleigentes o no
-        if not config.get_setting("unify"):               #Si Titulos Inteligentes NO seleccionados: añadir calidad, lenguaje
-            item_local.title = '%s [%s][%s]' % (item_local.title, item_local.quality, item_local.language)
+            item_local.title = '%s %s' % (item_local.title, item_local.contentSerieName)
+        item_local.title = '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red][%s][/COLOR]' % (item_local.title, item_local.infoLabels['year'], rating, item_local.quality, item_local.language)
 
         #Quitamos campos vacíos
-        if item_local.infoLabels['episodio_titulo']:
-            item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['episodio_titulo'].replace("[]", "")
-        item_local.title = item_local.title.replace("[]", "")
+        item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['episodio_titulo'].replace(" []", "")
+        item_local.title = item_local.title.replace(" []", "")
+        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\]\[\/COLOR\]', '', item_local.title)
+        item_local.title = re.sub(r'\s\[COLOR \w+\]-\[\/COLOR\]', '', item_local.title)
         
         #logger.debug("title=[" + item_local.title + "], url=[" + item_local.url + "], item=[" + str(item_local) + "]")
     
     if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(item.clone(title="[COLOR yelow]Añadir esta serie a la videoteca[/COLOR]", action="add_serie_to_library", extra="episodios"))
-    
+        title = ''
+        if item_local.infoLabels['temporada_num_episodios']:
+            title = ' [Temp. de %s ep.]' % item_local.infoLabels['temporada_num_episodios']
+            
+        itemlist.append(item.clone(title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]" + title, action="add_serie_to_library", extra="episodios"))
+
     return itemlist
 
 def search(item, texto):
