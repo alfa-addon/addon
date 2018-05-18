@@ -59,8 +59,9 @@ def mainlist(item):
              fanart=fanart_host,
              thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/Year.png"))
 
-    # itemlist.append(Item(channel=__channel__, action="search", title="     Buscar...", 
-    #                      url=urlparse.urljoin(CHANNEL_HOST, "buscar/?s="), extra="movies", fanart=fanart_host))
+    itemlist.append(Item(channel=__channel__, action="local_search", title="    Buscar...",
+             url=urlparse.urljoin(CHANNEL_HOST, "buscar/?sitesearch=pelispedia.tv&q="), extra="movies", 
+             fanart=fanart_host, thumbnail=get_thumb('search', auto=True)))
 
 
     itemlist.append(Item(channel=__channel__, title="Series", fanart=fanart_host, folder=False,
@@ -87,8 +88,9 @@ def mainlist(item):
              fanart=fanart_host,
              thumbnail="https://raw.githubusercontent.com/master-1970/resources/master/images/genres/0/Year.png"))
 
-    # itemlist.append(Item(channel=__channel__, action="search", title="     Buscar...", 
-    #                      url=urlparse.urljoin(CHANNEL_HOST, "series/buscar/?s="), extra="serie", fanart=fanart_host))
+    itemlist.append(Item(channel=__channel__, action="local_search", title="    Buscar...",
+             url=urlparse.urljoin(CHANNEL_HOST, "series/buscar/?sitesearch=pelispedia.tv&q="), extra="serie", 
+             fanart=fanart_host, thumbnail=get_thumb('search', auto=True)))
 
 
     # ~ itemlist.append(Item(channel=__channel__, title="", fanart=fanart_host, folder=False, thumbnail=thumbnail_host))
@@ -210,15 +212,32 @@ def listado_anio(item):
     return itemlist
 
 
-def search(item, texto):
-    # Funcion de busqueda desactivada
-    logger.info("texto=%s" % texto)
+def local_search(item):
+    logger.info()
+    text = ""
+    # ~ if config.get_setting("save_last_search", item.channel):
+        # ~ text = config.get_setting("last_search", item.channel)
 
-    item.url = item.url + "%" + texto.replace(' ', '+') + "%"
+    from platformcode import platformtools
+    texto = platformtools.dialog_input(default=text, heading="Buscar en Pelispedia")
+    if texto is None:
+        return
+
+    # ~ if config.get_setting("save_last_search", item.channel):
+        # ~ config.set_setting("last_search", texto, item.channel)
+
+    return search(item, texto)
+
+
+def search(item, texto):
+    logger.info()
+    if '/buscar/?' not in item.url:
+        item.url = CHANNEL_HOST if item.extra == 'movies' else CHANNEL_HOST + 'series/'
+        item.url += 'buscar/?sitesearch=pelispedia.tv&q='
+    item.url += texto.replace(" ", "+")
 
     try:
         return listado(item)
-
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
     except:
         import sys
@@ -294,7 +313,7 @@ def listado(item):
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
 
     # numero de registros que se muestran por página, se fija a 28 por cada paginación
-    if len(matches) >= 28:
+    if len(matches) >= 28 and '/buscar/?' not in item.url:
 
         file_php = "666more"
         tipo_serie = ""
@@ -473,6 +492,8 @@ def findvideos(item):
                     itemlist.append(new_item)
 
         elif scrapedurl.startswith("https://load.pelispedia.vip/embed/"):
+            if scrapedtitle == 'vid': scrapedtitle = 'vidoza'
+            elif scrapedtitle == 'fast': scrapedtitle = 'fastplay'
             title = "Ver video en [" + scrapedtitle + "]"
             new_item = item.clone(title=title, url=scrapedurl, action="play", referer=item.url)
             itemlist.append(new_item)
@@ -542,22 +563,30 @@ def play(item):
                 srv = scrapertools.find_single_match(data, '<meta (?:name|property)="og:sitename" content="([^"]+)"')
                 if srv == '' and 'rapidvideo.com/' in url: srv = 'rapidvideo'
 
-                if url != '':
+                if url != '' and srv != '':
                     itemlist.append(item.clone(url=url, server=srv.lower()))
 
-                elif '<title>Vidoza</title>' in data:
+                elif '<title>Vidoza</title>' in data or '|fastplay|' in data:
+                    if '|fastplay|' in data:
+                        packed = scrapertools.find_single_match(data, "<script type='text/javascript'>(eval\(.*?)</script>")
+                        from lib import jsunpack
+                        data = jsunpack.unpack(packed)
+                        data = data.replace("\\'", "'")
+
                     matches = scrapertools.find_multiple_matches(data, 'file\s*:\s*"([^"]+)"\s*,\s*label\s*:\s*"([^"]+)"')
-                    logger.info("matches: %s" % matches)
                     subtitle = ''
                     for fil, lbl in matches:
                         if fil.endswith('.srt') and not fil.endswith('empty.srt'):
                             subtitle = fil
+                            if not subtitle.startswith('http'):
+                                domi = scrapertools.find_single_match(data, 'aboutlink\s*:\s*"([^"]*)')
+                                subtitle = domi + subtitle
                             break
 
                     for fil, lbl in matches:
                         if not fil.endswith('.srt'):
                             itemlist.append([lbl, fil, 0, subtitle])
-                
+
                 break
 
 
