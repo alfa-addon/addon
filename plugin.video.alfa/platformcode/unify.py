@@ -400,7 +400,7 @@ def title_format(item):
             item.title = '%s %s' % (item.title, set_color(rating, color_rating))
 
         # Damos formato a la calidad si existiera y lo agregamos al titulo
-        if item.quality:
+        if item.quality and isinstance(item.quality, str):
             quality = item.quality.strip()
             item.title = '%s %s' % (item.title, set_color(quality, 'quality'))
         else:
