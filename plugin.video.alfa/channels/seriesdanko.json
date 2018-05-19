@@ -15,7 +15,15 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": false,
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_series",
+      "type": "bool",
+      "label": "Incluir en Novedades - Episodios de series",
+      "default": true,
       "enabled": true,
       "visible": true
     },
@@ -32,6 +40,19 @@
         "Latino",
         "VO",
         "VOS"
+      ]
+    },
+    {
+      "id": "filterlinks",
+      "type": "list",
+      "label": "Mostrar enlaces de tipo...",
+      "default": 2,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Solo Descarga",
+        "Solo Online",
+        "No filtrar"
       ]
     }
   ]

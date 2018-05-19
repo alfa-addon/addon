@@ -132,17 +132,7 @@ def newest(categoria):
     if categoria != 'series':
         return []
 
-    try:
-        return novedades(Item())
-
-    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("%s" % line)
-
-    return []
-
+    return novedades(Item())
 
 def episodios(item):
     logger.info("url: %s" % item.url)
@@ -177,7 +167,10 @@ def search(item, texto):
     logger.info("texto: %s" % texto)
     data = httptools.downloadpage(urlparse.urljoin(HOST, "/buscar.php?term=%s" % texto)).data
     data_dict = jsontools.load(data)
-    tvshows = data_dict["myData"]
+    try:
+        tvshows = data_dict["myData"]
+    except:
+        return []
 
     return [item.clone(action="episodios",
                        title=show["titulo"],
@@ -203,23 +196,34 @@ def findvideos(item):
 
     links = re.findall(expr, data, re.MULTILINE | re.DOTALL)
 
-    itemlist = [item.clone(
-        action="play",
-        title="{linkType} en {server} [{lang}] [{quality}] ({uploader}: {date})".format(
-            linkType="Ver" if linkType != "descargar" else "Descargar",
-            lang=IDIOMAS.get(lang, lang),
-            date=date,
-            server=server.rstrip(),
-            quality=quality,
-            uploader=uploader),
-        server=server.rstrip(),
-        url=urlparse.urljoin(HOST, url),
-        language=IDIOMAS.get(lang,lang),
-        quality=quality
-    ) for lang, date, server, url, linkType, quality, uploader in links]
+    itemlist = []
 
+    try:
+        filtro_enlaces = config.get_setting("filterlinks", item.channel)
+    except:
+        filtro_enlaces = 2
 
+    typeListStr = ["Descargar", "Ver"]
 
+    for lang, date, server, url, linkType, quality, uploader in links:
+        linkTypeNum = 0 if linkType == "descargar" else 1
+        if filtro_enlaces != 2 and filtro_enlaces != linkTypeNum:
+            continue
+        itemlist.append(item.clone(
+                action="play",
+                title="{linkType} en {server} [{lang}] [{quality}] ({uploader}: {date})".format(
+                    linkType=typeListStr[linkTypeNum],
+                    lang=IDIOMAS.get(lang, lang),
+                    date=date,
+                    server=server.rstrip(),
+                    quality=quality,
+                    uploader=uploader),
+                server=server.rstrip(),
+                url=urlparse.urljoin(HOST, url),
+                language=IDIOMAS.get(lang,lang),
+                quality=quality
+            )
+        )
 
     # Requerido para FilterTools
 
