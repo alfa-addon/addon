@@ -20,6 +20,14 @@
       "visible": true
     },
     {
+      "id": "include_in_newest_series",
+      "type": "bool",
+      "label": "Incluir en Novedades - Episodios de series",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
       "id": "filter_languages",
       "type": "list",
       "label": "Mostrar enlaces en idioma...",
