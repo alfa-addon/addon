@@ -169,7 +169,7 @@ def add_languages(title, languages):
 def set_color(title, category):
     #logger.info()
 
-    color_scheme = {'otro': 'white'}
+    color_scheme = {'otro': 'white', 'dual': 'white'}
 
     #logger.debug('category antes de remove: %s' % category)
     category = remove_format(category).lower()
@@ -209,6 +209,7 @@ def set_lang(language):
           'sub: español', 'vs', 'zs', 'vs', 'english-spanish subs', 'ingles sub espanol']
     vos=['vos', 'sub ingles', 'engsub', 'vosi','ingles subtitulado', 'sub: ingles']
     vo=['ingles', 'en','vo', 'ovos', 'eng','v.o', 'english']
+    dual=['dual']
 
     language = scrapertools.decodeHtmlentities(language)
     old_lang = language
@@ -227,6 +228,8 @@ def set_lang(language):
         language = 'vos'
     elif language in vo:
         language = 'vo'
+    elif language in dual:
+        language = 'dual'
     else:
         language = 'otro'
 
@@ -322,7 +325,15 @@ def title_format(item):
 
         elif item.contentTitle:
             # Si el titulo no tiene contentSerieName entonces se formatea como pelicula
-            item.title = '%s' % set_color(item.contentTitle, 'movie')
+            saga = False
+            if 'saga' in item.title.lower():
+                item.title = '%s [Saga]' % set_color(item.contentTitle, 'movie')
+            elif 'miniserie' in item.title.lower():
+                item.title = '%s [Miniserie]' % set_color(item.contentTitle, 'movie')
+            elif 'extend' in item.title.lower():
+                item.title = '%s [V.Extend.]' % set_color(item.contentTitle, 'movie')
+            else:
+                item.title = '%s' % set_color(item.contentTitle, 'movie')
             if item.contentType=='movie':
                 if item.context:
                     if isinstance(item.context, list):
@@ -389,7 +400,7 @@ def title_format(item):
             item.title = '%s %s' % (item.title, set_color(rating, color_rating))
 
         # Damos formato a la calidad si existiera y lo agregamos al titulo
-        if item.quality:
+        if item.quality and isinstance(item.quality, str):
             quality = item.quality.strip()
             item.title = '%s %s' % (item.title, set_color(quality, 'quality'))
         else:
@@ -459,30 +470,25 @@ def title_format(item):
 
 def thumbnail_type(item):
     #logger.info()
-
     # Se comprueba que tipo de thumbnail se utilizara en findvideos,
     # Poster o Logo del servidor
 
     thumb_type = config.get_setting('video_thumbnail_type')
-    #logger.debug('thumb_type: %s' % thumb_type)
     info = item.infoLabels
-    #logger.debug('item.thumbnail: %s'%item.thumbnail)
+    item.contentThumbnail = item.thumbnail
+    if info:
+        if info['thumbnail'] !='':
+            item.contentThumbnail = info['thumbnail']
 
-    if info['thumbnail'] !='':
-        item.contentThumbnail = info['thumbnail']
-    else:
-        item.contentThumbnail = item.thumbnail
-
-    if item.action == 'play':
-        if thumb_type == 0:
-            if info and info['thumbnail'] != '':
-                item.thumbnail = info['thumbnail']
-        elif thumb_type == 1:
-            from core.servertools import get_server_parameters
-            #logger.debug('item.server: %s'%item.server)
-            server_parameters = get_server_parameters(item.server.lower())
-            item.thumbnail = server_parameters.get("thumbnail", "")
-            #logger.debug('thumbnail: %s' % item.thumb)
+        if item.action == 'play':
+            if thumb_type == 0:
+                if info['thumbnail'] != '':
+                    item.thumbnail = info['thumbnail']
+            elif thumb_type == 1:
+                from core.servertools import get_server_parameters
+                #logger.debug('item.server: %s'%item.server)
+                server_parameters = get_server_parameters(item.server.lower())
+                item.thumbnail = server_parameters.get("thumbnail", "")
 
     return item.thumbnail
 

@@ -12,11 +12,11 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'http://www.estadepelis.com/'
+host = 'http://solocastellano.com/'
 headers = [['User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0'],
            ['Referer', host]]
 
-IDIOMAS = {'Latino': 'Latino', 'Sub Español': 'VOS'}
+IDIOMAS = {'Castellano': 'Castellano'}
 list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['yourupload', 'openload', 'sendvid']
@@ -53,55 +53,10 @@ tgenero = {"acción": "https://s3.postimg.cc/y6o9puflv/accion.png",
            "terror": "https://s7.postimg.cc/yi0gij3gb/terror.png",
            "thriller": "https://s22.postimg.cc/5y9g0jsu9/thriller.png"}
 
-
 def mainlist(item):
     logger.info()
+
     autoplay.init(item.channel, list_servers, list_quality)
-    itemlist = []
-
-    itemlist.append(item.clone(title="Peliculas",
-                               action="menupeliculas",
-                               thumbnail=get_thumb('movies', auto=True),
-                               fanart='https://s8.postimg.cc/6wqwy2c2t/peliculas.png'
-                               ))
-
-    itemlist.append(item.clone(title="Series",
-                               action="lista",
-                               thumbnail=get_thumb('tvshows', auto=True),
-                               fanart='https://s27.postimg.cc/iahczwgrn/series.png',
-                               url=host + 'lista-de-series/',
-                               extra='series'
-                               ))
-
-    itemlist.append(item.clone(title="Doramas",
-                               action="lista", thumbnail=get_thumb('doramas', auto=True),
-                               fanart='https://s15.postimg.cc/sjcthoa6z/doramas.png',
-                               url=host + 'lista-de-doramas/',
-                               extra='series'
-                               ))
-
-    itemlist.append(item.clone(title="Documentales",
-                               action="lista",
-                               thumbnail=get_thumb('documentaries', auto=True),
-                               fanart='https://s16.postimg.cc/7xjj4bmol/documental.png',
-                               url=host + 'lista-de-documentales/',
-                               extra='peliculas'
-                               ))
-
-    itemlist.append(item.clone(title="Buscar",
-                               action="search",
-                               url=host + 'search?q=',
-                               thumbnail=get_thumb('search', auto=True),
-                               fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
-                               ))
-
-    autoplay.show_option(item.channel, itemlist)
-
-    return itemlist
-
-
-def menupeliculas(item):
-    logger.info()
 
     itemlist = []
 
@@ -128,6 +83,14 @@ def menupeliculas(item):
                                url=host,
                                extra='peliculas'
                                ))
+
+    itemlist.append(item.clone(title="Buscar",
+                               action="search",
+                               url=host + 'search?q=',
+                               thumbnail=get_thumb('search', auto=True),
+                               fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'))
+
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -194,7 +157,6 @@ def generos(item):
     itemlist = []
     norep = []
     data = httptools.downloadpage(item.url).data
-    logger.debug(data)
     patron = '<li class="cat-item cat-item-.*?"><a href="([^"]+)".*?>([^<]+)<\/a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 

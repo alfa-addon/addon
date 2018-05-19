@@ -130,7 +130,10 @@ def render_items(itemlist, parent_item):
     # Recorremos el itemlist
 
     for item in itemlist:
-        channel_parameters = channeltools.get_channel_parameters(item.channel)
+        try:
+            channel_parameters = channeltools.get_channel_parameters(item.channel)
+        except:
+            pass
         #logger.debug(item)
         # Si el item no contiene categoria, le ponemos la del item padre
         if item.category == "":
@@ -172,9 +175,11 @@ def render_items(itemlist, parent_item):
         # Añade headers a las imagenes si estan en un servidor con cloudflare
         from core import httptools
 
-        item.thumbnail = httptools.get_url_headers(item.thumbnail)
+        if item.action == 'play':
+            item.thumbnail = unify.thumbnail_type(item)
+        else:
+            item.thumbnail = httptools.get_url_headers(item.thumbnail)
         item.fanart = httptools.get_url_headers(item.fanart)
-        item.thumbnail = unify.thumbnail_type(item)
         # IconImage para folder y video
         if item.folder:
             icon_image = "DefaultFolder.png"
@@ -192,12 +197,12 @@ def render_items(itemlist, parent_item):
             fanart = os.path.join(config.get_runtime_path(), "fanart.jpg")
 
         # Creamos el listitem
-        listitem = xbmcgui.ListItem(item.title)
+        #listitem = xbmcgui.ListItem(item.title)
 
         # values icon, thumb or poster are skin dependent.. so we set all to avoid problems
         # if not exists thumb it's used icon value
         if config.get_platform(True)['num_version'] >= 16.0:
-            listitem.setArt({'icon': icon_image, 'thumb': item.contentThumbnail, 'poster': item.thumbnail,
+            listitem.setArt({'icon': icon_image, 'thumb': item.thumbnail, 'poster': item.thumbnail,
                              'fanart': fanart})
         else:
             listitem.setIconImage(icon_image)
