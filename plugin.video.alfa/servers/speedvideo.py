@@ -10,7 +10,7 @@ def test_video_exists(page_url):
     data = httptools.downloadpage(page_url).data
 
     if "File was deleted" in data:
-        return False, "[speedvideo] Il file non esiste oppure è stato cancellato"
+        return False, "[speedvideo] El archivo no existe o ha sido borrado"
 
     return True, ""
 
