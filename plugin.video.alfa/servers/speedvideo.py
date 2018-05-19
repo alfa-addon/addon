@@ -1,34 +1,36 @@
 # -*- coding: utf-8 -*-
 
-import base64
-
-from core import scrapertools
+from core import httptools, scrapertools
 from platformcode import logger
 
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
+    data = httptools.downloadpage(page_url).data
+
+    if "File was deleted" in data:
+        return False, "[speedvideo] El archivo no existe o ha sido borrado"
+
     return True, ""
 
 
-def get_video_url(page_url, premium=False, user="", password="", video_password=""):
+def get_video_url(page_url,
+                  premium=False,
+                  user="",
+                  password="",
+                  video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
 
-    data = scrapertools.cachePage(page_url)
+    data = httptools.downloadpage(page_url).data
 
-    codif = scrapertools.find_single_match(data, 'var [a-z]+ = ([0-9]+);')
-    link = scrapertools.find_single_match(data, 'linkfile ="([^"]+)"')
-    numero = int(codif)
+    media_urls = scrapertools.find_multiple_matches(data, r"file:[^']'([^']+)',\s*label:[^\"]\"([^\"]+)\"")
 
-    # Decrypt link base64 // python version of speedvideo's base64_decode() [javascript]
+    for media_url, label in media_urls:
+        media_url = httptools.downloadpage(media_url, only_headers=True, follow_redirects=False).headers.get("location", "")
 
-    link1 = link[:numero]
-    link2 = link[numero + 10:]
-    link = link1 + link2
-    media_url = base64.b64decode(link)
-
-    video_urls.append(["." + media_url.rsplit('.', 1)[1] + ' [speedvideo]', media_url])
+        if media_url:
+            video_urls.append([label + " " + media_url.rsplit('.', 1)[1] + ' [speedvideo]', media_url])
 
     return video_urls

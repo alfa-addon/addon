@@ -1,7 +1,7 @@
 {
   "id": "seriesblanco",
   "name": "Seriesblanco",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "seriesblanco.png",
