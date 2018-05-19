@@ -177,7 +177,10 @@ def search(item, texto):
     logger.info("texto: %s" % texto)
     data = httptools.downloadpage(urlparse.urljoin(HOST, "/buscar.php?term=%s" % texto)).data
     data_dict = jsontools.load(data)
-    tvshows = data_dict["myData"]
+    try:
+        tvshows = data_dict["myData"]
+    except:
+        return []
 
     return [item.clone(action="episodios",
                        title=show["titulo"],
