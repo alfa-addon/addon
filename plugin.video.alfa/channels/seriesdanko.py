@@ -33,12 +33,20 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
                          url=urlparse.urljoin(HOST, "all.php")))
 
-    #itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, CALIDADES)
+    itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, CALIDADES)
 
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
+def newest(categoria):
+    logger.info("categoria: %s" % categoria)
+    itemlist = []
+
+    if categoria == 'series':
+        itemlist = novedades(Item(channel="seriesdanko", title="Novedades", action="novedades", url=HOST))
+
+    return itemlist
 
 def novedades(item):
     logger.info()
@@ -220,7 +228,7 @@ def episodios(item):
                              infoLabels=infoLabels))
 
 
-    #itemlist = filtertools.get_links(itemlist, item, list_idiomas, CALIDADES)
+    itemlist = filtertools.get_links(itemlist, item, list_idiomas, CALIDADES)
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     # Opción "Añadir esta serie a la videoteca de XBMC"
@@ -241,14 +249,24 @@ def findvideos(item):
     online = re.findall('<table class=.+? cellpadding=.+? cellspacing=.+?>(.+?)</table>', data,
                         re.MULTILINE | re.DOTALL)
 
-    itemlist = parse_videos(item, "Ver", online[0])
-    itemlist.extend(parse_videos(item, "Descargar", online[1]))
+    itemlist = []
 
-    itemlist = filtertools.get_links(itemlist, item, list_idiomas, CALIDADES)
+    try:
+        filtro_enlaces = config.get_setting("filterlinks", item.channel)
+    except:
+        filtro_enlaces = 2
+
+
+    if filtro_enlaces != 0:
+        itemlist.extend(parse_videos(item, "Ver", online[0]))
+
+    if filtro_enlaces != 1:
+        itemlist.extend(parse_videos(item, "Descargar", online[1]))
+
 
     # Requerido para FilterTools
 
-    itemlist = filtertools.get_links(itemlist, item, list_idiomas)
+    itemlist = filtertools.get_links(itemlist, item, list_idiomas, CALIDADES)
 
     # Requerido para AutoPlay
 
