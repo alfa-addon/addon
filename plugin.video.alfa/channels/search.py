@@ -11,9 +11,70 @@ from core import channeltools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
+from core import tmdb
+
+link_list = []
+max_links = 30
 
 
 def mainlist(item):
+    logger.info()
+    item.channel = "search"
+
+    itemlist = []
+    context = [{"title": "Elegir canales incluidos", "action": "setting_channel", "channel": item.channel}]
+    itemlist.append(Item(channel=item.channel, action="sub_menu", title="Buscar en canales", context=context,
+                         thumbnail=get_thumb("search.png")))
+
+    itemlist.append(Item(channel=item.channel, action='genres_menu', title='Películas por Generos', type='movie'))
+
+    itemlist.append (Item(channel=item.channel, action='discover_list', title='Películas mas populares',
+                          context=context,
+                          search_type='list', list_type='movie/popular'))
+
+    itemlist.append(Item(channel=item.channel, action='discover_list', title='Películas mejor valoradas',
+                         context=context,
+                         search_type='list', list_type='movie/top_rated'))
+
+    itemlist.append(
+        Item(channel=item.channel, action='discover_list', title='Películas Ahora en cines', context=context,
+             search_type='list',
+             list_type='movie/now_playing'))
+
+    itemlist.append(Item(channel=item.channel, action='genres_menu', title='Series por Generos', type='tv'))
+
+    itemlist.append(
+        Item(channel=item.channel, action='discover_list', title='Series mas populares', context=context,
+             search_type='list',list_type='tv/popular'))
+
+    itemlist.append(Item(channel=item.channel, action='discover_list', title='Series en emisión', context=context,
+                         search_type='list', list_type='tv/on_the_air'))
+
+
+    itemlist.append(Item(channel=item.channel, action='discover_list', title='Series mejor valoradas', context=context,
+                         search_type='list', list_type='tv/top_rated'))
+
+
+
+
+    return itemlist
+
+
+def genres_menu(item):
+
+    itemlist = []
+
+    genres = tmdb.get_genres(item.type)
+
+    logger.debug(genres)
+    logger.debug(genres[item.type])
+
+    for key, value in genres[item.type].items():
+        itemlist.append(item.clone(title=value, action='discover_list', search_type='discover',
+                                   list_type=key, page='1'))
+    return sorted(itemlist, key=lambda it: it.title)
+
+def sub_menu(item):
     logger.info()
     item.channel = "search"
 
@@ -433,7 +494,7 @@ def do_search(item, categories=None):
             title = channel
 
             # resultados agrupados por canales
-            if item.contextual == True:
+            if item.contextual == True or item.action == 'search_tmdb':
                 result_mode = 1
             if result_mode == 0:
                 if len(search_results[channel]) > 1:
@@ -514,3 +575,61 @@ def get_saved_searches():
         saved_searches_list = list(current_saved_searches_list)
 
     return saved_searches_list
+
+
+def discover_list(item):
+    itemlist = []
+
+    itemlist = tmdb.discovery(item)
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+
+    if item.search_type=='discover':
+        next_page = str(int(item.page)+1)
+        itemlist.append(item.clone(title='Pagina Siguente', page=next_page))
+
+    return itemlist
+
+def search_tmdb(item):
+    logger.debug(item)
+
+    itemlist = []
+    threads = []
+    logger.debug(item)
+    wanted = item.contentTitle
+
+    search = do_search(item)
+
+    if item.contentSerieName == '':
+        results = exact_results(search, wanted)
+        for result in results:
+            logger.debug(result)
+            t = Thread(target=get_links, args=[result])
+            t.start()
+            threads.append(t)
+
+            for thread in threads:
+                thread.join()
+
+            # try:
+            #     get_links(result)
+            # except:
+            #     pass
+
+        for link in link_list:
+            if link.action == 'play' and not 'trailer' in link.title.lower() and len(itemlist) < max_links:
+                itemlist.append(link)
+
+        return sorted(itemlist, key=lambda it: it.server)
+    else:
+        for item in search:
+            if item.contentSerieName != '' and item.contentSerieName == wanted:
+                logger.debug(item)
+                itemlist.append(item)
+        return itemlist
+
+def get_links (item):
+    logger.info()
+    results =[]
+    channel = __import__('channels.%s' % item.from_channel, None, None, ["channels.%s" % item.from_channel])
+    if len(link_list) <= max_links:
+        link_list.extend(getattr(channel, item.from_action)(item))
