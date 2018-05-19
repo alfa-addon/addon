@@ -145,6 +145,7 @@ def normalize(string):
     normal = ''.join((c for c in unicodedata.normalize('NFD', unicode(string)) if unicodedata.category(c) != 'Mn'))
     return normal
 
+
 def simplify(string):
 
     #logger.info()
@@ -153,6 +154,7 @@ def simplify(string):
     string = string.replace('-',' ').replace('_',' ')
     string = re.sub(r'\d+','', string)
     string = string.strip()
+
     notilde = normalize(string)
     try:
         string = notilde.decode()
@@ -416,7 +418,6 @@ def title_format(item):
         # Damos formato al idioma si existiera y lo agregamos al titulo
         if lang:
             item.title = add_languages(item.title, simple_language)
-
 
         # Para las busquedas por canal
         if item.from_channel != '':
