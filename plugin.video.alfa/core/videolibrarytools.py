@@ -5,6 +5,7 @@
 
 import errno
 import math
+import os
 
 from core import filetools
 from core import scraper
@@ -123,7 +124,7 @@ def save_movie(item):
     else:
         base_name = item.contentTitle
 
-    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").lower().encode("utf8")
+    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
 
     for raiz, subcarpetas, ficheros in filetools.walk(MOVIES_PATH):
         for c in subcarpetas:
@@ -141,7 +142,7 @@ def save_movie(item):
             logger.debug("No se ha podido crear el directorio")
             return 0, 0, -1
 
-    nfo_path = filetools.join(path, "%s [%s].nfo" % (base_name, _id))
+    nfo_path = filetools.join(path, "%s [%s].info" % (base_name, _id))
     strm_path = filetools.join(path, "%s.strm" % base_name)
     json_path = filetools.join(path, ("%s [%s].json" % (base_name, item.channel.lower())))
 
@@ -244,7 +245,7 @@ def save_tvshow(item, episodelist):
     else:
         base_name = item.contentSerieName
 
-    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").lower().encode("utf8")
+    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
 
     for raiz, subcarpetas, ficheros in filetools.walk(TVSHOWS_PATH):
         for c in subcarpetas:
@@ -263,7 +264,7 @@ def save_tvshow(item, episodelist):
             if exception.errno != errno.EEXIST:
                 raise
 
-    tvshow_path = filetools.join(path, "tvshow.nfo")
+    tvshow_path = filetools.join(path, "tvshow.info")
     if not filetools.exists(tvshow_path):
         # Creamos tvshow.nfo, si no existe, con la head_nfo, info de la serie y marcas de episodios vistos
         logger.info("Creando tvshow.nfo: " + tvshow_path)
@@ -348,6 +349,15 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     raiz, carpetas_series, ficheros = filetools.walk(path).next()
     ficheros = [filetools.join(path, f) for f in ficheros]
 
+    nostrm_episodelist = []
+    for root, folders, files in os.walk(path):
+        for file in files:
+            season_episode = scrapertools.get_season_and_episode(file)
+            if season_episode == "" or os.path.isfile(filetools.join(path, "%s.strm" % season_episode)):
+                continue
+            nostrm_episodelist.append(season_episode)
+    nostrm_episodelist = sorted(set(nostrm_episodelist))
+
     # Silent es para no mostrar progreso (para videolibrary_service)
     if not silent:
         # progress dialog
@@ -380,9 +390,11 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
 
         season_episode = "%sx%s" % (e.contentSeason, str(e.contentEpisodeNumber).zfill(2))
         strm_path = filetools.join(path, "%s.strm" % season_episode)
-        nfo_path = filetools.join(path, "%s.nfo" % season_episode)
+        nfo_path = filetools.join(path, "%s.info" % season_episode)
         json_path = filetools.join(path, ("%s [%s].json" % (season_episode, e.channel)).lower())
 
+        if season_episode in nostrm_episodelist:
+            continue
         strm_exists = strm_path in ficheros
         nfo_exists = nfo_path in ficheros
         json_exists = json_path in ficheros
@@ -460,7 +472,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
 
     if news_in_playcounts:
         # Si hay nuevos episodios los marcamos como no vistos en tvshow.nfo ...
-        tvshow_path = filetools.join(path, "tvshow.nfo")
+        tvshow_path = filetools.join(path, "tvshow.info")
         try:
             import datetime
             head_nfo, tvshow_item = read_nfo(tvshow_path)
@@ -475,7 +487,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
 
             filetools.write(tvshow_path, head_nfo + tvshow_item.tojson())
         except:
-            logger.error("Error al actualizar tvshow.nfo")
+            logger.error("Error al actualizar tvshow.info")
             fallidos = -1
         else:
             # ... si ha sido correcto actualizamos la videoteca de Kodi

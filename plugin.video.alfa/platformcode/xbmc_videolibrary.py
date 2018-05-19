@@ -114,7 +114,7 @@ def sync_trakt_addon(path_folder):
 
         # obtenemos los valores de la serie
         from core import videolibrarytools
-        tvshow_file = filetools.join(path_folder, "tvshow.nfo")
+        tvshow_file = filetools.join(path_folder, "tvshow.info")
         head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)
 
         # buscamos en las series de trakt

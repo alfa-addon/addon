@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import xbmc
 
 from channelselector import get_thumb
 from core import filetools
@@ -10,9 +11,42 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 
+def videolibrary_check_format():
+    logger.info()
+
+    if config.get_setting("videolibrary_check_flag") == None:
+
+        p_dialog = platformtools.dialog_progress_bg("Alpha", "Converting the library to the new format...")
+        p_dialog.update(0)
+
+        import glob
+        movies_nfos = glob.glob(filetools.join(videolibrarytools.MOVIES_PATH, u'/*/*.nfo'))
+        tvshows_nfos = glob.glob(filetools.join(videolibrarytools.TVSHOWS_PATH, u'/*/*.nfo'))	
+        num_nfos = len(movies_nfos) + len(tvshows_nfos)
+        counter =  0
+
+        for filename in movies_nfos:
+            counter += 1
+            p_dialog.update((counter*100)/num_nfos)
+            os.rename(filename, filename.replace('.nfo', '.info'))
+
+        for filename in tvshows_nfos:
+            counter += 1
+            p_dialog.update((counter*100)/num_nfos)
+            os.rename(filename, filename.replace('.nfo', '.info'))
+
+        xbmc.sleep(2000)
+        p_dialog.close()
+
+        config.set_setting("videolibrary_check_flag", "1")
+
+    return
+
 
 def mainlist(item):
     logger.info()
+
+    videolibrary_check_format()
 
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="list_movies", title="Películas",
@@ -37,7 +71,7 @@ def list_movies(item):
 
     for raiz, subcarpetas, ficheros in filetools.walk(videolibrarytools.MOVIES_PATH):
         for f in ficheros:
-            if f.endswith(".nfo"):
+            if f.endswith(".info"):
                 nfo_path = filetools.join(raiz, f)
                 head_nfo, new_item = videolibrarytools.read_nfo(nfo_path)
 
@@ -95,7 +129,7 @@ def list_tvshows(item):
     # Obtenemos todos los tvshow.nfo de la videoteca de SERIES recursivamente
     for raiz, subcarpetas, ficheros in filetools.walk(videolibrarytools.TVSHOWS_PATH):
         for f in ficheros:
-            if f == "tvshow.nfo":
+            if f == "tvshow.info":
                 tvshow_path = filetools.join(raiz, f)
                 # logger.debug(tvshow_path)
                 head_nfo, item_tvshow = videolibrarytools.read_nfo(tvshow_path)
@@ -253,7 +287,7 @@ def get_episodes(item):
                 continue
 
             # Obtener los datos del season_episode.nfo
-            nfo_path = filetools.join(raiz, i).replace('.strm', '.nfo')
+            nfo_path = filetools.join(raiz, i).replace('.strm', '.info')
             head_nfo, epi = videolibrarytools.read_nfo(nfo_path)
 
             # Fijar el titulo del capitulo si es posible
@@ -307,11 +341,11 @@ def findvideos(item):
     if item.contentType == 'movie':
         item.strm_path = filetools.join(videolibrarytools.MOVIES_PATH, item.strm_path)
         path_dir = os.path.dirname(item.strm_path)
-        item.nfo = filetools.join(path_dir, os.path.basename(path_dir) + ".nfo")
+        item.nfo = filetools.join(path_dir, os.path.basename(path_dir) + ".info")
     else:
         item.strm_path = filetools.join(videolibrarytools.TVSHOWS_PATH, item.strm_path)
         path_dir = os.path.dirname(item.strm_path)
-        item.nfo = filetools.join(path_dir, 'tvshow.nfo')
+        item.nfo = filetools.join(path_dir, 'tvshow.info')
 
     for fd in filetools.listdir(path_dir):
         if fd.endswith('.json'):
@@ -537,7 +571,7 @@ def mark_season_as_watched(item):
     # logger.debug("item:\n" + item.tostring('\n'))
 
     # Obtener el diccionario de episodios marcados
-    f = filetools.join(item.path, 'tvshow.nfo')
+    f = filetools.join(item.path, 'tvshow.info')
     head_nfo, it = videolibrarytools.read_nfo(f)
     if not hasattr(it, 'library_playcounts'):
         it.library_playcounts = {}
@@ -596,7 +630,13 @@ def mark_tvshow_as_updatable(item):
 
 def delete(item):
     def delete_all(_item):
-        filetools.rmdirtree(_item.path)
+        path = (_item.path).decode("utf8")
+        ficheros = os.listdir(path)
+        for file in ficheros:
+            if file.endswith(".strm") or file.endswith(".info") or file.endswith(".json"):
+                os.remove(filetools.join(path, file))
+        if not os.listdir(path):
+            filetools.rmdirtree(path)
 
         if config.is_xbmc():
             import xbmc
