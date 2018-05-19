@@ -27,6 +27,7 @@ def mainlist(item):
     thumb_series_az = get_thumb("channels_tvshow_az.png")
     thumb_docus = get_thumb("channels_documentary.png")
     thumb_buscar = get_thumb("search.png")
+    thumb_settings = get_thumb("setting_0.png")
 
     itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url=host,
                          extra="peliculas", thumbnail=thumb_pelis ))
@@ -38,9 +39,20 @@ def mainlist(item):
                          thumbnail=thumb_docus))
     itemlist.append(
         Item(channel=item.channel, action="search", title="Buscar", url=host + "buscar", thumbnail=thumb_buscar))
+        
+    itemlist.append(
+        Item(channel=item.channel, action="", title="[COLOR yellow]Configuración de Servidores:[/COLOR]", url="", thumbnail=thumb_settings))
+    itemlist.append(
+        Item(channel=item.channel, action="settingCanal", title="Servidores para Ver Online y Descargas", url="", thumbnail=thumb_settings))
 
     return itemlist
 
+    
+def settingCanal(item):
+    from platformcode import platformtools
+    return platformtools.show_channel_settings()
+
+    
 def submenu(item):
     logger.info()
     itemlist = []
@@ -110,8 +122,10 @@ def listado(item):
     clase = "pelilist"      # etiqueta para localizar zona de listado de contenidos
     url_next_page =''       # Controlde paginación
     cnt_tot = 30            # Poner el num. máximo de items por página
+    category = ""           # Guarda la categoria que viene desde una busqueda global
 
     if item.category:
+        category = item.category
         del item.category
     if item.totalItems:
         del item.totalItems
@@ -293,7 +307,7 @@ def listado(item):
         title = re.sub(r' \d+x\d+', '', title)
         title = re.sub(r' x\d+', '', title)
         
-        title = title.replace("Ver online ", "").replace("Descarga Serie HD ", "").replace("Descargar Serie HD ", "").replace("Descarga Serie ", "").replace("Descargar Serie ", "").replace("Ver en linea ", "").replace("Ver en linea", "").replace("HD ", "").replace("(Proper)", "").replace("RatDVD", "").replace("DVDRiP", "").replace("DVDR", "").replace("DVD9", "").replace("DVD", "").replace("DVB", "").replace("- ES ", "").replace("ES ", "").replace("COMPLETA", "").replace("(", "-").replace(")", "-").replace(".", " ").strip()
+        title = title.replace("Ver online ", "").replace("Descarga Serie HD ", "").replace("Descargar Serie HD ", "").replace("Descarga Serie ", "").replace("Descargar Serie ", "").replace("Ver en linea ", "").replace("Ver en linea", "").replace("HD ", "").replace("(Proper)", "").replace("RatDVD", "").replace("DVDRiP", "").replace("DVDRIP", "").replace("DVDR", "").replace("DVD9", "").replace("DVD", "").replace("DVB", "").replace("- ES ", "").replace("ES ", "").replace("COMPLETA", "").replace("(", "-").replace(")", "-").replace(".", " ").strip()
         
         title = title.replace("Descargar torrent ", "").replace("Descarga Gratis ", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Bajar ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").strip()
         
@@ -405,9 +419,15 @@ def listado(item):
         title = title.replace("--", "").replace(" []", "").replace("()", "").replace("(/)", "").replace("[/]", "")
         title = re.sub(r'\s\[COLOR \w+\]\[\]\[\/COLOR\]', '', title)
         title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', title)
+        
+        if category == "newest":     #Viene de Novedades.  Marquemos el título con el nombre del canal
+            title += ' -%s-' % item_local.channel.capitalize()
+            if item_local.contentType == "movie": 
+                item_local.contentTitle += ' -%s-' % item_local.channel.capitalize()
+        
         item_local.title = title
         
-        #logger.debug("url: " + item_local.url + " / title: " + item_local.title + " / content title: " + item_local.contentTitle + "/" + item_local.contentSerieName + " / calidad: " + item_local.quality + " / year: " + year)
+        logger.debug("url: " + item_local.url + " / title: " + item_local.title + " / content title: " + item_local.contentTitle + "/" + item_local.contentSerieName + " / calidad: " + item_local.quality + " / year: " + year)
         #logger.debug(item_local)
 
     if len(itemlist) == 0:
@@ -427,12 +447,14 @@ def listado_busqueda(item):
     cnt_tot = 40            # Poner el num. máximo de items por página.  Dejamos que la web lo controle
     cnt_title = 0           # Contador de líneas insertadas en Itemlist
     cnt_pag = 0             # Contador de líneas leídas de Matches
-    
+    category = ""           # Guarda la categoria que viene desde una busqueda global
+
     if item.cnt_pag:
         cnt_pag = item.cnt_pag      # Se guarda en la lista de páginas anteriores en Item
         del item.cnt_pag
 
     if item.category:
+        category = item.category
         del item.category
     if item.totalItems:
         del item.totalItems
@@ -667,7 +689,7 @@ def listado_busqueda(item):
         title = re.sub(r' \d+x\d+', '', title)
         title = re.sub(r' x\d+', '', title)
         
-        title = title.replace("Ver online ", "").replace("Descarga Serie HD ", "").replace("Descargar Serie HD ", "").replace("Descarga Serie ", "").replace("Descargar Serie ", "").replace("Ver en linea ", "").replace("Ver en linea", "").replace("HD ", "").replace("(Proper)", "").replace("RatDVD", "").replace("DVDRiP", "").replace("DVDR", "").replace("DVD9", "").replace("DVD", "").replace("DVB", "").replace("- ES ", "").replace("ES ", "").replace("COMPLETA", "").replace("(", "-").replace(")", "-").replace(".", " ").strip()
+        title = title.replace("Ver online ", "").replace("Descarga Serie HD ", "").replace("Descargar Serie HD ", "").replace("Descarga Serie ", "").replace("Descargar Serie ", "").replace("Ver en linea ", "").replace("Ver en linea", "").replace("HD ", "").replace("(Proper)", "").replace("RatDVD", "").replace("DVDRiP", "").replace("DVDRIP", "").replace("DVDR", "").replace("DVD9", "").replace("DVD", "").replace("DVB", "").replace("- ES ", "").replace("ES ", "").replace("COMPLETA", "").replace("(", "-").replace(")", "-").replace(".", " ").strip()
         
         title = title.replace("Descargar torrent ", "").replace("Descarga Gratis ", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Bajar ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").strip()
         
@@ -787,13 +809,16 @@ def listado_busqueda(item):
             else:
                 item_local.url = url_id                 #Cambiamos url de episodio por el de serie
 
-            logger.debug("url: " + item_local.url + " / title o/n: " + item_local.title + " / " + real_title_mps + " / calidad_mps : " + calidad_mps + " / contentType : " + item_local.contentType)
+            #logger.debug("url: " + item_local.url + " / title o/n: " + item_local.title + " / " + real_title_mps + " / calidad_mps : " + calidad_mps + " / contentType : " + item_local.contentType)
             
             item_local.title = real_title_mps           #Esperemos que el nuevo título esté bien
         
         #Agrega el item local a la lista itemlist
         itemlist.append(item_local.clone())
         
+    if not category:            #Si este campo no existe es que viene de la primera pasada de una búsqueda global
+        return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
+    
     #Pasamos a TMDB la lista completa Itemlist
     tmdb.set_infoLabels(itemlist, True)
     
@@ -852,7 +877,7 @@ def listado_busqueda(item):
         title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', title)
         item_local.title = title
         
-        #logger.debug("url: " + item_local.url + " / title: " + item_local.title + " / content title: " + item_local.contentTitle + "/" + item_local.contentSerieName + " / calidad: " + item_local.quality + "[" + str(item_local.language) + "]" + " / calidad ORG: " + calidad + " / year: " + year  + " / tamaño: " + size)
+        logger.debug("url: " + item_local.url + " / title: " + item_local.title + " / content title: " + item_local.contentTitle + "/" + item_local.contentSerieName + " / calidad: " + item_local.quality + "[" + str(item_local.language) + "]" + " / calidad ORG: " + calidad + " / year: " + year  + " / tamaño: " + size)
 
         #logger.debug(item_local)
 
@@ -865,6 +890,7 @@ def listado_busqueda(item):
 
 def findvideos(item):
     import xbmc
+    from core import channeltools
     logger.info()
     itemlist = []
     
@@ -873,6 +899,105 @@ def findvideos(item):
     # item.url = item.url.replace(".com/",".com/descarga-directa/")
     item.url = item.url.replace(".com/", ".com/descarga-torrent/")
     
+    #Función para limitar la verificación de enlaces de Servidores para Ver online y Descargas
+    try:
+        #Inicializamos las variables por si hay un error en medio del proceso
+        channel_exclude = []
+        ver_enlaces = []
+        ver_enlaces_veronline = -1                  #Ver todos los enlaces Ver Online
+        verificar_enlaces_veronline = -1            #Verificar todos los enlaces Ver Online
+        verificar_enlaces_veronline_validos = True  #"¿Contar sólo enlaces 'verificados' en Ver Online?"
+        excluir_enlaces_veronline = []              #Lista vacía de servidores excluidos en Ver Online
+        ver_enlaces_descargas = 0                   #Ver todos los enlaces Descargar
+        verificar_enlaces_descargas = -1            #Verificar todos los enlaces Descargar
+        verificar_enlaces_descargas_validos = True  #"¿Contar sólo enlaces 'verificados' en Descargar?"
+        excluir_enlaces_descargas = []              #Lista vacía de servidores excluidos en Descargar
+        
+        #Leemos las opciones de permitir Servidores para Ver Online y Descargas
+        #Cargamos en .json del canal para ver las listas de valores en  settings
+        channel_exclude = channeltools.get_channel_json(item.channel)
+        for settings in channel_exclude['settings']:                                #Se recorren todos los settings
+            if settings['id'] == "clonenewpct1_excluir1_enlaces_veronline":         #lista de enlaces a excluir
+                max_excl = int(settings['max_excl'])                                #Máximo número de servidores excluidos
+                channel_exclude = settings['lvalues']                               #Cargamos la lista de servidores
+            if settings['id'] == "clonenewpct1_ver_enlaces_descargas":              #Número de enlances a ver o verificar
+                ver_enlaces = settings['lvalues']                                   #Cargamos la lista de num. de enlaces
+    
+        #Primer loop para enlaces de Ver Online.  
+        #Carga la variable de ver
+        ver_enlaces_veronline = int(config.get_setting("clonenewpct1_ver_enlaces_veronline", item.channel))
+        if ver_enlaces_veronline == 1:      #a "Todos" le damos valor -1.  Para "No" dejamos 0
+            ver_enlaces_veronline = -1
+        if ver_enlaces_veronline > 1:       #para los demás valores, tomamos los de la lista
+            ver_enlaces_veronline = int(ver_enlaces[ver_enlaces_veronline])
+    
+        #Carga la variable de verificar
+        verificar_enlaces_veronline = int(config.get_setting("clonenewpct1_verificar_enlaces_veronline", item.channel))
+        if verificar_enlaces_veronline == 1:        #a "Todos" le damos valor -1.  Para "No" dejamos 0
+            verificar_enlaces_veronline = -1
+        if verificar_enlaces_veronline > 1:         #para los demás valores, tomamos los de la lista
+            verificar_enlaces_veronline = int(ver_enlaces[verificar_enlaces_veronline])
+
+        #Carga la variable de contar sólo los servidores verificados
+        verificar_enlaces_veronline_validos = int(config.get_setting("clonenewpct1_verificar_enlaces_veronline_validos", item.channel))
+
+        #Carga la variable de lista de servidores excluidos
+        x = 1
+        for x in range(1, max_excl+1):          #recorremos todas las opciones de canales exluidos
+            valor = str(config.get_setting("clonenewpct1_excluir%s_enlaces_veronline" % x, item.channel))
+            valor = int(valor)
+            if valor > 0:       #Evitamos "No"
+                excluir_enlaces_veronline += [channel_exclude[valor]]       #Añadimos el nombre de servidor excluido a la lista
+            x += 1
+
+        #Segundo loop para enlaces de Descargar.  
+        #Carga la variable de ver
+        ver_enlaces_descargas = int(config.get_setting("clonenewpct1_ver_enlaces_descargas", item.channel))
+        if ver_enlaces_descargas == 1:      #a "Todos" le damos valor -1.  Para "No" dejamos 0
+            ver_enlaces_descargas = -1
+        if ver_enlaces_descargas > 1:       #para los demás valores, tomamos los de la lista
+            ver_enlaces_descargas = int(ver_enlaces[ver_enlaces_descargas])
+    
+        #Carga la variable de verificar
+        verificar_enlaces_descargas = int(config.get_setting("clonenewpct1_verificar_enlaces_descargas", item.channel))
+        if verificar_enlaces_descargas == 1:    #a "Todos" le damos valor -1.  Para "No" dejamos 0
+            verificar_enlaces_descargas = -1
+        if verificar_enlaces_descargas > 1:     #para los demás valores, tomamos los de la lista
+            verificar_enlaces_descargas = int(ver_enlaces[verificar_enlaces_descargas])
+
+        #Carga la variable de contar sólo los servidores verificados
+        verificar_enlaces_descargas_validos = int(config.get_setting("clonenewpct1_verificar_enlaces_descargas_validos", item.channel))
+
+        #Carga la variable de lista de servidores excluidos
+        x = 1
+        for x in range(1, max_excl+1):      #recorremos todas las opciones de canales exluidos
+            valor = str(config.get_setting("clonenewpct1_excluir%s_enlaces_descargas" % x, item.channel))
+            valor = int(valor)
+            if valor > 0:       #Evitamos "No"
+                excluir_enlaces_descargas += [channel_exclude[valor]]       #Añadimos el nombre de servidor excluido a la lista
+            x += 1
+
+    except Exception, ex:           #En caso de error, lo mostramos y reseteamos todas las variables
+        logger.error("Error en la lectura de parámentros del .json del canal: " + item.channel + " \n%s" % ex)
+        #Mostrar los errores
+        logger.debug(ver_enlaces_veronline)
+        logger.debug(verificar_enlaces_veronline)
+        logger.debug(verificar_enlaces_veronline_validos)
+        logger.debug(excluir_enlaces_veronline)
+        logger.debug(ver_enlaces_descargas)
+        logger.debug(verificar_enlaces_descargas)
+        logger.debug(verificar_enlaces_descargas_validos)
+        logger.debug(excluir_enlaces_descargas)
+        #Resetear las variables a sus valores por defecto
+        ver_enlaces_veronline = -1                  #Ver todos los enlaces Ver Online
+        verificar_enlaces_veronline = -1            #Verificar todos los enlaces Ver Online
+        verificar_enlaces_veronline_validos = True  #"¿Contar sólo enlaces 'verificados' en Ver Online?"
+        excluir_enlaces_veronline = []              #Lista vacía de servidores excluidos en Ver Online
+        ver_enlaces_descargas = 0                   #Ver todos los enlaces Descargar
+        verificar_enlaces_descargas = -1            #Verificar todos los enlaces Descargar
+        verificar_enlaces_descargas_validos = True  #"¿Contar sólo enlaces 'verificados' en Descargar?"
+        excluir_enlaces_descargas = []              #Lista vacía de servidores excluidos en Descargar
+        
     # Saber si estamos en una ventana emergente lanzada desde una viñeta del menú principal,
     # con la función "play_from_library"
     unify_status = False
@@ -957,7 +1082,7 @@ def findvideos(item):
         
         itemlist.append(item_local.clone())     #Pintar pantalla
     
-    #logger.debug("TORRENT: " + item_local.url + " / title gen/torr: " + title_gen + " / " + title + " / calidad: " + item_local.quality + " / tamaño: " + size + " / content: " + item_local.contentTitle + " / " + item_local.contentSerieName)
+    logger.debug("TORRENT: " + item_local.url + " / title gen/torr: " + title_gen + " / " + title + " / calidad: " + item_local.quality + " / tamaño: " + size + " / content: " + item_local.contentTitle + " / " + item_local.contentSerieName)
     #logger.debug(item_local)
 
     # VER vídeos, descargar vídeos un link,  o múltiples links
@@ -974,30 +1099,55 @@ def findvideos(item):
     enlaces_descargar = enlaces_ver
     #logger.debug(enlaces_ver)
 
-    #Recorre todos los links de VER
+    #Recorre todos los links de VER, si está permitido
+    cnt_enl_ver = 1
+    cnt_enl_verif = 1
     for logo, servidor, idioma, calidad, enlace, title in enlaces_ver:
+        if ver_enlaces_veronline == 0:      #Si no se quiere Ver Online, se sale del bloque
+            break
         if "ver" in title.lower():
             servidor = servidor.replace("streamin", "streaminto")
+
+            if servidor.capitalize() in excluir_enlaces_veronline:       #Servidor excluido, pasamos al siguiente
+                continue
             mostrar_server = True
             if config.get_setting("hidepremium"):       #Si no se aceptan servidore premium, se ignoran
                 mostrar_server = servertools.is_server_enabled(servidor)
-            
+                
             #logger.debug("VER: url: " + enlace + " / title: " + title + " / servidor: " + servidor + " / idioma: " + idioma)
-
+            
             #Si el servidor es válido, se comprueban si los links están activos
             if mostrar_server:
                 try:
-                    devuelve = servertools.findvideosbyserver(enlace, servidor)     #activo el link ?
-                    if devuelve:
-                        enlace = devuelve[0][1]
-                        item_local.alive = servertools.check_video_link(enlace, servidor)       #activo el link ?
-                        
+                    if cnt_enl_ver <= ver_enlaces_veronline or ver_enlaces_veronline == -1:
+                        devuelve = servertools.findvideosbyserver(enlace, servidor)     #existe el link ?
+                        if verificar_enlaces_veronline == 0:
+                            cnt_enl_ver += 1
+                    else:
+                        break       #Si se ha agotado el contador de verificación, se sale de Ver Online
+                    
+                    if devuelve:                                    #Hay link
+                        enlace = devuelve[0][1]                     #Se guarda el link
+                        item_local.alive = "??"                     #Se asume poe defecto que es link es dudoso
+                        if verificar_enlaces_veronline != 0:        #Se quiere verificar si el link está activo?
+                            if cnt_enl_verif <= verificar_enlaces_veronline or verificar_enlaces_veronline == -1: #contador?
+                                item_local.alive = servertools.check_video_link(enlace, servidor)       #activo el link ?
+                                if verificar_enlaces_veronline_validos:     #Los links tienen que ser válidos para contarlos?
+                                    if item_local.alive == "Ok":            #Sí
+                                        cnt_enl_verif += 1                      #Movemos los contadores
+                                        cnt_enl_ver += 1                        #Movemos los contadores
+                                else:                                       #Si no es necesario que sean links válidos, sumamos
+                                    cnt_enl_verif += 1                          #Movemos los contadores
+                                    cnt_enl_ver += 1                            #Movemos los contadores
+                            else:
+                                break       #Si se ha agotado el contador de verificación, se sale de Ver Online
+
                         #Si el link no está activo se ignora
                         if item_local.alive == "??":        #dudoso
                             item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (servidor.capitalize(), item_local.quality, str(item_local.language))
                         elif item_local.alive.lower() == "no":      #No está activo.  Lo preparo, pero no lo pinto
                             item_local.title = '[COLOR red][%s][/COLOR] [COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.alive, servidor.capitalize(), item_local.quality, str(item_local.language))
-                            logger.debug(item_local.alive + ": ALIVE / " + title + " / " + enlace)
+                            logger.debug(item_local.alive + ": ALIVE / " + title + " / " + servidor + " / " + enlace)
                             raise
                         else:               #Sí está activo
                             item_local.title = '[COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (servidor.capitalize(), item_local.quality, str(item_local.language))
@@ -1014,7 +1164,7 @@ def findvideos(item):
                     pass
 
     #Ahora vemos los enlaces de DESCARGAR
-    if len(enlaces_descargar) > 0:
+    if len(enlaces_descargar) > 0 and ver_enlaces_descargas != 0:
         
         #Pintamos un pseudo-título de Descargas
         if not unify_status:         #Si Titulos Inteligentes NO seleccionados:
@@ -1023,11 +1173,19 @@ def findvideos(item):
             itemlist.append(item_local.clone(title="[COLOR gold] Enlaces Descargar: [/COLOR]", action=""))
 
     #Recorre todos los links de DESCARGAR
+    cnt_enl_ver = 1
+    cnt_enl_verif = 1
     for logo, servidor, idioma, calidad, enlace, title in enlaces_descargar:
+        if ver_enlaces_descargas == 0:
+            break
+
         if "Ver" not in title:
             servidor = servidor.replace("uploaded", "uploadedto")
             partes = enlace.split(" ")      #Partimos el enlace en cada link de las partes
             title = "Descarga"              #Usamos la palabra reservada de Unify para que no formatee el título
+
+            if servidor.capitalize() in excluir_enlaces_descargas:       #Servidor excluido, pasamos al siguiente
+                continue
             
             #logger.debug("DESCARGAR: url: " + enlace + " / title: " + title + title + " / servidor: " + servidor + " / idioma: " + idioma)
             
@@ -1042,17 +1200,37 @@ def findvideos(item):
                 mostrar_server = True
                 if config.get_setting("hidepremium"):       #Si no se aceptan servidore premium, se ignoran
                     mostrar_server = servertools.is_server_enabled(servidor)
-                
+
                 #Si el servidor es válido, se comprueban si los links están activos
                 if mostrar_server:
                     try:
-                        devuelve = servertools.findvideosbyserver(enlace, servidor)     #activo el link ?
+                        if cnt_enl_ver <= ver_enlaces_descargas or ver_enlaces_descargas == -1:
+                            devuelve = servertools.findvideosbyserver(enlace, servidor)     #activo el link ?
+                            if verificar_enlaces_descargas == 0:
+                                cnt_enl_ver += 1
+                        else:
+                            ver_enlaces_descargas = 0       #FORZAR SALIR de DESCARGAS
+                            break       #Si se ha agotado el contador de verificación, se sale de "Enlace"
+
                         if devuelve:
                             enlace = devuelve[0][1]
                             
                             #Verifica si está activo el primer link.  Si no lo está se ignora el enlace-servidor entero
                             if p <= 2:
-                                item_local.alive = servertools.check_video_link(enlace, servidor)   #activo el link ?
+                                item_local.alive = "??"                     #Se asume poe defecto que es link es dudoso
+                                if verificar_enlaces_descargas != 0:        #Se quiere verificar si el link está activo?
+                                    if cnt_enl_verif <= verificar_enlaces_descargas or verificar_enlaces_descargas == -1: #contador?
+                                        item_local.alive = servertools.check_video_link(enlace, servidor)  #activo el link ?
+                                        if verificar_enlaces_descargas_validos:     #Los links tienen que ser válidos para contarlos?
+                                            if item_local.alive == "Ok":    #Sí
+                                                cnt_enl_verif += 1              #Movemos los contadores
+                                                cnt_enl_ver += 1                #Movemos los contadores
+                                        else:                           #Si no es necesario que sean links válidos, sumamos
+                                            cnt_enl_verif += 1                  #Movemos los contadores
+                                            cnt_enl_ver += 1                    #Movemos los contadores
+                                    else:
+                                        ver_enlaces_descargas = 0               #FORZAR SALIR de DESCARGAS
+                                        break       #Si se ha agotado el contador de verificación, se sale de "Enlace"
                                 
                                 if item_local.alive == "??":        #dudoso
                                     if not unify_status:         #Si titles Inteligentes NO seleccionados:
@@ -1064,7 +1242,7 @@ def findvideos(item):
                                         parte_title = '[COLOR red][%s][/COLOR] %s' % (item_local.alive, parte_title)
                                     else:
                                         parte_title = '[COLOR red]%s[/COLOR]-%s' % (item_local.alive, parte_title)
-                                    logger.debug(item_local.alive + ": ALIVE / " + title + " / " + enlace)
+                                    logger.debug(item_local.alive + ": ALIVE / " + title + " / " + servidor + " / " + enlace)
                                     break
 
                             #Preparamos el resto de variables de Item para descargar los vídeos
@@ -1201,7 +1379,7 @@ def episodios(item):
             
             itemlist.append(item_local.clone())
             
-            #logger.debug("title: " + item_local.title + " / url: " + item_local.url + " / calidad: " + item_local.quality + " / Season: " + str(item_local.contentSeason) + " / EpisodeNumber: " + str(item_local.contentEpisodeNumber))
+            logger.debug("title: " + item_local.title + " / url: " + item_local.url + " / calidad: " + item_local.quality + " / Season: " + str(item_local.contentSeason) + " / EpisodeNumber: " + str(item_local.contentEpisodeNumber))
     
     # Pasada por TMDB y clasificación de lista por temporada y episodio
     tmdb.set_infoLabels(itemlist, seekTmdb = True)
@@ -1290,35 +1468,53 @@ def newest(categoria):
     logger.info()
     itemlist = []
     item = Item()
+    
+    item.title = "newest"
+    item.category = "newest"
+    item.action = "listado"
+    item.channel = scrapertools.find_single_match(host, r'(\w+)\.com\/')
+    
     try:
-        item.extra = 'pelilist'
-        if categoria == 'torrent':
+        if categoria == 'peliculas':
             item.url = host+'peliculas/'
-
+            item.extra = "peliculas"
             itemlist = listado(item)
-            if itemlist[-1].title == ">> Página siguiente":
-                itemlist.pop()
-            item.url = host+'series/'
-            itemlist.extend(listado(item))
-            if itemlist[-1].title == ">> Página siguiente":
+            if ">> Página siguiente" in itemlist[-1].title:
                 itemlist.pop()
                 
-        if categoria == 'peliculas 4k':
-            item.url = host+'peliculas-hd/4kultrahd/'
+        if categoria == 'series':
+            item.url = host+'series/'
+            item.extra = "series"
             itemlist.extend(listado(item))
-            if itemlist[-1].title == ">> Página siguiente":
+            if ">> Página siguiente" in itemlist[-1].title:
+                itemlist.pop()
+                
+        if categoria == '4k':
+            item.url = host+'peliculas-hd/4kultrahd/'
+            item.extra = "peliculas"
+            itemlist.extend(listado(item))
+            if ">> Página siguiente" in itemlist[-1].title:
                  itemlist.pop()
                 
         if categoria == 'anime':
             item.url = host+'anime/'
+            item.extra = "peliculas"
             itemlist.extend(listado(item))
-            if itemlist[-1].title == ">> Página siguiente":
+            if ">> Página siguiente" in itemlist[-1].title:
                  itemlist.pop()
                                  
         if categoria == 'documentales':
             item.url = host+'documentales/'
+            item.extra = "varios"
             itemlist.extend(listado(item))
-            if itemlist[-1].title == ">> Página siguiente":
+            if ">> Página siguiente" in itemlist[-1].title:
+                itemlist.pop()
+                
+        if categoria == 'latino':
+            item.url = host+'peliculas-latino/'
+            item.extra = "peliculas"
+            itemlist.extend(listado(item))
+            if ">> Página siguiente" in itemlist[-1].title:
                 itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
