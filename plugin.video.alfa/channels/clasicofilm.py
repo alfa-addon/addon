@@ -200,7 +200,7 @@ def findvideos(item):
                 files = filetools.walk(movie_path)
                 for dirpath, dirname, filename in files:
                     for f in filename:
-                        if item.infoLabels["imdb_id"] in f and f.endswith(".nfo"):
+                        if item.infoLabels["imdb_id"] in f and f.endswith(".info"):
                             head_nfo, it = videolibrarytools.read_nfo(filetools.join(dirpath, dirname, f))
                             canales = it.library_urls.keys()
                             canales.sort()
