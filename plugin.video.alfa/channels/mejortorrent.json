@@ -3,7 +3,7 @@
   "name": "Mejor Torrent",
   "active": true,
   "adult": false,
-  "language": ["cast"],
+  "language": ["*"],
   "thumbnail": "mejortorrent.png",
   "banner": "mejortorrent.png",
   "categories": [
@@ -17,14 +17,14 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     },
     {
-      "id": "include_in_newest_torrent",
+      "id": "include_in_newest_peliculas",
       "type": "bool",
-      "label": "Incluir en Novedades - Torrent",
+      "label": "Incluir en Novedades - Peliculas",
       "default": true,
       "enabled": true,
       "visible": true
