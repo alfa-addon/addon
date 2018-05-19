@@ -132,17 +132,7 @@ def newest(categoria):
     if categoria != 'series':
         return []
 
-    try:
-        return novedades(Item())
-
-    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("%s" % line)
-
-    return []
-
+    return novedades(Item())
 
 def episodios(item):
     logger.info("url: %s" % item.url)

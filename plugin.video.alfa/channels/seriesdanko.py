@@ -44,7 +44,7 @@ def newest(categoria):
     itemlist = []
 
     if categoria == 'series':
-        itemlist = novedades(Item(channel="seriesdanko", title="Novedades", action="novedades", url=HOST))
+        itemlist = novedades(Item())
 
     return itemlist
 
