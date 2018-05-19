@@ -467,6 +467,7 @@ def listado_busqueda(item):
     url_next_page =''   # Controlde paginación
     cnt_tot = 30        # Poner el num. máximo de items por página
     pag = False         # No hay paginación en la web
+    category = ""       # Guarda la categoria que viene desde una busqueda global
     
     data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, post=item.post).data)
     #logger.debug(data)
@@ -534,6 +535,7 @@ def listado_busqueda(item):
         # Creamos "item_local" y lo limpiamos un poco de algunos restos de item
         item_local = item.clone()
         if item_local.category:
+            category = item.category
             del item_local.category
         if item_local.tipo:
             del item_local.tipo
@@ -653,6 +655,9 @@ def listado_busqueda(item):
         
         #logger.debug(item_local)
         
+    if not category:            #Si este campo no existe es que viene de la primera pasada de una búsqueda global
+        return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
+    
     #Llamamos a TMDB para que complete InfoLabels desde itemlist.  Mejor desde itemlist porque envía las queries en paralelo
     tmdb.set_infoLabels(itemlist, seekTmdb = True)
     
@@ -997,7 +1002,7 @@ def newest(categoria):
     itemlist = []
     item = Item()
     try:
-        if categoria == 'torrent':
+        if categoria == 'peliculas':
             item.url = host + "/secciones.php?sec=ultimos_torrents"
             item.extra = "novedades"
             item.channel = "mejortorrent"
