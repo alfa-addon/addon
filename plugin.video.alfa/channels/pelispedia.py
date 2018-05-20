@@ -698,8 +698,7 @@ def evpKDF(passwd, salt, key_size=8, iv_size=4, iterations=1, hash_algorithm="md
     }
 
 def obtener_cripto(password, plaintext):
-    import hashlib, os, base64, json
-    from Crypto.Cipher import AES
+    import os, base64, json
     SALT_LENGTH = 8
     BLOCK_SIZE = 16
     KEY_SIZE = 32
@@ -712,8 +711,15 @@ def obtener_cripto(password, plaintext):
 
     kdf = evpKDF(password, salt)
 
-    cipherSpec = AES.new(kdf['key'], AES.MODE_CBC, iv)
-    ciphertext = cipherSpec.encrypt(paddedPlaintext)
+    try: # Intentar con librería AES del sistema
+        from Crypto.Cipher import AES
+        cipherSpec = AES.new(kdf['key'], AES.MODE_CBC, iv)
+        ciphertext = cipherSpec.encrypt(paddedPlaintext)
+
+    except: # Si falla intentar con librería del addon 
+        import jscrypto
+        cipherSpec = jscrypto.new(kdf['key'], jscrypto.MODE_CBC, iv)
+        ciphertext = cipherSpec.encrypt(paddedPlaintext)
 
     return json.dumps({'ct': base64.b64encode(ciphertext), 'iv': iv.encode("hex"), 's': salt.encode("hex")}, sort_keys=True, separators=(',', ':'))
 
