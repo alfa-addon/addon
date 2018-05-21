@@ -538,6 +538,7 @@ def play(item):
                 mp4 = scrapertools.find_single_match(data, '"link":"([^"]*)')
                 if mp4:
                     mp4 = mp4.replace('\/', '/')
+                    if 'chomikuj.pl/' in mp4: mp4 += "|Referer=%s" % item.referer
                     itemlist.append(['.mp4', mp4, 0, subtitle])
                 
                 break
@@ -714,12 +715,10 @@ def obtener_cripto(password, plaintext):
     try: # Intentar con librería AES del sistema
         from Crypto.Cipher import AES
         cipherSpec = AES.new(kdf['key'], AES.MODE_CBC, iv)
-        ciphertext = cipherSpec.encrypt(paddedPlaintext)
-
     except: # Si falla intentar con librería del addon 
         import jscrypto
         cipherSpec = jscrypto.new(kdf['key'], jscrypto.MODE_CBC, iv)
-        ciphertext = cipherSpec.encrypt(paddedPlaintext)
+    ciphertext = cipherSpec.encrypt(paddedPlaintext)
 
     return json.dumps({'ct': base64.b64encode(ciphertext), 'iv': iv.encode("hex"), 's': salt.encode("hex")}, sort_keys=True, separators=(',', ':'))
 
