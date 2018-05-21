@@ -107,17 +107,21 @@ def search(item, texto):
 
     return sub_search(item)
 
-import json
-
 def search_section(item, data, sectionType):
     logger.info()
     sectionResultsRE = re.findall("<a[^<]+href *= *[\"'](?P<url>[^\"']+)[^>]>[^<]*<img[^>]+src *= *[\"'](?P<thumbnail>[^\"']+).*?<figcaption[^\"']*[\"'](?P<title>.*?)\">", data, re.MULTILINE | re.DOTALL)
 
-    results = [item.clone(action = "seasons" if sectionType == "series" else "findvideos",
-                          title = title,
-                          thumbnail = thumbnail,
-                          url = url) for url, thumbnail, title in sectionResultsRE]
-    return results
+    itemlist = []
+    for url, thumbnail, title in sectionResultsRE:
+        newitem = item.clone(action = "seasons" if sectionType == "series" else "findvideos",
+                             title = title,
+                             thumbnail = thumbnail,
+                             url = url)
+        if sectionType == "series":
+            item.show = title;
+        itemlist.append(newitem)
+
+    return itemlist
 
 def sub_search(item):
     logger.info()
@@ -131,8 +135,6 @@ def sub_search(item):
     itemlist.extend(search_section(item, searchSections[1], "series"))
 
     tmdb.set_infoLabels(itemlist)
-    for i in itemlist:
-        logger.info(i.tojson())
     return itemlist
 
 def get_source(url):
@@ -248,21 +250,36 @@ def list_all(item):
 
     return itemlist
 
+def episodios(item):
+    logger.info("url: %s" % item.url)
+    itemlist = seasons(item)
+
+    if len(itemlist) > 0 and itemlist[0].action != "findvideos":
+        episodes = []
+        for season in itemlist:
+            episodes.extend([episode for episode in seasons_episodes(season)])
+        itemlist = episodes
+
+    return itemlist
+
 def seasons(item):
     logger.info()
     data = httptools.downloadpage(item.url).data
-# <a href="https://pepecine.io/ver-serie-tv/7020-Juego-de-Tronos/seasons/1" class="sezon">Temporada 1</a>
 
     reSeasons = re.findall("href *= *[\"']([^\"']+)[\"'][^\"']+[\"']sezon[^>]+>([^<]+)+", data)
 
-    result = [item.clone(action = "seasons_episodes",
+    itemlist = [item.clone(action = "seasons_episodes",
                           title = title,
                           url = url) for url, title in reSeasons]
 
-    if len(result) == 1:
-        result = seasons_episodes(result[0])
+    if len(itemlist) == 1:
+        itemlist = seasons_episodes(itemlist[0])
 
-    return result
+    # Opción "Añadir esta serie a la videoteca de XBMC"
+    if config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(item.clone(title="Añadir esta serie a la videoteca", action="add_serie_to_library", extra="episodios"))
+
+    return itemlist
 
 def seasons_episodes(item):
     logger.info()
@@ -271,7 +288,7 @@ def seasons_episodes(item):
     reEpisodes = re.findall("<a[^>]+col-sm-3[^>]+href *= *[\"'](?P<url>[^\"']+).*?<img[^>]+src *= *[\"'](?P<thumbnail>[^\"']+).*?<a[^>]+>(?P<title>.*?)</a>", data, re.MULTILINE | re.DOTALL)
 
     seasons = [item.clone(action = "findvideos",
-                          title = title,
+                          title = re.sub("<b>Episodio (\d+)</b> - T(\d+) \| {0} \| ".format(item.show), "\g<2>x\g<1> - ", title),
                           thumbnail = thumbnail,
                           url = url) for url, thumbnail, title in reEpisodes]
 
@@ -283,10 +300,10 @@ def findvideos(item):
 
     if item.extra != "links_encoded":
 
-        data = httptools.downloadpage(item.url).data
-        linksRE = re.findall("getFavicon\('(?P<url>[^']+)[^>]+>[^>]+>(?P<language>[^<]+).+?<td[^>]+>(?P<quality>[^<]*).+?<td[^>]+>(?P<antiquity>[^<]*)", data, re.MULTILINE | re.DOTALL)
-        for url, language, quality, antiquity in linksRE:
-            logger.info("URL = " + url);
+        # data = httptools.downloadpage(item.url).data
+        # linksRE = re.findall("getFavicon\('(?P<url>[^']+)[^>]+>[^>]+>(?P<language>[^<]+).+?<td[^>]+>(?P<quality>[^<]*).+?<td[^>]+>(?P<antiquity>[^<]*)", data, re.MULTILINE | re.DOTALL)
+        # for url, language, quality, antiquity in linksRE:
+        #     logger.info("URL = " + url);
 
 
         data = httptools.downloadpage(item.url).data
@@ -332,16 +349,16 @@ def findvideos(item):
             videoitem.title = '%s [%s] [%s]' % (videoitem.server.capitalize(), videoitem.language, videoitem.quality)
 
     tmdb.set_infoLabels(itemlist)
-    if itemlist:
+    if itemlist and not item.show:
         itemlist.append(Item(channel = item.channel))
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
                                    text_color="magenta"))
         # Opción "Añadir esta película a la videoteca de KODI"
         if item.extra != "library":
             if config.get_videolibrary_support():
-                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
-                                     action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                     fulltitle = item.fulltitle
+                itemlist.append(item.clone(title="Añadir a la videoteca",
+                                           text_color="green",
+                                           action="add_pelicula_to_library"
                                      ))
     return itemlist
 
