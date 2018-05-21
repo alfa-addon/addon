@@ -13,16 +13,13 @@ from core import servertools
 from core import tmdb
 from core.item import Item, InfoLabels
 from platformcode import config, logger
+from channels import filtertools
 
 host = "https://pepecine.io"
 
 IDIOMAS = {'es': 'Español', 'en': 'Inglés', 'la': 'Latino', 'su': 'VOSE', 'vo': 'VO', 'otro': 'OVOS'}
 list_idiomas = IDIOMAS.values()
 list_language = ['default']
-
-CALIDADES = ['SD', 'HDiTunes', 'Micro-HD-720p', 'Micro-HD-1080p', '1080p', '720p']
-list_quality = CALIDADES
-
 
 perpage = 20
 
@@ -68,6 +65,7 @@ def mainlist(item):
                                url    = host + '/donde-ver?q=',
                                action ='search',
                                type   = 'movie'))
+
     return itemlist
 
 
@@ -118,7 +116,7 @@ def search_section(item, data, sectionType):
                              thumbnail = thumbnail,
                              url = url)
         if sectionType == "series":
-            item.show = title;
+            newitem.show = title;
         itemlist.append(newitem)
 
     return itemlist
@@ -288,11 +286,12 @@ def seasons_episodes(item):
     reEpisodes = re.findall("<a[^>]+col-sm-3[^>]+href *= *[\"'](?P<url>[^\"']+).*?<img[^>]+src *= *[\"'](?P<thumbnail>[^\"']+).*?<a[^>]+>(?P<title>.*?)</a>", data, re.MULTILINE | re.DOTALL)
 
     seasons = [item.clone(action = "findvideos",
-                          title = re.sub("<b>Episodio (\d+)</b> - T(\d+) \| {0} \| ".format(item.show), "\g<2>x\g<1> - ", title),
+                          title = re.sub("<b>Episodio (\d+)</b> - T(\d+) \|[^\|]*\| ".format(item.show), "\g<2>x\g<1> - ", title),
                           thumbnail = thumbnail,
                           url = url) for url, thumbnail, title in reEpisodes]
 
     return seasons
+
 
 def findvideos(item):
     logger.info()
@@ -360,7 +359,7 @@ def findvideos(item):
                                            text_color="green",
                                            action="add_pelicula_to_library"
                                      ))
-    return itemlist
+    return filtertools.get_links(itemlist, item, list_idiomas)
 
 
 def play(item):
