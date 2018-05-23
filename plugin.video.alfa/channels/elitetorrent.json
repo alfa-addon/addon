@@ -3,7 +3,7 @@
   "name": "Elite Torrent",
   "active": true,
   "adult": false,
-  "language": ["cast"],
+  "language": ["*"],
   "thumbnail": "elitetorrent.png",
   "banner": "elitetorrent.png",
   "categories": [
@@ -15,10 +15,10 @@
   ],
   "settings":[
     {
-      "id": "include_in_newest_torrent",
+      "id": "include_in_global_search",
       "type": "bool",
-      "label": "Incluir en Novedades - Torrent",
-      "default": true,
+      "label": "Incluir en busqueda global",
+      "default": false,
       "enabled": true,
       "visible": true
     }
