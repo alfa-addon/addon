@@ -169,7 +169,7 @@ class Client(object):
           #decryptor = aes.AESModeOfOperationCBC(key, iv='\0' * 16)
       except:
           import jscrypto
-          decryptor = jscrypto.new(key, AES.MODE_CBC, '\0' * 16)
+          decryptor = jscrypto.new(key, jscrypto.MODE_CBC, '\0' * 16)
       return decryptor.decrypt(data)
 
     def aes_cbc_decrypt_a32(self,data, key):
