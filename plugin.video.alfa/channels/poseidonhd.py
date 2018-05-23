@@ -274,7 +274,7 @@ def findvideos(item):
             #title = '%s [%s]' % (item.title, language)
             itemlist.append(item.clone(title='[%s] [%s]', url=url, action='play', subtitle=subs,
                             language=language, quality=quality, infoLabels = item.infoLabels))
-        itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % (x.server.capitalize(), x.language))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % (x.server.capitalize(), x.language))
 
     # Requerido para Filtrar enlaces
 
