@@ -148,12 +148,13 @@ def findvideos(item):
                              action = "play",
                              title = calidad,
                              fulltitle = item.title,
+                             thumbnail = item.thumbnail,
                              contentThumbnail = item.thumbnail,
                              url = url,
                              language = IDIOMAS['Latino']
                              ))
-    tmdb.set_infoLabels(itemlist, seekTmdb = True)
     itemlist = servertools.get_servers_itemlist(itemlist)
+    tmdb.set_infoLabels(itemlist, seekTmdb = True)
     itemlist.append(Item(channel=item.channel))
     if config.get_videolibrary_support():
         itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",

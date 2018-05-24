@@ -4,6 +4,10 @@
     "ignore_urls": [],
     "patterns": [
       {
+        "pattern": "clipwatching.com/(e.*?.html)",
+        "url": "http://clipwatching.com/\\1"
+      },
+      {
         "pattern": "clipwatching.com/(\\w+)",
         "url": "http://clipwatching.com/\\1.html"
       }

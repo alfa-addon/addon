@@ -1,6 +1,4 @@
 import urllib2
-from Crypto.Cipher import AES
-from Crypto.Util import Counter
 
 class Cursor(object):
     def __init__(self, file):
@@ -61,8 +59,14 @@ class Cursor(object):
 
     def prepare_decoder(self,offset):
         initial_value = self.initial_value + int(offset/16)
-        self.decryptor = AES.new(self._file._client.a32_to_str(self.k), AES.MODE_CTR, counter = Counter.new(128, initial_value = initial_value))
-        #self.decryptor = aes.AESModeOfOperationCTR(f=self,key=self._client.a32_to_str(self.k),counter=aes.Counter(initial_value=initial_value))
+        try:
+            from Crypto.Cipher import AES
+            from Crypto.Util import Counter
+            self.decryptor = AES.new(self._file._client.a32_to_str(self.k), AES.MODE_CTR, counter = Counter.new(128, initial_value = initial_value))
+        except:
+            from pyaes import aes
+            self.decryptor = aes.AESModeOfOperationCTR(f=self,key=self._client.a32_to_str(self.k),counter=aes.Counter(initial_value=initial_value))
+
         rest = offset - int(offset/16)*16
         if rest:
             self.decode(str(0)*rest)
