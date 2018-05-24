@@ -226,9 +226,9 @@ def render_items(itemlist, parent_item):
         context_commands = set_context_commands(item, parent_item)
 
         # Añadimos el item
-        if config.get_platform(True)['num_version'] >= 17.0:
+        if config.get_platform(True)['num_version'] >= 17.0 and parent_item.list_type == '':
             listitem.addContextMenuItems(context_commands)
-        else:
+        elif parent_item.list_type == '':
             listitem.addContextMenuItems(context_commands, replaceItems=True)
 
         if not item.totalItems:
@@ -247,7 +247,18 @@ def render_items(itemlist, parent_item):
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
     # Fijamos el "breadcrumb"
-    xbmcplugin.setPluginCategory(handle=int(sys.argv[1]), category=parent_item.category.capitalize())
+    if parent_item.list_type == '':
+        breadcrumb = parent_item.category.capitalize()
+    else:
+        if 'similar' in parent_item.list_type:
+            if parent_item.contentTitle != '':
+                breadcrumb = 'Similares (%s)' % parent_item.contentTitle
+            else:
+                breadcrumb = 'Similares (%s)' % parent_item.contentSerieName
+        else:
+            breadcrumb = 'Busqueda'
+
+    xbmcplugin.setPluginCategory(handle=int(sys.argv[1]), category=breadcrumb)
 
     # No ordenar items
     xbmcplugin.addSortMethod(handle=int(sys.argv[1]), sortMethod=xbmcplugin.SORT_METHOD_NONE)
@@ -394,7 +405,6 @@ def set_context_commands(item, parent_item):
             else:
                 context_commands.append(
                     (command["title"], "XBMC.RunPlugin(%s?%s)" % (sys.argv[0], item.clone(**command).tourl())))
-
     # Opciones segun criterios, solo si el item no es un tag (etiqueta), ni es "Añadir a la videoteca", etc...
     if item.action and item.action not in ["add_pelicula_to_library", "add_serie_to_library", "buscartrailer"]:
         # Mostrar informacion: si el item tiene plot suponemos q es una serie, temporada, capitulo o pelicula
@@ -430,7 +440,8 @@ def set_context_commands(item, parent_item):
             elif item.contentType == "movie" and (item.infoLabels['tmdb_id'] or item.infoLabels['imdb_id'] or
                                                   item.contentTitle):
                 param = "id =%s,imdb_id=%s,name=%s" \
-                        % (item.infoLabels['tmdb_id'], item.infoLabels['imdb_id'], item.contentTitle)
+                       % (item.infoLabels['tmdb_id'], item.infoLabels['imdb_id'], item.contentTitle)
+
                 context_commands.append(("ExtendedInfo",
                                          "XBMC.RunScript(script.extendedinfo,info=extendedinfo,%s)" % param))
 
@@ -455,7 +466,7 @@ def set_context_commands(item, parent_item):
                                      (sys.argv[0], item.clone(channel="favorites", action="addFavourite",
                                                               from_channel=item.channel,
                                                               from_action=item.action).tourl())))
-        # Buscar en otros canales
+        # Buscar en otros canales y similares
         if item.contentType in ['movie', 'tvshow'] and item.channel != 'search':
             # Buscar en otros canales
             if item.contentSerieName != '':
@@ -469,6 +480,14 @@ def set_context_commands(item, parent_item):
                                                                                    from_channel=item.channel,
 
                                                                                    contextual=True).tourl())))
+            if item.contentType == 'tvshow':
+                mediatype = 'tv'
+            else:
+                mediatype = item.contentType
+            context_commands.append(("[COLOR yellow]Buscar Similares[/COLOR]", "XBMC.Container.Update (%s?%s)" % (
+            sys.argv[0], item.clone(channel='search', action='discover_list', search_type='list', page='1',
+                                    list_type='%s/%s/similar' % (mediatype,item.infoLabels['tmdb_id'])).tourl())))
+
         # Definir como Pagina de inicio
         if config.get_setting('start_page'):
             if item.action not in ['findvideos', 'play']:

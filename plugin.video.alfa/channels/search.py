@@ -8,6 +8,7 @@ from threading import Thread
 
 from channelselector import get_thumb
 from core import channeltools
+from core import scrapertools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
@@ -578,14 +579,43 @@ def get_saved_searches():
 
 
 def discover_list(item):
+    from platformcode import unify
     itemlist = []
 
-    itemlist = tmdb.discovery(item)
+    result = tmdb.discovery(item)
+
+    tvshow = False
+
+    logger.debug(item)
+
+    for elem in result:
+        elem['tmdb_id']=elem['id']
+        if 'title' in elem:
+            title = unify.normalize(elem['title']).capitalize()
+            elem['year'] = scrapertools.find_single_match(elem['release_date'], '(\d{4})-\d+-\d+')
+        else:
+            title = unify.normalize(elem['name']).capitalize()
+            tvshow = True
+
+        new_item = Item(channel='search', title=title, infoLabels=elem, action='search_tmdb', extra=title,
+                        category='Resultados', context ='')
+
+        if tvshow:
+            new_item.contentSerieName = title
+        else:
+            new_item.contentTitle = title
+
+        itemlist.append(new_item)
+
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
-    if item.search_type=='discover':
+    if item.page != '' and len(itemlist)>0:
         next_page = str(int(item.page)+1)
-        itemlist.append(item.clone(title='Pagina Siguente', page=next_page))
+        #if not 'similar' in item.list_type:
+        #    itemlist.append(item.clone(title='Pagina Siguente', page=next_page))
+        #else:
+        itemlist.append(Item(channel=item.channel, action='discover_list', title='Pagina Siguente',
+                             search_type=item.search_type, list_type=item.list_type, type=item.type, page=next_page))
 
     return itemlist
 

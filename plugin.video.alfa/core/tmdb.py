@@ -540,41 +540,19 @@ def discovery(item):
     from core.item import Item
     from platformcode import unify
 
-    tvshow = False
-    itemlist = []
-    logger.debug(item)
-
     if item.search_type == 'discover':
         listado = Tmdb(discover={'url':'discover/%s' % item.type, 'with_genres':item.list_type, 'language':'es',
                                  'page':item.page})
 
     elif item.search_type == 'list':
-        listado = Tmdb(list={'url': item.list_type, 'language':'es'})
+        if item.page == '':
+            item.page = '1'
+        listado = Tmdb(list={'url': item.list_type, 'language':'es', 'page':item.page})
 
     logger.debug(listado.get_list_resultados())
     result = listado.get_list_resultados()
 
-    for elem in result:
-        elem['tmdb_id']=elem['id']
-        if 'title' in elem:
-            title = unify.normalize(elem['title']).capitalize()
-            contentTitle = title
-            elem['year'] = scrapertools.find_single_match(elem['release_date'], '(\d{4})-\d+-\d+')
-        else:
-            title = unify.normalize(elem['name']).capitalize()
-            tvshow = True
-
-        logger.debug(elem)
-        new_item = Item(channel=item.channel, title=title, infoLabels=elem, action='search_tmdb', extra=title)
-
-        if tvshow:
-            new_item.contentSerieName = title
-        else:
-            new_item.contentTitle = title
-
-        itemlist.append(new_item)
-
-    return itemlist
+    return result
 
 def get_genres(type):
     lang = 'es'
