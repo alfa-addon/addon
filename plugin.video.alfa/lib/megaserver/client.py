@@ -6,7 +6,6 @@ import time
 import urllib
 from threading import Thread
 
-from Crypto.Cipher import AES
 from file import File
 from handler import Handler
 from platformcode import logger
@@ -164,8 +163,13 @@ class Client(object):
       return self.base64urlencode(self.a32_to_str(a))
 
     def aes_cbc_decrypt(self, data, key):
-      decryptor = AES.new(key, AES.MODE_CBC, '\0' * 16)
-      #decryptor = aes.AESModeOfOperationCBC(key, iv='\0' * 16)
+      try:
+          from Crypto.Cipher import AES
+          decryptor = AES.new(key, AES.MODE_CBC, '\0' * 16)
+          #decryptor = aes.AESModeOfOperationCBC(key, iv='\0' * 16)
+      except:
+          import jscrypto
+          decryptor = jscrypto.new(key, jscrypto.MODE_CBC, '\0' * 16)
       return decryptor.decrypt(data)
 
     def aes_cbc_decrypt_a32(self,data, key):

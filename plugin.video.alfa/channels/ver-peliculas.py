@@ -38,8 +38,8 @@ def mainlist(item):
         Item(channel=item.channel,
              title="Español",
              action="listado",
-             url=host + "peliculas/en-espanol/"
-             ))
+             url=host + "peliculas/en-espanol/",
+             thumbnail = get_thumb("channels_spanish.png")))
     itemlist.append(
         Item(channel=item.channel,
              title="Latino",
@@ -54,9 +54,10 @@ def mainlist(item):
              thumbnail=get_thumb("channels_vos.png")))
     itemlist.append(
         Item(channel=item.channel,
-             title="Categorias",
+             title="Generos",
              action="categories",
-             url=host
+             url=host,
+             thumbnail=get_thumb('genres', auto=True)
              ))
     itemlist.append(
         Item(channel=item.channel,
@@ -95,7 +96,6 @@ def search(item, texto):
         post = "keyword=%s" % texto
         data = httptools.downloadpage(item.url, post=post).data
         data = data.replace('\\"', '"').replace('\\/', '/')
-        logger.debug("data %s" % data)
 
         pattern = 'url\((.*?)\).+?<a href="([^"]+)".*?class="ss-title">(.*?)</a>'
         matches = re.compile(pattern, re.DOTALL).findall(data)
@@ -146,14 +146,6 @@ def listado(item):
                                  title=">> Página siguiente",
                                  url=url,
                                  thumbnail=get_thumb("next.png")))
-
-        for item in itemlist:
-            if item.infoLabels['plot'] == '':
-                data = httptools.downloadpage(item.url).data
-                item.plot = scrapertools.find_single_match(data, '<div class="desc">([^<]+)</div>').strip()
-                item.fanart = scrapertools.find_single_match(data, '<meta property="og:image" content="([^"]+)"/>')
-
-
     return itemlist
 
 
@@ -172,10 +164,13 @@ def findvideos(item):
     video_info = scrapertools.find_single_match(data, "load_player\('([^']+).*?([^']+)")
     movie_info = scrapertools.find_single_match(item.url,
                                             'http:\/\/ver-peliculas\.(io|org)\/peliculas\/(\d+)-(.*?)-\d{4}-online\.')
+
+
     movie_host = movie_info[0]
-    movie_id = movie_info[1]
-    movie_name = movie_info[2]
-    sub = video_info[1]
+    movie_id = scrapertools.find_single_match(data,'id=idpelicula value=(.*?)>')
+    movie_name = scrapertools.find_single_match(data,'id=nombreslug value=(.*?)>')
+    sub = scrapertools.find_single_match(data, 'id=imdb value=(.*?)>')
+    sub = '%s/subtix/%s.srt' % (movie_host, sub)
     url_base = 'http://ver-peliculas.%s/core/api.php?id=%s&slug=%s' % (movie_host, movie_id, movie_name)
     data = httptools.downloadpage(url_base).data
     json_data = jsontools.load(data)
@@ -185,8 +180,10 @@ def findvideos(item):
         video_base_url = host + '/core/videofinal.php'
         if video_list[videoitem] != None:
             video_lang = video_list[videoitem]
-            languages = ['latino', 'spanish', 'subtitulos']
+            languages = ['latino', 'spanish', 'subtitulos', 'subtitulosp']
             for lang in languages:
+                if lang not in video_lang:
+                    continue
                 if video_lang[lang] != None:
                     if not isinstance(video_lang[lang], int):
                         video_id = video_lang[lang][0]["video"]
@@ -199,15 +196,20 @@ def findvideos(item):
                         for video_link in sources:
                             url = video_link['sources']
                             if url not in duplicated and server!='drive':
-                                lang = lang.capitalize()
-                                if lang == 'Spanish':
+
+                                if lang == 'spanish':
                                     lang = 'Español'
+                                elif 'sub' in lang:
+                                    lang = 'Subtitulada'
+                                lang = lang.capitalize()
                                 title = 'Ver en %s [' + lang + ']'
                                 thumbnail = servertools.guess_server_thumbnail(server)
                                 itemlist.append(item.clone(title=title,
                                                            url=url,
                                                            thumbnail=thumbnail,
-                                                           action='play'
+                                                           action='play',
+                                                           language=lang
+
                                                            ))
                                 duplicated.append(url)
     tmdb.set_infoLabels(itemlist, __modo_grafico__)

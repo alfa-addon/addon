@@ -236,7 +236,7 @@ def listado(item):
         
         #Determinamos y marcamos idiomas distintos del castellano
         item_local.language = []
-        if "[vos" in title.lower()  or "v.o.s" in title.lower() or "vo" in title.lower() or ".com/pelicula/" in scrapedurl  or ".com/series-vo" in scrapedurl or "-vo/" in scrapedurl or "vos" in calidad.lower() or "vose" in calidad.lower() or "v.o.s" in calidad.lower() or ".com/peliculas-vo" in item.url:
+        if "[vos" in title.lower()  or "v.o.s" in title.lower() or "vo" in title.lower() or ".com/pelicula/" in scrapedurl  or ".com/series-vo" in scrapedurl or "-vo/" in scrapedurl or "vos" in calidad.lower() or "vose" in calidad.lower() or "v.o.s" in calidad.lower() or "sub" in calidad.lower() or ".com/peliculas-vo" in item.url:
             item_local.language += ["VOS"]
         title = title.replace(" [Subs. integrados]", "").replace(" [subs. Integrados]", "").replace(" [VOSE", "").replace(" [VOS", "").replace(" (V.O.S.E)", "").replace(" VO", "").replace("Subtitulos", "")
         if "latino" in title.lower() or "argentina" in title.lower() or "-latino/" in scrapedurl or "latino" in calidad.lower() or "argentina" in calidad.lower():
@@ -272,8 +272,8 @@ def listado(item):
         if "audio" in title.lower():        #Reservamos info de audio para después de TMDB
             title_subs += ['[%s]' % scrapertools.find_single_match(title, r'(\[[a|A]udio.*?\])')]
             title = re.sub(r'\[[a|A]udio.*?\]', '', title)
-        if "[dual" in title.lower() or "multileng" in title.lower() or "multileng" in item_local.quality.lower():
-            item_local.language += ["DUAL"]
+        if "[dual" in title.lower() or "multileng" in title.lower() or "multileng" in item_local.quality.lower() or (("espa" in title.lower() or "spani" in title.lower()) and "VOS" in item_local.language):
+            item_local.language[0:0] = ["DUAL"]
             title = re.sub(r'\[[D|d]ual.*?\]', '', title)
             title = re.sub(r'\[[M|m]ultileng.*?\]', '', title)
             item_local.quality = re.sub(r'\[[M|m]ultileng.*?\]', '', item_local.quality)
@@ -309,7 +309,7 @@ def listado(item):
         
         title = title.replace("Ver online ", "").replace("Descarga Serie HD ", "").replace("Descargar Serie HD ", "").replace("Descarga Serie ", "").replace("Descargar Serie ", "").replace("Ver en linea ", "").replace("Ver en linea", "").replace("HD ", "").replace("(Proper)", "").replace("RatDVD", "").replace("DVDRiP", "").replace("DVDRIP", "").replace("DVDR", "").replace("DVD9", "").replace("DVD", "").replace("DVB", "").replace("- ES ", "").replace("ES ", "").replace("COMPLETA", "").replace("(", "-").replace(")", "-").replace(".", " ").strip()
         
-        title = title.replace("Descargar torrent ", "").replace("Descarga Gratis ", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Bajar ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").strip()
+        title = title.replace("Descargar torrent ", "").replace("Descarga Gratis ", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Bajar ", "").replace("HDRIP ", "").replace("HDRiP ", "").replace("HDRip ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").strip()
         
         if title.endswith("torrent gratis"): title = title[:-15]
         if title.endswith("gratis"): title = title[:-7]
@@ -324,16 +324,9 @@ def listado(item):
             if not "HDR" in item_local.quality:
                 item_local.quality += " HDR"
         
-        while title.endswith(' '):
-            title = title[:-1]
-        while title.startswith(' '):
-            title = title[+1:]
-        while title_alt.endswith(' '):
-            title_alt = title_alt[:-1]
-        while title_alt.startswith(' '):
-            title_alt = title_alt[+1:]
-        while item_local.quality.endswith(' '):
-            item_local.quality = item_local.quality[:-1]
+        title = title.strip()
+        title_alt = title_alt.strip()
+        item_local.quality = item_local.quality.strip()
 
         if not title:       #Usamos solo el title_alt en caso de que no exista el título original
             title = title_alt
@@ -416,9 +409,9 @@ def listado(item):
         if config.get_setting("unify"):         #Si Titulos Inteligentes SÍ seleccionados:
             title = title.replace("[", "-").replace("]", "-")
         
-        title = title.replace("--", "").replace(" []", "").replace("()", "").replace("(/)", "").replace("[/]", "")
-        title = re.sub(r'\s\[COLOR \w+\]\[\]\[\/COLOR\]', '', title)
-        title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', title)
+        title = title.replace("--", "").replace(" []", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+        title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', title).strip()
+        title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', title).strip()
         
         if category == "newest":     #Viene de Novedades.  Marquemos el título con el nombre del canal
             title += ' -%s-' % item_local.channel.capitalize()
@@ -427,7 +420,7 @@ def listado(item):
         
         item_local.title = title
         
-        logger.debug("url: " + item_local.url + " / title: " + item_local.title + " / content title: " + item_local.contentTitle + "/" + item_local.contentSerieName + " / calidad: " + item_local.quality + " / year: " + year)
+        logger.debug("url: " + item_local.url + " / title: " + item_local.title + " / content title: " + item_local.contentTitle + "/" + item_local.contentSerieName + " / calidad: " + item_local.quality + " / year: " + str(item_local.infoLabels['year']))
         #logger.debug(item_local)
 
     if len(itemlist) == 0:
@@ -447,15 +440,10 @@ def listado_busqueda(item):
     cnt_tot = 40            # Poner el num. máximo de items por página.  Dejamos que la web lo controle
     cnt_title = 0           # Contador de líneas insertadas en Itemlist
     cnt_pag = 0             # Contador de líneas leídas de Matches
-    category = ""           # Guarda la categoria que viene desde una busqueda global
 
     if item.cnt_pag:
         cnt_pag = item.cnt_pag      # Se guarda en la lista de páginas anteriores en Item
         del item.cnt_pag
-
-    if item.category:
-        category = item.category
-        del item.category
     if item.totalItems:
         del item.totalItems
     if item.text_bold:
@@ -578,12 +566,14 @@ def listado_busqueda(item):
                 title_lista += [scrapedurl_alt]
             else:
                 title_lista += [scrapedurl]
-        if "juego/" in scrapedurl or "xbox" in scrapedurl.lower() or "xbox" in scrapedtitle.lower() or "xbox" in calidad.lower() or "epub" in calidad.lower() or "pdf" in calidad.lower():      # no mostramos lo que no sean videos
+        if "juego/" in scrapedurl or "xbox" in scrapedurl.lower() or "xbox" in scrapedtitle.lower() or "windows" in scrapedtitle.lower() or "windows" in calidad.lower() or "nintendo" in scrapedtitle.lower() or "xbox" in calidad.lower() or "epub" in calidad.lower() or "pdf" in calidad.lower() or "pcdvd" in calidad.lower() or "crack" in calidad.lower():      # no mostramos lo que no sean videos
             continue
         cnt_title += 1                  # Sería una línea real más para Itemlist
         
         #Creamos una copia de Item para cada contenido
         item_local = item.clone()
+        if item_local.category:
+            del item_local.category
         if item_local.tipo:
             del item_local.tipo
         if item_local.totalItems:
@@ -594,6 +584,10 @@ def listado_busqueda(item):
             del item_local.pattern
         if item_local.title_lista:
             del item_local.title_lista
+        item_local.adult = True
+        del item_local.adult
+        item_local.folder = True
+        del item_local.folder
         item_local.title = ''
         item_local.context = "['buscar_trailer']"
         
@@ -620,7 +614,7 @@ def listado_busqueda(item):
         
         #Determinamos y marcamos idiomas distintos del castellano
         item_local.language = []
-        if "[vos" in title.lower()  or "v.o.s" in title.lower() or "vo" in title.lower() or ".com/pelicula/" in scrapedurl  or ".com/series-vo" in scrapedurl or "-vo/" in scrapedurl or "vos" in calidad.lower() or "vose" in calidad.lower() or "v.o.s" in calidad.lower():
+        if "[vos" in title.lower()  or "v.o.s" in title.lower() or "vo" in title.lower() or ".com/pelicula/" in scrapedurl  or ".com/series-vo" in scrapedurl or "-vo/" in scrapedurl or "vos" in calidad.lower() or "vose" in calidad.lower() or "v.o.s" in calidad.lower() or "sub" in calidad.lower() or ".com/peliculas-vo" in item.url:
             item_local.language += ["VOS"]
         title = title.replace(" [Subs. integrados]", "").replace(" [subs. Integrados]", "").replace(" [VOSE", "").replace(" [VOS", "").replace(" (V.O.S.E)", "").replace(" VO", "").replace("Subtitulos", "")
         if "latino" in title.lower() or "argentina" in title.lower() or "-latino/" in scrapedurl or "latino" in calidad.lower() or "argentina" in calidad.lower():
@@ -654,8 +648,8 @@ def listado_busqueda(item):
         if "audio" in title.lower():        #Reservamos info de audio para después de TMDB
             title_subs += ['[%s]' % scrapertools.find_single_match(title, r'(\[[a|A]udio.*?\])')]
             title = re.sub(r'\[[a|A]udio.*?\]', '', title)
-        if "[dual" in title.lower() or "multileng" in title.lower() or "multileng" in item_local.quality.lower():
-            item_local.language += ["DUAL"]
+        if "[dual" in title.lower() or "multileng" in title.lower() or "multileng" in item_local.quality.lower() or (("espa" in title.lower() or "spani" in title.lower()) and "VOS" in item_local.language):
+            item_local.language[0:0] = ["DUAL"]
             title = re.sub(r'\[[D|d]ual.*?\]', '', title)
             title = re.sub(r'\[[M|m]ultileng.*?\]', '', title)
             item_local.quality = re.sub(r'\[[M|m]ultileng.*?\]', '', item_local.quality)
@@ -691,7 +685,7 @@ def listado_busqueda(item):
         
         title = title.replace("Ver online ", "").replace("Descarga Serie HD ", "").replace("Descargar Serie HD ", "").replace("Descarga Serie ", "").replace("Descargar Serie ", "").replace("Ver en linea ", "").replace("Ver en linea", "").replace("HD ", "").replace("(Proper)", "").replace("RatDVD", "").replace("DVDRiP", "").replace("DVDRIP", "").replace("DVDR", "").replace("DVD9", "").replace("DVD", "").replace("DVB", "").replace("- ES ", "").replace("ES ", "").replace("COMPLETA", "").replace("(", "-").replace(")", "-").replace(".", " ").strip()
         
-        title = title.replace("Descargar torrent ", "").replace("Descarga Gratis ", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Bajar ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").strip()
+        title = title.replace("Descargar torrent ", "").replace("Descarga Gratis ", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Bajar ", "").replace("HDRIP ", "").replace("HDRiP ", "").replace("HDRip ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").strip()
         
         if "pelisyseries.com" in host and item_local.contentType == "tvshow":
             titulo = ''
@@ -715,19 +709,18 @@ def listado_busqueda(item):
         if title.endswith(" -"): title = title[:-2]
         if "en espa" in title: title = title[:-11]
         #title = re.sub(r'^\s', '', title)
-        title = title.replace("a?o", 'año').replace("a?O", 'año').replace("A?o", 'Año').replace("A?O", 'Año')
-        while title.startswith(' '):
-            title = title[+1:]
-        while title.endswith(' '):
-            title = title[:-1]
+        title = title.replace("a?o", 'año').replace("a?O", 'año').replace("A?o", 'Año').replace("A?O", 'Año').strip()
 
         #Preparamos calidad
         item_local.quality = item_local.quality.replace("[ ", "").replace(" ]", "")     #Preparamos calidad para Series
         item_local.quality = re.sub(r'\[\d{4}\]', '', item_local.quality)               #Quitar año, si lo tiene
         item_local.quality = re.sub(r'\[Cap.*?\]', '', item_local.quality)              #Quitar episodios, si lo tiene
         item_local.quality = re.sub(r'\[Docu.*?\]', '', item_local.quality)             #Quitar tipo contenidos, si lo tiene
-        if "[es-" in item_local.quality.lower() or (("cast" in item_local.quality.lower() or "spani" in item_local.quality.lower()) and ("eng" in item_local.quality.lower() or "ing" in item_local.quality.lower())):     #Mirar si es DUAL
-            item_local.language += ["DUAL"]                                                #Salvar DUAL en idioma
+        #Mirar si es DUAL
+        if "VOS" in item_local.language and "DUAL" not in item_local.language and ("[sp" in item_local.quality.lower() or "espa" in item_local.quality.lower() or "cast" in item_local.quality.lower() or "spani" in item_local.quality.lower()):
+            item_local.language[0:0] = ["DUAL"]    
+        if ("[es-" in item_local.quality.lower() or (("cast" in item_local.quality.lower() or "espa" in item_local.quality.lower() or "spani" in item_local.quality.lower()) and ("eng" in item_local.quality.lower() or "ing" in item_local.quality.lower()))) and "DUAL" not in item_local.language:     #Mirar si es DUAL
+            item_local.language[0:0] = ["DUAL"]                                         #Salvar DUAL en idioma
             item_local.quality = re.sub(r'\[[es|ES]-\w+]', '', item_local.quality)      #borrar DUAL
         item_local.quality = re.sub(r'[\s|-][c|C]aste.+', '', item_local.quality)       #Borrar después de Castellano
         item_local.quality = re.sub(r'[\s|-][e|E]spa.+', '', item_local.quality)        #Borrar después de Español
@@ -735,9 +728,7 @@ def listado_busqueda(item):
         item_local.quality = re.sub(r'[\s|-][i|I|e|E]ngl.+', '', item_local.quality)    #Borrar después de Inglés-English
         item_local.quality = item_local.quality.replace("[", "").replace("]", " ").replace("ALTA DEFINICION", "HDTV").replace(" Cap", "")
         #Borrar palabras innecesarias restantes
-        item_local.quality = item_local.quality.replace("Espaol", "").replace("Español", "").replace("Espa", "").replace("Castellano ", "").replace("Castellano", "").replace("Spanish", "").replace("English", "").replace("Ingles", "").replace("Latino", "").replace("+Subs", "").replace("-Subs", "").replace("Subs", "").replace("VOSE", "").replace("VOS", "")
-        while item_local.quality.endswith(" "):                                         #Borrar espacios de cola
-            item_local.quality = item_local.quality[:-1]
+        item_local.quality = item_local.quality.replace("Espaol", "").replace("Español", "").replace("Espa", "").replace("Castellano ", "").replace("Castellano", "").replace("Spanish", "").replace("English", "").replace("Ingles", "").replace("Latino", "").replace("+Subs", "").replace("-Subs", "").replace("Subs", "").replace("VOSE", "").replace("VOS", "").strip()
         
         #Limpieza final del título y guardado en las variables según su tipo de contenido
         item_local.title = title
@@ -816,7 +807,7 @@ def listado_busqueda(item):
         #Agrega el item local a la lista itemlist
         itemlist.append(item_local.clone())
         
-    if not category:            #Si este campo no existe es que viene de la primera pasada de una búsqueda global
+    if not item.category:       #Si este campo no existe es que viene de la primera pasada de una búsqueda global
         return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
     
     #Pasamos a TMDB la lista completa Itemlist
@@ -872,12 +863,12 @@ def listado_busqueda(item):
         if config.get_setting("unify"):         #Si Titulos Inteligentes SÍ seleccionados:
             title = title.replace("[", "-").replace("]", "-")
         
-        title = title.replace("--", "").replace(" []", "").replace("()", "").replace("(/)", "").replace("[/]", "")
-        title = re.sub(r'\s\[COLOR \w+\]\[\]\[\/COLOR\]', '', title)
-        title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', title)
+        title = title.replace("--", "").replace(" []", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+        title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', title).strip()
+        title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', title).strip()
         item_local.title = title
         
-        logger.debug("url: " + item_local.url + " / title: " + item_local.title + " / content title: " + item_local.contentTitle + "/" + item_local.contentSerieName + " / calidad: " + item_local.quality + "[" + str(item_local.language) + "]" + " / calidad ORG: " + calidad + " / year: " + year  + " / tamaño: " + size)
+        logger.debug("url: " + item_local.url + " / title: " + item_local.title + " / content title: " + item_local.contentTitle + "/" + item_local.contentSerieName + " / calidad: " + item_local.quality + "[" + str(item_local.language) + "]" + " / year: " + str(item_local.infoLabels['year']))
 
         #logger.debug(item_local)
 
@@ -889,7 +880,6 @@ def listado_busqueda(item):
     return itemlist
 
 def findvideos(item):
-    import xbmc
     from core import channeltools
     logger.info()
     itemlist = []
@@ -997,18 +987,31 @@ def findvideos(item):
         verificar_enlaces_descargas = -1            #Verificar todos los enlaces Descargar
         verificar_enlaces_descargas_validos = True  #"¿Contar sólo enlaces 'verificados' en Descargar?"
         excluir_enlaces_descargas = []              #Lista vacía de servidores excluidos en Descargar
-        
+
     # Saber si estamos en una ventana emergente lanzada desde una viñeta del menú principal,
     # con la función "play_from_library"
     unify_status = False
-    if xbmc.getCondVisibility('Window.IsMedia') == 1:
+    try:
+        import xbmc
+        if xbmc.getCondVisibility('Window.IsMedia') == 1:
+            unify_status = config.get_setting("unify")
+    except:
         unify_status = config.get_setting("unify")
+    
+    #Salvamos la información de max num. de episodios por temporada para despues de TMDB
+    if item.infoLabels['temporada_num_episodios']:
+        num_episodios = item.infoLabels['temporada_num_episodios']
+    else:
+        num_episodios = 1
     
     # Obtener la información actualizada del Episodio, si no la hay
     if not item.infoLabels['tmdb_id'] or (not item.infoLabels['episodio_titulo'] and item.contentType == 'episode'):
         tmdb.set_infoLabels(item, True)
     elif (not item.infoLabels['tvdb_id'] and item.contentType == 'episode') or item.contentChannel == "videolibrary":
         tmdb.set_infoLabels(item, True)
+    #Restauramos la información de max num. de episodios por temporada despues de TMDB
+    if item.infoLabels['temporada_num_episodios'] and num_episodios > item.infoLabels['temporada_num_episodios']:
+        item.infoLabels['temporada_num_episodios'] = num_episodios
 
     # Descarga la página
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
@@ -1028,6 +1031,8 @@ def findvideos(item):
         item.infoLabels['episodio_titulo'] = re.sub(r'\s?\[.*?\]', '', item.infoLabels['episodio_titulo'])
         if item.infoLabels['episodio_titulo'] == item.contentSerieName:
             item.infoLabels['episodio_titulo'] = ''
+    if item.infoLabels['aired'] and item.contentType == "episode":
+            item.infoLabels['year'] = scrapertools.find_single_match(str(item.infoLabels['aired']), r'\/(\d{4})')
 
     #Generamos una copia de Item para trabajar sobre ella
     item_local = item.clone()
@@ -1057,10 +1062,10 @@ def findvideos(item):
     else:
         title = item_local.title
         title_gen = title
-        
-    title_gen = re.sub(r'\s\[COLOR \w+\]\[\]\[\/COLOR\]', '', title_gen)    #Quitamos etiquetas vacías
-    title_gen = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', title_gen)        #Quitamos colores vacíos
-    title_gen = title_gen.replace(" []", "")                                #Quitamos etiquetas vacías
+    
+    title_gen = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', title_gen).strip()  #Quitamos etiquetas vacías
+    title_gen = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', title_gen).strip()            #Quitamos colores vacíos
+    title_gen = title_gen.replace(" []", "").strip()                                    #Quitamos etiquetas vacías
 
     if not unify_status:         #Si Titulos Inteligentes NO seleccionados:
         title_gen = '**- [COLOR gold]Enlaces Ver: [/COLOR]%s[COLOR gold] -**[/COLOR]' % (title_gen)
@@ -1074,9 +1079,9 @@ def findvideos(item):
     
     #Ahora pintamos el link del Torrent, si lo hay
     if item_local.url:		# Hay Torrent ?
-        item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red][%s][/COLOR]' % (item_local.quality, str(item_local.language))        #Preparamos título de Torrent
-        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\]\[\/COLOR\]', '', item_local.title)  #Quitamos etiquetas vacías
-        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)      #Quitamos colores vacíos
+        item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))        #Preparamos título de Torrent
+        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title).strip() #Quitamos etiquetas vacías
+        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title).strip() #Quitamos colores vacíos
         item_local.alive = "??"         #Calidad del link sin verificar
         item_local.action = "play"      #Visualizar vídeo
         
@@ -1156,9 +1161,9 @@ def findvideos(item):
                         item_local.action = "play"
                         item_local.server = servidor
                         item_local.url = enlace
-                        item_local.title = item_local.title.replace("[]", "")
-                        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\]\[\/COLOR\]', '', item_local.title)
-                        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)
+                        item_local.title = item_local.title.replace("[]", "").strip()
+                        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title).strip()
+                        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title).strip()
                         itemlist.append(item_local.clone())
                 except:
                     pass
@@ -1249,9 +1254,9 @@ def findvideos(item):
                             item_local.action = "play"
                             item_local.server = servidor
                             item_local.url = enlace
-                            item_local.title = parte_title.replace("[]", "")
-                            item_local.title = re.sub(r'\[COLOR \w+\]\[\]\[\/COLOR\]', '', item_local.title)
-                            item_local.title = re.sub(r'\[COLOR \w+\]-\[\/COLOR\]', '', item_local.title)
+                            item_local.title = parte_title.replace("[]", "").strip()
+                            item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title).strip()
+                            item_local.title = re.sub(r'\[COLOR \w+\]-\[\/COLOR\]', '', item_local.title).strip()
                             itemlist.append(item_local.clone())
                     except:
                         pass
@@ -1426,10 +1431,10 @@ def episodios(item):
         item_local.title = '%s [%s] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.title, item_local.infoLabels['year'], rating, item_local.quality, str(item_local.language))
         
         #Quitamos campos vacíos
-        item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['episodio_titulo'].replace(" []", "")
-        item_local.title = item_local.title.replace(" []", "")
-        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\]\[\/COLOR\]', '', item_local.title)
-        item_local.title = re.sub(r'\s\[COLOR \w+\]-\[\/COLOR\]', '', item_local.title)
+        item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['episodio_titulo'].replace(" []", "").strip()
+        item_local.title = item_local.title.replace(" []", "").strip()
+        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title).strip()
+        item_local.title = re.sub(r'\s\[COLOR \w+\]-\[\/COLOR\]', '', item_local.title).strip()
         if num_episodios < item_local.contentEpisodeNumber:
             num_episodios = item_local.contentEpisodeNumber
         if num_episodios and not item_local.infoLabels['temporada_num_episodios']:
