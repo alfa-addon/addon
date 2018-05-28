@@ -226,33 +226,83 @@ def episodesxseasons(item):
     return itemlist[::-1]
 
 
+# def findvideos(item):
+#     logger.info()
+#     itemlist=[]
+#     data = get_source(item.url)
+#     patron = "<a class=dload.*? target=_blank>.*?<\/a><i>(.*?)<\/i>.*?<a href=.*?showDownload\((.*?)\);"
+#     matches = re.compile(patron, re.DOTALL).findall(data)
+#
+#     for quality, extra_info in matches:
+#         extra_info= extra_info.replace("'",'')
+#         extra_info= extra_info.split(',')
+#         title = '%s [%s]' % (item.contentTitle, quality)
+#         url = extra_info[1]
+#         if item.extra == 'movie':
+#             url = extra_info[1]
+#         else:
+#             url = extra_info[2]
+#         server = 'torrent'
+#         itemlist.append(Item(channel=item.channel,
+#                              title=title,
+#                              contentTitle= item.title,
+#                              url=url,
+#                              action='play',
+#                              quality=quality,
+#                              server=server,
+#                              thumbnail = item.infoLabels['thumbnail'],
+#                              infoLabels=item.infoLabels
+#                              ))
+#
+#     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
+#         itemlist.append(Item(channel=item.channel,
+#                              title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+#                              url=item.url,
+#                              action="add_pelicula_to_library",
+#                              extra="findvideos",
+#                              contentTitle=item.contentTitle
+#                              ))
+#
+#     return itemlist
+
+
 def findvideos(item):
     logger.info()
     itemlist=[]
     data = get_source(item.url)
-    patron = "<a class=dload.*? target=_blank>.*?<\/a><i>(.*?)<\/i>.*?<a href=.*?showDownload\((.*?)\);"
+    patron = "showDownload\(([^\)]+)\);.*?alt=.*?torrent (.*?) "
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for quality, extra_info in matches:
-        extra_info= extra_info.replace("'",'')
-        extra_info= extra_info.split(',')
-        title = '%s [%s]' % (item.contentTitle, quality)
-        url = extra_info[1]
+    for extra_info, quality in matches:
+        extra_info= extra_info.replace(",'",'|')
+        extra_info= extra_info.split('|')
+        title = '%s [%s]' % ('Torrent', quality.strip())
         if item.extra == 'movie':
-            url = extra_info[1]
+            url = extra_info[2].strip("'")
         else:
-            url = extra_info[2]
+            url = extra_info[3].strip("'")
         server = 'torrent'
-        itemlist.append(Item(channel=item.channel,
-                             title=title,
-                             contentTitle= item.title,
-                             url=url,
-                             action='play',
-                             quality=quality,
-                             server=server,
-                             thumbnail = item.infoLabels['thumbnail'],
-                             infoLabels=item.infoLabels
-                             ))
+
+        if not '.torrent' in url:
+            if 'tvsinpagar' in url:
+                url = url.replace('http://','http://www.')
+            try:
+                from_web = httptools.downloadpage(url, follow_redirects=False)
+                url = from_web.headers['location']
+            except:
+                pass
+
+        if '.torrent' in url:
+            itemlist.append(Item(channel=item.channel,
+                                 title=title,
+                                 contentTitle= item.title,
+                                 url=url,
+                                 action='play',
+                                 quality=quality,
+                                 server=server,
+                                 thumbnail = item.infoLabels['thumbnail'],
+                                 infoLabels=item.infoLabels
+                                 ))
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(Item(channel=item.channel,
