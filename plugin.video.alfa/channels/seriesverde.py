@@ -183,8 +183,7 @@ def episodesxseason(item):
     itemlist = []
     data = get_source(item.url)
     season = item.contentSeasonNumber
-    patron = "<td><a href='([^ ]+)'.*?itemprop='episodeNumber'>%s+x(\d+)</span> - (.*?) </a>.*?(/banderas.*?)</td>" % \
-             season
+    patron = "<td><a href='([^ ]+)'.*?itemprop='episodeNumber'>%s+x(\d+)</span> - (.*?) </a>.*?(/banderas.*?)</td>" % season
     matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
     for scrapedurl, scraped_episode, scrapedtitle, lang_data in matches:
@@ -212,8 +211,9 @@ def add_language(title, string):
     languages = scrapertools.find_multiple_matches(string, '/banderas/(.*?).png')
 
     for lang in languages:
-        if lang == 'japvose':
+        if 'jap' in lang or lang not in IDIOMAS:
             lang = 'vos'
+					
         language.append(IDIOMAS[lang])
         title = '%s [%s]' % (title, IDIOMAS[lang])
 
@@ -226,6 +226,7 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
+
     patron = "<a href=([^ ]+) target=_blank><img src='/servidores/(.*?).(?:png|jpg)'.*?sno.*?"
     patron += "sno><span>(.*?)<.*?(/banderas.*?)td"
     matches = re.compile(patron, re.DOTALL).findall(data)
