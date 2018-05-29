@@ -8,5 +8,38 @@
   "banner": "https://s4.postimg.cc/lulxulmql/animeshd-banner.png",
   "categories": [
     "anime"
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": false,
+      "visible": false
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "LAT",
+        "CAST",
+        "VOSE"
+      ]
+    },
+    {
+      "id": "comprueba_enlaces_num",
+      "type": "list",
+      "label": "Número de enlaces a verificar",
+      "default": 1,
+      "enabled": true,
+      "visible": "eq(-1,true)",
+      "lvalues": [ "5", "10", "15", "20" ]
+    }
   ]
 }
