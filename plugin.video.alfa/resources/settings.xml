@@ -7,6 +7,7 @@
         <setting id="channel_language" type="labelenum" values="all|cast|lat" label="30019" default="all"/>
         <setting id="trakt_sync" type="bool" label="Sincronizar con Trakt.tv (Debes tener una cuenta)" default="false"/>
         <setting id="forceview" type="bool" label="30043" default="false"/>
+        <setting id="faster_item_serialization" type="bool" label="30300" default="false"/>
         <setting id="debug" type="bool" label="30003" default="false"/>
         <setting label="Uso de servidores" type="lsep"/>
         <setting id="resolve_priority" type="enum" label="Método prioritario" values="Free primero|Premium primero|Debriders primero" default="0"/>
