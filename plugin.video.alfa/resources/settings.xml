@@ -23,13 +23,9 @@
 
     <!-- Path downloads -->
     <category label="30501">
-        <setting id="path_selection" type="enum" values="Escribir ruta|Examinar ruta" default="0" label="Tipo de ruta"/>
-        <setting id="downloadpath" type="text" label="30017" default="" visible="eq(-1,0)"/>
-        <setting id="downloadpath" type="folder" label="30017" default="" visible="eq(-2,1)"/>
-        <setting id="downloadlistpath" type="text" label="30018" default="" visible="eq(-3,0)"/>
-        <setting id="downloadlistpath" type="folder" label="30018" default="" visible="eq(-4,1)"/>
-        <setting id="videolibrarypath" type="text" label="30067" default="" visible="eq(-5,0)"/>
-        <setting id="videolibrarypath" type="folder" label="30067" default="" visible="eq(-6,1)"/>
+        <setting id="downloadpath" type="folder" label="30017" default=""/>
+        <setting id="downloadlistpath" type="folder" label="30018" default=""/>
+        <setting id="videolibrarypath" type="folder" label="30067" default=""/>
 
         <setting type="sep"/>
         <setting label="30131" type="lsep"/>

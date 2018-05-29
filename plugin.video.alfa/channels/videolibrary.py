@@ -596,7 +596,12 @@ def mark_tvshow_as_updatable(item):
 
 def delete(item):
     def delete_all(_item):
-        filetools.rmdirtree(_item.path)
+        for file in filetools.listdir(_item.path):
+            if file.endswith(".strm") or file.endswith(".nfo") or file.endswith(".json"):
+                filetools.remove(filetools.join(_item.path, file))
+        raiz, carpeta_serie, ficheros = filetools.walk(_item.path).next()
+        if ficheros == []:
+            filetools.rmdir(_item.path)
 
         if config.is_xbmc():
             import xbmc

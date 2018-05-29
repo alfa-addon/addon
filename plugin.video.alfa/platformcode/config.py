@@ -352,7 +352,6 @@ def verify_directories_created():
     config_paths = [["folder_movies", "CINE"],
                     ["folder_tvshows", "SERIES"]]
 
-    flag_call = True
     for path, default in config_paths:
         saved_path = get_setting(path)
 
@@ -365,11 +364,7 @@ def verify_directories_created():
             logger.debug("Creating %s: %s" % (path, content_path))
 
             # si se crea el directorio
-            if filetools.mkdir(content_path):
-                if flag_call:
-                    # le pasamos el valor para que sepamos que se ha pasado por creación de directorio
-                    xbmc_videolibrary.ask_set_content(1)
-                    flag_call = False
+            filetools.mkdir(content_path)
 
     try:
         from core import scrapertools
