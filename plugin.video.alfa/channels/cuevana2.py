@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 import re
+import urllib
 from channelselector import get_thumb
 
 from core.item import Item
 from core import httptools
+from core import jsontools
 from core import scrapertools
 from core import servertools
 from platformcode import config, logger
 from channels import autoplay
-from lib import requests
-
-
 
 host = "http://www.cuevana2.com/"
-__channel__ = "cuevana2"
 list_quality = []
 list_servers = ['rapidvideo', 'streamango', 'directo', 'yourupload', 'openload', 'dostream']
 
@@ -72,12 +70,12 @@ def load_data(url):
 
     return data
 
-def put_movies(itemlist, data, pattern):
+def put_movies(itemlist, item, data, pattern):
     matches = scrapertools.find_multiple_matches(data, pattern)
     for link, img, title, rating, plot in matches:
         if 'pelicula' in link:
             itemTitle = "%s [COLOR yellow](%s/100)[/COLOR]" % (title, rating)
-            itemlist.append(Item(channel = __channel__, title=itemTitle, fulltitle=title, thumbnail=img, 
+            itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=title, thumbnail=img, 
                 url=link, plot=plot, action="findvideos"))
             logger.info(link)
 
@@ -100,7 +98,7 @@ def episodes(item):
 
     matches = scrapertools.find_multiple_matches(data, seasonsPattern)
     for season, title in matches:
-        itemlist.append(Item(channel = __channel__, title="[COLOR blue]%s[/COLOR]" % title))
+        itemlist.append(Item(channel = item.channel, title="[COLOR blue]%s[/COLOR]" % title))
         episodeMatches = scrapertools.find_single_match(data, episodesPattern % season)
         put_episodes(itemlist, item, episodeMatches)
 
@@ -115,7 +113,7 @@ def shows(item):
 
     matches = scrapertools.find_multiple_matches(data, pattern)
     for link, title in matches:
-        itemlist.append(Item(channel = __channel__, title=title, url=host + link, action="episodes"))
+        itemlist.append(Item(channel = item.channel, title=title, url=host + link, action="episodes"))
 
     return itemlist
 
@@ -132,11 +130,11 @@ def movies(item):
     pattern += '<span style="width:([0-9]+)%">.*?'
     pattern += '"txt">(.*?)</div>' # text
 
-    put_movies(itemlist, data, pattern)
+    put_movies(itemlist, item, data, pattern)
 
     next_page = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)">')
     if next_page:
-        itemlist.append(Item(channel = __channel__, title='Siguiente Pagina', url=next_page, action="movies"))
+        itemlist.append(Item(channel = item.channel, title='Siguiente Pagina', url=next_page, action="movies"))
 
     #coloca las peliculas encontradas en la lista
     return itemlist
@@ -154,8 +152,7 @@ def searchShows(itemlist, item, texto):
         logger.info(texto)
 
         if inArray(texto, keywords):
-            itemlist.append(Item(channel = __channel__, title=title, url=host + link, action="episodes"))
-
+            itemlist.append(Item(channel = item.channel, title=title, url=host + link, action="episodes"))
 
 def searchMovies(itemlist, item, texto):
     texto = texto.replace(' ', '+').lower()
@@ -197,7 +194,7 @@ def by(item, pattern):
 
     matches = scrapertools.find_multiple_matches(data, pattern)
     for link, genre in matches:
-        itemlist.append(Item(channel = __channel__, title=genre, url=link, action="movies"))
+        itemlist.append(Item(channel = item.channel, title=genre, url=link, action="movies"))
 
     return itemlist
 
@@ -208,9 +205,9 @@ def age(item):
     return by(item, '(\d+)')
 
 def GKPluginLink(hash):
-    re = requests.post('https://player4.cuevana2.com/plugins/gkpluginsphp.php', dict(link=hash))
-
-    return re.json()['link'] if re.content else ''
+    hashdata = urllib.urlencode({r'link':hash})
+    json = httptools.downloadpage('https://player4.cuevana2.com/plugins/gkpluginsphp.php', post=hashdata).data
+    return jsontools.load(json)['link'] if json else ''
 
 #el pattern esta raro para eliminar los duplicados, de todas formas asi es un lenguaje de programacion verificando su sintaxis
 def getContentMovie(data, item):
@@ -244,7 +241,7 @@ def findvideos(item):
     pattern = '<iframe width="650" height="450" scrolling="no" src="([^"]+)'
     subtitles = scrapertools.find_single_match(data, '<iframe width="650" height="450" scrolling="no" src=".*?sub=([^"]+)"')
 
-    #itemlist.append(Item(channel = __channel__, title=item.url))
+    #itemlist.append(Item(channel = item.channel, title=item.url))
     for link in scrapertools.find_multiple_matches(data, pattern):
         #php.*?=(\w+)&
         #url=(.*?)&
@@ -271,6 +268,9 @@ def findvideos(item):
         # personalizadas para Directo, se agradece, por ahora solo devuelve el primero que encuentre
         if type(link) is list:
             link = link[0]['link']
+        if r'chomikuj.pl' in link:
+            # En algunas personas la opcion CH les da error 401
+            link += "|Referer=https://player4.cuevana2.com/plugins/gkpluginsphp.php" 
 
         itemlist.append(
             item.clone(

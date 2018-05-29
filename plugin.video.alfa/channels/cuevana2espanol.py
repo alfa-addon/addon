@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 import re
+import urllib
 from channelselector import get_thumb
 
 from core.item import Item
 from core import httptools
+from core import jsontools
 from core import scrapertools
 from core import servertools
 from platformcode import config, logger
 from channels import autoplay
-from lib import requests
-
-
 
 host = "http://cuevana2espanol.com/"
-__channel__ = "cuevana2espanol"
 list_quality = []
 list_servers = ['rapidvideo', 'streamango', 'directo', 'yourupload', 'openload', 'dostream']
 
@@ -55,12 +53,12 @@ def movies(item):
     matches = scrapertools.find_multiple_matches(data, pattern)
     for img, title, ranking, link, age in matches:
         itemTitle = "%s [COLOR yellow](%s)[/COLOR] [COLOR blue](%s)[/COLOR]" % (title, ranking, age)
-        itemlist.append(Item(channel = __channel__, title=itemTitle, fulltitle=title, thumbnail=img, 
+        itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=title, thumbnail=img, 
             url=link, action="findvideos"))
 
     next_page = scrapertools.find_single_match(data, 'href="([^"]+)" ><span class="icon-chevron-right">')
     if next_page:
-        itemlist.append(Item(channel = __channel__, title="Siguiente Pagina", 
+        itemlist.append(Item(channel = item.channel, title="Siguiente Pagina", 
             url=next_page, action="movies"))
 
     return itemlist
@@ -79,7 +77,7 @@ def moviesIMDB(item):
         itemTitle = "%s [COLOR blue](#%s)[/COLOR] [COLOR yellow](%s)[/COLOR]" % (title, rank, rating)
         img = img.replace('-90x135', '')
 
-        itemlist.append(Item(channel = __channel__, title=itemTitle, fulltitle=title, thumbnail=img, 
+        itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=title, thumbnail=img, 
             url=link, action="findvideos"))
 
     return itemlist
@@ -97,12 +95,12 @@ def searchMovies(item):
     for link, img, title, year, plot in matches:
         itemTitle = "%s [COLOR blue](%s)[/COLOR]" % (title, year)
 
-        itemlist.append(Item(channel = __channel__, title=itemTitle, fulltitle=title, thumbnail=img,
+        itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=title, thumbnail=img,
             url=link, plot=plot, action="findvideos"))
 
     next_page = scrapertools.find_single_match(data, 'href="([^"]+)" ><span class="icon-chevron-right">')
     if next_page:
-        itemlist.append(Item(channel = __channel__, title="Siguiente Pagina", 
+        itemlist.append(Item(channel = item.channel, title="Siguiente Pagina", 
             url=next_page, action="searchMovies"))
 
     return itemlist
@@ -114,9 +112,9 @@ def search(item, text):
     return searchMovies(item)
 
 def GKPluginLink(hash):
-    re = requests.post('https://player4.cuevana2.com/plugins/gkpluginsphp.php', dict(link=hash))
-
-    return re.json()['link'] if re.content else ''
+    hashdata = urllib.urlencode({r'link':hash})
+    json = httptools.downloadpage('https://player4.cuevana2.com/plugins/gkpluginsphp.php', post=hashdata).data
+    return jsontools.load(json)['link'] if json else ''
 
 def getContent(item, data):
     item.infoLabels["year"] = scrapertools.find_single_match(data, 'class="date">.*?(\d+)</span>')
@@ -141,7 +139,7 @@ def findvideos(item):
     """
     pattern = '<iframe class="metaframe rptss" src="([^"]+)"'
 
-    #itemlist.append(Item(channel = __channel__, title=item.url))
+    #itemlist.append(Item(channel = item.channel, title=item.url))
     for link in scrapertools.find_multiple_matches(data, pattern):
         #php.*?=(\w+)&
         #url=(.*?)&
@@ -169,6 +167,9 @@ def findvideos(item):
         # personalizadas para Directo, se agradece, por ahora solo devuelve el primero que encuentre
         if type(link) is list:
             link = link[0]['link']
+        if r'chomikuj.pl' in link:
+            # En algunas personas la opcion CH les da error 401
+            link += "|Referer=https://player4.cuevana2.com/plugins/gkpluginsphp.php" 
 
         itemlist.append(
             item.clone(
