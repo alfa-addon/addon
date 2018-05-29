@@ -14,7 +14,7 @@ from core import tmdb
 from channels import autoplay
 
 
-HOST = "https://seriesblanco.com/"
+HOST = "https://seriesverde.com/"
 IDIOMAS = {'es': 'Español', 'en': 'Inglés', 'la': 'Latino', 'vo': 'VO', 'vos': 'VOS', 'vosi': 'VOSI', 'otro': 'OVOS'}
 list_idiomas = IDIOMAS.values()
 list_language = ['default']
