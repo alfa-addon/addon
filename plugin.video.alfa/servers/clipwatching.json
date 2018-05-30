@@ -9,7 +9,7 @@
       },
       {
         "pattern": "clipwatching.com/(\\w+)",
-        "url": "http://clipwatching.com/\\1.html"
+        "url": "http://clipwatching.com/embed-\\1.html"
       }
     ]
   },
