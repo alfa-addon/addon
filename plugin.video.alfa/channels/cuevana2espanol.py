@@ -33,7 +33,9 @@ def mainlist(item):
         url = host + "tendencias", thumbnail = get_thumb("hot", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Ranking IMDB", action = "moviesIMDB", 
         url = host + "raking-imdb", thumbnail = get_thumb("hot", auto = True) ))
-    itemlist.append(Item(channel = item.channel, title = ""))
+    itemlist.append(Item(channel = item.channel, title = "Busqueda", folder=False, text_bold=True))
+    itemlist.append(Item(channel = item.channel, title = "Por Letra", action = "letters",
+        url = host, thumbnail = get_thumb("letter", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Buscar...", action = "search", 
         url = host + "?s=", thumbnail = get_thumb("search", auto = True)))
 
@@ -82,6 +84,38 @@ def moviesIMDB(item):
 
     return itemlist
 
+def byLetter(item):
+    itemlist = []
+    letter = item.extra
+
+    pageForNonce = load_data(item.url)
+    nonce = scrapertools.find_single_match(pageForNonce, '"nonce":"([^"]+)"')
+    raw = httptools.downloadpage('http://cuevana2espanol.com/wp-json/dooplay/glossary/?term=%s&nonce=%s&type=all' % (letter, nonce)).data
+    json = jsontools.load(raw).items()
+    logger.info(nonce)
+
+    for movie in json:
+        data = movie[1]
+        itemTitle = data['title']
+        if 'year' in data:
+            itemTitle += " [COLOR blue](%s)[/COLOR]" % data['year'] 
+        if data['imdb']:
+            itemTitle += " [COLOR yellow](%s)[/COLOR]" % data['imdb']
+
+        itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=data['title'], url=data['url'], 
+            thumbnail=data['img'].replace('-90x135', ''), action="findvideos"))
+
+    return itemlist
+
+def letters(item):
+    itemlist = []
+    letter = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+    for let in letter:
+        itemlist.append(item.clone(title=let, extra=let.lower(), action="byLetter"))
+
+    return itemlist
+
 def searchMovies(item):
     itemlist = []
 
@@ -94,8 +128,8 @@ def searchMovies(item):
     matches = scrapertools.find_multiple_matches(data, pattern)
     for link, img, title, year, plot in matches:
         itemTitle = "%s [COLOR blue](%s)[/COLOR]" % (title, year)
-
-        itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=title, thumbnail=img,
+        fullimg = img.replace('-150x150', '')
+        itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=title, thumbnail=fullimg,
             url=link, plot=plot, action="findvideos"))
 
     next_page = scrapertools.find_single_match(data, 'href="([^"]+)" ><span class="icon-chevron-right">')
