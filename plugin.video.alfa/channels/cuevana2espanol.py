@@ -92,19 +92,19 @@ def byLetter(item):
     pageForNonce = load_data(item.url)
     nonce = scrapertools.find_single_match(pageForNonce, '"nonce":"([^"]+)"')
     raw = httptools.downloadpage('http://cuevana2espanol.com/wp-json/dooplay/glossary/?term=%s&nonce=%s&type=all' % (letter, nonce)).data
-    json = jsontools.load(raw).items()
+    json = jsontools.load(raw)
     logger.info(nonce)
+    if 'error' not in json:
+        for movie in json.items():
+            data = movie[1]
+            itemTitle = data['title']
+            if 'year' in data:
+                itemTitle += " [COLOR blue](%s)[/COLOR]" % data['year'] 
+            if data['imdb']:
+                itemTitle += " [COLOR yellow](%s)[/COLOR]" % data['imdb']
 
-    for movie in json:
-        data = movie[1]
-        itemTitle = data['title']
-        if 'year' in data:
-            itemTitle += " [COLOR blue](%s)[/COLOR]" % data['year'] 
-        if data['imdb']:
-            itemTitle += " [COLOR yellow](%s)[/COLOR]" % data['imdb']
-
-        itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=data['title'], url=data['url'], 
-            thumbnail=data['img'].replace('-90x135', ''), action="findvideos"))
+            itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=data['title'], url=data['url'], 
+                thumbnail=data['img'].replace('-90x135', ''), action="findvideos"))
 
     return itemlist
 
