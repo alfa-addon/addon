@@ -84,6 +84,8 @@ def get_channel_parameters(channel_name):
                         if 'id' in s:
                             if s['id'] == "include_in_global_search":
                                 channel_parameters["include_in_global_search"] = True
+                            elif s['id'] == "filter_languages":
+                                channel_parameters["filter_languages"] = s.get('lvalues',[])
                             elif not s['id'].startswith("include_in_") and \
                                     (s.get('enabled', False) or s.get('visible', False)):
                                 channel_parameters["has_settings"] = True

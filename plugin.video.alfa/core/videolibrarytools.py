@@ -123,7 +123,7 @@ def save_movie(item):
     else:
         base_name = item.contentTitle
 
-    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").lower().encode("utf8")
+    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
 
     for raiz, subcarpetas, ficheros in filetools.walk(MOVIES_PATH):
         for c in subcarpetas:
@@ -244,7 +244,7 @@ def save_tvshow(item, episodelist):
     else:
         base_name = item.contentSerieName
 
-    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").lower().encode("utf8")
+    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
 
     for raiz, subcarpetas, ficheros in filetools.walk(TVSHOWS_PATH):
         for c in subcarpetas:
@@ -348,6 +348,15 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     raiz, carpetas_series, ficheros = filetools.walk(path).next()
     ficheros = [filetools.join(path, f) for f in ficheros]
 
+    nostrm_episodelist = []
+    for root, folders, files in filetools.walk(path):
+        for file in files:
+            season_episode = scrapertools.get_season_and_episode(file)
+            if season_episode == "" or filetools.exists(filetools.join(path, "%s.strm" % season_episode)):
+                continue
+            nostrm_episodelist.append(season_episode)
+    nostrm_episodelist = sorted(set(nostrm_episodelist))
+
     # Silent es para no mostrar progreso (para videolibrary_service)
     if not silent:
         # progress dialog
@@ -356,7 +365,12 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
 
     new_episodelist = []
     # Obtenemos el numero de temporada y episodio y descartamos los q no lo sean
+    tags = []
+    if config.get_setting("enable_filter", "videolibrary"):
+        tags = [x.strip() for x in config.get_setting("filters", "videolibrary").lower().split(",")]
     for e in episodelist:
+        if tags != [] and tags != None and any(tag in e.title.lower() for tag in tags):
+            continue
         try:
             season_episode = scrapertools.get_season_and_episode(e.title)
 
@@ -383,6 +397,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         nfo_path = filetools.join(path, "%s.nfo" % season_episode)
         json_path = filetools.join(path, ("%s [%s].json" % (season_episode, e.channel)).lower())
 
+        if season_episode in nostrm_episodelist:
+            continue
         strm_exists = strm_path in ficheros
         nfo_exists = nfo_path in ficheros
         json_exists = json_path in ficheros

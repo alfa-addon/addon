@@ -7,6 +7,7 @@ from core import jsontools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
+from core import channeltools
 
 TAG_TVSHOW_FILTER = "TVSHOW_FILTER"
 TAG_NAME = "name"
@@ -405,74 +406,87 @@ def config_item(item):
     dict_series = jsontools.get_node_from_file(item.from_channel, TAG_TVSHOW_FILTER)
 
     tvshow = item.show.lower().strip()
+    default_lang = ''
 
-    lang_selected = dict_series.get(tvshow, {}).get(TAG_LANGUAGE, 'Español')
-    list_quality = dict_series.get(tvshow, {}).get(TAG_QUALITY_ALLOWED, [x.lower() for x in item.list_quality])
-    # logger.info("lang selected {}".format(lang_selected))
-    # logger.info("list quality {}".format(list_quality))
+    channel_parameters = channeltools.get_channel_parameters(item.from_channel)
+    list_language = channel_parameters["filter_languages"]
+    try:
+        if channel_parameters["filter_languages"] != '' and len(list_language) > 0:
+            default_lang = list_language[1]
+    except:
+        pass
 
-    active = True
-    custom_button = {'visible': False}
-    allow_option = False
-    if item.show.lower().strip() in dict_series:
-        allow_option = True
-        active = dict_series.get(item.show.lower().strip(), {}).get(TAG_ACTIVE, False)
-        custom_button = {'label': 'Borrar', 'function': 'delete', 'visible': True, 'close': True}
+    if default_lang == '':
+        platformtools.dialog_notification("FilterTools", "No hay idiomas definidos")
+        return
+    else:
+        lang_selected = dict_series.get(tvshow, {}).get(TAG_LANGUAGE, default_lang)
+        list_quality = dict_series.get(tvshow, {}).get(TAG_QUALITY_ALLOWED, [x.lower() for x in item.list_quality])
+        # logger.info("lang selected {}".format(lang_selected))
+        # logger.info("list quality {}".format(list_quality))
 
-    list_controls = []
+        active = True
+        custom_button = {'visible': False}
+        allow_option = False
+        if item.show.lower().strip() in dict_series:
+            allow_option = True
+            active = dict_series.get(item.show.lower().strip(), {}).get(TAG_ACTIVE, False)
+            custom_button = {'label': 'Borrar', 'function': 'delete', 'visible': True, 'close': True}
 
-    if allow_option:
-        active_control = {
-            "id": "active",
-            "type": "bool",
-            "label": "¿Activar/Desactivar filtro?",
-            "color": "",
-            "default": active,
-            "enabled": allow_option,
-            "visible": allow_option,
-        }
-        list_controls.append(active_control)
+        list_controls = []
 
-    language_option = {
-        "id": "language",
-        "type": "list",
-        "label": "Idioma",
-        "color": "0xFFee66CC",
-        "default": item.list_language.index(lang_selected),
-        "enabled": True,
-        "visible": True,
-        "lvalues": item.list_language
-    }
-    list_controls.append(language_option)
-
-    if item.list_quality:
-        list_controls_calidad = [
-            {
-                "id": "textoCalidad",
-                "type": "label",
-                "label": "Calidad permitida",
-                "color": "0xffC6C384",
-                "enabled": True,
-                "visible": True,
-            },
-        ]
-        for element in sorted(item.list_quality, key=str.lower):
-            list_controls_calidad.append({
-                "id": element,
+        if allow_option:
+            active_control = {
+                "id": "active",
                 "type": "bool",
-                "label": element,
-                "default": (False, True)[element.lower() in list_quality],
-                "enabled": True,
-                "visible": True,
-            })
+                "label": "¿Activar/Desactivar filtro?",
+                "color": "",
+                "default": active,
+                "enabled": allow_option,
+                "visible": allow_option,
+            }
+            list_controls.append(active_control)
 
-        # concatenamos list_controls con list_controls_calidad
-        list_controls.extend(list_controls_calidad)
+        language_option = {
+            "id": "language",
+            "type": "list",
+            "label": "Idioma",
+            "color": "0xFFee66CC",
+            "default": item.list_language.index(lang_selected),
+            "enabled": True,
+            "visible": True,
+            "lvalues": item.list_language
+        }
+        list_controls.append(language_option)
 
-    title = "Filtrado de enlaces para: [COLOR %s]%s[/COLOR]" % (COLOR.get("selected", "auto"), item.show)
+        if item.list_quality:
+            list_controls_calidad = [
+                {
+                    "id": "textoCalidad",
+                    "type": "label",
+                    "label": "Calidad permitida",
+                    "color": "0xffC6C384",
+                    "enabled": True,
+                    "visible": True,
+                },
+            ]
+            for element in sorted(item.list_quality, key=str.lower):
+                list_controls_calidad.append({
+                    "id": element,
+                    "type": "bool",
+                    "label": element,
+                    "default": (False, True)[element.lower() in list_quality],
+                    "enabled": True,
+                    "visible": True,
+                })
 
-    platformtools.show_channel_settings(list_controls=list_controls, callback='save', item=item,
-                                        caption=title, custom_button=custom_button)
+            # concatenamos list_controls con list_controls_calidad
+            list_controls.extend(list_controls_calidad)
+
+        title = "Filtrado de enlaces para: [COLOR %s]%s[/COLOR]" % (COLOR.get("selected", "auto"), item.show)
+
+        platformtools.show_channel_settings(list_controls=list_controls, callback='save', item=item,
+                                            caption=title, custom_button=custom_button)
 
 
 def delete(item, dict_values):

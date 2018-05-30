@@ -1,13 +1,13 @@
 {
-  "id": "animeshd",
-  "name": "AnimesHD",
+  "id": "seriesverde",
+  "name": "SeriesVerde",
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "thumbnail": "https://s21.postimg.cc/b43i3ljav/animeshd.png",
-  "banner": "https://s4.postimg.cc/lulxulmql/animeshd-banner.png",
+  "thumbnail": "https://s33.postimg.cc/96dhv4trj/seriesverde.png",
+  "banner": "",
   "categories": [
-    "anime"
+    "tvshow"
   ],
   "settings": [
     {
@@ -27,19 +27,11 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "LAT",
-        "CAST",
-        "VOSE"
+		"Cast",
+		"Lat",
+        "VOSE",
+        "VO"
       ]
-    },
-    {
-      "id": "comprueba_enlaces_num",
-      "type": "list",
-      "label": "Número de enlaces a verificar",
-      "default": 1,
-      "enabled": true,
-      "visible": "eq(-1,true)",
-      "lvalues": [ "5", "10", "15", "20" ]
     }
   ]
 }

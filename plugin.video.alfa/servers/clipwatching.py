@@ -17,7 +17,9 @@ def get_video_url(page_url, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
     video_urls = []
-    videourl, label = scrapertools.find_single_match(data, 'file:"([^"]+).*?label:"([^"]+)')
-    video_urls.append([label + " [clipwatching]", videourl])
-
+    videos = scrapertools.find_multiple_matches(data, 'file:"([^"]+).*?label:"([^"]+)')
+    for video, label in videos:
+        video_urls.append([label + " [clipwatching]", video])
+    logger.info("Url: %s" %videos)
+    video_urls.sort(key=lambda it: int(it[0].split("p ", 1)[0]))
     return video_urls
