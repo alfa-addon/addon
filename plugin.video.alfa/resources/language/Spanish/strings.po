@@ -251,6 +251,10 @@ msgctxt "#30164"
 msgid "Delete this file"
 msgstr "Borrar este fichero"
 
+msgctxt "#30300"
+msgid "Faster context menus"
+msgstr "Menús contextuales rápidos (puede causar que algunas opciones no funcionen)"
+
 msgctxt "#30501"
 msgid "Paths"
 msgstr "Rutas"

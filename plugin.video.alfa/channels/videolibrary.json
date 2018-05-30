@@ -71,10 +71,32 @@
       ]
     },
     {
+      "id": "addition",
+      "type": "label",
+      "label": "Añadir a la videoteca",
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "enable_filter",
+      "type": "bool",
+      "label": "    Excluir los streams que contienen etiquetas específicas",
+      "enabled": true,
+      "visible": true,
+      "default": false
+    },
+    {
+      "id": "filters",
+      "type": "text",
+      "label": "    Etiquetas",
+      "visible": true,
+      "enabled": "eq(-1,true)"
+    },
+    {
       "id": "window_type",
       "type": "list",
       "label": "Mostrar los enlaces en",
-      "default": 0,
+      "default": 1,
       "enabled": true,
       "visible": true,
       "lvalues": [

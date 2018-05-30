@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel TioTorrent -*-
+# -*- Channel MasTorrents -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -13,7 +13,7 @@ from core import servertools
 from core import httptools
 from core import tmdb
 
-host = 'http://www.tiotorrent.com/'
+host = 'http://www.mastorrents.com/'
 
 def mainlist(item):
     logger.info()
@@ -37,22 +37,23 @@ def movie_list(item):
 
     itemlist = []
 
-    itemlist.append(item.clone(title="Estrenos",
-                               action="lista",
-                               url=host + 'estrenos-de-cine',
-                               extra='movie'
-                               ))
-
     itemlist.append(item.clone(title="Todas",
                                action="lista",
-                               url=host + 'peliculas',
-                               extra='movie'
+                               url=host+'peliculas',
+                               extra='movie',
+                               thumbnail=get_thumb('all', auto=True)
+                               ))
+
+    itemlist.append(item.clone(title="Generos",
+                               action="genres",
+                               url=host,
+                               extra='movie',
+                               thumbnail=get_thumb('genres', auto=True)
                                ))
 
     itemlist.append(item.clone(title="Buscar",
                                action="search",
-                               url=host + '/peliculas/?pTit=',
-                               thumbnail=get_thumb("search.png"),
+                               url=host + '?pTit=', thumbnail=get_thumb('search', auto=True),
                                extra='movie'
                                ))
     return itemlist
@@ -66,14 +67,22 @@ def series_list(item):
     itemlist.append(item.clone(title="Todas",
                                action="lista",
                                url=host + 'series',
-                               extra='serie'
+                               extra='serie',
+                               thumbnail=get_thumb('all', auto=True)
+                               ))
+
+    itemlist.append(item.clone(title="Generos",
+                               action="genres",
+                               url=host + 'series/',
+                               extra='serie',
+                               thumbnail=get_thumb('genres', auto=True)
                                ))
 
     itemlist.append(item.clone(title="Buscar",
                                action="search",
-                               url=host + '/series/?pTit=',
-                               thumbnail=get_thumb("search.png"),
-                               extra='serie'
+                               url=host + 'series/?pTit=',
+                               extra='serie',
+                               thumbnail=get_thumb('search', auto=True)
                                ))
     return itemlist
 
@@ -87,49 +96,43 @@ def get_source(url):
 def lista (item):
     logger.info ()
     itemlist = []
+    infoLabels = dict()
     data = get_source(item.url)
-    if item.extra == 'movie':
-        patron = "<div class=moviesbox.*?><a href=(.*?)>.*?image:url\('(.*?)'\)>.*?<b>.*?>(.*?)<"
-        matches = re.compile(patron, re.DOTALL).findall(data)
-        for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
-            url = scrapedurl
-            thumbnail = scrapedthumbnail
-            contentTitle = scrapedtitle.decode('latin1').encode('utf8')
-            title = contentTitle
-            filtro_thumb = scrapedthumbnail.replace("https://image.tmdb.org/t/p/w396", "")
-            filtro_list = {"poster_path": filtro_thumb}
-            filtro_list = filtro_list.items()
+    patron = "<div class=moviesbox>.*?</div><a href=(.*?)><div class=moviesbox_img style=background-image:url\('("
+    patron += ".*?)'\)>.*?tooltipbox>(.*?)(?: <i>| <br /><i>)(.*?)<"
+    matches = re.compile(patron, re.DOTALL).findall(data)
 
-            itemlist.append(item.clone(action='findvideos',
-                                       title=title, url=url,
-                                       thumbnail=thumbnail,
-                                       contentTitle=contentTitle,
-                                       infoLabels={'filtro': filtro_list},
-                                       extra=item.extra
-                                       ))
-    else:
-        patron = "<div class=moviesbox.*?>.*?episode>(.*?)x(.*?)<.*?href=(.*?)>.*?image:url\('(.*?)'.*?href.*?>(.*?)<"
-        matches = re.compile(patron, re.DOTALL).findall(data)
-        for season, episode, scrapedurl, scrapedthumbnail, scrapedtitle in matches:
-            url = scrapedurl
-            thumbnail = scrapedthumbnail
-            contentSerieName = scrapedtitle
-            title = '%s' % contentSerieName
-            filtro_thumb = scrapedthumbnail.replace("https://image.tmdb.org/t/p/w396", "")
+    for scrapedurl, scrapedthumbnail, scrapedtitle, extra_data in matches:
+        extra_data = extra_data.replace('(','').replace(')','')
+        url = scrapedurl
+        thumbnail = scrapedthumbnail
+        contentTitle = scrapedtitle.decode('latin1').encode('utf8')
+        title = contentTitle
+
+        tvshow = False
+        if 'x' in extra_data:
+            tvshow = True
+            filtro_thumb = scrapedthumbnail.replace("https://image.tmdb.org/t/p/w200_and_h300_bestv2", "")
             filtro_list = {"poster_path": filtro_thumb}
             filtro_list = filtro_list.items()
-            contentSeason=season
-            contentEpisode=episode
-            itemlist.append(item.clone(action='seasons',
-                                       title=title,
-                                       url=url,
-                                       thumbnail=thumbnail,
-                                       contentSerieName=contentSerieName,
-                                       contentSeason=contentSeason,
-                                       contentEpisode=contentEpisode,
-                                       infoLabels={'filtro': filtro_list},
-                                       extra=item.extra
-                                       ))
+            infoLabels['filtro']= filtro_list
+        else:
+            infoLabels['year']=extra_data
+        new_item=(Item(channel=item.channel,
+                       action='findvideos',
+                       title=title, 
+                       url=url,
+                       thumbnail=thumbnail,
+                       infoLabels=infoLabels,
+                       extra=item.extra
+                       ))
+        if tvshow:
+            new_item.contentSerieName = contentTitle
+            new_item.action = 'seasons'
+        else:
+            new_item.contentTitle = contentTitle
+            new_item.action = 'findvideos'
+        itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb =True)
  #Paginacion
@@ -141,11 +144,28 @@ def lista (item):
         if next_page !='':
            itemlist.append(item.clone(action = "lista",
                                       title = 'Siguiente >>>',
-                                      url = next_page,
-                                      thumbnail='https://s32.postimg.cc/4zppxf5j9/siguiente.png'
+                                      url = next_page
                                       ))
     return itemlist
 
+
+def genres(item):
+    logger.info()
+
+    itemlist = []
+
+    data = get_source(item.url)
+    data = scrapertools.find_single_match(data,'G&eacute;neros</option>(.+)</select></div>')
+
+    patron = '<option value=(.*?)>(.*?)</option>'
+
+    matches = re.compile(patron,re.DOTALL).findall(data)
+
+    for value, title in matches:
+        url = item.url + value
+        title = title.decode('latin1').encode('utf8')
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action='lista'))
+    return itemlist
 
 def search(item, texto):
     logger.info()
@@ -224,46 +244,6 @@ def episodesxseasons(item):
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     return itemlist[::-1]
-
-
-# def findvideos(item):
-#     logger.info()
-#     itemlist=[]
-#     data = get_source(item.url)
-#     patron = "<a class=dload.*? target=_blank>.*?<\/a><i>(.*?)<\/i>.*?<a href=.*?showDownload\((.*?)\);"
-#     matches = re.compile(patron, re.DOTALL).findall(data)
-#
-#     for quality, extra_info in matches:
-#         extra_info= extra_info.replace("'",'')
-#         extra_info= extra_info.split(',')
-#         title = '%s [%s]' % (item.contentTitle, quality)
-#         url = extra_info[1]
-#         if item.extra == 'movie':
-#             url = extra_info[1]
-#         else:
-#             url = extra_info[2]
-#         server = 'torrent'
-#         itemlist.append(Item(channel=item.channel,
-#                              title=title,
-#                              contentTitle= item.title,
-#                              url=url,
-#                              action='play',
-#                              quality=quality,
-#                              server=server,
-#                              thumbnail = item.infoLabels['thumbnail'],
-#                              infoLabels=item.infoLabels
-#                              ))
-#
-#     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
-#         itemlist.append(Item(channel=item.channel,
-#                              title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-#                              url=item.url,
-#                              action="add_pelicula_to_library",
-#                              extra="findvideos",
-#                              contentTitle=item.contentTitle
-#                              ))
-#
-#     return itemlist
 
 
 def findvideos(item):

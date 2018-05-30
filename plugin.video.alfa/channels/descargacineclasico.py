@@ -2,7 +2,7 @@
 import re
 
 from channelselector import get_thumb
-from platformcode import logger
+from platformcode import logger, config
 from core import scrapertools, httptools
 from core import servertools
 from core import tmdb
@@ -86,7 +86,6 @@ def agregadas(item):
                               thumbnail=thumbnail,
                               plot=plot,
                               show=title) )
-    scrapertools.printMatches(itemlist)
     tmdb.set_infoLabels(itemlist)
     # Paginación
     try:
@@ -116,8 +115,20 @@ def findvideos(item):
         itemlist.append( item.clone(action="play",
                                     title=title,
                                     url=scrapedurl) )
-    tmdb.set_infoLabels(itemlist)
     itemlist = servertools.get_servers_itemlist(itemlist)
+    tmdb.set_infoLabels(itemlist)
+    if itemlist:
+        itemlist.append(Item(channel = item.channel))
+        itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
+                                   text_color="magenta"))
+        # Opción "Añadir esta película a la biblioteca de KODI"
+        if item.extra != "library":
+            if config.get_videolibrary_support():
+                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                                     action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
+                                     contentTitle = item.contentTitle
+                                     ))
+    return itemlist
     return itemlist
 
 

@@ -161,8 +161,8 @@ def findvideos(item):
                  title = titulo,
                  url = url
                  ))
-    tmdb.set_infoLabels(itemlist, __modo_grafico__)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    tmdb.set_infoLabels(itemlist, __modo_grafico__)
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
