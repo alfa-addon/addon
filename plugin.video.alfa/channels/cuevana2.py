@@ -166,7 +166,7 @@ def searchMovies(itemlist, item, texto):
     #coloca las peliculas encontradas en la lista, improvisando do while
     next_page = True
     while next_page:
-        put_movies(itemlist, data, pattern)
+        put_movies(itemlist, item, data, pattern)
         next_page = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)">')
 
         if next_page:
