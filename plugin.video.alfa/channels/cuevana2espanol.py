@@ -33,9 +33,10 @@ def mainlist(item):
         url = host + "tendencias", thumbnail = get_thumb("hot", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Ranking IMDB", action = "moviesIMDB", 
         url = host + "raking-imdb", thumbnail = get_thumb("hot", auto = True) ))
-    itemlist.append(Item(channel = item.channel, title = "Busqueda", folder=False, text_bold=True))
+    itemlist.append(Item(channel = item.channel, title = "Busqueda", folder=False, text_bold=True,
+        thumbnail = get_thumb("search", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Por Letra", action = "letters",
-        url = host, thumbnail = get_thumb("letter", auto = True)))
+        url = host, thumbnail = get_thumb("alphabet", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Buscar...", action = "search", 
         url = host + "?s=", thumbnail = get_thumb("search", auto = True)))
 
