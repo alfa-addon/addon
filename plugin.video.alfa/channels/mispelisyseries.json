@@ -22,6 +22,14 @@
       "visible": true
     },
     {
+      "id": "modo_grafico",
+      "type": "bool",
+      "label": "Buscar información extra (TMDB)",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
       "id": "clonenewpct1_ver_enlaces_veronline",
       "type": "list",
       "label": "Mostrar enlaces Ver Online",
