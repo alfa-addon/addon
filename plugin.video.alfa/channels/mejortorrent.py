@@ -15,6 +15,8 @@ from core import tmdb
 
 host = "http://www.mejortorrent.com"
 
+__modo_grafico__ = config.get_setting('modo_grafico', 'mejortorrent')
+
 def mainlist(item):
     logger.info()
 
@@ -386,7 +388,7 @@ def listado(item):
             break
         
     #Llamamos a TMDB para que complete InfoLabels
-    tmdb.set_infoLabels(itemlist, seekTmdb = True)
+    tmdb.set_infoLabels(itemlist, __modo_grafico__)
     
     # Pasada para maqullaje de los títulos obtenidos desde TMDB    
     for item_local in itemlist:
@@ -682,7 +684,7 @@ def listado_busqueda(item):
         return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
 
     #Llamamos a TMDB para que complete InfoLabels desde itemlist.  Mejor desde itemlist porque envía las queries en paralelo
-    tmdb.set_infoLabels(itemlist, seekTmdb = True)
+    tmdb.set_infoLabels(itemlist, __modo_grafico__)
     
     # Pasada para maqullaje de los títulos obtenidos desde TMDB    
     for item_local in itemlist:
@@ -773,9 +775,9 @@ def findvideos(item):
     
     # Obtener la información actualizada del Episodio, si no la hay
     if not item.infoLabels['tmdb_id'] or (not item.infoLabels['episodio_titulo'] and item.contentType == 'episode'):
-        tmdb.set_infoLabels(item, True)
+        tmdb.set_infoLabels(item, __modo_grafico__)
     elif (not item.infoLabels['tvdb_id'] and item.contentType == 'episode') or item.contentChannel == "videolibrary":
-        tmdb.set_infoLabels(item, True)
+        tmdb.set_infoLabels(item, __modo_grafico__)
     #Restauramos la información de max num. de episodios por temporada despues de TMDB
     if item.infoLabels['temporada_num_episodios'] and num_episodios > item.infoLabels['temporada_num_episodios']:
         item.infoLabels['temporada_num_episodios'] = num_episodios
@@ -815,8 +817,7 @@ def findvideos(item):
         #Limpiamos de año y rating de episodios, usamos el año del episodio en vez del de la serie
         if item_local.infoLabels['episodio_titulo']:
             item_local.infoLabels['episodio_titulo'] = re.sub(r'\s?\[.*?\]', '', item_local.infoLabels['episodio_titulo'])
-            if item_local.infoLabels['episodio_titulo'] == item_local.contentSerieName:
-                item_local.infoLabels['episodio_titulo'] = ''
+            item.infoLabels['episodio_titulo'] = item.infoLabels['episodio_titulo'].replace(' - ' + item.contentSerieName, '')
         if item_local.infoLabels['aired'] and item_local.contentType == "episode":
             item_local.infoLabels['year'] = scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})')
             
@@ -954,13 +955,15 @@ def episodios(item):
         itemlist.append(item_local.clone())
         
     # Llamamos a TMDB para que complete el episodio en InfoLabels
-    tmdb.set_infoLabels(itemlist, seekTmdb = True)
+    tmdb.set_infoLabels(itemlist, __modo_grafico__)
     if len(itemlist) > 1:
         itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
 
     # Pasada para maqullaje de los títulos obtenidos desde TMDB
     num_episodios = 1
+    num_episodios_lista = [0]
     num_temporada = 1
+    num_episodios_flag = True
     for item_local in itemlist:
         
         # Si no hay datos de TMDB, pongo los datos locales que conozco
@@ -989,7 +992,7 @@ def episodios(item):
         #Preparamos el título para que sea compatible con Añadir Serie a Videoteca
         if item_local.infoLabels['episodio_titulo']:
             if "al" in item_local.title:        #Si son episodios múltiples, ponemos nombre de serie
-                item_local.title = '%s %s' % (item_local.title, item_local.contentSerieName)
+                item_local.title = '%s - %s' % (item_local.title, item_local.contentSerieName)
                 item_local.infoLabels['episodio_titulo'] = '%s %s' % (scrapertools.find_single_match(item_local.title, r'(al \d+)'), item_local.contentSerieName)
             else:
                 item_local.title = '%s %s' % (item_local.title, item_local.infoLabels['episodio_titulo'])
@@ -1013,8 +1016,14 @@ def episodios(item):
             num_episodios = item_local.contentEpisodeNumber
         if num_episodios and not item_local.infoLabels['temporada_num_episodios']:
             item_local.infoLabels['temporada_num_episodios'] = num_episodios
+            num_episodios_flag = False
+        num_episodios_lista[item_local.contentSeason:] = [num_episodios]
         
         #logger.debug("title=[" + item_local.title + "], url=[" + item_local.url + "], item=[" + str(item_local) + "]")
+    
+    if not num_episodios_flag:          #Si el num de episodios no está informado, acualizamos episodios de toda la serie
+        for item_local in itemlist:
+            item_local.infoLabels['temporada_num_episodios'] = num_episodios_lista[item_local.contentSeason]
     
     if config.get_videolibrary_support() and len(itemlist) > 0:
         title = ''
