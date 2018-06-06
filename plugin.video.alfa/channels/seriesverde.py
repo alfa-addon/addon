@@ -169,7 +169,7 @@ def seasons(item):
     return itemlist
 
 
-def all_episodes(item):
+def epidodios(item):
     logger.info()
     itemlist = []
     templist = seasons(item)
@@ -183,8 +183,9 @@ def episodesxseason(item):
     itemlist = []
     data = get_source(item.url)
     season = item.contentSeasonNumber
+    season_data = scrapertools.find_single_match(data, '<div id=collapse%s.*?panel-success' % season)
     patron = "<td><a href='([^ ]+)'.*?itemprop='episodeNumber'>%s+x(\d+)</span> - (.*?) </a>.*?(/banderas.*?)</td>" % season
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = re.compile(patron, re.DOTALL).findall(season_data)
     infoLabels = item.infoLabels
     for scrapedurl, scraped_episode, scrapedtitle, lang_data in matches:
         url = host + scrapedurl
@@ -207,15 +208,22 @@ def episodesxseason(item):
 
 def add_language(title, string):
     logger.info()
-    language = []
+
     languages = scrapertools.find_multiple_matches(string, '/banderas/(.*?).png')
 
+
+    language = []
     for lang in languages:
+
         if 'jap' in lang or lang not in IDIOMAS:
             lang = 'vos'
-					
-        language.append(IDIOMAS[lang])
-        title = '%s [%s]' % (title, IDIOMAS[lang])
+
+        if len(languages) == 1:
+            language = IDIOMAS[languages[0]]
+            title = '%s [%s]' % (title, language)
+        else:
+            language.append(IDIOMAS[lang])
+            title = '%s [%s]' % (title, IDIOMAS[lang])
 
     return title, language
 
@@ -226,9 +234,8 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
-
     patron = "<a href=([^ ]+) target=_blank><img src='/servidores/(.*?).(?:png|jpg)'.*?sno.*?"
-    patron += "sno><span>(.*?)<.*?(/banderas.*?)td"
+    patron += "<span>(.*?)<.*?(/banderas.*?)td"
     matches = re.compile(patron, re.DOTALL).findall(data)
 
 
