@@ -128,11 +128,13 @@ def listado(item):
             video_section = scrapertools.find_single_match(data, '<div class="contenedor-home">(.*?</div>)</div></div>')
         except:
             logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL " + " / DATA: " + video_section)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
             return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
         cnt_next += 1
         if not data:        #Si la web está caída salimos sin dar error
-            return itemlist
+            logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL " + " / DATA: " + video_section)
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
+            return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         #Obtiene la dirección de la próxima página, si la hay
         try:
@@ -174,9 +176,9 @@ def listado(item):
         patron += '<div class="bloque-inferior">\s*(?P<title>.*?)\s*<\/div>\s?<div class="bloque-date">\s*(?P<date>.*?)\s*<\/div>'
 
         matches_alt = re.compile(patron, re.DOTALL).findall(video_section)
-        if not matches_alt:                         #error
-            logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + video_section)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+        if not matches_alt and not '<div class="titulo-load-core">0 resultados' in data:       #error
+            logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         #Ahora se hace una simulación para saber cuantas líneas podemos albergar en este Itemlist.
@@ -420,7 +422,7 @@ def findvideos(item):
         data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url).data)
     except:
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea " + " / DATA: " + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
     data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     data = scrapertools.find_single_match(data, 'div id="Tokyo" [^>]+>(.*?)</div>')     #Seleccionamos la zona de links
@@ -429,7 +431,7 @@ def findvideos(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                             #error
         logger.error("ERROR 02: FINDVIDEOS: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 02: FINDVIDEOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
             
     #logger.debug("PATRON: " + patron)
@@ -564,6 +566,10 @@ def episodios(item):
     temp_previous = ''
     temp_next = ''
     item.extra = "episodios"
+    
+    # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
+    if not item.infoLabels['tmdb_id']:
+        tmdb.set_infoLabels(item, True)
 
     try:
         data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url).data)    #Cargamos los datos de la página
@@ -586,9 +592,15 @@ def episodios(item):
         temp_previous_num = int(temp_actual_num)
     except:                                                                             #Algún error de proceso, salimos
         logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea: " + temp_actual + " (" + str (temp_actual_num) + ") / Previa: " + temp_previous + " / o Siguiente: " + temp_next + " / Avance: " + temp_advance + " / DATA: " + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
         return itemlist
 
+    max_temp = 1
+    if item.library_playcounts:         #Averiguar cuantas temporadas hay en Videoteca
+        patron = 'season (\d+)'
+        matches = re.compile(patron, re.DOTALL).findall(str(item.library_playcounts))
+        max_temp = int(max(matches))
+    
     if not item.library_playcounts:    #no viene de Videoteca, se ponen valores de configuración o de la pasada anterior
         if not item.contentType:
             if modo_serie_temp == 0:
@@ -597,9 +609,11 @@ def episodios(item):
                 item.contentType = "tvshow"
                 if item.contentSeason:
                     item.contentSeason = 0
-    elif len(item.library_playcounts) < item.infoLabels["number_of_episodes"]:  #Si tenemos en .nfo menos episodios, Temp.
+
+    elif max_temp < item.infoLabels["number_of_seasons"]:       #Si tenemos en .nfo menos temporadas, Temp.
         item.contentType = "season"
-    elif len(item.library_playcounts) > item.infoLabels["number_of_episodes"]:  #Si tenemos en .nfo más episodios, investigar
+
+    elif max_temp >= item.infoLabels["number_of_seasons"]:      #Si tenemos en .nfo igaual o más temporadas, investigar
         cnt_s = 0
         for s in item.library_playcounts:       #Ver cuántas Temporadas hay en Videoteca
             if "season" in s:
@@ -630,6 +644,8 @@ def episodios(item):
                     item.contentType = "season"
                 else:                           #Es Serie
                     item.contentType = "tvshow"
+    else:
+        item.contentType = "list"
 
     temp_lista = []
     temp_bucle = 0
@@ -709,7 +725,7 @@ def episodios(item):
             
             except:                                     #Error al leer o procesar la página actual? Salimos
                 logger.error("ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea: " + temp_actual + " (" + str (temp_actual_num) + ") / Previa: " + temp_previous + " / o Siguiente: " + temp_next + " / Avance: " + temp_advance + " / DATA: " + data)
-                itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
+                itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
                 return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
         
         if item.contentType == "season":
@@ -744,7 +760,7 @@ def episodios(item):
         matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches:                             #error
             logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
         
         #logger.debug("PATRON: " + patron)
@@ -852,7 +868,7 @@ def episodios(item):
         itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))     #clasificamos
 
     # Pasada por TMDB y clasificación de lista por temporada y episodio
-    tmdb.set_infoLabels(itemlist, __modo_grafico__)
+    tmdb.set_infoLabels(itemlist, True)
 
     # Pasada para maquillaje de los títulos obtenidos desde TMDB
     num_episodios = 1
@@ -928,7 +944,7 @@ def episodios(item):
 
         if item.action == 'get_seasons':        #si es actualización de videoteca, título estándar
             #Si hay una nueva Temporada, se activa como la actual
-            if item.library_urls[item.channel] != item.url and item.contentType == "season":
+            if item.library_urls[item.channel] != item.url and (item.contentType == "season" or modo_ultima_temp):
                 item.library_urls[item.channel] = item.url          #Se actualiza la url apuntando a la última Temporada
                 try:
                     from core import videolibrarytools              #Se fuerza la actualización de la url en el .nfo
