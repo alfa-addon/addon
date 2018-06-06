@@ -10,7 +10,9 @@
     "torrent",
     "movie",
     "tvshow",
-    "documentary"
+    "documentary",
+    "vos",
+    "direct"
   ],
   "settings": [
     {
@@ -25,6 +27,14 @@
       "id": "modo_grafico",
       "type": "bool",
       "label": "Buscar información extra (TMDB)",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "seleccionar_ult_temporadda_activa",
+      "type": "bool",
+      "label": "Seleccionar para Videoteca si estará activa solo la última Temporada",
       "default": true,
       "enabled": true,
       "visible": true

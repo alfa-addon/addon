@@ -19,6 +19,7 @@ item = Item()
 if not item.channel:
     item.channel = scrapertools.find_single_match(host, r'(\w+)\.com\/')
 __modo_grafico__ = config.get_setting('modo_grafico', item.channel)
+modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', item.channel)
 
 def mainlist(item):
     logger.info()
@@ -80,7 +81,7 @@ def submenu(item):
             data = scrapertools.get_match(data, patron)
             if not data:
                 logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-                itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+                itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
                 return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
         else:
             return itemlist                             #si no hay más datos, algo no funciona, pintamos lo que tenemos
@@ -89,7 +90,7 @@ def submenu(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:
         logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     for scrapedurl, scrapedtitle in matches:
@@ -126,7 +127,7 @@ def alfabeto(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:
         logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     for scrapedurl, scrapedtitle in matches:
@@ -156,7 +157,7 @@ def listado(item):
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
     except:
         logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL " + " / DATA: " + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     #Establecemos los valores básicos en función del tipo de contenido
@@ -177,10 +178,12 @@ def listado(item):
     patron = '<ul class="' + clase + '">(.*?)</ul>'
     if data:
         fichas = scrapertools.get_match(data, patron)
-        if not fichas:                             #error
+        if not fichas and not '<h3><strong>( 0 ) Resultados encontrados </strong>' in data:         #error
             logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        elif '<h3><strong>( 0 ) Resultados encontrados </strong>' in data:                          #no hay vídeos
+            return itemlist
     else:
         return itemlist
     page_extra = clase
@@ -194,7 +197,7 @@ def listado(item):
     matches = re.compile(patron, re.DOTALL).findall(fichas)
     if not matches:                             #error
         logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + fichas)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     #logger.debug("MATCHES: " + str(len(matches)))
@@ -506,11 +509,13 @@ def listado_busqueda(item):
             data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, post=item.post).data)
         except:
             logger.error("ERROR 01: LISTADO_BUSQUEDA: La Web no responde o ha cambiado de URL " + " / DATA: " + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 01: LISTADO_BUSQUEDA:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO_BUSQUEDA:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
             return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
         cnt_next += 1
         if not data:        #Si la web está caída salimos sin dar error
-            return itemlist
+            logger.error("ERROR 01: LISTADO_BUSQUEDA: La Web no responde o ha cambiado de URL " + " / DATA: " + data)
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO_BUSQUEDA:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
+            return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         #Obtiene la dirección de la próxima página, si la hay
         try:
@@ -528,19 +533,20 @@ def listado_busqueda(item):
             post_num = int(post)-1      #Guardo página actual
 
         # Preparamos un patron que pretence recoger todos los datos significativos del video
-        pattern = '<ul class="%s">(.*?)</ul>' % item.pattern        #seleccionamos en bloque que nos interesa    
+        pattern = '<ul class="%s">(.*?)</ul>' % item.pattern            #seleccionamos el bloque que nos interesa 
+        data_alt = data
         data = scrapertools.get_match(data, pattern)
         #pattern = '<li[^>]*><a href="(?P<url>[^"]+).*?<img.*?src="(?P<thumb>[^"]+)?".*?<h2.*?>(?P<title>.*?)?<\/h2>'
-        pattern = '<li[^>]*><a href="(?P<scrapedurl>[^"]+).*?'      #url
-        pattern += 'title="(?P<scrapedtitle>[^"]+).*?'              #título
-        pattern += '<img.*?src="(?P<scrapedthumbnail>[^"]+)?".*?'   #thumb
-        pattern += '<h2.*?(?P<calidad>\[.*?)?<\/h2.*?'              #calidad
-        pattern += '<span.*?>\d+-\d+-(?P<year>\d{4})?<\/span>*.?'   #año
-        pattern += '<span.*?>(?P<size>\d+[\.|\s].*?[GB|MB])?<\/span>'  #tamaño (significativo para peliculas)
+        pattern = '<li[^>]*><a href="(?P<scrapedurl>[^"]+).*?'          #url
+        pattern += 'title="(?P<scrapedtitle>[^"]+).*?'                  #título
+        pattern += '<img.*?src="(?P<scrapedthumbnail>[^"]+)?".*?'       #thumb
+        pattern += '<h2.*?(?P<calidad>\[.*?)?<\/h2.*?'                  #calidad
+        pattern += '<span.*?>\d+-\d+-(?P<year>\d{4})?<\/span>*.?'       #año
+        pattern += '<span.*?>(?P<size>\d+[\.|\s].*?[GB|MB])?<\/span>'   #tamaño (significativo para peliculas)
         matches_alt = re.compile(pattern, re.DOTALL).findall(data)
-        if not matches_alt:                         #error
-            logger.error("ERROR 02: LISTADO_BUSQUEDA: Ha cambiado la estructura de la Web " + " / PATRON: " + pattern + " / DATA: " + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 02: LISTADO_BUSQUEDA: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+        if not matches_alt and not '<h3><strong>( 0 ) Resultados encontrados </strong>' in data_alt:        #error
+            logger.error("ERROR 02: LISTADO_BUSQUEDA: Ha cambiado la estructura de la Web " + " / PATRON: " + pattern + " / DATA: " + data_alt)
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO_BUSQUEDA: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
         
         #Ahora se hace una simulación para saber cuantas líneas podemos albergar en este Itemlist.
@@ -1066,7 +1072,7 @@ def findvideos(item):
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
     except:
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea " + " / DATA: " + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
     data = data.replace("$!", "#!").replace("'", "\"").replace("Ã±", "ñ").replace("//pictures", "/pictures")
@@ -1094,7 +1100,7 @@ def findvideos(item):
     item_local.url = scrapertools.find_single_match(data, patron)
     if not item_local.url:                             #error
         logger.error("ERROR 02: FINDVIDEOS: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 02: FINDVIDEOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
     item_local.url = item_local.url.replace(" ", "%20")             #sustituimos espacios por %20, por si acaso
     #logger.debug("Patron: " + patron + " url: " + item_local.url)
@@ -1192,6 +1198,7 @@ def findvideos(item):
                         item_local.alive = "??"                     #Se asume poe defecto que es link es dudoso
                         if verificar_enlaces_veronline != 0:        #Se quiere verificar si el link está activo?
                             if cnt_enl_verif <= verificar_enlaces_veronline or verificar_enlaces_veronline == -1: #contador?
+                                #Llama a la subfunción de check_list_links(itemlist) para cada link de servidor
                                 item_local.alive = servertools.check_video_link(enlace, servidor)       #activo el link ?
                                 if verificar_enlaces_veronline_validos:     #Los links tienen que ser válidos para contarlos?
                                     if item_local.alive == "Ok":            #Sí
@@ -1281,6 +1288,7 @@ def findvideos(item):
                                 item_local.alive = "??"                     #Se asume poe defecto que es link es dudoso
                                 if verificar_enlaces_descargas != 0:        #Se quiere verificar si el link está activo?
                                     if cnt_enl_verif <= verificar_enlaces_descargas or verificar_enlaces_descargas == -1: #contador?
+                                        #Llama a la subfunción de check_list_links(itemlist) para primer link de servidor
                                         item_local.alive = servertools.check_video_link(enlace, servidor)  #activo el link ?
                                         if verificar_enlaces_descargas_validos:     #Los links tienen que ser válidos para contarlos?
                                             if item_local.alive == "Ok":    #Sí
@@ -1324,22 +1332,41 @@ def episodios(item):
     logger.info()
     itemlist = []
 
+    max_temp = 1
+    y = []
+    if modo_ultima_temp and item.library_playcounts:         #Averiguar cuantas temporadas hay en Videoteca
+        patron = 'season (\d+)'
+        matches = re.compile(patron, re.DOTALL).findall(str(item.library_playcounts))
+        for x in matches:
+            y += [int(x)]
+        max_temp = max(y)
+    
+    # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
+    if not item.infoLabels['tmdb_id']:
+        tmdb.set_infoLabels(item, True)
+    
+    data = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url).data)
     except:                                                                             #Algún error de proceso, salimos
         logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea")
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
         return itemlist
 
     #Busca y pre-carga todas las páginas de episodios que componen las serie, para obtener la url de cada página
     pattern = '<ul class="%s">(.*?)</ul>' % "pagination"  # item.pattern
     pagination = scrapertools.find_single_match(data, pattern)
     if pagination:
-        pattern = '<li><a href="([^"]+)">Last<\/a>'     #Busca última página
+        if "/pg/" in item.url:
+            act_page = int(scrapertools.find_single_match(item.url, r'\/pg\/(\d+)'))    #Num página actual
+        else:
+            act_page = 1
+        pattern = '<li><a href="([^"]+)">Last<\/a>'                                 #Busca última página
         full_url = scrapertools.find_single_match(pagination, pattern)
         url, last_page = scrapertools.find_single_match(full_url, r'(.*?\/pg\/)(\d+)')
+        last_page = int(last_page)
         list_pages = [item.url]
-        for x in range(2, int(last_page) + 1):      #carga cada página para obtener la url de la siguiente
+        for x in range(act_page + 1, last_page + 1):   #carga cada página para obtener la url de la siguiente
             #LAS SIGUIENTES 3 LINEAS ANULADAS: no es necesario leer la pagína siguiente. Se supone que está activa
             #response = httptools.downloadpage('%s%s'% (url,x))
             #if response.sucess:
@@ -1348,16 +1375,21 @@ def episodios(item):
     else:
         list_pages = [item.url]
 
-    for index, page in enumerate(list_pages):       #Recorre la lista de páginas
+    for page in list_pages:         #Recorre la lista de páginas
+        if not list_pages:
+            break
         try:
-            data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(page).data)
+            if not data:
+                data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(page).data)
             data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
             data = data.replace("chapters", "buscar-list")   #Compatibilidad con mispelisy.series.com
             pattern = '<ul class="%s">(.*?)</ul>' % "buscar-list"  # item.pattern
             data = scrapertools.get_match(data, pattern)
+            if not data:
+                raise
         except:
             logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " + " / PATRON: " + pattern + " / " + str(list_pages + " / DATA: " + data))
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         if "pelisyseries.com" in host:
@@ -1367,14 +1399,15 @@ def episodios(item):
         matches = re.compile(pattern, re.DOTALL).findall(data)
         if not matches:                             #error
             logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " + " / PATRON: " + pattern + " / DATA: " + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + 'ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        data = ''
         
         #logger.debug("patron: " + pattern)
         #logger.debug(matches)    
         
         #Empezamos a generar cada episodio
-        season = "1"
+        season = max_temp
         for url, thumb, info in matches:
             if "pelisyseries.com" in host:  #En esta web están en diferente orden
                 interm = url
@@ -1425,6 +1458,10 @@ def episodios(item):
             
             r = re.compile(pattern)
             match = [m.groupdict() for m in r.finditer(info)][0]
+            if not match:                             #error
+                logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " + " / PATRON: " + pattern + " / DATA: " + info)
+                itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+                return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
             if match['season'] is None: match['season'] = season    #Si no se encuentran valores, pero poner lo básico
             if match['episode'] is None: match['episode'] = "0"
@@ -1445,14 +1482,39 @@ def episodios(item):
 
             item_local.contentEpisodeNumber = match['episode']
             item_local.contentSeason = match['season']
+            
+            if modo_ultima_temp and item.library_playcounts:        #Si solo se actualiza la última temporada de Videoteca
+                if item_local.contentSeason < max_temp:
+                    list_pages = []         #Sale del bucle de leer páginas
+                    break                   #Sale del bucle actual del FOR de episodios por página
+                #if ('%sx%s' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))) in item.library_playcounts:
+                #    continue
+                    
+            if item_local.active:
+                del item_local.active
+            if item_local.category:
+                del item_local.category
+            if item_local.infoLabels['title']:
+                del item_local.infoLabels['title']
+            item_local.context = "['buscar_trailer']"
             item_local.action = "findvideos"
             item_local.contentType = "episode"
             item_local.extra = "episodios"
+            if item_local.library_playcounts:
+                del item_local.library_playcounts
+            if item_local.library_urls:
+                del item_local.library_urls
+            if item_local.path:
+                del item_local.path
+            if item_local.update_last:
+                del item_local.update_last
+            if item_local.update_next:
+                del item_local.update_next
             
             itemlist.append(item_local.clone())
 
     # Pasada por TMDB y clasificación de lista por temporada y episodio
-    tmdb.set_infoLabels(itemlist, seekTmdb = __modo_grafico__)
+    tmdb.set_infoLabels(itemlist, seekTmdb = True)
     if len(itemlist) > 1:
         itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
 
