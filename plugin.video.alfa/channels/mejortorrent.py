@@ -882,6 +882,10 @@ def findvideos(item):
 def episodios(item):
     logger.info()
     itemlist = []
+    
+    # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
+    if not item.infoLabels['tmdb_id']:
+        tmdb.set_infoLabels(item, True)
 
     # Carga la página
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
@@ -955,7 +959,7 @@ def episodios(item):
         itemlist.append(item_local.clone())
         
     # Llamamos a TMDB para que complete el episodio en InfoLabels
-    tmdb.set_infoLabels(itemlist, __modo_grafico__)
+    tmdb.set_infoLabels(itemlist, True)
     if len(itemlist) > 1:
         itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
 
