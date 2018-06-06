@@ -8,7 +8,7 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
-    if "File Not Found" in data:
+    if "File Not Found" in data or "File was deleted" in data:
         return False, "[clipwatching] El video ha sido borrado"
     return True, ""
 
