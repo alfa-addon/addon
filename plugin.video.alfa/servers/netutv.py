@@ -31,8 +31,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     js_wise = scrapertools.find_single_match(data_page_url_hqq,
                                              "<script type=[\"']text/javascript[\"']>\s*;?(eval.*?)</script>")
     data_unwise = jswise(js_wise).replace("\\", "")
-    at = scrapertools.find_single_match(data_unwise, 'var at\s*=\s*"([^"]+)"')
-    http_referer = scrapertools.find_single_match(data_unwise, 'var http_referer\s*=\s*"([^"]+)"')
+    at = scrapertools.find_single_match(data_unwise, 'at=(\w+)')
+    http_referer = scrapertools.find_single_match(data_unwise, 'http_referer=(.*?)&')
     url = "http://hqq.watch/sec/player/embed_player.php?iss=&vid=%s&at=%s&autoplayed=yes&referer=on" \
           "&http_referer=%s&pass=&embed_from=&need_captcha=0&hash_from=" % (id_video, at, http_referer)
     data_player = httptools.downloadpage(url, add_referer=True).data

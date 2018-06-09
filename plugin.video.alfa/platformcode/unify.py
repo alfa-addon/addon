@@ -492,7 +492,9 @@ def thumbnail_type(item):
 
     thumb_type = config.get_setting('video_thumbnail_type')
     info = item.infoLabels
-    item.contentThumbnail = item.thumbnail
+    if not item.contentThumbnail:
+        item.contentThumbnail = item.thumbnail
+
     if info:
         if info['thumbnail'] !='':
             item.contentThumbnail = info['thumbnail']
@@ -505,7 +507,7 @@ def thumbnail_type(item):
                 from core.servertools import get_server_parameters
                 #logger.debug('item.server: %s'%item.server)
                 server_parameters = get_server_parameters(item.server.lower())
-                item.thumbnail = server_parameters.get("thumbnail", "")
+                item.thumbnail = server_parameters.get("thumbnail", item.contentThumbnail)
 
     return item.thumbnail
 

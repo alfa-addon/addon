@@ -499,7 +499,7 @@ def do_search(item, categories=None):
                 result_mode = 1
             if result_mode == 0:
                 if len(search_results[channel]) > 1:
-                    title += " [%s]" % element["item"].title.strip()
+                    title += " -%s" % element["item"].title.strip()
                 title += " (%s)" % len(element["itemlist"])
 
                 title = re.sub("\[COLOR [^\]]+\]", "", title)
