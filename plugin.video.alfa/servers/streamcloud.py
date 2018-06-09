@@ -45,7 +45,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         media_url = scrapertools.get_match(data, 'file\: "([^"]+)"')
 
     video_urls = []
-    video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [streamcloud]", media_url])
+    video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [streamcloud]", media_url+"|Referer="+page_url])
+
 
     for video_url in video_urls:
         logger.info("%s - %s" % (video_url[0], video_url[1]))
