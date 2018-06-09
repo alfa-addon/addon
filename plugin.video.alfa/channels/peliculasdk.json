@@ -7,8 +7,9 @@
   "thumbnail": "http://s29.postimg.cc/wzw749oon/pldklog.jpg",
   "banner": "peliculasdk.png",
   "categories": [
-    "torrent",
-    "movie"
+    "movie", 
+    "vos", 
+    "adult"
   ],
   "settings": [
     {

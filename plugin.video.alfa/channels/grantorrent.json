@@ -1,0 +1,53 @@
+{
+  "id": "grantorrent",
+  "name": "GranTorrent",
+  "active": true,
+  "adult": false,
+  "language": ["*"],
+  "thumbnail": "grantorrent.jpg",
+  "banner": "grantorrent.png",
+  "fanart": "grantorrent.png",
+  "categories": [
+    "torrent",
+    "movie",
+    "tvshow"
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "seleccionar_serie_temporada",
+      "type": "list",
+      "label": "Seleccionar agrupar por Serie o Temporada",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Temporada",
+        "Serie"
+      ]
+    },
+    {
+      "id": "seleccionar_ult_temporadda_activa",
+      "type": "bool",
+      "label": "Seleccionar para Videoteca si estará activa solo la última Temporada",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "modo_grafico",
+      "type": "bool",
+      "label": "Buscar información extra (TMDB)",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}
