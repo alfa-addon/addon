@@ -730,11 +730,11 @@ def indices_tmdb(item):
     from datetime import datetime
     if "Géneros" in item.title:
         thumbnail = {}
-        url = ('http://api.themoviedb.org/3/genre/%s/list?api_key=f7f51775877e0bb6703520952b3c7840&language=%s'
+        url = ('http://api.themoviedb.org/3/genre/%s/list?api_key=a1ab8b8669da03637a4b98fa39c39228&language=%s'
                % (item.extra, langt))
+        lista_generos = {}
         try:
             lista = jsontools.load(httptools.downloadpage(url, cookies=False).data)["genres"]
-            lista_generos = {}
             for l in lista:
                 lista_generos[str(l["id"])] = l["name"]
                 if "es" in langt:
@@ -754,12 +754,10 @@ def indices_tmdb(item):
             sort_by = 'first_air_date.desc'
             param_year = 'air_date.lte'
         for key, value in lista_generos.items():
-            new_item = item.clone()
-            new_item.title = value
-            new_item.thumbnail = thumbnail[key]
-            new_item.search = {'url': 'discover/%s' % item.extra, 'with_genres': key, 'sort_by': sort_by,
-                               param_year: fecha,
-                               'language': langt, 'page': 1}
+            search = {'url': 'discover/%s' % item.extra, 'with_genres': key, 'sort_by': sort_by,
+                        param_year: fecha,
+                        'language': langt, 'page': 1}
+            new_item = item.clone(title=value, thumbnail=thumbnail[key], action="listado_tmdb", search=search)
             itemlist.append(new_item)
 
         itemlist.sort(key=lambda item: item.title)
