@@ -21,18 +21,9 @@ def mainlist(item):
     logger.info()
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
-    itemlist.append(Item(channel = item.channel, title = "Peliculas", action = "movies_menu", 
-        url = host + "pelicula", thumbnail = get_thumb("movies", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Series", action = "shows_menu", 
-        url = host + "pelicula", thumbnail = get_thumb("tvshows", auto = True) ))
-    itemlist.append(Item(channel = item.channel, title = "Buscar...", action = "search", 
-        url = host + "search/", thumbnail = get_thumb("search", auto = True)))
-    autoplay.show_option(item.channel, itemlist)
-
-    return itemlist
-
-def movies_menu(item):
-    itemlist = []
+    # PELICULAS
+    itemlist.append(Item(channel = item.channel, title = "Peliculas", folder=False, 
+        thumbnail = get_thumb("movies", auto = True), text_bold=True))
 
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "movies", 
         url = host + "pelicula", thumbnail = get_thumb("newest", auto = True)))
@@ -42,18 +33,20 @@ def movies_menu(item):
         url = host + "pelicula", thumbnail = get_thumb("year", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Favoritas", action = "movies", 
         url = host + "peliculas-destacadas", thumbnail = get_thumb("favorites", auto = True) ))
-    itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar...", action = "search", 
         url = host + "search/", thumbnail = get_thumb("search", auto = True)))
 
-    return itemlist
+    # SERIES
+    itemlist.append(Item(channel = item.channel, title = "Series", folder=False, 
+        thumbnail = get_thumb("tvshows", auto = True), text_bold=True))
 
-def shows_menu(item):
-    itemlist = []
     itemlist.append(Item(channel = item.channel, title = "Todas las Series", action = "shows", 
         url = host + "listar-series", thumbnail = get_thumb("tvshows", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Buscar...", action = "search", extra='1', 
         url = host + "listar-series", thumbnail = get_thumb("search", auto = True)))
+
+    autoplay.show_option(item.channel, itemlist)
+
     return itemlist
 
 ### FIN MENUS ###
@@ -98,7 +91,8 @@ def episodes(item):
 
     matches = scrapertools.find_multiple_matches(data, seasonsPattern)
     for season, title in matches:
-        itemlist.append(Item(channel = item.channel, title="[COLOR blue]%s[/COLOR]" % title))
+        itemlist.append(Item(channel = item.channel, title="[COLOR blue]%s[/COLOR]" % title, 
+            folder=False, text_bold=True))
         episodeMatches = scrapertools.find_single_match(data, episodesPattern % season)
         put_episodes(itemlist, item, episodeMatches)
 
@@ -166,7 +160,7 @@ def searchMovies(itemlist, item, texto):
     #coloca las peliculas encontradas en la lista, improvisando do while
     next_page = True
     while next_page:
-        put_movies(itemlist, data, pattern)
+        put_movies(itemlist, item, data, pattern)
         next_page = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)">')
 
         if next_page:

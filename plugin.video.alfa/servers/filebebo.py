@@ -19,7 +19,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = get_source(page_url)
 
-    if "File was deleted" in data:
+    if "File was deleted" in data or "File Not Found" in data:
         return False, "[Filebebo] El video ha sido borrado"
 
     return True, ""

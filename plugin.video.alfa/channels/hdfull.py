@@ -349,11 +349,16 @@ def fichas(item):
             bus = host[-4:]
             tag_type = scrapertools.find_single_match(url, '%s/([^/]+)/' %bus)
             title += " - [COLOR blue]" + tag_type.capitalize() + "[/COLOR]"
-
-        itemlist.append(
-            Item(channel=item.channel, action=action, title=title, url=url, fulltitle=title, thumbnail=thumbnail,
-                 show=show, folder=True, contentType=contentType, contentTitle=contentTitle,
-                 language =language, infoLabels=infoLabels))
+        if "/serie" in url or "/tags-tv" in url:
+            itemlist.append(
+                Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
+                     contentSerieName=show, folder=True, contentType=contentType,
+                     language =language, infoLabels=infoLabels))
+        else:
+            itemlist.append(
+                Item(channel=item.channel, action=action, title=title, url=url, fulltitle=title, thumbnail=thumbnail,
+                     folder=True, contentType=contentType, contentTitle=contentTitle,
+                     language =language, infoLabels=infoLabels))
     ## Paginación
     next_page_url = scrapertools.find_single_match(data, '<a href="([^"]+)">.raquo;</a>')
     if next_page_url != "":
@@ -389,50 +394,41 @@ def episodios(item):
     str = get_status(status, "shows", id)
     if str != "" and account and item.category != "Series" and "XBMC" not in item.title:
         if config.get_videolibrary_support():
-            title = " ( [COLOR gray][B]" + item.show + "[/B][/COLOR] )"
+            title = " ( [COLOR gray][B]" + item.contentSerieName + "[/B][/COLOR] )"
             itemlist.append(
-                Item(channel=item.channel, action="episodios", title=title, fulltitle=title, url=url_targets,
-                     thumbnail=item.thumbnail, show=item.show, folder=False))
+                Item(channel=item.channel, action="episodios", title=title, url=url_targets,
+                     thumbnail=item.thumbnail, contentSerieName=item.contentSerieName, folder=False))
         title = str.replace('green', 'red').replace('Siguiendo', 'Abandonar')
-        itemlist.append(Item(channel=item.channel, action="set_status", title=title, fulltitle=title, url=url_targets,
-                             thumbnail=item.thumbnail, show=item.show, folder=True))
+        itemlist.append(Item(channel=item.channel, action="set_status", title=title, url=url_targets,
+                             thumbnail=item.thumbnail, contentSerieName=item.contentSerieName, folder=True))
     elif account and item.category != "Series" and "XBMC" not in item.title:
         if config.get_videolibrary_support():
             title = " ( [COLOR gray][B]" + item.show + "[/B][/COLOR] )"
             itemlist.append(
-                Item(channel=item.channel, action="episodios", title=title, fulltitle=title, url=url_targets,
-                     thumbnail=item.thumbnail, show=item.show, folder=False))
+                Item(channel=item.channel, action="episodios", title=title, url=url_targets,
+                     thumbnail=item.thumbnail, contentSerieName=item.contentSerieName, folder=False))
         title = " ( [COLOR orange][B]Seguir[/B][/COLOR] )"
-        itemlist.append(Item(channel=item.channel, action="set_status", title=title, fulltitle=title, url=url_targets,
-                             thumbnail=item.thumbnail, show=item.show, folder=True))
-
+        itemlist.append(Item(channel=item.channel, action="set_status", title=title, url=url_targets,
+                             thumbnail=item.thumbnail, contentSerieName=item.contentSerieName, folder=True))
     patron = "<li><a href='([^']+)'>[^<]+</a></li>"
-
     matches = re.compile(patron, re.DOTALL).findall(data)
-
     for scrapedurl in matches:
-
+        if "temporada-0" in scrapedurl:
+            continue
         ## Episodios
         data = agrupa_datos(httptools.downloadpage(scrapedurl).data)
-
         sid = scrapertools.get_match(data, "<script>var sid = '(\d+)'")
         ssid = scrapertools.get_match(scrapedurl, "temporada-(\d+)")
         post = "action=season&start=0&limit=0&show=%s&season=%s" % (sid, ssid)
-
         url = host + "/a/episodes"
-
         data = httptools.downloadpage(url, post=post).data
-
         episodes = jsontools.load(data)
-
         for episode in episodes:
-
             thumbnail = host + "/thumbs/" + episode['thumbnail']
             language = episode['languages']
             temporada = episode['season']
             episodio = episode['episode']
             if len(episodio) == 1: episodio = '0' + episodio
-
             if episode['languages'] != "[]":
                 idiomas = "( [COLOR teal][B]"
                 for idioma in episode['languages']: idiomas += idioma + " "
@@ -440,15 +436,12 @@ def episodios(item):
                 idiomas = idiomas
             else:
                 idiomas = ""
-
             if episode['title']:
                 try:
                     title = episode['title']['es'].strip()
                 except:
                     title = episode['title']['en'].strip()
-
             if len(title) == 0: title = "Temporada " + temporada + " Episodio " + episodio
-
             try:
                 title = temporada + "x" + episodio + " - " + title.decode('utf-8') + ' ' + idiomas
             except:
@@ -456,38 +449,30 @@ def episodios(item):
             # try: title = temporada + "x" + episodio + " - " + title + ' ' + idiomas
             # except: pass
             # except: title = temporada + "x" + episodio + " - " + title.decode('iso-8859-1') + ' ' + idiomas
-
             str = get_status(status, 'episodes', episode['id'])
             if str != "": title += str
-
             try:
                 title = title.encode('utf-8')
             except:
                 title = title.encode('iso-8859-1')
-
             url = urlparse.urljoin(scrapedurl, 'temporada-' + temporada + '/episodio-' + episodio) + "###" + episode[
                 'id'] + ";3"
-
-            itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url,
-                                 thumbnail=thumbnail, show=item.show, folder=True, contentType="episode",
+            itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url,
+                                 thumbnail=thumbnail, contentSerieName=item.contentSerieName, folder=True, contentType="episode",
                                  language=language))
-
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=url_targets,
-                             action="add_serie_to_library", extra="episodios", show=item.show))
+                             action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
         itemlist.append(Item(channel=item.channel, title="Descargar todos los episodios de la serie", url=url_targets,
-                             action="download_all_episodes", extra="episodios", show=item.show))
-
+                             action="download_all_episodes", extra="episodios"))
     return itemlist
 
 
 def novedades_episodios(item):
     logger.info()
-
     itemlist = []
     ## Carga estados
     status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
-
     ## Episodios
     url = item.url.split("?")[0]
     post = item.url.split("?")[1]

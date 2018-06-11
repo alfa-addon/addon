@@ -10,35 +10,76 @@ from core.scrapertools import decodeHtmlentities as dhe
 from platformcode import logger
 from platformcode import config
 from core import tmdb
+from channelselector import get_thumb
+
+from channels import filtertools
+from channels import autoplay
+
 
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'peliculasdk')
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'peliculasdk')
+__adult_mode__ = config.get_setting("adult_mode")
 
 host = "http://www.peliculasdk.com"
 
+
+IDIOMAS = {'es': 'Español', 'la': 'Latino', 'su': 'Subtitulado', 'in': 'Inglés'}
+list_language = IDIOMAS.values()
+list_quality = ['HD-1080', 'HD-720', 'HD-320', 'BR-R', 'BR-S', 'DVD-R', 'DVD-S', 'TS-HQ', 'TS', 'CAM']  # -R:Rip, -S:Screener
+list_servers = ['directo', 'streamango', 'powvideo', 'datoporn', 'gamovideo', 'streamplay', 'okru', 'rapidvideo', 'openload']
+
+
 def mainlist(item):
     logger.info()
+
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist = []
-    itemlist.append(
-        Item(channel=item.channel, title="[COLOR orange]Estrenos[/COLOR]", action="peliculas", url= host + "/ver/estrenos",
-             fanart="http://s24.postimg.cc/z6ulldcph/pdkesfan.jpg",
-             thumbnail="http://s16.postimg.cc/st4x601d1/pdkesth.jpg"))
-    itemlist.append(
-        Item(channel=item.channel, title="[COLOR orange]PelisHd[/COLOR]", action="peliculas", url= host + "/calidad/HD-720/",
-             fanart="http://s18.postimg.cc/wzqonq3w9/pdkhdfan.jpg",
-             thumbnail="http://s8.postimg.cc/nn5669ln9/pdkhdthu.jpg"))
-    itemlist.append(
-        Item(channel=item.channel, title="[COLOR orange]Pelis HD-Rip[/COLOR]", action="peliculas", url= host + "/calidad/HD-320",
-             fanart="http://s7.postimg.cc/3pmnrnu7f/pdkripfan.jpg",
-             thumbnail="http://s12.postimg.cc/r7re8fie5/pdkhdripthub.jpg"))
-    itemlist.append(
-        Item(channel=item.channel, title="[COLOR orange]Pelis Audio español[/COLOR]", action="peliculas", url= host + "/idioma/Espanol/",
-             fanart="http://s11.postimg.cc/65t7bxlzn/pdkespfan.jpg",
-             thumbnail="http://s13.postimg.cc/sh1034ign/pdkhsphtub.jpg"))
-    itemlist.append(
-        Item(channel=item.channel, title="[COLOR orange]Buscar...[/COLOR]", action="search", url= host + "/calidad/HD-720/",
-             fanart="http://s14.postimg.cc/ceqajaw2p/pdkbusfan.jpg",
-             thumbnail="http://s13.postimg.cc/o85gsftyv/pdkbusthub.jpg"))
+
+    itemlist.append(Item(channel=item.channel, title='Estrenos', action='peliculas', url= host + "/ver/estrenos/",
+                         thumbnail=get_thumb('newest', auto=True), type='movies'))
+
+    itemlist.append(Item(channel=item.channel, title='Por géneros', action='section',
+                         thumbnail=get_thumb('genres', auto=True), type='movies'))
+
+    itemlist.append(Item(channel=item.channel, title='Por calidades', action='section',
+                         thumbnail=get_thumb('quality', auto=True), type='movies'))
+
+    itemlist.append(Item(channel=item.channel, title='Por idiomas', action='section',
+                         thumbnail=get_thumb('language', auto=True), type='movies'))
+
+    if __adult_mode__ != 0:
+        itemlist.append(Item(channel=item.channel, title='Adultos +18', action='peliculas', url= host + "/genero/adultos/",
+                             thumbnail=get_thumb('adults', auto=True), type='movies'))
+
+    itemlist.append(Item(channel=item.channel, title='Buscar...', action='search',
+                         thumbnail=get_thumb('search', auto=True), type='movies'))
+
+    autoplay.show_option(item.channel, itemlist)
+
+    return itemlist
+
+
+def section(item):
+    logger.info()
+    itemlist=[]
+    duplicados=[]
+    data = httptools.downloadpage(host).data
+
+    if 'Por géneros' in item.title:
+        patron = '<li><a href="(\/genero\/[^"]*)">([^<]*)<\/a><\/li>'  #<li><a href="/genero/accion">Acción</a></li>
+    elif 'Por calidades' in item.title:
+        patron = "<li><a href='(\/calidad\/[^']*)'>([^<]*)<\/a><\/li>" #<li><a href='/calidad/HD-1080/'>HD 1080</a></li>
+    elif 'Por idiomas' in item.title:
+        patron = "<li><a href='(\/idioma\/[^']*)'>([^<]*)<\/a><\/li>"  #<li><a href='/idioma/Espanol/'>Español</a></li>
+
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for scrapedurl, scrapedtitle in matches:
+        if scrapedtitle not in duplicados:
+            itemlist.append(Item(channel=item.channel, url=host + scrapedurl, title=scrapedtitle, action='peliculas',
+                                 type=item.type))
+            duplicados.append(scrapedtitle)
 
     return itemlist
 
@@ -62,132 +103,161 @@ def search(item, texto):
 def buscador(item):
     logger.info()
     itemlist = []
+
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron = '<div class="karatula".*?'
-    patron += 'src="([^"]+)".*?'
-    patron += '<div class="tisearch"><a href="([^"]+)">'
-    patron += '([^<]+)<.*?'
-    patron += 'Audio:(.*?)</a>.*?'
-    patron += 'Género:(.*?)</a>.*?'
-    patron += 'Calidad:(.*?),'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedthumbnail, scrapedurl, scrapedtitle, scrapedlenguaje, scrapedgenero, scrapedcalidad in matches:
+    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|&#.*?;", "", data)
+
+    patron = 'style="position:relative"> '
+    patron += '<a href="([^"]+)">'
+    patron += '<img src="([^"]+)" alt="([^"]+)"></a><br>'
+    patron += '<div class="titulope">([^<]+)</div>.*?'
+    patron += 'Audio: (.+?)</div>.*?'
+    patron += 'Calidad: (.+?)</div>.*?'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedtitleorig, scrapedlenguaje, scrapedcalidad in matches:
+        
         year = scrapertools.find_single_match(scrapedtitle, '\((\d+)\)')
-        scrapedcalidad = re.sub(r"<a href.*?>|</a>|</span>", "", scrapedcalidad).strip()
-        scrapedlenguaje = re.sub(r"<a href.*?>|</a>|</span>", "", scrapedlenguaje).strip()
-        if not "Adultos" in scrapedgenero and not "Adultos" in scrapedlenguaje and not "Adultos" in scrapedcalidad:
-            scrapedcalidad = "[COLOR orange]" + scrapedcalidad + "[/COLOR]"
-            scrapedlenguaje = "[COLOR orange]" + scrapedlenguaje + "[/COLOR]"
-            title = scrapedtitle + "-(Idioma: " + scrapedlenguaje + ")" + "-(Calidad: " + scrapedcalidad + ")"
-            title = "[COLOR white]" + title + "[/COLOR]"
-            scrapedtitle = scrapedtitle.split("(")[0].strip()
-            itemlist.append(Item(channel=item.channel, title=title, url=scrapedurl, action="findvideos",
-                                 thumbnail=scrapedthumbnail, contentTitle = scrapedtitle, infoLabels={'year':year},
-                                 fanart="http://s18.postimg.cc/h9kb22mnt/pdkfanart.jpg", library=True, folder=True))
-    tmdb.set_infoLabels(itemlist, True)
-    try:
-        next_page = scrapertools.get_match(data,
-                                           '<span class="current">.*?<a href="(.*?)".*?>Siguiente &raquo;</a></div>')
-        itemlist.append(Item(channel=item.channel, action="buscador", title="[COLOR red]siguiente>>[/COLOR]", url=next_page,
-                             thumbnail="http://s6.postimg.cc/uej03x4r5/bricoflecha.png",
-                             fanart="http://s18.postimg.cc/h9kb22mnt/pdkfanart.jpg", folder=True))
-    except:
-        pass
+        scrapedtitle = re.sub(r"\(\d+\)", "", scrapedtitle).strip()
+
+        audios = scrapertools.find_multiple_matches(scrapedlenguaje, '<a href="[^"]*" rel="[^"]*">([^<]*)</a>')
+        calidad = scrapertools.find_single_match(scrapedcalidad, '<a href="[^"]*" rel="[^"]*">([^<]*)</a>')
+
+        titulo = '%s [%s][%s]' % (scrapedtitle, ','.join([a[:3] for a in audios]), calidad)
+
+        # Parece que las pelis de adultos se mezclan en la búsqueda y lo único que las diferencia es que no tienen Calidad
+        if calidades or __adult_mode__ != 0:
+            itemlist.append(Item(channel=item.channel,
+                                 action="findvideos", url=scrapedurl,
+                                 title=titulo, contentTitle=scrapedtitle,
+                                 thumbnail=scrapedthumbnail,
+                                 language=audios,
+                                 quality=calidad,
+                                 infoLabels={'year':year}
+                                 ))
+
+    tmdb.set_infoLabels(itemlist)
+
+    # Paginación
+    url_next_page = scrapertools.find_single_match(data,'<a href="([^"]*)">Siguiente &raquo;</a>')
+    if url_next_page:
+        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page))
+
     return itemlist
 
 
 def peliculas(item):
     logger.info()
     itemlist = []
-    # Descarga la página
+
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|&#.*?;", "", data)
-    patron = 'style="position:relative;"> '
-    patron += '<a href="([^"]+)" '
-    patron += 'title="([^<]+)">'
-    patron += '<img src="([^"]+)".*?'
-    patron += 'Audio:(.*?)</br>.*?'
-    patron += 'Calidad:(.*?)</br>.*?'
-    patron += 'Género:.*?tag">(.*?)</a>'
+
+    patron = 'style="position:relative"> '
+    patron += '<a href="([^"]+)">'
+    patron += '<img src="([^"]+)" alt="([^"]+)"></a><br>'
+    patron += '<div class="titulope">([^<]+)</div>.*?'
+    patron += 'Audio: (.+?)</div>.*?'
+    patron += 'Calidad: (.+?)</div>.*?'
+    patron += 'Género: (.+?)</div>'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedlenguaje, scrapedcalidad, scrapedgenero in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedtitleorig, scrapedlenguaje, scrapedcalidad, scrapedgenero in matches:
+        
         year = scrapertools.find_single_match(scrapedtitle, '\((\d+)\)')
         scrapedtitle = re.sub(r"\(\d+\)", "", scrapedtitle).strip()
-        scrapedcalidad = re.sub(r"<a href.*?>|</a>", "", scrapedcalidad).strip()
-        scrapedlenguaje = re.sub(r"<a href.*?>|</a>", "", scrapedlenguaje).strip()
-        scrapedlenguaje = scrapedlenguaje.split(',')
-        if not "Adultos" in scrapedgenero and not "Adultos" in scrapedlenguaje and not "Adultos" in scrapedcalidad:
-            scrapedtitle = scrapedtitle
+
+        audios = scrapertools.find_multiple_matches(scrapedlenguaje, '<a href="[^"]*" rel="[^"]*">([^<]*)</a>')
+        calidad = scrapertools.find_single_match(scrapedcalidad, '<a href="[^"]*" rel="[^"]*">([^<]*)</a>')
+        generos = scrapertools.find_multiple_matches(scrapedgenero, '<a href="[^"]*" rel="[^"]*">([^<]*)</a>')
+
+        titulo = '%s [%s][%s]' % (scrapedtitle, ','.join([a[:3] for a in audios]), calidad)
+
+        if 'Adultos' not in generos or __adult_mode__ != 0:
             itemlist.append(Item(channel=item.channel,
-                                 title=scrapedtitle,
-                                 url=scrapedurl,
-                                 action="findvideos",
+                                 action="findvideos", url=scrapedurl,
+                                 title=titulo, contentTitle=scrapedtitle,
                                  thumbnail=scrapedthumbnail,
-                                 fanart="http://s18.postimg.cc/h9kb22mnt/pdkfanart.jpg", library=True, folder=True,
-                                 language=scrapedlenguaje,
-                                 quality=scrapedcalidad,
-                                 contentTitle = scrapedtitle,
+                                 language=audios,
+                                 quality=calidad,
                                  infoLabels={'year':year}
                                  ))
+
     tmdb.set_infoLabels(itemlist)
-    ## Paginación
-    next_page = scrapertools.get_match(data, '<span class="current">.*?<a href="(.*?)".*?>Siguiente &raquo;</a></div>')
-    itemlist.append(Item(channel=item.channel, action="peliculas", title="[COLOR red]siguiente>>[/COLOR]", url=next_page,
-                         thumbnail="http://s6.postimg.cc/uej03x4r5/bricoflecha.png",
-                         fanart="http://s18.postimg.cc/h9kb22mnt/pdkfanart.jpg", folder=True))
+
+    # Paginación
+    url_next_page = scrapertools.find_single_match(data,'<a href="([^"]*)">Siguiente &raquo;</a>')
+    if url_next_page:
+        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page))
+
     return itemlist
 
 
 def findvideos(item):
     logger.info()
     itemlist = []
+
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"<!--.*?-->", "", data)
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    bloque_tab = scrapertools.find_single_match(data, '<div id="verpelicula">(.*?)<div class="tab_container">')
-    patron = '<li><a href="#([^<]+)"><span class="re">\d<\/span><span class="([^<]+)"><\/span><span class=.*?>([^<]+)<\/span>'
-    check = re.compile(patron, re.DOTALL).findall(bloque_tab)
-    servers_data_list = []
-    patron = '<div id="(tab\d+)" class="tab_content"><script type="text/rocketscript">(\w+)\("([^"]+)"\)</script></div>'
+
+    patron = '<li><a href="#(tab\d+)"><span class="re">\d<\/span><span class="([^"]+)"><\/span><span class=.*?>([^<]+)<\/span>'
+    check = re.compile(patron, re.DOTALL).findall(data)
+    if not check:
+        patron = '<li><a href="#(tab\d+)">'
+        check = re.compile(patron, re.DOTALL).findall(data)
+        for i, valor in enumerate(check):
+            check[i] = [valor, '', '']
+
+    patron = '<div id="(tab\d+)" class="tab_content">(.*?)</div>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    if len(matches) == 0:
-        patron = '<div id="(tab\d+)" class="tab_content"><script>(\w+)\("([^"]+)"\)</script></div>'
-        matches = re.compile(patron, re.DOTALL).findall(data)
-    for check_tab, server, id in matches:
-        if check_tab in str(check):
-            idioma, calidad = scrapertools.find_single_match(str(check), "" + check_tab + "', '(.*?)', '(.*?)'")
-            servers_data_list.append([server, id, idioma, calidad])
-    url = host + "/Js/videod.js"
-    data = httptools.downloadpage(url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    data = data.replace('<iframe width="100%" height="400" scrolling="no" frameborder="0"', '')
-    patron = 'function (\w+)\(id\).*?'
-    patron += 'data-src="([^"]+)"'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for server, url in matches:
-        for enlace, id, idioma, calidad in servers_data_list:
-            if server == enlace:
-                video_url = re.sub(r"embed\-|\-.*?x.*?\.html|u\'|\'\(", "", str(url))
-                video_url = re.sub(r"'\+codigo\+'", "", video_url)
-                video_url = video_url.replace('embed//', 'embed/')
-                video_url = video_url + id
-                if "goo.gl" in video_url:
-                    try:
-                        from unshortenit import unshorten
-                        url = unshorten(video_url)
-                        video_url = scrapertools.get_match(str(url), "u'([^']+)'")
-                    except:
-                        continue
-                title = "Ver en: %s [" + idioma + "][" + calidad + "]"
-                itemlist.append(
-                    item.clone(title=title, url=video_url, action="play",
-                         thumbnail=item.category,
-                         language=idioma, quality=calidad))
+
+    servers_data_list = []
+    for i, match in enumerate(matches):
+        if match[0] == check[i][0]:
+            if '<iframe' in match[1]:
+                src = scrapertools.find_single_match(match[1], ' src="([^"]*)"')
+                servers_data_list.append([check[i][1], check[i][2], 'iframe', src])  # idioma, calidad, 'iframe', src 
+
+            elif '<script' in match[1]:
+                src = scrapertools.find_single_match(match[1], '<script>(.*?)<\/script>')
+                if src:
+                    func, parm  = scrapertools.find_single_match(src, '(.*?)\("([^"]*)"\)')
+                    servers_data_list.append([check[i][1], check[i][2], func, parm ])  # idioma, calidad, func, parm 
+
+    data = httptools.downloadpage(host + '/Js/videod.js').data
+    patron = 'function (\w+)\(id\){(.*?)}'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for idioma, calidad, func, parm in servers_data_list:
+        if func == 'iframe':
+            title = "Ver en: %s [" + idioma + "][" + calidad + "]"
+            itemlist.append(
+                item.clone(title=title, url=parm, action="play",
+                     thumbnail=item.category,
+                     language=idioma, quality=calidad))
+
+        else:
+            for funcion, contenido in matches:
+                if funcion == func:
+                    if '<script' in contenido: continue
+                    if '<iframe' in contenido:
+                        src = scrapertools.find_single_match(contenido, 'src="([^"]*)"')
+                    else:
+                        src = scrapertools.find_single_match(contenido, 'href="([^"]*)"')
+                    if "'+codigo+'" not in src: continue
+                    src = src.replace("'+codigo+'", parm)
+
+                    title = "Ver en: %s [" + idioma + "][" + calidad + "]"
+                    itemlist.append(
+                        item.clone(title=title, url=src, action="play",
+                             thumbnail=item.category,
+                             language=idioma, quality=calidad))
+                    break
+
     tmdb.set_infoLabels(itemlist)
+
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+
     if __comprueba_enlaces__:
         itemlist = servertools.check_list_links(itemlist, __comprueba_enlaces_num__)
+
     if item.library and config.get_videolibrary_support() and len(itemlist) > 0:
         infoLabels = {'tmdb_id': item.infoLabels['tmdb_id'],
                       'title': item.fulltitle}
@@ -195,12 +265,12 @@ def findvideos(item):
                              action="add_pelicula_to_library", url=item.url, infoLabels=infoLabels,
                              text_color="0xFFff6666",
                              thumbnail='http://imgur.com/0gyYvuC.png'))
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    autoplay.start(itemlist, item)
+
     return itemlist
-
-
-def play(item):
-    item.thumbnail = item.contentThumbnail
-    return [item]
 
 
 def newest(categoria):

@@ -38,6 +38,9 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="opciones", title="Opciones",
                          thumbnail=get_thumb("search.png")))
 
+    itemlist.append(Item(channel="tvmoviedb", action="mainlist", title="Busquèda alternativa",
+                         thumbnail=get_thumb("search.png")))
+
     saved_searches_list = get_saved_searches()
     context2 = context[:]
     context2.append({"title": "Borrar búsquedas guardadas",
@@ -437,7 +440,7 @@ def do_search(item, categories=None):
                 result_mode = 1
             if result_mode == 0:
                 if len(search_results[channel]) > 1:
-                    title += " [%s]" % element["item"].title.strip()
+                    title += " -%s" % element["item"].title.strip()
                 title += " (%s)" % len(element["itemlist"])
 
                 title = re.sub("\[COLOR [^\]]+\]", "", title)

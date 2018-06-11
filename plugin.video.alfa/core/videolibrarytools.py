@@ -125,6 +125,9 @@ def save_movie(item):
 
     base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
 
+    if config.get_setting("lowerize_title", "videolibrary") == 0:
+        base_name = base_name.lower()
+
     for raiz, subcarpetas, ficheros in filetools.walk(MOVIES_PATH):
         for c in subcarpetas:
             code = scrapertools.find_single_match(c, '\[(.*?)\]')
@@ -245,6 +248,9 @@ def save_tvshow(item, episodelist):
         base_name = item.contentSerieName
 
     base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
+
+    if config.get_setting("lowerize_title", "videolibrary") == 0:
+        base_name = base_name.lower()
 
     for raiz, subcarpetas, ficheros in filetools.walk(TVSHOWS_PATH):
         for c in subcarpetas:
