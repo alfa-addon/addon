@@ -67,7 +67,7 @@ def mainlist(item):
     itemlist.append(
         item.clone(title="CineCalidad Portugues",
                    action="submenu",
-                   host="http://cinemaqualidade.to/",
+                   host="http://www.cinemaqualidade.to/",
                    thumbnail=thumbbr,
                    extra="filmes",
                    ))
@@ -81,7 +81,7 @@ def submenu(item):
     idioma = 'peliculas'
     idioma2 = "destacada"
     host = item.host
-    if item.host == "http://cinemaqualidade.to/":
+    if item.host == "http://www.cinemaqualidade.to/":
         idioma = "filmes"
         idioma2 = "destacado"
     logger.info()
