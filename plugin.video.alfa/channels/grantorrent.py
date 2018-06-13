@@ -65,7 +65,7 @@ def submenu(item):
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
     except:
-        logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL")
+        logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " + item.url)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
         return itemlist     #Algo no funciona, pintamos lo que tenemos
     
@@ -127,12 +127,12 @@ def listado(item):
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.post).data)
             video_section = scrapertools.find_single_match(data, '<div class="contenedor-home">(.*?</div>)</div></div>')
         except:
-            logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL " + " / DATA: " + video_section)
+            logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + video_section)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
             return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
         cnt_next += 1
         if not data:        #Si la web está caída salimos sin dar error
-            logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL " + " / DATA: " + video_section)
+            logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + video_section)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
             return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
@@ -421,7 +421,7 @@ def findvideos(item):
     try:
         data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url).data)
     except:
-        logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea " + " / DATA: " + data)
+        logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
     data = unicode(data, "utf-8", errors="replace").encode("utf-8")
@@ -824,7 +824,7 @@ def episodios(item):
                             item_local.contentEpisodeNumber = 0
                     item_local.contentEpisodeNumber = int(item_local.contentEpisodeNumber)
             except:
-                logger.error("ERROR 07: EPISODIOS: Error en número de Episodio: " + temp_epi)
+                logger.error("ERROR 07: EPISODIOS: Error en número de Temporada o Episodio: " + temp_epi)
                 continue                                #si da un error pasamos del episodio
                 
             if item_local.contentSeason != temp_actual_num:     #A veces es diferente el num de Temp. de la URL y de
@@ -872,8 +872,10 @@ def episodios(item):
 
     # Pasada para maquillaje de los títulos obtenidos desde TMDB
     num_episodios = 1
-    num_episodios_lista = [0]
+    num_episodios_lista = []
+    for i in range(0, 50):  num_episodios_lista += [0]
     num_temporada = 1
+    num_temporada_max = 99
     num_episodios_flag = True
     for item_local in itemlist:
         
@@ -887,6 +889,19 @@ def episodios(item):
             rating = round(rating, 1)
             
         #Salvamos en número de episodios de la temporada
+        if item_local.infoLabels['number_of_seasons']:
+            #Si el num de temporada está fuera de control, se pone 0, y se reclasifica itemlist
+            if item_local.contentSeason > item_local.infoLabels['number_of_seasons'] + 1:
+                logger.error("ERROR 07: EPISODIOS: Num. de Temporada fuera de rango " + " / TEMPORADA: " + str(item_local.contentSeason) + " / " + str(item_local.contentEpisodeNumber) + " / MAX_TEMPORADAS: " + str(item_local.infoLabels['number_of_seasons']) + " / LISTA_TEMPORADAS: " + str(num_episodios_lista))
+                item_local.contentSeason = 0
+                itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
+            else:
+                num_temporada_max = item_local.infoLabels['number_of_seasons']
+        else:
+            if item_local.contentSeason > num_temporada_max + 1:
+                logger.error("ERROR 07: EPISODIOS: Num. de Temporada fuera de rango " + " / TEMPORADA: " + str(item_local.contentSeason) + " / " + str(item_local.contentEpisodeNumber) + " / MAX_TEMPORADAS: " + str(num_temporada_max) + " / LISTA_TEMPORADAS: " + str(num_episodios_lista))
+                item_local.contentSeason = 0
+                itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
         if num_temporada != item_local.contentSeason:
             num_temporada = item_local.contentSeason
             num_episodios = 0
@@ -925,14 +940,17 @@ def episodios(item):
         if num_episodios and not item_local.infoLabels['temporada_num_episodios']:
             item_local.infoLabels['temporada_num_episodios'] = num_episodios
             num_episodios_flag = False
-        num_episodios_lista[item_local.contentSeason:] = [num_episodios]
+        num_episodios_lista[item_local.contentSeason] = [num_episodios]
         
         #logger.debug("title: " + item_local.title + " / url: " + item_local.url + " / calidad: " + item_local.quality + " / Season: " + str(item_local.contentSeason) + " / EpisodeNumber: " + str(item_local.contentEpisodeNumber) + " / num_episodios_lista: " + str(num_episodios_lista) + str(num_episodios_flag))
         #logger.debug(item_local)
         
-    if not num_episodios_flag:          #Si el num de episodios no está informado, acualizamos episodios de toda la serie
-        for item_local in itemlist:
-            item_local.infoLabels['temporada_num_episodios'] = num_episodios_lista[item_local.contentSeason]
+    try:
+        if not num_episodios_flag:          #Si el num de episodios no está informado, acualizamos episodios de toda la serie
+            for item_local in itemlist:
+                item_local.infoLabels['temporada_num_episodios'] = num_episodios_lista[item_local.contentSeason]
+    except:
+        logger.error("ERROR 07: EPISODIOS: Num de Temporada fuera de rango " + " / TEMPORADA: " + str(item_local.contentSeason) + " / " + str(item_local.contentEpisodeNumber) + " / MAX_TEMPORADAS: " + str(num_temporada_max) + " / LISTA_TEMPORADAS: " + str(num_episodios_lista))
     
     if config.get_videolibrary_support() and len(itemlist) > 0:
         title = ''
