@@ -1,7 +1,7 @@
 {
   "id": "tvmoviedb",
   "name": "TvMovieDB",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["*"],
   "thumbnail": "http://i.imgur.com/HA7fvgD.png",

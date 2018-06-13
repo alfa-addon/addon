@@ -113,13 +113,13 @@ def open_settings():
                 if settings_post['adult_aux_new_password1'] == settings_post['adult_aux_new_password2']:
                     set_setting('adult_password', settings_post['adult_aux_new_password1'])
                 else:
-                    platformtools.dialog_ok("Canales para adultos",
-                                            "Los campos 'Nueva contraseña' y 'Confirmar nueva contraseña' no coinciden."
-                                            , "Entre de nuevo en 'Preferencias' para cambiar la contraseña")
+                    platformtools.dialog_ok(config.get_localized_string(60305),
+                                            config.get_localized_string(60306),
+                                            config.get_localized_string(60307))
 
         else:
-            platformtools.dialog_ok("Canales para adultos", "La contraseña no es correcta.",
-                                    "Los cambios realizados en esta sección no se guardaran.")
+            platformtools.dialog_ok(config.get_localized_string(60305), config.get_localized_string(60309),
+                                    config.get_localized_string(60310))
 
             # Deshacer cambios
             set_setting("adult_mode", settings_pre.get("adult_mode", 0))
@@ -352,7 +352,6 @@ def verify_directories_created():
     config_paths = [["folder_movies", "CINE"],
                     ["folder_tvshows", "SERIES"]]
 
-    flag_call = True
     for path, default in config_paths:
         saved_path = get_setting(path)
 
@@ -365,11 +364,7 @@ def verify_directories_created():
             logger.debug("Creating %s: %s" % (path, content_path))
 
             # si se crea el directorio
-            if filetools.mkdir(content_path):
-                if flag_call:
-                    # le pasamos el valor para que sepamos que se ha pasado por creación de directorio
-                    xbmc_videolibrary.ask_set_content(1)
-                    flag_call = False
+            filetools.mkdir(content_path)
 
     try:
         from core import scrapertools

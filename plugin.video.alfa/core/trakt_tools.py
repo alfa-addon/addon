@@ -203,13 +203,17 @@ def trakt_check(itemlist):
     id_result = ''
     # check = u'\u221a'
     check = 'v'
-    get_sync_from_file()
+    synced = False
     try:
         for item in itemlist:
             info = item.infoLabels
 
             if info != '' and info['mediatype'] in ['movie', 'episode'] and item.channel != 'videolibrary':
 
+                if not synced:
+                    get_sync_from_file()
+                    synced = True
+                
                 mediatype = 'movies'
                 id_type = 'tmdb'
 

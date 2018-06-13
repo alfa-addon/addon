@@ -458,14 +458,14 @@ def get_season_and_episode(title):
     """
     filename = ""
 
-    patrons = ["(\d+)x(\d+)", "(?:s|t)(\d+)e(\d+)",
-               "(?:season|temp\w*)\s*(\d+)\s*(?:capitulo|epi\w*)\s*(\d+)"]
+    patrons = ["(\d+)\s*[x-]\s*(\d+)", "(\d+)\s*×\s*(\d+)", "(?:s|t)(\d+)e(\d+)",
+               "(?:season|temp\w*)\s*(\d+)\s*(?:capitulo|epi|episode\w*)\s*(\d+)"]
 
     for patron in patrons:
         try:
             matches = re.compile(patron, re.I).search(title)
             if matches:
-                filename = matches.group(1) + "x" + matches.group(2).zfill(2)
+                filename = matches.group(1).lstrip('0') + "x" + matches.group(2).zfill(2)
                 break
         except:
             pass
