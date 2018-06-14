@@ -113,13 +113,13 @@ def open_settings():
                 if settings_post['adult_aux_new_password1'] == settings_post['adult_aux_new_password2']:
                     set_setting('adult_password', settings_post['adult_aux_new_password1'])
                 else:
-                    platformtools.dialog_ok("Canales para adultos",
-                                            "Los campos 'Nueva contraseña' y 'Confirmar nueva contraseña' no coinciden."
-                                            , "Entre de nuevo en 'Preferencias' para cambiar la contraseña")
+                    platformtools.dialog_ok(config.get_localized_string(60305),
+                                            config.get_localized_string(60306),
+                                            config.get_localized_string(60307))
 
         else:
-            platformtools.dialog_ok("Canales para adultos", "La contraseña no es correcta.",
-                                    "Los cambios realizados en esta sección no se guardaran.")
+            platformtools.dialog_ok(config.get_localized_string(60305), config.get_localized_string(60309),
+                                    config.get_localized_string(60310))
 
             # Deshacer cambios
             set_setting("adult_mode", settings_pre.get("adult_mode", 0))
@@ -399,3 +399,4 @@ def verify_directories_created():
         import traceback
         logger.error("Al comprobar o crear la carpeta de resolución")
         logger.error(traceback.format_exc())
+
