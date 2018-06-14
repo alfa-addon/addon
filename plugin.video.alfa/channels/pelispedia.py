@@ -16,6 +16,8 @@ from platformcode import config, logger
 from platformcode import platformtools
 from core import filetools
 
+import gktools
+
 __channel__ = "pelispedia"
 
 CHANNEL_HOST = "http://www.pelispedia.tv/"
@@ -510,96 +512,10 @@ def findvideos(item):
 
 def play(item):
     logger.info("url=%s" % item.url)
-    itemlist = []
 
-    if item.url.startswith("https://pelispedia.video/v.php"):
+    itemlist = gktools.gk_play(item)
 
-        headers = {'Referer': item.referer}
-        resp = httptools.downloadpage(item.url, headers=headers, cookies=False)
-        
-        for h in resp.headers:
-            ck = scrapertools.find_single_match(resp.headers[h], '__cfduid=([^;]*)')
-            if ck:
-                gsv = scrapertools.find_single_match(resp.data, '<meta name="google-site-verification" content="([^"]*)"')
-                token = generar_token(gsv, 'b0a8c83650f18ccc7c87b16e3c460474'+'yt'+'b0a8c83650f18ccc7c87b16e3c460474'+'2653')
-                playparms = scrapertools.find_single_match(resp.data, 'Play\("([^"]*)","([^"]*)","([^"]*)"')
-                if playparms:
-                    link = playparms[0]
-                    subtitle = '' if playparms[1] == '' or playparms[2] == '' else playparms[2] + playparms[1] + '.srt'
-                else:
-                    link = scrapertools.find_single_match(item.url, 'id=([^;]*)')
-                    subtitle = ''
-                # ~ logger.info("gsv: %s token: %s ck: %s link: %s" % (gsv, token, ck, link))
-
-                post = "link=%s&token=%s" % (link, token)
-                headers = {'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': '__cfduid=' + ck}
-                data = httptools.downloadpage("https://pelispedia.video/plugins/gkpedia.php", post=post, headers=headers, cookies=False).data
-                
-                mp4 = scrapertools.find_single_match(data, '"link":"([^"]*)')
-                if mp4:
-                    mp4 = mp4.replace('\/', '/')
-                    if 'chomikuj.pl/' in mp4: mp4 += "|Referer=%s" % item.referer
-                    itemlist.append(['.mp4', mp4, 0, subtitle])
-                
-                break
-
-
-    elif item.url.startswith("https://load.pelispedia.vip/embed/"):
-        
-        headers = {'Referer': item.referer}
-        resp = httptools.downloadpage(item.url, headers=headers, cookies=False)
-
-        for h in resp.headers:
-            ck = scrapertools.find_single_match(resp.headers[h], '__cfduid=([^;]*)')
-            if ck:
-                gsv = scrapertools.find_single_match(resp.data, '<meta name="google-site-verification" content="([^"]*)"')
-                token = generar_token(gsv, '4fe554b59d760c9986c903b07af8b7a4'+'yt'+'4fe554b59d760c9986c903b07af8b7a4'+'785446346')
-                url = item.url.replace('/embed/', '/stream/') + '/' + token
-                # ~ logger.info("gsv: %s token: %s ck: %s" % (gsv, token, ck))
-
-                headers = {'Referer': item.url, 'Cookie': '__cfduid=' + ck}
-                data = httptools.downloadpage(url, headers=headers, cookies=False).data
-                
-                url = scrapertools.find_single_match(data, '<meta (?:name|property)="og:url" content="([^"]+)"')
-                srv = scrapertools.find_single_match(data, '<meta (?:name|property)="og:sitename" content="([^"]+)"')
-                if srv == '' and 'rapidvideo.com/' in url: srv = 'rapidvideo'
-
-                if url != '' and srv != '':
-                    itemlist.append(item.clone(url=url, server=srv.lower()))
-
-                elif '<title>Vidoza</title>' in data or '|fastplay|' in data:
-                    if '|fastplay|' in data:
-                        packed = scrapertools.find_single_match(data, "<script type='text/javascript'>(eval\(.*?)</script>")
-                        from lib import jsunpack
-                        data = jsunpack.unpack(packed)
-                        data = data.replace("\\'", "'")
-
-                    matches = scrapertools.find_multiple_matches(data, 'file\s*:\s*"([^"]+)"\s*,\s*label\s*:\s*"([^"]+)"')
-                    subtitle = ''
-                    for fil, lbl in matches:
-                        if fil.endswith('.srt') and not fil.endswith('empty.srt'):
-                            subtitle = fil
-                            if not subtitle.startswith('http'):
-                                domi = scrapertools.find_single_match(data, 'aboutlink\s*:\s*"([^"]*)')
-                                subtitle = domi + subtitle
-                            break
-
-                    for fil, lbl in matches:
-                        if not fil.endswith('.srt'):
-                            itemlist.append([lbl, fil, 0, subtitle])
-
-                break
-
-
-    else:
-        itemlist = servertools.find_video_items(data=item.url)
-        for videoitem in itemlist:
-            videoitem.title = item.title
-            videoitem.channel = __channel__
-
-    logger.info("retorna itemlist: %s" % itemlist)
     return itemlist
-
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -665,82 +581,3 @@ def decodificar_cookie(data):
 
     g = eval(l1)
     return eval(l2).replace(";path=/;max-age=86400", "")
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-def evpKDF(passwd, salt, key_size=8, iv_size=4, iterations=1, hash_algorithm="md5"):
-    import hashlib
-    target_key_size = key_size + iv_size
-    derived_bytes = ""
-    number_of_derived_words = 0
-    block = None
-    hasher = hashlib.new(hash_algorithm)
-    while number_of_derived_words < target_key_size:
-        if block is not None:
-            hasher.update(block)
-
-        hasher.update(passwd)
-        hasher.update(salt)
-        block = hasher.digest()
-        hasher = hashlib.new(hash_algorithm)
-
-        for i in range(1, iterations):
-            hasher.update(block)
-            block = hasher.digest()
-            hasher = hashlib.new(hash_algorithm)
-
-        derived_bytes += block[0: min(len(block), (target_key_size - number_of_derived_words) * 4)]
-
-        number_of_derived_words += len(block)/4
-
-    return {
-        "key": derived_bytes[0: key_size * 4],
-        "iv": derived_bytes[key_size * 4:]
-    }
-
-def obtener_cripto(password, plaintext):
-    import os, base64, json
-    SALT_LENGTH = 8
-    BLOCK_SIZE = 16
-    KEY_SIZE = 32
-
-    salt = os.urandom(SALT_LENGTH)
-    iv = os.urandom(BLOCK_SIZE)
-
-    paddingLength = 16 - (len(plaintext) % 16)
-    paddedPlaintext = plaintext+chr(paddingLength)*paddingLength
-
-    kdf = evpKDF(password, salt)
-
-    try: # Intentar con librería AES del sistema
-        from Crypto.Cipher import AES
-        cipherSpec = AES.new(kdf['key'], AES.MODE_CBC, iv)
-    except: # Si falla intentar con librería del addon 
-        import jscrypto
-        cipherSpec = jscrypto.new(kdf['key'], jscrypto.MODE_CBC, iv)
-    ciphertext = cipherSpec.encrypt(paddedPlaintext)
-
-    return json.dumps({'ct': base64.b64encode(ciphertext), 'iv': iv.encode("hex"), 's': salt.encode("hex")}, sort_keys=True, separators=(',', ':'))
-
-def generar_token(gsv, pwd):
-    txt = obtener_cripto(pwd, gsv)
-
-    _0x382d28 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-
-    valors = [0, 0, 0]
-    cicle = 0
-    retorn = ''
-    for ch in txt:
-        valors[cicle] = ord(ch)
-        cicle += 1
-        if cicle == 3:
-            primer = _0x382d28[valors[0] >> 0x2]
-            segon  = _0x382d28[((valors[0] & 0x3) << 0x4) | (valors[1] >> 0x4)]
-            tercer = _0x382d28[((valors[1] & 0xf) << 0x2) | (valors[2] >> 0x6)]
-            quart  = _0x382d28[valors[2] & 0x3f]
-            retorn += primer + segon + tercer + quart
-            
-            valors = [0, 0, 0]
-            cicle = 0
-
-    return retorn
