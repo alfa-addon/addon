@@ -434,6 +434,7 @@ def nuevos_cap(item):
 
     data = httptools.downloadpage(item.url).data
     data = jsontools.load(data)
+    logger.debug(data)
     capitulos = []
     if "Nuevas" in item.title:
         for child in data["b"]:
@@ -455,12 +456,14 @@ def nuevos_cap(item):
             infoLabels['season'] = int(season)
         except:
             infoLabels['season'] = 0
-
         if "Nuevos" in item.title:
             if not child['episode']:
                 episode = scrapertools.find_single_match(child['name'], '\d+x(\d+)')
                 if not episode:
                     episode = "0"
+                infoLabels['episode'] = int(episode)
+            elif "al" in child['episode']:
+                episode = "0"
                 infoLabels['episode'] = int(episode)
             else:
                 infoLabels['episode'] = int(child['episode'])

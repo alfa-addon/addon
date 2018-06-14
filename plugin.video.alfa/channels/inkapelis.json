@@ -4,7 +4,7 @@
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "thumbnail": "http://i.imgur.com/I7MxHZI.png",
+  "thumbnail": "https://www.inkapelis.com/wp-content/uploads/2016/07/logitoinkapelis-min.png",
   "banner": "inkapelis.png",
   "categories": [
     "movie",
@@ -36,6 +36,22 @@
       "visible": true
     },
     {
+      "id": "include_in_newest_castellano",
+      "type": "bool",
+      "label": "Incluir en Novedades - castellano",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_latino",
+      "type": "bool",
+      "label": "Incluir en Novedades - latino",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
       "id": "modo_grafico",
       "type": "bool",
       "label": "Buscar información extra",
@@ -54,6 +70,20 @@
         "Perfil 3",
         "Perfil 2",
         "Perfil 1"
+      ]
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "LAT",
+        "CAST",
+        "VOSE"
       ]
     },
     {
