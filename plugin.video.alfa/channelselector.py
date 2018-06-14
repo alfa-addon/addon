@@ -60,7 +60,7 @@ def getmainlist(view="thumb_"):
 
 def getchanneltypes(view="thumb_"):
     logger.info()
-
+    
     # Lista de categorias
     channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent"]
     dict_types_lang = {'movie': config.get_localized_string(30122), 'tvshow': config.get_localized_string(30123),
@@ -80,6 +80,10 @@ def getchanneltypes(view="thumb_"):
     itemlist.append(Item(title=title, channel="channelselector", action="filterchannels", view=view,
                          category=title, channel_type="all", thumbnail=get_thumb("channels_all.png", view),
                          viewmode="thumbnails"))
+
+    itemlist.append(Item(title="Hoy en TV", channel="filmontv", action="mainlist", view=view,
+                         category=title, channel_type="all", thumbnail="Check",
+                         viewmode="list"))
 
     for channel_type in channel_types:
         logger.info("channel_type=%s" % channel_type)
