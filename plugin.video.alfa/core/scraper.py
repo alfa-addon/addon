@@ -21,10 +21,10 @@ def find_and_set_infoLabels(item):
     scraper = None
     # logger.debug("item:\n" + item.tostring('\n'))
 
-    list_opciones_cuadro = ["Introducir otro nombre", "Completar información"]
+    list_opciones_cuadro = [config.get_localized_string(60223), config.get_localized_string(60224)]
     # Si se añaden más scrapers hay q declararlos aqui-> "modulo_scraper": "Texto_en_cuadro"
-    scrapers_disponibles = {'tmdb': "Buscar en TheMovieDB.org",
-                            'tvdb': "Buscar en TheTvDB.com"}
+    scrapers_disponibles = {'tmdb': config.get_localized_string(60225),
+                            'tvdb': config.get_localized_string(60226)}
 
     # Obtener el Scraper por defecto de la configuracion segun el tipo de contenido
     if item.contentType == "movie":
@@ -63,10 +63,10 @@ def find_and_set_infoLabels(item):
             return True
         elif scraper_result:
             # Contenido encontrado pero no hay 'code'
-            msg = "Identificador no encontrado para: %s" % title
+            msg = config.get_localized_string(60227) % title
         else:
             # Contenido no encontrado
-            msg = "No se ha encontrado informacion para: %s" % title
+            msg = config.get_localized_string(60228) % title
 
         logger.info(msg)
         # Mostrar cuadro con otras opciones:
@@ -80,7 +80,7 @@ def find_and_set_infoLabels(item):
 
         elif index == 0:
             # Pregunta el titulo
-            title = platformtools.dialog_input(title, "Introduzca el nombre de la %s a buscar" % tipo_contenido)
+            title = platformtools.dialog_input(title, config.get_localized_string(60229) % tipo_contenido)
             if title:
                 if item.contentType == "movie":
                     item.contentTitle = title
@@ -125,19 +125,19 @@ def cuadro_completar(item):
 
     COLOR = ["0xFF8A4B08", "0xFFF7BE81"]
     # Creamos la lista de campos del infoLabel
-    controls = [("title", "text", "Titulo:"),
-                ("originaltitle", "text", "Titulo original"),
-                ("year", "text", "Año"),
-                ("identificadores", "label", "Identificadores:"),
-                ("tmdb_id", "text", "    The Movie Database ID"),
-                ("url_tmdb", "text", "        URL Tmdb", "+!eq(-1,'')"),
-                ("tvdb_id", "text", "    The TVDB ID", "+eq(-7,'Serie')"),
-                ("url_tvdb", "text", "        URL TVDB", "+!eq(-1,'')+eq(-8,'Serie')"),
-                ("imdb_id", "text", "    IMDb ID"),
-                ("otro_id", "text", "    Otro ID", "+eq(-1,'')"),
-                ("urls", "label", "Imágenes (urls):"),
-                ("fanart", "text", "    Fondo"),
-                ("thumbnail", "text", "    Miniatura")]
+    controls = [("title", "text", config.get_localized_string(60230)),
+                ("originaltitle", "text", config.get_localized_string(60231)),
+                ("year", "text", config.get_localized_string(60232)),
+                ("identificadores", "label", config.get_localized_string(60233)),
+                ("tmdb_id", "text", config.get_localized_string(60234)),
+                ("url_tmdb", "text", config.get_localized_string(60235), "+!eq(-1,'')"),
+                ("tvdb_id", "text", config.get_localized_string(60236), "+eq(-7,'Serie')"),
+                ("url_tvdb", "text", config.get_localized_string(60237), "+!eq(-1,'')+eq(-8,'Serie')"),
+                ("imdb_id", "text", config.get_localized_string(60238)),
+                ("otro_id", "text", config.get_localized_string(60239), "+eq(-1,'')"),
+                ("urls", "label", config.get_localized_string(60240)),
+                ("fanart", "text", config.get_localized_string(60241)),
+                ("thumbnail", "text", config.get_localized_string(60242))]
 
     if item.infoLabels["mediatype"] == "movie":
         mediatype_default = 0
@@ -146,12 +146,12 @@ def cuadro_completar(item):
 
     listado_controles = [{'id': "mediatype",
                           'type': "list",
-                          'label': "Tipo de contenido",
+                          'label': config.get_localized_string(60243),
                           'color': COLOR[1],
                           'default': mediatype_default,
                           'enabled': True,
                           'visible': True,
-                          'lvalues': ["Película", "Serie"]
+                          'lvalues': [config.get_localized_string(60244), config.get_localized_string(60245)]
                           }]
 
     for i, c in enumerate(controls):
@@ -188,7 +188,7 @@ def cuadro_completar(item):
                                   'visible': True})
 
     # logger.debug(dict_default)
-    if platformtools.show_channel_settings(list_controls=listado_controles, caption="Completar información", item=item,
+    if platformtools.show_channel_settings(list_controls=listado_controles, caption=config.get_localized_string(60246), item=item,
                                            callback="core.scraper.callback_cuadro_completar",
                                            custom_button={"visible": False}):
         return True
@@ -263,7 +263,6 @@ def get_nfo(item):
 
 
 def sort_episode_list(episodelist):
-    episodelist.sort(key=lambda e: e.title, reverse=True)
     scraper_actual = ['tmdb', 'tvdb'][config.get_setting("scraper_tvshows", "videolibrary")]
 
     if scraper_actual == "tmdb":
@@ -273,3 +272,4 @@ def sort_episode_list(episodelist):
         episodelist.sort(key=lambda e: (int(e.contentEpisodeNumber), int(e.contentSeason)))
 
     return episodelist
+
