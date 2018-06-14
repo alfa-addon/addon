@@ -2,7 +2,7 @@
   "id": "lacajita",
   "name": "LaCajita",
   "language": ["cast", "lat"],
-  "active": true,
+  "active": false,
   "adult": false,
   "thumbnail": "http://i.imgur.com/LVdupxc.png",
   "categories": [
