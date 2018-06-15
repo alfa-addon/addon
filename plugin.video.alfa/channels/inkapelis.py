@@ -9,6 +9,10 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
+from channels import filtertools
+from channels import autoplay
+
+
 __modo_grafico__ = config.get_setting("modo_grafico", "inkapelis")
 __perfil__ = config.get_setting("perfil", "inkapelis")
 
@@ -19,14 +23,34 @@ perfil = [['0xFFFFE6CC', '0xFFFFCE9C', '0xFF994D00', '0xFFFE2E2E'],
 color1, color2, color3, color4 = perfil[__perfil__]
 
 
+IDIOMAS = {'Latino': 'LAT', 'Español':'CAST', 'Subtitulado': 'VOSE'}
+list_language = IDIOMAS.values()
+list_quality = ['Cam', 'TSHQ', 'Dvdrip', 'Blurayrip', 'HD Rip 320p', 'hd rip 320p', 'HD Real 720p', 'Full HD 1080p']
+list_servers = ['openload', 'gamovideo', 'streamplay', 'streamango', 'vidoza']
+
+
 def mainlist(item):
     logger.info()
+
+    autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
 
     itemlist.append(item.clone(title="Novedades", action="entradas", url="http://www.inkapelis.com/",
                                extra="Novedades", text_color=color1, thumbnail=get_thumb('newest', auto=True)))
-    itemlist.append(item.clone(title="Estrenos", action="entradas", url="http://www.inkapelis.com/genero/estrenos/",
-                               text_color=color1, thumbnail=get_thumb('premieres', auto=True)))
+    #itemlist.append(item.clone(title="Estrenos", action="entradas", url="http://www.inkapelis.com/genero/estrenos/",
+    #                           text_color=color1, thumbnail=get_thumb('premieres', auto=True)))
+    itemlist.append(item.clone(title="Castellano", action="entradas",
+                               url="https://www.inkapelis.com/?anio=&genero=&calidad=&idioma=Castellano&s=",
+                               extra="Buscar", text_color=color1, thumbnail=get_thumb('espanolas', auto=True)))
+
+    itemlist.append(item.clone(title="Latino", action="entradas",
+                               url="https://www.inkapelis.com/?anio=&genero=&calidad=&idioma=Latino&s=",
+                               extra="Buscar", text_color=color1, thumbnail=get_thumb('latino', auto=True)))
+
+    itemlist.append(item.clone(title="VOSE", action="entradas",
+                               url="https://www.inkapelis.com/?anio=&genero=&calidad=&idioma=Subtitulada&s=",
+                               extra="Buscar", text_color=color1, thumbnail=get_thumb('newest', auto=True)))
+
     itemlist.append(item.clone(title="Géneros", action="generos", url="http://www.inkapelis.com/", text_color=color1,
                                thumbnail=get_thumb('genres', auto=True),))
     itemlist.append(item.clone(title="Buscar...", action="", text_color=color1))
@@ -43,6 +67,9 @@ def mainlist(item):
             itemlist.append(
                 new_item.clone(action="filtro", title=title, url="http://www.inkapelis.com/?s=", text_color=color2))
     itemlist.append(item.clone(action="configuracion", title="Configurar canal...", text_color="gold", folder=False))
+
+    autoplay.show_option(item.channel, itemlist)
+
     return itemlist
 
 
@@ -65,6 +92,16 @@ def newest(categoria):
 
         if categoria == "terror":
             item.url = "https://www.inkapelis.com/genero/terror/"
+            item.action = "entradas"
+
+        if categoria == "castellano":
+            item.url = "https://www.inkapelis.com/?anio=&genero=&calidad=&idioma=Castellano&s="
+            item.extra = "Buscar"
+            item.action = "entradas"
+
+        if categoria == "latino":
+            item.url = "https://www.inkapelis.com/?anio=&genero=&calidad=&idioma=Latino&s="
+            item.extra = "Buscar"
             item.action = "entradas"
         itemlist = entradas(item)
 
@@ -246,8 +283,6 @@ def entradas(item):
                 thumbnail = scrapedthumbnail.replace("w185", "original")
                 title = scrapedtitle
                 calidad = calidad.strip()
-                if calidad:
-                    title += "  [" + calidad + "]"
 
                 itemlist.append(item.clone(action="findvideos", title=title, url=scrapedurl, thumbnail=thumbnail,
                                            contentTitle=scrapedtitle, fulltitle=scrapedtitle,
@@ -272,6 +307,10 @@ def entradas(item):
                 if category == "Eroticas +18":
                     continue
                 idioma = idioma.strip()
+                if idioma in IDIOMAS:
+                    idioma = IDIOMAS[idioma]
+                else:
+                    idioma = IDIOMAS['Subtitulado']
                 calidad = calidad.strip()
                 scrapedtitle = scrapedtitle.replace("Ver Pelicula ", "")
                 title = scrapedtitle
@@ -358,13 +397,17 @@ def findvideos(item):
     patron = '<td><a href="([^"]+)".*?title="([^"]+)".*?<td>([^"]+)<\/td><td>([^"]+)<\/td>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, server, idioma, calidad in matches:
+        if idioma in IDIOMAS:
+            idioma= IDIOMAS[idioma]
+        else:
+            idioma = IDIOMAS['Subtitulado']
         if server == "Embed":
             server = "Nowvideo"
         if server == "Ul":
             server = "Uploaded"
         title = "%s  [%s][%s]" % (server, idioma, calidad)
-        itemlist.append(item.clone(action="play", title=title, url=url, language = idioma, quality = calidad,
-                                   server = server))
+        itemlist.append(item.clone(action="play", title=title, url=url, language=idioma, quality=calidad,
+                                   server=server, infoLabels=item.infoLabels))
 
     patron = 'id="(embed[0-9]*)".*?<div class="calishow">(.*?)<.*?src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -374,8 +417,15 @@ def findvideos(item):
             title = "Directo"
         idioma = scrapertools.find_single_match(data, 'href="#%s".*?>([^<]+)<' % id_embed)
         title = "%s  [%s][%s]" % (title.capitalize(), idioma, calidad)
-        itemlist.append(item.clone(action="play", title=title, url=url, language = idioma, quality = calidad,
-                                   server = server))
+        itemlist.append(item.clone(action="play", title=title, url=url, language=idioma, quality=calidad,
+                                   server=server))
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
 
     if itemlist:
         if not config.get_setting('menu_trailer', item.channel):
@@ -401,5 +451,8 @@ def play(item):
             itemlist.insert(0, [title, url])
     else:
         itemlist = servertools.find_video_items(data=item.url)
+
+    for videoitem in itemlist:
+        videoitem.infoLabels=item.infoLabels
 
     return itemlist
