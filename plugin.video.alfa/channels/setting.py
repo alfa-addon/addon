@@ -291,8 +291,24 @@ def settings(item):
 
 
 def submenu_tools(item):
+    import os
+    from core import filetools
     logger.info()
     itemlist = list()
+
+    #Herramientas de testeo masivo
+    test_path = os.path.join(config.get_runtime_path(), "channels/test.py")
+
+    if filetools.exists(test_path):
+        itemlist.append(Item(channel=CHANNELNAME, title="Herramientas de Testeo masivo", action="", folder=False,
+                             thumbnail=get_thumb("channels.png")))
+        itemlist.append(Item(title='- Testear canales ...', channel="test", action="channel_test_selected"))
+        itemlist.append(Item(title='- Testear servidores ...', channel="test", action="server_test_selected"))
+        itemlist.append(Item(title='- Testear novedades!', channel="test", action="news_test_all"))
+        itemlist.append(Item(title='- Upload tests to web!', channel="test", action="web_update_tests"))
+        itemlist.append(
+            Item(channel=CHANNELNAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))
+
 
     itemlist.append(Item(channel=CHANNELNAME, title="Herramientas de canales", action="", folder=False,
                          thumbnail=get_thumb("channels.png")))
@@ -651,3 +667,4 @@ def overwrite_tools(item):
                 logger.error(message)
 
         p_dialog2.close()
+

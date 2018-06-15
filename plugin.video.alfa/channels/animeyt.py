@@ -11,6 +11,8 @@ from core.item import Item
 from core import tmdb
 from platformcode import config,logger
 
+import gktools
+
 __modo_grafico__ = config.get_setting('modo_grafico', 'animeyt')
 
 HOST = "http://animeyt.tv/"
@@ -138,7 +140,7 @@ def episodios(item):
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for url, scrapedtitle, episode in matches:
-		
+        
         season = 1
         episode = int(episode)
         season, episode = renumbertools.numbered_for_tratk(item.channel, scrapedtitle, season, episode)
@@ -158,16 +160,20 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
 
-    patron = 'Player\("(.*?)"'
+    # ~ patron = 'Player\("(.*?)"'
+    patron = 'iframe src="([^"]*)"'
 
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for url in matches:
-        if "cldup" in url:
-            title = "Opcion Cldup"
-        if "chumi" in url:
-            title = "Opcion Chumi"
-        itemlist.append(item.clone(channel=item.channel, folder=False, title=title, action="play", url=url))
+        title = scrapertools.find_single_match(url, '/([^\.]*)\.php\?')
+        # ~ title = 'PDT'
+        # ~ if "cldup" in url:
+            # ~ title = "Opcion Cldup"
+        # ~ if "chumi" in url:
+            # ~ title = "Opcion Chumi"
+        if title == 'rakuten': # de momento es el único resuelto
+            itemlist.append(item.clone(channel=item.channel, folder=False, title=title, action="play", url=url, referer=item.url))
 
     if item.extra != "library":
         if config.get_videolibrary_support() and item.extra:
@@ -176,16 +182,18 @@ def findvideos(item):
     return itemlist
 
 
-def player(item):
+def play(item):
     logger.info()
     itemlist = []
+    
+    if 'https://s2.animeyt.tv/rakuten.php?' in item.url:
+        itemlist = gktools.gk_play(item)
 
-    data = httptools.downloadpage(item.url, add_referer=True).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-	
-    url = scrapertools.find_single_match(data, 'sources: \[{file:\'(.*?)\'')
-
-    itemlist = servertools.find_video_items(data=data)
-
+    # PENDIENTE ANALIZAR DEMÁS CASOS...
+    # ~ else:
+        # ~ headers = {'Referer': item.referer}
+        # ~ resp = httptools.downloadpage(item.url, headers=headers, cookies=False)
+        # ~ with open('animeyt-play-%s.html' % item.title, 'w') as f: f.write(resp.data); f.close()
+ 
     return itemlist
 
