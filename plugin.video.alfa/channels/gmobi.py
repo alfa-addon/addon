@@ -12,7 +12,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import logger
 
-host = 'http://gnula.mobi/'
+host = 'http://www.gnula.mobi/'
 def mainlist(item):
     logger.info()
     itemlist = list()
@@ -68,17 +68,24 @@ def peliculas(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<div class="col-mt-5 postsh">.*?href="(.*?)" title="(.*?)".*?under-title">(.*?)<.*?src="(.*?)"'
+    patron = '<div class="col-mt-5 postsh">.*?href="(.*?)" title="(.*?)".*?<.*?src="(.*?)"'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedyear, scrapedtitle, scrapedthumbnail in matches:
-        year = scrapertools.find_single_match(scrapedyear, r'.*?\((\d{4})\)')
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, fulltitle = scrapedtitle, url=scrapedurl,
-                        thumbnail=scrapedthumbnail, infoLabels={'year': year}))
+    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
+        filter_thumb = scrapedthumbnail.replace("http://image.tmdb.org/t/p/w300", "")
+        filter_list = {"poster_path": filter_thumb}
+        filter_list = filter_list.items()
+        itemlist.append(Item(channel=item.channel,
+                             action="findvideos",
+                             title=scrapedtitle,
+                             fulltitle = scrapedtitle,
+                             url=scrapedurl,
+                             thumbnail=scrapedthumbnail,
+                             infoLabels={'filtro': filter_list}))
 
     tmdb.set_infoLabels(itemlist, True)
     next_page_url = scrapertools.find_single_match(data, '<link rel="next" href="(.*?)"')
     if next_page_url != "":
-        next_page_url = item.url + next_page_url
+        next_page_url = next_page_url
         itemlist.append(item.clone(action="peliculas", title="Siguiente >>", text_color="yellow",
                                    url=next_page_url))
 

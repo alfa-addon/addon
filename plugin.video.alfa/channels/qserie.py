@@ -215,8 +215,7 @@ def generos(item):
 
     for scrapedtitle, scrapedurl in matches:
         url = urlparse.urljoin(item.url, scrapedurl)
-        title = scrapedtitle.decode('cp1252')
-        title = title.encode('utf-8')
+        title = scrapedtitle.capitalize()
         if title.lower() in tgenero:
             thumbnail = tgenero[title.lower()]
             fanart = tgenero[title.lower()]
@@ -225,7 +224,7 @@ def generos(item):
             fanart = ''
         plot = ''
         itemlist.append(
-            Item(channel=item.channel, action="todas", title=title.lower(), fulltitle=item.fulltitle, url=url,
+            Item(channel=item.channel, action="todas", title=title, fulltitle=item.fulltitle, url=url,
                  thumbnail=thumbnail, plot=plot, fanart=fanart))
 
     return itemlist
@@ -241,19 +240,12 @@ def ultimas(item):
 
     for scrapedtitle, scrapedurl in matches:
         url = urlparse.urljoin(item.url, scrapedurl)
-        data = httptools.downloadpage(scrapedurl).data
-        thumbnail = scrapertools.get_match(data, '<link rel="image_src" href="([^"]+)"/>')
-        realplot = scrapertools.find_single_match(data, '<p itemprop="articleBody">([^<]+)<\/p> ')
-        plot = scrapertools.remove_htmltags(realplot)
-        inutil = re.findall(r' Temporada \d', scrapedtitle)
-        title = scrapedtitle
-        title = scrapertools.decodeHtmlentities(title)
-        realtitle = scrapedtitle.replace(inutil[0], '')
-        fanart = 'https://s22.postimg.cc/cb7nmhwv5/ultimas.png'
+        season = scrapertools.find_single_match(scrapedtitle, 'Temporada (\d+)')
+        title = scrapertools.find_single_match(scrapedtitle, '(.*?) Temporada')
         itemlist.append(
-            Item(channel=item.channel, action="temporadas", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                 fanart=fanart, contentSerieName=realtitle))
-
+            Item(channel=item.channel, action="temporadas", title=scrapedtitle, url=url, contentSerieName=title,
+                 contentSeasonNumber=season, infoLabels={'season':season}))
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -290,42 +282,38 @@ def lasmas(item):
 
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    realplot = ''
+    base_data = httptools.downloadpage(item.url).data
+    base_data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", base_data)
+    thumbnail = ''
     if item.extra == 'letras':
-        patron = '<li><a href="([^"]+)" title="Series que comienzan con.*?">([^<]+)</a></li>'
+        data = base_data
+        patron = '<li><a href=([^ ]+) title=Series que comienzan con.*?>([^<]+)</a></li>'
     else:
-        patron = '<a href="([^"]+)" title="([^V]+)' + item.extra + '.*?">'
+        if item.extra == 'Vista':
+            type = 'Vistas'
+        else:
+            type = 'Votadas'
+        data = scrapertools.find_single_match(base_data, 'white>Las m.s %s <span(.*?)</a>(?:</div>|</center>)' %
+                                              type)
+        patron = '<a href=([^ ]+) title=(.*?) ' + item.extra
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
         url = urlparse.urljoin(item.url, scrapedurl)
         if item.extra != 'letras':
-            data = httptools.downloadpage(scrapedurl).data
-            thumbnail = scrapertools.get_match(data, '<link rel="image_src" href="([^"]+)"/>')
-            realplot = scrapertools.find_single_match(data, '<p itemprop="articleBody">([^<]+)<\/p> ')
-            plot = scrapertools.remove_htmltags(realplot)
             action = 'temporadas'
         else:
             if scrapedtitle.lower() in thumbletras:
                 thumbnail = thumbletras[scrapedtitle.lower()]
-            else:
-                thumbnail = ''
-            plot = ''
             action = 'todas'
         title = scrapedtitle.replace(': ', '')
         title = scrapertools.decodeHtmlentities(title)
-        if item.extra == 'letras':
-            fanart = 'https://s17.postimg.cc/fwi1y99en/a-z.png'
-        elif item.extra == 'Vista':
-            fanart = 'https://s9.postimg.cc/wmhzu9d7z/vistas.png'
-        else:
-            fanart = ''
 
-        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail, plot=plot,
-                             fanart=fanart, contentSerieName=scrapedtitle))
-
+        itemlist.append(Item(channel=item.channel, action=action, title=title, url=url,
+                             thumbnail=thumbnail, contentSerieName=scrapedtitle))
+    if item.extra != 'letras':
+        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

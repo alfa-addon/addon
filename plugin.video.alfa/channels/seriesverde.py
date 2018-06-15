@@ -162,14 +162,14 @@ def seasons(item):
                              title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
                              url=item.url,
                              action="add_serie_to_library",
-                             extra="all_episodes",
+                             extra="episodios",
                              contentSerieName=item.contentSerieName,
                              ))
 
     return itemlist
 
 
-def epidodios(item):
+def episodios(item):
     logger.info()
     itemlist = []
     templist = seasons(item)

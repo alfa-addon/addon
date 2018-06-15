@@ -10,26 +10,8 @@ from core import tmdb
 from core import jsontools
 from core.item import Item
 from platformcode import config, logger
+from channelselector import get_thumb
 
-tgenero = {"Comedia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
-           "Suspense": "https://s13.postimg.cc/wmw6vl1cn/suspenso.png",
-           "Drama": "https://s16.postimg.cc/94sia332d/drama.png",
-           "Acción": "https://s3.postimg.cc/y6o9puflv/accion.png",
-           "Aventura": "https://s10.postimg.cc/6su40czih/aventura.png",
-           "Romance": "https://s15.postimg.cc/fb5j8cl63/romance.png",
-           "Animación": "https://s13.postimg.cc/5on877l87/animacion.png",
-           "Ciencia ficción": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png",
-           "Terror": "https://s7.postimg.cc/yi0gij3gb/terror.png",
-           "Documental": "https://s16.postimg.cc/7xjj4bmol/documental.png",
-           "Música": "https://s29.postimg.cc/bbxmdh9c7/musical.png",
-           "Fantasía": "https://s13.postimg.cc/65ylohgvb/fantasia.png",
-           "Misterio": "https://s1.postimg.cc/w7fdgf2vj/misterio.png",
-           "Crimen": "https://s4.postimg.cc/6z27zhirx/crimen.png",
-           "Familia": "https://s7.postimg.cc/6s7vdhqrf/familiar.png",
-           "Guerra": "https://s4.postimg.cc/n1h2jp2jh/guerra.png",
-           "Western": "https://s23.postimg.cc/lzyfbjzhn/western.png",
-           "Historia": "https://s15.postimg.cc/fmc050h1n/historia.png"
-           }
 
 thumbletras = {'#': 'https://s32.postimg.cc/drojt686d/image.png',
                'a': 'https://s32.postimg.cc/llp5ekfz9/image.png',
@@ -73,53 +55,46 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Estrenos",
                                action="lista",
-                               thumbnail='https://s21.postimg.cc/fy69wzm93/estrenos.png',
-                               fanart='https://s21.postimg.cc/fy69wzm93/estrenos.png',
+                               thumbnail=get_thumb('premieres', auto=True),
                                url=host + 'estrenos'
                                ))
 
     itemlist.append(item.clone(title="Todas",
                                action="lista",
-                               thumbnail='https://s18.postimg.cc/fwvaeo6qh/todas.png',
-                               fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
+                               thumbnail=get_thumb('all', auto=True),
                                url=host
                                ))
 
     itemlist.append(item.clone(title="Generos",
                                action="seccion",
                                url=host,
-                               thumbnail='https://s3.postimg.cc/5s9jg2wtf/generos.png',
-                               fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png',
+                               thumbnail=get_thumb('genres', auto=True),
                                extra='generos'
                                ))
 
     itemlist.append(item.clone(title="Alfabetico",
                                action="seccion",
                                url=host,
-                               thumbnail='https://s17.postimg.cc/fwi1y99en/a-z.png',
-                               fanart='https://s17.postimg.cc/fwi1y99en/a-z.png',
+                               thumbnail=get_thumb('alphabet', auto=True),
                                extra='a-z'
                                ))
 
     itemlist.append(item.clone(title="Mas Vistas",
                                action="lista",
-                               thumbnail='https://s9.postimg.cc/wmhzu9d7z/vistas.png',
-                               fanart='https://s9.postimg.cc/wmhzu9d7z/vistas.png',
+                               thumbnail=get_thumb('more watched', auto=True),
                                url=host + 'peliculas-mas-vistas'
                                ))
 
     itemlist.append(item.clone(title="Mas Votadas",
                                action="lista",
-                               thumbnail='https://s7.postimg.cc/9kg1nthzf/votadas.png',
-                               fanart='https://s7.postimg.cc/9kg1nthzf/votadas.png',
+                               thumbnail=get_thumb('more voted', auto=True),
                                url=host + 'peliculas-mas-votadas'
                                ))
 
     itemlist.append(item.clone(title="Buscar",
                                action="search",
                                url=host + '?s=',
-                               thumbnail='https://s30.postimg.cc/pei7txpa9/buscar.png',
-                               fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
+                               thumbnail=get_thumb('search', auto=True)
                                ))
 
     return itemlist
@@ -178,7 +153,7 @@ def seccion(item):
     itemlist = []
     data = get_source(item.url)
     if item.extra == 'generos':
-        patron = '<li class=cat-item cat-item-.*?><a href=(.*?)>(.*?)<\/li>'
+        patron = '<li class=cat-item cat-item-.*?><a href=(.*?)>(.*?)</a><\/li>'
     elif item.extra == 'a-z':
         patron = '<li><a href=(.*?)>(\w|#)<\/a><\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -187,12 +162,8 @@ def seccion(item):
         url = scrapedurl
         thumbnail = ''
         if item.extra == 'generos':
-            title = re.sub(r'<\/a> \(\d+\)', '', scrapedtitle)
-            cantidad = re.findall(r'.*?<\/a> \((\d+)\)', scrapedtitle)
-            th_title = title
-            title = title + ' (' + cantidad[0] + ')'
-            if th_title in tgenero:
-                thumbnail = tgenero[th_title]
+            #cantidad = re.findall(r'.*?<\/a> \((\d+)\)', scrapedtitle)
+            title = scrapedtitle
         else:
             title = scrapedtitle
             if title.lower() in thumbletras:
