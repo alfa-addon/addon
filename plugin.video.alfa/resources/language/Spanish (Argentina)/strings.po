@@ -338,8 +338,8 @@ msgid "Looking for %s..."
 msgstr "Buscando %s..."
 
 msgctxt "#30994"
-msgid "Searching in %s..."
-msgstr "Buscando en %s..."
+msgid "Searching in %s"
+msgstr "Buscando en %s"
 
 msgctxt "#30995"
 msgid "%d found so far: %s"
@@ -3528,3 +3528,65 @@ msgstr "- Upload tests to web!"
 msgctxt "#70206"
 msgid "Link found in %s"
 msgstr "Enlace encontrado en %s"
+
+msgctxt "#70207"
+msgid "    - Movies 4K "
+msgstr "    - Películas 4K "
+
+msgctxt "#70208"
+msgid "Movies 4K"
+msgstr Películas 4K"
+
+msgctxt "#70209"
+msgid "Horror movies"
+msgstr Peliculas de miedo!"
+
+msgctxt "#70210"
+msgid " (In %s and %s)"
+msgstr " (En %s y %s)"
+
+msgctxt "#70211"
+msgid " (In %s)"
+msgstr " (En %s)"
+
+msgctxt "#70212"
+msgid "    - Castellan"
+msgstr "    - Castellano"
+
+msgctxt "#70213"
+msgid "    - Latin"
+msgstr "    - Latino"
+
+msgctxt "#70214"
+msgid "    - Torrent"
+msgstr "    - Torrent"
+
+msgctxt "#70208"
+msgid "Movies 4K"
+msgstr Películas 4K
+
+msgctxt "#70209"
+msgid "Horror movies!"
+msgstr "Peliculas de miedo!
+
+msgctxt "#70210"
+msgid " (In %s and %s)"
+msgstr " (En %s y %s)"
+
+msgctxt "#70211"
+msgid " (In %s)"
+msgstr " (En %s)"
+
+msgctxt "#70212"
+msgid "    - Castellan"
+msgstr "    - Castellano"
+
+msgctxt "#70213"
+msgid "    - Latin"
+msgstr "    - Latino"
+
+msgctxt "#70214"
+msgid "    - Torrent"
+msgstr "    - Torrent"
+
+
