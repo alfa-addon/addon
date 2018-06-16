@@ -169,7 +169,7 @@ def check_for_update(overwrite=True):
             p_dialog.close()
 
         else:
-            logger.info("No actualiza la videoteca, está desactivado en la configuración de icarus")
+            logger.info("No actualiza la videoteca, está desactivado en la configuración de alfa")
 
     except Exception, ex:
         logger.error("Se ha producido un error al actualizar las series")
