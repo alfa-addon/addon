@@ -339,7 +339,7 @@ msgstr "Ricerca di %s ..."
 
 msgctxt "#30994"
 msgid "Searching in %s..."
-msgstr "Sto cercando in %s ..."
+msgstr "Sto cercando in %s"
 
 msgctxt "#30995"
 msgid "%d found so far: %s"
@@ -3343,7 +3343,7 @@ msgstr "Cerca informazioni estese (dati sugli attori) Aumenta il tempo di ricerc
 
 msgctxt "#70157"
 msgid "Use cache (improves recurring searches)"
-msgstr "Usa cache (mejora le ricerche ricorrenti)"
+msgstr "Usa cache (migliora le ricerche ricorrenti)"
 
 msgctxt "#70158"
 msgid "every 1 day"
@@ -3540,4 +3540,37 @@ msgstr "- Upload tests su web!"
 msgctxt "#70206"
 msgid "Link found in %s"
 msgstr " %s"
+
+msgctxt "#70207"
+msgid "    - Movies 4K "
+msgstr "    - Film 4K "
+
+msgctxt "#70208"
+msgid "Movies 4K"
+msgstr "Film 4K"
+
+msgctxt "#70209"
+msgid "Horror movies!"
+msgstr "Horror movies!"
+
+msgctxt "#70210"
+msgid " (In %s and %s)"
+msgstr " (In %s e %s)"
+
+msgctxt "#70211"
+msgid " (In %s)"
+msgstr " (In %s)"
+
+msgctxt "#70212"
+msgid "    - Castellan"
+msgstr "    - Castellano"
+
+msgctxt "#70213"
+msgid "    - Latin"
+msgstr "    - Latino"
+
+msgctxt "#70214"
+msgid "    - Torrent"
+msgstr "    - Torrent"
+
 
