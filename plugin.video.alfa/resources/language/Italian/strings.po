@@ -3573,4 +3573,8 @@ msgctxt "#70214"
 msgid "    - Torrent"
 msgstr "    - Torrent"
 
+msgctxt "#70215"
+msgid "TEST THIS CHANNEL"
+msgstr "TESTA QUESTO CANALE"
+
 

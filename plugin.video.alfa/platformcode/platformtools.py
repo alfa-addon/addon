@@ -514,7 +514,7 @@ def set_context_commands(item, parent_item):
                 item.wanted = item.contentSerieName
             else:
                 item.wanted = item.contentTitle
-            context_commands.append(("[COLOR yellow]Buscar en otros canales[/COLOR]",
+            context_commands.append((config.get_localized_string(60350),
                                      "XBMC.Container.Update (%s?%s)" % (sys.argv[0],
                                                                         item.clone(channel='search',
                                                                                    action="do_search",
