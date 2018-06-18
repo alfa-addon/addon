@@ -18,8 +18,8 @@ msgstr ""
 "Language: it_IT\n"
 
 msgctxt "#20000"
-msgid "Icarus"
-msgstr "Icarus"
+msgid "Alfa"
+msgstr "Alfa"
 
 msgctxt "#30001"
 msgid "Check for updates:"
@@ -339,7 +339,7 @@ msgstr "Ricerca di %s ..."
 
 msgctxt "#30994"
 msgid "Searching in %s..."
-msgstr "Sto cercando in %s"
+msgstr "Sto cercando in %s ..."
 
 msgctxt "#30995"
 msgid "%d found so far: %s"
@@ -386,8 +386,8 @@ msgid "Synchronization with Trakt started"
 msgstr "Sincronizzazione con Trakt iniziata"
 
 msgctxt "#59971"
-msgid "Icarus Auto-configuration"
-msgstr "Icarus Auto-configurazione"
+msgid "Alfa Auto-configuration"
+msgstr "Alfa Auto-configurazione"
 
 msgctxt "#59972"
 msgid "Search for: '%s' | Found: %d vídeos | Time: %2.f seconds"
@@ -438,8 +438,8 @@ msgid ""
 msgstr ""
 
 msgctxt "#59984"
-msgid "An error has occurred in icarus, \nCheck log for more details."
-msgstr "Si è verificato un errore in icarus, \nControlla il log per maggiori dettagli."
+msgid "An error has occurred in alfa, \nCheck log for more details."
+msgstr "Si è verificato un errore in alfa, \nControlla il log per maggiori dettagli."
 
 msgctxt "#59985"
 msgid "Error in the channel"
@@ -550,12 +550,12 @@ msgid "No video to play"
 msgstr "Nessun video da riprodurre"
 
 msgctxt "#60013"
-msgid "This website seems to be unavailable, try later, if the problem persists, check with a browser: %s.\nIf the web page is working correctly, please report the error on : https://alfa-addon.com/categories/icarus-addon.50/"
-msgstr "Questo sito non sembra essere disponibile, riprova più tardi, se il problema persiste verifica mediante un browser: %s.\nSe la pagina web funziona correttamente segnala l'errore su : https://alfa-addon.com/categories/icarus-addon.50/"
+msgid "This website seems to be unavailable, try later, if the problem persists, check with a browser: %s.\nIf the web page is working correctly, please report the error on : https://alfa-addon.com/categories/alfa-addon.50/"
+msgstr "Questo sito non sembra essere disponibile, riprova più tardi, se il problema persiste verifica mediante un browser: %s.\nSe la pagina web funziona correttamente segnala l'errore su : https://alfa-addon.com/categories/alfa-addon.50/"
 
 msgctxt "#60014"
-msgid "It may be due to a connection problem, the web page of the channel has changed its structure, or an internal error of icarus.\nTo have more details, see the log file."
-msgstr "Potrebbe essere dovuto a un problema di connessione, la pagina web del canale ha cambiato la sua struttura, oppure un errore interno di icarus.\nPer avere maggiori dettagli, consulta il file di log."
+msgid "It may be due to a connection problem, the web page of the channel has changed its structure, or an internal error of alfa.\nTo have more details, see the log file."
+msgstr "Potrebbe essere dovuto a un problema di connessione, la pagina web del canale ha cambiato la sua struttura, oppure un errore interno di alfa.\nPer avere maggiori dettagli, consulta il file di log."
 
 msgctxt "#60015"
 msgid "Check the log for more details on the error."
@@ -650,8 +650,8 @@ msgid "Tv series update ..."
 msgstr "Aggiornamento serie ..."
 
 msgctxt "#60038"
-msgid "An error has occurred on icarus"
-msgstr "Si è verificato un errore su icarus"
+msgid "An error has occurred on alfa"
+msgstr "Si è verificato un errore su alfa"
 
 msgctxt "#60039"
 msgid "Error on channel %s"
@@ -1102,8 +1102,8 @@ msgid "Problem in the connection process"
 msgstr "Problema nel processo di collegamento"
 
 msgctxt "#60261"
-msgid "Icarus"
-msgstr "Icarus"
+msgid "Alfa"
+msgstr "Alfa"
 
 msgctxt "#60262"
 msgid "You can install the Trakt script below, once installed and configured what you see will be automatically synchronized with your account."
@@ -1406,8 +1406,8 @@ msgid "Download in"
 msgstr "Scaricare in"
 
 msgctxt "#60337"
-msgid "icarus-MCT: No support adf.ly"
-msgstr "icarus-MCT: Sin soporte adf.ly"
+msgid "alfa-MCT: No support adf.ly"
+msgstr "alfa-MCT: Sin soporte adf.ly"
 
 msgctxt "#60338"
 msgid "The script does not support URL reduction adf.ly."
@@ -1430,8 +1430,8 @@ msgid "Continue with the session?"
 msgstr "Continuare con la sessione?"
 
 msgctxt "#60345"
-msgid "icarus-MCT: List of videos"
-msgstr "icarus-MCT: Lista di video"
+msgid "alfa-MCT: List of videos"
+msgstr "alfa-MCT: Lista di video"
 
 msgctxt "#60346"
 msgid "Delete video downloads"
@@ -1455,7 +1455,7 @@ msgstr "[COLOR yellow]Cerca negli altri canali[/COLOR]"
 
 msgctxt "#60351"
 msgid "Set as homepage"
-msgstr "[COLOR 0xffccff00]Impostare come HomePage[/COLOR]"
+msgstr "[COLOR 0xffccff00]Impostare come Homepage[/COLOR]"
 
 msgctxt "#60352"
 msgid "Add TV Series to Videolibrary"
@@ -1491,7 +1491,7 @@ msgstr "Cerca Trailer"
 
 msgctxt "#60360"
 msgid "[COLOR 0xffccff00]<Quick Menu>[/COLOR]"
-msgstr "[COLOR 0xffccff00]<Menu Rápido>[/COLOR]"
+msgstr "[COLOR 0xffccff00]<Menu Rapido>[/COLOR]"
 
 msgctxt "#60361"
 msgid "Super Favourites Menu"
@@ -1506,8 +1506,8 @@ msgid "The server on which it is hosted"
 msgstr "Il server in cui è ospitato "
 
 msgctxt "#60364"
-msgid "is not yet supported in Icarus"
-msgstr "non è ancora supportato in Icarus"
+msgid "is not yet supported in Alfa"
+msgstr "non è ancora supportato in Alfa"
 
 msgctxt "#60365"
 msgid "Loading video..."
@@ -1842,8 +1842,8 @@ msgid "    - Links of interest"
 msgstr "    - Collegamenti di interesse"
 
 msgctxt "#60457"
-msgid "Icarus"
-msgstr "Icarus"
+msgid "Alfa"
+msgstr "Alfa"
 
 msgctxt "#60458"
 msgid "The disabling can be done in 'Settings>Turn on/off channels'. You can toggle channels on/off one at a time or all at the same time. Want to manage your channels now?"
@@ -1858,11 +1858,11 @@ msgid "This can be improved by limiting the maximum number of links or by displa
 msgstr "Questo può essere migliorato limitando il numero massimo di collegamenti o visualizzandoli in una finestra Pop-Up. Queste impostazioni possono essere trovate in 'Impostazioni>Impostazioni libreria' Vuoi accedere a queste impostazioni?"
 
 msgctxt "#60461"
-msgid "Icarus - FAQ - %s"
-msgstr "Icarus - FAQ - %s"
+msgid "Alfa - FAQ - %s"
+msgstr "Alfa - FAQ - %s"
 
 msgctxt "#60462"
-msgid "You may not have written the library path correctly in 'Settings>Preferences'.\nIl The specified path must be exactly the same as the 'source' entered in 'Archive' of the Kodi library.\nAVANZATO: This path is also found in 'sources.xml'.\nThere can be problems using some Kodi forks and paths with 'special://'. SPMC, for example, has problems with this, and there doesn't seem to be a solution, as it is an external problem to Icarus that has existed for a long time.\nYou can try solving these problems in 'Settings>Library Settings' by changing the 'Search in' setting from 'The folder of each series' to 'All library'."
+msgid "You may not have written the library path correctly in 'Settings>Preferences'.\nIl The specified path must be exactly the same as the 'source' entered in 'Archive' of the Kodi library.\nAVANZATO: This path is also found in 'sources.xml'.\nThere can be problems using some Kodi forks and paths with 'special://'. SPMC, for example, has problems with this, and there doesn't seem to be a solution, as it is an external problem to Alfa that has existed for a long time.\nYou can try solving these problems in 'Settings>Library Settings' by changing the 'Search in' setting from 'The folder of each series' to 'All library'."
 msgstr "Potresti non aver scritto correttamente il percorso della libreria in 'Impostazioni>Preferenze'.\nIl percorso specificato deve essere esattamente uguale al 'sorgente' inserito in 'Archivio' della libreria di Kodi.\nAVANZATO: Questo percorso si trova anche in 'sources.xml'.\nPotresti riscontrare dei problemi utilizzando alcuni fork di Kodi e percorsi con 'special://'. SPMC, per esempio, ha problemi con questo, e non sembra esserci una soluzione, poichè è un problema esterno ad Alfa che esiste da molto tempo.\nPuoi provare a risolvere questi problemi in 'Impostazioni>Impostazioni libreria', modificando l'impostazione 'Esegui ricerca contenuto in' da 'La cartella di ogni serie' in 'Tutta la libreria'."
 
 msgctxt "#60463"
@@ -2327,7 +2327,7 @@ msgstr "Sovrascrittura della videoteca....SERIE TV"
 
 msgctxt "#60585"
 msgid "alfa"
-msgstr "icarus"
+msgstr "alfa"
 
 msgctxt "#60586"
 msgid "Overwriting the video library...MOVIES"
@@ -2990,8 +2990,8 @@ msgid "In my Collection"
 msgstr "Nella mia Collezione"
 
 msgctxt "#70069"
-msgid "Search %s in icarus: %s"
-msgstr "Cerca %s in icarus: %s"
+msgid "Search %s in alfa: %s"
+msgstr "Cerca %s in alfa: %s"
 
 msgctxt "#70070"
 msgid "    Search original title: %s"
@@ -3423,7 +3423,7 @@ msgstr "Attendi"
 
 msgctxt "#70177"
 msgid "seconds for the video to start ..."
-msgstr "secondi che inizi il video..."
+msgstr "secondi che inizi il vídeo..."
 
 msgctxt "#70178"
 msgid "Trying with: %s"
@@ -3539,7 +3539,7 @@ msgstr "- Upload tests su web!"
 
 msgctxt "#70206"
 msgid "Link found in %s"
-msgstr " %s"
+msgstr "Link su %s"
 
 msgctxt "#70207"
 msgid "    - Movies 4K "
@@ -3559,11 +3559,11 @@ msgstr " (In %s e %s)"
 
 msgctxt "#70211"
 msgid " (In %s)"
-msgstr " (In %s)"
+msgstr " (En %s)"
 
 msgctxt "#70212"
 msgid "    - Castellan"
-msgstr "    - Castellano"
+msgstr "    - Castigliano"
 
 msgctxt "#70213"
 msgid "    - Latin"
