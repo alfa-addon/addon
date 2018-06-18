@@ -69,7 +69,8 @@ def list_all(item):
         action = 'seasons'
 
         if 'episode' in item.url:
-            scrapedtitle, season, episode = scrapertools.find_single_match(scrapedtitle, '(.*?) (\d+)x(\d+)')
+            scrapedtitle, season, episode = scrapertools.find_single_match(scrapedtitle,
+                                                                           '(.*?) (\d+).*?(?:x|X).*?(\d+)')
             contentSerieName = scrapedtitle
             scrapedtitle = '%sx%s - %s' % (season, episode, scrapedtitle)
             action='findvideos'
