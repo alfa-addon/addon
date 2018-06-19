@@ -1,0 +1,11 @@
+{
+    "id": "filmontv",
+    "name": "Filmontv",
+    "active": false,
+    "adult": false,
+    "language": ["*"],
+    "categories": [
+      "movie",
+      "tvshow"
+    ]
+  }
