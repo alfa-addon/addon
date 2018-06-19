@@ -30,6 +30,10 @@ def getmainlist(view="thumb_"):
                          context=[{"title": "Configurar Buscador", "channel": "search", "action": "opciones",
                                    "goto": True}]))
 
+    itemlist.append(Item(title="Hoy en TV", channel="filmontv", action="mainlist", view=view,
+                         category="all", channel_type="all", thumbnail=get_thumb("channels_peliculas_tv.png"),
+                         viewmode="list"))
+
     itemlist.append(Item(title=config.get_localized_string(30102), channel="favorites", action="mainlist",
                          thumbnail=get_thumb("favorites.png", view),
                          category=config.get_localized_string(30102), viewmode="thumbnails"))
