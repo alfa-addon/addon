@@ -48,69 +48,69 @@ def mainlist(item):
 
     #if list_canales['peliculas']:
     thumbnail = get_thumb("channels_movie.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="peliculas", title="Películas",
+    new_item = Item(channel=item.channel, action="novedades", extra="peliculas", title=config.get_localized_string(30122),
                     thumbnail=thumbnail)
 
     set_category_context(new_item)
     itemlist.append(new_item)
 
     thumbnail = get_thumb("channels_movie_4k.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="4k", title="Películas 4K", thumbnail=thumbnail)
+    new_item = Item(channel=item.channel, action="novedades", extra="4k", title=config.get_localized_string(70208), thumbnail=thumbnail)
 
     set_category_context(new_item)
     itemlist.append(new_item)
 
     #if list_canales['terror']:
     thumbnail = get_thumb("channels_horror.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="terror", title="Peliculas de miedo!",
+    new_item = Item(channel=item.channel, action="novedades", extra="terror", title=config.get_localized_string(70209),
                     thumbnail=thumbnail)
     set_category_context(new_item)
     itemlist.append(new_item)
 
     #if list_canales['infantiles']:
     thumbnail = get_thumb("channels_children.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="infantiles", title="Para niños",
+    new_item = Item(channel=item.channel, action="novedades", extra="infantiles", title=config.get_localized_string(60510),
                     thumbnail=thumbnail)
     set_category_context(new_item)
     itemlist.append(new_item)
 
     #if list_canales['series']:
     thumbnail = get_thumb("channels_tvshow.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="series", title="Episodios de series",
+    new_item = Item(channel=item.channel, action="novedades", extra="series", title=config.get_localized_string(60511),
                     thumbnail=thumbnail)
     set_category_context(new_item)
     itemlist.append(new_item)
 
     #if list_canales['anime']:
     thumbnail = get_thumb("channels_anime.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="anime", title="Episodios de anime",
+    new_item = Item(channel=item.channel, action="novedades", extra="anime", title=config.get_localized_string(60512),
                     thumbnail=thumbnail)
     set_category_context(new_item)
     itemlist.append(new_item)
 
     # if list_canales['Castellano']:
     thumbnail = get_thumb("channels_spanish.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="castellano", title="Castellano",
+    new_item = Item(channel=item.channel, action="novedades", extra="castellano", title=config.get_localized_string(70014),
                     thumbnail=thumbnail)
     set_category_context(new_item)
     itemlist.append(new_item)
 
     # if list_canales['Latino']:
     thumbnail = get_thumb("channels_latino.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="latino", title="Latino",
+    new_item = Item(channel=item.channel, action="novedades", extra="latino", title=config.get_localized_string(59976),
                     thumbnail=thumbnail)
     set_category_context(new_item)
     itemlist.append(new_item)
 
     # if list_canales['Torrent']:
     thumbnail = get_thumb("channels_torrent.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="torrent", title="Torrent", thumbnail=thumbnail)
+    new_item = Item(channel=item.channel, action="novedades", extra="torrent", title=config.get_localized_string(70171), thumbnail=thumbnail)
     set_category_context(new_item)
     itemlist.append(new_item)
 
     #if list_canales['documentales']:
     thumbnail = get_thumb("channels_documentary.png")
-    new_item = Item(channel=item.channel, action="novedades", extra="documentales", title="Documentales",
+    new_item = Item(channel=item.channel, action="novedades", extra="documentales", title=config.get_localized_string(60513),
                     thumbnail=thumbnail)
     set_category_context(new_item)
     itemlist.append(new_item)
@@ -119,11 +119,11 @@ def mainlist(item):
 
 
 def set_category_context(item):
-    item.context = [{"title": "Canales incluidos en: %s" % item.title,
+    item.context = [{"title": config.get_localized_string(60514) % item.title,
                      "extra": item.extra,
                      "action": "setting_channel",
                      "channel": item.channel}]
-    item.category = "Novedades en %s" % item.extra
+    item.category = config.get_localized_string(60679) % item.extra
 
 
 def get_channels_list():
@@ -233,15 +233,15 @@ def novedades(item):
     logger.info("multithread= " + str(multithread))
 
     if not multithread:
-        if platformtools.dialog_yesno("Búsqueda concurrente desactivada",
-                                      "La búsqueda concurrente de novedades proporciona",
-                                      "una mayor velocidad y su desactivación solo es aconsejable en caso de fallo.",
-                                      "¿Desea activar la búsqueda concurrente ahora?"):
+        if platformtools.dialog_yesno(config.get_localized_string(60515),
+                                      config.get_localized_string(60516),
+                                      config.get_localized_string(60517),
+                                      config.get_localized_string(60518)):
             if config.set_setting("multithread", True, "news"):
                 multithread = True
 
     if mode == 'normal':
-        progreso = platformtools.dialog_progress(item.category, "Buscando canales...")
+        progreso = platformtools.dialog_progress(item.category, config.get_localized_string(60519))
 
     list_canales, any_active = get_channels_list()
 
@@ -276,13 +276,13 @@ def novedades(item):
                 t.start()
                 threads.append(t)
                 if mode == 'normal':
-                    progreso.update(percentage, "", "Buscando en '%s'..." % channel_title)
+                    progreso.update(percentage, "", config.get_localized_string(60520) % channel_title)
 
             # Modo single Thread
             else:
                 if mode == 'normal':
                     logger.info("Obteniendo novedades de channel_id=" + channel_id)
-                    progreso.update(percentage, "", "Buscando en '%s'..." % channel_title)
+                    progreso.update(percentage, "", config.get_localized_string(60520) % channel_title)
                 get_newest(channel_id, item.extra)
 
         # Modo Multi Thread: esperar q todos los hilos terminen
@@ -295,8 +295,8 @@ def novedades(item):
 
                 list_pendent_names = [a.getName() for a in pendent]
                 if mode == 'normal':
-                    mensaje = "Buscando en %s" % (", ".join(list_pendent_names))
-                    progreso.update(percentage, "Finalizado en %d/%d canales..." % (len(threads) - len(pendent), len(threads)),
+                    mensaje = config.get_localized_string(30994) % (", ".join(list_pendent_names))
+                    progreso.update(percentage, config.get_localized_string(60521) % (len(threads) - len(pendent), len(threads)),
                                 mensaje)
                     logger.debug(mensaje)
 
@@ -307,7 +307,7 @@ def novedades(item):
                 time.sleep(0.5)
                 pendent = [a for a in threads if a.isAlive()]
         if mode == 'normal':
-            mensaje = "Resultados obtenidos: %s | Tiempo: %2.f segundos" % (len(list_newest), time.time() - start_time)
+            mensaje = config.get_localized_string(60522) % (len(list_newest), time.time() - start_time)
             progreso.update(100, mensaje, " ", " ")
             logger.info(mensaje)
             start_time = time.time()
@@ -492,9 +492,9 @@ def group_by_content(list_result_canal):
 
             if len(canales_no_duplicados) > 1:
                 canales = ', '.join([i for i in canales_no_duplicados[:-1]])
-                title += " (En %s y %s)" % (canales, canales_no_duplicados[-1])
+                title += config.get_localized_string(70210) % (canales, canales_no_duplicados[-1])
             else:
-                title += " (En %s)" % (', '.join([i for i in canales_no_duplicados]))
+                title += config.get_localized_string(70211) % (', '.join([i for i in canales_no_duplicados]))
 
             new_item = v[0].clone(channel="news", title=title, action="show_channels",
                                   sub_list=[i.tourl() for i in v], extra=channels_id_name)
@@ -531,47 +531,47 @@ def show_channels(item):
 
 def menu_opciones(item):
     itemlist = list()
-    itemlist.append(Item(channel=item.channel, title="Canales incluidos en:",
+    itemlist.append(Item(channel=item.channel, title=config.get_localized_string(60525),
                          thumbnail=get_thumb("setting_0.png"),
                          folder=False))
-    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="peliculas", title="    - Películas ",
+    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="peliculas", title=config.get_localized_string(60526),
                          thumbnail=get_thumb("channels_movie.png"),
                          folder=False))
-    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="4K", title="    - Películas 4K ",
+    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="4K", title=config.get_localized_string(70207),
                          thumbnail=get_thumb("channels_movie.png"), folder=False))
-    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="infantiles", title="    - Para niños",
+    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="infantiles", title=config.get_localized_string(60527),
                          thumbnail=get_thumb("channels_children.png"),
                          folder=False))
     itemlist.append(Item(channel=item.channel, action="setting_channel", extra="series",
-                         title="    - Episodios de series",
+                         title=config.get_localized_string(60528),
                          thumbnail=get_thumb("channels_tvshow.png"),
                          folder=False))
     itemlist.append(Item(channel=item.channel, action="setting_channel", extra="anime",
-                         title="    - Episodios de anime",
+                         title=config.get_localized_string(60529),
                          thumbnail=get_thumb("channels_anime.png"),
                          folder=False))
     itemlist.append(
-        Item(channel=item.channel, action="setting_channel", extra="castellano", title="    - Castellano",
+        Item(channel=item.channel, action="setting_channel", extra="castellano", title=config.get_localized_string(70212),
              thumbnail=get_thumb("channels_documentary.png"), folder=False))
 
-    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="latino", title="    - Latino",
+    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="latino", title=config.get_localized_string(70213),
                          thumbnail=get_thumb("channels_documentary.png"), folder=False))
 
-    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="Torrent", title="    - Torrent",
+    itemlist.append(Item(channel=item.channel, action="setting_channel", extra="Torrent", title=config.get_localized_string(70214),
                          thumbnail=get_thumb("channels_documentary.png"), folder=False))
 
     itemlist.append(Item(channel=item.channel, action="setting_channel", extra="documentales",
-                         title="    - Documentales",
+                         title=config.get_localized_string(60530),
                          thumbnail=get_thumb("channels_documentary.png"),
                          folder=False))
-    itemlist.append(Item(channel=item.channel, action="settings", title="Otros ajustes",
+    itemlist.append(Item(channel=item.channel, action="settings", title=config.get_localized_string(60531),
                          thumbnail=get_thumb("setting_0.png"),
                          folder=False))
     return itemlist
 
 
 def settings(item):
-    return platformtools.show_channel_settings(caption="configuración -- Novedades")
+    return platformtools.show_channel_settings(caption=config.get_localized_string(60532))
 
 
 def setting_channel(item):
