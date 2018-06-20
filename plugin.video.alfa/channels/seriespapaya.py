@@ -21,7 +21,7 @@ HOST = "http://www.seriespapaya.com"
 IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán', 'sub': 'VOSE', 'Español Latino':'lat',
            'Español Castellano':'es', 'Sub Español':'VOSE'}
 list_idiomas = IDIOMAS.values()
-CALIDADES = ['360p', '480p', '720p HD', '1080p HD', 'default']
+list_quality = ['360p', '480p', '720p HD', '1080p HD', 'default']
 list_servers = ['powvideo', 'streamplay', 'filebebo', 'flashx', 'gamovideo', 'nowvideo', 'openload', 'streamango',
                 'streamcloud', 'vidzi', 'clipwatching', ]
 
@@ -29,7 +29,7 @@ list_servers = ['powvideo', 'streamplay', 'filebebo', 'flashx', 'gamovideo', 'no
 def mainlist(item):
     logger.info()
 
-    autoplay.init(item.channel, list_servers, CALIDADES)
+    autoplay.init(item.channel, list_servers, list_quality)
 
     thumb_series = get_thumb("channels_tvshow.png")
     thumb_series_az = get_thumb("channels_tvshow_az.png")
@@ -42,7 +42,7 @@ def mainlist(item):
         Item(action="novedades", title="Capítulos de estreno", channel=item.channel, thumbnail=thumb_series))
     itemlist.append(Item(action="search", title="Buscar", channel=item.channel, thumbnail=thumb_buscar))
 
-    itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, CALIDADES)
+    itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, list_quality)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -92,7 +92,7 @@ def series_por_letra_y_grupo(item):
             show=name,
             url=urlparse.urljoin(HOST, url),
             thumbnail=urlparse.urljoin(HOST, img),
-            context=filtertools.context(item, list_idiomas, CALIDADES),
+            context=filtertools.context(item, list_idiomas, list_quality),
             plot = plot,
             infoLabels={'year':year}
         )
@@ -153,7 +153,7 @@ def episodios(item):
                                    language=filter_lang
                                    ))
 
-    itemlist = filtertools.get_links(itemlist, item, list_idiomas, CALIDADES)
+    itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
 
     # Opción "Añadir esta serie a la videoteca de XBMC"
     if config.get_videolibrary_support() and len(itemlist) > 0:
@@ -177,7 +177,7 @@ def search(item, texto):
                        show=show["titulo"],
                        url=urlparse.urljoin(HOST, show["urla"]),
                        thumbnail=urlparse.urljoin(HOST, show["img"]),
-                       context=filtertools.context(item, list_idiomas, CALIDADES)
+                       context=filtertools.context(item, list_idiomas, list_quality)
                        ) for show in tvshows]
 
 
@@ -227,7 +227,7 @@ def findvideos(item):
 
     # Requerido para FilterTools
 
-    itemlist = filtertools.get_links(itemlist, item, list_idiomas, CALIDADES)
+    itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
 
     # Requerido para AutoPlay
 

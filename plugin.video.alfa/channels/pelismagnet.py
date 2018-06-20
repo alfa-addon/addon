@@ -74,7 +74,11 @@ def menu_alf(item):
 
     for letra in ['[0-9]', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
                   'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
-        itemlist.append(Item(channel=item.channel, action="series", title=letra,
+        if 'series' in item.url:
+            action = 'series'
+        else:
+            action = 'pelis'
+        itemlist.append(Item(channel=item.channel, action=action, title=letra,
                              url=item.url + "?keywords=^" + letra + "&page=0"))
 
     return itemlist
@@ -117,6 +121,7 @@ def series(item):
     data = httptools.downloadpage(item.url).data
 
     lista = jsontools.load(data)
+    logger.debug(lista)
     if item.extra == "next":
         lista_ = lista[25:]
     else:
@@ -171,6 +176,7 @@ def episodios(item):
     # post = "page=%s&x=34&y=14" % urllib.quote(item.url)
     # response = httptools.downloadpage(url, post, follow_redirects=False).data
     # url = scrapertools.find_single_match(response, '<meta http-equiv="refresh".*?url=([^"]+)"')
+    logger.debug(item)
     data = httptools.downloadpage(item.url).data
 
     data = jsontools.load(data)
