@@ -735,7 +735,7 @@ def episodios(item):
             else:                                       #episodio normal
                 item_local.title = '%sx%s -' % (item_local.contentSeason, str(item_local.contentEpisodeNumber).zfill(2))
             
-            if len(itemlist) > 0 and item_local.contentSeason == itemlist[-1].contentSeason and item_local.contentEpisodeNumber == itemlist[-1].contentEpisodeNumber and not "Temporada" in itemlist[-1].title and itemlist[-1].contentEpisodeNumber != 0:     #solo guardamos un episodio ...
+            if len(itemlist) > 0 and item_local.contentSeason == itemlist[-1].contentSeason and item_local.contentEpisodeNumber == itemlist[-1].contentEpisodeNumber and item_local.title == itemlist[-1].title and itemlist[-1].contentEpisodeNumber != 0:     #solo guardamos un episodio ...
                 if itemlist[-1].quality:
                     itemlist[-1].quality += ", " + quality          #... pero acumulamos las calidades
                 else:

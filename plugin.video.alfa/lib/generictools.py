@@ -318,24 +318,23 @@ def post_tmdb_episodios(item, itemlist):
 
         #Preparamos el título para que sea compatible con Añadir Serie a Videoteca
         if item.infoLabels['title']: del item.infoLabels['title']
-        if item_local.infoLabels['episodio_titulo']:
-            if "al" in item_local.title:        #Si son episodios múltiples, ponemos nombre de serie
-                if "al 99" in item_local.title.lower():   #Temporada completa.  Buscamos num. total de episodios de la temporada
-                    item_local.title = item_local.title.replace("99", str(num_episodios))
-                item_local.title = '%s %s' % (item_local.title, item_local.contentSerieName)
-                item_local.infoLabels['episodio_titulo'] = '%s - %s' % (scrapertools.find_single_match(item_local.title, r'(al \d+)'), item_local.contentSerieName)
-            else:
-                item_local.title = '%s %s' % (item_local.title, item_local.infoLabels['episodio_titulo'])
             
+        if "Temporada" in item_local.title:     #Compatibilizamos "Temporada" con Unify
+            item_local.title = '%sx%s al 99 -' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber))
+        if " al " in item_local.title:        #Si son episodios múltiples, ponemos nombre de serie
+            if " al 99" in item_local.title.lower():   #Temporada completa.  Buscamos num total de episodios de la temporada
+                item_local.title = item_local.title.replace("99", str(num_episodios))
+            item_local.title = '%s %s' % (item_local.title, item_local.contentSerieName)
+            item_local.infoLabels['episodio_titulo'] = '%s - %s [%s] [%s]' % (scrapertools.find_single_match(item_local.title, r'(al \d+)'), item_local.contentSerieName, item_local.infoLabels['year'], rating)
+        
+        elif item_local.infoLabels['episodio_titulo']:
+            item_local.title = '%s %s' % (item_local.title, item_local.infoLabels['episodio_titulo']) 
             item_local.infoLabels['episodio_titulo'] = '%s [%s] [%s]' % (item_local.infoLabels['episodio_titulo'], item_local.infoLabels['year'], rating)
             
         else:       #Si no hay título de episodio, ponermos el nombre de la serie
             item_local.title = '%s %s' % (item_local.title, item_local.contentSerieName)
-            if "Temporada" in item_local.title:
-                item_local.infoLabels['episodio_titulo'] = '%s - %s [%s] [%s]' % (scrapertools.find_single_match(item_local.title, r'(Temporada \d+ Completa)'), item_local.contentSerieName, item_local.infoLabels['year'], rating)
-            else:
-                item_local.infoLabels['episodio_titulo'] = '%s [%s] [%s]' % (item_local.contentSerieName, item_local.infoLabels['year'], rating)
-            item_local.infoLabels['title'] = item_local.infoLabels['episodio_titulo']
+            item_local.infoLabels['episodio_titulo'] = '%s [%s] [%s]' % (item_local.contentSerieName, item_local.infoLabels['year'], rating)
+            #item_local.infoLabels['title'] = item_local.infoLabels['episodio_titulo']
         
         #Componemos el título final, aunque con Unify usará infoLabels['episodio_titulo']
         item_local.title = '%s [%s] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.title, item_local.infoLabels['year'], rating, item_local.quality, str(item_local.language))
