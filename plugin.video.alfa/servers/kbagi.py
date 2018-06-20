@@ -10,7 +10,7 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     domain = "diskokosmiko.mx"
-    if "kbagi.com" in page_url:
+    if "k-bagi.com" in page_url:
         domain = "kbagi.com"
     logueado, error_message = kbagi.login(domain)
     if not logueado:
@@ -28,8 +28,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    host = "http://kbagi.com"
-    host_string = "kbagi"
+    host = "http://k-bagi.com"
+    host_string = "k-bagi"
     if "diskokosmiko.mx" in page_url:
         host = "http://diskokosmiko.mx"
         host_string = "diskokosmiko"
