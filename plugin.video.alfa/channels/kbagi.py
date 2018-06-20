@@ -35,6 +35,8 @@ def login(pagina):
         dom = pagina.split(".")[0]
         user = config.get_setting("%suser" %dom, "kbagi")
         password = config.get_setting("%spassword" %dom, "kbagi")
+        if "kbagi" in pagina:
+            pagina = "k-bagi.com"
         if not user:
             return False, "Para ver los enlaces de %s es necesario registrarse en %s" %(dom, pagina)
         data = httptools.downloadpage("http://%s" % pagina).data
@@ -65,14 +67,14 @@ def mainlist(item):
     if not logueado:
         itemlist.append(item.clone(title=error_message, action="configuracion", folder=False))
     else:
-        item.extra = "http://kbagi.com"
+        item.extra = "http://k-bagi.com"
         itemlist.append(item.clone(title="kbagi", action="", text_color=color2))
         itemlist.append(
-            item.clone(title="     Búsqueda", action="search", url="http://kbagi.com/action/SearchFiles"))
+            item.clone(title="     Búsqueda", action="search", url="http://k-bagi.com/action/SearchFiles"))
         itemlist.append(item.clone(title="     Colecciones", action="colecciones",
-                                   url="http://kbagi.com/action/home/MoreNewestCollections?pageNumber=1"))
+                                   url="http://k-bagi.com/action/home/MoreNewestCollections?pageNumber=1"))
         itemlist.append(item.clone(title="     Búsqueda personalizada", action="filtro",
-                                   url="http://kbagi.com/action/SearchFiles"))
+                                   url="http://k-bagi.com/action/SearchFiles"))
         itemlist.append(item.clone(title="     Mi cuenta", action="cuenta"))
     logueado, error_message = login("diskokosmiko.mx")
     if not logueado:
