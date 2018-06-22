@@ -249,6 +249,10 @@ msgctxt "#30200"
 msgid "Square"
 msgstr ""
 
+msgctxt "#30300"
+msgid "Faster context menus"
+msgstr ""
+
 msgctxt "#30501"
 msgid "Paths"
 msgstr ""
@@ -3588,5 +3592,9 @@ msgstr ""
 
 msgctxt "#70215"
 msgid "TEST THIS CHANNEL"
+msgstr ""
+
+msgctxt "#70216"
+msgid "Back"
 msgstr ""
 

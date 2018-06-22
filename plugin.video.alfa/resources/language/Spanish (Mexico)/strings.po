@@ -83,7 +83,7 @@ msgstr "Directorio de lista descargas:"
 
 msgctxt "#30019"
 msgid "Filter channels by language:"
-msgstr "Filter channels by language:"
+msgstr "Filtrar canales para idioma:"
 
 msgctxt "#30043"
 msgid "Force view mode:"
@@ -3564,6 +3564,10 @@ msgstr "    - Torrent"
 msgctxt "#70215"
 msgid "TEST THIS CHANNEL"
 msgstr "TESTEAR ESTE CANAL"
+
+msgctxt "#70216"
+msgid "Back"
+msgstr "Atrás"
 
 
 

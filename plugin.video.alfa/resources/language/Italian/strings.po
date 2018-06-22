@@ -3139,7 +3139,7 @@ msgstr "Vuoi che Alfa auto-configuri la videoteca di Kodi?Ti verrà chiesto di i
 
 msgctxt "#70106"
 msgid "If you choose 'No' you can do it later from 'Configuration > Preferences > Paths'."
-msgstr "Si Scegli 'No' potrai farlo in seguito da 'Ipostazioni > Preferenze > Percorsi'."
+msgstr "Se Scegli 'No' potrai farlo in seguito da 'Impostazioni > Preferenze > Percorsi'."
 
 msgctxt "#70107"
 msgid "Select scraper for Tv Shows"
@@ -3576,5 +3576,9 @@ msgstr "    - Torrent"
 msgctxt "#70215"
 msgid "TEST THIS CHANNEL"
 msgstr "TESTA QUESTO CANALE"
+
+msgctxt "#70216"
+msgid "Back"
+msgstr "Indietro"
 
 
