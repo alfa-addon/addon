@@ -83,7 +83,7 @@ def list_all(item):
 
         url = host + scrapedurl
         thumbnail = scrapedthumbnail
-        title = scrapedtitle
+        title = scrapertools.decodeHtmlentities(scrapedtitle)
 
         itemlist.append(Item(channel=item.channel,
                              action='seasons',
@@ -125,7 +125,10 @@ def section(item):
 
     for scrapedurl, scrapedtitle in matches:
 
-        url = host + scrapedurl
+        if item.title == 'Generos':
+            url = host + scrapedurl
+        else:
+            url = scrapedurl
         title = scrapedtitle
         itemlist.append(Item(channel=item.channel,
                              action='list_all',
@@ -211,7 +214,6 @@ def add_language(title, string):
 
     languages = scrapertools.find_multiple_matches(string, '/banderas/(.*?).png')
 
-
     language = []
     for lang in languages:
 
@@ -219,7 +221,7 @@ def add_language(title, string):
             lang = 'vos'
 
         if len(languages) == 1:
-            language = IDIOMAS[languages[0]]
+            language = IDIOMAS[lang]
             title = '%s [%s]' % (title, language)
         else:
             language.append(IDIOMAS[lang])

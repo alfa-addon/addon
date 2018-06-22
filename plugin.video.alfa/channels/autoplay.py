@@ -344,7 +344,7 @@ def start(itemlist, item):
     return itemlist
 
 
-def init(channel, list_servers, list_quality):
+def init(channel, list_servers, list_quality, reset=False):
     '''
     Comprueba la existencia de canal en el archivo de configuracion de Autoplay y si no existe lo añade.
     Es necesario llamar a esta funcion al entrar a cualquier canal que incluya la funcion Autoplay.
@@ -360,6 +360,7 @@ def init(channel, list_servers, list_quality):
     change = False
     result = True
 
+
     if not config.is_xbmc():
         # platformtools.dialog_notification('AutoPlay ERROR', 'Sólo disponible para XBMC/Kodi')
         result = False
@@ -371,7 +372,7 @@ def init(channel, list_servers, list_quality):
             change = True
             autoplay_node = {"AUTOPLAY": {}}
 
-        if channel not in autoplay_node:
+        if channel not in autoplay_node or reset:
             change = True
 
             # Se comprueba que no haya calidades ni servidores duplicados
@@ -573,9 +574,15 @@ def autoplay_config(item):
     list_controls.append(set_priority)
     dict_values["priority"] = settings_node.get("priority", 0)
 
+
+
     # Abrir cuadro de dialogo
     platformtools.show_channel_settings(list_controls=list_controls, dict_values=dict_values, callback='save',
-                                        item=item, caption='%s - AutoPlay' % channel_name)
+                                        item=item, caption='%s - AutoPlay' % channel_name,
+                                        custom_button={'visible': True,
+                                                       'function': "reset",
+                                                        'close': True,
+                                                        'label': 'Reset'})
 
 
 def save(item, dict_data_saved):
@@ -654,3 +661,16 @@ def is_active():
         settings_node = channel_node.get('settings', {})
 
         return settings_node.get('active', False)
+
+
+def reset(item, dict):
+
+    channel_name = item.from_channel
+    channel = __import__('channels.%s' % channel_name, fromlist=["channels.%s" % channel_name])
+    list_servers = channel.list_servers
+    list_quality = channel.list_quality
+
+    init(channel_name, list_servers, list_quality, reset=True)
+    platformtools.dialog_notification('AutoPlay', '%s: Los datos fueron reiniciados' % item.category)
+
+    return
