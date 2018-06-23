@@ -299,7 +299,6 @@ msgstr ""
 
 msgctxt "#30984"
 msgid "Popular"
-
 msgstr ""
 
 msgctxt "#30985"
@@ -3054,10 +3053,6 @@ msgctxt "#70080"
 msgid "Do you want Alfa to auto-configure Kodi's video library?"
 msgstr ""
 
-msgctxt "#70081"
-msgid "If you choose 'No' you can do it later from 'Configuration > Preferences > Paths'."
-msgstr ""
-
 msgctxt "#70082"
 msgid "Global Search"
 msgstr ""
@@ -3596,5 +3591,53 @@ msgstr ""
 
 msgctxt "#70216"
 msgid "Back"
+msgstr ""
+
+msgctxt "#70217"
+msgid "downloads"
+msgstr ""
+
+msgctxt "#70218"
+msgid "Delete complete downloads"
+msgstr ""
+
+msgctxt "#70219"
+msgid "Restart download with error"
+msgstr ""
+
+msgctxt "#70220"
+msgid "Download all"
+msgstr ""
+
+msgctxt "#70221"
+msgid "Delete all"
+msgstr ""
+
+msgctxt "#70222"
+msgid "View downloaded files"
+msgstr ""
+
+msgctxt "#70223"
+msgid "Settings downloads..."
+msgstr ""
+
+msgctxt "#70224"
+msgid "settings -- Downloads"
+msgstr ""
+
+msgctxt "#70225"
+msgid "Download"
+msgstr ""
+
+msgctxt "#70226"
+msgid "Remove from the list"
+msgstr ""
+
+msgctxt "#70227"
+msgid "Restart download and delete data"
+msgstr ""
+
+msgctxt "#70228"
+msgid "Downloaded: %s"
 msgstr ""
 

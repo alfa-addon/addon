@@ -29,7 +29,7 @@ import urlparse
 from threading import Thread, Lock
 
 from core import filetools
-from platformcode import logger
+from platformcode import logger, config
 
 
 class Downloader:
@@ -89,9 +89,9 @@ class Downloader:
         return os.path.abspath(filetools.join(self._path, self._filename))
 
     # Funciones
-    def start_dialog(self, title="Descargando..."):
+    def start_dialog(self, title=config.get_localized_string(60200)):
         from platformcode import platformtools
-        progreso = platformtools.dialog_progress(title, "Iniciando descarga...")
+        progreso = platformtools.dialog_progress(title, config.get_localized_string(60201))
         self.start()
         while self.state == self.states.downloading and not progreso.iscanceled():
             time.sleep(0.1)

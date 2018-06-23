@@ -463,7 +463,7 @@ msgstr "Attendere prego"
 
 msgctxt "#59990"
 msgid "Channels included in the search"
-msgstr "Canali inclusi nella ricerca"
+msgstr "Sto cercando nei canali:"
 
 msgctxt "#59991"
 msgid "All"
@@ -3580,5 +3580,53 @@ msgstr "TESTA QUESTO CANALE"
 msgctxt "#70216"
 msgid "Back"
 msgstr "Indietro"
+
+msgctxt "#70217"
+msgid "downloads"
+msgstr "downloads"
+
+msgctxt "#70218"
+msgid "Delete complete downloads"
+msgstr "Elimina i downloads completati"
+
+msgctxt "#70219"
+msgid "Restart download with error"
+msgstr "Reinizia i download con errori"
+
+msgctxt "#70220"
+msgid "Download all"
+msgstr "Scarica tutti"
+
+msgctxt "#70221"
+msgid "Delete all"
+msgstr "Elimina tutto"
+
+msgctxt "#70222"
+msgid "View downloaded files"
+msgstr "Vedi i files scaricati"
+
+msgctxt "#70223"
+msgid "Settings downloads..."
+msgstr "Configurazione downloads..."
+
+msgctxt "#70224"
+msgid "settings -- Downloads"
+msgstr "configurazione -- Download"
+
+msgctxt "#70225"
+msgid "Download"
+msgstr "Scarica"
+
+msgctxt "#70226"
+msgid "Remove from the list"
+msgstr "Elimina dalla lista"
+
+msgctxt "#70227"
+msgid "Restart download and delete data"
+msgstr "Reinizia il download ed elimina dati"
+
+msgctxt "#70228"
+msgid "Downloaded: %s"
+msgstr "Scaricato: %s"
 
 

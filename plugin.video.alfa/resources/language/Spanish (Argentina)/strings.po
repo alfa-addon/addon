@@ -3569,6 +3569,54 @@ msgctxt "#70216"
 msgid "Back"
 msgstr "Atrás"
 
+msgctxt "#70217"
+msgid "downloads"
+msgstr "descargas"
+
+msgctxt "#70218"
+msgid "Delete complete downloads"
+msgstr "Eliminar descargas completadas"
+
+msgctxt "#70219"
+msgid "Restart download with error"
+msgstr "Reiniciar descargas con error"
+
+msgctxt "#70220"
+msgid "Download all"
+msgstr "Descargar todo"
+
+msgctxt "#70221"
+msgid "Delete all"
+msgstr "Eliminar todo"
+
+msgctxt "#70222"
+msgid "View downloaded files"
+msgstr "Ver archivos descargados"
+
+msgctxt "#70223"
+msgid "Settings downloads..."
+msgstr "Configuración descargas..."
+
+msgctxt "#70224"
+msgid "settings -- Downloads"
+msgstr "configuración -- Descargas"
+
+msgctxt "#70225"
+msgid "Download"
+msgstr "Descargar"
+
+msgctxt "#70226"
+msgid "Remove from the list"
+msgstr "Eliminar de la lista"
+
+msgctxt "#70227"
+msgid "Restart download and delete data"
+msgstr "Reiniciar descarga y eliminar datos"
+
+msgctxt "#70228"
+msgid "Downloaded: %s"
+msgstr "Descargado: %s"
+
 
 
 
