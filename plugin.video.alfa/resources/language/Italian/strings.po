@@ -3629,4 +3629,72 @@ msgctxt "#70228"
 msgid "Downloaded: %s"
 msgstr "Scaricato: %s"
 
+msgctxt "#70229"
+msgid "File location"
+msgstr "Posizione dei files"
+
+msgctxt "#70230"
+msgid "  - Add completed downloads to the video library "
+msgstr "  - Aggiungi download completi alla videoteca"
+
+msgctxt "#70231"
+msgid "  - Move the downloaded file to the video library"
+msgstr "  - Sposta i files scaricati nella videoteca"
+
+msgctxt "#70232"
+msgid "  - View files downloaded from downloads"
+msgstr "  - Visualizzare i files scaricati da Downloads"
+
+msgctxt "#70233"
+msgid "  - Size per block"
+msgstr "  - Dimensione per blocco"
+
+msgctxt "#70234"
+msgid "  - Size by part"
+msgstr "  - Dimensione per parte"
+
+msgctxt "#70235"
+msgid "  - Maximum number of simultaneous connections"
+msgstr "  - Numero massimo di connnessioni simultanee"
+
+msgctxt "#70236"
+msgid "  - Maximum number of parts in memory"
+msgstr "  - Numero massimo di parti in memoria"
+
+msgctxt "#70237"
+msgid "Choice of the server"
+msgstr "Scelta del server"
+
+msgctxt "#70238"
+msgid "- Order of servers"
+msgstr "  - Ordine dei servers"
+
+msgctxt "#70240"
+msgid "  - Preferred quality"
+msgstr "  - Qualità preferita"
+
+msgctxt "#70241"
+msgid "The highest"
+msgstr "La più alta"
+
+msgctxt "#70242"
+msgid "  - Choose the fastest servers"
+msgstr "  - Scegli i servers più veloci"
+
+msgctxt "#70243"
+msgid "Download"
+msgstr "Download"
+
+msgctxt "#70244"
+msgid "Keep"
+msgstr "Mantieni"
+
+msgctxt "#70245"
+msgid "Reorder"
+msgstr "Riordina"
+
+msgctxt "#70246"
+msgid "  - Preferred language"
+msgstr "  - Lingua preferita"
+
 

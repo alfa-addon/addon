@@ -3641,3 +3641,84 @@ msgctxt "#70228"
 msgid "Downloaded: %s"
 msgstr ""
 
+
+msgctxt "#70226"
+msgid "Remove from the list"
+msgstr ""
+
+msgctxt "#70227"
+msgid "Restart download and delete data"
+msgstr ""
+
+msgctxt "#70228"
+msgid "Downloaded: %s"
+msgstr ""
+
+msgctxt "#70229"
+msgid "File location"
+msgstr ""
+
+msgctxt "#70230"
+msgid "  - Add completed downloads to the video library "
+msgstr ""
+
+msgctxt "#70231"
+msgid "  - Move the downloaded file to the video library"
+msgstr ""
+
+msgctxt "#70232"
+msgid "  - View files downloaded from downloads"
+msgstr ""
+
+msgctxt "#70233"
+msgid "  - Size per block"
+msgstr ""
+
+msgctxt "#70234"
+msgid "  - Size by part"
+msgstr ""
+
+msgctxt "#70235"
+msgid "  - Maximum number of simultaneous connections"
+msgstr ""
+
+msgctxt "#70236"
+msgid "  - Maximum number of parts in memory"
+msgstr ""
+
+msgctxt "#70237"
+msgid "Choice of the server"
+msgstr ""
+
+msgctxt "#70238"
+msgid "- Order of servers"
+msgstr ""
+
+msgctxt "#70240"
+msgid "  - Preferred quality"
+msgstr ""
+
+msgctxt "#70241"
+msgid "The highest"
+msgstr ""
+
+msgctxt "#70242"
+msgid "  - Choose the fastest servers"
+msgstr ""
+
+msgctxt "#70243"
+msgid "Download"
+msgstr ""
+
+msgctxt "#70244"
+msgid "Keep"
+msgstr ""
+
+msgctxt "#70245"
+msgid "Reorder"
+msgstr ""
+
+msgctxt "#70246"
+msgid "  - Preferred language"
+msgstr ""
+
