@@ -16,14 +16,14 @@ HOST = 'http://seriesdanko.to/'
 IDIOMAS = {'es': 'Español', 'la': 'Latino', 'vos': 'VOS', 'vo': 'VO'}
 list_idiomas = IDIOMAS.values()
 list_servers = ['streamcloud', 'powvideo', 'gamovideo', 'streamplay', 'openload', 'flashx', 'nowvideo', 'thevideo']
-CALIDADES = ['SD', 'MicroHD', 'HD/MKV']
+list_quality = ['SD', 'MicroHD', 'HD/MKV']
 
 
 
 def mainlist(item):
     logger.info()
 
-    autoplay.init(item.channel, list_servers, CALIDADES)
+    autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
 
     itemlist.append(Item(channel=item.channel, title="Novedades", action="novedades", url=HOST))
@@ -33,7 +33,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
                          url=urlparse.urljoin(HOST, "all.php")))
 
-    itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, CALIDADES)
+    itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, list_quality)
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -76,7 +76,7 @@ def novedades(item):
 
         itemlist.append(Item(channel=item.channel, title=title, url=urlparse.urljoin(HOST, scrapedurl), show=show,
                              action="episodios", thumbnail=scrapedthumb,
-                             context=filtertools.context(item, list_idiomas, CALIDADES), language=language))
+                             context=filtertools.context(item, list_idiomas, list_quality), language=language))
 
     return itemlist
 
@@ -124,7 +124,7 @@ def series_seccion(item):
     for scrapedurl, scrapedtitle in matches[item.first:limit]:
         itemlist.append(Item(channel=item.channel, action="episodios", title=scrapedtitle, show=scrapedtitle,
                              url=urlparse.urljoin(HOST, scrapedurl),
-                             context=filtertools.context(item, list_idiomas, CALIDADES)))
+                             context=filtertools.context(item, list_idiomas, list_quality)))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     #pagination
@@ -157,7 +157,7 @@ def series_por_letra(item):
     itemlist = []
     for url, title, img in shows:
         itemlist.append(item.clone(title=title, url=urlparse.urljoin(HOST, url), action="episodios", thumbnail=img,
-                                   show=title, context=filtertools.context(item, list_idiomas, CALIDADES)))
+                                   show=title, context=filtertools.context(item, list_idiomas, list_quality)))
     return itemlist
 
 
@@ -172,7 +172,7 @@ def search(item, texto):
                            data, re.IGNORECASE)
         for url, title in shows:
             itemlist.append(item.clone(title=title, url=urlparse.urljoin(HOST, url), action="episodios", show=title,
-                                       context=filtertools.context(item, list_idiomas, CALIDADES)))
+                                       context=filtertools.context(item, list_idiomas, list_quality)))
 
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -228,7 +228,7 @@ def episodios(item):
                              infoLabels=infoLabels))
 
 
-    itemlist = filtertools.get_links(itemlist, item, list_idiomas, CALIDADES)
+    itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     # Opción "Añadir esta serie a la videoteca de XBMC"
@@ -266,7 +266,7 @@ def findvideos(item):
 
     # Requerido para FilterTools
 
-    itemlist = filtertools.get_links(itemlist, item, list_idiomas, CALIDADES)
+    itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
 
     # Requerido para AutoPlay
 

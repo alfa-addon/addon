@@ -287,7 +287,6 @@ def findvideos(item):
     strm_id = scrapertools.find_single_match(data, '"id": (.*?),')
     streams = scrapertools.find_single_match(data, '"stream": (.*?)};')
     dict_strm = jsontools.load(streams)
-
     base_url = 'http:%s%s/' % (dict_strm['accessPoint'], strm_id)
     for server in dict_strm['servers']:
         expire = dict_strm['expire']
@@ -297,24 +296,26 @@ def findvideos(item):
 
         strm_url = base_url +'%s?expire=%s&callback=%s&signature=%s&last_modify=%s' % (server, expire, callback,
                                                                                        signature, last_modify)
-
-        strm_data = httptools.downloadpage(strm_url).data
-        strm_data = scrapertools.unescape(strm_data)
-        title = '%s'
-        language = ''
-        if server not in ['fire', 'meph']:
-            urls = scrapertools.find_multiple_matches(strm_data, '"(?:file|src)"*?:.*?"(.*?)"')
-            for url in urls:
+        try:
+            strm_data = httptools.downloadpage(strm_url).data
+            strm_data = scrapertools.unescape(strm_data)
+            title = '%s'
+            language = ''
+            if server not in ['fire', 'meph']:
+                urls = scrapertools.find_multiple_matches(strm_data, '"(?:file|src)"*?:.*?"(.*?)"')
+                for url in urls:
+                    if url != '':
+                        url = url.replace ('\\/','/')
+                        itemlist.append(Item(channel=item.channel, title=title, url=url, action='play'))
+            elif server in ['fire', 'mpeh']:
+                url = scrapertools.find_single_match(strm_data, 'xmlhttp.open(\"GET\", \"(.*?)\"')
                 if url != '':
-                    url = url.replace ('\\/','/')
-                    itemlist.append(Item(channel=item.channel, title=title, url=url, action='play'))
-        elif server in ['fire', 'mpeh']:
-            url = scrapertools.find_single_match(strm_data, 'xmlhttp.open(\"GET\", \"(.*?)\"')
-            if url != '':
-                url = url.replace('\\/', '/')
-                itemlist.append(Item(channel=item.channel, title=url, url=url, action='play'))
-        else:
-            continue
+                    url = url.replace('\\/', '/')
+                    itemlist.append(Item(channel=item.channel, title=url, url=url, action='play'))
+            else:
+                continue
+        except:
+            pass
 
 
     servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server)

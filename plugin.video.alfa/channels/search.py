@@ -38,7 +38,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="opciones", title="Opciones",
                          thumbnail=get_thumb("search.png")))
 
-    itemlist.append(Item(channel="tvmoviedb", action="mainlist", title="Busquèda alternativa",
+    itemlist.append(Item(channel="tvmoviedb", action="mainlist", title="Búsqueda alternativa",
                          thumbnail=get_thumb("search.png")))
 
     saved_searches_list = get_saved_searches()
