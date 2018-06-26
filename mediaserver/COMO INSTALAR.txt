@@ -1,0 +1,13 @@
+COMO INSTALAR LA VERSION MEDIASERVER:
+
+-Descargar Alfa desde el reposotorio de Github:  https://github.com/alfa-addon/addon (opcion Clone or download - Download zip
+-El archivo descargado (addon-master.zip) abrirlo e ingresar a la carpeta: addon-master
+-Descomprimir la carpeta plugin.video.alfa en alguna carpeta
+-Luego descomprimir la carpeta mediaserver encima de la carpeta plugi.video.alfa reemplazando los archivos existentes.
+
+COMO INICIAR LA VERSION MEDIASERVER
+
+Se necesita que esté instalado python 2.x desde aqui: https://www.python.org/
+
+Para iniciar: python alfa.py
+
