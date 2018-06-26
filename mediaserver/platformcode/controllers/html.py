@@ -696,15 +696,17 @@ class platform(Platformtools):
                     c["value"] = dict_values[c["id"]]
 
             # Translation
-            if c['label'].startswith('@') and unicode(c['label'][1:]).isnumeric():
-                c['label'] = str(config.get_localized_string(c['label'][1:]))
+            string_id = re.findall(r'\$ADDON\[[^\d]+(\d+)]', c['label'], flags=re.DOTALL)
+            if c['label'].startswith('$') and len(string_id) > 0:
+                c['label'] = str(config.get_localized_string(string_id[0]))
             if c["label"].endswith(":"): c["label"] = c["label"][:-1]
 
             if c['type'] == 'list':
                 lvalues = []
                 for li in c['lvalues']:
-                    if li.startswith('@') and unicode(li[1:]).isnumeric():
-                        lvalues.append(str(config.get_localized_string(li[1:])))
+                    string_id = re.findall(r'\$ADDON\[[^\d]+(\d+)]', li, flags=re.DOTALL)
+                    if li.startswith('$') and len(string_id) > 0:
+                        lvalues.append(str(config.get_localized_string(string_id[0])))
                     else:
                         lvalues.append(li)
                 c['lvalues'] = lvalues
