@@ -12,6 +12,8 @@ def test_video_exists(page_url):
     except:
         pass
 
+    if response.code == 404:
+        return False, "[Rapidvideo] El archivo no existe ó ha sido borrado"
     if not response.data or "urlopen error [Errno 1]" in str(response.code):
         from platformcode import config
         if config.is_xbmc():
