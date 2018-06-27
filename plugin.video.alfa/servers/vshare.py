@@ -26,22 +26,25 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     if flowplayer:
         return [["FLV", flowplayer.group(1)]]
 
-    jsUnpack = jsunpack.unpack(data)
-    logger.debug(jsUnpack)
-
     video_urls = []
+    try:
+        jsUnpack = jsunpack.unpack(data)
+        logger.debug(jsUnpack)
+        fields = re.search("\[([^\]]+).*?parseInt\(value\)-(\d+)", jsUnpack)
+        if fields:
+            logger.debug("Values: " + fields.group(1))
+            logger.debug("Substract: " + fields.group(2))
+            substract = int(fields.group(2))
 
-    fields = re.search("\[([^\]]+).*?parseInt\(value\)-(\d+)", jsUnpack)
-    if fields:
-        logger.debug("Values: " + fields.group(1))
-        logger.debug("Substract: " + fields.group(2))
-        substract = int(fields.group(2))
+            arrayResult = [chr(int(value) - substract) for value in fields.group(1).split(",")]
+            strResult = "".join(arrayResult)
+            logger.debug(strResult)
+            videoSources = re.findall("<source[\s]+src=[\"'](?P<url>[^\"']+)[^>]+label=[\"'](?P<label>[^\"']+)", strResult)
+            for url, label in videoSources:
+                video_urls.append([label, url])
+            video_urls.sort(key=lambda i: int(i[0].replace("p","")))
+    except:
+        url = scrapertools.find_single_match(data,'<source src="([^"]+)')
+        video_urls.append(["MP4", url])
 
-        arrayResult = [chr(int(value) - substract) for value in fields.group(1).split(",")]
-        strResult = "".join(arrayResult)
-        logger.debug(strResult)
-        videoSources = re.findall("<source[\s]+src=[\"'](?P<url>[^\"']+)[^>]+label=[\"'](?P<label>[^\"']+)", strResult)
-        for url, label in videoSources:
-            video_urls.append([label, url])
-    video_urls.sort(key=lambda i: int(i[0].replace("p","")))
     return video_urls
