@@ -89,40 +89,40 @@ def mainlist(item):
 
     # Si hay alguno completado
     if 2 in estados:
-        itemlist.insert(0, Item(channel=item.channel, action="clean_ready", title="Eliminar descargas completadas",
+        itemlist.insert(0, Item(channel=item.channel, action="clean_ready", title=config.get_localized_string(70218),
                                 contentType=item.contentType, contentChannel=item.contentChannel,
                                 contentSerieName=item.contentSerieName, text_color="sandybrown"))
 
     # Si hay alguno con error
     if 3 in estados:
-        itemlist.insert(0, Item(channel=item.channel, action="restart_error", title="Reiniciar descargas con error",
+        itemlist.insert(0, Item(channel=item.channel, action="restart_error", title=config.get_localized_string(70219),
                                 contentType=item.contentType, contentChannel=item.contentChannel,
                                 contentSerieName=item.contentSerieName, text_color="orange"))
 
     # Si hay alguno pendiente
     if 1 in estados or 0 in estados:
-        itemlist.insert(0, Item(channel=item.channel, action="download_all", title="Descargar todo",
+        itemlist.insert(0, Item(channel=item.channel, action="download_all", title=config.get_localized_string(70220),
                                 contentType=item.contentType, contentChannel=item.contentChannel,
                                 contentSerieName=item.contentSerieName, text_color="green"))
 
     if len(itemlist):
-        itemlist.insert(0, Item(channel=item.channel, action="clean_all", title="Eliminar todo",
+        itemlist.insert(0, Item(channel=item.channel, action="clean_all", title=config.get_localized_string(70221),
                                 contentType=item.contentType, contentChannel=item.contentChannel,
                                 contentSerieName=item.contentSerieName, text_color="red"))
 
     if not item.contentType == "tvshow" and config.get_setting("browser", "downloads") == True:
-        itemlist.insert(0, Item(channel=item.channel, action="browser", title="Ver archivos descargados",
+        itemlist.insert(0, Item(channel=item.channel, action="browser", title=config.get_localized_string(70222),
                                 url=DOWNLOAD_PATH, text_color="yellow"))
 
     if not item.contentType == "tvshow":
-        itemlist.insert(0, Item(channel=item.channel, action="settings", title="Configuración descargas...",
+        itemlist.insert(0, Item(channel=item.channel, action="settings", title=config.get_localized_string(70223),
                                 text_color="blue"))
 
     return itemlist
 
 
 def settings(item):
-    ret = platformtools.show_channel_settings(caption="configuración -- Descargas")
+    ret = platformtools.show_channel_settings(caption=config.get_localized_string(70224))
     platformtools.itemlist_refresh()
     return ret
 
@@ -211,7 +211,7 @@ def menu(item):
     else:
         servidor = "Auto"
     # Opciones disponibles para el menu
-    op = ["Descargar", "Eliminar de la lista", "Reiniciar descarga y eliminar datos",
+    op = [config.get_localized_string(70225), config.get_localized_string(70226), config.get_localized_string(70227),
           "Modificar servidor: %s" % (servidor.capitalize())]
 
     opciones = []
@@ -237,7 +237,7 @@ def menu(item):
         opciones.append(op[1])  # Eliminar de la lista
 
     # Mostramos el dialogo
-    seleccion = platformtools.dialog_select("Elige una opción", opciones)
+    seleccion = platformtools.dialog_select(config.get_localized_string(30163), opciones)
 
     # -1 es cancelar
     if seleccion == -1: return
@@ -289,12 +289,12 @@ def move_to_libray(item):
     if config.get_setting("library_add", "downloads") == True:
         if filetools.isfile(final_path):
             if item.contentType == "movie" and item.infoLabels["tmdb_id"]:
-                library_item = Item(title="Descargado: %s" % item.downloadFilename, channel="downloads",
+                library_item = Item(title=config.get_localized_string(70228) % item.downloadFilename, channel="downloads",
                                     action="findvideos", infoLabels=item.infoLabels, url=final_path)
                 videolibrarytools.save_movie(library_item)
 
             elif item.contentType == "episode" and item.infoLabels["tmdb_id"]:
-                library_item = Item(title="Descargado: %s" % item.downloadFilename, channel="downloads",
+                library_item = Item(title=config.get_localized_string(70228) % item.downloadFilename, channel="downloads",
                                     action="findvideos", infoLabels=item.infoLabels, url=final_path)
                 tvshow = Item(channel="downloads", contentType="tvshow",
                               infoLabels={"tmdb_id": item.infoLabels["tmdb_id"]})
@@ -511,11 +511,11 @@ def download_from_server(item):
     logger.info(item.tostring())
     unsupported_servers = ["torrent"]
 
-    progreso = platformtools.dialog_progress("Descargas", "Probando con: %s" % item.server)
+    progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70178) % item.server)
     channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
     if hasattr(channel, "play") and not item.play_menu:
 
-        progreso.update(50, "Probando con: %s" % item.server, "Conectando con %s..." % item.contentChannel)
+        progreso.update(50, config.get_localized_string(70178) % item.server, config.get_localized_string(60003) % item.contentChannel)
         try:
             itemlist = getattr(channel, "play")(item.clone(channel=item.contentChannel, action=item.contentAction))
         except:
@@ -578,10 +578,10 @@ def download_from_best_server(item):
 
     result = {"downloadStatus": STATUS_CODES.error}
 
-    progreso = platformtools.dialog_progress("Descargas", "Obteniendo lista de servidores disponibles...")
+    progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70179))
     channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
 
-    progreso.update(50, "Obteniendo lista de servidores disponibles:", "Conectando con %s..." % item.contentChannel)
+    progreso.update(50, config.get_localized_string(70184), config.get_localized_string(70180) % item.contentChannel)
 
     if hasattr(channel, item.contentAction):
         play_items = getattr(channel, item.contentAction)(
@@ -591,8 +591,8 @@ def download_from_best_server(item):
 
     play_items = filter(lambda x: x.action == "play" and not "trailer" in x.title.lower(), play_items)
 
-    progreso.update(100, "Obteniendo lista de servidores disponibles", "Servidores disponibles: %s" % len(play_items),
-                    "Identificando servidores...")
+    progreso.update(100, config.get_localized_string(70183), config.get_localized_string(70181) % len(play_items),
+                    config.get_localized_string(70182))
 
     if config.get_setting("server_reorder", "downloads") == 1:
         play_items.sort(key=sort_method)
@@ -625,9 +625,9 @@ def select_server(item):
     logger.info(
         "contentAction: %s | contentChannel: %s | url: %s" % (item.contentAction, item.contentChannel, item.url))
 
-    progreso = platformtools.dialog_progress("Descargas", "Obteniendo lista de servidores disponibles...")
+    progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70179))
     channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
-    progreso.update(50, "Obteniendo lista de servidores disponibles:", "Conectando con %s..." % item.contentChannel)
+    progreso.update(50, config.get_localized_string(70184), config.get_localized_string(70180) % item.contentChannel)
 
     if hasattr(channel, item.contentAction):
         play_items = getattr(channel, item.contentAction)(
@@ -637,14 +637,14 @@ def select_server(item):
 
     play_items = filter(lambda x: x.action == "play" and not "trailer" in x.title.lower(), play_items)
 
-    progreso.update(100, "Obteniendo lista de servidores disponibles", "Servidores disponibles: %s" % len(play_items),
-                    "Identificando servidores...")
+    progreso.update(100, config.get_localized_string(70183), config.get_localized_string(70181) % len(play_items),
+                    config.get_localized_string(70182))
 
     for x, i in enumerate(play_items):
         if not i.server and hasattr(channel, "play"):
             play_items[x] = getattr(channel, "play")(i)
 
-    seleccion = platformtools.dialog_select("Selecciona el servidor", ["Auto"] + [s.title for s in play_items])
+    seleccion = platformtools.dialog_select(config.get_localized_string(70192), ["Auto"] + [s.title for s in play_items])
     if seleccion > 1:
         update_json(item.path, {
             "downloadServer": {"url": play_items[seleccion - 1].url, "server": play_items[seleccion - 1].server}})
@@ -795,7 +795,7 @@ def save_download_video(item):
 
     write_json(item)
 
-    if not platformtools.dialog_yesno(config.get_localized_string(30101), "¿Iniciar la descarga ahora?"):
+    if not platformtools.dialog_yesno(config.get_localized_string(30101), config.get_localized_string(70189)):
         platformtools.dialog_ok(config.get_localized_string(30101), item.contentTitle,
                                 config.get_localized_string(30109))
     else:
@@ -806,7 +806,7 @@ def save_download_movie(item):
     logger.info("contentAction: %s | contentChannel: %s | contentTitle: %s" % (
         item.contentAction, item.contentChannel, item.contentTitle))
 
-    progreso = platformtools.dialog_progress("Descargas", "Obteniendo datos de la pelicula")
+    progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70191))
 
     set_movie_title(item)
 
@@ -815,7 +815,7 @@ def save_download_movie(item):
         progreso.close()
         return save_download_video(item)
 
-    progreso.update(0, "Añadiendo pelicula...")
+    progreso.update(0, config.get_localized_string(60062))
 
     item.downloadFilename = filetools.validate_path("%s [%s]" % (item.contentTitle.strip(), item.contentChannel))
 
@@ -823,7 +823,7 @@ def save_download_movie(item):
 
     progreso.close()
 
-    if not platformtools.dialog_yesno(config.get_localized_string(30101), "¿Iniciar la descarga ahora?"):
+    if not platformtools.dialog_yesno(config.get_localized_string(30101), config.get_localized_string(70189)):
         platformtools.dialog_ok(config.get_localized_string(30101), item.contentTitle,
                                 config.get_localized_string(30109))
     else:
@@ -834,17 +834,17 @@ def save_download_tvshow(item):
     logger.info("contentAction: %s | contentChannel: %s | contentType: %s | contentSerieName: %s" % (
         item.contentAction, item.contentChannel, item.contentType, item.contentSerieName))
 
-    progreso = platformtools.dialog_progress("Descargas", "Obteniendo datos de la serie")
+    progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70188))
 
     scraper.find_and_set_infoLabels(item)
 
     item.downloadFilename = filetools.validate_path("%s [%s]" % (item.contentSerieName, item.contentChannel))
 
-    progreso.update(0, "Obteniendo episodios...", "conectando con %s..." % item.contentChannel)
+    progreso.update(0, config.get_localized_string(70186), config.get_localized_string(70187) % item.contentChannel)
 
     episodes = get_episodes(item)
 
-    progreso.update(0, "Añadiendo capitulos...", " ")
+    progreso.update(0, config.get_localized_string(70190), " ")
 
     for x, i in enumerate(episodes):
         progreso.update(x * 100 / len(episodes),
@@ -852,7 +852,7 @@ def save_download_tvshow(item):
         write_json(i)
     progreso.close()
 
-    if not platformtools.dialog_yesno(config.get_localized_string(30101), "¿Iniciar la descarga ahora?"):
+    if not platformtools.dialog_yesno(config.get_localized_string(30101), config.get_localized_string(70189)):
         platformtools.dialog_ok(config.get_localized_string(30101),
                                 str(len(episodes)) + " capitulos de: " + item.contentSerieName,
                                 config.get_localized_string(30109))
