@@ -5,6 +5,10 @@
       {
         "pattern": "(vshare.io/v/[a-zA-Z0-9/-]+)",
         "url": "http://\\1"
+      },
+      {
+        "pattern": "(vshare.eu/embed-[a-zA-Z0-9/-]+.html)",
+        "url": "http://\\1"
       }
     ]
   },

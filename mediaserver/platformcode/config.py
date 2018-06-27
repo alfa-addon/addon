@@ -310,6 +310,23 @@ def verify_directories_created():
             logger.debug("Creating %s: %s" % (path, saved_path))
             filetools.mkdir(saved_path)
 
+    config_paths = [["folder_movies", "CINE"],
+                    ["folder_tvshows", "SERIES"]]
+
+    for path, default in config_paths:
+        saved_path = get_setting(path)
+
+        if not saved_path:
+            saved_path = default
+            set_setting(path, saved_path)
+
+        content_path = filetools.join(get_videolibrary_path(), saved_path)
+        if not filetools.exists(content_path):
+            logger.debug("Creating %s: %s" % (path, content_path))
+
+            # si se crea el directorio
+            filetools.mkdir(content_path)
+
 
 def get_local_ip():
     import socket
@@ -371,6 +388,7 @@ if not os.path.exists(get_data_path()):
 # Literales
 TRANSLATION_FILE_PATH = os.path.join(get_runtime_path(), "resources", "language", "Spanish", "strings.po")
 load_settings()
+
 
 # modo adulto:
 # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie sesión
