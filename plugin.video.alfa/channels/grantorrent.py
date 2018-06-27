@@ -286,20 +286,20 @@ def listado(item):
         title = title.replace("Dual", "").replace("dual", "").replace("Subtitulada", "").replace("subtitulada", "").replace("Subt", "").replace("subt", "").replace("Sub", "").replace("sub", "").replace("(Reparado)", "").replace("(Proper)", "").replace("(proper)", "").replace("Proper", "").replace("proper", "").replace("(Latino)", "").replace("Latino", "")
         title = title.replace("- HDRip", "").replace("(HDRip)", "").replace("- Hdrip", "").replace("(microHD)", "").replace("(DVDRip)", "").replace("(HDRip)", "").replace("(BR-LINE)", "").replace("(HDTS-SCREENER)", "").replace("(BDRip)", "").replace("(BR-Screener)", "").replace("(DVDScreener)", "").replace("TS-Screener", "").replace(" TS", "").replace(" Ts", "")
             
-        if item_local.extra == "peliculas":         #preparamos Item para películas
+        if item_local.extra == "peliculas":                 #preparamos Item para películas
             if "/serie" in scrapedurl or "/serie" in item.url:
                 continue
             item_local.contentType = "movie"
             item_local.action = "findvideos"
-            title = scrapertools.htmlclean(title)   #Quitamos html restante
+            title = scrapertools.htmlclean(title)           #Quitamos html restante
             item_local.contentTitle = title.strip()
-        else:                                       #preparamos Item para series
+        else:                                               #preparamos Item para series
             if not "/serie" in scrapedurl and not "/serie" in item.url:
                 continue
-            if modo_serie_temp == 1:                #si está en modo Serie
+            if modo_serie_temp == 1:                        #si está en modo Serie
                 item_local.contentType = "tvshow"
                 item_local.extra = "tvshow"
-            else:                                   #si no, en modo temporada
+            else:                                           #si no, en modo temporada
                 item_local.contentType = "season"
                 item_local.extra = "season"
             item_local.action = "episodios"
@@ -378,6 +378,7 @@ def findvideos(item):
         if item.contentType == "episode":       #En Series los campos están en otro orden.  No hay size, en su lugar sxe
             temp_epi = quality
             quality = size
+            size = ''
             contentSeason = ''
             contentEpisodeNumber = ''
             try:                                #obtenemos la temporada y episodio de la página y la comparamos con Item
@@ -423,17 +424,11 @@ def findvideos(item):
             item_local.quality = quality
         if "temporada" in temp_epi.lower():
             item_local.quality = '%s [Temporada]' % item_local.quality
-        if size and item_local.contentType != "episode":
+        #if size and item_local.contentType != "episode":
+        if size:
             size = size.replace(".", ",").replace("B,", " B").replace("b,", " b")
             item_local.quality = '%s [%s]' % (item_local.quality, size)
-        
-        #Limpiamos de año y rating de episodios
-        if item.infoLabels['episodio_titulo']:
-            item.infoLabels['episodio_titulo'] = re.sub(r'\s?\[.*?\]', '', item.infoLabels['episodio_titulo'])
-            item.infoLabels['episodio_titulo'] = item.infoLabels['episodio_titulo'].replace(item.wanted, '')
-        if item.infoLabels['aired'] and item.contentType == "episode":
-            item.infoLabels['year'] = scrapertools.find_single_match(str(item.infoLabels['aired']), r'\/(\d{4})')
-        
+
         #Salvamos la url del .torrent
         if scrapedurl:
             item_local.url = scrapedurl
@@ -446,7 +441,7 @@ def findvideos(item):
         
             itemlist.append(item_local.clone())     #Pintar pantalla
             
-        logger.debug("TORRENT: " + item_local.url + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality)
+        #logger.debug("TORRENT: " + item_local.url + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality)
         #logger.debug(item_local)
 
     return itemlist
@@ -495,14 +490,14 @@ def episodios(item):
         matches = re.compile(patron, re.DOTALL).findall(str(item.library_playcounts))
         max_temp = int(max(matches))
     
-    if not item.library_playcounts:    #no viene de Videoteca, se ponen valores de configuración o de la pasada anterior
+    if not item.library_playcounts:     #no viene de Videoteca, se ponen valores de configuración o de la pasada anterior
         if not item.contentType:
             if modo_serie_temp == 0:
                 item.contentType = "season"
             else:
                 item.contentType = "tvshow"
                 if item.contentSeason:
-                    item.contentSeason = 0
+                    del item.infoLabels['season']
 
     elif max_temp < item.infoLabels["number_of_seasons"]:       #Si tenemos en .nfo menos temporadas, Temp.
         item.contentType = "season"
