@@ -494,9 +494,62 @@ def update_tvshow(item):
     p_dialog.close()
 
 
+def mark_content_as_watched2(item):
+    logger.info()
+   # logger.debug("item:\n" + item.tostring('\n'))
+
+    if filetools.exists(item.nfo):
+        head_nfo, it = videolibrarytools.read_nfo(item.nfo) 
+        #logger.debug(it) 
+
+        if item.contentType == 'movie':
+            name_file = os.path.splitext(os.path.basename(item.nfo))[0]
+            
+            if name_file != 'tvshow' :
+                it.library_playcounts.update({name_file: item.playcount}) 
+
+        if item.contentType == 'episode' or item.contentType == 'list' or name_file == 'tvshow':
+       # elif item.contentType == 'episode':
+            name_file = os.path.splitext(os.path.basename(item.strm_path))[0]
+            num_season = name_file [0]
+            item.__setattr__('contentType', 'episode') 
+            item.__setattr__('contentSeason', num_season) 
+            #logger.debug(name_file) 
+         
+        else:
+            name_file = item.contentTitle
+           # logger.debug(name_file) 
+
+        if not hasattr(it, 'library_playcounts'):
+            it.library_playcounts = {}
+        it.library_playcounts.update({name_file: item.playcount}) 
+
+        # se comprueba que si todos los episodios de una temporada están marcados, se marque tb la temporada
+        if item.contentType != 'movie':
+            it = check_season_playcount(it, item.contentSeason)
+            #logger.debug(it) 
+
+        # Guardamos los cambios en item.nfo
+        if filetools.write(item.nfo, head_nfo + it.tojson()):
+            item.infoLabels['playcount'] = item.playcount
+            logger.debug(item.playcount)
+
+           # if  item.contentType == 'episodesss':
+                # Actualizar toda la serie
+                #new_item = item.clone(contentSeason=-1)
+                #mark_season_as_watched(new_item)
+
+            if config.is_xbmc():
+                from platformcode import xbmc_videolibrary
+                xbmc_videolibrary.mark_content_as_watched_on_kodi(item , item.playcount)
+               # logger.debug(item) 
+
+            platformtools.itemlist_refresh() 
+
+
 def mark_content_as_watched(item):
     logger.info()
-    # logger.debug("item:\n" + item.tostring('\n'))
+    logger.debug("item:\n" + item.tostring('\n'))
 
     if filetools.exists(item.nfo):
         head_nfo, it = videolibrarytools.read_nfo(item.nfo)
@@ -520,10 +573,11 @@ def mark_content_as_watched(item):
         if filetools.write(item.nfo, head_nfo + it.tojson()):
             item.infoLabels['playcount'] = item.playcount
 
-            if item.contentType == 'tvshow':
+            if item.contentType == 'tvshow' and item.type != 'episode' :
                 # Actualizar toda la serie
                 new_item = item.clone(contentSeason=-1)
                 mark_season_as_watched(new_item)
+
             if config.is_xbmc(): #and item.contentType == 'episode':
                 from platformcode import xbmc_videolibrary
                 xbmc_videolibrary.mark_content_as_watched_on_kodi(item, item.playcount)
@@ -555,7 +609,7 @@ def mark_season_as_watched(item):
             season, episode = season_episode.split("x")
 
             if int(item.contentSeason) == -1 or int(season) == int(item.contentSeason):
-                name_file = os.path.splitext(os.path.basename(f))[0]
+                name_file = os.path.splitext(os.path.basename(i))[0]
                 it.library_playcounts[name_file] = item.playcount
                 episodios_marcados += 1
 
@@ -685,16 +739,19 @@ def check_season_playcount(item, season):
 
 def check_tvshow_playcount(item, season):
     logger.info()
+   # logger.debug(item) 
     if season:
         temporadas_serie = 0
         temporadas_vistas_serie = 0
         for key, value in item.library_playcounts.iteritems():
-            if key == ("season %s" % season):
+            #if key.startswith("season %s" % season):
+            if key.startswith("season" ):
                 temporadas_serie += 1
                 if value > 0:
                     temporadas_vistas_serie += 1
+                    #logger.debug(temporadas_serie)
 
-        if temporadas_serie == temporadas_vistas_serie:
+        if temporadas_serie == temporadas_vistas_serie: 
             item.library_playcounts.update({item.title: 1})
         else:
             item.library_playcounts.update({item.title: 0})

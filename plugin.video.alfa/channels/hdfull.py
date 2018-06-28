@@ -413,9 +413,6 @@ def episodios(item):
     patron = "<li><a href='([^']+)'>[^<]+</a></li>"
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl in matches:
-        if "temporada-0" in scrapedurl:
-            continue
-        ## Episodios
         data = agrupa_datos(httptools.downloadpage(scrapedurl).data)
         sid = scrapertools.get_match(data, "<script>var sid = '(\d+)'")
         ssid = scrapertools.get_match(scrapedurl, "temporada-(\d+)")

@@ -490,7 +490,7 @@ def episodios(item):
         # Sin valoración:
         # show = re.sub(r"\s\(\d+\.\d+\)", "", item.show)
         itemlist.append(
-            Item(channel='plusdede', title="Añadir esta serie a la biblioteca de XBMC", url=item.url, token=token,
+            Item(channel='plusdede', title="Añadir esta serie a la videoteca", url=item.url, token=token,
                  action="add_serie_to_library", extra="episodios###", show=show))
         itemlist.append(
             Item(channel='plusdede', title="Descargar todos los episodios de la serie", url=item.url, token=token,
