@@ -22,26 +22,10 @@ def cachePage(url, post=None, headers=None, modoCache=None, timeout=None):
 def downloadpage(url, post=None, headers=None, follow_redirects=True, timeout=None, header_to_get=None):
     response = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=follow_redirects,
                                       timeout=timeout)
-
     if header_to_get:
         return response.headers.get(header_to_get)
     else:
         return response.data
-
-
-# def downloadpageWithResult(url, post=None, headers=None, follow_redirects=True, timeout=None, header_to_get=None):
-#     response = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=follow_redirects,
-#                                       timeout=timeout)
-#
-#     if header_to_get:
-#         return response.headers.get(header_to_get)
-#     else:
-#         return response.data, response.code
-
-
-# def downloadpageWithoutCookies(url):
-#     response = httptools.downloadpage(url, cookies=False)
-#     return response.data
 
 
 def downloadpageGzip(url):
@@ -60,21 +44,10 @@ def get_header_from_response(url, header_to_get="", post=None, headers=None):
     return response.headers.get(header_to_get)
 
 
-# def get_headers_from_response(url, post=None, headers=None):
-#     response = httptools.downloadpage(url, post=post, headers=headers, only_headers=True)
-#     return response.headers.items()
-
-
 def read_body_and_headers(url, post=None, headers=None, follow_redirects=False, timeout=None):
     response = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=follow_redirects,
                                       timeout=timeout)
     return response.data, response.headers
-
-
-# def anti_cloudflare(url, host="", headers=None, post=None, location=False):
-#     # anti_cloudfare ya integrado en httptools por defecto
-#     response = httptools.downloadpage(url, post=post, headers=headers)
-#     return response.data
 
 
 def printMatches(matches):
@@ -130,17 +103,6 @@ def unescape(text):
         else:
             # named entity
             try:
-                '''
-                if text[1:-1] == "amp":
-                    text = "&amp;amp;"
-                elif text[1:-1] == "gt":
-                    text = "&amp;gt;"
-                elif text[1:-1] == "lt":
-                    text = "&amp;lt;"
-                else:
-                    print text[1:-1]
-                    text = unichr(htmlentitydefs.name2codepoint[text[1:-1]]).encode("utf-8")
-                '''
                 import htmlentitydefs
                 text = unichr(htmlentitydefs.name2codepoint[text[1:-1]]).encode("utf-8")
             except KeyError:
@@ -385,27 +347,6 @@ def remove_show_from_title(title, show):
     return title
 
 
-# def getRandom(str):
-#     return get_md5(str)
-
-
-# def unseo(cadena):
-#     if cadena.upper().startswith("VER GRATIS LA PELICULA "):
-#         cadena = cadena[23:]
-#     elif cadena.upper().startswith("VER GRATIS PELICULA "):
-#         cadena = cadena[20:]
-#     elif cadena.upper().startswith("VER ONLINE LA PELICULA "):
-#         cadena = cadena[23:]
-#     elif cadena.upper().startswith("VER GRATIS "):
-#         cadena = cadena[11:]
-#     elif cadena.upper().startswith("VER ONLINE "):
-#         cadena = cadena[11:]
-#     elif cadena.upper().startswith("DESCARGA DIRECTA "):
-#         cadena = cadena[17:]
-#     return cadena
-
-
-# scrapertools.get_filename_from_url(media_url)[-4:]
 def get_filename_from_url(url):
     import urlparse
     parsed_url = urlparse.urlparse(url)
@@ -465,7 +406,10 @@ def get_season_and_episode(title):
         try:
             matches = re.compile(patron, re.I).search(title)
             if matches:
-                filename = matches.group(1).lstrip('0') + "x" + matches.group(2).zfill(2)
+                if len(matches.group(1)) == 1:
+                    filename = matches.group(1) + "x" + matches.group(2).zfill(2)
+                else:
+                    filename = matches.group(1).lstrip('0') + "x" + matches.group(2).zfill(2)
                 break
         except:
             pass
@@ -473,27 +417,3 @@ def get_season_and_episode(title):
     logger.info("'" + title + "' -> '" + filename + "'")
 
     return filename
-
-
-# def get_sha1(cadena):
-#     try:
-#         import hashlib
-#         devuelve = hashlib.sha1(cadena).hexdigest()
-#     except:
-#         import sha
-#         import binascii
-#         devuelve = binascii.hexlify(sha.new(cadena).digest())
-#
-#     return devuelve
-
-
-# def get_md5(cadena):
-#     try:
-#         import hashlib
-#         devuelve = hashlib.md5(cadena).hexdigest()
-#     except:
-#         import md5
-#         import binascii
-#         devuelve = binascii.hexlify(md5.new(cadena).digest())
-#
-#     return devuelve

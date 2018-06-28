@@ -40,6 +40,7 @@ def run(item):
                 platformtools.render_items(None, item)
                 return
 
+    channelmodule = None
     # Importa el canal para el item, todo item debe tener un canal, sino sale de la función
     if item.channel:
         channelmodule = import_channel(item)
