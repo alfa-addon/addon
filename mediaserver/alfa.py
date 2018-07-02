@@ -17,7 +17,6 @@ from platformcode import platformtools, logger
 import HTTPAndWSServer
 
 http_port = config.get_setting("server.port")
-websocket_port = config.get_setting("websocket.port")
 myip = config.get_local_ip()
 
 
@@ -44,7 +43,6 @@ def show_info():
     print ("--------------------------------------------------------------------")
     print ("Alfa Iniciado")
     print ("La URL para acceder es http://%s:%s" % (myip, http_port))
-    print ("WebSocket Server iniciado en ws://%s:%s" % (myip, websocket_port))
     print ("--------------------------------------------------------------------")
     print ("Runtime Path      : " + config.get_runtime_path())
     print ("Data Path         : " + config.get_data_path())
@@ -72,7 +70,6 @@ def start():
         logger.info("--------------------------------------------------------------------")
         logger.info("Alfa Iniciado")
         logger.info("La URL para acceder es http://%s:%s" % (myip, http_port))
-        logger.info("WebSocket Server iniciado en ws://%s:%s" % (myip, websocket_port))
         logger.info("--------------------------------------------------------------------")
         logger.info("Runtime Path      : " + config.get_runtime_path())
         logger.info("Data Path         : " + config.get_data_path())
