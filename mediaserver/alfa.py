@@ -14,8 +14,7 @@ from platformcode import config
 
 sys.path.append(os.path.join(config.get_runtime_path(), 'lib'))
 from platformcode import platformtools, logger
-import HTTPServer
-import WebSocket
+import HTTPAndWSServer
 
 http_port = config.get_setting("server.port")
 websocket_port = config.get_setting("websocket.port")
@@ -67,8 +66,7 @@ def start():
     logger.info("server init...")
     config.verify_directories_created()
     try:
-        HTTPServer.start(show_info)
-        WebSocket.start(show_info)
+        HTTPAndWSServer.start(show_info)
 
         # Da por levantado el servicio
         logger.info("--------------------------------------------------------------------")
@@ -91,9 +89,7 @@ def start():
 
     except KeyboardInterrupt:
         print 'Deteniendo el servidor HTTP...'
-        HTTPServer.stop()
-        print 'Deteniendo el servidor WebSocket...'
-        WebSocket.stop()
+        HTTPAndWSServer.stop()
         print 'Alfa Detenido'
         flag = False
 

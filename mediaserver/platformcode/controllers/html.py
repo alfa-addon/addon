@@ -33,7 +33,10 @@ class html(Controller):
         self.platformtools = platform(self)
         self.data = {}
         if self.handler:
-            self.client_ip = handler.client.getpeername()[0]
+            if hasattr(handler, "client"):
+                self.client_ip = handler.client.getpeername()[0]
+            else:
+                self.client_ip = handler.client_address[0]
             self.send_message({"action": "connect",
                                "data": {"version": "Alfa %s" % version,
                                         "date": "--/--/----"}})
