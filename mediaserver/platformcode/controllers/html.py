@@ -15,14 +15,9 @@ from platformcode import config
 from core.item import Item
 from core.tmdb import Tmdb
 from platformcode import launcher, logger
-from core import filetools
 
-# <addon id="plugin.video.alfa" name="Alfa" version="2.3.0" provider-name="Alfa Addon">
-data = filetools.read(filetools.join(config.get_runtime_path(), "addon.xml"))
-aux = re.findall('<addon id="plugin.video.alfa" name="Alfa" version="([^"]+)"', data, re.MULTILINE | re.DOTALL)
-version = "???"
-if len(aux) > 0:
-    version = aux[0]
+## Obtiene la versión del addon
+version = config.get_addon_version()
 
 class html(Controller):
     pattern = re.compile("##")
