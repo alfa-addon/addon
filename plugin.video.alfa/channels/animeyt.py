@@ -11,7 +11,7 @@ from core.item import Item
 from core import tmdb
 from platformcode import config,logger
 
-import gktools
+import gktools, random, time, urllib
 
 __modo_grafico__ = config.get_setting('modo_grafico', 'animeyt')
 
@@ -31,6 +31,10 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Búsqueda", action="search", url=urlparse.urljoin(HOST, "busqueda?terminos=")))
 
     itemlist = renumbertools.show_option(item.channel, itemlist)
+
+    # ~ prova = 'EIpStovt0/tFerZM4pviHBzddH308TWRR41XnHv9N4tUNih6r+GjCDa/cV1uVUQXEmZd1Hsu2ABzESzBMGiK6XUdRgYZYHImmrIWcn3tfYPCuSWBc2UgwxUtR+WOsov6YiGM5AdgJGFunoN'
+    # ~ aux = gktools.decode_rijndael(prova, preIV = 'b3512f4972d314da9', key='3e1a854e7d5835ab99d99a29afec8bbb')
+    # ~ itemlist.append(Item(channel=item.channel, title=aux, action="novedades", url=HOST))
 
     return itemlist
 
@@ -160,20 +164,24 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
 
-    # ~ patron = 'Player\("(.*?)"'
-    patron = 'iframe src="([^"]*)"'
+    from collections import OrderedDict # cambiado dict por OrderedDict para mantener el mismo orden que en la web
 
-    matches = scrapertools.find_multiple_matches(data, patron)
+    matches = scrapertools.find_multiple_matches(data, '<li><a id="mirror(\d*)" class="link-veranime[^"]*" href="[^"]*">([^<]*)')
+    d_links = OrderedDict(matches)
 
-    for url in matches:
-        title = scrapertools.find_single_match(url, '/([^\.]*)\.php\?')
-        # ~ title = 'PDT'
-        # ~ if "cldup" in url:
-            # ~ title = "Opcion Cldup"
-        # ~ if "chumi" in url:
-            # ~ title = "Opcion Chumi"
-        if title == 'rakuten': # de momento es el único resuelto
-            itemlist.append(item.clone(channel=item.channel, folder=False, title=title, action="play", url=url, referer=item.url))
+    matches = scrapertools.find_multiple_matches(data, 'if \(mirror == (\d*)\).*?iframe src="([^"]*)"')
+    d_frames = OrderedDict(matches)
+
+    for k in d_links:
+        if k in d_frames and d_frames[k] != '':
+            tit = scrapertools.find_single_match(d_frames[k], '/([^\./]*)\.php\?')
+            if tit == '':
+                tit = 'mega' if 'mega.nz/' in d_frames[k] else 'dailymotion' if 'dailymotion.com/' in d_frames[k] else'noname'
+            if tit == 'id' and 'yourupload.com/' in d_frames[k]: tit = 'yourupload'
+            title = 'Opción %s (%s)' % (d_links[k], tit)
+            
+            itemlist.append(item.clone(channel=item.channel, folder=False, title=title, action="play", url=d_frames[k], referer=item.url))
+
 
     if item.extra != "library":
         if config.get_videolibrary_support() and item.extra:
@@ -186,14 +194,321 @@ def play(item):
     logger.info()
     itemlist = []
     
-    if 'https://s2.animeyt.tv/rakuten.php?' in item.url:
-        itemlist = gktools.gk_play(item)
+    if item.url.startswith('https://www.dailymotion.com/'):
+        itemlist.append(item.clone(url=item.url, server='dailymotion'))
 
-    # PENDIENTE ANALIZAR DEMÁS CASOS...
-    # ~ else:
-        # ~ headers = {'Referer': item.referer}
-        # ~ resp = httptools.downloadpage(item.url, headers=headers, cookies=False)
-        # ~ with open('animeyt-play-%s.html' % item.title, 'w') as f: f.write(resp.data); f.close()
- 
+    elif item.url.startswith('https://mega.nz/'):
+        itemlist.append(item.clone(url=item.url.replace('embed',''), server='mega'))
+
+    elif item.url.startswith('https://s2.animeyt.tv/rakuten.php?'):
+        # 1- Descargar
+        data, ck = gktools.get_data_and_cookie(item)
+
+        # 2- Calcular datos
+        gsv = scrapertools.find_single_match(data, '<meta name="google-site-verification" content="([^"]*)"')
+        if not gsv: return itemlist
+
+        suto = gktools.md5_dominio(item.url)
+        sufijo = '3497510'
+
+        token = gktools.generar_token('"'+gsv+'"', suto+'yt'+suto+sufijo)
+
+        link, subtitle = gktools.get_play_link_id(data, item.url)
+        
+        url = 'https://s2.animeyt.tv/rakuten/plugins/gkpluginsphp.php'
+        post = "link=%s&token=%s" % (link, token)
+
+        # 3- Descargar json
+        data = gktools.get_data_json(url, post, ck, item.url)
+
+        # 4- Extraer enlaces
+        itemlist = gktools.extraer_enlaces_json(data, item.referer, subtitle)
+
+
+    elif item.url.startswith('https://s3.animeyt.tv/amz.php?'):
+        # 1- Descargar
+        data, ck = gktools.get_data_and_cookie(item)
+
+        # 2- Calcular datos
+        gsv = scrapertools.find_single_match(data, '<meta name="Animeyt-Token" content="([^"]*)"')
+        v_token = scrapertools.find_single_match(data, "var v_token='([^']*)'")
+        if not gsv or not v_token: return itemlist
+
+        suto = gktools.md5_dominio(item.url)
+        sufijo = '9457610'
+
+        token = gktools.generar_token('"'+gsv+'"', suto+'yt'+suto+sufijo)
+
+        url = 'https://s3.animeyt.tv/amz_animeyts.php'
+        post = "v_token=%s&token=%s&handler=%s" % (v_token, token, 'Animeyt')
+        
+        # 3- Descargar json
+        data = gktools.get_data_json(url, post, ck, item.url)
+
+        # 4- Extraer enlaces
+        itemlist = gktools.extraer_enlaces_json(data, item.referer)
+
+
+    elif item.url.startswith('https://s2.animeyt.tv/lola.php?'):
+        # 1- Descargar
+        data, ck = gktools.get_data_and_cookie(item)
+
+        # 2- Calcular datos
+        gsv = scrapertools.find_single_match(data, '<meta name="Animeyt-Token" content="([^"]*)"')
+        s_cd, s_file = scrapertools.find_single_match(data, "var cd='([^']*)';\s*var file='([^']*)'")
+        if not gsv or not s_cd or not s_file: return itemlist
+
+        suto = gktools.md5_dominio(item.url)
+        sufijo = '8134976'
+
+        token = gktools.generar_token('"'+gsv+'"', suto+'yt'+suto+sufijo)
+
+        url = 'https://s2.animeyt.tv/minha_animeyt.php'
+        post = "cd=%s&file=%s&token=%s&handler=%s" % (s_cd, s_file, token, 'Animeyt')
+        
+        # 3- Descargar json
+        data = gktools.get_data_json(url, post, ck, item.url)
+
+        # 4- Extraer enlaces
+        itemlist = gktools.extraer_enlaces_json(data, item.referer)
+
+
+    elif item.url.startswith('https://s4.animeyt.tv/chumi.php?'): #https://s4.animeyt.tv/chumi.php?cd=3481&file=4
+        # 1- Descargar
+        data, ck = gktools.get_data_and_cookie(item)
+
+        # 2- Calcular datos
+        gsv = scrapertools.find_single_match(data, '<meta name="Animeyt-Token" content="([^"]*)"')
+        s_cd, s_file = scrapertools.find_single_match(item.url, '\?cd=([^&]*)&file=([^&]*)')
+        if not gsv or not s_cd or not s_file: return itemlist
+        
+        ip = gktools.toHex(gsv) + str(1000000 + random.randint(0,9000000)) + str(100000 + random.randint(0,900000))
+        
+        gsv_bis = gktools.transforma_gsv(gsv, '159753')
+        p1 = '1705f5652bb6546ab3643ff698e' + gsv[-5:]
+        p2 = '8388ca3fd07' + gsv[-5:] + gsv_bis
+        
+        texto = gktools.toHex(gktools.encode_rijndael(gsv, p1, p2))
+
+        suto = gktools.md5_dominio(item.url)
+        sufijo = '147268278' + gsv[-5:]
+        prefijo = gsv[:-5] + gsv_bis
+
+        token = gktools.generar_token('"'+texto+'"', prefijo+suto+'yt'+suto+sufijo)
+        archive = gktools.toHex(token)
+
+        url = 'https://s4.animeyt.tv/minha/minha_animeyt.php'
+        post = "cd=%s&id=%s&archive=%s&ip=%s&Japan=%s" % (s_cd, s_file, archive, ip, 'Asia')
+        
+        # 3- Descargar json
+        data = gktools.get_data_json(url, post, ck, item.url)
+
+        # 4- Extraer enlaces
+        itemlist = gktools.extraer_enlaces_json(data, item.referer)
+
+
+    elif item.url.startswith('https://s3.animeyt.tv/mega.php?'): #https://s3.animeyt.tv/mega.php?v=WmpHMEVLVTNZZktyaVAwai9sYzhWV1ZRTWh0WTZlNGZ3VzFVTXhMTkx2NGlOMjRYUHhZQlMvaUFsQlJFbHBVTA==
+        # 1- Descargar
+        data, ck = gktools.get_data_and_cookie(item)
+
+        # 2- Calcular datos
+        gsv = scrapertools.find_single_match(data, '<meta name="Animeyt-Token" content="([^"]*)"')
+        s_v = scrapertools.find_single_match(item.url, '\?v=([^&]*)')
+        if not gsv or not s_v: return itemlist
+        
+        ip = gktools.toHex(gsv) + str(1000000 + random.randint(0,9000000)) + str(100000 + random.randint(0,900000))
+        
+        gsv_bis = gktools.transforma_gsv(gsv, '159753')
+        p1 = '1705f5652bb6546ab3643ff698e' + gsv[-5:]
+        p2 = '8388ca3fd07' + gsv[-5:] + gsv_bis
+        
+        texto = gktools.toHex(gktools.encode_rijndael(gsv, p1, p2))
+
+        suto = gktools.md5_dominio(item.url)
+        sufijo = '147268278' + gsv[-5:]
+        prefijo = gsv[:-5] + gsv_bis
+
+        token = gktools.generar_token('"'+texto+'"', prefijo+suto+'yt'+suto+sufijo)
+        archive = gktools.toHex(token)
+
+        url = 'https://s3.animeyt.tv/mega_animeyts.php'
+        post = "v=%s&archive=%s&referer=%s&ip=%s&Japan=%s" % (s_v, archive, item.url, ip, 'Asia')
+
+        # 3- Descargar json
+        data = gktools.get_data_json(url, post, ck, item.url)
+
+        # 4- Extraer enlaces
+        itemlist = gktools.extraer_enlaces_json(data, item.referer)
+
+
+    elif item.url.startswith('https://s2.animeyt.tv/naruto/naruto.php?'): #https://s2.animeyt.tv/naruto/naruto.php?id=3477&file=11.mp4
+        # 1- Descargar
+        data, ck = gktools.get_data_and_cookie(item)
+
+        # 2- Calcular datos
+        gsv = scrapertools.find_single_match(data, '<meta name="Animeyt-Token" content="([^"]*)"')
+        s_id, s_file = scrapertools.find_single_match(item.url, '\?id=([^&]*)&file=([^&]*)')
+        if not gsv or not s_id or not s_file: return itemlist
+        
+        ip = gktools.toHex(gsv) + str(1000000 + random.randint(0,9000000)) + str(100000 + random.randint(0,900000))
+        
+        gsv_bis = gktools.transforma_gsv(gsv, '159753')
+        p1 = '1705f5652bb6546ab3643ff698e' + gsv[-5:]
+        p2 = '8388ca3fd07' + gsv[-5:] + gsv_bis
+        
+        texto = gktools.toHex(gktools.encode_rijndael(gsv, p1, p2))
+
+        suto = gktools.md5_dominio(item.url)
+        sufijo = '147268278' + gsv[-5:]
+        prefijo = gsv[:-5] + gsv_bis
+
+        token = gktools.generar_token('"'+texto+'"', prefijo+suto+'yt'+suto+sufijo)
+        archive = gktools.toHex(token)
+
+        url = 'https://s2.animeyt.tv/naruto/narutos_animeyt.php'
+        post = "id=%s&file=%s&archive=%s&referer=%s&ip=%s&Japan=%s" % (s_id, s_file, archive, urllib.quote(item.url), ip, 'Asia')
+
+        # 3- Descargar json
+        data = gktools.get_data_json(url, post, ck, item.url)
+
+        # 4- Extraer enlaces
+        itemlist = gktools.extraer_enlaces_json(data, item.referer)
+
+
+    elif item.url.startswith('https://s4.animeyt.tv/facebook.php?'): #https://s4.animeyt.tv/facebook.php?cd=3481&id=4
+        # 1- Descargar
+        data, ck = gktools.get_data_and_cookie(item)
+
+        # 2- Calcular datos
+        gsv = scrapertools.find_single_match(data, '<meta name="Animeyt-Token" content="([^"]*)"')
+        s_cd, s_id = scrapertools.find_single_match(item.url, '\?cd=([^&]*)&id=([^&]*)')
+        if not gsv or not s_cd or not s_id: return itemlist
+        
+        ip = gktools.toHex(gsv) + str(1000000 + random.randint(0,9000000)) + str(100000 + random.randint(0,900000))
+        
+        gsv_bis = gktools.transforma_gsv(gsv, '159753')
+        p1 = '1705f5652bb6546ab3643ff698e' + gsv[-5:]
+        p2 = '8388ca3fd07' + gsv[-5:] + gsv_bis
+        
+        texto = gktools.toHex(gktools.encode_rijndael(gsv, p1, p2))
+
+        suto = gktools.md5_dominio(item.url)
+        sufijo = '147268278' + gsv[-5:]
+        prefijo = gsv[:-5] + gsv_bis
+
+        token = gktools.generar_token('"'+texto+'"', prefijo+suto+'yt'+suto+sufijo)
+        archive = gktools.toHex(token)
+
+        url = 'https://s4.animeyt.tv/facebook/facebook_animeyts.php'
+        post = "cd=%s&id=%s&archive=%s&referer=%s&ip=%s&Japan=%s" % (s_cd, s_id, archive, urllib.quote(item.url), ip, 'Asia')
+
+        # 3- Descargar json
+        data = gktools.get_data_json(url, post, ck, item.url)
+
+        # 4- Extraer enlaces
+        itemlist = gktools.extraer_enlaces_json(data, item.referer)
+
+
+    elif item.url.startswith('https://s.animeyt.tv/v4/media.php?'): #https://s.animeyt.tv/v4/media.php?id=SmdMQ2Y0NUhFK2hOZlYzbVJCbnE3QT09
+        # 1- Descargar
+        data, ck = gktools.get_data_and_cookie(item)
+
+        # 2- Calcular datos
+        gsv = scrapertools.find_single_match(data, '<meta name="Animeyt-Token" content="([^"]*)"')
+        s_id = scrapertools.find_single_match(item.url, '\?id=([^&]*)')
+        if not gsv or not s_id: return itemlist
+        
+        ip = gktools.toHex(gsv) + str(1000000 + random.randint(0,9000000)) + str(100000 + random.randint(0,900000))
+        
+        gsv_bis = gktools.transforma_gsv(gsv, '159753')
+        p1 = '1705f5652bb6546ab3643ff698e' + gsv[-5:]
+        p2 = '8388ca3fd07' + gsv[-5:] + gsv_bis
+        
+        texto = gktools.toHex(gktools.encode_rijndael(gsv, p1, p2))
+
+        suto = gktools.md5_dominio(item.url)
+        sufijo = '8049762' + gsv[-5:]
+        prefijo = gsv[:-5] + gsv_bis
+
+        token = gktools.generar_token('"'+texto+'"', prefijo+suto+'yt'+suto+sufijo)
+        archive = gktools.toHex(token)
+
+        url = 'https://s.animeyt.tv/v4/gsuite_animeyts.php'
+        post = "id=%s&archive=%s&ip=%s&Japan=%s" % (s_id, archive, ip, 'Asia')
+        
+        # 3- Descargar json
+        data = gktools.get_data_json(url, post, ck, item.url)
+
+        # 4- Extraer enlaces
+        itemlist = gktools.extraer_enlaces_json(data, item.referer)
+
+
+    elif item.url.startswith('https://s10.animeyt.tv/yourupload.com/id.php?'): #https://s10.animeyt.tv/yourupload.com/id.php?id=62796D77774A4E4363326642
+        # 1- Descargar
+        data, ck = gktools.get_data_and_cookie(item)
+
+        # 2- Calcular datos
+        gsv = scrapertools.find_single_match(data, '<meta name="Animeyt-Token" content="([^"]*)"')
+        s_id = scrapertools.find_single_match(item.url, '\?id=([^&]*)')
+        if not gsv or not s_id: return itemlist
+        
+        ip = gktools.toHex(gsv) + str(1000000 + random.randint(0,9000000)) + str(100000 + random.randint(0,900000))
+        
+        gsv_bis = gktools.transforma_gsv(gsv, '159753')
+        p1 = '1705f5652bb6546ab3643ff698e' + gsv[-5:]
+        p2 = '8388ca3fd07' + gsv[-5:] + gsv_bis
+        
+        texto = gktools.toHex(gktools.encode_rijndael(gsv, p1, p2))
+
+        suto = gktools.md5_dominio(item.url)
+        sufijo = '8049762' + gsv[-5:]
+        prefijo = gsv[:-5] + gsv_bis
+
+        token = gktools.generar_token('"'+texto+'"', prefijo+suto+'yt'+suto+sufijo)
+        archive = gktools.toHex(token)
+
+        url = 'https://s10.animeyt.tv/yourupload.com/chinese_streaming.php'
+        post = "id=%s&archive=%s&ip=%s&Japan=%s" % (s_id, archive, ip, 'Asia')
+        
+        # 3- Descargar json
+        data = gktools.get_data_json(url, post, ck, item.url)
+
+        # 4- Extraer enlaces
+        itemlist = gktools.extraer_enlaces_json(data, item.referer)
+
+
+    elif item.url.startswith('https://s4.animeyt.tv/onedrive.php?'): #https://s4.animeyt.tv/onedrive.php?cd=3439&id=12
+        # 1- Descargar
+        data, ck = gktools.get_data_and_cookie(item)
+
+        # 2- Calcular datos
+        gsv = scrapertools.find_single_match(data, '<meta name="Animeyt-Token" content="([^"]*)"')
+        s_cd, s_id = scrapertools.find_single_match(item.url, '\?cd=([^&]*)&id=([^&]*)')
+        if not gsv or not s_cd or not s_id: return itemlist
+        
+        ip = gktools.toHex(gsv) + str(1000000 + random.randint(0,9000000)) + str(100000 + random.randint(0,900000))
+        
+        gsv_bis = gktools.transforma_gsv(gsv, '159753')
+        p1 = '1705f5652bb6546ab3643ff698e' + gsv[-5:]
+        p2 = '8388ca3fd07' + gsv[-5:] + gsv_bis
+        
+        texto = gktools.toHex(gktools.encode_rijndael(gsv, p1, p2))
+
+        suto = gktools.md5_dominio(item.url)
+        sufijo = '147268278' + gsv[-5:]
+        prefijo = gsv[:-5] + gsv_bis
+
+        token = gktools.generar_token('"'+texto+'"', prefijo+suto+'yt'+suto+sufijo)
+        archive = gktools.toHex(token)
+
+        url = 'https://s4.animeyt.tv/onedrive/onedrive_animeyts.php'
+        post = "cd=%s&id=%s&archive=%s&ip=%s&Japan=%s" % (s_cd, s_id, archive, ip, 'Asia')
+        
+        # 3- Descargar json
+        data = gktools.get_data_json(url, post, ck, item.url)
+
+        # 4- Extraer enlaces
+        itemlist = gktools.extraer_enlaces_json(data, item.referer)
+
+
     return itemlist
-

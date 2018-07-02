@@ -31,6 +31,9 @@ default_headers["Accept-Language"] = "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3"
 default_headers["Accept-Charset"] = "UTF-8"
 default_headers["Accept-Encoding"] = "gzip"
 
+# Tiempo máximo de espera para downloadpage, si no se especifica nada
+HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = None
+
 
 def get_url_headers(url):
     domain_cookies = cj._cookies.get("." + urlparse.urlparse(url)[1], {}).get("/", {})
@@ -121,6 +124,9 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
         request_headers["Referer"] = "/".join(url.split("/")[:3])
 
     url = urllib.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
+
+    # Limitar tiempo de descarga si no se ha pasado timeout y hay un valor establecido en la variable global
+    if timeout is None and HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT is not None: timeout = HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT
 
     logger.info("----------------------------------------------")
     logger.info("downloadpage")
