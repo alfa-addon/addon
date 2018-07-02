@@ -20,6 +20,7 @@ import WebSocket
 http_port = config.get_setting("server.port")
 websocket_port = config.get_setting("websocket.port")
 myip = config.get_local_ip()
+version = config.get_addon_version()
 
 
 def thread_name_wrap(func):
@@ -43,7 +44,7 @@ if sys.version_info < (2, 7, 11):
 def show_info():
     os.system('cls' if os.name == 'nt' else 'clear')
     print ("--------------------------------------------------------------------")
-    print ("Alfa Iniciado")
+    print ("Alfa %s Iniciado" %version)
     print ("La URL para acceder es http://%s:%s" % (myip, http_port))
     print ("WebSocket Server iniciado en ws://%s:%s" % (myip, websocket_port))
     print ("--------------------------------------------------------------------")
