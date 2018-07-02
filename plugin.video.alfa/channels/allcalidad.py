@@ -147,10 +147,12 @@ def findvideos(item):
     match = scrapertools.find_multiple_matches(bloque, '(?is)(?:iframe|script) .*?src="([^"]+)')
     for url in match:
         titulo = "Ver en: %s"
+        text_color = "white"
         if "goo.gl" in url:
             url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
         if "youtube" in url:
-            titulo = "[COLOR = yellow]Ver trailer: %s[/COLOR]"
+            titulo = "Ver trailer: %s"
+            text_color = "yellow"
         if "ad.js" in url or "script" in url or "jstags.js" in url:
             continue
         elif "vimeo" in url:
@@ -158,6 +160,7 @@ def findvideos(item):
         itemlist.append(
                  item.clone(channel = item.channel,
                  action = "play",
+                 text_color = text_color,
                  title = titulo,
                  url = url
                  ))
