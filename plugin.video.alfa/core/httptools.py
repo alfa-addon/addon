@@ -32,7 +32,8 @@ default_headers["Accept-Charset"] = "UTF-8"
 default_headers["Accept-Encoding"] = "gzip"
 
 # Tiempo máximo de espera para downloadpage, si no se especifica nada
-HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = None
+HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = config.get_setting('httptools_timeout', default=15)
+if HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT == 0: HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = None
 
 
 def get_url_headers(url):
