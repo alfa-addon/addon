@@ -612,8 +612,9 @@ def play(item):
     uri_request = host + "/video-prod/s/uri?uri=%s&_=%s" % (uri, int(time.time()))
     data = httptools.downloadpage(uri_request).data
     data = jsontools.load(data)
-    url = item.url.replace(".tv-vip.com/transcoder/", ".tv-vip.info/c/transcoder/") + "?tt=" + str(data['tt']) + \
+    url = item.url.replace(".tv-vip.com/transcoder/", ".tv-vip.in/c/transcoder/") + "?tt=" + str(data['tt']) + \
           "&mm=" + data['mm'] + "&bb=" + data['bb']
+    url += "|User-Agent=Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Mobile Safari/537.36"
     itemlist.append(item.clone(action="play", server="directo", url=url, folder=False))
     return itemlist
 
