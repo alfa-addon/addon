@@ -434,8 +434,8 @@ msgid "torrent"
 msgstr "torrent"
 
 msgctxt "#59983"
-msgid ""
-msgstr ""
+msgid "%.2f%% - %.2f %s of %.2f %s a %.2f %s/s (%d/%d)"
+msgstr "%.2f%% - %.2f %s de %.2f %s a %.2f %s/s (%d/%d)"
 
 msgctxt "#59984"
 msgid "An error has occurred in alfa, \nCheck log for more details."
@@ -2486,8 +2486,8 @@ msgid "    Remove the channel name at the beginning"
 msgstr "    Quitar el nombre del canal del principio"
 
 msgctxt "#60628"
-msgid "    Pop-up window: Replace \"View in\" with \"[V]\" and \"Download in\" with \"[D]\""
-msgstr "    Ventana emergente: Reemplazar \"Ver en\" por \"[V]\" y \"Descargar en\" por \"[D]\""
+msgid "    Pop-up window: Replace \'View in\' with \'[V]\' and \'Download in\' with \'[D]\'"
+msgstr "    Ventana emergente: Reemplazar \'Ver en\' por \'[V]\' y \'Descargar en\' por \'[D]\'"
 
 msgctxt "#60629"
 msgid "Database location"
@@ -3567,7 +3567,7 @@ msgstr "TESTEAR ESTE CANAL"
 
 msgctxt "#70216"
 msgid "Back"
-msgstr "Atrás"
+msgstr "Indietro"
 
 msgctxt "#70217"
 msgid "downloads"
@@ -3654,7 +3654,7 @@ msgid "Choice of the server"
 msgstr "Elección del servidor"
 
 msgctxt "#70238"
-msgid "-  Order of servers"
+msgid "- Order of servers"
 msgstr "  - Orden de servidores"
 
 msgctxt "#70240"
@@ -3682,11 +3682,127 @@ msgid "Reorder"
 msgstr "Reordenar"
 
 msgctxt "#70246"
-msgid "  - Preferred language"
+msgid "  - Lingua preferita"
 msgstr "  - Idioma preferido"
 
+msgctxt "#70247"
+msgid "Home page"
+msgstr "Pagina de inicio"
 
+msgctxt "#70248"
+msgid "Use personal API key"
+msgstr "Usar API key personal"
 
+msgctxt "#70249"
+msgid "API key"
+msgstr "API key"
 
+msgctxt "#70250"
+msgid "No home page has been defined. Please select one using the context menu."
+msgstr "No has definido ninguna pagina de inicio. Utiliza el menu contextual para definir una."
+
+msgctxt "#70251"
+msgid "Check the log in %s for more details."
+msgstr "Comprueba el log in %s para ver mas detalles del error."
+
+msgctxt "#70252"
+msgid "[COLOR mediumturquoise][B]Duration: %s minutes[/B][/COLOR]"
+msgstr "[COLOR mediumturquoise][B]Duración: %s minutos[/B][/COLOR]"
+
+msgctxt "#70253"
+msgid "Torrent client settings"
+msgstr "Ajustes de cliente Torrent"
+
+msgctxt "#70254"
+msgid "Internal Client"
+msgstr "Cliente interno"
+
+msgctxt "#70255"
+msgid "Internal client - MCT"
+msgstr "Cliente interno - MCT"
+
+msgctxt "#70256"
+msgid "What client do you want to use to play torrent?"
+msgstr "¿Qué cliente quiere usar para reproducir torrent?"
+
+msgctxt "#70257"
+msgid "Settings -- Torrent"
+msgstr "configuración -- Torrent"
+
+msgctxt "#70258"
+msgid "Alfa Started"
+msgstr "Alfa Iniciado"
+
+msgctxt "#70259"
+msgid "The URL to access is http://%s:%s"
+msgstr "La URL para acceder es http://%s:%s"
+
+msgctxt "#70260"
+msgid "WebSocket Server started in ws: //% s:% s"
+msgstr "WebSocket Server iniciado en ws://%s:%s"
+
+msgctxt "#70261"
+msgid "Stopping the HTTP server ..."
+msgstr "Deteniendo el servidor HTTP..."
+
+msgctxt "#70262"
+msgid "Stopping the Websocket server ..."
+msgstr "Deteniendo el servidor WebSocket..."
+
+msgctxt "#70263"
+msgid "Alfa stopped"
+msgstr "Alfa Detenido"
+
+msgctxt "#70264"
+msgid "Basic realm=\Enter the username and password to access proteus \""
+msgstr "Basic realm=\"Introduce el nombre de usuario y clave para acceder a proteus\""
+
+msgctxt "#70265"
+msgid "The data entered is not correct!"
+msgstr "¡Los datos introducidos no son correctos!"
+
+msgctxt "#70266"
+msgid "The search for% s did not match."
+msgstr "La busqueda de %s no dio resultados."
+
+msgctxt "#70267"
+msgid "An error occurred in channel "
+msgstr "Se ha producido un error en el canal "
+
+msgctxt "#70268"
+msgid "This can be due to several reasons: \ n \ - The server is not available, or is not responding. \ n \ - Changes in the design of the web. \ n \ - Etc ... \ n \ Check the log to see more details of the error. "
+msgstr "Esto puede ser devido a varias razones: \n \- El servidor no está disponible, o no esta respondiendo.\n \- Cambios en el diseño de la web.\n \- Etc...\n \Comprueba el log para ver mas detalles del error."
+
+msgctxt "#70269"
+msgid "Search new episodes now"
+msgstr "Buscar nuevos episodios ahora"
+
+msgctxt "#70270"
+msgid "Videolibrary movies"
+msgstr "Videoteca de películas"
+
+msgctxt "#70271"
+msgid "Videolibrary Tv Shows"
+msgstr "Videoteca de series"
+
+msgctxt "#70272"
+msgid "Activate premium account"
+msgstr "Activar cuenta premium"
+
+msgctxt "#70273"
+msgid "Choose included channels"
+msgstr "Elegir canales incluidos"
+
+msgctxt "#70274"
+msgid "Alternative search"
+msgstr "Búsqueda alternativa"
+
+msgctxt "#70275"
+msgid "Add Torrent channels in search"
+msgstr "Incluir en la búsqueda canales Torrent"
+
+msgctxt "#70276"
+msgid "Search by title"
+msgstr "Buscar por titulo"
 
 

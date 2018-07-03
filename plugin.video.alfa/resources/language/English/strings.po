@@ -434,7 +434,7 @@ msgid "torrent"
 msgstr ""
 
 msgctxt "#59983"
-msgid ""
+msgid "%.2f%% - %.2f %s of %.2f %s a %.2f %s/s (%d/%d)"
 msgstr ""
 
 msgctxt "#59984"
@@ -2506,7 +2506,7 @@ msgid "    Remove the channel name at the beginning"
 msgstr ""
 
 msgctxt "#60628"
-msgid "    Pop-up window: Replace \"View in\" with \"[V]\" and \"Download in\" with \"[D]\""
+msgid "    Pop-up window: Replace \'View in\' with \'[V]\' and \'Download in\' with \'[D]\'"
 msgstr ""
 
 msgctxt "#60629"
@@ -3619,7 +3619,7 @@ msgstr ""
 
 msgctxt "#70223"
 msgid "Settings downloads..."
-msgstr ""
+msgstr "Configurazione downloads..."
 
 msgctxt "#70224"
 msgid "settings -- Downloads"
@@ -3628,19 +3628,6 @@ msgstr ""
 msgctxt "#70225"
 msgid "Download"
 msgstr ""
-
-msgctxt "#70226"
-msgid "Remove from the list"
-msgstr ""
-
-msgctxt "#70227"
-msgid "Restart download and delete data"
-msgstr ""
-
-msgctxt "#70228"
-msgid "Downloaded: %s"
-msgstr ""
-
 
 msgctxt "#70226"
 msgid "Remove from the list"
@@ -3722,3 +3709,122 @@ msgctxt "#70246"
 msgid "  - Preferred language"
 msgstr ""
 
+msgctxt "#70247"
+msgid "Home page"
+msgstr ""
+
+msgctxt "#70248"
+msgid "Use personal API key"
+msgstr ""
+
+msgctxt "#70249"
+msgid "API key"
+msgstr ""
+
+msgctxt "#70250"
+msgid "No home page has been defined. Please select one using the context menu."
+msgstr ""
+
+msgctxt "#70251"
+msgid "Check the log in %s for more details."
+msgstr ""
+
+msgctxt "#70252"
+msgid "[COLOR mediumturquoise][B]Duration: %s minutes[/B][/COLOR]"
+msgstr ""
+
+msgctxt "#70253"
+msgid "Torrent client settings"
+msgstr ""
+
+msgctxt "#70254"
+msgid "Internal Client"
+msgstr ""
+
+msgctxt "#70255"
+msgid "Internal client - MCT"
+msgstr ""
+
+msgctxt "#70256"
+msgid "What client do you want to use to play torrent?"
+msgstr "Quale client vuoi usare per riprodurre il torrent?
+
+msgctxt "#70257"
+msgid "Settings -- Torrent"
+msgstr ""
+
+msgctxt "#70258"
+msgid "Alfa Started"
+msgstr ""
+
+msgctxt "#70259"
+msgid "The URL to access is http://%s:%s"
+msgstr ""
+
+msgctxt "#70260"
+msgid "WebSocket Server started in ws: //% s:% s"
+msgstr ""
+
+msgctxt "#70261"
+msgid "Stopping the HTTP server ..."
+msgstr ""
+
+msgctxt "#70262"
+msgid "Stopping the Websocket server ..."
+msgstr ""
+
+msgctxt "#70263"
+msgid "Alfa stopped"
+msgstr ""
+
+msgctxt "#70264"
+msgid "Basic realm=\Enter the username and password to access proteus \""
+msgstr ""
+
+msgctxt "#70265"
+msgid "The data entered is not correct!"
+msgstr ""
+
+msgctxt "#70266"
+msgid "The search for% s did not match."
+msgstr ""
+
+msgctxt "#70267"
+msgid "An error occurred in channel "
+msgstr ""
+
+msgctxt "#70268"
+msgid "This can be due to several reasons: \ n \ - The server is not available, or is not responding. \ n \ - Changes in the design of the web. \ n \ - Etc ... \ n \ Check the log to see more details of the error. "
+msgstr ""
+
+msgctxt "#70269"
+msgid "Search new episodes now"
+msgstr ""
+
+msgctxt "#70270"
+msgid "Videolibrary movies"
+msgstr ""
+
+msgctxt "#70271"
+msgid "Videolibrary Tv Shows"
+msgstr ""
+
+msgctxt "#70272"
+msgid "Activate premium account"
+msgstr ""
+
+msgctxt "#70273"
+msgid "Choose included channels"
+msgstr ""
+
+msgctxt "#70274"
+msgid "Alternative search"
+msgstr ""
+
+msgctxt "#70275"
+msgid "Add Torrent channels in search"
+msgstr ""
+
+msgctxt "#70276"
+msgid "Search by title"
+msgstr ""

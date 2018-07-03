@@ -16,7 +16,7 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 from core import jsontools
-from channels import side_menu
+
 
 THUMBNAILS = {'0': 'posters', '1': 'banners', '2': 'squares'}
 
@@ -245,13 +245,15 @@ def novedades(item):
 
     list_canales, any_active = get_channels_list()
 
-    if mode=='silent' and any_active and len(list_canales[item.extra]) > 0:
-        side_menu.set_menu_settings(item)
-        aux_list=[]
-        for canal in list_canales[item.extra]:
-            if len(aux_list)<2:
-                aux_list.append(canal)
-        list_canales[item.extra]=aux_list
+    if config.is_xbmc():
+        from channels import side_menu
+        if mode=='silent' and any_active and len(list_canales[item.extra]) > 0:
+            side_menu.set_menu_settings(item)
+            aux_list=[]
+            for canal in list_canales[item.extra]:
+                if len(aux_list)<2:
+                    aux_list.append(canal)
+            list_canales[item.extra]=aux_list
 
     if mode == 'set_cache':
         list_canales[item.extra] = list_canales[item.extra][2:]

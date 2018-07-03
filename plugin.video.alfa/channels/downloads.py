@@ -474,7 +474,7 @@ def download_from_url(url, item):
                    block_size=2 ** (17 + int(config.get_setting("block_size", "downloads"))),
                    part_size=2 ** (20 + int(config.get_setting("part_size", "downloads"))),
                    max_buffer=2 * int(config.get_setting("max_buffer", "downloads")))
-    d.start_dialog("Descargas")
+    d.start_dialog(config.get_localized_string(60332))
 
     # Descarga detenida. Obtenemos el estado:
     # Se ha producido un error en la descarga   

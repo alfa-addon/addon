@@ -52,7 +52,7 @@ def mark_auto_as_watched(item):
                 item.playcount = 1
                 sync_with_trakt = True
                 from channels import videolibrary
-                videolibrary.mark_content_as_watched(item)
+                videolibrary.mark_content_as_watched2(item)
                 break
 
             time.sleep(30)

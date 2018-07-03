@@ -96,7 +96,7 @@ class Downloader:
         while self.state == self.states.downloading and not progreso.iscanceled():
             time.sleep(0.1)
             line1 = "%s" % (self.filename)
-            line2 = "%.2f%% - %.2f %s de %.2f %s a %.2f %s/s (%d/%d)" % (
+            line2 = config.get_localized_string(59983) % (
                 self.progress, self.downloaded[1], self.downloaded[2], self.size[1], self.size[2],
                 self.speed[1], self.speed[2], self.connections[0], self.connections[1])
             line3 = config.get_localized_string(60202) % (self.remaining_time)

@@ -12,7 +12,7 @@ def test_video_exists(page_url):
     data = httptools.downloadpage(page_url).data
 
     if "Not Found" in data or "File was deleted" in data:
-        return False, "[Watchvideo] El fichero no existe o ha sido borrado"
+        return False, "[Filevideo] El fichero no existe o ha sido borrado"
 
     return True, ""
 
@@ -28,7 +28,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     media_urls = scrapertools.find_multiple_matches(dec_data, '\{file\s*:\s*"([^"]+)",label\s*:\s*"([^"]+)"\}')
     for media_url, label in media_urls:
         ext = scrapertools.get_filename_from_url(media_url)[-4:]
-        video_urls.append(["%s %sp [watchvideo]" % (ext, label), media_url])
+        video_urls.append(["%s %sp [filevideo]" % (ext, label), media_url])
 
     video_urls.reverse()
     m3u8 = scrapertools.find_single_match(dec_data, '\{file\:"(.*?.m3u8)"\}')
