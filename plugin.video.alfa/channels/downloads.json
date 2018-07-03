@@ -10,14 +10,14 @@
   "settings": [
     {
       "type": "label",
-      "label": "Ubicacion de archivos",
+      "label": "$ADDON[plugin.video.alfa 70229]",
       "enabled": true,
       "visible": true
     },
     {
       "id": "library_add",
       "type": "bool",
-      "label": "  - Añadir descargas completadas a la videoteca",
+      "label": "$ADDON[plugin.video.alfa 70230]",
       "default": true,
       "enabled": true,
       "visible": true
@@ -25,7 +25,7 @@
     {
       "id": "library_move",
       "type": "bool",
-      "label": "  - Mover el archivo descargado a la videoteca",
+      "label": "$ADDON[plugin.video.alfa 70231]",
       "default": true,
       "enabled": "eq(-1,true)",
       "visible": true
@@ -33,21 +33,21 @@
     {
       "id": "browser",
       "type": "bool",
-      "label": "  - Visualizar archivos descargados desde descargas",
+      "label": "$ADDON[plugin.video.alfa 70232]",
       "default": false,
       "enabled": true,
       "visible": true
     },
     {
       "type": "label",
-      "label": "Descarga",
+      "label": "$ADDON[plugin.video.alfa 70243]",
       "enabled": true,
       "visible": true
     },
     {
       "id": "block_size",
       "type": "list",
-      "label": "  - Tamaño por bloque",
+      "label": "$ADDON[plugin.video.alfa 70233]",
       "lvalues": [
         "128 KB",
         "256 KB",
@@ -62,7 +62,7 @@
     {
       "id": "part_size",
       "type": "list",
-      "label": "  - Tamaño por parte",
+      "label": "$ADDON[plugin.video.alfa 70234]",
       "lvalues": [
         "1 MB",
         "2 MB",
@@ -78,7 +78,7 @@
     {
       "id": "max_connections",
       "type": "list",
-      "label": "  - Numero máximo de conexiones simultaneas",
+      "label": "$ADDON[plugin.video.alfa 70235]",
       "lvalues": [
         "1",
         "2",
@@ -98,7 +98,7 @@
     {
       "id": "max_buffer",
       "type": "list",
-      "label": "  - Numero máximo de partes en memoria",
+      "label": "$ADDON[plugin.video.alfa 70236]",
       "lvalues": [
         "0",
         "2",
@@ -118,17 +118,17 @@
     },
     {
       "type": "label",
-      "label": "Elección del servidor",
+      "label": "$ADDON[plugin.video.alfa 70237]",
       "enabled": true,
       "visible": true
     },
     {
       "id": "server_reorder",
       "type": "list",
-      "label": "  - Orden de servidores",
+      "label": "$ADDON[plugin.video.alfa 70238]",
       "lvalues": [
-        "Mantener",
-        "Reordenar"
+        "$ADDON[plugin.video.alfa 70244]",
+        "$ADDON[plugin.video.alfa 70245]"
       ],
       "default": 1,
       "enabled": true,
@@ -137,7 +137,7 @@
     {
       "id": "language",
       "type": "list",
-      "label": "  - Idioma preferido",
+      "label": "$ADDON[plugin.video.alfa 70246]",
       "lvalues": [
         "Esp, Lat, Sub, Eng, Vose",
         "Esp, Sub, Lat, Eng, Vose",
@@ -145,29 +145,29 @@
         "Vose, Eng, Sub, Esp, Lat"
       ],
       "default": 0,
-      "enabled": "eq(-1,'Reordenar')",
+      "enabled": "eq(-1,$ADDON[plugin.video.alfa 70245])",
       "visible": true
     },
     {
       "id": "quality",
       "type": "list",
-      "label": "  - Calidad preferida",
+      "label": "$ADDON[plugin.video.alfa 70240]",
       "lvalues": [
-        "La mas alta",
+        "$ADDON[plugin.video.alfa 70241]",
         "HD 1080",
         "HD 720",
         "SD"
       ],
       "default": 0,
-      "enabled": "eq(-2,'Reordenar')",
+      "enabled": "eq(-2,$ADDON[plugin.video.alfa 70245])",
       "visible": true
     },
     {
       "id": "server_speed",
       "type": "bool",
-      "label": "  - Elegir los servidores mas rapidos",
+      "label": "$ADDON[plugin.video.alfa 70242]",
       "default": true,
-      "enabled": "eq(-3,'Reordenar')",
+      "enabled": "eq(-3,$ADDON[plugin.video.alfa 70245])",
       "visible": true
     }
   ]

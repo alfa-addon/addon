@@ -1,121 +1,121 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
-    <category label="General">
-        <setting id="player_mode" type="enum" values="Direct|SetResolvedUrl|Built-In|Download and Play" label="30044" default="0"/>
-        <setting id="default_action" type="enum" lvalues="30006|30007|30008" label="30005" default="0"/>
-        <setting id="thumbnail_type" type="enum" lvalues="30011|30012|30200" label="30010" default="2"/>
-        <setting id="channel_language" type="labelenum" values="all|cast|lat" label="30019" default="all"/>
-        <setting id="trakt_sync" type="bool" label="Sincronizar con Trakt.tv (Debes tener una cuenta)" default="false"/>
-        <setting id="forceview" type="bool" label="30043" default="false"/>
-        <setting id="faster_item_serialization" type="bool" label="30300" default="false"/>
-        <setting id="debug" type="bool" label="30003" default="false"/>
-        <setting label="Uso de servidores" type="lsep"/>
-        <setting id="resolve_priority" type="enum" label="Método prioritario" values="Free primero|Premium primero|Debriders primero" default="0"/>
-        <setting id="resolve_stop" type="bool" label="Dejar de buscar cuando encuentre una opción" default="true"/>
-        <setting id="hidepremium" type="bool" label="Ocultar servidores de pago sin cuenta" default="false"/>
+    <category label="$ADDON[plugin.video.alfa 70168]">
+        <setting id="player_mode" type="enum" values="Direct|SetResolvedUrl|Built-In|Download and Play" label="$ADDON[plugin.video.alfa 30044]" default="0"/>
+        <setting id="default_action" type="enum" lvalues="30006|30007|30008" label="$ADDON[plugin.video.alfa 30005]" default="0"/>
+        <setting id="thumbnail_type" type="enum" lvalues="30011|30012|30200" label="$ADDON[plugin.video.alfa 30010]" default="2"/>
+        <setting id="channel_language" type="labelenum" values="all|cast|lat|ita" label="$ADDON[plugin.video.alfa 30019]" default="all"/>
+        <setting id="trakt_sync" type="bool" label="$ADDON[plugin.video.alfa 70109]" default="false"/>
+        <setting id="forceview" type="bool" label="$ADDON[plugin.video.alfa 30043]" default="false"/>
+        <setting id="faster_item_serialization" type="bool" label="$ADDON[plugin.video.alfa 30300]" default="false"/>
+        <setting id="debug" type="bool" label="$ADDON[plugin.video.alfa 30003]" default="false"/>
+        <setting label="$ADDON[plugin.video.alfa 70169]" type="lsep"/>
+        <setting id="resolve_priority" type="enum" label="$ADDON[plugin.video.alfa 70110]" lvalues="70164|70165|70166" default="0"/>
+        <setting id="resolve_stop" type="bool" label="$ADDON[plugin.video.alfa 70111]" default="true"/>
+        <setting id="hidepremium" type="bool" label="$ADDON[plugin.video.alfa 70112]" default="false"/>
         <setting type="sep"/>
-        <setting label="Canales para adultos" type="lsep"/>
-        <setting id="adult_aux_intro_password" type="text" label="Contraseña (por defecto 0000):" option="hidden"  default=""/>
-        <setting id="adult_mode" type="enum" values="Nunca|Siempre|Solo hasta que se reinicie Kodi" label="30002" enable="!eq(-1,)" default="0"/>
-        <setting id="adult_request_password" type="bool" label="Solicitar contraseña para abrir canales de adultos"  enable="!eq(-1,0)+!eq(-2,)" default="true"/>
-        <setting id="adult_aux_new_password1" type="text" label="Nueva contraseña:" option="hidden" enable="!eq(-3,)" default=""/>
-        <setting id="adult_aux_new_password2" type="text" label="Confirmar nueva contraseña:" option="hidden" enable="!eq(-1,)" default=""/>
+        <setting label="$ADDON[plugin.video.alfa 60305]" type="lsep"/>
+        <setting id="adult_aux_intro_password" type="text" label="$ADDON[plugin.video.alfa 70113]" option="hidden"  default=""/>
+        <setting id="adult_mode" type="enum" lvalues="60602|60616|70114" label="$ADDON[plugin.video.alfa 30002]" enable="!eq(-1,)" default="0"/>
+        <setting id="adult_request_password" type="bool" label="$ADDON[plugin.video.alfa 70115]"  enable="!eq(-1,0)+!eq(-2,)" default="true"/>
+        <setting id="adult_aux_new_password1" type="text" label="$ADDON[plugin.video.alfa 70116]" option="hidden" enable="!eq(-3,)" default=""/>
+        <setting id="adult_aux_new_password2" type="text" label="$ADDON[plugin.video.alfa 70117]" option="hidden" enable="!eq(-1,)" default=""/>
     </category>
 
     <!-- Path downloads -->
-    <category label="30501">
-        <setting id="downloadpath" type="folder" label="30017" default=""/>
-        <setting id="downloadlistpath" type="folder" label="30018" default=""/>
-        <setting id="videolibrarypath" type="folder" label="30067" default=""/>
+    <category label="$ADDON[plugin.video.alfa 30501]">
+        <setting id="downloadpath" type="folder" label="$ADDON[plugin.video.alfa 30017]" default=""/>
+        <setting id="downloadlistpath" type="folder" label="$ADDON[plugin.video.alfa 30018]" default=""/>
+        <setting id="videolibrarypath" type="folder" label="$ADDON[plugin.video.alfa 30067]" default=""/>
 
         <setting type="sep"/>
-        <setting label="30131" type="lsep"/>
-        <setting id="folder_tvshows" type="text" label="Nombre de carpeta para 'Series'" default="SERIES"/>
-        <setting id="folder_movies" type="text" label="Nombre de carpeta para 'Peliculas'" default="CINE"/>
+        <setting label="$ADDON[plugin.video.alfa 30131]" type="lsep"/>
+        <setting id="folder_tvshows" type="text" label="$ADDON[plugin.video.alfa 70118]" default="SERIES"/>
+        <setting id="folder_movies" type="text" label="$ADDON[plugin.video.alfa 70119]" default="CINE"/>
         <setting id="videolibrary_kodi_flag" type="number" label="" default="0" visible="false"/>
-        <setting id="videolibrary_kodi" type="bool" label="Autoconfigurar videoteca de XBMC/Kodi para contenido de Alfa" enable="lt(-1,2)+eq(0,false)" default="false"/>
+        <setting id="videolibrary_kodi" type="bool" label="$ADDON[plugin.video.alfa 70120]" enable="lt(-1,2)+eq(0,false)" default="false"/>
     </category>
-     <category label="Pagina de inicio">
-        <setting id="start_page" type="bool" label="Activar pagina de inicio" default="false"/>
-        <setting id="custom_start" type="bool" label="Personalizado (seleccionar desde un canal)" default="false"
+     <category label="$ADDON[plugin.video.alfa 70121]">
+        <setting id="start_page" type="bool" label="$ADDON[plugin.video.alfa 70121]" default="false"/>
+        <setting id="custom_start" type="bool" label="$ADDON[plugin.video.alfa 70122]" default="false"
                  visible="eq(-1,True)"/>
-        <setting id="news_start" type="bool" label="Mostrar Novedades" default="false" visible="eq(-2,True)"
+        <setting id="news_start" type="bool" label="$ADDON[plugin.video.alfa 70123]" default="false" visible="eq(-2,True)"
                  enable="eq(-1,False)+eq(-2,True"/>
-         <setting id="category" type="labelenum" label="Categoria"
-                 values="Peliculas|Series|Anime|Infantiles|Documentales|Terror|Castellano|Latino|Torrent"
-                 default="Peliculas" visible="eq(-3,True)+eq(-1,True)+eq(-2,False)" enable="eq(-3,True)+eq(-1,True)+(-2,false)"/>
+         <setting id="category" type="labelenum" label="$ADDON[plugin.video.alfa 70124]"
+                 lvalues="70137|70136|70127|60269|60272|70013|70014|59976|70171"
+                 default="$ADDON[plugin.video.alfa 70137]" visible="eq(-3,True)+eq(-1,True)+eq(-2,False)" enable="eq(-3,True)+eq(-1,True)+(-2,false)"/>
    </category>
-    <category label="Opciones Visuales">
-        <setting id="icon_set" type="labelenum" label="Set de iconos" values="default|dark|angedam" default="default"/>
-        <setting id="infoplus_set" type="labelenum" label="Opción visual Infoplus" values="Sin animación|Con animación" default="Sin animación"/>
-        <setting id="video_thumbnail_type" type="enum" label="Thumbnail para videos" values="Poster|Logo del servidor" default="0"/>
-        <setting label="Opciones para Titulos" type="lsep"/>
-        <setting id="unify" type="bool" label="Titulos Inteligentes" default="false"/>
-        <setting id="title_color" type="bool" label="Colores Personalizados" default="false" visible="eq(-1,true)"/>
-        <setting id="movie_color" type="labelenum" label="Pelicula"
+    <category label="$ADDON[plugin.video.alfa 70126]">
+        <setting id="icon_set" type="labelenum" label="$ADDON[plugin.video.alfa 70108]" values="default|dark|angedam" default="default"/>
+        <setting id="infoplus_set" type="labelenum" label="$ADDON[plugin.video.alfa 70128]" lvalues="70129|70130" default="$ADDON[plugin.video.alfa 70129]"/>
+        <setting id="video_thumbnail_type" type="enum" label="$ADDON[plugin.video.alfa 70131]" lvalues="70132|70133" default="0"/>
+        <setting label="$ADDON[plugin.video.alfa 70167]" type="lsep"/>
+        <setting id="unify" type="bool" label="$ADDON[plugin.video.alfa 70134]" default="false"/>
+        <setting id="title_color" type="bool" label="$ADDON[plugin.video.alfa 70135]" default="false" visible="eq(-1,true)"/>
+        <setting id="movie_color" type="labelenum" label="$ADDON[plugin.video.alfa 70137]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-1,true)+eq(-2,true)"/>
-        <setting id="tvshow_color" type="labelenum" label="Serie"
+        <setting id="tvshow_color" type="labelenum" label="$ADDON[plugin.video.alfa 70136]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-2,true)+eq(-3,true)"/>
-        <setting id="year_color" type="labelenum" label="Año"
+        <setting id="year_color" type="labelenum" label="$ADDON[plugin.video.alfa 60232]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-3,true)+eq(-4,true)"/>
-        <setting id="rating_1_color" type="labelenum" label="Valoracion Baja"
+        <setting id="rating_1_color" type="labelenum" label="$ADDON[plugin.video.alfa 70138]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-4,true)+eq(-5,true)"/>
-        <setting id="rating_2_color" type="labelenum" label="Valoracion Media"
+        <setting id="rating_2_color" type="labelenum" label="$ADDON[plugin.video.alfa 70139]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-5,true)+eq(-6,true)"/>
-        <setting id="rating_3_color" type="labelenum" label="Valoracion Alta"
+        <setting id="rating_3_color" type="labelenum" label="$ADDON[plugin.video.alfa 70140]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-6,true)+eq(-7,true)"/>
-        <setting id="quality_color" type="labelenum" label="Calidad"
+        <setting id="quality_color" type="labelenum" label="$ADDON[plugin.video.alfa 70141]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-7,true)+eq(-8,true)"/>
-        <setting id="cast_color" type="labelenum" label="Castellano"
+        <setting id="cast_color" type="labelenum" label="$ADDON[plugin.video.alfa 59980]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-8,true)+eq(-9,true)"/>
-        <setting id="lat_color" type="labelenum" label="Latino"
+        <setting id="lat_color" type="labelenum" label="$ADDON[plugin.video.alfa 59981]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-9,true)+eq(-10,true)"/>
-        <setting id="vose_color" type="labelenum" label="VOSE (Versión Original Subtitulado Español)"
+        <setting id="vose_color" type="labelenum" label="$ADDON[plugin.video.alfa 701402]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-10,true)+eq(-11,true)"/>
-        <setting id="vos_color" type="labelenum" label="VOS (Versión Original Subtitulado)"
+        <setting id="vos_color" type="labelenum" label="$ADDON[plugin.video.alfa 70143]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-11,true)+eq(-12,true)"/>
-        <setting id="vo_color" type="labelenum" label="VO (Versión Original)"
+        <setting id="vo_color" type="labelenum" label="$ADDON[plugin.video.alfa 70144]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-12,true)+eq(-13,true)"/>
-        <setting id="server_color" type="labelenum" label="Servidores"
+        <setting id="server_color" type="labelenum" label="$ADDON[plugin.video.alfa 70145]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-13,true)+eq(-14,true)"/>
-        <setting id="library_color" type="labelenum" label="Añadir a Videoteca"
+        <setting id="library_color" type="labelenum" label="$ADDON[plugin.video.alfa 70146]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-14,true)+eq(-15,true)"/>
-        <setting id="update_color" type="labelenum" label="Videoteca (Actualizar serie)"
+        <setting id="update_color" type="labelenum" label="$ADDON[plugin.video.alfa 70147]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-15,true)+eq(-16,true)"/>
-        <setting id="no_update_color" type="labelenum" label="Videoteca (No actualizar serie)"
+        <setting id="no_update_color" type="labelenum" label="$ADDON[plugin.video.alfa 70148]"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-16,true)+eq(-17,true)"/>
    </category>
-    <category label="Otros">
-        <setting label="Info de películas/series en menú contextual" type="lsep"/>
-        <setting id="infoplus" type="bool" label="Mostrar opción Infoplus:" default="true"/>
-        <setting id="extended_info" type="bool" label="Mostrar opción ExtendedInfo (Necesario addon externo):" default="false"/>
+    <category label="$ADDON[plugin.video.alfa 70149]">
+        <setting label="$ADDON[plugin.video.alfa 70150]" type="lsep"/>
+        <setting id="infoplus" type="bool" label="$ADDON[plugin.video.alfa 70151]" default="true"/>
+        <setting id="extended_info" type="bool" label="$ADDON[plugin.video.alfa 70152]" default="false"/>
 
-		<setting label="Botones/Teclas de acceso (Cambios requieren reiniciar Kodi)" type="lsep"/>
+		<setting label="$ADDON[plugin.video.alfa 70153]" type="lsep"/>
 		<setting id="shortcut_key" type="action" label="30999" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAia2V5bWFwIg0KfQ==)" />
 
         <setting type="sep"/>
-        <setting label="TheMovieDB (obtiene datos de las películas o series)" type="lsep"/>
-        <setting id="tmdb_threads" type="labelenum" values="5|10|15|20|25|30" label="Búsquedas simultáneas (puede causar inestabilidad)" default="20"/>
-        <setting id="tmdb_plus_info" type="bool" label="Buscar información extendida (datos de actores) Aumenta el tiempo de búsqueda" default="false"/>
-        <setting id="tmdb_cache" type="bool" label="Usar caché (mejora las búsquedas recurrentes)" default="true"/>
-        <setting id="tmdb_cache_expire" type="enum" lvalues="cada 1 día|cada 7 días|cada 15 días|cada 30 días|No" label="¿Renovar caché?" enable="eq(-1,true)" default="4"/>
-        <setting id="tmdb_clean_db_cache" type="action" label="Pulse para 'Borrar caché' guardada" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAic2NyaXB0Ig0KfQ==)" />
+        <setting label="$ADDON[plugin.video.alfa 70154]" type="lsep"/>
+        <setting id="tmdb_threads" type="labelenum" values="5|10|15|20|25|30" label="$ADDON[plugin.video.alfa 70155]" default="20"/>
+        <setting id="tmdb_plus_info" type="bool" label="$ADDON[plugin.video.alfa 70156]" default="false"/>
+        <setting id="tmdb_cache" type="bool" label="$ADDON[plugin.video.alfa 70157]" default="true"/>
+        <setting id="tmdb_cache_expire" type="enum" lvalues="70158|70159|70160|70161|70170" label="$ADDON[plugin.video.alfa 70162]" enable="eq(-1,true)" default="4"/>
+        <setting id="tmdb_clean_db_cache" type="action" label="$ADDON[plugin.video.alfa 70163]" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAic2NyaXB0Ig0KfQ==)" />
 
    </category>
 
