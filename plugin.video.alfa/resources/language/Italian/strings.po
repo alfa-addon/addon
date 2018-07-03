@@ -3816,4 +3816,9 @@ msgctxt "#70276"
 msgid "Search by title"
 msgstr "Cerca per titolo"
 
+msgctxt "#70277"
+msgid "MediaServer Language (Restart Required)"
+msgstr "mediaServer Lingua (Riavvio Richiesto)"
+
+
 

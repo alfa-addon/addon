@@ -62,7 +62,7 @@
     {
       "id": "search_new_content",
       "type": "list",
-      "label": "[@60618",
+      "label": "@60618",
       "default": 0,
       "enabled": "!eq(-4,@60615])",
       "lvalues": [
