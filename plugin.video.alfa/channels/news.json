@@ -11,7 +11,7 @@
     {
       "id": "multithread",
       "type": "bool",
-      "label": "$ADDON[plugin.video.alfa 60656]",
+      "label": "@60656",
       "default": true,
       "enabled": true,
       "visible": true
@@ -19,14 +19,14 @@
     {
       "id": "result_mode",
       "type": "list",
-      "label": "$ADDON[plugin.video.alfa 60657]",
+      "label": "@60657",
       "default": 2,
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "$ADDON[plugin.video.alfa 60658]",
-        "$ADDON[plugin.video.alfa 60659]",
-        "$ADDON[plugin.video.alfa 60660]"
+        "@60658",
+        "@60659",
+        "@60660"
       ]
     },
     {
@@ -37,11 +37,11 @@
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "$ADDON[plugin.video.alfa 60667]",
-        "$ADDON[plugin.video.alfa 60668]",
-        "$ADDON[plugin.video.alfa 60669]",
-        "$ADDON[plugin.video.alfa 60670]",
-        "$ADDON[plugin.video.alfa 60671]"
+        "@60667",
+        "@60668",
+        "@60669",
+        "@60670",
+        "@60671"
       ]
     }
   ]
