@@ -73,7 +73,7 @@ def start():
 
         # Da por levantado el servicio
         logger.info("--------------------------------------------------------------------")
-        logger.info("Alfa Iniciado")
+        logger.info("Alfa %s Iniciado" %version)
         logger.info("La URL para acceder es http://%s:%s" % (myip, http_port))
         logger.info("WebSocket Server iniciado en ws://%s:%s" % (myip, websocket_port))
         logger.info("--------------------------------------------------------------------")
