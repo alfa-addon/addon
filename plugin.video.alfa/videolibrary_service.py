@@ -13,11 +13,14 @@ from core import filetools
 from core import videolibrarytools
 from platformcode import config, logger
 from platformcode import platformtools
+from channels import videolibrary
 
 
 def update(path, p_dialog, i, t, serie, overwrite):
     logger.info("Actualizando " + path)
     insertados_total = 0
+    #logger.debug(serie)
+    head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')
 
     # logger.debug("%s: %s" %(serie.contentSerieName,str(list_canales) ))
     for channel, url in serie.library_urls.items():
@@ -35,6 +38,7 @@ def update(path, p_dialog, i, t, serie, overwrite):
                 pathchannels = filetools.join(config.get_runtime_path(), "channels", serie.channel + '.py')
                 logger.info("Cargando canal: " + pathchannels + " " +
                             serie.channel)
+                logger.debug(serie) 
 
                 if serie.library_filter_show:
                     serie.show = serie.library_filter_show.get(channel, serie.contentSerieName)
@@ -46,10 +50,16 @@ def update(path, p_dialog, i, t, serie, overwrite):
                     if int(overwrite) == 3:
                         # Sobrescribir todos los archivos (tvshow.nfo, 1x01.nfo, 1x01 [canal].json, 1x01.strm, etc...)
                         insertados, sobreescritos, fallidos = videolibrarytools.save_tvshow(serie, itemlist)
+                        serie= videolibrary.check_season_playcount(serie, serie.contentSeason)
+                        if filetools.write(path + '/tvshow.nfo', head_nfo + it.tojson()):
+                            serie.infoLabels['playcount'] = serie.playcount
                     else:
                         insertados, sobreescritos, fallidos = videolibrarytools.save_episodes(path, itemlist, serie,
                                                                                               silent=True,
                                                                                               overwrite=overwrite)
+                        it = videolibrary.check_season_playcount(it, it.contentSeason)
+                        if filetools.write(path + '/tvshow.nfo', head_nfo + it.tojson()):
+                            serie.infoLabels['playcount'] = serie.playcount
                     insertados_total += insertados
 
                 except Exception, ex:
