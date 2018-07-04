@@ -495,7 +495,7 @@ def listado_busqueda(item):
     matches += re.compile(patron, re.DOTALL).findall(data)
     matches_cnt = len(matches)
     
-    if not matches and not 'Se han encontrado <b>0</b> resultados.' in data:       #error
+    if not matches and not 'Se han encontrado <b>0</b> resultados.' and not "href='/juego-descargar-torrent" in data:       #error
         logger.error("ERROR 02: LISTADO_BUSQUEDA: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO_BUSQUEDA: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
