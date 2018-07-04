@@ -117,6 +117,9 @@
         <setting id="tmdb_cache_expire" type="enum" lvalues="cada 1 día|cada 7 días|cada 15 días|cada 30 días|No" label="¿Renovar caché?" enable="eq(-1,true)" default="4"/>
         <setting id="tmdb_clean_db_cache" type="action" label="Pulse para 'Borrar caché' guardada" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAic2NyaXB0Ig0KfQ==)" />
 
-   </category>
+        <setting type="sep"/>
+        <setting label="Para evitar esperar demasiado cuando un servidor no responde:" type="lsep"/>
+        <setting id="httptools_timeout" type="labelenum" values="0|5|10|15|20|25|30" label="Timeout (tiempo de espera máximo)" default="15"/>
+    </category>
 
 </settings>

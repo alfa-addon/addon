@@ -304,6 +304,8 @@ def submenu_tools(item):
                              thumbnail=get_thumb("channels.png")))
         itemlist.append(Item(title='- Testear canales ...', channel="test", action="channel_test_selected"))
         itemlist.append(Item(title='- Testear servidores ...', channel="test", action="server_test_selected"))
+        itemlist.append(Item(title='- Testear todos los canales!', channel="test", action="channel_test_all"))
+        itemlist.append(Item(title='- Testear todos los servidores!', channel="test", action="server_test_all"))
         itemlist.append(Item(title='- Testear novedades!', channel="test", action="news_test_all"))
         itemlist.append(Item(title='- Upload tests to web!', channel="test", action="web_update_tests"))
         itemlist.append(

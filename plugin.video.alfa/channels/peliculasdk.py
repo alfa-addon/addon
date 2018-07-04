@@ -124,8 +124,8 @@ def buscador(item):
 
         titulo = '%s [%s][%s]' % (scrapedtitle, ','.join([a[:3] for a in audios]), calidad)
 
-        # Parece que las pelis de adultos se mezclan en la búsqueda y lo único que las diferencia es que no tienen Calidad
-        if calidades or __adult_mode__ != 0:
+        # Parece que las pelis de adultos se mezclan en la búsqueda y lo único que las diferencia es que no tienen Calidad y Audios
+        if (calidad and audios) or __adult_mode__ != 0:
             itemlist.append(Item(channel=item.channel,
                                  action="findvideos", url=scrapedurl,
                                  title=titulo, contentTitle=scrapedtitle,
