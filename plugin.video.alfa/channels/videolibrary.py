@@ -292,6 +292,7 @@ def get_episodes(item):
 
 def findvideos(item):
     logger.info()
+    from lib import generictools
     # logger.debug("item:\n" + item.tostring('\n'))
 
     itemlist = []
@@ -321,10 +322,11 @@ def findvideos(item):
                 list_canales[nom_canal] = filetools.join(path_dir, fd)
 
     num_canales = len(list_canales)
-    # logger.debug(str(list_canales))
+
     if 'downloads' in list_canales:
         json_path = list_canales['downloads']
         item_json = Item().fromjson(filetools.read(json_path))
+        item_json = generictools.redirect_clone_newpct1(item_json)      ###### Redirección al canal NewPct1.py si es un clone
         item_json.contentChannel = "local"
         # Soporte para rutas relativas en descargas
         if filetools.is_relative(item_json.url):
@@ -362,7 +364,12 @@ def findvideos(item):
     for nom_canal, json_path in list_canales.items():
         if filtro_canal and filtro_canal != nom_canal.capitalize():
             continue
-
+        
+        item_canal = Item()
+        item_canal.channel = nom_canal
+        item_canal = generictools.redirect_clone_newpct1(item_canal)    ###### Redirección al canal NewPct1.py si es un clone
+        nom_canal = item_canal.channel
+            
         # Importamos el canal de la parte seleccionada
         try:
             channel = __import__('channels.%s' % nom_canal, fromlist=["channels.%s" % nom_canal])
@@ -370,6 +377,7 @@ def findvideos(item):
             exec "import channels." + nom_canal + " as channel"
 
         item_json = Item().fromjson(filetools.read(json_path))
+        item_json = generictools.redirect_clone_newpct1(item_json)      ###### Redirección al canal NewPct1.py si es un clone
         list_servers = []
 
         try:

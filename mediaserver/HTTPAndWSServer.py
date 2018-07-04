@@ -5,17 +5,17 @@ import re
 import threading
 import time
 import traceback
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from BaseHTTPServer import HTTPServer
+from HTTPWebSocketsHandler import HTTPWebSocketsHandler
 
 from platformcode import config, logger
-
+from core import jsontools as json
 
 class MyHTTPServer(HTTPServer):
     daemon_threads = True
 
     def process_request_thread(self, request, client_address):
         try:
-
             self.finish_request(request, client_address)
             self.shutdown_request(request)
         except:
@@ -35,12 +35,15 @@ class MyHTTPServer(HTTPServer):
             logger.error(traceback.format_exc())
 
 
-class Handler(BaseHTTPRequestHandler):
+class Handler(HTTPWebSocketsHandler):
     def log_message(self, format, *args):
         # sys.stderr.write("%s - - [%s] %s\n" %(self.client_address[0], self.log_date_time_string(), format%args))
         pass
 
-    def do_GET(self):
+    def sendMessage(self, message):
+        self.send_message(message)
+
+    def do_GET_HTTP(self):
         from platformcode import platformtools
         from platformcode import controllers
         # Control de accesos
@@ -87,6 +90,40 @@ class Handler(BaseHTTPRequestHandler):
                     del c
         return
 
+    def on_ws_message(self, message):
+        try:
+            if message:
+                json_message = json.load(message)
+
+            if "request" in json_message:
+                t = threading.Thread(target=run, args=[self.controller, json_message["request"].encode("utf8")], name=self.ID)
+                t.setDaemon(True)
+                t.start()
+
+            elif "data" in json_message:
+                if type(json_message["data"]["result"]) == unicode:
+                    json_message["data"]["result"] = json_message["data"]["result"].encode("utf8")
+
+                self.controller.data = json_message["data"]
+
+        except:
+            logger.error(traceback.format_exc())
+            show_error_message(traceback.format_exc())
+
+    def on_ws_connected(self):
+        try:
+            self.ID = "%032x" % (random.getrandbits(128))
+            from platformcode.controllers.html import html
+            self.controller = html(self, self.ID)
+            self.server.fnc_info()
+        except:
+            logger.error(traceback.format_exc())
+
+    def on_ws_closed(self):
+        self.controller.__del__()
+        del self.controller
+        self.server.fnc_info()
+
     def address_string(self):
         # Disable reverse name lookups
         return self.client_address[:2][0]
@@ -94,6 +131,13 @@ class Handler(BaseHTTPRequestHandler):
 
 PORT = config.get_setting("server.port")
 server = MyHTTPServer(('', int(PORT)), Handler)
+
+def run(controller, path):
+    try:
+        controller.run(path)
+    except:
+        logger.error(traceback.format_exc())
+        show_error_message(traceback.format_exc())
 
 
 def start(fnc_info):
