@@ -204,6 +204,7 @@ def set_lang(language):
     #logger.info()
 
     cast =['castellano','espanol','cast','esp','espaol', 'es','zc', 'spa', 'spanish', 'vc']
+    ita =['italiano','italian','ita','it']
     lat=['latino','lat','la', 'espanol latino', 'espaol latino', 'zl', 'mx', 'co', 'vl']
     vose=['subtitulado','subtitulada','sub','sub espanol','vose','espsub','su','subs castellano',
           'sub: español', 'vs', 'zs', 'vs', 'english-spanish subs', 'ingles sub espanol']
@@ -222,6 +223,8 @@ def set_lang(language):
         language = 'cast'
     elif language in lat:
         language = 'lat'
+    elif language in ita:
+        language = 'ita'    
     elif language in vose:
         language = 'vose'
     elif language in vos:
