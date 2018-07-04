@@ -385,10 +385,8 @@ menufilepath = os.path.join(get_runtime_path(), "resources", "settings.xml")
 configfilepath = os.path.join(get_data_path(), "settings.xml")
 if not os.path.exists(get_data_path()):
     os.mkdir(get_data_path())
-# Literales
-TRANSLATION_FILE_PATH = os.path.join(get_runtime_path(), "resources", "language", "Spanish", "strings.po")
 load_settings()
-
+TRANSLATION_FILE_PATH = os.path.join(get_runtime_path(), "resources", "language", settings_dic["mediaserver_language"], "strings.po")
 
 # modo adulto:
 # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie sesión
