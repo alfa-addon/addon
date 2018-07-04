@@ -1,7 +1,7 @@
 {
   "id": "guaridavalencianista",
   "name": "La Guarida valencianista",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast"],
   "thumbnail": "guaridavalencianista.png",
