@@ -18,16 +18,19 @@ from channels import videolibrary
 
 def update(path, p_dialog, i, t, serie, overwrite):
     logger.info("Actualizando " + path)
+    from lib import generictools
     insertados_total = 0
-    #logger.debug(serie)
+
     head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')
 
     # logger.debug("%s: %s" %(serie.contentSerieName,str(list_canales) ))
     for channel, url in serie.library_urls.items():
         serie.channel = channel
         serie.url = url
+        
+        serie = generictools.redirect_clone_newpct1(serie)        ###### Redirección al canal NewPct1.py si es un clone
 
-        channel_enabled = channeltools.is_enabled(channel)
+        channel_enabled = channeltools.is_enabled(serie.channel)
 
         if channel_enabled:
 
@@ -38,13 +41,14 @@ def update(path, p_dialog, i, t, serie, overwrite):
                 pathchannels = filetools.join(config.get_runtime_path(), "channels", serie.channel + '.py')
                 logger.info("Cargando canal: " + pathchannels + " " +
                             serie.channel)
-                logger.debug(serie) 
 
                 if serie.library_filter_show:
-                    serie.show = serie.library_filter_show.get(channel, serie.contentSerieName)
+                    serie.show = serie.library_filter_show.get(serie.channel, serie.contentSerieName)
 
                 obj = imp.load_source(serie.channel, pathchannels)
                 itemlist = obj.episodios(serie)
+                
+                serie.channel = channel             #Restauramos el valor incial del clone de NewPct1
 
                 try:
                     if int(overwrite) == 3:
