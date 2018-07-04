@@ -556,7 +556,7 @@ def play(item):
         url = item.url.replace('/embed/', '/stream/') + '/' + token
 
         # 3- Descargar página
-        data = gktools.get_data_with_cookie(url, item.url, ck)
+        data = gktools.get_data_with_cookie(url, ck, item.url)
 
         # 4- Extraer enlaces
         url = scrapertools.find_single_match(data, '<meta (?:name|property)="og:url" content="([^"]+)"')

@@ -32,10 +32,6 @@ def mainlist(item):
 
     itemlist = renumbertools.show_option(item.channel, itemlist)
 
-    # ~ prova = 'EIpStovt0/tFerZM4pviHBzddH308TWRR41XnHv9N4tUNih6r+GjCDa/cV1uVUQXEmZd1Hsu2ABzESzBMGiK6XUdRgYZYHImmrIWcn3tfYPCuSWBc2UgwxUtR+WOsov6YiGM5AdgJGFunoN'
-    # ~ aux = gktools.decode_rijndael(prova, preIV = 'b3512f4972d314da9', key='3e1a854e7d5835ab99d99a29afec8bbb')
-    # ~ itemlist.append(Item(channel=item.channel, title=aux, action="novedades", url=HOST))
-
     return itemlist
 
 
