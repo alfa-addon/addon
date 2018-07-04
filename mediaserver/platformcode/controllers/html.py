@@ -15,14 +15,9 @@ from platformcode import config
 from core.item import Item
 from core.tmdb import Tmdb
 from platformcode import launcher, logger
-from core import filetools
 
-# <addon id="plugin.video.alfa" name="Alfa" version="2.3.0" provider-name="Alfa Addon">
-data = filetools.read(filetools.join(config.get_runtime_path(), "addon.xml"))
-aux = re.findall('<addon id="plugin.video.alfa" name="Alfa" version="([^"]+)"', data, re.MULTILINE | re.DOTALL)
-version = "???"
-if len(aux) > 0:
-    version = aux[0]
+## Obtiene la versión del addon
+version = config.get_addon_version()
 
 class html(Controller):
     pattern = re.compile("##")
@@ -113,7 +108,7 @@ class platform(Platformtools):
                                         thumbnail=channelselector.get_thumb("back.png", "banner_")))
             else:
                 itemlist.insert(0, Item(title="Atrás", action="go_back",
-                                        thumbnail=channelselector.get_thumb("back.png")))
+                                        thumbnail=channelselector.get_thumb("back.png", "banner_")))
 
         JsonData = {}
         JsonData["action"] = "EndItems"
@@ -127,17 +122,9 @@ class platform(Platformtools):
         # Recorremos el itemlist
         for item in itemlist:
 
-            if not item.thumbnail and item.action == "search": item.thumbnail = channelselector.get_thumb("search.png")
-            if not item.thumbnail and item.folder == True: item.thumbnail = channelselector.get_thumb("folder.png", "banner")
-            if not item.thumbnail and item.folder == False: item.thumbnail = channelselector.get_thumb("nofolder.png")
-            if "http://media.xxxxx/" in item.thumbnail and not item.thumbnail.startswith(
-                    "http://media.xxxxxxxx/thumb_"):
-
-                if parent_item.viewmode in ["banner", "channel"]:
-                    item.thumbnail = channelselector.get_thumbnail_path("banner") + os.path.basename(item.thumbnail)
-                else:
-                    item.thumbnail = channelselector.get_thumbnail_path() + os.path.basename(item.thumbnail)
-
+            if not item.thumbnail and item.action == "search": item.thumbnail = channelselector.get_thumb("search.png", "banner_")
+            #if not item.thumbnail and item.folder == True: item.thumbnail = channelselector.get_thumb("folder.png", "banner_")
+            if not item.thumbnail and item.folder == False: item.thumbnail = channelselector.get_thumb("nofolder.png", "banner_")
             # Estas imagenes no estan en banner, asi que si queremos banner, para que no se vean mal las quitamos
             elif parent_item.viewmode in ["banner", "channel"] and item.thumbnail.startswith(
                     "http://media.xxxxx/thumb_"):

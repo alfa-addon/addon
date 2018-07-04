@@ -18,6 +18,9 @@ from core.cloudflare import Cloudflare
 from platformcode import config, logger
 from platformcode.logger import WebErrorException
 
+## Obtiene la versión del addon
+__version = config.get_addon_version()
+
 cookies_lock = Lock()
 
 cj = cookielib.MozillaCookieJar()
@@ -130,7 +133,7 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
     if timeout is None and HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT is not None: timeout = HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT
 
     logger.info("----------------------------------------------")
-    logger.info("downloadpage")
+    logger.info("downloadpage Alfa: %s" %__version)
     logger.info("----------------------------------------------")
     logger.info("Timeout: %s" % timeout)
     logger.info("URL: " + url)
@@ -277,3 +280,5 @@ class NoRedirectHandler(urllib2.HTTPRedirectHandler):
     http_error_301 = http_error_302
     http_error_303 = http_error_302
     http_error_307 = http_error_302
+    
+

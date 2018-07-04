@@ -18,6 +18,7 @@ import HTTPAndWSServer
 
 http_port = config.get_setting("server.port")
 myip = config.get_local_ip()
+version = config.get_addon_version()
 
 
 def thread_name_wrap(func):
@@ -41,7 +42,7 @@ if sys.version_info < (2, 7, 11):
 def show_info():
     os.system('cls' if os.name == 'nt' else 'clear')
     print ("--------------------------------------------------------------------")
-    print ("Alfa Iniciado")
+    print ("Alfa %s Iniciado" %version)
     print ("La URL para acceder es http://%s:%s" % (myip, http_port))
     print ("--------------------------------------------------------------------")
     print ("Runtime Path      : " + config.get_runtime_path())
@@ -68,7 +69,7 @@ def start():
 
         # Da por levantado el servicio
         logger.info("--------------------------------------------------------------------")
-        logger.info("Alfa Iniciado")
+        logger.info("Alfa %s Iniciado" %version)
         logger.info("La URL para acceder es http://%s:%s" % (myip, http_port))
         logger.info("--------------------------------------------------------------------")
         logger.info("Runtime Path      : " + config.get_runtime_path())

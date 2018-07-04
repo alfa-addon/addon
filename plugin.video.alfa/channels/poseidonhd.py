@@ -256,24 +256,30 @@ def findvideos(item):
 
         for url in urls:
             final_url = httptools.downloadpage('https:'+url).data
-            if 'vip' in url:
+
+            if language == 'VOSE':
+                sub = scrapertools.find_single_match(url, 'sub=(.*?)&')
+                subs = 'https:%s' % sub
+
+            if 'index' in url:
                 file_id = scrapertools.find_single_match(url, 'file=(.*?)&')
-                if language=='VOSE':
-                    sub = scrapertools.find_single_match(url, 'sub=(.*?)&')
-                    subs = 'https:%s' % sub
-                post = {'link':file_id}
+                post = {'link': file_id}
                 post = urllib.urlencode(post)
-                hidden_url = 'https://streamango.poseidonhd.com/repro//plugins/gkpluginsphp.php'
+                hidden_url = 'https://streamango.poseidonhd.com/repro/plugins/gkpluginsphp.php'
                 data_url = httptools.downloadpage(hidden_url, post=post).data
                 dict_vip_url = jsontools.load(data_url)
                 url = dict_vip_url['link']
             else:
-                url = 'https:%s' % url
-                new_url = url.replace('embed','stream')
-                url = httptools.downloadpage(new_url, follow_redirects=False).headers.get('location')
-            #title = '%s [%s]' % (item.title, language)
-            itemlist.append(item.clone(title='[%s] [%s]', url=url, action='play', subtitle=subs,
-                            language=language, quality=quality, infoLabels = item.infoLabels))
+                file_id = scrapertools.find_single_match(url, 'url=(.*?)&')
+                post = {'url': file_id}
+                post = urllib.urlencode(post)
+                hidden_url = 'https://streamango.poseidonhd.com/repro/r.php'
+                data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False)
+                url = data_url.headers['location']
+
+            itemlist.append(item.clone(title = '[%s] [%s]', url=url, action='play', subtitle=subs,
+                            language=language, quality=quality, infoLabels=item.infoLabels))
+
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % (x.server.capitalize(), x.language))
 
     # Requerido para Filtrar enlaces
@@ -288,6 +294,8 @@ def findvideos(item):
     # Requerido para AutoPlay
 
     autoplay.start(itemlist, item)
+
+    itemlist = sorted(itemlist, key=lambda it: it.language)
 
     if item.contentType != 'episode':
         if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':

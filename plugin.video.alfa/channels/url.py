@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
@@ -24,7 +25,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info("texto=" + texto)
 
-    if not texto.startswith("http://"):
+    if not texto.startswith("http"):
         texto = "http://" + texto
 
     itemlist = []
@@ -38,7 +39,7 @@ def search(item, texto):
         itemlist.append(
             Item(channel=item.channel, action="play", url=texto, server="directo", title="Ver enlace directo"))
     else:
-        data = scrapertools.downloadpage(texto)
+        data = httptools.downloadpage(texto).data
         itemlist = servertools.find_video_items(data=data)
         for item in itemlist:
             item.channel = "url"

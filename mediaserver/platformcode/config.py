@@ -14,6 +14,27 @@ settings_dic = {}
 adult_setting = {}
 
 
+def get_addon_version(linea_inicio=0, total_lineas=2):
+    '''
+    Devuelve el número de de versión del addon, obtenido desde el archivo addon.xml
+    '''
+    path = get_runtime_path() + "\\addon.xml"
+    f = open(path, "rb")
+    data = []
+    for x, line in enumerate(f):
+        if x < linea_inicio: continue
+        if len(data) == total_lineas: break
+        data.append(line)
+    f.close()
+    data1 = "".join(data)
+    # <addon id="plugin.video.alfa" name="Alfa" version="2.5.21" provider-name="Alfa Addon">
+    aux = re.findall('<addon id="plugin.video.alfa" name="Alfa" version="([^"]+)"', data1, re.MULTILINE | re.DOTALL)
+    version = "???"
+    if len(aux) > 0:
+        version = aux[0]
+    return version
+
+
 def get_platform(full_version=False):
     # full_version solo es util en xbmc/kodi
     ret = {
