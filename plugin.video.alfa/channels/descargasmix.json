@@ -2,7 +2,7 @@
   "id": "descargasmix",
   "name": "DescargasMIX",
   "language": ["cast", "lat"],
-  "active": true,
+  "active": false,
   "adult": false,
   "thumbnail": "descargasmix.png",
   "banner": "descargasmix.png",
