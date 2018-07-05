@@ -203,7 +203,7 @@ def listado(item):
 
     data = ''
     try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage("item.url", timeout=timeout).data)
+        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
     except:
         pass
         
