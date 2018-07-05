@@ -19,6 +19,7 @@ def get_addon_version(linea_inicio=0, total_lineas=2):
     '''
     Devuelve el número de de versión del addon, obtenido desde el archivo addon.xml
     '''
+    return __settings__.getAddonInfo('version')
     path = os.path.join(get_runtime_path(), "addon.xml")
     f = open(path, "rb")
     data = []
