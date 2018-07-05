@@ -3,11 +3,11 @@
     <category label="General">
         <setting label="Puertos" type="lsep" />
         <setting default="8080" id="server.port" label="Puerto HTTP" type="number"/>
-        <setting default="8081" id="websocket.port" label="Puerto WebSocket" type="number"/>
         <setting type="sep"/>
         <setting id="default_action" type="enum" lvalues="30006|30007|30008" label="30005" default="0"/>
         <setting id="thumbnail_type" type="enum" lvalues="30011|30012|30200" label="30010" default="2"/>
-        <setting id="channel_language" type="labelenum" values="all|cast|lat" label="30019" default="all"/>
+        <setting id="mediaserver_language" type="labelenum" values="English|Spanish|Spanish (Argentina)|Spanish (Mexico)|Italian" label="70277" default="Spanish" />
+        <setting id="channel_language" type="labelenum" values="all|cast|lat|it" label="30019" default="all"/>
         <setting id="debug" type="bool" label="30003" default="false"/>
         <setting label="Uso de servidores" type="lsep"/>
         <setting id="resolve_priority" type="enum" label="Método prioritario" values="Free primero|Premium primero|Debriders primero" default="0"/>

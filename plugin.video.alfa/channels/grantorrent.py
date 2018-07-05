@@ -680,6 +680,8 @@ def episodios(item):
                 del item_local.update_last
             if item_local.update_next:
                 del item_local.update_next
+            if item_local.channel_host:
+                del item_local.channel_host
 
             #Verificamos el idioma por si encontramos algo
             if not item_local.language:

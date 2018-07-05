@@ -18,6 +18,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = data.replace("\\'", "'")
 
     media_url = scrapertools.find_single_match(data, '{type:"video/mp4",src:"([^"]+)"}')
+    if not media_url:
+        media_url = scrapertools.find_single_match(data, '"file":"([^"]+)')
     logger.info("media_url=" + media_url)
 
     video_urls = list()

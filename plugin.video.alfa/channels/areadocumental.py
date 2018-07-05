@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import urllib
+import re
 
 from core import httptools
 from core import scrapertools
@@ -25,7 +26,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Novedades", action="entradas",
                                url= host + "/resultados-reciente.php?buscar=&genero=",
                                fanart="http://i.imgur.com/Q7fsFI6.png"))
-    itemlist.append(item.clone(title="Destacados", action="entradas",
+    itemlist.append(item.clone(title="Destacados", action="destacados",
                                url= host + "/resultados-destacados.php?buscar=&genero=",
                                fanart="http://i.imgur.com/Q7fsFI6.png"))
     itemlist.append(item.clone(title="Categorías", action="cat", url= host + "/index.php",
@@ -36,6 +37,12 @@ def mainlist(item):
     itemlist.append(item.clone(title="Configurar canal", action="configuracion", text_color="gold"))
 
     return itemlist
+
+def get_source(url):
+    logger.info()
+    data = httptools.downloadpage(url).data
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}|"|\(|\)', "", data)
+    return data
 
 
 def configuracion(item):
@@ -95,22 +102,19 @@ def indice(item):
 def cat(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.find_single_match(data, '<ul class="menu">(.*?)</nav>')
-    matches = scrapertools.find_multiple_matches(bloque, "<li>.*?<a href='([^']+)'.*?>(.*?)</a>")
-    for scrapedurl, scrapedtitle in matches:
-        scrapedurl = host + "/" + scrapedurl
-        if not "span" in scrapedtitle:
-            scrapedtitle = "[COLOR gold]    **" + scrapedtitle + "**[/COLOR]"
-            itemlist.append(item.clone(action="entradas", title=scrapedtitle, url=scrapedurl))
-        else:
-            scrapedtitle = scrapertools.htmlclean(scrapedtitle)
-            itemlist.append(item.clone(action="entradas", title=scrapedtitle, url=scrapedurl))
+    data = get_source(item.url)
+    bloques = scrapertools.find_multiple_matches(data, '</li><li class=dropdown>.*?</ul>')
+    for bloque in bloques:
+        matches = scrapertools.find_multiple_matches(bloque, "<li><a href=(.*?)>(.*?)<")
+        for scrapedurl, scrapedtitle in matches:
+            scrapedurl = host + "/" + scrapedurl
+            if not "TODO" in scrapedtitle:
+                itemlist.append(item.clone(action="entradas", title=scrapedtitle, url=scrapedurl))
 
     return itemlist
 
 
-def entradas(item):
+def destacados(item):
     logger.info()
     itemlist = []
     item.text_color = color2
@@ -154,6 +158,37 @@ def entradas(item):
                                    title, quality = quality))
 
     next_page = scrapertools.find_single_match(data2, '<a href="([^"]+)"> ></a>')
+    if next_page:
+        itemlist.append(item.clone(action="entradas", title=">> Página Siguiente", url=host + next_page,
+                                   text_color=color3))
+
+    return itemlist
+
+
+
+def entradas(item):
+    logger.info()
+    itemlist = []
+    item.text_color = color2
+
+    data = get_source(item.url)
+
+    patron  = 'class=imagen.*?href=(.*?)><img.*?src=(.*?) alt=.*?title=(.*?)/>.*?</h2>(\d{4}) (.*?)<.*?space>(.*?)<'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for  scrapedurl, scrapedthumbnail, scrapedtitle, year, genero, scrapedplot in matches:
+        infolab = {'plot': scrapedplot, 'genre': genero}
+        scrapedurl = host + "/" + scrapedurl
+        scrapedthumbnail = host +'/'+ scrapedthumbnail
+        title = scrapedtitle
+        if not year.isspace() and year != "":
+            infolab['year'] = int(year)
+
+        itemlist.append(item.clone(action="findvideos", title=title, fulltitle=title,
+                                   url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels=infolab, contentTitle =
+                                   title))
+
+    next_page = scrapertools.find_single_match(data, '<a class=last>.*?</a></li><li><a href=(.*?)>.*?</a>')
+    next_page = scrapertools.htmlclean(next_page)
     if next_page:
         itemlist.append(item.clone(action="entradas", title=">> Página Siguiente", url=host + next_page,
                                    text_color=color3))

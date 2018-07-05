@@ -20,7 +20,6 @@ class fileserver(Controller):
             self.handler.send_header('Content-type', 'text/html')
             self.handler.end_headers()
             respuesta = f.read()
-            respuesta = respuesta.replace("{$WSPORT}", str(config.get_setting("websocket.port")))
             self.handler.wfile.write(respuesta)
             f.close()
 
