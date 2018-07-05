@@ -3832,3 +3832,12 @@ msgstr ""
 msgctxt "#70277"
 msgid "MediaServer Language (Restart Required)"
 msgstr ""
+
+msgctxt "#70278"
+msgid "Rename"
+msgstr ""
+
+msgctxt "#70279"
+msgid "You can try downloading the 'libtorrent' module from Kodi or installing some addon like 'Quasar' or 'Torrenter', \nwhich will appear among the options in the pop-up \nwhen it appears when clicking on a torrent link. 'Torrenter 'It's more complex but also more complete \nand it always works.'"
+msgstr ""
+
