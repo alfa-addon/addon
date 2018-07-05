@@ -495,7 +495,7 @@ def listado_busqueda(item):
     matches += re.compile(patron, re.DOTALL).findall(data)
     matches_cnt = len(matches)
     
-    if not matches and not 'Se han encontrado <b>0</b> resultados.' in data:       #error
+    if not matches and not 'Se han encontrado <b>0</b> resultados.' and not "href='/juego-descargar-torrent" in data:       #error
         logger.error("ERROR 02: LISTADO_BUSQUEDA: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO_BUSQUEDA: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
@@ -828,6 +828,21 @@ def episodios(item):
         item_local.action = "findvideos"
         item_local.contentType = "episode"
         item_local.extra = "episodios"
+        if item_local.library_playcounts:
+            del item_local.library_playcounts
+        if item_local.library_urls:
+            del item_local.library_urls
+        if item_local.path:
+            del item_local.path
+        if item_local.update_last:
+            del item_local.update_last
+        if item_local.update_next:
+            del item_local.update_next
+        if item_local.channel_host:
+            del item_local.channel_host
+        
+        item_local.title = ''
+        item_local.context = "['buscar_trailer']"
 
         item_local.url = urlparse.urljoin(host, scrapedurl)
         

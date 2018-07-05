@@ -1,9 +1,11 @@
 {
   "id": "search",
-  "name": "Buscador global",
+  "name": "@60672",
   "active": false,
   "adult": false,
-  "language": ["*"],
+  "language": [
+    "it"
+  ],
   "categories": [
     "movie"
   ],
@@ -11,7 +13,7 @@
     {
       "id": "multithread",
       "type": "bool",
-      "label": "Buscador MultiThread",
+      "label": "@60673",
       "default": true,
       "enabled": true,
       "visible": true
@@ -19,19 +21,19 @@
     {
       "id": "result_mode",
       "type": "list",
-      "label": "Mostrar resultados:",
+      "label": "@60674",
       "default": 0,
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "Por canales",
-        "Todo junto"
+        "@60675",
+        "@60676"
       ]
     },
     {
       "id": "saved_searches_limit",
       "type": "list",
-      "label": "Busquedas guardadas:",
+      "label": "@60677",
       "default": 0,
       "enabled": true,
       "visible": true,
@@ -45,7 +47,7 @@
     {
       "id": "last_search",
       "type": "bool",
-      "label": "Recordar última búsqueda",
+      "label": "@60678",
       "default": true,
       "enabled": true,
       "visible": true

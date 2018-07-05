@@ -15,10 +15,10 @@ def mainlist(item):
     logger.info()
 
     itemlist = list()
-    itemlist.append(Item(channel=item.channel, action="list_movies", title="Películas",
+    itemlist.append(Item(channel=item.channel, action="list_movies", title=config.get_localized_string(60509),
                          category="Videoteca de películas",
                          thumbnail=get_thumb("videolibrary_movie.png")))
-    itemlist.append(Item(channel=item.channel, action="list_tvshows", title="Series",
+    itemlist.append(Item(channel=item.channel, action="list_tvshows", title=config.get_localized_string(60600),
                          category="Videoteca de series",
                          thumbnail=get_thumb("videolibrary_tvshow.png")))
 
@@ -28,7 +28,7 @@ def mainlist(item):
 def channel_config(item):
     return platformtools.show_channel_settings(channelpath=os.path.join(config.get_runtime_path(), "channels",
                                                                         item.channel),
-                                               caption="configuración -- Videoteca")
+                                               caption=config.get_localized_string(60598))
 
 
 def list_movies(item):
@@ -54,10 +54,10 @@ def list_movies(item):
                 visto = new_item.library_playcounts.get(os.path.splitext(f)[0], 0)
                 new_item.infoLabels["playcount"] = visto
                 if visto > 0:
-                    texto_visto = "Marcar película como no vista"
+                    texto_visto = config.get_localized_string(60016)
                     contador = 0
                 else:
-                    texto_visto = "Marcar película como vista"
+                    texto_visto = config.get_localized_string(60017)
                     contador = 1
 
                 # Menu contextual: Eliminar serie/canal
@@ -65,10 +65,10 @@ def list_movies(item):
                 if "downloads" in new_item.library_urls:
                     num_canales -= 1
                 if num_canales > 1:
-                    texto_eliminar = "Eliminar película/canal"
+                    texto_eliminar = config.get_localized_string(60018)
                     multicanal = True
                 else:
-                    texto_eliminar = "Eliminar esta película"
+                    texto_eliminar = config.get_localized_string(60019)
                     multicanal = False
 
                 new_item.context = [{"title": texto_visto,
@@ -107,19 +107,19 @@ def list_tvshows(item):
                 visto = item_tvshow.library_playcounts.get(item_tvshow.contentTitle, 0)
                 item_tvshow.infoLabels["playcount"] = visto
                 if visto > 0:
-                    texto_visto = "Marcar serie como no vista"
+                    texto_visto = config.get_localized_string(60020)
                     contador = 0
                 else:
-                    texto_visto = "Marcar serie como vista"
+                    texto_visto = config.get_localized_string(60021)
                     contador = 1
 
                 # Menu contextual: Buscar automáticamente nuevos episodios o no
                 if item_tvshow.active and int(item_tvshow.active) > 0:
-                    texto_update = "Buscar automáticamente nuevos episodios: Desactivar"
+                    texto_update = config.get_localized_string(60022)
                     value = 0
                     item_tvshow.text_color = "green"
                 else:
-                    texto_update = "Buscar automáticamente nuevos episodios: Activar"
+                    texto_update = config.get_localized_string(60023)
                     value = 1
                     item_tvshow.text_color = "0xFFDF7401"
 
@@ -128,10 +128,10 @@ def list_tvshows(item):
                 if "downloads" in item_tvshow.library_urls:
                     num_canales -= 1
                 if num_canales > 1:
-                    texto_eliminar = "Eliminar serie/canal"
+                    texto_eliminar = config.get_localized_string(60024)
                     multicanal = True
                 else:
-                    texto_eliminar = "Eliminar esta serie"
+                    texto_eliminar = config.get_localized_string(60025)
                     multicanal = False
 
                 item_tvshow.context = [{"title": texto_visto,
@@ -160,7 +160,7 @@ def list_tvshows(item):
         itemlist = sorted(itemlist, key=lambda it: it.title.lower())
 
         itemlist.append(Item(channel=item.channel, action="update_videolibrary", thumbnail=item.thumbnail,
-                             title="Buscar nuevos episodios y actualizar videoteca", folder=False))
+                             title=config.get_localized_string(60026), folder=False))
 
     return itemlist
 
@@ -182,7 +182,7 @@ def get_seasons(item):
     for f in ficheros:
         if f.endswith('.json'):
             season = f.split('x')[0]
-            dict_temp[season] = "Temporada %s" % season
+            dict_temp[season] = config.get_localized_string(60027) % season
 
     if config.get_setting("no_pile_on_seasons", "videolibrary") == 1 and len(
             dict_temp) == 1:  # Sólo si hay una temporada
@@ -205,10 +205,10 @@ def get_seasons(item):
             visto = item_nfo.library_playcounts.get("season %s" % season, 0)
             new_item.infoLabels["playcount"] = visto
             if visto > 0:
-                texto = "Marcar temporada como no vista"
+                texto = config.get_localized_string(60028)
                 value = 0
             else:
-                texto = "Marcar temporada como vista"
+                texto = config.get_localized_string(60029)
                 value = 1
             new_item.context = [{"title": texto,
                                  "action": "mark_season_as_watched",
@@ -222,7 +222,7 @@ def get_seasons(item):
             itemlist = sorted(itemlist, key=lambda it: int(it.contentSeason))
 
         if config.get_setting("show_all_seasons", "videolibrary"):
-            new_item = item.clone(action="get_episodes", title="*Todas las temporadas")
+            new_item = item.clone(action="get_episodes", title=config.get_localized_string(60030))
             new_item.infoLabels["playcount"] = 0
             itemlist.insert(0, new_item)
 
@@ -260,7 +260,7 @@ def get_episodes(item):
             if epi.contentTitle:
                 title_episodie = epi.contentTitle.strip()
             else:
-                title_episodie = "Temporada %s Episodio %s" % \
+                title_episodie = config.get_localized_string(60031) % \
                                  (epi.contentSeason, str(epi.contentEpisodeNumber).zfill(2))
 
             epi.contentTitle = "%sx%s" % (epi.contentSeason, str(epi.contentEpisodeNumber).zfill(2))
@@ -273,10 +273,10 @@ def get_episodes(item):
             visto = item_nfo.library_playcounts.get(season_episode, 0)
             epi.infoLabels["playcount"] = visto
             if visto > 0:
-                texto = "Marcar episodio como no visto"
+                texto = config.get_localized_string(60032)
                 value = 0
             else:
-                texto = "Marcar episodio como visto"
+                texto = config.get_localized_string(60033)
                 value = 1
             epi.context = [{"title": texto,
                             "action": "mark_content_as_watched",
@@ -292,6 +292,7 @@ def get_episodes(item):
 
 def findvideos(item):
     logger.info()
+    from lib import generictools
     # logger.debug("item:\n" + item.tostring('\n'))
 
     itemlist = []
@@ -321,10 +322,11 @@ def findvideos(item):
                 list_canales[nom_canal] = filetools.join(path_dir, fd)
 
     num_canales = len(list_canales)
-    # logger.debug(str(list_canales))
+
     if 'downloads' in list_canales:
         json_path = list_canales['downloads']
         item_json = Item().fromjson(filetools.read(json_path))
+        item_json = generictools.redirect_clone_newpct1(item_json)      ###### Redirección al canal NewPct1.py si es un clone
         item_json.contentChannel = "local"
         # Soporte para rutas relativas en descargas
         if filetools.is_relative(item_json.url):
@@ -341,8 +343,8 @@ def findvideos(item):
 
     filtro_canal = ''
     if num_canales > 1 and config.get_setting("ask_channel", "videolibrary"):
-        opciones = ["Mostrar solo los enlaces de %s" % k.capitalize() for k in list_canales.keys()]
-        opciones.insert(0, "Mostrar todos los enlaces")
+        opciones = [config.get_localized_string(70089) % k.capitalize() for k in list_canales.keys()]
+        opciones.insert(0, config.get_localized_string(70083))
         if item_local:
             opciones.append(item_local.title)
 
@@ -356,13 +358,18 @@ def findvideos(item):
             platformtools.play_video(item_local)
 
         elif index > 0:
-            filtro_canal = opciones[index].replace("Mostrar solo los enlaces de ", "")
+            filtro_canal = opciones[index].replace(config.get_localized_string(70078), "")
             itemlist = []
 
     for nom_canal, json_path in list_canales.items():
         if filtro_canal and filtro_canal != nom_canal.capitalize():
             continue
-
+        
+        item_canal = Item()
+        item_canal.channel = nom_canal
+        item_canal = generictools.redirect_clone_newpct1(item_canal)    ###### Redirección al canal NewPct1.py si es un clone
+        nom_canal = item_canal.channel
+            
         # Importamos el canal de la parte seleccionada
         try:
             channel = __import__('channels.%s' % nom_canal, fromlist=["channels.%s" % nom_canal])
@@ -370,6 +377,7 @@ def findvideos(item):
             exec "import channels." + nom_canal + " as channel"
 
         item_json = Item().fromjson(filetools.read(json_path))
+        item_json = generictools.redirect_clone_newpct1(item_json)      ###### Redirección al canal NewPct1.py si es un clone
         list_servers = []
 
         try:
@@ -450,7 +458,7 @@ def play(item):
                 v.title = item.contentTitle
             else:
                 if item.contentType == "episode":
-                    v.title = "Episodio %s" % item.contentEpisodeNumber
+                    v.title = config.get_localized_string(60036) % item.contentEpisodeNumber
             v.thumbnail = item.thumbnail
             v.contentThumbnail = item.thumbnail
 
@@ -482,8 +490,8 @@ def update_tvshow(item):
     logger.info()
     # logger.debug("item:\n" + item.tostring('\n'))
 
-    heading = 'Actualizando serie....'
-    p_dialog = platformtools.dialog_progress_bg('alfa', heading)
+    heading = config.get_localized_string(60037)
+    p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(20000), heading)
     p_dialog.update(0, heading, item.contentSerieName)
 
     import videolibrary_service
@@ -672,13 +680,13 @@ def delete(item):
     # logger.debug(item.tostring('\n'))
 
     if item.contentType == 'movie':
-        heading = "Eliminar película"
+        heading = config.get_localized_string(70084)
     else:
-        heading = "Eliminar serie"
+        heading = config.get_localized_string(70085)
 
     if item.multicanal:
         # Obtener listado de canales
-        opciones = ["Eliminar solo los enlaces de %s" % k.capitalize() for k in item.library_urls.keys() if
+        opciones = [config.get_localized_string(70086) % k.capitalize() for k in item.library_urls.keys() if
                     k != "downloads"]
         opciones.insert(0, heading)
 
@@ -690,7 +698,7 @@ def delete(item):
 
         elif index > 0:
             # Seleccionado Eliminar canal X
-            canal = opciones[index].replace("Eliminar solo los enlaces de ", "").lower()
+            canal = opciones[index].replace(config.get_localized_string(70079), "").lower()
 
             num_enlaces = 0
             for fd in filetools.listdir(item.path):
@@ -704,14 +712,14 @@ def delete(item):
                 del item_nfo.library_urls[canal]
                 filetools.write(item.nfo, head_nfo + item_nfo.tojson())
 
-            msg_txt = "Eliminados %s enlaces del canal %s" % (num_enlaces, canal)
+            msg_txt = config.get_localized_string(70087) % (num_enlaces, canal)
             logger.info(msg_txt)
             platformtools.dialog_notification(heading, msg_txt)
             platformtools.itemlist_refresh()
 
     else:
         if platformtools.dialog_yesno(heading,
-                                      "¿Realmente desea eliminar '%s' de su videoteca?" % item.infoLabels['title']):
+                                      config.get_localized_string(70088) % item.infoLabels['title']):
             delete_all(item)
 
 

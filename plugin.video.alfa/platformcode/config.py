@@ -15,6 +15,27 @@ __settings__ = xbmcaddon.Addon(id="plugin.video." + PLUGIN_NAME)
 __language__ = __settings__.getLocalizedString
 
 
+def get_addon_version(linea_inicio=0, total_lineas=2):
+    '''
+    Devuelve el número de de versión del addon, obtenido desde el archivo addon.xml
+    '''
+    path = os.path.join(get_runtime_path(), "addon.xml")
+    f = open(path, "rb")
+    data = []
+    for x, line in enumerate(f):
+        if x < linea_inicio: continue
+        if len(data) == total_lineas: break
+        data.append(line)
+    f.close()
+    data1 = "".join(data)
+    # <addon id="plugin.video.alfa" name="Alfa" version="2.5.21" provider-name="Alfa Addon">
+    aux = re.findall('<addon id="plugin.video.alfa" name="Alfa" version="([^"]+)"', data1, re.MULTILINE | re.DOTALL)
+    version = "???"
+    if len(aux) > 0:
+        version = aux[0]
+    return version
+
+
 def get_platform(full_version=False):
     """
         Devuelve la información la version de xbmc o kodi sobre el que se ejecuta el plugin
@@ -113,13 +134,13 @@ def open_settings():
                 if settings_post['adult_aux_new_password1'] == settings_post['adult_aux_new_password2']:
                     set_setting('adult_password', settings_post['adult_aux_new_password1'])
                 else:
-                    platformtools.dialog_ok("Canales para adultos",
-                                            "Los campos 'Nueva contraseña' y 'Confirmar nueva contraseña' no coinciden."
-                                            , "Entre de nuevo en 'Preferencias' para cambiar la contraseña")
+                    platformtools.dialog_ok(config.get_localized_string(60305),
+                                            config.get_localized_string(60306),
+                                            config.get_localized_string(60307))
 
         else:
-            platformtools.dialog_ok("Canales para adultos", "La contraseña no es correcta.",
-                                    "Los cambios realizados en esta sección no se guardaran.")
+            platformtools.dialog_ok(config.get_localized_string(60305), config.get_localized_string(60309),
+                                    config.get_localized_string(60310))
 
             # Deshacer cambios
             set_setting("adult_mode", settings_pre.get("adult_mode", 0))

@@ -18,6 +18,9 @@ from core.cloudflare import Cloudflare
 from platformcode import config, logger
 from platformcode.logger import WebErrorException
 
+## Obtiene la versión del addon
+__version = config.get_addon_version()
+
 cookies_lock = Lock()
 
 cj = cookielib.MozillaCookieJar()
@@ -30,6 +33,10 @@ default_headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0
 default_headers["Accept-Language"] = "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3"
 default_headers["Accept-Charset"] = "UTF-8"
 default_headers["Accept-Encoding"] = "gzip"
+
+# Tiempo máximo de espera para downloadpage, si no se especifica nada
+HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = config.get_setting('httptools_timeout', default=15)
+if HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT == 0: HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = None
 
 
 def get_url_headers(url):
@@ -122,8 +129,11 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
 
     url = urllib.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
 
+    # Limitar tiempo de descarga si no se ha pasado timeout y hay un valor establecido en la variable global
+    if timeout is None and HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT is not None: timeout = HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT
+
     logger.info("----------------------------------------------")
-    logger.info("downloadpage")
+    logger.info("downloadpage Alfa: %s" %__version)
     logger.info("----------------------------------------------")
     logger.info("Timeout: %s" % timeout)
     logger.info("URL: " + url)
@@ -270,3 +280,5 @@ class NoRedirectHandler(urllib2.HTTPRedirectHandler):
     http_error_301 = http_error_302
     http_error_303 = http_error_302
     http_error_307 = http_error_302
+    
+

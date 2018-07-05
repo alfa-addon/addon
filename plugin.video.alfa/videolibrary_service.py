@@ -3,14 +3,9 @@
 # Service for updating new episodes on library series
 # ------------------------------------------------------------
 
-import datetime
-import imp
-import math
-import threading
+import datetime, imp, math, threading
 
-from core import channeltools
-from core import filetools
-from core import videolibrarytools
+from core import channeltools, filetools, videolibrarytools
 from platformcode import config, logger
 from platformcode import platformtools
 from channels import videolibrary
@@ -18,33 +13,37 @@ from channels import videolibrary
 
 def update(path, p_dialog, i, t, serie, overwrite):
     logger.info("Actualizando " + path)
+    from lib import generictools
     insertados_total = 0
-    #logger.debug(serie)
+
     head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')
 
     # logger.debug("%s: %s" %(serie.contentSerieName,str(list_canales) ))
     for channel, url in serie.library_urls.items():
         serie.channel = channel
         serie.url = url
+        
+        serie = generictools.redirect_clone_newpct1(serie)        ###### Redirección al canal NewPct1.py si es un clone
 
-        channel_enabled = channeltools.is_enabled(channel)
+        channel_enabled = channeltools.is_enabled(serie.channel)
 
         if channel_enabled:
 
-            heading = 'Actualizando videoteca....'
+            heading = config.get_localized_string(60389)
             p_dialog.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (serie.contentSerieName,
                                                                               serie.channel.capitalize()))
             try:
                 pathchannels = filetools.join(config.get_runtime_path(), "channels", serie.channel + '.py')
                 logger.info("Cargando canal: " + pathchannels + " " +
                             serie.channel)
-                logger.debug(serie) 
 
                 if serie.library_filter_show:
-                    serie.show = serie.library_filter_show.get(channel, serie.contentSerieName)
+                    serie.show = serie.library_filter_show.get(serie.channel, serie.contentSerieName)
 
                 obj = imp.load_source(serie.channel, pathchannels)
                 itemlist = obj.episodios(serie)
+                
+                serie.channel = channel             #Restauramos el valor incial del clone de NewPct1
 
                 try:
                     if int(overwrite) == 3:
@@ -91,8 +90,8 @@ def check_for_update(overwrite=True):
         if config.get_setting("update", "videolibrary") != 0 or overwrite:
             config.set_setting("updatelibrary_last_check", hoy.strftime('%Y-%m-%d'), "videolibrary")
 
-            heading = 'Actualizando videoteca....'
-            p_dialog = platformtools.dialog_progress_bg('alfa', heading)
+            heading = config.get_localized_string(60389)
+            p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(20000), heading)
             p_dialog.update(0, '')
             show_list = []
 
