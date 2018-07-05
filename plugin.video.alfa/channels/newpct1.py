@@ -75,7 +75,9 @@ def mainlist(item):
         Item(channel=item.channel, action="", title="[COLOR yellow]Configuración de Servidores:[/COLOR]", url="", thumbnail=thumb_settings, category=item.category, channel_host=item.channel_host))
     itemlist.append(
         Item(channel=item.channel, action="settingCanal", title="Servidores para Ver Online y Descargas", url="", thumbnail=thumb_settings, category=item.category, channel_host=item.channel_host))
-
+       
+    item.category = '%s / %s' % (channel_py.title(), item.category.title())    #Newpct1 / nombre de clone en pantalla de Mainlist
+        
     return itemlist
 
     
