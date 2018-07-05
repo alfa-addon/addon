@@ -122,7 +122,7 @@ def mainlist(item):
                          title="    - Enlaces de interés",
                          thumbnail=get_thumb("help.png"),
                          folder=False, extra=""))
->>>>>>> 3f27e1f22733890dd5d9af6c222f20d2a13a01fe
+
 
     return itemlist
 
