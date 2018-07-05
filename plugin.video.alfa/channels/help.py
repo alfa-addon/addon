@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import xbmc
 
 from core.item import Item
 from platformcode import config, logger, platformtools
@@ -40,50 +41,50 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, action="", title="FAQ:",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False))
     if config.is_xbmc():
+        itemlist.append(Item(channel=item.channel, action="", title="FAQ:",
+                             thumbnail=get_thumb("help.png"),
+                             folder=False))
         itemlist.append(Item(channel=item.channel, action="faq",
-                             title="    - ¿Cómo reportar un error?",
+                             title=config.get_localized_string(60448),
                              thumbnail=get_thumb("help.png"),
                              folder=False, extra="report_error"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - ¿Se pueden activar/desactivar los canales?",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="onoff_canales"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - ¿Es posible la sincronización automática con Trakt?",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="trakt_sync"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - ¿Es posible mostrar todos los resultados juntos en el buscador global?",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="buscador_juntos"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - Los enlaces tardan en aparecer.",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="tiempo_enlaces"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - La búsqueda de contenido no se hace correctamente.",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="prob_busquedacont"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - Algún canal no funciona correctamente.",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="canal_fallo"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - Los enlaces Torrent no funcionan.",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="prob_torrent"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - No se actualiza correctamente la videoteca.",
-                         thumbnail=get_thumb("help.png"),
-                         folder=True, extra="prob_bib"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - Enlaces de interés",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra=""))
+        itemlist.append(Item(channel=item.channel, action="faq",
+                             title=config.get_localized_string(60449),
+                             thumbnail=get_thumb("help.png"),
+                             folder=False, extra="onoff_canales"))
+        itemlist.append(Item(channel=item.channel, action="faq",
+                             title=config.get_localized_string(60450),
+                             thumbnail=get_thumb("help.png"),
+                             folder=False, extra="trakt_sync"))
+        itemlist.append(Item(channel=item.channel, action="faq",
+                             title=config.get_localized_string(60451),
+                             thumbnail=get_thumb("help.png"),
+                             folder=False, extra="buscador_juntos"))
+        itemlist.append(Item(channel=item.channel, action="faq",
+                             title=config.get_localized_string(60452),
+                             thumbnail=get_thumb("help.png"),
+                             folder=False, extra="tiempo_enlaces"))
+        itemlist.append(Item(channel=item.channel, action="faq",
+                             title=config.get_localized_string(60453),
+                             thumbnail=get_thumb("help.png"),
+                             folder=False, extra="prob_busquedacont"))
+        itemlist.append(Item(channel=item.channel, action="faq",
+                             title=config.get_localized_string(60454),
+                             thumbnail=get_thumb("help.png"),
+                             folder=False, extra="canal_fallo"))
+        itemlist.append(Item(channel=item.channel, action="faq",
+                             title=config.get_localized_string(70280),
+                             thumbnail=get_thumb("help.png"),
+                             folder=False, extra="prob_torrent"))
+        itemlist.append(Item(channel=item.channel, action="faq",
+                             title=config.get_localized_string(60455),
+                             thumbnail=get_thumb("help.png"),
+                             folder=True, extra="prob_bib"))
+        itemlist.append(Item(channel=item.channel, action="faq",
+                             title=config.get_localized_string(60456),
+                             thumbnail=get_thumb("help.png"),
+                             folder=False, extra=""))
 
     return itemlist
 
@@ -91,76 +92,44 @@ def mainlist(item):
 def faq(item):
 
     if item.extra == "onoff_canales":
-        respuesta = platformtools.dialog_yesno("Alfa",
-                                               "Esto se puede hacer en 'Configuración'>'Activar/Desactivar canales'. "
-                                               "Puedes activar/desactivar los canales uno por uno o todos a la vez. ",
-                                               "¿Deseas gestionar ahora los canales?")
+        respuesta = platformtools.dialog_yesno(config.get_localized_string(60457),
+                                               config.get_localized_string(60458))
         if respuesta == 1:
             from channels import setting
             setting.conf_tools(Item(extra='channels_onoff'))
 
     elif item.extra == "trakt_sync":
-        respuesta = platformtools.dialog_yesno("Alfa",
-                                               "Actualmente se puede activar la sincronización (silenciosa) "
-                                               "tras marcar como visto un episodio (esto se hace automáticamente). "
-                                               "Esta opción se puede activar en 'Configuración'>'Ajustes "
-                                               "de la videoteca'.",
-                                               "¿Deseas acceder a dichos ajustes?")
+        respuesta = platformtools.dialog_yesno(config.get_localized_string(60457),
+                                               config.get_localized_string(60459))
         if respuesta == 1:
             from channels import videolibrary
             videolibrary.channel_config(Item(channel='videolibrary'))
 
     elif item.extra == "tiempo_enlaces":
-        respuesta = platformtools.dialog_yesno("Alfa",
-                                               "Esto puede mejorarse limitando el número máximo de "
-                                               "enlaces o mostrandolos en una ventana emergente. "
-                                               "Estas opciones se encuentran en 'Configuración'>'Ajustes "
-                                               "de la videoteca'.",
-                                               "¿Deseas acceder a dichos ajustes?")
+        respuesta = platformtools.dialog_yesno(config.get_localized_string(60457),
+                                               config.get_localized_string(60460))
         if respuesta == 1:
             from channels import videolibrary
             videolibrary.channel_config(Item(channel='videolibrary'))
 
     elif item.extra == "prob_busquedacont":
-        title = "Alfa - FAQ - %s" % item.title[6:]
-        text = ("Puede que no hayas escrito la ruta de la librería correctamente en "
-                "'Configuración'>'Preferencias'.\n"
-                "La ruta específicada debe ser exactamente la misma de la 'fuente' "
-                "introducida en 'Archivos' de la videoteca de Kodi.\n"
-                "AVANZADO: Esta ruta también se encuentra en 'sources.xml'.\n"
-                "También puedes estar experimentando problemas por estar "
-                "usando algun fork de Kodi y rutas con 'special://'. "
-                "SPMC, por ejemplo, tiene problemas con esto, y no parece tener solución, "
-                "ya que es un problema ajeno a Alfa que existe desde hace mucho.\n"
-                "Puedes intentar subsanar estos problemas en 'Configuración'>'Ajustes de "
-                "la videoteca', cambiando el ajuste 'Realizar búsqueda de contenido en' "
-                "de 'La carpeta de cada serie' a 'Toda la videoteca'."
-                "También puedes acudir a 'http://alfa-addon.com' en busca de ayuda.")
+        title = config.get_localized_string(60461) % item.title[6:]
+        text = (config.get_localized_string(60462))
 
         return TextBox("DialogTextViewer.xml", os.getcwd(), "Default", title=title, text=text)
 
     elif item.extra == "canal_fallo":
-        title = "Alfa - FAQ - %s" % item.title[6:]
-        text = ("Puede ser que la página web del canal no funcione. "
-                "En caso de que funcione la página web puede que no seas el primero"
-                " en haberlo visto y que el canal este arreglado. "
-                "Puedes mirar en 'alfa-addon.com' o en el "
-                "repositorio de GitHub (github.com/alfa-addon/addon). "
-                "Si no encuentras el canal arreglado puedes reportar un "
-                "problema en el foro.")
+        title = config.get_localized_string(60461) % item.title[6:]
+        text = (config.get_localized_string(60463))
 
         return TextBox("DialogTextViewer.xml", os.getcwd(), "Default", title=title, text=text)
 
     elif item.extra == "prob_bib":
-        platformtools.dialog_ok("Alfa",
-                                "Puede ser que hayas actualizado el plugin recientemente "
-                                "y que las actualizaciones no se hayan aplicado del todo "
-                                "bien. Puedes probar en 'Configuración'>'Otras herramientas', "
-                                "comprobando los archivos *_data.json o "
-                                "volviendo a añadir toda la videoteca.")
+        platformtools.dialog_ok(config.get_localized_string(60457),
+                                config.get_localized_string(60464))
 
-        respuesta = platformtools.dialog_yesno("Alfa",
-                                               "¿Deseas acceder ahora a esa seccion?")
+        respuesta = platformtools.dialog_yesno(config.get_localized_string(60457),
+                                               config.get_localized_string(60465))
         if respuesta == 1:
             itemlist = []
             from channels import setting
@@ -169,56 +138,31 @@ def faq(item):
             return itemlist
 
     elif item.extra == "prob_torrent":
-        title = "Alfa - FAQ - %s" % item.title[6:]
-        text = ("Puedes probar descargando el modulo 'libtorrent' de Kodi o "
-                "instalando algun addon como 'Quasar' o 'Torrenter', "
-                "los cuales apareceran entre las opciones de la ventana emergente "
-                "que aparece al pulsar sobre un enlace torrent. "
-                "'Torrenter' es más complejo pero también más completo "
-                "y siempre funciona.")
+        title = config.get_localized_string(60461) % item.title[6:]
+        text = (config.get_localized_string(70279))
 
         return TextBox("DialogTextViewer.xml", os.getcwd(), "Default", title=title, text=text)
 
     elif item.extra == "buscador_juntos":
-        respuesta = platformtools.dialog_yesno("Alfa",
-                                               "Si. La opcion de mostrar los resultados juntos "
-                                               "o divididos por canales se encuentra en "
-                                               "'setting'>'Ajustes del buscador global'>"
-                                               "'Otros ajustes'.",
-                                               "¿Deseas acceder a ahora dichos ajustes?")
+        respuesta = platformtools.dialog_yesno(config.get_localized_string(60457),
+                                               config.get_localized_string(60466))
         if respuesta == 1:
             from channels import search
             search.settings("")
 
     elif item.extra == "report_error":
-        import xbmc
         if config.get_platform(True)['num_version'] < 14:
             log_name = "xbmc.log"
         else:
             log_name = "kodi.log"
         ruta = xbmc.translatePath("special://logpath") + log_name
-        title = "Alfa - FAQ - %s" % item.title[6:]
-        text = ("Para reportar un problema en 'http://alfa-addon.com' es necesario:\n"
-                "  - Versión que usas de Alfa.\n"
-                "  - Versión que usas de kodi, mediaserver, etc.\n"
-                "  - Versión y nombre del sistema operativo que usas.\n"
-                "  - Nombre del skin (en el caso que uses Kodi) y si se "
-                "te ha resuelto el problema al usar el skin por defecto.\n"
-                "  - Descripción del problema y algún caso de prueba.\n"
-                "  - Agregar el log en modo detallado, una vez hecho esto, "
-                "zipea el log y lo puedes adjuntar en un post.\n\n"
-                "Para activar el log en modo detallado, ingresar a:\n"
-                "  - Configuración.\n"
-                "  - Preferencias.\n"
-                "  - En la pestaña General - Marcar la opción: Generar log detallado.\n\n"
-                "El archivo de log detallado se encuentra en la siguiente ruta: \n\n"
-                "%s" % ruta)
+        title = config.get_localized_string(60461) % item.title[6:]
+        text = (config.get_localized_string(60467) % ruta)
 
         return TextBox("DialogTextViewer.xml", os.getcwd(), "Default", title=title, text=text)
 
     else:
-        platformtools.dialog_ok("Alfa",
-                                "Entérate de novedades, consejos u opciones que desconoces en Telegram: @alfa_addon.\n"
-                                "Si tienes problemas o dudas, puedes acudir al Foro: http://alfa-addon.com")
+        platformtools.dialog_ok(config.get_localized_string(60457),
+                                config.get_localized_string(60468))
 
 
