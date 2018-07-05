@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import xbmc
 
 from core.item import Item
 from platformcode import config, logger, platformtools
@@ -40,15 +41,14 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, action="", title="FAQ:",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False))
     if config.is_xbmc():
+        itemlist.append(Item(channel=item.channel, action="", title="FAQ:",
+                             thumbnail=get_thumb("help.png"),
+                             folder=False))
         itemlist.append(Item(channel=item.channel, action="faq",
                              title=config.get_localized_string(60448),
                              thumbnail=get_thumb("help.png"),
                              folder=False, extra="report_error"))
-<<<<<<< HEAD
         itemlist.append(Item(channel=item.channel, action="faq",
                              title=config.get_localized_string(60449),
                              thumbnail=get_thumb("help.png"),
@@ -85,44 +85,6 @@ def mainlist(item):
                              title=config.get_localized_string(60456),
                              thumbnail=get_thumb("help.png"),
                              folder=False, extra=""))
-=======
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - ¿Se pueden activar/desactivar los canales?",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="onoff_canales"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - ¿Es posible la sincronización automática con Trakt?",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="trakt_sync"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - ¿Es posible mostrar todos los resultados juntos en el buscador global?",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="buscador_juntos"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - Los enlaces tardan en aparecer.",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="tiempo_enlaces"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - La búsqueda de contenido no se hace correctamente.",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="prob_busquedacont"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - Algún canal no funciona correctamente.",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="canal_fallo"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - Los enlaces Torrent no funcionan.",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra="prob_torrent"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - No se actualiza correctamente la videoteca.",
-                         thumbnail=get_thumb("help.png"),
-                         folder=True, extra="prob_bib"))
-    itemlist.append(Item(channel=item.channel, action="faq",
-                         title="    - Enlaces de interés",
-                         thumbnail=get_thumb("help.png"),
-                         folder=False, extra=""))
-
 
     return itemlist
 
@@ -177,12 +139,7 @@ def faq(item):
 
     elif item.extra == "prob_torrent":
         title = config.get_localized_string(60461) % item.title[6:]
-        text = ("Puedes probar descargando el modulo 'libtorrent' de Kodi o "
-                "instalando algun addon como 'Quasar' o 'Torrenter', "
-                "los cuales apareceran entre las opciones de la ventana emergente "
-                "que aparece al pulsar sobre un enlace torrent. "
-                "'Torrenter' es más complejo pero también más completo "
-                "y siempre funciona.")
+        text = (config.get_localized_string(70279))
 
         return TextBox("DialogTextViewer.xml", os.getcwd(), "Default", title=title, text=text)
 
@@ -194,7 +151,6 @@ def faq(item):
             search.settings("")
 
     elif item.extra == "report_error":
-        import xbmc
         if config.get_platform(True)['num_version'] < 14:
             log_name = "xbmc.log"
         else:
