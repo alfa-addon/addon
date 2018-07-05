@@ -1,7 +1,7 @@
 {
   "id": "tumejortorrent",
   "name": "Tumejortorrent",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "tumejortorrent.png",
@@ -20,7 +20,7 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },

@@ -802,8 +802,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         if item.url_alt: 
             item.url = item.url_alt
             del item.url_alt
-        if item.channel_host:
-            del item.channel_host
+        item.channel_host = channel_host_failed
     
     return (item, data)
     
