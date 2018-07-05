@@ -563,83 +563,83 @@ msgstr "Comprueba el log para ver mas detalles del error."
 
 msgctxt "#60016"
 msgid "Segna film come non visto"
-msgstr "Segna film come non visto"
+msgstr "Marcar película como no vista"
 
 msgctxt "#60017"
 msgid "Mark movie as not watched"
-msgstr "Segna film come visto"
+msgstr "Marcar película como vista"
 
 msgctxt "#60018"
 msgid "Delete movie/channel"
-msgstr "Elimina film/canale"
+msgstr "Eliminar película/canal"
 
 msgctxt "#60019"
 msgid "Delete this movie"
-msgstr "Elimina questo film"
+msgstr "Eliminar esta película"
 
 msgctxt "#60020"
 msgid "Mark tv series as not watched"
-msgstr "Segna serie come non vista"
+msgstr "Marcar serie como no vista"
 
 msgctxt "#60021"
 msgid "Mark tv series as watched"
-msgstr "Segna serie come vista"
+msgstr "Marcar serie como vista"
 
 msgctxt "#60022"
 msgid "Automatically find new episodes: Disable"
-msgstr "Trova automaticamente nuovi episodi: Disattiva"
+msgstr "Buscar automáticamente nuevos episodios: Desactivar"
 
 msgctxt "#60023"
 msgid "Automatically find new episodes: Enable"
-msgstr "Trova automaticamente nuovi episodi: Attiva"
+msgstr "Buscar automáticamente nuevos episodios: Activar"
 
 msgctxt "#60024"
 msgid "Delete tv series/channel"
-msgstr "Elimina serie/canale"
+msgstr "Eliminar serie/canal"
 
 msgctxt "#60025"
 msgid "Delete tv series"
-msgstr "Elimina serie"
+msgstr "Eliminar esta serie"
 
 msgctxt "#60026"
 msgid "Search for new episodes and update"
-msgstr "Cerca nuovi episodi e aggiorna"
+msgstr "Buscar nuevos episodios y actualizar videoteca"
 
 msgctxt "#60027"
 msgid "Season %s"
-msgstr "Stagione %s"
+msgstr "Temporada %s"
 
 msgctxt "#60028"
 msgid "Segna stagione come non vista"
-msgstr "Segna stagione come non vista"
+msgstr "Marcar temporada como no vista"
 
 msgctxt "#60029"
 msgid "Mark season as not watched"
-msgstr "Segna stagione come vista"
+msgstr "Marcar temporada como vista"
 
 msgctxt "#60030"
 msgid "*All the seasons"
-msgstr "*Tutte le stagioni"
+msgstr "*Todas las temporadas"
 
 msgctxt "#60031"
 msgid "Season %s Episode %s"
-msgstr "Stagione %s Episodio %s"
+msgstr "Temporada %s Episodio %s"
 
 msgctxt "#60032"
 msgid "Mark episode as not watched"
-msgstr "Segna episodio come non visto"
+msgstr "Marcar episodio como no visto"
 
 msgctxt "#60033"
 msgid "Mark episode as watched"
-msgstr "Segna episodio come visto"
+msgstr "Marcar episodio como visto"
 
 msgctxt "#60034"
 msgid "Show only link %s"
-msgstr "Mostra solo link %s"
+msgstr "Mostrar solo los enlaces de %s"
 
 msgctxt "#60035"
 msgid "Show all the links"
-msgstr "Mosta tutti i collegamenti"
+msgstr "Mostrar todos los enlaces"
 
 msgctxt "#60036"
 msgid "Episode %s"
@@ -647,11 +647,11 @@ msgstr "Episodio %s"
 
 msgctxt "#60037"
 msgid "Tv series update ..."
-msgstr "Aggiornamento serie ..."
+msgstr "Actualizando serie...."
 
 msgctxt "#60038"
 msgid "An error has occurred on alfa"
-msgstr "Si è verificato un errore su alfa"
+msgstr "Se ha producido un error en alfa"
 
 msgctxt "#60039"
 msgid "Error on channel %s"
@@ -659,27 +659,27 @@ msgstr "Error en el canal  %s"
 
 msgctxt "#60040"
 msgid "Delete movie"
-msgstr "Rimuovere film"
+msgstr "Eliminar película"
 
 msgctxt "#60041"
 msgid "Delete tv series"
-msgstr "Rimuovere serie"
+msgstr "Eliminar serie"
 
 msgctxt "#60042"
 msgid "Delete only the links of %s"
-msgstr "Rimuovere solo i link dei %s"
+msgstr "Eliminar solo los enlaces de %s"
 
 msgctxt "#60043"
 msgid "Delete %s links of channel %s"
-msgstr "Cancellati %s collegamenti del canale %s"
+msgstr "Eliminados %s enlaces del canal %s"
 
 msgctxt "#60044"
 msgid "Do you want really to delete '%s' from videolibrary?"
-msgstr "Vuoi davvero rimuovere '%s' dalla videoteca?"
+msgstr "¿Realmente desea eliminar '%s' de su videoteca?"
 
 msgctxt "#60045"
 msgid "Sync with Trakt started"
-msgstr "Sincronizzazione con Trakt iniziata"
+msgstr "Sincronizacion con Trakt iniciada"
 
 msgctxt "#60046"
 msgid "TheMovieDB not present.\nInstall it now?"
@@ -1098,8 +1098,8 @@ msgid "Problem in the connection process"
 msgstr "Fallo en el proceso de vinculación"
 
 msgctxt "#60261"
-msgid "Icarus"
-msgstr "Icarus"
+msgid "Alfa"
+msgstr "Alfa"
 
 msgctxt "#60262"
 msgid "You can install the Trakt script below, once installed and configured what you see will be automatically synchronized with your account."
@@ -1502,7 +1502,7 @@ msgid "The server on which it is hosted"
 msgstr "El servidor donde está alojado no está"
 
 msgctxt "#60364"
-msgid "is not yet supported in Icarus"
+msgid "is not yet supported in Alfa"
 msgstr "soportado en alfa todavía"
 
 msgctxt "#60365"
@@ -1579,7 +1579,7 @@ msgstr "AutoPlay"
 
 msgctxt "#60392"
 msgid "\n\n\nTotal Reset of the addon %s.\n\n[COLOR red]Attention This function completely resets the addon.[/COLOR]"
-msgstr "\n\n\nReset totale dell'addon %s.\n\n[COLOR red]Attenzione questa funzione resetta totalmente l'addon.[/COLOR]"
+msgstr "\n\n\nReinicio total de addon% s. \n\n [COLOR red] Atención esta función restablece completamente el plugin.[/COLOR]"
 
 msgctxt "#60393"
 msgid "[COLOR red]Reset %s[/COLOR]"
@@ -1591,23 +1591,23 @@ msgstr "Reset %s"
 
 msgctxt "#60395"
 msgid "Are you sure you want to reset all settings of %s ?"
-msgstr "Sei sicuro di voler resettare tutte le impostazioni di %s ?"
+msgstr "¿Está seguro que desea restablecer todas las configuraciones de% s?"
 
 msgctxt "#60396"
 msgid "Cancel"
-msgstr "Annulla"
+msgstr "Cancelar"
 
 msgctxt "#60397"
 msgid "Confirm"
-msgstr "Conferma"
+msgstr "Confirmar
 
 msgctxt "#60398"
 msgid " Settings Reset was successful!"
-msgstr "Reset delle impostazioni è avvenuto con successo!"
+msgstr "Restablecer configuración ha sido configurado correctamente"
 
 msgctxt "#60399"
 msgid "AutoPlay allows you to auto play links directly, based on your server settings and preferred qualities. "
-msgstr "AutoPlay permite auto reproducir los enlaces directamente, basándose en la configuracion de tus servidores y calidades preferidas. "
+msgstr "AutoPlay permite auto reproducir los enlaces directamente, basándose en la configuracion de tus \nservidores y calidades favoritas. ' "
 
 msgctxt "#60400"
 msgid "512 Mega"
@@ -1623,27 +1623,27 @@ msgstr "2 Gb"
 
 msgctxt "#60403"
 msgid "more than 2 Gb"
-msgstr "più di 2 Gb"
+msgstr "mas que di 2 Gb"
 
 msgctxt "#60404"
 msgid "Choose cache setting"
-msgstr "Scegli settaggio cache"
+msgstr "Elegir configuración de caché"
 
 msgctxt "#60405"
 msgid "\n[COLOR orange]Cache Set for 512 Mega RAM[/COLOR]"
-msgstr "\n[COLOR orange]Cache Impostata per 512 Mega di RAM[/COLOR]"
+msgstr "\n[COLOR orange]Caché configurado en 512 Mega di RAM[/COLOR]"
 
 msgctxt "#60406"
 msgid "\n[COLOR orange]Cache Set for 1 Gb RAM[/COLOR]"
-msgstr "\n[COLOR orange]Cache Impostata per 1 Gb di RAM[/COLOR]"
+msgstr "\n[COLOR orange]Caché configurado en 1 Gb di RAM[/COLOR]"
 
 msgctxt "#60407"
 msgid "\n[COLOR orange]Cache Set for 2 Gb RAM[/COLOR]"
-msgstr "\n[COLOR orange]Cache Impostata per 2 Gb di RAM[/COLOR]"
+msgstr "\n[COLOR orange]Caché configurado en 2 Gb di RAM[/COLOR]"
 
 msgctxt "#60408"
 msgid "\n[COLOR orange]Cache Set higher than 2 Gb of RAM[/COLOR]"
-msgstr "\n[COLOR orange]Cache Impostata a superiore di 2 Gb di RAM[/COLOR]"
+msgstr "\n[COLOR orange]Caché configurado en más de 2 GB de RAM[/COLOR]"
 
 msgctxt "#60409"
 msgid "plugin"
@@ -1651,11 +1651,11 @@ msgstr "plugin"
 
 msgctxt "#60410"
 msgid "An advancedsettings.xml file has been created"
-msgstr "E' stato creato un file advancedsettings.xml"
+msgstr "Se ha creado un archivo advancedsettings.xml"
 
 msgctxt "#60411"
 msgid "with the ideal streaming configuration."
-msgstr "con la configurazione ideale per lo streaming."
+msgstr "con la configuración ideal para la transmisión."
 
 msgctxt "#60412"
 msgid "Choose channels to include"
@@ -1663,39 +1663,39 @@ msgstr "Elegir canales incluidos"
 
 msgctxt "#60413"
 msgid "[COLOR yellow]New Movie Search...[/COLOR]"
-msgstr "[COLOR yellow]Nuova ricerca film...[/COLOR]"
+msgstr "[COLOR yellow]Nueva búsqueda de película ...[/COLOR]"
 
 msgctxt "#60414"
 msgid "[COLOR yellow]New search tv series...[/COLOR]"
-msgstr "[COLOR yellow]Nuova ricerca serie tv...[/COLOR]"
+msgstr "[COLOR yellow]Nueva búsqueda de series[/COLOR]"
 
 msgctxt "#60415"
 msgid "[COLOR green]Other settings[/COLOR]"
-msgstr "[COLOR green]Altre impostazioni[/COLOR]"
+msgstr "[COLOR green]Otros Ajustes[/COLOR]"
 
 msgctxt "#60416"
 msgid "Delete saved searches"
-msgstr "Cancella ricerche salvate"
+msgstr "Borrar búsquedas guardadas"
 
 msgctxt "#60417"
 msgid "[COLOR red]Delete search history[/COLOR]"
-msgstr "[COLOR red]Elimina cronologia ricerche[/COLOR]"
+msgstr "[COLOR red]Borrar el historial de búsqueda[/COLOR]"
 
 msgctxt "#60418"
 msgid "Choose channels to include in your search"
-msgstr "Scegli i canali da includere nella ricerca"
+msgstr "Elegir canales incluidos en la búsqueda"
 
 msgctxt "#60419"
 msgid "Delete saved searches"
-msgstr "Cancella ricerche salvate"
+msgstr "Borrar búsquedas guardadas"
 
 msgctxt "#60420"
 msgid "More Options"
-msgstr "Altre opzioni"
+msgstr "Otros Ajustes"
 
 msgctxt "#60421"
 msgid "Channels included in the global search "
-msgstr "Canali inclusi nella ricerca globale "
+msgstr "Canales incluidos en la búsqueda global "
 
 msgctxt "#60422"
 msgid "Search "
@@ -1703,7 +1703,7 @@ msgstr "Buscando "
 
 msgctxt "#60423"
 msgid "Search"
-msgstr "Ricerca"
+msgstr "Buscar
 
 msgctxt "#60424"
 msgid "Searches key have been deleted correctly"
@@ -1711,7 +1711,7 @@ msgstr "Búsquedas borradas correctamente"
 
 msgctxt "#60425"
 msgid "Channel search"
-msgstr "Cerca canale"
+msgstr "Buscar canal"
 
 msgctxt "#60426"
 msgid "FILTER: Configure"
@@ -1803,87 +1803,87 @@ msgstr "FAQ:"
 
 msgctxt "#60448"
 msgid "    - How do I report an error?"
-msgstr "    - Come segnalo un errore?"
+msgstr "    - ¿Cómo reportar un error?"
 
 msgctxt "#60449"
 msgid "    - Is it possible to enable/disable channels?"
-msgstr "    - È Possibile attivare/disattivare i canali?"
+msgstr "    - ¿Se pueden activar/desactivar los canales?"
 
 msgctxt "#60450"
 msgid "    - Is automatic synchronization with Trakt possible?"
-msgstr "    - È Possibile la sincronizzazione automatica con Trakt?"
+msgstr "    - ¿Es posible la sincronización automática con Trakt?"
 
 msgctxt "#60451"
 msgid "    - Is it possible to show all the results together in the global search?"
-msgstr "    - È Possibile mostrare tutti i risultati uniti nella ricerca globale?"
+msgstr "    - ¿Es posible mostrar todos los resultados juntos en el buscador global?"
 
 msgctxt "#60452"
 msgid "    - Links take too long to appear."
-msgstr "    - I link ci mettono troppo ad apparire."
+msgstr "    - Los enlaces tardan en aparecer."
 
 msgctxt "#60453"
 msgid "    - The content search is not performed correctly."
-msgstr "    - La ricerca dei contenuti non viene eseguita correttamente."
+msgstr "    - La búsqueda de contenido no se hace correctamente."
 
 msgctxt "#60454"
 msgid "    - Some channels do not function properly."
-msgstr "    - Alcuni canali non funzionano correttamente."
+msgstr "    - Algún canal no funciona correctamente.""
 
 msgctxt "#60455"
 msgid "    - The library does not update correctly."
-msgstr "    - La libreria non viene aggiornata correttamente."
+msgstr "    - No se actualiza correctamente la videoteca."
 
 msgctxt "#60456"
 msgid "    - Links of interest"
-msgstr "    - Collegamenti di interesse"
+msgstr "    - Enlaces de interés"
 
 msgctxt "#60457"
-msgid "Icarus"
-msgstr "Icarus"
+msgid "Alfa"
+msgstr "Alfa"
 
 msgctxt "#60458"
 msgid "The disabling can be done in 'Settings>Turn on/off channels'. You can toggle channels on/off one at a time or all at the same time. Want to manage your channels now?"
-msgstr "La disabilitazione può essere fatta in 'Impostazioni>Attiva/Disattiva canali'. È Possibile Attivare/Disattivare i canali uno alla volta o tutti allo stesso tempo. Vuoi gestire i canali adesso?"
+msgstr "Esto se puede hacer en 'Configuración'>'Activar/Desactivar canales.\n Puedes activar/desactivar los canales uno por uno o todos a la vez.\n ¿Deseas gestionar ahora los canales?"
 
 msgctxt "#60459"
-msgid "Currently it is possible to activate the synchronization (silent) after having marked an episode as 'as watched' (this happens automatically). This option can be enabled in 'Settings>Library Settings'. Do you want access to these settings?"
-msgstr "Attualmente è possibile attivare la sincronizzazione (silenziosa) dopo aver segnato come 'come visto' un episodio (ciò avviene automaticamente). Questa opzione può essere attivata in 'Impostazioni>Impostazioni libreria'. Vuoi accedere a queste impostazioni?"
+msgid "Currently it is possible to activate the synchronization (silent). \nafter having marked an episode as 'as watched' (this happens automatically). \nThis option can be enabled in 'Settings>Library Settings'. Do you want access to these settings?"
+msgstr "Actualmente se puede activar la sincronización (silenciosa) \ntras marcar como visto un episodio (esto se hace automáticamente).\nEsta opción se puede activar en 'Configuración'>'Ajustes de la videoteca \n¿Deseas acceder a dichos ajustes?"
 
 msgctxt "#60460"
-msgid "This can be improved by limiting the maximum number of links or by displaying them in a Pop-Up window. These settings can be found in 'Settings>Library Settings' Do you want to access these settings?"
-msgstr "Questo può essere migliorato limitando il numero massimo di collegamenti o visualizzandoli in una finestra Pop-Up. Queste impostazioni possono essere trovate in 'Impostazioni>Impostazioni libreria' Vuoi accedere a queste impostazioni?"
+msgid "This can be improved by limiting the maximum number of\nlinks or by displaying them in a Pop-Up window.\nThese settings can be found in 'Settings>Library Settings\nDo you want to access these settings?"
+msgstr "Esto puede mejorarse limitando el número máximo de \nenlaces o mostrandolos en una ventana emergente.\nEstas opciones se encuentran en 'Configuración'>'Ajustes de la videoteca\n¿Deseas acceder a dichos ajustes?"
 
 msgctxt "#60461"
-msgid "Icarus - FAQ - %s"
-msgstr "Icarus- FAQ - %s"
+msgid "Alfa - FAQ - %s"
+msgstr "Alfa- FAQ - %s"
 
 msgctxt "#60462"
-msgid "You may not have written the library path correctly in 'Settings>Preferences'.\nIl The specified path must be exactly the same as the 'source' entered in 'Archive' of the Kodi library.\nAVANZATO: This path is also found in 'sources.xml'.\nThere can be problems using some Kodi forks and paths with 'special://'. SPMC, for example, has problems with this, and there doesn't seem to be a solution, as it is an external problem to Icarus that has existed for a long time.\nYou can try solving these problems in 'Settings>Library Settings' by changing the 'Search in' setting from 'The folder of each series' to 'All library'."
-msgstr "Potresti non aver scritto correttamente il percorso della libreria in 'Impostazioni>Preferenze'.\nIl percorso specificato deve essere esattamente uguale al 'sorgente' inserito in 'Archivio' della libreria di Kodi.\nAVANZATO: Questo percorso si trova anche in 'sources.xml'.\nPotresti riscontrare dei problemi utilizzando alcuni fork di Kodi e percorsi con 'special://'. SPMC, per esempio, ha problemi con questo, e non sembra esserci una soluzione, poichè è un problema esterno ad Orion che esiste da molto tempo.\nPuoi provare a risolvere questi problemi in 'Impostazioni>Impostazioni libreria', modificando l'impostazione 'Esegui ricerca contenuto in' da 'La cartella di ogni serie' in 'Tutta la libreria'."
+msgid "You may not have written the library path correctly in 'Settings>Preferences'.\nIl The specified path must be exactly the same as the 'source' entered in 'Archive' of the Kodi library.\nAVANZATO: This path is also found in 'sources.xml'.\nThere can be problems using some Kodi forks and paths with 'special://'. SPMC, for example, has problems with this, and there doesn't seem to be a solution, as it is an external problem to Alfa that has existed for a long time.\nYou can try solving these problems in 'Settings>Library Settings' by changing the 'Search in' setting from 'The folder of each series' to 'All library'."
+msgstr "Puede que no hayas escrito la ruta de la librería correctamente en \n'Configuración'>'Preferencias'.\nLa ruta específicada debe ser exactamente la misma de la 'fuente'\nintroducida en 'Archivos' de la videoteca de Kodi.\nAVANZADO: Esta ruta también se encuentra en 'sources.xml'.\nTambién puedes estar experimentando problemas por estar \nusando algun fork de Kodi y rutas con 'special://'. \nSPMC, por ejemplo, tiene problemas con esto, y no parece tener solución, \nya que es un problema ajeno a Alfa que existe desde hace mucho.\nPuedes intentar subsanar estos problemas en 'Configuración'>'Ajustes de \nla videoteca', cambiando el ajuste 'Realizar búsqueda de contenido en' \nde 'La carpeta de cada serie' a 'Toda la videoteca'. \nTambién puedes acudir a 'http://alfa-addon.com' en busca de ayuda."
 
 msgctxt "#60463"
 msgid "The channel site may not work. In case the site works you can report the problem on github."
-msgstr "Può darsi che il sito del canale non funzioni. Nel caso il sito funzioni puoi segnalare il problema su github."
+msgstr "Puede ser que la página web del canal no funcione.\nEn caso de que funcione la página web puede que no seas el primero \nen haberlo visto y que el canal este arreglado. \nPuedes mirar en 'alfa-addon.com' o en el \nrepositorio de GitHub (github.com/alfa-addon/addon).\nSi no encuentras el canal arreglado puedes reportar un \nproblema en el foro."
 
 msgctxt "#60464"
-msgid "It is possible that you have updated Icarus recently and that the changes have not been fully applied Well, you can try 'Settings>Other Tools', checking the *_data.json files or reattaching everything to the library again"
-msgstr "È Possibile che tu abbia aggiornato Orion di recente e che i cambiamenti non siano stati totalmente applicati Bene, puoi provare in 'Impostazioni>Altri strumenti', controllando i files *_data.json o riaggiungendo tutto ancora alla libreria"
+msgid "It is possible that you have updated Alfa recently \nand that the changes have not been fully applied Well, \nyou can try 'Settings>Other Tools', \nchecking the *_data.json files or reattaching everything to the library again"
+msgstr "Puede ser que hayas actualizado el plugin recientemente \ny que las actualizaciones no se hayan aplicado del todo \nbien. Puedes probar en 'Configuración'>'Otras herramientas', \ncomprobando los archivos *_data.json o \nvolviendo a añadir toda la videoteca."
 
 msgctxt "#60465"
 msgid "Do you want access to these settings?"
-msgstr "Vuoi accedere a queste impostazioni?"
+msgstr "¿Deseas acceder ahora a esa seccion?"
 
 msgctxt "#60466"
-msgid "Yes, the option to display merged or split results by channels can be found in 'Settings>Global Search Settings>Other Settings'. Do you want access to these settings?"
-msgstr "Sì, l'opzione per mostrare i risultati uniti o divisi per canali si trova in 'Impostazioni>Impostazioni ricerca globale>Altre impostazioni'. Vuoi accedere a queste impostazioni?"
+msgid "Yes, the option to display merged or split \nresults by channels can be found in \n'Settings>Global Search Settings>Other Settings'. \nDo you want access to these settings?"
+msgstr "Sì. La opcion de mostrar los resultados juntos \no divididos por canales se encuentra en \n'setting'>'Ajustes del buscador global'> \n'Otros ajustes'. \n¿Deseas acceder a ahora dichos ajustes?"
 
 msgctxt "#60467"
 msgid "To report a problem on'http://alfa-addon.com' you need to:|the version you're using of Alpha.|The version you're using of kodi, mediaserver, etc.|the version and name of the operating system you're using.|The name of the skin (in case you're using Kodi) and whether using the default skin has solved the problem.|Description of the problem and any test cases.To activate the log in detailed mode, go to:|Configuration.|Preferences.|In the General tab - Check the option: Generate detailed log. The detailed log file can be found in the following path: \n\n%s"
-msgstr "Para reportar un problema en 'http://alfa-addon.com' es necesario:\n  - Versión que usas de Icarus.\n  - Versión que usas de kodi, mediaserver, etc.\n  - Versión y nombre del sistema operativo que usas.\n  - Nombre del skin (en el caso que uses Kodi) y si se te ha resuelto el problema al usar el skin por defecto.\n  - Descripción del problema y algún caso de prueba.\n  - Agregar el log en modo detallado, una vez hecho esto, zipea el log y lo puedes adjuntar en un post.\n\nPara activar el log en modo detallado, ingresar a:\n  - Configuración.\n  - Preferencias.\n  - En la pestaña General - Marcar la opción: Generar log detallado.\n\nEl archivo de log detallado se encuentra en la siguiente ruta: \n\n%s"
+msgstr "Para reportar un problema en 'http://alfa-addon.com' es necesario:\n  - Versión que usas de Alfa.\n  - Versión que usas de kodi, mediaserver, etc.\n  - Versión y nombre del sistema operativo que usas.\n  - Nombre del skin (en el caso que uses Kodi) y si se te ha resuelto el problema al usar el skin por defecto.\n  - Descripción del problema y algún caso de prueba.\n  - Agregar el log en modo detallado, una vez hecho esto, zipea el log y lo puedes adjuntar en un post.\n\nPara activar el log en modo detallado, ingresar a:\n  - Configuración.\n  - Preferencias.\n  - En la pestaña General - Marcar la opción: Generar log detallado.\n\nEl archivo de log detallado se encuentra en la siguiente ruta: \n\n%s"
 
 msgctxt "#60468"
 msgid "You can find our Telegram channel at @StreamOnDemandOfficial\nSe you have doubts you can write to us in the Telegram group: https://bit.ly/2I3kRwF"
-msgstr "Puoi trovare il nostro canale Telegram in @StreamOnDemandOfficial\nSe hai dubbi puoi scriverci nel gruppo Telegram: https://bit.ly/2I3kRwF"
+msgstr "Entérate de novedades, consejos u opciones que desconoces en Telegram: @alfa_addon.\nSi tienes problemas o dudas, puedes acudir al Foro: http://alfa-addon.com"
 
 msgctxt "#60469"
 msgid "Uploading new data"
@@ -3030,8 +3030,8 @@ msgid "Remove only links of "
 msgstr "Eliminar solo los enlaces de "
 
 msgctxt "#70080"
-msgid "Do you want Icarus to auto-configure Kodi's video library?"
-msgstr "¿Desea que Icarus auto-configure la videoteca de Kodi?"
+msgid "Do you want Alfa to auto-configure Kodi's video library?"
+msgstr "¿Desea que Alfa auto-configure la videoteca de Kodi?"
 
 msgctxt "#70081"
 msgid "If you choose 'No' you can do it later from 'Configuration > Preferences > Paths'."
@@ -3130,8 +3130,8 @@ msgid "Congratulations, the Kodi video library has been configured correctly."
 msgstr "Felicidades la videoteca de Kodi ha sido configurada correctamente."
 
 msgctxt "#70105"
-msgid "Do you want Icarus to automatically configure the Kodi library?You will be asked to set up scrapers for movies and series."
-msgstr "¿Desea que Icarus auto-configure la videoteca de Kodi?Se le pedirá que configure los scrapers para las películas y las series."
+msgid "Do you want Alfa to automatically configure the Kodi library?You will be asked to set up scrapers for movies and series."
+msgstr "¿Desea que Alfa auto-configure la videoteca de Kodi?Se le pedirá que configure los scrapers para las películas y las series."
 
 msgctxt "#70106"
 msgid "If you choose 'No' you can do it later from 'Configuration > Preferences > Paths'."
@@ -3190,8 +3190,8 @@ msgid "Folder name for 'Movies'"
 msgstr "Nombre de carpeta para 'Peliculas'"
 
 msgctxt "#70120"
-msgid "Autoconfigure XBMC / Kodi library for Icarus content"
-msgstr "Autoconfigurar videoteca de XBMC/Kodi para contenido de Icarus"
+msgid "Autoconfigure XBMC / Kodi library for Alfa content"
+msgstr "Autoconfigurar videoteca de XBMC/Kodi para contenido de Alfa"
 
 msgctxt "#70121"
 msgid "Activate Home Page"
@@ -3808,5 +3808,17 @@ msgstr "Buscar por titulo"
 msgctxt "#70277"
 msgid "MediaServer Language (Restart Required)"
 msgstr "Idioma MediaServer (Reinicio Requerido)"
+
+msgctxt "#70278"
+msgid "Rename"
+msgstr "Renombrar"
+
+msgctxt "#70279"
+msgid "You can try downloading the 'libtorrent' module from Kodi or installing some addon like 'Quasar' or 'Torrenter', which will appear among the options in the pop-up when it appears when clicking on a torrent link. 'Torrenter 'It's more complex but also more complete and it always works.'"
+msgstr "Puedes probar descargando el modulo 'libtorrent' de Kodi o instalando algun addon como 'Quasar' o 'Torrenter', los cuales apareceran entre las opciones de la ventana emergente que aparece al pulsar sobre un enlace torrent. 'Torrenter' es más complejo pero también más completo y siempre funciona."
+
+msgctxt "#70280"
+msgid "    -  Torrent Links don't work."
+msgstr "    - Los enlaces Torrent no funcionan."
 
 
