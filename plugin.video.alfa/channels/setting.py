@@ -294,6 +294,7 @@ def submenu_tools(item):
     itemlist = list()
 
     #Herramientas de testeo masivo
+    import os
     test_path = os.path.join(config.get_runtime_path(), "channels/test.py")
 
     if filetools.exists(test_path):

@@ -1,7 +1,7 @@
 {
   "id": "mispelisyseries",
   "name": "Mispelisyseries",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "http://mispelisyseries.com/mps/library/content/template_mps/images/logomps.png",
