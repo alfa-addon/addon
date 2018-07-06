@@ -17,34 +17,34 @@ def mainlist(item):
     logger.info()
 
     itemlist = list()
-    itemlist.append(Item(channel=CHANNELNAME, title="Preferencias", action="settings", folder=False,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60535), action="settings", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
 
     itemlist.append(Item(channel=CHANNELNAME, title="", action="", folder=False, thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Ajustes especiales", action="", folder=False,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60536), action="", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="   Ajustes de Canales", action="menu_channels", folder=True,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60537), action="menu_channels", folder=True,
                          thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="   Ajustes de Servidores", action="menu_servers", folder=True,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60538), action="menu_servers", folder=True,
                          thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel="news", title="   Ajustes de la sección 'Novedades'", action="menu_opciones",
+    itemlist.append(Item(channel="news", title=config.get_localized_string(60539), action="menu_opciones",
                          folder=True, thumbnail=get_thumb("news.png")))
-    itemlist.append(Item(channel="search", title="   Ajustes del buscador global", action="opciones", folder=True,
+    itemlist.append(Item(channel="search", title=config.get_localized_string(60540), action="opciones", folder=True,
                          thumbnail=get_thumb("search.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="   Ajustes de descargas", action="channel_config",
-                         config="downloads", folder=True, thumbnail=get_thumb("downloads.png")))
+    #itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60541), action="channel_config",
+    #                     config="downloads", folder=True, thumbnail=get_thumb("downloads.png")))
 
     if config.get_videolibrary_support():
-        itemlist.append(Item(channel="videolibrary", title="   Ajustes de la videoteca", action="channel_config",
+        itemlist.append(Item(channel="videolibrary", title=config.get_localized_string(60542), action="channel_config",
                              folder=True, thumbnail=get_thumb("videolibrary.png")))
 
     if config.is_xbmc():
-        itemlist.append(Item(channel=CHANNELNAME, title="   Ajustes de cliente Torrent", action="setting_torrent",
+        itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(70253), action="setting_torrent",
                              folder=True, thumbnail=get_thumb("channels_torrent.png")))
 
     itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="Otras herramientas", action="submenu_tools", folder=True,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60544), action="submenu_tools", folder=True,
                          thumbnail=get_thumb("setting_0.png")))
 
     return itemlist
@@ -54,10 +54,10 @@ def menu_channels(item):
     logger.info()
     itemlist = list()
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Activar/desactivar canales", action="conf_tools", folder=False,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60545), action="conf_tools", folder=False,
                          extra="channels_onoff", thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Ajustes por canales", action="", folder=False,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60546), action="", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
 
     # Inicio - Canales configurables
@@ -70,16 +70,16 @@ def menu_channels(item):
         channel_parameters = channeltools.get_channel_parameters(channel.channel)
 
         if channel_parameters["has_settings"]:
-            itemlist.append(Item(channel=CHANNELNAME, title="   Configuración del canal '%s'" % channel.title,
+            itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60547) % channel.title,
                                  action="channel_config", config=channel.channel, folder=False,
                                  thumbnail=channel.thumbnail))
     # Fin - Canales configurables
 
     itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Herramientas de canales", action="", folder=False,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60548), action="", folder=False,
                          thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="   Comprobar archivos *_data.json", action="conf_tools",
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60549), action="conf_tools",
                          folder=True, extra="lib_check_datajson", thumbnail=get_thumb("channels.png")))
 
     return itemlist
@@ -95,14 +95,14 @@ def setting_torrent(item):
 
     default = config.get_setting("torrent_client", server="torrent", default=0)
 
-    torrent_options = ["Preguntar", "Cliente interno", "Cliente interno - MCT"]
+    torrent_options = [config.get_localized_string(30006), config.get_localized_string(70254), config.get_localized_string(70255)]
     torrent_options.extend(platformtools.torrent_client_installed())
 
     list_controls = [
         {
             "id": "list_torrent",
             "type": "list",
-            "label": "¿Qué cliente quiere usar para reproducir torrent?",
+            "label": config.get_localized_string(70256),
             "default": default,
             "enabled": True,
             "visible": True,
@@ -111,25 +111,24 @@ def setting_torrent(item):
     ]
 
     platformtools.show_channel_settings(list_controls=list_controls, callback='save_setting_torrent', item=item,
-                                        caption="configuración -- Torrent", custom_button={'visible': False})
+                                        caption=config.get_localized_string(70257), custom_button={'visible': False})
 
 
 def save_setting_torrent(item, dict_data_saved):
     if dict_data_saved and "list_torrent" in dict_data_saved:
         config.set_setting("torrent_client", dict_data_saved["list_torrent"], server="torrent")
 
-
 def menu_servers(item):
     logger.info()
     itemlist = list()
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Sevidores bloqueados", action="servers_blacklist", folder=False,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60550), action="servers_blacklist", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Servidores favoritos",
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60551),
                          action="servers_favorites", folder=False, thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Ajustes de debriders:",
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60552),
                          action="", folder=False, thumbnail=get_thumb("setting_0.png")))
 
     # Inicio - Servidores configurables
@@ -139,10 +138,10 @@ def menu_servers(item):
         server_parameters = servertools.get_server_parameters(server)
         if server_parameters["has_settings"]:
             itemlist.append(
-                Item(channel=CHANNELNAME, title="   Configuración del servidor '%s'" % server_parameters["name"],
+                Item(channel=CHANNELNAME, title=config.get_localized_string(60553) % server_parameters["name"],
                      action="server_config", config=server, folder=False, thumbnail=""))
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Ajustes de servidores",
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60554),
                          action="", folder=False, thumbnail=get_thumb("setting_0.png")))
 
     server_list = servertools.get_servers_list().keys()
@@ -153,7 +152,7 @@ def menu_servers(item):
         if server_parameters["has_settings"] and filter(lambda x: x["id"] not in ["black_list", "white_list"],
                                                         server_parameters["settings"]):
             itemlist.append(
-                Item(channel=CHANNELNAME, title="   Configuración del servidor '%s'" % server_parameters["name"],
+                Item(channel=CHANNELNAME, title=config.get_localized_string(60553) % server_parameters["name"],
                      action="server_config", config=server, folder=False, thumbnail=""))
 
     # Fin - Servidores configurables
@@ -193,12 +192,12 @@ def servers_blacklist(item):
         list_controls.append(control)
 
     return platformtools.show_channel_settings(list_controls=list_controls, dict_values=dict_values,
-                                               caption="Servidores bloqueados", callback="cb_servers_blacklist")
+                                               caption=config.get_localized_string(60550), callback="cb_servers_blacklist")
 
 
 def cb_servers_blacklist(item, dict_values):
     f = False
-    progreso = platformtools.dialog_progress("Guardando configuración...", "Espere un momento por favor.")
+    progreso = platformtools.dialog_progress(config.get_localized_string(60557), config.get_localized_string(60558))
     n = len(dict_values)
     i = 1
     for k, v in dict_values.items():
@@ -209,7 +208,7 @@ def cb_servers_blacklist(item, dict_values):
             if v:  # Si el servidor esta en la lista negra no puede estar en la de favoritos
                 config.set_setting("favorites_servers_list", 100, server=k)
                 f = True
-                progreso.update((i * 100) / n, "Guardando configuración...%s" % k)
+                progreso.update((i * 100) / n, config.get_localized_string(60559) % k)
         i += 1
 
     if not f:  # Si no hay ningun servidor en la lista, desactivarla
@@ -224,7 +223,7 @@ def servers_favorites(item):
 
     list_controls = [{'id': 'favorites_servers',
                       'type': "bool",
-                      'label': "Ordenar servidores",
+                      'label': config.get_localized_string(60577),
                       'default': False,
                       'enabled': True,
                       'visible': True}]
@@ -248,7 +247,7 @@ def servers_favorites(item):
     for x in range(1, 6):
         control = {'id': x,
                    'type': "list",
-                   'label': "    Servidor #%s" % x,
+                   'label': config.get_localized_string(60597) % x,
                    'lvalues': server_names,
                    'default': 0,
                    'enabled': "eq(-%s,True)" % x,
@@ -256,12 +255,12 @@ def servers_favorites(item):
         list_controls.append(control)
 
     return platformtools.show_channel_settings(list_controls=list_controls, dict_values=dict_values, item=server_names,
-                                               caption="Servidores favoritos", callback="cb_servers_favorites")
+                                               caption=config.get_localized_string(60551), callback="cb_servers_favorites")
 
 
 def cb_servers_favorites(server_names, dict_values):
     dict_name = {}
-    progreso = platformtools.dialog_progress("Guardando configuración...", "Espere un momento por favor.")
+    progreso = platformtools.dialog_progress(config.get_localized_string(60557), config.get_localized_string(60558))
 
     for i, v in dict_values.items():
         if i == "favorites_servers":
@@ -277,7 +276,7 @@ def cb_servers_favorites(server_names, dict_values):
             config.set_setting("favorites_servers_list", dict_name[server_parameters['name']], server=server)
         else:
             config.set_setting("favorites_servers_list", 0, server=server)
-        progreso.update((i * 100) / n, "Guardando configuración...%s" % server_parameters['name'])
+        progreso.update((i * 100) / n, config.get_localized_string(60559) % server_parameters['name'])
         i += 1
 
     if not dict_name:  # Si no hay ningun servidor en lalista desactivarla
@@ -291,12 +290,11 @@ def settings(item):
 
 
 def submenu_tools(item):
-    import os
-    from core import filetools
     logger.info()
     itemlist = list()
 
     #Herramientas de testeo masivo
+    import os
     test_path = os.path.join(config.get_runtime_path(), "channels/test.py")
 
     if filetools.exists(test_path):
@@ -304,28 +302,30 @@ def submenu_tools(item):
                              thumbnail=get_thumb("channels.png")))
         itemlist.append(Item(title='- Testear canales ...', channel="test", action="channel_test_selected"))
         itemlist.append(Item(title='- Testear servidores ...', channel="test", action="server_test_selected"))
+        itemlist.append(Item(title='- Testear todos los canales!', channel="test", action="channel_test_all"))
+        itemlist.append(Item(title='- Testear todos los servidores!', channel="test", action="server_test_all"))
         itemlist.append(Item(title='- Testear novedades!', channel="test", action="news_test_all"))
         itemlist.append(Item(title='- Upload tests to web!', channel="test", action="web_update_tests"))
         itemlist.append(
             Item(channel=CHANNELNAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))
 
 
-    itemlist.append(Item(channel=CHANNELNAME, title="Herramientas de canales", action="", folder=False,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60564), action="", folder=False,
                          thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title="   Comprobar archivos *_data.json", action="conf_tools",
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60565), action="conf_tools",
                          folder=True, extra="lib_check_datajson", thumbnail=get_thumb("channels.png")))
 
     if config.get_videolibrary_support():
         itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,
                              thumbnail=get_thumb("setting_0.png")))
-        itemlist.append(Item(channel=CHANNELNAME, title="Herramientas de videoteca", action="", folder=False,
+        itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60566), action="", folder=False,
                              thumbnail=get_thumb("videolibrary.png")))
         itemlist.append(Item(channel=CHANNELNAME, action="overwrite_tools", folder=False,
                              thumbnail=get_thumb("videolibrary.png"),
-                             title="   Sobreescribir toda la videoteca (strm, nfo y json)"))
+                             title=config.get_localized_string(60567)))
         itemlist.append(Item(channel="videolibrary", action="update_videolibrary", folder=False,
                              thumbnail=get_thumb("videolibrary.png"),
-                             title="   Buscar nuevos episodios y actualizar videoteca"))
+                             title=config.get_localized_string(60568)))
 
     return itemlist
 
@@ -352,14 +352,14 @@ def conf_tools(item):
         try:
             list_controls.append({'id': "all_channels",
                                   'type': "list",
-                                  'label': "Todos los canales",
+                                  'label': config.get_localized_string(60594),
                                   'default': 0,
                                   'enabled': True,
                                   'visible': True,
                                   'lvalues': ['',
-                                              'Activar todos',
-                                              'Desactivar todos',
-                                              'Establecer estado por defecto']})
+                                              config.get_localized_string(60591),
+                                              config.get_localized_string(60592),
+                                              config.get_localized_string(60593)]})
 
             for channel in channel_list:
                 # Si el canal esta en la lista de exclusiones lo saltamos
@@ -374,7 +374,7 @@ def conf_tools(item):
                         status = channel_parameters["active"]
                         logger.debug("%s | Status (XML): %s" % (channel.channel, status))
                         if not status:
-                            status_control = " [COLOR grey](Desactivado por defecto)[/COLOR]"
+                            status_control = config.get_localized_string(60595)
                     else:
                         logger.debug("%s  | Status: %s" % (channel.channel, status))
 
@@ -395,7 +395,7 @@ def conf_tools(item):
         else:
             return platformtools.show_channel_settings(list_controls=list_controls,
                                                        item=item.clone(channel_list=channel_list),
-                                                       caption="Canales",
+                                                       caption=config.get_localized_string(60596),
                                                        callback="channel_status",
                                                        custom_button={"visible": False})
 
@@ -427,7 +427,7 @@ def conf_tools(item):
 
                     if not list_controls:
                         itemlist.append(Item(channel=CHANNELNAME,
-                                             title=channel.title + " - No tiene ajustes por defecto",
+                                             title=channel.title + config.get_localized_string(60569),
                                              action="", folder=False,
                                              thumbnail=channel.thumbnail))
                         continue
@@ -457,7 +457,7 @@ def conf_tools(item):
                             datajson_size = filetools.getsize(file_settings)
                         except:
                             import traceback
-                            logger.error(channel.title + " | Detalle del error: %s" % traceback.format_exc())
+                            logger.error(channel.title + config.get_localized_string(60570) % traceback.format_exc())
                     else:
                         datajson_size = None
 
@@ -472,7 +472,7 @@ def conf_tools(item):
                             # logger.info(channel.title + " | Default: %s" % default_settings)
                         except:
                             import traceback
-                            logger.error(channel.title + " | Detalle del error: %s" % traceback.format_exc())
+                            logger.error(channel.title + config.get_localized_string(60570) % traceback.format_exc())
                             # default_settings = {}
 
                         # Si _data.json necesita ser reparado o no existe...
@@ -488,12 +488,12 @@ def conf_tools(item):
                                     open(file_settings, "wb").write(json_data)
                                     # logger.info(channel.channel + " - Archivo _data.json GUARDADO!")
                                     # El channel_data.json se ha creado/modificado
-                                    list_status = " - [COLOR red] CORREGIDO!![/COLOR]"
+                                    list_status = config.get_localized_string(60560)
                                 except EnvironmentError:
                                     logger.error("ERROR al salvar el archivo: %s" % file_settings)
                             else:
                                 if default_settings is None:
-                                    list_status = " - [COLOR red] Imposible cargar los ajustes por defecto![/COLOR]"
+                                    list_status = config.get_localized_string(60571)
 
                     else:
                         # logger.info(channel.channel + " - NO necesita correccion!")
@@ -503,19 +503,19 @@ def conf_tools(item):
                     if needsfix is not None:
                         if needsfix:
                             if not channeljson_exists:
-                                list_status = " - Ajustes creados"
+                                list_status = config.get_localized_string(60588)
                                 list_colour = "red"
                             else:
-                                list_status = " - No necesita corrección"
+                                list_status = config.get_localized_string(60589)
                                 list_colour = "green"
                         else:
                             # Si "needsfix" es "false" y "datjson_size" es None habra
                             # ocurrido algun error
                             if datajson_size is None:
-                                list_status = " - Ha ocurrido algun error"
+                                list_status = config.get_localized_string(60590)
                                 list_colour = "red"
                             else:
-                                list_status = " - No necesita corrección"
+                                list_status = config.get_localized_string(60589)
                                 list_colour = "green"
 
                     if list_status is not None:
@@ -592,20 +592,20 @@ def channel_status(item, dict_values):
     except:
         import traceback
         logger.error("Detalle del error: %s" % traceback.format_exc())
-        platformtools.dialog_notification("Error", "Se ha producido un error al guardar")
+        platformtools.dialog_notification(config.get_localized_string(60579), config.get_localized_string(60580))
 
 
 def overwrite_tools(item):
     import videolibrary_service
     from core import videolibrarytools
 
-    seleccion = platformtools.dialog_yesno("Sobrescribir toda la videoteca",
-                                           "Esto puede llevar algún tiempo.",
-                                           "¿Desea continuar?")
+    seleccion = platformtools.dialog_yesno(config.get_localized_string(60581),
+                                           config.get_localized_string(60582),
+                                           config.get_localized_string(60583))
     if seleccion == 1:
         # tvshows
-        heading = 'Sobrescribiendo videoteca....SERIES'
-        p_dialog = platformtools.dialog_progress_bg('alfa', heading)
+        heading = config.get_localized_string(60584)
+        p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(60585), heading)
         p_dialog.update(0, '')
 
         show_list = []
@@ -631,8 +631,8 @@ def overwrite_tools(item):
         p_dialog.close()
 
         # movies
-        heading = 'Sobrescribiendo videoteca....PELICULAS'
-        p_dialog2 = platformtools.dialog_progress_bg('alfa', heading)
+        heading = config.get_localized_string(60586)
+        p_dialog2 = platformtools.dialog_progress_bg(config.get_localized_string(60585), heading)
         p_dialog2.update(0, '')
 
         movies_list = []
@@ -654,7 +654,7 @@ def overwrite_tools(item):
                 filetools.rmdirtree(path)
 
                 import math
-                heading = 'Actualizando videoteca....'
+                heading = config.get_localized_string(60587)
 
                 p_dialog2.update(int(math.ceil((i + 1) * t)), heading, "%s: %s" % (movie.contentTitle,
                                                                                    movie.channel.capitalize()))
@@ -667,4 +667,3 @@ def overwrite_tools(item):
                 logger.error(message)
 
         p_dialog2.close()
-

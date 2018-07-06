@@ -496,6 +496,7 @@ def findvideos(item):
         elif scrapedurl.startswith("https://load.pelispedia.vip/embed/"):
             if scrapedtitle == 'vid': scrapedtitle = 'vidoza'
             elif scrapedtitle == 'fast': scrapedtitle = 'fastplay'
+            elif scrapedtitle == 'frem': scrapedtitle = 'fembed'
             title = "Ver video en [" + scrapedtitle + "]"
             new_item = item.clone(title=title, url=scrapedurl, action="play", referer=item.url)
             itemlist.append(new_item)
@@ -512,8 +513,58 @@ def findvideos(item):
 
 def play(item):
     logger.info("url=%s" % item.url)
+    itemlist = []
 
-    itemlist = gktools.gk_play(item)
+    if item.url.startswith("https://pelispedia.video/v.php"):
+        # 1- Descargar
+        data, ck = gktools.get_data_and_cookie(item)
+
+        # 2- Calcular datos
+        gsv = scrapertools.find_single_match(data, '<meta name="google-site-verification" content="([^"]*)"')
+        if not gsv: return itemlist
+
+        suto = gktools.md5_dominio(item.url)
+        sufijo = '2653'
+
+        token = gktools.generar_token('"'+gsv+'"', suto+'yt'+suto+sufijo)
+
+        link, subtitle = gktools.get_play_link_id(data, item.url)
+        
+        url = 'https://pelispedia.video/plugins/ymovies.php' # cloupedia.php gkpedia.php
+        post = "link=%s&token=%s" % (link, token)
+
+        # 3- Descargar json
+        data = gktools.get_data_json(url, post, ck)
+
+        # 4- Extraer enlaces
+        itemlist = gktools.extraer_enlaces_json(data, item.referer, subtitle)
+
+
+    elif item.url.startswith("https://load.pelispedia.vip/embed/"):
+        # 1- Descargar
+        data, ck = gktools.get_data_and_cookie(item)
+
+        # 2- Calcular datos
+        gsv = scrapertools.find_single_match(data, '<meta name="google-site-verification" content="([^"]*)"')
+        if not gsv: return itemlist
+
+        suto = gktools.md5_dominio(item.url)
+        sufijo = '785446346'
+
+        token = gktools.generar_token(gsv, suto+'yt'+suto+sufijo)
+
+        url = item.url.replace('/embed/', '/stream/') + '/' + token
+
+        # 3- Descargar página
+        data = gktools.get_data_with_cookie(url, ck, item.url)
+
+        # 4- Extraer enlaces
+        url = scrapertools.find_single_match(data, '<meta (?:name|property)="og:url" content="([^"]+)"')
+        srv = scrapertools.find_single_match(data, '<meta (?:name|property)="og:sitename" content="([^"]+)"')
+        if srv == '' and 'rapidvideo.com/' in url: srv = 'rapidvideo'
+
+        if url != '' and srv != '':
+            itemlist.append(item.clone(url=url, server=srv.lower()))
 
     return itemlist
 

@@ -3,7 +3,6 @@
     <category label="General">
         <setting label="Puertos" type="lsep" />
         <setting default="8080" id="server.port" label="Puerto HTTP" type="number"/>
-        <setting default="8081" id="websocket.port" label="Puerto WebSocket" type="number"/>
         <setting type="sep"/>
         <setting id="default_action" type="enum" lvalues="30006|30007|30008" label="30005" default="0"/>
         <setting id="thumbnail_type" type="enum" lvalues="30011|30012|30200" label="30010" default="2"/>

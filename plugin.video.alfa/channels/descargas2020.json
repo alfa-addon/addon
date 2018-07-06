@@ -1,7 +1,7 @@
 {
   "id": "descargas2020",
   "name": "Descargas2020",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "http://descargas2020.com/d20/library/content/template/images/_logod2020.png",

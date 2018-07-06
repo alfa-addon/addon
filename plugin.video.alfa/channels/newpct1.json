@@ -1,16 +1,17 @@
 {
-  "id": "tumejortorrent",
-  "name": "Tumejortorrent",
-  "active": false,
+  "id": "newpct1",
+  "name": "Newpct1",
+  "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
-  "thumbnail": "tumejortorrent.png",
-  "banner": "tumejortorrent.png",
+  "language": ["*"],
+  "thumbnail": "newpct1.png",
+  "banner": "newpct1.png",
   "categories": [
     "movie",
     "tvshow",
     "anime",
     "torrent",
+    "latino",
     "documentary",
     "vos",
     "direct"
@@ -20,7 +21,7 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     },
@@ -31,6 +32,30 @@
       "default": true,
       "enabled": true,
       "visible": true
+    },
+    {
+      "id": "clonenewpct1_channel_default",
+      "type": "list",
+      "label": "Clone de NewPct1 por defecto",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Torrentrapid",
+        "Torrentlocura",
+        "Tumejortorrent",
+        "Tvsinpagar",
+        "Descargas2020",
+        "Mispelisyseries"        
+      ]
+    },
+    {
+      "id": "clonenewpct1_channels_list",
+      "type": "text",
+      "label": "Lista de clones de NewPct1 y orden de uso",
+      "default": "('1', 'torrentrapid', 'http://torrentrapid.com/', 'movie, tvshow, season, episode', ''), ('1', 'torrentlocura', 'http://torrentlocura.com/', 'movie, tvshow, season, episode', ''), ('1', 'tumejortorrent', 'http://tumejortorrent.com/', 'movie, tvshow, season, episode', ''), ('1', 'tvsinpagar', 'http://www.tvsinpagar.com/', 'tvshow, season, episode', ''), ('1', 'descargas2020', 'http://descargas2020.com/', 'movie, tvshow, season, episode', ''), ('1', 'mispelisyseries', 'http://mispelisyseries.com/', 'movie', 'search')",
+      "enabled": true,
+      "visible": false
     },
     {
       "id": "seleccionar_ult_temporadda_activa",
@@ -465,6 +490,75 @@
         "Userscloud",
         "Vidabc",
         "Vidspot"
+      ]
+    },
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_series",
+      "type": "bool",
+      "label": "Incluir en Novedades - Episodios de series",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_anime",
+      "type": "bool",
+      "label": "Incluir en Novedades - Anime",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_documentales",
+      "type": "bool",
+      "label": "Incluir en Novedades - Documentales",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_latino",
+      "type": "bool",
+      "label": "Incluir en Novedades - Documentales",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_4k",
+      "type": "bool",
+      "label": "Incluir en Novedades - 4K",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "clonenewpct1_timeout_downloadpage",
+      "type": "list",
+      "label": "Timeout (segs.) en descarga de páginas o verificación de servidores",
+      "default": 5,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "None",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
       ]
     }
   ]

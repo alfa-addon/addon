@@ -706,21 +706,27 @@ def filter_servers(servers_list):
 
     return servers_list
 
-def check_list_links(itemlist, numero):
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Comprobación de enlaces
+# -----------------------
+
+def check_list_links(itemlist, numero='', timeout=3):
     """
     Comprueba una lista de enlaces a videos y la devuelve modificando el titulo con la verificacion.
-    El segundo parametro (numero) indica cuantos enlaces hay que verificar (0:5, 1:10, 2:15, 3:20)
+    El parámetro numero indica cuantos enlaces hay que verificar (0:5, 1:10, 2:15, 3:20)
+    El parámetro timeout indica un tope de espera para descargar la página
     """
     numero = ((int(numero) + 1) * 5) if numero != '' else 10
     for it in itemlist:
         if numero > 0 and it.server != '' and it.url != '':
-            verificacion = check_video_link(it.url, it.server)
+            verificacion = check_video_link(it.url, it.server, timeout)
             it.title = verificacion + ', ' + it.title.strip()
             it.alive = verificacion
             numero -= 1
     return itemlist
 
-def check_video_link(url, server):
+def check_video_link(url, server, timeout=3):
     """
     Comprueba si el enlace a un video es valido y devuelve un string de 2 posiciones con la verificacion.
     :param url, server: Link y servidor
@@ -734,17 +740,23 @@ def check_video_link(url, server):
         return "??"
         
     if hasattr(server_module, 'test_video_exists'):
+        ant_timeout = httptools.HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT
+        httptools.HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = timeout  # Limitar tiempo de descarga
         try:
             video_exists, message = server_module.test_video_exists(page_url=url)
             if not video_exists:
                 logger.info("[check_video_link] No existe! %s %s %s" % (message, server, url))
-                return "NO"
+                resultado = "NO"
             else:
-                logger.info("[check_video_link] comprovacion OK %s %s" % (server, url))
-                return "Ok"
+                logger.info("[check_video_link] comprobacion OK %s %s" % (server, url))
+                resultado = "Ok"
         except:
             logger.info("[check_video_link] No se puede comprobar ahora! %s %s" % (server, url))
-            return "??"
+            resultado = "??"
+
+        finally:
+            httptools.HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = ant_timeout  # Restaurar tiempo de descarga
+            return resultado
 
     logger.info("[check_video_link] No hay test_video_exists para servidor: %s" % server)
     return "??"
