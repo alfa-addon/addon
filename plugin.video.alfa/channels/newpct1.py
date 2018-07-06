@@ -60,22 +60,24 @@ def mainlist(item):
     thumb_buscar = get_thumb("search.png")
     thumb_settings = get_thumb("setting_0.png")
 
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url=item.channel_host,
-                         extra="peliculas", thumbnail=thumb_pelis, category=item.category))
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url=item.channel_host, 
+                         extra="peliculas", thumbnail=thumb_pelis, category=item.category, channel_host=item.channel_host))
 
     itemlist.append(Item(channel=item.channel, action="submenu", title="Series", url=item.channel_host, extra="series",
-                         thumbnail=thumb_series, category=item.category))
+                         thumbnail=thumb_series, category=item.category, channel_host=item.channel_host))
                          
     itemlist.append(Item(channel=item.channel, action="submenu", title="Documentales", url=item.channel_host, extra="varios",
-                         thumbnail=thumb_docus, category=item.category))
+                         thumbnail=thumb_docus, category=item.category, channel_host=item.channel_host))
     itemlist.append(
-        Item(channel=item.channel, action="search", title="Buscar", url=item.channel_host + "buscar", thumbnail=thumb_buscar, category=item.category))
+        Item(channel=item.channel, action="search", title="Buscar", url=item.channel_host + "buscar", thumbnail=thumb_buscar, category=item.category, channel_host=item.channel_host))
         
     itemlist.append(
-        Item(channel=item.channel, action="", title="[COLOR yellow]Configuración de Servidores:[/COLOR]", url="", thumbnail=thumb_settings, category=item.category))
+        Item(channel=item.channel, action="", title="[COLOR yellow]Configuración de Servidores:[/COLOR]", url="", thumbnail=thumb_settings, category=item.category, channel_host=item.channel_host))
     itemlist.append(
-        Item(channel=item.channel, action="settingCanal", title="Servidores para Ver Online y Descargas", url="", thumbnail=thumb_settings, category=item.category))
-
+        Item(channel=item.channel, action="settingCanal", title="Servidores para Ver Online y Descargas", url="", thumbnail=thumb_settings, category=item.category, channel_host=item.channel_host))
+       
+    item.category = '%s / %s' % (channel_py.title(), item.category.title())    #Newpct1 / nombre de clone en pantalla de Mainlist
+        
     return itemlist
 
     
@@ -489,9 +491,9 @@ def listado_busqueda(item):
     cnt_tot = 40            # Poner el num. máximo de items por página.  Dejamos que la web lo controle
     cnt_title = 0           # Contador de líneas insertadas en Itemlist
     cnt_pag = 0             # Contador de líneas leídas de Matches
-    timeout_search = 5      # Timeout un poco más largo para las búsquedas
-    if timeout > 5:
-        timeout_search = timeout    # Timeout un poco más largo para las búsquedas
+    timeout_search = timeout * 2      # Timeout un poco más largo para las búsquedas
+    if timeout_search < 5:
+        timeout_search = 5  # Timeout un poco más largo para las búsquedas
     data = ''
 
     if item.cnt_pag:
@@ -884,7 +886,7 @@ def listado_busqueda(item):
         
     if not item.category:       #Si este campo no existe es que viene de la primera pasada de una búsqueda global
         return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
-    
+
     #Pasamos a TMDB la lista completa Itemlist
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
     

@@ -42,24 +42,29 @@ modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', chann
 timeout = config.get_setting('clonenewpct1_timeout_downloadpage', channel_py)               #Timeout downloadpage
 if timeout == 0: timeout = None
 
-platformtools.dialog_ok("NewPct1, ¡¡¡he vuelto como canal VIRTUAL!!!", "Hemos centralizado la gestión de los clones de NewPct1 en el canal virtual NewPct1. Los clones desaparecerán en breve.", "Para más información lee el tutorial: https://alfa-addon.com /threads/newpct1-implantando-alta-disponibilidad.1200/")
+platformtools.dialog_notification("NewPct1, ¡¡¡he vuelto como canal VIRTUAL!!!", "Hemos centralizado la gestión de los clones de NewPct1 en NewPct1 como canal virtual. Los clones desaparecerán en breve. Para más información lee el tutorial: https://alfa-addon.com /threads/newpct1-implantando-alta-disponibilidad.1200/", time=30000)
 
 #Vayamos a la siguiente acción en el canal Newpct1
 from platformcode import launcher
 channel_clone_name = "tumejortorrent"                                      #Nombre del Canal elegido
+channel_py = channel_clone_name
 host = "http://tumejortorrent.com/"
 item.category = channel_clone_name.capitalize()
 item.action = "mainlist"
 item.channel_host = host
-launcher.run(item)
+#launcher.run(item)
 
 
 def mainlist(item):
     logger.info()
-    if item.channel != channel_py:
-        return
+    #if item.channel != channel_py:
+    #    return
 
     itemlist = []
+    
+    if not item.channel_host:
+        item.channel_host = host
+    item.category = channel_clone_name.capitalize()
 
     thumb_pelis = get_thumb("channels_movie.png")
     thumb_pelis_hd = get_thumb("channels_movie_hd.png")
@@ -71,20 +76,20 @@ def mainlist(item):
     thumb_settings = get_thumb("setting_0.png")
 
     itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url=host,
-                         extra="peliculas", thumbnail=thumb_pelis, category=item.category))
+                         extra="peliculas", thumbnail=thumb_pelis, category=item.category, channel_host=item.channel_host))
 
     itemlist.append(Item(channel=item.channel, action="submenu", title="Series", url=host, extra="series",
-                         thumbnail=thumb_series, category=item.category))
+                         thumbnail=thumb_series, category=item.category, channel_host=item.channel_host))
                          
     itemlist.append(Item(channel=item.channel, action="submenu", title="Documentales", url=host, extra="varios",
-                         thumbnail=thumb_docus, category=item.category))
+                         thumbnail=thumb_docus, category=item.category, channel_host=item.channel_host))
     itemlist.append(
-        Item(channel=item.channel, action="search", title="Buscar", url=host + "buscar", thumbnail=thumb_buscar, category=item.category))
+        Item(channel=item.channel, action="search", title="Buscar", url=host + "buscar", thumbnail=thumb_buscar, category=item.category, channel_host=item.channel_host))
         
     itemlist.append(
-        Item(channel=item.channel, action="", title="[COLOR yellow]Configuración de Servidores:[/COLOR]", url="", thumbnail=thumb_settings, category=item.category))
+        Item(channel=item.channel, action="", title="[COLOR yellow]Configuración de Servidores:[/COLOR]", url="", thumbnail=thumb_settings, category=item.category, channel_host=item.channel_host))
     itemlist.append(
-        Item(channel=item.channel, action="settingCanal", title="Servidores para Ver Online y Descargas", url="", thumbnail=thumb_settings, category=item.category))
+        Item(channel=item.channel, action="settingCanal", title="Servidores para Ver Online y Descargas", url="", thumbnail=thumb_settings, category=item.category, channel_host=item.channel_host))
 
     return itemlist
 
@@ -499,9 +504,9 @@ def listado_busqueda(item):
     cnt_tot = 40            # Poner el num. máximo de items por página.  Dejamos que la web lo controle
     cnt_title = 0           # Contador de líneas insertadas en Itemlist
     cnt_pag = 0             # Contador de líneas leídas de Matches
-    timeout_search = 5      # Timeout un poco más largo para las búsquedas
-    if timeout > 5:
-        timeout_search = timeout    # Timeout un poco más largo para las búsquedas
+    timeout_search = timeout * 2      # Timeout un poco más largo para las búsquedas
+    if timeout_search < 5:
+        timeout_search = 5  # Timeout un poco más largo para las búsquedas
     data = ''
 
     if item.cnt_pag:

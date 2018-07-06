@@ -1454,7 +1454,7 @@ msgid "[COLOR yellow]Search in other channels[/COLOR]"
 msgstr "[COLOR yellow]Cerca negli altri canali[/COLOR]"
 
 msgctxt "#60351"
-msgid "Set as homepage"
+msgid "[COLOR 0xffccff00]Set as Homepage[/COLOR]"
 msgstr "[COLOR 0xffccff00]Impostare come Homepage[/COLOR]"
 
 msgctxt "#60352"
@@ -3818,7 +3818,19 @@ msgstr "Cerca per titolo"
 
 msgctxt "#70277"
 msgid "MediaServer Language (Restart Required)"
-msgstr "mediaServer Lingua (Riavvio Richiesto)"
+msgstr "Lingua MediaServer (Riavvio Richiesto)"
+
+msgctxt "#70278"
+msgid "Rename"
+msgstr "Rinomina"
+
+msgctxt "#70279"
+msgid "You can try downloading the 'libtorrent' module from Kodi or installing some addon like 'Quasar' or 'Torrenter', which will appear among the options in the pop-up when it appears when clicking on a torrent link. \n'Torrenter 'It's more complex but also more complete and it always works.'"
+msgstr "Puoi provare a scaricare il modulo 'libtorrent' da Kodi o installare alcuni addon come 'Quasar' o 'Torrenter', che appariranno tra le opzioni nel pop-up .Quando appare quando fai clic su un collegamento torrent. \n'Torrenter' È più complesso ma anche più completo e funziona sempre'".
+
+msgctxt "#70280"
+msgid "    -  Torrent Links don't work."
+msgstr "    - I Link Torrent non funzionano."
 
 
 
