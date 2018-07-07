@@ -8,6 +8,8 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 from platformcode import launcher
+from core import videolibrarytools
+from core import filetools
 
 __channel__ = "autoplay"
 
@@ -79,6 +81,26 @@ def start(itemlist, item):
     :return: intenta autoreproducir, en caso de fallar devuelve el itemlist que recibio en un principio
     '''
     logger.info()
+    #logger.debug(item) 
+    show_name = item.contentSerieName.lower()
+    movie_name =item.contentTitle.lower()
+    
+    if item.contentChannel == "videolibrary" and item.contentType == "episode" :
+        for path, folders, files in filetools.walk(videolibrarytools.TVSHOWS_PATH):
+                for folder in [f for f in folders if f.startswith(show_name)] :
+                    full_path =  os.path.join(path, folder) 
+                    nfo_path = os.path.join(path, folder + '/tvshow.nfo') 
+                    season_episode = "%sx%s" % (item.contentSeason, str(item.contentEpisodeNumber).zfill(2))
+                    strm_path = filetools.join(full_path, "%s.strm" % season_episode) 
+                    item_mark = item.clone(nfo=nfo_path, strm_path=strm_path) 
+                   # logger.debug(item_mark) 
+                    
+    if item.contentChannel == "videolibrary" and item.contentType == "movie" :
+        for path, folders, files in filetools.walk(videolibrarytools.MOVIES_PATH):
+                for folder in [f for f in folders if f.startswith(movie_name)] :
+                    nfo_path = os.path.join(path, folder, folder + '.nfo') 
+                    item_mark = item.clone(nfo=nfo_path) 
+                    #logger.debug(item_mark)
 
     if not config.is_xbmc():
         #platformtools.dialog_notification('AutoPlay ERROR', 'Sólo disponible para XBMC/Kodi')
@@ -293,10 +315,10 @@ def start(itemlist, item):
 
                     # Verifica si el item viene de la videoteca
                     try:
-                        if item.contentChannel =='videolibrary':
+                        if item_mark.contentChannel =='videolibrary':
                             # Marca como visto
                             from platformcode import xbmc_videolibrary
-                            xbmc_videolibrary.mark_auto_as_watched(item)
+                            xbmc_videolibrary.mark_auto_as_watched(item_mark)
                             # Rellena el video con los datos del item principal y reproduce
                             play_item = item.clone(url=videoitem)
                             platformtools.play_video(play_item.url, autoplay=True)
