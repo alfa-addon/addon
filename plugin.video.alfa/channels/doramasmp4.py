@@ -83,7 +83,7 @@ def list_all(item):
 
         else:
             new_item.contentSerieName=scrapedtitle
-            new_item.action = 'episodes'
+            new_item.action = 'episodios'
         itemlist.append(new_item)
 
 
@@ -155,43 +155,7 @@ def episodios(item):
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
-            item.clone(title="Añadir esta serie a la videoteca", action="add_serie_to_library", extra="episodes", text_color='yellow'))
-    return itemlist
-
-def episodes(item):
-    logger.info()
-    itemlist = []
-    data = get_source(item.url)
-    logger.debug(data)
-    patron = '<a itemprop=url href=(.*?) title=.*? class=media.*?truncate-width>(.*?)<.*?'
-    patron +='text-muted mb-1>Capítulo (.*?)</div>'
-
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    infoLabels = item.infoLabels
-
-    for scrapedurl, scrapedtitle, scrapedep in matches:
-        url = scrapedurl
-        contentEpisodeNumber = scrapedep
-
-        infoLabels['season'] = 1
-        infoLabels['episode'] = contentEpisodeNumber
-
-        if scrapedtitle != '':
-            title = '%sx%s - %s' % ('1',scrapedep, scrapedtitle)
-        else:
-            title = 'episodio %s' % scrapedep
-
-        infoLabels = item.infoLabels
-
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url,
-                             contentEpisodeNumber=contentEpisodeNumber, type='episode', infoLabels=infoLabels))
-
-
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
-    if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(
-            item.clone(title="Añadir esta serie a la videoteca", action="add_serie_to_library", extra="episodes", text_color='yellow'))
+            item.clone(title="Añadir esta serie a la videoteca", action="add_serie_to_library", extra="episodios", text_color='yellow'))
     return itemlist
 
 def findvideos(item):
@@ -213,7 +177,7 @@ def findvideos(item):
         item.type = 'dorama'
         item.contentSerieName = item.contentTitle
         item.contentTitle = ''
-        return episodes(item)
+        return episodios(item)
     else:
 
         for video_url in matches:
@@ -283,7 +247,7 @@ def search(item, texto):
     item.type = 'search'
     if texto != '':
         try:
-            return episodes(item)
+            return episodios(item)
         except:
             itemlist.append(item.clone(url='', title='No hay elementos...', action=''))
             return itemlist
