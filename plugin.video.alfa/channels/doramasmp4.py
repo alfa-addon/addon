@@ -40,8 +40,10 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all",
                          url=host + 'catalogue?format=pelicula', thumbnail=get_thumb('movies', auto=True),
                          type='movie'))
-    itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= host+'search?q=',
-                         thumbnail=get_thumb('search', auto=True)))
+ #   itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= host+'search?q=',
+                       #  thumbnail=get_thumb('search', auto=True)))
+    itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= host,
+                         thumbnail=get_thumb('search', auto=True)))                      
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -120,6 +122,41 @@ def latest_episodes(item):
 
     return itemlist
 
+def episodios(item):
+    logger.info()
+    itemlist = []
+    data = get_source(item.url)
+    logger.debug(data)
+    patron = '<a itemprop=url href=(.*?) title=.*? class=media.*?truncate-width>(.*?)<.*?'
+    patron +='text-muted mb-1>Capítulo (.*?)</div>'
+
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    infoLabels = item.infoLabels
+
+    for scrapedurl, scrapedtitle, scrapedep in matches:
+        url = scrapedurl
+        contentEpisodeNumber = scrapedep
+
+        infoLabels['season'] = 1
+        infoLabels['episode'] = contentEpisodeNumber
+
+        if scrapedtitle != '':
+            title = '%sx%s - %s' % ('1',scrapedep, scrapedtitle)
+        else:
+            title = 'episodio %s' % scrapedep
+
+        infoLabels = item.infoLabels
+
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url,
+                             contentEpisodeNumber=contentEpisodeNumber, type='episode', infoLabels=infoLabels))
+
+
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+
+    if config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(
+            item.clone(title="Añadir esta serie a la videoteca", action="add_serie_to_library", extra="episodes", text_color='yellow'))
+    return itemlist
 
 def episodes(item):
     logger.info()
@@ -240,12 +277,13 @@ def findvideos(item):
 def search(item, texto):
     logger.info()
     itemlist = []
-    texto = texto.replace(" ", "+")
+    texto = texto.replace(" ", "-")
+    texto = texto + "/" 
     item.url = item.url + texto
     item.type = 'search'
     if texto != '':
         try:
-            return list_all(item)
+            return episodes(item)
         except:
             itemlist.append(item.clone(url='', title='No hay elementos...', action=''))
             return itemlist
