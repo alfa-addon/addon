@@ -40,8 +40,10 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all",
                          url=host + 'catalogue?format=pelicula', thumbnail=get_thumb('movies', auto=True),
                          type='movie'))
-    itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= host+'search?q=',
-                         thumbnail=get_thumb('search', auto=True)))
+ #   itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= host+'search?q=',
+                       #  thumbnail=get_thumb('search', auto=True)))
+    itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= host,
+                         thumbnail=get_thumb('search', auto=True)))                      
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -81,7 +83,7 @@ def list_all(item):
 
         else:
             new_item.contentSerieName=scrapedtitle
-            new_item.action = 'episodes'
+            new_item.action = 'episodios'
         itemlist.append(new_item)
 
 
@@ -120,8 +122,7 @@ def latest_episodes(item):
 
     return itemlist
 
-
-def episodes(item):
+def episodios(item):
     logger.info()
     itemlist = []
     data = get_source(item.url)
@@ -154,7 +155,7 @@ def episodes(item):
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
-            item.clone(title="Añadir esta serie a la videoteca", action="add_serie_to_library", extra="episodes", text_color='yellow'))
+            item.clone(title="Añadir esta serie a la videoteca", action="add_serie_to_library", extra="episodios", text_color='yellow'))
     return itemlist
 
 def findvideos(item):
@@ -176,7 +177,7 @@ def findvideos(item):
         item.type = 'dorama'
         item.contentSerieName = item.contentTitle
         item.contentTitle = ''
-        return episodes(item)
+        return episodios(item)
     else:
 
         for video_url in matches:
@@ -240,12 +241,13 @@ def findvideos(item):
 def search(item, texto):
     logger.info()
     itemlist = []
-    texto = texto.replace(" ", "+")
+    texto = texto.replace(" ", "-")
+    texto = texto + "/" 
     item.url = item.url + texto
     item.type = 'search'
     if texto != '':
         try:
-            return list_all(item)
+            return episodios(item)
         except:
             itemlist.append(item.clone(url='', title='No hay elementos...', action=''))
             return itemlist
