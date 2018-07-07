@@ -647,7 +647,12 @@ def post_tmdb_findvideos(item, itemlist):
         title = '%sx%s' % (str(item.contentSeason), str(item.contentEpisodeNumber).zfill(2))    #Temporada y Episodio
         if item.infoLabels['temporada_num_episodios']:
             title = '%s (de %s)' % (title, str(item.infoLabels['temporada_num_episodios']))     #Total Episodios
-        title = '%s %s' % (title, item.infoLabels['episodio_titulo'])                           #Título Episodio
+        
+        #Si son episodios múltiples, y viene de Videoteca, ponemos nombre de serie        
+        if " al " in item.title and not " al " in item.infoLabels['episodio_titulo']: 
+            title = '%s al %s - ' % (title, scrapertools.find_single_match(item.title, 'al (\d+)'))
+        else:
+            title = '%s %s' % (title, item.infoLabels['episodio_titulo'])                       #Título Episodio
         title_gen = '%s, %s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] [%s]' % (title, item.contentSerieName, item.infoLabels['year'], rating, item.quality, str(item.language), scrapertools.find_single_match(item.title, '\s\[(\d+,?\d*?\s\w[b|B])\]'))     #Rating, Calidad, Idioma, Tamaño                
         if item.infoLabels['status'] and item.infoLabels['status'].lower() == "ended":
             title_gen = '[TERM.] %s' % title_gen        #Marca cuando la Serie está terminada y no va a haber más producción
@@ -668,7 +673,7 @@ def post_tmdb_findvideos(item, itemlist):
 
     if item.channel_alt:
         title_gen = '[COLOR yellow]%s [/COLOR][ALT]: %s' % (item.category.capitalize(), title_gen)
-    elif config.get_setting("quit_channel_name", "videolibrary") == 1 and item.contentChannel == "videolibrary":
+    elif (config.get_setting("quit_channel_name", "videolibrary") == 1 or item.channel == channel_py) and item.contentChannel == "videolibrary":
         title_gen = '%s: %s' % (item.category.capitalize(), title_gen)
 
     #Pintamos el pseudo-título con toda la información disponible del vídeo

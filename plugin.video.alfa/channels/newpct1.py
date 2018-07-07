@@ -1386,8 +1386,12 @@ def episodios(item):
                 pattern = ".*?[^>]+>.*?Temporada\s*(?P<season>\d+)?.*?Capitulo(?:s)?\s*(?P<episode>\d+)?" \
                           "(?:.*?(?P<episode2>\d+)?)<.+?<span[^>]+>(?P<lang>.*?)?<\/span>\s*Calidad\s*<span[^>]+>" \
                           "[\[]\s*(?P<quality>.*?)?\s*[\]]<\/span>"
-                if "Especial" in info: # Capitulos Especiales
-                    pattern = ".*?[^>]+>.*?Temporada.*?\[.*?(?P<season>\d+).*?\].*?Capitulo.*?\[\s*(?P<episode>\d+).*?\]?(?:.*?(?P<episode2>\d+)?)<.+?<span[^>]+>(?P<lang>.*?)?<\/span>\s*Calidad\s*<span[^>]+>[\[]\s*(?P<quality>.*?)?\s*[\]]<\/span>"
+                if not scrapertools.find_single_match(info, pattern):
+                    if "especial" in info.lower():      # Capitulos Especiales
+                        pattern = ".*?[^>]+>.*?Temporada.*?\[.*?(?P<season>\d+).*?\].*?Capitulo.*?\[\s*(?P<episode>\d+).*?\]?(?:.*?(?P<episode2>\d+)?)<.+?<span[^>]+>(?P<lang>.*?)?<\/span>\s*Calidad\s*<span[^>]+>[\[]\s*(?P<quality>.*?)?\s*[\]]<\/span>"
+                    elif "miniserie" in info.lower() or "completa" in info.lower():     # Series o miniseries completa
+                        logger.debug("patron episodioNEW - MINISERIE: " + info)
+                        info = '><strong>%sTemporada %s Capitulo 01_99</strong> - <span >Español Castellano</span> Calidad <span >[%s]</span>' % (item_local.contentSerieName, season, item_local.quality)
                 
                 if not scrapertools.find_single_match(info, pattern):   #en caso de error de formato, creo uno básico
                     logger.debug("patron episodioNEW: " + pattern)
@@ -1413,6 +1417,9 @@ def episodios(item):
                 elif "completa" in info.lower():
                     info = info.replace("COMPLETA", "Caps. 01_99")
                     pattern = 'Temp.*?(?P<season>\d+).*?Cap\w?\.\s\d?(?P<episode>\d{2})(?:.*?(?P<episode2>\d{2}))?.*?\[(?P<quality>.*?)\].*?\[(?P<lang>\w+)\]?'
+                    if not scrapertools.find_single_match(info, pattern):   #en caso de error de formato, creo uno básico
+                        logger.debug(info)
+                        info = '%s - Temp.%s [Caps. 01_99][%s][Spanish]' % (item_local.contentSerieName, season, item_local.quality)
                 if scrapertools.find_single_match(info, '\[Cap.\d{2,3}'):
                     pattern = "\[(?P<quality>.*?)\].*?\[Cap.(?P<season>\d).*?(?P<episode>\d{2})(?:_(?P<season2>\d+)" \
                           "(?P<episode2>\d{2}))?.*?\].*?(?:\[(?P<lang>.*?)\])?"
