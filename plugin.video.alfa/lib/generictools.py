@@ -120,9 +120,12 @@ def update_title(item):
             #Si el usuario ha seleccionado una opción distinta o cambiado algo, ajustamos los títulos
             if item.tmdb_stat == True:
                 if new_item.contentSerieName:       #Si es serie...
-                    item.title_from_channel = new_item.contentSerieName        #Guardo el título incial para Filtertools
-                    item.title = item.title.replace(new_item.contentSerieName, item.contentTitle)
-                    item.contentSerieName = item.contentTitle
+                    if config.get_setting("filter_languages", item.channel) >= 0:
+                        item.title_from_channel = new_item.contentSerieName         #Guardo el título incial para Filtertools
+                        item.contentSerieName = new_item.contentSerieName           #Guardo el título incial para Filtertools
+                    else:
+                        item.title = item.title.replace(new_item.contentSerieName, item.contentTitle)
+                        item.contentSerieName = item.contentTitle
                     if new_item.contentSeason: item.contentSeason = new_item.contentSeason      #Restauramos Temporada
                     if item.infoLabels['title']: del item.infoLabels['title']       #Borramos título de peli (es serie)
                 else:                               #Si es película...
