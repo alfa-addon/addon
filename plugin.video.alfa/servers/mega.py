@@ -15,6 +15,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     from megaserver import Client
 
+    page_url = page_url.replace('/embed#!', '/#!')
+
     c = Client(url=page_url, is_playing_fnc=platformtools.is_playing)
 
     files = c.get_files()
