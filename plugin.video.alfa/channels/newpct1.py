@@ -172,6 +172,7 @@ def submenu_novedades(item):
     
     data = ''
     timeout_search=timeout * 2          #Más tiempo para Novedades, que es una búsqueda
+    thumb_settings = get_thumb("setting_0.png")
     
     #Establecer los valores del .json por si se entra directamente desde un favorito
     item.channel_host = host
@@ -236,6 +237,11 @@ def submenu_novedades(item):
     for item_local in itemlist_alt:
         item_local.title = re.sub(r'^\d{2}', '', item_local.title)      #Borramos la secuencia
         itemlist.append(item_local.clone())
+        
+    itemlist.append(
+        Item(channel=item.channel, action="", title="[COLOR yellow]Configuración de Novedades:[/COLOR]", url="", thumbnail=thumb_settings, category=item.category, channel_host=item.channel_host))
+    itemlist.append(
+        Item(channel=item.channel, action="settingCanal", title="Periodos y formatos de series en Novedades", url="", thumbnail=thumb_settings, category=item.category, channel_host=item.channel_host))
 
     return itemlist
     
