@@ -13,7 +13,7 @@ from platformcode import config, logger
 from channels import filtertools
 from channels import autoplay
 
-host = 'http://www.novelashdgratis.io'
+host = 'http://www.novelasgratishd.tv'
 
 IDIOMAS = {'la':'Latino'}
 list_language = IDIOMAS.values()
