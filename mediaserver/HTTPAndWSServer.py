@@ -139,6 +139,23 @@ def run(controller, path):
         logger.error(traceback.format_exc())
         show_error_message(traceback.format_exc())
 
+def show_error_message(err_info):
+    from core import scrapertools
+    patron = 'File "' + os.path.join(config.get_runtime_path(), "channels", "").replace("\\", "\\\\") + '([^.]+)\.py"'
+    canal = scrapertools.find_single_match(err_info, patron)
+    if canal:
+        platformtools.dialog_ok(
+            "Se ha producido un error en el canal " + canal,
+            "Esto puede ser devido a varias razones: \n \
+            - El servidor no está disponible, o no esta respondiendo.\n \
+            - Cambios en el diseño de la web.\n \
+            - Etc...\n \
+            Comprueba el log para ver mas detalles del error.")
+    else:
+        platformtools.dialog_ok(
+            "Se ha producido un error en Alfa",
+            "Comprueba el log para ver mas detalles del error.")
+
 
 def start(fnc_info):
     server.fnc_info = fnc_info
