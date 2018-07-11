@@ -5,7 +5,7 @@
 # Código reusable de diferentes partes de los canales que pueden
 # ser llamadados desde otros canales, y así carificar el formato
 # y resultado de cada canal y reducir el costo su mantenimiento
-# ----------------------------------------------------------
+# ------------------------------------------------------------
 
 import re
 import sys
