@@ -40,7 +40,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all",
                          url=host + 'catalogue?format=pelicula', thumbnail=get_thumb('movies', auto=True),
                          type='movie'))
-    itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= host+'search?q=',
+    itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= host+'ajax/search.php',
                          thumbnail=get_thumb('search', auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
@@ -81,9 +81,8 @@ def list_all(item):
 
         else:
             new_item.contentSerieName=scrapedtitle
-            new_item.action = 'episodes'
+            new_item.action = 'episodios'
         itemlist.append(new_item)
-
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     # Paginacion
@@ -98,6 +97,33 @@ def list_all(item):
             itemlist.append(Item(channel=item.channel, action="list_all", title='Siguiente >>>',
                                  url=page_base+next_page, thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png',
                                  type=item.type))
+    return itemlist
+
+
+def search_results(item):
+    logger.info()
+
+    itemlist=[]
+    data = httptools.downloadpage(item.url, post=item.post).data
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    patron = '<a class=media p-2 href=(.*?)><img class=mr-2 src=(.*?)>.*?500>(.*?)</div>'
+    patron += '<div class=text-muted tx-11>(.*?)</div>.*?200>(.*?)</div>'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for scrapedurl, scrapedthumbnail, scrapedtitle, year, scrapedtype in matches:
+        new_item = Item(channel=item.channel, url=scrapedurl, thumbnail=scrapedthumbnail, title=scrapedtitle)
+
+        if scrapedtype != 'dorama':
+            new_item.action = 'findvideos'
+            new_item.contentTitle = scrapedtitle
+
+        else:
+            new_item.contentSerieName=scrapedtitle
+            new_item.action = 'episodios'
+        itemlist.append(new_item)
+
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+
     return itemlist
 
 
@@ -121,11 +147,10 @@ def latest_episodes(item):
     return itemlist
 
 
-def episodes(item):
+def episodios(item):
     logger.info()
     itemlist = []
     data = get_source(item.url)
-    logger.debug(data)
     patron = '<a itemprop=url href=(.*?) title=.*? class=media.*?truncate-width>(.*?)<.*?'
     patron +='text-muted mb-1>Capítulo (.*?)</div>'
 
@@ -154,7 +179,7 @@ def episodes(item):
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
-            item.clone(title="Añadir esta serie a la videoteca", action="add_serie_to_library", extra="episodes", text_color='yellow'))
+            item.clone(title="Añadir esta serie a la videoteca", action="add_serie_to_library", extra="episodios", text_color='yellow'))
     return itemlist
 
 def findvideos(item):
@@ -164,7 +189,6 @@ def findvideos(item):
     duplicated = []
     headers={'referer':item.url}
     data = get_source(item.url)
-    logger.debug(data)
     patron = 'animated pulse data-url=(.*?)>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     if '</strong> ¡Este capítulo no tiene subtítulos, solo audio original! </div>' in data:
@@ -176,7 +200,7 @@ def findvideos(item):
         item.type = 'dorama'
         item.contentSerieName = item.contentTitle
         item.contentTitle = ''
-        return episodes(item)
+        return episodios(item)
     else:
 
         for video_url in matches:
@@ -239,13 +263,17 @@ def findvideos(item):
 
 def search(item, texto):
     logger.info()
+    import urllib
     itemlist = []
     texto = texto.replace(" ", "+")
-    item.url = item.url + texto
+    item.url = item.url
+    post = {'q':texto}
+    post = urllib.urlencode(post)
     item.type = 'search'
+    item.post = post
     if texto != '':
         try:
-            return list_all(item)
+            return search_results(item)
         except:
             itemlist.append(item.clone(url='', title='No hay elementos...', action=''))
             return itemlist
