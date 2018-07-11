@@ -53,7 +53,7 @@
       "id": "clonenewpct1_channels_list",
       "type": "text",
       "label": "Lista de clones de NewPct1 y orden de uso",
-      "default": "('1', 'torrentrapid', 'http://torrentrapid.com/', 'movie, tvshow, season, episode', ''), ('1', 'torrentlocura', 'http://torrentlocura.com/', 'movie, tvshow, season, episode', ''), ('1', 'tumejortorrent', 'http://tumejortorrent.com/', 'movie, tvshow, season, episode', ''), ('1', 'tvsinpagar', 'http://www.tvsinpagar.com/', 'tvshow, season, episode', ''), ('1', 'descargas2020', 'http://descargas2020.com/', 'movie, tvshow, season, episode', ''), ('1', 'mispelisyseries', 'http://mispelisyseries.com/', 'movie', 'search')",
+      "default": "('1', 'torrentrapid', 'http://torrentrapid.com/', 'movie, tvshow, season, episode', 'serie_episodios'), ('1', 'torrentlocura', 'http://torrentlocura.com/', 'movie, tvshow, season, episode', ''), ('1', 'tumejortorrent', 'http://tumejortorrent.com/', 'movie, tvshow, season, episode', ''), ('1', 'tvsinpagar', 'http://www.tvsinpagar.com/', 'tvshow, season, episode', ''), ('1', 'descargas2020', 'http://descargas2020.com/', 'movie, tvshow, season, episode', ''), ('1', 'mispelisyseries', 'http://mispelisyseries.com/', 'movie', 'search, listado_busqueda')",
       "enabled": true,
       "visible": false
     },
@@ -559,6 +559,33 @@
         "8",
         "9",
         "10"
+      ]
+    },
+    {
+      "id": "clonenewpct1_rango_fechas_novedades",
+      "type": "list",
+      "label": "Rango de fechas para búsquedas en Novedades",
+      "default": 2,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Hoy",
+        "Ayer",
+        "Semana",
+        "Mes",
+        "Siempre"
+      ]
+    },
+    {
+      "id": "clonenewpct1_serie_episodio_novedades",
+      "type": "list",
+      "label": "Ver en Novedades las series como episodios sueltos o serie completa",
+      "default": 1,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Episodios sueltos",
+        "Serie completa"
       ]
     }
   ]
