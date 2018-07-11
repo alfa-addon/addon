@@ -607,14 +607,25 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
+    #logger.debug('item.url %s' % item.url)
     uri = scrapertools.find_single_match(item.url, '(/transcoder[\w\W]+)')
-    uri_request = host + "/video-prod/s/uri?uri=%s&_=%s" % (uri, int(time.time()))
+    s = scrapertools.find_single_match(item.url, r'http.*?://(.*?)\.')
+    #logger.debug('uri %s' % uri)
+    #logger.debug('s %s'% s)
+    uri_request = host + "/video2-prod/s/uri?uri=%s&s=%s&_=%s" % (uri, s, int(time.time()))
     data = httptools.downloadpage(uri_request).data
     data = jsontools.load(data)
-    url = item.url.replace(".tv-vip.com/transcoder/", ".tv-vip.in/c/transcoder/") + "?tt=" + str(data['tt']) + \
-          "&mm=" + data['mm'] + "&bb=" + data['bb']
-    url += "|User-Agent=Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Mobile Safari/537.36"
+    #logger.debug(data)
+    if data['s'] == None:
+        data['s'] = ''
+    url = item.url.replace(".tv-vip.com/transcoder/", ".%s/e/transcoder/") % (data['b']) + "?tt=" + str(data['a']['tt']) + \
+          "&mm=" + data['a']['mm'] + "&bb=" + data['a']['bb']
+
+    #logger.debug(url)
+    #url += "|User-Agent=Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Mobile Safari/537.36"
+
     itemlist.append(item.clone(action="play", server="directo", url=url, folder=False))
+
     return itemlist
 
 
