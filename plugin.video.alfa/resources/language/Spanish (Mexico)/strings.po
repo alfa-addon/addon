@@ -437,10 +437,6 @@ msgctxt "#59983"
 msgid "%.2f%% - %.2f %s of %.2f %s a %.2f %s/s (%d/%d)"
 msgstr "%.2f%% - %.2f %s de %.2f %s a %.2f %s/s (%d/%d)"
 
-msgctxt "#59984"
-msgid "An error has occurred in alfa, \nCheck log for more details."
-msgstr "Se ha producido un error en alfa,\nComprueba el log para ver mas detalles del error."
-
 msgctxt "#59985"
 msgid "Error in the channel "
 msgstr "Error en el canal "
@@ -550,12 +546,12 @@ msgid "No video to play"
 msgstr "No hay nada que reproducir"
 
 msgctxt "#60013"
-msgid "This website seems to be unavailable, try later, if the problem persists, check with a browser: %s.\nIf the web page is working correctly, please report the error on : https://alfa-addon.com/categories/alfa-addon.50/"
-msgstr "La web de la que depende parece no estar disponible, puede volver a intentarlo,\nsi el problema persiste verifique mediante un navegador la web: %s. \nSi la web funciona correctamente informe el error en: www.alfa-addon.com"
+msgid "This website seems to be unavailable, try later, if the problem persists, check with a browser: %s. If the web page is working correctly, please report the error on : https://alfa-addon.com"
+msgstr "La web de la que depende parece no estar disponible, puede volver a intentarlo, si el problema persiste verifique mediante un navegador la web: %s. Si la web funciona correctamente informe el error en: www.alfa-addon.com"
 
 msgctxt "#60014"
-msgid "It may be due to a connection problem, the web page of the channel has changed its structure, or an internal error of alfa.\nTo have more details, see the log file."
-msgstr "Puede deberse a un fallo de conexión, la web del canal\nha cambiado su estructura,o un error interno de alfa.\nPara saber más detalles, consulta el log."
+msgid "It may be due to a connection problem, the web page of the channel has changed its structure, or an internal error of alfa. To have more details, see the log file."
+msgstr "Puede deberse a un fallo de conexión, la web del canal ha cambiado su estructura, o un error interno de alfa. Para saber más detalles, consulta el log."
 
 msgctxt "#60015"
 msgid "Check the log for more details on the error."
@@ -823,7 +819,7 @@ msgstr "   Prioridad (Indica el orden para Auto-Reproducir)"
 
 msgctxt "#60086"
 msgid "It has been renamed to:"
-msgstr "È Stato rinominato in:"
+msgstr "Esto ha sido renombrado a:"
 
 msgctxt "#60087"
 msgid "Unexpected error on channel %s"
@@ -3764,10 +3760,6 @@ msgstr "¡Los datos introducidos no son correctos!"
 msgctxt "#70266"
 msgid "The search for% s did not match."
 msgstr "La busqueda de %s no dio resultados."
-
-msgctxt "#70267"
-msgid "An error occurred in channel "
-msgstr "Se ha producido un error en el canal "
 
 msgctxt "#70268"
 msgid "This can be due to several reasons: \ n \ - The server is not available, or is not responding. \ n \ - Changes in the design of the web. \ n \ - Etc ... \ n \ Check the log to see more details of the error. "
