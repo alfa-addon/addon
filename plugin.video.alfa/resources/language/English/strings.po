@@ -437,10 +437,6 @@ msgctxt "#59983"
 msgid "%.2f%% - %.2f %s of %.2f %s a %.2f %s/s (%d/%d)"
 msgstr ""
 
-msgctxt "#59984"
-msgid "An error has occurred in alfa, \nCheck log for more details."
-msgstr ""
-
 msgctxt "#59985"
 msgid "Error in the channel "
 msgstr ""
@@ -550,11 +546,11 @@ msgid "No video to play"
 msgstr ""
 
 msgctxt "#60013"
-msgid "This website seems to be unavailable, try later, if the problem persists, check with a browser: %s.\nIf the web page is working correctly, please report the error on : https://alfa-addon.com/categories/alfa-addon.50/"
+msgid "This website seems to be unavailable, try later, if the problem persists, check with a browser: %s. If the web page is working correctly, please report the error on : https://alfa-addon.com"
 msgstr ""
 
 msgctxt "#60014"
-msgid "It may be due to a connection problem, the web page of the channel has changed its structure, or an internal error of alfa.\nTo have more details, see the log file."
+msgid "It may be due to a connection problem, the web page of the channel has changed its structure, or an internal error of alfa. To have more details, see the log file."
 msgstr ""
 
 msgctxt "#60015"
@@ -3787,10 +3783,6 @@ msgstr ""
 
 msgctxt "#70266"
 msgid "The search for% s did not match."
-msgstr ""
-
-msgctxt "#70267"
-msgid "An error occurred in channel "
 msgstr ""
 
 msgctxt "#70268"
