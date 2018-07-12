@@ -1699,7 +1699,7 @@ msgstr "Altre opzioni"
 
 msgctxt "#60421"
 msgid "Channels included in the global search "
-msgstr "Canali inclusi nella ricerca globale "
+msgstr "Canali inclusi nella ricerca globale: "
 
 msgctxt "#60422"
 msgid "Search "
@@ -3832,5 +3832,11 @@ msgctxt "#70280"
 msgid "    -  Torrent Links don't work."
 msgstr "    - I Link Torrent non funzionano."
 
+msgctxt "#70281"
+msgid "Do you want to show these links?"
+msgstr "Vuoi vedere questi links"
 
+msgctxt "#70282"
+msgid "Searching in %s"
+msgstr "Ricerca in %s"
 
