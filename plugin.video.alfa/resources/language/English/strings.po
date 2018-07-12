@@ -3741,6 +3741,14 @@ msgctxt "#70254"
 msgid "Internal Client"
 msgstr ""
 
+msgctxt "#70281"
+msgid "Do you want to show these links?"
+msgstr ""
+
+msgctxt "#70282"
+msgid "Searching in %s"
+msgstr ""
+
 msgctxt "#70255"
 msgid "Internal client - MCT"
 msgstr ""
