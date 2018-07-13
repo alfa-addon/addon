@@ -608,6 +608,7 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
     logger.info()
     # logger.debug(item.tostring('\n'))
     logger.debug('item play: %s'%item)
+    xbmc_player = XBMCPlayer()
     if item.channel == 'downloads':
         logger.info("Reproducir video local: %s [%s]" % (item.title, item.url))
         xlistitem = xbmcgui.ListItem(path=item.url)
@@ -674,7 +675,6 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
         playlist.add(mediaurl, xlistitem)
 
         # Reproduce
-        xbmc_player = XBMCPlayer()
         xbmc_player.play(playlist, xlistitem)
     else:
         set_player(item, xlistitem, mediaurl, view, strm)

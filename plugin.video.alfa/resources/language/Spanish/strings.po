@@ -442,8 +442,8 @@ msgid "An error has occurred in alfa, \nCheck log for more details."
 msgstr "Se ha producido un error en alfa,\nComprueba el log para ver mas detalles del error."
 
 msgctxt "#59985"
-msgid "Error in the channel"
-msgstr "Error en el canal"
+msgid "Error in the channel "
+msgstr "Error en el canal "
 
 msgctxt "#59986"
 msgid "Error loading the server: %s\n"
@@ -3375,7 +3375,7 @@ msgstr "Opciones para Titulos"
 
 msgctxt "#70168"
 msgid "General"
-msgstr "Generale"
+msgstr "General"
 
 msgctxt "#70169"
 msgid "Servers use"

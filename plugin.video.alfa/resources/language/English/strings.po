@@ -442,7 +442,7 @@ msgid "An error has occurred in alfa, \nCheck log for more details."
 msgstr ""
 
 msgctxt "#59985"
-msgid "Error in the channel"
+msgid "Error in the channel "
 msgstr ""
 
 msgctxt "#59986"
@@ -3302,7 +3302,7 @@ msgid "VOS (Original Subtitled Version)"
 msgstr ""
 
 msgctxt "#70144"
-msgid "VO (Original Version Originale)"
+msgid "VO (Original Version)"
 msgstr ""
 
 msgctxt "#70145"
