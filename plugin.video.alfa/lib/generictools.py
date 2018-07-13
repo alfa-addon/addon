@@ -198,6 +198,9 @@ def post_tmdb_listado(item, itemlist):
     for item_local in itemlist:                                 #Recorremos el Itenlist generado por el canal
         title = item_local.title
         #logger.debug(item_local)
+        
+        item_local.last_page = 0
+        del item_local.last_page                            #Borramos restos de paginación
 
         if item_local.contentSeason_save:                       #Restauramos el num. de Temporada
             item_local.contentSeason = item_local.contentSeason_save
@@ -710,9 +713,7 @@ def post_tmdb_findvideos(item, itemlist):
         title_gen = '%s: %s' % (item.category.capitalize(), title_gen)
 
     #Pintamos el pseudo-título con toda la información disponible del vídeo
-    item.action = ""
-    item.server = ""
-    itemlist.append(item.clone(title=title_gen))		#Título con todos los datos del vídeo
+    itemlist.append(item.clone(action="", server = "", title=title_gen))		#Título con todos los datos del vídeo
     
     #agregamos la opción de Añadir a Videoteca para péliculas (no series)
     if item.contentType == 'movie' and item.contentChannel != "videolibrary":     
