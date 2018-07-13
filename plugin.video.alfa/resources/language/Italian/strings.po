@@ -442,8 +442,8 @@ msgid "An error has occurred in alfa, \nCheck log for more details."
 msgstr "Si è verificato un errore in alfa, \nControlla il log per maggiori dettagli."
 
 msgctxt "#59985"
-msgid "Error in the channel"
-msgstr "Errore nel canale"
+msgid "Error in the channel "
+msgstr "Errore nel canale "
 
 msgctxt "#59986"
 msgid "Error loading the server: %s\n"
@@ -3290,7 +3290,7 @@ msgid "VOS (Original Subtitled Version)"
 msgstr "VOS (Version Original Sottotitolato)"
 
 msgctxt "#70144"
-msgid "VO (Original Version Originale)"
+msgid "VO (Original Version)"
 msgstr "VO (Original)"
 
 msgctxt "#70145"

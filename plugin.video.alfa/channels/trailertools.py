@@ -165,7 +165,7 @@ def youtube_search(item):
     patron += """url":"([^"]+)"""
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedthumbnail, scrapedtitle, scrapedduration, scrapedurl in matches:
-        scrapedtitle = scrapedtitle.decode("utf-8")
+        scrapedtitle = scrapedtitle.decode('utf8').encode('utf8')
         scrapedtitle = scrapedtitle + " (" + scrapedduration + ")"
         if item.contextual:
             scrapedtitle = "[COLOR white]%s[/COLOR]" % scrapedtitle

@@ -235,8 +235,12 @@ def mark_content_as_watched_on_kodi(item, value=1):
         data = get_data(payload)
         if 'result' in data and "movies" in data['result']:
 
-            filename = filetools.basename(item.strm_path)
-            head, tail = filetools.split(filetools.split(item.strm_path)[0])
+            if item.strm_path:              #Si Item es de un episodio
+                filename = filetools.basename(item.strm_path)
+                head, tail = filetools.split(filetools.split(item.strm_path)[0])
+            else:                           #Si Item es de la Serie
+                filename = filetools.basename(item.path)
+                head, tail = filetools.split(filetools.split(item.path)[0])
             path = filetools.join(tail, filename)
 
             for d in data['result']['movies']:
@@ -258,8 +262,12 @@ def mark_content_as_watched_on_kodi(item, value=1):
         data = get_data(payload)
         if 'result' in data and "episodes" in data['result']:
 
-            filename = filetools.basename(item.strm_path)
-            head, tail = filetools.split(filetools.split(item.strm_path)[0])
+            if item.strm_path:              #Si Item es de un episodio
+                filename = filetools.basename(item.strm_path)
+                head, tail = filetools.split(filetools.split(item.strm_path)[0])
+            else:                           #Si Item es de la Serie
+                filename = filetools.basename(item.path)
+                head, tail = filetools.split(filetools.split(item.path)[0])
             path = filetools.join(tail, filename)
 
             for d in data['result']['episodes']:

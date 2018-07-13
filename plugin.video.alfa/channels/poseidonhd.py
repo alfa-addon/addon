@@ -256,7 +256,6 @@ def findvideos(item):
 
         for url in urls:
             final_url = httptools.downloadpage('https:'+url).data
-
             if language == 'VOSE':
                 sub = scrapertools.find_single_match(url, 'sub=(.*?)&')
                 subs = 'https:%s' % sub
@@ -265,7 +264,7 @@ def findvideos(item):
                 file_id = scrapertools.find_single_match(url, 'file=(.*?)&')
                 post = {'link': file_id}
                 post = urllib.urlencode(post)
-                hidden_url = 'https://streamango.poseidonhd.com/repro/plugins/gkpluginsphp.php'
+                hidden_url = 'https://streamango.poseidonhd.net/repro/plugins/gkpluginsphp.php'
                 data_url = httptools.downloadpage(hidden_url, post=post).data
                 dict_vip_url = jsontools.load(data_url)
                 url = dict_vip_url['link']
@@ -273,7 +272,7 @@ def findvideos(item):
                 file_id = scrapertools.find_single_match(url, 'url=(.*?)&')
                 post = {'url': file_id}
                 post = urllib.urlencode(post)
-                hidden_url = 'https://streamango.poseidonhd.com/repro/r.php'
+                hidden_url = 'https://streamango.poseidonhd.net/repro/r.php'
                 data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False)
                 url = data_url.headers['location']
 
