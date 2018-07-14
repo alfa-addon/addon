@@ -416,7 +416,7 @@ def do_search(item, categories=None):
             percentage = int(math.ceil(index * t))
 
             list_pendent_names = [a.getName() for a in pendent]
-            mensaje = "Buscando en %s" % (", ".join(list_pendent_names))
+            mensaje = config.get_localized_string(70282) % (", ".join(list_pendent_names))
             progreso.update(percentage, config.get_localized_string(60521) % (len(threads) - len(pendent), len(threads)),
                             mensaje)
             logger.debug(mensaje)
