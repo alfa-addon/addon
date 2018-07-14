@@ -3828,3 +3828,8 @@ msgstr "¿Desea mostrar estos enlaces?"
 msgctxt "#70282"
 msgid "Searching in %s"
 msgstr "Buscando en %s"
+
+msgctxt "#70283"
+msgid "movie"
+msgstr "pelicula"
+
