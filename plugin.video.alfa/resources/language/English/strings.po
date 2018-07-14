@@ -3849,3 +3849,18 @@ msgctxt "#70279"
 msgid "You can try downloading the 'libtorrent' module from Kodi or installing some addon like 'Quasar' or 'Torrenter', \nwhich will appear among the options in the pop-up \nwhen it appears when clicking on a torrent link. 'Torrenter 'It's more complex but also more complete \nand it always works.'"
 msgstr ""
 
+msgctxt "#70280"
+msgid "    -  Torrent Links don't work."
+msgstr ""
+
+msgctxt "#70281"
+msgid "Do you want to show these links?"
+msgstr ""
+
+msgctxt "#70282"
+msgid "Searching in %s"
+msgstr ""
+
+msgctxt "#70283"
+msgid "movie"
+msgstr ""
