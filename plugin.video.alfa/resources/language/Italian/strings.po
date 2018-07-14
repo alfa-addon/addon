@@ -391,7 +391,7 @@ msgstr "Alfa Auto-configurazione"
 
 msgctxt "#59972"
 msgid "Search for: '%s' | Found: %d vídeos | Time: %2.f seconds"
-msgstr "Ricerca di: '%s' | Trovati: %d vídeos | Tempo: %2.f secondi"
+msgstr "Ricerca di: '%s' | Trovati: %d video | Tempo: %2.f secondi"
 
 msgctxt "#59973"
 msgid "Search Cancelled"
@@ -975,7 +975,7 @@ msgstr "Nessuna informazione trovata per: %s"
 
 msgctxt "#60229"
 msgid "Enter the name of %s to search"
-msgstr "Inserisci il nome di %s per cercare"
+msgstr "Inserisci il titolo del %s per cercare"
 
 msgctxt "#60230"
 msgid "Title:"
