@@ -619,7 +619,7 @@ def setting_channel(item):
         custom_button_label = "Todos"
 
     return platformtools.show_channel_settings(list_controls=list_controls,
-                                               caption="Canales incluidos en Novedades",
+                                               caption=caption,
                                                callback="save_settings", item=item,
                                                custom_button={'visible': True,
                                                               'function': "cb_custom_button",
