@@ -4,6 +4,7 @@ import random
 import struct
 import time
 import urllib
+import requests
 from threading import Thread
 
 from file import File
@@ -132,9 +133,19 @@ class Client(object):
             raise Exception("Enlace no valido")
 
     def api_req(self, req, get=""):
-          seqno = random.randint(0, 0xFFFFFFFF)
-          url = 'https://g.api.mega.co.nz/cs?id=%d%s' % (seqno, get)
-          return json.loads(self.post(url, json.dumps([req])))[0]
+        seqno = random.randint(0, 0xFFFFFFFF)
+        url = 'https://g.api.mega.co.nz/cs?id=%d%s' % (seqno, get)
+        # ~ return json.loads(self.post(url, json.dumps([req])))[0]
+
+        req = requests.post(
+            url,
+            params={'id': seqno},
+            data=json.dumps([req]),
+            timeout=30)
+        json_resp = json.loads(req.text)
+        if isinstance(json_resp, int):
+            raise Exception("MEGA api_req error %d" % json_resp)
+        return json_resp[0]
 
     def base64urldecode(self,data):
       data += '=='[(2 - len(data) * 3) % 4:]
