@@ -203,7 +203,7 @@ msgstr "Videoteca"
 
 msgctxt "#30135"
 msgid "added to the videolibrary"
-msgstr "added to the videolibrary"
+msgstr "se ha añadido a la videoteca"
 
 msgctxt "#30136"
 msgid "Original version"
@@ -291,11 +291,11 @@ msgstr "Búsqueda por Persona"
 
 msgctxt "#30982"
 msgid "Search by Company"
-msgstr "Búsqueda por Company"
+msgstr "Búsqueda por Compañia"
 
 msgctxt "#30983"
 msgid "Now Playing"
-msgstr "Ahora Playing"
+msgstr "Ahora Reproduciendo"
 
 msgctxt "#30984"
 msgid "Popular"
@@ -351,7 +351,7 @@ msgstr "Los más votados"
 
 msgctxt "#30997"
 msgid "Academy Awards"
-msgstr "Academy Awards"
+msgstr "Premios de la academia"
 
 msgctxt "#30998"
 msgid "Shortcut"
@@ -359,7 +359,7 @@ msgstr "Shortcut"
 
 msgctxt "#30999"
 msgid "Add key to open Shortcut"
-msgstr "Agregar clave para abrir el atajo"
+msgstr "Añadir tecla para abrir el Shortcut"
 
 msgctxt "#50000"
 msgid "Sagas"
@@ -802,16 +802,16 @@ msgid "      Favorite servers"
 msgstr "      Servidores favoritos"
 
 msgctxt "#60082"
-msgid "          \u2665 Favorite server %s"
-msgstr "          \u2665 Servidor Favorito %s"
+msgid "Favorite server %s"
+msgstr "Servidor Favorito %s"
 
 msgctxt "#60083"
 msgid "      Preferred Qualities"
 msgstr "      Calidades Favoritas"
 
 msgctxt "#60084"
-msgid "          \u2665 Preferred Quality %s"
-msgstr "          \u2665 Calidad Favorita %s"
+msgid "Preferred Quality %s"
+msgstr "Calidad Favorita %s"
 
 msgctxt "#60085"
 msgid "   Priority (Indicates the order for AutoPlay)"
@@ -1125,10 +1125,6 @@ msgctxt "#60268"
 msgid "Animation"
 msgstr "Animación"
 
-msgctxt "#60269"
-msgid "Kids"
-msgstr "Niños"
-
 msgctxt "#60270"
 msgid "Comedy"
 msgstr "Comedia"
@@ -1136,10 +1132,6 @@ msgstr "Comedia"
 msgctxt "#60271"
 msgid "Crime"
 msgstr "Crimen"
-
-msgctxt "#60272"
-msgid "Documentaries"
-msgstr "Documental"
 
 msgctxt "#60273"
 msgid "Family"
@@ -3127,11 +3119,11 @@ msgstr "Felicidades la videoteca de Kodi ha sido configurada correctamente."
 
 msgctxt "#70105"
 msgid "Do you want Alfa to automatically configure the Kodi library?You will be asked to set up scrapers for movies and series."
-msgstr "¿Desea que Alfa auto-configure la videoteca de Kodi?Se le pedirá que configure los scrapers para las películas y las series."
+msgstr "¿Desea que Alfa auto-configure la videoteca de Kodi? Se le pedirá que configure los proveedores de contenido para las películas y las series."
 
 msgctxt "#70106"
 msgid "If you choose 'No' you can do it later from 'Configuration > Preferences > Paths'."
-msgstr "Si pulsa 'No' podra hacerlo desde 'Configuración > Preferencia > Rutas'."
+msgstr "Si pulsa 'No' podrá hacerlo desde 'Configuración > Preferencias > Rutas'."
 
 msgctxt "#70107"
 msgid "Select scraper for Tv Shows"
@@ -3213,10 +3205,6 @@ msgctxt "#70126"
 msgid "Visual Options"
 msgstr "Opciones Visuales"
 
-msgctxt "#70127"
-msgid "Anime"
-msgstr "Anime"
-
 msgctxt "#70128"
 msgid "Infoplus visual option"
 msgstr "Opción visual Infoplus"
@@ -3249,13 +3237,9 @@ msgctxt "#70135"
 msgid "Custom Colours"
 msgstr "Colores Personalizados"
 
-msgctxt "#70136"
-msgid "Tv Show"
-msgstr "Serie"
-
 msgctxt "#70137"
-msgid "Movie"
-msgstr "Pelicula"
+msgid "Movies"
+msgstr "Peliculas"
 
 msgctxt "#70138"
 msgid "Low Rating"
@@ -3267,7 +3251,7 @@ msgstr "Valoracion Media"
 
 msgctxt "#70140"
 msgid "High Rating"
-msgstr "Valoracion Alta"
+msgstr "Valoración Alta"
 
 msgctxt "#70141"
 msgid "Quality"
@@ -3750,8 +3734,8 @@ msgid "Alfa stopped"
 msgstr "Alfa Detenido"
 
 msgctxt "#70264"
-msgid "Basic realm=\Enter the username and password to access proteus \""
-msgstr "Basic realm=\"Introduce el nombre de usuario y clave para acceder a proteus\""
+msgid "Enter the username and password to access Alfa"
+msgstr "Introduce el nombre de usuario y clave para acceder a Alfa"
 
 msgctxt "#70265"
 msgid "The data entered is not correct!"
@@ -3760,10 +3744,6 @@ msgstr "¡Los datos introducidos no son correctos!"
 msgctxt "#70266"
 msgid "The search for% s did not match."
 msgstr "La busqueda de %s no dio resultados."
-
-msgctxt "#70268"
-msgid "This can be due to several reasons: \ n \ - The server is not available, or is not responding. \ n \ - Changes in the design of the web. \ n \ - Etc ... \ n \ Check the log to see more details of the error. "
-msgstr "Esto puede ser devido a varias razones: \n \- El servidor no está disponible, o no esta respondiendo.\n \- Cambios en el diseño de la web.\n \- Etc...\n \Comprueba el log para ver mas detalles del error."
 
 msgctxt "#70269"
 msgid "Search new episodes now"
