@@ -4,7 +4,7 @@ import random
 import struct
 import time
 import urllib
-import requests
+from core import httptools
 from threading import Thread
 
 from file import File
@@ -135,17 +135,7 @@ class Client(object):
     def api_req(self, req, get=""):
         seqno = random.randint(0, 0xFFFFFFFF)
         url = 'https://g.api.mega.co.nz/cs?id=%d%s' % (seqno, get)
-        # ~ return json.loads(self.post(url, json.dumps([req])))[0]
-
-        req = requests.post(
-            url,
-            params={'id': seqno},
-            data=json.dumps([req]),
-            timeout=30)
-        json_resp = json.loads(req.text)
-        if isinstance(json_resp, int):
-            raise Exception("MEGA api_req error %d" % json_resp)
-        return json_resp[0]
+        return json.loads(self.post(url, json.dumps([req])))[0]
 
     def base64urldecode(self,data):
       data += '=='[(2 - len(data) * 3) % 4:]
@@ -190,6 +180,7 @@ class Client(object):
       return sum((self.aes_cbc_decrypt_a32(a[i:i+4], key) for i in xrange(0, len(a), 4)), ())
 
     def post(self, url, data):
+      return httptools.downloadpage(url, data).data
       import ssl
       from functools import wraps
       def sslwrap(func):
