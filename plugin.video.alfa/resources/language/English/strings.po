@@ -737,10 +737,6 @@ msgctxt "#60060"
 msgid "Alfa Auto-configuration"
 msgstr ""
 
-msgctxt "#60061"
-msgid "Do you want Alfa to auto-configure Kodi's video library?\nIf you choose 'No' you can do it later from 'Configuration > Preferences > Paths'."
-msgstr ""
-
 msgctxt "#60062"
 msgid "Adding movies to your video library..."
 msgstr ""
