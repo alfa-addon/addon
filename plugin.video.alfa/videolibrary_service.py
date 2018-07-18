@@ -23,7 +23,11 @@ def update(path, p_dialog, i, t, serie, overwrite):
         serie.channel = channel
         serie.url = url
         
-        serie = generictools.redirect_clone_newpct1(serie)        ###### Redirección al canal NewPct1.py si es un clone
+        ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
+        try:
+            serie, it, overwrite = generictools.redirect_clone_newpct1(serie, head_nfo, it, overwrite, path)
+        except:
+            pass
 
         channel_enabled = channeltools.is_enabled(serie.channel)
 

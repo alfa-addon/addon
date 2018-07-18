@@ -1,57 +1,67 @@
 {
-  "id": "mejortorrent",
-  "name": "Mejor Torrent",
-  "active": true,
-  "adult": false,
-  "language": ["*"],
-  "thumbnail": "mejortorrent.png",
-  "banner": "mejortorrent.png",
+  "active": true, 
+  "adult": false, 
+  "banner": "mejortorrent.png", 
   "categories": [
-    "torrent",
-    "movie",
-    "tvshow",
+    "torrent", 
+    "movie", 
+    "tvshow", 
     "documentary"
-  ],
+  ], 
+  "id": "mejortorrent", 
+  "language": [
+    "*"
+  ], 
+  "name": "Mejor Torrent", 
   "settings": [
     {
-      "id": "include_in_global_search",
-      "type": "bool",
-      "label": "Incluir en busqueda global",
-      "default": true,
-      "enabled": true,
+      "default": "http://www.mejortorrent.com/", 
+      "enabled": true, 
+      "id": "domain_name", 
+      "label": "URL actual de la Web Mejor Torrent", 
+      "type": "text", 
       "visible": true
-    },
+    }, 
     {
-      "id": "modo_grafico",
-      "type": "bool",
-      "label": "Buscar información extra (TMDB)",
-      "default": true,
-      "enabled": true,
+      "default": true, 
+      "enabled": true, 
+      "id": "include_in_global_search", 
+      "label": "Incluir en busqueda global", 
+      "type": "bool", 
       "visible": true
-    },
+    }, 
     {
-      "id": "seleccionar_ult_temporadda_activa",
-      "type": "bool",
-      "label": "Seleccionar para Videoteca si estará activa solo la última Temporada",
-      "default": true,
-      "enabled": true,
+      "default": true, 
+      "enabled": true, 
+      "id": "modo_grafico", 
+      "label": "Buscar información extra (TMDB)", 
+      "type": "bool", 
       "visible": true
-    },
+    }, 
     {
-      "id": "include_in_newest_peliculas",
-      "type": "bool",
-      "label": "Incluir en Novedades - Peliculas",
-      "default": true,
-      "enabled": true,
+      "default": true, 
+      "enabled": true, 
+      "id": "seleccionar_ult_temporadda_activa", 
+      "label": "Seleccionar para Videoteca si estará activa solo la última Temporada", 
+      "type": "bool", 
       "visible": true
-    },
+    }, 
     {
-      "id": "include_in_newest_documentales",
-      "type": "bool",
-      "label": "Incluir en Novedades - Documentales",
-      "default": true,
-      "enabled": true,
+      "default": true, 
+      "enabled": true, 
+      "id": "include_in_newest_peliculas", 
+      "label": "Incluir en Novedades - Peliculas", 
+      "type": "bool", 
+      "visible": true
+    }, 
+    {
+      "default": true, 
+      "enabled": true, 
+      "id": "include_in_newest_documentales", 
+      "label": "Incluir en Novedades - Documentales", 
+      "type": "bool", 
       "visible": true
     }
-  ]
+  ], 
+  "thumbnail": ", thumb_intervenido_pn.jpeg"
 }
