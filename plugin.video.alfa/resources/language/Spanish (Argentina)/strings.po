@@ -717,6 +717,22 @@ msgctxt "#60055"
 msgid "Error of provider configuration in BD."
 msgstr "Error al configurar el scraper en la BD."
 
+msgctxt "#60056"
+msgid "Videolibrary %s not configured"
+msgstr "Videoteca %s no ha sido configurada"
+
+msgctxt "#60057"
+msgid "Videolibrary %s configured"
+msgstr "Videoteca %s configurada"
+
+msgctxt "#60058"
+msgid "You need to restart Kodi for the changes to take effect."
+msgstr "Tu necesitas reiniciar Kodi para que los cambios se efectúen"
+
+msgctxt "#60059"
+msgid "Congratulations, Kodi's video library has been configured correctly."
+msgstr "Felicitaciones, videoteca de Kodi ha sido configurado correctamente"
+
 msgctxt "#60060"
 msgid "Alfa Auto-configuration"
 msgstr "Alfa Auto-configuración"
@@ -1691,7 +1707,7 @@ msgstr "Buscando "
 
 msgctxt "#60423"
 msgid "Search"
-msgstr "Buscar
+msgstr "Buscar"
 
 msgctxt "#60424"
 msgid "Searches key have been deleted correctly"
@@ -3804,4 +3820,3 @@ msgstr "Buscando en %s"
 msgctxt "#70283"
 msgid "movie"
 msgstr "pelicula"
-
