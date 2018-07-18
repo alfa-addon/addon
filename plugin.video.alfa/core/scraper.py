@@ -29,7 +29,7 @@ def find_and_set_infoLabels(item):
     # Obtener el Scraper por defecto de la configuracion segun el tipo de contenido
     if item.contentType == "movie":
         scraper_actual = ['tmdb'][config.get_setting("scraper_movies", "videolibrary")]
-        tipo_contenido = "película"
+        tipo_contenido = config.get_localized_string(70283)
         title = item.contentTitle
         # Completar lista de opciones para este tipo de contenido
         list_opciones_cuadro.append(scrapers_disponibles['tmdb'])

@@ -56,7 +56,7 @@ class Handler(HTTPWebSocketsHandler):
                                 Usuario + ":" + Password):
             self.send_response(401)
             self.send_header('WWW-Authenticate',
-                             'Basic realm=\"Introduce el nombre de usuario y clave para acceder a alfa\"')
+                             'Basic realm=\"' + config.get_localized_string(70264) + '\"')
             self.send_header('Content-type', 'text/html; charset=utf-8')
             self.end_headers()
             self.wfile.write('¡Los datos introducidos no son correctos!')

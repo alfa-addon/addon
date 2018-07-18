@@ -16,10 +16,10 @@ def mainlist(item):
 
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="list_movies", title=config.get_localized_string(60509),
-                         category="Videoteca de películas",
+                         category=config.get_localized_string(70270),
                          thumbnail=get_thumb("videolibrary_movie.png")))
     itemlist.append(Item(channel=item.channel, action="list_tvshows", title=config.get_localized_string(60600),
-                         category="Videoteca de series",
+                         category=config.get_localized_string(70271),
                          thumbnail=get_thumb("videolibrary_tvshow.png")))
 
     return itemlist
@@ -146,7 +146,7 @@ def list_tvshows(item):
                                         "action": "delete",
                                         "channel": "videolibrary",
                                         "multicanal": multicanal},
-                                       {"title": "Buscar nuevos episodios ahora",
+                                       {"title": config.get_localized_string(70269),
                                         "action": "update_tvshow",
                                         "channel": "videolibrary"}]
                 # ,{"title": "Cambiar contenido (PENDIENTE)",
