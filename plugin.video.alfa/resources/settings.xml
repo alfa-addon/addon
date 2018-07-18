@@ -42,7 +42,7 @@
         <setting id="news_start" type="bool" label="70123" default="false" visible="eq(-2,True)"
                  enable="eq(-1,False)+eq(-2,True"/>
          <setting id="category" type="labelenum" label="70124"
-                 lvalues="70137|70136|70127|60269|60272|70013|70014|59976|70171"
+                 lvalues="70137|30123|30124|70018|60513|70013|70014|59976|70171"
                  default="70137" visible="eq(-3,True)+eq(-1,True)+eq(-2,False)" enable="eq(-3,True)+eq(-1,True)+(-2,false)"/>
    </category>
     <category label="70126">
@@ -55,7 +55,7 @@
         <setting id="movie_color" type="labelenum" label="70137"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-1,true)+eq(-2,true)"/>
-        <setting id="tvshow_color" type="labelenum" label="70136"
+        <setting id="tvshow_color" type="labelenum" label="30123"
                  lvalues="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-2,true)+eq(-3,true)"/>
         <setting id="year_color" type="labelenum" label="60232"

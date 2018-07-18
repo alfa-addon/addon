@@ -619,7 +619,7 @@ def setting_channel(item):
         custom_button_label = config.get_localized_string(59991)
 
     return platformtools.show_channel_settings(list_controls=list_controls,
-                                               caption=config.get_localized_string(60533),
+                                               caption=caption,
                                                callback="save_settings", item=item,
                                                custom_button={'visible': True,
                                                               'function': "cb_custom_button",
