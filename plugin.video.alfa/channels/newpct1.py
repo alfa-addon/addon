@@ -98,7 +98,10 @@ def mainlist(item):
     
 def settingCanal(item):
     from platformcode import platformtools
-    return platformtools.show_channel_settings()
+    platformtools.show_channel_settings()
+    platformtools.itemlist_refresh()
+    return 
+    
 
     
 def submenu(item):
