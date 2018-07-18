@@ -612,11 +612,11 @@ def setting_channel(item):
 
         list_controls.append(control)
 
-    caption = "Canales incluidos en Novedades " + item.title.replace("Canales incluidos en: ", "- ").strip()
+    caption = config.get_localized_string(60533) + item.title.replace(config.get_localized_string(60525), "- ").strip()
     if config.get_setting("custom_button_value_news", item.channel):
-        custom_button_label = "Ninguno"
+        custom_button_label = config.get_localized_string(59992)
     else:
-        custom_button_label = "Todos"
+        custom_button_label = config.get_localized_string(59991)
 
     return platformtools.show_channel_settings(list_controls=list_controls,
                                                caption=caption,
