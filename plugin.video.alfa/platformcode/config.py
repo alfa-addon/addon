@@ -393,6 +393,7 @@ def verify_directories_created():
         # Buscamos el archivo addon.xml del skin activo
         skindir = filetools.join(xbmc.translatePath("special://home"), 'addons', xbmc.getSkinDir(),
                                  'addon.xml')
+        if not os.path.isdir(skindir): return # No hace falta mostrar error en el log si no existe la carpeta
         # Extraemos el nombre de la carpeta de resolución por defecto
         folder = ""
         data = filetools.read(skindir)
