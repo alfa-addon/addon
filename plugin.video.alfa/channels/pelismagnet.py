@@ -119,6 +119,8 @@ def series(item):
     # response = httptools.downloadpage(url, post, follow_redirects=False).data
     # url = scrapertools.find_single_match(response, '<meta http-equiv="refresh".*?url=([^"]+)"')
     data = httptools.downloadpage(item.url).data
+    pos = data.find('[')
+    if pos > 0: data = data[pos:]
 
     lista = jsontools.load(data)
     logger.debug(lista)
@@ -178,6 +180,8 @@ def episodios(item):
     # url = scrapertools.find_single_match(response, '<meta http-equiv="refresh".*?url=([^"]+)"')
     logger.debug(item)
     data = httptools.downloadpage(item.url).data
+    pos = data.find('[')
+    if pos > 0: data = data[pos:]
 
     data = jsontools.load(data)
 
@@ -248,6 +252,8 @@ def pelis(item):
     # response = httptools.downloadpage(url, post, follow_redirects=False).data
     # url = scrapertools.find_single_match(response, '<meta http-equiv="refresh".*?url=([^"]+)"')
     data = httptools.downloadpage(item.url).data
+    pos = data.find('[')
+    if pos > 0: data = data[pos:]
 
     lista = jsontools.load(data)
     if item.extra == "next":
