@@ -417,6 +417,8 @@ def post_tmdb_episodios(item, itemlist):
         del item.url_alt
     if item.title_from_channel:
         del item.title_from_channel
+    if item.ow_force:
+        del item.ow_force
         
     for item_local in itemlist:                     #Recorremos el Itemlist generado por el canal
         if item_local.add_videolibrary:
@@ -443,6 +445,8 @@ def post_tmdb_episodios(item, itemlist):
             del item_local.channel_host         
         if item_local.intervencion:
             del item_local.intervencion
+        if item_local.ow_force:
+            del item_local.ow_force
         #logger.debug(item_local)
         
         #Ajustamos el nombre de la categoría si es un clone de NewPct1
@@ -1036,10 +1040,10 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, overwrite=False, path=F
         - ow_force:     indicador para la acción de "videolibrary_service.py".  Puede crear la variable item.ow_force:
                             - force:    indica al canal que analize toda la serie y que videolibrary_service la reescriba
                             - auto:     indica a videolibrary_service que la reescriba
-                            - no:       no acción especial para videolibrary_service
+                            - no:       no acción para videolibrary_service, solo redirige en visionado de videolibrary
         ejemplo: ('1', 'mejortorrent', 'mejortorrent1', 'http://www.mejortorrent.com/', 'https://mejortorrent1.com/', 'auto')
     
-    La llamada recibe el parámetro Item, el .nfoy los devuleve actualizados, así como opcionalmente el parámetro "overwrite· que puede forzar la reescritura de todos los archivos de la serie
+    La llamada recibe el parámetro Item, el .nfo y los devuleve actualizados, así como opcionalmente el parámetro "overwrite· que puede forzar la reescritura de todos los archivos de la serie, y el parámetro "path" si viene de videolibrary_service
     
     """
     if not it:
@@ -1078,12 +1082,15 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, overwrite=False, path=F
             if item.contentType == "list":                                  #Si viene de Videolibrary, le cambiamos ya el canal
                 if item.channel != channel_py:
                     item.channel = canal_des                                #Cambiamos el canal.  Si es clone, lo hace el canal
-            if item.contentType not in content_inc:
+                    continue                                                #Salimos sin hacer nada más. item está casi vacío
+            if item.contentType not in content_inc and "*" not in content_inc:  #Está el contenido el la lista de incluidos
                 continue
-            if item.contentType in content_exc:                             #Es esta nuestra entrada?
+            if item.contentType in content_exc:                             #Está el contenido excluido?
                 continue
             if channel_enabled and canal_org != canal_des:                  #Si el canal está activo, puede ser solo...
                 continue                                                    #... una intervención que afecte solo a una región
+            if ow_force == 'no' and path != False:                          #Queremos que el canal solo visualice sin migración?
+                continue                                                    #Salimos sin tocas archivos
             item.url = item.url.replace(url_org, url_des)                   #reemplzamos una parte de url
             if patron1:                                                     #Hay expresión regex?
                 url = scrapertools.find_single_match(item.url, patron1)     #La aplicamos a url
@@ -1116,6 +1123,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, overwrite=False, path=F
             item.ow_force = "1"                                         #Se lo decimos
         if ow_force in ['force', 'auto']:                               #Sobreescribir la series?
             overwrite = ow_force_param                                  #Sí, lo marcamos
+
 
         if item.contentType in ['tvshow', 'season'] and it.library_urls:
             if path == False:
