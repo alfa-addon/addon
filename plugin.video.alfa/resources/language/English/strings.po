@@ -437,10 +437,6 @@ msgctxt "#59983"
 msgid "%.2f%% - %.2f %s of %.2f %s a %.2f %s/s (%d/%d)"
 msgstr ""
 
-msgctxt "#59984"
-msgid "An error has occurred in alfa, \nCheck log for more details."
-msgstr ""
-
 msgctxt "#59985"
 msgid "Error in the channel "
 msgstr ""
@@ -550,11 +546,11 @@ msgid "No video to play"
 msgstr ""
 
 msgctxt "#60013"
-msgid "This website seems to be unavailable, try later, if the problem persists, check with a browser: %s.\nIf the web page is working correctly, please report the error on : https://alfa-addon.com/categories/alfa-addon.50/"
+msgid "This website seems to be unavailable, try later, if the problem persists, check with a browser: %s. If the web page is working correctly, please report the error on : https://alfa-addon.com"
 msgstr ""
 
 msgctxt "#60014"
-msgid "It may be due to a connection problem, the web page of the channel has changed its structure, or an internal error of alfa.\nTo have more details, see the log file."
+msgid "It may be due to a connection problem, the web page of the channel has changed its structure, or an internal error of alfa. To have more details, see the log file."
 msgstr ""
 
 msgctxt "#60015"
@@ -741,10 +737,6 @@ msgctxt "#60060"
 msgid "Alfa Auto-configuration"
 msgstr ""
 
-msgctxt "#60061"
-msgid "Do you want Alfa to auto-configure Kodi's video library?\nIf you choose 'No' you can do it later from 'Configuration > Preferences > Paths'."
-msgstr ""
-
 msgctxt "#60062"
 msgid "Adding movies to your video library..."
 msgstr ""
@@ -826,7 +818,7 @@ msgid "      Favorite servers"
 msgstr ""
 
 msgctxt "#60082"
-msgid "          \u2665 Favorite server %s"
+msgid "Favorite server %s"
 msgstr ""
 
 msgctxt "#60083"
@@ -834,7 +826,7 @@ msgid "      Preferred Qualities"
 msgstr ""
 
 msgctxt "#60084"
-msgid "          \u2665 Preferred Quality %s"
+msgid "Preferred Quality %s"
 msgstr ""
 
 msgctxt "#60085"
@@ -1149,20 +1141,12 @@ msgctxt "#60268"
 msgid "Animation"
 msgstr ""
 
-msgctxt "#60269"
-msgid "Kids"
-msgstr ""
-
 msgctxt "#60270"
 msgid "Comedy"
 msgstr ""
 
 msgctxt "#60271"
 msgid "Crime"
-msgstr ""
-
-msgctxt "#60272"
-msgid "Documentaries"
 msgstr ""
 
 msgctxt "#60273"
@@ -3233,10 +3217,6 @@ msgctxt "#70126"
 msgid "Visual Options"
 msgstr ""
 
-msgctxt "#70127"
-msgid "Anime"
-msgstr ""
-
 msgctxt "#70128"
 msgid "Infoplus visual option"
 msgstr ""
@@ -3274,7 +3254,7 @@ msgid "Tv Show"
 msgstr ""
 
 msgctxt "#70137"
-msgid "Movie"
+msgid "Movies"
 msgstr ""
 
 msgctxt "#70138"
@@ -3741,6 +3721,14 @@ msgctxt "#70254"
 msgid "Internal Client"
 msgstr ""
 
+msgctxt "#70281"
+msgid "Do you want to show these links?"
+msgstr ""
+
+msgctxt "#70282"
+msgid "Searching in %s"
+msgstr ""
+
 msgctxt "#70255"
 msgid "Internal client - MCT"
 msgstr ""
@@ -3778,7 +3766,7 @@ msgid "Alfa stopped"
 msgstr ""
 
 msgctxt "#70264"
-msgid "Basic realm=\Enter the username and password to access proteus \""
+msgid "Enter the username and password to access Alfa"
 msgstr ""
 
 msgctxt "#70265"
@@ -3787,14 +3775,6 @@ msgstr ""
 
 msgctxt "#70266"
 msgid "The search for% s did not match."
-msgstr ""
-
-msgctxt "#70267"
-msgid "An error occurred in channel "
-msgstr ""
-
-msgctxt "#70268"
-msgid "This can be due to several reasons: \ n \ - The server is not available, or is not responding. \ n \ - Changes in the design of the web. \ n \ - Etc ... \ n \ Check the log to see more details of the error. "
 msgstr ""
 
 msgctxt "#70269"
@@ -3841,3 +3821,18 @@ msgctxt "#70279"
 msgid "You can try downloading the 'libtorrent' module from Kodi or installing some addon like 'Quasar' or 'Torrenter', \nwhich will appear among the options in the pop-up \nwhen it appears when clicking on a torrent link. 'Torrenter 'It's more complex but also more complete \nand it always works.'"
 msgstr ""
 
+msgctxt "#70280"
+msgid "    -  Torrent Links don't work."
+msgstr ""
+
+msgctxt "#70281"
+msgid "Do you want to show these links?"
+msgstr ""
+
+msgctxt "#70282"
+msgid "Searching in %s"
+msgstr ""
+
+msgctxt "#70283"
+msgid "movie"
+msgstr ""
