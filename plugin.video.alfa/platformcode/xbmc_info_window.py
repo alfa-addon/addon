@@ -2,7 +2,7 @@
 
 import xbmcgui
 from core.tmdb import Tmdb
-from platformcode import logger
+from platformcode import config, logger
 
 ID_BUTTON_CLOSE = 10003
 ID_BUTTON_PREVIOUS = 10025
@@ -217,7 +217,7 @@ class InfoWindow(xbmcgui.WindowXMLDialog):
             self.getControl(10009).setLabel(self.result.get("language", "N/A"))
             self.getControl(100010).setLabel(config.get_localized_string(60380))
             self.getControl(100011).setLabel(self.result.get("puntuacion", "N/A"))
-            self.getControl(100012).setLabel(config.get_localized_string(60382)
+            self.getControl(100012).setLabel(config.get_localized_string(60382))
             self.getControl(100013).setLabel(self.result.get("genre", "N/A"))
 
             if self.result.get("season"):
