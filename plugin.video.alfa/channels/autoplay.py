@@ -516,7 +516,7 @@ def autoplay_config(item):
         default = num - 1
         if default > len(server_list) - 1:
             default = 0
-        set_servers = {"id": "server_%s" % num, "label": u"          \u2665 Servidor Favorito %s" % num,
+        set_servers = {"id": "server_%s" % num, "label": u"          \u2665 " +"Servidor Favorito %s" % num,
                        "color": "0xfffcab14", "type": "list", "default": default,
                        "enabled": "eq(-%s,true)+eq(-%s,true)" % (pos1, num), "visible": True,
                        "lvalues": server_list}
@@ -548,7 +548,7 @@ def autoplay_config(item):
         if default > len(quality_list) - 1:
             default = 0
 
-        set_quality = {"id": "quality_%s" % num, "label": u"          \u2665 Calidad Favorita %s" % num,
+        set_quality = {"id": "quality_%s" % num, "label": u"          \u2665 " + "Calidad Favorita %s" % num,
                        "color": "0xfff442d9", "type": "list", "default": default,
                        "enabled": "eq(-%s,true)+eq(-%s,true)" % (pos1, num), "visible": True,
                        "lvalues": quality_list}

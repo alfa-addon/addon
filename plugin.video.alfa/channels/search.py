@@ -222,7 +222,7 @@ def searchbycat(item):
     # Only in xbmc/kodi
     # Abre un cuadro de dialogo con las categorías en las que hacer la búsqueda
 
-    categories = ["Películas", "Series", "Anime", "Documentales", "VOS", "Latino"]
+    categories = [config.get_localized_string(30122), config.get_localized_string(30123), config.get_localized_string(30124), config.get_localized_string(30125), config.get_localized_string(59975), config.get_localized_string(59976)]
     categories_id = ["movie", "tvshow", "anime", "documentary", "vos", "latino"]
     list_controls = []
     for i, category in enumerate(categories):
@@ -478,7 +478,7 @@ def do_search(item, categories=None):
             percentage = int(math.ceil(index * t))
 
             list_pendent_names = [a.getName() for a in pendent]
-            mensaje = "Buscando en %s" % (", ".join(list_pendent_names))
+            mensaje = config.get_localized_string(70282) % (", ".join(list_pendent_names))
             progreso.update(percentage, config.get_localized_string(60521) % (len(threads) - len(pendent), len(threads)),
                             mensaje)
             logger.debug(mensaje)

@@ -128,7 +128,7 @@
       "label": "@70238",
       "lvalues": [
         "@70244",
-        "@70245"
+        "Reordenar"
       ],
       "default": 1,
       "enabled": true,
@@ -145,7 +145,7 @@
         "Vose, Eng, Sub, Esp, Lat"
       ],
       "default": 0,
-      "enabled": "eq(-1,@70245])",
+      "enabled": "eq(-1,'Reordenar')",
       "visible": true
     },
     {
@@ -159,7 +159,7 @@
         "SD"
       ],
       "default": 0,
-      "enabled": "eq(-2,@70245])",
+      "enabled": "eq(-2,'Reordenar')",
       "visible": true
     },
     {
@@ -167,7 +167,7 @@
       "type": "bool",
       "label": "@70242",
       "default": true,
-      "enabled": "eq(-3,@70245])",
+      "enabled": "eq(-3,'Reordenar')",
       "visible": true
     }
   ]

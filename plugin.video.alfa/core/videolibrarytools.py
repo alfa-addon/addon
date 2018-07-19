@@ -557,7 +557,7 @@ def add_movie(item):
                                 config.get_localized_string(30135))  # 'se ha añadido a la videoteca'
     else:
         platformtools.dialog_ok(config.get_localized_string(30131),
-                                "ERROR, la pelicula NO se ha añadido a la videoteca")
+                                config.get_localized_string(60066))  #"ERROR, la pelicula NO se ha añadido a la videoteca")
 
 
 def add_tvshow(item, channel=None):

@@ -1067,6 +1067,21 @@ def play_torrent(item, xlistitem, mediaurl):
     if seleccion > 1:
         mediaurl = urllib.quote_plus(item.url)
         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
+        
+        if "quasar" in torrent_options[seleccion][1]:                   #Seleccionamos que clientes torrent soportamos
+            if item.strm_path:                                          #Sólo si es de Videoteca
+                import time
+                time_limit = time.time() + 150                          #Marcamos el timepo máx. de buffering
+                while not is_playing() and time.time() < time_limit:    #Esperamos mientra buffera    
+                    time.sleep(5)                                       #Repetimos cada intervalo
+                    #logger.debug(str(time_limit))
+                    
+                if is_playing():                                        #Ha terminado de bufferar o ha cancelado
+                    from platformcode import xbmc_videolibrary
+                    xbmc_videolibrary.mark_auto_as_watched(item)        #Marcamos como visto al terminar
+                    #logger.debug("Llamado el marcado")
+                #else:
+                    #logger.debug("Video cancelado o timeout")
 
     if seleccion == 1:
         from platformcode import mct

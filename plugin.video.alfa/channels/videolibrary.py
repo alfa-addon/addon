@@ -16,10 +16,10 @@ def mainlist(item):
 
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="list_movies", title=config.get_localized_string(60509),
-                         category="Videoteca de películas",
+                         category=config.get_localized_string(70270),
                          thumbnail=get_thumb("videolibrary_movie.png")))
     itemlist.append(Item(channel=item.channel, action="list_tvshows", title=config.get_localized_string(60600),
-                         category="Videoteca de series",
+                         category=config.get_localized_string(70271),
                          thumbnail=get_thumb("videolibrary_tvshow.png")))
 
     return itemlist
@@ -146,7 +146,7 @@ def list_tvshows(item):
                                         "action": "delete",
                                         "channel": "videolibrary",
                                         "multicanal": multicanal},
-                                       {"title": "Buscar nuevos episodios ahora",
+                                       {"title": config.get_localized_string(70269),
                                         "action": "update_tvshow",
                                         "channel": "videolibrary"}]
                 # ,{"title": "Cambiar contenido (PENDIENTE)",
@@ -326,7 +326,11 @@ def findvideos(item):
     if 'downloads' in list_canales:
         json_path = list_canales['downloads']
         item_json = Item().fromjson(filetools.read(json_path))
-        item_json = generictools.redirect_clone_newpct1(item_json)      ###### Redirección al canal NewPct1.py si es un clone
+        ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
+        try:
+            item_json, it, overwrite = generictools.redirect_clone_newpct1(item_json)
+        except:
+            pass
         item_json.contentChannel = "local"
         # Soporte para rutas relativas en descargas
         if filetools.is_relative(item_json.url):
@@ -367,7 +371,11 @@ def findvideos(item):
         
         item_canal = Item()
         item_canal.channel = nom_canal
-        item_canal = generictools.redirect_clone_newpct1(item_canal)    ###### Redirección al canal NewPct1.py si es un clone
+        ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
+        try:
+            item_canal, it, overwrite = generictools.redirect_clone_newpct1(item_canal)
+        except:
+            pass
         nom_canal = item_canal.channel
             
         # Importamos el canal de la parte seleccionada
@@ -377,7 +385,11 @@ def findvideos(item):
             exec "import channels." + nom_canal + " as channel"
 
         item_json = Item().fromjson(filetools.read(json_path))
-        item_json = generictools.redirect_clone_newpct1(item_json)      ###### Redirección al canal NewPct1.py si es un clone
+        ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
+        try:
+            item_json, it, overwrite = generictools.redirect_clone_newpct1(item_json)
+        except:
+            pass
         list_servers = []
 
         try:
@@ -389,7 +401,7 @@ def findvideos(item):
                     item_json.show = item.library_filter_show.get(nom_canal, "")
 
             # Ejecutamos find_videos, del canal o común
-            item_json.contentChannel='videolibrary'
+            item_json.contentChannel = 'videolibrary'
             if hasattr(channel, 'findvideos'):
                 from core import servertools
                 list_servers = getattr(channel, 'findvideos')(item_json)
