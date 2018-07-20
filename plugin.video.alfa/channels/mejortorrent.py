@@ -810,19 +810,19 @@ def episodios(item):
 
     # Carga la página
     try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
+        data_alt = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
     except:                                                                             #Algún error de proceso, salimos
         logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea" + item.url)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
         return itemlist
     
     #Datos para crear el Post.  Usado para documentales
-    total_capis = scrapertools.find_single_match(data, "<input type='hidden' name='total_capis' value='(\d+)'>")
-    tabla = scrapertools.find_single_match(data, "<input type='hidden' name='tabla' value='([^']+)'>")
-    titulo_post = scrapertools.find_single_match(data, "<input type='hidden' name='titulo' value='([^']+)'>")
+    total_capis = scrapertools.find_single_match(data_alt, "<input type='hidden' name='total_capis' value='(\d+)'>")
+    tabla = scrapertools.find_single_match(data_alt, "<input type='hidden' name='tabla' value='([^']+)'>")
+    titulo_post = scrapertools.find_single_match(data_alt, "<input type='hidden' name='titulo' value='([^']+)'>")
     
     # Selecciona en tramo que nos interesa
-    data = scrapertools.find_single_match(data,
+    data = scrapertools.find_single_match(data_alt,
                                   "(<form name='episodios' action='secciones.php\?sec=descargas\&ap=contar_varios' method='post'>.*?)</form>")
     
     # Prepara el patrón de búsqueda de: URL, título, fechas y dos valores mas sin uso
@@ -836,9 +836,9 @@ def episodios(item):
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                             #error
-        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        item = generictools.web_intervenida(item, data_alt)                     #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
-            item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
+            item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
             return itemlist                                                     #Salimos
         
         logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)

@@ -11,7 +11,6 @@
     "tvshow",
     "anime",
     "torrent",
-    "latino",
     "documentary",
     "vos",
     "direct"
@@ -117,7 +116,7 @@
       "id": "clonenewpct1_excluir1_enlaces_veronline",
       "type": "list",
       "label": "Excluir Servidores para Ver Online",
-      "default": 9,
+      "default": 22,
       "max_excl": 5,
       "enabled": true,
       "visible": "!eq(-3,'No')",
