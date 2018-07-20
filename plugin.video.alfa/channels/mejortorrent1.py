@@ -529,10 +529,9 @@ def listado_busqueda(item):
             return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         cnt_next += 1
-        # busca series y Novedades
-        patron = '<tr.*?><a href="([^"]+)" style="[^>]+>([^<]+)<\/a>'               #url
-        patron += '<span style="[^"]+">\(([^>]+)\)<\/a><\/td>'                      #título
-        patron += '<td align="[^"]+" width="[^"]+">([^>]+)<\/td><\/tr>'             #calidad y tipo de contenido
+        patron = '<a href="([^"]+)" style="[^>]+>([^<]+)<\/a>'                      #url y título
+        patron += '<span style="[^"]+">\(([^>]+)?\)<\/a><\/td>'                     #calidad
+        patron += '<td align="[^"]+" width="[^"]+">([^>]+)<\/td><\/tr>'             #tipo de contenido
         matches_alt = scrapertools.find_multiple_matches(data, patron)
 
         i = 0
@@ -846,8 +845,7 @@ def findvideos(item):
 def episodios(item):
     logger.info()
     itemlist = []
-    
-    logger.debug(item)
+
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
     if not item.infoLabels['tmdb_id']:
         tmdb.set_infoLabels(item, True)
