@@ -362,7 +362,7 @@ def findvideos(item):
             platformtools.play_video(item_local)
 
         elif index > 0:
-            filtro_canal = opciones[index].replace(config.get_localized_string(70078), "")
+            filtro_canal = opciones[index].replace(config.get_localized_string(70078), "").strip()
             itemlist = []
 
     for nom_canal, json_path in list_canales.items():

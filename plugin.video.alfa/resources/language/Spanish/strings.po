@@ -3071,7 +3071,7 @@ msgstr "¿Realmente desea eliminar '%s' de su videoteca?"
 
 msgctxt "#70089"
 msgid "Show only links of %s"
-msgstr "Mostrar solo los enlaces de %s "
+msgstr "Mostrar solo los enlaces de %s"
 
 msgctxt "#70090"
 msgid "    Exclude all streams with specific words"
