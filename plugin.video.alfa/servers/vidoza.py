@@ -3,6 +3,7 @@
 from core import httptools
 from core import scrapertools
 from platformcode import logger
+import json
 
 
 def test_video_exists(page_url):
