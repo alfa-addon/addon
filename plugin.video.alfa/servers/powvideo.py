@@ -30,14 +30,24 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
     unpacked = jsunpack.unpack(packed)
-
+    
     url = scrapertools.find_single_match(unpacked, "(?:src):\\\\'([^\\\\]+.mp4)\\\\'")
-    itemlist.append([".mp4" + " [powvideo]", decode_powvideo_url(url)])
+
+    a, b = scrapertools.find_single_match(data, "\['splice'\]\(0x([0-9a-fA-F]*),0x([0-9a-fA-F]*)\);")
+    if a and b:
+        url = decode_powvideo_url(url, int(a, 16), int(b, 16))
+    else:
+        logger.debug('No detectado splice! Revisar sistema de decode...')
+
+    itemlist.append([".mp4" + " [powvideo]", url])
     itemlist.sort(key=lambda x: x[0], reverse=True)
     return itemlist
 
-def decode_powvideo_url(url):
+def decode_powvideo_url(url, desde, num):
     tria = re.compile('[0-9a-z]{40,}', re.IGNORECASE).findall(url)[0]
     gira = tria[::-1]
-    x = gira[:2] + gira[3:]
+    if desde == 0:
+        x = gira[num:]
+    else:
+        x = gira[:desde] + gira[(desde+num):]
     return re.sub(tria, x, url)
