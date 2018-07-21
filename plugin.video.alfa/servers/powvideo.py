@@ -39,5 +39,5 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 def decode_powvideo_url(url):
     tria = re.compile('[0-9a-z]{40,}', re.IGNORECASE).findall(url)[0]
     gira = tria[::-1]
-    x = gira[:1] + gira[2:]
+    x = gira[:2] + gira[3:]
     return re.sub(tria, x, url)
