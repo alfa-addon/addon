@@ -3,7 +3,7 @@
 from core import httptools
 from core import scrapertools
 from platformcode import logger
-import json
+from core import jsontools
 
 
 def test_video_exists(page_url):
@@ -25,7 +25,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     s = scrapertools.find_single_match(data, 'sourcesCode\s*:\s*(\[\{.*?\}\])')
     s = s.replace('src:', '"src":').replace('type:', '"type":').replace('label:', '"label":').replace('res:', '"res":')
     try:
-        data = json.loads(str(s))
+        data = jsontools.load(s)
         for enlace in data:
             if 'src' in enlace:
                 tit = ''
