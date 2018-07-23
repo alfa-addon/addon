@@ -319,7 +319,7 @@ def mark_season_as_watched_on_kodi(item, value=1):
     item_path2 = item_path1.replace("\\", "/")
 
     sql = 'update files set playCount= %s where idFile  in ' \
-          '(select idfile from episode_view where strPath like "%s" or strPath like "%s"%s)' % \
+          '(select idfile from episode_view where (strPath like "%s" or strPath like "%s")%s)' % \
           (value, item_path1, item_path2, request_season)
 
     execute_sql_kodi(sql)
