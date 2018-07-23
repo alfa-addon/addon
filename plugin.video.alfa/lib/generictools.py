@@ -991,11 +991,12 @@ def web_intervenida(item, data, desactivar=True):
 
                     break
         else:
-            json_data['active'] = False                                 #Se desactiva el canal
+            #json_data['active'] = False                                 #Se desactiva el canal
             json_data['thumbnail'] = ', thumb_%s' % judicial            #Guardamos el thumb de la autoridad judicial
 
         #Guardamos los cambios hechos en el .json
         try:
+            disabled = config.set_setting('enabled', False, item.channel)
             channel_path = filetools.join(config.get_runtime_path(), "channels", item.channel + ".json")
             with open(channel_path, 'w') as outfile:                        #Grabamos el .json actualizado
                 json.dump(json_data, outfile, sort_keys = True, indent = 2, ensure_ascii = False)
@@ -1007,7 +1008,7 @@ def web_intervenida(item, data, desactivar=True):
     return item
 
     
-def redirect_clone_newpct1(item, head_nfo=None, it=None, overwrite=False, path=False):
+def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=False, lookup=False):
     logger.info()
     
     """
@@ -1043,7 +1044,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, overwrite=False, path=F
                             - no:       no acción para videolibrary_service, solo redirige en visionado de videolibrary
         ejemplo: ('1', 'mejortorrent', 'mejortorrent1', 'http://www.mejortorrent.com/', 'https://mejortorrent1.com/', 'auto')
     
-    La llamada recibe el parámetro Item, el .nfo y los devuleve actualizados, así como opcionalmente el parámetro "overwrite· que puede forzar la reescritura de todos los archivos de la serie, y el parámetro "path" si viene de videolibrary_service
+    La llamada recibe el parámetro Item, el .nfo y los devuleve actualizados, así como opcionalmente el parámetro "overwrite· que puede forzar la reescritura de todos los archivos de la serie, y el parámetro "path" si viene de videolibrary_service.  Por último, recibe opcionalmente el parámetro "lookup" si se quiere solo averigurar si habrá migración para ese título, pero sin realizarla.
     
     """
     if not it:
@@ -1060,7 +1061,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, overwrite=False, path=F
         if settings['id'] == "clonenewpct1_channels_list":                  #Encontramos en setting
             fail_over_list = settings['default']                            #Carga lista de clones
         if settings['id'] == "intervenidos_channels_list":                  #Encontramos en setting
-            intervencion = settings['default']                         #Carga lista de clones y canales intervenidos
+            intervencion = settings['default']                              #Carga lista de clones y canales intervenidos
 
     #primero tratamos los clones de Newpct1
     channel_alt = item.channel                                              #Salvamos en nombre del canal o clone
@@ -1069,16 +1070,25 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, overwrite=False, path=F
         item.channel = channel_py
       
     #Ahora tratamos las webs intervenidas, tranformamos la url, el nfo y borramos los archivos obsoletos de la serie
-    if channel not in intervencion:                                         #Hacemos una lookup para ver si...
+    if channel not in intervencion and channel_alt != 'videolibrary':       #Hacemos una lookup para ver si...
         return (item, it, overwrite)                                        #... el canal/clone está listado
 
     import ast
     intervencion_list = ast.literal_eval(intervencion)                      #Convertir a Array el string
     #logger.debug(intervencion_list)
-    if item.channel != channel_py:
-        channel_enabled = channeltools.is_enabled(item.channel)             #Verificamos que el canal esté inactivo   
+    
+    if lookup == True:
+        overwrite = False                                                   #Solo avisamos si hay cambios
     for activo, canal_org, canal_des, url_org, url_des, patron1, patron2, patron3, patron4, patron5, content_inc, content_exc, ow_force in intervencion_list:
-        if activo == '1' and canal_org == channel_alt:                      #Es esta nuestra entrada?
+        if activo == '1' and (canal_org == channel_alt or channel_alt == 'videolibrary'):     #Es esta nuestra entrada?
+            if channel_alt == 'videolibrary':                               #Viene de videolibrary.list_movies
+                for canal_vid, url_vid in item.library_urls.items():
+                    if canal_org != canal_vid:                              #Miramos si canal_org de la regla está en item.library_urls
+                        continue
+                    else:
+                        channel_alt = canal_org                             #Sí, ponermos el nombre del canal/clone de origen
+                if channel_alt == 'videolibrary':
+                    continue
             if item.contentType == "list":                                  #Si viene de Videolibrary, le cambiamos ya el canal
                 if item.channel != channel_py:
                     item.channel = canal_des                                #Cambiamos el canal.  Si es clone, lo hace el canal
@@ -1087,60 +1097,95 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, overwrite=False, path=F
                 continue
             if item.contentType in content_exc:                             #Está el contenido excluido?
                 continue
-            if channel_enabled and canal_org != canal_des:                  #Si el canal está activo, puede ser solo...
+            if item.channel != channel_py:
+                channel_enabled = channeltools.is_enabled(channel_alt)      #Verificamos que el canal esté inactivo
+                channel_enabled_alt = config.get_setting('enabled', channel_alt)
+                channel_enabled = channel_enabled * channel_enabled_alt     #Si está inactivo en algún sitio, tomamos eso
+            if channel_enabled == 1 and canal_org != canal_des:             #Si el canal está activo, puede ser solo...
                 continue                                                    #... una intervención que afecte solo a una región
-            if ow_force == 'no' and path != False:                          #Queremos que el canal solo visualice sin migración?
-                continue                                                    #Salimos sin tocas archivos
-            item.url = item.url.replace(url_org, url_des)                   #reemplzamos una parte de url
+            if ow_force == 'no' and it.library_urls:                        #Esta regla solo vale para findvideos...
+                continue                                                    #... salidmos si estamos actualizando
+            if lookup == True:                                              #Queremos que el canal solo visualice sin migración?
+                if ow_force != 'no':
+                    overwrite = True                                        #Avisamos que hay cambios
+                continue                                                    #Salimos sin tocar archivos
+            url_total = ''
+            if item.url:
+                url_total = item.url
+            elif not item.url and item.library_urls:
+                url_total = item.library_urls[canal_org]
+            url_total = url_total.replace(url_org, url_des)                 #reemplazamos una parte de url
+            url = ''
             if patron1:                                                     #Hay expresión regex?
-                url = scrapertools.find_single_match(item.url, patron1)     #La aplicamos a url
+                url += scrapertools.find_single_match(url_total, patron1)   #La aplicamos a url
             if patron2:                                                     #Hay más expresión regex?
-                url += scrapertools.find_single_match(item.url, patron2)    #La aplicamos a url
+                url += scrapertools.find_single_match(url_total, patron2)   #La aplicamos a url
             if patron3:                                                     #Hay más expresión regex?
-                url += scrapertools.find_single_match(item.url, patron3)    #La aplicamos a url
+                url += scrapertools.find_single_match(url_total, patron3)   #La aplicamos a url
             if patron4:                                                     #Hay más expresión regex?
-                url += scrapertools.find_single_match(item.url, patron4)    #La aplicamos a url
+                url += scrapertools.find_single_match(url_total, patron4)   #La aplicamos a url
             if patron5:                                                     #Hay más expresión regex?
-                url += scrapertools.find_single_match(item.url, patron5)    #La aplicamos a url
-            item.url = url                                                  #Guardamos la suma de los resultados intermedios
+                url += scrapertools.find_single_match(url_total, patron5)   #La aplicamos a url
+            if url:
+                url_total = url                                             #Guardamos la suma de los resultados intermedios
             update_stat += 1                                                #Ya hemos actualizado algo
+            canal_org_def = canal_org
+            canal_des_def = canal_des
+            ow_force_def = ow_force
             
     if update_stat > 0:                                                 #Ha habido alguna actualización?  Entonces salvamos
-        if item.channel == channel_py:                                  #Si es Newpct1...
+        if item.channel == channel_py or channel in fail_over_list:     #Si es Newpct1...
             if item.contentType == "tvshow":
-                item.url = re.sub(r'\/\d+\/?$', '', item.url)           #parece que con el título  ecuentra la serie, normalmente...
-        if it.url:
-            it.url = item.url                                           #reemplazamos una parte de url en .nfo, aunque no suele haberla
+                url_total = re.sub(r'\/\d+\/?$', '', url_total)         #parece que con el título  ecuentra la serie, normalmente...
+        if item.url:
+            item.url = url_total                                        #Salvamos la url convertida
         if item.library_urls:
-            item.library_urls.pop(canal_org, None)
-            item.library_urls = {canal_des: item.url}
+            item.library_urls.pop(canal_org_def, None)
+            item.library_urls = {canal_des_def: url_total}
             it.library_urls = item.library_urls
-        if item.channel != channel_py:
-            item.channel = canal_des                                    #Cambiamos el canal.  Si es clone, lo hace el canal
+        if item.channel != channel_py and item.channel != 'videolibrary':
+            item.channel = canal_des_def                                #Cambiamos el canal.  Si es clone, lo hace el canal
             if channel_alt == item.category.lower():                    #Actualizamos la Categoría y si la tenía
                 item.category = item.channel.capitalize()
-        if ow_force == 'force':                                         #Queremos que el canal revise la serie entera?
-            item.ow_force = "1"                                         #Se lo decimos
-        if ow_force in ['force', 'auto']:                               #Sobreescribir la series?
-            overwrite = ow_force_param                                  #Sí, lo marcamos
+        if ow_force_def == 'force' and item.contentType != "movie":     #Queremos que el canal revise la serie entera?
+            item.ow_force = '1'                                         #Se lo decimos
+        if ow_force_def in ['force', 'auto']:                           #Sobreescribir la series?
+            overwrite = True                                            #Sí, lo marcamos
 
-
-        if item.contentType in ['tvshow', 'season'] and it.library_urls:
-            if path == False:
-                TVSHOWS_PATH = item.path
-            else:
-                TVSHOWS_PATH = path
+        #logger.debug(canal_org_def + canal_des_def + ow_force_def)
+        if it.library_urls and path != False and ow_force_def != 'no':      #Continuamos si hay .nfo, path, y queremos actualizarlo
+            if item.update_next:
+                del item.update_next                                        #Borramos estos campos para forzar la actualización ya
+            if it.update_next:
+                del it.update_next
         
             # Listamos todos los ficheros de la serie, asi evitamos tener que comprobar si existe uno por uno
-            raiz, carpetas_series, ficheros = filetools.walk(TVSHOWS_PATH).next()
-            ficheros = [filetools.join(TVSHOWS_PATH, f) for f in ficheros]          #Almacenamos la lista de archivos de la carpeta
-            canal_erase = '[%s]' % canal_org
+            raiz, carpetas_series, ficheros = filetools.walk(path).next()
+            ficheros = [filetools.join(path, f) for f in ficheros]          #Almacenamos la lista de archivos de la carpeta
+            canal_erase = '[%s]' % canal_org_def
             for archivo in ficheros:
-                if canal_erase in archivo:                                          #Borramos los .json que sean del canal intervenido
+                if canal_erase in archivo:                                  #Borramos los .json que sean del canal intervenido
+                    json_path = archivo.replace(canal_org_def, canal_des_def)   #Salvamos el path del .json para luego crearlo
                     filetools.remove(archivo)
-                if "tvshow.nfo" in archivo:
-                    filetools.write(archivo, head_nfo + it.tojson())                #escribo el .nfo por si aborta update
+                if item.contentType == "movie" and ".nfo" in archivo:
+                    filetools.write(archivo, head_nfo + it.tojson())        #escribo el .nfo de la peli por si aborta update
+                if item.contentType != "movie" and "tvshow.nfo" in archivo:
+                    filetools.write(archivo, head_nfo + it.tojson())        #escribo el tvshow.nfo por si aborta update
+            
+            #Aquí convertimos las películas.  Después de borrado el .json, dejamos que videolibrarytools lo regenere
+            if item.contentType == "movie":                                 #Dejamos que regenere el archivo .json
+                item_movie = item.clone()
+                item_movie.channel = canal_des_def                          #mombre del canal migrado
+                del item_movie.library_playcounts                           #Borramos lo que no es necesario en el .json
+                del item_movie.library_urls
+                item_movie.url = url_total                                  #url migrada
+                del item_movie.nfo
+                del item_movie.path
+                del item_movie.strm_path
+                del item_movie.text_color
+                filetools.write(json_path, item_movie.tojson())             #Salvamos el nuevo .json de la película
 
-    #logger.debug(item)
+    if update_stat > 0 and path != False and ow_force_def != 'no':
+        logger.debug(item)
     
     return (item, it, overwrite)
