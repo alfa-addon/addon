@@ -22,12 +22,12 @@ def mainlist(item):
                 "action": "setting_channel",
                 "channel": item.channel}]
     itemlist.append(Item(channel=item.channel, action="search",
-                         title=config.get_localized_string(70276), context=context,
+                         title=config.get_localized_string(30980), context=context,
                          thumbnail=get_thumb("search.png")))
 
     thumbnail = get_thumb("search_star.png")
 
-    itemlist.append(Item(channel='tvmoviedb', title=config.get_localized_string(59999), action="search_",
+    itemlist.append(Item(channel='tvmoviedb', title=config.get_localized_string(70036), action="search_",
                          search={'url': 'search/person', 'language': 'es', 'page': 1}, star=True,
                          thumbnail=thumbnail))
 
