@@ -61,6 +61,11 @@ elif fecha_rango == 3: fecha_rango = 'Mes'
 elif fecha_rango == 4: fecha_rango = 'Siempre'
 episodio_serie = config.get_setting('clonenewpct1_serie_episodio_novedades', channel_py)    #Episodio o serie para Novedades
 
+#Temporal, sólo para actualizar newpct1_data.json con otro valor por defecto
+channel_banned = config.get_setting('clonenewpct1_excluir1_enlaces_veronline', channel_py)  #1er Canal baneado
+if channel_banned == 9:
+    config.set_setting('clonenewpct1_excluir1_enlaces_veronline', 22, channel_py)           #se pone el nuevo valor por defecto
+
 
 def mainlist(item):
     logger.info()

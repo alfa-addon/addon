@@ -421,7 +421,10 @@ def findvideos(item):
 
         #Tratamos la calidad y tamaño de cada link
         if quality:
-            item_local.quality = quality
+            tiempo = ''
+            if item_local.quality:
+                tiempo = scrapertools.find_single_match(item_local.quality, r'(\s\[.*?\])')
+            item_local.quality = quality + tiempo
         if "temporada" in temp_epi.lower():
             item_local.quality = '%s [Temporada]' % item_local.quality
         #if size and item_local.contentType != "episode":

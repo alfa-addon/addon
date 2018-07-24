@@ -27,6 +27,7 @@ channel_py = "newpct1"
 intervenido_judicial = 'Dominio intervenido por la Autoridad Judicial'
 intervenido_policia = '<!--CATEGORY:Judicial_Policia_Nacional'
 intervenido_guardia = '<!--CATEGORY:Judicial_Guardia_Civil'
+intervenido_sucuri = 'Access Denied - Sucuri Website Firewall'
 
 
 def update_title(item):
@@ -721,6 +722,27 @@ def post_tmdb_findvideos(item, itemlist):
 
     if item.quality.lower() in ['gb', 'mb']:
         item.quality = item.quality.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b')
+    
+    #Leo de la BD de Kodi la duración de la película o episodio.  En "from_fields" se pueden poner las columnas que se quiera
+    nun_records = 0
+    if item.contentType == 'movie':
+        nun_records, records = get_field_from_kodi_DB(item, from_fields='c11')      #Leo de la BD de Kodi la duración de la película
+    else:
+        nun_records, records = get_field_from_kodi_DB(item, from_fields='c09')      #Leo de la BD de Kodi la duración del episodio
+    if nun_records > 0:                                                             #Hay registros?
+        for strFileName, field1 in records: #Es un array, busco el campo del registro: añadir en el FOR un fieldX por nueva columna
+            tiempo_final = 0
+            try:
+                tiempo_final = int(field1)                                                  #lo convierto a int, pero puede se null
+                if tiempo_final == 0:                                                       #en episodios suele estar a 0
+                    continue                                                                #pasamos
+                if tiempo_final > 700:                                                      #Si está en segundos
+                    tiempo_final = tiempo_final / 60                                        #Lo transformo a minutos
+                horas = tiempo_final / 60                                                   #Lo transformo a horas
+                resto = tiempo_final - (horas * 60)                                         #guardo el resto de minutos de la hora
+                item.quality += ' [%s:%s]' % (str(horas).zfill(2), str(resto).zfill(2))     #Lo agrego a Calidad del Servidor
+            except:
+                pass
         
     #Ajustamos el nombre de la categoría
     if item.channel != channel_py:
@@ -782,6 +804,78 @@ def post_tmdb_findvideos(item, itemlist):
     #logger.debug(item)
     
     return (item, itemlist)
+    
+
+def get_field_from_kodi_DB(item, from_fields='*', files='file'):
+    logger.info()
+    """
+        
+    Llamada para leer de la DB de Kodi los campos que se reciben de entrada (from_fields, por defecto "*") del vídeo señalado en Item
+    Obviamente esto solo funciona con Kodi y si la película o serie está catalogada en las Videotecas de Alfa y Kodi
+    Se puede pedir que la búdqueda se haga por archivos (defecto), o por carpeta (series)
+    
+    La llamada es:
+        nun_records, records = generictools.get_field_from_kodi_DB(item, from_fields='cXX[, cYY,...]'[, files = 'file|folder'])
+    
+    Devuelve el num de registros encontrados y los registros.  Es importante que el llamador verifique que "nun_records > 0" antes de tratar "records"
+    
+    """
+
+    FOLDER_MOVIES = config.get_setting("folder_movies")
+    FOLDER_TVSHOWS = config.get_setting("folder_tvshows")
+    VIDEOLIBRARY_PATH = config.get_videolibrary_config_path()
+    
+    if item.contentType == 'movie':                                     #Agrego la carpeta correspondiente al path de la Videoteca
+        path = filetools.join(VIDEOLIBRARY_PATH, FOLDER_MOVIES)
+    else:
+        path = filetools.join(VIDEOLIBRARY_PATH, FOLDER_TVSHOWS)
+
+    raiz, carpetas, ficheros = filetools.walk(path).next()              #listo las series o películas en la Videoteca
+    carpetas = [filetools.join(path, f) for f in carpetas]              #agrego la carpeta del contenido al path
+    for carpeta in carpetas:                                            #busco el contenido seleccionado en la lista de carpetas
+        if item.contentType == 'movie' and (item.contentTitle.lower() in carpeta or item.contentTitle in carpeta):   #Películas?
+            path = carpeta                                              #Almacenamos la carpeta en el path
+            break
+        elif item.contentType in ['tvshow', 'season', 'episode'] and (item.contentSerieName.lower() in carpeta or item.contentSerieName in carpeta):                                   #Series?
+            path = carpeta                                              #Almacenamos la carpeta en el path
+            break
+    
+    file_search = '%'                                                   #Por defecto busca todos los archivos de la carpeta
+    if files == 'file':                                                 #Si se ha pedido son un archivo (defecto), se busca
+        if item.contentType == 'episode':                               #Si es episodio, se pone el nombre, si no de deja %
+            file_search = '%sx%s.strm' % (item.contentSeason, str(item.contentEpisodeNumber).zfill(2))      #Nombre para episodios
+
+    if "\\" in path:                                                    #Ajustamos los / en función de la plataforma
+        path = path.replace("/", "\\")
+        path += "\\"                                                    #Terminamos el path con un /
+    else:
+        path += "/"
+
+    if FOLDER_TVSHOWS in path:                                          #Compruebo si es CINE o SERIE
+        contentType = "episode_view"                                    #Marco la tabla de BBDD de Kodi Video
+    else:
+        contentType = "movie_view"                                      #Marco la tabla de BBDD de Kodi Video
+    path1 = path.replace("\\\\", "\\")                                  #para la SQL solo necesito la carpeta
+    path2 = path.replace("\\", "/")                                     #Formato no Windows
+
+    #Ejecutmos la sentencia SQL
+    if not from_fields:
+        from_fields = '*'
+    else:
+        from_fields = 'strFileName, %s' % from_fields                       #al menos dos campos, porque uno solo genera cosas raras
+    sql = 'select %s from %s where (strPath like "%s" or strPath like "%s") and strFileName like "%s"' % (from_fields, contentType, path1, path2, file_search)
+    nun_records = 0
+    records = None
+    try:
+        if config.is_xbmc():
+            from platformcode import xbmc_videolibrary
+            nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql)      #ejecución de la SQL
+            if nun_records == 0:                                                #hay error?
+                logger.error("Error en la SQL: " + sql + ": 0 registros")       #No estará catalogada o hay un error en el SQL
+    except:
+        pass
+             
+    return (nun_records, records)
     
     
 def fail_over_newpct1(item, patron, patron2=None, timeout=None):
@@ -953,11 +1047,16 @@ def web_intervenida(item, data, desactivar=True):
     """
     
     intervencion = ()
-    
-    if intervenido_policia in data or intervenido_guardia in data:      #Verificamos que sea una intervención judicial
-        judicial = 'intervenido_gc.png'                                 #Por defecto thumb de la Benemérita
+    judicial = ''
+
+    #Verificamos que sea una intervención judicial
+    if intervenido_policia in data or intervenido_guardia in data or intervenido_sucuri in data:
+        if intervenido_guardia in data:
+            judicial = 'intervenido_gc.png'                             #thumb de la Benemérita
         if intervenido_policia in data:
             judicial = 'intervenido_pn.jpeg'                            #thumb de la Policia Nacional
+        if intervenido_sucuri in data:
+            judicial = 'intervenido_sucuri.png'                         #thumb de Sucuri
         category = item.category
         if not item.category:
             category = item.channel
@@ -966,7 +1065,7 @@ def web_intervenida(item, data, desactivar=True):
             item.intervencion = []                                      #Si no existe el array, lo creamos
         item.intervencion += [intervencion]                             #Añadimos esta intervención al array
         
-        logger.error("ERROR 99: " + category + ": " + intervenido_judicial + ": " + item.url + ": DESACTIVADO=" + str(desactivar) + " / DATA: " + data)
+        logger.error("ERROR 99: " + category + ": " + judicial + ": " + item.url + ": DESACTIVADO=" + str(desactivar) + " / DATA: " + data)
         
         if desactivar == False:                                         #Si no queremos desactivar el canal, nos vamos
             return item
@@ -1083,10 +1182,13 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         if activo == '1' and (canal_org == channel_alt or channel_alt == 'videolibrary'):     #Es esta nuestra entrada?
             if channel_alt == 'videolibrary':                               #Viene de videolibrary.list_movies
                 for canal_vid, url_vid in item.library_urls.items():
-                    if canal_org != canal_vid:                              #Miramos si canal_org de la regla está en item.library_urls
+                    if canal_org != canal_vid:                      #Miramos si canal_org de la regla está en item.library_urls
                         continue
                     else:
-                        channel_alt = canal_org                             #Sí, ponermos el nombre del canal/clone de origen
+                        channel_alt = canal_org                             #Sí, ponermos el nombre del canal de origen
+                        channel_b = "'%s'" % canal_org
+                        if channel_b in fail_over_list:                     #Si es un clone de Newpct1, se actualiza a newpct1
+                            channel_alt = channel_py
                 if channel_alt == 'videolibrary':
                     continue
             if item.contentType == "list":                                  #Si viene de Videolibrary, le cambiamos ya el canal
@@ -1189,3 +1291,18 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         logger.debug(item)
     
     return (item, it, overwrite)
+    
+
+def dejuice(data):
+    logger.info()
+    # Metodo para desobfuscar datos de JuicyCodes
+    
+    import base64
+    from lib import jsunpack
+
+    juiced = scrapertools.find_single_match(data, 'JuicyCodes.Run\((.*?)\);')
+    b64_data = juiced.replace('+', '').replace('"', '')
+    b64_decode = base64.b64decode(b64_data)
+    dejuiced = jsunpack.unpack(b64_decode)
+
+    return dejuiced
