@@ -9,6 +9,7 @@ from core import videolibrarytools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
+from lib import generictools
 
 
 def mainlist(item):
@@ -34,8 +35,6 @@ def channel_config(item):
 def list_movies(item, silent=False):
     logger.info()
     itemlist = []
-    from platformcode import xbmc_videolibrary
-    from lib import generictools
 
     for raiz, subcarpetas, ficheros in filetools.walk(videolibrarytools.MOVIES_PATH):
         for f in ficheros:
@@ -44,7 +43,9 @@ def list_movies(item, silent=False):
                 
                 #Sincronizamos las películas vistas desde la videoteca de Kodi con la de Alfa
                 try:
-                    xbmc_videolibrary.mark_content_as_watched_on_alfa(nfo_path)
+                    if config.is_xbmc():                #Si es Kodi, lo hacemos
+                        from platformcode import xbmc_videolibrary
+                        xbmc_videolibrary.mark_content_as_watched_on_alfa(nfo_path)
                 except:
                     pass
                 
@@ -109,7 +110,6 @@ def list_movies(item, silent=False):
 def list_tvshows(item):
     logger.info()
     itemlist = []
-    from platformcode import xbmc_videolibrary
 
     # Obtenemos todos los tvshow.nfo de la videoteca de SERIES recursivamente
     for raiz, subcarpetas, ficheros in filetools.walk(videolibrarytools.TVSHOWS_PATH):
@@ -120,7 +120,9 @@ def list_tvshows(item):
                 
                 #Sincronizamos los episodios vistos desde la videoteca de Kodi con la de Alfa
                 try:
-                    xbmc_videolibrary.mark_content_as_watched_on_alfa(tvshow_path)
+                    if config.is_xbmc():                #Si es Kodi, lo hacemos
+                        from platformcode import xbmc_videolibrary
+                        xbmc_videolibrary.mark_content_as_watched_on_alfa(tvshow_path)
                 except:
                     pass
                 
@@ -318,7 +320,6 @@ def get_episodes(item):
 
 def findvideos(item):
     logger.info()
-    from lib import generictools
     # logger.debug("item:\n" + item.tostring('\n'))
 
     itemlist = []
@@ -418,28 +419,23 @@ def findvideos(item):
             pass
         list_servers = []
 
-        try:
-            # FILTERTOOLS
-            # si el canal tiene filtro se le pasa el nombre que tiene guardado para que filtre correctamente.
-            if "list_language" in item_json:
-                # si se viene desde la videoteca del addon
-                if "library_filter_show" in item:
-                    item_json.show = item.library_filter_show.get(nom_canal, "")
+        # FILTERTOOLS
+        # si el canal tiene filtro se le pasa el nombre que tiene guardado para que filtre correctamente.
+        if "list_language" in item_json:
+            # si se viene desde la videoteca del addon
+            if "library_filter_show" in item:
+                item_json.show = item.library_filter_show.get(nom_canal, "")
 
-            # Ejecutamos find_videos, del canal o común
-            item_json.contentChannel = 'videolibrary'
-            if hasattr(channel, 'findvideos'):
-                from core import servertools
-                list_servers = getattr(channel, 'findvideos')(item_json)
-                list_servers = servertools.filter_servers(list_servers)
-            else:
-                from core import servertools
-                list_servers = servertools.find_video_items(item_json)
-        except Exception, ex:
-            logger.error("Ha fallado la funcion findvideos para el canal %s" % nom_canal)
-            template = "An exception of type %s occured. Arguments:\n%r"
-            message = template % (type(ex).__name__, ex.args)
-            logger.error(message)
+        # Ejecutamos find_videos, del canal o común
+        item_json.contentChannel = 'videolibrary'
+        if hasattr(channel, 'findvideos'):
+            from core import servertools
+            list_servers = getattr(channel, 'findvideos')(item_json)
+            list_servers = servertools.filter_servers(list_servers)
+        else:
+            from core import servertools
+            list_servers = servertools.find_video_items(item_json)
+       
 
         # Cambiarle el titulo a los servers añadiendoles el nombre del canal delante y
         # las infoLabels y las imagenes del item si el server no tiene

@@ -9,12 +9,11 @@ from core import channeltools, filetools, videolibrarytools
 from platformcode import config, logger
 from platformcode import platformtools
 from channels import videolibrary
+from lib import generictools
 
 
 def update(path, p_dialog, i, t, serie, overwrite):
     logger.info("Actualizando " + path)
-    from lib import generictools
-    from platformcode import xbmc_videolibrary
     insertados_total = 0
       
     head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')
@@ -81,7 +80,9 @@ def update(path, p_dialog, i, t, serie, overwrite):
 
     #Sincronizamos los episodios vistos desde la videoteca de Kodi con la de Alfa
     try:
-        xbmc_videolibrary.mark_content_as_watched_on_alfa(path + '/tvshow.nfo')
+        if config.is_xbmc():                #Si es Kodi, lo hacemos
+            from platformcode import xbmc_videolibrary
+            xbmc_videolibrary.mark_content_as_watched_on_alfa(path + '/tvshow.nfo')
     except:
         pass
     
@@ -90,8 +91,7 @@ def update(path, p_dialog, i, t, serie, overwrite):
 
 def check_for_update(overwrite=True):
     logger.info("Actualizando series...")
-    from lib import generictools
-    from platformcode import xbmc_videolibrary
+
     p_dialog = None
     serie_actualizada = False
     update_when_finished = False
@@ -136,7 +136,9 @@ def check_for_update(overwrite=True):
                     if overwrite_forced == False:
                         #Sincronizamos los episodios vistos desde la videoteca de Kodi con la de Alfa, aunque la serie esté desactivada
                         try:
-                            xbmc_videolibrary.mark_content_as_watched_on_alfa(path + '/tvshow.nfo')
+                            if config.is_xbmc():                #Si es Kodi, lo hacemos
+                                from platformcode import xbmc_videolibrary
+                                xbmc_videolibrary.mark_content_as_watched_on_alfa(path + '/tvshow.nfo')
                         except:
                             pass
                     
