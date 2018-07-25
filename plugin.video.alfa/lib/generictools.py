@@ -665,6 +665,7 @@ def post_tmdb_findvideos(item, itemlist):
     En Itemlist devuelve un Item con el pseudotítulo.  Ahí el canal irá agregando el resto.
     
     """
+    #logger.debug(item)
     
     #Creción de título general del vídeo a visualizar en Findvideos
     itemlist = []
@@ -684,11 +685,12 @@ def post_tmdb_findvideos(item, itemlist):
     if item.infoLabels['temporada_num_episodios'] and item.contentEpisodeNumber <= item.infoLabels['temporada_num_episodios']:
         num_episodios = item.infoLabels['temporada_num_episodios']
 
-    # Obtener la información actualizada del Episodio, si no la hay.  Siempre cuando viene de Videoteca
-    if not item.infoLabels['tmdb_id'] or (not item.infoLabels['episodio_titulo'] and item.contentType == 'episode'):
-        tmdb.set_infoLabels(item, True)
-    elif (not item.infoLabels['tvdb_id'] and item.contentType == 'episode') or item.contentChannel == "videolibrary":
-        tmdb.set_infoLabels(item, True)
+    # Obtener la información actualizada del vídeo.  En una segunda lectura de TMDB da más información que en la primera
+    #if not item.infoLabels['tmdb_id'] or (not item.infoLabels['episodio_titulo'] and item.contentType == 'episode'):
+    #    tmdb.set_infoLabels(item, True)
+    #elif (not item.infoLabels['tvdb_id'] and item.contentType == 'episode') or item.contentChannel == "videolibrary":
+    #    tmdb.set_infoLabels(item, True)
+    tmdb.set_infoLabels(item, True)
     #Restauramos la información de max num. de episodios por temporada despues de TMDB
     try:
         if item.infoLabels['temporada_num_episodios']:
@@ -698,7 +700,7 @@ def post_tmdb_findvideos(item, itemlist):
             item.infoLabels['temporada_num_episodios'] = num_episodios
     except:
         pass
-    
+
     #Quitamos el la categoría o nombre del título, si lo tiene
     if item.contentTitle:
         item.contentTitle = re.sub(r' -%s-' % item.category, '', item.contentTitle)
@@ -722,27 +724,34 @@ def post_tmdb_findvideos(item, itemlist):
 
     if item.quality.lower() in ['gb', 'mb']:
         item.quality = item.quality.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b')
+
+    #busco "duration" en infoLabels
+    tiempo = 0
+    if item.infoLabels['duration']:
+        tiempo = item.infoLabels['duration']
     
+    elif item.contentChannel == 'videolibrary':                                     #No hay, viene de la Videoteca? buscamos en la DB
     #Leo de la BD de Kodi la duración de la película o episodio.  En "from_fields" se pueden poner las columnas que se quiera
-    nun_records = 0
-    if item.contentType == 'movie':
-        nun_records, records = get_field_from_kodi_DB(item, from_fields='c11')      #Leo de la BD de Kodi la duración de la película
-    else:
-        nun_records, records = get_field_from_kodi_DB(item, from_fields='c09')      #Leo de la BD de Kodi la duración del episodio
-    if nun_records > 0:                                                             #Hay registros?
-        for strFileName, field1 in records: #Es un array, busco el campo del registro: añadir en el FOR un fieldX por nueva columna
-            tiempo_final = 0
-            try:
-                tiempo_final = int(field1)                                                  #lo convierto a int, pero puede se null
-                if tiempo_final == 0:                                                       #en episodios suele estar a 0
-                    continue                                                                #pasamos
-                if tiempo_final > 700:                                                      #Si está en segundos
-                    tiempo_final = tiempo_final / 60                                        #Lo transformo a minutos
-                horas = tiempo_final / 60                                                   #Lo transformo a horas
-                resto = tiempo_final - (horas * 60)                                         #guardo el resto de minutos de la hora
-                item.quality += ' [%s:%s]' % (str(horas).zfill(2), str(resto).zfill(2))     #Lo agrego a Calidad del Servidor
-            except:
-                pass
+        nun_records = 0
+        if item.contentType == 'movie':
+            nun_records, records = get_field_from_kodi_DB(item, from_fields='c11')  #Leo de la BD de Kodi la duración de la película
+        else:
+            nun_records, records = get_field_from_kodi_DB(item, from_fields='c09')  #Leo de la BD de Kodi la duración del episodio
+        if nun_records > 0:                                                         #Hay registros?
+            #Es un array, busco el campo del registro: añadir en el FOR un fieldX por nueva columna
+            for strFileName, field1 in records: 
+                tiempo = field1
+    
+    try:                                                                                #calculamos el timepo en hh:mm
+        tiempo_final = int(tiempo)                                                      #lo convierto a int, pero puede se null
+        if tiempo_final > 0:                                                            #Si el tiempo está a 0, pasamos
+            if tiempo_final > 700:                                                      #Si está en segundos
+                tiempo_final = tiempo_final / 60                                        #Lo transformo a minutos
+            horas = tiempo_final / 60                                                   #Lo transformo a horas
+            resto = tiempo_final - (horas * 60)                                         #guardo el resto de minutos de la hora
+            item.quality += ' [%s:%s]' % (str(horas).zfill(2), str(resto).zfill(2))     #Lo agrego a Calidad del Servidor
+    except:
+        pass
         
     #Ajustamos el nombre de la categoría
     if item.channel != channel_py:
@@ -1078,7 +1087,7 @@ def web_intervenida(item, data, desactivar=True):
         if item.channel == channel_py:                                  #Si es un clone de Newpct1, lo desactivamos
             for settings in json_data['settings']:                      #Se recorren todos los settings
                 if settings['id'] == "clonenewpct1_channels_list":      #Encontramos en setting
-                    action_excluded = scrapertools.find_single_match(settings['default'], "\('\d', '%s', '[^']+', '[^']*', '([^']*)'\)" % item.category.lower())                #extraemos el valor de action_excluded
+                    action_excluded = scrapertools.find_single_match(settings['default'], "\('\d', '%s', '[^']+', '[^']*', '([^']*)'\)" % item.category.lower())               #extraemos el valor de action_excluded
                     if action_excluded:
                         if "intervenido" not in action_excluded:
                             action_excluded += ', %s' % judicial        #Agregamos el thumb de la autoridad judicial
@@ -1095,7 +1104,8 @@ def web_intervenida(item, data, desactivar=True):
 
         #Guardamos los cambios hechos en el .json
         try:
-            disabled = config.set_setting('enabled', False, item.channel)
+            if item.channel != channel_py:
+                disabled = config.set_setting('enabled', False, item.channel)
             channel_path = filetools.join(config.get_runtime_path(), "channels", item.channel + ".json")
             with open(channel_path, 'w') as outfile:                        #Grabamos el .json actualizado
                 json.dump(json_data, outfile, sort_keys = True, indent = 2, ensure_ascii = False)

@@ -134,6 +134,13 @@ def submenu(item):
     patron = '<li><a\s?class="[^"]+"\s?href="http:[^"]+"><i\s?class=.*><\/i>.*Inicio<\/a><\/li>(.+)<\/ul>\s?<\/nav>'
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not data or not scrapertools.find_single_match(data, patron):
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            for clone_inter, autoridad in item.intervencion:
+                thumb_intervenido = get_thumb(autoridad)
+                itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
+            return itemlist                                                     #Salimos
+        
         logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " + item.url + data)
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
         item, data = generictools.fail_over_newpct1(item, patron)
@@ -211,6 +218,13 @@ def submenu_novedades(item):
     patron = '<div class="content">.*?<ul class="noticias'
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not data or not scrapertools.find_single_match(data, patron):
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            for clone_inter, autoridad in item.intervencion:
+                thumb_intervenido = get_thumb(autoridad)
+                itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
+            return itemlist                                                     #Salimos
+        
         logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " + item.url + data)
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
         item, data = generictools.fail_over_newpct1(item, patron)
@@ -279,6 +293,13 @@ def alfabeto(item):
 
     patron = '<ul class="alfabeto">(.*?)</ul>'
     if not data or not scrapertools.find_single_match(data, patron):
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            for clone_inter, autoridad in item.intervencion:
+                thumb_intervenido = get_thumb(autoridad)
+                itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
+            return itemlist                                                     #Salimos
+        
         logger.error("ERROR 01: ALFABETO: La Web no responde o ha cambiado de URL: " + item.url + data)
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
         item, data = generictools.fail_over_newpct1(item, patron)
@@ -330,6 +351,11 @@ def listado(item):
     
     patron = '<ul class="' + clase + '">(.*?)</ul>'     #seleccionamos el bloque que nos interesa
     if not data or (not scrapertools.find_single_match(data, patron) and not '<h3><strong>( 0 ) Resultados encontrados </strong>' in data):
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error
+            return itemlist                                                     #Salimos
+            
         logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + data)
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
         item, data = generictools.fail_over_newpct1(item, patron)
@@ -650,6 +676,7 @@ def listado_busqueda(item):
     #Máximo num. de líneas permitidas por TMDB. Máx de 5 páginas por Itemlist para no degradar el rendimiento
     while cnt_title <= cnt_tot and cnt_next < 5:
 
+        data = ''
         try:
             data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, post=item.post, timeout=timeout_search).data)
         except:
@@ -661,6 +688,11 @@ def listado_busqueda(item):
         else:
             pattern = '<ul class="%s">(.*?)</ul>' % item.pattern                #seleccionamos el bloque que nos interesa
         if not data or (not scrapertools.find_single_match(data, pattern) and not '<h3><strong>( 0 ) Resultados encontrados </strong>' in data):
+            item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+            if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+                item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error
+                return itemlist                                                     #Salimos
+            
             logger.error("ERROR 01: LISTADO_BUSQUEDA: La Web no responde o ha cambiado de URL: " + item.url + item.post + " / DATA: " + data)
             #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
             item, data = generictools.fail_over_newpct1(item, pattern)
@@ -1236,6 +1268,11 @@ def findvideos(item):
     patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'       #Patron para .torrent
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not data or not scrapertools.find_single_match(data, patron):
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
+            return itemlist                                                     #Salimos
+        
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url + " / DATA: " + data)
         
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el vídeo
@@ -1531,6 +1568,11 @@ def episodios(item):
             
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not data_alt or not scrapertools.find_single_match(data_alt, pattern):
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
+            return itemlist                                                     #Salimos
+        
         logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea: " + item.url)
         logger.error(pattern + data)
 

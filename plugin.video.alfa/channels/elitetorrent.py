@@ -40,9 +40,13 @@ def submenu(item):
     logger.info()
     itemlist = []
     
+    data = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
     except:
+        pass
+        
+    if not data:
         logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " + item.url)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
         return itemlist     #Algo no funciona, pintamos lo que tenemos
@@ -55,6 +59,13 @@ def submenu(item):
     patron = '<a href="(.*?)".*?title="(.*?)"'      #Encontrar todos los apartados
     matches = re.compile(patron, re.DOTALL).findall(data1)
     if not matches:
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            for clone_inter, autoridad in item.intervencion:
+                thumb_intervenido = get_thumb(autoridad)
+                itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
+            return itemlist                                                     #Salimos
+        
         logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data1)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
@@ -86,16 +97,16 @@ def listado(item):
     itemlist = []
 
     # Descarga la página
+    data = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
     except:
-            logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
-            return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        pass
+        
     if not data:        #Si la web está caída salimos sin dar error
-            logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
-            return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + data)
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
+        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     patron = '<div id="principal">.*?<\/nav><\/div><\/div>'
     data = scrapertools.find_single_match(data, patron)
@@ -110,9 +121,14 @@ def listado(item):
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches and not '<title>503 Backend fetch failed</title>' in data:       #error
-            logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
-            return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error
+            return itemlist                                                     #Salimos
+        
+        logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     #logger.debug("PATRON: " + patron)
     #logger.debug(matches)
@@ -153,7 +169,7 @@ def listado(item):
         if "dual" in scrapedcategory.lower() or "dual" in title.lower():
             item_local.language[0:0] = ["DUAL"]
         
-        #Limpiamos el título de la basuna innecesaria
+        #Limpiamos el título de la basura innecesaria
         title = title.replace("Dual", "").replace("dual", "").replace("Subtitulada", "").replace("subtitulada", "").replace("Subt", "").replace("subt", "").replace("Sub", "").replace("sub", "").replace("(Proper)", "").replace("(proper)", "").replace("Proper", "").replace("proper", "").replace("#", "").replace("(Latino)", "").replace("Latino", "")
         title = title.replace("- HDRip", "").replace("(HDRip)", "").replace("- Hdrip", "").replace("(microHD)", "").replace("(DVDRip)", "").replace("(HDRip)", "").replace("(BR-LINE)", "").replace("(HDTS-SCREENER)", "").replace("(BDRip)", "").replace("(BR-Screener)", "").replace("(DVDScreener)", "").replace("TS-Screener", "").replace(" TS", "").replace(" Ts", "")
         title = re.sub(r'\??\s?\d*?\&.*', '', title).title().strip()
@@ -199,11 +215,11 @@ def listado(item):
         
         itemlist.append(item_local.clone())     #Pintar pantalla
    
-    #if not item.category:       #Si este campo no existe es que viene de la primera pasada de una búsqueda global
-    #    return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
+    if not item.category:       #Si este campo no existe es que viene de la primera pasada de una búsqueda global
+        return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
 
     #Pasamos a TMDB la lista completa Itemlist
-    #tmdb.set_infoLabels(itemlist, True)
+    tmdb.set_infoLabels(itemlist, True)
     
     #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
     item, itemlist = generictools.post_tmdb_listado(item, itemlist)
@@ -239,9 +255,13 @@ def findvideos(item):
     itemlist = []
 
     #Bajamos los datos de la página
+    data = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
     except:
+        pass
+        
+    if not data:
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
@@ -268,6 +288,11 @@ def findvideos(item):
     #logger.info("link Magnet: " + link_magnet)
     
     if not link_torrent and not link_magnet:                    #error
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
+            return itemlist                                                     #Salimos
+            
         logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron_t + " / " + patron_m + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
