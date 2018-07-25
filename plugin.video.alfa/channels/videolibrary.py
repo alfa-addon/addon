@@ -9,6 +9,7 @@ from core import videolibrarytools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
+from lib import generictools
 
 
 def mainlist(item):
@@ -31,7 +32,7 @@ def channel_config(item):
                                                caption=config.get_localized_string(60598))
 
 
-def list_movies(item):
+def list_movies(item, silent=False):
     logger.info()
     itemlist = []
 
@@ -39,6 +40,15 @@ def list_movies(item):
         for f in ficheros:
             if f.endswith(".nfo"):
                 nfo_path = filetools.join(raiz, f)
+                
+                #Sincronizamos las películas vistas desde la videoteca de Kodi con la de Alfa
+                try:
+                    if config.is_xbmc():                #Si es Kodi, lo hacemos
+                        from platformcode import xbmc_videolibrary
+                        xbmc_videolibrary.mark_content_as_watched_on_alfa(nfo_path)
+                except:
+                    pass
+                
                 head_nfo, new_item = videolibrarytools.read_nfo(nfo_path)
 
                 new_item.nfo = nfo_path
@@ -50,6 +60,12 @@ def list_movies(item):
                     # Si se ha eliminado el strm desde la bilbioteca de kodi, no mostrarlo
                     continue
 
+                ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
+                try:
+                    new_item, new_item, overwrite = generictools.redirect_clone_newpct1(new_item, head_nfo, new_item, raiz)
+                except:
+                    pass
+                
                 # Menu contextual: Marcar como visto/no visto
                 visto = new_item.library_playcounts.get(os.path.splitext(f)[0], 0)
                 new_item.infoLabels["playcount"] = visto
@@ -85,7 +101,10 @@ def list_movies(item):
                 # logger.debug("new_item: " + new_item.tostring('\n'))
                 itemlist.append(new_item)
 
-    return sorted(itemlist, key=lambda it: it.title.lower())
+    if silent == False:
+        return sorted(itemlist, key=lambda it: it.title.lower())
+    else:
+        return
 
 
 def list_tvshows(item):
@@ -98,6 +117,15 @@ def list_tvshows(item):
             if f == "tvshow.nfo":
                 tvshow_path = filetools.join(raiz, f)
                 # logger.debug(tvshow_path)
+                
+                #Sincronizamos los episodios vistos desde la videoteca de Kodi con la de Alfa
+                try:
+                    if config.is_xbmc():                #Si es Kodi, lo hacemos
+                        from platformcode import xbmc_videolibrary
+                        xbmc_videolibrary.mark_content_as_watched_on_alfa(tvshow_path)
+                except:
+                    pass
+                
                 head_nfo, item_tvshow = videolibrarytools.read_nfo(tvshow_path)
                 item_tvshow.title = item_tvshow.contentTitle
                 item_tvshow.path = raiz
@@ -292,7 +320,6 @@ def get_episodes(item):
 
 def findvideos(item):
     logger.info()
-    from lib import generictools
     # logger.debug("item:\n" + item.tostring('\n'))
 
     itemlist = []
@@ -362,7 +389,7 @@ def findvideos(item):
             platformtools.play_video(item_local)
 
         elif index > 0:
-            filtro_canal = opciones[index].replace(config.get_localized_string(70078), "")
+            filtro_canal = opciones[index].replace(config.get_localized_string(70078), "").strip()
             itemlist = []
 
     for nom_canal, json_path in list_canales.items():
@@ -552,7 +579,7 @@ def mark_content_as_watched2(item):
         # Guardamos los cambios en item.nfo
         if filetools.write(item.nfo, head_nfo + it.tojson()):
             item.infoLabels['playcount'] = item.playcount
-            logger.debug(item.playcount)
+            #logger.debug(item.playcount)
 
            # if  item.contentType == 'episodesss':
                 # Actualizar toda la serie
@@ -569,7 +596,7 @@ def mark_content_as_watched2(item):
 
 def mark_content_as_watched(item):
     logger.info()
-    logger.debug("item:\n" + item.tostring('\n'))
+    #logger.debug("item:\n" + item.tostring('\n'))
 
     if filetools.exists(item.nfo):
         head_nfo, it = videolibrarytools.read_nfo(item.nfo)

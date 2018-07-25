@@ -127,13 +127,12 @@ def render_items(itemlist, parent_item):
         if 'anime' in channeltools.get_channel_parameters(parent_item.channel)['categories']:
             anime = True
 
-    # Recorremos el itemlist
 
+    unify_enabled = config.get_setting('unify')
+    #logger.debug('unify_enabled: %s' % unify_enabled)
+
+    # Recorremos el itemlist
     for item in itemlist:
-        try:
-            channel_parameters = channeltools.get_channel_parameters(item.channel)
-        except:
-            pass
         #logger.debug(item)
         # Si el item no contiene categoria, le ponemos la del item padre
         if item.category == "":
@@ -143,9 +142,7 @@ def render_items(itemlist, parent_item):
         if item.fanart == "":
             item.fanart = parent_item.fanart
 
-
         if genre:
-
             valid_genre = True
             thumb = get_thumb(item.title, auto=True)
             if thumb != '':
@@ -155,12 +152,7 @@ def render_items(itemlist, parent_item):
                 valid_genre = True
 
 
-        unify_enabled = config.get_setting('unify')
-
-        #logger.debug('unify_enabled: %s' % unify_enabled)
-
-
-        if unify_enabled and not channel_parameters['adult'] and 'skip_unify' not in channel_parameters:
+        if unify_enabled:
             # Formatear titulo con unify
             item = unify.title_format(item)
         else:

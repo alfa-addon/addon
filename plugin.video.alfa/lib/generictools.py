@@ -27,6 +27,7 @@ channel_py = "newpct1"
 intervenido_judicial = 'Dominio intervenido por la Autoridad Judicial'
 intervenido_policia = '<!--CATEGORY:Judicial_Policia_Nacional'
 intervenido_guardia = '<!--CATEGORY:Judicial_Guardia_Civil'
+intervenido_sucuri = 'Access Denied - Sucuri Website Firewall'
 
 
 def update_title(item):
@@ -664,6 +665,7 @@ def post_tmdb_findvideos(item, itemlist):
     En Itemlist devuelve un Item con el pseudotítulo.  Ahí el canal irá agregando el resto.
     
     """
+    #logger.debug(item)
     
     #Creción de título general del vídeo a visualizar en Findvideos
     itemlist = []
@@ -683,11 +685,12 @@ def post_tmdb_findvideos(item, itemlist):
     if item.infoLabels['temporada_num_episodios'] and item.contentEpisodeNumber <= item.infoLabels['temporada_num_episodios']:
         num_episodios = item.infoLabels['temporada_num_episodios']
 
-    # Obtener la información actualizada del Episodio, si no la hay.  Siempre cuando viene de Videoteca
-    if not item.infoLabels['tmdb_id'] or (not item.infoLabels['episodio_titulo'] and item.contentType == 'episode'):
-        tmdb.set_infoLabels(item, True)
-    elif (not item.infoLabels['tvdb_id'] and item.contentType == 'episode') or item.contentChannel == "videolibrary":
-        tmdb.set_infoLabels(item, True)
+    # Obtener la información actualizada del vídeo.  En una segunda lectura de TMDB da más información que en la primera
+    #if not item.infoLabels['tmdb_id'] or (not item.infoLabels['episodio_titulo'] and item.contentType == 'episode'):
+    #    tmdb.set_infoLabels(item, True)
+    #elif (not item.infoLabels['tvdb_id'] and item.contentType == 'episode') or item.contentChannel == "videolibrary":
+    #    tmdb.set_infoLabels(item, True)
+    tmdb.set_infoLabels(item, True)
     #Restauramos la información de max num. de episodios por temporada despues de TMDB
     try:
         if item.infoLabels['temporada_num_episodios']:
@@ -697,7 +700,7 @@ def post_tmdb_findvideos(item, itemlist):
             item.infoLabels['temporada_num_episodios'] = num_episodios
     except:
         pass
-    
+
     #Quitamos el la categoría o nombre del título, si lo tiene
     if item.contentTitle:
         item.contentTitle = re.sub(r' -%s-' % item.category, '', item.contentTitle)
@@ -721,6 +724,34 @@ def post_tmdb_findvideos(item, itemlist):
 
     if item.quality.lower() in ['gb', 'mb']:
         item.quality = item.quality.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b')
+
+    #busco "duration" en infoLabels
+    tiempo = 0
+    if item.infoLabels['duration']:
+        tiempo = item.infoLabels['duration']
+    
+    elif item.contentChannel == 'videolibrary':                                     #No hay, viene de la Videoteca? buscamos en la DB
+    #Leo de la BD de Kodi la duración de la película o episodio.  En "from_fields" se pueden poner las columnas que se quiera
+        nun_records = 0
+        if item.contentType == 'movie':
+            nun_records, records = get_field_from_kodi_DB(item, from_fields='c11')  #Leo de la BD de Kodi la duración de la película
+        else:
+            nun_records, records = get_field_from_kodi_DB(item, from_fields='c09')  #Leo de la BD de Kodi la duración del episodio
+        if nun_records > 0:                                                         #Hay registros?
+            #Es un array, busco el campo del registro: añadir en el FOR un fieldX por nueva columna
+            for strFileName, field1 in records: 
+                tiempo = field1
+    
+    try:                                                                                #calculamos el timepo en hh:mm
+        tiempo_final = int(tiempo)                                                      #lo convierto a int, pero puede se null
+        if tiempo_final > 0:                                                            #Si el tiempo está a 0, pasamos
+            if tiempo_final > 700:                                                      #Si está en segundos
+                tiempo_final = tiempo_final / 60                                        #Lo transformo a minutos
+            horas = tiempo_final / 60                                                   #Lo transformo a horas
+            resto = tiempo_final - (horas * 60)                                         #guardo el resto de minutos de la hora
+            item.quality += ' [%s:%s]' % (str(horas).zfill(2), str(resto).zfill(2))     #Lo agrego a Calidad del Servidor
+    except:
+        pass
         
     #Ajustamos el nombre de la categoría
     if item.channel != channel_py:
@@ -782,6 +813,78 @@ def post_tmdb_findvideos(item, itemlist):
     #logger.debug(item)
     
     return (item, itemlist)
+    
+
+def get_field_from_kodi_DB(item, from_fields='*', files='file'):
+    logger.info()
+    """
+        
+    Llamada para leer de la DB de Kodi los campos que se reciben de entrada (from_fields, por defecto "*") del vídeo señalado en Item
+    Obviamente esto solo funciona con Kodi y si la película o serie está catalogada en las Videotecas de Alfa y Kodi
+    Se puede pedir que la búdqueda se haga por archivos (defecto), o por carpeta (series)
+    
+    La llamada es:
+        nun_records, records = generictools.get_field_from_kodi_DB(item, from_fields='cXX[, cYY,...]'[, files = 'file|folder'])
+    
+    Devuelve el num de registros encontrados y los registros.  Es importante que el llamador verifique que "nun_records > 0" antes de tratar "records"
+    
+    """
+
+    FOLDER_MOVIES = config.get_setting("folder_movies")
+    FOLDER_TVSHOWS = config.get_setting("folder_tvshows")
+    VIDEOLIBRARY_PATH = config.get_videolibrary_config_path()
+    
+    if item.contentType == 'movie':                                     #Agrego la carpeta correspondiente al path de la Videoteca
+        path = filetools.join(VIDEOLIBRARY_PATH, FOLDER_MOVIES)
+    else:
+        path = filetools.join(VIDEOLIBRARY_PATH, FOLDER_TVSHOWS)
+
+    raiz, carpetas, ficheros = filetools.walk(path).next()              #listo las series o películas en la Videoteca
+    carpetas = [filetools.join(path, f) for f in carpetas]              #agrego la carpeta del contenido al path
+    for carpeta in carpetas:                                            #busco el contenido seleccionado en la lista de carpetas
+        if item.contentType == 'movie' and (item.contentTitle.lower() in carpeta or item.contentTitle in carpeta):   #Películas?
+            path = carpeta                                              #Almacenamos la carpeta en el path
+            break
+        elif item.contentType in ['tvshow', 'season', 'episode'] and (item.contentSerieName.lower() in carpeta or item.contentSerieName in carpeta):                                   #Series?
+            path = carpeta                                              #Almacenamos la carpeta en el path
+            break
+    
+    file_search = '%'                                                   #Por defecto busca todos los archivos de la carpeta
+    if files == 'file':                                                 #Si se ha pedido son un archivo (defecto), se busca
+        if item.contentType == 'episode':                               #Si es episodio, se pone el nombre, si no de deja %
+            file_search = '%sx%s.strm' % (item.contentSeason, str(item.contentEpisodeNumber).zfill(2))      #Nombre para episodios
+
+    if "\\" in path:                                                    #Ajustamos los / en función de la plataforma
+        path = path.replace("/", "\\")
+        path += "\\"                                                    #Terminamos el path con un /
+    else:
+        path += "/"
+
+    if FOLDER_TVSHOWS in path:                                          #Compruebo si es CINE o SERIE
+        contentType = "episode_view"                                    #Marco la tabla de BBDD de Kodi Video
+    else:
+        contentType = "movie_view"                                      #Marco la tabla de BBDD de Kodi Video
+    path1 = path.replace("\\\\", "\\")                                  #para la SQL solo necesito la carpeta
+    path2 = path.replace("\\", "/")                                     #Formato no Windows
+
+    #Ejecutmos la sentencia SQL
+    if not from_fields:
+        from_fields = '*'
+    else:
+        from_fields = 'strFileName, %s' % from_fields                       #al menos dos campos, porque uno solo genera cosas raras
+    sql = 'select %s from %s where (strPath like "%s" or strPath like "%s") and strFileName like "%s"' % (from_fields, contentType, path1, path2, file_search)
+    nun_records = 0
+    records = None
+    try:
+        if config.is_xbmc():
+            from platformcode import xbmc_videolibrary
+            nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql)      #ejecución de la SQL
+            if nun_records == 0:                                                #hay error?
+                logger.error("Error en la SQL: " + sql + ": 0 registros")       #No estará catalogada o hay un error en el SQL
+    except:
+        pass
+             
+    return (nun_records, records)
     
     
 def fail_over_newpct1(item, patron, patron2=None, timeout=None):
@@ -953,11 +1056,16 @@ def web_intervenida(item, data, desactivar=True):
     """
     
     intervencion = ()
-    
-    if intervenido_policia in data or intervenido_guardia in data:      #Verificamos que sea una intervención judicial
-        judicial = 'intervenido_gc.png'                                 #Por defecto thumb de la Benemérita
+    judicial = ''
+
+    #Verificamos que sea una intervención judicial
+    if intervenido_policia in data or intervenido_guardia in data or intervenido_sucuri in data:
+        if intervenido_guardia in data:
+            judicial = 'intervenido_gc.png'                             #thumb de la Benemérita
         if intervenido_policia in data:
             judicial = 'intervenido_pn.jpeg'                            #thumb de la Policia Nacional
+        if intervenido_sucuri in data:
+            judicial = 'intervenido_sucuri.png'                         #thumb de Sucuri
         category = item.category
         if not item.category:
             category = item.channel
@@ -966,7 +1074,7 @@ def web_intervenida(item, data, desactivar=True):
             item.intervencion = []                                      #Si no existe el array, lo creamos
         item.intervencion += [intervencion]                             #Añadimos esta intervención al array
         
-        logger.error("ERROR 99: " + category + ": " + intervenido_judicial + ": " + item.url + ": DESACTIVADO=" + str(desactivar) + " / DATA: " + data)
+        logger.error("ERROR 99: " + category + ": " + judicial + ": " + item.url + ": DESACTIVADO=" + str(desactivar) + " / DATA: " + data)
         
         if desactivar == False:                                         #Si no queremos desactivar el canal, nos vamos
             return item
@@ -979,7 +1087,7 @@ def web_intervenida(item, data, desactivar=True):
         if item.channel == channel_py:                                  #Si es un clone de Newpct1, lo desactivamos
             for settings in json_data['settings']:                      #Se recorren todos los settings
                 if settings['id'] == "clonenewpct1_channels_list":      #Encontramos en setting
-                    action_excluded = scrapertools.find_single_match(settings['default'], "\('\d', '%s', '[^']+', '[^']*', '([^']*)'\)" % item.category.lower())                #extraemos el valor de action_excluded
+                    action_excluded = scrapertools.find_single_match(settings['default'], "\('\d', '%s', '[^']+', '[^']*', '([^']*)'\)" % item.category.lower())               #extraemos el valor de action_excluded
                     if action_excluded:
                         if "intervenido" not in action_excluded:
                             action_excluded += ', %s' % judicial        #Agregamos el thumb de la autoridad judicial
@@ -991,11 +1099,13 @@ def web_intervenida(item, data, desactivar=True):
 
                     break
         else:
-            json_data['active'] = False                                 #Se desactiva el canal
+            #json_data['active'] = False                                 #Se desactiva el canal
             json_data['thumbnail'] = ', thumb_%s' % judicial            #Guardamos el thumb de la autoridad judicial
 
         #Guardamos los cambios hechos en el .json
         try:
+            if item.channel != channel_py:
+                disabled = config.set_setting('enabled', False, item.channel)
             channel_path = filetools.join(config.get_runtime_path(), "channels", item.channel + ".json")
             with open(channel_path, 'w') as outfile:                        #Grabamos el .json actualizado
                 json.dump(json_data, outfile, sort_keys = True, indent = 2, ensure_ascii = False)
@@ -1007,7 +1117,7 @@ def web_intervenida(item, data, desactivar=True):
     return item
 
     
-def redirect_clone_newpct1(item, head_nfo=None, it=None, overwrite=False, path=False):
+def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=False, lookup=False):
     logger.info()
     
     """
@@ -1043,7 +1153,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, overwrite=False, path=F
                             - no:       no acción para videolibrary_service, solo redirige en visionado de videolibrary
         ejemplo: ('1', 'mejortorrent', 'mejortorrent1', 'http://www.mejortorrent.com/', 'https://mejortorrent1.com/', 'auto')
     
-    La llamada recibe el parámetro Item, el .nfo y los devuleve actualizados, así como opcionalmente el parámetro "overwrite· que puede forzar la reescritura de todos los archivos de la serie, y el parámetro "path" si viene de videolibrary_service
+    La llamada recibe el parámetro Item, el .nfo y los devuleve actualizados, así como opcionalmente el parámetro "overwrite· que puede forzar la reescritura de todos los archivos de la serie, y el parámetro "path" si viene de videolibrary_service.  Por último, recibe opcionalmente el parámetro "lookup" si se quiere solo averigurar si habrá migración para ese título, pero sin realizarla.
     
     """
     if not it:
@@ -1060,7 +1170,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, overwrite=False, path=F
         if settings['id'] == "clonenewpct1_channels_list":                  #Encontramos en setting
             fail_over_list = settings['default']                            #Carga lista de clones
         if settings['id'] == "intervenidos_channels_list":                  #Encontramos en setting
-            intervencion = settings['default']                         #Carga lista de clones y canales intervenidos
+            intervencion = settings['default']                              #Carga lista de clones y canales intervenidos
 
     #primero tratamos los clones de Newpct1
     channel_alt = item.channel                                              #Salvamos en nombre del canal o clone
@@ -1069,16 +1179,28 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, overwrite=False, path=F
         item.channel = channel_py
       
     #Ahora tratamos las webs intervenidas, tranformamos la url, el nfo y borramos los archivos obsoletos de la serie
-    if channel not in intervencion:                                         #Hacemos una lookup para ver si...
+    if channel not in intervencion and channel_alt != 'videolibrary':       #Hacemos una lookup para ver si...
         return (item, it, overwrite)                                        #... el canal/clone está listado
 
     import ast
     intervencion_list = ast.literal_eval(intervencion)                      #Convertir a Array el string
     #logger.debug(intervencion_list)
-    if item.channel != channel_py:
-        channel_enabled = channeltools.is_enabled(item.channel)             #Verificamos que el canal esté inactivo   
+    
+    if lookup == True:
+        overwrite = False                                                   #Solo avisamos si hay cambios
     for activo, canal_org, canal_des, url_org, url_des, patron1, patron2, patron3, patron4, patron5, content_inc, content_exc, ow_force in intervencion_list:
-        if activo == '1' and canal_org == channel_alt:                      #Es esta nuestra entrada?
+        if activo == '1' and (canal_org == channel_alt or channel_alt == 'videolibrary'):     #Es esta nuestra entrada?
+            if channel_alt == 'videolibrary':                               #Viene de videolibrary.list_movies
+                for canal_vid, url_vid in item.library_urls.items():
+                    if canal_org != canal_vid:                      #Miramos si canal_org de la regla está en item.library_urls
+                        continue
+                    else:
+                        channel_alt = canal_org                             #Sí, ponermos el nombre del canal de origen
+                        channel_b = "'%s'" % canal_org
+                        if channel_b in fail_over_list:                     #Si es un clone de Newpct1, se actualiza a newpct1
+                            channel_alt = channel_py
+                if channel_alt == 'videolibrary':
+                    continue
             if item.contentType == "list":                                  #Si viene de Videolibrary, le cambiamos ya el canal
                 if item.channel != channel_py:
                     item.channel = canal_des                                #Cambiamos el canal.  Si es clone, lo hace el canal
@@ -1087,60 +1209,110 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, overwrite=False, path=F
                 continue
             if item.contentType in content_exc:                             #Está el contenido excluido?
                 continue
-            if channel_enabled and canal_org != canal_des:                  #Si el canal está activo, puede ser solo...
+            if item.channel != channel_py:
+                channel_enabled = channeltools.is_enabled(channel_alt)      #Verificamos que el canal esté inactivo
+                channel_enabled_alt = config.get_setting('enabled', channel_alt)
+                channel_enabled = channel_enabled * channel_enabled_alt     #Si está inactivo en algún sitio, tomamos eso
+            if channel_enabled == 1 and canal_org != canal_des:             #Si el canal está activo, puede ser solo...
                 continue                                                    #... una intervención que afecte solo a una región
-            if ow_force == 'no' and path != False:                          #Queremos que el canal solo visualice sin migración?
-                continue                                                    #Salimos sin tocas archivos
-            item.url = item.url.replace(url_org, url_des)                   #reemplzamos una parte de url
+            if ow_force == 'no' and it.library_urls:                        #Esta regla solo vale para findvideos...
+                continue                                                    #... salidmos si estamos actualizando
+            if lookup == True:                                              #Queremos que el canal solo visualice sin migración?
+                if ow_force != 'no':
+                    overwrite = True                                        #Avisamos que hay cambios
+                continue                                                    #Salimos sin tocar archivos
+            url_total = ''
+            if item.url:
+                url_total = item.url
+            elif not item.url and item.library_urls:
+                url_total = item.library_urls[canal_org]
+            url_total = url_total.replace(url_org, url_des)                 #reemplazamos una parte de url
+            url = ''
             if patron1:                                                     #Hay expresión regex?
-                url = scrapertools.find_single_match(item.url, patron1)     #La aplicamos a url
+                url += scrapertools.find_single_match(url_total, patron1)   #La aplicamos a url
             if patron2:                                                     #Hay más expresión regex?
-                url += scrapertools.find_single_match(item.url, patron2)    #La aplicamos a url
+                url += scrapertools.find_single_match(url_total, patron2)   #La aplicamos a url
             if patron3:                                                     #Hay más expresión regex?
-                url += scrapertools.find_single_match(item.url, patron3)    #La aplicamos a url
+                url += scrapertools.find_single_match(url_total, patron3)   #La aplicamos a url
             if patron4:                                                     #Hay más expresión regex?
-                url += scrapertools.find_single_match(item.url, patron4)    #La aplicamos a url
+                url += scrapertools.find_single_match(url_total, patron4)   #La aplicamos a url
             if patron5:                                                     #Hay más expresión regex?
-                url += scrapertools.find_single_match(item.url, patron5)    #La aplicamos a url
-            item.url = url                                                  #Guardamos la suma de los resultados intermedios
+                url += scrapertools.find_single_match(url_total, patron5)   #La aplicamos a url
+            if url:
+                url_total = url                                             #Guardamos la suma de los resultados intermedios
             update_stat += 1                                                #Ya hemos actualizado algo
+            canal_org_def = canal_org
+            canal_des_def = canal_des
+            ow_force_def = ow_force
             
     if update_stat > 0:                                                 #Ha habido alguna actualización?  Entonces salvamos
-        if item.channel == channel_py:                                  #Si es Newpct1...
+        if item.channel == channel_py or channel in fail_over_list:     #Si es Newpct1...
             if item.contentType == "tvshow":
-                item.url = re.sub(r'\/\d+\/?$', '', item.url)           #parece que con el título  ecuentra la serie, normalmente...
-        if it.url:
-            it.url = item.url                                           #reemplazamos una parte de url en .nfo, aunque no suele haberla
+                url_total = re.sub(r'\/\d+\/?$', '', url_total)         #parece que con el título  ecuentra la serie, normalmente...
+        if item.url:
+            item.url = url_total                                        #Salvamos la url convertida
         if item.library_urls:
-            item.library_urls.pop(canal_org, None)
-            item.library_urls = {canal_des: item.url}
+            item.library_urls.pop(canal_org_def, None)
+            item.library_urls = {canal_des_def: url_total}
             it.library_urls = item.library_urls
-        if item.channel != channel_py:
-            item.channel = canal_des                                    #Cambiamos el canal.  Si es clone, lo hace el canal
+        if item.channel != channel_py and item.channel != 'videolibrary':
+            item.channel = canal_des_def                                #Cambiamos el canal.  Si es clone, lo hace el canal
             if channel_alt == item.category.lower():                    #Actualizamos la Categoría y si la tenía
                 item.category = item.channel.capitalize()
-        if ow_force == 'force':                                         #Queremos que el canal revise la serie entera?
-            item.ow_force = "1"                                         #Se lo decimos
-        if ow_force in ['force', 'auto']:                               #Sobreescribir la series?
-            overwrite = ow_force_param                                  #Sí, lo marcamos
+        if ow_force_def == 'force' and item.contentType != "movie":     #Queremos que el canal revise la serie entera?
+            item.ow_force = '1'                                         #Se lo decimos
+        if ow_force_def in ['force', 'auto']:                           #Sobreescribir la series?
+            overwrite = True                                            #Sí, lo marcamos
 
-
-        if item.contentType in ['tvshow', 'season'] and it.library_urls:
-            if path == False:
-                TVSHOWS_PATH = item.path
-            else:
-                TVSHOWS_PATH = path
+        #logger.debug(canal_org_def + canal_des_def + ow_force_def)
+        if it.library_urls and path != False and ow_force_def != 'no':      #Continuamos si hay .nfo, path, y queremos actualizarlo
+            if item.update_next:
+                del item.update_next                                        #Borramos estos campos para forzar la actualización ya
+            if it.update_next:
+                del it.update_next
         
             # Listamos todos los ficheros de la serie, asi evitamos tener que comprobar si existe uno por uno
-            raiz, carpetas_series, ficheros = filetools.walk(TVSHOWS_PATH).next()
-            ficheros = [filetools.join(TVSHOWS_PATH, f) for f in ficheros]          #Almacenamos la lista de archivos de la carpeta
-            canal_erase = '[%s]' % canal_org
+            raiz, carpetas_series, ficheros = filetools.walk(path).next()
+            ficheros = [filetools.join(path, f) for f in ficheros]          #Almacenamos la lista de archivos de la carpeta
+            canal_erase = '[%s]' % canal_org_def
             for archivo in ficheros:
-                if canal_erase in archivo:                                          #Borramos los .json que sean del canal intervenido
+                if canal_erase in archivo:                                  #Borramos los .json que sean del canal intervenido
+                    json_path = archivo.replace(canal_org_def, canal_des_def)   #Salvamos el path del .json para luego crearlo
                     filetools.remove(archivo)
-                if "tvshow.nfo" in archivo:
-                    filetools.write(archivo, head_nfo + it.tojson())                #escribo el .nfo por si aborta update
+                if item.contentType == "movie" and ".nfo" in archivo:
+                    filetools.write(archivo, head_nfo + it.tojson())        #escribo el .nfo de la peli por si aborta update
+                if item.contentType != "movie" and "tvshow.nfo" in archivo:
+                    filetools.write(archivo, head_nfo + it.tojson())        #escribo el tvshow.nfo por si aborta update
+            
+            #Aquí convertimos las películas.  Después de borrado el .json, dejamos que videolibrarytools lo regenere
+            if item.contentType == "movie":                                 #Dejamos que regenere el archivo .json
+                item_movie = item.clone()
+                item_movie.channel = canal_des_def                          #mombre del canal migrado
+                del item_movie.library_playcounts                           #Borramos lo que no es necesario en el .json
+                del item_movie.library_urls
+                item_movie.url = url_total                                  #url migrada
+                del item_movie.nfo
+                del item_movie.path
+                del item_movie.strm_path
+                del item_movie.text_color
+                filetools.write(json_path, item_movie.tojson())             #Salvamos el nuevo .json de la película
 
-    #logger.debug(item)
+    if update_stat > 0 and path != False and ow_force_def != 'no':
+        logger.debug(item)
     
     return (item, it, overwrite)
+    
+
+def dejuice(data):
+    logger.info()
+    # Metodo para desobfuscar datos de JuicyCodes
+    
+    import base64
+    from lib import jsunpack
+
+    juiced = scrapertools.find_single_match(data, 'JuicyCodes.Run\((.*?)\);')
+    b64_data = juiced.replace('+', '').replace('"', '')
+    b64_decode = base64.b64decode(b64_data)
+    dejuiced = jsunpack.unpack(b64_decode)
+
+    return dejuiced
