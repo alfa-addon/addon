@@ -1,7 +1,7 @@
 {
   "id": "seriesverde",
   "name": "SeriesVerde",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://s33.postimg.cc/96dhv4trj/seriesverde.png",
