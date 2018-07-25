@@ -319,12 +319,95 @@ def mark_season_as_watched_on_kodi(item, value=1):
     item_path2 = item_path1.replace("\\", "/")
 
     sql = 'update files set playCount= %s where idFile  in ' \
-          '(select idfile from episode_view where strPath like "%s" or strPath like "%s"%s)' % \
+          '(select idfile from episode_view where (strPath like "%s" or strPath like "%s")%s)' % \
           (value, item_path1, item_path2, request_season)
 
     execute_sql_kodi(sql)
 
 
+def mark_content_as_watched_on_alfa(path):
+    from channels import videolibrary
+    from core import videolibrarytools
+    from core import scrapertools
+    import re
+    """
+        marca toda la serie o película como vista o no vista en la Videoteca de Alfa basado en su estado en la Videoteca de Kodi
+        @type str: path
+        @param path: carpeta de contenido a marcar
+        """
+    logger.info()
+    #logger.debug("path: " + path)
+    
+    FOLDER_MOVIES = config.get_setting("folder_movies")
+    FOLDER_TVSHOWS = config.get_setting("folder_tvshows")
+    VIDEOLIBRARY_PATH = config.get_videolibrary_config_path()
+
+    # Solo podemos marcar el contenido como vista en la BBDD de Kodi si la BBDD es local,
+    # en caso de compartir BBDD esta funcionalidad no funcionara
+    #if config.get_setting("db_mode", "videolibrary"):
+    #    return
+    
+    path2 = ''
+    if "special://" in VIDEOLIBRARY_PATH:
+        if FOLDER_TVSHOWS in path:
+            path2 = re. sub(r'.*?%s' % FOLDER_TVSHOWS, VIDEOLIBRARY_PATH + "/" + FOLDER_TVSHOWS, path).replace("\\", "/")
+        if FOLDER_MOVIES in path:
+            path2 = re. sub(r'.*?%s' % FOLDER_MOVIES, VIDEOLIBRARY_PATH + "/" + FOLDER_MOVIES, path).replace("\\", "/")
+
+    if "\\" in path:
+        path = path.replace("/", "\\")
+    head_nfo, item = videolibrarytools.read_nfo(path)                   #Leo el .nfo del contenido
+
+    if FOLDER_TVSHOWS in path:                                          #Compruebo si es CINE o SERIE
+        contentType = "episode_view"                                    #Marco la tabla de BBDD de Kodi Video
+        nfo_name = "tvshow.nfo"                                         #Construyo el nombre del .nfo
+        path1 = path.replace("\\\\", "\\").replace(nfo_name, '')        #para la SQL solo necesito la carpeta
+        if not path2:
+            path2 = path1.replace("\\", "/")                            #Formato no Windows
+        else:
+            path2 = path2.replace(nfo_name, '')
+        
+    else:
+        contentType = "movie_view"                                      #Marco la tabla de BBDD de Kodi Video
+        path1 = path.replace("\\\\", "\\")                              #Formato Windows
+        if not path2:
+            path2 = path1.replace("\\", "/")                            #Formato no Windows
+        nfo_name = scrapertools.find_single_match(path2, '\]\/(.*?)$')  #Construyo el nombre del .nfo
+        path1 = path1.replace(nfo_name, '')                             #para la SQL solo necesito la carpeta
+        path2 = path2.replace(nfo_name, '')                             #para la SQL solo necesito la carpeta
+
+    #Ejecutmos la sentencia SQL
+    sql = 'select strFileName, playCount from %s where (strPath like "%s" or strPath like "%s")' % (contentType, path1, path2)
+    nun_records = 0
+    records = None
+    nun_records, records = execute_sql_kodi(sql)                        #ejecución de la SQL
+    if nun_records == 0:                                                #hay error?
+        logger.error("Error en la SQL: " + sql + ": 0 registros")
+        return                                                          #salimos: o no está catalogado en Kodi, o hay un error en la SQL
+    
+    for title, playCount in records:                                    #Ahora recorremos todos los registros obtenidos
+        if contentType == "episode_view":
+            title_plain = title.replace('.strm', '')                    #Si es Serie, quitamos el sufijo .strm
+        else:
+            title_plain = scrapertools.find_single_match(item.strm_path, '.(.*?\s\[.*?\])') #si es peli, quitamos el título
+        if playCount is None or playCount == 0:                         #todavía no se ha visto, lo ponemos a 0
+            playCount_final = 0
+        elif playCount >= 1:
+            playCount_final = 1
+        title_plain = title_plain.decode("utf-8").encode("utf-8")       #Hacemos esto porque si no genera esto: u'title_plain'
+        item.library_playcounts.update({title_plain: playCount_final})  #actualizamos el playCount del .nfo
+
+    if item.infoLabels['mediatype'] == "tvshow":                        #Actualizamos los playCounts de temporadas y Serie
+        for season in item.library_playcounts:
+            if "season" in season:                                      #buscamos las etiquetas "season" dentro de playCounts
+                season_num = int(scrapertools.find_single_match(season, 'season (\d+)'))    #salvamos el núm, de Temporada
+                item = videolibrary.check_season_playcount(item, season_num)    #llamamos al método que actualiza Temps. y Series
+
+    filetools.write(path, head_nfo + item.tojson())
+    
+    #logger.debug(item)
+    
+    
 def get_data(payload):
     """
     obtiene la información de la llamada JSON-RPC con la información pasada en payload

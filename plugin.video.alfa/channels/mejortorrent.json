@@ -1,18 +1,17 @@
 {
-  "active": true, 
-  "adult": false, 
-  "banner": "mejortorrent.png", 
+  "id": "mejortorrent",
+  "name": "Mejor Torrent",
+  "active": true,
+  "adult": false,
+  "language": ["*"],
+  "thumbnail": "thumb_intervenido_pn.jpeg",
+  "banner": "mejortorrent.png",
   "categories": [
-    "torrent", 
-    "movie", 
-    "tvshow", 
+    "torrent",
+    "movie",
+    "tvshow",
     "documentary"
-  ], 
-  "id": "mejortorrent", 
-  "language": [
-    "*"
-  ], 
-  "name": "Mejor Torrent", 
+  ],
   "settings": [
     {
       "default": "http://www.mejortorrent.com/", 
@@ -62,6 +61,5 @@
       "type": "bool", 
       "visible": true
     }
-  ], 
-  "thumbnail": ", thumb_intervenido_pn.jpeg"
+  ]
 }
