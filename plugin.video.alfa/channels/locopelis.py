@@ -2,15 +2,21 @@
 
 import re
 import urlparse
+import urllib
 
 from channels import autoplay
 from channels import filtertools
 from core import httptools
 from core import scrapertools
+from core import servertools
+from core import jsontools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
+
+
+
 IDIOMAS = {'Latino': 'Latino', 'Español': 'Español', 'Sub español': 'VOS'}
 list_language = IDIOMAS.values()
 list_quality = []
@@ -18,11 +24,17 @@ list_servers = [
     'openload',
 ]
 
-host = 'http://www.locopelis.com/'
+host = 'https://www.locopelis.com/'
 
 audio = {'Latino': '[COLOR limegreen]LATINO[/COLOR]', 'Español': '[COLOR yellow]ESPAÑOL[/COLOR]',
          'Sub Español': '[COLOR red]SUB ESPAÑOL[/COLOR]'}
 
+
+def get_source(url):
+    logger.info()
+    data = httptools.downloadpage(url).data
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    return data
 
 def mainlist(item):
     logger.info()
@@ -127,8 +139,6 @@ def todas(item):
         idioma = scrapertools.decodeHtmlentities(idioma_id)
         # if idioma == 'Espa&ntilde;ol':
         #    idioma ='Español'
-        logger.debug('idioma original: %s' % idioma_id)
-        logger.debug('idioma: %s' % idioma)
         if idioma in audio:
             idioma = audio[idioma]
 
@@ -338,24 +348,27 @@ def search(item, texto):
         return []
 
 
+def get_link(data):
+    new_url = scrapertools.find_single_match(data, '(?:IFRAME|iframe) src=(.*?) scrolling')
+    return new_url
+
 def findvideos(item):
     logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
 
-    from core import servertools
-    itemlist.extend(servertools.find_video_items(data=data))
-    if item.language == 'Espa&ntilde;ol':
-        item.language == 'Español'
-    for videoitem in itemlist:
-        videoitem.language = IDIOMAS[item.language]
-        videoitem.title = item.contentTitle + ' (' + videoitem.server + ') (' + videoitem.language + ')'
-        videoitem.channel = item.channel
-        videoitem.folder = False
-        videoitem.extra = item.thumbnail
-        videoitem.fulltitle = item.title
-        videoitem.quality = 'default'
-        videoitem.infoLabels = item.infoLabels
+    itemlist = []
+    new_url = get_link(get_source(item.url))
+    new_url = get_link(get_source(new_url))
+    video_id = scrapertools.find_single_match(new_url, 'http.*?h=(\w+)')
+    new_url = '%s%s' % (host, 'playeropstream/api.php')
+    post = {'h': video_id}
+    post = urllib.urlencode(post)
+    data = httptools.downloadpage(new_url, post=post).data
+    json_data = jsontools.load(data)
+    url = json_data['url']
+    server = servertools.get_server_from_url(url)
+    title = '%s [%s]' % (server, item.language)
+    itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language=item.language,
+                         server=server, infoLabels=item.infoLabels))
 
     # Requerido para FilterTools
 

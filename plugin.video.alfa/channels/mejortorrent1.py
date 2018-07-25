@@ -515,6 +515,7 @@ def listado_busqueda(item):
     while cnt_title <= cnt_tot and cnt_next < 5:
         
         status = False      # Calidad de los datos leídos
+        data = ''
         try:
             data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(url_next_page, post=item.post).data)
             data = re.sub('\r\n', '', data).decode('utf8').encode('utf8')
@@ -851,10 +852,14 @@ def episodios(item):
         tmdb.set_infoLabels(item, True)
 
     # Carga la página
+    data = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
         data = data.replace('"', "'")
     except:                                                                             #Algún error de proceso, salimos
+        pass
+        
+    if not data:
         logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea" + item.url)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
         return itemlist

@@ -194,7 +194,7 @@ def filterchannels(category, view="thumb_"):
         if view == "banner_" and "banner" in channel_parameters:
             channel_parameters["thumbnail"] = channel_parameters["banner"]
 
-        channelslist.insert(0, Item(title="Tengo una URL", action="mainlist", channel="url",
+        channelslist.insert(0, Item(title=config.get_localized_string(60088), action="mainlist", channel="url",
                                     thumbnail=channel_parameters["thumbnail"], type="generic", viewmode="list"))
 
     return channelslist

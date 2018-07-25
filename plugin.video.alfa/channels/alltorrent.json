@@ -4,7 +4,8 @@
   "active": true,
   "adult": false,
   "language": ["cast"],
-  "thumbnail": "http://imgur.com/sLaXHvp.png",
+  "thumbnail": "altorrent.png",
+  "fanart": "altorrent.jpg",
   "categories": [
     "torrent",
     "movie"
@@ -22,7 +23,7 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },
