@@ -61,10 +61,12 @@ def listado(item):
     except:
         pass
     
-    if not data:        #Si la web está caída salimos sin dar error
+    if not data and item.extra != "año":        #Si la web está caída salimos sin dar error
         logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+    elif not data and item.extra == "año":      #cuando no hay datos para un año, da error.  Tratamos de evitar el error
+        return itemlist
     
     patron = '<div class="browse-movie-wrap col-xs-10 col-sm-4 col-md-5 col-lg-4"><a href="([^"]+)".*?src="([^"]+)".*?alt="([^"]+)".*?rel="tag">([^"]+)<\/a>\s?<\/div><div class="[^"]+">(.*?)<\/div><\/div><\/div>'
     #data = scrapertools.find_single_match(data, patron)
@@ -283,6 +285,7 @@ def newest(categoria):
         if categoria == 'torrent':
             item.url = host
             item.extra = "peliculas"
+            item.channel = "alltorrents"
 
             itemlist = listado(item)
             if itemlist[-1].title == "Página siguiente >>":
