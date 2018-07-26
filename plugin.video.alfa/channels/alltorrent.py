@@ -224,6 +224,7 @@ def findvideos(item):
     #Ahora tratamos el servidor directo
     item_local = item.clone()
     servidor = 'openload'
+    item_local.quality = ''
     if item.infoLabels['duration']:
         item_local.quality = scrapertools.find_single_match(item.quality, '(\s\[.*?\])')            #Copiamos la duración
     enlace = scrapertools.find_single_match(data, 'button-green-download-big".*?href="([^"]+)"><span class="icon-play">')
