@@ -3820,3 +3820,41 @@ msgstr "Buscando en %s"
 msgctxt "#70283"
 msgid "movie"
 msgstr "pelicula"
+
+msgctxt "#70284"
+msgid "%.2f%% of %.1fMB %s | %.1f kB/s"
+msgstr "%.2f%% de %.1fMB %s | %.1f kB/s"
+
+msgctxt "#70285"
+msgid "Configure News"
+msgstr "Configurar Novedades"
+
+msgctxt "#70286"
+msgid "Configure Search"
+msgstr "Configurar Buscador"
+
+msgctxt "#70286"
+msgid "Configure Search"
+msgstr "Configurar Buscador"
+
+msgctxt "#70287"
+msgid "Configure VideoLibrary"
+msgstr "Configurar Videoteca"
+
+msgctxt "#70288"
+msgid "Configure Downloads"
+msgstr "Configurar Descargas"
+
+msgctxt "#70289"
+msgid "Alfa\nCorrected an error in the adult section, the password has been reset to "
+msgstr "Alfa\nCorregido un error en la seccion adultos, se ha reseteado la contrasena a por "
+
+msgctxt "#70290"
+msgid "default, you will have to change it again if you want.\ n Type 's', if you have understood it: "
+msgstr "defecto, tendra que cambiarla de nuevo si lo desea.\n Escriba 's', si lo ha entendido: "
+
+msgctxt "#70291"
+msgid "Error, during conversion"
+msgstr "Error, en conversión"
+
+

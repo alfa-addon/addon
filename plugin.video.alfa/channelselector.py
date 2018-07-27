@@ -17,7 +17,7 @@ def getmainlist(view="thumb_"):
     itemlist.append(Item(title=config.get_localized_string(30130), channel="news", action="mainlist",
                          thumbnail=get_thumb("news.png", view),
                          category=config.get_localized_string(30119), viewmode="thumbnails",
-                         context=[{"title": "Configurar Novedades", "channel": "news", "action": "menu_opciones",
+                         context=[{"title": config.get_localized_string(70285), "channel": "news", "action": "menu_opciones",
                                    "goto": True}]))
 
     itemlist.append(Item(title=config.get_localized_string(30118), channel="channelselector", action="getchanneltypes",
@@ -27,7 +27,7 @@ def getmainlist(view="thumb_"):
     itemlist.append(Item(title=config.get_localized_string(30103), channel="search", action="mainlist",
                          thumbnail=get_thumb("search.png", view),
                          category=config.get_localized_string(30119), viewmode="list",
-                         context=[{"title": "Configurar Buscador", "channel": "search", "action": "opciones",
+                         context=[{"title": config.get_localized_string(70286), "channel": "search", "action": "opciones",
                                    "goto": True}]))
 
     itemlist.append(Item(title=config.get_localized_string(30102), channel="favorites", action="mainlist",
@@ -38,12 +38,12 @@ def getmainlist(view="thumb_"):
         itemlist.append(Item(title=config.get_localized_string(30131), channel="videolibrary", action="mainlist",
                              thumbnail=get_thumb("videolibrary.png", view),
                              category=config.get_localized_string(30119), viewmode="thumbnails",
-                             context=[{"title": "Configurar Videoteca", "channel": "videolibrary",
+                             context=[{"title": config.get_localized_string(70287), "channel": "videolibrary",
                                        "action": "channel_config"}]))
 
     itemlist.append(Item(title=config.get_localized_string(30101), channel="downloads", action="mainlist",
                          thumbnail=get_thumb("downloads.png", view), viewmode="list",
-                         context=[{"title": "Configurar Descargas", "channel": "setting", "config": "downloads",
+                         context=[{"title": config.get_localized_string(70288), "channel": "setting", "config": "downloads",
                                    "action": "channel_config"}]))
 
     thumb_setting = "setting_%s.png" % 0  # config.get_setting("plugin_updates_available")
