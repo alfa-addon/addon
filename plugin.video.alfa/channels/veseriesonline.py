@@ -183,50 +183,56 @@ def findvideos(item):
 
     # listado de opciones links_url
 
-    data = get_source(links_url)
-    patron = 'content ><h2>(.*?)</h2>.*?class=video.*?src=(.*?) scrolling'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    try:
+        data = get_source(links_url)
+        patron = 'content ><h2>(.*?)</h2>.*?class=video.*?src=(.*?) scrolling'
+        matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for lang_data, scrapedurl in matches:
-        if 'Latino' in lang_data:
-            language = 'Lat'
-        elif 'Español' in lang_data:
-            language = 'Cast'
-        else:
-            language = 'VOSE'
-        hidden_url = scrapedurl.replace('/i/', '/r/')
-        data = get_source(hidden_url)
-        url = scrapertools.find_single_match(data, ':url content=(.*?)>')
-        title = '%s '+ '[%s]' % language
-        if url != '':
-            itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language=language,
-                                 infoLabels=item.infoLabels))
+        for lang_data, scrapedurl in matches:
+            if 'Latino' in lang_data:
+                language = 'Lat'
+            elif 'Español' in lang_data:
+                language = 'Cast'
+            else:
+                language = 'VOSE'
+            hidden_url = scrapedurl.replace('/i/', '/r/')
+            data = get_source(hidden_url)
+            url = scrapertools.find_single_match(data, ':url content=(.*?)>')
+            title = '%s '+ '[%s]' % language
+            if url != '':
+                itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language=language,
+                                     infoLabels=item.infoLabels))
+    except:
+        pass
 
     # listado de enlaces online_url
-    data = get_source(online_url)
-    patron = '<i class=lang-(.*?)>.*?href=(.*?) '
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
-    for lang_data, scrapedurl in matches:
-        if 'lat' in lang_data:
-            language = 'Lat'
-        elif 'spa' in lang_data:
-            language = 'Cast'
-        elif 'eng' in lang_data:
-            language = 'VOSE'
-        else:
-            language = 'VO'
-        video_id = scrapertools.find_single_match(scrapedurl, 'index.php/(\d+)/')
-        new_url = '%s%s%s%s' % (host, 'ext/index-include.php?id=', video_id, '&tipo=1')
-        data = get_source(new_url)
-        video_url = scrapertools.find_single_match(data, '<div class=container><a href=(.*?)>')
-        video_url = video_url.replace('enlace.php', 'r')
-        data = httptools.downloadpage(video_url, follow_redirects=False)
-        url = data.headers['location']
-        title = '%s '+ '[%s]' % language
-        if url != '':
-            itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language=language,
-                                 infoLabels=item.infoLabels))
+    try:
+        data = get_source(online_url)
+        patron = '<i class=lang-(.*?)>.*?href=(.*?) '
+        matches = re.compile(patron, re.DOTALL).findall(data)
+        scrapertools.printMatches(matches)
+        for lang_data, scrapedurl in matches:
+            if 'lat' in lang_data:
+                language = 'Lat'
+            elif 'spa' in lang_data:
+                language = 'Cast'
+            elif 'eng' in lang_data:
+                language = 'VOSE'
+            else:
+                language = 'VO'
+            video_id = scrapertools.find_single_match(scrapedurl, 'index.php/(\d+)/')
+            new_url = '%s%s%s%s' % (host, 'ext/index-include.php?id=', video_id, '&tipo=1')
+            data = get_source(new_url)
+            video_url = scrapertools.find_single_match(data, '<div class=container><a href=(.*?)>')
+            video_url = video_url.replace('enlace.php', 'r')
+            data = httptools.downloadpage(video_url, follow_redirects=False)
+            url = data.headers['location']
+            title = '%s '+ '[%s]' % language
+            if url != '':
+                itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language=language,
+                                     infoLabels=item.infoLabels))
+    except:
+        pass
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 

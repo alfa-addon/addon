@@ -27,33 +27,35 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="sub_menu", title="Buscar en canales", context=context,
                          thumbnail=get_thumb("search.png")))
 
-    itemlist.append(Item(channel=item.channel, action='genres_menu', title='Películas por Generos', type='movie'))
+    itemlist.append(Item(channel=item.channel, action='genres_menu', title='Películas por Generos', type='movie',
+                         thumbnail=get_thumb("genres.png")))
 
     itemlist.append (Item(channel=item.channel, action='discover_list', title='Películas mas populares',
-                          context=context,
-                          search_type='list', list_type='movie/popular'))
+                          context=context, search_type='list', list_type='movie/popular',
+                          thumbnail=get_thumb("popular.png")))
 
     itemlist.append(Item(channel=item.channel, action='discover_list', title='Películas mejor valoradas',
-                         context=context,
-                         search_type='list', list_type='movie/top_rated'))
+                         context=context, search_type='list', list_type='movie/top_rated',
+                         thumbnail=get_thumb("top_rated.png")))
 
     itemlist.append(
         Item(channel=item.channel, action='discover_list', title='Películas Ahora en cines', context=context,
-             search_type='list',
-             list_type='movie/now_playing'))
+             search_type='list', list_type='movie/now_playing',
+                         thumbnail=get_thumb("now_playing.png")))
 
-    itemlist.append(Item(channel=item.channel, action='genres_menu', title='Series por Generos', type='tv'))
+    itemlist.append(Item(channel=item.channel, action='genres_menu', title='Series por Generos', type='tv',
+                         thumbnail=get_thumb("genres.png")))
 
     itemlist.append(
         Item(channel=item.channel, action='discover_list', title='Series mas populares', context=context,
-             search_type='list',list_type='tv/popular'))
+             search_type='list',list_type='tv/popular', thumbnail=get_thumb("popular.png")))
 
     itemlist.append(Item(channel=item.channel, action='discover_list', title='Series en emisión', context=context,
-                         search_type='list', list_type='tv/on_the_air'))
+                         search_type='list', list_type='tv/on_the_air', thumbnail=get_thumb("on_the_air.png")))
 
 
     itemlist.append(Item(channel=item.channel, action='discover_list', title='Series mejor valoradas', context=context,
-                         search_type='list', list_type='tv/top_rated'))
+                         search_type='list', list_type='tv/top_rated', thumbnail=get_thumb("top_rated.png")))
 
 
 

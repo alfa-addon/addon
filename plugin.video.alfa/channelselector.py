@@ -196,6 +196,22 @@ def filterchannels(category, view="thumb_"):
 
         channelslist.insert(0, Item(title=config.get_localized_string(60088), action="mainlist", channel="url",
                                     thumbnail=channel_parameters["thumbnail"], type="generic", viewmode="list"))
+    if category in ['movie', 'tvshow']:
+        titles = ['Mas Populares', 'Mejor Valoradas', 'Ahora en cines', 'En Emision', 'Por Genero']
+        ids = ['popular', 'top_rated', 'now_playing', 'on_the_air']
+        for x in range(0,3):
+            if x == 2 and category != 'movie':
+                title=titles[x+1]
+                id = ids[x+1]
+            else:
+                title=titles[x]
+                id = ids[x]
+            channelslist.insert(x,
+                Item(channel='search', action='discover_list', title=title, search_type='list',
+                     list_type='%s/%s' % (category.replace('show',''), id), thumbnail=get_thumb(id+".png")))
+
+        channelslist.insert(3, Item(channel='search', action='genres_menu', title='Generos',
+                                    type=category.replace('show',''), thumbnail=get_thumb("genres.png")))
 
     return channelslist
 
