@@ -1039,6 +1039,11 @@ def play_torrent(item, xlistitem, mediaurl):
     # Plugins externos
     if seleccion > 1:
         mediaurl = urllib.quote_plus(item.url)
+        if "quasar" in torrent_options[seleccion][1] and item.infoLabels['tmdb_id']:    #Llamada con más parámetros para completar el título
+            if item.contentType == 'episode':
+                mediaurl += "&episode=%s&library=&season=%s&show=%s&tmdb=%s&type=episode" % (item.infoLabels['episode'], item.infoLabels['season'], item.infoLabels['tmdb_id'], item.infoLabels['tmdb_id'])
+            else:
+                mediaurl += "&library=&tmdb=%s&type=movie" % (item.infoLabels['tmdb_id'])
         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
         
         if "quasar" in torrent_options[seleccion][1]:                   #Seleccionamos que clientes torrent soportamos
