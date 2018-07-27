@@ -536,6 +536,32 @@ def completar_codigos(item):
             item.infoLabels['url_scraper'].append(url_scraper)
 
 
+def discovery(item):
+    from core.item import Item
+    from platformcode import unify
+
+    if item.search_type == 'discover':
+        listado = Tmdb(discover={'url':'discover/%s' % item.type, 'with_genres':item.list_type, 'language':'es',
+                                 'page':item.page})
+
+    elif item.search_type == 'list':
+        if item.page == '':
+            item.page = '1'
+        listado = Tmdb(list={'url': item.list_type, 'language':'es', 'page':item.page})
+
+    logger.debug(listado.get_list_resultados())
+    result = listado.get_list_resultados()
+
+    return result
+
+def get_genres(type):
+    lang = 'es'
+    genres = Tmdb(tipo=type)
+
+    return genres.dic_generos[lang]
+
+
+
 # Clase auxiliar
 class ResultDictDefault(dict):
     # Python 2.4
@@ -762,6 +788,7 @@ class Tmdb(object):
         self.busqueda_year = kwargs.get('year', '')
         self.busqueda_filtro = kwargs.get('filtro', {})
         self.discover = kwargs.get('discover', {})
+        self.list = kwargs.get('list', {})
 
         # Reellenar diccionario de generos si es necesario
         if (self.busqueda_tipo == 'movie' or self.busqueda_tipo == "tv") and \
@@ -792,6 +819,9 @@ class Tmdb(object):
 
         elif self.discover:
             self.__discover()
+
+        elif self.list:
+            self.__list()
 
         else:
             logger.debug("Creado objeto vacio")
@@ -946,6 +976,65 @@ class Tmdb(object):
             msg = "La busqueda de '%s' no dio resultados para la pagina %s" % (buscando, page)
             logger.error(msg)
             return 0
+
+    def __list(self, index_results=0):
+        self.result = ResultDictDefault()
+        results = []
+        total_results = 0
+        total_pages = 0
+
+        # Ejemplo self.discover: {'url': 'movie/', 'with_cast': '1'}
+        # url: Método de la api a ejecutar
+        # resto de claves: Parámetros de la búsqueda concatenados a la url
+        type_search = self.list.get('url', '')
+        if type_search:
+            params = []
+            for key, value in self.list.items():
+                if key != "url":
+                    params.append("&"+key + "=" + str(value))
+            # http://api.themoviedb.org/3/movie/popolar?api_key=a1ab8b8669da03637a4b98fa39c39228&&language=es
+            url = ('http://api.themoviedb.org/3/%s?api_key=a1ab8b8669da03637a4b98fa39c39228%s'
+                   % (type_search, ''.join(params)))
+
+            logger.info("[Tmdb.py] Buscando %s:\n%s" % (type_search, url))
+            resultado = self.get_json(url)
+
+            total_results = resultado.get("total_results", -1)
+            total_pages = resultado.get("total_pages", 1)
+
+            if total_results > 0:
+                results = resultado["results"]
+                if self.busqueda_filtro and results:
+                    # TODO documentar esta parte
+                    for key, value in dict(self.busqueda_filtro).items():
+                        for r in results[:]:
+                            if key not in r or r[key] != value:
+                                results.remove(r)
+                                total_results -= 1
+            elif total_results == -1:
+                results = resultado
+
+            if index_results >= len(results):
+                logger.error(
+                    "La busqueda de '%s' no dio %s resultados" % (type_search, index_results))
+                return 0
+
+        # Retornamos el numero de resultados de esta pagina
+        if results:
+            self.results = results
+            self.total_results = total_results
+            self.total_pages = total_pages
+            if total_results > 0:
+                self.result = ResultDictDefault(self.results[index_results])
+            else:
+                self.result = results
+            return len(self.results)
+        else:
+            # No hay resultados de la busqueda
+            logger.error("La busqueda de '%s' no dio resultados" % type_search)
+            return 0
+
+
 
     def __discover(self, index_results=0):
         self.result = ResultDictDefault()
