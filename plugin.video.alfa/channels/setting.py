@@ -296,16 +296,8 @@ def submenu_tools(item):
     #Herramientas de testeo masivo
     import os
     test_path = os.path.join(config.get_runtime_path(), "channels/test.py")
-
     if filetools.exists(test_path):
-        itemlist.append(Item(channel=CHANNELNAME, title="Herramientas de Testeo masivo", action="", folder=False,
-                             thumbnail=get_thumb("channels.png")))
-        itemlist.append(Item(title='- Testear canales ...', channel="test", action="channel_test_selected"))
-        itemlist.append(Item(title='- Testear servidores ...', channel="test", action="server_test_selected"))
-        itemlist.append(Item(title='- Testear todos los canales!', channel="test", action="channel_test_all"))
-        itemlist.append(Item(title='- Testear todos los servidores!', channel="test", action="server_test_all"))
-        itemlist.append(Item(title='- Testear novedades!', channel="test", action="news_test_all"))
-        itemlist.append(Item(title='- Upload tests to web!', channel="test", action="web_update_tests"))
+        itemlist.append(Item(title='Testear canales y servidores ...', channel="test", action="mainlist"))
         itemlist.append(
             Item(channel=CHANNELNAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))
 
