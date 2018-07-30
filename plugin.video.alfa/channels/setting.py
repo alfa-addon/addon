@@ -543,7 +543,8 @@ def channels_onoff(item):
     for channel in channels_list:
         channel_parameters = channeltools.get_channel_parameters(channel.channel)
         lbl = '%s' % channel_parameters['language']
-        lbl += ' %s' % [config.get_localized_category(categ) for categ in channel_parameters['categories']]
+        # ~ lbl += ' %s' % [config.get_localized_category(categ) for categ in channel_parameters['categories']]
+        lbl += ' %s' % ', '.join(config.get_localized_category(categ) for categ in channel_parameters['categories'])
 
         it = xbmcgui.ListItem(channel.title, lbl)
         it.setArt({ 'thumb': channel.thumbnail, 'fanart': channel.fanart })
