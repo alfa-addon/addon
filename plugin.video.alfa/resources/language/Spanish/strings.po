@@ -503,7 +503,7 @@ msgstr "Filtrar servidores (Lista Negra)"
 
 msgctxt "#60001"
 msgid "Filter server (Black List)\nNo connection available that meets the requirements of the Black list.\nTry again by changing the filter in 'Server Configuration"
-msgstr "Filtrar servidores (Lista Negra)\nNo hay enlaces disponibles que cumplan los requisitos de su Lista Negra.\nPruebe de nuevo modificando el fíltro en 'Configuracíon Servidores""
+msgstr "Filtrar servidores (Lista Negra)\nNo hay enlaces disponibles que cumplan los requisitos de su Lista Negra.\nPruebe de nuevo modificando el fíltro en 'Configuracíon Servidores"
 
 msgctxt "#60003"
 msgid "Connecting with %s"
@@ -2207,7 +2207,7 @@ msgstr "Herramientas de canales"
 
 msgctxt "#60549"
 msgid "Check the files * _data.json"
-msgstr "Comprobar archivos *_data.json","
+msgstr "Comprobar archivos *_data.json"
 
 msgctxt "#60550"
 msgid "Servers locked"
@@ -2550,8 +2550,8 @@ msgid "Show option \"All Seasons\"."
 msgstr "Mostrar la opción \"Todas las temporadas\""
 
 msgctxt "#60643"
-msgid "Do not combine the seasons of the series""
-msgstr "No apilar temporadas de series""
+msgid "Do not combine the seasons of the series"
+msgstr "No apilar temporadas de series"
 
 msgctxt "#60644"
 msgid "Only if there is one season"
@@ -2895,7 +2895,7 @@ msgstr "Sagas y Colecciones"
 
 msgctxt "#70045"
 msgid "Movies/TV Shows/Documentaries by Themes"
-msgstr "Películas/Series/Documentales por Temas""
+msgstr "Películas/Series/Documentales por Temas"
 
 msgctxt "#70046"
 msgid "Search Movies/TV Shows"
@@ -2975,7 +2975,7 @@ msgstr "Buscar Series/Películas/Ovas"
 
 msgctxt "#70065"
 msgid ">> Next Page"
-msgstr ">> Página siguiente""
+msgstr ">> Página siguiente"
 
 msgctxt "#70066"
 msgid "    Search title in spanish: %s"
@@ -3857,4 +3857,93 @@ msgctxt "#70291"
 msgid "Error, during conversion"
 msgstr "Error, en conversión"
 
+# Servers ---- 
+msgctxt "#70292"
+msgid "[%s] File no longer exist on this server."
+msgstr "[%s] El archivo ya no está presente en el servidor."
+ 
+msgctxt "#70293"
+msgid "[%s] The file is processing or has been deleted."
+msgstr "[%s] El archivo de video todavía se está procesando o se ha eliminado."
+
+msgctxt "#70294"
+msgid "[%s] Link Not valid."
+msgstr "[%s] Enlace no válido."
+
+msgctxt "#70295"
+msgid "[%s] Premium account needed."
+msgstr "[%s] Debes tener una cuenta premium."
+
+msgctxt "#70296"
+msgid "[%s] Internal server error."
+msgstr "[%s] Error interno del servidor."
+
+msgctxt "#70297"
+msgid "[%s] File is awaiting for moderation."
+msgstr "[%s] El video está esperando por moderación."
+
+msgctxt "#70298"
+msgid "[%s] The number of allowed reproductions has been exceeded."
+msgstr "[%s] Se ha excedido el número de reproducciones permitidas."
+
+msgctxt "#70299"
+msgid "[%s] You do not have permission to access this file."
+msgstr "[%s] No tienes permiso para acceder a este video."
+
+msgctxt "#70300"
+msgid "[%s] Too many connections to the server, try later."
+msgstr "[%s] Demasiadas conexiones al servidor, inténtelo después."
+
+msgctxt "#70301"
+msgid "[%s] File deleted for infringement."
+msgstr "[%s] Archivo eliminado por infracción."
+
+msgctxt "#70302"
+msgid "[%s] This server only works from Kodi 17."
+msgstr "[%s] Este conector solo funciona a partir de Kodi 17."
+
+msgctxt "#70303"
+msgid "[%s] This server does not work with your version of Plex, try to update it."
+msgstr "[%s] Este conector no funciona con tu versión de Plex, intenta actualizarla."
+
+msgctxt "#70304"
+msgid "[%s] This server requires updating python to version 2.7.9 or higher."
+msgstr "[%s] Este conector requiere actualizar python a la versión 2.7.9 o superior."
+# ============
+
+msgctxt "#70305"
+msgid "Search in channels"
+msgstr "Buscar en canales"
+
+msgctxt "#70306"
+msgid "Movies by Genre"
+msgstr "Películas por Generos"
+
+msgctxt "#70307"
+msgid "Most popular Movies"
+msgstr "Películas mas populares"
+
+msgctxt "#70308"
+msgid "Top rated Movies"
+msgstr "Películas mejor valoradas"
+
+msgctxt "#70309"
+msgid "Movies Now in Theatres "
+msgstr "Películas Ahora en cines"
+
+msgctxt "#70310"
+msgid "Series by Genre"
+msgstr "Series por Generos"
+
+msgctxt "#70311"
+msgid "Series most polupar"
+msgstr "Series mas populares"
+
+msgctxt "#70312"
+msgid "Series in progress"
+msgstr "Series en emisión"
+
+msgctxt "#70313"
+msgid "Top rated Series"
+msgstr "Series mejor valoradas"
 

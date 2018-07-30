@@ -2535,10 +2535,10 @@ msgstr "        Attendere finchè la serie sia aggiunta"
 
 msgctxt "#60642"
 msgid "Show option \"All Seasons\"."
-msgstr "Mostra l'opzione \"Tutte le stagioni\""
+msgstr "Mostra l'opzione \'Tutte le stagioni\'"
 
 msgctxt "#60643"
-msgid "Do not combine the seasons of the series""
+msgid "Do not combine the seasons of the series"
 msgstr "Non unire le stagioni delle serie"
 
 msgctxt "#60644"
@@ -2967,7 +2967,7 @@ msgstr ">> Pagina successiva"
 
 msgctxt "#70066"
 msgid "    Search title in spanish: %s"
-msgstr "Cerca il suo titolo in italiano: %s""
+msgstr "Cerca il suo titolo in italiano: %s"
 
 msgctxt "#70067"
 msgid "Info Seasons [%s]"
@@ -3852,3 +3852,93 @@ msgstr "default, puoi cambiarla di nuovo se vuoi.\n Scrivi 's', se hai capito: "
 msgctxt "#70291"
 msgid "Error, during conversion"
 msgstr "Errore, in conversione"
+
+# Servers ---- 
+msgctxt "#70292"
+msgid "[%s] File no longer exist on this server."
+msgstr "[%s] Il file non è più presente nel server."
+ 
+msgctxt "#70293"
+msgid "[%s] The file is processing or has been deleted."
+msgstr "[%s] Il file video è ancora in elaborazione o è stato rimosso."
+
+msgctxt "#70294"
+msgid "[%s] Link Not valid."
+msgstr "[%s] URL Non valido."
+
+msgctxt "#70295"
+msgid "[%s] Premium account needed."
+msgstr "[%s] É Necessario un account premium."
+
+msgctxt "#70296"
+msgid "[%s] Internal server error."
+msgstr "[%s] Errore server interno."
+
+msgctxt "#70297"
+msgid "[%s] File is awaiting for moderation."
+msgstr "[%s] Il File è in attesa di moderazione."
+
+msgctxt "#70298"
+msgid "[%s] The number of allowed reproductions has been exceeded."
+msgstr "[%s] Il numero di riproduzioni concesse è stato superato."
+
+msgctxt "#70299"
+msgid "[%s] You do not have permission to access this file."
+msgstr "[%s] Non hai il permesso per accedere a questo file."
+
+msgctxt "#70300"
+msgid "[%s] Too many connections to the server, try later."
+msgstr "[%s] Troppe connessioni al server, riprova più tardi."
+
+msgctxt "#70301"
+msgid "[%s] File deleted for infringement."
+msgstr "[%s] File rimosso per infrazione."
+
+msgctxt "#70302"
+msgid "[%s] This server only works from Kodi 17."
+msgstr "[%s] Questo server funziona solo a partire da Kodi 17."
+
+msgctxt "#70303"
+msgid "[%s] This server does not work with your version of Plex, try to update it."
+msgstr "[%s] Questo server non funziona con la tua versione di Plex, prova ad aggiornare Plex."
+
+msgctxt "#70304"
+msgid "[%s] This server requires updating python to version 2.7.9 or higher."
+msgstr "[%s] Questo server richiede la versione 2.7.9 (O Maggiore) di Python."
+# ============
+
+msgctxt "#70305"
+msgid "Search in channels"
+msgstr "Cerca nei canali"
+
+msgctxt "#70306"
+msgid "Movies by Genre"
+msgstr "Film per Genere"
+
+msgctxt "#70307"
+msgid "Most popular Movies"
+msgstr "Film più popolari"
+
+msgctxt "#70308"
+msgid "Top rated Movies"
+msgstr "Film più valutati"
+
+msgctxt "#70309"
+msgid "Movies Now in Theatres "
+msgstr "Film ora in sala"
+
+msgctxt "#70310"
+msgid "Series by Genre"
+msgstr "Serie per Genere"
+
+msgctxt "#70311"
+msgid "Series most polupar"
+msgstr "Serie più popolari"
+
+msgctxt "#70312"
+msgid "Series in progress"
+msgstr "Serie in uscita"
+
+msgctxt "#70313"
+msgid "Top rated Series"
+msgstr "Serie Più valutate"
