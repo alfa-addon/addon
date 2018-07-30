@@ -197,11 +197,11 @@ def seasons(item):
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
                 Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
-                     action="add_serie_to_library", extra="all_episodes", contentSerieName=item.contentSerieName))
+                     action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
 
     return itemlist
 
-def all_episodes(item):
+def episodios(item):
     logger.info()
     itemlist = []
     templist = seasons(item)
@@ -256,26 +256,41 @@ def findvideos(item):
 
         for url in urls:
             final_url = httptools.downloadpage('https:'+url).data
-
             if language == 'VOSE':
                 sub = scrapertools.find_single_match(url, 'sub=(.*?)&')
                 subs = 'https:%s' % sub
 
             if 'index' in url:
-                file_id = scrapertools.find_single_match(url, 'file=(.*?)&')
-                post = {'link': file_id}
-                post = urllib.urlencode(post)
-                hidden_url = 'https://streamango.poseidonhd.com/repro/plugins/gkpluginsphp.php'
-                data_url = httptools.downloadpage(hidden_url, post=post).data
-                dict_vip_url = jsontools.load(data_url)
-                url = dict_vip_url['link']
+                try:
+                    file_id = scrapertools.find_single_match(url, 'file=(.*?)&')
+                    post = {'link': file_id}
+                    post = urllib.urlencode(post)
+                    hidden_url = 'https://streamango.poseidonhd.net/repro/plugins/gkpluginsphp.php'
+                    data_url = httptools.downloadpage(hidden_url, post=post).data
+                    dict_vip_url = jsontools.load(data_url)
+                    url = dict_vip_url['link']
+                except:
+                    pass
             else:
-                file_id = scrapertools.find_single_match(url, 'url=(.*?)&')
-                post = {'url': file_id}
-                post = urllib.urlencode(post)
-                hidden_url = 'https://streamango.poseidonhd.com/repro/r.php'
-                data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False)
-                url = data_url.headers['location']
+                try:
+
+                    if 'openload' in url:
+                        file_id = scrapertools.find_single_match(url, 'h=(\w+)')
+                        post = {'h': file_id}
+                        post = urllib.urlencode(post)
+                        hidden_url = 'https://streamango.poseidonhd.net/repro/openload/api.php'
+                        data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False).data
+                        json_data = jsontools.load(data_url)
+                        url = json_data['url']
+                    else:
+                        file_id = scrapertools.find_single_match(url, 'url=(.*?)&')
+                        post = {'url': file_id}
+                        post = urllib.urlencode(post)
+                        hidden_url = 'https://streamango.poseidonhd.net/repro/r.php'
+                        data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False)
+                        url = data_url.headers['location']
+                except:
+                    pass
 
             itemlist.append(item.clone(title = '[%s] [%s]', url=url, action='play', subtitle=subs,
                             language=language, quality=quality, infoLabels=item.infoLabels))

@@ -315,9 +315,12 @@ def findvideos(item):
                 server = 'thevideome'
                 url = server_url[server_id] + video_id + '.html'
             elif server_id == 'BitTorrent':
-                base_url = 'http://www.cinecalidad.to/protect/contenido.php'
-                post = 'i=%s&title=%s' % (video_id, item.contentTitle)
-                protect = httptools.downloadpage(base_url, post=post).data
+                import urllib
+                base_url = 'http://www.cinecalidad.to/protect/v.php'
+                post = {'i':video_id, 'title':item.title}
+                post = urllib.urlencode(post)
+                headers = {'Referer':item.url}
+                protect = httptools.downloadpage(base_url+'?'+post, headers=headers).data
                 url = scrapertools.find_single_match(protect, 'value="(magnet.*?)"')
                 server = 'torrent'
             else:

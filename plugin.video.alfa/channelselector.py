@@ -17,7 +17,7 @@ def getmainlist(view="thumb_"):
     itemlist.append(Item(title=config.get_localized_string(30130), channel="news", action="mainlist",
                          thumbnail=get_thumb("news.png", view),
                          category=config.get_localized_string(30119), viewmode="thumbnails",
-                         context=[{"title": "Configurar Novedades", "channel": "news", "action": "menu_opciones",
+                         context=[{"title": config.get_localized_string(70285), "channel": "news", "action": "menu_opciones",
                                    "goto": True}]))
 
     itemlist.append(Item(title=config.get_localized_string(30118), channel="channelselector", action="getchanneltypes",
@@ -27,7 +27,7 @@ def getmainlist(view="thumb_"):
     itemlist.append(Item(title=config.get_localized_string(30103), channel="search", action="mainlist",
                          thumbnail=get_thumb("search.png", view),
                          category=config.get_localized_string(30119), viewmode="list",
-                         context=[{"title": "Configurar Buscador", "channel": "search", "action": "opciones",
+                         context=[{"title": config.get_localized_string(70286), "channel": "search", "action": "opciones",
                                    "goto": True}]))
 
     itemlist.append(Item(title=config.get_localized_string(30102), channel="favorites", action="mainlist",
@@ -38,12 +38,12 @@ def getmainlist(view="thumb_"):
         itemlist.append(Item(title=config.get_localized_string(30131), channel="videolibrary", action="mainlist",
                              thumbnail=get_thumb("videolibrary.png", view),
                              category=config.get_localized_string(30119), viewmode="thumbnails",
-                             context=[{"title": "Configurar Videoteca", "channel": "videolibrary",
+                             context=[{"title": config.get_localized_string(70287), "channel": "videolibrary",
                                        "action": "channel_config"}]))
 
     itemlist.append(Item(title=config.get_localized_string(30101), channel="downloads", action="mainlist",
                          thumbnail=get_thumb("downloads.png", view), viewmode="list",
-                         context=[{"title": "Configurar Descargas", "channel": "setting", "config": "downloads",
+                         context=[{"title": config.get_localized_string(70288), "channel": "setting", "config": "downloads",
                                    "action": "channel_config"}]))
 
     thumb_setting = "setting_%s.png" % 0  # config.get_setting("plugin_updates_available")
@@ -52,7 +52,7 @@ def getmainlist(view="thumb_"):
                          thumbnail=get_thumb(thumb_setting, view),
                          category=config.get_localized_string(30100), viewmode="list"))
 
-    itemlist.append(Item(title=config.get_localized_string(30104), channel="help", action="mainlist",
+    itemlist.append(Item(title=config.get_localized_string(30104) + " (" + config.get_localized_string(20000) +" " + config.get_addon_version() + ")", channel="help", action="mainlist",
                          thumbnail=get_thumb("help.png", view),
                          category=config.get_localized_string(30104), viewmode="list"))
     return itemlist
@@ -194,8 +194,24 @@ def filterchannels(category, view="thumb_"):
         if view == "banner_" and "banner" in channel_parameters:
             channel_parameters["thumbnail"] = channel_parameters["banner"]
 
-        channelslist.insert(0, Item(title="Tengo una URL", action="mainlist", channel="url",
+        channelslist.insert(0, Item(title=config.get_localized_string(60088), action="mainlist", channel="url",
                                     thumbnail=channel_parameters["thumbnail"], type="generic", viewmode="list"))
+    if category in ['movie', 'tvshow']:
+        titles = ['Mas Populares', 'Mejor Valoradas', 'Ahora en cines', 'En Emision', 'Por Genero']
+        ids = ['popular', 'top_rated', 'now_playing', 'on_the_air']
+        for x in range(0,3):
+            if x == 2 and category != 'movie':
+                title=titles[x+1]
+                id = ids[x+1]
+            else:
+                title=titles[x]
+                id = ids[x]
+            channelslist.insert(x,
+                Item(channel='search', action='discover_list', title=title, search_type='list',
+                     list_type='%s/%s' % (category.replace('show',''), id), thumbnail=get_thumb(id+".png")))
+
+        channelslist.insert(3, Item(channel='search', action='genres_menu', title='Generos',
+                                    type=category.replace('show',''), thumbnail=get_thumb("genres.png")))
 
     return channelslist
 

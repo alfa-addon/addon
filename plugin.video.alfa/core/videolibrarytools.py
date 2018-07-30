@@ -294,10 +294,16 @@ def save_tvshow(item, episodelist):
     if episodelist and "list_language" in episodelist[0]:
         # si ya hemos añadido un canal previamente con filtro, añadimos o actualizamos el canal y show
         if "library_filter_show" in item_tvshow:
-            item_tvshow.library_filter_show[item.channel] = item.show
+            if item.title_from_channel:
+                item_tvshow.library_filter_show[item.channel] = item.title_from_channel
+            else:
+                item_tvshow.library_filter_show[item.channel] = item.show
         # no habia ningún canal con filtro y lo generamos por primera vez
         else:
-            item_tvshow.library_filter_show = {item.channel: item.show}
+            if item.title_from_channel:
+                item_tvshow.library_filter_show = {item.channel: item.title_from_channel}
+            else:
+                item_tvshow.library_filter_show = {item.channel: item.show}
 
     if item.channel != "downloads":
         item_tvshow.active = 1  # para que se actualice a diario cuando se llame a videolibrary_service
@@ -551,7 +557,7 @@ def add_movie(item):
                                 config.get_localized_string(30135))  # 'se ha añadido a la videoteca'
     else:
         platformtools.dialog_ok(config.get_localized_string(30131),
-                                "ERROR, la pelicula NO se ha añadido a la videoteca")
+                                config.get_localized_string(60066))  #"ERROR, la pelicula NO se ha añadido a la videoteca")
 
 
 def add_tvshow(item, channel=None):

@@ -35,7 +35,9 @@ def mainlist(item):
                    action="lista",
                    thumbnail=get_thumb('all', auto=True),
                    fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
-                   url='%s%s'%(host,'peliculas/page/1')
+                   url='%s%s'%(host,'peliculas/'),
+                   first=0
+
                    ))
 
     itemlist.append(
@@ -43,7 +45,7 @@ def mainlist(item):
                    action="seccion",
                    thumbnail=get_thumb('genres', auto=True),
                    fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png',
-                   url='%s%s' % (host, 'peliculas/page/1'),
+                   url='%s%s' % (host, 'peliculas/'),
                    ))
 
     itemlist.append(
@@ -51,7 +53,8 @@ def mainlist(item):
                    action="lista",
                    thumbnail=get_thumb('more watched', auto=True),
                    fanart='https://s9.postimg.cc/wmhzu9d7z/vistas.png',
-                   url='%s%s'%(host,'top-imdb/page/1'),
+                   url='%s%s'%(host,'top-imdb/'),
+                   first=0
                    ))
 
     itemlist.append(
@@ -69,9 +72,7 @@ def lista(item):
     logger.info()
 
     itemlist = []
-    max_items = 20
-    next_page_url = ''
-
+    next = False
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
 
@@ -80,23 +81,13 @@ def lista(item):
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    if item.next_page != 'b':
-        if len(matches) > max_items:
-            next_page_url = item.url
-            matches = matches[:max_items]
-            next_page = 'b'
-    else:
-        matches = matches[max_items:]
-        next_page = 'a'
-        next_page_str = scrapertools.find_single_match(data,"<li class='active'><a class=''>(\d+)</a>")
-        next_page_num = int(next_page_str)+1
-        page_base = re.sub(r'(page\/\d+)','', item.url)
-        next_page_url = '%s%s%s'%(page_base,'page/',next_page_num)
+    first = item.first
+    last = first + 19
+    if last > len(matches):
+        last = len(matches)
+        next = True
 
-        if next_page_url:
-            next_page_url =  next_page_url
-
-    for scrapedurl, quality, scrapedthumbnail, scrapedtitle, plot in matches:
+    for scrapedurl, quality, scrapedthumbnail, scrapedtitle, plot in matches[first:last]:
 
         url = scrapedurl
         thumbnail = scrapedthumbnail
@@ -118,17 +109,17 @@ def lista(item):
                  contentTitle=title
                  ))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True)
-    # Paginacion
-    if next_page_url != '':
-        itemlist.append(
-            Item(channel=item.channel,
-                 action="lista",
-                 title='Siguiente >>>',
-                 url=next_page_url,
-                 thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png',
-                 extra=item.extra,
-                 next_page=next_page
-                 ))
+
+    if not next:
+        url_next_page = item.url
+        first = last
+    else:
+        url_next_page = scrapertools.find_single_match(data, "<a href=([^ ]+) class=page-link aria-label=Next>")
+        first = 0
+
+    if url_next_page:
+        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='lista', first=first))
+
     return itemlist
 
 
@@ -153,7 +144,8 @@ def seccion(item):
                      action='lista',
                      title=title,
                      url=url,
-                     thumbnail=thumbnail
+                     thumbnail=thumbnail,
+                     first=0
                      ))
     return itemlist
 
@@ -162,6 +154,7 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
+    item.first=0
     if texto != '':
         return lista(item)
 
@@ -178,6 +171,7 @@ def newest(categoria):
             item.url = host + 'categoria/animacion/'
         elif categoria == 'terror':
             item.url = host + '/categoria/terror/'
+        item.first=0
         itemlist = lista(item)
         if itemlist[-1].title == 'Siguiente >>>':
             itemlist.pop()

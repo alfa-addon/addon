@@ -9,13 +9,13 @@ from core import channeltools, filetools, videolibrarytools
 from platformcode import config, logger
 from platformcode import platformtools
 from channels import videolibrary
+from lib import generictools
 
 
 def update(path, p_dialog, i, t, serie, overwrite):
     logger.info("Actualizando " + path)
-    from lib import generictools
     insertados_total = 0
-
+      
     head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')
 
     # logger.debug("%s: %s" %(serie.contentSerieName,str(list_canales) ))
@@ -23,7 +23,11 @@ def update(path, p_dialog, i, t, serie, overwrite):
         serie.channel = channel
         serie.url = url
         
-        serie = generictools.redirect_clone_newpct1(serie)        ###### Redirección al canal NewPct1.py si es un clone
+        ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
+        try:
+            serie, it, overwrite = generictools.redirect_clone_newpct1(serie, head_nfo, it, path, overwrite)
+        except:
+            pass
 
         channel_enabled = channeltools.is_enabled(serie.channel)
 
@@ -42,8 +46,6 @@ def update(path, p_dialog, i, t, serie, overwrite):
 
                 obj = imp.load_source(serie.channel, pathchannels)
                 itemlist = obj.episodios(serie)
-                
-                serie.channel = channel             #Restauramos el valor incial del clone de NewPct1
 
                 try:
                     if int(overwrite) == 3:
@@ -76,11 +78,20 @@ def update(path, p_dialog, i, t, serie, overwrite):
         else:
             logger.debug("Canal %s no activo no se actualiza" % serie.channel)
 
+    #Sincronizamos los episodios vistos desde la videoteca de Kodi con la de Alfa
+    try:
+        if config.is_xbmc():                #Si es Kodi, lo hacemos
+            from platformcode import xbmc_videolibrary
+            xbmc_videolibrary.mark_content_as_watched_on_alfa(path + '/tvshow.nfo')
+    except:
+        pass
+    
     return insertados_total > 0
 
 
 def check_for_update(overwrite=True):
     logger.info("Actualizando series...")
+
     p_dialog = None
     serie_actualizada = False
     update_when_finished = False
@@ -104,7 +115,17 @@ def check_for_update(overwrite=True):
             for i, tvshow_file in enumerate(show_list):
                 head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)
                 path = filetools.dirname(tvshow_file)
-
+                
+                ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
+                overwrite_forced = False
+                try:
+                    serie, serie, overwrite_forced = generictools.redirect_clone_newpct1(serie, head_nfo, serie, path, overwrite, lookup=True)
+                except:
+                    pass
+                if overwrite_forced == True:
+                    overwrite = True
+                    serie.update_next = ''
+                    
                 logger.info("serie=" + serie.contentSerieName)
                 p_dialog.update(int(math.ceil((i + 1) * t)), heading, serie.contentSerieName)
 
@@ -112,7 +133,16 @@ def check_for_update(overwrite=True):
 
                 if not serie.active:
                     # si la serie no esta activa descartar
-                    continue
+                    if overwrite_forced == False:
+                        #Sincronizamos los episodios vistos desde la videoteca de Kodi con la de Alfa, aunque la serie esté desactivada
+                        try:
+                            if config.is_xbmc():                #Si es Kodi, lo hacemos
+                                from platformcode import xbmc_videolibrary
+                                xbmc_videolibrary.mark_content_as_watched_on_alfa(path + '/tvshow.nfo')
+                        except:
+                            pass
+                    
+                        continue
 
                 # obtenemos las fecha de actualizacion y de la proxima programada para esta serie
                 update_next = serie.update_next
@@ -158,6 +188,7 @@ def check_for_update(overwrite=True):
                     if not serie_actualizada:
                         update_next += datetime.timedelta(days=interval)
 
+                head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)       #Vuelve a leer el.nfo, que ha sido modificado
                 if interval != int(serie.active) or update_next.strftime('%Y-%m-%d') != serie.update_next:
                     serie.active = interval
                     serie.update_next = update_next.strftime('%Y-%m-%d')
@@ -193,6 +224,10 @@ def check_for_update(overwrite=True):
 
         if p_dialog:
             p_dialog.close()
+            
+    from core.item import Item
+    item_dummy = Item()
+    videolibrary.list_movies(item_dummy, silent=True)
 
 
 def start(thread=True):

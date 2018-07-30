@@ -24,7 +24,7 @@
       "label": "@60606",
       "default": 0,
       "visible": true,
-      "enabled": "eq(-1,@60603])|eq(-1,@60605])",
+      "enabled": "eq(-1,@60603)|eq(-1,@60605)",
       "lvalues": [
         "No",
         "@60609",
@@ -39,7 +39,7 @@
       "label": "@60613",
       "default": 1,
       "visible": true,
-      "enabled": "eq(-2,@60604])|eq(-2,@60605])",
+      "enabled": "eq(-2,@60604)|eq(-2,@60605)",
       "lvalues": [
         "00:00",
         "04:00",
@@ -53,7 +53,7 @@
       "label": "@60614",
       "default": 0,
       "visible": true,
-      "enabled": "!eq(-3,@60615])",
+      "enabled": "!eq(-3,@60615)",
       "lvalues": [
         "@60616",
         "@60617"
@@ -64,7 +64,7 @@
       "type": "list",
       "label": "@60618",
       "default": 0,
-      "enabled": "!eq(-4,@60615])",
+      "enabled": "!eq(-4,@60615)",
       "lvalues": [
         "@60619",
         "@60620"

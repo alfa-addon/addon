@@ -127,13 +127,12 @@ def render_items(itemlist, parent_item):
         if 'anime' in channeltools.get_channel_parameters(parent_item.channel)['categories']:
             anime = True
 
-    # Recorremos el itemlist
 
+    unify_enabled = config.get_setting('unify')
+    #logger.debug('unify_enabled: %s' % unify_enabled)
+
+    # Recorremos el itemlist
     for item in itemlist:
-        try:
-            channel_parameters = channeltools.get_channel_parameters(item.channel)
-        except:
-            pass
         #logger.debug(item)
         # Si el item no contiene categoria, le ponemos la del item padre
         if item.category == "":
@@ -143,9 +142,7 @@ def render_items(itemlist, parent_item):
         if item.fanart == "":
             item.fanart = parent_item.fanart
 
-
         if genre:
-
             valid_genre = True
             thumb = get_thumb(item.title, auto=True)
             if thumb != '':
@@ -155,12 +152,7 @@ def render_items(itemlist, parent_item):
                 valid_genre = True
 
 
-        unify_enabled = config.get_setting('unify')
-
-        #logger.debug('unify_enabled: %s' % unify_enabled)
-
-
-        if unify_enabled and not channel_parameters['adult'] and 'skip_unify' not in channel_parameters:
+        if unify_enabled:
             # Formatear titulo con unify
             item = unify.title_format(item)
         else:
@@ -226,9 +218,9 @@ def render_items(itemlist, parent_item):
         context_commands = set_context_commands(item, parent_item)
 
         # Añadimos el item
-        if config.get_platform(True)['num_version'] >= 17.0:
+        if config.get_platform(True)['num_version'] >= 17.0 and parent_item.list_type == '':
             listitem.addContextMenuItems(context_commands)
-        else:
+        elif parent_item.list_type == '':
             listitem.addContextMenuItems(context_commands, replaceItems=True)
 
         if not item.totalItems:
@@ -247,7 +239,18 @@ def render_items(itemlist, parent_item):
         xbmcplugin.setContent(int(sys.argv[1]), "movies")
 
     # Fijamos el "breadcrumb"
-    xbmcplugin.setPluginCategory(handle=int(sys.argv[1]), category=parent_item.category.capitalize())
+    if parent_item.list_type == '':
+        breadcrumb = parent_item.category.capitalize()
+    else:
+        if 'similar' in parent_item.list_type:
+            if parent_item.contentTitle != '':
+                breadcrumb = 'Similares (%s)' % parent_item.contentTitle
+            else:
+                breadcrumb = 'Similares (%s)' % parent_item.contentSerieName
+        else:
+            breadcrumb = 'Busqueda'
+
+    xbmcplugin.setPluginCategory(handle=int(sys.argv[1]), category=breadcrumb)
 
     # No ordenar items
     xbmcplugin.addSortMethod(handle=int(sys.argv[1]), sortMethod=xbmcplugin.SORT_METHOD_NONE)
@@ -432,7 +435,6 @@ def set_context_commands(item, parent_item):
             else:
                 context_commands.append(
                     (command["title"], "XBMC.RunPlugin(%s?%s)" % (sys.argv[0], item.clone(**command).tourl())))
-
     # Opciones segun criterios, solo si el item no es un tag (etiqueta), ni es "Añadir a la videoteca", etc...
     if item.action and item.action not in ["add_pelicula_to_library", "add_serie_to_library", "buscartrailer"]:
         # Mostrar informacion: si el item tiene plot suponemos q es una serie, temporada, capitulo o pelicula
@@ -468,7 +470,8 @@ def set_context_commands(item, parent_item):
             elif item.contentType == "movie" and (item.infoLabels['tmdb_id'] or item.infoLabels['imdb_id'] or
                                                   item.contentTitle):
                 param = "id =%s,imdb_id=%s,name=%s" \
-                        % (item.infoLabels['tmdb_id'], item.infoLabels['imdb_id'], item.contentTitle)
+                       % (item.infoLabels['tmdb_id'], item.infoLabels['imdb_id'], item.contentTitle)
+
                 context_commands.append(("ExtendedInfo",
                                          "XBMC.RunScript(script.extendedinfo,info=extendedinfo,%s)" % param))
 
@@ -521,6 +524,14 @@ def set_context_commands(item, parent_item):
                                                                                    from_channel=item.channel,
 
                                                                                    contextual=True).tourl())))
+            if item.contentType == 'tvshow':
+                mediatype = 'tv'
+            else:
+                mediatype = item.contentType
+            context_commands.append(("[COLOR yellow]Buscar Similares[/COLOR]", "XBMC.Container.Update (%s?%s)" % (
+            sys.argv[0], item.clone(channel='search', action='discover_list', search_type='list', page='1',
+                                    list_type='%s/%s/similar' % (mediatype,item.infoLabels['tmdb_id'])).tourl())))
+
         # Definir como Pagina de inicio
         if config.get_setting('start_page'):
             if item.action not in ['findvideos', 'play']:
@@ -608,6 +619,7 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
     logger.info()
     # logger.debug(item.tostring('\n'))
     logger.debug('item play: %s'%item)
+    xbmc_player = XBMCPlayer()
     if item.channel == 'downloads':
         logger.info("Reproducir video local: %s [%s]" % (item.title, item.url))
         xlistitem = xbmcgui.ListItem(path=item.url)
@@ -674,7 +686,6 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
         playlist.add(mediaurl, xlistitem)
 
         # Reproduce
-        xbmc_player = XBMCPlayer()
         xbmc_player.play(playlist, xlistitem)
     else:
         set_player(item, xlistitem, mediaurl, view, strm)
@@ -1047,7 +1058,27 @@ def play_torrent(item, xlistitem, mediaurl):
     # Plugins externos
     if seleccion > 1:
         mediaurl = urllib.quote_plus(item.url)
+        if "quasar" in torrent_options[seleccion][1] and item.infoLabels['tmdb_id']:    #Llamada con más parámetros para completar el título
+            if item.contentType == 'episode':
+                mediaurl += "&episode=%s&library=&season=%s&show=%s&tmdb=%s&type=episode" % (item.infoLabels['episode'], item.infoLabels['season'], item.infoLabels['tmdb_id'], item.infoLabels['tmdb_id'])
+            else:
+                mediaurl += "&library=&tmdb=%s&type=movie" % (item.infoLabels['tmdb_id'])
         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
+        
+        if "quasar" in torrent_options[seleccion][1]:                   #Seleccionamos que clientes torrent soportamos
+            if item.strm_path:                                          #Sólo si es de Videoteca
+                import time
+                time_limit = time.time() + 150                          #Marcamos el timepo máx. de buffering
+                while not is_playing() and time.time() < time_limit:    #Esperamos mientra buffera    
+                    time.sleep(5)                                       #Repetimos cada intervalo
+                    #logger.debug(str(time_limit))
+                    
+                if is_playing():                                        #Ha terminado de bufferar o ha cancelado
+                    from platformcode import xbmc_videolibrary
+                    xbmc_videolibrary.mark_auto_as_watched(item)        #Marcamos como visto al terminar
+                    #logger.debug("Llamado el marcado")
+                #else:
+                    #logger.debug("Video cancelado o timeout")
 
     if seleccion == 1:
         from platformcode import mct

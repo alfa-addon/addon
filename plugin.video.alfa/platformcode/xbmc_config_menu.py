@@ -111,7 +111,7 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
                             ]
                         }
 
-                    Los campos 'label', 'default' y 'lvalues' pueden ser un numero precedido de '@'. En cuyo caso se
+                    Los campos 'label', 'default', 'enabled' y 'lvalues' pueden ser un numero precedido de '@'. En cuyo caso se
                     buscara el literal en el archivo string.xml del idioma seleccionado.
                     Los campos 'enabled' y 'visible' admiten los comparadores eq(), gt() e it() y su funcionamiento se
                     describe en: http://kodi.wiki/view/Add-on_settings#Different_types
@@ -273,6 +273,9 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
                 if c["type"] == "label":
                     control_value = c["control"].getLabel()
 
+                if value.startswith('@') and unicode(value[1:]).isnumeric():
+                    value = config.get_localized_string(int(value[1:]))
+            
             # Operaciones lt "menor que" y gt "mayor que", requieren que las comparaciones sean numeros, sino devuelve
             # False
             if operator in ["lt", "!lt", "gt", "!gt"]:

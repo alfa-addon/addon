@@ -14,10 +14,18 @@
   ],
   "settings": [
     {
+      "id": "domain_name",
+      "type": "text",
+      "label": "URL actual de la Web Mejor Torrent",
+      "default": "http://www.mejortorrent.com/",
+      "enabled": true,
+      "visible": true
+    },
+    {
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },

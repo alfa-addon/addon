@@ -14,7 +14,8 @@ from platformcode import config, logger
 from core import tmdb
 from lib import generictools
 
-host = "http://www.mejortorrent.com"
+host = 'http://www.mejortorrent.com/'
+#host = config.get_setting('domain_name', 'mejortorrent')
 
 __modo_grafico__ = config.get_setting('modo_grafico', 'mejortorrent')
 
@@ -182,7 +183,12 @@ def listado(item):
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     matches_cnt = len(matches)
-    if not matches and not 'Se han encontrado <b>0</b> resultados.' in data:       #error
+    if not matches and not 'Se han encontrado <b>0</b> resultados.' in data:    #error
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error
+            return itemlist                                                     #Salimos
+        
         logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
@@ -495,7 +501,12 @@ def listado_busqueda(item):
     matches += re.compile(patron, re.DOTALL).findall(data)
     matches_cnt = len(matches)
     
-    if not matches and not 'Se han encontrado <b>0</b> resultados.' and not "href='/juego-descargar-torrent" in data:       #error
+    if not matches and not 'Se han encontrado <b>0</b> resultados.' and not "href='/juego-descargar-torrent" in data:  #error
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error
+            return itemlist                                                     #Salimos
+        
         logger.error("ERROR 02: LISTADO_BUSQUEDA: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO_BUSQUEDA: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
@@ -706,6 +717,7 @@ def findvideos(item):
     itemlist = []
     
     #Bajamos los datos de la página
+    data = ''
     try:
         if item.post:   #Puede traer datos para una llamada "post".  De momento usado para documentales, pero podrían ser series
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, post=item.post).data)
@@ -720,6 +732,16 @@ def findvideos(item):
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     matches = re.compile(patron, re.DOTALL).findall(data)
+    if not matches:
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
+            return itemlist                                                     #Salimos
+            
+        logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
+        itemlist.append(item.clone(action='', title=item.category + ': ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log'))
+        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        
     #logger.debug(data)
     #logger.debug("PATRON: " + patron)
     #logger.debug(matches)
@@ -788,19 +810,19 @@ def episodios(item):
 
     # Carga la página
     try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
+        data_alt = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
     except:                                                                             #Algún error de proceso, salimos
         logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea" + item.url)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
         return itemlist
     
     #Datos para crear el Post.  Usado para documentales
-    total_capis = scrapertools.find_single_match(data, "<input type='hidden' name='total_capis' value='(\d+)'>")
-    tabla = scrapertools.find_single_match(data, "<input type='hidden' name='tabla' value='([^']+)'>")
-    titulo_post = scrapertools.find_single_match(data, "<input type='hidden' name='titulo' value='([^']+)'>")
+    total_capis = scrapertools.find_single_match(data_alt, "<input type='hidden' name='total_capis' value='(\d+)'>")
+    tabla = scrapertools.find_single_match(data_alt, "<input type='hidden' name='tabla' value='([^']+)'>")
+    titulo_post = scrapertools.find_single_match(data_alt, "<input type='hidden' name='titulo' value='([^']+)'>")
     
     # Selecciona en tramo que nos interesa
-    data = scrapertools.find_single_match(data,
+    data = scrapertools.find_single_match(data_alt,
                                   "(<form name='episodios' action='secciones.php\?sec=descargas\&ap=contar_varios' method='post'>.*?)</form>")
     
     # Prepara el patrón de búsqueda de: URL, título, fechas y dos valores mas sin uso
@@ -814,6 +836,11 @@ def episodios(item):
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                             #error
+        item = generictools.web_intervenida(item, data_alt)                     #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
+            return itemlist                                                     #Salimos
+        
         logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos

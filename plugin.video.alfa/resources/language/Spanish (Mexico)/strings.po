@@ -203,7 +203,7 @@ msgstr "Videoteca"
 
 msgctxt "#30135"
 msgid "added to the videolibrary"
-msgstr "added to the videolibrary"
+msgstr "se ha añadido a la videoteca"
 
 msgctxt "#30136"
 msgid "Original version"
@@ -291,11 +291,11 @@ msgstr "Búsqueda por Persona"
 
 msgctxt "#30982"
 msgid "Search by Company"
-msgstr "Búsqueda por Company"
+msgstr "Búsqueda por Compañia"
 
 msgctxt "#30983"
 msgid "Now Playing"
-msgstr "Ahora Playing"
+msgstr "Ahora Reproduciendo"
 
 msgctxt "#30984"
 msgid "Popular"
@@ -351,7 +351,7 @@ msgstr "Los más votados"
 
 msgctxt "#30997"
 msgid "Academy Awards"
-msgstr "Academy Awards"
+msgstr "Premios de la academia"
 
 msgctxt "#30998"
 msgid "Shortcut"
@@ -359,7 +359,7 @@ msgstr "Shortcut"
 
 msgctxt "#30999"
 msgid "Add key to open Shortcut"
-msgstr "Agregar clave para abrir el atajo"
+msgstr "Añadir tecla para abrir el Shortcut"
 
 msgctxt "#50000"
 msgid "Sagas"
@@ -437,13 +437,9 @@ msgctxt "#59983"
 msgid "%.2f%% - %.2f %s of %.2f %s a %.2f %s/s (%d/%d)"
 msgstr "%.2f%% - %.2f %s de %.2f %s a %.2f %s/s (%d/%d)"
 
-msgctxt "#59984"
-msgid "An error has occurred in alfa, \nCheck log for more details."
-msgstr "Se ha producido un error en alfa,\nComprueba el log para ver mas detalles del error."
-
 msgctxt "#59985"
-msgid "Error in the channel"
-msgstr "Error en el canal"
+msgid "Error in the channel "
+msgstr "Error en el canal "
 
 msgctxt "#59986"
 msgid "Error loading the server: %s\n"
@@ -550,12 +546,12 @@ msgid "No video to play"
 msgstr "No hay nada que reproducir"
 
 msgctxt "#60013"
-msgid "This website seems to be unavailable, try later, if the problem persists, check with a browser: %s.\nIf the web page is working correctly, please report the error on : https://alfa-addon.com/categories/alfa-addon.50/"
-msgstr "La web de la que depende parece no estar disponible, puede volver a intentarlo,\nsi el problema persiste verifique mediante un navegador la web: %s. \nSi la web funciona correctamente informe el error en: www.alfa-addon.com"
+msgid "This website seems to be unavailable, try later, if the problem persists, check with a browser: %s. If the web page is working correctly, please report the error on : https://alfa-addon.com"
+msgstr "La web de la que depende parece no estar disponible, puede volver a intentarlo, si el problema persiste verifique mediante un navegador la web: %s. Si la web funciona correctamente informe el error en: www.alfa-addon.com"
 
 msgctxt "#60014"
-msgid "It may be due to a connection problem, the web page of the channel has changed its structure, or an internal error of alfa.\nTo have more details, see the log file."
-msgstr "Puede deberse a un fallo de conexión, la web del canal\nha cambiado su estructura,o un error interno de alfa.\nPara saber más detalles, consulta el log."
+msgid "It may be due to a connection problem, the web page of the channel has changed its structure, or an internal error of alfa. To have more details, see the log file."
+msgstr "Puede deberse a un fallo de conexión, la web del canal ha cambiado su estructura, o un error interno de alfa. Para saber más detalles, consulta el log."
 
 msgctxt "#60015"
 msgid "Check the log for more details on the error."
@@ -721,6 +717,22 @@ msgctxt "#60055"
 msgid "Error of provider configuration in BD."
 msgstr "Error al configurar el scraper en la BD."
 
+msgctxt "#60056"
+msgid "Videolibrary %s not configured"
+msgstr "Videoteca %s no ha sido configurada"
+
+msgctxt "#60057"
+msgid "Videolibrary %s configured"
+msgstr "Videoteca %s configurada"
+
+msgctxt "#60058"
+msgid "You need to restart Kodi for the changes to take effect."
+msgstr "Tu necesitas reiniciar Kodi para que los cambios se efectúen"
+
+msgctxt "#60059"
+msgid "Congratulations, Kodi's video library has been configured correctly."
+msgstr "Felicitaciones, videoteca de Kodi ha sido configurado correctamente"
+
 msgctxt "#60060"
 msgid "Alfa Auto-configuration"
 msgstr "Alfa Auto-configuración"
@@ -806,16 +818,16 @@ msgid "      Favorite servers"
 msgstr "      Servidores favoritos"
 
 msgctxt "#60082"
-msgid "          \u2665 Favorite server %s"
-msgstr "          \u2665 Servidor Favorito %s"
+msgid "Favorite server %s"
+msgstr "Servidor Favorito %s"
 
 msgctxt "#60083"
 msgid "      Preferred Qualities"
 msgstr "      Calidades Favoritas"
 
 msgctxt "#60084"
-msgid "          \u2665 Preferred Quality %s"
-msgstr "          \u2665 Calidad Favorita %s"
+msgid "Preferred Quality %s"
+msgstr "Calidad Favorita %s"
 
 msgctxt "#60085"
 msgid "   Priority (Indicates the order for AutoPlay)"
@@ -823,7 +835,7 @@ msgstr "   Prioridad (Indica el orden para Auto-Reproducir)"
 
 msgctxt "#60086"
 msgid "It has been renamed to:"
-msgstr "È Stato rinominato in:"
+msgstr "Esto ha sido renombrado a:"
 
 msgctxt "#60087"
 msgid "Unexpected error on channel %s"
@@ -1129,10 +1141,6 @@ msgctxt "#60268"
 msgid "Animation"
 msgstr "Animación"
 
-msgctxt "#60269"
-msgid "Kids"
-msgstr "Niños"
-
 msgctxt "#60270"
 msgid "Comedy"
 msgstr "Comedia"
@@ -1140,10 +1148,6 @@ msgstr "Comedia"
 msgctxt "#60271"
 msgid "Crime"
 msgstr "Crimen"
-
-msgctxt "#60272"
-msgid "Documentaries"
-msgstr "Documental"
 
 msgctxt "#60273"
 msgid "Family"
@@ -1703,7 +1707,7 @@ msgstr "Buscando "
 
 msgctxt "#60423"
 msgid "Search"
-msgstr "Buscar
+msgstr "Buscar"
 
 msgctxt "#60424"
 msgid "Searches key have been deleted correctly"
@@ -3067,7 +3071,7 @@ msgstr "¿Realmente desea eliminar '%s' de su videoteca?"
 
 msgctxt "#70089"
 msgid "Show only links of %s"
-msgstr "Mostrar solo los enlaces de %s "
+msgstr "Mostrar solo los enlaces de %s"
 
 msgctxt "#70090"
 msgid "    Exclude all streams with specific words"
@@ -3131,11 +3135,11 @@ msgstr "Felicidades la videoteca de Kodi ha sido configurada correctamente."
 
 msgctxt "#70105"
 msgid "Do you want Alfa to automatically configure the Kodi library?You will be asked to set up scrapers for movies and series."
-msgstr "¿Desea que Alfa auto-configure la videoteca de Kodi?Se le pedirá que configure los scrapers para las películas y las series."
+msgstr "¿Desea que Alfa auto-configure la videoteca de Kodi? Se le pedirá que configure los proveedores de contenido para las películas y las series."
 
 msgctxt "#70106"
 msgid "If you choose 'No' you can do it later from 'Configuration > Preferences > Paths'."
-msgstr "Si pulsa 'No' podra hacerlo desde 'Configuración > Preferencia > Rutas'."
+msgstr "Si pulsa 'No' podrá hacerlo desde 'Configuración > Preferencias > Rutas'."
 
 msgctxt "#70107"
 msgid "Select scraper for Tv Shows"
@@ -3217,10 +3221,6 @@ msgctxt "#70126"
 msgid "Visual Options"
 msgstr "Opciones Visuales"
 
-msgctxt "#70127"
-msgid "Anime"
-msgstr "Anime"
-
 msgctxt "#70128"
 msgid "Infoplus visual option"
 msgstr "Opción visual Infoplus"
@@ -3253,13 +3253,9 @@ msgctxt "#70135"
 msgid "Custom Colours"
 msgstr "Colores Personalizados"
 
-msgctxt "#70136"
-msgid "Tv Show"
-msgstr "Serie"
-
 msgctxt "#70137"
-msgid "Movie"
-msgstr "Pelicula"
+msgid "Movies"
+msgstr "Peliculas"
 
 msgctxt "#70138"
 msgid "Low Rating"
@@ -3271,7 +3267,7 @@ msgstr "Valoracion Media"
 
 msgctxt "#70140"
 msgid "High Rating"
-msgstr "Valoracion Alta"
+msgstr "Valoración Alta"
 
 msgctxt "#70141"
 msgid "Quality"
@@ -3375,7 +3371,7 @@ msgstr "Opciones para Titulos"
 
 msgctxt "#70168"
 msgid "General"
-msgstr "Generale"
+msgstr "General"
 
 msgctxt "#70169"
 msgid "Servers use"
@@ -3754,8 +3750,8 @@ msgid "Alfa stopped"
 msgstr "Alfa Detenido"
 
 msgctxt "#70264"
-msgid "Basic realm=\Enter the username and password to access proteus \""
-msgstr "Basic realm=\"Introduce el nombre de usuario y clave para acceder a proteus\""
+msgid "Enter the username and password to access Alfa"
+msgstr "Introduce el nombre de usuario y clave para acceder a Alfa"
 
 msgctxt "#70265"
 msgid "The data entered is not correct!"
@@ -3764,14 +3760,6 @@ msgstr "¡Los datos introducidos no son correctos!"
 msgctxt "#70266"
 msgid "The search for% s did not match."
 msgstr "La busqueda de %s no dio resultados."
-
-msgctxt "#70267"
-msgid "An error occurred in channel "
-msgstr "Se ha producido un error en el canal "
-
-msgctxt "#70268"
-msgid "This can be due to several reasons: \ n \ - The server is not available, or is not responding. \ n \ - Changes in the design of the web. \ n \ - Etc ... \ n \ Check the log to see more details of the error. "
-msgstr "Esto puede ser devido a varias razones: \n \- El servidor no está disponible, o no esta respondiendo.\n \- Cambios en el diseño de la web.\n \- Etc...\n \Comprueba el log para ver mas detalles del error."
 
 msgctxt "#70269"
 msgid "Search new episodes now"
@@ -3820,5 +3808,53 @@ msgstr "Puedes probar descargando el modulo 'libtorrent' de Kodi o instalando al
 msgctxt "#70280"
 msgid "    -  Torrent Links don't work."
 msgstr "    - Los enlaces Torrent no funcionan."
+
+msgctxt "#70281"
+msgid "Do you want to show these links?"
+msgstr "¿Desea mostrar estos enlaces?"
+
+msgctxt "#70282"
+msgid "Searching in %s"
+msgstr "Buscando en %s"
+
+msgctxt "#70283"
+msgid "movie"
+msgstr "pelicula"
+
+msgctxt "#70284"
+msgid "%.2f%% of %.1fMB %s | %.1f kB/s"
+msgstr "%.2f%% de %.1fMB %s | %.1f kB/s"
+
+msgctxt "#70285"
+msgid "Configure News"
+msgstr "Configurar Novedades"
+
+msgctxt "#70286"
+msgid "Configure Search"
+msgstr "Configurar Buscador"
+
+msgctxt "#70286"
+msgid "Configure Search"
+msgstr "Configurar Buscador"
+
+msgctxt "#70287"
+msgid "Configure VideoLibrary"
+msgstr "Configurar Videoteca"
+
+msgctxt "#70288"
+msgid "Configure Downloads"
+msgstr "Configurar Descargas"
+
+msgctxt "#70289"
+msgid "Alfa\nCorrected an error in the adult section, the password has been reset to "
+msgstr "Alfa\nCorregido un error en la seccion adultos, se ha reseteado la contrasena a por "
+
+msgctxt "#70290"
+msgid "default, you will have to change it again if you want.\ n Type 's', if you have understood it: "
+msgstr "defecto, tendra que cambiarla de nuevo si lo desea.\n Escriba 's', si lo ha entendido: "
+
+msgctxt "#70291"
+msgid "Error, during conversion"
+msgstr "Error, en conversión"
 
 
