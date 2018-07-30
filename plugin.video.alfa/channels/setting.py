@@ -327,6 +327,9 @@ def conf_tools(item):
 
     # Activar o desactivar canales
     if item.extra == "channels_onoff":
+        if config.get_platform(True)['num_version'] >= 17.0: # A partir de Kodi 16 se puede usar multiselect, y de 17 con preselect
+            return channels_onoff(item)
+        
         import channelselector
         from core import channeltools
 
@@ -527,6 +530,59 @@ def conf_tools(item):
             logger.error("Error: %s" % traceback.format_exc())
 
         return itemlist
+
+
+def channels_onoff(item):
+    import channelselector, xbmcgui
+    from core import channeltools
+
+    # Cargar lista de opciones
+    # ------------------------
+    lista = []; ids = []
+    channels_list = channelselector.filterchannels('allchannelstatus')
+    for channel in channels_list:
+        channel_parameters = channeltools.get_channel_parameters(channel.channel)
+        lbl = '%s' % channel_parameters['language']
+        lbl += ' %s' % [config.get_localized_category(categ) for categ in channel_parameters['categories']]
+
+        it = xbmcgui.ListItem(channel.title, lbl)
+        it.setArt({ 'thumb': channel.thumbnail, 'fanart': channel.fanart })
+        lista.append(it)
+        ids.append(channel.channel)
+
+    # Diálogo para pre-seleccionar
+    # ----------------------------
+    preselecciones = ['Pre-seleccionar activados actualmente', 'Pre-seleccionar todos', 'No pre-seleccionar ninguno']
+    ret = platformtools.dialog_select(config.get_localized_string(60545), preselecciones)
+    if ret == -1: return False # pedido cancel
+    if ret == 2: preselect = []
+    elif ret == 1: preselect = range(len(ids))
+    else:
+        preselect = []
+        for i, canal in enumerate(ids):
+            channel_status = config.get_setting('enabled', canal)
+            if channel_status is None: channel_status = True
+            if channel_status:
+                preselect.append(i)
+
+    # Diálogo para seleccionar
+    # ------------------------
+    ret = xbmcgui.Dialog().multiselect(config.get_localized_string(60545), lista, preselect=preselect, useDetails=True)
+    if ret == None: return False # pedido cancel
+    seleccionados = [ids[i] for i in ret]
+
+    # Guardar cambios en canales activados
+    # ------------------------------------
+    for canal in ids:
+        channel_status = config.get_setting('enabled', canal)
+        if channel_status is None: channel_status = True
+
+        if channel_status and canal not in seleccionados:
+            config.set_setting('enabled', False, canal)
+        elif not channel_status and canal in seleccionados:
+            config.set_setting('enabled', True, canal)
+
+    return False
 
 
 def channel_status(item, dict_values):
