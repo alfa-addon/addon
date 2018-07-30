@@ -280,7 +280,7 @@ def run(item=None):
         canal = scrapertools.find_single_match(traceback.format_exc(), patron)
 
         platformtools.dialog_ok(
-            config.get_localized_string(70093) + canal,
+            config.get_localized_string(59985) + canal,
             config.get_localized_string(60013) %(e))
     except:
         import traceback
@@ -302,11 +302,13 @@ def run(item=None):
 
         if canal:
             platformtools.dialog_ok(
-                config.get_localized_string(70093) + canal,
-                config.get_localized_string(60014), log_message)
+                config.get_localized_string(60087) %canal,
+                config.get_localized_string(60014),
+                log_message)
         else:
             platformtools.dialog_ok(
-                config.get_localized_string(59984),
+                config.get_localized_string(60038),
+                config.get_localized_string(60015),
                 log_message)
 
 

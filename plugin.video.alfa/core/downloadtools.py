@@ -812,7 +812,7 @@ def downloadfileGzipped(url, pathfichero):
 
     # Crea el diálogo de progreso
     from platformcode import platformtools
-    progreso = platformtools.dialog_progress("addon", "Descargando...", url.split("|")[0], nombrefichero)
+    progreso = platformtools.dialog_progress("addon", config.get_localized_string(60200), url.split("|")[0], nombrefichero)
 
     # Timeout del socket a 60 segundos
     socket.setdefaulttimeout(10)

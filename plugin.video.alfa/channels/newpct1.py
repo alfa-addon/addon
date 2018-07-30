@@ -11,6 +11,7 @@ from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
 from core import servertools
+from core import channeltools
 from core.item import Item
 from platformcode import config, logger
 from core import tmdb
@@ -19,7 +20,12 @@ from lib import generictools
 channel_py = 'newpct1'
 
 #Código para permitir usar un único canal para todas las webs clones de NewPct1
-clone_list = config.get_setting('clonenewpct1_channels_list', channel_py)       #Carga lista de clones
+#Cargamos en .json del canal para ver las listas de valores en settings
+clone_list = channeltools.get_channel_json(channel_py)
+for settings in clone_list['settings']:                                         #Se recorren todos los settings
+    if settings['id'] == "clonenewpct1_channels_list":                          #Encontramos en setting
+        clone_list = settings['default']                                        #Carga lista de clones
+        break
 clone_list = ast.literal_eval(clone_list)                                       #la convierte en array
 host_index = 0
 host_index = config.get_setting('clonenewpct1_channel_default', channel_py)     #Clone por defecto
@@ -28,8 +34,16 @@ for active_clone, channel_clone, host_clone, contentType_clone, info_clone in cl
     if i == host_index:
         channel_clone_name = channel_clone                                      #Nombre del Canal elegido
         host = host_clone                                                       #URL del Canal elegido
-        break
+        if active_clone == "1":                                                 #Comprueba que el clone esté activo
+            break
+        channel_clone_name = "*** DOWN ***"                                     #es un fallo masivo ???
+        for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
+            if active_clone == "1":                                             #Comprueba que el clone esté activo
+                channel_clone_name = channel_clone                              #Nombre del Canal elegido
+                host = host_clone                                               #URL del Canal elegido
+                break
     i += 1
+    
 item = Item()
 if item.channel != channel_py:
     item.channel = channel_py
@@ -39,6 +53,18 @@ __modo_grafico__ = config.get_setting('modo_grafico', channel_py)               
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel_py)      #Actualización sólo últ. Temporada?
 timeout = config.get_setting('clonenewpct1_timeout_downloadpage', channel_py)               #Timeout downloadpage
 if timeout == 0: timeout = None
+fecha_rango = config.get_setting('clonenewpct1_rango_fechas_novedades', channel_py)         #Rango fechas para Novedades
+if fecha_rango == 0: fecha_rango = 'Hoy'
+elif fecha_rango == 1: fecha_rango = 'Ayer'
+elif fecha_rango == 2: fecha_rango = 'Semana'
+elif fecha_rango == 3: fecha_rango = 'Mes'
+elif fecha_rango == 4: fecha_rango = 'Siempre'
+episodio_serie = config.get_setting('clonenewpct1_serie_episodio_novedades', channel_py)    #Episodio o serie para Novedades
+
+#Temporal, sólo para actualizar newpct1_data.json con otro valor por defecto
+channel_banned = config.get_setting('clonenewpct1_excluir1_enlaces_veronline', channel_py)  #1er Canal baneado
+if channel_banned == 9:
+    config.set_setting('clonenewpct1_excluir1_enlaces_veronline', 22, channel_py)           #se pone el nuevo valor por defecto
 
 
 def mainlist(item):
@@ -59,7 +85,13 @@ def mainlist(item):
     thumb_docus = get_thumb("channels_documentary.png")
     thumb_buscar = get_thumb("search.png")
     thumb_settings = get_thumb("setting_0.png")
+    
+    if channel_clone_name == "*** DOWN ***":    #Ningún clones activo !!!
+        itemlist.append(item.clone(action='', title="[COLOR yellow]Ningún canal NewPct1 activo[/COLOR]"))    
+        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos y salimos
 
+    itemlist.append(Item(channel=item.channel, action="submenu_novedades", title="Novedades", url=item.channel_host + "ultimas-descargas/", extra="novedades", thumbnail=thumb_pelis, category=item.category, channel_host=item.channel_host))
+    
     itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url=item.channel_host, 
                          extra="peliculas", thumbnail=thumb_pelis, category=item.category, channel_host=item.channel_host))
 
@@ -83,11 +115,14 @@ def mainlist(item):
     
 def settingCanal(item):
     from platformcode import platformtools
-    return platformtools.show_channel_settings()
-
+    platformtools.show_channel_settings()
+    platformtools.itemlist_refresh()
+    return 
     
+
 def submenu(item):
     logger.info()
+    
     itemlist = []
     
     data = ''
@@ -99,6 +134,13 @@ def submenu(item):
     patron = '<li><a\s?class="[^"]+"\s?href="http:[^"]+"><i\s?class=.*><\/i>.*Inicio<\/a><\/li>(.+)<\/ul>\s?<\/nav>'
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not data or not scrapertools.find_single_match(data, patron):
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            for clone_inter, autoridad in item.intervencion:
+                thumb_intervenido = get_thumb(autoridad)
+                itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
+            return itemlist                                                     #Salimos
+        
         logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " + item.url + data)
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
         item, data = generictools.fail_over_newpct1(item, patron)
@@ -148,6 +190,99 @@ def submenu(item):
     return itemlist
 
 
+def submenu_novedades(item):
+    logger.info()
+    
+    itemlist = []
+    itemlist_alt = []
+    
+    data = ''
+    timeout_search=timeout * 2          #Más tiempo para Novedades, que es una búsqueda
+    thumb_settings = get_thumb("setting_0.png")
+    
+    #Establecer los valores del .json por si se entra directamente desde un favorito
+    item.channel_host = host
+    item.url = host + "ultimas-descargas/"
+    item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+    item.extra = "novedades"
+    
+    if channel_clone_name == "*** DOWN ***":    #Ningún clones activo !!!
+        itemlist.append(item.clone(action='', title="[COLOR yellow]Ningún canal NewPct1 activo[/COLOR]"))    
+        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos y salimos
+    
+    try:
+        data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, timeout=timeout_search).data)
+    except:
+        pass
+        
+    patron = '<div class="content">.*?<ul class="noticias'
+    #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
+    if not data or not scrapertools.find_single_match(data, patron):
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            for clone_inter, autoridad in item.intervencion:
+                thumb_intervenido = get_thumb(autoridad)
+                itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
+            return itemlist                                                     #Salimos
+        
+        logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " + item.url + data)
+        #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
+        item, data = generictools.fail_over_newpct1(item, patron)
+    
+    if not data:    #Si no ha logrado encontrar nada, salimos
+        itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.category + '[/COLOR]: Ningún canal NewPct1 activo'))    
+        itemlist.append(item.clone(action='', title=item.category + ': ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
+        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+    elif item.channel_alt:                      #Si ha habido fail-over, lo comento
+        itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.category + '[/COLOR] [ALT ] en uso'))
+        itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.channel_alt.capitalize() + '[/COLOR] inaccesible'))
+        
+        if item.url_alt: del item.url_alt
+        del item.channel_alt
+        
+    data = scrapertools.get_match(data, patron)                             #Seleccionamos el trozo que nos interesa
+    data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
+    data = data.replace("'", '"').replace('/series"', '/series/"')          #Compatibilidad con mispelisy.series.com
+    
+    patron = '<option value="([^"]+)".*?>(.*?)<\/option>'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    
+    itemlist.append(item.clone(action='', title="[COLOR yellow]Ver lo Último de:[/COLOR]"))
+    for value, title in matches:
+        if not value.isdigit():
+            if title not in "Mes": 
+                item.post = "date=%s" % value
+                itemlist.append(item.clone(action="listado_busqueda", title=title, url=item.url, post=item.post))
+    
+    itemlist.append(item.clone(action='', title="[COLOR yellow]Lo Último en la Categoría:[/COLOR]"))
+    for value, title in matches:
+        if value.isdigit():
+            if title not in "Juegos, Software, Musica, Deportes":
+                
+                #tratamos de poner al principio las categorías más relevantes
+                if value == '1027': title = "01" + title        #Pelis HD
+                elif value == '757': title = "02" + title       #Pelis Castellano
+                elif value == '1527': title = "03" + title      #Pelis Latino
+                elif value == '1469': title = "04" + title      #Series HD
+                elif value == '767': title = "05" + title       #Series
+                else: title = "99" + title                      #Resto
+
+                item.post = "categoryIDR=%s&date=%s" % (value, fecha_rango)
+                itemlist_alt.append(item.clone(action="listado_busqueda", title=title, url=item.url, post=item.post))
+    
+    itemlist_alt = sorted(itemlist_alt, key=lambda it: it.title)        #clasificamos
+    for item_local in itemlist_alt:
+        item_local.title = re.sub(r'^\d{2}', '', item_local.title)      #Borramos la secuencia
+        itemlist.append(item_local.clone())
+        
+    itemlist.append(
+        Item(channel=item.channel, action="", title="[COLOR yellow]Configuración de Novedades:[/COLOR]", url="", thumbnail=thumb_settings, category=item.category, channel_host=item.channel_host))
+    itemlist.append(
+        Item(channel=item.channel, action="settingCanal", title="Periodos y formatos de series en Novedades", url="", thumbnail=thumb_settings, category=item.category, channel_host=item.channel_host))
+
+    return itemlist
+    
+    
 def alfabeto(item):
     logger.info()
     itemlist = []
@@ -158,6 +293,13 @@ def alfabeto(item):
 
     patron = '<ul class="alfabeto">(.*?)</ul>'
     if not data or not scrapertools.find_single_match(data, patron):
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            for clone_inter, autoridad in item.intervencion:
+                thumb_intervenido = get_thumb(autoridad)
+                itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
+            return itemlist                                                     #Salimos
+        
         logger.error("ERROR 01: ALFABETO: La Web no responde o ha cambiado de URL: " + item.url + data)
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
         item, data = generictools.fail_over_newpct1(item, patron)
@@ -206,9 +348,14 @@ def listado(item):
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
     except:
         pass
-        
+    
     patron = '<ul class="' + clase + '">(.*?)</ul>'     #seleccionamos el bloque que nos interesa
     if not data or (not scrapertools.find_single_match(data, patron) and not '<h3><strong>( 0 ) Resultados encontrados </strong>' in data):
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error
+            return itemlist                                                     #Salimos
+            
         logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + data)
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
         item, data = generictools.fail_over_newpct1(item, patron)
@@ -311,7 +458,7 @@ def listado(item):
         cnt_pag += cnt_tot
 
     #Tratamos todos los contenidos, creardo una variable local de Item
-    for scrapedurl, scrapedtitle, scrapedthumbnail, title_alt, calidad in matches:
+    for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedtitle_alt, calidad in matches:
         item_local = item.clone()
         if item_local.tipo:
             del item_local.tipo
@@ -321,13 +468,15 @@ def listado(item):
             del item_local.post_num
         if item_local.category:
             del item_local.category
+        if item_local.intervencion:
+            del item_local.intervencion
 
         item_local.title = ''
         item_local.context = "['buscar_trailer']"
         
         # Limpiamos títulos, Sacamos datos de calidad, audio y lenguaje
         title = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf8').strip()
-        title_alt = re.sub('\r\n', '', title_alt).decode('iso-8859-1').encode('utf8').strip()
+        title_alt = re.sub('\r\n', '', scrapedtitle_alt).decode('iso-8859-1').encode('utf8').strip()
         title = title.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ï¿½", "ñ").replace("Ã±", "ñ").replace(".", " ")
         title_alt = title_alt.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ï¿½", "ñ").replace("Ã±", "ñ")
         
@@ -483,15 +632,21 @@ def listado_busqueda(item):
 
     #Renombramos el canal al nombre de clone elegido.  Actualizados URL
     host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
-    #item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')
-    if item.category and item.category != "newest":
-        item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+    item.channel_host = host
+    item.category_new = ''
+    if item.category:
+        item.category_new = item.category
+    item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+    
+    if channel_clone_name == "*** DOWN ***":    #Ningún clones activo !!!
+        itemlist.append(item.clone(action='', title="[COLOR yellow]Ningún canal NewPct1 activo[/COLOR]"))    
+        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos y salimos
     
     itemlist = []
     cnt_tot = 40            # Poner el num. máximo de items por página.  Dejamos que la web lo controle
     cnt_title = 0           # Contador de líneas insertadas en Itemlist
     cnt_pag = 0             # Contador de líneas leídas de Matches
-    timeout_search = timeout * 2      # Timeout un poco más largo para las búsquedas
+    timeout_search = timeout * 2        # Timeout un poco más largo para las búsquedas
     if timeout_search < 5:
         timeout_search = 5  # Timeout un poco más largo para las búsquedas
     data = ''
@@ -521,14 +676,23 @@ def listado_busqueda(item):
     #Máximo num. de líneas permitidas por TMDB. Máx de 5 páginas por Itemlist para no degradar el rendimiento
     while cnt_title <= cnt_tot and cnt_next < 5:
 
+        data = ''
         try:
             data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, post=item.post, timeout=timeout_search).data)
         except:
             pass
         
         cnt_next += 1
-        pattern = '<ul class="%s">(.*?)</ul>' % item.pattern            #seleccionamos el bloque que nos interesa
+        if item.extra == "novedades":
+            pattern = '<div class="content">.*?<ul class="noticias(.*?)<\/div><!-- end .content -->'  #seleccionamos el bloque que nos interesa
+        else:
+            pattern = '<ul class="%s">(.*?)</ul>' % item.pattern                #seleccionamos el bloque que nos interesa
         if not data or (not scrapertools.find_single_match(data, pattern) and not '<h3><strong>( 0 ) Resultados encontrados </strong>' in data):
+            item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+            if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+                item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error
+                return itemlist                                                     #Salimos
+            
             logger.error("ERROR 01: LISTADO_BUSQUEDA: La Web no responde o ha cambiado de URL: " + item.url + item.post + " / DATA: " + data)
             #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
             item, data = generictools.fail_over_newpct1(item, pattern)
@@ -543,7 +707,11 @@ def listado_busqueda(item):
         #Obtiene la dirección de la próxima página, si la hay
         try:
             post_actual = item.post     #Guardamos el post actual por si hay overflow de Itemlist y hay que hechar marcha atrás
-            get, post, total_pag = scrapertools.find_single_match(data, '<ul class="pagination">.*?<a\s*href="([^"]+)"(?:\s*onClick=".*?\(\'([^"]+)\'\);">Next<\/a>.*?onClick=".*?\(\'([^"]+)\'\);">Last<\/a>)')
+            
+            if item.extra == "novedades":
+                get, post, total_pag = scrapertools.find_single_match(data, '<ul class="pagination">.*?<a\s*href="([^"]+pg\/)(\d+)">Next<\/a>.*?<a\s*href="[^"]+pg\/(\d+)">Last<\/a>')
+            else:
+                get, post, total_pag = scrapertools.find_single_match(data, '<ul class="pagination">.*?<a\s*href="([^"]+)"(?:\s*onClick=".*?\(\'([^"]+)\'\);">Next<\/a>.*?onClick=".*?\(\'([^"]+)\'\);">Last<\/a>)')
         except:
             post = False
             cnt_next = 99       #No hay más páginas.  Salir del bucle después de procesar ésta
@@ -556,17 +724,29 @@ def listado_busqueda(item):
             post_num = int(post)-1      #Guardo página actual
 
         # Preparamos un patron que pretence recoger todos los datos significativos del video
-        pattern = '<ul class="%s">(.*?)</ul>' % item.pattern            #seleccionamos el bloque que nos interesa 
+        if item.extra == "novedades":
+            pattern = '<div class="content">.*?<ul class="noticias(.*?)<\/div><!-- end .content -->'  #seleccionamos el bloque que nos interesa
+        else:
+            pattern = '<ul class="%s">(.*?)</ul>' % item.pattern            #seleccionamos el bloque que nos interesa
         data_alt = data
         data = scrapertools.get_match(data, pattern)
-        pattern = '<li[^>]*><a href="(?P<scrapedurl>[^"]+).*?'          #url
-        pattern += 'title="(?P<scrapedtitle>[^"]+).*?'                  #título
-        pattern += '<img.*?src="(?P<scrapedthumbnail>[^"]+)?".*?'       #thumb
-        pattern += '<h2.*?(?P<calidad>\[.*?)?<\/h2.*?'                  #calidad
-        pattern += '<span.*?>\d+-\d+-(?P<year>\d{4})?<\/span>*.?'       #año
-        pattern += '<span.*?>(?P<size>\d+[\.|\s].*?[GB|MB])?<\/span>'   #tamaño (significativo para peliculas)
+        if item.extra == "novedades":
+            pattern = '<a href="(?P<scrapedurl>[^"]+)"\s?'                  #url
+            pattern += 'title="(?P<scrapedtitle>[^"]+)"[^>]*>'              #título
+            pattern += '<img[^>]*src="(?P<scrapedthumbnail>[^"]+)"?.*?'     #thumb
+            pattern += '<\/h2><\/a><span.*?">(?P<calidad>.*?)?'             #calidad
+            pattern += '<(?P<year>.*?)?'                                    #año
+            pattern += '>Tama.*?\s(?P<size>\d+[.|\s].*?[GB|MB])?\s?<\/strong>'   #tamaño (significativo para peliculas)
+        else:
+            pattern = '<li[^>]*><a href="(?P<scrapedurl>[^"]+).*?'          #url
+            pattern += 'title="(?P<scrapedtitle>[^"]+).*?'                  #título
+            pattern += '<img.*?src="(?P<scrapedthumbnail>[^"]+)?".*?'       #thumb
+            pattern += '<h2.*?(?P<calidad>\[.*?)?<\/h2.*?'                  #calidad
+            pattern += '<span.*?>\d+-\d+-(?P<year>\d{4})?<\/span>*.?'       #año
+            pattern += '<span.*?>(?P<size>\d+[\.|\s].*?[GB|MB])?<\/span>'   #tamaño (significativo para peliculas)
+        
         matches_alt = re.compile(pattern, re.DOTALL).findall(data)
-        if not matches_alt and not '<h3><strong>( 0 ) Resultados encontrados </strong>' in data_alt:        #error
+        if not matches_alt and not '<h3><strong>( 0 ) Resultados encontrados </strong>' in data_alt and not '<ul class="noticias-series"></ul></form></div><!-- end .page-box -->' in data_alt:        #error
             logger.error("ERROR 02: LISTADO_BUSQUEDA: Ha cambiado la estructura de la Web " + " / PATRON: " + pattern + " / DATA: " + data_alt)
             itemlist.append(item.clone(action='', title=item.category + ': ERROR 02: LISTADO_BUSQUEDA: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Pintamos los datos de fail-over, si los hay
@@ -619,7 +799,7 @@ def listado_busqueda(item):
     #logger.debug(data)
 
     cnt_title = 0
-    for scrapedurl, scrapedtitle, scrapedthumbnail, calidad, year, size in matches:
+    for scrapedurl, scrapedtitle, scrapedthumbnail, calidad, scrapedyear, scrapedsize in matches:
         cnt_pag += 1 
         
         #Realiza un control de las series que se añaden, ya que el buscador devuelve episodios y no las series completas
@@ -648,8 +828,8 @@ def listado_busqueda(item):
         
         #Creamos una copia de Item para cada contenido
         item_local = item.clone()
-        if item_local.category:
-            del item_local.category
+        if item_local.category_new:
+            del item_local.category_new
         if item_local.tipo:
             del item_local.tipo
         if item_local.totalItems:
@@ -664,19 +844,76 @@ def listado_busqueda(item):
         del item_local.adult
         item_local.folder = True
         del item_local.folder
+        if item_local.intervencion:
+            del item_local.intervencion
         item_local.title = ''
         item_local.context = "['buscar_trailer']"
+        item_local.contentType = ""
+        url = scrapedurl
         
+        title_subs = []
+        
+        #Si son episodios sueltos de Series que vienen de Novedades, se busca la url de la Serie
+        if item.extra == "novedades" and "/serie" in url and episodio_serie == 1:
+            item_local.url = url
+            item_local.extra2 = 'serie_episodios'           #Creamos acción temporal excluyente para otros clones
+            if item_local.category == 'Mispelisyseries':    #Esta web no gestiona bien el cambio de episodio a Serie
+                pattern = 'class="btn-torrent">.*?window.location.href = "(.*?)";'       #Patron para .torrent
+                #Como no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el cambio de episodio por serie
+                item_local, data_serie = generictools.fail_over_newpct1(item_local, pattern)
+            else:
+                try:
+                    data_serie = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item_local.url, timeout=timeout).data)
+                except:
+                    pass
+
+                pattern = 'class="btn-torrent">.*?window.location.href = "(.*?)";'       #Patron para .torrent
+                if not data_serie or (not scrapertools.find_single_match(data_serie, pattern) and not '<h3><strong>( 0 ) Resultados encontrados </strong>' in data and not '<ul class="noticias-series"></ul></form></div><!-- end .page-box -->' in data):
+                    logger.error("ERROR 01: LISTADO_BUSQUEDA: La Web no responde o ha cambiado de URL: " + item_local.url + " / DATA: " + data_serie)
+                    #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el cambio de episodio por serie
+                    item_local, data_serie = generictools.fail_over_newpct1(item_local, pattern)
+            
+            if not data_serie:    #Si no ha logrado encontrar nada, salimos
+                title_subs += ["ERR"]
+            
+            elif item_local.channel_alt:                #Si ha habido fail-over, lo comento
+                url = url.replace(item_local.channel_alt, item_local.category.lower())
+                title_subs += ["ALT"]
+
+            try:
+                pattern = '<div class="content">.*?<h1>.*?<a href="([^"]+)"'            #Patron para Serie completa
+                item_local.url = scrapertools.find_single_match(data_serie, pattern)
+                if (item.post and '775' in item.post and 'vo/' not in item_local.url) or 'vo/' in url:     #Son series VO mal formadas?
+                    item_local.url = item_local.url.replace('/series/', '/series-vo/')
+                #item_local.url = re.sub(r'\/\d+$', '/', item_local.url)             #Quitamos el ID de la serie por compatib.
+                if item_local.url:
+                    title_subs += ["Episodio %sx%s" % (scrapertools.find_single_match(url, '\/temp.*?-(\d+)\/cap.*?-(\d+)\/'))]
+                    url = item_local.url
+            except:
+                pass
+                
+        if item.extra == "novedades" and "/serie" in url:
+            if not item_local.url or episodio_serie == 0:
+                item_local.url = url
+                if scrapertools.find_single_match(url, '\/temp.*?-(\d+)\/cap.*?-(\d+)\/'):
+                    title_subs += ["Episodio %sx%s" % (scrapertools.find_single_match(url, '\/temp.*?-(\d+)\/cap.*?-(\d+)\/'))]
+                else:
+                    title_subs += ["Episodio 1x01"]
+
         #Establecemos los valores básicos en función del tipo de contenido
-        if (".com/serie" in scrapedurl or "/serie" in scrapedurl or "-serie" in scrapedurl) and not "/miniseries" in scrapedurl:      #Series
+        if (".com/serie" in url or "/serie" in url or "-serie" in url) and not "/miniseries" in url and (not "/capitulo" in url or "pelisyseries.com" in item_local.channel_host):   #Series
             item_local.action = "episodios"
             item_local.contentType = "tvshow"
             item_local.extra = "series"
-        elif "varios/" in scrapedurl or "/miniseries" in scrapedurl:               #Documentales y varios
+        elif "varios/" in url or "/miniseries" in url:                #Documentales y varios
             item_local.action = "findvideos"
             item_local.contentType = "movie"
             item_local.extra = "varios"
-        else:                                       #Películas
+        elif "/capitulo" in url:                                             #Documentales y varios
+            item_local.action = "findvideos"
+            item_local.contentType = "episode"
+            item_local.extra = "series"
+        else:                                                                       #Películas
             item_local.action = "findvideos"
             item_local.contentType = "movie"
             item_local.extra = "peliculas"
@@ -686,14 +923,13 @@ def listado_busqueda(item):
         title = title.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ï¿½", "ñ").replace("Ã±", "ñ")
         
         item_local.quality = scrapertools.htmlclean(calidad)
-        title_subs = []
-        
+
         #Determinamos y marcamos idiomas distintos del castellano
         item_local.language = []
-        if "[vos" in title.lower()  or "v.o.s" in title.lower() or "vo" in title.lower() or ".com/pelicula/" in scrapedurl  or ".com/series-vo" in scrapedurl or "-vo/" in scrapedurl or "vos" in calidad.lower() or "vose" in calidad.lower() or "v.o.s" in calidad.lower() or "sub" in calidad.lower() or ".com/peliculas-vo" in item.url:
+        if "[vos" in title.lower()  or "v.o.s" in title.lower() or "vo" in title.lower() or ".com/pelicula/" in url  or ".com/series-vo" in url or "-vo/" in url or "vos" in calidad.lower() or "vose" in calidad.lower() or "v.o.s" in calidad.lower() or "sub" in calidad.lower() or ".com/peliculas-vo" in item.url:
             item_local.language += ["VOS"]
         title = title.replace(" [Subs. integrados]", "").replace(" [subs. Integrados]", "").replace(" [VOSE", "").replace(" [VOS", "").replace(" (V.O.S.E)", "").replace(" VO", "").replace("Subtitulos", "")
-        if "latino" in title.lower() or "argentina" in title.lower() or "-latino/" in scrapedurl or "latino" in calidad.lower() or "argentina" in calidad.lower():
+        if "latino" in title.lower() or "argentina" in title.lower() or "-latino/" in url or "latino" in calidad.lower() or "argentina" in calidad.lower():
             item_local.language += ["LAT"]
         
         #Guardamos info de 3D en calidad y limpiamos
@@ -811,17 +1047,22 @@ def listado_busqueda(item):
         item_local.title = title
         if item_local.contentType == "movie":
             item_local.contentTitle = title
-            size = size.replace(".", ",")
+            size = scrapedsize.replace(".", ",")
             item_local.quality = '%s [%s]' % (item_local.quality, size)
         else:
             item_local.contentSerieName = title
         
         #Guardamos el resto de variables del vídeo
-        item_local.url = scrapedurl
+        item_local.url = url
         item_local.thumbnail = scrapedthumbnail
         item_local.contentThumbnail = scrapedthumbnail
 
         #Guardamos el año que puede venir en la url, por si luego no hay resultados desde TMDB
+        try:
+            year = int(scrapedyear)
+        except:
+            year = ""
+        year = str(year)
         if year >= "1900" and year <= "2040" and year != "2020":
             title_subs += [year]
         item_local.infoLabels['year'] = '-'
@@ -830,11 +1071,11 @@ def listado_busqueda(item):
         item_local.title_subs = title_subs
 
         # Codigo para rescatar lo que se pueda en pelisy.series.com de Series para la Videoteca.  la URL apunta al capítulo y no a la Serie.  Nombre de Serie frecuentemente en blanco. Se obtiene de Thumb, así como el id de la serie
-        if ("/serie" in item_local.url or "-serie" in item_local.url) and "pelisyseries.com" in host:
+        if ("/serie" in item_local.url or "-serie" in item_local.url) and "pelisyseries.com" in item_local.channel_host:
             #Extraer la calidad de la serie basados en la info de la url
-            if "seriehd" in url:
+            if "seriehd" in item_local.url:
                 calidad_mps = "series-hd/"
-            elif "serievo" in url or "serie-vo" in url:
+            elif "serievo" in item_local.url or "serie-vo" in item_local.url:
                 calidad_mps = "series-vo/"
             else:
                 calidad_mps = "series/"
@@ -847,7 +1088,7 @@ def listado_busqueda(item):
             
             #Extraer el ID de la serie desde Thumbs (4 dígitos).  Si no hay, nulo
             if "/0_" not in scrapedthumbnail and not "no_image" in scrapedthumbnail:
-                serieid = scrapertools.find_single_match(scrapedthumbnail, r'.*?\/\w\/(?P<serieid>\d+).*?.*')
+                serieid = scrapertools.find_single_match(scrapedthumbnail, r'\/\w\/(?P<serieid>\d+)')
                 if len(serieid) > 5:
                     serieid = ""
             else:
@@ -879,13 +1120,14 @@ def listado_busqueda(item):
 
             #logger.debug("url: " + item_local.url + " / title o/n: " + item_local.title + " / " + real_title_mps + " / calidad_mps : " + calidad_mps + " / contentType : " + item_local.contentType)
             
-            item_local.title = real_title_mps           #Esperemos que el nuevo título esté bien
+            item_local.title = real_title_mps.replace('-', ' ').title().strip()     #Esperemos que el nuevo título esté bien
+            item_local.contentSerieName = item_local.title
         
         #Agrega el item local a la lista itemlist
         itemlist.append(item_local.clone())
         
-    if not item.category:       #Si este campo no existe es que viene de la primera pasada de una búsqueda global
-        return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
+    if not item.category_new:       #Si este campo no existe es que viene de la primera pasada de una búsqueda global
+        return itemlist             #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
 
     #Pasamos a TMDB la lista completa Itemlist
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
@@ -901,16 +1143,17 @@ def listado_busqueda(item):
     return itemlist
 
 def findvideos(item):
-    from core import channeltools
     logger.info()
+    itemlist = []
     
     #Renombramos el canal al nombre de clone elegido.  Actualizados URL
     host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
-    #item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')
+    item.channel_host = host
     item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
     
-    itemlist = []
-    
+    verify_fo = True                    #Verificamos si el clone a usar está activo
+    item, data = generictools.fail_over_newpct1(item, verify_fo)
+
     # Cualquiera de las tres opciones son válidas
     # item.url = item.url.replace(".com/",".com/ver-online/")
     # item.url = item.url.replace(".com/",".com/descarga-directa/")
@@ -1014,7 +1257,7 @@ def findvideos(item):
         verificar_enlaces_descargas = -1            #Verificar todos los enlaces Descargar
         verificar_enlaces_descargas_validos = True  #"¿Contar sólo enlaces 'verificados' en Descargar?"
         excluir_enlaces_descargas = []              #Lista vacía de servidores excluidos en Descargar
-    
+
     # Descarga la página
     data = ''
     try:
@@ -1025,6 +1268,11 @@ def findvideos(item):
     patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'       #Patron para .torrent
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not data or not scrapertools.find_single_match(data, patron):
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
+            return itemlist                                                     #Salimos
+        
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url + " / DATA: " + data)
         
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el vídeo
@@ -1263,23 +1511,37 @@ def findvideos(item):
 
 def episodios(item):
     logger.info()
+    itemlist = []
+    
+    #logger.debug(item)
     
     #Renombramos el canal al nombre de clone elegido.  Actualizados URL
     host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
-    #item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')
+    item.channel_host = host
     item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
     
-    itemlist = []
+    verify_fo = True                    #Verificamos si el clone a usar está activo
+    item, data = generictools.fail_over_newpct1(item, verify_fo)
+
+    #Limpiamos num. Temporada y Episodio que ha podido quedar por Novedades
+    if item.contentSeason:
+        del item.infoLabels['season']
+    if item.contentEpisodeNumber:
+        del item.infoLabels['episode']
 
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
     if not item.infoLabels['tmdb_id']:
         tmdb.set_infoLabels(item, True)
         
+    modo_ultima_temp_alt = modo_ultima_temp
+    if item.ow_force == "1":                        #Si hay un traspaso de canal o url, se actualiza todo 
+        modo_ultima_temp_alt = False
+    
     max_temp = 1
     if item.infoLabels['number_of_seasons']:
         max_temp = item.infoLabels['number_of_seasons']
     y = []
-    if modo_ultima_temp and item.library_playcounts:         #Averiguar cuantas temporadas hay en Videoteca
+    if modo_ultima_temp_alt and item.library_playcounts:         #Averiguar cuantas temporadas hay en Videoteca
         patron = 'season (\d+)'
         matches = re.compile(patron, re.DOTALL).findall(str(item.library_playcounts))
         for x in matches:
@@ -1287,10 +1549,14 @@ def episodios(item):
         max_temp = max(y)
 
     data = ''
+    data_alt = ''
     try:
+        if "pelisyseries.com" in item.url:
+            patron = '<ul class="%s">(.*?)</ul>' % "chapters"  # item.pattern
+        else:
+            patron = '<ul class="%s">(.*?)</ul>' % "buscar-list"  # item.pattern
+        
         data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, timeout=timeout).data)
-        patron = '<ul class="%s">(.*?)</ul>' % "buscar-list"  # item.pattern
-        data_alt = ''
         if data: data_alt = scrapertools.get_match(data, patron)
     except:                                                                             #Algún error de proceso
         pass
@@ -1302,7 +1568,13 @@ def episodios(item):
             
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not data_alt or not scrapertools.find_single_match(data_alt, pattern):
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
+            return itemlist                                                     #Salimos
+        
         logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea: " + item.url)
+        logger.error(pattern + data)
 
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el vídeo
         item, data = generictools.fail_over_newpct1(item, patron, pattern)
@@ -1371,7 +1643,9 @@ def episodios(item):
         #logger.debug(matches)    
         
         #Empezamos a generar cada episodio
-        for url, thumb, info in matches:
+        for scrapedurl, scrapedthumb, info in matches:
+            url = scrapedurl
+            thumb = scrapedthumb
             if "pelisyseries.com" in item.url:      #En esta web están en diferente orden
                 interm = url
                 url = thumb
@@ -1386,8 +1660,12 @@ def episodios(item):
                 pattern = ".*?[^>]+>.*?Temporada\s*(?P<season>\d+)?.*?Capitulo(?:s)?\s*(?P<episode>\d+)?" \
                           "(?:.*?(?P<episode2>\d+)?)<.+?<span[^>]+>(?P<lang>.*?)?<\/span>\s*Calidad\s*<span[^>]+>" \
                           "[\[]\s*(?P<quality>.*?)?\s*[\]]<\/span>"
-                if "Especial" in info: # Capitulos Especiales
-                    pattern = ".*?[^>]+>.*?Temporada.*?\[.*?(?P<season>\d+).*?\].*?Capitulo.*?\[\s*(?P<episode>\d+).*?\]?(?:.*?(?P<episode2>\d+)?)<.+?<span[^>]+>(?P<lang>.*?)?<\/span>\s*Calidad\s*<span[^>]+>[\[]\s*(?P<quality>.*?)?\s*[\]]<\/span>"
+                if not scrapertools.find_single_match(info, pattern):
+                    if "especial" in info.lower():      # Capitulos Especiales
+                        pattern = ".*?[^>]+>.*?Temporada.*?\[.*?(?P<season>\d+).*?\].*?Capitulo.*?\[\s*(?P<episode>\d+).*?\]?(?:.*?(?P<episode2>\d+)?)<.+?<span[^>]+>(?P<lang>.*?)?<\/span>\s*Calidad\s*<span[^>]+>[\[]\s*(?P<quality>.*?)?\s*[\]]<\/span>"
+                    elif "miniserie" in info.lower() or "completa" in info.lower():     # Series o miniseries completa
+                        logger.debug("patron episodioNEW - MINISERIE: " + info)
+                        info = '><strong>%sTemporada %s Capitulo 01_99</strong> - <span >Español Castellano</span> Calidad <span >[%s]</span>' % (item_local.contentSerieName, season, item_local.quality)
                 
                 if not scrapertools.find_single_match(info, pattern):   #en caso de error de formato, creo uno básico
                     logger.debug("patron episodioNEW: " + pattern)
@@ -1413,6 +1691,9 @@ def episodios(item):
                 elif "completa" in info.lower():
                     info = info.replace("COMPLETA", "Caps. 01_99")
                     pattern = 'Temp.*?(?P<season>\d+).*?Cap\w?\.\s\d?(?P<episode>\d{2})(?:.*?(?P<episode2>\d{2}))?.*?\[(?P<quality>.*?)\].*?\[(?P<lang>\w+)\]?'
+                    if not scrapertools.find_single_match(info, pattern):   #en caso de error de formato, creo uno básico
+                        logger.debug(info)
+                        info = '%s - Temp.%s [Caps. 01_99][%s][Spanish]' % (item_local.contentSerieName, season, item_local.quality)
                 if scrapertools.find_single_match(info, '\[Cap.\d{2,3}'):
                     pattern = "\[(?P<quality>.*?)\].*?\[Cap.(?P<season>\d).*?(?P<episode>\d{2})(?:_(?P<season2>\d+)" \
                           "(?P<episode2>\d{2}))?.*?\].*?(?:\[(?P<lang>.*?)\])?"
@@ -1465,41 +1746,30 @@ def episodios(item):
                 item_local.infoLabels['episodio_titulo'] = match['lang']
                 item_local.infoLabels['title'] = item_local.infoLabels['episodio_titulo']
             
-            item_local.contentEpisodeNumber = match['episode']
             
             if match['episode'] == 0: match['episode'] = 1      #Evitar errores en Videoteca
+            item_local.contentEpisodeNumber = match['episode']
+
             if match["episode2"]:       #Hay episodio dos? es una entrada múltiple?
                 item_local.title = "%sx%s al %s -" % (str(match["season"]), str(match["episode"]).zfill(2), str(match["episode2"]).zfill(2))            #Creamos un título con el rango de episodios
             else:                   #Si es un solo episodio, se formatea ya
                 item_local.title = "%sx%s -" % (match["season"], str(match["episode"]).zfill(2))
-            
-            if modo_ultima_temp and item.library_playcounts:        #Si solo se actualiza la última temporada de Videoteca
+
+            if modo_ultima_temp_alt and item.library_playcounts:    #Si solo se actualiza la última temporada de Videoteca
                 if item_local.contentSeason < max_temp:
                     list_pages = []         #Sale del bucle de leer páginas
                     break                   #Sale del bucle actual del FOR de episodios por página
                 #if ('%sx%s' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))) in item.library_playcounts:
                 #    continue
-                    
+                
             if item_local.active:
                 del item_local.active
-            if item_local.infoLabels['title']:
+            if item_local.contentTitle:
                 del item_local.infoLabels['title']
             item_local.context = "['buscar_trailer']"
             item_local.action = "findvideos"
             item_local.contentType = "episode"
             item_local.extra = "episodios"
-            if item_local.library_playcounts:
-                del item_local.library_playcounts
-            if item_local.library_urls:
-                del item_local.library_urls
-            if item_local.path:
-                del item_local.path
-            if item_local.update_last:
-                del item_local.update_last
-            if item_local.update_next:
-                del item_local.update_next
-            if item_local.channel_host:
-                del item_local.channel_host
             
             itemlist.append(item_local.clone())
             
@@ -1536,6 +1806,7 @@ def search(item, texto):
     # texto = texto.replace(" ", "+")
 
     try:
+        item.url = host + "buscar"
         item.post = "q=%s" % texto
         item.pattern = "buscar-list"
         itemlist = listado_busqueda(item)
@@ -1556,51 +1827,57 @@ def newest(categoria):
     
     item.title = "newest"
     item.category = "newest"
-    item.action = "listado"
-    item.channel = scrapertools.find_single_match(host, r'(\w+)\.com\/')
+    item.channel = channel_py
     
     try:
         if categoria == 'peliculas':
-            item.url = host+'peliculas/'
+            item.url = host + 'ultimas-descargas/'
+            value = 757
+            item.post = "categoryIDR=%s&date=%s" % (value, fecha_rango)
+            item.extra = "novedades"
+            item.action = "listado_busqueda"
+            itemlist = listado_busqueda(item)
+                
+        elif categoria == 'series':
+            item.url = host + 'ultimas-descargas/'
+            value = 767
+            item.post = "categoryIDR=%s&date=%s" % (value, fecha_rango)
+            item.extra = "novedades"
+            item.action = "listado_busqueda"
+            itemlist = listado_busqueda(item)
+                
+        elif categoria == '4k':
+            item.url = host + 'ultimas-descargas/'
+            value = 1027
+            item.post = "categoryIDR=%s&date=%s" % (value, fecha_rango)
+            item.extra = "novedades"
+            item.action = "listado_busqueda"
+            itemlist = listado_busqueda(item)
+                
+        elif categoria == 'anime':
+            item.url = host + 'anime/'
             item.extra = "peliculas"
+            item.action = "listado"
             itemlist = listado(item)
-            if ">> Página siguiente" in itemlist[-1].title:
-                itemlist.pop()
-                
-        if categoria == 'series':
-            item.url = host+'series/'
-            item.extra = "series"
-            itemlist.extend(listado(item))
-            if ">> Página siguiente" in itemlist[-1].title:
-                itemlist.pop()
-                
-        if categoria == '4k':
-            item.url = host+'peliculas-hd/4kultrahd/'
-            item.extra = "peliculas"
-            itemlist.extend(listado(item))
-            if ">> Página siguiente" in itemlist[-1].title:
-                 itemlist.pop()
-                
-        if categoria == 'anime':
-            item.url = host+'anime/'
-            item.extra = "peliculas"
-            itemlist.extend(listado(item))
-            if ">> Página siguiente" in itemlist[-1].title:
-                 itemlist.pop()
                                  
-        if categoria == 'documentales':
-            item.url = host+'documentales/'
-            item.extra = "varios"
-            itemlist.extend(listado(item))
-            if ">> Página siguiente" in itemlist[-1].title:
-                itemlist.pop()
+        elif categoria == 'documentales':
+            item.url = host + 'ultimas-descargas/'
+            value = 780
+            item.post = "categoryIDR=%s&date=%s" % (value, fecha_rango)
+            item.extra = "novedades"
+            item.action = "listado_busqueda"
+            itemlist = listado_busqueda(item)
                 
-        if categoria == 'latino':
-            item.url = host+'peliculas-latino/'
-            item.extra = "peliculas"
-            itemlist.extend(listado(item))
-            if ">> Página siguiente" in itemlist[-1].title:
-                itemlist.pop()
+        elif categoria == 'latino':
+            item.url = host + 'ultimas-descargas/'
+            value = 1527
+            item.post = "categoryIDR=%s&date=%s" % (value, fecha_rango)
+            item.extra = "novedades"
+            item.action = "listado_busqueda"
+            itemlist = listado_busqueda(item)
+            
+        if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
+            itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
     except:
