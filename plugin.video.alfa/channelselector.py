@@ -62,9 +62,10 @@ def getchanneltypes(view="thumb_"):
     logger.info()
 
     # Lista de categorias
-    channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent"]
+    channel_types = ["movie", "tvshow", "anime", "documentary", "cult", "vos", "direct", "torrent"]
     dict_types_lang = {'movie': config.get_localized_string(30122), 'tvshow': config.get_localized_string(30123),
                        'anime': config.get_localized_string(30124), 'documentary': config.get_localized_string(30125),
+                       'cult': "cult",
                        'vos': config.get_localized_string(30136), 'adult': config.get_localized_string(30126),
                        'direct': config.get_localized_string(30137)}
 
@@ -84,6 +85,11 @@ def getchanneltypes(view="thumb_"):
     for channel_type in channel_types:
         logger.info("channel_type=%s" % channel_type)
         title = dict_types_lang.get(channel_type, channel_type)
+
+        if channel_type == "cult":
+            itemlist.append(Item(title="Cult", channel="cult", action="mainlist", category="cult", channel_type=channel_type, thumbnail=os.path.join(config.get_runtime_path(), "resources", "images", "cat_menu_cult.png")))
+            continue
+
         itemlist.append(Item(title=title, channel="channelselector", action="filterchannels", category=title,
                              channel_type=channel_type, viewmode="thumbnails",
                              thumbnail=get_thumb("channels_%s.png" % channel_type, view)))
