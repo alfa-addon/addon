@@ -268,9 +268,6 @@ def findvideos(item):
     
 def actualizar_titulos(item):
     logger.info()
-    itemlist = []
-    
-    from platformcode import launcher
     
     item = generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
     
