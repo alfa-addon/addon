@@ -139,7 +139,7 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
     logger.info("URL: " + url)
     logger.info("Dominio: " + urlparse.urlparse(url)[1])
     if post:
-        logger.info("Peticion: POST")
+        logger.info("Peticion: POST: %s" % post)
     else:
         logger.info("Peticion: GET")
     logger.info("Usar Cookies: %s" % cookies)
