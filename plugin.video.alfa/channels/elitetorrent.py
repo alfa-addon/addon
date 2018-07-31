@@ -173,6 +173,7 @@ def listado(item):
         title = title.replace("Dual", "").replace("dual", "").replace("Subtitulada", "").replace("subtitulada", "").replace("Subt", "").replace("subt", "").replace("Sub", "").replace("sub", "").replace("(Proper)", "").replace("(proper)", "").replace("Proper", "").replace("proper", "").replace("#", "").replace("(Latino)", "").replace("Latino", "")
         title = title.replace("- HDRip", "").replace("(HDRip)", "").replace("- Hdrip", "").replace("(microHD)", "").replace("(DVDRip)", "").replace("(HDRip)", "").replace("(BR-LINE)", "").replace("(HDTS-SCREENER)", "").replace("(BDRip)", "").replace("(BR-Screener)", "").replace("(DVDScreener)", "").replace("TS-Screener", "").replace(" TS", "").replace(" Ts", "")
         title = re.sub(r'\??\s?\d*?\&.*', '', title).title().strip()
+        item_local.from_title = title                       #Guardamos esta etiqueta para posible desambiguación de título
         
         if item_local.extra == "peliculas":     #preparamos Item para películas
             if "/serie" in scrapedurl or "/serie" in item.url:
@@ -215,8 +216,8 @@ def listado(item):
         
         itemlist.append(item_local.clone())     #Pintar pantalla
    
-    if not item.category:       #Si este campo no existe es que viene de la primera pasada de una búsqueda global
-        return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
+    #if not item.category:       #Si este campo no existe es que viene de la primera pasada de una búsqueda global
+    #    return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
 
     #Pasamos a TMDB la lista completa Itemlist
     tmdb.set_infoLabels(itemlist, True)
@@ -338,6 +339,18 @@ def findvideos(item):
 
     return itemlist
 
+
+def actualizar_titulos(item):
+    logger.info()
+    itemlist = []
+    
+    from platformcode import launcher
+    
+    item = generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
+
+    #Volvemos a la siguiente acción en el canal
+    return item
+    
 
 def search(item, texto):
     logger.info("search:" + texto)

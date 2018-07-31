@@ -405,8 +405,8 @@ def listado(item):
         itemlist.append(item.clone(action='', title=item.category + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
-    #logger.debug("MATCHES: " + str(len(matches)))
-    #logger.debug(matches)
+    logger.debug("MATCHES: " + str(len(matches)))
+    logger.debug(matches)
     #logger.debug("patron: " + patron + " / fichas: " + fichas)
 
     # Identifico la página actual y el total de páginas para el pie de página
@@ -476,7 +476,9 @@ def listado(item):
         
         # Limpiamos títulos, Sacamos datos de calidad, audio y lenguaje
         title = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf8').strip()
+        #title = re.sub('\r\n', '', scrapedtitle).decode('utf-8').encode('utf-8').strip()
         title_alt = re.sub('\r\n', '', scrapedtitle_alt).decode('iso-8859-1').encode('utf8').strip()
+        #title_alt = re.sub('\r\n', '', scrapedtitle_alt).decode('utf-8').encode('utf-8').strip()
         title = title.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ï¿½", "ñ").replace("Ã±", "ñ").replace(".", " ")
         title_alt = title_alt.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ï¿½", "ñ").replace("Ã±", "ñ")
         
@@ -485,7 +487,7 @@ def listado(item):
         
         #Determinamos y marcamos idiomas distintos del castellano
         item_local.language = []
-        if "[vos" in title.lower()  or "v.o.s" in title.lower() or "vo" in title.lower() or ".com/pelicula/" in scrapedurl  or ".com/series-vo" in scrapedurl or "-vo/" in scrapedurl or "vos" in calidad.lower() or "vose" in calidad.lower() or "v.o.s" in calidad.lower() or "sub" in calidad.lower() or ".com/peliculas-vo" in item.url:
+        if "[vos" in title.lower() or "v.o.s" in title.lower() or "vo" in title.lower() or "subs" in title.lower() or ".com/pelicula/" in scrapedurl  or ".com/series-vo" in scrapedurl or "-vo/" in scrapedurl or "vos" in calidad.lower() or "vose" in calidad.lower() or "v.o.s" in calidad.lower() or "sub" in calidad.lower() or ".com/peliculas-vo" in item.url:
             item_local.language += ["VOS"]
         title = title.replace(" [Subs. integrados]", "").replace(" [subs. Integrados]", "").replace(" [VOSE", "").replace(" [VOS", "").replace(" (V.O.S.E)", "").replace(" VO", "").replace("Subtitulos", "")
         if "latino" in title.lower() or "argentina" in title.lower() or "-latino/" in scrapedurl or "latino" in calidad.lower() or "argentina" in calidad.lower():
@@ -557,9 +559,9 @@ def listado(item):
         title = re.sub(r' \d+x\d+', '', title)
         title = re.sub(r' x\d+', '', title)
         
-        title = title.replace("Ver online ", "").replace("Descarga Serie HD ", "").replace("Descargar Serie HD ", "").replace("Descarga Serie ", "").replace("Descargar Serie ", "").replace("Ver en linea ", "").replace("Ver en linea", "").replace("HD ", "").replace("(Proper)", "").replace("RatDVD", "").replace("DVDRiP", "").replace("DVDRIP", "").replace("DVDRip", "").replace("DVDR", "").replace("DVD9", "").replace("DVD", "").replace("DVBRIP", "").replace("DVB", "").replace("LINE", "").replace("- ES ", "").replace("ES ", "").replace("COMPLETA", "").replace("(", "-").replace(")", "-").replace(".", " ").strip()
+        title = title.replace("Ver online ", "").replace("Descarga Serie HD ", "").replace("Descargar Serie HD ", "").replace("Descarga Serie ", "").replace("Descargar Serie ", "").replace("Ver en linea ", "").replace("Ver en linea", "").replace("en Full HD", "").replace("en hd ", "").replace("en HD ", "").replace("HD ", "").replace("(Proper)", "").replace("RatDVD", "").replace("DVDRiP", "").replace("DVDRIP", "").replace("DVDRip", "").replace("DVDR", "").replace("DVD9", "").replace("DVD", "").replace("DVBRIP", "").replace("DVB", "").replace("LINE", "").replace("calidad", " ").replace("- ES ", "").replace("ES ", "").replace("COMPLETA", "").replace("(", "-").replace(")", "-").replace(".", " ").strip()
         
-        title = title.replace("Descargar torrent ", "").replace("Descarga Gratis ", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Bajar ", "").replace("HDRIP ", "").replace("HDRiP ", "").replace("HDRip ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").strip()
+        title = title.replace("Descargar torrent ", "").replace("Descarga Gratis", "").replace("Descarga gratis", "").replace("Descargar Gratis", "").replace("Descargar gratis", "").replace("en gratis", "").replace("gratis gratis", "").replace("Gratisgratis", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Descargar ", "").replace("Decargar ", "").replace("Bajar ", "").replace("HDRIP ", "").replace("HDRiP ", "").replace("HDRip ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("en BluRay", "").replace("BluRay en", "").replace("Bluray en", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").replace("++Sub", "").replace("+-+Sub", "").strip()
         
         if title.endswith("torrent gratis"): title = title[:-15]
         if title.endswith("gratis"): title = title[:-7]
@@ -586,6 +588,7 @@ def listado(item):
         #Limpieza final del título y guardado en las variables según su tipo de contenido
         title = scrapertools.remove_htmltags(title)
         item_local.title = title
+        item_local.from_title = title                       #Guardamos esta etiqueta para posible desambiguación de título
         if item_local.contentType == "movie":
             item_local.contentTitle = title
         else:
@@ -609,6 +612,8 @@ def listado(item):
         
         #Agrega el item local a la lista itemlist
         itemlist.append(item_local.clone())
+        
+        #logger.debug(item_local)
 
     #Pasamos a TMDB la lista completa Itemlist
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
@@ -920,13 +925,14 @@ def listado_busqueda(item):
         
         # Limpiamos títulos, Sacamos datos de calidad, audio y lenguaje
         title = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf8').strip()
+        #title = re.sub('\r\n', '', scrapedtitle).decode('utf-8').encode('utf-8').strip()
         title = title.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ï¿½", "ñ").replace("Ã±", "ñ")
         
         item_local.quality = scrapertools.htmlclean(calidad)
 
         #Determinamos y marcamos idiomas distintos del castellano
         item_local.language = []
-        if "[vos" in title.lower()  or "v.o.s" in title.lower() or "vo" in title.lower() or ".com/pelicula/" in url  or ".com/series-vo" in url or "-vo/" in url or "vos" in calidad.lower() or "vose" in calidad.lower() or "v.o.s" in calidad.lower() or "sub" in calidad.lower() or ".com/peliculas-vo" in item.url:
+        if "[vos" in title.lower()  or "v.o.s" in title.lower() or "vo" in title.lower() or "subs" in title.lower() or ".com/pelicula/" in url  or ".com/series-vo" in url or "-vo/" in url or "vos" in calidad.lower() or "vose" in calidad.lower() or "v.o.s" in calidad.lower() or "sub" in calidad.lower() or ".com/peliculas-vo" in item.url:
             item_local.language += ["VOS"]
         title = title.replace(" [Subs. integrados]", "").replace(" [subs. Integrados]", "").replace(" [VOSE", "").replace(" [VOS", "").replace(" (V.O.S.E)", "").replace(" VO", "").replace("Subtitulos", "")
         if "latino" in title.lower() or "argentina" in title.lower() or "-latino/" in url or "latino" in calidad.lower() or "argentina" in calidad.lower():
@@ -986,7 +992,7 @@ def listado_busqueda(item):
             title_subs += ["[Miniserie]"]
 
         #Limpiamos restos en título
-        title = title.replace("Castellano", "").replace("castellano", "").replace("inglés", "").replace("ingles", "").replace("Inglés", "").replace("Ingles", "").replace("Ing", "").replace("Eng", "").replace("Calidad", "").replace("de la Serie", "")
+        title = title.replace("Castellano", "").replace("castellano", "").replace("inglés", "").replace("ingles", "").replace("Inglés", "").replace("Ingles", "").replace("Ingl", "").replace("Engl", "").replace("Calidad", "").replace("de la Serie", "")
         
         #Limpiamos cabeceras y colas del título
         title = re.sub(r'Descargar\s\w+\-\w+', '', title)
@@ -996,9 +1002,9 @@ def listado_busqueda(item):
         title = re.sub(r' \d+x\d+', '', title)
         title = re.sub(r' x\d+', '', title)
         
-        title = title.replace("Ver online ", "").replace("Descarga Serie HD ", "").replace("Descargar Serie HD ", "").replace("Descarga Serie ", "").replace("Descargar Serie ", "").replace("Ver en linea ", "").replace("Ver en linea", "").replace("HD ", "").replace("(Proper)", "").replace("RatDVD", "").replace("DVDRiP", "").replace("DVDRIP", "").replace("DVDRip", "").replace("DVDR", "").replace("DVD9", "").replace("DVD", "").replace("DVBRIP", "").replace("DVB", "").replace("LINE", "").replace("- ES ", "").replace("ES ", "").replace("COMPLETA", "").replace("(", "-").replace(")", "-").replace(".", " ").strip()
+        title = title.replace("Ver online ", "").replace("Descarga Serie HD ", "").replace("Descargar Serie HD ", "").replace("Descarga Serie ", "").replace("Descargar Serie ", "").replace("Ver en linea ", "").replace("Ver en linea", "").replace("en Full HD", "").replace("en hd ", "").replace("en HD ", "").replace("HD ", "").replace("(Proper)", "").replace("RatDVD", "").replace("DVDRiP", "").replace("DVDRIP", "").replace("DVDRip", "").replace("DVDR", "").replace("DVD9", "").replace("DVD", "").replace("DVBRIP", "").replace("DVB", "").replace("LINE", "").replace("calidad", " ").replace("- ES ", "").replace("ES ", "").replace("COMPLETA", "").replace("(", "-").replace(")", "-").replace(".", " ").strip()
         
-        title = title.replace("Descargar torrent ", "").replace("Descarga Gratis ", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Bajar ", "").replace("HDRIP ", "").replace("HDRiP ", "").replace("HDRip ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").strip()
+        title = title.replace("Descargar torrent ", "").replace("Descarga Gratis", "").replace("Descarga gratis", "").replace("Descargar Gratis", "").replace("Descargar gratis", "").replace("en gratis", "").replace("gratis gratis", "").replace("Gratisgratis", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Descargar ", "").replace("Decargar ", "").replace("Bajar ", "").replace("HDRIP ", "").replace("HDRiP ", "").replace("HDRip ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("en BluRay", "").replace("BluRay en", "").replace("Bluray en", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").replace("++Sub", "").replace("+-+Sub", "").strip()
         
         if "pelisyseries.com" in host and item_local.contentType == "tvshow":
             titulo = ''
@@ -1045,6 +1051,7 @@ def listado_busqueda(item):
         
         #Limpieza final del título y guardado en las variables según su tipo de contenido
         item_local.title = title
+        item_local.from_title = title                       #Guardamos esta etiqueta para posible desambiguación de título
         if item_local.contentType == "movie":
             item_local.contentTitle = title
             size = scrapedsize.replace(".", ",")
@@ -1126,8 +1133,8 @@ def listado_busqueda(item):
         #Agrega el item local a la lista itemlist
         itemlist.append(item_local.clone())
         
-    if not item.category_new:       #Si este campo no existe es que viene de la primera pasada de una búsqueda global
-        return itemlist             #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
+    #if not item.category_new:       #Si este campo no existe es que viene de la primera pasada de una búsqueda global
+    #    return itemlist             #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
 
     #Pasamos a TMDB la lista completa Itemlist
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
@@ -1798,7 +1805,7 @@ def actualizar_titulos(item):
     item = generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
 
     #Volvemos a la siguiente acción en el canal
-    return launcher.run(item)
+    return item
     
 
 def search(item, texto):

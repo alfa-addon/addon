@@ -340,7 +340,15 @@ def listado(item):
                     item_local.url = url
                     item_local.contentType = "season"
             else:
-                real_title, item_local.contentSeason, item_local.quality = scrapertools.find_single_match(scrapedurl, patron_title_se)
+                try:
+                    real_title, item_local.contentSeason, item_local.quality = scrapertools.find_single_match(scrapedurl, patron_title_se)
+                except:
+                    real_title = ''
+                    item_local.action = "findvideos"
+                    item_local.contentType = "episode"
+                    item_local.contentSeason = 1
+                    item_local.contentEpisodeNumber = 1
+                    item_local.quality = ''
 
             item_local.contentSerieName = real_title.replace("-", " ").capitalize()
             if not item_local.contentSeason:
@@ -448,6 +456,7 @@ def listado(item):
         elif item_local.contentType != "episode":
             item_local.title = title
             item_local.title = item_local.contentSerieName
+        item_local.from_title = title                       #Guardamos esta etiqueta para posible desambiguación de título
 
         if "saga" in item_local.contentTitle.lower() or "saga" in item_local.contentSerieName.lower():
             item_local.contentTitle = item_local.contentTitle.replace("Saga ", "").replace("Saga", "")
@@ -681,6 +690,7 @@ def listado_busqueda(item):
                 title = title.replace("4k-hdr", "").replace("4K-HDR", "").replace("hdr", "").replace("HDR", "").replace("4k", "").replace("4K", "")
         title = title.replace("(", "").replace(")", "").replace("[", "").replace("]", "").strip()
         item_local.title = title
+        item_local.from_title = title                       #Guardamos esta etiqueta para posible desambiguación de título
         
         if "Peliculas" in scrapedtype or "Variados" in scrapedtype:
             item_local.action = "findvideos"
@@ -711,8 +721,8 @@ def listado_busqueda(item):
         
         #logger.debug(item_local)
         
-    if not category:            #Si este campo no existe es que viene de la primera pasada de una búsqueda global
-        return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
+    #if not category:            #Si este campo no existe es que viene de la primera pasada de una búsqueda global
+    #    return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
 
     #Llamamos a TMDB para que complete InfoLabels desde itemlist.  Mejor desde itemlist porque envía las queries en paralelo
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
@@ -973,7 +983,7 @@ def actualizar_titulos(item):
     item = generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
     
     #Volvemos a la siguiente acción en el canal
-    return launcher.run(item)
+    return item
     
 
 def search(item, texto):

@@ -333,13 +333,14 @@ def listado(item):
             item_local.contentSerieName = title.strip()
 
         item_local.title = title.strip()                    #Salvamos el título
+        item_local.from_title = title.strip()               #Guardamos esta etiqueta para posible desambiguación de título
         item_local.infoLabels['year'] = "-"                 #Reseteamos el año para que TMDB nos lo de
         
         #Agrega el item local a la lista itemlist
         itemlist.append(item_local.clone())
 
-    if not item.category and result_mode == 0:   #Si este campo no existe, viene de la primera pasada de una búsqueda global
-        return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorrar tiempo
+    #if not item.category and result_mode == 0:   #Si este campo no existe, viene de la primera pasada de una búsqueda global
+    #    return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorrar tiempo
     
     #Pasamos a TMDB la lista completa Itemlist
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
@@ -820,7 +821,7 @@ def actualizar_titulos(item):
     item = generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
     
     #Volvemos a la siguiente acción en el canal
-    return launcher.run(item)
+    return item
     
     
 def search(item, texto):
