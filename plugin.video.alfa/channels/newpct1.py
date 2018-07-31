@@ -405,8 +405,8 @@ def listado(item):
         itemlist.append(item.clone(action='', title=item.category + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
-    logger.debug("MATCHES: " + str(len(matches)))
-    logger.debug(matches)
+    #logger.debug("MATCHES: " + str(len(matches)))
+    #logger.debug(matches)
     #logger.debug("patron: " + patron + " / fichas: " + fichas)
 
     # Identifico la página actual y el total de páginas para el pie de página
