@@ -303,7 +303,7 @@ msgstr "Populares"
 
 msgctxt "#30985"
 msgid "Top Rated"
-msgstr "Top Rated"
+msgstr "Mejor valoradas"
 
 msgctxt "#30986"
 msgid "Search by Collection"
@@ -2858,12 +2858,12 @@ msgid "Search %s"
 msgstr "Buscar %s"
 
 msgctxt "#70036"
-msgid "Search actor/actress"
-msgstr "Buscar actor/actriz"
+msgid "     Search actor/actress"
+msgstr "     Buscar actor/actriz"
 
 msgctxt "#70037"
-msgid "Search director, writer..."
-msgstr "Buscar director, guionista..."
+msgid "     Search director, writer..."
+msgstr "     Buscar director, guionista..."
 
 msgctxt "#70038"
 msgid "Custom Filter"
@@ -3947,3 +3947,322 @@ msgctxt "#70313"
 msgid "Top rated Series"
 msgstr "Series mejor valoradas"
 
+msgctxt "#70314"
+msgid "Actors/Actresses"
+msgstr "Actores/Actrices"
+
+msgctxt "#70315"
+msgid "Recommendations"
+msgstr "Recomendaciones"
+
+msgctxt "#70316"
+msgid "List of Images"
+msgstr "Lista de Imágenes"
+
+msgctxt "#70317"
+msgid "Listen to BSO - List of songs"
+msgstr "Escuchar BSO - Lista de canciones"
+
+msgctxt "#70318"
+msgid "Manage yor trakt account"
+msgstr "Gestionar con tu cuenta Trakt"
+
+msgctxt "#70319"
+msgid "Filming equipment"
+msgstr "Equipo de rodaje"
+
+msgctxt "#70320"
+msgid "Filter search"
+msgstr "Filtra la búsqueda"
+
+msgctxt "#70321"
+msgid "[MAL] Add to your lists/%s"
+msgstr "[MAL] Añadir a tus listas/%s"
+
+msgctxt "#70322"
+msgid "[MAL] in your list of [COLOR %s]%s[/COLOR] Do you want to change?/%s"
+msgstr "[MAL] En tu lista de [COLOR %s]%s[/COLOR]. ¿Cambiar?/%s"
+
+msgctxt "#70323"
+msgid "[Trakt] Manage your account"
+msgstr "[Trakt] Gestionar con tu cuenta"
+
+msgctxt "#70324"
+msgid "[FA] My vote: %s  ---> Change?"
+msgstr "[FA] Mi voto: %s  ---> ¿Cambiar?"
+
+msgctxt "#70325"
+msgid "[FA] Vote %s"
+msgstr "[FA] Votar %s"
+
+msgctxt "#70326"
+msgid "[FA] Add or remove from a user list"
+msgstr "[FA] Añadir o quitar de una lista de usuario"
+
+msgctxt "#70327"
+msgid "It's part of: %s"
+msgstr "Es parte de: %s"
+
+msgctxt "#70328"
+msgid "%ss similarar"
+msgstr "%ss similares"
+
+msgctxt "#70329"
+msgid "User and/or passwords not configured"
+msgstr "Usuario y/o contraseñas no configurados"
+
+msgctxt "#70330"
+msgid "Error in the user and/or password. Check your credentials"
+msgstr "Error en el usuario y/o contraseña. Comprueba tus credenciales"
+
+msgctxt "#70331"
+msgid "Error during login. Check your credentials
+msgstr "Error durante el login. Comprueba tus credenciales"
+
+msgctxt "#70332"
+msgid "My votes"
+msgstr "Mis votaciones"
+
+msgctxt "#70333"
+msgid "Add new list"
+msgstr "Añadir una nueva lista"
+
+msgctxt "#70334"
+msgid "Action completed successfully"
+msgstr "Acción completada con éxito"
+
+msgctxt "#70335"
+msgid "Error, something has failed during the process"
+msgstr "Error, algo ha fallado durante el proceso"
+
+msgctxt "#70336"
+msgid "Vote %s"
+msgstr "Votar %s"
+
+msgctxt "#70337"
+msgid "Vote completed successfully"
+msgstr "Voto contabilizado con éxito"
+
+msgctxt "#70338"
+msgid "List created correctly"
+msgstr "Lista creada correctamente"
+
+msgctxt "#70339"
+msgid "Fanart.tv website not available. Retry"
+msgstr "Web de Fanart.tv no disponible. Vuelve a intentarlo"
+
+msgctxt "#70340"
+msgid "No images available"
+msgstr "No hay imágenes disponibles"
+
+msgctxt "#70341"
+msgid "[Trakt] Mark %s as not seen"
+msgstr "[Trakt] Marcar %s como no vista"
+
+msgctxt "#70342"
+msgid "[Trakt] Mark %s as seen"
+msgstr "[Trakt] Marcar %s como vista"
+
+msgctxt "#70343"
+msgid "[Trakt] Remove %s from your watchlist"
+msgstr "[Trakt] Eliminar %s de tu watchlist"
+
+msgctxt "#70344"
+msgid "Add to %s your watchlist""
+msgstr "[Trakt] Añadir %s a tu watchlist"
+
+msgctxt "#70345"
+msgid "[Trakt] Remove %s from your collection"
+msgstr "[Trakt] Eliminar %s de tu colección"
+
+msgctxt "#70346"
+msgid "[Trakt] Add %s to your collection
+msgstr "[Trakt] Añadir %s a tu colección"
+
+msgctxt "#70347"
+msgid "Action performed correctly"
+msgstr "Acción realizada correctamente"
+
+msgctxt "#70348"
+msgid "An error occurred in process"
+msgstr "Hubo error en el proceso"
+
+msgctxt "#70349"
+msgid "List sorted by %s. Change order?"
+msgstr "Lista ordenada por %s. ¿Cambiar orden?"
+
+msgctxt "#70350"
+msgid "Search in alfa: %s"
+msgstr "Buscar en alfa: %s"
+
+msgctxt "#70351"
+msgid "    Search alternative title: %s"
+msgstr "    Buscar por título alternativo: %s"
+
+msgctxt "#70352"
+msgid "    Search title in english: %s"
+msgstr "    Buscar por su título en inglés: %s"
+
+msgctxt "#70353"
+msgid "Vídeos (Episodes, Trailers...)"
+msgstr "Vídeos (Episodios, Trailers...)"
+
+msgctxt "#70354"
+msgid "Characters/Staff"
+msgstr "Personajes/Staff"
+
+msgctxt "#70355"
+msgid "Prequel: %s"
+msgstr "Precuela: %s"
+
+msgctxt "#70356"
+msgid "Sequel: %s"
+msgstr "Secuela: %s"
+
+msgctxt "#70357"
+msgid "Alternative version: %s"
+msgstr "Versión alternativa: %s"
+
+msgctxt "#70358"
+msgid "Recommendations TMDB"
+msgstr "Recomendaciones TMDB"
+
+msgctxt "#70359"
+msgid "Recommendations MyAnimeList"
+msgstr "Recomendaciones MyAnimeList"
+
+msgctxt "#70360"
+msgid "  [COLOR %s][Without subs in castellan][/COLOR]"
+msgstr "  [COLOR %s][Sin subs en castellano][/COLOR]"
+
+msgctxt "#70361"
+msgid ">> More Episodes"
+msgstr ">> Más Episodios"
+
+msgctxt "#70362"
+msgid "Episodes"
+msgstr "Episodios"
+
+msgctxt "#70363"
+msgid "Trailers/Promotions"
+msgstr "Tráilers/Promocionales"
+
+msgctxt "#70364"
+msgid "Winter"
+msgstr "Invierno"
+
+msgctxt "#70365"
+msgid "Spring"
+msgstr "Primavera"
+
+msgctxt "#70366"
+msgid "Summer"
+msgstr "Verano"
+
+msgctxt "#70367"
+msgid "Fall"
+msgstr "Otoño"
+
+msgctxt "#70368"
+msgid "(New)"
+msgstr "(Nuevos)"
+
+msgctxt "#70369"
+msgid "(Continuation)"
+msgstr "(Continuación)"
+
+msgctxt "#70370"
+msgid "Characters/Benders"
+msgstr "Personajes/Dobladores"
+
+msgctxt "#70371"
+msgid "Principal"
+msgstr "Principal"
+
+msgctxt "#70372"
+msgid "Secondary"
+msgstr "Secundario"
+
+msgctxt "#70373"
+msgid "Animes where it appears:"
+msgstr "Animes donde aparece:"
+
+msgctxt "#70374"
+msgid "Give voice to/in:"
+msgstr "Da voz a/en:"
+
+msgctxt "#70375"
+msgid "Staff in animes:"
+msgstr "Staff en animes:"
+
+msgctxt "#70376"
+msgid "Info in AniDB   [COLOR %s]%s[/COLOR]"
+msgstr "Info en AniDB   [COLOR %s]%s[/COLOR]"
+
+msgctxt "#70377"
+msgid "  - [COLOR %s]Fansubs in spanish:[/COLOR]"
+msgstr "  - [COLOR %s]Fansubs en español:[/COLOR]"
+
+msgctxt "#70378"
+msgid "Complete"
+msgstr "Completa"
+
+msgctxt "#70379"
+msgid "Finished"
+msgstr "Terminada"
+
+msgctxt "#70380"
+msgid "Stalled"
+msgstr "Pausa"
+
+msgctxt "#70381"
+msgid "Dropped"
+msgstr "Abandonada"
+
+msgctxt "#70381"
+msgid "Myanimelist username and/or password blank"
+msgstr "Usuario y/o contraseña de Myanimelist en blanco"
+
+msgctxt "#70382"
+msgid "Currently watching"
+msgstr "Viendo actualmente"
+
+msgctxt "#70383"
+msgid "Completed"
+msgstr "Completados"
+
+msgctxt "#70384"
+msgid "Pause"
+msgstr "En pausa"
+
+msgctxt "#70385"
+msgid "Descarted"
+msgstr "Descartados"
+
+msgctxt "#70386"
+msgid "See later"
+msgstr "Ver más adelante"
+
+msgctxt "#70387"
+msgid "E = In emission | F = Completed | P = Coming soon"
+msgstr "E=En emisión | F=Finalizado | P=Próximamente"
+
+msgctxt "#70388"
+msgid ". Available actions:"
+msgstr ". Acciones disponibles:"
+
+msgctxt "#70389"
+msgid ". In your list [COLOR %s]%s[/COLOR]"
+msgstr ". En tu lista [COLOR %s]%s[/COLOR]"
+
+msgctxt "#70390"
+msgid "Anime: %s%s"
+msgstr "Anime: %s%s"
+
+msgctxt "#70391"
+msgid "Add to list %s"
+msgstr "Añadir a lista %s"
+
+msgctxt "#70392"
+msgid "Rate with a [COLOR %s]%s[/ COLOR]"
+msgstr "Puntuar con un [COLOR %s]%s[/COLOR]"

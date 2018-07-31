@@ -3958,3 +3958,323 @@ msgstr ""
 msgctxt "#70313"
 msgid "Top rated Series"
 msgstr ""
+
+msgctxt "#70314"
+msgid "Actors/Actresses"
+msgstr ""
+
+msgctxt "#70315"
+msgid "Recommendations"
+msgstr ""
+
+msgctxt "#70316"
+msgid "List of Images"
+msgstr ""
+
+msgctxt "#70317"
+msgid "Listen to BSO - List of songs"
+msgstr ""
+
+msgctxt "#70318"
+msgid "Manage yor trakt account"
+msgstr ""
+
+msgctxt "#70319"
+msgid "Filming equipment"
+msgstr ""
+
+msgctxt "#70320"
+msgid "Filter search"
+msgstr ""
+
+msgctxt "#70321"
+msgid "[MAL] Add to your lists/%s"
+msgstr ""
+
+msgctxt "#70322"
+msgid "[MAL] in your list of [COLOR %s]%s[/COLOR] Do you want to change?/%s"
+msgstr ""
+
+msgctxt "#70323"
+msgid "[Trakt] Manage your account"
+msgstr ""
+
+msgctxt "#70324"
+msgid "[FA] My vote: %s  ---> Change?"
+msgstr ""
+
+msgctxt "#70325"
+msgid "[FA] Vote %s"
+msgstr ""
+
+msgctxt "#70326"
+msgid "[FA] Add or remove from a user list"
+msgstr ""
+
+msgctxt "#70327"
+msgid "It's part of: %s"
+msgstr ""
+
+msgctxt "#70328"
+msgid "%ss similarar"
+msgstr ""
+
+msgctxt "#70329"
+msgid "User and/or passwords not configured"
+msgstr ""
+
+msgctxt "#70330"
+msgid "Error in the user and/or password. Check your credentials"
+msgstr ""
+
+msgctxt "#70331"
+msgid "Error during login. Check your credentials
+msgstr ""
+
+msgctxt "#70332"
+msgid "My votes"
+msgstr ""
+
+msgctxt "#70333"
+msgid "Add new list"
+msgstr ""
+
+msgctxt "#70334"
+msgid "Action completed successfully"
+msgstr ""
+
+msgctxt "#70335"
+msgid "Error, something has failed during the process"
+msgstr ""
+
+msgctxt "#70336"
+msgid "Vote %s"
+msgstr ""
+
+msgctxt "#70337"
+msgid "Vote completed successfully"
+msgstr ""
+
+msgctxt "#70338"
+msgid "List created correctly"
+msgstr ""
+
+msgctxt "#70339"
+msgid "Fanart.tv website not available. Retry"
+msgstr ""
+
+msgctxt "#70340"
+msgid "No images available"
+msgstr ""
+
+msgctxt "#70341"
+msgid "[Trakt] Mark %s as not seen"
+msgstr ""
+
+msgctxt "#70342"
+msgid "[Trakt] Mark %s as seen"
+msgstr ""
+
+msgctxt "#70343"
+msgid "[Trakt] Remove %s from your watchlist"
+msgstr ""
+
+msgctxt "#70344"
+msgid "Add to %s your watchlist""
+msgstr ""
+
+msgctxt "#70345"
+msgid "[Trakt] Remove %s from your collection"
+msgstr ""
+
+msgctxt "#70346"
+msgid "[Trakt] Add %s to your collection
+msgstr ""
+
+msgctxt "#70347"
+msgid "Action performed correctly"
+msgstr ""
+
+msgctxt "#70348"
+msgid "An error occurred in process"
+msgstr "Hubo error en el proceso"
+
+msgctxt "#70349"
+msgid "List sorted by %s. Change order?"
+msgstr ""
+
+msgctxt "#70350"
+msgid "Search in alfa: %s"
+msgstr ""
+
+msgctxt "#70351"
+msgid "    Search alternative title: %s"
+msgstr ""
+
+msgctxt "#70352"
+msgid "    Search title in english: %s"
+msgstr ""
+
+msgctxt "#70353"
+msgid "Vídeos (Episodes, Trailers...)"
+msgstr ""
+
+msgctxt "#70354"
+msgid "Characters/Staff"
+msgstr ""
+
+msgctxt "#70355"
+msgid "Prequel: %s"
+msgstr ""
+
+msgctxt "#70356"
+msgid "Sequel: %s"
+msgstr ""
+
+msgctxt "#70357"
+msgid "Alternative version: %s"
+msgstr ""
+
+msgctxt "#70358"
+msgid "Recommendations TMDB"
+msgstr ""
+
+msgctxt "#70359"
+msgid "Recommendations MyAnimeList"
+msgstr ""
+
+msgctxt "#70360"
+msgid "  [COLOR %s][Without subs in castellan][/COLOR]"
+msgstr ""
+
+msgctxt "#70361"
+msgid ">> More Episodes"
+msgstr ""
+
+msgctxt "#70362"
+msgid "Episodes"
+msgstr ""
+
+msgctxt "#70363"
+msgid "Trailers/Promotions"
+msgstr ""
+
+msgctxt "#70364"
+msgid "Winter"
+msgstr ""
+
+msgctxt "#70365"
+msgid "Spring"
+msgstr ""
+
+msgctxt "#70366"
+msgid "Summer"
+msgstr ""
+
+msgctxt "#70367"
+msgid "Fall"
+msgstr ""
+
+msgctxt "#70368"
+msgid "(New)"
+msgstr ""
+
+msgctxt "#70369"
+msgid "(Continuation)"
+msgstr ""
+
+msgctxt "#70370"
+msgid "Characters/Benders"
+msgstr ""
+
+msgctxt "#70371"
+msgid "Principal"
+msgstr ""
+
+msgctxt "#70372"
+msgid "Secondary"
+msgstr ""
+
+msgctxt "#70373"
+msgid "Animes where it appears:"
+msgstr ""
+
+msgctxt "#70374"
+msgid "Give voice to/in:"
+msgstr ""
+
+msgctxt "#70375"
+msgid "Staff in animes:"
+msgstr ""
+
+msgctxt "#70376"
+msgid "Info in AniDB   [COLOR %s]%s[/COLOR]"
+msgstr ""
+
+msgctxt "#70377"
+msgid "  - [COLOR %s]Fansubs in spanish:[/COLOR]"
+msgstr ""
+
+msgctxt "#70378"
+msgid "Complete"
+msgstr ""
+
+msgctxt "#70379"
+msgid "Finished"
+msgstr ""
+
+msgctxt "#70380"
+msgid "Stalled"
+msgstr ""
+
+msgctxt "#70381"
+msgid "Dropped"
+msgstr ""
+
+msgctxt "#70381"
+msgid "Myanimelist username and/or password blank"
+msgstr ""
+
+msgctxt "#70382"
+msgid "Currently watching"
+msgstr ""
+
+msgctxt "#70383"
+msgid "Completed"
+msgstr ""
+
+msgctxt "#70384"
+msgid "Pause"
+msgstr ""
+
+msgctxt "#70385"
+msgid "Descarted"
+msgstr ""
+
+msgctxt "#70386"
+msgid "See later"
+msgstr ""
+
+msgctxt "#70387"
+msgid "E = In emission | F = Completed | P = Coming soon"
+msgstr ""
+
+msgctxt "#70388"
+msgid ". Available actions:"
+msgstr ""
+
+msgctxt "#70389"
+msgid ". In your list [COLOR %s]%s[/COLOR]"
+msgstr ""
+
+msgctxt "#70390"
+msgid "Anime: %s%s"
+msgstr ""
+
+msgctxt "#70391"
+msgid "Add to list %s"
+msgstr ""
+
+msgctxt "#70392"
+msgid "Rate with a [COLOR %s]%s[/ COLOR]"
+msgstr ""

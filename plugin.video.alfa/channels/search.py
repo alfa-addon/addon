@@ -619,7 +619,7 @@ def discover_list(item):
         #if not 'similar' in item.list_type:
         #    itemlist.append(item.clone(title='Pagina Siguente', page=next_page))
         #else:
-        itemlist.append(Item(channel=item.channel, action='discover_list', title='Pagina Siguente',
+        itemlist.append(Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70065),
                              search_type=item.search_type, list_type=item.list_type, type=item.type, page=next_page))
 
     return itemlist
