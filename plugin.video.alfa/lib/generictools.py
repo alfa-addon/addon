@@ -20,7 +20,7 @@ from core import servertools
 from core import channeltools
 from core import filetools
 from core.item import Item
-from platformcode import config, logger
+from platformcode import config, logger, platformtools
 from core import tmdb
 
 channel_py = "newpct1"
@@ -69,25 +69,42 @@ def update_title(item):
     if item.from_action:
         item.action = item.from_action
         del item.from_action
-    if item.from_title:
-        item.title = item.from_title
-        del item.from_title
-    elif item.contentType != "movie":
-        item.add_videolibrary = True    #Estamos Añadiendo a la Videoteca.  Indicador para control de uso de los Canales
-    if item.contentType == "movie":
-        if item.channel == channel_py:  #Si es una peli de NewPct1, ponemos el nombre del clone
-            item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')
-    if item.channel_host:                   #Borramos ya el indicador para que no se guarde en la Videoteca
-        del item.channel_host
-    if item.contentTitle:
-        item.contentTitle = re.sub(r' -%s-' % item.category, '', item.contentTitle)
-        item.title = re.sub(r' -%s-' % item.category, '', item.title)
+    if item.from_update:
+        if item.from_title_tmdb:            #Si se salvó el título del contenido devuelto por TMDB, se restaura.
+            item.title = item.from_title_tmdb
+    else:
+        item.add_videolibrary = True        #Estamos Añadiendo a la Videoteca.  Indicador para control de uso de los Canales
+    if item.add_videolibrary:
+        if item.contentType == "movie":
+            if item.from_title_tmdb:        #Si se salvó el título del contenido devuelto por TMDB, se restaura.
+                item.title = item.from_title_tmdb
+            del item.add_videolibrary
+        if item.channel_host:               #Borramos ya el indicador para que no se guarde en la Videoteca
+            del item.channel_host
+        if item.contentTitle:
+            item.contentTitle = re.sub(r' -%s-' % item.category, '', item.contentTitle)
+            item.title = re.sub(r' -%s-' % item.category, '', item.title)
+    if item.contentType == 'movie':
+        from_title_tmdb = item.contentTitle
+    else:
+        from_title_tmdb = item.contentSerieName
     
-    #Sólo ejecutamos este código si no se ha hecho antes en el Canal.  Por ejemplo, si se ha llamado desde Episodios,
+    #Sólo ejecutamos este código si no se ha hecho antes en el Canal.  Por ejemplo, si se ha llamado desde Episodios o Findvideos,
     #ya no se ejecutará al Añadia a Videoteca, aunque desde el canal se podrá llamar tantas veces como se quiera, 
     #o hasta que encuentre un título no ambiguo
-    if not item.tmdb_stat:
+    if item.tmdb_stat:
+        if item.from_title_tmdb: del item.from_title_tmdb
+        if item.from_title: del item.from_title
+        item.from_update = True
+        del item.from_update
+        if item.contentType == "movie":
+            if item.channel == channel_py:  #Si es una peli de NewPct1, ponemos el nombre del clone
+                item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')
+    else:
         new_item = item.clone()             #Salvamos el Item inicial para restaurarlo si el usuario cancela
+        if item.contentType == "movie":
+            if item.channel == channel_py:  #Si es una peli de NewPct1, ponemos el nombre del clone
+                item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')
         #Borramos los IDs y el año para forzar a TMDB que nos pregunte
         if item.infoLabels['tmdb_id'] or item.infoLabels['tmdb_id'] == None: item.infoLabels['tmdb_id'] = ''
         if item.infoLabels['tvdb_id'] or item.infoLabels['tvdb_id'] == None: item.infoLabels['tvdb_id'] = ''
@@ -95,6 +112,16 @@ def update_title(item):
         if item.infoLabels['season']: del item.infoLabels['season'] #Funciona mal con num. de Temporada.  Luego lo restauramos
         item.infoLabels['year'] = '-'
         
+        if item.from_title:
+            if item.from_title_tmdb:
+                if scrapertools.find_single_match(item.from_title_tmdb, '^(?:\[COLOR \w+\])?(.*?)(?:\[)'):
+                    from_title_tmdb = scrapertools.find_single_match(item.from_title_tmdb, '^(?:\[COLOR \w+\])?(.*?)(?:\[)').strip()
+            item.title = item.title.replace(from_title_tmdb, item.from_title)
+            item.infoLabels['title'] = item.from_title
+            
+            if item.from_title_tmdb: del item.from_title_tmdb
+        if not item.from_update and item.from_title: del item.from_title
+
         if item.contentSerieName:           #Copiamos el título para que sirva de referencia en menú "Completar Información"
             item.infoLabels['originaltitle'] = item.contentSerieName
             item.contentTitle = item.contentSerieName
@@ -109,57 +136,67 @@ def update_title(item):
             #Si el usuario ha cambiado los datos en "Completar Información" hay que ver el título definitivo en TMDB
             if not item.infoLabels['tmdb_id']:
                 if item.contentSerieName:
-                    item.contentSerieName = item.contentTitle               #Se pone título nuevo
-                item.infoLabels['noscrap_id'] = ''                          #Se resetea, por si acaso
-                item.infoLabels['year'] = '-'                               #Se resetea, por si acaso
-                scraper_return = scraper.find_and_set_infoLabels(item)      #Se intenta de nuevo
+                    item.contentSerieName = item.contentTitle                       #Se pone título nuevo
+                item.infoLabels['noscrap_id'] = ''                                  #Se resetea, por si acaso
+                item.infoLabels['year'] = '-'                                       #Se resetea, por si acaso
+                scraper_return = scraper.find_and_set_infoLabels(item)              #Se intenta de nuevo
 
                 #Parece que el usuario ha cancelado de nuevo.  Restituimos los datos a la situación inicial
                 if not scraper_return or not item.infoLabels['tmdb_id']:
                     item = new_item.clone()
                 else:
-                    item.tmdb_stat = True       #Marcamos Item como procesado correctamente por TMDB (pasada 2)
+                    item.tmdb_stat = True           #Marcamos Item como procesado correctamente por TMDB (pasada 2)
             else:
-                item.tmdb_stat = True           #Marcamos Item como procesado correctamente por TMDB (pasada 1)
+                item.tmdb_stat = True               #Marcamos Item como procesado correctamente por TMDB (pasada 1)
 
             #Si el usuario ha seleccionado una opción distinta o cambiado algo, ajustamos los títulos
+            if item.contentType != 'movie' or item.from_update:
+                item.channel = new_item.channel     #Restuaramos el nombre del canal, por si lo habíamos cambiado
             if item.tmdb_stat == True:
                 if new_item.contentSerieName:       #Si es serie...
                     if config.get_setting("filter_languages", item.channel) >= 0:
                         item.title_from_channel = new_item.contentSerieName         #Guardo el título incial para Filtertools
                         item.contentSerieName = new_item.contentSerieName           #Guardo el título incial para Filtertools
                     else:
-                        item.title = item.title.replace(new_item.contentSerieName, item.contentTitle)
+                        item.title = item.title.replace(new_item.contentSerieName, item.contentTitle).replace(from_title_tmdb, item.contentTitle)
                         item.contentSerieName = item.contentTitle
                     if new_item.contentSeason: item.contentSeason = new_item.contentSeason      #Restauramos Temporada
                     if item.infoLabels['title']: del item.infoLabels['title']       #Borramos título de peli (es serie)
-                else:                               #Si es película...
-                    item.title = item.title.replace(new_item.contentTitle, item.contentTitle)
-                if new_item.infoLabels['year']:     #Actualizamos el Año en el título
+                else:                                                               #Si es película...
+                    item.title = item.title.replace(new_item.contentTitle, item.contentTitle).replace(from_title_tmdb, item.contentTitle)
+                if new_item.infoLabels['year']:                                     #Actualizamos el Año en el título
                     item.title = item.title.replace(str(new_item.infoLabels['year']), str(item.infoLabels['year']))
-                if new_item.infoLabels['rating']:   #Actualizamos en Rating en el título
-                    rating_old = ''
-                    if new_item.infoLabels['rating'] and new_item.infoLabels['rating'] != '0.0':
-                        rating_old = float(new_item.infoLabels['rating'])
-                        rating_old = round(rating_old, 1)
-                    rating_new = ''
-                    if item.infoLabels['rating'] and item.infoLabels['rating'] != '0.0':
-                        rating_new = float(item.infoLabels['rating'])
-                        rating_new = round(rating_new, 1)
-                    item.title = item.title.replace("[" + str(rating_old) + "]", "[" + str(rating_new) + "]")
-                if item.wanted:                     #Actualizamos Wanted, si existe
+                if new_item.infoLabels['rating']:                                   #Actualizamos en Rating en el título
+                    try:
+                        rating_old = ''
+                        if new_item.infoLabels['rating'] and new_item.infoLabels['rating'] != '0.0':
+                            rating_old = float(new_item.infoLabels['rating'])
+                            rating_old = round(rating_old, 1)
+                        rating_new = ''
+                        if item.infoLabels['rating'] and item.infoLabels['rating'] != '0.0':
+                            rating_new = float(item.infoLabels['rating'])
+                            rating_new = round(rating_new, 1)
+                        item.title = item.title.replace("[" + str(rating_old) + "]", "[" + str(rating_new) + "]")
+                    except:
+                        pass
+                if item.wanted:                                                      #Actualizamos Wanted, si existe
                     item.wanted = item.contentTitle
-                if new_item.contentSeason:          #Restauramos el núm. de Temporada después de TMDB
+                if new_item.contentSeason:                                           #Restauramos el núm. de Temporada después de TMDB
                     item.contentSeason = new_item.contentSeason
+                    
+                if item.from_update: 
+                    item.from_update = True 
+                    del item.from_update
+                    platformtools.itemlist_update(item)
      
         #Para evitar el "efecto memoria" de TMDB, se le llama con un título ficticio para que resetee los buffers
         if item.contentSerieName:
-            new_item.infoLabels['tmdb_id'] = '289'      #una serie no ambigua
+            new_item.infoLabels['tmdb_id'] = '289'                                  #una serie no ambigua
         else:
-            new_item.infoLabels['tmdb_id'] = '111'      #una peli no ambigua
+            new_item.infoLabels['tmdb_id'] = '111'                                  #una peli no ambigua
         new_item.infoLabels['year'] = '-'
         if new_item.contentSeason:
-            del new_item.infoLabels['season']           #Funciona mal con num. de Temporada
+            del new_item.infoLabels['season']                                       #Funciona mal con num. de Temporada
         scraper_return = scraper.find_and_set_infoLabels(new_item)
         
     #logger.debug(item)
@@ -241,10 +278,16 @@ def post_tmdb_listado(item, itemlist):
         item_local.title_subs = []
         del item_local.title_subs
         
+        if item_local.from_title:
+            if item_local.contentType == 'movie':
+                item_local.contentTitle = item_local.from_title
+            else:
+                item_local.contentSerieName = item_local.from_title
+        
         #Preparamos el Rating del vídeo
         rating = ''
         try:
-            if item_local.infoLabels['rating'] and item_local.infoLabels['rating'] != '0.0':
+            if item_local.infoLabels['rating'] and item_local.infoLabels['rating'] != 0.0:
                 rating = float(item_local.infoLabels['rating'])
                 rating = round(rating, 1)
         except:
@@ -502,7 +545,7 @@ def post_tmdb_episodios(item, itemlist):
         #Preparamos el Rating del vídeo
         rating = ''
         try:
-            if item_local.infoLabels['rating'] and item_local.infoLabels['rating'] != '0.0':
+            if item_local.infoLabels['rating'] and item_local.infoLabels['rating'] != 0.0:
                 rating = float(item_local.infoLabels['rating'])
                 rating = round(rating, 1)
         except:
@@ -572,7 +615,7 @@ def post_tmdb_episodios(item, itemlist):
         logger.error("ERROR 07: EPISODIOS: Num de Temporada fuera de rango " + " / TEMPORADA: " + str(item_local.contentSeason) + " / " + str(item_local.contentEpisodeNumber) + " / MAX_TEMPORADAS: " + str(num_temporada_max) + " / LISTA_TEMPORADAS: " + str(num_episodios_lista))
     
     #Permitimos la actualización de los títulos, bien para uso inmediato, o para añadir a la videoteca
-    itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", action="actualizar_titulos", tmdb_stat=False, from_action=item.action, from_title=item.title))
+    itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", action="actualizar_titulos", tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
     
     #Borro num. Temporada si no viene de menú de Añadir a Videoteca y no está actualizando la Videoteca
     if not item.library_playcounts:                     #si no está actualizando la Videoteca
@@ -716,7 +759,7 @@ def post_tmdb_findvideos(item, itemlist):
 
     rating = ''     #Ponemos el rating
     try:
-        if item.infoLabels['rating'] and item.infoLabels['rating'] != '0.0':
+        if item.infoLabels['rating'] and item.infoLabels['rating'] != 0.0:
             rating = float(item.infoLabels['rating'])
             rating = round(rating, 1)
     except:
@@ -733,15 +776,18 @@ def post_tmdb_findvideos(item, itemlist):
     elif item.contentChannel == 'videolibrary':                                     #No hay, viene de la Videoteca? buscamos en la DB
     #Leo de la BD de Kodi la duración de la película o episodio.  En "from_fields" se pueden poner las columnas que se quiera
         nun_records = 0
-        if item.contentType == 'movie':
-            nun_records, records = get_field_from_kodi_DB(item, from_fields='c11')  #Leo de la BD de Kodi la duración de la película
-        else:
-            nun_records, records = get_field_from_kodi_DB(item, from_fields='c09')  #Leo de la BD de Kodi la duración del episodio
+        try:
+            if item.contentType == 'movie':
+                nun_records, records = get_field_from_kodi_DB(item, from_fields='c11')  #Leo de la BD de Kodi la duración de la película
+            else:
+                nun_records, records = get_field_from_kodi_DB(item, from_fields='c09')  #Leo de la BD de Kodi la duración del episodio
+        except:
+            pass
         if nun_records > 0:                                                         #Hay registros?
             #Es un array, busco el campo del registro: añadir en el FOR un fieldX por nueva columna
             for strFileName, field1 in records: 
                 tiempo = field1
-    
+
     try:                                                                                #calculamos el timepo en hh:mm
         tiempo_final = int(tiempo)                                                      #lo convierto a int, pero puede se null
         if tiempo_final > 0:                                                            #Si el tiempo está a 0, pasamos
@@ -749,7 +795,8 @@ def post_tmdb_findvideos(item, itemlist):
                 tiempo_final = tiempo_final / 60                                        #Lo transformo a minutos
             horas = tiempo_final / 60                                                   #Lo transformo a horas
             resto = tiempo_final - (horas * 60)                                         #guardo el resto de minutos de la hora
-            item.quality += ' [%s:%s]' % (str(horas).zfill(2), str(resto).zfill(2))     #Lo agrego a Calidad del Servidor
+            if not scrapertools.find_single_match(item.quality, '(\[\d+:\d+\])'):       #si ya tiene la duración, pasamos
+                item.quality += ' [%s:%s]' % (str(horas).zfill(2), str(resto).zfill(2))     #Lo agrego a Calidad del Servidor
     except:
         pass
         
@@ -768,7 +815,7 @@ def post_tmdb_findvideos(item, itemlist):
             title = '%s al %s - ' % (title, scrapertools.find_single_match(item.title, 'al (\d+)'))
         else:
             title = '%s %s' % (title, item.infoLabels['episodio_titulo'])                       #Título Episodio
-        title_gen = '%s, %s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] [%s]' % (title, item.contentSerieName, item.infoLabels['year'], rating, item.quality, str(item.language), scrapertools.find_single_match(item.title, '\s\[(\d+,?\d*?\s\w[b|B])\]'))     #Rating, Calidad, Idioma, Tamaño                
+        title_gen = '%s, %s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] [%s]' % (title, item.contentSerieName, item.infoLabels['year'], rating, item.quality, str(item.language), scrapertools.find_single_match(item.title, '\s\[(\d+,?\d*?\s\w[b|B])\]'))                                                #Rating, Calidad, Idioma, Tamaño                
         if item.infoLabels['status'] and item.infoLabels['status'].lower() == "ended":
             title_gen = '[TERM.] %s' % title_gen        #Marca cuando la Serie está terminada y no va a haber más producción
         item.title = title_gen
@@ -803,8 +850,11 @@ def post_tmdb_findvideos(item, itemlist):
     itemlist.append(item.clone(action="", server = "", title=title_gen))		#Título con todos los datos del vídeo
     
     #agregamos la opción de Añadir a Videoteca para péliculas (no series)
-    if item.contentType == 'movie' and item.contentChannel != "videolibrary":     
-        itemlist.append(item.clone(title="**-[COLOR yellow] Añadir a la videoteca [/COLOR]-**", action="add_pelicula_to_library", extra="películas", from_title=title_videoteca))
+    if item.contentType == 'movie' and item.contentChannel != "videolibrary":
+        #Permitimos la actualización de los títulos, bien para uso inmediato, o para añadir a la videoteca
+        itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", action="actualizar_titulos", extra="películas", tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
+        
+        itemlist.append(item.clone(title="**-[COLOR yellow] Añadir a la videoteca [/COLOR]-**", action="add_pelicula_to_library", extra="películas", from_action=item.action, from_title_tmdb=item.title))
     
     #Añadimos la opción de ver trailers
     if item.contentChannel != "videolibrary":
@@ -833,11 +883,16 @@ def get_field_from_kodi_DB(item, from_fields='*', files='file'):
     FOLDER_MOVIES = config.get_setting("folder_movies")
     FOLDER_TVSHOWS = config.get_setting("folder_tvshows")
     VIDEOLIBRARY_PATH = config.get_videolibrary_config_path()
+    VIDEOLIBRARY_REAL_PATH = config.get_videolibrary_path()
     
     if item.contentType == 'movie':                                     #Agrego la carpeta correspondiente al path de la Videoteca
-        path = filetools.join(VIDEOLIBRARY_PATH, FOLDER_MOVIES)
+        path = filetools.join(VIDEOLIBRARY_REAL_PATH, FOLDER_MOVIES)
+        path2 = filetools.join(VIDEOLIBRARY_PATH, FOLDER_MOVIES)
+        folder = FOLDER_MOVIES
     else:
-        path = filetools.join(VIDEOLIBRARY_PATH, FOLDER_TVSHOWS)
+        path = filetools.join(VIDEOLIBRARY_REAL_PATH, FOLDER_TVSHOWS)
+        path2 = filetools.join(VIDEOLIBRARY_PATH, FOLDER_TVSHOWS)
+        folder = FOLDER_TVSHOWS
 
     raiz, carpetas, ficheros = filetools.walk(path).next()              #listo las series o películas en la Videoteca
     carpetas = [filetools.join(path, f) for f in carpetas]              #agrego la carpeta del contenido al path
@@ -845,10 +900,11 @@ def get_field_from_kodi_DB(item, from_fields='*', files='file'):
         if item.contentType == 'movie' and (item.contentTitle.lower() in carpeta or item.contentTitle in carpeta):   #Películas?
             path = carpeta                                              #Almacenamos la carpeta en el path
             break
-        elif item.contentType in ['tvshow', 'season', 'episode'] and (item.contentSerieName.lower() in carpeta or item.contentSerieName in carpeta):                                   #Series?
+        elif item.contentType in ['tvshow', 'season', 'episode'] and (item.contentSerieName.lower() in carpeta or item.contentSerieName in carpeta):                                                                #Series?
             path = carpeta                                              #Almacenamos la carpeta en el path
             break
     
+    path2 += '/%s/' % scrapertools.find_single_match(path, '%s.(.*?\s\[.*?\])' % folder) #Agregamos la carpeta de la Serie o Películas, formato Android
     file_search = '%'                                                   #Por defecto busca todos los archivos de la carpeta
     if files == 'file':                                                 #Si se ha pedido son un archivo (defecto), se busca
         if item.contentType == 'episode':                               #Si es episodio, se pone el nombre, si no de deja %
@@ -865,7 +921,7 @@ def get_field_from_kodi_DB(item, from_fields='*', files='file'):
     else:
         contentType = "movie_view"                                      #Marco la tabla de BBDD de Kodi Video
     path1 = path.replace("\\\\", "\\")                                  #para la SQL solo necesito la carpeta
-    path2 = path.replace("\\", "/")                                     #Formato no Windows
+    path2 = path2.replace("\\", "/")                                     #Formato no Windows
 
     #Ejecutmos la sentencia SQL
     if not from_fields:
@@ -1105,7 +1161,8 @@ def web_intervenida(item, data, desactivar=True):
         #Guardamos los cambios hechos en el .json
         try:
             if item.channel != channel_py:
-                disabled = config.set_setting('enabled', False, item.channel)
+                disabled = config.set_setting('enabled', False, item.channel)                       #Desactivamos el canal
+                disabled = config.set_setting('include_in_global_search', False, item.channel)      #Lo sacamos de las búquedas globales
             channel_path = filetools.join(config.get_runtime_path(), "channels", item.channel + ".json")
             with open(channel_path, 'w') as outfile:                        #Grabamos el .json actualizado
                 json.dump(json_data, outfile, sort_keys = True, indent = 2, ensure_ascii = False)
