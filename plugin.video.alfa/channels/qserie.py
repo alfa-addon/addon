@@ -2,10 +2,13 @@
 
 import re
 import urlparse
+import urllib
 
 from core import httptools
 from core import scrapertools
+from core import servertools
 from core import tmdb
+from core import jsontools
 from core.item import Item
 from platformcode import config, logger
 
@@ -316,40 +319,33 @@ def lasmas(item):
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
+def get_source(url):
+    logger.info()
+    data = httptools.downloadpage(url).data
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    return data
+
+def get_link(data):
+    new_url = scrapertools.find_single_match(data, '(?:IFRAME|iframe) src=(.*?) scrolling')
+    return new_url
 
 def findvideos(item):
     logger.info()
+    host = 'https://www.locopelis.tv/'
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-
-    anterior = scrapertools.find_single_match(data, '<a class="left" href="([^"]+)" title="Cap.tulo Anterior"></a>')
-    siguiente = scrapertools.find_single_match(data, '<a class="right" href="([^"]+)" title="Cap.tulo Siguiente"></a>')
-    titulo = scrapertools.find_single_match(data,
-                                            '<h1 class="tithd bold fs18px lnht30px ico_b pdtop10px">([^<]+)</h1> ')
-    existe = scrapertools.find_single_match(data, '<center>La pel.cula que quieres ver no existe.</center>')
-
-    from core import servertools
-    itemlist.extend(servertools.find_video_items(data=data))
-    for videoitem in itemlist:
-        if 'youtube' in videoitem.url:
-            itemlist.remove(videoitem)
-    for videoitem in itemlist:
-        videoitem.channel = item.channel
-        videoitem.action = "play"
-        videoitem.folder = False
-        videoitem.fanart = item.fanart
-        videoitem.title = titulo + " " + videoitem.server
-    if item.extra2 != 'todos':
-        data = httptools.downloadpage(anterior).data
-        existe = scrapertools.find_single_match(data, '<center>La pel.cula que quieres ver no existe.</center>')
-        if not existe:
-            itemlist.append(Item(channel=item.channel, action="findvideos", title='Capitulo Anterior', url=anterior,
-                                 thumbnail='https://s1.postimg.cc/dbq8gvldb/anterior.png', folder=True))
-
-        data = httptools.downloadpage(siguiente).data
-        existe = scrapertools.find_single_match(data, '<center>La pel.cula que quieres ver no existe.</center>')
-        if not existe:
-            itemlist.append(Item(channel=item.channel, action="findvideos", title='Capitulo Siguiente', url=siguiente,
-                                 thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png', folder=True))
+    new_url = get_link(get_source(item.url))
+    new_url = get_link(get_source(new_url))
+    video_id = scrapertools.find_single_match(new_url, 'http.*?h=(\w+)')
+    new_url = '%s%s' % (host, 'playeropstream/api.php')
+    post = {'h': video_id}
+    post = urllib.urlencode(post)
+    data = httptools.downloadpage(new_url, post=post).data
+    json_data = jsontools.load(data)
+    url = json_data['url']
+    server = servertools.get_server_from_url(url)
+    title = '%s' % server
+    itemlist.append(Item(channel=item.channel, title=title, url=url, action='play',
+                         server=server, infoLabels=item.infoLabels))
 
     return itemlist
+

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel PelisR -*-
+# -*- Channel DosPelis -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -23,18 +23,17 @@ from platformcode import config, logger
 IDIOMAS = {'mx': 'Latino', 'dk':'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb':'VOSE'}
 list_language = IDIOMAS.values()
 
-list_quality = ['360P', '480P', '720P', '1080P']
+list_quality = []
 
 list_servers = [
     'directo',
     'openload',
-    'rapidvideo'
 ]
 
-__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'pelisr')
-__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'pelisr')
+__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'dospelis')
+__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'dospelis')
 
-host = 'https://pelisr.com/'
+host = 'https://dospelis.com/'
 
 def mainlist(item):
     logger.info()
@@ -236,36 +235,23 @@ def episodesxseasons(item):
 
 def findvideos(item):
     logger.info()
-    from lib import generictools
     itemlist = []
     data = get_source(item.url)
     patron = 'id=option-(\d+).*?rptss src=(.*?) frameborder'
     matches = re.compile(patron, re.DOTALL).findall(data)
+    lang=''
     for option, scrapedurl in matches:
         lang = scrapertools.find_single_match(data, 'href=#option-%s>.*?/flags/(.*?).png' % option)
         quality = ''
         if lang not in IDIOMAS:
             lang = 'en'
-        title = '%s'
-
-        if 'embed' in scrapedurl:
-            enc_data = get_source(scrapedurl)
-            dec_data = generictools.dejuice(enc_data)
-            url, quality = scrapertools.find_single_match(dec_data, '"file":"(.*?)","label":"(.*?)"')
-
-        elif 'wd=' in scrapedurl:
-            new_id = scrapertools.find_single_match(scrapedurl, 'wd=(.*?)&')
-            new_id = new_id[::-1]
-            new_url = 'https://pelisr.com/encri/?wr=%s' % new_id
-            headers = {'Referer': scrapedurl}
-            data = httptools.downloadpage(new_url, headers=headers, follow_redirects=False)
-            url = data.headers['location']
+        title = '%s %s'
 
         itemlist.append(
-            Item(channel=item.channel, url=url, title=title, action='play', quality=quality, language=IDIOMAS[lang],
+            Item(channel=item.channel, url=scrapedurl, title=title, action='play', quality=quality, language=IDIOMAS[lang],
                  infoLabels=item.infoLabels))
 
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % (x.server.capitalize(), x.language))
 
     # Requerido para Filtrar enlaces
 
