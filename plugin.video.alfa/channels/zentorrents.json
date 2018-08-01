@@ -1,7 +1,7 @@
 {
     "id": "zentorrents",
     "name": "Zentorrent",
-    "active": true,
+    "active": false,
     "adult": false,
     "language": ["cast"],
     "banner": "zentorrents.png",
