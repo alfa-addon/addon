@@ -23,38 +23,38 @@ def mainlist(item):
     item.channel = "search"
 
     itemlist = []
-    context = [{"title": "Elegir canales incluidos", "action": "setting_channel", "channel": item.channel}]
-    itemlist.append(Item(channel=item.channel, action="sub_menu", title="Buscar en canales", context=context,
+    context = [{"title": config.get_localized_string(60412), "action": "setting_channel", "channel": item.channel}]
+    itemlist.append(Item(channel=item.channel, action="sub_menu", title=config.get_localized_string(70305), context=context,
                          thumbnail=get_thumb("search.png")))
 
-    itemlist.append(Item(channel=item.channel, action='genres_menu', title='Películas por Generos', type='movie',
+    itemlist.append(Item(channel=item.channel, action='genres_menu', title=config.get_localized_string(70306), type='movie',
                          thumbnail=get_thumb("genres.png")))
 
-    itemlist.append (Item(channel=item.channel, action='discover_list', title='Películas mas populares',
+    itemlist.append (Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70307),
                           context=context, search_type='list', list_type='movie/popular',
                           thumbnail=get_thumb("popular.png")))
 
-    itemlist.append(Item(channel=item.channel, action='discover_list', title='Películas mejor valoradas',
+    itemlist.append(Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70308),
                          context=context, search_type='list', list_type='movie/top_rated',
                          thumbnail=get_thumb("top_rated.png")))
 
     itemlist.append(
-        Item(channel=item.channel, action='discover_list', title='Películas Ahora en cines', context=context,
+        Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70309), context=context,
              search_type='list', list_type='movie/now_playing',
                          thumbnail=get_thumb("now_playing.png")))
 
-    itemlist.append(Item(channel=item.channel, action='genres_menu', title='Series por Generos', type='tv',
+    itemlist.append(Item(channel=item.channel, action='genres_menu', title=config.get_localized_string(70310), type='tv',
                          thumbnail=get_thumb("genres.png")))
 
     itemlist.append(
-        Item(channel=item.channel, action='discover_list', title='Series mas populares', context=context,
+        Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70311), context=context,
              search_type='list',list_type='tv/popular', thumbnail=get_thumb("popular.png")))
 
-    itemlist.append(Item(channel=item.channel, action='discover_list', title='Series en emisión', context=context,
+    itemlist.append(Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70312), context=context,
                          search_type='list', list_type='tv/on_the_air', thumbnail=get_thumb("on_the_air.png")))
 
 
-    itemlist.append(Item(channel=item.channel, action='discover_list', title='Series mejor valoradas', context=context,
+    itemlist.append(Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70313), context=context,
                          search_type='list', list_type='tv/top_rated', thumbnail=get_thumb("top_rated.png")))
 
 
@@ -619,7 +619,7 @@ def discover_list(item):
         #if not 'similar' in item.list_type:
         #    itemlist.append(item.clone(title='Pagina Siguente', page=next_page))
         #else:
-        itemlist.append(Item(channel=item.channel, action='discover_list', title='Pagina Siguente',
+        itemlist.append(Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70065),
                              search_type=item.search_type, list_type=item.list_type, type=item.type, page=next_page))
 
     return itemlist
