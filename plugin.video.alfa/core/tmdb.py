@@ -1541,8 +1541,15 @@ class Tmdb(object):
                 else:
                     ret_infoLabels['plot'] = self.get_sinopsis()
 
-            elif k == 'runtime':
+            elif k == 'runtime':                                #Duration for movies
                 ret_infoLabels['duration'] = int(v) * 60
+                
+            elif k == 'episode_run_time':                       #Duration for episodes
+                try:
+                    for v_alt in v:                             #It comes as a list (?!)
+                        ret_infoLabels['duration'] = int(v_alt) * 60
+                except:
+                    pass
 
             elif k == 'release_date':
                 ret_infoLabels['year'] = int(v[:4])
