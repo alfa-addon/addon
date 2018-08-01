@@ -215,7 +215,7 @@ def filmaf(item):
                                        "fromyear=&toyear=&notvse=1&nodoc=1" % langf))
         itemlist.append(item.clone(title=config.get_localized_string(70030), action="listado_fa",
                                    url="http://m.filmaffinity.com/%s/rdcat.php?id=new_th_%s" % (langf, langf)))
-        itemlist.append(item.clone(title="Géneros", action="indices_fa", url="http://m.filmaffinity.com/%s/topgen.php"
+        itemlist.append(item.clone(title=config.get_localized_string(70032), action="indices_fa", url="http://m.filmaffinity.com/%s/topgen.php"
                                                                              % langf,
                                    thumbnail="%s0/Genres.png" % images_predef))
     else:
@@ -1129,7 +1129,7 @@ def indices_imdb(item):
     # Índices imdb por año y genero
     itemlist = []
     from datetime import datetime
-    if "Géneros" in item.title:
+    if config.get_localized_string(70032) in item.title:
         generos_spa = {'Action': 'Accion', 'Adventure': 'Aventura', 'Animation': 'Animacion', 'Biography': 'Biografía',
                        'Comedy': 'Comedia', 'Crime': 'Crimen', 'Documentary': 'Documental', 'Family': 'Familia',
                        'Fantasy': 'Fantasia', 'Film-Noir': 'Cine Negro', 'Game-Show': 'Concursos',
@@ -1304,7 +1304,7 @@ def indices_fa(item):
                 next_page = "http://www.filmaffinity.com" + next_page
             itemlist.append(Item(channel=item.channel, action=item.action, title=config.get_localized_string(70065), url=next_page,
                                  extra=item.extra))
-    elif "Géneros" in item.title:
+    elif config.get_localized_string(70032) in item.title:
         bloque = scrapertools.find_single_match(data, 'name="genre">.*?</option>(.*?)</select>')
         matches = scrapertools.find_multiple_matches(bloque, '<option value="([^"]+)">([^<]+)</option>')
         for valor, titulo in matches:
