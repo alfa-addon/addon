@@ -1,31 +1,22 @@
 {
   "id": "seriesblanco",
-  "name": "Seriesblanco",
-  "active": false,
+  "name": "SeriesBlanco",
+  "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "thumbnail": "seriesblanco.png",
-  "banner": "seriesblanco.png",
+  "thumbnail": "https://s22.postimg.cc/nucz720sx/image.png",
+  "banner": "",
   "categories": [
-    "tvshow",
-    "vos"
+    "tvshow"
   ],
   "settings": [
     {
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": true,
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "include_in_newest_series",
-      "type": "bool",
-      "label": "Incluir en Novedades - Episodios de series",
-      "default": true,
-      "enabled": true,
-      "visible": true
+      "default": false,
+      "enabled": false,
+      "visible": false
     },
     {
       "id": "filter_languages",
@@ -36,26 +27,10 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "Español",
-        "Inglés",
-        "Latino",
-        "VO",
-        "VOS",
-        "VOSI",
-        "OVOS"
-      ]
-    },
-    {
-      "id": "filterlinks",
-      "type": "list",
-      "label": "Mostrar enlaces de tipo...",
-      "default": 2,
-      "enabled": true,
-      "visible": true,
-      "lvalues": [
-        "Solo Descarga",
-        "Solo Online",
-        "No filtrar"
+		"Cast",
+		"Lat",
+        "VOSE",
+        "VO"
       ]
     }
   ]
