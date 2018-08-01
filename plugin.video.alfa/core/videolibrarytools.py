@@ -545,9 +545,9 @@ def add_movie(item):
     #Si se cancela la segunda pantalla, la variable "scraper_return" estará en False.  El usuario no quiere seguir
     
     from lib import generictools
-    generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
-    if item.tmdb_stat:
-        del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
+    item = generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
+    #if item.tmdb_stat:
+    #    del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
 
     new_item = item.clone(action="findvideos")
     insertados, sobreescritos, fallidos = save_movie(new_item)
@@ -613,9 +613,9 @@ def add_tvshow(item, channel=None):
         #Si se cancela la segunda pantalla, la variable "scraper_return" estará en False.  El usuario no quiere seguir
         
         from lib import generictools
-        generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
-        if item.tmdb_stat:
-            del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
+        item = generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
+        #if item.tmdb_stat:
+        #    del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
                 
         # Obtiene el listado de episodios
         itemlist = getattr(channel, item.action)(item)
