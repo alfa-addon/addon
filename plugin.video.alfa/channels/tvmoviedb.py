@@ -620,7 +620,7 @@ def detalles(item):
                                            'language': langt, 'page': 1}, infoLabels={'mediatype': item.contentType},
                                    text_color=color2))
         itemlist.append(
-            item.clone(title="Recomendaciones", action="listado_tmdb", infoLabels={'mediatype': item.contentType},
+            item.clone(title=config.get_localized_string(70315), action="listado_tmdb", infoLabels={'mediatype': item.contentType},
                        search={'url': '%s/%s/recommendations' % (item.extra, item.infoLabels['tmdb_id']),
                                'language': langt, 'page': 1}, text_color=color2))
 
@@ -728,7 +728,7 @@ def indices_tmdb(item):
     # Indices por genero y año
     itemlist = []
     from datetime import datetime
-    if "Géneros" in item.title:
+    if config.get_localized_string(70032) in item.title:
         thumbnail = {}
         url = ('http://api.themoviedb.org/3/genre/%s/list?api_key=a1ab8b8669da03637a4b98fa39c39228&language=%s'
                % (item.extra, langt))
