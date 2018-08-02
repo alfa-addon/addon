@@ -59,6 +59,10 @@ def dialog_select(heading, _list):
     return xbmcgui.Dialog().select(heading, _list)
 
 
+def dialog_multiselect(heading, _list, autoclose=0, preselect=[], useDetails=False):
+    return xbmcgui.Dialog().multiselect(heading, _list, autoclose=autoclose, preselect=preselect, useDetails=useDetails)
+
+
 def dialog_progress(heading, line1, line2=" ", line3=" "):
     dialog = xbmcgui.DialogProgress()
     dialog.create(heading, line1, line2, line3)
@@ -496,19 +500,6 @@ def set_context_commands(item, parent_item):
                                      (sys.argv[0], item.clone(channel="favorites", action="addFavourite",
                                                               from_channel=item.channel,
                                                               from_action=item.action).tourl())))
-        #Herramientas de desarrollador
-        from core import filetools
-
-        test_path = os.path.join(config.get_runtime_path(), "channels/test.py")
-
-        if parent_item.action == 'filterchannels' and item.action == 'mainlist' and filetools.exists(test_path):
-
-            channel_parameters = channeltools.get_channel_parameters(item.channel)
-            context_commands.append(("TESTEAR ESTE CANAL",
-                                     "XBMC.RunPlugin(%s?%s)" %
-                                     (sys.argv[0],
-                                      Item(channel='test', action='channel_test',
-                                      config=channel_parameters['channel']).tourl())))
 
         # Buscar en otros canales
         if item.contentType in ['movie', 'tvshow'] and item.channel != 'search':
@@ -522,7 +513,6 @@ def set_context_commands(item, parent_item):
                                                                         item.clone(channel='search',
                                                                                    action="do_search",
                                                                                    from_channel=item.channel,
-
                                                                                    contextual=True).tourl())))
             if item.contentType == 'tvshow':
                 mediatype = 'tv'
@@ -606,7 +596,6 @@ def set_context_commands(item, parent_item):
                                 "XBMC.Container.Update (%s?%s)" % (sys.argv[0], Item(channel='side_menu',
                                                                                      action="open_menu",
                                                                                      parent=parent_item.tourl()).tourl(
-
                                 ))))
     return context_commands
 

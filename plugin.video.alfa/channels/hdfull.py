@@ -517,10 +517,10 @@ def findvideos(item):
                                  url=url_targets, thumbnail=item.thumbnail, show=item.show, folder=False))
             title_label = " ( [COLOR green][B]Tráiler[/B][/COLOR] )"
             it1.append(
-                item.clone(channel="trailertools", action="buscartrailer", title=title_label, contentTitle=item.show, url=item.url,
+                Item(channel="trailertools", action="buscartrailer", title=title_label, contentTitle=item.show, url=item.url,
                      thumbnail=item.thumbnail, show=item.show))
         it1.append(Item(channel=item.channel, action="set_status", title=title, fulltitle=title, url=url_targets,
-                             thumbnail=item.thumbnail, show=item.show, folder=True))
+                             thumbnail=item.thumbnail, show=item.show, language=item.language, folder=True))
     data_js = httptools.downloadpage("%s/templates/hdfull/js/jquery.hdfull.view.min.js" % host).data
     key = scrapertools.find_single_match(data_js, 'JSON.parse\(atob.*?substrings\((.*?)\)')
     data_js = httptools.downloadpage("%s/js/providers.js" % host).data
@@ -566,8 +566,8 @@ def findvideos(item):
         if account:
             url += "###" + id + ";" + type
         it2.append(
-            item.clone(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                 plot=plot, fanart=fanart, show=item.show, folder=True, infoLabels=infolabels,
+            Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
+                 plot=plot, fanart=fanart, show=item.show, folder=True, infoLabels=infolabels, language=idioma,
                  contentTitle=item.contentTitle, contentType=item.contentType, tipo=option, tipo1=option1, idioma=idioma))
     it2 = servertools.get_servers_itemlist(it2, lambda i: i.title % i.server.capitalize())
     it2.sort(key=lambda it: (it.tipo1, it.idioma, it.server))
