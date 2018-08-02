@@ -59,18 +59,22 @@ def list_all(item):
     itemlist = []
 
     data = get_source(item.url)
+    full_data = data
+    data = scrapertools.find_single_match(data, '<ul class=MovieList NoLmtxt.*?</ul>')
     if item.section == 'alpha':
         patron = '<span class=Num>\d+.*?<a href=(.*?) class.*?<img src=(.*?) alt=.*?<strong>(.*?)</strong>.*?'
         patron += '<td>(\d{4})</td>'
+        matches = re.compile(patron, re.DOTALL).findall(full_data)
     else:
         patron = '<article id=post-.*?<a href=(.*?)>.*?<img src=(.*?) alt=.*?'
-        patron += '<h3 class=Title>(.*?)<\/h3>.*?<span class=Year>(.*?)<\/span>'
-    data = get_source(item.url)
-    matches = re.compile(patron, re.DOTALL).findall(data)
+        patron += '<h3 class=Title>(.*?)<\/h3>(?:</a>|<span class=Year>(.*?)<\/span>)'
+        matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, year in matches:
 
         url = scrapedurl
+        if year == '':
+            year = '-'
         if "|" in scrapedtitle:
             scrapedtitle= scrapedtitle.split("|")
             contentTitle = scrapedtitle[0].strip()
@@ -92,7 +96,7 @@ def list_all(item):
 
     #  Paginación
 
-    url_next_page = scrapertools.find_single_match(data,'<a class=next.*?href=(.*?)>')
+    url_next_page = scrapertools.find_single_match(full_data,'<a class=next.*?href=(.*?)>')
     if url_next_page:
         itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='list_all'))
     return itemlist
@@ -102,14 +106,13 @@ def section(item):
     itemlist = []
 
     data = get_source(host)
-
     action = 'list_all'
     if item.section == 'quality':
-        patron = 'menu-item-object-category.*?menu-item-\d+><a href=(.*?)>(.*?)<\/a>'
+        patron = 'menu-item-object-category.*?menu-item-\d+ menu-category-list><a href=(.*?)>(.*?)<\/a>'
     elif item.section == 'genre':
-        patron = '<a href=(http:.*?) class=Button STPb>(.*?)</a>'
+        patron = '<a href=([^ ]+) class=Button STPb>(.*?)</a>'
     elif item.section == 'year':
-        patron = 'custom menu-item-15\d+><a href=(.*?\?s.*?)>(\d{4})<\/a><\/li>'
+        patron = '<li><a href=([^>]+)>(\d{4})<\/a><\/li>'
     elif item.section == 'alpha':
         patron = '<li><a href=(.*?letters.*?)>(.*?)</a>'
         action = 'list_all'

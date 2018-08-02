@@ -85,7 +85,8 @@ def search(item, texto):
 def sub_search(item):
     logger.info()
     itemlist =[]
-    data = httptools.downloadpage(item.url, add_referer=True).data
+    headers = {'Referer':host, 'X-Requested-With': 'XMLHttpRequest'}
+    data = httptools.downloadpage(item.url, headers=headers).data
     dict_data = jsontools.load(data)
     list =dict_data["data"] [item.type]
     if item.type == "m":

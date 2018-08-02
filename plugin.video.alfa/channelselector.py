@@ -63,11 +63,6 @@ def getchanneltypes(view="thumb_"):
 
     # Lista de categorias
     channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent"]
-    dict_types_lang = {'movie': config.get_localized_string(30122), 'tvshow': config.get_localized_string(30123),
-                       'anime': config.get_localized_string(30124), 'documentary': config.get_localized_string(30125),
-                       'vos': config.get_localized_string(30136), 'adult': config.get_localized_string(30126),
-                       'direct': config.get_localized_string(30137)}
-
     if config.get_setting("adult_mode") != 0:
         channel_types.append("adult")
 
@@ -83,7 +78,7 @@ def getchanneltypes(view="thumb_"):
 
     for channel_type in channel_types:
         logger.info("channel_type=%s" % channel_type)
-        title = dict_types_lang.get(channel_type, channel_type)
+        title = config.get_localized_category(channel_type)
         itemlist.append(Item(title=title, channel="channelselector", action="filterchannels", category=title,
                              channel_type=channel_type, viewmode="thumbnails",
                              thumbnail=get_thumb("channels_%s.png" % channel_type, view)))
