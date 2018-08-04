@@ -94,10 +94,10 @@ def authentication():
         device_code = data["device_code"]
         intervalo = data["interval"]
 
-        dialog_auth = platformtools.dialog_progress("Autentificación. No cierres esta ventana!!",
-                                                    "1. Entra en la siguiente url: %s" % verify_url,
-                                                    "2. Ingresa este código en la página y presiona Allow:  %s" % user_code,
-                                                    "3. Espera a que se cierre esta ventana")
+        dialog_auth = platformtools.dialog_progress(config.get_localized_string(70414),
+                                                    config.get_localized_string(60252) % verify_url,
+                                                    config.get_localized_string(70413) % user_code,
+                                                    config.get_localized_string(60254))
 
         # Generalmente cada 5 segundos se intenta comprobar si el usuario ha introducido el código
         while True:

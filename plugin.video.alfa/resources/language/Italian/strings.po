@@ -2754,7 +2754,7 @@ msgid "Beginnin"
 msgstr "Inizio"
 
 msgctxt "#70013"
-msgid "Terror"
+msgid "Horror"
 msgstr "Orrore"
 
 msgctxt "#70014"
@@ -3841,14 +3841,6 @@ msgctxt "#70288"
 msgid "Configure Downloads"
 msgstr "Configura Downloads"
 
-msgctxt "#70289"
-msgid "Alfa\nCorrected an error in the adult section, the password has been reset to "
-msgstr "Alfa\nCorretto un errore nella sezione adulti, la password è sta resettata a quella di "
-
-msgctxt "#70290"
-msgid "default, you will have to change it again if you want.\ n Type 's', if you have understood it: "
-msgstr "default, puoi cambiarla di nuovo se vuoi.\n Scrivi 's', se hai capito: "
-
 msgctxt "#70291"
 msgid "Error, during conversion"
 msgstr "Errore, in conversione"
@@ -4262,3 +4254,419 @@ msgstr "Aggiungi alla lista %s"
 msgctxt "#70392"
 msgid "Rate with a [COLOR %s]%s[/ COLOR]"
 msgstr "Dai un punteggio con un [COLOR %s]%s[/COLOR]"
+
+msgctxt "#70393"
+msgid "[%s]: Select the correct %s "
+msgstr "[%s]: Selezona la %s corretta"
+
+msgctxt "#70394"
+msgid "Action"
+msgstr "Azione"
+
+msgctxt "#70395"
+msgid "Sport"
+msgstr "Sport"
+
+msgctxt "#70396"
+msgid "Documentary"
+msgstr "Documentari"
+
+msgctxt "#70397"
+msgid "Science fiction"
+msgstr "Fantascienza"
+
+msgctxt "#70398"
+msgid "Talk Show"
+msgstr "Talk Show"
+
+msgctxt "#70399"
+msgid "Family"
+msgstr "Famiglia"
+
+msgctxt "#70400"
+msgid "Film-Noir"
+msgstr "Film Noir"
+
+msgctxt "#70401"
+msgid "Game-Show"
+msgstr "Game Show"
+
+msgctxt "#70402"
+msgid "Mystery"
+msgstr "Mistero"
+
+msgctxt "#70403"
+msgid "Biography"
+msgstr "Biografía"
+
+msgctxt "#70404"
+msgid "Music"
+msgstr "Musica"
+
+msgctxt "#70405"
+msgid "History"
+msgstr "Storico"
+
+msgctxt "#70406"
+msgid "Reality-TV"
+msgstr "Reality Show"
+
+msgctxt "#70407"
+msgid "War"
+msgstr "Guerra"
+
+msgctxt "#70408"
+msgid "Musical"
+msgstr "Musical"
+
+msgctxt "#70409"
+msgid "Romance"
+msgstr "Romantico"
+
+msgctxt "#70410"
+msgid "Thriller"
+msgstr "Thriller"
+
+msgctxt "#70411"
+msgid "Western"
+msgstr "Western"
+
+msgctxt "#70412"
+msgid "Drama"
+msgstr "Drammatico"
+
+msgctxt "#70413"
+msgid ""
+msgstr ""
+
+msgctxt "#70413"
+msgid "2. Enter this code on the page and click Allow:  %s"
+msgstr "2. Inserisci questo codice nella pagina e premi Allow:  %s"
+
+msgctxt "#70414"
+msgid "Authentication. Do not close this window!!"
+msgstr "Autenticazione. Non chiudere questa finestra!!"
+
+msgctxt "#70415"
+msgid "Trakt.tv"
+msgstr "Trakt.tv"
+
+msgctxt "#70416"
+msgid "=== Movies ==="
+msgstr "=== Film ==="
+
+msgctxt "#70417"
+msgid "=== TV Shows ==="
+msgstr "=== Serie TV ==="
+
+msgctxt "#70418"
+msgid "Search language in TMDB"
+msgstr "Ligua di ricerca in TMDB"
+
+msgctxt "#70419"
+msgid "German"
+msgstr "Tedesco"
+
+msgctxt "#70420"
+msgid "French"
+msgstr "Francese"
+
+msgctxt "#70421"
+msgid "Portuguese"
+msgstr "Portoghese"
+
+msgctxt "#70422"
+msgid "Italian"
+msgstr "Italiano"
+
+msgctxt "#70423"
+msgid "Spanish Latin"
+msgstr "Spagnolo Latino"
+
+msgctxt "#70424"
+msgid "Catalan"
+msgstr "Catalano"
+
+msgctxt "#70425"
+msgid "English"
+msgstr "Inglese"
+
+msgctxt "#70426"
+msgid "Alternative language for TMDB (No main language synopsis)"
+msgstr "Linguaggio alternativo per TMDB (sinossi senza lingua principale)"
+
+msgctxt "#70427"
+msgid "Language of titles in IMDB"
+msgstr "Lingua per i titoli in IMDB"
+
+msgctxt "#70428"
+msgid "Filmaffinity website"
+msgstr "Sitio Web Filmaffinity"
+
+msgctxt "#70429"
+msgid "Colombia"
+msgstr "Colombia"
+
+msgctxt "#70430"
+msgid "Chile"
+msgstr "Cile"
+
+msgctxt "#70431"
+msgid "Argentina"
+msgstr "Argentina"
+
+msgctxt "#70432"
+msgid "Mexico"
+msgstr "Messico"
+
+msgctxt "#70433"
+msgid "US/UK"
+msgstr "US/UK"
+
+msgctxt "#70434"
+msgid "Spain"
+msgstr "Spagna"
+
+msgctxt "#70435"
+msgid "User Filmaaffinity (Optional)"
+msgstr "Username Filmaffinity (Opzionale)"
+
+msgctxt "#70436"
+msgid "Password Filmaffinity"
+msgstr "Password Filmaffinity"
+
+msgctxt "#70437"
+msgid "Order personal lists of Filmaffinity by:"
+msgstr "Ordina liste personali di Filmaffinity per:"
+
+msgctxt "#70438"
+msgid "Position"
+msgstr "Posizione"
+
+msgctxt "#70439"
+msgid "Vote"
+msgstr "Voto"
+
+msgctxt "#70440"
+msgid "Average grade"
+msgstr "Valutazione media"
+
+msgctxt "#70441"
+msgid "User MyAnimeList (Optional)"
+msgstr "Username MyAnimeList (Opzionale)"
+
+msgctxt "#70442"
+msgid "Password MyAnimeList"
+msgstr "Password MyAnimeList"
+
+msgctxt "#70443"
+msgid "Show Hentai in MyAnimeList"
+msgstr "Mostra Hentai in MyAnimeList"
+
+msgctxt "#70444"
+msgid "Profile 3"
+msgstr "Perofilo 3"
+
+msgctxt "#70445"
+msgid "Profile 2"
+msgstr "Profilo 2"
+
+msgctxt "#70446"
+msgid "Profile 1"
+msgstr "Profilo 1"
+
+msgctxt "#70447"
+msgid "[%s] The file has been deleted"
+msgstr "[%s] Il file è stato cancellato"
+
+msgctxt "#70448"
+msgid "[%s] The file is still in process"
+msgstr "[%s] Il file è ancora in elaborazione"
+
+msgctxt "#70449"
+msgid "[%s] The file does not exist or has been deleted"
+msgstr "[%s] Il file non esiste oppure è stato cancellato"
+
+msgctxt "#70450"
+msgid "Anyone"
+msgstr "Qualsiasi"
+
+msgctxt "#70451"
+msgid "Select one, none or more than one gender"
+msgstr "Seleziona uno, nessuno o più di un genere"
+
+msgctxt "#70452"
+msgid "Year from"
+msgstr "Anno da:"
+
+msgctxt "#70453"
+msgid "Year until"
+msgstr "Anno fino a:"
+
+msgctxt "#70454"
+msgid "Minimum number of votes"
+msgstr "Numero minimo di voti"
+
+msgctxt "#70455"
+msgid "Order by"
+msgstr "Ordina per"
+
+msgctxt "#70456"
+msgid "Popularity Desc"
+msgstr "Popolarità Desc"
+
+msgctxt "#70457"
+msgid "Popularity Asc"
+msgstr "Popolarità Asc"
+
+msgctxt "#70458"
+msgid "Year Desc"
+msgstr "Anno Desc"
+
+msgctxt "#70459"
+msgid "Year Asc"
+msgstr "Anno Asc"
+
+msgctxt "#70460"
+msgid "Desc Rating"
+msgstr "Rating Desc"
+
+msgctxt "#70461"
+msgid "Asc Rating"
+msgstr "Rating Asc"
+
+msgctxt "#70462"
+msgid "Title [A-Z]"
+msgstr "Titolo [A-Z]"
+
+msgctxt "#70463"
+msgid "Title [Z-A]"
+msgstr "Titolo[Z-A]"
+
+msgctxt "#70464"
+msgid "Set as default filter"
+msgstr "Impostare come filtro di default"
+
+msgctxt "#70465"
+msgid "Key word"
+msgstr "Parola Chiave"
+
+msgctxt "#70466"
+msgid "Country"
+msgstr "Nazione"
+
+msgctxt "#70467"
+msgid "Select a genre"
+msgstr "Seleziona un genere"
+
+msgctxt "#70468"
+msgid "Indicate your vote"
+msgstr "Indica il tuo voto:"
+
+msgctxt "#70469"
+msgid "Added"
+msgstr "Aggiunto"
+
+msgctxt "#70470"
+msgid "Premiere"
+msgstr "Premiere"
+
+msgctxt "#70471"
+msgid "Duration"
+msgstr "Durata"
+
+msgctxt "#70472"
+msgid "Popularity"
+msgstr "Popolarità"
+
+msgctxt "#70473"
+msgid "Rating"
+msgstr "Rating"
+
+msgctxt "#70474"
+msgid "Votes"
+msgstr "Voti"
+
+msgctxt "#70475"
+msgid "upward"
+msgstr "ascendente"
+
+msgctxt "#70476"
+msgid "falling"
+msgstr "discendente"
+
+msgctxt "#70477"
+msgid "Upward"
+msgstr "Ascendente"
+
+msgctxt "#70478"
+msgid "Falling"
+msgstr "Discendente"
+
+msgctxt "#70479"
+msgid "Currently watching"
+msgstr "In visione attualmente"
+
+msgctxt "#70480"
+msgid "Completed"
+msgstr "Completati"
+
+msgctxt "#70481"
+msgid "Anticipated to see"
+msgstr "Da vedersi"
+
+msgctxt "#70482"
+msgid "Kind"
+msgstr "Tipo"
+
+msgctxt "#70483"
+msgid "Special"
+msgstr "Special"
+
+msgctxt "#70484"
+msgid "OVA"
+msgstr "OVA"
+
+msgctxt "#70485"
+msgid "Status"
+msgstr "Stato"
+
+msgctxt "#70486"
+msgid "(1) Grotesque"
+msgstr "(1) Grottesco"
+
+msgctxt "#70487"
+msgid "(2) Horrible"
+msgstr "(2) orribile"
+
+msgctxt "#70488"
+msgid "(3) Very bad"
+msgstr "(3) bruttissimo"
+
+msgctxt "#70489"
+msgid "(4) Bad"
+msgstr "(4) Brutto"
+
+msgctxt "#70490"
+msgid "(5) Regular"
+msgstr "(5) Regulare"
+
+msgctxt "#70491"
+msgid "(6) Pasable"
+msgstr "(6) Passabile"
+
+msgctxt "#70492"
+msgid "(7) Good"
+msgstr "(7) Buono"
+
+msgctxt "#70493"
+msgid "(8) Very good"
+msgstr "(8) Ottimo"
+
+msgctxt "#70494"
+msgid "(9) Genial"
+msgstr "(9) Geniale"
+
+msgctxt "#70495"
+msgid "(10) Masterpiece"
+msgstr "(10) Capolavoro"

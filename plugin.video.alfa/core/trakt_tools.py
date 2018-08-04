@@ -71,11 +71,11 @@ def token_trakt(item):
             data = jsontools.load(data)
         else:
             import time
-            dialog_auth = platformtools.dialog_progress("Sincronizar con Trakt. No cierres esta ventana",
-                                                        "1. Entra en la siguiente url: %s" % item.verify_url,
-                                                        "2. Ingresa este código en la página y acepta:  %s"
+            dialog_auth = platformtools.dialog_progress(config.get_localized_string(60251),
+                                                        config.get_localized_string(60252) % item.verify_url,
+                                                        config.get_localized_string(60253)
                                                         % item.user_code,
-                                                        "3. Espera a que se cierre esta ventana")
+                                                        config.get_localized_string(60254))
 
             # Generalmente cada 5 segundos se intenta comprobar si el usuario ha introducido el código
             while True:
