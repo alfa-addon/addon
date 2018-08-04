@@ -1,7 +1,7 @@
 {
   "id": "peliculasrey",
   "name": "peliculasrey",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "peliculasrey.png",
