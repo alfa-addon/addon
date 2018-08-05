@@ -255,7 +255,7 @@ def trakt(item):
     page = "?page=1&limit=20&extended=full"
     if not item.extra:
         item.extra = "movie"
-        itemlist.append(item.clone(title="[B][COLOR yellow]%s[/COLOR][/B]" % config.get_localized_string(70416), action=""))
+        itemlist.append(item.clone(title="[COLOR yellow][B]%s[/B][/COLOR]" % config.get_localized_string(70416), action=""))
         itemlist.append(item.clone(title=config.get_localized_string(70049), action="acciones_trakt", url="movies/popular%s" % page))
         itemlist.append(
             item.clone(title=config.get_localized_string(70050), action="acciones_trakt", url="movies/trending%s" % page))
@@ -265,7 +265,7 @@ def trakt(item):
         if token_auth:
             itemlist.append(item.clone(title=config.get_localized_string(70052), action="acciones_trakt",
                                        url="recommendations/movies?limit=100&extended=full", pagina=0))
-        itemlist.append(item.clone(title="[B][COLOR yellow]%s[/COLOR][/B]" % config.get_localized_string(70417), action="",))
+        itemlist.append(item.clone(title="[COLOR yellow][B]%s[/B][/COLOR]" % config.get_localized_string(70417), action="",))
         item.extra = "show"
         itemlist.append(item.clone(title=config.get_localized_string(70049), action="acciones_trakt", url="shows/popular%s" % page))
         itemlist.append(item.clone(title=config.get_localized_string(70050), action="acciones_trakt", url="shows/trending%s" % page))
@@ -275,7 +275,7 @@ def trakt(item):
         if token_auth:
             itemlist.append(item.clone(title=config.get_localized_string(70052), action="acciones_trakt",
                                        url="recommendations/shows?limit=100&extended=full", pagina=0))
-        itemlist.append(item.clone(title="[B][COLOR red]%s[/COLOR][/B]" % config.get_localized_string(70048), extra="cuenta"))
+        itemlist.append(item.clone(title="[COLOR red][B]%s[/B][/COLOR]" % config.get_localized_string(70048), extra="cuenta"))
     else:
         item.extra = "movie"
         # Se comprueba si existe un token guardado y sino se ejecuta el proceso de autentificación
