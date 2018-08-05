@@ -35,14 +35,9 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     data = httptools.downloadpage(host).data
-    url_cse = scrapertools.find_single_match(data, '<form action="([^"]+)"') + "?"
-    bloque = scrapertools.find_single_match(data, '<form action=.*?</form>').replace('name="q"', "")
-    matches = scrapertools.find_multiple_matches(bloque, 'name="([^"]+).*?value="([^"]+)')
-    post = "q=" + texto + "&"
-    for name, value in matches:
-        post += name + "=" + value + "&"
-    data = httptools.downloadpage(url_cse + post).data
-    cse_token = scrapertools.find_single_match(data, "var cse_token='([^']+)'")
+    cxv = scrapertools.find_single_match(data, 'cx" value="([^"]+)"')
+    data = httptools.downloadpage("https://cse.google.es/cse.js?hpg=1&cx=%s" %cxv).data
+    cse_token = scrapertools.find_single_match(data, 'cse_token": "([^"]+)"')
     item.url = host_search %(texto, cse_token)
     try:
         return sub_search(item)
@@ -149,7 +144,7 @@ def findvideos(item):
     cuenta = 0
     for datos in bloque:
         cuenta = cuenta + 1
-        patron = '<em>(opción %s.*?)</em>' %cuenta
+        patron = '<em>((?:opciÃ³n|opción) %s.*?)</em>' %cuenta
         scrapedopcion = scrapertools.find_single_match(data, patron)
         titulo_opcion = "(" + scrapertools.find_single_match(scrapedopcion, "op.*?, (.*)").upper() + ")"
         if "TRAILER" in titulo_opcion or titulo_opcion == "()":
