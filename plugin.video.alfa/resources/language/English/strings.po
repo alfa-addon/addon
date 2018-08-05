@@ -1894,7 +1894,7 @@ msgid "Uploading new data"
 msgstr ""
 
 msgctxt "#60470"
-msgid "Buscando en Tmdb......."
+msgid "Searching in Tmdb......."
 msgstr ""
 
 msgctxt "#60471"
@@ -4682,3 +4682,20 @@ msgstr ""
 msgctxt "#70495"
 msgid "(10) Masterpiece"
 msgstr ""
+
+msgctxt "#70496"
+msgid "The search for "
+msgstr ""
+
+msgctxt "#70497"
+msgid " did not match."
+msgstr ""
+
+msgctxt "#70498"
+msgid "Producer: "
+msgstr ""
+
+msgctxt "#70499"
+msgid "Genre: "
+msgstr ""
+

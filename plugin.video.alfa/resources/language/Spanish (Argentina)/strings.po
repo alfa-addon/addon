@@ -4670,3 +4670,20 @@ msgstr "(9) Genial"
 msgctxt "#70495"
 msgid "(10) Masterpiece"
 msgstr "(10) Obra maestra"
+
+msgctxt "#70496"
+msgid "The search for "
+msgstr "La busqueda de "
+
+msgctxt "#70497"
+msgid " did not match."
+msgstr " no dio resultados."
+
+msgctxt "#70498"
+msgid "Producer: "
+msgstr "Productora: "
+
+msgctxt "#70499"
+msgid "Genre: "
+msgstr "Género: "
+

@@ -3989,7 +3989,7 @@ msgstr "[FA] Aggiungi o rimuovi da un elenco utenti"
 
 msgctxt "#70327"
 msgid "It's part of: %s"
-msgstr "E'parte di: %s"
+msgstr "Fa parte di: %s"
 
 msgctxt "#70328"
 msgid "%ss similarar"
@@ -4670,3 +4670,20 @@ msgstr "(9) Geniale"
 msgctxt "#70495"
 msgid "(10) Masterpiece"
 msgstr "(10) Capolavoro"
+
+msgctxt "#70496"
+msgid "The search for "
+msgstr "La ricerca di "
+
+msgctxt "#70497"
+msgid " did not match."
+msgstr " non ha dato risultati."
+
+msgctxt "#70498"
+msgid "Producer: "
+msgstr "Produzione: "
+
+msgctxt "#70499"
+msgid "Genere: "
+msgstr "Género: "
+
