@@ -3989,7 +3989,7 @@ msgstr "[FA] Aggiungi o rimuovi da un elenco utenti"
 
 msgctxt "#70327"
 msgid "It's part of: %s"
-msgstr "E'parte di: %s"
+msgstr "Fa parte di: %s"
 
 msgctxt "#70328"
 msgid "%ss similarar"
