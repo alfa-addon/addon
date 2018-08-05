@@ -891,7 +891,7 @@ class related(xbmcgui.WindowDialog):
 
         self.gt_peli = xbmcgui.ControlTextBox(210, 385, 1100, 60, self.fonts["12"])
         self.addControl(self.gt_peli)
-        self.gt_peli.setText("[COLOR limegreen][B]Género: [/B][/COLOR]")
+        self.gt_peli.setText("[COLOR limegreen][B]%s[/B][/COLOR]" % config.get_localized_string(70499))
         if set_animation:
             self.gt_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-7000 delay=5750 time=700 condition=true tween=circle easing=in',),
@@ -907,7 +907,7 @@ class related(xbmcgui.WindowDialog):
 
         self.pt_peli = xbmcgui.ControlTextBox(210, 410, 307, 60, self.fonts["12"])
         self.addControl(self.pt_peli)
-        self.pt_peli.setText("[COLOR limegreen][B]Productora: [/B][/COLOR]")
+        self.pt_peli.setText("[COLOR limegreen][B]%s[/B][/COLOR]" % config.get_localized_string(70498))
         if set_animation:
             self.pt_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-7000 delay=5700 time=700 condition=true tween=circle easing=in',),
