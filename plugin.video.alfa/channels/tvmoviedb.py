@@ -3246,9 +3246,9 @@ def menu_mal(item):
     if "lista" in title_estado:
         item.lista = True
 
-    itemlist.append(item.clone(title=config.get_localized_string(70390) % (item.contentTitle, title_estado), action=""))
-        status = {'1': config.get_localized_string(70479), '2': config.get_localized_string(70480), '3': config.get_localized_string(70384), '4': config.get_localized_string(70385),
-                  '6': config.get_localized_string(70481)}
+    itemlist.append(item.clone(title="Anime: %s%s" % (item.contentTitle, title_estado), action=""))
+    status = {'1': config.get_localized_string(70479), '2': config.get_localized_string(70480), '3': config.get_localized_string(70384), '4': config.get_localized_string(70385),
+              '6': config.get_localized_string(70481)}
     for key, value in status.items():
         if not value in title_estado:
             itemlist.append(
