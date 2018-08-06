@@ -37,9 +37,9 @@ ACTION_MOVE_UP = 3
 
 set_animation = False
 xinfoplus_set = config.get_setting("infoplus_set")
-if xinfoplus_set == "Sin animación":
+if xinfoplus_set == config.get_localized_string(70129):
     set_animation = False
-if xinfoplus_set == "Con animación":
+if xinfoplus_set == config.get_localized_string(70130):
     set_animation = True
 
 def start(item, recomendaciones=[], from_window=False):
@@ -400,7 +400,7 @@ class main(xbmcgui.WindowDialog):
             self.plot.autoScroll(11000, 6000, 30000)
         except:
             xbmc.executebuiltin(
-                'Notification([COLOR red][B]Actualiza Kodi a su última versión[/B][/COLOR], [COLOR skyblue]para mejor info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")')
+                config.get_localized_string(70500))
         self.plot.setText(dhe(self.infoLabels.get("plot", "")))
 
         xbmc.sleep(200)
@@ -842,7 +842,7 @@ class related(xbmcgui.WindowDialog):
             self.info_peli.autoScroll(7000, 6000, 30000)
         except:
             xbmc.executebuiltin(
-                'Notification([COLOR red][B]Actualiza Kodi a su última versión[/B][/COLOR], [COLOR skyblue]para mejor info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")')
+                config.get_localized_string(70500))
         self.info_peli.setText(self.info)
         if set_animation:
            self.info_peli.setAnimations(
@@ -859,9 +859,9 @@ class related(xbmcgui.WindowDialog):
                                         ('WindowClose', 'effect=zoom end=0% time=1000 condition=true',)])
 
         if self.infoLabels.get("status") == "Ended" and self.item.contentType != "movie":
-            status = "[COLOR aquamarine][B]Finalizada %s[/B][/COLOR]"
+            status = config.get_localized_string(70515)
         elif self.infoLabels.get("status") and self.item.contentType != "movie":
-            status = "[COLOR aquamarine][B]En emisión %s[/B][/COLOR]"
+            status = config.get_localized_string(70516)
         else:
             status = "[COLOR aquamarine][B]%s[/B][/COLOR]"
 
@@ -1238,7 +1238,7 @@ class Busqueda(xbmcgui.WindowXMLDialog):
         else:
             self.getControl(1).setLabel(config.get_localized_string(60494))
 
-        self.getControl(5).setLabel("[COLOR tomato][B]Cerrar[/B][/COLOR]")
+        self.getControl(5).setLabel(config.get_localized_string(60495))
         self.control_list.reset()
         items = []
         for item_l in self.lista:
@@ -1577,7 +1577,7 @@ class ActorInfo(xbmcgui.WindowDialog):
             self.info_actor.autoScroll(7000, 6000, 30000)
         except:
             xbmc.executebuiltin(
-                'Notification([COLOR red][B]Actualiza Kodi a su última versión[/B][/COLOR], [COLOR skyblue]para mejor info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")')
+                config.get_localized_string(70500))
         self.info_actor.setText(
             "[COLOR coral][B]%s[/B][/COLOR]" % actor_tmdb.result.get("biography", config.get_localized_string(60504)))
 
@@ -1601,7 +1601,7 @@ class ActorInfo(xbmcgui.WindowDialog):
             else:
                 self.titulos.append([entradas["id"], entradas.get("title", entradas.get("original_title", "")), thumb])
 
-        self.dialog.update(40, '[COLOR rosybrown]Obteniendo filmografía...[/COLOR]')
+        self.dialog.update(40, config.get_localized_string(60505))
         self.mas_pelis = 8
         self.idps = []
         self.botones = []
@@ -1673,7 +1673,7 @@ class ActorInfo(xbmcgui.WindowDialog):
             self.botones.append(self.btn_right)
 
         xbmc.sleep(200)
-        self.dialog.update(80, '[COLOR plum]Recopilando imágenes...[/COLOR]')
+        self.dialog.update(80, config.get_localized_string(60506))
         self.images = []
         for images in actor_tmdb.result.get("images", {}).get("profiles", []):
             imagen = "https://image.tmdb.org/t/p/original" + images["file_path"]

@@ -4699,3 +4699,71 @@ msgctxt "#70499"
 msgid "Genre: "
 msgstr ""
 
+msgctxt "#70500"
+msgid "Notification([COLOR red][B]Update Kodi to its latest version[/B][/COLOR], [COLOR skyblue]for best info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")"
+msgstr ""
+
+msgctxt "#70501"
+msgid "Search did not match (%s)"
+msgstr ""
+
+msgctxt "#70502"
+msgid ">> Next"
+msgstr ""
+
+msgctxt "#70503"
+msgid "There is no available video"
+msgstr ""
+
+msgctxt "#70504"
+msgid "Loading trailers..."
+msgstr ""
+
+msgctxt "#70505"
+msgid "Enter the title to search"
+msgstr ""
+
+msgctxt "#70506"
+msgid "Searching: "
+msgstr ""
+
+msgctxt "#70507"
+msgid "Search in Youtube"
+msgstr ""
+
+msgctxt "#70508"
+msgid "Search in Abandomoviez"
+msgstr ""
+
+msgctxt "#70509"
+msgid "Search in Jayhap (Youtube, Vimeo & Dailymotion)"
+msgstr ""
+
+msgctxt "#70510"
+msgid "Manual Search in Youtube"
+msgstr ""
+
+msgctxt "#70511"
+msgid "Manual Search in Abandomoviez"
+msgstr ""
+
+msgctxt "#70512"
+msgid "Searching in abandomoviez"
+msgstr ""
+
+msgctxt "#70513"
+msgid "Manual Searching in Filmaffinity"
+msgstr ""
+
+msgctxt "#70514"
+msgid "Manual Search in Jayhap"
+msgstr ""
+
+msgctxt "#70515"
+msgid "[COLOR aquamarine][B]Completed %s[/B][/COLOR]"
+msgstr ""
+
+msgctxt "#70516"
+msgid "[COLOR aquamarine][B]In progress %s[/B][/COLOR]"
+msgstr ""
+
