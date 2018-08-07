@@ -450,7 +450,7 @@ def listado_tmdb(item):
                 else:
                     # Si es una búsqueda de personas se incluye en el título y fanart una película por la que es conocido
                     known_for = ob_tmdb.results[i].get("known_for")
-                    type = item.search['type']
+                    type=item.type
                     if known_for:
                         from random import randint
                         random = randint(0, len(known_for) - 1)
