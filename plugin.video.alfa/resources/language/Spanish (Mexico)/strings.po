@@ -3845,6 +3845,14 @@ msgctxt "#70288"
 msgid "Configure Downloads"
 msgstr "Configurar Descargas"
 
+msgctxt "#70289"
+msgid "Alfa\nCorrected an error in the adult section, the password has been reset to "
+msgstr "Alfa\nCorregido un error en la seccion adultos, se ha reseteado la contrasena a por "
+
+msgctxt "#70290"
+msgid "default, you will have to change it again if you want.\n Type 's', if you have understood it: "
+msgstr "defecto, tendra que cambiarla de nuevo si lo desea.\n Escriba 's', si lo ha entendido: "
+
 msgctxt "#70291"
 msgid "Error, during conversion"
 msgstr "Error, en conversión"
@@ -3956,7 +3964,7 @@ msgid "Listen to BSO - List of songs"
 msgstr "Escuchar BSO - Lista de canciones"
 
 msgctxt "#70318"
-msgid "Manage yor trakt account"
+msgid "Manage your trakt account"
 msgstr "Gestionar con tu cuenta Trakt"
 
 msgctxt "#70319"
@@ -4674,6 +4682,10 @@ msgstr "(10) Obra maestra"
 msgctxt "#70496"
 msgid "The search for "
 msgstr "La busqueda de "
+
+msgctxt "#70497"
+msgid " did not match."
+msgstr " no dio resultados."
 
 msgctxt "#70497"
 msgid " did not match."

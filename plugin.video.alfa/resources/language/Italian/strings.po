@@ -3841,6 +3841,14 @@ msgctxt "#70288"
 msgid "Configure Downloads"
 msgstr "Configura Downloads"
 
+msgctxt "#70289"
+msgid "Alfa\nCorrected an error in the adult section, the password has been reset to "
+msgstr "Alfa\nCorretto un errore nella sezione adulti, la password è sta resettata a quella di "
+
+msgctxt "#70290"
+msgid "default, you will have to change it again if you want.\nType 's', if you have understood it: "
+msgstr "default, puoi cambiarla di nuovo se vuoi.\nScrivi 's', se hai capito: "
+
 msgctxt "#70291"
 msgid "Error, during conversion"
 msgstr "Errore, in conversione"
@@ -4257,7 +4265,7 @@ msgstr "Dai un punteggio con un [COLOR %s]%s[/COLOR]"
 
 msgctxt "#70393"
 msgid "[%s]: Select the correct %s "
-msgstr "[%s]: Selezona la %s corretta"
+msgstr "[%s]: Seleziona la %s corretta"
 
 msgctxt "#70394"
 msgid "Action"
@@ -4641,7 +4649,7 @@ msgstr "(2) orribile"
 
 msgctxt "#70488"
 msgid "(3) Very bad"
-msgstr "(3) bruttissimo"
+msgstr "(3) Bruttissimo"
 
 msgctxt "#70489"
 msgid "(4) Bad"
