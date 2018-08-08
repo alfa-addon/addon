@@ -1047,14 +1047,14 @@ def play_torrent(item, xlistitem, mediaurl):
     # Plugins externos
     if seleccion > 1:
         mediaurl = urllib.quote_plus(item.url)
-        if "quasar" in torrent_options[seleccion][1] and item.infoLabels['tmdb_id']:    #Llamada con más parámetros para completar el título
-            if item.contentType == 'episode':
+        if ("quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]) and item.infoLabels['tmdb_id']:    #Llamada con más parámetros para completar el título
+            if item.contentType == 'episode' and "elementum" not in torrent_options[seleccion][1]:
                 mediaurl += "&episode=%s&library=&season=%s&show=%s&tmdb=%s&type=episode" % (item.infoLabels['episode'], item.infoLabels['season'], item.infoLabels['tmdb_id'], item.infoLabels['tmdb_id'])
-            else:
+            elif item.contentType == 'movie':
                 mediaurl += "&library=&tmdb=%s&type=movie" % (item.infoLabels['tmdb_id'])
         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
         
-        if "quasar" in torrent_options[seleccion][1]:                   #Seleccionamos que clientes torrent soportamos
+        if "quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]:   #Seleccionamos que clientes torrent soportamos
             if item.strm_path:                                          #Sólo si es de Videoteca
                 import time
                 time_limit = time.time() + 150                          #Marcamos el timepo máx. de buffering
