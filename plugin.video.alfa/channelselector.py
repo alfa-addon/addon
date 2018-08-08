@@ -63,6 +63,11 @@ def getchanneltypes(view="thumb_"):
 
     # Lista de categorias
     channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent"]
+    dict_types_lang = {'movie': config.get_localized_string(30122), 'tvshow': config.get_localized_string(30123),
+                       'anime': config.get_localized_string(30124), 'documentary': config.get_localized_string(30125),
+                       'vos': config.get_localized_string(30136), 'adult': config.get_localized_string(30126),
+                       'direct': config.get_localized_string(30137)}
+
     if config.get_setting("adult_mode") != 0:
         channel_types.append("adult")
 
@@ -78,7 +83,7 @@ def getchanneltypes(view="thumb_"):
 
     for channel_type in channel_types:
         logger.info("channel_type=%s" % channel_type)
-        title = config.get_localized_category(channel_type)
+        title = dict_types_lang.get(channel_type, channel_type)
         itemlist.append(Item(title=title, channel="channelselector", action="filterchannels", category=title,
                              channel_type=channel_type, viewmode="thumbnails",
                              thumbnail=get_thumb("channels_%s.png" % channel_type, view)))
@@ -169,10 +174,11 @@ def filterchannels(category, view="thumb_"):
                 context.append({"title": "Configurar canal", "channel": "setting", "action": "channel_config",
                                 "config": channel_parameters["channel"]})
 
+            channel_info = set_channel_info(channel_parameters)
             # Si ha llegado hasta aquí, lo añade
             channelslist.append(Item(title=channel_parameters["title"], channel=channel_parameters["channel"],
                                      action="mainlist", thumbnail=channel_parameters["thumbnail"],
-                                     fanart=channel_parameters["fanart"], category=channel_parameters["title"],
+                                     fanart=channel_parameters["fanart"], plot=channel_info, category=channel_parameters["title"],
                                      language=channel_parameters["language"], viewmode="list", context=context))
 
         except:
@@ -232,3 +238,34 @@ def get_thumb(thumb_name, view="thumb_", auto=False):
         media_path = os.path.join(resource_path, icon_pack_name)
 
         return os.path.join(media_path, view + thumb_name)
+
+
+def set_channel_info(parameters):
+    logger.info()
+
+    info = ''
+    language = ''
+    content = ''
+    langs = parameters['language']
+    lang_dict = {'lat':'Latino', 'cast':'Castellano', '*':'Latino, Castellano, VOSE, VO'}
+    for lang in langs:
+        if 'vos' in parameters['categories']:
+            lang = '*'
+
+        if lang in lang_dict:
+            if language != '' and language != '*' and not parameters['adult']:
+                language = '%s, %s' % (language, lang_dict[lang])
+            elif not parameters['adult']:
+                language = lang_dict[lang]
+        if lang == '*':
+            break
+
+    categories = parameters['categories']
+    for cat in categories:
+        if content != '':
+            content = '%s, %s' % (content, config.get_localized_category(cat))
+        else:
+            content = config.get_localized_category(cat)
+
+    info = '[COLOR yellow]Tipo de contenido:[/COLOR] %s\n\n[COLOR yellow]Idiomas:[/COLOR] %s' % (content, language)
+    return info
