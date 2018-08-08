@@ -1894,7 +1894,7 @@ msgid "Uploading new data"
 msgstr ""
 
 msgctxt "#60470"
-msgid "Buscando en Tmdb......."
+msgid "Searching in Tmdb......."
 msgstr ""
 
 msgctxt "#60471"
@@ -2766,7 +2766,7 @@ msgid "Beginning"
 msgstr ""
 
 msgctxt "#70013"
-msgid "Terror"
+msgid "Horror"
 msgstr ""
 
 msgctxt "#70014"
@@ -3862,8 +3862,8 @@ msgid "Alfa\nCorrected an error in the adult section, the password has been rese
 msgstr " "
 
 msgctxt "#70290"
-msgid "default, you will have to change it again if you want.\ n Type 's', if you have understood it: "
-msgstr " "
+msgid "default, you will have to change it again if you want.\nType 's', if you have understood it: "
+msgstr ""
 
 msgctxt "#70291"
 msgid "Error, during conversion"
@@ -4278,3 +4278,500 @@ msgstr ""
 msgctxt "#70392"
 msgid "Rate with a [COLOR %s]%s[/ COLOR]"
 msgstr ""
+
+msgctxt "#70393"
+msgid "[%s]: Select the correct %s "
+msgstr ""
+
+msgctxt "#70394"
+msgid "Action"
+msgstr ""
+
+msgctxt "#70395"
+msgid "Sport"
+msgstr ""
+
+msgctxt "#70396"
+msgid "Documentary"
+msgstr ""
+
+msgctxt "#70397"
+msgid "Science fiction"
+msgstr ""
+
+msgctxt "#70398"
+msgid "Talk Show"
+msgstr ""
+
+msgctxt "#70399"
+msgid "Family"
+msgstr ""
+
+msgctxt "#70400"
+msgid "Film-Noir"
+msgstr ""
+
+msgctxt "#70401"
+msgid "Game-Show"
+msgstr ""
+
+msgctxt "#70402"
+msgid "Mystery"
+msgstr ""
+
+msgctxt "#70403"
+msgid "Biography"
+msgstr ""
+
+msgctxt "#70404"
+msgid "Music"
+msgstr ""
+
+msgctxt "#70405"
+msgid "History"
+msgstr ""
+
+msgctxt "#70406"
+msgid "Reality-TV"
+msgstr ""
+
+msgctxt "#70407"
+msgid "War"
+msgstr ""
+
+msgctxt "#70408"
+msgid "Musical"
+msgstr ""
+
+msgctxt "#70409"
+msgid "Romance"
+msgstr ""
+
+msgctxt "#70410"
+msgid "Thriller"
+msgstr "Thriller"
+
+msgctxt "#70411"
+msgid "Western"
+msgstr ""
+
+msgctxt "#70412"
+msgid "Drama"
+msgstr ""
+
+msgctxt "#70413"
+msgid "2. Enter this code on the page and click Allow:  %s"
+msgstr ""
+
+msgctxt "#70414"
+msgid "Authentication. Do not close this window!!"
+msgstr ""
+
+msgctxt "#70415"
+msgid "Trakt.tv"
+msgstr ""
+
+msgctxt "#70416"
+msgid "=== Movies ==="
+msgstr ""
+
+msgctxt "#70417"
+msgid "=== TV Shows ==="
+msgstr ""
+
+msgctxt "#70418"
+msgid "Search language in TMDB"
+msgstr ""
+
+msgctxt "#70419"
+msgid "German"
+msgstr ""
+
+msgctxt "#70420"
+msgid "French"
+msgstr ""
+
+msgctxt "#70421"
+msgid "Portuguese"
+msgstr ""
+
+msgctxt "#70422"
+msgid "Italian"
+msgstr ""
+
+msgctxt "#70423"
+msgid "Spanish Latin"
+msgstr ""
+
+msgctxt "#70424"
+msgid "Catalan"
+msgstr ""
+
+msgctxt "#70425"
+msgid "English"
+msgstr ""
+
+msgctxt "#70426"
+msgid "Alternative language for TMDB (No main language synopsis)"
+msgstr ""
+
+msgctxt "#70427"
+msgid "Language of titles in IMDB"
+msgstr ""
+
+msgctxt "#70428"
+msgid "Filmaffinity website"
+msgstr ""
+
+msgctxt "#70429"
+msgid "Colombia"
+msgstr ""
+
+msgctxt "#70430"
+msgid "Chile"
+msgstr ""
+
+msgctxt "#70431"
+msgid "Argentina"
+msgstr ""
+
+msgctxt "#70432"
+msgid "Mexico"
+msgstr ""
+
+msgctxt "#70433"
+msgid "US/UK"
+msgstr ""
+
+msgctxt "#70434"
+msgid "Spain"
+msgstr ""
+
+msgctxt "#70435"
+msgid "User Filmaaffinity (Optional)"
+msgstr ""
+
+msgctxt "#70436"
+msgid "Password Filmaffinity"
+msgstr ""
+
+msgctxt "#70437"
+msgid "Order personal lists of Filmaffinity by:"
+msgstr ""
+
+msgctxt "#70438"
+msgid "Position"
+msgstr ""
+
+msgctxt "#70439"
+msgid "Vote"
+msgstr ""
+
+msgctxt "#70440"
+msgid "Average grade"
+msgstr ""
+
+msgctxt "#70441"
+msgid "User MyAnimeList (Optional)"
+msgstr ""
+
+msgctxt "#70442"
+msgid "Password MyAnimeList"
+msgstr ""
+
+msgctxt "#70443"
+msgid "Show Hentai in MyAnimeList"
+msgstr ""
+
+msgctxt "#70444"
+msgid "Profile 3"
+msgstr ""
+
+msgctxt "#70445"
+msgid "Profile 2"
+msgstr ""
+
+msgctxt "#70446"
+msgid "Profile 1"
+msgstr ""
+
+msgctxt "#70447"
+msgid "[%s] The file has been deleted"
+msgstr ""
+
+msgctxt "#70448"
+msgid "[%s] The file is still in process"
+msgstr ""
+
+msgctxt "#70449"
+msgid ""
+msgstr ""
+
+msgctxt "#70450"
+msgid "Anyone"
+msgstr ""
+
+msgctxt "#70451"
+msgid "Select one, none or more than one gender"
+msgstr "S"
+
+msgctxt "#70452"
+msgid "Year from"
+msgstr ""
+
+msgctxt "#70453"
+msgid "Year until"
+msgstr ""
+
+msgctxt "#70454"
+msgid "Minimum number of votes"
+msgstr ""
+
+msgctxt "#70455"
+msgid "Order by"
+msgstr ""
+
+msgctxt "#70456"
+msgid "Popularity Desc"
+msgstr ""
+
+msgctxt "#70457"
+msgid "Popularity Asc"
+msgstr ""
+
+msgctxt "#70458"
+msgid "Year Desc"
+msgstr ""
+
+msgctxt "#70459"
+msgid "Year Asc"
+msgstr ""
+
+msgctxt "#70460"
+msgid "Desc Rating"
+msgstr ""
+
+msgctxt "#70461"
+msgid "Asc Rating"
+msgstr ""
+
+msgctxt "#70462"
+msgid "Title [A-Z]"
+msgstr ""
+
+msgctxt "#70463"
+msgid "Title [Z-A]"
+msgstr ""
+
+msgctxt "#70464"
+msgid "Set as default filter"
+msgstr ""
+
+msgctxt "#70465"
+msgid "Key word"
+msgstr ""
+
+msgctxt "#70466"
+msgid "Country"
+msgstr ""
+
+msgctxt "#70467"
+msgid "Select a genre"
+msgstr ""
+
+msgctxt "#70468"
+msgid "Indicate your vote"
+msgstr ""
+
+msgctxt "#70469"
+msgid "Added"
+msgstr ""
+
+msgctxt "#70470"
+msgid "Premiere"
+msgstr ""
+
+msgctxt "#70471"
+msgid "Duration"
+msgstr ""
+
+msgctxt "#70472"
+msgid "Popularity"
+msgstr ""
+
+msgctxt "#70473"
+msgid "Rating"
+msgstr ""
+
+msgctxt "#70474"
+msgid "Votes"
+msgstr ""
+
+msgctxt "#70475"
+msgid "upward"
+msgstr ""
+
+msgctxt "#70476"
+msgid "falling"
+msgstr ""
+
+msgctxt "#70477"
+msgid "Upward"
+msgstr ""
+
+msgctxt "#70478"
+msgid "Falling"
+msgstr ""
+
+msgctxt "#70479"
+msgid "Currently watching"
+msgstr ""
+
+msgctxt "#70480"
+msgid "Completed"
+msgstr ""
+
+msgctxt "#70481"
+msgid "Anticipated to see"
+msgstr ""
+
+msgctxt "#70482"
+msgid "Kind"
+msgstr ""
+
+msgctxt "#70483"
+msgid "Special"
+msgstr ""
+
+msgctxt "#70484"
+msgid "OVA"
+msgstr ""
+
+msgctxt "#70485"
+msgid "Status"
+msgstr ""
+
+msgctxt "#70486"
+msgid "(1) Grotesque"
+msgstr ""
+
+msgctxt "#70487"
+msgid "(2) Horrible"
+msgstr ""
+
+msgctxt "#70488"
+msgid "(3) Very bad"
+msgstr ""
+
+msgctxt "#70489"
+msgid "(4) Bad"
+msgstr ""
+
+msgctxt "#70490"
+msgid "(5) Regular"
+msgstr ""
+
+msgctxt "#70491"
+msgid "(6) Pasable"
+msgstr ""
+
+msgctxt "#70492"
+msgid "(7) Good"
+msgstr ""
+
+msgctxt "#70493"
+msgid "(8) Very good"
+msgstr ""
+
+msgctxt "#70494"
+msgid "(9) Genial"
+msgstr ""
+
+msgctxt "#70495"
+msgid "(10) Masterpiece"
+msgstr ""
+
+msgctxt "#70496"
+msgid "The search for "
+msgstr ""
+
+msgctxt "#70497"
+msgid " did not match."
+msgstr ""
+
+msgctxt "#70498"
+msgid "Producer: "
+msgstr ""
+
+msgctxt "#70499"
+msgid "Genre: "
+msgstr ""
+
+msgctxt "#70500"
+msgid "Notification([COLOR red][B]Update Kodi to its latest version[/B][/COLOR], [COLOR skyblue]for best info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")"
+msgstr ""
+
+msgctxt "#70501"
+msgid "Search did not match (%s)"
+msgstr ""
+
+msgctxt "#70502"
+msgid ">> Next"
+msgstr ""
+
+msgctxt "#70503"
+msgid "There is no available video"
+msgstr ""
+
+msgctxt "#70504"
+msgid "Loading trailers..."
+msgstr ""
+
+msgctxt "#70505"
+msgid "Enter the title to search"
+msgstr ""
+
+msgctxt "#70506"
+msgid "Searching: "
+msgstr ""
+
+msgctxt "#70507"
+msgid "Search in Youtube"
+msgstr ""
+
+msgctxt "#70508"
+msgid "Search in Abandomoviez"
+msgstr ""
+
+msgctxt "#70509"
+msgid "Search in Jayhap (Youtube, Vimeo & Dailymotion)"
+msgstr ""
+
+msgctxt "#70510"
+msgid "Manual Search in Youtube"
+msgstr ""
+
+msgctxt "#70511"
+msgid "Manual Search in Abandomoviez"
+msgstr ""
+
+msgctxt "#70512"
+msgid "Searching in abandomoviez"
+msgstr ""
+
+msgctxt "#70513"
+msgid "Manual Searching in Filmaffinity"
+msgstr ""
+
+msgctxt "#70514"
+msgid "Manual Search in Jayhap"
+msgstr ""
+
+msgctxt "#70515"
+msgid "[COLOR aquamarine][B]Completed %s[/B][/COLOR]"
+msgstr ""
+
+msgctxt "#70516"
+msgid "[COLOR aquamarine][B]In progress %s[/B][/COLOR]"
+msgstr ""
+
