@@ -10,6 +10,7 @@ from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+from channels import filtertools
 from channels import autoplay
 
 IDIOMAS = {'latino': 'Latino'}
@@ -97,7 +98,6 @@ def episodios(item):
 
     patron_caps = '<li><span>Capitulo (\d+).*?</span><a href="(.*?)">(.*?)</a></li>'
     matches = scrapertools.find_multiple_matches(data, patron_caps)
-    # data_info = scrapertools.find_single_match(data, '<div class="info">.+?<\/div><\/div>')
     patron_info = '<img src="([^"]+)">.+?</span>(.*?)</p>.*?<h2>Reseña:</h2><p>(.*?)</p>'
     scrapedthumbnail, show, scrapedplot = scrapertools.find_single_match(data, patron_info)
     scrapedthumbnail = host + scrapedthumbnail
@@ -142,66 +142,73 @@ def episodios(item):
 
     return itemlist
 
-
 def findvideos(item):
-    logger.info()
-
     import base64
-
+    logger.info()
     itemlist = []
-
-    url_server = "https://openload.co/embed/%s/"
-    url_api_get_key = "https://serieslan.com/idx.php?i=%s&k=%s"
-
-    def txc(key, _str):
-        s = range(256)
-        j = 0
-        res = ''
-        for i in range(256):
-            j = (j + s[i] + ord(key[i % len(key)])) % 256
-            x = s[i]
-            s[i] = s[j]
-            s[j] = x
-        i = 0
-        j = 0
-        for y in range(len(_str)):
-            i = (i + 1) % 256
-            j = (j + s[i]) % 256
-            x = s[i]
-            s[i] = s[j]
-            s[j] = x
-            res += chr(ord(_str[y]) ^ s[(s[i] + s[j]) % 256])
-        return res
-
     data = httptools.downloadpage(item.url).data
-    pattern = "<script type=.+?>.+?\['(.+?)','(.+?)','.+?'\]"
-    idv, ide = scrapertools.find_single_match(data, pattern)
-    thumbnail = scrapertools.find_single_match(data,
-                                               '<div id="tab-1" class="tab-content current">.+?<img src="([^"]*)">')
-    show = scrapertools.find_single_match(data, '<span>Episodio: <\/span>([^"]*)<\/p><p><span>Idioma')
-    thumbnail = host + thumbnail
-    data = httptools.downloadpage(url_api_get_key % (idv, ide), headers={'Referer': item.url}).data
-    data = eval(data)
 
-    if type(data) == list:
-        video_url = url_server % (txc(ide, base64.decodestring(data[2])))
-        server = "openload"
-        if " SUB" in item.title:
-            lang = "VOS"
-        elif " Sub" in item:
-            lang = "VOS"
-        else:
-            lang = "Latino"
-        title = "Enlace encontrado en " + server + " [" + lang + "]"
-        if item.contentChannel=='videolibrary':
-            itemlist.append(item.clone(channel=item.channel, action="play", url=video_url,
-                             thumbnail=thumbnail, server=server, folder=False))
-        else:
-            itemlist.append(Item(channel=item.channel, action="play", title=title, show=show, url=video_url, plot=item.plot,
-                             thumbnail=thumbnail, server=server, folder=False))
+    _sa = scrapertools.find_single_match(data, 'var _sa = (true|false);')
+    _sl = scrapertools.find_single_match(data, 'var _sl = ([^;]+);')
+    sl = eval(_sl)
 
-        autoplay.start(itemlist, item)
-        return itemlist
-    else:
-        return []
+    buttons = scrapertools.find_multiple_matches(data, '<button href="" class="selop" sl="([^"]+)">([^<]+)</button>')
+    for id, title in buttons:
+        new_url = golink(int(id), _sa, sl)
+        data = httptools.downloadpage(new_url).data
+        _x0x = scrapertools.find_single_match(data, 'var x0x = ([^;]+);')
+        x0x = eval(_x0x)
 
+        url = resolve(x0x[4], base64.b64decode(x0x[1]))
+        if 'download' in url:
+            url = url.replace('download', 'preview')
+        title = '%s'
+
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language='latino',
+                             infoLabels=item.infoLabels))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
+
+    return itemlist
+
+def golink (num, sa, sl):
+    import urllib
+    b = [3, 10, 5, 22, 31]
+    d = ''
+    for i in range(len(b)):
+        d += sl[2][b[i]+num:b[i]+num+1]
+
+    SVR = "https://viteca.stream" if sa == 'true' else "http://serieslan.com"
+    TT = "/" + urllib.quote_plus(sl[3].replace("/", "><")) if num == 0 else ""
+
+    return SVR + "/el/" + sl[0] + "/" + sl[1] + "/" + str(num) + "/" + sl[2] + d + TT
+
+
+def resolve(value1, value2):
+    reto = ''
+    lista = range(256)
+    j = 0
+    for i in range(256):
+        j = (j + lista[i] + ord(value1[i % len(value1)])) % 256
+        k = lista[i]
+        lista[i] = lista[j]
+        lista[j] = k
+
+    m = 0;
+    j = 0;
+    for i in range(len(value2)):
+        m = (m + 1) % 256
+        j = (j + lista[m]) % 256
+        k = lista[m]
+        lista[m] = lista[j]
+        lista[j] = k
+        reto += chr(ord(value2[i]) ^ lista[(lista[m] + lista[j]) % 256])
+
+    return reto
