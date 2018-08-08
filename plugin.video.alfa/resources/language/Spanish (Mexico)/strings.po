@@ -3845,14 +3845,6 @@ msgctxt "#70288"
 msgid "Configure Downloads"
 msgstr "Configurar Descargas"
 
-msgctxt "#70289"
-msgid "Alfa\nCorrected an error in the adult section, the password has been reset to "
-msgstr "Alfa\nCorregido un error en la seccion adultos, se ha reseteado la contrasena a por "
-
-msgctxt "#70290"
-msgid "default, you will have to change it again if you want.\n Type 's', if you have understood it: "
-msgstr "defecto, tendra que cambiarla de nuevo si lo desea.\n Escriba 's', si lo ha entendido: "
-
 msgctxt "#70291"
 msgid "Error, during conversion"
 msgstr "Error, en conversión"
