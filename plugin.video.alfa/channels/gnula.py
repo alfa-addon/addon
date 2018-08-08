@@ -17,13 +17,13 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Estrenos", action="peliculas",
                          url= host +"peliculas-online/lista-de-peliculas-online-parte-1/", viewmode="movie",
-                         thumbnail=get_thumb('premieres', auto=True),))
+                         thumbnail=get_thumb('premieres', auto=True), first=0))
     itemlist.append(
         Item(channel=item.channel, title="Generos", action="generos", url= host + "generos/lista-de-generos/",
              thumbnail=get_thumb('genres', auto=True),))
     itemlist.append(Item(channel=item.channel, title="Recomendadas", action="peliculas",
                          url= host + "peliculas-online/lista-de-peliculas-recomendadas/", viewmode="movie",
-                         thumbnail=get_thumb('recomended', auto=True),))
+                         thumbnail=get_thumb('recomended', auto=True), first=0))
     itemlist.append(Item(channel = item.channel, action = ""))
     itemlist.append(
         Item(channel=item.channel, title="Buscar", action="search", url = host_search,
@@ -94,7 +94,8 @@ def generos(item):
                              action = 'peliculas',
                              title = title,
                              url = url,
-                             viewmode = "movie"))
+                             viewmode = "movie",
+                             first=0))
     itemlist = sorted(itemlist, key=lambda item: item.title)
     return itemlist
 
@@ -102,11 +103,18 @@ def generos(item):
 def peliculas(item):
     logger.info()
     itemlist = []
+    next = True
     data = httptools.downloadpage(item.url).data
     patron  = '<a class="Ntooltip" href="([^"]+)">([^<]+)<span><br[^<]+'
     patron += '<img src="([^"]+)"></span></a>(.*?)<br'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedtitle, scrapedthumbnail, resto in matches:
+    first = item.first
+    last = first + 19
+    if last > len(matches):
+        last = len(matches)
+        next = False
+
+    for scrapedurl, scrapedtitle, scrapedthumbnail, resto in matches[first:last]:
         language = []
         plot = scrapertools.htmlclean(resto).strip()
         languages = scrapertools.find_multiple_matches(plot, r'\((V.)\)')
@@ -127,6 +135,13 @@ def peliculas(item):
                              language=language,
                              quality=quality
                              ))
+    #paginacion
+
+    url_next_page = item.url
+    first = last
+    if next:
+        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='peliculas', first=first))
+
     return itemlist
 
 
