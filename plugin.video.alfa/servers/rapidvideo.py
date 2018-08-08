@@ -35,6 +35,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
+    if "Please click on this button to open this video" in data:
+        post = "confirm.x=77&confirm.y=76&block=1"
+        data = httptools.downloadpage(page_url, post=post).data
     patron = 'https://www.rapidvideo.com/e/[^"]+'
     match = scrapertools.find_multiple_matches(data, patron)
     if match:
