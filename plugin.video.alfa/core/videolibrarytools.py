@@ -402,7 +402,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
 
     for i, e in enumerate(scraper.sort_episode_list(new_episodelist)):
         if not silent:
-            p_dialog.update(int(math.ceil((i + 1) * t)), 'Añadiendo episodio...', e.title)
+            p_dialog.update(int(math.ceil((i + 1) * t)), config.get_localized_string(60064), e.title)
 
         season_episode = "%sx%s" % (e.contentSeason, str(e.contentEpisodeNumber).zfill(2))
         strm_path = filetools.join(path, "%s.strm" % season_episode)
