@@ -1882,11 +1882,11 @@ msgid "Yes, the option to display merged or split \nresults by channels can be f
 msgstr "Sì. La opcion de mostrar los resultados juntos \no divididos por canales se encuentra en \n'setting'>'Ajustes del buscador global'> \n'Otros ajustes'. \n¿Deseas acceder a ahora dichos ajustes?"
 
 msgctxt "#60467"
-msgid "To report a problem on'http://alfa-addon.com' you need to:|the version you're using of Alpha.|The version you're using of kodi, mediaserver, etc.|the version and name of the operating system you're using.|The name of the skin (in case you're using Kodi) and whether using the default skin has solved the problem.|Description of the problem and any test cases.To activate the log in detailed mode, go to:|Configuration.|Preferences.|In the General tab - Check the option: Generate detailed log. The detailed log file can be found in the following path: \n\n%s"
+msgid "To report a problem on'http://alfa-addon.com' you need to:|the version you're using of Alfa.|The version you're using of kodi, mediaserver, etc.|the version and name of the operating system you're using.|The name of the skin (in case you're using Kodi) and whether using the default skin has solved the problem.|Description of the problem and any test cases.To activate the log in detailed mode, go to:|Configuration.|Preferences.|In the General tab - Check the option: Generate detailed log. The detailed log file can be found in the following path: \n\n%s"
 msgstr "Para reportar un problema en 'http://alfa-addon.com' es necesario:\n  - Versión que usas de Alfa.\n  - Versión que usas de kodi, mediaserver, etc.\n  - Versión y nombre del sistema operativo que usas.\n  - Nombre del skin (en el caso que uses Kodi) y si se te ha resuelto el problema al usar el skin por defecto.\n  - Descripción del problema y algún caso de prueba.\n  - Agregar el log en modo detallado, una vez hecho esto, zipea el log y lo puedes adjuntar en un post.\n\nPara activar el log en modo detallado, ingresar a:\n  - Configuración.\n  - Preferencias.\n  - En la pestaña General - Marcar la opción: Generar log detallado.\n\nEl archivo de log detallado se encuentra en la siguiente ruta: \n\n%s"
 
 msgctxt "#60468"
-msgid "You can find our Telegram channel at @StreamOnDemandOfficial\nSe you have doubts you can write to us in the Telegram group: https://bit.ly/2I3kRwF"
+msgid "You can find our Telegram channel at @alfa_addon\nIf you have doubts you can write to us in the Forum: http://alfa-addon.com"
 msgstr "Entérate de novedades, consejos u opciones que desconoces en Telegram: @alfa_addon.\nSi tienes problemas o dudas, puedes acudir al Foro: http://alfa-addon.com"
 
 msgctxt "#60469"

@@ -1886,7 +1886,7 @@ msgid "To report a problem on'http://alfa-addon.com' you need to:|the version yo
 msgstr ""
 
 msgctxt "#60468"
-msgid "You can find our Telegram channel at @StreamOnDemandOfficial\nSe you have doubts you can write to us in the Telegram group: https://bit.ly/2I3kRwF"
+msgid "You can find our Telegram channel at @alfa_addon\nIf you have doubts you can write to us in the Telegram group: https://t.me/alfa_addon"
 msgstr ""
 
 msgctxt "#60469"
