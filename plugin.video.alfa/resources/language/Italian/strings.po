@@ -1874,8 +1874,8 @@ msgid "To report a problem on'http://alfa-addon.com' you need to:|the version yo
 msgstr "Per segnalare un problema su 'http://alfa-addon.com' è necessario:|la versione che si sta usando di Alpha.|La versione che si sta usando di kodi, mediaserver, ecc.|la versione e il nome del sistema operativo che si sta usando.|Il nome della skin (nel caso in cui si stia usando Kodi) e se l'utilizzo della skin predefinita ha risolto il problema.|La descrizione del problema e tutti i casi di test.Per attivare il log in modalità dettagliata, andare su:|Configurazione.|Preferenze.|Nella scheda Generale - Selezionare l'opzione: Genera log dettagliato Il file di log dettagliato si trova nel seguente percorso: \n\n%s"
 
 msgctxt "#60468"
-msgid "You can find our Telegram channel at @StreamOnDemandOfficial\nSe you have doubts you can write to us in the Telegram group: https://bit.ly/2I3kRwF"
-msgstr "Puoi trovare il nostro canale Telegram in @StreamOnDemandOfficial\nSe hai dubbi puoi scriverci nel gruppo Telegram: https://bit.ly/2I3kRwF"
+msgid "You can find our Telegram channel at @alfa_addon\nIf you have doubts you can write to us in the Forum: http://alfa-addon.com"
+msgstr "Scopri le novità, i suggerimenti o le opzioni che non conosci su Telegram: @alfa_addon.\nSi tienes problemas o dudas, puedes acudir al Foro: http://alfa-addon.com"
 
 msgctxt "#60469"
 msgid "Uploading new data"
