@@ -82,8 +82,7 @@ def getchanneltypes(view="thumb_"):
                          viewmode="thumbnails"))
 
     for channel_type in channel_types:
-        logger.info("channel_type=%s" % channel_type)
-        title = dict_types_lang.get(channel_type, channel_type)
+        title = config.get_localized_category(channel_type)
         itemlist.append(Item(title=title, channel="channelselector", action="filterchannels", category=title,
                              channel_type=channel_type, viewmode="thumbnails",
                              thumbnail=get_thumb("channels_%s.png" % channel_type, view)))
