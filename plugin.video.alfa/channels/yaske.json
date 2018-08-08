@@ -1,7 +1,7 @@
 {
   "id": "yaske",
   "name": "Yaske",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "banner": "yaske.png",

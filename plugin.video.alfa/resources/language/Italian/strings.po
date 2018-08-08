@@ -834,8 +834,8 @@ msgid "Enter URL"
 msgstr "Inserisci URL"
 
 msgctxt "#60089"
-msgid "Enter the URL [Link to server / download]"
-msgstr "Inserire l'URL [Link a server / download]"
+msgid "Enter the URL [Link to server/download]"
+msgstr "Inserire l'URL [Link a server/download]"
 
 msgctxt "#60090"
 msgid "Enter the URL [Direct link to video]."
