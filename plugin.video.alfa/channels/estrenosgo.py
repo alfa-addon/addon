@@ -10,7 +10,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
-HOST = 'http://estrenosli.org/'
+HOST = 'http://estrenosby.net/' # 'http://estrenosli.org/'
 parameters = channeltools.get_channel_parameters('estrenosgo')
 fanart_host = parameters['fanart']
 thumbnail_host = parameters['thumbnail']
@@ -138,7 +138,7 @@ def findvideos(item):
     list_opciones = []
     IDIOMAS = {"banderita1": "Español", "banderita2": "VOSE", "banderita3": "Latino"}
 
-    url = "http://estrenosli.org/ver-online-" + item.url
+    url = HOST + "ver-online-" + item.url
 
     data = httptools.downloadpage(url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
