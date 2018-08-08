@@ -373,6 +373,7 @@ def listado(item):
     elif item.extra == "series" and not "/miniseries" in item.url:
         item.action = "episodios"
         item.contentType = "tvshow"
+        item.season_colapse = True
         pag = True
     elif item.extra == "varios" or "/miniseries" in item.url:
         item.action = "findvideos"
@@ -827,7 +828,7 @@ def listado_busqueda(item):
                 title_lista += [scrapedurl_alt]
             else:
                 title_lista += [scrapedurl]
-        if "juego/" in scrapedurl or "xbox" in scrapedurl.lower() or "xbox" in scrapedtitle.lower() or "windows" in scrapedtitle.lower() or "windows" in calidad.lower() or "nintendo" in scrapedtitle.lower() or "xbox" in calidad.lower() or "epub" in calidad.lower() or "pdf" in calidad.lower() or "pcdvd" in calidad.lower() or "crack" in calidad.lower():      # no mostramos lo que no sean videos
+        if ("juego/" in scrapedurl or "xbox" in scrapedurl.lower()) and not "/serie" in scrapedurl or "xbox" in scrapedtitle.lower() or "windows" in scrapedtitle.lower() or "windows" in calidad.lower() or "nintendo" in scrapedtitle.lower() or "xbox" in calidad.lower() or "epub" in calidad.lower() or "pdf" in calidad.lower() or "pcdvd" in calidad.lower() or "crack" in calidad.lower():      # no mostramos lo que no sean videos
             continue
         cnt_title += 1                  # Sería una línea real más para Itemlist
         
@@ -863,7 +864,7 @@ def listado_busqueda(item):
             item_local.url = url
             item_local.extra2 = 'serie_episodios'           #Creamos acción temporal excluyente para otros clones
             if item_local.category == 'Mispelisyseries':    #Esta web no gestiona bien el cambio de episodio a Serie
-                pattern = 'class="btn-torrent">.*?window.location.href = "(.*?)";'       #Patron para .torrent
+                pattern = 'class="btn-torrent">.*?window.location.href = "([^"]+)";'      #Patron para .torrent
                 #Como no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el cambio de episodio por serie
                 item_local, data_serie = generictools.fail_over_newpct1(item_local, pattern)
             else:
@@ -872,7 +873,7 @@ def listado_busqueda(item):
                 except:
                     pass
 
-                pattern = 'class="btn-torrent">.*?window.location.href = "(.*?)";'       #Patron para .torrent
+                pattern = 'class="btn-torrent">.*?window.location.href = "([^"]+)";'       #Patron para .torrent
                 if not data_serie or (not scrapertools.find_single_match(data_serie, pattern) and not '<h3><strong>( 0 ) Resultados encontrados </strong>' in data and not '<ul class="noticias-series"></ul></form></div><!-- end .page-box -->' in data):
                     logger.error("ERROR 01: LISTADO_BUSQUEDA: La Web no responde o ha cambiado de URL: " + item_local.url + " / DATA: " + data_serie)
                     #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el cambio de episodio por serie
@@ -892,7 +893,7 @@ def listado_busqueda(item):
                     item_local.url = item_local.url.replace('/series/', '/series-vo/')
                 #item_local.url = re.sub(r'\/\d+$', '/', item_local.url)             #Quitamos el ID de la serie por compatib.
                 if item_local.url:
-                    title_subs += ["Episodio %sx%s" % (scrapertools.find_single_match(url, '\/temp.*?-(\d+)\/cap.*?-(\d+)\/'))]
+                    title_subs += ["Episodio %sx%s" % (scrapertools.find_single_match(url, '\/temp.*?-(\d+)-?\/cap.*?-(\d+(?:-al-\d+)?)-?\/'))]
                     url = item_local.url
             except:
                 pass
@@ -900,8 +901,8 @@ def listado_busqueda(item):
         if item.extra == "novedades" and "/serie" in url:
             if not item_local.url or episodio_serie == 0:
                 item_local.url = url
-                if scrapertools.find_single_match(url, '\/temp.*?-(\d+)\/cap.*?-(\d+)\/'):
-                    title_subs += ["Episodio %sx%s" % (scrapertools.find_single_match(url, '\/temp.*?-(\d+)\/cap.*?-(\d+)\/'))]
+                if scrapertools.find_single_match(url, '\/temp.*?-(\d+)-?\/cap.*?-(\d+(?:-al-\d+)?)-?\/'):
+                    title_subs += ["Episodio %sx%s" % (scrapertools.find_single_match(url, '\/temp.*?-(\d+)-?\/cap.*?-(\d+(?:-al-\d+)?)-?\/'))]
                 else:
                     title_subs += ["Episodio 1x01"]
 
@@ -909,6 +910,7 @@ def listado_busqueda(item):
         if (".com/serie" in url or "/serie" in url or "-serie" in url) and not "/miniseries" in url and (not "/capitulo" in url or "pelisyseries.com" in item_local.channel_host):   #Series
             item_local.action = "episodios"
             item_local.contentType = "tvshow"
+            item_local.season_colapse = True
             item_local.extra = "series"
         elif "varios/" in url or "/miniseries" in url:                #Documentales y varios
             item_local.action = "findvideos"
@@ -963,6 +965,7 @@ def listado_busqueda(item):
             title = re.sub(r' - [t|T]emp\w+.*?\d+', '', title)
             title = re.sub(r' [t|T]emp.*?\d+[x|X]\d+', '', title)
             title = re.sub(r' [t|T]emp.*?\d+', '', title)
+            title = re.sub(r' [c|C]ap.*?\d+ al \d+', '', title)
             title = re.sub(r' [c|C]ap.*?\d+', '', title)
         if "audio" in title.lower():        #Reservamos info de audio para después de TMDB
             title_subs += ['[%s]' % scrapertools.find_single_match(title, r'(\[[a|A]udio.*?\])')]
@@ -1531,24 +1534,40 @@ def episodios(item):
     item, data = generictools.fail_over_newpct1(item, verify_fo)
 
     #Limpiamos num. Temporada y Episodio que ha podido quedar por Novedades
+    season_display = 0
     if item.contentSeason:
+        if item.season_colapse:                         #Si viene del menú de Temporadas...
+            season_display = item.contentSeason         #... salvamos el num de sesión a pintar
+            item.from_num_season_colapse = season_display
+            del item.season_colapse
+            item.contentType = "tvshow"
+            if item.from_title_season_colapse:
+                item.title = item.from_title_season_colapse
+                del item.from_title_season_colapse
+                if item.infoLabels['title']:
+                    del item.infoLabels['title']
         del item.infoLabels['season']
     if item.contentEpisodeNumber:
         del item.infoLabels['episode']
+    if season_display == 0 and item.from_num_season_colapse:
+        season_display = item.from_num_season_colapse
 
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
     if not item.infoLabels['tmdb_id']:
-        tmdb.set_infoLabels(item, True)
+        try:
+            tmdb.set_infoLabels(item, True)                     #TMDB de cada Temp
+        except:
+            pass
         
     modo_ultima_temp_alt = modo_ultima_temp
-    if item.ow_force == "1":                        #Si hay un traspaso de canal o url, se actualiza todo 
+    if item.ow_force == "1":                                    #Si hay un traspaso de canal o url, se actualiza todo 
         modo_ultima_temp_alt = False
     
     max_temp = 1
     if item.infoLabels['number_of_seasons']:
         max_temp = item.infoLabels['number_of_seasons']
     y = []
-    if modo_ultima_temp_alt and item.library_playcounts:         #Averiguar cuantas temporadas hay en Videoteca
+    if modo_ultima_temp_alt and item.library_playcounts:        #Averiguar cuantas temporadas hay en Videoteca
         patron = 'season (\d+)'
         matches = re.compile(patron, re.DOTALL).findall(str(item.library_playcounts))
         for x in matches:
@@ -1664,9 +1683,7 @@ def episodios(item):
             estado = True                   #Buena calidad de datos por defecto
 
             if "<span" in info:  # new style
-                pattern = ".*?[^>]+>.*?Temporada\s*(?P<season>\d+)?.*?Capitulo(?:s)?\s*(?P<episode>\d+)?" \
-                          "(?:.*?(?P<episode2>\d+)?)<.+?<span[^>]+>(?P<lang>.*?)?<\/span>\s*Calidad\s*<span[^>]+>" \
-                          "[\[]\s*(?P<quality>.*?)?\s*[\]]<\/span>"
+                pattern = "[^>]+>.*?Temporada\s*(?:<span[^>]+>\[\s?)?(?P<season>\d+)?.*?Capitulo(?:s)?\s*(?:<span[^>]+>\[\s?)?(?P<episode>\d+)?(?:.*?(?P<episode2>\d+)?)<.*?<span[^>]+>(?P<lang>.*?)?<\/span>\s*Calidad\s*<span[^>]+>[\[]\s*(?P<quality>.*?)?\s*[\]]<\/span>"
                 if not scrapertools.find_single_match(info, pattern):
                     if "especial" in info.lower():      # Capitulos Especiales
                         pattern = ".*?[^>]+>.*?Temporada.*?\[.*?(?P<season>\d+).*?\].*?Capitulo.*?\[\s*(?P<episode>\d+).*?\]?(?:.*?(?P<episode2>\d+)?)<.+?<span[^>]+>(?P<lang>.*?)?<\/span>\s*Calidad\s*<span[^>]+>[\[]\s*(?P<quality>.*?)?\s*[\]]<\/span>"
@@ -1768,11 +1785,19 @@ def episodios(item):
                     break                   #Sale del bucle actual del FOR de episodios por página
                 #if ('%sx%s' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))) in item.library_playcounts:
                 #    continue
-                
+              
+            if season_display > 0:
+                if item_local.contentSeason > season_display:
+                    continue
+                elif item_local.contentSeason < season_display:
+                    break
+            
             if item_local.active:
                 del item_local.active
             if item_local.contentTitle:
                 del item_local.infoLabels['title']
+            if item_local.season_colapse:
+                del item_local.season_colapse
             item_local.context = "['buscar_trailer']"
             item_local.action = "findvideos"
             item_local.contentType = "episode"
@@ -1780,18 +1805,24 @@ def episodios(item):
             
             itemlist.append(item_local.clone())
             
+            #logger.debug(item_local)
+            
         data = ''
 
     if len(itemlist) > 1:
         itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))     #clasificamos
+        
+    if item.season_colapse and not item.add_videolibrary:       #Si viene de listado, mostramos solo Temporadas
+        item, itemlist = generictools.post_tmdb_seasons(item, itemlist)
 
-    # Pasada por TMDB y clasificación de lista por temporada y episodio
-    tmdb.set_infoLabels(itemlist, True)
+    if not item.season_colapse:             #Si no es pantalla de Temporadas, pintamos todo
+        # Pasada por TMDB y clasificación de lista por temporada y episodio
+        tmdb.set_infoLabels(itemlist, True)
+
+        #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
+        item, itemlist = generictools.post_tmdb_episodios(item, itemlist)
     
     #logger.debug(item)
-
-    #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
-    item, itemlist = generictools.post_tmdb_episodios(item, itemlist)
 
     return itemlist
     
