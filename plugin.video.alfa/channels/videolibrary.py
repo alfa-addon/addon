@@ -127,19 +127,24 @@ def list_tvshows(item):
                     pass
                 
                 head_nfo, item_tvshow = videolibrarytools.read_nfo(tvshow_path)
-                item_tvshow.title = item_tvshow.contentTitle
-                item_tvshow.path = raiz
-                item_tvshow.nfo = tvshow_path
+                try:                                    #A veces da errores aleatorios, por no encontrar el .nfo.  Probablemente problemas de timing
+                    item_tvshow.title = item_tvshow.contentTitle
+                    item_tvshow.path = raiz
+                    item_tvshow.nfo = tvshow_path
 
-                # Menu contextual: Marcar como visto/no visto
-                visto = item_tvshow.library_playcounts.get(item_tvshow.contentTitle, 0)
-                item_tvshow.infoLabels["playcount"] = visto
-                if visto > 0:
-                    texto_visto = config.get_localized_string(60020)
-                    contador = 0
-                else:
-                    texto_visto = config.get_localized_string(60021)
-                    contador = 1
+                    # Menu contextual: Marcar como visto/no visto
+                    visto = item_tvshow.library_playcounts.get(item_tvshow.contentTitle, 0)
+                    item_tvshow.infoLabels["playcount"] = visto
+                    if visto > 0:
+                        texto_visto = config.get_localized_string(60020)
+                        contador = 0
+                    else:
+                        texto_visto = config.get_localized_string(60021)
+                        contador = 1
+                
+                except:
+                    logger.error('No encuentra: ' + str(tvshow_path))
+                    continue
 
                 # Menu contextual: Buscar automáticamente nuevos episodios o no
                 if item_tvshow.active and int(item_tvshow.active) > 0:
