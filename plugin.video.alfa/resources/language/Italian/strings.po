@@ -2890,7 +2890,7 @@ msgid "Search Movies/TV Shows"
 msgstr "Cerca Film/Serie TV"
 
 msgctxt "#70047"
-msgid "     Search by director"
+msgid "Search by director"
 msgstr "Cerca per regista"
 
 msgctxt "#70048"
