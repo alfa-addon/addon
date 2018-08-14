@@ -1070,7 +1070,7 @@ def filtro_imdb(item):
     list_controls.append({'id': 'orden', 'label': config.get_localized_string(70455), 'enabled': True, 'color': '0xFF25AA48',
                           'type': 'list', 'default': -1, 'visible': True})
     orden = [config.get_localized_string(70456), config.get_localized_string(70457), config.get_localized_string(70458), config.get_localized_string(70459), config.get_localized_string(70460), config.get_localized_string(70461),
-             config.get_localized_string(70462, config.get_localized_string(70463)]
+             config.get_localized_string(70462), config.get_localized_string(70463)]
 
     orden_imdb = ['moviemeter,asc', 'moviemeter,desc', 'year,desc', 'year,asc',
                   'user_rating,desc', 'user_rating,asc', 'alpha,asc', 'alpha,desc']

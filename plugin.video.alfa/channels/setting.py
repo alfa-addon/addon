@@ -553,7 +553,7 @@ def channels_onoff(item):
 
     # Diálogo para pre-seleccionar
     # ----------------------------
-    preselecciones = ['Pre-seleccionar activados actualmente', 'Pre-seleccionar todos', 'No pre-seleccionar ninguno']
+    preselecciones = [config.get_localized_string(70517), config.get_localized_string(70518), config.get_localized_string(70519)]
     ret = platformtools.dialog_select(config.get_localized_string(60545), preselecciones)
     if ret == -1: return False # pedido cancel
     if ret == 2: preselect = []
