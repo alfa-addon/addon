@@ -15,27 +15,26 @@ __settings__ = xbmcaddon.Addon(id="plugin.video." + PLUGIN_NAME)
 __language__ = __settings__.getLocalizedString
 
 
-def get_addon_version(linea_inicio=0, total_lineas=2):
+def get_addon_version(with_fix=True):
     '''
-    Devuelve el número de de versión del addon, obtenido desde el archivo addon.xml
+    Devuelve el número de versión del addon, y opcionalmente número de fix si lo hay
     '''
-    return __settings__.getAddonInfo('version')
-    path = os.path.join(get_runtime_path(), "addon.xml")
-    f = open(path, "rb")
-    data = []
-    for x, line in enumerate(f):
-        if x < linea_inicio: continue
-        if len(data) == total_lineas: break
-        data.append(line)
-    f.close()
-    data1 = "".join(data)
-    # <addon id="plugin.video.alfa" name="Alfa" version="2.5.21" provider-name="Alfa Addon">
-    aux = re.findall('<addon id="plugin.video.alfa" name="Alfa" version="([^"]+)"', data1, re.MULTILINE | re.DOTALL)
-    version = "???"
-    if len(aux) > 0:
-        version = aux[0]
-    return version
+    if with_fix:
+        return __settings__.getAddonInfo('version') + get_addon_version_fix()
+    else:
+        return __settings__.getAddonInfo('version')
 
+def get_addon_version_fix():
+    try:
+        last_fix_json = os.path.join(get_runtime_path(), 'last_fix.json')   # información de la versión fixeada del usuario
+        if os.path.exists(last_fix_json):
+            with open(last_fix_json, 'r') as f: data=f.read(); f.close()
+            fix = re.findall('"fix_version"\s*:\s*(\d+)', data)
+            if fix:
+                return '.fix%s' % fix[0]
+    except:
+        pass
+    return ''
 
 def get_platform(full_version=False):
     """

@@ -293,14 +293,21 @@ def submenu_tools(item):
     logger.info()
     itemlist = list()
 
-    #Herramientas de testeo masivo
+    # Herramientas personalizadas
     import os
-    test_path = os.path.join(config.get_runtime_path(), "channels/test.py")
-    if filetools.exists(test_path):
-        itemlist.append(Item(title='Testear canales y servidores ...', channel="test", action="mainlist"))
-        itemlist.append(
-            Item(channel=CHANNELNAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))
+    channel_custom = os.path.join(config.get_runtime_path(), 'channels', 'custom.py')
+    if not filetools.exists(channel_custom):
+        user_custom = os.path.join(config.get_data_path(), 'custom.py')
+        if filetools.exists(user_custom):
+            filetools.copy(user_custom, channel_custom, silent=True)
+    if filetools.exists(channel_custom):
+        itemlist.append(Item(channel='custom', action='mainlist', title='Custom Channel'))
 
+
+    itemlist.append(Item(channel=CHANNELNAME, action="check_quickfixes", folder=False,
+                         title="Comprobar actualizaciones urgentes", plot="Versión actual: %s" % config.get_addon_version() ))
+    itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,
+                         thumbnail=get_thumb("setting_0.png")))
 
     itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60564), action="", folder=False,
                          thumbnail=get_thumb("channels.png")))
@@ -320,6 +327,13 @@ def submenu_tools(item):
                              title=config.get_localized_string(60568)))
 
     return itemlist
+
+
+def check_quickfixes(item):
+    logger.info()
+    
+    from platformcode import updater
+    return updater.check_addon_updates(verbose=True)
 
 
 def conf_tools(item):

@@ -120,6 +120,11 @@
         <setting type="sep"/>
         <setting label="Para evitar esperar demasiado cuando un servidor no responde:" type="lsep"/>
         <setting id="httptools_timeout" type="labelenum" values="0|5|10|15|20|25|30" label="Timeout (tiempo de espera máximo)" default="15"/>
+        
+        <setting type="sep"/>
+        <setting label="Gestión de actualizaciones urgentes de módulos de Alfa (Quick Fixes):" type="lsep"/>
+        <setting id="addon_update_timer" type="labelenum" values="0|6|12|24" label="Intervalo entre actualizaciones automáticas (horas)" default="12"/>
+        <setting id="addon_update_message" type="bool" label="Quiere ver mensajes de las actualizaciones" default="false"/>
     </category>
 
 </settings>
