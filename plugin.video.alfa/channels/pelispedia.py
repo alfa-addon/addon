@@ -143,7 +143,8 @@ def listado_genero(item):
 
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
+    # ~ data = httptools.downloadpage(item.url).data
+    data = obtener_data(item.url)
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<Br>|<BR>|<br>|<br/>|<br />|-\s", "", data)
 
     if item.extra == "movies":
@@ -180,7 +181,8 @@ def listado_anio(item):
 
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
+    # ~ data = httptools.downloadpage(item.url).data
+    data = obtener_data(item.url)
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<Br>|<BR>|<br>|<br/>|<br />|-\s", "", data)
 
     if item.extra == "movies":
