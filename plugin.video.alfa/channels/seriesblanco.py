@@ -281,7 +281,6 @@ def findvideos(item):
         if 'streamcrypt' in url:
             url = url.replace('https://streamcrypt', 'https://www.streamcrypt')
             temp_data = httptools.downloadpage(url, follow_redirects=False, only_headers=True)
-            logger.debug(temp_data.headers)
             if 'location' in temp_data.headers:
                 url = temp_data.headers['location']
             else:
@@ -330,7 +329,6 @@ def search_results(item):
     itemlist = []
 
     data = get_source(item.url)
-    logger.debug(data)
 
     patron = '<div style="float.*?<a href="([^"]+)">.*?src="([^"]+)".*?alt="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
