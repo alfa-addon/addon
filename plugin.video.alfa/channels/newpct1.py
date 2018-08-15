@@ -605,8 +605,10 @@ def listado(item):
         if item_local.contentType == "movie": 
             year = scrapertools.find_single_match(scrapedurl, r'(\d{4})')
         if year >= "1900" and year <= "2040" and year != "2020":
-            title_subs += [year]
-        item_local.infoLabels['year'] = '-'
+            item_local.infoLabels['year'] = year
+            #title_subs += [year]
+        else:
+            item_local.infoLabels['year'] = '-'
         
         #Guarda la variable temporal que almacena la info adicional del título a ser restaurada después de TMDB
         item_local.title_subs = title_subs
@@ -1074,8 +1076,10 @@ def listado_busqueda(item):
             year = ""
         year = str(year)
         if year >= "1900" and year <= "2040" and year != "2020":
-            title_subs += [year]
-        item_local.infoLabels['year'] = '-'
+            item_local.infoLabels['year'] = year
+            #title_subs += [year]
+        else:
+            item_local.infoLabels['year'] = '-'
         
         #Guarda la variable temporal que almacena la info adicional del título a ser restaurada después de TMDB
         item_local.title_subs = title_subs

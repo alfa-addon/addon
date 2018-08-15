@@ -44,7 +44,9 @@
         "00:00",
         "04:00",
         "08:00",
-        "12:00"
+        "12:00",
+        "16:00",
+        "20:00"
       ]
     },
     {
@@ -303,6 +305,12 @@
       "default": true,
       "enabled": "eq(-1,TheTvDB.com)",
       "visible": true
+    },
+    {
+      "id": "verify_playcount",
+      "type": "bool",
+      "label": "Verificación de los contadores de vídeos vistos/no vistos (desmarcar para verificar)",
+      "default": false
     }
   ]
 }
