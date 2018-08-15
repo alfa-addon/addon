@@ -127,24 +127,19 @@ def list_tvshows(item):
                     pass
                 
                 head_nfo, item_tvshow = videolibrarytools.read_nfo(tvshow_path)
-                try:                                    #A veces da errores aleatorios, por no encontrar el .nfo.  Probablemente problemas de timing
-                    item_tvshow.title = item_tvshow.contentTitle
-                    item_tvshow.path = raiz
-                    item_tvshow.nfo = tvshow_path
+                item_tvshow.title = item_tvshow.contentTitle
+                item_tvshow.path = raiz
+                item_tvshow.nfo = tvshow_path
 
-                    # Menu contextual: Marcar como visto/no visto
-                    visto = item_tvshow.library_playcounts.get(item_tvshow.contentTitle, 0)
-                    item_tvshow.infoLabels["playcount"] = visto
-                    if visto > 0:
-                        texto_visto = config.get_localized_string(60020)
-                        contador = 0
-                    else:
-                        texto_visto = config.get_localized_string(60021)
-                        contador = 1
-                
-                except:
-                    logger.error('No encuentra: ' + str(tvshow_path))
-                    continue
+                # Menu contextual: Marcar como visto/no visto
+                visto = item_tvshow.library_playcounts.get(item_tvshow.contentTitle, 0)
+                item_tvshow.infoLabels["playcount"] = visto
+                if visto > 0:
+                    texto_visto = config.get_localized_string(60020)
+                    contador = 0
+                else:
+                    texto_visto = config.get_localized_string(60021)
+                    contador = 1
 
                 # Menu contextual: Buscar automáticamente nuevos episodios o no
                 if item_tvshow.active and int(item_tvshow.active) > 0:
@@ -324,12 +319,16 @@ def get_episodes(item):
 
 
 def findvideos(item):
+    from channels import autoplay
     logger.info()
     # logger.debug("item:\n" + item.tostring('\n'))
 
     itemlist = []
     list_canales = {}
     item_local = None
+
+    # Desactiva autoplay
+    autoplay.set_status(False)
 
     if not item.contentTitle or not item.strm_path:
         logger.debug("No se pueden buscar videos por falta de parametros")
@@ -470,6 +469,8 @@ def findvideos(item):
             itemlist.append(server)
 
     # return sorted(itemlist, key=lambda it: it.title.lower())
+    autoplay.play_multi_channel(item, itemlist)
+
     return itemlist
 
 
@@ -546,75 +547,6 @@ def update_tvshow(item):
     p_dialog.close()
 
 
-def verify_playcount_series(item, path):
-    logger.info()
-    
-    """
-    Este método revisa y repara el PlayCount de una serie que se haya desincronizado de la lista real de episodios en su carpeta.  Las entradas de episodios, temporadas o serie que falten, son creado con la marca de "no visto".  Posteriormente se envia a verificar los contadores de Temporadas y Serie
-    
-    En el retorno envía de estado de True si se actualizado o False si no, normalmente por error.  Con este estado, el caller puede actualizar el estado de la opción "verify_playcount" en "videolibrary.py".  La intención de este método es la de dar una pasada que repare todos los errores y luego desactivarse.  Se puede volver a activar en el menú de Videoteca de Alfa.
-    
-    """
-    #logger.debug("item:\n" + item.tostring('\n'))
-    
-    #Si no ha hecho nunca la verificación, lo forzamos
-    estado = config.get_setting("verify_playcount", "videolibrary")
-    if not estado or estado == False:
-        estado = True                                                               #Si no ha hecho nunca la verificación, lo forzamos
-    else:
-        estado = False
-        
-    if item.contentType == 'movie':                                                 #Esto es solo para Series
-        return (item, False)
-
-    if filetools.exists(path):
-        nfo_path = filetools.join(path, "tvshow.nfo")
-        head_nfo, it = videolibrarytools.read_nfo(nfo_path)                         #Obtenemos el .nfo de la Serie
-
-        if not hasattr(it, 'library_playcounts') or not it.library_playcounts:      #Si el .nfo no tiene library_playcounts se lo creamos
-            logger.error('** No tiene PlayCount')
-            it.library_playcounts = {}
-        
-        # Obtenemos los archivos de los episodios
-        raiz, carpetas_series, ficheros = filetools.walk(path).next()
-
-        # Crear un item en la lista para cada strm encontrado
-        estado_update = False
-        for i in ficheros:
-            if i.endswith('.strm'):
-                season_episode = scrapertools.get_season_and_episode(i)
-                if not season_episode:
-                    # El fichero no incluye el numero de temporada y episodio
-                    continue
-                season, episode = season_episode.split("x")
-
-                if season_episode not in it.library_playcounts:                     #No está incluido el episodio
-                    it.library_playcounts.update({season_episode: 0})               #actualizamos el playCount del .nfo
-                    estado_update = True                                                   #Marcamos que hemos actualizado algo
-                    
-                if 'season %s' % season not in it.library_playcounts:               #No está incluida la Temporada
-                    it.library_playcounts.update({'season %s' % season: 0})         #actualizamos el playCount del .nfo
-                    estado_update = True                                                   #Marcamos que hemos actualizado algo
-                    
-                if it.contentSerieName not in it.library_playcounts:                #No está incluida la Serie
-                    it.library_playcounts.update({item.contentSerieName: 0})        #actualizamos el playCount del .nfo
-                    estado_update = True                                                   #Marcamos que hemos actualizado algo
-                
-        if estado_update:
-            logger.error('** Estado de actualización: ' + str(estado) + ' / PlayCount: ' + str(it.library_playcounts))
-            estado = estado_update
-        # se comprueba que si todos los episodios de una temporada están marcados, se marque tb la temporada
-        for key, value in it.library_playcounts.iteritems():
-            if key.startswith("season"):
-                season = scrapertools.find_single_match(key, 'season (\d+)')        #Obtenemos en núm. de Temporada
-                it = check_season_playcount(it, season)
-
-        # Guardamos los cambios en item.nfo
-        if filetools.write(nfo_path, head_nfo + it.tojson()):
-            return (it, estado)
-    return (item, False)
-
-    
 def mark_content_as_watched2(item):
     logger.info()
    # logger.debug("item:\n" + item.tostring('\n'))
