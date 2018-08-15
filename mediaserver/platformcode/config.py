@@ -14,7 +14,7 @@ settings_dic = {}
 adult_setting = {}
 
 
-def get_addon_version(linea_inicio=0, total_lineas=2):
+def get_addon_version(linea_inicio=0, total_lineas=2, with_fix=False):
     '''
     Devuelve el número de de versión del addon, obtenido desde el archivo addon.xml
     '''

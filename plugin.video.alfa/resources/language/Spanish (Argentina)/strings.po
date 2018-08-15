@@ -479,7 +479,7 @@ msgstr "Elegir canales incluidos en la búsqueda"
 
 msgctxt "#59995"
 msgid "Saved Searches"
-msgstr "Búsquedasguardadas"
+msgstr "Búsquedas guardadas"
 
 msgctxt "#59996"
 msgid "Delete saved searches"
@@ -2846,7 +2846,7 @@ msgid "Genres"
 msgstr "Géneros"
 
 msgctxt "#70033"
-msgid "Actors / Actresses by popularity"
+msgid "Actors/Actresses by popularity"
 msgstr "Actores/Actrices por popularidad"
 
 msgctxt "#70034"
@@ -2858,12 +2858,12 @@ msgid "Search %s"
 msgstr "Buscar %s"
 
 msgctxt "#70036"
-msgid "     Search actor/actress"
-msgstr "     Buscar actor/actriz"
+msgid "Search actor/actress"
+msgstr "Buscar actor/actriz"
 
 msgctxt "#70037"
-msgid "     Search director, writer..."
-msgstr "     Buscar director, guionista..."
+msgid "Search director, writer..."
+msgstr "Buscar director, escritor..."
 
 msgctxt "#70038"
 msgid "Custom Filter"
@@ -2902,8 +2902,8 @@ msgid "Search Movies/TV Shows"
 msgstr "Buscar Películas/Series"
 
 msgctxt "#70047"
-msgid "     Search by director"
-msgstr "     Buscar por director"
+msgid "Search by director"
+msgstr "Buscar por director"
 
 msgctxt "#70048"
 msgid " My Account"
