@@ -78,7 +78,6 @@ def list_all(item):
 
     itemlist = []
     data = get_source(item.url)
-    logger.debug(data)
     contentSerieName = ''
 
     patron = '<div style="float.*?<a href="([^"]+)">.*?src="([^"]+)".*?data-original-title="([^"]+)">'
@@ -141,7 +140,6 @@ def seasons(item):
     logger.info()
     itemlist = []
     data = get_source(item.url)
-    logger.debug(data)
     patron = '<span itemprop="seasonNumber" class="fa fa-arrow-down">.*?Temporada (\d+) '
     matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels=item.infoLabels
@@ -183,7 +181,6 @@ def episodesxseason(item):
     logger.info()
     itemlist = []
     data = get_source(item.url)
-    logger.debug(data)
     season = item.contentSeasonNumber
     season_data = scrapertools.find_single_match(data, '<div id="collapse%s".*?</tbody>' % season)
     patron = '<td><a href="([^ ]+)".*?itemprop="episodeNumber">%sx(\d+)</span> (.*?) </a>.*?<td>(.*?)</td>' % season
@@ -218,7 +215,6 @@ def new_episodes(item):
 
     data = scrapertools.find_single_match(data,
                                           '<center>Series Online : Capítulos estrenados recientemente</center>.*?</ul>')
-    logger.debug(data)
     patron = '<li><h6.*?src="([^"]+)".*?href="([^"]+)">.*?src="([^"]+)".*? data-original-title=" (\d+x\d+).*?'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -270,7 +266,6 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
-    logger.debug(data)
     patron = '<imgsrc="([^"]+)".*?<a class="open-link" data-enlace="([^"]+)".*?<td>([^<]+)</td>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
