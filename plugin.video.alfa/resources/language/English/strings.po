@@ -846,7 +846,7 @@ msgid "Enter URL"
 msgstr ""
 
 msgctxt "#60089"
-msgid "Enter the URL [Link to server/download]"
+msgid "Enter the URL [Link to server / download]"
 msgstr ""
 
 msgctxt "#60090"
@@ -1114,7 +1114,7 @@ msgid "Alfa"
 msgstr ""
 
 msgctxt "#60262"
-msgid "You can install the Trakt script below, once installed and configured what you see will be automatically synchronized with your account."
+msgid "You can install the Trakt script below."
 msgstr ""
 
 msgctxt "#60263"
@@ -4765,5 +4765,25 @@ msgstr ""
 
 msgctxt "#70516"
 msgid "[COLOR aquamarine][B]In progress %s[/B][/COLOR]"
+msgstr ""
+
+msgctxt "#70517"
+msgid "Pre-selected currently activated"
+msgstr ""
+
+msgctxt "#70518"
+msgid "Pre-select all"
+msgstr ""
+
+msgctxt "#70519"
+msgid "Do not pre-select any"
+msgstr ""
+
+msgctxt "#70520"
+msgid "AutoPlay allows auto to reproduce the links directly, based on the configuration of your \nfavorite servers and qualities. "
+msgstr ""
+
+msgctxt "#70521"
+msgid "You can install the Trakt script below, \nonce installed and configured what \nyou see will be synchronized with your account automatically. \nDo you want to continue?"
 msgstr ""
 

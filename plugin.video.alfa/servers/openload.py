@@ -16,7 +16,7 @@ def test_video_exists(page_url):
     if 'We’re Sorry!' in data:
         data = httptools.downloadpage(page_url.replace("/embed/", "/f/"), headers=header, cookies=False).data
         if 'We’re Sorry!' in data:
-            return False, "[Openload] El archivo no existe o ha sido borrado"
+            return False, config.get_localized_string(70449) % "Openload"
 
     return True, ""
 

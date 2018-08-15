@@ -548,7 +548,7 @@ def autoplay_config(item):
         if default > len(quality_list) - 1:
             default = 0
 
-        set_quality = {"id": "quality_%s" % num, "label": u"          \u2665 " + "Calidad Favorita %s" % num,
+        set_quality = {"id": "quality_%s" % num, "label": u"          \u2665 " + config.get_localized_string(60084) % num,
                        "color": "0xfff442d9", "type": "list", "default": default,
                        "enabled": "eq(-%s,true)+eq(-%s,true)" % (pos1, num), "visible": True,
                        "lvalues": quality_list}

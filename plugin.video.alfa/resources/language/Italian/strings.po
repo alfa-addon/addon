@@ -834,8 +834,8 @@ msgid "Enter URL"
 msgstr "Inserisci URL"
 
 msgctxt "#60089"
-msgid "Enter the URL [Link to server/download]"
-msgstr "Inserire l'URL [Link a server/download]"
+msgid "Enter the URL [Link to server / download]"
+msgstr "Inserire l'URL [Link a server / download]"
 
 msgctxt "#60090"
 msgid "Enter the URL [Direct link to video]."
@@ -1102,8 +1102,8 @@ msgid "Alfa"
 msgstr "Alfa"
 
 msgctxt "#60262"
-msgid "You can install the Trakt script below, once installed and configured what you see will be automatically synchronized with your account."
-msgstr "Puoi installare lo script Trakt qui sotto, una volta installato e configurato ciò che vedi sarà sincronizzato automaticamente con il tuo account."
+msgid "You can install the Trakt script below."
+msgstr "Puoi installare lo script Trakt qui sotto."
 
 msgctxt "#60263"
 msgid "Do you want to continue?"
@@ -4754,4 +4754,24 @@ msgstr "[COLOR aquamarine][B]Completata %s[/B][/COLOR]"
 msgctxt "#70516"
 msgid "[COLOR aquamarine][B]In progress %s[/B][/COLOR]"
 msgstr "[COLOR aquamarine][B]In Corso %s[/B][/COLOR]"
+
+msgctxt "#70517"
+msgid "Pre-selected currently activated"
+msgstr "Pre-seleziona attivati attuali"
+
+msgctxt "#70518"
+msgid "Pre-select all"
+msgstr "Pre-seleziona tutti"
+
+msgctxt "#70519"
+msgid "Do not pre-select any"
+msgstr "Non pre-selezionare nessuno"
+
+msgctxt "#70520"
+msgid "AutoPlay allows auto to reproduce the links directly, based on the configuration of your \nfavorite servers and qualities. "
+msgstr "AutoPlay consente di riprodurre automaticamente i collegamenti direttamente, in base alla configurazione dei tuoi \nservers e qualità preferite. "
+
+msgctxt "#70521"
+msgid "You can install the Trakt script below, \nonce installed and configured what \nyou see will be synchronized with your account automatically. \nDo you want to continue?"
+msgstr "Puoi installare lo script Trakt qui sotto, \ nuna volta installato e configurato ciò che \nvedrai verrà sincronizzato automaticamente con il tuo account. \nVuoi continuare?"
 

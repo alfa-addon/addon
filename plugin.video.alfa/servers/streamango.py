@@ -10,7 +10,7 @@ def test_video_exists(page_url):
 
     data = httptools.downloadpage(page_url).data
     if "We are unable to find the video" in data:
-        return False, "[streamango] El archivo no existe o  ha sido borrado"
+        return False, config.get_localized_string(70449) % "Streamango"
 
     return True, ""
 

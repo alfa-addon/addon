@@ -1114,8 +1114,8 @@ msgid "Alfa"
 msgstr "Alfa"
 
 msgctxt "#60262"
-msgid "You can install the Trakt script below, once installed and configured what you see will be automatically synchronized with your account."
-msgstr "Puedes instalar el script de Trakt a continuacíon, una vez instalado y configurado lo que veas se sincronizara con tu cuenta automaticamente."
+msgid "You can install the Trakt script below."
+msgstr "Puedes instalar el script de Trakt a continuacíon."
 
 msgctxt "#60263"
 msgid "Do you want to continue?"
@@ -4759,3 +4759,22 @@ msgctxt "#70516"
 msgid "[COLOR aquamarine][B]In progress %s[/B][/COLOR]"
 msgstr "[COLOR aquamarine][B]En emisión %s[/B][/COLOR]"
 
+msgctxt "#70517"
+msgid "Pre-selected currently activated"
+msgstr "Pre-seleccionar activados actualmente"
+
+msgctxt "#70518"
+msgid "Pre-select all"
+msgstr "Pre-seleccionar todos"
+
+msgctxt "#70519"
+msgid "Do not pre-select any"
+msgstr "No pre-seleccionar ninguno"
+
+msgctxt "#70520"
+msgid "AutoPlay allows auto to reproduce the links directly, based on the configuration of your \nfavorite servers and qualities. "
+msgstr "AutoPlay permite auto reproducir los enlaces directamente, basándose en la configuracion de tus \nservidores y calidades favoritas. "
+
+msgctxt "#70521"
+msgid "You can install the Trakt script below, \nonce installed and configured what \nyou see will be synchronized with your account automatically. \nDo you want to continue?"
+msgstr "Puedes instalar el script de Trakt a continuacíon, \nuna vez instalado y configurado lo que \veas se sincronizara con tu cuenta automaticamente. \n¿Deseas continuar?"
