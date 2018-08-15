@@ -297,13 +297,26 @@ def post_tmdb_listado(item, itemlist):
                     rating = ''
         except:
             pass
-        
+
         # Si TMDB no ha encontrado el vídeo limpiamos el año
         if item_local.infoLabels['year'] == "-":
             item_local.infoLabels['year'] = ''
             item_local.infoLabels['aired'] = ''
+            
+        # Si TMDB no ha encontrado nada y hemos usado el año de la web, lo intentamos sin año
+        if not item_local.infoLabels['tmdb_id']:
+            if item_local.infoLabels['year']:                                   #lo intentamos de nuevo solo si había año, puede que erroneo
+                year = item_local.infoLabels['year']                            #salvamos el año por si no tiene éxito la nueva búsqueda
+                item_local.infoLabels['year'] = "-"                             #reseteo el año
+                try:
+                    tmdb.set_infoLabels(item_local, True)                       #pasamos otra vez por TMDB
+                except:
+                    pass
+                if not item_local.infoLabels['tmdb_id']:                        #ha tenido éxito?
+                    item_local.infoLabels['year'] = year                        #no, restauramos el año y lo dejamos ya
+
         # Para Episodios, tomo el año de exposición y no el de inicio de la serie
-        elif item_local.infoLabels['aired']:
+        if item_local.infoLabels['aired']:
             item_local.infoLabels['year'] = scrapertools.find_single_match(str(item_local.infoLabels['aired']), r'\/(\d{4})')
 
         # Preparamos el título para series, con los núm. de temporadas, si las hay
@@ -873,7 +886,7 @@ def post_tmdb_findvideos(item, itemlist):
     En Itemlist devuelve un Item con el pseudotítulo.  Ahí el canal irá agregando el resto.
     
     """
-    #logger.debug(item)
+    logger.debug(item)
     
     #Creción de título general del vídeo a visualizar en Findvideos
     itemlist = []
@@ -965,8 +978,8 @@ def post_tmdb_findvideos(item, itemlist):
                 tiempo_final = tiempo_final / 60                                        #Lo transformo a minutos
             horas = tiempo_final / 60                                                   #Lo transformo a horas
             resto = tiempo_final - (horas * 60)                                         #guardo el resto de minutos de la hora
-            if not scrapertools.find_single_match(item.quality, '(\[\d+:\d+\])'):       #si ya tiene la duración, pasamos
-                item.quality += ' [%s:%s]' % (str(horas).zfill(2), str(resto).zfill(2))     #Lo agrego a Calidad del Servidor
+            if not scrapertools.find_single_match(item.quality, '(\[\d+:\d+)'):         #si ya tiene la duración, pasamos
+                item.quality += ' [COLOR white][%s:%s h]' % (str(horas).zfill(2), str(resto).zfill(2))     #Lo agrego a Calidad del Servidor
     except:
         pass
         
@@ -1018,6 +1031,14 @@ def post_tmdb_findvideos(item, itemlist):
     
     #Pintamos el pseudo-título con toda la información disponible del vídeo
     itemlist.append(item.clone(action="", server = "", title=title_gen))		#Título con todos los datos del vídeo
+    
+    if item.action == 'show_result':                                            #Viene de una búsqueda global
+        channel = item.channel.capitalize()
+        if item.from_channel == channel_py or item.channel == channel_py:
+            channel = item.category
+        elif item.from_channel:
+            channel = item.from_channel.capitalize()
+        item.quality = '[COLOR yellow][%s][/COLOR] %s' % (channel, item.quality)
     
     #agregamos la opción de Añadir a Videoteca para péliculas (no series)
     if item.contentType == 'movie' and item.contentChannel != "videolibrary":
@@ -1159,11 +1180,13 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
     #Cargamos en .json del canal para ver las listas de valores en settings
     fail_over = channeltools.get_channel_json(channel_py)
     for settings in fail_over['settings']:                             #Se recorren todos los settings
-        if settings['id'] == "clonenewpct1_channels_list":                  #Encontramos en setting
+        if settings['id'] == "clonenewpct1_channels_list":             #Encontramos en setting
             fail_over = settings['default']                            #Carga lista de clones
             break
     fail_over_list = ast.literal_eval(fail_over)
 
+    if item.from_channel:                                              #Desde search puede venir con el nombre de canal equivocado
+        item.channel = item.from_channel
     #Recorremos el Array identificando el canal que falla
     for active, channel, channel_host, contentType, action_excluded in fail_over_list:
         if item.channel == channel_py:
@@ -1183,6 +1206,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         break
         
     if not channel_failed:
+        logger.error('Patrón: ' + str(patron) + ' / fail_over_list: ' + str(fail_over_list))
         logger.error(item)
         return (item, data)                             #Algo no ha funcionado, no podemos hacer nada
 

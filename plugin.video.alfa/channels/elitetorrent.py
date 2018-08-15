@@ -274,8 +274,6 @@ def findvideos(item):
         item.title = re.sub('\s\[\d+,?\d*?\s\w[b|B]s\]', '', item.title)        #Quitamos size de título, si lo traía
         item.title = '%s [%s]' % (item.title, size)                             #Agregamos size al final del título
         item.quality = re.sub('\s\[\d+,?\d*?\s\w[b|B]s\]', '', item.quality)    #Quitamos size de calidad, si lo traía
-        item.quality = '%s [%s]' % (item.quality, size)                         #Agregamos size al final de calidad
-        item.quality = item.quality.replace("G", "G ").replace("M", "M ")       #Se evita la palabra reservada en Unify
 
     patron_t = '<div class="enlace_descarga".*?<a href="(.*?\.torrent)"'
     link_torrent = scrapertools.find_single_match(data, patron_t)
@@ -300,6 +298,10 @@ def findvideos(item):
 
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
+    
+    if size:
+        item.quality = '%s [%s]' % (item.quality, size)                         #Agregamos size al final de calidad
+        item.quality = item.quality.replace("G", "G ").replace("M", "M ")       #Se evita la palabra reservada en Unify
     
     #Generamos una copia de Item para trabajar sobre ella
     item_local = item.clone()
