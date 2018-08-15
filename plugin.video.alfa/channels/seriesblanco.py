@@ -15,7 +15,7 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'http://seriesblanco.xyz/'
+host = 'http://seriesblanco.org/'
 
 IDIOMAS = {'es': 'Cast', 'la': 'Lat', 'vos': 'VOSE', 'vo': 'VO'}
 list_language = IDIOMAS.values()
@@ -40,7 +40,7 @@ def mainlist(item):
                          title="Todas",
                          action="list_all",
                          thumbnail=get_thumb('all', auto=True),
-                         url=host + 'listado/',
+                         url=host + 'lista-de-series/',
                          ))
 
     itemlist.append(Item(channel=item.channel,
@@ -54,11 +54,12 @@ def mainlist(item):
                          title="A - Z",
                          action="section",
                          thumbnail=get_thumb('alphabet', auto=True),
-                         url=host+'listado/', ))
+                         url=host+'lista-de-series/', ))
 
     itemlist.append(Item(channel=item.channel,
                          title="Buscar",
                          action="search",
+                         url=host+"?s=",
                          thumbnail=get_thumb('search', auto=True)))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
@@ -69,7 +70,7 @@ def mainlist(item):
 def get_source(url):
     logger.info()
     data = httptools.downloadpage(url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
 def list_all(item):
@@ -77,15 +78,16 @@ def list_all(item):
 
     itemlist = []
     data = get_source(item.url)
+    logger.debug(data)
     contentSerieName = ''
 
-    patron = "<div style='float.*?<a href='(.*?)'>.*?src='(.*?)' title='(.*?)'"
+    patron = '<div style="float.*?<a href="([^"]+)">.*?src="([^"]+)".*?data-original-title="([^"]+)">'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
 
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
 
-        url = host + scrapedurl
+        url = scrapedurl
         thumbnail = scrapedthumbnail
         title = scrapertools.decodeHtmlentities(scrapedtitle)
 
@@ -103,13 +105,12 @@ def list_all(item):
     # #Paginacion
 
     if itemlist != []:
-        base_page = scrapertools.find_single_match(item.url,'(.*?)?')
-        next_page = scrapertools.find_single_match(data, '</span><a href=?pagina=2>>></a>')
+        next_page = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)">')
         if next_page != '':
             itemlist.append(Item(channel=item.channel,
-                                 action="lista",
+                                 action="list_all",
                                  title='Siguiente >>>',
-                                 url=base_page+next_page,
+                                 url=next_page,
                                  thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png',
                                  ))
     return itemlist
@@ -120,17 +121,14 @@ def section(item):
     itemlist = []
     data = get_source(item.url)
     if item.title == 'Generos':
-        patron = '<li><a href=([^ ]+)><i class=fa fa-bookmark-o></i> (.*?)</a></li>'
+        patron = '<li><a href="([^ ]+)"><i class="fa fa-bookmark-o"></i> ([^<]+)</a></li>'
     elif item.title == 'A - Z':
-        patron = "<a dir='ltr' href=(.*?) class='label label-primary'>(.*?)</a>"
+        patron = '<a dir="ltr" href="([^"]+)" class="label label-primary">([^<]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
 
-        if item.title == 'Generos':
-            url = host + scrapedurl
-        else:
-            url = scrapedurl
+        url = scrapedurl
         title = scrapedtitle
         itemlist.append(Item(channel=item.channel,
                              action='list_all',
@@ -143,7 +141,8 @@ def seasons(item):
     logger.info()
     itemlist = []
     data = get_source(item.url)
-    patron = '<span itemprop=seasonNumber class=fa fa-arrow-down>.*?Temporada (\d+) '
+    logger.debug(data)
+    patron = '<span itemprop="seasonNumber" class="fa fa-arrow-down">.*?Temporada (\d+) '
     matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels=item.infoLabels
     for scrapedseason in matches:
@@ -184,14 +183,14 @@ def episodesxseason(item):
     logger.info()
     itemlist = []
     data = get_source(item.url)
-
+    logger.debug(data)
     season = item.contentSeasonNumber
-    season_data = scrapertools.find_single_match(data, '<div id=collapse%s.*?panel-primary' % season)
-    patron = "<td><a href='([^ ]+)'.*?itemprop='episodeNumber'>%s+x(\d+)</span> - (.*?) </a>.*?(/banderas.*?)</td>" % season
+    season_data = scrapertools.find_single_match(data, '<div id="collapse%s".*?</tbody>' % season)
+    patron = '<td><a href="([^ ]+)".*?itemprop="episodeNumber">%sx(\d+)</span> (.*?) </a>.*?<td>(.*?)</td>' % season
     matches = re.compile(patron, re.DOTALL).findall(season_data)
     infoLabels = item.infoLabels
     for scrapedurl, scraped_episode, scrapedtitle, lang_data in matches:
-        url = host + scrapedurl
+        url = scrapedurl
         title = '%sx%s - %s' % (season, scraped_episode, scrapedtitle.strip())
         infoLabels['episode'] = scraped_episode
         thumbnail = item.thumbnail
@@ -217,18 +216,20 @@ def new_episodes(item):
 
     data = get_source(item.url)
 
-    patron = "padding-left:15px'><a href=(.*?) >.*?src='(.*?)' title=.*? alt='(.*?) (\d+x\d+)'.*?"
-    patron += "<span class='strong'>.*?</span>(.*?)</button></a></div>"
+    data = scrapertools.find_single_match(data,
+                                          '<center>Series Online : Capítulos estrenados recientemente</center>.*?</ul>')
+    logger.debug(data)
+    patron = '<li><h6.*?src="([^"]+)".*?href="([^"]+)">.*?src="([^"]+)".*? data-original-title=" (\d+x\d+).*?'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedinfo, lang_data in matches:
-
+    for lang_data, scrapedurl, scrapedthumbnail, scrapedinfo,  in matches:
 
         url = host+scrapedurl
         thumbnail = scrapedthumbnail
         scrapedinfo = scrapedinfo.split('x')
         season = scrapedinfo[0]
         episode = scrapedinfo[1]
+        scrapedtitle = scrapertools.find_single_match(url, 'capitulo/([^/]+)/').replace("-", " ")
         title = '%s - %sx%s' % (scrapedtitle, season, episode )
         title, language = add_language(title, lang_data)
         itemlist.append(Item(channel=item.channel,
@@ -244,7 +245,7 @@ def new_episodes(item):
 
 def add_language(title, string):
     logger.info()
-    languages = scrapertools.find_multiple_matches(string, '/banderas/(.*?).png')
+    languages = scrapertools.find_multiple_matches(string, '/language/(.*?).png')
     language = []
     for lang in languages:
 
@@ -269,34 +270,40 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
-
-    patron = "<a href=([^ ]+) target=_blank><img src='/servidores/(.*?).(?:png|jpg)'.*?sno.*?"
-    patron += "<span>(.*?)<.*?(/banderas.*?)td"
+    logger.debug(data)
+    patron = '<imgsrc="([^"]+)".*?<a class="open-link" data-enlace="([^"]+)".*?<td>([^<]+)</td>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-
-    for scrapedurl, server, quality, lang_data in matches:
-
-        title = server.capitalize()
+    for lang_data, scrapedurl, quality in matches:
+        encrypted=False
+        title = '%s'
         if quality == '':
             quality = 'SD'
         title = '%s [%s]' % (title, quality)
         title, language = add_language(title, lang_data)
         thumbnail = item.thumbnail
-
-        enlace_id, serie_id, se, ep = scrapertools.find_single_match(scrapedurl,'enlace(\d+)/(\d+)/(\d+)/(\d+)/')
-
-        url = host + 'ajax/load_enlace.php?serie=%s&temp=%s&cap=%s&id=%s' % (serie_id, se, ep, enlace_id)
+        url = scrapedurl
+        if 'streamcrypt' in url:
+            url = url.replace('https://streamcrypt', 'https://www.streamcrypt')
+            temp_data = httptools.downloadpage(url, follow_redirects=False, only_headers=True)
+            logger.debug(temp_data.headers)
+            if 'location' in temp_data.headers:
+                url = temp_data.headers['location']
+            else:
+                continue
         itemlist.append(Item(channel=item.channel,
                              title=title,
                              url=url,
                              action="play",
                              thumbnail=thumbnail,
-                             server=server,
                              quality=quality,
                              language=language,
+                             encrypted=encrypted,
                              infoLabels=item.infoLabels
                              ))
+
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+
     # Requerido para FilterTools
 
     itemlist = filtertools.get_links(itemlist, item, list_language)
@@ -308,24 +315,30 @@ def findvideos(item):
     return sorted(itemlist, key=lambda it: it.language)
 
 
-def play(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url, follow_redirects=False).data
-    itemlist = servertools.find_video_items(data=data)
-    for videoitem in itemlist:
-        videoitem.infoLabels = item.infoLabels
-
-
-    return itemlist
+# def play(item):
+#     logger.info()
+#     itemlist = []
+#     if item.encrypted:
+#         url = item.url.replace('https://', 'https://streamcrypt.net/').replace('www.','')
+#         data = httptools.downloadpage(url).data
+#         itemlist = servertools.find_video_items(data=data)
+#         for videoitem in itemlist:
+#             videoitem.infoLabels = item.infoLabels
+#     else:
+#         itemlist.append(item)
+#
+#
+#     return itemlist
 
 def search_results(item):
     logger.info()
     itemlist = []
 
-    data = httptools.downloadpage(host + 'finder.php', post=item.post).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = "<a href='(.*?)'>.*?src=(.*?) style.*?value=(.*?)>"
+    data = get_source(item.url)
+    logger.debug(data)
+
+    patron = '<div style="float.*?<a href="([^"]+)">.*?src="([^"]+)".*?alt="([^"]+)"'
+    matches = re.compile(patron, re.DOTALL).findall(data)
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -344,10 +357,10 @@ def search_results(item):
 
 def search(item, texto):
     logger.info()
-    import urllib
-    if texto != '':
-        post = {'query':texto}
-        post = urllib.urlencode(post)
-        item.post = post
+    texto = texto.replace(" ", "+")
+    item.url = item.url + texto
 
-        return search_results(item)
+    if texto != '':
+        return list_all(item)
+    else:
+        return []
