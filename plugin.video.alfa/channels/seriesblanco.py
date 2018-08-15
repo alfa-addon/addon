@@ -308,22 +308,6 @@ def findvideos(item):
 
     return sorted(itemlist, key=lambda it: it.language)
 
-
-# def play(item):
-#     logger.info()
-#     itemlist = []
-#     if item.encrypted:
-#         url = item.url.replace('https://', 'https://streamcrypt.net/').replace('www.','')
-#         data = httptools.downloadpage(url).data
-#         itemlist = servertools.find_video_items(data=data)
-#         for videoitem in itemlist:
-#             videoitem.infoLabels = item.infoLabels
-#     else:
-#         itemlist.append(item)
-#
-#
-#     return itemlist
-
 def search_results(item):
     logger.info()
     itemlist = []
