@@ -50,17 +50,17 @@ def update(path, p_dialog, i, t, serie, overwrite):
                 try:
                     if int(overwrite) == 3:
                         # Sobrescribir todos los archivos (tvshow.nfo, 1x01.nfo, 1x01 [canal].json, 1x01.strm, etc...)
-                        insertados, sobreescritos, fallidos = videolibrarytools.save_tvshow(serie, itemlist)
-                        serie= videolibrary.check_season_playcount(serie, serie.contentSeason)
-                        if filetools.write(path + '/tvshow.nfo', head_nfo + it.tojson()):
-                            serie.infoLabels['playcount'] = serie.playcount
+                        insertados, sobreescritos, fallidos, notusedpath = videolibrarytools.save_tvshow(serie, itemlist)
+                        #serie= videolibrary.check_season_playcount(serie, serie.contentSeason)
+                        #if filetools.write(path + '/tvshow.nfo', head_nfo + it.tojson()):
+                        #    serie.infoLabels['playcount'] = serie.playcount
                     else:
                         insertados, sobreescritos, fallidos = videolibrarytools.save_episodes(path, itemlist, serie,
                                                                                               silent=True,
                                                                                               overwrite=overwrite)
-                        it = videolibrary.check_season_playcount(it, it.contentSeason)
-                        if filetools.write(path + '/tvshow.nfo', head_nfo + it.tojson()):
-                            serie.infoLabels['playcount'] = serie.playcount
+                        #it = videolibrary.check_season_playcount(it, it.contentSeason)
+                        #if filetools.write(path + '/tvshow.nfo', head_nfo + it.tojson()):
+                        #    serie.infoLabels['playcount'] = serie.playcount
                     insertados_total += insertados
 
                 except Exception, ex:
@@ -96,7 +96,8 @@ def check_for_update(overwrite=True):
     serie_actualizada = False
     update_when_finished = False
     hoy = datetime.date.today()
-
+    estado_verify_playcount_series = False
+    
     try:
         if config.get_setting("update", "videolibrary") != 0 or overwrite:
             config.set_setting("updatelibrary_last_check", hoy.strftime('%Y-%m-%d'), "videolibrary")
@@ -128,6 +129,19 @@ def check_for_update(overwrite=True):
                     
                 logger.info("serie=" + serie.contentSerieName)
                 p_dialog.update(int(math.ceil((i + 1) * t)), heading, serie.contentSerieName)
+                
+                #Verificamos el estado del serie.library_playcounts de la Serie por si está incompleto
+                try:
+                    estado = False
+                    #Si no hemos hecho la verificación o no tiene playcount, entramos
+                    estado = config.get_setting("verify_playcount", "videolibrary")
+                    if not estado or estado == False or not serie.library_playcounts:               #Si no se ha pasado antes, lo hacemos ahora
+                        serie, estado = videolibrary.verify_playcount_series(serie, path)           #También se pasa si falta un PlayCount por completo
+                except:
+                    pass
+                else:
+                    if estado:                                                                      #Si ha tenido éxito la actualización...
+                        estado_verify_playcount_series = True                                       #... se marca para cambiar la opción de la Videoteca
 
                 interval = int(serie.active)  # Podria ser del tipo bool
 
@@ -188,10 +202,11 @@ def check_for_update(overwrite=True):
                     if not serie_actualizada:
                         update_next += datetime.timedelta(days=interval)
 
-                head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)       #Vuelve a leer el.nfo, que ha sido modificado
+                head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)                       #Vuelve a leer el.nfo, que ha sido modificado
                 if interval != int(serie.active) or update_next.strftime('%Y-%m-%d') != serie.update_next:
+                    if update_next > hoy:
+                        serie.update_next = update_next.strftime('%Y-%m-%d')
                     serie.active = interval
-                    serie.update_next = update_next.strftime('%Y-%m-%d')
                     serie.channel = "videolibrary"
                     serie.action = "get_seasons"
                     filetools.write(tvshow_file, head_nfo + serie.tojson())
@@ -205,6 +220,9 @@ def check_for_update(overwrite=True):
                     else:
                         update_when_finished = True
 
+            if estado_verify_playcount_series:                                                  #Si se ha cambiado algún playcount, ...
+                estado = config.set_setting("verify_playcount", True, "videolibrary")           #... actualizamos la opción de Videolibrary
+            
             if config.get_setting("search_new_content", "videolibrary") == 1 and update_when_finished:
                 # Actualizamos la videoteca de Kodi: Buscar contenido en todas las series
                 if config.is_xbmc():
@@ -254,7 +272,8 @@ def start(thread=True):
 
 def monitor_update():
     update_setting = config.get_setting("update", "videolibrary")
-    if update_setting == 2 or update_setting == 3:  # "Actualizar "Cada dia" o "Una vez al dia"
+    # "Actualizar "Una sola vez al dia" o "al inicar Kodi y al menos una vez al dia"
+    if update_setting == 2 or update_setting == 3:
         hoy = datetime.date.today()
         last_check = config.get_setting("updatelibrary_last_check", "videolibrary")
         if last_check:
@@ -269,14 +288,15 @@ def monitor_update():
         #             (last_check, hoy, datetime.datetime.now().hour))
         # logger.info("Atraso del inicio del dia: %i:00" % update_start)
 
-        if last_check < hoy and datetime.datetime.now().hour >= int(update_start):
-            logger.info("Inicio actualizacion programada: %s" % datetime.datetime.now())
+        if last_check <= hoy and datetime.datetime.now().hour == int(update_start):
+            logger.info("Inicio actualizacion programada para las %s h.: %s" % (update_start, datetime.datetime.now()))
             check_for_update(overwrite=False)
 
 
 if __name__ == "__main__":
     # Se ejecuta en cada inicio
     import xbmc
+    import time
 
     # modo adulto:
     # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie Kodi
@@ -289,6 +309,10 @@ if __name__ == "__main__":
     if wait > 0:
         xbmc.sleep(wait)
 
+    # Verificar quick-fixes al abrirse Kodi, y dejarlo corriendo como Thread
+    from platformcode import updater
+    updater.check_addon_init()
+    
     if not config.get_setting("update", "videolibrary") == 2:
         check_for_update(overwrite=False)
 
