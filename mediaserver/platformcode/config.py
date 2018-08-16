@@ -14,7 +14,7 @@ settings_dic = {}
 adult_setting = {}
 
 
-def get_addon_version(linea_inicio=0, total_lineas=2):
+def get_addon_version(linea_inicio=0, total_lineas=2, with_fix=False):
     '''
     Devuelve el número de de versión del addon, obtenido desde el archivo addon.xml
     '''
@@ -269,6 +269,14 @@ def get_localized_string(code):
         pass
 
     return dev
+
+
+def get_localized_category(categ):
+    categories = {'movie': get_localized_string(30122), 'tvshow': get_localized_string(30123),
+                  'anime': get_localized_string(30124), 'documentary': get_localized_string(30125),
+                  'vos': get_localized_string(30136), 'adult': get_localized_string(30126),
+                  'direct': get_localized_string(30137), 'torrent': get_localized_string(70015)}
+    return categories[categ] if categ in categories else categ
 
 
 def get_videolibrary_path():

@@ -252,10 +252,8 @@ def ultimas(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data = data.decode('cp1252')
     realplot = ''
-    patron = '<a href="([^"]+)" title="([^"]+)"><img src="([^"]+)" alt=.*? style="width:105px; height:160px; ' \
-             'border:1px solid #999"\/><\/a>'
+    patron = '<a href="([^"]+)" title="([^"]+)"> <img src="([^"]+)".*?solid'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -312,10 +310,7 @@ def letras(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data = data.decode('cp1252')
-    data = scrapertools.find_single_match(data, '<\/form><\/table><\/div>.*?<\/ul>')
-
-    patron = '<li><a href="(.*?)" title="Letra.*?">(.*?)<\/a><\/li>'
+    patron = '<li><a href="([^"]+)" title="Letra.*?">([^<]+)<\/a><\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
@@ -356,36 +351,40 @@ def findvideos(item):
     logger.info()
 
     itemlist = []
-    new_url = get_link(get_source(item.url))
-    new_url = get_link(get_source(new_url))
-    video_id = scrapertools.find_single_match(new_url, 'http.*?h=(\w+)')
-    new_url = '%s%s' % (host, 'playeropstream/api.php')
-    post = {'h': video_id}
-    post = urllib.urlencode(post)
-    data = httptools.downloadpage(new_url, post=post).data
-    json_data = jsontools.load(data)
-    url = json_data['url']
-    server = servertools.get_server_from_url(url)
-    title = '%s [%s]' % (server, item.language)
-    itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language=item.language,
-                         server=server, infoLabels=item.infoLabels))
+    try:
+        new_url = get_link(get_source(item.url))
+        new_url = get_link(get_source(new_url))
+        video_id = scrapertools.find_single_match(new_url, 'http.*?h=(\w+)')
+        new_url = '%s%s' % (host, 'playeropstream/api.php')
+        post = {'h': video_id}
+        post = urllib.urlencode(post)
+        data = httptools.downloadpage(new_url, post=post).data
+        json_data = jsontools.load(data)
+        url = json_data['url']
+        server = servertools.get_server_from_url(url)
+        title = '%s [%s]' % (server, item.language)
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language=item.language,
+                             server=server, infoLabels=item.infoLabels))
 
-    # Requerido para FilterTools
+        # Requerido para FilterTools
 
-    itemlist = filtertools.get_links(itemlist, item, list_language)
+        itemlist = filtertools.get_links(itemlist, item, list_language)
 
-    # Requerido para AutoPlay
+        # Requerido para AutoPlay
 
-    autoplay.start(itemlist, item)
+        autoplay.start(itemlist, item)
 
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
-        itemlist.append(Item(channel=item.channel,
-                             title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                             url=item.url,
-                             action="add_pelicula_to_library",
-                             extra="findvideos",
-                             contentTitle=item.contentTitle
-                             ))
+        if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
+            itemlist.append(Item(channel=item.channel,
+                                 title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                                 url=item.url,
+                                 action="add_pelicula_to_library",
+                                 extra="findvideos",
+                                 contentTitle=item.contentTitle
+                                 ))
+    except:
+        pass
+
     return itemlist
 
 

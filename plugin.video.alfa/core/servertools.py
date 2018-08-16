@@ -8,6 +8,7 @@ import os
 import re
 import time
 import urlparse
+import filetools
 
 from core import httptools
 from core import jsontools
@@ -451,8 +452,9 @@ def get_server_parameters(server):
             # Debriders
             elif os.path.isfile(os.path.join(config.get_runtime_path(), "servers", "debriders", server + ".json")):
                 path = os.path.join(config.get_runtime_path(), "servers", "debriders", server + ".json")
-
-            import filetools
+            #
+            #Cuando no está bien definido el server en el canal (no existe conector), muestra error por no haber "path" y se tiene que revisar el canal
+            #
             data = filetools.read(path)
             dict_server = jsontools.load(data)
 
@@ -465,13 +467,6 @@ def get_server_parameters(server):
 
                 if type(dict_server[k]) == str:
                     dict_server[k] = [dict_server[k]]
-
-                    # if not dict_server.has_key(k) or dict_server[k] == "":
-                    #     dict_server[k] = []
-                    # elif type(dict_server[k]) == dict:
-                    #     dict_server[k] = dict_server[k]["value"]
-                    # if type(dict_server[k]) == str:
-                    #     dict_server[k] = [dict_server[k]]
 
             if "find_videos" in dict_server:
                 dict_server['find_videos']["patterns"] = dict_server['find_videos'].get("patterns", list())
@@ -495,7 +490,6 @@ def get_server_parameters(server):
 
 def get_server_json(server_name):
     # logger.info("server_name=" + server_name)
-    import filetools
     try:
         server_path = filetools.join(config.get_runtime_path(), "servers", server_name + ".json")
         if not filetools.exists(server_path):

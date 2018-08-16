@@ -53,8 +53,8 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel, action="videos", title="Útimos videos", url=url_api + "/index/main/0/pc",
                          viewmode="movie"))
-    itemlist.append(Item(channel=item.channel, action="listcategorias", title="Listado categorias Populares",
-                         url=url_api + "/index/main/0/pc", extra="popular"))
+    #itemlist.append(Item(channel=item.channel, action="listcategorias", title="Listado categorias Populares",
+    #                     url=url_api + "/index/main/0/pc", extra="popular"))
     itemlist.append(Item(channel=item.channel, action="listcategorias", title="Listado categorias completo",
                          url=url_api + "/index/main/0/pc", extra="nonpopular"))
     itemlist.append(
@@ -74,7 +74,7 @@ def videos(item):
         title = Video["title"]
         itemlist.append(
             Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot="", show="",
-                 folder=True))
+                 folder=True, contentType="movie"))
 
     # Paginador
     Actual = int(scrapertools.get_match(item.url, url_api + '/index/[^/]+/([0-9]+)/pc'))
@@ -93,10 +93,11 @@ def listcategorias(item):
     data = scrapertools.cache_page(item.url)
     JSONData = json.load(data)
 
-    for Tag in JSONData["tags"][item.extra]:
-        url = url_api + "/index/tag/0/pc?tag=" + Tag
-        title = Tag
-        title = title[:1].upper() + title[1:]
+    #for Tag in JSONData["tags"][item.extra]:
+    for Tag in JSONData["tags"]:
+        url = url_api + "/index/tag/0/pc?tag=" + Tag["tag"]
+        title = '%s - %s' % (str(Tag["tag"]), str(Tag["videos"]))
+        #title = title[:1].upper() + title[1:]
         itemlist.append(
             Item(channel=item.channel, action="videos", title=title, url=url, folder=True, viewmode="movie"))
 
@@ -108,6 +109,7 @@ def search(item, texto):
 
     texto = texto.replace(" ", "+")
     item.url = item.url % (texto)
+    
     try:
         return videos(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla

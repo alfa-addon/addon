@@ -5,7 +5,7 @@
     "patterns": [
       {
         "pattern": "(?:thevideo.me|tvad.me|thevid.net|thevideo.ch|thevideo.us)/(?:embed-|)([A-z0-9]+)",
-        "url": "http://thevideo.me/embed-\\1.html"
+        "url": "https://thevideo.me/embed-\\1.html"
       }
     ]
   },

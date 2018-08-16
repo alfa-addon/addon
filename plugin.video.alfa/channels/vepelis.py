@@ -2,10 +2,12 @@
 
 import re
 import urlparse
+import urllib
 
 from core import scrapertools
 from core import httptools
 from core import servertools
+from core import jsontools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
@@ -80,24 +82,6 @@ def listarpeliculas(item):
                          url=scrapedurl, thumbnail=scrapedthumbnail, plot=scrapedplot, extra=extra, folder=True))
 
     return itemlist
-
-
-def findvideos(item):
-    logger.info()
-    # Descarga la página
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-
-    itemlist.extend(servertools.find_video_items(data=data))
-
-    for videoitem in itemlist:
-        videoitem.channel = item.channel
-        videoitem.quality = item.quality
-        videoitem.language = item.language
-        videoitem.action = 'play'
-
-    return itemlist
-
 
 def generos(item):
     logger.info()
@@ -230,6 +214,46 @@ def listado2(item):
     return itemlist
 
 
+def get_source(url):
+    logger.info()
+    data = httptools.downloadpage(url).data
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    return data
+
+def get_link(data):
+    new_url = scrapertools.find_single_match(data, '(?:IFRAME|iframe) src="([^"]+)" scrolling')
+    return new_url
+
+def findvideos(item):
+    logger.info()
+    host = 'https://www.locopelis.tv/'
+    itemlist = []
+    new_url = get_link(get_source(item.url))
+    new_url = get_link(get_source(new_url))
+    video_id = scrapertools.find_single_match(new_url, 'http.*?h=(\w+)')
+    new_url = '%s%s' % (host, 'playeropstream/api.php')
+    post = {'h': video_id}
+    post = urllib.urlencode(post)
+    data = httptools.downloadpage(new_url, post=post).data
+    json_data = jsontools.load(data)
+    url = json_data['url']
+    server = servertools.get_server_from_url(url)
+    title = '%s' % server
+    itemlist.append(Item(channel=item.channel, title=title, url=url, action='play',
+                         server=server, infoLabels=item.infoLabels))
+
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
+        itemlist.append(Item(channel=item.channel,
+                             title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                             url=item.url,
+                             action="add_pelicula_to_library",
+                             extra="findvideos",
+                             contentTitle = item.fulltitle
+                             ))
+
+    return itemlist
+
+
 def search(item, texto):
     logger.info()
     itemlist = []
@@ -277,3 +301,6 @@ def newest(categoria):
         return []
 
     return itemlist
+
+
+

@@ -8,6 +8,8 @@ from platformcode import logger
 
 
 def test_video_exists(page_url):
+    if 'googleusercontent' in page_url:
+        return True, "" # desactivada verificación pq se encalla!
 
     response = httptools.downloadpage(page_url, cookies=False, headers={"Referer": page_url})
     if "no+existe" in response.data:
@@ -34,13 +36,19 @@ def get_video_url(page_url, user="", password="", video_password=""):
 
         response = httptools.downloadpage(page_url, follow_redirects = False, cookies=False, headers={"Referer": page_url})
         url=response.headers['location']
-        cookies = ""
-        cookie = response.headers["set-cookie"].split("HttpOnly, ")
-        for c in cookie:
-            cookies += c.split(";", 1)[0] + "; "
-        data = response.data.decode('unicode-escape')
-        data = urllib.unquote_plus(urllib.unquote_plus(data))
-        headers_string = "|Cookie=" + cookies
+        if "set-cookie" in response.headers:
+            try:
+                cookies = ""
+                cookie = response.headers["set-cookie"].split("HttpOnly, ")
+                for c in cookie:
+                    cookies += c.split(";", 1)[0] + "; "
+                data = response.data.decode('unicode-escape')
+                data = urllib.unquote_plus(urllib.unquote_plus(data))
+                headers_string = "|Cookie=" + cookies
+            except:
+                headers_string = ""
+        else:
+            headers_string = ""
 
         quality = scrapertools.find_single_match (url, '.itag=(\d+).')
 

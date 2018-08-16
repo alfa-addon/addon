@@ -8,6 +8,8 @@ import sys
 import threading
 import time
 from functools import wraps
+# Requerido para el ejecutable en windows
+import SimpleHTTPServer
 
 sys.dont_write_bytecode = True
 from platformcode import config
