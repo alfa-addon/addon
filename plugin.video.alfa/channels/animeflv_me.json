@@ -1,7 +1,7 @@
 {
   "id": "animeflv_me",
   "name": "Animeflv.ME",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "http://i.imgur.com/x9AdvBx.png",

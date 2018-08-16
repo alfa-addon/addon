@@ -17,13 +17,13 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Estrenos", action="peliculas",
                          url= host +"peliculas-online/lista-de-peliculas-online-parte-1/", viewmode="movie",
-                         thumbnail=get_thumb('premieres', auto=True),))
+                         thumbnail=get_thumb('premieres', auto=True), first=0))
     itemlist.append(
         Item(channel=item.channel, title="Generos", action="generos", url= host + "generos/lista-de-generos/",
              thumbnail=get_thumb('genres', auto=True),))
     itemlist.append(Item(channel=item.channel, title="Recomendadas", action="peliculas",
                          url= host + "peliculas-online/lista-de-peliculas-recomendadas/", viewmode="movie",
-                         thumbnail=get_thumb('recomended', auto=True),))
+                         thumbnail=get_thumb('recomended', auto=True), first=0))
     itemlist.append(Item(channel = item.channel, action = ""))
     itemlist.append(
         Item(channel=item.channel, title="Buscar", action="search", url = host_search,
@@ -35,14 +35,9 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     data = httptools.downloadpage(host).data
-    url_cse = scrapertools.find_single_match(data, '<form action="([^"]+)"') + "?"
-    bloque = scrapertools.find_single_match(data, '<form action=.*?</form>').replace('name="q"', "")
-    matches = scrapertools.find_multiple_matches(bloque, 'name="([^"]+).*?value="([^"]+)')
-    post = "q=" + texto + "&"
-    for name, value in matches:
-        post += name + "=" + value + "&"
-    data = httptools.downloadpage(url_cse + post).data
-    cse_token = scrapertools.find_single_match(data, "var cse_token='([^']+)'")
+    cxv = scrapertools.find_single_match(data, 'cx" value="([^"]+)"')
+    data = httptools.downloadpage("https://cse.google.es/cse.js?hpg=1&cx=%s" %cxv).data
+    cse_token = scrapertools.find_single_match(data, 'cse_token": "([^"]+)"')
     item.url = host_search %(texto, cse_token)
     try:
         return sub_search(item)
@@ -99,7 +94,8 @@ def generos(item):
                              action = 'peliculas',
                              title = title,
                              url = url,
-                             viewmode = "movie"))
+                             viewmode = "movie",
+                             first=0))
     itemlist = sorted(itemlist, key=lambda item: item.title)
     return itemlist
 
@@ -107,11 +103,18 @@ def generos(item):
 def peliculas(item):
     logger.info()
     itemlist = []
+    next = True
     data = httptools.downloadpage(item.url).data
     patron  = '<a class="Ntooltip" href="([^"]+)">([^<]+)<span><br[^<]+'
     patron += '<img src="([^"]+)"></span></a>(.*?)<br'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedtitle, scrapedthumbnail, resto in matches:
+    first = item.first
+    last = first + 19
+    if last > len(matches):
+        last = len(matches)
+        next = False
+
+    for scrapedurl, scrapedtitle, scrapedthumbnail, resto in matches[first:last]:
         language = []
         plot = scrapertools.htmlclean(resto).strip()
         languages = scrapertools.find_multiple_matches(plot, r'\((V.)\)')
@@ -132,6 +135,13 @@ def peliculas(item):
                              language=language,
                              quality=quality
                              ))
+    #paginacion
+
+    url_next_page = item.url
+    first = last
+    if next:
+        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='peliculas', first=first))
+
     return itemlist
 
 
@@ -149,7 +159,7 @@ def findvideos(item):
     cuenta = 0
     for datos in bloque:
         cuenta = cuenta + 1
-        patron = '<em>(opción %s.*?)</em>' %cuenta
+        patron = '<em>((?:opciÃ³n|opción) %s.*?)</em>' %cuenta
         scrapedopcion = scrapertools.find_single_match(data, patron)
         titulo_opcion = "(" + scrapertools.find_single_match(scrapedopcion, "op.*?, (.*)").upper() + ")"
         if "TRAILER" in titulo_opcion or titulo_opcion == "()":

@@ -460,10 +460,18 @@ def findvideos(item):
             item_local.quality = quality + tiempo
         if "temporada" in temp_epi.lower():
             item_local.quality = '%s [Temporada]' % item_local.quality
+        #Añadimos la duración, que estará en item.quility
+        if scrapertools.find_single_match(item.quality, '(\[\d+:\d+)'):                   #si ya tiene la duración, la ponemos
+            item_local.quality = '%s [%s h]' % (item_local.quality, scrapertools.find_single_match(item.quality, '(\d+:\d+)'))
         #if size and item_local.contentType != "episode":
         if size:
             size = size.replace(".", ",").replace("B,", " B").replace("b,", " b")
             item_local.quality = '%s [%s]' % (item_local.quality, size)
+        if item_local.action == 'show_result':                                            #Viene de una búsqueda global
+            channel = item_local.channel.capitalize()
+            if item_local.from_channel:
+                channel = item_local.from_channel.capitalize()
+            item_local.quality = '[COLOR yellow][%s][/COLOR] %s' % (channel, item_local.quality)
 
         #Salvamos la url del .torrent
         if scrapedurl:

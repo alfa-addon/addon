@@ -7,12 +7,12 @@ import os
 from inspect import isclass
 
 from controller import Controller
-from platformcode import logger
+from platformcode import config, logger
 
 
 def load_controllers():
     controllers = []
-    path = os.path.split(__file__)[0]
+    path = os.path.join(config.get_runtime_path(),"platformcode\controllers")
     for fname in os.listdir(path):
         mod, ext = os.path.splitext(fname)
         fname = os.path.join(path, fname)

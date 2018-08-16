@@ -215,6 +215,8 @@ def save_tvshow(item, episodelist):
     @return:  el número de episodios sobreescritos
     @rtype fallidos: int
     @return:  el número de episodios fallidos o -1 si ha fallado toda la serie
+    @rtype path: str
+    @return:  directorio serie
     """
     logger.info()
     # logger.debug(item.tostring('\n'))
@@ -223,7 +225,7 @@ def save_tvshow(item, episodelist):
     # Si llegados a este punto no tenemos titulo o code, salimos
     if not (item.contentSerieName or item.infoLabels['code']) or not item.channel:
         logger.debug("NO ENCONTRADO contentSerieName NI code")
-        return 0, 0, -1  # Salimos sin guardar
+        return 0, 0, -1, path  # Salimos sin guardar
 
     scraper_return = scraper.find_and_set_infoLabels(item)
     # Llegados a este punto podemos tener:
@@ -234,7 +236,7 @@ def save_tvshow(item, episodelist):
         # TODO de momento si no hay resultado no añadimos nada,
         # aunq podriamos abrir un cuadro para introducir el identificador/nombre a mano
         logger.debug("NO ENCONTRADO EN SCRAPER O NO TIENE code")
-        return 0, 0, -1
+        return 0, 0, -1, path
 
     _id = item.infoLabels['code'][0]
 
@@ -311,7 +313,7 @@ def save_tvshow(item, episodelist):
 
     if not episodelist:
         # La lista de episodios esta vacia
-        return 0, 0, 0
+        return 0, 0, 0, path
 
     # Guardar los episodios
     '''import time
@@ -402,7 +404,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
 
     for i, e in enumerate(scraper.sort_episode_list(new_episodelist)):
         if not silent:
-            p_dialog.update(int(math.ceil((i + 1) * t)), 'Añadiendo episodio...', e.title)
+            p_dialog.update(int(math.ceil((i + 1) * t)), config.get_localized_string(60064), e.title)
 
         season_episode = "%sx%s" % (e.contentSeason, str(e.contentEpisodeNumber).zfill(2))
         strm_path = filetools.join(path, "%s.strm" % season_episode)
@@ -619,6 +621,7 @@ def add_tvshow(item, channel=None):
                 
         # Obtiene el listado de episodios
         itemlist = getattr(channel, item.action)(item)
+        
     insertados, sobreescritos, fallidos, path = save_tvshow(item, itemlist)
 
     if not insertados and not sobreescritos and not fallidos:

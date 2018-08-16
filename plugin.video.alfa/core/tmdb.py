@@ -1350,7 +1350,7 @@ class Tmdb(object):
 
             if "status_code" in self.temporada[numtemporada]:
                 #Se ha producido un error
-                msg = "La busqueda de " + buscando + " no dio resultados."
+                msg = config.get_localized_string(70496) + buscando + config.get_localized_string(70497)
                 msg += "\nError de tmdb: %s %s" % (
                 self.temporada[numtemporada]["status_code"], self.temporada[numtemporada]["status_message"])
                 logger.debug(msg)

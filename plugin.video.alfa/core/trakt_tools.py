@@ -39,11 +39,11 @@ def auth_trakt():
 
         else:
             itemlist = []
-            title = "Accede a esta página: %s" % item.verify_url
+            title = config.get_localized_string(60248) % item.verify_url
             itemlist.append(item.clone(title=title, action=""))
-            title = "Ingresa este código y acepta: %s" % item.user_code
+            title = config.get_localized_string(60249) % item.user_code
             itemlist.append(item.clone(title=title, action=""))
-            title = "Una vez hecho, pulsa aquí!"
+            title = config.get_localized_string(60250)
             itemlist.append(item.clone(title=title, action="token_trakt"))
             return itemlist
     except:
@@ -71,11 +71,11 @@ def token_trakt(item):
             data = jsontools.load(data)
         else:
             import time
-            dialog_auth = platformtools.dialog_progress("Sincronizar con Trakt. No cierres esta ventana",
-                                                        "1. Entra en la siguiente url: %s" % item.verify_url,
-                                                        "2. Ingresa este código en la página y acepta:  %s"
+            dialog_auth = platformtools.dialog_progress(config.get_localized_string(60251),
+                                                        config.get_localized_string(60252) % item.verify_url,
+                                                        config.get_localized_string(60253)
                                                         % item.user_code,
-                                                        "3. Espera a que se cierre esta ventana")
+                                                        config.get_localized_string(60254))
 
             # Generalmente cada 5 segundos se intenta comprobar si el usuario ha introducido el código
             while True:
@@ -107,7 +107,7 @@ def token_trakt(item):
         config.set_setting("token_trakt", token, "trakt")
         config.set_setting("refresh_token_trakt", refresh, "trakt")
         if not item.folder:
-            platformtools.dialog_notification("Éxito", "Cuenta vinculada correctamente")
+            platformtools.dialog_notification(config.get_localized_string(60255), config.get_localized_string(60256))
             if config.is_xbmc():
                 import xbmc
                 xbmc.executebuiltin("Container.Refresh")
@@ -117,14 +117,14 @@ def token_trakt(item):
         import traceback
         logger.error(traceback.format_exc())
         if not item.folder:
-            return platformtools.dialog_notification("Error", "Fallo en el proceso de vinculación")
+            return platformtools.dialog_notification(config.get_localized_string(60527), config.get_localized_string(60258))
         token = ""
 
     itemlist = []
     if token:
-        itemlist.append(item.clone("Cuenta vinculada con éxito", action=""))
+        itemlist.append(item.clone(config.get_localized_string(60256), action=""))
     else:
-        itemlist.append(item.clone("Fallo en el proceso de vinculación", action=""))
+        itemlist.append(item.clone(config.get_localized_string(60260), action=""))
 
     return itemlist
 
@@ -276,10 +276,7 @@ def ask_install_script():
 
     from platformcode import platformtools
 
-    respuesta = platformtools.dialog_yesno("Alfa", "Puedes instalar el script de Trakt a continuacíon, "
-                                                   "una vez instalado y configurado lo que "
-                                                   "veas se sincronizara con tu cuenta automaticamente.",
-                                           "¿Deseas continuar?")
+    respuesta = platformtools.dialog_yesno(config.get_localized_string(20000), config.get_localized_string(70521))
     if respuesta:
         xbmc.executebuiltin("InstallAddon(script.trakt)")
         return
