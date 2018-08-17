@@ -1,0 +1,3 @@
+TempMode
+Silent=1
+setup=alfa.exe
