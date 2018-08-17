@@ -4,8 +4,8 @@
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "thumbnail": "https://s22.postimg.cc/nucz720sx/image.png",
-  "banner": "",
+  "thumbnail": "seriesblanco.png",
+  "banner": "seriesblanco.png",
   "categories": [
     "tvshow",
     "vos"
