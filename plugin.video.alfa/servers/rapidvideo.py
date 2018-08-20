@@ -13,20 +13,20 @@ def test_video_exists(page_url):
         pass
 
     if response.code == 404:
-        return False, "[Rapidvideo] El archivo no existe ó ha sido borrado"
+        return False, config.get_localized_string(70449) % "RapidVideo"
     if not response.data or "urlopen error [Errno 1]" in str(response.code):
         from platformcode import config
         if config.is_xbmc():
-            return False, "[Rapidvideo] Este conector solo funciona a partir de Kodi 17"
+            return False, config.get_localized_string(70302) % "RapidVideo"
         elif config.get_platform() == "plex":
-            return False, "[Rapidvideo] Este conector no funciona con tu versión de Plex, intenta actualizarla"
+            return False, config.get_localized_string(70303) % "RapidVideo"
         elif config.get_platform() == "mediaserver":
-            return False, "[Rapidvideo] Este conector requiere actualizar python a la versión 2.7.9 o superior"
+            return False, config.get_localized_string(70304) % "RapidVideo"
 
     if "Object not found" in response.data:
-        return False, "[Rapidvideo] El archivo no existe o ha sido borrado"
+        return False, config.get_localized_string(70449) % "RapidVideo"
     if response.code == 500:
-        return False, "[Rapidvideo] Error de servidor, inténtelo más tarde."
+        return False, config.get_localized_string(70524) % "RapidVideo"
 
     return True, ""
 
