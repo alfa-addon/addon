@@ -4806,3 +4806,7 @@ msgstr "Ahora en cines"
 msgctxt "#70528"
 msgid "Movies by Genre"
 msgstr "Por generos"
+
+msgctxt "#70529"
+msgid "tv show"
+msgstr "serie"
