@@ -4807,4 +4807,7 @@ msgctxt "#70528"
 msgid "Movies by Genre"
 msgstr "Per genere"
 
+msgctxt "#70529"
+msgid "tv show"
+msgstr "serie"
 
