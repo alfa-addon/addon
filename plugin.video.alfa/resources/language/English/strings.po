@@ -846,7 +846,7 @@ msgid "Enter URL"
 msgstr ""
 
 msgctxt "#60089"
-msgid "Enter the URL [Link to server / download]"
+msgid "Enter the URL [Link to server/download]"
 msgstr ""
 
 msgctxt "#60090"
@@ -3031,10 +3031,6 @@ msgstr ""
 
 msgctxt "#70079"
 msgid "Remove only links of "
-msgstr ""
-
-msgctxt "#70080"
-msgid "Do you want Alfa to auto-configure Kodi's video library?"
 msgstr ""
 
 msgctxt "#70082"

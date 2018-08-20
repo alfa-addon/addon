@@ -834,8 +834,8 @@ msgid "Enter URL"
 msgstr "Inserisci URL"
 
 msgctxt "#60089"
-msgid "Enter the URL [Link to server / download]"
-msgstr "Inserire l'URL [Link a server / download]"
+msgid "Enter the URL [Link to server/download]"
+msgstr "Inserire l'URL [Link a server/download]"
 
 msgctxt "#60090"
 msgid "Enter the URL [Direct link to video]."
@@ -3020,14 +3020,6 @@ msgstr "Mostra solo link di "
 msgctxt "#70079"
 msgid "Remove only links of "
 msgstr "Rimuovere solo i collegamenti di "
-
-msgctxt "#70080"
-msgid "Do you want Alfa to auto-configure Kodi's video library?"
-msgstr "Vuoi che Alfa auto-configuri la videoteca di Kodi?"
-
-msgctxt "#70081"
-msgid "If you choose 'No' you can do it later from 'Configuration > Preferences > Paths'."
-msgstr "Se scegli 'No' potrai farlo in seguito da 'Configurazione > Preferenze > Percorsi'."
 
 msgctxt "#70082"
 msgid "Global Search"
