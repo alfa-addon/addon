@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from channels import autoplay
+from channels import filtertools
 from core import httptools
 from core import scrapertools
 from core import servertools
@@ -8,7 +10,13 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-CHANNEL_HOST = "http://www.cinetux.io/"
+IDIOMAS = {'Latino': 'Latino', 'Subtitulado': 'Subtitulado', 'Español': 'Español', 'SUB': 'SUB' }
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['rapidvideo', 'streamango', 'okru', 'vidoza', 'openload', 'powvideo', 'netutv','gvideo']
+
+
+CHANNEL_HOST = "http://www.cinetux.to/"
 
 # Configuracion del canal
 __modo_grafico__ = config.get_setting('modo_grafico', 'cinetux')
@@ -26,6 +34,7 @@ viewmode = viewmode_options[config.get_setting('viewmode', 'cinetux')]
 
 def mainlist(item):
     logger.info()
+    autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
     item.viewmode = viewmode
     data = httptools.downloadpage(CHANNEL_HOST + "pelicula").data
@@ -53,6 +62,7 @@ def mainlist(item):
     itemlist.append(item.clone(action="search", title="Buscar...", text_color=color3,
                                thumbnail=get_thumb('search', auto=True)))
     itemlist.append(item.clone(action="configuracion", title="Configurar canal...", text_color="gold", folder=False))
+    autoplay.show_option(item.channel, itemlist)
     return itemlist
 
 
@@ -129,13 +139,13 @@ def peliculas(item):
     patron += '.*?alt="([^"]+)"'
     patron += '(.*?)'
     patron += 'href="([^"]+)"'
-    patron += '.*?(?:<span>|<span class="year">)([^<]+)'
+    patron += '.*?(?:<span>|<span class="year">)(.+?)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedthumbnail, scrapedtitle, quality, scrapedurl, scrapedyear in matches:
         quality = scrapertools.find_single_match(quality, '.*?quality">([^<]+)')
         try:
             fulltitle = scrapedtitle
-            year = scrapedyear.replace("&nbsp;", "")
+            year = scrapertools.find_single_match(scrapedyear,'\d{4}')
             if "/" in fulltitle:
                 fulltitle = fulltitle.split(" /", 1)[0]
             scrapedtitle = "%s (%s)" % (fulltitle, year)
@@ -219,8 +229,6 @@ def findvideos(item):
         filtro_enlaces = 2
     dict_idiomas = {'Español': 2, 'Latino': 1, 'Subtitulado': 0}
     data = httptools.downloadpage(item.url).data
-    if item.infoLabels["year"]:
-        tmdb.set_infoLabels(item, __modo_grafico__)
     if filtro_enlaces != 0:
         list_enlaces = bloque_enlaces(data, filtro_idioma, dict_idiomas, "online", item)
         if list_enlaces:
@@ -233,6 +241,14 @@ def findvideos(item):
             itemlist.append(item.clone(action="", title="Enlaces Descarga", text_color=color1,
                                        text_bold=True))
             itemlist.extend(list_enlaces)
+    tmdb.set_infoLabels(item, __modo_grafico__)
+
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
     if itemlist:
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
                                    text_color="magenta"))

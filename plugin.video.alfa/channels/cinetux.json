@@ -13,6 +13,21 @@
   ],
   "settings": [
     {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "Latino",
+        "Subtitulado",
+        "Español",
+        "SUB"
+      ]
+    },
+    {
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
@@ -90,20 +105,6 @@
       ]
     },
     {
-      "id": "filterlanguages",
-      "type": "list",
-      "label": "Mostrar enlaces en idioma...",
-      "default": 3,
-      "enabled": true,
-      "visible": true,
-      "lvalues": [
-        "VOSE",
-        "Latino",
-        "Español",
-        "No filtrar"
-      ]
-    },
-    {
       "id": "filterlinks",
       "type": "list",
       "label": "Mostrar enlaces de tipo...",
@@ -117,6 +118,19 @@
       ]
     },
     {
+      "id": "filterlanguages",
+      "type": "list",
+      "label": "Mostrar enlaces del canal en idioma...",
+      "default": 3,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "VOSE",
+        "Latino",
+        "Español",
+        "No filtrar"
+      ]
+    },    {
       "id": "viewmode",
       "type": "list",
       "label": "Elegir vista por defecto (Confluence)...",
