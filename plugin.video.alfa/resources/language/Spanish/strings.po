@@ -679,7 +679,7 @@ msgstr "Sincronizacion con Trakt iniciada"
 
 msgctxt "#60046"
 msgid "TheMovieDB not present.\nInstall it now?"
-msgstr "TheMovieDB\nNo se ha encontrado el Scraper de películas de TheMovieDB.\n¿Desea instalarlo ahora?"
+msgstr "TheMovieDB\nNo se ha encontrado el proveedor de información de películas de TheMovieDB.\n¿Desea instalarlo ahora?"
 
 msgctxt "#60047"
 msgid "The Movie Database is not installed."
@@ -687,7 +687,7 @@ msgstr "The Movie Database no instalado."
 
 msgctxt "#60048"
 msgid "The TVDB not present.\nInstall it now?"
-msgstr "The TVDB\nNo se ha encontrado el Scraper de series de The TVDB.\n¿Desea instalarlo ahora?"
+msgstr "The TVDB\nNo se ha encontrado el proveedor de información de series de The TVDB.\n¿Desea instalarlo ahora?"
 
 msgctxt "#60049"
 msgid "The TVDB is not installed."
@@ -707,15 +707,15 @@ msgstr "Errore di impostazione LibraryPath in BD"
 
 msgctxt "#60053"
 msgid "Do you want to configure this scraper in italian as default option for the movies ?"
-msgstr "¿Desea configurar este Scraper en español como opción por defecto para películas?"
+msgstr "¿Desea configurar este proveedor de información en español como opción por defecto para películas?"
 
 msgctxt "#60054"
 msgid "Do you want to configure this scraper in italian as default option for the tv series ?"
-msgstr "¿Desea configurar este Scraper en español como opción por defecto para series?"
+msgstr "¿Desea configurar este proveedor de información en español como opción por defecto para series?"
 
 msgctxt "#60055"
 msgid "Error of provider configuration in BD."
-msgstr "Error al configurar el scraper en la BD."
+msgstr "Error al configurar el proveedor de información en la BD."
 
 msgctxt "#60056"
 msgid "Videolibrary %s not configured"
@@ -3033,14 +3033,6 @@ msgctxt "#70079"
 msgid "Remove only links of "
 msgstr "Eliminar solo los enlaces de "
 
-msgctxt "#70080"
-msgid "Do you want Alfa to auto-configure Kodi's video library?"
-msgstr "¿Desea que Alfa auto-configure la videoteca de Kodi?"
-
-msgctxt "#70081"
-msgid "If you choose 'No' you can do it later from 'Configuration > Preferences > Paths'."
-msgstr "Si pulsa 'No' podra hacerlo desde 'Configuración > Preferencia > Rutas'."
-
 msgctxt "#70082"
 msgid "Global Search"
 msgstr "Buscador global"
@@ -3091,7 +3083,7 @@ msgstr "The Movie Database"
 
 msgctxt "#70094"
 msgid "Select scraper for movies"
-msgstr "Seleccione el scraper para las películas"
+msgstr "Seleccione el proveedor de información para las películas"
 
 msgctxt "#70095"
 msgid "Universal Movie Scraper not present.\nInstall it now?"
@@ -3143,7 +3135,7 @@ msgstr "Si pulsa 'No' podrá hacerlo desde 'Configuración > Preferencias > Ruta
 
 msgctxt "#70107"
 msgid "Select scraper for Tv Shows"
-msgstr "Seleccione el scraper para las series"
+msgstr "Seleccione el proveedor de información para las series"
 
 msgctxt "#70108"
 msgid "Icons Set"
