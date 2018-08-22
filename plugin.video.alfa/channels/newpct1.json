@@ -534,7 +534,7 @@
     {
       "id": "include_in_newest_latino",
       "type": "bool",
-      "label": "Incluir en Novedades - Documentales",
+      "label": "Incluir en Novedades - Latino",
       "default": true,
       "enabled": true,
       "visible": false
