@@ -4773,7 +4773,7 @@ msgstr "AutoPlay consente di riprodurre automaticamente i collegamenti direttame
 
 msgctxt "#70521"
 msgid "You can install the Trakt script below, \nonce installed and configured what \nyou see will be synchronized with your account automatically. \nDo you want to continue?"
-msgstr "Puoi installare lo script Trakt qui sotto, \ nuna volta installato e configurato ciò che \nvedrai verrà sincronizzato automaticamente con il tuo account. \nVuoi continuare?"
+msgstr "Puoi installare lo script Trakt qui sotto, \nuna volta installato e configurato ciò che \nvedrai verrà sincronizzato automaticamente con il tuo account. \nVuoi continuare?"
 
 msgctxt "#70522"
 msgid "No Filter"
