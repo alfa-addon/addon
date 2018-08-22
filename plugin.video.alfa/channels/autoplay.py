@@ -102,7 +102,12 @@ def start(itemlist, item):
     if item.channel == 'videolibrary':
         autoplay_node = jsontools.get_node_from_file('autoplay', 'AUTOPLAY')
         channel_id = item.contentChannel
-    if not channel_id in autoplay_node or not autoplay_node['status']:
+    try:
+        active = autoplay_node['status']
+    except:
+        active = is_active(item.channel)
+
+    if not channel_id in autoplay_node or not active:
         return itemlist
 
     # Agrega servidores y calidades que no estaban listados a autoplay_node
@@ -407,7 +412,6 @@ def init(channel, list_servers, list_quality, reset=False):
 
                 channel_node["settings"]["server_%s" % n] = s
                 channel_node["settings"]["quality_%s" % n] = c
-
             autoplay_node[channel] = channel_node
 
         if change:
