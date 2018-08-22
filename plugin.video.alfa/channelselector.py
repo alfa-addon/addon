@@ -170,7 +170,7 @@ def filterchannels(category, view="thumb_"):
             # Si tiene configuración añadimos un item en el contexto
             context = []
             if channel_parameters["has_settings"]:
-                context.append({"title": "Configurar canal", "channel": "setting", "action": "channel_config",
+                context.append({"title": config.get_localized_string(70525), "channel": "setting", "action": "channel_config",
                                 "config": channel_parameters["channel"]})
 
             channel_info = set_channel_info(channel_parameters)
@@ -197,7 +197,7 @@ def filterchannels(category, view="thumb_"):
         channelslist.insert(0, Item(title=config.get_localized_string(60088), action="mainlist", channel="url",
                                     thumbnail=channel_parameters["thumbnail"], type="generic", viewmode="list"))
     if category in ['movie', 'tvshow']:
-        titles = ['Mas Populares', 'Mejor Valoradas', 'Ahora en cines', 'En Emision', 'Por Genero']
+        titles = [config.get_localized_string(70028), config.get_localized_string(30985), config.get_localized_string(70527), config.get_localized_string(60264), config.get_localized_string(70528)]
         ids = ['popular', 'top_rated', 'now_playing', 'on_the_air']
         for x in range(0,3):
             if x == 2 and category != 'movie':

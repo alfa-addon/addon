@@ -303,7 +303,7 @@ msgstr "Populares"
 
 msgctxt "#30985"
 msgid "Top Rated"
-msgstr "Mejor valoradas"
+msgstr "Mejor Valoradas"
 
 msgctxt "#30986"
 msgid "Search by Collection"
@@ -4778,3 +4778,35 @@ msgstr "AutoPlay permite auto reproducir los enlaces directamente, basándose en
 msgctxt "#70521"
 msgid "You can install the Trakt script below, \nonce installed and configured what \nyou see will be synchronized with your account automatically. \nDo you want to continue?"
 msgstr "Puedes instalar el script de Trakt a continuacíon, \nuna vez instalado y configurado lo que \veas se sincronizara con tu cuenta automaticamente. \n¿Deseas continuar?"
+
+msgctxt "#70522"
+msgid "No filter"
+msgstr "No filtrar"
+
+msgctxt "#70523"
+msgid "%s: The data was restarted"
+msgstr "%s: Los datos fueron reiniciados"
+
+msgctxt "#70524"
+msgid " Server error, try later."
+msgstr " Error de servidor, inténtelo más tarde."
+
+msgctxt "#70525"
+msgid "Configure channel"
+msgstr "Configurar canal"
+
+msgctxt "#70526"
+msgid "Verification of counters of videos seen / not seen (uncheck to verify)"
+msgstr "Verificación de los contadores de vídeos vistos/no vistos (desmarcar para verificar)"
+
+msgctxt "#70527"
+msgid "Now in Theatres "
+msgstr "Ahora en cines"
+
+msgctxt "#70528"
+msgid "Movies by Genre"
+msgstr "Por generos"
+
+msgctxt "#70529"
+msgid "tv show"
+msgstr "serie"

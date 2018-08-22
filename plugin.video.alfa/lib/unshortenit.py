@@ -13,7 +13,6 @@ import time
 import urllib
 from base64 import b64decode
 
-
 from core import httptools
 from platformcode import config
 
@@ -36,6 +35,7 @@ class UnshortenIt(object):
     _anonymz_regex = r'anonymz\.com'
     _shrink_service_regex = r'shrink-service\.it'
     _rapidcrypt_regex = r'rapidcrypt\.net'
+    _cryptmango_regex = r'cryptmango'
 
     _maxretries = 5
 
@@ -73,45 +73,66 @@ class UnshortenIt(object):
             return self._unshorten_anonymz(uri)
         if re.search(self._rapidcrypt_regex, domain, re.IGNORECASE):
             return self._unshorten_rapidcrypt(uri)
+        if re.search(self._cryptmango_regex, uri, re.IGNORECASE):
+            return self._unshorten_cryptmango(uri)
 
         return uri, 200
 
     def unwrap_30x(self, uri, timeout=10):
+        def unwrap_30x(uri, timeout=10):
 
-        domain = urlsplit(uri).netloc
-        self._timeout = timeout
+            domain = urlsplit(uri).netloc
+            self._timeout = timeout
 
-        try:
-            # headers stop t.co from working so omit headers if this is a t.co link
-            if domain == 't.co':
-                r = httptools.downloadpage(uri, timeout=self._timeout)
-                return r.url, r.code
-            # p.ost.im uses meta http refresh to redirect.
-            if domain == 'p.ost.im':
-                r = httptools.downloadpage(uri, timeout=self._timeout)
-                uri = re.findall(r'.*url\=(.*?)\"\.*', r.data)[0]
-                return uri, r.code
-
-            retries = 0
-            while True:
-                r = httptools.downloadpage(
-                    uri,
-                    timeout=self._timeout,
-                    follow_redirects=False)
-                if not r.sucess:
-                    return uri, -1
-
-                if 'location' in r.headers and retries < self._maxretries:
-                    r = httptools.downloadpage(
-                        r.headers['location'],
-                        follow_redirects=False)
-                    uri = r.url
-                    retries += 1
-                else:
+            try:
+                # headers stop t.co from working so omit headers if this is a t.co link
+                if domain == 't.co':
+                    r = httptools.downloadpage(uri, timeout=self._timeout)
                     return r.url, r.code
+                # p.ost.im uses meta http refresh to redirect.
+                if domain == 'p.ost.im':
+                    r = httptools.downloadpage(uri, timeout=self._timeout)
+                    uri = re.findall(r'.*url\=(.*?)\"\.*', r.data)[0]
+                    return uri, r.code
 
-        except Exception as e:
-            return uri, str(e)
+                retries = 0
+                while True:
+                    r = httptools.downloadpage(
+                        uri,
+                        timeout=self._timeout,
+                        cookies=False,
+                        follow_redirects=False)
+                    if not r.sucess:
+                        return uri, -1
+
+                    if '4snip' not in r.url and 'location' in r.headers and retries < self._maxretries:
+                        r = httptools.downloadpage(
+                            r.headers['location'],
+                            cookies=False,
+                            follow_redirects=False)
+                        uri = r.url
+                        retries += 1
+                    else:
+                        return r.url, r.code
+
+            except Exception as e:
+                return uri, str(e)
+
+        uri, code = unwrap_30x(uri, timeout)
+
+        if 'vcrypt' in uri and 'fastshield' in uri:
+            # twince because of cookies
+            httptools.downloadpage(
+                uri,
+                timeout=self._timeout,
+                post='go=go')
+            r = httptools.downloadpage(
+                uri,
+                timeout=self._timeout,
+                post='go=go')
+            return r.url, r.code
+
+        return uri, code
 
     def _clear_google_outbound_proxy(self, url):
         '''
@@ -422,6 +443,18 @@ class UnshortenIt(object):
             html = r.data
 
             uri = re.findall(r'<a class="push_button blue" href=([^>]+)>', html)[0]
+
+            return uri, r.code
+
+        except Exception as e:
+            return uri, str(e)
+
+    def _unshorten_cryptmango(self, uri):
+        try:
+            r = httptools.downloadpage(uri, timeout=self._timeout, cookies=False)
+            html = r.data
+
+            uri = re.findall(r'<iframe src="([^"]+)"[^>]+>', html)[0]
 
             return uri, r.code
 
