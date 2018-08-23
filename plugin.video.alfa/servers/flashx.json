@@ -4,12 +4,12 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "flashx.(?:tv|pw|ws|sx|to)/(?:embed.php\\?c=|embed-|playvid-|)([A-z0-9]+)",
-        "url": "https://www.flashx.tv/\\1.html"
+        "pattern": "flashx.co/([A-z0-9]+)\\.jsp",
+        "url": "https://www.flashx.co/\\1.jsp"
       },
       {
-        "pattern": "flashx.co/([A-z0-9]+).jsp",
-        "url": "https://www.flashx.to/\\1.jsp"
+        "pattern": "flashx.(?:tv|pw|ws|sx|to)/(?:embed.php\\?c=|embed-|playvid-|)([A-z0-9]+)",
+        "url": "https://www.flashx.tv/\\1.html"
       }
     ]
   },

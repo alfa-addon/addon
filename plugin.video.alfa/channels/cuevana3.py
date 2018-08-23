@@ -30,19 +30,27 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()
-    itemlist.append(item.clone(title="Ultimas", action="list_all", url=host, thumbnail=get_thumb('last', auto=True)))
-    itemlist.append(item.clone(title="Generos", action="section", section='genre',
-                               thumbnail=get_thumb('genres', auto=True)))
-    itemlist.append(item.clone(title="Castellano", action="list_all", url= host+'?s=Español',
-                               thumbnail=get_thumb('audio', auto=True)))
-    itemlist.append(item.clone(title="Latino", action="list_all", url=host + '?s=Latino',
-                               thumbnail=get_thumb('audio', auto=True)))
-    itemlist.append(item.clone(title="VOSE", action="list_all", url=host + '?s=Subtitulado',
-                               thumbnail=get_thumb('audio', auto=True)))
-    itemlist.append(item.clone(title="Alfabetico", action="section", section='alpha',
-                               thumbnail=get_thumb('alphabet', auto=True)))
-    itemlist.append(item.clone(title="Buscar", action="search", url=host+'?s=',
-                               thumbnail=get_thumb('search', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all", url=host,
+                         thumbnail=get_thumb('last', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Generos", action="section", section='genre',
+                         thumbnail=get_thumb('genres', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Castellano", action="list_all", url= host+'espanol',
+                         thumbnail=get_thumb('audio', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Latino", action="list_all", url=host + 'latino',
+                         thumbnail=get_thumb('audio', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="VOSE", action="list_all", url=host + 'subtitulado',
+                         thumbnail=get_thumb('audio', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Alfabetico", action="section", section='alpha',
+                         thumbnail=get_thumb('alphabet', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host+'?s=',
+                         thumbnail=get_thumb('search', auto=True)))
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -52,7 +60,7 @@ def mainlist(item):
 def get_source(url):
     logger.info()
     data = httptools.downloadpage(url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
 
@@ -63,11 +71,11 @@ def list_all(item):
     try:
         data = get_source(item.url)
         if item.section == 'alpha':
-          patron = '<span class=Num>\d+.*?<a href=(.*?) class.*?'
-          patron += 'src=(.*?) class.*?<strong>(.*?)</strong>.*?<td>(\d{4})</td>'
+          patron = '<span class="Num">\d+.*?<a href="([^"]+)" class.*?'
+          patron += 'src="([^"]+)" class.*?<strong>([^<]+)</strong>.*?<td>(\d{4})</td>'
         else:
-            patron = '<article id=post-.*?<a href=(.*?)>.*?src=(.*?) alt=.*?'
-            patron += '<h2 class=Title>(.*?)<\/h2>.*?<span class=Year>(.*?)<\/span>'
+            patron = '<article id="post-\d+".*?<a href="([^"]+)">.*?'
+            patron += 'src="([^"]+)".*?<h2 class="Title">([^<]+)<\/h2>.*?<span class="Year">([^<]+)<\/span>'
         data = get_source(item.url)
         matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -84,7 +92,7 @@ def list_all(item):
 
             title = '%s [%s]'%(contentTitle, year)
             thumbnail = 'http:'+scrapedthumbnail
-            itemlist.append(item.clone(action='findvideos',
+            itemlist.append(Item(channel=item.channel, action='findvideos',
                                        title=title,
                                        url=url,
                                        thumbnail=thumbnail,
@@ -95,9 +103,10 @@ def list_all(item):
 
         #  Paginación
 
-        url_next_page = scrapertools.find_single_match(data,'<a class=next.*?href=(.*?)>')
+        url_next_page = scrapertools.find_single_match(data,'<a class="next.*?" rel="next" href="([^"]+)"')
         if url_next_page:
-            itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='list_all', section=item.section))
+            itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all',
+                                 section=item.section))
     except:
         pass
     return itemlist
@@ -107,17 +116,13 @@ def section(item):
     itemlist = []
 
     data = get_source(host)
-
     action = 'list_all'
-    if item.section == 'quality':
-        patron = 'menu-item-object-category.*?menu-item-\d+><a href=(.*?)>(.*?)<\/a>'
-    elif item.section == 'genre':
-        patron = 'category menu-item-\d+><a href=(http:.*?)>(.*?)</a>'
-    elif item.section == 'year':
-        patron = 'custom menu-item-15\d+><a href=(.*?\?s.*?)>(\d{4})<\/a><\/li>'
+
+    if item.section == 'genre':
+        data = scrapertools.find_single_match(data, '>Géneros</a>.*?</ul>')
     elif item.section == 'alpha':
-        patron = '<li><a href=(.*?letter.*?)>(.*?)</a>'
-        action = 'list_all'
+        data = scrapertools.find_single_match(data, '<ul class="AZList"><li>.*?</ul>')
+    patron = '<a href="([^"]+)">([^<]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for data_one, data_two in matches:
@@ -136,11 +141,17 @@ def findvideos(item):
 
     itemlist = []
     data = get_source(item.url)
-    patron = 'domain=(.*?) class=.*?><span>.*?</span>.*?<span>\d+ - (.*?) - (.*?)</span>'
+    patron = 'TPlayerNv="Opt(\w\d+)".*?img src="(.*?)<span>\d+ - (.*?) - ([^<]+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for url, language, quality in matches:
+    for option, url_data, language, quality in matches:
+        if 'domain' in url_data:
+            url = scrapertools.find_single_match(url_data, 'domain=([^"]+)"')
+        else:
+            url = scrapertools.find_single_match(data, 'id="Opt%s">.*?file=([^"]+)"' % option)
+
         if url != '' and 'youtube' not in url:
-            itemlist.append(item.clone(title='%s', url=url, language=IDIOMAS[language], quality=quality, action='play'))
+                itemlist.append(Item(channel=item.channel, title='%s', url=url, language=IDIOMAS[language],
+                                     quality=quality, action='play'))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % '%s [%s] [%s]'%(i.server.capitalize(),
                                                                                               i.language, i.quality))

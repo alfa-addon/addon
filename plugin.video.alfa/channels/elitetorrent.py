@@ -377,6 +377,7 @@ def newest(categoria):
         if categoria == 'torrent':
             item.url = host
             item.extra = "peliculas"
+            item.category_new= 'newest'
 
             itemlist = listado(item)
             if itemlist[-1].title == "Página siguiente >>":

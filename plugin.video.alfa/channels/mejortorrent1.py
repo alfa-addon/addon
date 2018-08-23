@@ -1008,10 +1008,11 @@ def newest(categoria):
     try:
         if categoria == 'peliculas':
             item.url = host + "peliculas/"
-            item.extra = "novedades"
+            item.extra = "peliculas"
             item.channel = "mejortorrent1"
+            item.category_new= 'newest'
             item.tipo = False
-            itemlist = listado_busqueda(item)
+            itemlist = listado(item)
             if "Pagina siguiente >>" in itemlist[-1].title:
                 itemlist.pop()
 
@@ -1019,6 +1020,7 @@ def newest(categoria):
             item.url = host + "documentales/"
             item.extra = "documentales"
             item.channel = "mejortorrent1"
+            item.category_new= 'newest'
             item.tipo = False
             itemlist = listado(item)
             if "Pagina siguiente >>" in itemlist[-1].title:

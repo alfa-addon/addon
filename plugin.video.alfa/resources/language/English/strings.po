@@ -846,7 +846,7 @@ msgid "Enter URL"
 msgstr ""
 
 msgctxt "#60089"
-msgid "Enter the URL [Link to server / download]"
+msgid "Enter the URL [Link to server/download]"
 msgstr ""
 
 msgctxt "#60090"
@@ -3033,10 +3033,6 @@ msgctxt "#70079"
 msgid "Remove only links of "
 msgstr ""
 
-msgctxt "#70080"
-msgid "Do you want Alfa to auto-configure Kodi's video library?"
-msgstr ""
-
 msgctxt "#70082"
 msgid "Global Search"
 msgstr ""
@@ -4785,5 +4781,37 @@ msgstr ""
 
 msgctxt "#70521"
 msgid "You can install the Trakt script below, \nonce installed and configured what \nyou see will be synchronized with your account automatically. \nDo you want to continue?"
+msgstr ""
+
+msgctxt "#70522"
+msgid "No filter"
+msgstr ""
+
+msgctxt "#70523"
+msgid "%s: The data was restarted"
+msgstr ""
+
+msgctxt "#70524"
+msgid " Server error, try later."
+msgstr ""
+
+msgctxt "#70525"
+msgid "Configure channel"
+msgstr ""
+
+msgctxt "#70526"
+msgid "Verification of counters of videos seen / not seen (uncheck to verify)"
+msgstr ""
+
+msgctxt "#70527"
+msgid "Now in Theatres "
+msgstr ""
+
+msgctxt "#70528"
+msgid "Movies by Genre"
+msgstr ""
+
+msgctxt "#70529"
+msgid "tv show"
 msgstr ""
 

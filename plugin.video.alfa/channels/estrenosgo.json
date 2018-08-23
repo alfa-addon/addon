@@ -3,13 +3,69 @@
   "name": "EstrenosGo",
   "active": true,
   "adult": false,
-  "language": ["cast"],
-  "fanart": "https://github.com/master-1970/resources/raw/master/images/fanart/estrenosgo.png",
-  "thumbnail": "https://github.com/master-1970/resources/raw/master/images/squares/estrenosgo.png",
+  "language": ["cast", "LAT", "VOSE", "VOS"],
+  "fanart": "estrenosgo.png",
+  "thumbnail": "estrenosgo.png",
   "banner": "estrenosgo.png",
   "categories": [
     "movie",
     "tvshow",
-    "torrent"
+    "torrent",
+    "direct"
+  ],
+  "settings": [
+    {
+      "default": true, 
+      "enabled": true, 
+      "id": "include_in_global_search", 
+      "label": "Incluir en busqueda global", 
+      "type": "bool", 
+      "visible": true
+    }, 
+    {
+      "default": true, 
+      "enabled": true, 
+      "id": "modo_grafico", 
+      "label": "Buscar información extra (TMDB)", 
+      "type": "bool", 
+      "visible": true
+    },
+    {
+      "id": "timeout_downloadpage",
+      "type": "list",
+      "label": "Timeout (segs.) en descarga de páginas o verificación de servidores",
+      "default": 5,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "None",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "id": "seleccionar_ult_temporadda_activa",
+      "type": "bool",
+      "label": "Seleccionar para Videoteca si estará activa solo la última Temporada",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    }
   ]
 }

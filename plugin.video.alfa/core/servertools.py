@@ -52,7 +52,7 @@ def find_video_items(item=None, data=None):
 
     # Busca los enlaces a los videos
     for label, url, server, thumbnail in findvideos(data):
-        title = "Enlace encontrado en %s" % label
+        title = config.get_localized_string(70206) % label
         itemlist.append(
             item.clone(title=title, action="play", url=url, thumbnail=thumbnail, server=server, folder=False))
 
@@ -154,9 +154,7 @@ def findvideos(data, skip=False):
             break
 
     if not devuelve and is_filter_servers:
-        platformtools.dialog_ok("Filtrar servidores (Lista Negra)",
-                                "No hay enlaces disponibles que cumplan los requisitos de su Lista Negra.",
-                                "Pruebe de nuevo modificando el fíltro en 'Configuracíon Servidores")
+        platformtools.dialog_ok(config.get_localized_string(60001))
 
     return devuelve
 
@@ -243,8 +241,8 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
         if server_parameters:
             # Muestra un diágo de progreso
             if muestra_dialogo:
-                progreso = platformtools.dialog_progress("alfa",
-                                                         "Conectando con %s" % server_parameters["name"])
+                progreso = platformtools.dialog_progress(config.get_localized_string(20000),
+                                                         config.get_localized_string(70180) % server_parameters["name"])
 
             # Cuenta las opciones disponibles, para calcular el porcentaje
 
@@ -265,7 +263,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
             logger.info("Opciones disponibles: %s | %s" % (len(opciones), opciones))
         else:
             logger.error("No existe conector para el servidor %s" % server)
-            error_messages.append("No existe conector para el servidor %s" % server)
+            error_messages.append(config.get_localized_string(60004) % server)
             muestra_dialogo = False
 
         # Importa el server
@@ -310,7 +308,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
 
                 # Muestra el progreso
                 if muestra_dialogo:
-                    progreso.update((100 / len(opciones)) * opciones.index(opcion), "Conectando con %s" % server_name)
+                    progreso.update((100 / len(opciones)) * opciones.index(opcion), config.get_localized_string(70180) % server_name)
 
                 # Modo free
                 if opcion == "free":
@@ -337,10 +335,10 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                         elif response and response[0][0]:
                             error_messages.append(response[0][0])
                         else:
-                            error_messages.append("Se ha producido un error en %s" % server_name)
+                            error_messages.append(config.get_localized_string(60006) % server_name)
                     except:
                         logger.error("Error en el servidor: %s" % opcion)
-                        error_messages.append("Se ha producido un error en %s" % server_name)
+                        error_messages.append(config.get_localized_string(60006) % server_name)
                         import traceback
                         logger.error(traceback.format_exc())
 
@@ -350,18 +348,18 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
 
             # Cerramos el progreso
             if muestra_dialogo:
-                progreso.update(100, "Proceso finalizado")
+                progreso.update(100, config.get_localized_string(60008))
                 progreso.close()
 
             # Si no hay opciones disponibles mostramos el aviso de las cuentas premium
             if video_exists and not opciones and server_parameters.get("premium"):
                 listapremium = [get_server_parameters(premium)["name"] for premium in server_parameters["premium"]]
                 error_messages.append(
-                    "Para ver un vídeo en %s necesitas<br/>una cuenta en: %s" % (server, " o ".join(listapremium)))
+                    config.get_localized_string(60009) % (server, " o ".join(listapremium)))
 
             # Si no tenemos urls ni mensaje de error, ponemos uno generico
             elif not video_urls and not error_messages:
-                error_messages.append("Se ha producido un error en %s" % get_server_parameters(server)["name"])
+                error_messages.append(config.get_localized_string(60006) % get_server_parameters(server)["name"])
 
     return video_urls, len(video_urls) > 0, "<br/>".join(error_messages)
 
@@ -480,7 +478,7 @@ def get_server_parameters(server):
             dict_servers_parameters[server] = dict_server
 
         except:
-            mensaje = "Error al cargar el servidor: %s\n" % server
+            mensaje = config.get_localized_string(59986) % server
             import traceback
             logger.error(mensaje + traceback.format_exc())
             return {}
@@ -693,9 +691,9 @@ def filter_servers(servers_list):
             servers_list_filter = filter(lambda x: not config.get_setting("black_list", server=x), servers_list)
 
         # Si no hay enlaces despues de filtrarlos
-        if servers_list_filter or not platformtools.dialog_yesno("Filtrar servidores (Lista Negra)",
-                                                                 "Todos los enlaces disponibles pertenecen a servidores incluidos en su Lista Negra.",
-                                                                 "¿Desea mostrar estos enlaces?"):
+        if servers_list_filter or not platformtools.dialog_yesno(config.get_localized_string(60000),
+                                                                 config.get_localized_string(60010),
+                                                                 config.get_localized_string(70281)):
             servers_list = servers_list_filter
 
     return servers_list
@@ -740,10 +738,10 @@ def check_video_link(url, server, timeout=3):
             video_exists, message = server_module.test_video_exists(page_url=url)
             if not video_exists:
                 logger.info("[check_video_link] No existe! %s %s %s" % (message, server, url))
-                resultado = "NO"
+                resultado = "[COLOR red][B]NO[/B][/COLOR]"
             else:
                 logger.info("[check_video_link] comprobacion OK %s %s" % (server, url))
-                resultado = "Ok"
+                resultado = "[COLOR green][B]OK[/B][/COLOR]"
         except:
             logger.info("[check_video_link] No se puede comprobar ahora! %s %s" % (server, url))
             resultado = "??"
