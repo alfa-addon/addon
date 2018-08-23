@@ -451,11 +451,11 @@ def find_and_set_infoLabels(item):
 
     if item.contentType == "movie":
         tipo_busqueda = "movie"
-        tipo_contenido = "pelicula"
+        tipo_contenido = config.get_localized_string(70283)
         title = item.contentTitle
     else:
         tipo_busqueda = "tv"
-        tipo_contenido = "serie"
+        tipo_contenido = config.get_localized_string(70529)
         title = item.contentSerieName
 
     # Si el titulo incluye el (año) se lo quitamos

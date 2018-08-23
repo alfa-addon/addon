@@ -834,8 +834,8 @@ msgid "Enter URL"
 msgstr "Inserisci URL"
 
 msgctxt "#60089"
-msgid "Enter the URL [Link to server / download]"
-msgstr "Inserire l'URL [Link a server / download]"
+msgid "Enter the URL [Link to server/download]"
+msgstr "Inserire l'URL [Link a server/download]"
 
 msgctxt "#60090"
 msgid "Enter the URL [Direct link to video]."
@@ -3021,14 +3021,6 @@ msgctxt "#70079"
 msgid "Remove only links of "
 msgstr "Rimuovere solo i collegamenti di "
 
-msgctxt "#70080"
-msgid "Do you want Alfa to auto-configure Kodi's video library?"
-msgstr "Vuoi che Alfa auto-configuri la videoteca di Kodi?"
-
-msgctxt "#70081"
-msgid "If you choose 'No' you can do it later from 'Configuration > Preferences > Paths'."
-msgstr "Se scegli 'No' potrai farlo in seguito da 'Configurazione > Preferenze > Percorsi'."
-
 msgctxt "#70082"
 msgid "Global Search"
 msgstr "Ricerca Globale"
@@ -4257,7 +4249,7 @@ msgstr "Dai un punteggio con un [COLOR %s]%s[/COLOR]"
 
 msgctxt "#70393"
 msgid "[%s]: Select the correct %s "
-msgstr "[%s]: Seleziona la %s corretta"
+msgstr "[%s]: Seleziona il %s corretto"
 
 msgctxt "#70394"
 msgid "Action"
@@ -4773,5 +4765,41 @@ msgstr "AutoPlay consente di riprodurre automaticamente i collegamenti direttame
 
 msgctxt "#70521"
 msgid "You can install the Trakt script below, \nonce installed and configured what \nyou see will be synchronized with your account automatically. \nDo you want to continue?"
-msgstr "Puoi installare lo script Trakt qui sotto, \ nuna volta installato e configurato ciò che \nvedrai verrà sincronizzato automaticamente con il tuo account. \nVuoi continuare?"
+msgstr "Puoi installare lo script Trakt qui sotto, \nuna volta installato e configurato ciò che \nvedrai verrà sincronizzato automaticamente con il tuo account. \nVuoi continuare?"
+
+msgctxt "#70522"
+msgid "No Filter"
+msgstr "Non Filtrare"
+
+msgctxt "#70523"
+msgid "No filter"
+msgstr "Non filtrare"
+
+msgctxt "#70523"
+msgid "%s: The data was restarted"
+msgstr "%s: I dati sono stati riavviati"
+
+msgctxt "#70524"
+msgid " Server error, try later."
+msgstr " Errore del server, riprova più tardi."
+
+msgctxt "#70525"
+msgid "Configure channel"
+msgstr "Configura canale"
+
+msgctxt "#70526"
+msgid "Verification of counters of videos seen / not seen (uncheck to verify)"
+msgstr "Verifica dei contatori di video visti/non visti (deselezionare per verificare)"
+
+msgctxt "#70527"
+msgid "Now in Theatres "
+msgstr "Oggi in Sala"
+
+msgctxt "#70528"
+msgid "Movies by Genre"
+msgstr "Per genere"
+
+msgctxt "#70529"
+msgid "tv show"
+msgstr "serie"
 

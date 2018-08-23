@@ -72,8 +72,8 @@ def check_addon_init():
 def check_addon_updates(verbose=False):
     logger.info()
 
-    ADDON_UPDATES_JSON = 'http://extra.alfa-addon.com/addon_updates/updates.json'
-    ADDON_UPDATES_ZIP = 'http://extra.alfa-addon.com/addon_updates/updates.zip'
+    ADDON_UPDATES_JSON = 'https://extra.alfa-addon.com/addon_updates/updates.json'
+    ADDON_UPDATES_ZIP = 'https://extra.alfa-addon.com/addon_updates/updates.zip'
 
     try:
         last_fix_json = os.path.join(config.get_runtime_path(), 'last_fix.json')   # información de la versión fixeada del usuario

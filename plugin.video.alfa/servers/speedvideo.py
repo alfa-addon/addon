@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from core import httptools, scrapertools
-from platformcode import logger
+from platformcode import config, logger
 
 
 def test_video_exists(page_url):
