@@ -142,10 +142,13 @@ def findvideos(item):
             contentTitle = scrapertools.find_single_match(data, 'orig_title.*?>([^<]+)<').strip()
             if contentTitle != "":
                 item.contentTitle = contentTitle
-    patron = '(?s)fmi(.*?)thead'
-    bloque = scrapertools.find_single_match(data, patron)
-    match = scrapertools.find_multiple_matches(bloque, '(?is)(?:iframe|script) .*?src="([^"]+)')
-    for url in match:
+    bloque = scrapertools.find_single_match(data, '(?s)<div class="bottomPlayer">(.*?)<script>')
+    match = scrapertools.find_multiple_matches(bloque, '(?is)data-Url="([^"]+).*?data-postId="([^"]+)')
+    for dataurl, datapostid in match:
+        page_url = host + "wp-admin/admin-ajax.php"
+        post = "action=get_more_top_news&postID=%s&dataurl=%s" %(datapostid, dataurl)
+        data = httptools.downloadpage(page_url, post=post).data
+        url = scrapertools.find_single_match(data, '(?i)src="([^"]+)')
         titulo = "Ver en: %s"
         text_color = "white"
         if "goo.gl" in url:
