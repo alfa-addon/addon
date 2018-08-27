@@ -156,7 +156,7 @@ def render_items(itemlist, parent_item):
                 valid_genre = True
 
 
-        if unify_enabled:
+        if unify_enabled and parent_item.channel != 'alfavorites':
             # Formatear titulo con unify
             item = unify.title_format(item)
         else:
@@ -433,12 +433,22 @@ def set_context_commands(item, parent_item):
             if "channel" in command:
                 command["from_channel"] = item.channel
 
+            # Si no se está dentro de Alfavoritos y hay los contextos de alfavoritos, descartarlos.
+            # (pasa al ir a un enlace de alfavoritos, si este se clona en el canal)
+            if parent_item.channel != 'alfavorites' and 'i_perfil' in command and 'i_enlace' in command:
+                continue
+
             if "goto" in command:
                 context_commands.append((command["title"], "XBMC.Container.Refresh (%s?%s)" %
                                          (sys.argv[0], item.clone(**command).tourl())))
             else:
                 context_commands.append(
                     (command["title"], "XBMC.RunPlugin(%s?%s)" % (sys.argv[0], item.clone(**command).tourl())))
+
+    # No añadir más opciones predefinidas si se está dentro de Alfavoritos
+    if parent_item.channel == 'alfavorites':
+        return context_commands
+
     # Opciones segun criterios, solo si el item no es un tag (etiqueta), ni es "Añadir a la videoteca", etc...
     if item.action and item.action not in ["add_pelicula_to_library", "add_serie_to_library", "buscartrailer"]:
         # Mostrar informacion: si el item tiene plot suponemos q es una serie, temporada, capitulo o pelicula
@@ -498,6 +508,12 @@ def set_context_commands(item, parent_item):
                   or item.action in ["update_videolibrary"]) and parent_item.channel != "favorites"):
             context_commands.append((config.get_localized_string(30155), "XBMC.RunPlugin(%s?%s)" %
                                      (sys.argv[0], item.clone(channel="favorites", action="addFavourite",
+                                                              from_channel=item.channel,
+                                                              from_action=item.action).tourl())))
+        # Añadir a Alfavoritos (Mis enlaces)
+        if item.channel not in ["favorites", "videolibrary", "help", ""] and parent_item.channel != "favorites":
+            context_commands.append(('[COLOR blue]Guardar enlace[/COLOR]', "XBMC.RunPlugin(%s?%s)" %
+                                     (sys.argv[0], item.clone(channel="alfavorites", action="addFavourite",
                                                               from_channel=item.channel,
                                                               from_action=item.action).tourl())))
 
