@@ -128,7 +128,7 @@ def categorias(item):
     #Insertamos las cabeceras para todas las peliculas de la Aalidad, por Año, Alfabético, por Género, y Otras Calidades
     if not extra3:
         itemlist.append(item.clone(title="Todas las Películas de " + item.extra.upper(), action="listado", url=item.url + '-0-0-fx-1-1-.fx'))
-        itemlist.append(item.clone(title="Año", action="search", url=item.url + '-0-%s-fx-1-1-.fx'))
+        itemlist.append(item.clone(title="Año", action="year", url=item.url + '-0-%s-fx-1-1-.fx'))
         itemlist.append(item.clone(title="Alfabético A-Z", action="alfabeto", url=item.url + '-0-0-%s-1-1-.fx'))
         itemlist.append(item.clone(title="Géneros", url=item.url + '-0-0-fx-1-1-.fx'))
     
@@ -1125,11 +1125,11 @@ def actualizar_titulos(item):
 def year(item):
     logger.info()
     
-    texto = platformtools.dialog_input(default='', heading='Año a buscar')
+    texto = platformtools.dialog_numeric(0, heading='Año a buscar')
     
     item.url = item.url % texto
 
-    if texto != '':
+    if texto != '' and texto != None:
         return listado(item)
  
  
