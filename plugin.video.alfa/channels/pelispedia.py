@@ -114,21 +114,12 @@ def listado_alfabetico(item):
     itemlist = []
 
     for letra in '0ABCDEFGHIJKLMNOPQRSTUVWXYZ':
-
-        cadena = "series/letra/"
         if item.extra == "movies":
-            cadena = 'movies/all/?letra='
+            cadena = 'letra/' + ('num' if letra == '0' else letra) + '/'
             viewcontent = "movies"
-            if letra == '0':
-                cadena += "Num"
-            else:
-                cadena += letra
         else:
+            cadena = 'series/letra/' + ('num' if letra == '0' else letra) + '/'
             viewcontent = "tvshows"
-            if letra == '0':
-                cadena += "num/"
-            else:
-                cadena += letra + "/"
 
         itemlist.append(
             Item(channel=__channel__, action="listado", title=letra, url=urlparse.urljoin(CHANNEL_HOST, cadena),
@@ -148,7 +139,7 @@ def listado_genero(item):
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<Br>|<BR>|<br>|<br/>|<br />|-\s", "", data)
 
     if item.extra == "movies":
-        cadena = 'movies/all/?gender='
+        cadena = 'genero/'
         viewcontent = "movies"
         patron = '<select name="gender" id="genres" class="auxBtn1">.*?</select>'
         data = scrapertools.find_single_match(data, patron)
@@ -164,9 +155,7 @@ def listado_genero(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for key, value in matches[1:]:
-        cadena2 = cadena + key
-        if item.extra != "movies":
-            cadena2 += "/"
+        cadena2 = cadena + key + '/'
 
         itemlist.append(
             Item(channel=__channel__, action="listado", title=value, url=urlparse.urljoin(CHANNEL_HOST, cadena2),
@@ -186,7 +175,7 @@ def listado_anio(item):
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<Br>|<BR>|<br>|<br/>|<br />|-\s", "", data)
 
     if item.extra == "movies":
-        cadena = 'movies/all/?year='
+        cadena = 'anio/'
         viewcontent = "movies"
         patron = '<select name="year" id="years" class="auxBtn1">.*?</select>'
         data = scrapertools.find_single_match(data, patron)
@@ -203,10 +192,7 @@ def listado_anio(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for value in matches[1:]:
-        cadena2 = cadena + value
-
-        if item.extra != "movies":
-            cadena2 += "/"
+        cadena2 = cadena + value + '/'
 
         itemlist.append(
             Item(channel=__channel__, action="listado", title=titulo + value, url=urlparse.urljoin(CHANNEL_HOST, cadena2),
@@ -294,7 +280,7 @@ def listado(item):
              '<p class="font12">(.*?)</p>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedyear, scrapedplot in matches[:28]:
+    for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedyear, scrapedplot in matches:
         title = "%s (%s)" % (scrapertools.unescape(scrapedtitle.strip()), scrapedyear)
         plot = scrapertools.entityunescape(scrapedplot)
 
@@ -309,52 +295,19 @@ def listado(item):
         else:
             new_item.fulltitle = scrapertools.unescape(scrapedtitle.strip())
             new_item.infoLabels = {'year': scrapedyear}
-            # logger.debug(new_item.tostring())
 
         itemlist.append(new_item)
 
     # Obtenemos los datos basicos de todas las peliculas mediante multihilos
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
 
-    # numero de registros que se muestran por página, se fija a 28 por cada paginación
-    if len(matches) >= 28 and '/buscar/?' not in item.url:
+    if '<ul class="pagination"' in data:
+        url_next = scrapertools.find_single_match(data, 'href="([^"]*)" rel="next"')
+        if url_next:
+            url = urlparse.urljoin(CHANNEL_HOST, url_next)
 
-        file_php = "666more"
-        tipo_serie = ""
-
-        if item.extra == "movies":
-            anio = scrapertools.find_single_match(item.url, "(?:year=)(\w+)")
-            letra = scrapertools.find_single_match(item.url, "(?:letra=)(\w+)")
-            genero = scrapertools.find_single_match(item.url, "(?:gender=|genre=)(\w+)")
-            params = "letra=%s&year=%s&genre=%s" % (letra, anio, genero)
-
-        else:
-            tipo2 = scrapertools.find_single_match(item.url, "(?:series/|tipo2=)(\w+)")
-            tipo_serie = "&tipo=serie"
-
-            if tipo2 != "all":
-                file_php = "letra"
-                tipo_serie += "&tipo2=" + tipo2
-
-            genero = ""
-            if tipo2 == "anio":
-                genero = scrapertools.find_single_match(item.url, "(?:anio/|genre=)(\w+)")
-            if tipo2 == "genero":
-                genero = scrapertools.find_single_match(item.url, "(?:genero/|genre=)(\w+)")
-            if tipo2 == "letra":
-                genero = scrapertools.find_single_match(item.url, "(?:letra/|genre=)(\w+)")
-
-            params = "genre=%s" % genero
-
-        url = "http://www.pelispedia.tv/api/%s.php?rangeStart=28&rangeEnd=28%s&%s" % (file_php, tipo_serie, params)
-
-        if "rangeStart" in item.url:
-            ant_inicio = scrapertools.find_single_match(item.url, "rangeStart=(\d+)&")
-            inicio = str(int(ant_inicio) + 28)
-            url = item.url.replace("rangeStart=" + ant_inicio, "rangeStart=" + inicio)
-
-        itemlist.append(Item(channel=__channel__, action="listado", title=">> Página siguiente", extra=item.extra,
-                             url=url, thumbnail=thumbnail_host, fanart=fanart_host))
+            itemlist.append(Item(channel=__channel__, action="listado", title=">> Página siguiente", extra=item.extra,
+                                 url=url, thumbnail=thumbnail_host, fanart=fanart_host))
 
     return itemlist
 
@@ -486,7 +439,7 @@ def findvideos(item):
 
     for scrapedurl, scrapedtitle in matches:
 
-        if scrapedurl.startswith("https://cloud.pelispedia.vip/html5.php"):
+        if scrapedurl.startswith("https://cloud.pelispedia.vip/html5.php") or scrapedurl.startswith("https://cloud.pelispedia.stream/html5.php"):
             parms = dict(re.findall('[&|\?]{1}([^=]*)=([^&]*)', scrapedurl))
             for cal in ['360', '480', '720', '1080']:
                 if parms[cal]:
