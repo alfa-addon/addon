@@ -11,7 +11,7 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import config, logger
+from platformcode import config, logger, platformtools
 from core import tmdb
 from lib import generictools
 
@@ -73,9 +73,9 @@ def submenu(item):
 
     if item.extra == "series":
 
-        itemlist.append(item.clone(title="Series completas:", action="listado", url=item.url + "descarga-0-58122-0-0-fx-1-1-.fx", thumbnail=thumb_series_VOD, extra="series"))
+        itemlist.append(item.clone(title="Series completas", action="listado", url=item.url + "descarga-0-58122-0-0-fx-1-1-.fx", thumbnail=thumb_series_VOD, extra="series"))
         itemlist.append(item.clone(title="Nuevos episodios", action="listado", url=item.url + "descarga-0-58122-0-0-fx-1-1-.fx", thumbnail=thumb_series, extra="episodios"))
-        itemlist.append(item.clone(title="      - Año", action="search", url=item.url + "descarga-0-58122-0-%s-fx-1-1-.fx", thumbnail=thumb_series, extra="episodios"))
+        itemlist.append(item.clone(title="      - Año", action="year", url=item.url + "descarga-0-58122-0-%s-fx-1-1-.fx", thumbnail=thumb_series, extra="episodios"))
         itemlist.append(item.clone(title="      - Alfabético A-Z", action="alfabeto", url=item.url + "descarga-0-58122-0-0-%s-1-1-.fx", thumbnail=thumb_series, extra="episodios"))
 
     return itemlist
@@ -127,7 +127,7 @@ def categorias(item):
     
     #Insertamos las cabeceras para todas las peliculas de la Aalidad, por Año, Alfabético, por Género, y Otras Calidades
     if not extra3:
-        itemlist.append(item.clone(title=item.extra.upper(), action="listado", url=item.url + '-0-0-fx-1-1-.fx'))
+        itemlist.append(item.clone(title="Todas las Películas de " + item.extra.upper(), action="listado", url=item.url + '-0-0-fx-1-1-.fx'))
         itemlist.append(item.clone(title="Año", action="search", url=item.url + '-0-%s-fx-1-1-.fx'))
         itemlist.append(item.clone(title="Alfabético A-Z", action="alfabeto", url=item.url + '-0-0-%s-1-1-.fx'))
         itemlist.append(item.clone(title="Géneros", url=item.url + '-0-0-fx-1-1-.fx'))
@@ -678,11 +678,14 @@ def findvideos(item):
             
             item_local.url = scrapedurl                                             #Guardamos la url intermedia
             
+            item_local.quality = ''
             if scrapedquality and not '--' in scrapedquality:                       #Salvamos la calidad, si la hay
                 item_local.quality = scrapedquality.lower().capitalize()
             
-                if scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])'): #Salvamos la duración
-                    item_local.quality += ' [COLOR white]%s' % scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])')   #Copiamos la duración
+            if not item_local.quality:
+                item_local.quality = item.quality
+            elif scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])'):   #Salvamos la duración
+                item_local.quality += ' [/COLOR][COLOR white]%s' % scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])') #Copiamos duración
 
             if scrapedlang in IDIOMAS:                                              #Salvamos el idioma, si lo hay
                 item_local.language = ["%s" % IDIOMAS[scrapedlang]]
@@ -770,11 +773,14 @@ def findvideos(item):
             
             item_local.url = scrapedurl                                                             #Guardamos la url intermedia
             
+            item_local.quality = ''
             if scrapedquality:
                 item_local.quality = scrapedquality
             
-                if scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])'): #Salvamos la duración
-                    item_local.quality += ' [COLOR white]%s' % scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])')   #Copiamos la duración
+            if not item_local.quality:
+                item_local.quality = item.quality
+            elif scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])'):                   #Salvamos la duración
+                item_local.quality += ' [/COLOR][COLOR white]%s' % scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])') #Copiamos duración
 
             if scrapedlang in IDIOMAS:
                 item_local.language = ["%s" % IDIOMAS[scrapedlang]]                                 #Salvamos el idioma, si lo hay
@@ -855,6 +861,7 @@ def findvideos(item):
                     quality = '[%s] %s' % (capitulo, quality)
 
                 #Verificamos el si el enlace del servidor está activo
+                mostrar_server = True
                 if config.get_setting("hidepremium"):                                               #Si no se aceptan servidore premium, se ignoran
                     mostrar_server = servertools.is_server_enabled(servidor)
                 
@@ -868,9 +875,9 @@ def findvideos(item):
                         
                     item_local.alive = servertools.check_video_link(enlace, servidor, timeout=timeout)      #activo el link ?
                     #Si el link no está activo se ignora
-                    if item_local.alive == "??":                                                            #dudoso
+                    if "??" in item_local.alive:                                                            #dudoso
                         item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (servidor.capitalize(), quality, str(item_local.language))
-                    elif item_local.alive.lower() == "no":                                                  #No está activo.  Lo preparo, pero no lo pinto
+                    elif "no" in item_local.alive.lower():                                              #No está activo.  Lo preparo, pero no lo pinto
                         item_local.title = '[COLOR red][%s][/COLOR] [COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.alive, servidor.capitalize(), quality, str(item_local.language))
                         logger.debug(item_local.alive + ": ALIVE / "  + servidor + " / " + enlace)
                         raise
@@ -879,7 +886,6 @@ def findvideos(item):
 
                     #Ahora pintamos el link Directo
                     item_local.url = enlace
-                    item_local.title = '[COLOR yellow][%s][/COLOR] [COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.alive, servidor.capitalize(), quality, str(item_local.language))         #Preparamos título de Directo
                     item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title)    #Quitamos etiquetas vacías
                     item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)      #Quitamos colores vacíos
                     item_local.action = "play"                                                          #Visualizar vídeo
@@ -887,7 +893,7 @@ def findvideos(item):
                     
                     itemlist_alt.append(item_local.clone(quality=quality))                              #Pintar pantalla
                 except:
-                    pass
+                    logger.error('ERROR al procesar enlaces DIRECTOS: ' + servidor + ' / ' + scrapedenlace)
 
                 #logger.debug("DIRECTO: " + scrapedenlace + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality + " / tamaño: " + scrapedsize + " / content: " + item_local.contentTitle + " / " + item_local.contentSerieName)
                 #logger.debug(item_local)
@@ -1055,9 +1061,9 @@ def episodios(item):
                 elif 'completa' in title.lower():
                     patron = '[t|T]emporada (\d+) [c|C]ompleta'
                     item_local.contentSeason = int(scrapertools.find_single_match(title, patron))
-                else:
+                if not item_local.contentSeason:
                     #Extraemos los episodios
-                    patron = '(\d+)[x|X](\d{1,2})'
+                    patron = '(\d{1,2})[x|X](\d{1,2})'
                     item_local.contentSeason, item_local.contentEpisodeNumber = scrapertools.find_single_match(title, patron)
                     item_local.contentSeason = int(item_local.contentSeason)
                     item_local.contentEpisodeNumber = int(item_local.contentEpisodeNumber)
@@ -1116,6 +1122,17 @@ def actualizar_titulos(item):
     return item
 
     
+def year(item):
+    logger.info()
+    
+    texto = platformtools.dialog_input(default='', heading='Año a buscar')
+    
+    item.url = item.url % texto
+
+    if texto != '':
+        return listado(item)
+ 
+ 
 def search(item, texto):
     logger.info()
     #texto = texto.replace(" ", "+")
