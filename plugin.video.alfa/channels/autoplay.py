@@ -703,18 +703,17 @@ def play_multi_channel(item, itemlist):
     channel_videos = []
     video_dict = dict()
     set_status(True)
+
     for video_item in itemlist:
         if video_item.contentChannel != actual_channel:
             actual_channel = video_item.contentChannel
-        else:
+        elif is_active(actual_channel):
             channel_videos.append(video_item)
             video_dict[actual_channel] = channel_videos
 
     for channel, videos in video_dict.items():
+        item.contentChannel = channel
         if not PLAYED:
-            item.contentChannel = channel
-            if is_active(channel):
-                logger.debug('esta activo en %s' % channel)
-                start(videos, item)
+            start(videos, item)
         else:
             break
