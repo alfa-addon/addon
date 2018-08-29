@@ -12,7 +12,16 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
+from channels import filtertools, autoplay
 from core import tmdb
+
+
+
+IDIOMAS = {'latino':'Lat', 'castellano':'Cast', 'subtitulado':'VOSE'}
+list_language = IDIOMAS.values()
+list_quality = ['360p', '480p', '720p', '1080p']
+list_servers = ['mailru', 'openload',  'streamango', 'estream']
+
 
 host = 'http://pelisplus.co'
 CHANNEL_HEADERS = [
@@ -26,6 +35,8 @@ def mainlist(item):
 
     itemlist = []
 
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist.append(item.clone(title="Peliculas",
                                action="movie_menu",
                                ))
@@ -33,6 +44,8 @@ def mainlist(item):
     itemlist.append(item.clone(title="Series",
                                action="series_menu",
                                ))
+
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -342,6 +355,8 @@ def get_links_by_language(item, data):
     language = scrapertools.find_single_match(data, 'ul id=level\d_(.*?)\s*class=')
     patron = 'data-source=(.*?)data.*?srt=(.*?)data-iframe.*?Opci.*?<.*?hidden>[^\(]\((.*?)\)'
     matches = re.compile(patron, re.DOTALL).findall(data)
+    if language in IDIOMAS:
+        language == IDIOMAS[language]
 
     for url, sub, quality in matches:
         if 'http' not in url:
@@ -386,6 +401,14 @@ def findvideos(item):
 
     video_list = servertools.get_servers_itemlist(video_list, lambda i: i.title % (i.server.capitalize(), i.language,
                                                                                    i.quality) )
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(video_list, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(video_list, item)
+
     if item.contentType != 'episode':
         if config.get_videolibrary_support() and len(video_list) > 0 and item.extra != 'findvideos':
             video_list.append(
@@ -396,6 +419,7 @@ def findvideos(item):
                      extra="findvideos",
                      contentTitle=item.contentTitle
                      ))
+
 
     return video_list
 
