@@ -177,6 +177,8 @@ def check_for_update(overwrite=True):
                 if overwrite or config.get_setting("updatetvshows_interval", "videolibrary") == 0:
                     # ... forzar actualizacion independientemente del intervalo
                     serie_actualizada = update(path, p_dialog, i, t, serie, overwrite)
+                    if not serie_actualizada:
+                        update_next = hoy + datetime.timedelta(days=interval)
 
                 elif interval == 1 and update_next <= hoy:
                     # ...actualizacion diaria
@@ -201,9 +203,14 @@ def check_for_update(overwrite=True):
                     serie_actualizada = update(path, p_dialog, i, t, serie, overwrite)
                     if not serie_actualizada:
                         update_next += datetime.timedelta(days=interval)
+                        
+                if serie_actualizada:
+                    update_last = hoy
+                    update_next = hoy + datetime.timedelta(days=interval)
 
                 head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)                       #Vuelve a leer el.nfo, que ha sido modificado
-                if interval != int(serie.active) or update_next.strftime('%Y-%m-%d') != serie.update_next:
+                if interval != int(serie.active) or update_next.strftime('%Y-%m-%d') != serie.update_next or update_last.strftime('%Y-%m-%d') != serie.update_last:
+                    serie.update_last = update_last.strftime('%Y-%m-%d')
                     if update_next > hoy:
                         serie.update_next = update_next.strftime('%Y-%m-%d')
                     serie.active = interval
