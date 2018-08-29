@@ -113,9 +113,10 @@ def series(item):
         scrapedtitle = ">> Pagina Siguiente"
         scrapedthumbnail = ""
         scrapedplot = ""
-        itemlist.append(
-            Item(channel=item.channel, action="series", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
-                 plot=scrapedplot, folder=True, viewmode="movie_with_plot"))
+        if len(itemlist)>0:
+            itemlist.append(
+                Item(channel=item.channel, action="series", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
+                     plot=scrapedplot, folder=True, viewmode="movie_with_plot"))
     except:
         pass
     return itemlist

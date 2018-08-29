@@ -98,20 +98,15 @@ def peliculas(item):
     data = httptools.downloadpage(item.url).data
     patron  = '(?s)short_overlay.*?<a href="([^"]+)'
     patron += '.*?img.*?src="([^"]+)'
-    patron += '.*?title="(.*?)"'
-    patron += '.*?(Idioma.*?)post-ratings'
-
+    patron += '.*?title="([^"]+).*?'
+    patron += 'data-postid="([^"]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for url, thumbnail, titulo, varios in matches:
-        idioma = scrapertools.find_single_match(varios, '(?s)Idioma.*?kinopoisk">([^<]+)')
-        number_idioma = scrapertools.find_single_match(idioma, '[0-9]')
-        mtitulo = titulo
-        if number_idioma != "":
-            idioma = ""
-        else:
-            mtitulo += " (" + idioma + ")"
-        year = scrapertools.find_single_match(varios, 'Año.*?kinopoisk">([^<]+)')
-        year = scrapertools.find_single_match(year, '[0-9]{4}')
+    for url, thumbnail, titulo, datapostid in matches:
+        post = 'action=get_movie_details&postID=%s' %datapostid
+        data1 = httptools.downloadpage(host + "wp-admin/admin-ajax.php", post=post).data
+        idioma = "Latino"
+        mtitulo = titulo + " (" + idioma + ")"
+        year = scrapertools.find_single_match(data1, "Año:.*?(\d{4})")
         if year:
             mtitulo += " (" + year + ")"
             item.infoLabels['year'] = int(year)
@@ -121,7 +116,6 @@ def peliculas(item):
                                    fulltitle = titulo,
                                    thumbnail = thumbnail,
                                    url = url,
-                                   contentTitle = titulo,
                                    contentType="movie",
                                    language = idioma
                                    ))

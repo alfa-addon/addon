@@ -41,7 +41,7 @@ tcalidad = {"FULL HD": "https://s18.postimg.cc/qszt3n6tl/fullhd.png",
             "HD": "https://s27.postimg.cc/m2dhhkrur/image.png",
             "SD": "https://s29.postimg.cc/l66t2pfqf/image.png"
             }
-host = 'http://miradetodo.io/'
+host = 'http://miradetodo.net/'
 
 
 def mainlist(item):
