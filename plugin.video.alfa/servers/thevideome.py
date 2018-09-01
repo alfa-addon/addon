@@ -8,9 +8,9 @@ from platformcode import logger
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    return True, ""
+    page_url = httptools.downloadpage(page_url, follow_redirects=False, only_headers=True).headers.get("location", "")
     data = httptools.downloadpage(page_url).data
-    if "File was deleted" in data or "Page Cannot Be Found" in data:
+    if "File was deleted" in data or "Page Cannot Be Found" in data or "<title>Video not found" in data:
         return False, "[thevideo.me] El archivo ha sido eliminado o no existe"
     return True, ""
 
