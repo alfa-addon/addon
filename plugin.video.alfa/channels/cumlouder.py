@@ -18,6 +18,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Últimos videos", action="videos", url="https://www.cumlouder.com/"))
     itemlist.append(item.clone(title="Categorias", action="categorias", url="https://www.cumlouder.com/categories/"))
     itemlist.append(item.clone(title="Pornstars", action="pornstars_list", url="https://www.cumlouder.com/girls/"))
+    itemlist.append(item.clone(title="Listas", action="series", url="https://www.cumlouder.com/series/"))
     itemlist.append(item.clone(title="Buscar", action="search", url="https://www.cumlouder.com/search?q=%s"))
 
     return itemlist
@@ -82,10 +83,8 @@ def categorias(item):
     itemlist = []
 
     data = get_data(item.url)
-    # logger.info("channels.cumlouder data="+data)
-    patron = '<a tag-url="[^"]+" class="[^"]+" href="([^"]+)" title="([^"]+)">[^<]+'
-    patron += '<img class="thumb" src="([^"]+)".*?<span class="cantidad">([^"]+)</span>'
-
+    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+    patron = '<a tag-url=.*?href="([^"]+)" title="([^"]+)".*?<img class="thumb" src="([^"]+)".*?<span class="cantidad">([^<]+)</span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for url, title, thumbnail, count in matches:
         if "go.php?" in url:
@@ -109,6 +108,28 @@ def categorias(item):
 
     return itemlist
 
+def series(item):
+    logger.info()
+    itemlist = []
+
+    data = get_data(item.url)
+    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+    patron = '<a onclick=.*?href="([^"]+)".*?\<img src="([^"]+)".*?h2 itemprop="name">([^<]+).*?p>([^<]+)</p>'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    for url, thumbnail, title, count in matches:
+        itemlist.append(
+            item.clone(title="%s (%s) " % (title, count), url=urlparse.urljoin(item.url, url), action="videos", thumbnail=thumbnail))
+
+    # Paginador
+    matches = re.compile('<li[^<]+<a href="([^"]+)" rel="nofollow">Next[^<]+</a[^<]+</li>', re.DOTALL).findall(data)
+    if matches:
+        if "go.php?" in matches[0]:
+            url = urllib.unquote(matches[0].split("/go.php?u=")[1].split("&")[0])
+        else:
+            url = urlparse.urljoin(item.url, matches[0])
+        itemlist.append(item.clone(title="Pagina Siguiente", url=url))
+
+    return itemlist
 
 def videos(item):
     logger.info()
@@ -116,7 +137,6 @@ def videos(item):
 
     data = get_data(item.url)
     patron = '<a class="muestra-escena" href="([^"]+)" title="([^"]+)"[^<]+<img class="thumb" src="([^"]+)".*?<span class="minutos"> <span class="ico-minutos sprite"></span> ([^<]+)</span>'
-
     matches = re.compile(patron, re.DOTALL).findall(data)
     for url, title, thumbnail, duration in matches:
         if "go.php?" in url:
