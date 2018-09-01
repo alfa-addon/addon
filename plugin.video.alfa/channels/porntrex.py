@@ -73,12 +73,14 @@ def lista(item):
             scrapedthumbnail = urlparse.urljoin(host, scrapedthumbnail)
         else:
             scrapedurl = urlparse.urljoin(host, scrapedurl)
+            if not scrapedthumbnail.startswith("https"):
+                scrapedthumbnail = "https:%s" % scrapedthumbnail
         if duration:
             scrapedtitle = "%s - %s" % (duration, scrapedtitle)
         if '>HD<' in quality:
             scrapedtitle += "  [COLOR red][HD][/COLOR]"
 
-        itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
+        itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, contentThumbnail=scrapedthumbnail,
                                    fanart=scrapedthumbnail))
 
     # Extrae la marca de siguiente página
@@ -128,6 +130,8 @@ def categorias(item):
             scrapedthumbnail = urllib.unquote(scrapedthumbnail.split("/go.php?u=")[1].split("&")[0])
         else:
             scrapedurl = urlparse.urljoin(host, scrapedurl)
+            if not scrapedthumbnail.startswith("https"):
+                scrapedthumbnail = "https:%s" % scrapedthumbnail
         if videos:
             scrapedtitle = "%s  (%s)" % (scrapedtitle, videos)
         itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
@@ -161,6 +165,8 @@ def playlists(item):
             scrapedthumbnail = urlparse.urljoin(host, scrapedthumbnail)
         else:
             scrapedurl = urlparse.urljoin(host, scrapedurl)
+            if not scrapedthumbnail.startswith("https"):
+                scrapedthumbnail = "https:%s" % scrapedthumbnail
         if videos:
             scrapedtitle = "%s  (%s)" % (scrapedtitle, videos)
         itemlist.append(item.clone(action="videos", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
