@@ -152,10 +152,8 @@ def categorias(item):
 def playlists(item):
     logger.info()
     itemlist = []
-
     # Descarga la pagina    
     data = get_data(item.url)
-
     # Extrae las entradas
     patron = '<div class="item.*?href="([^"]+)" title="([^"]+)".*?data-original="([^"]+)".*?<div class="totalplaylist">([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -168,11 +166,10 @@ def playlists(item):
             if not scrapedthumbnail.startswith("https"):
                 scrapedthumbnail = "https:%s" % scrapedthumbnail
         if videos:
-            scrapedtitle = "%s  (%s)" % (scrapedtitle, videos)
+            scrapedtitle = "%s  [COLOR red](%s)[/COLOR]" % (scrapedtitle, videos)
         itemlist.append(item.clone(action="videos", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
                                    fanart=scrapedthumbnail))
-
-    # Extrae la marca de siguiente página
+    #Extrae la marca de siguiente página
     next_page = scrapertools.find_single_match(data, '<li class="next">.*?href="([^"]+)"')
     if next_page:
         if "go.php?" in next_page:
@@ -187,36 +184,29 @@ def playlists(item):
 def videos(item):
     logger.info()
     itemlist = []
-
-    # Descarga la pagina
+    # Descarga la pagina 
     data = get_data(item.url)
-
     action = "play"
     if config.get_setting("menu_info", "porntrex"):
         action = "menu_info"
     # Extrae las entradas
-    patron = '<a href="([^"]+)" class="item ".*?data-original="([^"]+)".*?<strong class="title">\s*([^<]+)<'
+    patron = '<div class="video-item.*?href="([^"]+)".*?title="([^"]+)".*?src="([^"]+)".*?class="hd(.*?)<div class="durations">.*?</i>([^<]+)</div>'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
-        scrapedtitle = scrapedtitle.strip()
+    for scrapedurl, scrapedtitle, scrapedthumbnail, quality, duration in matches:
         if "go.php?" in scrapedurl:
             scrapedurl = urllib.unquote(scrapedurl.split("/go.php?u=")[1].split("&")[0])
             scrapedthumbnail = urlparse.urljoin(host, scrapedthumbnail)
-        itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
-                                   fanart=scrapedthumbnail))
-
-    # Extrae la marca de siguiente página
-    next_page = scrapertools.find_single_match(data, '<li class="next">.*?from:(\d+)')
-    if next_page:
-        if "from=" in item.url:
-            next_page = re.sub(r'&from=(\d+)', '&from=%s' % next_page, item.url)
         else:
-            next_page = "%s?mode=async&function=get_block&block_id=playlist_view_playlist_view&sort_by" \
-                        "=added2fav_date&&from=%s" % (item.url, next_page)
-        itemlist.append(item.clone(action="videos", title=">> Página Siguiente", url=next_page))
-
+            scrapedurl = urlparse.urljoin(host, scrapedurl)
+            if not scrapedthumbnail.startswith("https"):
+                scrapedthumbnail = "https:%s" % scrapedthumbnail
+        if duration:
+            scrapedtitle = "%s - %s" % (duration, scrapedtitle)
+        if '>HD<' in quality:
+            scrapedtitle += "  [COLOR red][HD][/COLOR]"
+        itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, contentThumbnail=scrapedthumbnail,
+                                   fanart=scrapedthumbnail))
     return itemlist
-
 
 def play(item):
     logger.info()
@@ -230,7 +220,7 @@ def play(item):
         patron = '<iframe.*?height="(\d+)".*?video_url\s*:\s*\'([^\']+)\''
         matches = scrapertools.find_multiple_matches(data, patron)
     for url, quality in matches:
-        if "http" in quality:
+        if "https" in quality:
             calidad = url
             url = quality
             quality = calidad + "p"
