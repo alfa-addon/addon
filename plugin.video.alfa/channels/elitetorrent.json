@@ -3,7 +3,7 @@
   "name": "Elite Torrent",
   "active": true,
   "adult": false,
-  "language": ["*"],
+  "language": ["cast", "lat"],
   "thumbnail": "elitetorrent.png",
   "banner": "elitetorrent.png",
   "categories": [

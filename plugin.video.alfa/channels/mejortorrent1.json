@@ -3,14 +3,15 @@
   "name": "Mejor Torrent 1",
   "active": true,
   "adult": false,
-  "language": ["*"],
+  "language": ["cast", "lat"],
   "thumbnail": "mejortorrent.png",
   "banner": "mejortorrent.png",
   "categories": [
     "torrent",
     "movie",
     "tvshow",
-    "documentary"
+    "documentary",
+    "vos"
   ],
   "settings": [
     {
