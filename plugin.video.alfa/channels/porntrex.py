@@ -10,6 +10,7 @@ from core.item import Item
 from platformcode import config, logger
 
 host = "https://www.porntrex.com"
+perpage = 20
 
 
 def mainlist(item):
@@ -183,6 +184,8 @@ def playlists(item):
 
 def videos(item):
     logger.info()
+    if not item.indexp:
+        item.indexp = 1
     itemlist = []
     # Descarga la pagina 
     data = get_data(item.url)
@@ -190,9 +193,13 @@ def videos(item):
     if config.get_setting("menu_info", "porntrex"):
         action = "menu_info"
     # Extrae las entradas
-    patron = '<div class="video-item.*?href="([^"]+)".*?title="([^"]+)".*?src="([^"]+)".*?class="hd(.*?)<div class="durations">.*?</i>([^<]+)</div>'
+    patron = '<div class="video-item.*?href="([^"]+)".*?title="([^"]+)".*?src="([^"]+)"(.*?)<div class="durations">.*?</i>([^<]+)</div>'
     matches = scrapertools.find_multiple_matches(data, patron)
+    count = 0
     for scrapedurl, scrapedtitle, scrapedthumbnail, quality, duration in matches:
+        count += 1
+        if count < item.indexp:
+            continue
         if "go.php?" in scrapedurl:
             scrapedurl = urllib.unquote(scrapedurl.split("/go.php?u=")[1].split("&")[0])
             scrapedthumbnail = urlparse.urljoin(host, scrapedthumbnail)
@@ -204,8 +211,14 @@ def videos(item):
             scrapedtitle = "%s - %s" % (duration, scrapedtitle)
         if '>HD<' in quality:
             scrapedtitle += "  [COLOR red][HD][/COLOR]"
+        if len(itemlist) >= perpage:
+            break;
         itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, contentThumbnail=scrapedthumbnail,
                                    fanart=scrapedthumbnail))
+    #Extrae la marca de siguiente página
+    if item.channel and len(itemlist) >= perpage:
+        itemlist.append( item.clone(title = "Página siguiente >>>", indexp = count + 1) )
+
     return itemlist
 
 def play(item):
