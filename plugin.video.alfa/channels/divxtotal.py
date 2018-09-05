@@ -100,14 +100,14 @@ def categorias(item):
     
     if not data:    #Si no ha logrado encontrar nada, salimos
         itemlist.append(item.clone(action='', title=item.category + ': ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
-        return itemlist                                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     if not matches:
         logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.category + ': ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
-        return itemlist                                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     #logger.debug(item.url_plus)
     #logger.debug(matches)
@@ -173,7 +173,7 @@ def listado(item):
     
     cnt_tot = 40                                                                # Poner el num. máximo de items por página
     cnt_title = 0                                                               # Contador de líneas insertadas en Itemlist
-    inicio = time.time()                                                        # Controlaremos que el proceso no exceda de un tiempo razonable
+    inicio = time.time()                                    # Controlaremos que el proceso no exceda de un tiempo razonable
     fin = inicio + 10                                                           # Después de este tiempo pintamos (segundos)
     timeout_search = timeout                                                    # Timeout para descargas
     if item.extra == 'search':
@@ -182,8 +182,8 @@ def listado(item):
             timeout_search = 5                                                  # Timeout un poco más largo para las búsquedas
 
     #Sistema de paginado para evitar páginas vacías o semi-vacías en casos de búsquedas con series con muchos episodios
-    title_lista = []                                                    # Guarda la lista de series que ya están en Itemlist, para no duplicar lineas
-    if item.title_lista:                                                        # Si viene de una pasada anterior, la lista ya estará guardada
+    title_lista = []                            # Guarda la lista de series que ya están en Itemlist, para no duplicar lineas
+    if item.title_lista:                                    # Si viene de una pasada anterior, la lista ya estará guardada
         title_lista.extend(item.title_lista)                                    # Se usa la lista de páginas anteriores en Item
         del item.title_lista                                                    # ... limpiamos
         
@@ -206,7 +206,7 @@ def listado(item):
         if not data and not item.extra2:                                        #Si la web está caída salimos sin dar error
             logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
-            return itemlist                                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
+            break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         #Patrón para todo, menos para Series completas, incluido búsquedas en cualquier caso
         patron = '<tr><td(?: class="[^"]+")?><a href="([^"]+)".?title="([^"]+)".*?<\/a><\/td><td(?: class="[^"]+")?>(?:<a href="[^"]+">)?(.*?)(?:<\/a>)?<\/td><td(?: class="[^"]+")?>.*?<\/td><td(?: class="[^"]+")?>(.*?)<\/td><\/tr>'
@@ -224,7 +224,7 @@ def listado(item):
             
             logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
-            return itemlist                                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+            break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
         
         #logger.debug("PATRON: " + patron)
         #logger.debug(matches)
@@ -547,7 +547,7 @@ def episodios(item):
     itemlist = []
     item.category = categoria
     
-    logger.debug(item)
+    #logger.debug(item)
 
     if item.from_title:
         item.title = item.from_title
@@ -616,8 +616,8 @@ def episodios(item):
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
-    logger.debug("PATRON: " + patron)
-    logger.debug(matches)
+    #logger.debug("PATRON: " + patron)
+    #logger.debug(matches)
     #logger.debug(data)
     
     season = max_temp

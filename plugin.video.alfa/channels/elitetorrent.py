@@ -49,14 +49,14 @@ def submenu(item):
     if not data:
         logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " + item.url)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
-        return itemlist     #Algo no funciona, pintamos lo que tenemos
+        return itemlist                                                         #Algo no funciona, pintamos lo que tenemos
     
-    patron = '<div class="cab_menu">.*?<\/div>'     #Menú principal
+    patron = '<div class="cab_menu">.*?<\/div>'                                 #Menú principal
     data1 = scrapertools.get_match(data, patron)
-    patron = '<div id="menu_langen">.*?<\/div>'     #Menú de idiomas
+    patron = '<div id="menu_langen">.*?<\/div>'                                 #Menú de idiomas
     data1 += scrapertools.get_match(data, patron)
     
-    patron = '<a href="(.*?)".*?title="(.*?)"'      #Encontrar todos los apartados
+    patron = '<a href="(.*?)".*?title="(.*?)"'                                  #Encontrar todos los apartados
     matches = re.compile(patron, re.DOTALL).findall(data1)
     if not matches:
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
@@ -68,25 +68,25 @@ def submenu(item):
         
         logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data1)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
-        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     for scrapedurl, scrapedtitle in matches:
         scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('utf8').strip()
         scrapedtitle = scrapedtitle.replace(" torrent", "").replace(" Torrent", "").replace("Series y ", "").title()
         
-        if "castellano" in scrapedtitle.lower():    #Evita la entrada de peliculas castellano del menú de idiomas
+        if "castellano" in scrapedtitle.lower():            #Evita la entrada de peliculas castellano del menú de idiomas
             continue
         
-        if item.extra == "series":                  #Tratamos Series
+        if item.extra == "series":                          #Tratamos Series
             if not "/serie" in scrapedurl:
                 continue
-        else:                                       #Tratamos Películas
+        else:                                               #Tratamos Películas
             if "/serie" in scrapedurl:
                 continue
         
         itemlist.append(item.clone(action="listado", title=scrapedtitle, url=scrapedurl))
             
-    if item.extra == "series":      #Añadimos Series VOSE que está fuera del menú principal
+    if item.extra == "series":                              #Añadimos Series VOSE que está fuera del menú principal
         itemlist.append(item.clone(action="listado", title="Series VOSE", url=host + "/series-vose/"))
     
     return itemlist
@@ -103,24 +103,24 @@ def listado(item):
     except:
         pass
         
-    if not data:        #Si la web está caída salimos sin dar error
+    if not data:                                            #Si la web está caída salimos sin dar error
         logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
-        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     patron = '<div id="principal">.*?<\/nav><\/div><\/div>'
     data = scrapertools.find_single_match(data, patron)
     
-    patron = '<li>.*?<a href="(.*?)".*?'        #url
-    patron += 'title="(.*?)".*?'                #título
-    patron += 'src="(.*?)".*?'                  #thumb
-    patron += "title='(.*?)'.*?"                #categoría, idioma
-    patron += '"><i>(.*?)<\/i><\/span.*?'       #calidad
-    patron += '="dig1">(.*?)<.*?'               #tamaño
-    patron += '="dig2">(.*?)<\/span><\/div>'    #tipo tamaño
+    patron = '<li>.*?<a href="(.*?)".*?'                    #url
+    patron += 'title="(.*?)".*?'                            #título
+    patron += 'src="(.*?)".*?'                              #thumb
+    patron += "title='(.*?)'.*?"                            #categoría, idioma
+    patron += '"><i>(.*?)<\/i><\/span.*?'                   #calidad
+    patron += '="dig1">(.*?)<.*?'                           #tamaño
+    patron += '="dig2">(.*?)<\/span><\/div>'                #tipo tamaño
 
     matches = re.compile(patron, re.DOTALL).findall(data)
-    if not matches and not '<title>503 Backend fetch failed</title>' in data:       #error
+    if not matches and not '<title>503 Backend fetch failed</title>' in data:   #error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
             item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error
@@ -128,21 +128,21 @@ def listado(item):
         
         logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
-        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     #logger.debug("PATRON: " + patron)
     #logger.debug(matches)
     #logger.debug(data)
 
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedcategory, scrapedcalidad, scrapedsize, scrapedsizet in matches:
-        item_local = item.clone()           #Creamos copia de Item para trabajar
+        item_local = item.clone()                           #Creamos copia de Item para trabajar
         
         title = re.sub('\r\n', '', scrapedtitle).decode('utf8').strip()
         title = title.replace(" torrent", "").replace(" Torrent", "").replace("Series y ", "")
         item_local.url = urlparse.urljoin(host, scrapedurl)
         item_local.thumbnail = urlparse.urljoin(host, scrapedthumbnail)
         
-        if "---" in scrapedcalidad:         #limpiamos calidades
+        if "---" in scrapedcalidad:                         #limpiamos calidades
             scrapedcalidad = ''
         if "microhd" in title.lower():
             item_local.quality = "microHD"
@@ -158,7 +158,7 @@ def listado(item):
         else:
             item_local.quality += ' [%s %s]' % (scrapedsize.replace(".", ","), scrapedsizet)
         
-        item_local.language = []            #Verificamos el idioma por si encontramos algo
+        item_local.language = []                            #Verificamos el idioma por si encontramos algo
         if "latino" in scrapedcategory.lower() or "latino" in item.url or "latino" in title.lower():
             item_local.language += ["LAT"]
         if "ingles" in scrapedcategory.lower() or "ingles" in item.url or "vose" in scrapedurl or "vose" in item.url:
@@ -175,7 +175,7 @@ def listado(item):
         title = re.sub(r'\??\s?\d*?\&.*', '', title).title().strip()
         item_local.from_title = title                       #Guardamos esta etiqueta para posible desambiguación de título
         
-        if item_local.extra == "peliculas":     #preparamos Item para películas
+        if item_local.extra == "peliculas":                 #preparamos Item para películas
             if "/serie" in scrapedurl or "/serie" in item.url:
                 continue
         if not "/serie" in scrapedurl and not "/serie" in item.url:
@@ -183,7 +183,7 @@ def listado(item):
             item_local.contentTitle = title
             item_local.extra = "peliculas"
         
-        if item_local.extra == "series":     #preparamos Item para series
+        if item_local.extra == "series":                    #preparamos Item para series
             if not "/serie" in scrapedurl and not "/serie" in item.url:
                 continue
         if "/serie" in scrapedurl or "/serie" in item.url:
@@ -202,7 +202,7 @@ def listado(item):
                 item_local.contentEpisodeNumber = 1
             item_local.contentSerieName = title
             if epi_mult:
-                title = "%sx%s al %s -" % (item_local.contentSeason, str(item_local.contentEpisodeNumber).zfill(2), str(epi_mult).zfill(2))                  #Creamos un título con el rango de episodios
+                title = "%sx%s al %s -" % (item_local.contentSeason, str(item_local.contentEpisodeNumber).zfill(2), str(epi_mult).zfill(2))                         #Creamos un título con el rango de episodios
             else:
                 title = '%sx%s ' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
         
@@ -214,7 +214,7 @@ def listado(item):
         if item.category:       #Si este campo no existe es que viene de la primera pasada de una búsqueda global, pasamos
             tmdb.set_infoLabels(item_local, True)
         
-        itemlist.append(item_local.clone())     #Pintar pantalla
+        itemlist.append(item_local.clone())                 #Pintar pantalla
    
     #if not item.category:       #Si este campo no existe es que viene de la primera pasada de una búsqueda global
     #    return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
@@ -227,12 +227,12 @@ def listado(item):
     
     # Extrae el paginador
     patron = '<div class="paginacion">.*?<span class="pagina pag_actual".*?'
-    patron += "<a href='([^']+)'.*?"                    #url siguiente página
-    patron += 'class="pagina">(\d+)<'                #próxima página
+    patron += "<a href='([^']+)'.*?"                                            #url siguiente página
+    patron += 'class="pagina">(\d+)<'                                           #próxima página
     matches = scrapertools.find_single_match(data, patron)
     
     patron = 'class="pagina pag_sig">Siguiente.*?'
-    patron += "<a href='.*?\/page\/(\d+)\/"             #total de páginas
+    patron += "<a href='.*?\/page\/(\d+)\/"                                     #total de páginas
     last_page = scrapertools.find_single_match(data, patron)
     if not last_page:
         patron = '<div class="paginacion">.*?'
@@ -265,7 +265,7 @@ def findvideos(item):
     if not data:
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
-        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
     #data = unicode(data, "utf-8", errors="replace")
     
     #Añadimos el tamaño para todos
@@ -278,7 +278,7 @@ def findvideos(item):
     patron_t = '<div class="enlace_descarga".*?<a href="(.*?\.torrent)"'
     link_torrent = scrapertools.find_single_match(data, patron_t)
     link_torrent = urlparse.urljoin(item.url, link_torrent)
-    link_torrent = link_torrent.replace(" ", "%20")             #sustituimos espacios por %20, por si acaso
+    link_torrent = link_torrent.replace(" ", "%20")                             #sustituimos espacios por %20, por si acaso
     #logger.info("link Torrent: " + link_torrent)
     
     patron_m = '<div class="enlace_descarga".*?<a href="(magnet:?.*?)"'
@@ -286,7 +286,7 @@ def findvideos(item):
     link_magnet = urlparse.urljoin(item.url, link_magnet)
     #logger.info("link Magnet: " + link_magnet)
     
-    if not link_torrent and not link_magnet:                    #error
+    if not link_torrent and not link_magnet:                                    #error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
             item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
@@ -294,7 +294,7 @@ def findvideos(item):
             
         logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron_t + " / " + patron_m + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log'))
-        return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
@@ -315,14 +315,14 @@ def findvideos(item):
         item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))        #Preparamos título de Torrent
         item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title)    #Quitamos etiquetas vacías
         item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)          #Quitamos colores vacíos
-        item_local.alive = "??"         #Calidad del link sin verificar
-        item_local.action = "play"      #Visualizar vídeo
-        item_local.server = "torrent"   #Seridor Torrent
+        item_local.alive = "??"                                                 #Calidad del link sin verificar
+        item_local.action = "play"                                              #Visualizar vídeo
+        item_local.server = "torrent"                                           #Seridor Torrent
         
-        itemlist.append(item_local.clone())     #Pintar pantalla
+        itemlist.append(item_local.clone())                                     #Pintar pantalla
     
     #Ahora pintamos el link del Magnet, si lo hay
-    if link_magnet:		# Hay Magnet ?
+    if link_magnet:		                                                        # Hay Magnet ?
         if item_local.quality:
             item_local.quality += " "
         item_local.quality = item_local.quality.replace("[Torrent]", "") + "[Magnet]"
@@ -330,11 +330,11 @@ def findvideos(item):
         item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))        #Preparamos título de Magnet
         item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title)    #Quitamos etiquetas vacías
         item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)          #Quitamos colores vacíos
-        item_local.alive = "??"         #Calidad del link sin verificar
-        item_local.action = "play"      #Visualizar vídeo
-        item_local.server = "torrent"   #Seridor Torrent
+        item_local.alive = "??"                                                 #Calidad del link sin verificar
+        item_local.action = "play"                                              #Visualizar vídeo
+        item_local.server = "torrent"                                           #Seridor Torrent
         
-        itemlist.append(item_local.clone())     #Pintar pantalla
+        itemlist.append(item_local.clone())                                     #Pintar pantalla
     
     #logger.debug("TORRENT: " + link_torrent + "MAGNET: " + link_magnet + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality + " / tamaño: " + size + " / content: " + item_local.contentTitle + " / " + item_local.contentSerieName)
     #logger.debug(item_local)
@@ -380,7 +380,7 @@ def newest(categoria):
             item.category_new= 'newest'
 
             itemlist = listado(item)
-            if itemlist[-1].title == "Página siguiente >>":
+            if "Página siguiente >>" in itemlist[-1].title:
                 itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
