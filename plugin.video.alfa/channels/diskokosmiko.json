@@ -1,8 +1,8 @@
 {
-  "id": "kbagi",
-  "name": "Kbagi/Diskokosmiko",
+  "id": "diskokosmiko",
+  "name": "Diskokosmiko",
   "language": ["cast", "lat"],
-  "active": false,
+  "active": true,
   "adult": false,
   "version": 1,
   "thumbnail": "http://i.imgur.com/EjbfM7p.png?1",
@@ -18,23 +18,6 @@
       "label": "Incluir en busqueda global",
       "default": false,
       "enabled": true,
-      "visible": true
-    },
-   {
-      "id": "kbagiuser",
-      "type": "text",
-      "color": "0xFF25AA48",
-      "label": "Usuario Kbagi",
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "kbagipassword",
-      "type": "text",
-      "color": "0xFF25AA48",
-      "hidden": true,
-      "label": "Password Kbagi",
-      "enabled": "!eq(-1,'')",
       "visible": true
     },
     {
