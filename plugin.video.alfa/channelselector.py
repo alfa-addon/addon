@@ -24,6 +24,10 @@ def getmainlist(view="thumb_"):
                          thumbnail=get_thumb("channels.png", view), view=view,
                          category=config.get_localized_string(30119), viewmode="thumbnails"))
 
+    itemlist.append(Item(title='Mis enlaces', channel="alfavorites", action="mainlist",
+                         thumbnail=get_thumb("favorites.png", view), view=view,
+                         category='Mis enlaces', viewmode="thumbnails"))
+
     itemlist.append(Item(title=config.get_localized_string(30103), channel="search", action="mainlist",
                          thumbnail=get_thumb("search.png", view),
                          category=config.get_localized_string(30119), viewmode="list",
@@ -63,10 +67,6 @@ def getchanneltypes(view="thumb_"):
 
     # Lista de categorias
     channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent"]
-    dict_types_lang = {'movie': config.get_localized_string(30122), 'tvshow': config.get_localized_string(30123),
-                       'anime': config.get_localized_string(30124), 'documentary': config.get_localized_string(30125),
-                       'vos': config.get_localized_string(30136), 'adult': config.get_localized_string(30126),
-                       'direct': config.get_localized_string(30137)}
 
     if config.get_setting("adult_mode") != 0:
         channel_types.append("adult")
@@ -188,7 +188,6 @@ def filterchannels(category, view="thumb_"):
     channelslist.sort(key=lambda item: item.title.lower().strip())
 
     if category == "all":
-
         channel_parameters = channeltools.get_channel_parameters('url')
         # Si prefiere el banner y el canal lo tiene, cambia ahora de idea
         if view == "banner_" and "banner" in channel_parameters:
@@ -196,6 +195,7 @@ def filterchannels(category, view="thumb_"):
 
         channelslist.insert(0, Item(title=config.get_localized_string(60088), action="mainlist", channel="url",
                                     thumbnail=channel_parameters["thumbnail"], type="generic", viewmode="list"))
+
     if category in ['movie', 'tvshow']:
         titles = [config.get_localized_string(70028), config.get_localized_string(30985), config.get_localized_string(70527), config.get_localized_string(60264), config.get_localized_string(70528)]
         ids = ['popular', 'top_rated', 'now_playing', 'on_the_air']

@@ -56,8 +56,7 @@ def show_option(channel, itemlist, text_color='yellow', thumbnail=None, fanart=N
     if fanart == None:
         fanart = 'https://s7.postimg.cc/65ooga04b/Auto_Play.png'
 
-    plot_autoplay = 'AutoPlay permite auto reproducir los enlaces directamente, basándose en la configuracion de tus ' \
-                    'servidores y calidades favoritas. '
+    plot_autoplay = config.get_localized_string(60399)
     itemlist.append(
         Item(channel=__channel__,
              title=config.get_localized_string(60071),
@@ -703,18 +702,17 @@ def play_multi_channel(item, itemlist):
     channel_videos = []
     video_dict = dict()
     set_status(True)
+
     for video_item in itemlist:
         if video_item.contentChannel != actual_channel:
             actual_channel = video_item.contentChannel
-        else:
+        elif is_active(actual_channel):
             channel_videos.append(video_item)
             video_dict[actual_channel] = channel_videos
 
     for channel, videos in video_dict.items():
+        item.contentChannel = channel
         if not PLAYED:
-            item.contentChannel = channel
-            if is_active(channel):
-                logger.debug('esta activo en %s' % channel)
-                start(videos, item)
+            start(videos, item)
         else:
             break

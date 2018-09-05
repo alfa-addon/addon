@@ -125,8 +125,8 @@ def list_all(item):
 
     data = get_source(item.url)
     if item.type ==  'movies':
-        patron = '<article id="post-\d+" class="item movies"><div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'
-        patron += '"quality">([^<]+)</span><\/div><a href="([^"]+)">.*?</h3>.*?<span>([^<]+)</'
+        patron = '<article id="post-\d+" class="item movies"><div class="poster">\s?<img src="([^"]+)" alt="([^"]+)">.*?'
+        patron += '"quality">([^<]+)</span><\/div>\s?<a href="([^"]+)">.*?</h3>.*?<span>([^<]+)</'
         matches = re.compile(patron, re.DOTALL).findall(data)
 
         for scrapedthumbnail, scrapedtitle, quality, scrapedurl, year in matches:
@@ -235,29 +235,32 @@ def episodesxseasons(item):
 def findvideos(item):
     logger.info()
     from lib import generictools
+    import urllib
     itemlist = []
     data = get_source(item.url)
-    patron = 'id="option-(\d+).*?rptss" src="([^"]+)" frameborder'
+    patron = 'data-post="(\d+)" data-nume="(\d+)".*?img src=\'([^\']+)\''
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for option, scrapedurl in matches:
-        lang = scrapertools.find_single_match(data, 'href="#option-%s">.*?/flags/(.*?).png' % option)
+    for id, option, lang in matches:
+        lang = scrapertools.find_single_match(lang, '.*?/flags/(.*?).png')
         quality = ''
+
+        post = {'action': 'doo_player_ajax', 'post': id, 'nume': option}
+        post = urllib.urlencode(post)
+        test_url = 'https://pelisr.com/wp-admin/admin-ajax.php'
+        new_data = httptools.downloadpage(test_url, post=post).data
+        scrapedurl = scrapertools.find_single_match(new_data, "src='([^']+)'")
+
         if lang not in IDIOMAS:
             lang = 'en'
         title = '%s'
 
-        if 'embed' in scrapedurl:
-            enc_data = get_source(scrapedurl)
+        if 'drive' in scrapedurl:
+            enc_data = httptools.downloadpage(scrapedurl, headers = {'Referer':item.url}).data
+
             dec_data = generictools.dejuice(enc_data)
             url, quality = scrapertools.find_single_match(dec_data, '"file":"(.*?)","label":"(.*?)"')
-
-        elif 'wd=' in scrapedurl:
-            new_id = scrapertools.find_single_match(scrapedurl, 'wd=(.*?)&')
-            new_id = new_id[::-1]
-            new_url = 'https://pelisr.com/encri/?wr=%s' % new_id
-            headers = {'Referer': scrapedurl}
-            data = httptools.downloadpage(new_url, headers=headers, follow_redirects=False)
-            url = data.headers['location']
+        else:
+            url = scrapedurl
 
         itemlist.append(
             Item(channel=item.channel, url=url, title=title, action='play', quality=quality, language=IDIOMAS[lang],

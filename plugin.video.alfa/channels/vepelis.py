@@ -37,51 +37,11 @@ def mainlist(item):
     return itemlist
 
 
-def listarpeliculas(item):
+def get_source(url):
     logger.info()
-
-    # Descarga la página
-    data = httptools.downloadpage(item.url).data
-    extra = item.extra
-
-    # Extrae las entradas de la pagina seleccionada
-    '''<td class="DarkText" align="center" valign="top" width="100px" height="160px" 
-    style="background-color:#1e1e1e;" onmouseover="this.style.backgroundColor='#000000'" 
-    onmouseout="this.style.backgroundColor='#1e1e1e'"><p style="margin-bottom: 3px;border-bottom:#ABABAB 1px solid"> 
-                    	<a href="http://www.peliculasaudiolatino.com/movies/Larry_Crowne.html"><img 
-                    	src="http://www.peliculasaudiolatino.com/poster/85x115/peliculas/movieimg/movie1317696842.jpg" 
-                    	alt="Larry Crowne" border="0" height="115" width="85"></a>'''
-    patron = '<td class=.*?<a '
-    patron += 'href="([^"]+)"><img src="([^"]+)" alt="([^"]+)"'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    itemlist = []
-    for match in matches:
-        scrapedurl = match[0]
-        scrapedtitle = match[2]
-        scrapedtitle = unicode(scrapedtitle, "iso-8859-1", errors="replace").encode("utf-8")
-        scrapedthumbnail = match[1]
-        scrapedplot = ""
-        logger.info(scrapedtitle)
-
-        # Añade al listado
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, fulltitle=scrapedtitle,
-                             url=scrapedurl, thumbnail=scrapedthumbnail, plot=scrapedplot, extra=extra, folder=True))
-
-    # Extrae la marca de siguiente página
-    patron = 'Anterior.*?  :: <a href="/../../.*?/page/([^"]+)">Siguiente '
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for match in matches:
-        if len(matches) > 0:
-            scrapedurl = extra + match
-            scrapedtitle = "!Pagina Siguiente"
-            scrapedthumbnail = ""
-            scrapedplot = ""
-
-            itemlist.append(
-                    Item(channel=item.channel, action="listarpeliculas", title=scrapedtitle, fulltitle=scrapedtitle,
-                         url=scrapedurl, thumbnail=scrapedthumbnail, plot=scrapedplot, extra=extra, folder=True))
-
-    return itemlist
+    data = httptools.downloadpage(url).data
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    return data
 
 def generos(item):
     logger.info()
@@ -187,11 +147,9 @@ def listado2(item):
     itemlist = []
 
     # Descarga la página
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-
-    patron = '<h2 class=titpeli.*?<a href=(.*?) title=(.*?)>.*?peli_img_img>.*?<img src=(.*?) alt.*?'
-    patron += '<p>(.*?)<.*?Genero.*?:.*?(\d{4})<.*?png\/>(.*?)<.*?: (.*?)<'
+    data = get_source(item.url)
+    patron = '<h2 class="titpeli.*?<a href="([^"]+)" title="([^"]+)">.*?peli_img_img">.*?'
+    patron +='<img src="([^"]+)" alt.*?<p>([^<]+)</p>.*?Genero.*?:.*?(\d{4})<.*?png".*?\/>([^<]+)<.*?: (.*?)<'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedplot, year, language, quality in matches:
@@ -213,12 +171,6 @@ def listado2(item):
 
     return itemlist
 
-
-def get_source(url):
-    logger.info()
-    data = httptools.downloadpage(url).data
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    return data
 
 def get_link(data):
     new_url = scrapertools.find_single_match(data, '(?:IFRAME|iframe) src="([^"]+)" scrolling')

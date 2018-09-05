@@ -98,20 +98,15 @@ def peliculas(item):
     data = httptools.downloadpage(item.url).data
     patron  = '(?s)short_overlay.*?<a href="([^"]+)'
     patron += '.*?img.*?src="([^"]+)'
-    patron += '.*?title="(.*?)"'
-    patron += '.*?(Idioma.*?)post-ratings'
-
+    patron += '.*?title="([^"]+).*?'
+    patron += 'data-postid="([^"]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for url, thumbnail, titulo, varios in matches:
-        idioma = scrapertools.find_single_match(varios, '(?s)Idioma.*?kinopoisk">([^<]+)')
-        number_idioma = scrapertools.find_single_match(idioma, '[0-9]')
-        mtitulo = titulo
-        if number_idioma != "":
-            idioma = ""
-        else:
-            mtitulo += " (" + idioma + ")"
-        year = scrapertools.find_single_match(varios, 'Año.*?kinopoisk">([^<]+)')
-        year = scrapertools.find_single_match(year, '[0-9]{4}')
+    for url, thumbnail, titulo, datapostid in matches:
+        post = 'action=get_movie_details&postID=%s' %datapostid
+        data1 = httptools.downloadpage(host + "wp-admin/admin-ajax.php", post=post).data
+        idioma = "Latino"
+        mtitulo = titulo + " (" + idioma + ")"
+        year = scrapertools.find_single_match(data1, "Año:.*?(\d{4})")
         if year:
             mtitulo += " (" + year + ")"
             item.infoLabels['year'] = int(year)
@@ -121,7 +116,6 @@ def peliculas(item):
                                    fulltitle = titulo,
                                    thumbnail = thumbnail,
                                    url = url,
-                                   contentTitle = titulo,
                                    contentType="movie",
                                    language = idioma
                                    ))
@@ -142,10 +136,13 @@ def findvideos(item):
             contentTitle = scrapertools.find_single_match(data, 'orig_title.*?>([^<]+)<').strip()
             if contentTitle != "":
                 item.contentTitle = contentTitle
-    patron = '(?s)fmi(.*?)thead'
-    bloque = scrapertools.find_single_match(data, patron)
-    match = scrapertools.find_multiple_matches(bloque, '(?is)(?:iframe|script) .*?src="([^"]+)')
-    for url in match:
+    bloque = scrapertools.find_single_match(data, '(?s)<div class="bottomPlayer">(.*?)<script>')
+    match = scrapertools.find_multiple_matches(bloque, '(?is)data-Url="([^"]+).*?data-postId="([^"]+)')
+    for dataurl, datapostid in match:
+        page_url = host + "wp-admin/admin-ajax.php"
+        post = "action=get_more_top_news&postID=%s&dataurl=%s" %(datapostid, dataurl)
+        data = httptools.downloadpage(page_url, post=post).data
+        url = scrapertools.find_single_match(data, '(?i)src="([^"]+)')
         titulo = "Ver en: %s"
         text_color = "white"
         if "goo.gl" in url:
