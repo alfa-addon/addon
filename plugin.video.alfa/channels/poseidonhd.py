@@ -17,7 +17,7 @@ from channels import autoplay
 from platformcode import config, logger
 
 
-IDIOMAS = {'mx': 'Latino', 'dk':'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb':'VOSE'}
+IDIOMAS = {'mx': 'Latino', 'dk':'Latino', 'es': 'Castellano', 'en': 'VOSE', 'gb':'VOSE', 'de':'Alemán'}
 list_language = IDIOMAS.values()
 
 list_quality = ['HD', 'SD', 'CAM']
