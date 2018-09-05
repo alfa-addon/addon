@@ -17,7 +17,7 @@ from channels import filtertools
 
 host = "https://pepecine.io"
 
-IDIOMAS = {'es': 'Español', 'en': 'Inglés', 'la': 'Latino', 'su': 'VOSE', 'vo': 'VO', 'otro': 'OVOS'}
+IDIOMAS = {'c': 'Castellano', 'i': 'Inglés', 'l': 'Latino', 's': 'VOSE', 'v': 'VO'}
 list_idiomas = IDIOMAS.values()
 list_language = ['default']
 
@@ -46,7 +46,7 @@ def mainlist(item):
 
     itemlist.append(Item(title = "Series"))
 
-    itemlist.append(item.clone(title  = "    Últimas series",
+    itemlist.append(item.clone(title  = "    Últimos episodios",
                                url    = host + '/las-series-online',
                                action = 'list_latest',
                                type   = 'series'))
@@ -151,10 +151,12 @@ def list_latest(item):
     itemlist = []
     data = get_source(item.url)
     data_url= scrapertools.find_single_match(data,'<iframe.*?src=(.*?) ')
-    data = get_source(data_url)
+    data = get_source(data_url).decode('iso-8859-1').encode('utf8')
     patron = "<div class='online'>.*?<img src=(.*?) class=.*?alt=(.*?) title=.*?"
     patron += "<b><a href=(.*?) target=.*?align=right><div class=s7>(.*?) <"
     matches = re.compile(patron,re.DOTALL).findall(data)
+    # Como len(matches)=300, se controla una paginación interna y se muestran en bloques de 20 (perpage)
+    # Se descartan enlaces repetidos en la misma paginación pq algunas pelis se duplican por el idioma/calidad pero apuntan a la misma url
     count = 0
     for thumbnail, title, url, language in matches:
         count += 1
@@ -162,33 +164,53 @@ def list_latest(item):
         if count < item.indexp:
             continue
 
-        if count >= item.indexp + perpage:
-            break;
+        isDD, language = _extraer_dd_idioma(language)
+        if isDD: 
+            continue
+
+        repe = False
+        for it in itemlist:
+            if it.url == host + url:
+                repe = True
+                break
+        if repe:
+            continue
 
         path = scrapertools.find_single_match(thumbnail, "w\w+(/\w+.....)")
         filtro_list = {"poster_path": path}
         filtro_list = filtro_list.items()
-        itemlist.append(item.clone(action       = 'findvideos',
-                                   title        = title,
-                                   url          = host + url,
-                                   thumbnail    = thumbnail,
-                                   language     = language,
-                                   infoLabels   = {'filtro': filtro_list},
-                                   )
-                            )
+
+        new_item = item.clone(action       = 'findvideos',
+                              title        = title,
+                              url          = host + url,
+                              thumbnail    = thumbnail,
+                              language     = language,
+                              infoLabels   = {'filtro': filtro_list, 'year': '-'}
+                             )
+
+        if item.type == 'series':
+            new_item.contentType = 'episode'
+            season_episode = scrapertools.find_single_match(title, ' (\d+)x(\d+)')
+            if season_episode:
+                new_item.contentSeason = season_episode[0]
+                new_item.contentEpisodeNumber = season_episode[1]
+                new_item.contentSerieName = re.sub(r' \d+x\d+', '', title).strip()
+            else:
+                new_item.contentSerieName = title
+        else:
+            new_item.contentType = 'movie'
+            new_item.contentTitle = title
+
+        itemlist.append(new_item)
+
+        if len(itemlist) >= perpage:
+            break;
+
     tmdb.set_infoLabels(itemlist)
 
     # Desde novedades no tenemos el elemento item.channel
-    if item.channel:
-        itemlist.append(item.clone(title = "Página siguiente >>>",
-                                   indexp = item.indexp + perpage
-                                   )
-                        )
-        if item.indexp > 1:
-            itemlist.append(item.clone(title = "<<< Página anterior",
-                                       indexp = item.indexp - perpage
-                                       )
-                            )
+    if item.channel and len(itemlist) >= perpage and count + 1 <= len(matches):
+        itemlist.append( item.clone(title = "Página siguiente >>>", indexp = count + 1) )
 
     return itemlist
 
@@ -200,7 +222,7 @@ def list_all(item):
         item.page = 1
 
     genero = scrapertools.find_single_match(item.url, "genre=(\w+)")
-    data= get_source(item.url)
+    data = get_source(item.url)
     token = scrapertools.find_single_match(data, "token:.*?'(.*?)'")
     url = host+'/titles/paginate?_token=%s&perPage=%d&page=%d&order=mc_num_of_votesDesc&type=%s&minRating=&maxRating=&availToStream=1&genres[]=%s' % (token, perpage, item.page, item.type, genero)
     data = httptools.downloadpage(url).data
@@ -225,6 +247,7 @@ def list_all(item):
 
         if item.type == 'movie':
             new_item.action = 'findvideos'
+            new_item.contentType = 'movie'
             new_item.contentTitle = element['title']
             new_item.fulltitle = element['title']
             if new_item.extra != "links_encoded":
@@ -234,6 +257,8 @@ def list_all(item):
                 new_item.action = 'seasons'
                 new_item.url = host + "/ver-serie-tv/" + str(element['id'])
                 new_item.show = element['title']
+                new_item.contentType = 'tvshow'
+                new_item.contentSerieName = element['title']
 
         itemlist.append(new_item)
 
@@ -241,10 +266,6 @@ def list_all(item):
 
     itemlist.append(item.clone(title = 'Página siguiente >>>',
                                page  = item.page + 1))
-
-    if (int(item.page) > 1):
-        itemlist.append(item.clone(title = '<<< Página anterior',
-                                   page  = item.page - 1))
 
     return itemlist
 
@@ -262,16 +283,21 @@ def episodios(item):
 
 def seasons(item):
     logger.info()
+    itemlist=[]
+
     data = httptools.downloadpage(item.url).data
 
     reSeasons = re.findall("href *= *[\"']([^\"']+)[\"'][^\"']+[\"']sezon[^>]+>([^<]+)+", data)
-
-    itemlist = [item.clone(action = "seasons_episodes",
-                          title = title,
-                          url = url) for url, title in reSeasons]
+    for url, title in reSeasons:
+        new_item = item.clone(action = "seasons_episodes", title = title, url = url)
+        new_item.contentType = 'season'
+        new_item.contentSeason = title.replace('Temporada', '').strip()
+        itemlist.append(new_item)        
 
     if len(itemlist) == 1:
         itemlist = seasons_episodes(itemlist[0])
+
+    tmdb.set_infoLabels(itemlist)
 
     # Opción "Añadir esta serie a la videoteca de XBMC"
     if config.get_videolibrary_support() and len(itemlist) > 0:
@@ -281,16 +307,25 @@ def seasons(item):
 
 def seasons_episodes(item):
     logger.info()
+    itemlist=[]
 
     data = httptools.downloadpage(item.url).data
-    reEpisodes = re.findall("<a[^>]+col-sm-3[^>]+href *= *[\"'](?P<url>[^\"']+).*?<img[^>]+src *= *[\"'](?P<thumbnail>[^\"']+).*?<a[^>]+>(?P<title>.*?)</a>", data, re.MULTILINE | re.DOTALL)
 
-    seasons = [item.clone(action = "findvideos",
-                          title = re.sub("<b>Episodio (\d+)</b> - T(\d+) \|[^\|]*\| ".format(item.show), "\g<2>x\g<1> - ", title),
-                          thumbnail = thumbnail,
-                          url = url) for url, thumbnail, title in reEpisodes]
+    reEpisodes = re.findall('<li class="media bord">(.*?)</li>', data, re.MULTILINE | re.DOTALL)
+    for epi in reEpisodes:
+        new_item = item.clone(action = "findvideos")
+        new_item.url = scrapertools.find_single_match(epi, ' href="([^"]*)')
+        new_item.thumbnail = scrapertools.find_single_match(epi, ' src="([^"]*)')
+        new_item.contentType = 'episode'
+        new_item.contentEpisodeNumber = scrapertools.find_single_match(epi, '<b>Episodio (\d+)</b>')
+        title = scrapertools.find_single_match(epi, '<b>Episodio \d+</b> - T\d+ \|[^\|]*\| ([^<]*)').strip()
+        new_item.title = '%sx%s - %s' % (str(item.contentSeason), str(new_item.contentEpisodeNumber), title)
+            
+        itemlist.append(new_item)        
 
-    return seasons
+    tmdb.set_infoLabels(itemlist)
+
+    return itemlist
 
 
 def findvideos(item):
@@ -298,28 +333,17 @@ def findvideos(item):
     itemlist=[]
 
     if item.extra != "links_encoded":
-
-        # data = httptools.downloadpage(item.url).data
-        # linksRE = re.findall("getFavicon\('(?P<url>[^']+)[^>]+>[^>]+>(?P<language>[^<]+).+?<td[^>]+>(?P<quality>[^<]*).+?<td[^>]+>(?P<antiquity>[^<]*)", data, re.MULTILINE | re.DOTALL)
-        # for url, language, quality, antiquity in linksRE:
-        #     logger.info("URL = " + url);
-
-
         data = httptools.downloadpage(item.url).data
-        patron  = "renderTab.bind.*?'([^']+).*?"
-        patron += "app.utils.getFavicon.*?<img [^>]*src *= *[\"']/([^\.]+).*?"
-        patron += 'color:#B1FFC5;">([^<]+)'
+        patron  = "renderTab\.bind.*?'([^']+)"
+        patron += '.*?<img data-bind="[^"]+"><b>([^<]*)'
+        patron += '.*?<td [^>]*>([^<]*)'
+        patron += '.*?<td [^>]*>([^<]*)'
+
         matches = scrapertools.find_multiple_matches(data, patron)
-        for scrapedurl, language, scrapedquality in matches:
-            isDD = language.startswith("z")
-            if isDD:
-                language = language[1:]
-
-            language = language[0:2]
-            language = IDIOMAS.get(language, language)
-
-            title = ("Ver" if not isDD else "Descargar") + " enlace en %s [" + language + "] [" + scrapedquality + "]"
+        for scrapedurl, language, scrapedquality, scrapedwhen in matches:
+            isDD, language = _extraer_dd_idioma(language)
             if not isDD:
+                title = "%s [" + language + "] [" + scrapedquality + "] [" + scrapedwhen + "]"
                 itemlist.append(item.clone(action = 'play',
                                            title = title,
                                            url = scrapedurl,
@@ -327,22 +351,17 @@ def findvideos(item):
                                            )
                                 )
         itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+
     else:
         for link in item.url:
-
-            language = scrapertools.find_single_match(link['label'], '/([^\.]+)')
-            isDD = language.startswith("z")
-            if isDD:
-                language = language[1:]
-
-            language = language[0:2]
-
+            isDD, language = _extraer_dd_idioma(link['label'])
             if not isDD:
                 itemlist.append(item.clone(action='play',
                                      title = item.title,
                                      url= link['url'],
-                                     language=IDIOMAS.get(language, language),
+                                     language=language,
                                      quality=link['quality']))
+
         itemlist=servertools.get_servers_itemlist(itemlist)
         for videoitem in itemlist:
             videoitem.title = '%s [%s] [%s]' % (videoitem.server.capitalize(), videoitem.language, videoitem.quality)
@@ -365,3 +384,10 @@ def findvideos(item):
 def play(item):
     item.thumbnail = item.contentThumbnail
     return [item]
+
+# idiomas: l, c, s, i, v  (lat, cast, subt, inglés, vo). Si empieza por z es descarga directa
+def _extraer_dd_idioma(lang):
+    lang = lang.strip().lower()
+    isDD = lang.startswith('z')
+    lg = lang[1] if isDD else lang[0]
+    return isDD, IDIOMAS.get(lg, lang)
