@@ -56,8 +56,7 @@ def show_option(channel, itemlist, text_color='yellow', thumbnail=None, fanart=N
     if fanart == None:
         fanart = 'https://s7.postimg.cc/65ooga04b/Auto_Play.png'
 
-    plot_autoplay = 'AutoPlay permite auto reproducir los enlaces directamente, basándose en la configuracion de tus ' \
-                    'servidores y calidades favoritas. '
+    plot_autoplay = config.get_localized_string(60399)
     itemlist.append(
         Item(channel=__channel__,
              title=config.get_localized_string(60071),

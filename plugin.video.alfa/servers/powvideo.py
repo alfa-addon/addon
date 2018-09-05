@@ -33,11 +33,16 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     
     url = scrapertools.find_single_match(unpacked, "(?:src):\\\\'([^\\\\]+.mp4)\\\\'")
 
-    a, b = scrapertools.find_single_match(data, "\['splice'\]\(0x([0-9a-fA-F]*),0x([0-9a-fA-F]*)\);")
-    if a and b:
-        url = decode_powvideo_url(url, int(a, 16), int(b, 16))
+    matches = scrapertools.find_single_match(data, "\['splice'\]\(0x([0-9a-fA-F]*),0x([0-9a-fA-F]*)\);")
+    if matches:
+        url = decode_powvideo_url(url, int(matches[0], 16), int(matches[1], 16))
     else:
-        logger.debug('No detectado splice! Revisar sistema de decode...')
+        matches = scrapertools.find_single_match(data, "\(0x([0-9a-fA-F]*),0x([0-9a-fA-F]*)\);")
+        if matches:
+            url = decode_powvideo_url(url, int(matches[0], 16), int(matches[1], 16))
+        else:
+            logger.debug('No detectado splice! Revisar sistema de decode...')
+            # ~ logger.debug(data)
 
     itemlist.append([".mp4" + " [powvideo]", url])
     itemlist.sort(key=lambda x: x[0], reverse=True)

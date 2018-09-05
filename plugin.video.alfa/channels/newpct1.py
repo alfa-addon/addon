@@ -1165,6 +1165,8 @@ def findvideos(item):
     logger.info()
     itemlist = []
     
+    #logger.debug(item)
+    
     #Renombramos el canal al nombre de clone elegido.  Actualizados URL
     host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
     item.channel_host = host
@@ -1306,7 +1308,7 @@ def findvideos(item):
         item.category = category_servidores                                         #restauramos valores originales
         item.url = url_servidores
         
-        # Nuevo sistema de scrapeo de servidores creado por Torrentlocula, compatible con otros clones de Newpct1
+        # Sistema de scrapeo de servidores creado por Torrentlocula, compatible con otros clones de Newpct1
         patron = '<div class=\"box1\"[^<]+<img src=\"([^<]+)?" style[^<]+><\/div[^<]+<div class="box2">([^<]+)?<\/div[^<]+<div class="box3">([^<]+)?'
         patron += '<\/div[^<]+<div class="box4">([^<]+)?<\/div[^<]+<div class="box5"><a href=(.*?)? rel.*?'
         patron += '<\/div[^<]+<div class="box6">([^<]+)?<'
@@ -1338,10 +1340,9 @@ def findvideos(item):
     size = size.replace(".", ",")                                                   #sustituimos . por , porque Unify lo borra
     if not size:
         size = scrapertools.find_single_match(item.quality, '\s\[(\d+,?\d*?\s\w[b|B])\]')
-    else:
+    if size:
         item.title = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item.title)            #Quitamos size de título, si lo traía
         item.title = '%s [%s]' % (item.title, size)                                 #Agregamos size al final del título
-    if size:
         size = size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b')
     item.quality = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item.quality)            #Quitamos size de calidad, si lo traía
     
@@ -1440,9 +1441,9 @@ def findvideos(item):
                                 break                                           #Si se ha agotado el contador de verificación, se sale de Ver Online
 
                         #Si el link no está activo se ignora
-                        if item_local.alive == "??":                            #dudoso
+                        if "??" in item_local.alive:                            #dudoso
                             item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (servidor.capitalize(), item_local.quality, str(item_local.language))
-                        elif item_local.alive.lower() == "no":      #No está activo.  Lo preparo, pero no lo pinto
+                        elif "no" in item_local.alive.lower():                  #No está activo.  Lo preparo, pero no lo pinto
                             item_local.title = '[COLOR red][%s][/COLOR] [COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.alive, servidor.capitalize(), item_local.quality, str(item_local.language))
                             logger.debug(item_local.alive + ": ALIVE / " + title + " / " + servidor + " / " + enlace)
                             raise
@@ -1458,7 +1459,7 @@ def findvideos(item):
                         item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title).strip()
                         itemlist.append(item_local.clone())
                 except:
-                    pass
+                    logger.error('ERROR al procesar enlaces VER DIRECTOS: ' + servidor + ' / ' + enlace)
 
     #Ahora vemos los enlaces de DESCARGAR
     if len(enlaces_descargar) > 0 and ver_enlaces_descargas != 0:
@@ -1530,12 +1531,12 @@ def findvideos(item):
                                         ver_enlaces_descargas = 0               #FORZAR SALIR de DESCARGAS
                                         break                               #Si se ha agotado el contador de verificación, se sale de "Enlace"
                                 
-                                if item_local.alive == "??":                #dudoso
+                                if "??" in item_local.alive:                #dudoso
                                     if not item.unify:                      #Si titles Inteligentes NO seleccionados:
                                         parte_title = '[COLOR yellow][?][/COLOR] %s' % (parte_title)
                                     else:
                                         parte_title = '[COLOR yellow]%s[/COLOR]-%s' % (item_local.alive, parte_title)
-                                elif item_local.alive.lower() == "no":      #No está activo.  Lo preparo, pero no lo pinto
+                                elif "no" in item_local.alive.lower():      #No está activo.  Lo preparo, pero no lo pinto
                                     if not item.unify:                      #Si titles Inteligentes NO seleccionados:
                                         parte_title = '[COLOR red][%s][/COLOR] %s' % (item_local.alive, parte_title)
                                     else:
@@ -1552,7 +1553,7 @@ def findvideos(item):
                             item_local.title = re.sub(r'\[COLOR \w+\]-\[\/COLOR\]', '', item_local.title).strip()
                             itemlist.append(item_local.clone())
                     except:
-                        pass
+                        logger.error('ERROR al procesar enlaces DESCARGAR DIRECTOS: ' + servidor + ' / ' + enlace)
                     
     return itemlist
 
