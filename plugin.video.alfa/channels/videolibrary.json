@@ -280,7 +280,7 @@
     {
       "id": "lowerize_title",
       "type": "list",
-      "label": "Crear directorios con letras en miúsculas",
+      "label": "Crear directorios con letras en minúsculas",
       "default": 0,
       "lvalues": [
         "Si",
