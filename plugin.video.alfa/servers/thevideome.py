@@ -3,7 +3,7 @@
 import urllib
 from core import httptools
 from core import scrapertools
-from platformcode import logger
+from platformcode import logger, config
 
 
 def test_video_exists(page_url):
@@ -18,7 +18,7 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
-    post= {}
+    post = {}
     post = urllib.urlencode(post)
     if not "embed" in page_url:
         page_url = page_url.replace("https://thevideo.me/", "https://thevideo.me/embed-") + ".html"
