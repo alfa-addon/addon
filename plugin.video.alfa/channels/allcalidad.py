@@ -34,11 +34,39 @@ def mainlist(item):
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host, thumbnail = get_thumb("newest", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos_years", url = host, extra = "Genero", thumbnail = get_thumb("genres", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = "Por año", action = "generos_years", url = host, extra = ">Año<", thumbnail = get_thumb("year", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Favoritas", action = "peliculas", url = host + "/favorites", thumbnail = get_thumb("favorites", auto = True) ))
+    itemlist.append(Item(channel = item.channel, title = "Favoritas", action = "favorites", url = host + "/favorites", thumbnail = get_thumb("favorites", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "?s=", thumbnail = get_thumb("search", auto = True)))
     autoplay.show_option(item.channel, itemlist)
     return itemlist
+
+def favorites(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron  = '(?s)short_overlay.*?<a href="([^"]+)'
+    patron += '.*?img.*?src="([^"]+)'
+    patron += '.*?title="([^"]+).*?'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url, thumbnail, titulo in matches:
+        idioma = "Latino"
+        mtitulo = titulo + " (" + idioma + ")"
+        itemlist.append(item.clone(channel = item.channel,
+                                   action = "findvideos",
+                                   title = mtitulo,
+                                   fulltitle = titulo,
+                                   thumbnail = thumbnail,
+                                   url = url,
+                                   contentType="movie",
+                                   language = idioma
+                                   ))
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
+    url_pagina = scrapertools.find_single_match(data, 'next" href="([^"]+)')
+    if url_pagina != "":
+        pagina = "Pagina: " + scrapertools.find_single_match(url_pagina, "page/([0-9]+)")
+        itemlist.append(Item(channel = item.channel, action = "peliculas", title = pagina, url = url_pagina))
+    return itemlist
+
 
 def newest(categoria):
     logger.info()

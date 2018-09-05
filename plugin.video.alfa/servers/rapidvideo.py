@@ -7,22 +7,16 @@ from platformcode import config, logger
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    try:
-        response = httptools.downloadpage(page_url)
-    except:
-        pass
-
+    response = httptools.downloadpage(page_url)
     if response.code == 404:
         return False, config.get_localized_string(70449) % "RapidVideo"
     if not response.data or "urlopen error [Errno 1]" in str(response.code):
-        from platformcode import config
         if config.is_xbmc():
             return False, config.get_localized_string(70302) % "RapidVideo"
         elif config.get_platform() == "plex":
             return False, config.get_localized_string(70303) % "RapidVideo"
         elif config.get_platform() == "mediaserver":
             return False, config.get_localized_string(70304) % "RapidVideo"
-
     if "Object not found" in response.data:
         return False, config.get_localized_string(70449) % "RapidVideo"
     if response.code == 500:

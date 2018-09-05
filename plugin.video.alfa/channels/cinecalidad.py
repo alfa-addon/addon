@@ -289,6 +289,14 @@ def findvideos(item):
     logger.info()
     itemlist = []
     duplicados = []
+
+    if 'cinemaqualidade' in item.url:
+        lang = 'portugues'
+    elif 'espana' in item.url:
+        lang = 'castellano'
+    elif 'cinecalidad' in item.url:
+        lang = 'latino'
+
     data = httptools.downloadpage(item.url).data
     patron = 'target="_blank".*? service=".*?" data="(.*?)"><li>(.*?)<\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -316,7 +324,7 @@ def findvideos(item):
                 url = server_url[server_id] + video_id + '.html'
             elif server_id == 'BitTorrent':
                 import urllib
-                base_url = 'http://www.cinecalidad.to/protect/v.php'
+                base_url = '%sprotect/v.php' % host
                 post = {'i':video_id, 'title':item.title}
                 post = urllib.urlencode(post)
                 headers = {'Referer':item.url}
@@ -330,9 +338,9 @@ def findvideos(item):
 
         if server_id not in ['Mega', 'MediaFire', 'Trailer']:
             if server != 'torrent':
-                language = IDIOMAS[item.language]
+                language = IDIOMAS[lang]
             else:
-                language = [IDIOMAS[item.language], 'vose']
+                language = [IDIOMAS[lang], 'vose']
             if url not in duplicados:
                 new_item = Item(channel=item.channel,
                                 action='play',
@@ -426,6 +434,6 @@ def newest(categoria):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = host + '/?s=' + texto
+    item.url = item.host + '?s=' + texto
     if texto != '':
         return peliculas(item)
