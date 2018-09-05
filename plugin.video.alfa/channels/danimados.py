@@ -143,52 +143,27 @@ def episodios(item):
 
 def findvideos(item):
     logger.info()
+    import base64
 
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     data1 = scrapertools.find_single_match(data,
-                      '<div id="playex" .+?>(.+?)<\/nav><\/div><\/div>')
-    patron='src="(.+?)"'
-    itemla = scrapertools.find_multiple_matches(data1,patron)
-    if "favicons?domain" in itemla[0]:
-        method = 1
-        data2=scrapertools.find_single_match(data, "var \$user_hashs = {(.+?)}")
-        patron='".+?":"(.+?)"'
-        itemla = scrapertools.find_multiple_matches(data2,patron)
-    else:
-        method = 0
-    for i in range(len(itemla)):
-        if method==0:
-            url=itemla[i]
-        else:
-            import base64
-            b=base64.b64decode(itemla[i])
-            url=b.decode('utf8')
-        #verificar existencia del video (testing)
-        codigo=verificar_video(itemla[i])
-        if codigo==200:
-            if "ok.ru" in url:
-                server='okru'
-            else:
-                server=''
-            if "youtube" in url:
-                server='youtube'
-            if "openload" in url:
-                server='openload'
-            if "google" in url:
-                server='gvideo'
-            if "rapidvideo" in url:
-                server='rapidvideo'
-            if "streamango" in url:
-                server='streamango'
-            if server!='':
-                title="Enlace encontrado en %s " % (server.capitalize())
-            else:
-                title="NO DISPONIBLE"
-            if title!="NO DISPONIBLE":
-                itemlist.append(item.clone(title=title,url=url, action="play", server=server))
+                      '<div id="playex" .+?>(.+?)<\/nav>?\s<\/div><\/div>')
+    patron = "changeLink\('([^']+)'\)"
+    matches = re.compile(patron, re.DOTALL).findall(data1)
+
+    for url64 in matches:
+        url =base64.b64decode(url64)
+        if 'danimados' in url:
+            new_data = httptools.downloadpage('https:'+url.replace('stream', 'stream_iframe')).data
+            url = scrapertools.find_single_match(new_data, '<source src="([^"]+)"')
+
+        itemlist.append(item.clone(title='%s',url=url, action="play"))
+
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentType=="movie" and item.contentChannel!='videolibrary':
         itemlist.append(
             item.clone(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
@@ -196,18 +171,3 @@ def findvideos(item):
             
     autoplay.start(itemlist, item)
     return itemlist
-
-
-def verificar_video(url):
-    codigo=httptools.downloadpage(url).code
-    if codigo==200:
-        # Revise de otra forma
-        data=httptools.downloadpage(url).data
-        removed = scrapertools.find_single_match(data,'removed(.+)')
-        if len(removed) != 0:
-            codigo1=404
-        else:
-            codigo1=200
-    else:
-        codigo1=200
-    return codigo1
