@@ -197,7 +197,7 @@ def filterchannels(category, view="thumb_"):
                                     thumbnail=channel_parameters["thumbnail"], type="generic", viewmode="list"))
 
     if category in ['movie', 'tvshow']:
-        titles = [config.get_localized_string(70028), config.get_localized_string(30985), config.get_localized_string(70527), config.get_localized_string(60264), config.get_localized_string(70528)]
+        titles = [config.get_localized_string(70028), config.get_localized_string(30985), config.get_localized_string(70559), config.get_localized_string(60264), config.get_localized_string(70560)]
         ids = ['popular', 'top_rated', 'now_playing', 'on_the_air']
         for x in range(0,3):
             if x == 2 and category != 'movie':
