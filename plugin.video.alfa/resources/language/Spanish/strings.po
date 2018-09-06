@@ -4792,13 +4792,149 @@ msgid "Verification of counters of videos seen / not seen (uncheck to verify)"
 msgstr "Verificación de los contadores de vídeos vistos/no vistos (desmarcar para verificar)"
 
 msgctxt "#70527"
+msgid "My links"
+msgstr 'Mis enlaces'
+
+msgctxt "#70528"
+msgid "Default folder"
+msgstr "Carpeta por defecto"
+
+msgctxt "#70529"
+msgid "Repeated link"
+msgstr "Enlace repetido"
+
+msgctxt "#70530"
+msgid "You already have this link in the folder"
+msgstr "Ya tienes este enlace en la carpeta"
+
+msgctxt "#70531"
+msgid "Saved link"
+msgstr "Guardado enlace"
+
+msgctxt "#70532"
+msgid "Folder: %s"
+msgstr "Carpeta: %s"
+
+msgctxt "#70533"
+msgid "Rename folder"
+msgstr "Cambiar nombre de la carpeta"
+
+msgctxt "#70534"
+msgid "Delete folder"
+msgstr "Eliminar la carpeta"
+
+msgctxt "#70535"
+msgid "Move up all"
+msgstr "Mover arriba del todo"
+
+msgctxt "#70536"
+msgid "Move up"
+msgstr "Mover hacia arriba"
+
+msgctxt "#70537"
+msgid "Move down"
+msgstr "Mover hacia abajo"
+
+msgctxt "#70538"
+msgid "Move down all"
+msgstr "Mover abajo del todo"
+
+msgctxt "#70539"
+msgid "* Create different folders to store your favorite links within Icarus. [CR]"
+msgstr "* Crea diferentes carpetas para guardar tus enlaces favoritos dentro de Icarus.[CR]]"
+
+msgctxt "#70540"
+msgid "* To add links to folders, access the context menu from any point in Icarus.[CR]"
+msgstr "* Para añadir enlaces a las carpetas accede al menú contextual desde cualquier punto de Icarus.[CR]"
+
+msgctxt "#70541"
+msgid "* The links can be channels, sections within the channels, searches, and even movies and series although for the latter it is preferable to use the video library."
+msgstr "* Los enlaces pueden ser canales, secciones dentro de los canales, búsquedas, e incluso películas y series aunque para esto último es preferible utilizar la videoteca."
+
+msgctxt "#70542"
+msgid "Create new folder ..."
+msgstr "Crear nueva carpeta ..."
+
+msgctxt "#70543"
+msgid "Move to another folder"
+msgstr "Mover a otra carpeta"
+
+msgctxt "#70544"
+msgid "Change title"
+msgstr "Cambiar título"
+
+msgctxt "#70545"
+msgid "Change color"
+msgstr "Cambiar color"
+
+msgctxt "#70546"
+msgid "Save link in:"
+msgstr "Guardar enlace en:"
+
+msgctxt "#70547"
+msgid "Change thumbnail"
+msgstr "Cambiar thumbnail"
+
+msgctxt "#70548"
+msgid "Delete link"
+msgstr "Eliminar enlace"
+
+msgctxt "#70549"
+msgid "Select folder"
+msgstr "Seleccionar carpeta"
+
+msgctxt "#70550"
+msgid "Create new folder"
+msgstr "Crear nueva carpeta"
+
+msgctxt "#70551"
+msgid "Folder name"
+msgstr "Nombre de la carpeta"
+
+msgctxt "#70552"
+msgid "Delete the folder and links it contains?"
+msgstr "¿Borrar la carpeta y los enlaces que contiene?"
+
+msgctxt "#70553"
+msgid "Change link title"
+msgstr "Cambiar título del enlace"
+
+msgctxt "#70554"
+msgid "Select thumbnail:"
+msgstr "Seleccionar thumbnail:"
+
+msgctxt "#70555"
+msgid "Move link to:"
+msgstr "Mover enlace a:"
+
+msgctxt "#70556"
+msgid "%d links in folder"
+msgstr "%d enlaces en la carpeta"
+
+msgctxt "#70557"
+msgid "Save link"
+msgstr "Guardar enlace"
+
+msgctxt "#70558"
+msgid "Select color:"
+msgstr "Seleccionar color:"
+
+msgctxt "#70559"
 msgid "Now in Theatres "
 msgstr "Ahora en cines"
 
-msgctxt "#70528"
+msgctxt "#70560"
 msgid "Movies by Genre"
 msgstr "Por generos"
 
-msgctxt "#70529"
-msgid "tv show"
-msgstr "serie"
+msgctxt "#70561"
+msgid "Search Similar
+msgstr "Buscar Similares"
+
+
+
+
+
+
+
+
