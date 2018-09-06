@@ -24,9 +24,9 @@ def getmainlist(view="thumb_"):
                          thumbnail=get_thumb("channels.png", view), view=view,
                          category=config.get_localized_string(30119), viewmode="thumbnails"))
 
-    itemlist.append(Item(title='Mis enlaces', channel="alfavorites", action="mainlist",
-                         thumbnail=get_thumb("favorites.png", view), view=view,
-                         category='Mis enlaces', viewmode="thumbnails"))
+    itemlist.append(Item(title=config.get_localized_string(70527), channel="alfavorites", action="mainlist",
+                         thumbnail=get_thumb("mylink.png", view), view=view,
+                         category=config.get_localized_string(70527), viewmode="thumbnails"))
 
     itemlist.append(Item(title=config.get_localized_string(30103), channel="search", action="mainlist",
                          thumbnail=get_thumb("search.png", view),
