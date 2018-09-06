@@ -1734,7 +1734,7 @@ msgid "[COLOR %s]Filter configuration for TV series...[/COLOR]"
 msgstr ""
 
 msgctxt "#60430"
-msgid "FILTRO: Delete '%s'"
+msgid "FILTER: Delete '%s'"
 msgstr ""
 
 msgctxt "#60431"
