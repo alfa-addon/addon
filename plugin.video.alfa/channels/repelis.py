@@ -9,7 +9,6 @@ from channelselector import get_thumb
 from channels import autoplay
 from channels import filtertools
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
