@@ -516,7 +516,7 @@ def set_context_commands(item, parent_item):
                                                               from_action=item.action).tourl())))
         # Añadir a Alfavoritos (Mis enlaces)
         if item.channel not in ["favorites", "videolibrary", "help", ""] and parent_item.channel != "favorites":
-            context_commands.append(('[COLOR blue]Guardar enlace[/COLOR]', "XBMC.RunPlugin(%s?%s)" %
+            context_commands.append(('[COLOR blue]%s[/COLOR]' % config.get_localized_string(70557), "XBMC.RunPlugin(%s?%s)" %
                                      (sys.argv[0], item.clone(channel="alfavorites", action="addFavourite",
                                                               from_channel=item.channel,
                                                               from_action=item.action).tourl())))
@@ -538,7 +538,7 @@ def set_context_commands(item, parent_item):
                 mediatype = 'tv'
             else:
                 mediatype = item.contentType
-            context_commands.append(("[COLOR yellow]Buscar Similares[/COLOR]", "XBMC.Container.Update (%s?%s)" % (
+            context_commands.append(("[COLOR yellow]%s[/COLOR]" % config.get_localized_string(70561), "XBMC.Container.Update (%s?%s)" % (
             sys.argv[0], item.clone(channel='search', action='discover_list', search_type='list', page='1',
                                     list_type='%s/%s/similar' % (mediatype,item.infoLabels['tmdb_id'])).tourl())))
 
