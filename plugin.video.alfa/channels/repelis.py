@@ -14,11 +14,12 @@ from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
+from lib import jsunpack
+from platformcode import config, logger, platformtools
 
 
 idio = {'es-mx': 'LAT','es-es': 'ESP','en': 'VO'}
-cali = {'poor': 'SD','low': 'SD','high': 'HD'}
+cali = {'poor': 'SD','low': 'SD','medium': 'HD','high': 'HD'}
 
 list_language = idio.values()
 list_quality = ["SD","HD"]
@@ -44,8 +45,16 @@ def mainlist(item):
     itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos", url = host, extra = "Genero", thumbnail = get_thumb("genres", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "/search?term=", thumbnail = get_thumb("search", auto = True)))
+    itemlist.append(item.clone(title="Configurar canal...", text_color="gold", action="configuracion", folder=False))
     autoplay.show_option(item.channel, itemlist)
     return itemlist
+
+
+def configuracion(item):
+    ret = platformtools.show_channel_settings()
+    platformtools.itemlist_refresh()
+    return ret
+
 
 def destacadas(item):
     logger.info()
@@ -178,12 +187,10 @@ def findvideos(item):
     dict = jsontools.load(bloque)
     urlx = httptools.downloadpage(host + dict[0]["url"])   #Para que pueda saltar el cloudflare, se tiene que descargar la página completa
     for datos in dict:
-        url1 = httptools.downloadpage(host + datos["url"], follow_redirects=False, only_headers=True).headers.get("location", "")
-        titulo = "Ver en: %s (" + cali[datos["quality"]] + ") (" + idio[datos["audio"]] + ")"
-        text_color = "white"
-        if "youtube" in url1:
-            titulo = "Ver trailer: %s"
-            text_color = "yellow"
+        url1 = datos["url"]
+        hostname = scrapertools.find_single_match(datos["hostname"].replace("www.",""), "(.*?)\.")
+        if hostname == "my": hostname = "mailru"
+        titulo = "Ver en: " + hostname.capitalize() + " (" + cali[datos["quality"]] + ") (" + idio[datos["audio"]] + ")"
         itemlist.append(
                  item.clone(channel = item.channel,
                  action = "play",
@@ -192,7 +199,6 @@ def findvideos(item):
                  title = titulo,
                  url = url1
                  ))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     itemlist.sort(key=lambda it: (it.language, it.server))
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
     # Requerido para FilterTools
@@ -217,5 +223,11 @@ def findvideos(item):
 
 
 def play(item):
-    item.thumbnail = item.contentThumbnail
-    return [item]
+    itemlist = []
+    url1 = httptools.downloadpage(host + item.url, follow_redirects=False, only_headers=True).headers.get("location", "")
+    if "storage" in url1:
+        url1 = scrapertools.find_single_match(url1, "src=(.*mp4)").replace("%3A",":").replace("%2F","/")
+    itemlist.append(item.clone(url=url1))
+    itemlist = servertools.get_servers_itemlist(itemlist)
+    itemlist[0].thumbnail = item.contentThumbnail
+    return itemlist
