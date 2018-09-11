@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "http://tusfiles.org/\\?([A-z0-9]+)",
-        "url": "http://tusfiles.org/?\\1/"
-      },
-      {
-        "pattern": "tusfiles.net/(?:embed-|)([A-z0-9]+)",
-        "url": "http://tusfiles.net/\\1"
+        "pattern": "megadrive.co/embed/([A-z0-9]+)",
+        "url": "https://megadrive.co/embed/\\1"
       }
     ]
   },
   "free": true,
-  "id": "tusfiles",
-  "name": "tusfiles",
+  "id": "megadrive",
+  "name": "megadrive",
   "settings": [
     {
       "default": false,
@@ -41,5 +37,6 @@
       "type": "list",
       "visible": false
     }
-  ]
+  ],
+  "thumbnail": "https://s8.postimg.cc/kr5olxmad/megadrive1.png"
 }
