@@ -8,6 +8,7 @@ from core import servertools
 from core import jsontools
 from core import tmdb
 from core.item import Item
+from channels import filtertools, autoplay
 from platformcode import config, logger
 
 host = 'http://www.ultrapeliculashd.com'
@@ -63,39 +64,51 @@ tcalidad = {'1080P': 'https://s21.postimg.cc/4h1s0t1wn/hd1080.png',
             '720P': 'https://s12.postimg.cc/lthu7v4q5/hd720.png', "HD": "https://s27.postimg.cc/m2dhhkrur/image.png"}
 
 
+IDIOMAS = {'Latino': 'LAT', 'Español': 'CAST', 'SUB':'VOSE'}
+list_language = IDIOMAS.values()
+list_quality = ['default', '1080p']
+list_servers = ['openload','directo']
+
+__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'ultrapeliculashd')
+__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'ultrapeliculashd')
+
 def mainlist(item):
     logger.info()
 
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist = []
 
-    itemlist.append(item.clone(title="Todas",
-                               action="lista",
-                               thumbnail='https://s18.postimg.cc/fwvaeo6qh/todas.png',
-                               fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
-                               url=host + '/movies/'
-                               ))
+    itemlist.append(Item(channel=item.channel, title="Todas",
+                         action="lista",
+                         thumbnail='https://s18.postimg.cc/fwvaeo6qh/todas.png',
+                         fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
+                         url=host + '/movies/'
+                         ))
 
-    itemlist.append(item.clone(title="Generos",
-                               action="generos",
-                               url=host,
-                               thumbnail='https://s3.postimg.cc/5s9jg2wtf/generos.png',
-                               fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png'
-                               ))
+    itemlist.append(Item(channel=item.channel, title="Generos",
+                         action="generos",
+                         url=host,
+                         thumbnail='https://s3.postimg.cc/5s9jg2wtf/generos.png',
+                         fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png'
+                         ))
 
-    itemlist.append(item.clone(title="Alfabetico",
-                               action="seccion",
-                               url=host,
-                               thumbnail='https://s17.postimg.cc/fwi1y99en/a-z.png',
-                               fanart='https://s17.postimg.cc/fwi1y99en/a-z.png',
-                               extra='alfabetico'
-                               ))
+    itemlist.append(Item(channel=item.channel, title="Alfabetico",
+                         action="seccion",
+                         url=host,
+                         thumbnail='https://s17.postimg.cc/fwi1y99en/a-z.png',
+                         fanart='https://s17.postimg.cc/fwi1y99en/a-z.png',
+                         extra='alfabetico'
+                         ))
 
-    itemlist.append(item.clone(title="Buscar",
-                               action="search",
-                               url=host + '/?s=',
-                               thumbnail='https://s30.postimg.cc/pei7txpa9/buscar.png',
-                               fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
-                               ))
+    itemlist.append(Item(channel=item.channel, title="Buscar",
+                         action="search",
+                         url=host + '/?s=',
+                         thumbnail='https://s30.postimg.cc/pei7txpa9/buscar.png',
+                         fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
+                         ))
+
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -160,13 +173,13 @@ def generos(item):
         title = scrapedtitle
         url = scrapedurl
         if scrapedtitle not in ['PRÓXIMAMENTE', 'EN CINE']:
-            itemlist.append(item.clone(action="lista",
-                                       title=title,
-                                       fulltitle=item.title,
-                                       url=url,
-                                       thumbnail=thumbnail,
-                                       fanart=fanart
-                                       ))
+            itemlist.append(Item(channel=item.channel, action="lista",
+                                 title=title,
+                                 fulltitle=item.title,
+                                 url=url,
+                                 thumbnail=thumbnail,
+                                 fanart=fanart
+                                 ))
     return itemlist
 
 
@@ -209,15 +222,33 @@ def alpha(item):
 
 
 def findvideos(item):
+    from lib import jsunpack
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = '<iframe.*?rptss src=(.*?) (?:width.*?|frameborder.*?) allowfullscreen><\/iframe>'
+    patron = '<div id=(option.*?) class=play.*?<iframe.*?'
+    patron += 'rptss src=(.*?) (?:width.*?|frameborder.*?) allowfullscreen><\/iframe>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for video_url in matches:
-        if 'stream' in video_url and 'streamango' not in video_url:
+    for option, video_url in matches:
+        language = scrapertools.find_single_match(data, '#%s>.*?-->(.*?)(?:\s|<)' % option)
+        if 'sub' in language.lower():
+            language = 'SUB'
+        language = IDIOMAS[language]
+        if 'ultrapeliculashd' in video_url:
+            new_data = httptools.downloadpage(video_url).data
+            new_data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", new_data)
+            if 'drive' not in video_url:
+                quality= '1080p'
+                packed = scrapertools.find_single_match(new_data, '<script>(eval\(.*?)eval')
+                unpacked = jsunpack.unpack(packed)
+                url = scrapertools.find_single_match(unpacked, 'file:(http.?:.*?)\}')
+            else:
+                quality= '1080p'
+                url = scrapertools.find_single_match(new_data, '</div><iframe src=([^\s]+) webkitallowfullscreen')
+
+        elif 'stream' in video_url and 'streamango' not in video_url:
             data = httptools.downloadpage('https:'+video_url).data
             if not 'iframe' in video_url:
                 new_url=scrapertools.find_single_match(data, 'iframe src="(.*?)"')
@@ -233,26 +264,42 @@ def findvideos(item):
                 url = url.replace('download', 'preview')+headers_string
 
                 sub = scrapertools.find_single_match(new_data, 'file:.*?"(.*?srt)"')
-                new_item = (Item(title=item.title, url=url, quality=quality, subtitle=sub, server='directo'))
+                new_item = (Item(title=item.title, url=url, quality=quality, subtitle=sub, server='directo',
+                                 language = language))
                 itemlist.append(new_item)
+
         else:
-            itemlist.extend(servertools.find_video_items(data=video_url))
+            url = video_url
+            quality = 'default'
 
-    for videoitem in itemlist:
-        videoitem.channel = item.channel
-        videoitem.action = 'play'
-        videoitem.thumbnail = item.thumbnail
-        videoitem.infoLabels = item.infoLabels
-        videoitem.title = item.contentTitle + ' (' + videoitem.server + ')'
-        if 'youtube' in videoitem.url:
-            videoitem.title = '[COLOR orange]Trailer en Youtube[/COLOR]'
+        if not config.get_setting("unify"):
+            title = ' [%s] [%s]' % (quality, language)
+        else:
+            title = ''
 
-    itemlist = servertools.get_servers_itemlist(itemlist)
+        new_item = (Item(channel=item.channel, title='%s'+title, url=url, action='play', quality=quality,
+                         language=language,  infoLabels=item.infoLabels))
+        itemlist.append(new_item)
+
+
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title %  i.server.capitalize())
+
+    if __comprueba_enlaces__:
+        itemlist = servertools.check_list_links(itemlist, __comprueba_enlaces_num__)
+
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
                  action="add_pelicula_to_library", extra="findvideos", contentTitle=item.contentTitle))
+
     return itemlist
 
 
