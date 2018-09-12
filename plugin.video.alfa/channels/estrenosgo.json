@@ -3,7 +3,7 @@
   "name": "EstrenosGo",
   "active": true,
   "adult": false,
-  "language": ["cast", "LAT", "VOSE", "VOS"],
+  "language": ["cast", "lat"],
   "fanart": "estrenosgo.png",
   "thumbnail": "estrenosgo.png",
   "banner": "estrenosgo.png",
@@ -11,7 +11,8 @@
     "movie",
     "tvshow",
     "torrent",
-    "direct"
+    "direct",
+    "vos"
   ],
   "settings": [
     {

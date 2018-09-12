@@ -242,8 +242,9 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
             server_cloudflare = "cloudflare"
 
     is_channel = inspect.getmodule(inspect.currentframe().f_back)
-    # error 4xx o 5xx se lanza excepcion
-    # response["code"] = 400
+    # error 4xx o 5xx se lanza excepcion (menos para servidores)
+    # response["code"] = 400  # linea de código para probar
+    is_channel = str(is_channel).replace("/servers/","\\servers\\")  # Para sistemas operativos diferente a Windows la ruta cambia
     if type(response["code"]) ==  int and "\\servers\\" not in str(is_channel):
         if response["code"] > 399 and (server_cloudflare == "cloudflare" and response["code"] != 503):
             raise WebErrorException(urlparse.urlparse(url)[1])

@@ -3,7 +3,7 @@
   "name": "DosPelis",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast", "vose"],
+  "language": ["lat", "cast"],
   "thumbnail": "https://www.dospelis.com/wp-content/uploads/2018/07/dospelislogo.png",
   "banner": "",
   "categories": [

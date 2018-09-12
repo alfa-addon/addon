@@ -21,7 +21,7 @@ from channelselector import get_thumb
 
 __channel__ = "pedropolis"
 
-host = "http://pedropolis.tv/"
+host = "https://pedropolis.tv/"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -74,7 +74,9 @@ def menumovies(item):
     itemlist = [item.clone(title="Todas", action="peliculas", text_blod=True, url=host + 'pelicula/',
                            viewcontent='movies', viewmode="movie_with_plot"),
                 item.clone(title="Más Vistas", action="peliculas", text_blod=True,
-                           viewcontent='movies', url=host + 'tendencias/?get=movie', viewmode="movie_with_plot"),
+                           viewcontent='movies', url=host + 'tendencias/?get=movies', viewmode="movie_with_plot"),
+                item.clone(title="Mejor Valoradas", action="peliculas", text_blod=True,
+                           viewcontent='movies', url=host + 'tendencias/?get=movies', viewmode="movie_with_plot"),
                 item.clone(title="Por año", action="p_portipo", text_blod=True, extra="Películas Por año",
                            viewcontent='movies', url=host, viewmode="movie_with_plot"),
                 item.clone(title="Por género", action="p_portipo", text_blod=True, extra="Categorías",
@@ -115,41 +117,32 @@ def p_portipo(item):
 def peliculas(item):
     logger.info()
     itemlist = []
-    url_next_page = ''
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
-    # logger.info(data)
-    patron = '<div class="poster"> <img src="([^"]+)" alt="([^"]+)">.*?'    # img, title
-    patron += '<div class="rating"><span class="[^"]+"></span>([^<]+).*?'  # rating
-    patron += '<span class="quality">([^<]+)</span></div> <a href="([^"]+)">.*?'  # calidad, url
-    patron += '<span>([^<]+)</span>'                                       # year
+    patron = '<div class="poster"> <img src="([^"]+)" alt="([^"]+)">.*?'    		# img, title
+    patron += '<div class="rating"><span class="[^"]+"></span>([^<]+).*?'  			# rating
+    patron += '<span class="quality">([^<]+)</span></div> <a href="([^"]+)">.*?'    # calidad, url
+    patron += '<span>([^<]+)</span>.*?'                                             # year
+
     matches = scrapertools.find_multiple_matches(data, patron)
-    # Paginación
-    if item.next_page != 'b':
-        if len(matches) > 19:
-            url_next_page = item.url
-        matches = matches[:19]
-        next_page = 'b'
-    else:
-        matches = matches[19:]
-        next_page = 'a'
-        patron_next_page = "<span class=\"current\">\d+</span><a href='([^']+)'"
-        matches_next_page = re.compile(patron_next_page, re.DOTALL).findall(data)
-        if len(matches_next_page) > 0:
-            url_next_page = urlparse.urljoin(item.url, matches_next_page[0])
+
     for scrapedthumbnail, scrapedtitle, rating, quality, scrapedurl, year in matches:
-        if 'Proximamente' not in quality:
-            scrapedtitle = scrapedtitle.replace('Ver ', '').partition(' /')[0].partition(':')[0].replace(
-                'Español Latino', '').strip()
-            title = "%s [COLOR green][%s][/COLOR] [COLOR yellow][%s][/COLOR]" % (scrapedtitle, year, quality)
-            itemlist.append(Item(channel=item.channel, action="findvideos", contentTitle=scrapedtitle,
-                            infoLabels={"year":year, "rating":rating}, thumbnail=scrapedthumbnail,
-                            url=scrapedurl, next_page=next_page, quality=quality, title=title))
+        scrapedtitle = scrapedtitle.replace('Ver ', '').partition(' /')[0].partition(':')[0].replace(
+            'Español Latino', '').strip()
+        title = "%s [COLOR green][%s][/COLOR] [COLOR yellow][%s][/COLOR]" % (scrapedtitle, year, quality)
+
+        itemlist.append(Item(channel=item.channel, action="findvideos", contentTitle=scrapedtitle,
+	                         infoLabels={"year":year, "rating":rating}, thumbnail=scrapedthumbnail,
+	                         url=scrapedurl, quality=quality, title=title))
+
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
-    if url_next_page:
+
+    pagination = scrapertools.find_single_match(data, "<span class=\"current\">\d+</span><a href='([^']+)'")
+
+    if pagination:
         itemlist.append(Item(channel=__channel__, action="peliculas", title="» Siguiente »",
-                             url=url_next_page, next_page=next_page, folder=True, text_blod=True,
-                             thumbnail=get_thumb("next.png")))
+                             url=pagination, folder=True, text_blod=True, thumbnail=get_thumb("next.png")))
+
+
     return itemlist
 
 
@@ -191,11 +184,13 @@ def sub_search(item):
         itemlist.append(item.clone(title=title, url=scrapedurl, contentTitle=scrapedtitle, extra='buscar',
                                    action=action, infoLabels={"year": year}, contentType=contentType,
                                    thumbnail=scrapedthumbnail, text_color=color1, contentSerieName=scrapedtitle))
+
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
-    paginacion = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
-    if paginacion:
+
+    pagination = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
+    if pagination:
         itemlist.append(Item(channel=item.channel, action="sub_search",
-                             title="» Siguiente »", url=paginacion, thumbnail=get_thumb("next.png")))
+                             title="» Siguiente »", url=pagination, thumbnail=get_thumb("next.png")))
     return itemlist
 
 
@@ -229,37 +224,26 @@ def newest(categoria):
 
 def series(item):
     logger.info()
-    url_next_page = ''
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    # logger.info(data)
     patron  = '<div class="poster"> <img src="([^"]+)"'
     patron += ' alt="([^"]+)">.*?'
     patron += '<a href="([^"]+)">'
     matches = scrapertools.find_multiple_matches(data, patron)
-    if item.next_page != 'b':
-        if len(matches) > 19:
-            url_next_page = item.url
-        matches = matches[:19]
-        next_page = 'b'
-    else:
-        matches = matches[19:]
-        next_page = 'a'
-        patron_next_page = '<link rel="next" href="([^"]+)" />'
-        matches_next_page = re.compile(patron_next_page, re.DOTALL).findall(data)
-        if len(matches_next_page) > 0:
-            url_next_page = urlparse.urljoin(item.url, matches_next_page[0])
+
     for scrapedthumbnail, scrapedtitle, scrapedurl in matches:
         scrapedtitle = scrapedtitle.replace('&#8217;', "'")
         itemlist.append(Item(channel=__channel__, title=scrapedtitle, extra='serie',
                              url=scrapedurl, thumbnail=scrapedthumbnail,
                              contentSerieName=scrapedtitle, show=scrapedtitle,
-                             next_page=next_page, action="temporadas", contentType='tvshow'))
+                             action="temporadas", contentType='tvshow'))
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
-    if url_next_page:
-        itemlist.append(Item(channel=__channel__, action="series", title="» Siguiente »", url=url_next_page,
-                             next_page=next_page, thumbnail=get_thumb("next.png")))
+
+    pagination = scrapertools.find_single_match(data, "<link rel='next' href='([^']+)' />")
+
+    if pagination:
+        itemlist.append(Item(channel=__channel__, action="series", title="» Siguiente »", url=pagination,
+                             thumbnail=get_thumb("next.png")))
     return itemlist
 
 
@@ -267,8 +251,6 @@ def temporadas(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    # logger.info(data)
     patron = '<span class="title">([^<]+)<i>.*?'  # season
     patron += '<img src="([^"]+)"></a></div>'     # img
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -303,8 +285,6 @@ def episodios(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    # logger.info(data)
     patron = '<div class="imagen"><a href="([^"]+)">.*?'  # url
     patron += '<div class="numerando">(.*?)</div>.*?'     # numerando cap
     patron += '<a href="[^"]+">([^<]+)</a>'               # title de episodios
@@ -350,16 +330,15 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    # logger.info(data)
     patron = '<div id="option-(\d+)".*?<iframe.*?src="([^"]+)".*?</iframe>'  # lang, url
     matches = re.compile(patron, re.DOTALL).findall(data)
     for option, url in matches:
-        lang = scrapertools.find_single_match(data, '<li><a class="options" href="#option-%s">.*?</b>-->(\w+)' % option)
-        lang = lang.lower()
+        lang = scrapertools.find_single_match(data, '<li><a class="options" href="#option-%s">.*?</b>(.*?)<span' % option)
+        lang = lang.lower().strip()
         idioma = {'latino': '[COLOR cornflowerblue](LAT)[/COLOR]',
                   'drive': '[COLOR cornflowerblue](LAT)[/COLOR]',
                   'castellano': '[COLOR green](CAST)[/COLOR]',
+                  'español': '[COLOR green](CAST)[/COLOR]',
                   'subtitulado': '[COLOR red](VOS)[/COLOR]',
                   'ingles': '[COLOR red](VOS)[/COLOR]'}
         if lang in idioma:

@@ -3,14 +3,15 @@
   "name": "GranTorrent",
   "active": true,
   "adult": false,
-  "language": ["*"],
+  "language": ["cast", "lat"],
   "thumbnail": "grantorrent.jpg",
   "banner": "grantorrent.png",
   "fanart": "grantorrent.png",
   "categories": [
     "torrent",
     "movie",
-    "tvshow"
+    "tvshow",
+    "vos"
   ],
   "settings": [
     {

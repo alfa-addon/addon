@@ -2,7 +2,7 @@
   "id": "crunchyroll",
   "name": "Crunchyroll",
   "language": ["cast", "lat"],
-  "active": false,
+  "active": true,
   "adult": false,
   "thumbnail": "http://i.imgur.com/O49fDS1.png",
   "categories": [

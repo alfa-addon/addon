@@ -3,14 +3,14 @@
 import urllib
 from core import httptools
 from core import scrapertools
-from platformcode import logger
+from platformcode import logger, config
 
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    return True, ""
+    page_url = httptools.downloadpage(page_url, follow_redirects=False, only_headers=True).headers.get("location", "")
     data = httptools.downloadpage(page_url).data
-    if "File was deleted" in data or "Page Cannot Be Found" in data:
+    if "File was deleted" in data or "Page Cannot Be Found" in data or "<title>Video not found" in data:
         return False, "[thevideo.me] El archivo ha sido eliminado o no existe"
     return True, ""
 
@@ -18,7 +18,7 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
-    post= {}
+    post = {}
     post = urllib.urlencode(post)
     if not "embed" in page_url:
         page_url = page_url.replace("https://thevideo.me/", "https://thevideo.me/embed-") + ".html"

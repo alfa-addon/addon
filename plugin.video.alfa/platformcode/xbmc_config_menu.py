@@ -469,10 +469,11 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
         self.ok_enabled = False
         self.default_enabled = False
 
-        if xbmcgui.__version__ == "1.2":
-            self.setCoordinateResolution(1)
-        else:
-            self.setCoordinateResolution(5)
+        if config.get_platform(True)['num_version'] < 18:
+            if xbmcgui.__version__ == "1.2":
+                self.setCoordinateResolution(1)
+            else:
+                self.setCoordinateResolution(5)
 
         # Ponemos el título
         self.getControl(10002).setLabel(self.caption)

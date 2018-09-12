@@ -113,7 +113,7 @@ def categorias(item):
     
     if not data:    #Si no ha logrado encontrar nada, salimos
         itemlist.append(item.clone(action='', title=item.category + ': ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
-        return itemlist                                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -121,7 +121,7 @@ def categorias(item):
     if not matches:
         logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.category + ': ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
-        return itemlist                                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     #logger.debug(matches)
     
@@ -182,7 +182,7 @@ def listado(item):
     
     cnt_tot = 40                                                                # Poner el num. máximo de items por página
     cnt_title = 0                                                               # Contador de líneas insertadas en Itemlist
-    inicio = time.time()                                                        # Controlaremos que el proceso no exceda de un tiempo razonable
+    inicio = time.time()                                    # Controlaremos que el proceso no exceda de un tiempo razonable
     fin = inicio + 10                                                           # Después de este tiempo pintamos (segundos)
     timeout_search = timeout                                                    # Timeout para descargas
     if item.extra == 'search':
@@ -191,9 +191,9 @@ def listado(item):
             timeout_search = 5                                                  # Timeout un poco más largo para las búsquedas
 
     #Sistema de paginado para evitar páginas vacías o semi-vacías en casos de búsquedas con series con muchos episodios
-    title_lista = []                                                    # Guarda la lista de series que ya están en Itemlist, para no duplicar lineas
-    if item.title_lista:                                                        # Si viene de una pasada anterior, la lista ya estará guardada
-        title_lista.extend(item.title_lista)        # Se usa la lista de páginas anteriores en Item
+    title_lista = []                            # Guarda la lista de series que ya están en Itemlist, para no duplicar lineas
+    if item.title_lista:                        # Si viene de una pasada anterior, la lista ya estará guardada
+        title_lista.extend(item.title_lista)    # Se usa la lista de páginas anteriores en Item
         del item.title_lista                                                    # ... limpiamos
         
     if not item.extra2:                                                         # Si viene de Catálogo o de Alfabeto
@@ -215,7 +215,12 @@ def listado(item):
         if not data:                                                            #Si la web está caída salimos sin dar error
             logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + url + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
-            return itemlist                                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
+            if len(itemlist) > 1:
+                #Pasamos a TMDB la lista completa Itemlist
+                tmdb.set_infoLabels(itemlist, __modo_grafico__)
+                #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
+                item, itemlist = generictools.post_tmdb_listado(item, itemlist)
+            return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         #Patrón para todo menos para Series completas
         patron = '<div class="MiniFicha"><a href="([^"]+)" title="([^"]+)">'
@@ -237,7 +242,12 @@ def listado(item):
             
             logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
-            return itemlist                                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+            if len(itemlist) > 1:
+                #Pasamos a TMDB la lista completa Itemlist
+                tmdb.set_infoLabels(itemlist, __modo_grafico__)
+                #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
+                item, itemlist = generictools.post_tmdb_listado(item, itemlist)
+            return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
         
         #logger.debug("PATRON: " + patron)
         #logger.debug(matches)
@@ -253,9 +263,9 @@ def listado(item):
             except:
                 last_page = 1                                                       #Si no lo encuentra, lo ponemos a 1
 
-        if item.extra == 'series':                                                  #Si son series completas, vamos a un listado especializado
-            item.matches = matches                                                  #salvamos todas las matches, no hay paginación
-            return listado_series(item)                                             #llamamos a un método especializado
+        if item.extra == 'series':                              #Si son series completas, vamos a un listado especializado
+            item.matches = matches                              #salvamos todas las matches, no hay paginación
+            return listado_series(item)                         #llamamos a un método especializado
         
         #Empezamos el procesado de matches
         for scrapedurl, scrapedenlace, scrapedthumbnail, scrapedtitle, cat_ppal, cat_sec, opciones in matches:
@@ -280,25 +290,25 @@ def listado(item):
                 except:
                     pass
                 
-                if not data_serie:                                              #Si la web está caída salimos sin dar error. Pintamos el episodio
+                if not data_serie:                      #Si la web está caída salimos sin dar error. Pintamos el episodio
                     logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + scrapedurl + " / SERIE: " + cat_sec)
                 else:
                     patron_serie = '<div id="where_i_am">.*?<a href="[^"]+">.*?<\/a>.*?<a href="([^"]+)">'
                     url = scrapertools.find_single_match(data_serie, patron_serie)      #buscamos la url de la serie completa
                     if url:
                         url = host + url
-                        extra = 'series'                                            #es una serie completa    
-                        title_lista += [cat_sec]                                    #la añadimos a la lista de series completas procesadas    
-                        title = cat_sec                                             #salvamos el título de la serie completa
+                        extra = 'series'                        #es una serie completa    
+                        title_lista += [cat_sec]                #la añadimos a la lista de series completas procesadas    
+                        title = cat_sec                         #salvamos el título de la serie completa
                     else:
-                        url = scrapedurl                                            #No se encuentra la Serie, se trata como Episodio suelto
+                        url = scrapedurl                        #No se encuentra la Serie, se trata como Episodio suelto
 
-            elif "Archivo Torrent" not in scrapedenlace and "Video Online" not in scrapedenlace:          #Si no tiene enlaces pasamos
+            elif "Archivo Torrent" not in scrapedenlace and "Video Online" not in scrapedenlace:    #Si no tiene enlaces pasamos
                 continue
 
             cnt_title += 1
-            item_local = item.clone()                                               #Creamos copia de Item para trabajar
-            if item_local.tipo:                                                     #... y limpiamos
+            item_local = item.clone()                           #Creamos copia de Item para trabajar
+            if item_local.tipo:                                 #... y limpiamos
                 del item_local.tipo
             if item_local.totalItems:
                 del item_local.totalItems
@@ -317,18 +327,18 @@ def listado(item):
             item_local.text_color = True
             del item_local.text_color
                 
-            title_subs = []                                                         #creamos una lista para guardar info importante
-            item_local.language = []                                                #creamos lista para los idiomas
-            item_local.quality = ''                                                 #iniciamos calidad   
+            title_subs = []                                         #creamos una lista para guardar info importante
+            item_local.language = []                                #creamos lista para los idiomas
+            item_local.quality = ''                                 #iniciamos calidad   
             quality_alt = ''
-            if 'series' not in cat_ppal:                                            #si no son series, contiene la calidad
+            if 'series' not in cat_ppal:                            #si no son series, contiene la calidad
                 quality_alt = cat_sec.lower().strip()
-            item_local.extra = extra                                                #guardamos el extra procesado    
-            item_local.url = url                                                    #guardamos la url final
-            item_local.thumbnail = host[:-1] + scrapedthumbnail                     #guardamos el thumb
+            item_local.extra = extra                                #guardamos el extra procesado    
+            item_local.url = url                                    #guardamos la url final
+            item_local.thumbnail = host[:-1] + scrapedthumbnail     #guardamos el thumb
             item_local.context = "['buscar_trailer']"
             
-            item_local.contentType = "movie"                                        #por defecto, son películas
+            item_local.contentType = "movie"                        #por defecto, son películas
             item_local.action = "findvideos"
             
             #Analizamos los formatos de la películas
@@ -347,7 +357,7 @@ def listado(item):
             elif item_local.extra == 'series':
                 item_local.contentType = "tvshow"
                 item_local.action = "episodios"
-                item_local.season_colapse = True                                    #Muestra las series agrupadas por temporadas
+                item_local.season_colapse = True                        #Muestra las series agrupadas por temporadas
             elif 'series' in cat_ppal or item_local.extra == 'episodios':
                 item_local.contentType = "episode"
                 item_local.extra = "episodios"
@@ -361,7 +371,7 @@ def listado(item):
                     item_local.contentType = "season"
                     item_local.extra = "season"
 
-            if item_local.contentType == "movie":                                   #para las peliculas ponemos el mismo extra
+            if item_local.contentType == "movie":                       #para las peliculas ponemos el mismo extra
                 item_local.extra = "peliculas"
                 
             #Detectamos idiomas
@@ -495,13 +505,13 @@ def listado_series(item):
     #logger.debug(item)
     
     #Control de paginación
-    matches = item.matches                                                  #Restauramos la matches de la primera pasada
+    matches = item.matches                                      #Restauramos la matches de la primera pasada
     del item.matches
-    matches_tot = len(matches)                                              #La web no pagina las Series, lo tenemos que controlar
-    if item.matches_current:                                                #Llevamos los contadores de cuánto hemos pintado y cuánto queda
+    matches_tot = len(matches)                                  #La web no pagina las Series, lo tenemos que controlar
+    if item.matches_current:                                    #Llevamos los contadores de cuánto hemos pintado y cuánto queda
         matches_current = item.matches_current
     if matches_tot >= matches_current + pag:
-        item.matches_current = matches_current + pag                        #Establecemos el bloque a pintar en este pasada
+        item.matches_current = matches_current + pag            #Establecemos el bloque a pintar en este pasada
     else:
         item.matches_current = matches_tot
 
@@ -566,8 +576,8 @@ def listado_series(item):
         
         #logger.debug(item_local)
    
-    #if not item.category:                              #Si este campo no existe es que viene de la primera pasada de una búsqueda global
-    #    return itemlist                                #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
+    #if not item.category:          #Si este campo no existe es que viene de la primera pasada de una búsqueda global
+    #    return itemlist            #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
 
     #Pasamos a TMDB la lista completa Itemlist
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
@@ -607,7 +617,7 @@ def findvideos(item):
     if not data_torrent and not data_directo:
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
-        return itemlist                                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     patron = '<div class="content"><a href="([^"]+).*?'
     patron += '(?:<div class="content_medium">(.*?)<\/div>.*?)?'
@@ -621,7 +631,7 @@ def findvideos(item):
             logger.error(data_torrent)
         if data_directo:
             logger.error(data_directo)
-        return itemlist                                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     #logger.debug("PATRON: " + patron)
     #logger.debug(matches_torrent)
@@ -652,17 +662,17 @@ def findvideos(item):
         item_local.contentType = 'tvshow'
         item_local.extra = 'series'
         item_local.action = 'episodios'
-        item_local.season_colapse = True                                                        #Muestra las series agrupadas por temporadas
+        item_local.season_colapse = True                                        #Muestra las series agrupadas por temporadas
         
         #Buscamos la url de la serie y verificamos que existe
         patron_serie = '<div class="linkMoreMovies"><div class="linkMore"><a href="([^"]+)">'
-        item_local.url = scrapertools.find_single_match(data_torrent, patron_serie)             #buscamos la url de la serie completa
+        item_local.url = scrapertools.find_single_match(data_torrent, patron_serie)     #buscamos la url de la serie completa
         if not item_local.url:
-            item_local.url = scrapertools.find_single_match(data_directo, patron_serie)         #buscamos la url de la serie completa
+            item_local.url = scrapertools.find_single_match(data_directo, patron_serie) #buscamos la url de la serie completa
         if item_local.url:
             item_local.url = item_local.url.replace('descargar-torrent', 'descarga').replace('-0-0-0-0-fx-', '-0-0-fx-')
             try:
-                tmdb.set_infoLabels(item_local, True)                                           #TMDB de la serie completa
+                tmdb.set_infoLabels(item_local, True)                                   #TMDB de la serie completa
             except:
                 pass
             
@@ -685,7 +695,7 @@ def findvideos(item):
             if not item_local.quality:
                 item_local.quality = item.quality
             elif scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])'):   #Salvamos la duración
-                item_local.quality += ' [/COLOR][COLOR white]%s' % scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])') #Copiamos duración
+                item_local.quality += ' [/COLOR][COLOR white]%s' % scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])')                                                              #Copiamos duración
 
             if scrapedlang in IDIOMAS:                                              #Salvamos el idioma, si lo hay
                 item_local.language = ["%s" % IDIOMAS[scrapedlang]]
@@ -701,7 +711,7 @@ def findvideos(item):
             
             if not data or not matches:
                 logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron  + " / URL: " + item_local.url  + " / DATA: " + data)
-                continue                                                            #si no hay más datos, algo no funciona, pasamos a Ver Online
+                continue                                    #si no hay más datos, algo no funciona, pasamos a Ver Online
             
             #logger.debug(patron)
             #logger.debug(matches)
@@ -749,11 +759,11 @@ def findvideos(item):
                 item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (quality, str(item_local.language))                                                  #Preparamos título de Torrent
                 item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title)    #Quitamos etiquetas vacías
                 item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)      #Quitamos colores vacíos
-                item_local.alive = "??"                                                             #Calidad del link sin verificar
-                item_local.action = "play"                                                          #Visualizar vídeo
-                item_local.server = "torrent"                                                       #Seridor Torrent
+                item_local.alive = "??"                                                     #Calidad del link sin verificar
+                item_local.action = "play"                                                  #Visualizar vídeo
+                item_local.server = "torrent"                                               #Seridor Torrent
                 
-                itemlist_alt.append(item_local.clone(quality=quality))                              #Pintar pantalla
+                itemlist_alt.append(item_local.clone(quality=quality))                      #Pintar pantalla
 
                 #logger.debug("TORRENT: " + scrapedtorrent + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality + " / tamaño: " + scrapedsize + " / content: " + item_local.contentTitle + " / " + item_local.contentSerieName)
                 #logger.debug(item_local)
@@ -761,17 +771,17 @@ def findvideos(item):
     #Si son múltiples episodios, ordenamos
     if len(itemlist_alt) > 1 and (item.contentType == 'episode' or item.contentType == 'season'):
         itemlist_alt = sorted(itemlist_alt, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))     #clasificamos
-        tmdb.set_infoLabels(itemlist_alt, True)                                                     #TMDB de la lista de episodios
+        tmdb.set_infoLabels(itemlist_alt, True)                                             #TMDB de la lista de episodios
     itemlist.extend(itemlist_alt)
 
     #Ahora tratamos los servidores directo
     itemlist_alt = []
     if matches_directo:
-        for scrapedurl, scrapedquality, scrapedlang in matches_directo:                             #leemos los torrents con la diferentes calidades
+        for scrapedurl, scrapedquality, scrapedlang in matches_directo:                     #leemos los torrents con la diferentes calidades
             #Generamos una copia de Item para trabajar sobre ella
             item_local = item.clone()
             
-            item_local.url = scrapedurl                                                             #Guardamos la url intermedia
+            item_local.url = scrapedurl                                                     #Guardamos la url intermedia
             
             item_local.quality = ''
             if scrapedquality:
@@ -779,11 +789,11 @@ def findvideos(item):
             
             if not item_local.quality:
                 item_local.quality = item.quality
-            elif scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])'):                   #Salvamos la duración
+            elif scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])'):           #Salvamos la duración
                 item_local.quality += ' [/COLOR][COLOR white]%s' % scrapertools.find_single_match(item.quality, '(\[\d+:\d+ h\])') #Copiamos duración
 
             if scrapedlang in IDIOMAS:
-                item_local.language = ["%s" % IDIOMAS[scrapedlang]]                                 #Salvamos el idioma, si lo hay
+                item_local.language = ["%s" % IDIOMAS[scrapedlang]]                         #Salvamos el idioma, si lo hay
             
             #Leemos la página con el enlace al Servidor
             try:
@@ -797,7 +807,7 @@ def findvideos(item):
             if not data or not matches:
                 logger.error("ERROR 02: FINDVIDEOS: El enlace no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron  + " / DATA: " + data)
                 itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El enlace no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log'))
-                break                                                               #si no hay más datos, algo no funciona, pasamos a Ver Online
+                continue                                                #si no hay más datos, algo no funciona, salimos
             
             #logger.debug(patron)
             #logger.debug(matches)
@@ -862,14 +872,14 @@ def findvideos(item):
 
                 #Verificamos el si el enlace del servidor está activo
                 mostrar_server = True
-                if config.get_setting("hidepremium"):                                               #Si no se aceptan servidore premium, se ignoran
+                if config.get_setting("hidepremium"):                       #Si no se aceptan servidore premium, se ignoran
                     mostrar_server = servertools.is_server_enabled(servidor)
                 
-                try:                                                                                #Obtenemos el enlace
+                try:                                                                            #Obtenemos el enlace
                     if mostrar_server:
-                        devuelve = servertools.findvideosbyserver(scrapedenlace, servidor)                  #existe el link ?
+                        devuelve = servertools.findvideosbyserver(scrapedenlace, servidor)      #existe el link ?
                         if devuelve:
-                            enlace = devuelve[0][1]                                                         #Se guarda el link
+                            enlace = devuelve[0][1]                                             #Se guarda el link
                     if not enlace:
                         continue
                         
@@ -877,21 +887,21 @@ def findvideos(item):
                     #Si el link no está activo se ignora
                     if "??" in item_local.alive:                                                            #dudoso
                         item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (servidor.capitalize(), quality, str(item_local.language))
-                    elif "no" in item_local.alive.lower():                                              #No está activo.  Lo preparo, pero no lo pinto
+                    elif "no" in item_local.alive.lower():                  #No está activo.  Lo preparo, pero no lo pinto
                         item_local.title = '[COLOR red][%s][/COLOR] [COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.alive, servidor.capitalize(), quality, str(item_local.language))
                         logger.debug(item_local.alive + ": ALIVE / "  + servidor + " / " + enlace)
                         raise
-                    else:                                                                                   #Sí está activo
+                    else:                                                                               #Sí está activo
                         item_local.title = '[COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (servidor.capitalize(), quality, str(item_local.language))
 
                     #Ahora pintamos el link Directo
                     item_local.url = enlace
                     item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title)    #Quitamos etiquetas vacías
-                    item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)      #Quitamos colores vacíos
-                    item_local.action = "play"                                                          #Visualizar vídeo
-                    item_local.server = servidor                                                        #Seridor Directo
+                    item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)  #Quitamos colores vacíos
+                    item_local.action = "play"                                                      #Visualizar vídeo
+                    item_local.server = servidor                                                    #Seridor Directo
                     
-                    itemlist_alt.append(item_local.clone(quality=quality))                              #Pintar pantalla
+                    itemlist_alt.append(item_local.clone(quality=quality))                          #Pintar pantalla
                 except:
                     logger.error('ERROR al procesar enlaces DIRECTOS: ' + servidor + ' / ' + scrapedenlace)
 
@@ -901,7 +911,7 @@ def findvideos(item):
     #Si son múltiples episodios, ordenamos
     if len(itemlist_alt) > 1 and (item.contentType == 'episode' or item.contentType == 'season'):
         itemlist_alt = sorted(itemlist_alt, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))     #clasificamos
-        tmdb.set_infoLabels(itemlist_alt, True)                                                         #TMDB de la lista de episodios
+        tmdb.set_infoLabels(itemlist_alt, True)                                             #TMDB de la lista de episodios
     itemlist.extend(itemlist_alt)
 
     return itemlist
@@ -913,14 +923,14 @@ def episodios(item):
     
     #logger.debug(item)
     
-    curr_page = 1                                                                                       # Página inicial
-    last_page = 99999                                                                                   # Última página inicial
+    curr_page = 1                                                                           # Página inicial
+    last_page = 99999                                                                       # Última página inicial
     if item.curr_page:
-        curr_page = int(item.curr_page)                                                                 # Si viene de una pasada anterior, lo usamos
-        del item.curr_page                                                                              # ... y lo borramos
+        curr_page = int(item.curr_page)                                                     # Si viene de una pasada anterior, lo usamos
+        del item.curr_page                                                                  # ... y lo borramos
     if item.last_page:
-        last_page = int(item.last_page)                                                                 # Si viene de una pasada anterior, lo usamos
-        del item.last_page                                                                              # ... y lo borramos
+        last_page = int(item.last_page)                                                     # Si viene de una pasada anterior, lo usamos
+        del item.last_page                                                                  # ... y lo borramos
     url_item = item.url.replace('1-.fx', '%s-.fx').replace('-1.fx', '-%s.fx')
     if item.from_title:
         item.title = item.from_title
@@ -928,8 +938,8 @@ def episodios(item):
     #Limpiamos num. Temporada y Episodio que ha podido quedar por Novedades
     season_display = 0
     if item.contentSeason:
-        if item.season_colapse:                                                                         #Si viene del menú de Temporadas...
-            season_display = item.contentSeason                                                         #... salvamos el num de sesión a pintar
+        if item.season_colapse:                                                             #Si viene del menú de Temporadas...
+            season_display = item.contentSeason                                     #... salvamos el num de sesión a pintar
             item.from_num_season_colapse = season_display
             del item.season_colapse
             item.contentType = "tvshow"
@@ -949,14 +959,14 @@ def episodios(item):
         tmdb.set_infoLabels(item, True)
         
     modo_ultima_temp_alt = modo_ultima_temp
-    if item.ow_force == "1":                                                                    #Si hay un traspaso de canal o url, se actualiza todo 
+    if item.ow_force == "1":                                        #Si hay un traspaso de canal o url, se actualiza todo 
         modo_ultima_temp_alt = False
     
     max_temp = 1
     if item.infoLabels['number_of_seasons']:
         max_temp = item.infoLabels['number_of_seasons']
     y = []
-    if modo_ultima_temp_alt and item.library_playcounts:                                        #Averiguar cuantas temporadas hay en Videoteca
+    if modo_ultima_temp_alt and item.library_playcounts:            #Averiguar cuantas temporadas hay en Videoteca
         patron = 'season (\d+)'
         matches = re.compile(patron, re.DOTALL).findall(str(item.library_playcounts))
         for x in matches:
@@ -967,19 +977,19 @@ def episodios(item):
     
         # Descarga la página
         data = ''
-        url = url_item % curr_page                                                              #Inserto en num de página en la url
+        url = url_item % curr_page                                                  #Inserto en num de página en la url
         try:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(url, timeout=timeout).data)
             data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
-        except:                                                                                 #Algún error de proceso, salimos
+        except:                                                                     #Algún error de proceso, salimos
             pass
             
         if not data:
             logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea" + item.url)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: EPISODIOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
-            return itemlist
+            break                                                                   #Pintamos lo que tenemos
         
-        curr_page += 1                                                                          #Apunto ya a la página siguiente
+        curr_page += 1                                                              #Apunto ya a la página siguiente
 
         #Usamos el mismo patrón que en listado
         patron = '<div class="MiniFicha"><a href="([^"]+)" title="([^"]+)">'
@@ -996,7 +1006,7 @@ def episodios(item):
             
             logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
-            return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+            break                                           #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         #logger.debug("PATRON: " + patron)
         #logger.debug(matches)
@@ -1080,10 +1090,10 @@ def episodios(item):
             else:
                 item_local.title = '%sx%s -' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
 
-            if modo_ultima_temp_alt and item.library_playcounts:                #Si solo se actualiza la última temporada de Videoteca
+            if modo_ultima_temp_alt and item.library_playcounts:    #Si solo se actualiza la última temporada de Videoteca
                 if item_local.contentSeason < max_temp:
-                    curr_page = 999999                                          #Sale del bucle de leer páginas
-                    break                                                       #Sale del bucle actual del WHILE de episodios por página
+                    curr_page = 999999                              #Sale del bucle de leer páginas
+                    break                                           #Sale del bucle actual del WHILE de episodios por página
 
             if season_display > 0:
                 if item_local.contentSeason > season_display:
@@ -1098,10 +1108,10 @@ def episodios(item):
     if len(itemlist) > 1:
         itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))       #clasificamos
         
-    if item.season_colapse and not item.add_videolibrary:                       #Si viene de listado, mostramos solo Temporadas
+    if item.season_colapse and not item.add_videolibrary:               #Si viene de listado, mostramos solo Temporadas
         item, itemlist = generictools.post_tmdb_seasons(item, itemlist)
 
-    if not item.season_colapse:                                                 #Si no es pantalla de Temporadas, pintamos todo
+    if not item.season_colapse:                                         #Si no es pantalla de Temporadas, pintamos todo
         # Pasada por TMDB y clasificación de lista por temporada y episodio
         tmdb.set_infoLabels(itemlist, True)
 
