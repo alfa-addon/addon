@@ -1,31 +1,17 @@
 {
-  "id": "sipeliculas",
-  "name": "SiPeliculas",
+  "id": "fanpelis",
+  "name":"Fanpelis",
+  "thumbnail":"http://fanpelis.com/wp-content/uploads/2018/05/111.png",
+  "banner":"",
   "active": true,
   "adult": false,
-  "language": ["lat"],
-  "banner": "https://s24.postimg.cc/5wcznkxhv/sipeliculas.png",
-  "thumbnail": "https://s23.postimg.cc/adrl2k5mz/sipeliculas.png",
+  "language": ["cast", "lat"],
+  "version": 1,
   "categories": [
-    "movie"
+    "movie",
+    "tvshow"
   ],
   "settings": [
-    {
-      "id": "include_in_global_search",
-      "type": "bool",
-      "label": "Incluir en busqueda global",
-      "default": false,
-      "enabled": false,
-      "visible": false
-    },
-    {
-      "id": "include_in_newest_latino",
-      "type": "bool",
-      "label": "Incluir en Novedades - Latino",
-      "default": true,
-      "enabled": true,
-      "visible": true
-    },
     {
       "id": "include_in_newest_peliculas",
       "type": "bool",
@@ -51,4 +37,5 @@
       "visible": true
     }
   ]
+
 }

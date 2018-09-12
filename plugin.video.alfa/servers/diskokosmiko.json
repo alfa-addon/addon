@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "cloudsany.com/i/([A-z0-9]+)",
-        "url": "https://cloudsany.com/i/\\1"
+        "pattern": "((?:diskokosmiko.mx)/[^\\s'\"]+)",
+        "url": "http://\\1"
       }
     ]
   },
   "free": true,
-  "id": "cloudsany",
-  "name": "cloudsany",
+  "id": "diskokosmoko",
+  "name": "diskokosmiko",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s1.postimg.cc/6wixo35myn/cloudsany1.png"
+  "thumbnail": "http://i.imgur.com/EjbfM7p.png?1",
+  "version": 1
 }

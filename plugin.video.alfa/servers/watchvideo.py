@@ -18,8 +18,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    media_urls = scrapertools.find_multiple_matches(data, 'file:"([^"]+)"')
+    packed = scrapertools.find_single_match(data, "text/javascript'>(.*?)\s*</script>")
+    unpacked = jsunpack.unpack(packed)
+    media_urls = scrapertools.find_multiple_matches(unpacked, 'file:"([^"]+)"')
     for media_url in media_urls:
+        media_url += "|Referer=%s" %page_url
+        if ".png" in media_url:
+            continue
         ext = "mp4"
         if "m3u8" in media_url:
             ext = "m3u8"

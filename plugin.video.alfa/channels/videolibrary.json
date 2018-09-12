@@ -278,6 +278,16 @@
       "visible": true
     },
     {
+      "id": "lowerize_title",
+      "type": "list",
+      "label": "Crear directorios con letras en minúsculas",
+      "default": 0,
+      "lvalues": [
+        "Si",
+        "No"
+      ]
+    },
+    {
       "id": "scraper_movies",
       "type": "list",
       "label": "@60651",
