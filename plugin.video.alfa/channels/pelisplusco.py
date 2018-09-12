@@ -356,7 +356,7 @@ def get_links_by_language(item, data):
     patron = 'data-source=(.*?)data.*?srt=(.*?)data-iframe.*?Opci.*?<.*?hidden>[^\(]\((.*?)\)'
     matches = re.compile(patron, re.DOTALL).findall(data)
     if language in IDIOMAS:
-        language == IDIOMAS[language]
+        language = IDIOMAS[language]
 
     for url, sub, quality in matches:
         if 'http' not in url:
@@ -403,7 +403,7 @@ def findvideos(item):
                                                                                    i.quality) )
     # Requerido para FilterTools
 
-    itemlist = filtertools.get_links(video_list, item, list_language)
+    video_list = filtertools.get_links(video_list, item, list_language)
 
     # Requerido para AutoPlay
 
