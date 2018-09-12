@@ -620,7 +620,7 @@ def play(item):
         data['a']['tt']) + \
           "&mm=" + data['a']['mm'] + "&bb=" + data['a']['bb']
 
-    url += "|User-Agent=Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Mobile Safari/537.36"
+    url += "|User-Agent=%s" % httptools.get_user_agent
 
     itemlist.append(item.clone(action="play", server="directo", url=url, folder=False))
 
