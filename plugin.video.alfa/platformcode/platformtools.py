@@ -1044,6 +1044,8 @@ def torrent_client_installed(show_tuple=False):
 
 def play_torrent(item, xlistitem, mediaurl):
     logger.info()
+    import time
+    
     # Opciones disponibles para Reproducir torrents
     torrent_options = list()
     torrent_options.append(["Cliente interno (necesario libtorrent)"])
@@ -1066,28 +1068,32 @@ def play_torrent(item, xlistitem, mediaurl):
 
     # Plugins externos
     if seleccion > 1:
+        
+        #### Compatibilidad con Kodi 18: evita cuelgues/cancelaciones cuando el .torrent se lanza desde pantalla convencional
+        if xbmc.getCondVisibility('Window.IsMedia'):
+            xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, xlistitem)   #Preparamos el entorno para evutar error Kod1 18
+            time.sleep(1)                                                   #Dejamos que se ejecute
+
         mediaurl = urllib.quote_plus(item.url)
         if ("quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]) and item.infoLabels['tmdb_id']:    #Llamada con más parámetros para completar el título
             if item.contentType == 'episode' and "elementum" not in torrent_options[seleccion][1]:
                 mediaurl += "&episode=%s&library=&season=%s&show=%s&tmdb=%s&type=episode" % (item.infoLabels['episode'], item.infoLabels['season'], item.infoLabels['tmdb_id'], item.infoLabels['tmdb_id'])
             elif item.contentType == 'movie':
                 mediaurl += "&library=&tmdb=%s&type=movie" % (item.infoLabels['tmdb_id'])
-        xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
         
-        if "quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]:   #Seleccionamos que clientes torrent soportamos
-            if item.strm_path:                                          #Sólo si es de Videoteca
-                import time
-                time_limit = time.time() + 150                          #Marcamos el timepo máx. de buffering
-                while not is_playing() and time.time() < time_limit:    #Esperamos mientra buffera    
-                    time.sleep(5)                                       #Repetimos cada intervalo
-                    #logger.debug(str(time_limit))
-                    
-                if is_playing():                                        #Ha terminado de bufferar o ha cancelado
-                    from platformcode import xbmc_videolibrary
-                    xbmc_videolibrary.mark_auto_as_watched(item)        #Marcamos como visto al terminar
-                    #logger.debug("Llamado el marcado")
-                #else:
-                    #logger.debug("Video cancelado o timeout")
+        xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
+
+        #Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos
+        if "quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]:   
+            time_limit = time.time() + 150                          #Marcamos el timepo máx. de buffering
+            while not is_playing() and time.time() < time_limit:    #Esperamos mientra buffera    
+                time.sleep(5)                                       #Repetimos cada intervalo
+                #logger.debug(str(time_limit))
+            
+            if item.strm_path and is_playing():                     #Sólo si es de Videoteca
+                from platformcode import xbmc_videolibrary
+                xbmc_videolibrary.mark_auto_as_watched(item)        #Marcamos como visto al terminar
+                #logger.debug("Llamado el marcado")
 
     if seleccion == 1:
         from platformcode import mct
