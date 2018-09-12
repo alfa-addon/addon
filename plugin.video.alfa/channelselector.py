@@ -24,9 +24,9 @@ def getmainlist(view="thumb_"):
                          thumbnail=get_thumb("channels.png", view), view=view,
                          category=config.get_localized_string(30119), viewmode="thumbnails"))
 
-    itemlist.append(Item(title='Mis enlaces', channel="alfavorites", action="mainlist",
-                         thumbnail=get_thumb("favorites.png", view), view=view,
-                         category='Mis enlaces', viewmode="thumbnails"))
+    itemlist.append(Item(title=config.get_localized_string(70527), channel="alfavorites", action="mainlist",
+                         thumbnail=get_thumb("mylink.png", view), view=view,
+                         category=config.get_localized_string(70527), viewmode="thumbnails"))
 
     itemlist.append(Item(title=config.get_localized_string(30103), channel="search", action="mainlist",
                          thumbnail=get_thumb("search.png", view),
@@ -197,7 +197,7 @@ def filterchannels(category, view="thumb_"):
                                     thumbnail=channel_parameters["thumbnail"], type="generic", viewmode="list"))
 
     if category in ['movie', 'tvshow']:
-        titles = [config.get_localized_string(70028), config.get_localized_string(30985), config.get_localized_string(70527), config.get_localized_string(60264), config.get_localized_string(70528)]
+        titles = [config.get_localized_string(70028), config.get_localized_string(30985), config.get_localized_string(70559), config.get_localized_string(60264), config.get_localized_string(70560)]
         ids = ['popular', 'top_rated', 'now_playing', 'on_the_air']
         for x in range(0,3):
             if x == 2 and category != 'movie':

@@ -1734,7 +1734,7 @@ msgid "[COLOR %s]Filter configuration for TV series...[/COLOR]"
 msgstr ""
 
 msgctxt "#60430"
-msgid "FILTRO: Delete '%s'"
+msgid "FILTER: Delete '%s'"
 msgstr ""
 
 msgctxt "#60431"
@@ -4804,14 +4804,142 @@ msgid "Verification of counters of videos seen / not seen (uncheck to verify)"
 msgstr ""
 
 msgctxt "#70527"
-msgid "Now in Theatres "
+msgid "My links"
 msgstr ""
 
 msgctxt "#70528"
-msgid "Movies by Genre"
+msgid "Default folder"
 msgstr ""
 
 msgctxt "#70529"
-msgid "tv show"
+msgid "Repeated link"
+msgstr ""
+
+msgctxt "#70530"
+msgid "You already have this link in the folder"
+msgstr ""
+
+msgctxt "#70531"
+msgid "Saved link"
+msgstr ""
+
+msgctxt "#70532"
+msgid "Folder: %s"
+msgstr ""
+
+msgctxt "#70533"
+msgid "Rename folder"
+msgstr ""
+
+msgctxt "#70534"
+msgid "Delete folder"
+msgstr ""
+
+msgctxt "#70535"
+msgid "Move up all"
+msgstr ""
+
+msgctxt "#70536"
+msgid "Move up"
+msgstr ""
+
+msgctxt "#70537"
+msgid "Move down"
+msgstr ""
+
+msgctxt "#70538"
+msgid "Move down all"
+msgstr ""
+
+msgctxt "#70539"
+msgid "* Create different folders to store your favorite links within Icarus. [CR]"
+msgstr ""
+
+msgctxt "#70540"
+msgid "* To add links to folders, access the context menu from any point in Icarus.[CR]"
+msgstr ""
+
+msgctxt "#70541"
+msgid "* The links can be channels, sections within the channels, searches, and even movies and series although for the latter it is preferable to use the video library."
+msgstr ""
+
+msgctxt "#70542"
+msgid "Create new folder ..."
+msgstr "Creaa nuova cartella ..."
+
+msgctxt "#70543"
+msgid "Move to another folder"
+msgstr ""
+
+msgctxt "#70544"
+msgid "Change title"
+msgstr ""
+
+msgctxt "#70545"
+msgid "Change color"
+msgstr ""
+
+msgctxt "#70546"
+msgid "Save link in:"
+msgstr ""
+
+msgctxt "#70547"
+msgid "Change thumbnail"
+msgstr ""
+
+msgctxt "#70548"
+msgid "Delete link"
+msgstr ""
+
+msgctxt "#70549"
+msgid "Select folder"
+msgstr ""
+
+msgctxt "#70550"
+msgid "Create new folder"
+msgstr ""
+
+msgctxt "#70551"
+msgid "Folder name"
+msgstr ""
+
+msgctxt "#70552"
+msgid "Delete the folder and links it contains?"
+msgstr ""
+
+msgctxt "#70553"
+msgid "Change link title"
+msgstr ""
+
+msgctxt "#70554"
+msgid "Select thumbnail:"
+msgstr ""
+
+msgctxt "#70555"
+msgid "Move link to:"
+msgstr ""
+
+msgctxt "#70556"
+msgid "%d links in folder"
+msgstr ""
+
+msgctxt "#70557"
+msgid "Save link"
+msgstr ""
+
+msgctxt "#70558"
+msgid "Select color:"
+msgstr ""
+
+msgctxt "#70559"
+msgid "Now in Theatres "
+msgstr ""
+
+msgctxt "#70560"
+msgid "Movies by Genre"
+msgstr "
+
+msgctxt "#70561"
+msgid "Search Similar
 msgstr ""
 
