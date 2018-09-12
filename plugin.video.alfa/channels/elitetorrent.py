@@ -171,8 +171,11 @@ def listado(item):
         
         #Limpiamos el título de la basura innecesaria
         title = title.replace("Dual", "").replace("dual", "").replace("Subtitulada", "").replace("subtitulada", "").replace("Subt", "").replace("subt", "").replace("Sub", "").replace("sub", "").replace("(Proper)", "").replace("(proper)", "").replace("Proper", "").replace("proper", "").replace("#", "").replace("(Latino)", "").replace("Latino", "")
-        title = title.replace("- HDRip", "").replace("(HDRip)", "").replace("- Hdrip", "").replace("(microHD)", "").replace("(DVDRip)", "").replace("(HDRip)", "").replace("(BR-LINE)", "").replace("(HDTS-SCREENER)", "").replace("(BDRip)", "").replace("(BR-Screener)", "").replace("(DVDScreener)", "").replace("TS-Screener", "").replace(" TS", "").replace(" Ts", "")
+        title = title.replace("- HDRip", "").replace("(HDRip)", "").replace("- Hdrip", "").replace("(microHD)", "").replace("(DVDRip)", "").replace("(HDRip)", "").replace("(BR-LINE)", "").replace("(HDTS-SCREENER)", "").replace("(BDRip)", "").replace("(BR-Screener)", "").replace("(DVDScreener)", "").replace("TS-Screener", "").replace(" TS", "").replace(" Ts", "").replace("temporada", "").replace("Temporada", "").replace("capitulo", "").replace("Capitulo", "")
+        
+        title = re.sub(r'(?:\d+)?x.?\s?\d+', '', title)
         title = re.sub(r'\??\s?\d*?\&.*', '', title).title().strip()
+        
         item_local.from_title = title                       #Guardamos esta etiqueta para posible desambiguación de título
         
         if item_local.extra == "peliculas":                 #preparamos Item para películas
@@ -190,16 +193,17 @@ def listado(item):
             item_local.contentType = "episode"
             item_local.extra = "series"
             epi_mult = scrapertools.find_single_match(item_local.url, r'cap.*?-\d+-al-(\d+)')
-            item_local.contentSeason = scrapertools.find_single_match(item_local.url, r'temp.*?-(\d+)')
+            item_local.contentSeason = scrapertools.find_single_match(item_local.url, r'temporada-(\d+)')
             item_local.contentEpisodeNumber = scrapertools.find_single_match(item_local.url, r'cap.*?-(\d+)')
             if not item_local.contentSeason:
                 item_local.contentSeason = scrapertools.find_single_match(item_local.url, r'-(\d+)[x|X]\d+')
             if not item_local.contentEpisodeNumber:
                 item_local.contentEpisodeNumber = scrapertools.find_single_match(item_local.url, r'-\d+[x|X](\d+)')
-            if item_local.contentSeason < 1:
-                item_local.contentSeason = 1
+            if not item_local.contentSeason or item_local.contentSeason < 1:
+                item_local.contentSeason = 0
             if item_local.contentEpisodeNumber < 1:
                 item_local.contentEpisodeNumber = 1
+            
             item_local.contentSerieName = title
             if epi_mult:
                 title = "%sx%s al %s -" % (item_local.contentSeason, str(item_local.contentEpisodeNumber).zfill(2), str(epi_mult).zfill(2))                         #Creamos un título con el rango de episodios
@@ -269,11 +273,11 @@ def findvideos(item):
     #data = unicode(data, "utf-8", errors="replace")
     
     #Añadimos el tamaño para todos
-    size = scrapertools.find_single_match(item.quality, '\s\[(\d+,?\d*?\s\w[b|B]s)\]')
+    size = scrapertools.find_single_match(item.quality, '\s\[(\d+,?\d*?\s\w\s?[b|B]s)\]')
     if size:
         item.title = re.sub('\s\[\d+,?\d*?\s\w[b|B]s\]', '', item.title)        #Quitamos size de título, si lo traía
         item.title = '%s [%s]' % (item.title, size)                             #Agregamos size al final del título
-        item.quality = re.sub('\s\[\d+,?\d*?\s\w[b|B]s\]', '', item.quality)    #Quitamos size de calidad, si lo traía
+        item.quality = re.sub('\s\[\d+,?\d*?\s\w\s?[b|B]s\]', '', item.quality) #Quitamos size de calidad, si lo traía
 
     patron_t = '<div class="enlace_descarga".*?<a href="(.*?\.torrent)"'
     link_torrent = scrapertools.find_single_match(data, patron_t)
@@ -299,9 +303,11 @@ def findvideos(item):
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
     
+    if not size:
+        size = generictools.get_torrent_size(link_torrent)                      #Buscamos el tamaño en el .torrent
     if size:
         item.quality = '%s [%s]' % (item.quality, size)                         #Agregamos size al final de calidad
-        item.quality = item.quality.replace("G", "G ").replace("M", "M ")       #Se evita la palabra reservada en Unify
+        item.quality = item.quality.replace("GB", "G B").replace("MB", "M B")   #Se evita la palabra reservada en Unify
     
     #Generamos una copia de Item para trabajar sobre ella
     item_local = item.clone()
@@ -313,8 +319,15 @@ def findvideos(item):
         item_local.quality += "[Torrent]"
         item_local.url = link_torrent
         item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))        #Preparamos título de Torrent
-        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title)    #Quitamos etiquetas vacías
-        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)          #Quitamos colores vacíos
+        
+        #Preparamos título y calidad, quitamos etiquetas vacías
+        item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
+        item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
+        item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+        item_local.quality = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.quality)
+        item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality)
+        item_local.quality = item_local.quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+                
         item_local.alive = "??"                                                 #Calidad del link sin verificar
         item_local.action = "play"                                              #Visualizar vídeo
         item_local.server = "torrent"                                           #Seridor Torrent
