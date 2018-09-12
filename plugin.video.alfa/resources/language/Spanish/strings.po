@@ -4793,7 +4793,7 @@ msgstr "Verificación de los contadores de vídeos vistos/no vistos (desmarcar p
 
 msgctxt "#70527"
 msgid "My links"
-msgstr 'Mis enlaces'
+msgstr "Mis enlaces"
 
 msgctxt "#70528"
 msgid "Default folder"
@@ -4930,6 +4930,7 @@ msgstr "Por generos"
 msgctxt "#70561"
 msgid "Search Similar
 msgstr "Buscar Similares"
+
 
 
 
