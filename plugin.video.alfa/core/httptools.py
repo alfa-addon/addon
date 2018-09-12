@@ -56,6 +56,9 @@ default_headers["Accept-Encoding"] = "gzip"
 HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = config.get_setting('httptools_timeout', default=15)
 if HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT == 0: HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = None
 
+def get_user_agent():
+    # Devuelve el user agent global para ser utilizado cuando es necesario para la url.
+    return default_headers["User-Agent"]
 
 def get_url_headers(url):
     domain_cookies = cj._cookies.get("." + urlparse.urlparse(url)[1], {}).get("/", {})
