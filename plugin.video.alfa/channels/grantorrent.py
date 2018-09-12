@@ -474,14 +474,17 @@ def findvideos(item):
         #Añadimos la duración, que estará en item.quility
         if scrapertools.find_single_match(item.quality, '(\[\d+:\d+)') and not scrapertools.find_single_match(item_local.quality, '(\[\d+:\d+)'):
             item_local.quality = '%s [/COLOR][COLOR white][%s h]' % (item_local.quality, scrapertools.find_single_match(item.quality, '(\d+:\d+)'))
+        
         #if size and item_local.contentType != "episode":
+        if not size:
+            size = generictools.get_torrent_size(scrapedurl)                            #Buscamos el tamaño en el .torrent
         if size:
             size = size.replace(".", ",").replace("B,", " B").replace("b,", " b")
             if '[/COLOR][COLOR white]' in item_local.quality:
                 item_local.quality = '%s [%s]' % (item_local.quality, size)
             else:
                 item_local.quality = '%s [/COLOR][COLOR white][%s]' % (item_local.quality, size)
-        if item_local.action == 'show_result':                                            #Viene de una búsqueda global
+        if item_local.action == 'show_result':                                          #Viene de una búsqueda global
             channel = item_local.channel.capitalize()
             if item_local.from_channel:
                 channel = item_local.from_channel.capitalize()
@@ -491,8 +494,15 @@ def findvideos(item):
         if scrapedurl:
             item_local.url = scrapedurl
             item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))     #Preparamos título de Torrent
-            item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title).strip() #Quitamos etiquetas vacías
-            item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title).strip() #Quitamos colores vacíos
+            
+            #Preparamos título y calidad, quitamos etiquetas vacías
+            item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
+            item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
+            item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+            item_local.quality = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.quality)
+            item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality)
+            item_local.quality = item_local.quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+            
             item_local.alive = "??"                                                     #Calidad del link sin verificar
             item_local.action = "play"                                                  #Visualizar vídeo
             item_local.server = "torrent"                                               #Seridor Torrent

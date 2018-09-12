@@ -845,18 +845,21 @@ def findvideos(item):
         
     # Poner la calidad, si es necesario
     if not item_local.quality:
+        item_local.quality = ''
         if scrapertools.find_single_match(data, '<b>Formato:<\/b>&\w+;\s?([^<]+)<br>'):
             item_local.quality = scrapertools.find_single_match(data, '<b>Formato:<\/b>&\w+;\s?([^<]+)<br>')
         elif "hdtv" in item_local.url.lower() or "720p" in item_local.url.lower() or "1080p" in item_local.url.lower() or "4k" in item_local.url.lower():
             item_local.quality = scrapertools.find_single_match(item_local.url, '.*?_([H|7|1|4].*?)\.torrent')
         item_local.quality = item_local.quality.replace("_", " ")
-        
+    
     # Extrae el tamaño del vídeo
     if scrapertools.find_single_match(data, '<b>Tama.*?:<\/b>&\w+;\s?([^<]+B)<?'):
         size = scrapertools.find_single_match(data, '<b>Tama.*?:<\/b>&\w+;\s?([^<]+B)<?')
     else:
         size  = scrapertools.find_single_match(item_local.url, '(\d{1,3},\d{1,2}?\w+)\.torrent')
     size = size.upper().replace(".", ",").replace("G", " G ").replace("M", " M ") #sustituimos . por , porque Unify lo borra
+    if not size:
+        size = generictools.get_torrent_size(item_local.url)                        #Buscamos el tamaño en el .torrent
     if size:
         item_local.title = re.sub('\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title) #Quitamos size de título, si lo traía
         item_local.title = '%s [%s]' % (item_local.title, size)                     #Agregamos size al final del título
@@ -866,8 +869,15 @@ def findvideos(item):
     #Ahora pintamos el link del Torrent, si lo hay
     if item_local.url:		# Hay Torrent ?
         item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))            #Preparamos título de Torrent
-        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title)    #Quitamos etiquetas vacías
-        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)          #Quitamos colores vacíos
+        
+        #Preparamos título y calidad, quitamos etiquetas vacías
+        item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
+        item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
+        item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+        item_local.quality = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.quality)
+        item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality)
+        item_local.quality = item_local.quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+        
         item_local.alive = "??"                                                     #Calidad del link sin verificar
         item_local.action = "play"                                                  #Visualizar vídeo
         item_local.server = "torrent"                                               #Seridor Torrent
