@@ -4,8 +4,10 @@ import re
 import urllib
 import urlparse
 
+from core import httptools
 from core import scrapertools
 from core import servertools
+from core import tmdb
 from platformcode import config, logger
 
 __modo_grafico__ = config.get_setting('modo_grafico', "seriecanal")
@@ -17,23 +19,21 @@ perfil = [['0xFFFFE6CC', '0xFFFFCE9C', '0xFF994D00'],
           ['0xFF58D3F7', '0xFF2E9AFE', '0xFF2E64FE']]
 color1, color2, color3 = perfil[__perfil__]
 
-URL_BASE = "http://www.seriecanal.com/"
+host = "https://www.seriecanal.com/"
 
 
 def login():
     logger.info()
-    data = scrapertools.downloadpage(URL_BASE)
+    data = httptools.downloadpage(host).data
     if "Cerrar Sesion" in data:
         return True, ""
-
     usuario = config.get_setting("user", "seriecanal")
     password = config.get_setting("password", "seriecanal")
     if usuario == "" or password == "":
         return False, 'Regístrate en www.seriecanal.com e introduce tus datos en "Configurar Canal"'
     else:
         post = urllib.urlencode({'username': usuario, 'password': password})
-        data = scrapertools.downloadpage("http://www.seriecanal.com/index.php?page=member&do=login&tarea=acceder",
-                                         post=post)
+        data = httptools.downloadpage(host + "index.php?page=member&do=login&tarea=acceder", post=post).data
         if "Bienvenid@, se ha identificado correctamente en nuestro sistema" in data:
             return True, ""
         else:
@@ -44,18 +44,15 @@ def mainlist(item):
     logger.info()
     itemlist = []
     item.text_color = color1
-
     result, message = login()
     if result:
-        itemlist.append(item.clone(action="series", title="Últimos episodios", url=URL_BASE))
+        itemlist.append(item.clone(action="series", title="Últimos episodios", url=host))
         itemlist.append(item.clone(action="genero", title="Series por género"))
         itemlist.append(item.clone(action="alfabetico", title="Series por orden alfabético"))
         itemlist.append(item.clone(action="search", title="Buscar..."))
     else:
         itemlist.append(item.clone(action="", title=message, text_color="red"))
-
     itemlist.append(item.clone(action="configuracion", title="Configurar canal...", text_color="gold", folder=False))
-
     return itemlist
 
 
@@ -68,7 +65,7 @@ def configuracion(item):
 
 def search(item, texto):
     logger.info()
-    item.url = "http://www.seriecanal.com/index.php?page=portada&do=category&method=post&category_id=0&order=" \
+    item.url = host + "index.php?page=portada&do=category&method=post&category_id=0&order=" \
                "C_Create&view=thumb&pgs=1&p2=1"
     try:
         post = "keyserie=" + texto
@@ -85,27 +82,24 @@ def search(item, texto):
 def genero(item):
     logger.info()
     itemlist = []
-    data = scrapertools.downloadpage(URL_BASE)
+    data = httptools.downloadpage(host).data
     data = scrapertools.find_single_match(data, '<ul class="tag-cloud">(.*?)</ul>')
-
     matches = scrapertools.find_multiple_matches(data, '<a.*?href="([^"]+)">([^"]+)</a>')
     for scrapedurl, scrapedtitle in matches:
         scrapedtitle = scrapedtitle.capitalize()
-        url = urlparse.urljoin(URL_BASE, scrapedurl)
+        url = urlparse.urljoin(host, scrapedurl)
         itemlist.append(item.clone(action="series", title=scrapedtitle, url=url))
-
     return itemlist
 
 
 def alfabetico(item):
     logger.info()
     itemlist = []
-    data = scrapertools.downloadpage(URL_BASE)
+    data = httptools.downloadpage(host).data
     data = scrapertools.find_single_match(data, '<ul class="pagination pagination-sm" style="margin:5px 0;">(.*?)</ul>')
-
     matches = scrapertools.find_multiple_matches(data, '<a.*?href="([^"]+)">([^"]+)</a>')
     for scrapedurl, scrapedtitle in matches:
-        url = urlparse.urljoin(URL_BASE, scrapedurl)
+        url = urlparse.urljoin(host, scrapedurl)
         itemlist.append(item.clone(action="series", title=scrapedtitle, url=url))
     return itemlist
 
@@ -115,45 +109,38 @@ def series(item):
     itemlist = []
     item.infoLabels = {}
     item.text_color = color2
-
     if item.extra != "":
-        data = scrapertools.downloadpage(item.url, post=item.extra)
+        data = httptools.downloadpage(item.url, post=item.extra).data
     else:
-        data = scrapertools.downloadpage(item.url)
+        data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
 
     patron = '<div class="item-inner" style="margin: 0 20px 0px 0\;"><img src="([^"]+)".*?' \
              'href="([^"]+)" title="Click para Acceder a la Ficha(?:\|([^"]+)|)".*?' \
              '<strong>([^"]+)</strong></a>.*?<strong>([^"]+)</strong></p>.*?' \
              '<p class="text-warning".*?\;">(.*?)</p>'
-
     matches = scrapertools.find_multiple_matches(data, patron)
-
     for scrapedthumbnail, scrapedurl, scrapedplot, scrapedtitle, scrapedtemp, scrapedepi in matches:
         title = scrapedtitle + " - " + scrapedtemp + " - " + scrapedepi
-        url = urlparse.urljoin(URL_BASE, scrapedurl)
-        temporada = scrapertools.find_single_match(scrapedtemp, "(\d+)")
-        new_item = item.clone()
-        new_item.contentType = "tvshow"
+        url = urlparse.urljoin(host, scrapedurl)
+        temporada = scrapertools.find_single_match(scrapedtemp, "\d+")
+        episode = scrapertools.find_single_match(scrapedepi, "\d+")
+        #item.contentType = "tvshow"
         if temporada != "":
-            new_item.infoLabels['season'] = temporada
-            new_item.contentType = "season"
-
-        logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + scrapedthumbnail + "]")
-        itemlist.append(new_item.clone(action="findvideos", title=title, fulltitle=scrapedtitle, url=url,
-                                       thumbnail=scrapedthumbnail, plot=scrapedplot, contentTitle=scrapedtitle,
-                                       context=["buscar_trailer"], show=scrapedtitle))
-
-    try:
-        from core import tmdb
-        tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
-    except:
-        pass
+            item.infoLabels['season'] = temporada
+            #item.contentType = "season"
+        if episode != "":
+            item.infoLabels['episode'] = episode
+            #item.contentType = "episode"
+        itemlist.append(item.clone(action="findvideos", title=title, url=url,
+                                       contentSerieName=scrapedtitle,
+                                       context=["buscar_trailer"]))
+    tmdb.set_infoLabels(itemlist)
     # Extra marca siguiente página
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" (?:onclick="return false;" |)title='
                                                      '"Página Siguiente"')
     if next_page != "/":
-        url = urlparse.urljoin(URL_BASE, next_page)
+        url = urlparse.urljoin(host, next_page)
         itemlist.append(item.clone(action="series", title=">> Siguiente", url=url, text_color=color3))
 
     return itemlist
@@ -163,10 +150,8 @@ def findvideos(item):
     logger.info()
     itemlist = []
     item.text_color = color3
-
-    data = scrapertools.downloadpage(item.url)
+    data = httptools.downloadpage(item.url).data
     data = scrapertools.decodeHtmlentities(data)
-
     # Busca en la seccion descarga/torrent
     data_download = scrapertools.find_single_match(data, '<th>Episodio - Enlaces de Descarga</th>(.*?)</table>')
     patron = '<p class="item_name".*?<a href="([^"]+)".*?>([^"]+)</a>'
@@ -178,18 +163,15 @@ def findvideos(item):
         else:
             scrapedtitle = "[Torrent] " + scrapedepi
         scrapedtitle = scrapertools.htmlclean(scrapedtitle)
-
         new_item.infoLabels['episode'] = scrapertools.find_single_match(scrapedtitle, "Episodio (\d+)")
         logger.debug("title=[" + scrapedtitle + "], url=[" + scrapedurl + "]")
         itemlist.append(new_item.clone(action="play", title=scrapedtitle, url=scrapedurl, server="torrent",
                                        contentType="episode"))
-
     # Busca en la seccion online
     data_online = scrapertools.find_single_match(data, "<th>Enlaces de Visionado Online</th>(.*?)</table>")
     patron = '<a href="([^"]+)\\n.*?src="([^"]+)".*?' \
              'title="Enlace de Visionado Online">([^"]+)</a>'
     matches = scrapertools.find_multiple_matches(data_online, patron)
-
     for scrapedurl, scrapedthumb, scrapedtitle in matches:
         # Deshecha enlaces de trailers
         scrapedtitle = scrapertools.htmlclean(scrapedtitle)
@@ -200,7 +182,6 @@ def findvideos(item):
 
             new_item.infoLabels['episode'] = scrapertools.find_single_match(scrapedtitle, "Episodio (\d+)")
             itemlist.append(new_item.clone(action="play", title=title, url=scrapedurl, contentType="episode"))
-
     # Comprueba si hay otras temporadas
     if not "No hay disponible ninguna Temporada adicional" in data:
         data_temp = scrapertools.find_single_match(data, '<div class="panel panel-success">(.*?)</table>')
@@ -210,7 +191,7 @@ def findvideos(item):
         matches = scrapertools.find_multiple_matches(data_temp, patron)
         for scrapedurl, scrapedtitle in matches:
             new_item = item.clone()
-            url = urlparse.urljoin(URL_BASE, scrapedurl)
+            url = urlparse.urljoin(host, scrapedurl)
             scrapedtitle = scrapedtitle.capitalize()
             temporada = scrapertools.find_single_match(scrapedtitle, "Temporada (\d+)")
             if temporada != "":
@@ -218,13 +199,7 @@ def findvideos(item):
                 new_item.infoLabels['episode'] = ""
             itemlist.append(new_item.clone(action="findvideos", title=scrapedtitle, url=url, text_color="red",
                                            contentType="season"))
-
-    try:
-        from core import tmdb
-        tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
-    except:
-        pass
-
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     new_item = item.clone()
     if config.is_xbmc():
         new_item.contextual = True
@@ -236,7 +211,6 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-
     if item.extra == "torrent":
         itemlist.append(item.clone())
     else:
