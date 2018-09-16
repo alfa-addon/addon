@@ -8,18 +8,19 @@ import sys
 import threading
 import time
 from functools import wraps
+# Requerido para el ejecutable en windows
+import SimpleHTTPServer
 
 sys.dont_write_bytecode = True
 from platformcode import config
 
 sys.path.append(os.path.join(config.get_runtime_path(), 'lib'))
 from platformcode import platformtools, logger
-import HTTPServer
-import WebSocket
+import HTTPAndWSServer
 
 http_port = config.get_setting("server.port")
-websocket_port = config.get_setting("websocket.port")
 myip = config.get_local_ip()
+version = config.get_addon_version()
 
 
 def thread_name_wrap(func):
@@ -43,9 +44,8 @@ if sys.version_info < (2, 7, 11):
 def show_info():
     os.system('cls' if os.name == 'nt' else 'clear')
     print ("--------------------------------------------------------------------")
-    print ("Alfa Iniciado")
+    print ("Alfa %s Iniciado" %version)
     print ("La URL para acceder es http://%s:%s" % (myip, http_port))
-    print ("WebSocket Server iniciado en ws://%s:%s" % (myip, websocket_port))
     print ("--------------------------------------------------------------------")
     print ("Runtime Path      : " + config.get_runtime_path())
     print ("Data Path         : " + config.get_data_path())
@@ -67,14 +67,12 @@ def start():
     logger.info("server init...")
     config.verify_directories_created()
     try:
-        HTTPServer.start(show_info)
-        WebSocket.start(show_info)
+        HTTPAndWSServer.start(show_info)
 
         # Da por levantado el servicio
         logger.info("--------------------------------------------------------------------")
-        logger.info("Alfa Iniciado")
+        logger.info("Alfa %s Iniciado" %version)
         logger.info("La URL para acceder es http://%s:%s" % (myip, http_port))
-        logger.info("WebSocket Server iniciado en ws://%s:%s" % (myip, websocket_port))
         logger.info("--------------------------------------------------------------------")
         logger.info("Runtime Path      : " + config.get_runtime_path())
         logger.info("Data Path         : " + config.get_data_path())
@@ -91,9 +89,7 @@ def start():
 
     except KeyboardInterrupt:
         print 'Deteniendo el servidor HTTP...'
-        HTTPServer.stop()
-        print 'Deteniendo el servidor WebSocket...'
-        WebSocket.stop()
+        HTTPAndWSServer.stop()
         print 'Alfa Detenido'
         flag = False
 

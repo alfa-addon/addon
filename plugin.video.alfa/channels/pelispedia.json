@@ -22,20 +22,6 @@
       "visible": true
     },
     {
-      "id": "perfil",
-      "type": "list",
-      "label": "Perfil de color",
-      "default": 3,
-      "enabled": true,
-      "visible": true,
-      "lvalues": [
-        "Sin color",
-        "Perfil 3",
-        "Perfil 2",
-        "Perfil 1"
-      ]
-    },
-    {
       "id": "orden_episodios",
       "type": "bool",
       "label": "Mostrar los episodios de las series en orden descendente",

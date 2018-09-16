@@ -1,7 +1,7 @@
 {
   "id": "ver-peliculas",
-  "thumbnail":"https://s14.postimg.org/98ulljwhd/ver-peliculas.png",
-  "banner":"https://s2.postimg.org/4k1ivod2h/ver-peliculas-banner.png",
+  "thumbnail":"https://s14.postimg.cc/98ulljwhd/ver-peliculas.png",
+  "banner":"https://s2.postimg.cc/4k1ivod2h/ver-peliculas-banner.png",
   "name": "Ver-peliculas",
   "active": true,
   "adult": false,
@@ -18,6 +18,20 @@
       "default": true,
       "enabled": true,
       "visible": true
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "Cast",
+        "Lat",
+        "VOSE"
+      ]
     }
   ]
 

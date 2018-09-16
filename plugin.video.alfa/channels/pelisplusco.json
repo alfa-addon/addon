@@ -4,8 +4,8 @@
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "thumbnail": "https://s26.postimg.org/jov1pmbh5/pelisplusco.png",
-  "banner": "https://s26.postimg.org/4hf259jmh/pelisplusco-banner.png",
+  "thumbnail": "https://s26.postimg.cc/jov1pmbh5/pelisplusco.png",
+  "banner": "https://s26.postimg.cc/4hf259jmh/pelisplusco-banner.png",
   "version": 1,
   "categories": [
     "movie",
@@ -22,6 +22,20 @@
       "default": true,
       "enabled": true,
       "visible": true
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "Lat",
+        "Cast",
+        "VOSE"
+      ]
     }
   ]
 }

@@ -116,14 +116,17 @@ def save_movie(item):
     _id = item.infoLabels['code'][0]
 
     # progress dialog
-    p_dialog = platformtools.dialog_progress('alfa', 'Añadiendo película...')
+    p_dialog = platformtools.dialog_progress(config.get_localized_string(20000), config.get_localized_string(60062))
 
     if config.get_setting("original_title_folder", "videolibrary") == 1 and item.infoLabels['originaltitle']:
         base_name = item.infoLabels['originaltitle']
     else:
         base_name = item.contentTitle
 
-    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").lower().encode("utf8")
+    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
+
+    if config.get_setting("lowerize_title", "videolibrary") == 0:
+        base_name = base_name.lower()
 
     for raiz, subcarpetas, ficheros in filetools.walk(MOVIES_PATH):
         for c in subcarpetas:
@@ -194,7 +197,7 @@ def save_movie(item):
 
     # Si llegamos a este punto es por q algo ha fallado
     logger.error("No se ha podido guardar %s en la videoteca" % item.contentTitle)
-    p_dialog.update(100, 'Fallo al añadir...', item.contentTitle)
+    p_dialog.update(100, config.get_localized_string(60063), item.contentTitle)
     p_dialog.close()
     return 0, 0, -1
 
@@ -212,6 +215,8 @@ def save_tvshow(item, episodelist):
     @return:  el número de episodios sobreescritos
     @rtype fallidos: int
     @return:  el número de episodios fallidos o -1 si ha fallado toda la serie
+    @rtype path: str
+    @return:  directorio serie
     """
     logger.info()
     # logger.debug(item.tostring('\n'))
@@ -220,7 +225,7 @@ def save_tvshow(item, episodelist):
     # Si llegados a este punto no tenemos titulo o code, salimos
     if not (item.contentSerieName or item.infoLabels['code']) or not item.channel:
         logger.debug("NO ENCONTRADO contentSerieName NI code")
-        return 0, 0, -1  # Salimos sin guardar
+        return 0, 0, -1, path  # Salimos sin guardar
 
     scraper_return = scraper.find_and_set_infoLabels(item)
     # Llegados a este punto podemos tener:
@@ -231,7 +236,7 @@ def save_tvshow(item, episodelist):
         # TODO de momento si no hay resultado no añadimos nada,
         # aunq podriamos abrir un cuadro para introducir el identificador/nombre a mano
         logger.debug("NO ENCONTRADO EN SCRAPER O NO TIENE code")
-        return 0, 0, -1
+        return 0, 0, -1, path
 
     _id = item.infoLabels['code'][0]
 
@@ -244,7 +249,10 @@ def save_tvshow(item, episodelist):
     else:
         base_name = item.contentSerieName
 
-    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").lower().encode("utf8")
+    base_name = unicode(filetools.validate_path(base_name.replace('/', '-')), "utf8").encode("utf8")
+
+    if config.get_setting("lowerize_title", "videolibrary") == 0:
+        base_name = base_name.lower()
 
     for raiz, subcarpetas, ficheros in filetools.walk(TVSHOWS_PATH):
         for c in subcarpetas:
@@ -288,10 +296,16 @@ def save_tvshow(item, episodelist):
     if episodelist and "list_language" in episodelist[0]:
         # si ya hemos añadido un canal previamente con filtro, añadimos o actualizamos el canal y show
         if "library_filter_show" in item_tvshow:
-            item_tvshow.library_filter_show[item.channel] = item.show
+            if item.title_from_channel:
+                item_tvshow.library_filter_show[item.channel] = item.title_from_channel
+            else:
+                item_tvshow.library_filter_show[item.channel] = item.show
         # no habia ningún canal con filtro y lo generamos por primera vez
         else:
-            item_tvshow.library_filter_show = {item.channel: item.show}
+            if item.title_from_channel:
+                item_tvshow.library_filter_show = {item.channel: item.title_from_channel}
+            else:
+                item_tvshow.library_filter_show = {item.channel: item.show}
 
     if item.channel != "downloads":
         item_tvshow.active = 1  # para que se actualice a diario cuando se llame a videolibrary_service
@@ -299,7 +313,7 @@ def save_tvshow(item, episodelist):
 
     if not episodelist:
         # La lista de episodios esta vacia
-        return 0, 0, 0
+        return 0, 0, 0, path
 
     # Guardar los episodios
     '''import time
@@ -348,15 +362,29 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     raiz, carpetas_series, ficheros = filetools.walk(path).next()
     ficheros = [filetools.join(path, f) for f in ficheros]
 
+    nostrm_episodelist = []
+    for root, folders, files in filetools.walk(path):
+        for file in files:
+            season_episode = scrapertools.get_season_and_episode(file)
+            if season_episode == "" or filetools.exists(filetools.join(path, "%s.strm" % season_episode)):
+                continue
+            nostrm_episodelist.append(season_episode)
+    nostrm_episodelist = sorted(set(nostrm_episodelist))
+
     # Silent es para no mostrar progreso (para videolibrary_service)
     if not silent:
         # progress dialog
-        p_dialog = platformtools.dialog_progress('alfa', 'Añadiendo episodios...')
-        p_dialog.update(0, 'Añadiendo episodio...')
+        p_dialog = platformtools.dialog_progress(config.get_localized_string(20000), config.get_localized_string(60064))
+        p_dialog.update(0, config.get_localized_string(60065))
 
     new_episodelist = []
     # Obtenemos el numero de temporada y episodio y descartamos los q no lo sean
+    tags = []
+    if config.get_setting("enable_filter", "videolibrary"):
+        tags = [x.strip() for x in config.get_setting("filters", "videolibrary").lower().split(",")]
     for e in episodelist:
+        if tags != [] and tags != None and any(tag in e.title.lower() for tag in tags):
+            continue
         try:
             season_episode = scrapertools.get_season_and_episode(e.title)
 
@@ -376,13 +404,15 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
 
     for i, e in enumerate(scraper.sort_episode_list(new_episodelist)):
         if not silent:
-            p_dialog.update(int(math.ceil((i + 1) * t)), 'Añadiendo episodio...', e.title)
+            p_dialog.update(int(math.ceil((i + 1) * t)), config.get_localized_string(60064), e.title)
 
         season_episode = "%sx%s" % (e.contentSeason, str(e.contentEpisodeNumber).zfill(2))
         strm_path = filetools.join(path, "%s.strm" % season_episode)
         nfo_path = filetools.join(path, "%s.nfo" % season_episode)
         json_path = filetools.join(path, ("%s [%s].json" % (season_episode, e.channel)).lower())
 
+        if season_episode in nostrm_episodelist:
+            continue
         strm_exists = strm_path in ficheros
         nfo_exists = nfo_path in ficheros
         json_exists = json_path in ficheros
@@ -509,6 +539,18 @@ def add_movie(item):
     """
     logger.info()
 
+    #Para desambiguar títulos, se provoca que TMDB pregunte por el título realmente deseado
+    #El usuario puede seleccionar el título entre los ofrecidos en la primera pantalla
+    #o puede cancelar e introducir un nuevo título en la segunda pantalla
+    #Si lo hace en "Introducir otro nombre", TMDB buscará automáticamente el nuevo título
+    #Si lo hace en "Completar Información", cambia parcialmente al nuevo título, pero no busca en TMDB.  Hay que hacerlo
+    #Si se cancela la segunda pantalla, la variable "scraper_return" estará en False.  El usuario no quiere seguir
+    
+    from lib import generictools
+    item = generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
+    #if item.tmdb_stat:
+    #    del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
+
     new_item = item.clone(action="findvideos")
     insertados, sobreescritos, fallidos = save_movie(new_item)
 
@@ -517,7 +559,7 @@ def add_movie(item):
                                 config.get_localized_string(30135))  # 'se ha añadido a la videoteca'
     else:
         platformtools.dialog_ok(config.get_localized_string(30131),
-                                "ERROR, la pelicula NO se ha añadido a la videoteca")
+                                config.get_localized_string(60066))  #"ERROR, la pelicula NO se ha añadido a la videoteca")
 
 
 def add_tvshow(item, channel=None):
@@ -565,26 +607,38 @@ def add_tvshow(item, channel=None):
             except ImportError:
                 exec "import channels." + item.channel + " as channel"
 
+        #Para desambiguar títulos, se provoca que TMDB pregunte por el título realmente deseado
+        #El usuario puede seleccionar el título entre los ofrecidos en la primera pantalla
+        #o puede cancelar e introducir un nuevo título en la segunda pantalla
+        #Si lo hace en "Introducir otro nombre", TMDB buscará automáticamente el nuevo título
+        #Si lo hace en "Completar Información", cambia parcialmente al nuevo título, pero no busca en TMDB.  Hay que hacerlo
+        #Si se cancela la segunda pantalla, la variable "scraper_return" estará en False.  El usuario no quiere seguir
+        
+        from lib import generictools
+        item = generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
+        #if item.tmdb_stat:
+        #    del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
+                
         # Obtiene el listado de episodios
         itemlist = getattr(channel, item.action)(item)
+        
     insertados, sobreescritos, fallidos, path = save_tvshow(item, itemlist)
 
     if not insertados and not sobreescritos and not fallidos:
-        platformtools.dialog_ok("Videoteca", "ERROR, la serie NO se ha añadido a la videoteca",
-                                "No se ha podido obtener ningun episodio")
+        platformtools.dialog_ok(config.get_localized_string(30131), config.get_localized_string(60067))
         logger.error("La serie %s no se ha podido añadir a la videoteca. No se ha podido obtener ningun episodio"
                      % item.show)
 
     elif fallidos == -1:
-        platformtools.dialog_ok("Videoteca", "ERROR, la serie NO se ha añadido a la videoteca")
+        platformtools.dialog_ok(config.get_localized_string(30131), config.get_localized_string(60068))
         logger.error("La serie %s no se ha podido añadir a la videoteca" % item.show)
 
     elif fallidos > 0:
-        platformtools.dialog_ok("Videoteca", "ERROR, la serie NO se ha añadido completa a la videoteca")
+        platformtools.dialog_ok(config.get_localized_string(30131), config.get_localized_string(60069))
         logger.error("No se han podido añadir %s episodios de la serie %s a la videoteca" % (fallidos, item.show))
 
     else:
-        platformtools.dialog_ok("Videoteca", "La serie se ha añadido a la videoteca")
+        platformtools.dialog_ok(config.get_localized_string(30131), config.get_localized_string(60070))
         logger.info("Se han añadido %s episodios de la serie %s a la videoteca" %
                     (insertados, item.show))
         if config.is_xbmc():

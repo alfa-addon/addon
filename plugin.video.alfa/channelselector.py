@@ -17,17 +17,21 @@ def getmainlist(view="thumb_"):
     itemlist.append(Item(title=config.get_localized_string(30130), channel="news", action="mainlist",
                          thumbnail=get_thumb("news.png", view),
                          category=config.get_localized_string(30119), viewmode="thumbnails",
-                         context=[{"title": "Configurar Novedades", "channel": "news", "action": "menu_opciones",
+                         context=[{"title": config.get_localized_string(70285), "channel": "news", "action": "menu_opciones",
                                    "goto": True}]))
 
     itemlist.append(Item(title=config.get_localized_string(30118), channel="channelselector", action="getchanneltypes",
                          thumbnail=get_thumb("channels.png", view), view=view,
                          category=config.get_localized_string(30119), viewmode="thumbnails"))
 
+    itemlist.append(Item(title=config.get_localized_string(70527), channel="alfavorites", action="mainlist",
+                         thumbnail=get_thumb("mylink.png", view), view=view,
+                         category=config.get_localized_string(70527), viewmode="thumbnails"))
+
     itemlist.append(Item(title=config.get_localized_string(30103), channel="search", action="mainlist",
                          thumbnail=get_thumb("search.png", view),
                          category=config.get_localized_string(30119), viewmode="list",
-                         context=[{"title": "Configurar Buscador", "channel": "search", "action": "opciones",
+                         context=[{"title": config.get_localized_string(70286), "channel": "search", "action": "opciones",
                                    "goto": True}]))
 
     itemlist.append(Item(title=config.get_localized_string(30102), channel="favorites", action="mainlist",
@@ -38,12 +42,12 @@ def getmainlist(view="thumb_"):
         itemlist.append(Item(title=config.get_localized_string(30131), channel="videolibrary", action="mainlist",
                              thumbnail=get_thumb("videolibrary.png", view),
                              category=config.get_localized_string(30119), viewmode="thumbnails",
-                             context=[{"title": "Configurar Videoteca", "channel": "videolibrary",
+                             context=[{"title": config.get_localized_string(70287), "channel": "videolibrary",
                                        "action": "channel_config"}]))
 
     itemlist.append(Item(title=config.get_localized_string(30101), channel="downloads", action="mainlist",
                          thumbnail=get_thumb("downloads.png", view), viewmode="list",
-                         context=[{"title": "Configurar Descargas", "channel": "setting", "config": "downloads",
+                         context=[{"title": config.get_localized_string(70288), "channel": "setting", "config": "downloads",
                                    "action": "channel_config"}]))
 
     thumb_setting = "setting_%s.png" % 0  # config.get_setting("plugin_updates_available")
@@ -52,7 +56,7 @@ def getmainlist(view="thumb_"):
                          thumbnail=get_thumb(thumb_setting, view),
                          category=config.get_localized_string(30100), viewmode="list"))
 
-    itemlist.append(Item(title=config.get_localized_string(30104), channel="help", action="mainlist",
+    itemlist.append(Item(title=config.get_localized_string(30104) + " (" + config.get_localized_string(20000) +" " + config.get_addon_version(with_fix=False) + ")", channel="help", action="mainlist",
                          thumbnail=get_thumb("help.png", view),
                          category=config.get_localized_string(30104), viewmode="list"))
     return itemlist
@@ -63,10 +67,6 @@ def getchanneltypes(view="thumb_"):
 
     # Lista de categorias
     channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent"]
-    dict_types_lang = {'movie': config.get_localized_string(30122), 'tvshow': config.get_localized_string(30123),
-                       'anime': config.get_localized_string(30124), 'documentary': config.get_localized_string(30125),
-                       'vos': config.get_localized_string(30136), 'adult': config.get_localized_string(30126),
-                       'direct': config.get_localized_string(30137)}
 
     if config.get_setting("adult_mode") != 0:
         channel_types.append("adult")
@@ -82,8 +82,7 @@ def getchanneltypes(view="thumb_"):
                          viewmode="thumbnails"))
 
     for channel_type in channel_types:
-        logger.info("channel_type=%s" % channel_type)
-        title = dict_types_lang.get(channel_type, channel_type)
+        title = config.get_localized_category(channel_type)
         itemlist.append(Item(title=title, channel="channelselector", action="filterchannels", category=title,
                              channel_type=channel_type, viewmode="thumbnails",
                              thumbnail=get_thumb("channels_%s.png" % channel_type, view)))
@@ -171,13 +170,14 @@ def filterchannels(category, view="thumb_"):
             # Si tiene configuración añadimos un item en el contexto
             context = []
             if channel_parameters["has_settings"]:
-                context.append({"title": "Configurar canal", "channel": "setting", "action": "channel_config",
+                context.append({"title": config.get_localized_string(70525), "channel": "setting", "action": "channel_config",
                                 "config": channel_parameters["channel"]})
 
+            channel_info = set_channel_info(channel_parameters)
             # Si ha llegado hasta aquí, lo añade
             channelslist.append(Item(title=channel_parameters["title"], channel=channel_parameters["channel"],
                                      action="mainlist", thumbnail=channel_parameters["thumbnail"],
-                                     fanart=channel_parameters["fanart"], category=channel_parameters["title"],
+                                     fanart=channel_parameters["fanart"], plot=channel_info, category=channel_parameters["title"],
                                      language=channel_parameters["language"], viewmode="list", context=context))
 
         except:
@@ -188,14 +188,30 @@ def filterchannels(category, view="thumb_"):
     channelslist.sort(key=lambda item: item.title.lower().strip())
 
     if category == "all":
-
         channel_parameters = channeltools.get_channel_parameters('url')
         # Si prefiere el banner y el canal lo tiene, cambia ahora de idea
         if view == "banner_" and "banner" in channel_parameters:
             channel_parameters["thumbnail"] = channel_parameters["banner"]
 
-        channelslist.insert(0, Item(title="Tengo una URL", action="mainlist", channel="url",
+        channelslist.insert(0, Item(title=config.get_localized_string(60088), action="mainlist", channel="url",
                                     thumbnail=channel_parameters["thumbnail"], type="generic", viewmode="list"))
+
+    if category in ['movie', 'tvshow']:
+        titles = [config.get_localized_string(70028), config.get_localized_string(30985), config.get_localized_string(70559), config.get_localized_string(60264), config.get_localized_string(70560)]
+        ids = ['popular', 'top_rated', 'now_playing', 'on_the_air']
+        for x in range(0,3):
+            if x == 2 and category != 'movie':
+                title=titles[x+1]
+                id = ids[x+1]
+            else:
+                title=titles[x]
+                id = ids[x]
+            channelslist.insert(x,
+                Item(channel='search', action='discover_list', title=title, search_type='list',
+                     list_type='%s/%s' % (category.replace('show',''), id), thumbnail=get_thumb(id+".png")))
+
+        channelslist.insert(3, Item(channel='search', action='genres_menu', title='Generos',
+                                    type=category.replace('show',''), thumbnail=get_thumb("genres.png")))
 
     return channelslist
 
@@ -221,3 +237,34 @@ def get_thumb(thumb_name, view="thumb_", auto=False):
         media_path = os.path.join(resource_path, icon_pack_name)
 
         return os.path.join(media_path, view + thumb_name)
+
+
+def set_channel_info(parameters):
+    logger.info()
+
+    info = ''
+    language = ''
+    content = ''
+    langs = parameters['language']
+    lang_dict = {'lat':'Latino', 'cast':'Castellano', '*':'Latino, Castellano, VOSE, VO'}
+    for lang in langs:
+        if 'vos' in parameters['categories']:
+            lang = '*'
+
+        if lang in lang_dict:
+            if language != '' and language != '*' and not parameters['adult']:
+                language = '%s, %s' % (language, lang_dict[lang])
+            elif not parameters['adult']:
+                language = lang_dict[lang]
+        if lang == '*':
+            break
+
+    categories = parameters['categories']
+    for cat in categories:
+        if content != '':
+            content = '%s, %s' % (content, config.get_localized_category(cat))
+        else:
+            content = config.get_localized_category(cat)
+
+    info = '[COLOR yellow]Tipo de contenido:[/COLOR] %s\n\n[COLOR yellow]Idiomas:[/COLOR] %s' % (content, language)
+    return info

@@ -1,12 +1,21 @@
 # -*- coding: utf-8 -*-
 
 from channelselector import get_thumb
+from channels import autoplay
+from channels import filtertools
 from core import httptools
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
+
+
+IDIOMAS = {'Latino': 'LAT'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['rapidvideo', 'streamango', 'fastplay', 'flashx', 'openload', 'vimeo', 'netutv']
+
 
 __channel__='allcalidad'
 
@@ -20,14 +29,44 @@ except:
 
 def mainlist(item):
     logger.info()
+    autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host, thumbnail = get_thumb("newest", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos_years", url = host, extra = "Genero", thumbnail = get_thumb("genres", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = "Por año", action = "generos_years", url = host, extra = ">Año<", thumbnail = get_thumb("year", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Favoritas", action = "peliculas", url = host + "/favorites", thumbnail = get_thumb("favorites", auto = True) ))
+    itemlist.append(Item(channel = item.channel, title = "Favoritas", action = "favorites", url = host + "/favorites", thumbnail = get_thumb("favorites", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "?s=", thumbnail = get_thumb("search", auto = True)))
+    autoplay.show_option(item.channel, itemlist)
     return itemlist
+
+def favorites(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron  = '(?s)short_overlay.*?<a href="([^"]+)'
+    patron += '.*?img.*?src="([^"]+)'
+    patron += '.*?title="([^"]+).*?'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url, thumbnail, titulo in matches:
+        idioma = "Latino"
+        mtitulo = titulo + " (" + idioma + ")"
+        itemlist.append(item.clone(channel = item.channel,
+                                   action = "findvideos",
+                                   title = mtitulo,
+                                   fulltitle = titulo,
+                                   thumbnail = thumbnail,
+                                   url = url,
+                                   contentType="movie",
+                                   language = idioma
+                                   ))
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
+    url_pagina = scrapertools.find_single_match(data, 'next" href="([^"]+)')
+    if url_pagina != "":
+        pagina = "Pagina: " + scrapertools.find_single_match(url_pagina, "page/([0-9]+)")
+        itemlist.append(Item(channel = item.channel, action = "peliculas", title = pagina, url = url_pagina))
+    return itemlist
+
 
 def newest(categoria):
     logger.info()
@@ -87,20 +126,15 @@ def peliculas(item):
     data = httptools.downloadpage(item.url).data
     patron  = '(?s)short_overlay.*?<a href="([^"]+)'
     patron += '.*?img.*?src="([^"]+)'
-    patron += '.*?title="(.*?)"'
-    patron += '.*?(Idioma.*?)post-ratings'
-
+    patron += '.*?title="([^"]+).*?'
+    patron += 'data-postid="([^"]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for url, thumbnail, titulo, varios in matches:
-        idioma = scrapertools.find_single_match(varios, '(?s)Idioma.*?kinopoisk">([^<]+)')
-        number_idioma = scrapertools.find_single_match(idioma, '[0-9]')
-        mtitulo = titulo
-        if number_idioma != "":
-            idioma = ""
-        else:
-            mtitulo += " (" + idioma + ")"
-        year = scrapertools.find_single_match(varios, 'Año.*?kinopoisk">([^<]+)')
-        year = scrapertools.find_single_match(year, '[0-9]{4}')
+    for url, thumbnail, titulo, datapostid in matches:
+        post = 'action=get_movie_details&postID=%s' %datapostid
+        data1 = httptools.downloadpage(host + "wp-admin/admin-ajax.php", post=post).data
+        idioma = "Latino"
+        mtitulo = titulo + " (" + idioma + ")"
+        year = scrapertools.find_single_match(data1, "Año:.*?(\d{4})")
         if year:
             mtitulo += " (" + year + ")"
             item.infoLabels['year'] = int(year)
@@ -110,7 +144,6 @@ def peliculas(item):
                                    fulltitle = titulo,
                                    thumbnail = thumbnail,
                                    url = url,
-                                   contentTitle = titulo,
                                    contentType="movie",
                                    language = idioma
                                    ))
@@ -125,15 +158,26 @@ def peliculas(item):
 def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '(?s)fmi(.*?)thead'
-    bloque = scrapertools.find_single_match(data, patron)
-    match = scrapertools.find_multiple_matches(bloque, '(?is)(?:iframe|script) .*?src="([^"]+)')
-    for url in match:
+    if not item.infoLabels["year"]:
+        item.infoLabels["year"] = scrapertools.find_single_match(data, 'dateCreated.*?(\d{4})')
+        if "orig_title" in data:
+            contentTitle = scrapertools.find_single_match(data, 'orig_title.*?>([^<]+)<').strip()
+            if contentTitle != "":
+                item.contentTitle = contentTitle
+    bloque = scrapertools.find_single_match(data, '(?s)<div class="bottomPlayer">(.*?)<script>')
+    match = scrapertools.find_multiple_matches(bloque, '(?is)data-Url="([^"]+).*?data-postId="([^"]+)')
+    for dataurl, datapostid in match:
+        page_url = host + "wp-admin/admin-ajax.php"
+        post = "action=get_more_top_news&postID=%s&dataurl=%s" %(datapostid, dataurl)
+        data = httptools.downloadpage(page_url, post=post).data
+        url = scrapertools.find_single_match(data, '(?i)src="([^"]+)')
         titulo = "Ver en: %s"
+        text_color = "white"
         if "goo.gl" in url:
             url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
         if "youtube" in url:
-            titulo = "[COLOR = yellow]Ver trailer: %s[/COLOR]"
+            titulo = "Ver trailer: %s"
+            text_color = "yellow"
         if "ad.js" in url or "script" in url or "jstags.js" in url:
             continue
         elif "vimeo" in url:
@@ -141,11 +185,19 @@ def findvideos(item):
         itemlist.append(
                  item.clone(channel = item.channel,
                  action = "play",
+                 text_color = text_color,
                  title = titulo,
                  url = url
                  ))
-    tmdb.set_infoLabels(itemlist, __modo_grafico__)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    tmdb.set_infoLabels(itemlist, __modo_grafico__)
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
+
     if itemlist:
         itemlist.append(Item(channel = item.channel))
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
@@ -155,7 +207,7 @@ def findvideos(item):
             if config.get_videolibrary_support():
                 itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
                                      action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                     fulltitle = item.fulltitle
+                                     contentTitle = item.contentTitle
                                      ))
     return itemlist
 

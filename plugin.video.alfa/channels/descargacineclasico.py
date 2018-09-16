@@ -1,15 +1,15 @@
-﻿# -*- coding: utf-8 -*-
-
+# -*- coding: utf-8 -*-
 import re
-import urlparse
 
 from channelselector import get_thumb
-from core import scrapertools
+from platformcode import logger, config
+from core import scrapertools, httptools
 from core import servertools
+from core import tmdb
 from core.item import Item
-from core.tmdb import Tmdb
-from platformcode import logger
-from servers.decrypters import expurl
+from lib import unshortenit
+
+host = "http://www.descargacineclasico.net"
 
 
 def agrupa_datos(data):
@@ -22,54 +22,36 @@ def agrupa_datos(data):
 
 def mainlist(item):
     logger.info()
-
-    thumb_buscar = get_thumb("search.png")
-
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Últimas agregadas", action="agregadas",
-                         url="http://www.descargacineclasico.net/", viewmode="movie_with_plot",
+                         url=host, viewmode="movie_with_plot",
                                thumbnail=get_thumb('last', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Listado por género", action="porGenero",
-                         url="http://www.descargacineclasico.net/",
+                         url=host,
                                thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(
-        Item(channel=item.channel, title="Buscar", action="search", url="http://www.descargacineclasico.net/",
+        Item(channel=item.channel, title="Buscar", action="search", url=host,
                                thumbnail=get_thumb('search', auto=True)))
-
     return itemlist
 
 
 def porGenero(item):
     logger.info()
-
     itemlist = []
-    data = scrapertools.cache_page(item.url)
-    logger.info("data=" + data)
-
+    data = httptools.downloadpage(item.url).data
     patron = '<ul class="columnas">(.*?)</ul>'
-    data = re.compile(patron, re.DOTALL).findall(data)
-    patron = '<li.*?>.*?href="([^"]+).*?>([^<]+)'
-    matches = re.compile(patron, re.DOTALL).findall(data[0])
-
-    for url, genero in matches:
-        itemlist.append(
-            Item(channel=item.channel, action="agregadas", title=genero, url=url, viewmode="movie_with_plot"))
-
+    data = re.compile(patron,re.DOTALL).findall(data)
+    patron = '<li.*?>.*?href="([^"]+).*?>([^<]+)'                                            
+    matches = re.compile(patron,re.DOTALL).findall(data[0])
+    for url,genero in matches:
+        itemlist.append( Item(channel=item.channel , action="agregadas" , title=genero,url=url, viewmode="movie_with_plot"))
     return itemlist
 
 
-def search(item, texto):
+def search(item,texto):
     logger.info()
-
-    '''
-    texto_get = texto.replace(" ","%20")
-    texto_post = texto.replace(" ","+")
-    item.url = "http://pelisadicto.com/buscar/%s?search=%s" % (texto_get,texto_post)
-    '''
-
     texto = texto.replace(" ", "+")
-    item.url = "http://www.descargacineclasico.net/?s=" + texto
-
+    item.url = host + "?s=" + texto
     try:
         return agregadas(item)
     # Se captura la excepci?n, para no interrumpir al buscador global si un canal falla
@@ -83,98 +65,73 @@ def search(item, texto):
 def agregadas(item):
     logger.info()
     itemlist = []
-    '''
-    # Descarga la pagina
-    if "?search=" in item.url:
-        url_search = item.url.split("?search=")
-        data = scrapertools.cache_page(url_search[0], url_search[1])
-    else:
-        data = scrapertools.cache_page(item.url)
-    logger.info("data="+data)
-    '''
-
-    data = scrapertools.cache_page(item.url)
-    logger.info("data=" + data)
-
-    # Extrae las entradas
-    fichas = re.sub(r"\n|\s{2}", "", scrapertools.get_match(data, '<div class="review-box-container">(.*?)wp-pagenavi'))
-
-    # <a href="http://www.descargacineclasico.net/ciencia-ficcion/quatermass-2-1957/"
-    # title="Quatermass II (Quatermass 2) (1957) Descargar y ver Online">
-    # <img style="border-radius:6px;"
-    # src="//www.descargacineclasico.net/wp-content/uploads/2015/12/Quatermass-II-2-1957.jpg"
-    # alt="Quatermass II (Quatermass 2) (1957) Descargar y ver Online Gratis" height="240" width="160">
-
-
-    patron = '<div class="post-thumbnail"><a href="([^"]+)".*?'  # url
-    patron += 'title="([^"]+)".*?'  # title
-    patron += 'src="([^"]+).*?'  # thumbnail
-    patron += '<p>([^<]+)'  # plot
-
-    matches = re.compile(patron, re.DOTALL).findall(fichas)
+    data = httptools.downloadpage(item.url).data
+    fichas = re.sub(r"\n|\s{2}","",scrapertools.get_match(data,'<div class="review-box-container">(.*?)wp-pagenavi'))
+    patron = '<div class="post-thumbnail"><a href="([^"]+)".*?' # url
+    patron+= 'title="([^"]+)".*?' # title
+    patron+= 'src="([^"]+).*?'     # thumbnail
+    patron+= '<p>([^<]+)'         # plot
+    matches = re.compile(patron,re.DOTALL).findall(fichas)
     for url, title, thumbnail, plot in matches:
-        title = title[0:title.find("Descargar y ver Online")]
-        url = urlparse.urljoin(item.url, url)
-        thumbnail = urlparse.urljoin(url, thumbnail)
-
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title + " ", fulltitle=title, url=url,
-                             thumbnail=thumbnail, plot=plot, show=title))
-
+        title = title.replace("Descargar y ver Online","").strip()
+        year = scrapertools.find_single_match(title, '\(([0-9]{4})')
+        fulltitle = title.replace("(%s)" %year,"").strip()
+        itemlist.append( Item(action="findvideos",
+                              channel=item.channel,
+                              contentSerieName="",
+                              title=title+" ",
+                              fulltitle=fulltitle ,
+                              infoLabels={'year':year},
+                              url=url ,
+                              thumbnail=thumbnail,
+                              plot=plot,
+                              show=title) )
+    tmdb.set_infoLabels(itemlist)
     # Paginación
     try:
-
-        # <ul class="pagination"><li class="active"><span>1</span></li><li><span><a href="2">2</a></span></li><li><span><a href="3">3</a></span></li><li><span><a href="4">4</a></span></li><li><span><a href="5">5</a></span></li><li><span><a href="6">6</a></span></li></ul>
-
         patron_nextpage = r'<a class="nextpostslink" rel="next" href="([^"]+)'
-        next_page = re.compile(patron_nextpage, re.DOTALL).findall(data)
-        itemlist.append(Item(channel=item.channel, action="agregadas", title="Página siguiente >>", url=next_page[0],
-                             viewmode="movie_with_plot"))
-    except:
-        pass
-
+        next_page = re.compile(patron_nextpage,re.DOTALL).findall(data)
+        itemlist.append( Item(channel=item.channel, action="agregadas", title="Página siguiente >>" , url=next_page[0], viewmode="movie_with_plot") )
+    except: pass
     return itemlist
 
 
 def findvideos(item):
     logger.info()
-
     itemlist = []
-
-    data = scrapertools.cache_page(item.url)
-
+    data = httptools.downloadpage(item.url).data
     data = scrapertools.unescape(data)
-
-    titulo = item.title
-    titulo_tmdb = re.sub("([0-9+])", "", titulo.strip())
-
-    oTmdb = Tmdb(texto_buscado=titulo_tmdb, idioma_busqueda="es")
-    item.fanart = oTmdb.get_backdrop()
-
-    # Descarga la pagina
-    #    data = scrapertools.cache_page(item.url)
-    patron = '#div_\d_\D.+?<img id="([^"]+).*?<span>.*?</span>.*?<span>(.*?)</span>.*?imgdes.*?imgdes/([^\.]+).*?<a href=([^\s]+)'  # Añado calidad
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    patron = '#div_\d_\D.+?<img id="([^"]+).*?<span>.*?</span>.*?<span>(.*?)</span>.*?imgdes.*?imgdes/([^\.]+).*?<a href=([^\s]+)'  #Añado calidad
+    matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedidioma, scrapedcalidad, scrapedserver, scrapedurl in matches:
-        title = titulo + "_" + scrapedidioma + "_" + scrapedserver + "_" + scrapedcalidad
-        itemlist.append(Item(channel=item.channel, action="play", title=title, fulltitle=title, url=scrapedurl,
-                             thumbnail=item.thumbnail, plot=item.plot, show=item.show, fanart=item.fanart))
-
+        while True:
+            loc = httptools.downloadpage(scrapedurl, follow_redirects=False).headers.get("location", "")
+            if not loc or "/ad/locked" in loc:
+                break
+            scrapedurl = loc
+        scrapedurl = scrapedurl.replace('"','')
+        scrapedurl, c = unshortenit.unshorten_only(scrapedurl)
+        title = item.title + "_" + scrapedidioma + "_"+ scrapedserver + "_" + scrapedcalidad
+        itemlist.append( item.clone(action="play",
+                                    title=title,
+                                    url=scrapedurl) )
+    itemlist = servertools.get_servers_itemlist(itemlist)
+    tmdb.set_infoLabels(itemlist)
+    if itemlist:
+        itemlist.append(Item(channel = item.channel))
+        itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
+                                   text_color="magenta"))
+        # Opción "Añadir esta película a la biblioteca de KODI"
+        if item.extra != "library":
+            if config.get_videolibrary_support():
+                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                                     action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
+                                     contentTitle = item.contentTitle
+                                     ))
+    return itemlist
     return itemlist
 
 
 def play(item):
-    logger.info()
-
-    video = expurl.expand_url(item.url)
-
-    itemlist = []
-
-    itemlist = servertools.find_video_items(data=video)
-
-    for videoitem in itemlist:
-        videoitem.title = item.title
-        videoitem.fulltitle = item.fulltitle
-        videoitem.thumbnail = item.thumbnail
-        videoitem.channel = item.channel
-
-    return itemlist
+    item.thumbnail = item.contentThumbnail
+    return [item]

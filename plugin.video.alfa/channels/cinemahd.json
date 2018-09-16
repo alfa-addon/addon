@@ -4,11 +4,11 @@
   "active": true,
   "adult": false,
   "language": ["lat"],
-  "thumbnail": "https://s13.postimg.org/bnesayzcn/cinemahd.png",
+  "thumbnail": "https://s13.postimg.cc/bnesayzcn/cinemahd.png",
   "banner": "",
   "version": 1,
   "categories": [
-    "movies"
+    "movie"
   ],
   "settings": [
     {
@@ -18,6 +18,18 @@
       "default": false,
       "enabled": false,
       "visible": false
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "LAT"
+      ]
     },
     {
       "id": "include_in_newest_peliculas",

@@ -12,7 +12,16 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
+from channels import filtertools, autoplay
 from core import tmdb
+
+
+
+IDIOMAS = {'latino':'Lat', 'castellano':'Cast', 'subtitulado':'VOSE'}
+list_language = IDIOMAS.values()
+list_quality = ['360p', '480p', '720p', '1080p']
+list_servers = ['mailru', 'openload',  'streamango', 'estream']
+
 
 host = 'http://pelisplus.co'
 CHANNEL_HEADERS = [
@@ -26,6 +35,8 @@ def mainlist(item):
 
     itemlist = []
 
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist.append(item.clone(title="Peliculas",
                                action="movie_menu",
                                ))
@@ -33,6 +44,8 @@ def mainlist(item):
     itemlist.append(item.clone(title="Series",
                                action="series_menu",
                                ))
+
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -85,7 +98,8 @@ def search(item, texto):
 def sub_search(item):
     logger.info()
     itemlist =[]
-    data = httptools.downloadpage(item.url, add_referer=True).data
+    headers = {'Referer':host, 'X-Requested-With': 'XMLHttpRequest'}
+    data = httptools.downloadpage(item.url, headers=headers).data
     dict_data = jsontools.load(data)
     list =dict_data["data"] [item.type]
     if item.type == "m":
@@ -102,7 +116,7 @@ def sub_search(item):
                              title = dict["title"] + " (" + dict["release_year"] + ")",
                              url = host + dict["slug"]
                              ))
-    tmdb.set_infoLabels(itemlist)
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 
     
@@ -257,7 +271,7 @@ def seccion(item):
                 itemlist.append(item.clone(action="seccion",
                                            title='Siguiente >>>',
                                            url=next_page_url,
-                                           thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'
+                                           thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
                                            ))
 
     return itemlist
@@ -277,6 +291,7 @@ def seasons(item):
     for title in matches:
         season = title.replace('Temporada ','')
         infoLabels['season'] = season
+        title = 'Temporada %s' % season.lstrip('0')
         itemlist.append(Item(
                              channel=item.channel,
                              title=title,
@@ -288,7 +303,23 @@ def seasons(item):
                              ))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
-    return itemlist[::-1]
+    itemlist = itemlist[::-1]
+    if config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(
+            Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
+                 action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
+
+    return itemlist
+
+
+def episodios(item):
+    logger.info()
+    itemlist = []
+    templist = seasons(item)
+    for tempitem in templist:
+        itemlist += season_episodes(tempitem)
+
+    return itemlist
 
 def season_episodes(item):
     logger.info()
@@ -303,8 +334,9 @@ def season_episodes(item):
     for url, episode in matches:
         episodenumber = re.sub('C.* ','',episode)
         infoLabels['episode'] = episodenumber
+        title = '%sx%s - %s' % (infoLabels['season'], episodenumber, episode)
         itemlist.append(Item(channel=item.channel,
-                        title= episode,
+                        title= title,
                         url = host+url,
                         action = 'findvideos',
                         infoLabels=infoLabels,
@@ -323,6 +355,8 @@ def get_links_by_language(item, data):
     language = scrapertools.find_single_match(data, 'ul id=level\d_(.*?)\s*class=')
     patron = 'data-source=(.*?)data.*?srt=(.*?)data-iframe.*?Opci.*?<.*?hidden>[^\(]\((.*?)\)'
     matches = re.compile(patron, re.DOTALL).findall(data)
+    if language in IDIOMAS:
+        language = IDIOMAS[language]
 
     for url, sub, quality in matches:
         if 'http' not in url:
@@ -365,15 +399,27 @@ def findvideos(item):
     for language in matches:
         video_list.extend(get_links_by_language(item, language))
 
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
-        itemlist.append(
-            Item(channel=item.channel,
-                 title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                 url=item.url,
-                 action="add_pelicula_to_library",
-                 extra="findvideos",
-                 contentTitle=item.contentTitle
-                 ))
-    video_list = servertools.get_servers_itemlist(video_list, lambda i: i.title % (i.server.capitalize(), i.language,i.quality) )
+    video_list = servertools.get_servers_itemlist(video_list, lambda i: i.title % (i.server.capitalize(), i.language,
+                                                                                   i.quality) )
+    # Requerido para FilterTools
+
+    video_list = filtertools.get_links(video_list, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(video_list, item)
+
+    if item.contentType != 'episode':
+        if config.get_videolibrary_support() and len(video_list) > 0 and item.extra != 'findvideos':
+            video_list.append(
+                Item(channel=item.channel,
+                     title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                     url=item.url,
+                     action="add_pelicula_to_library",
+                     extra="findvideos",
+                     contentTitle=item.contentTitle
+                     ))
+
+
     return video_list
 

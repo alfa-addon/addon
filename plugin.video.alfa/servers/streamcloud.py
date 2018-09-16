@@ -10,6 +10,10 @@ def test_video_exists(page_url):
     data = scrapertools.cache_page(url=page_url)
     if "<h1>404 Not Found</h1>" in data:
         return False, "El archivo no existe<br/>en streamcloud o ha sido borrado."
+    elif "<h1>File Not Found</h1>" in data:
+        return False, "El archivo no existe<br/>en streamcloud o ha sido borrado."
+    elif "<h1>Archivo no encontrado</h1>" in data:
+        return False, "El archivo no existe<br/>en streamcloud o ha sido borrado."
     else:
         return True, ""
 
@@ -41,7 +45,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         media_url = scrapertools.get_match(data, 'file\: "([^"]+)"')
 
     video_urls = []
-    video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [streamcloud]", media_url])
+    video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [streamcloud]", media_url+"|Referer="+page_url])
+
 
     for video_url in video_urls:
         logger.info("%s - %s" % (video_url[0], video_url[1]))

@@ -14,6 +14,27 @@ settings_dic = {}
 adult_setting = {}
 
 
+def get_addon_version(linea_inicio=0, total_lineas=2, with_fix=False):
+    '''
+    Devuelve el número de de versión del addon, obtenido desde el archivo addon.xml
+    '''
+    path = os.path.join(get_runtime_path(), "addon.xml")
+    f = open(path, "rb")
+    data = []
+    for x, line in enumerate(f):
+        if x < linea_inicio: continue
+        if len(data) == total_lineas: break
+        data.append(line)
+    f.close()
+    data1 = "".join(data)
+    # <addon id="plugin.video.alfa" name="Alfa" version="2.5.21" provider-name="Alfa Addon">
+    aux = re.findall('<addon id="plugin.video.alfa" name="Alfa" version="([^"]+)"', data1, re.MULTILINE | re.DOTALL)
+    version = "???"
+    if len(aux) > 0:
+        version = aux[0]
+    return version
+
+
 def get_platform(full_version=False):
     # full_version solo es util en xbmc/kodi
     ret = {
@@ -250,6 +271,14 @@ def get_localized_string(code):
     return dev
 
 
+def get_localized_category(categ):
+    categories = {'movie': get_localized_string(30122), 'tvshow': get_localized_string(30123),
+                  'anime': get_localized_string(30124), 'documentary': get_localized_string(30125),
+                  'vos': get_localized_string(30136), 'adult': get_localized_string(30126),
+                  'direct': get_localized_string(30137), 'torrent': get_localized_string(70015)}
+    return categories[categ] if categ in categories else categ
+
+
 def get_videolibrary_path():
     value = get_setting("videolibrarypath")
     if value == "":
@@ -310,6 +339,23 @@ def verify_directories_created():
             logger.debug("Creating %s: %s" % (path, saved_path))
             filetools.mkdir(saved_path)
 
+    config_paths = [["folder_movies", "CINE"],
+                    ["folder_tvshows", "SERIES"]]
+
+    for path, default in config_paths:
+        saved_path = get_setting(path)
+
+        if not saved_path:
+            saved_path = default
+            set_setting(path, saved_path)
+
+        content_path = filetools.join(get_videolibrary_path(), saved_path)
+        if not filetools.exists(content_path):
+            logger.debug("Creating %s: %s" % (path, content_path))
+
+            # si se crea el directorio
+            filetools.mkdir(content_path)
+
 
 def get_local_ip():
     import socket
@@ -368,9 +414,8 @@ menufilepath = os.path.join(get_runtime_path(), "resources", "settings.xml")
 configfilepath = os.path.join(get_data_path(), "settings.xml")
 if not os.path.exists(get_data_path()):
     os.mkdir(get_data_path())
-# Literales
-TRANSLATION_FILE_PATH = os.path.join(get_runtime_path(), "resources", "language", "Spanish", "strings.po")
 load_settings()
+TRANSLATION_FILE_PATH = os.path.join(get_runtime_path(), "resources", "language", settings_dic["mediaserver_language"], "strings.po")
 
 # modo adulto:
 # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie sesión

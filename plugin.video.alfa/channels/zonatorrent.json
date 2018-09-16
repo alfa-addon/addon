@@ -5,28 +5,59 @@
     "adult": false,
     "language": ["cast", "lat"],
     "banner": "",
-    "thumbnail": "https://zonatorrent.org/wp-content/uploads/2017/04/zonatorrent-New-Logo.png",
+    "thumbnail": "zonatorrent.png",
     "version": 1,
     "categories": [
-        "torrent",
-        "movie"
+      "torrent",
+      "movie",
+      "tvshow",
+      "vos"
     ],
     "settings": [
-        {
-            "id": "include_in_global_search",
-            "type": "bool",
-            "label": "Incluir en busqueda global",
-            "default": true,
-            "enabled": true,
-            "visible": true
-        },
-        {
-            "id": "modo_grafico",
-            "type": "bool",
-            "label": "Buscar información extra",
-            "default": true,
-            "enabled": true,
-            "visible": true
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "modo_grafico",
+      "type": "bool",
+      "label": "Buscar información extra",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "timeout_downloadpage",
+      "type": "list",
+      "label": "Timeout (segs.) en descarga de páginas o verificación de servidores",
+      "default": 5,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "None",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "id": "seleccionar_ult_temporadda_activa",
+      "type": "bool",
+      "label": "Seleccionar para Videoteca si estará activa solo la última Temporada",
+      "default": true,
+      "enabled": true,
+      "visible": true
     },
     {
       "id": "include_in_newest_peliculas",

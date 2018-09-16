@@ -3,6 +3,24 @@
 # httptools
 # --------------------------------------------------------------------------------
 
+
+# Fix para error de validación del certificado del tipo:
+# [downloadpage] Response code: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:661)>
+# [downloadpage] Response error: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:661)
+# Fix desde la página: https://stackoverflow.com/questions/27835619/urllib-and-ssl-certificate-verify-failed-error
+#-----------------------------------------------------------------------
+import ssl
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    # Legacy Python that doesn't verify HTTPS certificates by default
+    pass
+else:
+    # Handle target environment that doesn't support HTTPS verification
+    ssl._create_default_https_context = _create_unverified_https_context
+#-----------------------------------------------------------------------
+
+
 import inspect
 import cookielib
 import gzip
@@ -18,6 +36,9 @@ from core.cloudflare import Cloudflare
 from platformcode import config, logger
 from platformcode.logger import WebErrorException
 
+## Obtiene la versión del addon
+__version = config.get_addon_version()
+
 cookies_lock = Lock()
 
 cj = cookielib.MozillaCookieJar()
@@ -25,12 +46,19 @@ ficherocookies = os.path.join(config.get_data_path(), "cookies.dat")
 
 # Headers por defecto, si no se especifica nada
 default_headers = dict()
-default_headers["User-Agent"] = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3163.100 Safari/537.36"
+default_headers["User-Agent"] = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3163.100 Safari/537.36"
 default_headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
 default_headers["Accept-Language"] = "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3"
 default_headers["Accept-Charset"] = "UTF-8"
 default_headers["Accept-Encoding"] = "gzip"
 
+# Tiempo máximo de espera para downloadpage, si no se especifica nada
+HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = config.get_setting('httptools_timeout', default=15)
+if HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT == 0: HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = None
+
+def get_user_agent():
+    # Devuelve el user agent global para ser utilizado cuando es necesario para la url.
+    return default_headers["User-Agent"]
 
 def get_url_headers(url):
     domain_cookies = cj._cookies.get("." + urlparse.urlparse(url)[1], {}).get("/", {})
@@ -68,7 +96,7 @@ load_cookies()
 
 
 def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=True, cookies=True, replace_headers=False,
-                 add_referer=False, only_headers=False, bypass_cloudflare=True):
+                 add_referer=False, only_headers=False, bypass_cloudflare=True, count_retries=0):
     """
     Abre una url y retorna los datos obtenidos
 
@@ -122,8 +150,11 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
 
     url = urllib.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
 
+    # Limitar tiempo de descarga si no se ha pasado timeout y hay un valor establecido en la variable global
+    if timeout is None and HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT is not None: timeout = HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT
+
     logger.info("----------------------------------------------")
-    logger.info("downloadpage")
+    logger.info("downloadpage Alfa: %s" %__version)
     logger.info("----------------------------------------------")
     logger.info("Timeout: %s" % timeout)
     logger.info("URL: " + url)
@@ -214,8 +245,9 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
             server_cloudflare = "cloudflare"
 
     is_channel = inspect.getmodule(inspect.currentframe().f_back)
-    # error 4xx o 5xx se lanza excepcion
-    # response["code"] = 400
+    # error 4xx o 5xx se lanza excepcion (menos para servidores)
+    # response["code"] = 400  # linea de código para probar
+    is_channel = str(is_channel).replace("/servers/","\\servers\\")  # Para sistemas operativos diferente a Windows la ruta cambia
     if type(response["code"]) ==  int and "\\servers\\" not in str(is_channel):
         if response["code"] > 399 and (server_cloudflare == "cloudflare" and response["code"] != 503):
             raise WebErrorException(urlparse.urlparse(url)[1])
@@ -234,13 +266,14 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
             logger.info("No se ha podido descomprimir")
 
     # Anti Cloudflare
-    if bypass_cloudflare:
+    if bypass_cloudflare and count_retries < 5:
         cf = Cloudflare(response)
         if cf.is_cloudflare:
+            count_retries += 1
             logger.info("cloudflare detectado, esperando %s segundos..." % cf.wait_time)
             auth_url = cf.get_url()
-            logger.info("Autorizando... url: %s" % auth_url)
-            if downloadpage(auth_url, headers=request_headers, replace_headers=True).sucess:
+            logger.info("Autorizando... intento %d url: %s" % (count_retries, auth_url))
+            if downloadpage(auth_url, headers=request_headers, replace_headers=True, count_retries=count_retries).sucess:
                 logger.info("Autorización correcta, descargando página")
                 resp = downloadpage(url=response["url"], post=post, headers=headers, timeout=timeout,
                                     follow_redirects=follow_redirects,
@@ -269,3 +302,5 @@ class NoRedirectHandler(urllib2.HTTPRedirectHandler):
     http_error_301 = http_error_302
     http_error_303 = http_error_302
     http_error_307 = http_error_302
+    
+

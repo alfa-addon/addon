@@ -16,7 +16,7 @@ def test_video_exists(page_url):
     if 'We’re Sorry!' in data:
         data = httptools.downloadpage(page_url.replace("/embed/", "/f/"), headers=header, cookies=False).data
         if 'We’re Sorry!' in data:
-            return False, "[Openload] El archivo no existe o ha sido borrado"
+            return False, config.get_localized_string(70449) % "Openload"
 
     return True, ""
 
@@ -31,11 +31,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     data = httptools.downloadpage(page_url, cookies=False, headers=header).data
 
-
     subtitle = scrapertools.find_single_match(data, '<track kind="captions" src="([^"]+)" srclang="es"')
 
     try:
-        code = scrapertools.find_single_match(data, '<span[^>]+id="[^"]+">([^<]{40,})</span>' )
+        code = scrapertools.find_single_match(data, '<p style="" id="[^"]+">(.*?)</p>' )
         _0x59ce16 = eval(scrapertools.find_single_match(data, '_0x59ce16=([^;]+)').replace('parseInt', 'int'))
         _1x4bfb36 = eval(scrapertools.find_single_match(data, '_1x4bfb36=([^;]+)').replace('parseInt', 'int'))
         parseInt  = eval(scrapertools.find_single_match(data, '_0x30725e,(\(parseInt.*?)\),').replace('parseInt', 'int'))

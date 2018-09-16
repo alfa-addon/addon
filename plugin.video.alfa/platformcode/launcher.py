@@ -24,7 +24,7 @@ def start():
     funciones que deseamos que se ejecuten nada mas abrir el plugin.
     """
     logger.info()
-
+    #config.set_setting('show_once', True)
     # Test if all the required directories are created
     config.verify_directories_created()
 
@@ -51,6 +51,11 @@ def run(item=None):
                     item.start = True;
             else:
                 item = Item(channel="channelselector", action="getmainlist", viewmode="movie")
+        if not config.get_setting('show_once'):
+            from platformcode import xbmc_videolibrary
+            xbmc_videolibrary.ask_set_content(1)
+            config.set_setting('show_once', True)
+
     logger.info(item.tostring())
 
     try:
@@ -96,7 +101,7 @@ def run(item=None):
         elif item.action == "script":
             from core import tmdb
             if tmdb.drop_bd():
-                platformtools.dialog_notification("Alfa", "caché eliminada", time=2000, sound=False)
+                platformtools.dialog_notification(config.get_localized_string(20000), config.get_localized_string(60011), time=2000, sound=False)
 
         # Action in certain channel specified in "action" and "channel" parameters
         else:
@@ -108,7 +113,7 @@ def run(item=None):
                 # Parental control
                 # If it is an adult channel, and user has configured pin, asks for it
                 if channeltools.is_adult(item.channel) and config.get_setting("adult_request_password"):
-                    tecleado = platformtools.dialog_input("", "Contraseña para canales de adultos", True)
+                    tecleado = platformtools.dialog_input("", config.get_localized_string(60334), True)
                     if tecleado is None or tecleado != config.get_setting("adult_password"):
                         return
 
@@ -136,6 +141,11 @@ def run(item=None):
 
             # Special play action
             if item.action == "play":
+                #define la info para trakt
+                try:
+                    trakt_tools.set_trakt_info(item)
+                except:
+                    pass
                 logger.info("item.action=%s" % item.action.upper())
                 # logger.debug("item_toPlay: " + "\n" + item.tostring('\n'))
 
@@ -158,7 +168,7 @@ def run(item=None):
 
                     # If not, shows user an error message
                     else:
-                        platformtools.dialog_ok("alfa", "No hay nada para reproducir")
+                        platformtools.dialog_ok(config.get_localized_string(20000), config.get_localized_string(60339))
 
                 # If player don't have a "play" function, not uses the standard play from platformtools
                 else:
@@ -270,10 +280,8 @@ def run(item=None):
         canal = scrapertools.find_single_match(traceback.format_exc(), patron)
 
         platformtools.dialog_ok(
-            "Error en el canal " + canal,
-            "La web de la que depende parece no estar disponible, puede volver a intentarlo, "
-            "si el problema persiste verifique mediante un navegador la web: %s. "
-            "Si la web funciona correctamente informe el error en: www.alfa-addon.com" %(e))
+            config.get_localized_string(59985) + canal,
+            config.get_localized_string(60013) %(e))
     except:
         import traceback
         logger.error(traceback.format_exc())
@@ -288,21 +296,21 @@ def run(item=None):
                 log_name = "xbmc.log"
             else:
                 log_name = "kodi.log"
-            log_message = "Ruta: " + xbmc.translatePath("special://logpath") + log_name
+            log_message = config.get_localized_string(50004) + xbmc.translatePath("special://logpath") + log_name
         except:
             log_message = ""
 
         if canal:
             platformtools.dialog_ok(
-                "Error inesperado en el canal " + canal,
-                "Puede deberse a un fallo de conexión, la web del canal "
-                "ha cambiado su estructura, o un error interno de alfa.",
-                "Para saber más detalles, consulta el log.", log_message)
+                config.get_localized_string(60087) %canal,
+                config.get_localized_string(60014),
+                log_message)
         else:
             platformtools.dialog_ok(
-                "Se ha producido un error en alfa",
-                "Comprueba el log para ver mas detalles del error.",
+                config.get_localized_string(60038),
+                config.get_localized_string(60015),
                 log_message)
+
 
 
 def reorder_itemlist(itemlist):
@@ -316,8 +324,8 @@ def reorder_itemlist(itemlist):
     modified = 0
     not_modified = 0
 
-    to_change = [['Ver en', '[V]'],
-                 ['Descargar en', '[D]']]
+    to_change = [[config.get_localized_string(60335), '[V]'],
+                 [config.get_localized_string(60336), '[D]']]
 
     for item in itemlist:
         old_title = unicode(item.title, "utf8").lower().encode("utf8")
@@ -404,11 +412,16 @@ def play_from_library(item):
     else:
         # Ventana emergente
         from channels import videolibrary
-        p_dialog = platformtools.dialog_progress_bg('alfa', 'Cargando...')
+        p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(20000), config.get_localized_string(70004))
         p_dialog.update(0, '')
 
         itemlist = videolibrary.findvideos(item)
 
+
+        while platformtools.is_playing():
+                # Ventana convencional
+                from time import sleep
+                sleep(5)
         p_dialog.update(50, '')
 
         '''# Se filtran los enlaces segun la lista negra
@@ -423,9 +436,11 @@ def play_from_library(item):
         if config.get_setting("replace_VD", "videolibrary") == 1:
             itemlist = reorder_itemlist(itemlist)
 
+
         p_dialog.update(100, '')
         xbmc.sleep(500)
         p_dialog.close()
+
 
         if len(itemlist) > 0:
             # El usuario elige el mirror

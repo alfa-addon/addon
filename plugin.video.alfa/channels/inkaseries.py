@@ -85,7 +85,7 @@ def list_all(item):
         next_page = scrapertools.find_single_match(data, '<li><a href=([^ ]+) ><span aria-hidden=true>&raquo;</span>')
         if next_page != '':
             itemlist.append(Item(channel=item.channel, action="list_all", title='Siguiente >>>', url=next_page,
-                                 thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'))
+                                 thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'))
     return itemlist
 
 
@@ -111,12 +111,12 @@ def seasons(item):
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
-                 action="add_serie_to_library", extra="all_episodes", contentSerieName=item.contentSerieName,
+                 action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
                  extra1='library'))
 
     return itemlist
 
-def all_episodes(item):
+def episodios(item):
     logger.info()
     itemlist = []
     templist = seasons(item)

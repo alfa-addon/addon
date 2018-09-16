@@ -11,6 +11,7 @@ from core.item import Item
 from platformcode import platformtools, config, logger
 
 
+
 __modo_grafico__ = config.get_setting('modo_grafico', 'animemovil')
 __perfil__ = ''
 
@@ -28,6 +29,7 @@ host = "http://animemovil.com"
 
 def mainlist(item):
     logger.info()
+
     itemlist = []
 
     itemlist.append(Item(channel=item.channel, action="recientes", title="Episodios Recientes", thumbnail=item.thumbnail,
@@ -48,6 +50,8 @@ def mainlist(item):
     itemlist.append(item.clone(title="Configurar canal", action="openconfig", text_color=color5, folder=False))
     if renumbertools.context:
         itemlist = renumbertools.show_option(item.channel, itemlist)
+
+
     return itemlist
 
 
@@ -204,14 +208,16 @@ def episodios(item):
     matches = scrapertools.find_multiple_matches(bloque, '<li><a href="([^"]+)" title="([^"]+)"')
     for url, title in matches:
         url = host + url
-        epi = scrapertools.find_single_match(title, '(?i)%s.*? (\d+) (?:Sub|Audio|Español)' % item.contentSerieName)
+        epi = scrapertools.find_single_match(title, '.+?(\d+) (?:Sub|Audio|Español)')
+        #epi = scrapertools.find_single_match(title, '(?i)%s.*? (\d+) (?:Sub|Audio|Español)' % item.contentSerieName)
         new_item = item.clone(action="findvideos", url=url, title=title, extra="")
         if epi:
+            if "Especial" in title:
+                epi=0
             season, episode = renumbertools.numbered_for_tratk(
-                item.channel, show, 1, int(epi))
+                item.channel, item.contentSerieName, 1, int(epi))
             new_item.infoLabels["episode"] = episode
             new_item.infoLabels["season"] = season
-
             new_item.title = "%sx%s %s" % (season, episode, title)
         itemlist.append(new_item)
 
@@ -278,70 +284,42 @@ def findvideos(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'\n|\s{2,}', '', data)
+    strm_id = scrapertools.find_single_match(data, '"id": (.*?),')
+    streams = scrapertools.find_single_match(data, '"stream": (.*?)};')
+    dict_strm = jsontools.load(streams)
+    base_url = 'http:%s%s/' % (dict_strm['accessPoint'], strm_id)
+    for server in dict_strm['servers']:
+        expire = dict_strm['expire']
+        signature = dict_strm['signature']
+        last_modify = dict_strm['last_modify']
+        callback = 'playerWeb'
 
-    akiba_url = scrapertools.find_single_match(data, '<div class="x-link"><a href="(.*?)"')
-    url = httptools.downloadpage('http:'+akiba_url, follow_redirects=False).headers.get('location')
-    title = '%s (%s)' % (item.title, 'akiba')
-    itemlist.append(item.clone(title=title, url=url, action='play'))
-
-    info = scrapertools.find_single_match(data, 'episodio_info=(.*?);')
-    dict_info = jsontools.load(info)
-
-    servers = dict_info['stream']['servers']
-    id = dict_info['id']
-    access_point = dict_info['stream']['accessPoint']
-    expire = dict_info['stream']['expire']
-    callback = dict_info['stream']['callback']
-    signature = dict_info['stream']['signature']
-    last_modify = dict_info['stream']['last_modify']
-
-    for server in servers:
-        stream_info = 'http:%s/%s/%s?expire=%s&callback=%s&signature=%s&last_modify=%s' % \
-                      (access_point, id, server, expire, callback, signature, last_modify)
-
+        strm_url = base_url +'%s?expire=%s&callback=%s&signature=%s&last_modify=%s' % (server, expire, callback,
+                                                                                       signature, last_modify)
         try:
-            dict_stream = jsontools.load(httptools.downloadpage(stream_info).data)
-            if dict_stream['status']:
-                kind = dict_stream['result']['kind']
-                if kind == 'iframe':
-                    url = dict_stream['result']['src']
-                    title = '%s (%s)' % (item.title, server)
-                elif kind == 'jwplayer':
-                    url_style = dict_stream['result']['setup']
-                    if server != 'rin':
-
-                        if 'playlist' in url_style:
-                            part = 1
-                            for media_list in url_style['playlist']:
-                                url = media_list['file']
-                                title = '%s (%s) - parte %s' % (item.title, server, part)
-                                itemlist.append(item.clone(title=title, url=url, action='play'))
-                                part += 1
-                        else:
-                            url = url_style['file']
-                            title = '%s (%s)' % (item.title, server)
-                    else:
-                        src_list = url_style['sources']
-                        for source in src_list:
-                            url = source['file']
-                            quality = source['label']
-                            title = '%s [%s](%s)' % (item.title, quality, server)
-                            itemlist.append(item.clone(title=title, url=url, action='play'))
-
-                elif kind == 'javascript':
-                    if 'jsCode' in dict_stream['result']:
-                        jscode = dict_stream['result']['jsCode']
-                        url = scrapertools.find_single_match(jscode, 'xmlhttp.open\("GET", "(.*?)"')
-                        title = '%s (%s)' % (item.title, server)
-
+            strm_data = httptools.downloadpage(strm_url).data
+            strm_data = scrapertools.unescape(strm_data)
+            title = '%s'
+            language = ''
+            if server not in ['fire', 'meph']:
+                urls = scrapertools.find_multiple_matches(strm_data, '"(?:file|src)"*?:.*?"(.*?)"')
+                for url in urls:
+                    if url != '':
+                        url = url.replace ('\\/','/')
+                        itemlist.append(Item(channel=item.channel, title=title, url=url, action='play'))
+            elif server in ['fire', 'mpeh']:
+                url = scrapertools.find_single_match(strm_data, 'xmlhttp.open(\"GET\", \"(.*?)\"')
                 if url != '':
-                    itemlist.append(item.clone(title=title, url=url, action='play'))
+                    url = url.replace('\\/', '/')
+                    itemlist.append(Item(channel=item.channel, title=url, url=url, action='play'))
+            else:
+                continue
         except:
             pass
-    itemlist = servertools.get_servers_itemlist(itemlist)
 
+
+    servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server)
     return itemlist
-
 
 def newest(categoria):
     logger.info()

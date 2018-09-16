@@ -5,6 +5,14 @@
       {
         "pattern": "(vshare.io/v/[a-zA-Z0-9/-]+)",
         "url": "http://\\1"
+      },
+      {
+        "pattern": "(vshare.eu/embed-[a-zA-Z0-9/-]+.html)",
+        "url": "http://\\1"
+      },
+      {
+        "pattern": "(vshare.eu/[a-zA-Z0-9/-]+.htm)",
+        "url": "http://\\1"
       }
     ]
   },
@@ -18,7 +26,7 @@
       "default": false,
       "enabled": true,
       "id": "black_list",
-      "label": "Incluir en lista negra",
+      "label": "@60654",
       "type": "bool",
       "visible": true
     },
@@ -26,7 +34,7 @@
       "default": 0,
       "enabled": true,
       "id": "favorites_servers_list",
-      "label": "Incluir en lista de favoritos",
+      "label": "@60655",
       "lvalues": [
         "No",
         "1",

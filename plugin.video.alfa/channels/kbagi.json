@@ -2,7 +2,7 @@
   "id": "kbagi",
   "name": "Kbagi/Diskokosmiko",
   "language": ["cast", "lat"],
-  "active": true,
+  "active": false,
   "adult": false,
   "version": 1,
   "thumbnail": "http://i.imgur.com/EjbfM7p.png?1",

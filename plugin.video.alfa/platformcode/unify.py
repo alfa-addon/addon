@@ -17,78 +17,78 @@ from core.item import Item
 from core import scrapertools
 from platformcode import logger
 
-thumb_dict = {"movies": "https://s10.postimg.org/fxtqzdog9/peliculas.png",
-    "tvshows": "https://s10.postimg.org/kxvslawe1/series.png",
-    "all": "https://s10.postimg.org/h1igpgw0p/todas.png",
-    "genres": "https://s10.postimg.org/6c4rx3x1l/generos.png",
-    "search": "https://s10.postimg.org/v985e2izd/buscar.png",
-    "quality": "https://s10.postimg.org/9bbojsbjd/calidad.png",
-    "audio": "https://s10.postimg.org/b34nern7d/audio.png",
-    "newest": "https://s10.postimg.org/g1s5tf1bt/novedades.png",
-    "last": "https://s10.postimg.org/i6ciuk0eh/ultimas.png",
-    "hot": "https://s10.postimg.org/yu40x8q2x/destacadas.png",
-    "year": "https://s10.postimg.org/atzrqg921/a_o.png",
-    "alphabet": "https://s10.postimg.org/4dy3ytmgp/a-z.png",
-    "recomended": "https://s10.postimg.org/7xk1oqccp/recomendadas.png",
-    "more watched": "https://s10.postimg.org/c6orr5neh/masvistas.png",
-    "more voted": "https://s10.postimg.org/lwns2d015/masvotadas.png",
-    "favorites": "https://s10.postimg.org/rtg147gih/favoritas.png",
-    "colections": "https://s10.postimg.org/ywnwjvytl/colecciones.png",
-    "categories": "https://s10.postimg.org/v0ako5lmh/categorias.png",
-    "premieres": "https://s10.postimg.org/sk8r9xdq1/estrenos.png",
-    "documentaries": "https://s10.postimg.org/68aygmmcp/documentales.png",
-    "language": "https://s10.postimg.org/6wci189ft/idioma.png",
-    "new episodes": "https://s10.postimg.org/fu4iwpnqh/nuevoscapitulos.png",
-    "country": "https://s10.postimg.org/yz0h81j15/pais.png",
-    "adults": "https://s10.postimg.org/s8raxc51l/adultos.png",
-    "recents": "https://s10.postimg.org/649u24kp5/recents.png",
-    "updated" : "https://s10.postimg.org/46m3h6h9l/updated.png",
-    "accion": "https://s14.postimg.org/sqy3q2aht/action.png",
-    "adolescente" : "https://s10.postimg.org/inq7u4p61/teens.png",
-    "adultos": "https://s10.postimg.org/s8raxc51l/adultos.png",
-    "animacion": "https://s14.postimg.org/vl193mupd/animation.png",
-    "anime" : "https://s10.postimg.org/n9mc2ikzt/anime.png",
-    "artes marciales" : "https://s10.postimg.org/4u1v51tzt/martial_arts.png",
-    "aventura": "https://s14.postimg.org/ky7fy5he9/adventure.png",
-    "belico": "https://s14.postimg.org/5e027lru9/war.png",
-    "biografia" : "https://s10.postimg.org/jq0ecjxnt/biographic.png",
-    "carreras": "https://s14.postimg.org/yt5qgdr69/races.png",
-    "ciencia ficcion": "https://s14.postimg.org/8kulr2jy9/scifi.png",
-    "cine negro" : "https://s10.postimg.org/6ym862qgp/noir.png",
-    "comedia": "https://s14.postimg.org/9ym8moog1/comedy.png",
-    "cortometraje" : "https://s10.postimg.org/qggvlxndl/shortfilm.png",
-    "crimen": "https://s14.postimg.org/duzkipjq9/crime.png",
-    "de la tv": "https://s10.postimg.org/94gj0iwh5/image.png",
-    "deporte": "https://s14.postimg.org/x1crlnnap/sports.png",
-    "destacadas": "https://s10.postimg.org/yu40x8q2x/destacadas.png",
-    "documental": "https://s10.postimg.org/68aygmmcp/documentales.png",
-    "doramas":"https://s10.postimg.org/h4dyr4nfd/doramas.png",
-    "drama": "https://s14.postimg.org/fzjxjtnxt/drama.png",
-    "erotica" : "https://s10.postimg.org/dcbb9bfx5/erotic.png",
-    "espanolas" : "https://s10.postimg.org/x1y6zikx5/spanish.png",
-    "estrenos" : "https://s10.postimg.org/sk8r9xdq1/estrenos.png",
-    "extranjera": "https://s10.postimg.org/f44a4eerd/foreign.png",
-    "familiar": "https://s14.postimg.org/jj5v9ndsx/family.png",
-    "fantasia": "https://s14.postimg.org/p7c60ksg1/fantasy.png",
-    "fantastico" : "https://s10.postimg.org/tedufx5eh/fantastic.png",
-    "historica": "https://s10.postimg.org/p1faxj6yh/historic.png",
-    "horror" : "https://s10.postimg.org/8exqo6yih/horror2.png",
-    "infantil": "https://s14.postimg.org/4zyq842mp/childish.png",
-    "intriga": "https://s14.postimg.org/5qrgdimw1/intrigue.png",
-    "latino" : "https://s10.postimg.org/swip0b86h/latin.png",
-    "mexicanas" : "https://s10.postimg.org/swip0b86h/latin.png",
-    "misterio": "https://s14.postimg.org/3m73cg8ep/mistery.png",
-    "musical": "https://s10.postimg.org/hy7fhtecp/musical.png",
-    "peleas" : "https://s10.postimg.org/7a3ojbjwp/Fight.png",
-    "policial" : "https://s10.postimg.org/wsw0wbgbd/cops.png",
-    "recomendadas": "https://s10.postimg.org/7xk1oqccp/recomendadas.png",
-    "religion" : "https://s10.postimg.org/44j2skquh/religion.png",
-    "romance" : "https://s10.postimg.org/yn8vdll6x/romance.png",
-    "romantica": "https://s14.postimg.org/8xlzx7cht/romantic.png",
-    "suspenso": "https://s10.postimg.org/7peybxdfd/suspense.png",
-    "terror": "https://s14.postimg.org/thqtvl52p/horror.png",
-    "thriller": "https://s14.postimg.org/uwsekl8td/thriller.png",
-    "western": "https://s10.postimg.org/5wc1nokjt/western.png"
+thumb_dict = {"movies": "https://s10.postimg.cc/fxtqzdog9/peliculas.png",
+    "tvshows": "https://s10.postimg.cc/kxvslawe1/series.png",
+    "all": "https://s10.postimg.cc/h1igpgw0p/todas.png",
+    "genres": "https://s10.postimg.cc/6c4rx3x1l/generos.png",
+    "search": "https://s10.postimg.cc/v985e2izd/buscar.png",
+    "quality": "https://s10.postimg.cc/9bbojsbjd/calidad.png",
+    "audio": "https://s10.postimg.cc/b34nern7d/audio.png",
+    "newest": "https://s10.postimg.cc/g1s5tf1bt/novedades.png",
+    "last": "https://s10.postimg.cc/i6ciuk0eh/ultimas.png",
+    "hot": "https://s10.postimg.cc/yu40x8q2x/destacadas.png",
+    "year": "https://s10.postimg.cc/atzrqg921/a_o.png",
+    "alphabet": "https://s10.postimg.cc/4dy3ytmgp/a-z.png",
+    "recomended": "https://s10.postimg.cc/7xk1oqccp/recomendadas.png",
+    "more watched": "https://s10.postimg.cc/c6orr5neh/masvistas.png",
+    "more voted": "https://s10.postimg.cc/lwns2d015/masvotadas.png",
+    "favorites": "https://s10.postimg.cc/rtg147gih/favoritas.png",
+    "colections": "https://s10.postimg.cc/ywnwjvytl/colecciones.png",
+    "categories": "https://s10.postimg.cc/v0ako5lmh/categorias.png",
+    "premieres": "https://s10.postimg.cc/sk8r9xdq1/estrenos.png",
+    "documentaries": "https://s10.postimg.cc/68aygmmcp/documentales.png",
+    "language": "https://s10.postimg.cc/6wci189ft/idioma.png",
+    "new episodes": "https://s10.postimg.cc/fu4iwpnqh/nuevoscapitulos.png",
+    "country": "https://s10.postimg.cc/yz0h81j15/pais.png",
+    "adults": "https://s10.postimg.cc/s8raxc51l/adultos.png",
+    "recents": "https://s10.postimg.cc/649u24kp5/recents.png",
+    "updated" : "https://s10.postimg.cc/46m3h6h9l/updated.png",
+    "accion": "https://s14.postimg.cc/sqy3q2aht/action.png",
+    "adolescente" : "https://s10.postimg.cc/inq7u4p61/teens.png",
+    "adultos": "https://s10.postimg.cc/s8raxc51l/adultos.png",
+    "animacion": "https://s14.postimg.cc/vl193mupd/animation.png",
+    "anime" : "https://s10.postimg.cc/n9mc2ikzt/anime.png",
+    "artes marciales" : "https://s10.postimg.cc/4u1v51tzt/martial_arts.png",
+    "aventura": "https://s14.postimg.cc/ky7fy5he9/adventure.png",
+    "belico": "https://s14.postimg.cc/5e027lru9/war.png",
+    "biografia" : "https://s10.postimg.cc/jq0ecjxnt/biographic.png",
+    "carreras": "https://s14.postimg.cc/yt5qgdr69/races.png",
+    "ciencia ficcion": "https://s14.postimg.cc/8kulr2jy9/scifi.png",
+    "cine negro" : "https://s10.postimg.cc/6ym862qgp/noir.png",
+    "comedia": "https://s14.postimg.cc/9ym8moog1/comedy.png",
+    "cortometraje" : "https://s10.postimg.cc/qggvlxndl/shortfilm.png",
+    "crimen": "https://s14.postimg.cc/duzkipjq9/crime.png",
+    "de la tv": "https://s10.postimg.cc/94gj0iwh5/image.png",
+    "deporte": "https://s14.postimg.cc/x1crlnnap/sports.png",
+    "destacadas": "https://s10.postimg.cc/yu40x8q2x/destacadas.png",
+    "documental": "https://s10.postimg.cc/68aygmmcp/documentales.png",
+    "doramas":"https://s10.postimg.cc/h4dyr4nfd/doramas.png",
+    "drama": "https://s14.postimg.cc/fzjxjtnxt/drama.png",
+    "erotica" : "https://s10.postimg.cc/dcbb9bfx5/erotic.png",
+    "espanolas" : "https://s10.postimg.cc/x1y6zikx5/spanish.png",
+    "estrenos" : "https://s10.postimg.cc/sk8r9xdq1/estrenos.png",
+    "extranjera": "https://s10.postimg.cc/f44a4eerd/foreign.png",
+    "familiar": "https://s14.postimg.cc/jj5v9ndsx/family.png",
+    "fantasia": "https://s14.postimg.cc/p7c60ksg1/fantasy.png",
+    "fantastico" : "https://s10.postimg.cc/tedufx5eh/fantastic.png",
+    "historica": "https://s10.postimg.cc/p1faxj6yh/historic.png",
+    "horror" : "https://s10.postimg.cc/8exqo6yih/horror2.png",
+    "infantil": "https://s14.postimg.cc/4zyq842mp/childish.png",
+    "intriga": "https://s14.postimg.cc/5qrgdimw1/intrigue.png",
+    "latino" : "https://s10.postimg.cc/swip0b86h/latin.png",
+    "mexicanas" : "https://s10.postimg.cc/swip0b86h/latin.png",
+    "misterio": "https://s14.postimg.cc/3m73cg8ep/mistery.png",
+    "musical": "https://s10.postimg.cc/hy7fhtecp/musical.png",
+    "peleas" : "https://s10.postimg.cc/7a3ojbjwp/Fight.png",
+    "policial" : "https://s10.postimg.cc/wsw0wbgbd/cops.png",
+    "recomendadas": "https://s10.postimg.cc/7xk1oqccp/recomendadas.png",
+    "religion" : "https://s10.postimg.cc/44j2skquh/religion.png",
+    "romance" : "https://s10.postimg.cc/yn8vdll6x/romance.png",
+    "romantica": "https://s14.postimg.cc/8xlzx7cht/romantic.png",
+    "suspenso": "https://s10.postimg.cc/7peybxdfd/suspense.png",
+    "terror": "https://s14.postimg.cc/thqtvl52p/horror.png",
+    "thriller": "https://s14.postimg.cc/uwsekl8td/thriller.png",
+    "western": "https://s10.postimg.cc/5wc1nokjt/western.png"
     }
 
 def set_genre(string):
@@ -140,6 +140,12 @@ def remove_format(string):
     #logger.debug('sale de remove: %s' % string)
     return string
 
+def normalize(string):
+    string = string.decode('utf-8')
+    normal = ''.join((c for c in unicodedata.normalize('NFD', unicode(string)) if unicodedata.category(c) != 'Mn'))
+    return normal
+
+
 def simplify(string):
 
     #logger.info()
@@ -148,9 +154,12 @@ def simplify(string):
     string = string.replace('-',' ').replace('_',' ')
     string = re.sub(r'\d+','', string)
     string = string.strip()
-    string = string.decode('utf-8')
-    notilde = ''.join((c for c in unicodedata.normalize('NFD', unicode(string)) if unicodedata.category(c) != 'Mn'))
-    string = notilde.decode()
+
+    notilde = normalize(string)
+    try:
+        string = notilde.decode()
+    except:
+        pass
     string = string.lower()
     #logger.debug('sale de simplify: %s' % string)
 
@@ -169,7 +178,7 @@ def add_languages(title, languages):
 def set_color(title, category):
     #logger.info()
 
-    color_scheme = {'otro': 'white'}
+    color_scheme = {'otro': 'white', 'dual': 'white'}
 
     #logger.debug('category antes de remove: %s' % category)
     category = remove_format(category).lower()
@@ -204,11 +213,13 @@ def set_lang(language):
     #logger.info()
 
     cast =['castellano','espanol','cast','esp','espaol', 'es','zc', 'spa', 'spanish', 'vc']
+    ita =['italiano','italian','ita','it']
     lat=['latino','lat','la', 'espanol latino', 'espaol latino', 'zl', 'mx', 'co', 'vl']
     vose=['subtitulado','subtitulada','sub','sub espanol','vose','espsub','su','subs castellano',
           'sub: español', 'vs', 'zs', 'vs', 'english-spanish subs', 'ingles sub espanol']
     vos=['vos', 'sub ingles', 'engsub', 'vosi','ingles subtitulado', 'sub: ingles']
     vo=['ingles', 'en','vo', 'ovos', 'eng','v.o', 'english']
+    dual=['dual']
 
     language = scrapertools.decodeHtmlentities(language)
     old_lang = language
@@ -221,12 +232,16 @@ def set_lang(language):
         language = 'cast'
     elif language in lat:
         language = 'lat'
+    elif language in ita:
+        language = 'ita'    
     elif language in vose:
         language = 'vose'
     elif language in vos:
         language = 'vos'
     elif language in vo:
         language = 'vo'
+    elif language in dual:
+        language = 'dual'
     else:
         language = 'otro'
 
@@ -322,9 +337,19 @@ def title_format(item):
 
         elif item.contentTitle:
             # Si el titulo no tiene contentSerieName entonces se formatea como pelicula
-            item.title = '%s' % set_color(item.contentTitle, 'movie')
+            saga = False
+            if 'saga' in item.title.lower():
+                item.title = '%s [Saga]' % set_color(item.contentTitle, 'movie')
+            elif 'miniserie' in item.title.lower():
+                item.title = '%s [Miniserie]' % set_color(item.contentTitle, 'movie')
+            elif 'extend' in item.title.lower():
+                item.title = '%s [V.Extend.]' % set_color(item.contentTitle, 'movie')
+            else:
+                item.title = '%s' % set_color(item.contentTitle, 'movie')
             if item.contentType=='movie':
-                item.context='Buscar esta pelicula en otros canales'
+                if item.context:
+                    if isinstance(item.context, list):
+                        item.context.append('Buscar esta pelicula en otros canales')
 
         if 'Novedades' in item.category and item.from_channel=='news':
             #logger.debug('novedades')
@@ -387,7 +412,7 @@ def title_format(item):
             item.title = '%s %s' % (item.title, set_color(rating, color_rating))
 
         # Damos formato a la calidad si existiera y lo agregamos al titulo
-        if item.quality:
+        if item.quality and isinstance(item.quality, str):
             quality = item.quality.strip()
             item.title = '%s %s' % (item.title, set_color(quality, 'quality'))
         else:
@@ -396,6 +421,14 @@ def title_format(item):
         # Damos formato al idioma si existiera y lo agregamos al titulo
         if lang:
             item.title = add_languages(item.title, simple_language)
+
+        # Para las busquedas por canal
+        if item.from_channel != '':
+            from core import channeltools
+            channel_parameters = channeltools.get_channel_parameters(item.from_channel)
+            logger.debug(channel_parameters)
+            item.title = '%s [%s]' % (item.title, channel_parameters['title'])
+
 
         # Formato para actualizaciones de series en la videoteca sobreescribe los colores anteriores
 
@@ -406,6 +439,7 @@ def title_format(item):
                 if 'Activar' in item.context[1]['title']:
                     item.title= '%s' % (set_color(item.title, 'no_update'))
 
+        #logger.debug('Despues del formato: %s' % item)
         # Damos formato al servidor si existiera
         if item.server:
             server = '%s' % set_color(item.server.strip().capitalize(), 'server')
@@ -417,6 +451,7 @@ def title_format(item):
         if item.action != 'play' and item.server:
             item.title ='%s %s'%(item.title, server.strip())
         elif item.action == 'play' and item.server:
+
             if item.quality == 'default':
                 quality = ''
             #logger.debug('language_color: %s'%language_color)
@@ -424,6 +459,12 @@ def title_format(item):
             if lang:
                 item.title = add_languages(item.title, simple_language)
             #logger.debug('item.title: %s' % item.title)
+            # si hay verificacion de enlaces
+            if item.alive != '':
+                if item.alive.lower() == 'no':
+                    item.title = '[[COLOR red][B]X[/B][/COLOR]] %s' % item.title
+                elif item.alive == '??':
+                    item.title = '[[COLOR yellow][B]?[/B][/COLOR]] %s' % item.title
         else:
             item.title = '%s' % item.title
         #logger.debug('item.title despues de server: %s' % item.title)
@@ -449,30 +490,27 @@ def title_format(item):
 
 def thumbnail_type(item):
     #logger.info()
-
     # Se comprueba que tipo de thumbnail se utilizara en findvideos,
     # Poster o Logo del servidor
 
     thumb_type = config.get_setting('video_thumbnail_type')
-    #logger.debug('thumb_type: %s' % thumb_type)
     info = item.infoLabels
-    #logger.debug('item.thumbnail: %s'%item.thumbnail)
-
-    if info['thumbnail'] !='':
-        item.contentThumbnail = info['thumbnail']
-    else:
+    if not item.contentThumbnail:
         item.contentThumbnail = item.thumbnail
 
-    if item.action == 'play':
-        if thumb_type == 0:
-            if info and info['thumbnail'] != '':
-                item.thumbnail = info['thumbnail']
-        elif thumb_type == 1:
-            from core.servertools import get_server_parameters
-            #logger.debug('item.server: %s'%item.server)
-            server_parameters = get_server_parameters(item.server.lower())
-            item.thumbnail = server_parameters.get("thumbnail", "")
-            #logger.debug('thumbnail: %s' % item.thumb)
+    if info:
+        if info['thumbnail'] !='':
+            item.contentThumbnail = info['thumbnail']
+
+        if item.action == 'play':
+            if thumb_type == 0:
+                if info['thumbnail'] != '':
+                    item.thumbnail = info['thumbnail']
+            elif thumb_type == 1:
+                from core.servertools import get_server_parameters
+                #logger.debug('item.server: %s'%item.server)
+                server_parameters = get_server_parameters(item.server.lower())
+                item.thumbnail = server_parameters.get("thumbnail", item.contentThumbnail)
 
     return item.thumbnail
 

@@ -73,7 +73,7 @@ def find_and_set_infoLabels(item):
 
     p_dialog = None
     if not item.contentSeason:
-        p_dialog = platformtools.dialog_progress_bg("Buscando información de la serie", "Espere por favor...")
+        p_dialog = platformtools.dialog_progress_bg(config.get_localized_string(60296), config.get_localized_string(60293))
 
     global otvdb_global
     tvdb_result = None
@@ -95,17 +95,17 @@ def find_and_set_infoLabels(item):
         otvdb_global = Tvdb(tvdb_id=item.infoLabels['tvdb_id'])
 
     if not item.contentSeason:
-        p_dialog.update(50, "Buscando información de la serie", "Obteniendo resultados...")
+        p_dialog.update(50, config.get_localized_string(60296), config.get_localized_string(60295))
     results, info_load = otvdb_global.get_list_results()
     logger.debug("results es %s" % results)
 
     if not item.contentSeason:
-        p_dialog.update(100, "Buscando información de la serie", "Encontrados %s posibles coincidencias" % len(results))
+        p_dialog.update(100, config.get_localized_string(60296), config.get_localized_string(60297) % len(results))
         p_dialog.close()
 
     if len(results) > 1:
         tvdb_result = platformtools.show_video_info(results, item=item, scraper=Tvdb,
-                                                    caption="[%s]: Selecciona la serie correcta" % title)
+                                                    caption=config.get_localized_string(60298) % title)
     elif len(results) > 0:
         tvdb_result = results[0]
 
@@ -344,8 +344,8 @@ class Tvdb:
             self.__get_by_id(kwargs.get('tvdb_id', ''))
             if not self.list_results and config.get_setting("tvdb_retry_eng", "videolibrary"):
                 from platformcode import platformtools
-                platformtools.dialog_notification("No se ha encontrado en idioma '%s'" % DEFAULT_LANG,
-                                                  "Se busca en idioma 'en'", sound=False)
+                platformtools.dialog_notification(config.get_localized_string(60299) % DEFAULT_LANG,
+                                                  config.get_localized_string(60302), sound=False)
                 self.__get_by_id(kwargs.get('tvdb_id', ''), "en")
                 self.lang = "en"
 
@@ -354,8 +354,8 @@ class Tvdb:
             self.__search(kwargs.get('search', ''), kwargs.get('imdb_id', ''), kwargs.get('zap2it_id', ''))
             if not self.list_results and config.get_setting("tvdb_retry_eng", "videolibrary"):
                 from platformcode import platformtools
-                platformtools.dialog_notification("No se ha encontrado en idioma '%s'" % DEFAULT_LANG,
-                                                  "Se busca en idioma 'en'")
+                platformtools.dialog_notification(config.get_localized_string(60299) % DEFAULT_LANG,
+                                                  config.get_localized_string(60302))
                 self.__search(kwargs.get('search', ''), kwargs.get('imdb_id', ''), kwargs.get('zap2it_id', ''), "en")
                 self.lang = "en"
 
@@ -365,7 +365,7 @@ class Tvdb:
                 buscando = kwargs.get('tvdb_id', '')
             else:
                 buscando = kwargs.get('search', '')
-            msg = "La busqueda de %s no dio resultados." % buscando
+            msg = config.get_localized_string(70266) % buscando
             logger.debug(msg)
 
     @classmethod

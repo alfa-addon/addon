@@ -14,11 +14,17 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
+from channels import filtertools, autoplay
 from core import tmdb
 
 __channel__ = "ver-peliculas"
 
-host = "http://ver-peliculas.io/"
+host = "https://ver-peliculas.co/"
+
+IDIOMAS = {'Latino':'Lat', 'Catellano':'Cast', 'Subtitulada':'VOSE'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['directo', 'openload',  'streamango', 'rapidvideo']
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -27,7 +33,11 @@ except:
 
 def mainlist(item):
     logger.info()
+
     itemlist = list()
+
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist.append(
         Item(channel=item.channel,
              title="Peliculas",
@@ -38,8 +48,8 @@ def mainlist(item):
         Item(channel=item.channel,
              title="Español",
              action="listado",
-             url=host + "peliculas/en-espanol/"
-             ))
+             url=host + "peliculas/en-espanol/",
+             thumbnail = get_thumb("channels_spanish.png")))
     itemlist.append(
         Item(channel=item.channel,
              title="Latino",
@@ -54,16 +64,19 @@ def mainlist(item):
              thumbnail=get_thumb("channels_vos.png")))
     itemlist.append(
         Item(channel=item.channel,
-             title="Categorias",
+             title="Generos",
              action="categories",
-             url=host
+             url=host,
+             thumbnail=get_thumb('genres', auto=True)
              ))
     itemlist.append(
         Item(channel=item.channel,
              title="Buscar",
              action="search",
-             url=host + "core/ajax/suggest_search",
+             url=host + "/buscar/",
              thumbnail=get_thumb("search.png")))
+
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -89,34 +102,10 @@ def categories(item):
 
 def search(item, texto):
     logger.info()
-
-    try:
-        itemlist = []
-        post = "keyword=%s" % texto
-        data = httptools.downloadpage(item.url, post=post).data
-        data = data.replace('\\"', '"').replace('\\/', '/')
-        logger.debug("data %s" % data)
-
-        pattern = 'url\((.*?)\).+?<a href="([^"]+)".*?class="ss-title">(.*?)</a>'
-        matches = re.compile(pattern, re.DOTALL).findall(data)
-
-        for thumb, url, title in matches:
-            itemlist.append(Item(channel=item.channel,
-                                 action="findvideos",
-                                 title=title,
-                                 url=url,
-                                 thumbnail=thumb
-                                 ))
-
-        return itemlist
-
-    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("%s" % line)
-        return []
-
+    texto = texto.replace(" ", "+")
+    item.url = item.url + texto + '.html'
+    if texto != '':
+        return listado(item)
 
 def listado(item):
     logger.info()
@@ -126,7 +115,8 @@ def listado(item):
     matches = scrapertools.find_multiple_matches(data, pattern)
     for url, thumb, title in matches:
         year = scrapertools.find_single_match(url, '-(\d+)-online')
-        title = title.replace("Película", "", 1).partition(" /")[0].partition(":")[0]
+        #title = title.replace("Película", "", 1).partition(" /")[0].partition(":")[0]
+        title = title.replace("Película", "", 1).partition(" /")[0]
         itemlist.append(Item(channel=item.channel,
                              action="findvideos",
                              title=title,
@@ -146,14 +136,6 @@ def listado(item):
                                  title=">> Página siguiente",
                                  url=url,
                                  thumbnail=get_thumb("next.png")))
-
-        for item in itemlist:
-            if item.infoLabels['plot'] == '':
-                data = httptools.downloadpage(item.url).data
-                item.plot = scrapertools.find_single_match(data, '<div class="desc">([^<]+)</div>').strip()
-                item.fanart = scrapertools.find_single_match(data, '<meta property="og:image" content="([^"]+)"/>')
-
-
     return itemlist
 
 
@@ -167,51 +149,70 @@ def get_source(url):
 def findvideos(item):
     logger.info()
     duplicated = []
-
+    itemlist = []
     data = get_source(item.url)
     video_info = scrapertools.find_single_match(data, "load_player\('([^']+).*?([^']+)")
     movie_info = scrapertools.find_single_match(item.url,
-                                            'http:\/\/ver-peliculas\.(io|org)\/peliculas\/(\d+)-(.*?)-\d{4}-online\.')
-    movie_host = movie_info[0]
-    movie_id = movie_info[1]
-    movie_name = movie_info[2]
-    sub = video_info[1]
-    url_base = 'http://ver-peliculas.%s/core/api.php?id=%s&slug=%s' % (movie_host, movie_id, movie_name)
-    data = httptools.downloadpage(url_base).data
-    json_data = jsontools.load(data)
-    video_list = json_data['lista']
-    itemlist = []
-    for videoitem in video_list:
-        video_base_url = host + '/core/videofinal.php'
-        if video_list[videoitem] != None:
-            video_lang = video_list[videoitem]
-            languages = ['latino', 'spanish', 'subtitulos']
-            for lang in languages:
-                if video_lang[lang] != None:
-                    if not isinstance(video_lang[lang], int):
-                        video_id = video_lang[lang][0]["video"]
-                        post = {"video": video_id, "sub": sub}
-                        post = urllib.urlencode(post)
-                        data = httptools.downloadpage(video_base_url, post=post).data
-                        playlist = jsontools.load(data)
-                        sources = playlist[['playlist'][0]]
-                        server = playlist['server']
-                        for video_link in sources:
-                            url = video_link['sources']
-                            if url not in duplicated and server!='drive':
-                                lang = lang.capitalize()
-                                if lang == 'Spanish':
-                                    lang = 'Español'
-                                title = 'Ver en %s [' + lang + ']'
-                                thumbnail = servertools.guess_server_thumbnail(server)
-                                itemlist.append(item.clone(title=title,
-                                                           url=url,
-                                                           thumbnail=thumbnail,
-                                                           action='play'
-                                                           ))
-                                duplicated.append(url)
+                                            'http.:\/\/ver-peliculas\.(io|org|co)\/peliculas\/(\d+)-(.*?)-\d{4}-online\.')
+
+    if movie_info:
+        movie_host = movie_info[0]
+        movie_id = scrapertools.find_single_match(data,'id=idpelicula value=(.*?)>')
+        movie_name = scrapertools.find_single_match(data,'id=nombreslug value=(.*?)>')
+        sub = scrapertools.find_single_match(data, 'id=imdb value=(.*?)>')
+        sub = '%s/subtix/%s.srt' % (movie_host, sub)
+        url_base = 'https://ver-peliculas.%s/core/api.php?id=%s&slug=%s' % (movie_host, movie_id, movie_name)
+        data = httptools.downloadpage(url_base).data
+        json_data = jsontools.load(data)
+        video_list = json_data['lista']
+        for videoitem in video_list:
+            video_base_url = host.replace('.io', '.%s' % movie_host) + 'core/videofinal.php'
+            if video_list[videoitem] != None:
+                video_lang = video_list[videoitem]
+                languages = ['latino', 'spanish', 'subtitulos', 'subtitulosp']
+                for lang in languages:
+                    if lang not in video_lang:
+                        continue
+                    if video_lang[lang] != None:
+                        if not isinstance(video_lang[lang], int):
+                            video_id = video_lang[lang][0]["video"]
+                            post = {"video": video_id, "sub": sub}
+                            post = urllib.urlencode(post)
+                            data = httptools.downloadpage(video_base_url, post=post).data
+                            playlist = jsontools.load(data)
+                            sources = playlist[['playlist'][0]]
+                            server = playlist['server']
+                            for video_link in sources:
+                                url = video_link['sources']
+                                if url not in duplicated and server!='drive':
+
+                                    if lang == 'spanish':
+                                        lang = 'Castellano'
+                                    elif 'sub' in lang:
+                                        lang = 'Subtitulada'
+                                    lang = lang.capitalize()
+                                    title = 'Ver en %s [' + lang + ']'
+                                    thumbnail = servertools.guess_server_thumbnail(server)
+                                    itemlist.append(item.clone(title=title,
+                                                               url=url,
+                                                               thumbnail=thumbnail,
+                                                               action='play',
+                                                               language=IDIOMAS[lang]
+                                                               ))
+                                    duplicated.append(url)
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+
+    itemlist = sorted(itemlist, key=lambda i: i.language)
+
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
+
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(
             Item(channel=item.channel,

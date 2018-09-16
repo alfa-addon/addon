@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import urlparse
+from time import sleep
 
 from core import channeltools
 from core import httptools
@@ -14,7 +15,7 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 
-HOST = 'http://www.plusdede.com'
+HOST = 'https://www.plusdede.com'
 __channel__ = 'plusdede'
 parameters = channeltools.get_channel_parameters(__channel__)
 fanart_host = parameters['fanart']
@@ -23,20 +24,46 @@ color1, color2, color3 = ['0xFFB10021', '0xFFB10021', '0xFFB10004']
 
 
 def login():
-    url_origen = "https://www.plusdede.com/login?popup=1"
-    data = httptools.downloadpage(url_origen, follow_redirects=True).data
-    if re.search(r'(?i)%s' % config.get_setting("plusdedeuser", "plusdede"), data):
-        return True
-
+    url_origen = HOST+"/login?popup=1"
+    try:
+        data = httptools.downloadpage(url_origen).data
+    except:
+        data = httptools.downloadpage(url_origen, follow_redirects=False).data
+    if '<span class="username">' in data:
+         return True
     token = scrapertools.find_single_match(data, '<input name="_token" type="hidden" value="([^"]+)"')
+    if re.search('Escribe los números de la imagen', data):
+        captcha_url = scrapertools.find_single_match(data, '<img src="([^"]+)" alt="captcha">')
+        imagen_data = httptools.downloadpage(captcha_url).data
+        ficheropng = os.path.join(config.get_data_path(), "captcha_plusdede.png")
+        outfile=open(ficheropng,'wb')
+        outfile.write(imagen_data)
+        outfile.close()
+        img = xbmcgui.ControlImage(450,15,400,130,ficheropng)
+        wdlg = xbmcgui.WindowDialog()
+        wdlg.addControl(img)
+        wdlg.show()
+        sleep(1)
+        kb = platformtools.dialog_numeric(0, "Escribe los números de la imagen")
 
-    post = "_token=" + str(token) + "&email=" + str(
-        config.get_setting("plusdedeuser", "plusdede")) + "&password=" + str(
-        config.get_setting("plusdedepassword", "plusdede")) + "&app=2131296469"
-    url = "https://www.plusdede.com/"
-    headers = {"User-Agent":"Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) "
-                                "Chrome/61.0.3163.100 Safari/537.36","Referer": url, "X-Requested-With": "XMLHttpRequest", "X-CSRF-TOKEN": token}
-    data = httptools.downloadpage("https://www.plusdede.com/login", post=post, headers=headers,
+        postcaptcha = ""
+        if kb !='':
+                solution = kb
+                postcaptcha = "&captcha=" + str(solution)
+        else:
+             return False
+        wdlg.close()
+    else:
+        postcaptcha=""
+
+    post = "_token=" + str(token) + "&email=" + str(config.get_setting("plusdedeuser", "plusdede")) + \
+           "&password=" + str(config.get_setting("plusdedepassword", "plusdede")) + postcaptcha\
+           #+ "&app=2131296469"
+    url = HOST
+    headers = {"User-Agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/66.0.3163.100 Safari/537.36", "Referer": url, "X-Requested-With": "XMLHttpRequest","X-CSRF-TOKEN":
+        token}
+    data = httptools.downloadpage(HOST+"/login", post=post, headers=headers,
                                   replace_headers=False).data
     if "redirect" in data:
         return True
@@ -47,10 +74,9 @@ def login():
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    if config.get_setting("plusdedeuser", "plusdede") == "":
+    if not config.get_setting("plusdedeuser", "plusdede"):
         itemlist.append(
-            Item(channel=item.channel, title="Habilita tu cuenta en la configuración...", action="settingCanal",
+            Item(channel=item.channel, title="Habilita tu cuenta en la configuración e ingresar de nuevo al canal", action="settingCanal",
                  url=""))
     else:
         result = login()
@@ -61,17 +87,17 @@ def mainlist(item):
         item.url = HOST
         item.fanart = fanart_host
 
-        item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/Directors%20Chair.png"
+        item.thumbnail = "https://s18.postimg.cc/r5cylu6rd/12_-_oi_RDsdv.png"
         itemlist.append(item.clone(title="Películas", action="menupeliculas", text_color=color3, text_blod=True))
 
-        item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/TV%20Series.png"
+        item.thumbnail = "https://s18.postimg.cc/ruvqy6zl5/15_-_9m9_Dp1m.png"
         itemlist.append(item.clone(title="Series", action="menuseries", text_color=color3, text_blod=True))
 
-        itemlist.append(item.clone(title="Listas", action="menulistas", text_color=color3, text_blod=True))
+        itemlist.append(item.clone(title="Listas", action="menulistas", text_color=color3, text_blod=True, thumbnail = 'https://s18.postimg.cc/xj21p46ih/10_-_Uf7e_XHE.png'))
 
         itemlist.append(item.clone(title="", folder=False, thumbnail=thumbnail_host))
         item.thumbnail = ""
-        itemlist.append(item.clone(channel=item.channel, action="settingCanal", title="Configuración...", url=""))
+        itemlist.append(item.clone(channel=item.channel, action="settingCanal", title="Configuración...", url="", thumbnail='https://s18.postimg.cc/c9efeassp/3_-_QAHK2_Tc.png'))
     return itemlist
 
 
@@ -86,31 +112,25 @@ def menuseries(item):
     item.fanart = fanart_host
     item.text_color = None
 
-    item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/Directors%20Chair.png"
-    itemlist.append(item.clone(title="Películas", action="menupeliculas", text_color=color3, text_blod=True))
-
-    item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/TV%20Series.png"
-    itemlist.append(item.clone(title="Series:", folder=False, text_color=color3, text_blod=True, select=True))
-    itemlist.append(item.clone(action="peliculas", title="    Novedades", url="https://www.plusdede.com/series"))
-    itemlist.append(item.clone(action="generos", title="    Por géneros", url="https://www.plusdede.com/series"))
+    item.thumbnail = "https://s18.postimg.cc/ruvqy6zl5/15_-_9m9_Dp1m.png"
+    itemlist.append(item.clone(action="peliculas", title="    Novedades", url="https://www.plusdede.com/series", thumbnail='https://s18.postimg.cc/in3ihji95/11_-_WPg_H5_Kx.png'))
+    itemlist.append(item.clone(action="generos", title="    Por géneros", url="https://www.plusdede.com/series", thumbnail='https://s18.postimg.cc/p0slktaah/5_-_c_Nf_KRvm.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Siguiendo", url="https://www.plusdede.com/series/following"))
+        item.clone(action="peliculas", title="    Siguiendo", url="https://www.plusdede.com/series/following", thumbnail='https://s18.postimg.cc/68gqh7j15/7_-_tqw_AHa5.png'))
     itemlist.append(item.clone(action="peliculas", title="    Capítulos Pendientes",
-                               url="https://www.plusdede.com/series/mypending/0?popup=1", viewmode="movie"))
+                               url="https://www.plusdede.com/series/mypending/0?popup=1", viewmode="movie", thumbnail='https://s18.postimg.cc/9s2o71w1l/2_-_3dbbx7_K.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Favoritas", url="https://www.plusdede.com/series/favorites"))
+        item.clone(action="peliculas", title="    Favoritas", url="https://www.plusdede.com/series/favorites", thumbnail='https://s18.postimg.cc/n8zmpwynd/4_-_JGrig_Ep.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Pendientes", url="https://www.plusdede.com/series/pending"))
-    itemlist.append(item.clone(action="peliculas", title="    Terminadas", url="https://www.plusdede.com/series/seen"))
+        item.clone(action="peliculas", title="    Pendientes", url="https://www.plusdede.com/series/pending", thumbnail='https://s18.postimg.cc/4gnrmacix/13_-_cwl_TDog.png'))
+    itemlist.append(item.clone(action="peliculas", title="    Terminadas", url="https://www.plusdede.com/series/seen", thumbnail='https://s18.postimg.cc/5vpcay0qh/17_-_M2in_Fp_O.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Recomendadas", url="https://www.plusdede.com/series/recommended"))
-    itemlist.append(item.clone(action="search", title="    Buscar...", url="https://www.plusdede.com/series"))
+        item.clone(action="peliculas", title="    Recomendadas", url="https://www.plusdede.com/series/recommended", thumbnail='https://s18.postimg.cc/bwn182sih/14_-_fin32_Kp.png'))
+    itemlist.append(item.clone(action="search", title="    Buscar...", url="https://www.plusdede.com/series", thumbnaiil='https://s18.postimg.cc/s7n54ghvt/1_-_01_ZDYii.png'))
     itemlist.append(item.clone(title="", folder=False, thumbnail=thumbnail_host))
 
-    itemlist.append(item.clone(title="Listas", action="menulistas", text_color=color3, text_blod=True))
-    itemlist.append(item.clone(title="", folder=False, thumbnail=thumbnail_host))
     item.thumbnail = ""
-    itemlist.append(Item(channel=item.channel, action="settingCanal", title="Configuración...", url=""))
+    itemlist.append(Item(channel=item.channel, action="settingCanal", title="Configuración...", url="", thumbnail='https://s18.postimg.cc/c9efeassp/3_-_QAHK2_Tc.png'))
     return itemlist
 
 
@@ -122,29 +142,22 @@ def menupeliculas(item):
     item.fanart = fanart_host
     item.text_color = None
 
-    item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/Directors%20Chair.png"
-    itemlist.append(item.clone(title="Películas:", folder=False, text_color=color3, text_blod=True, select=True))
-    itemlist.append(item.clone(action="peliculas", title="    Novedades", url="https://www.plusdede.com/pelis"))
-    itemlist.append(item.clone(action="generos", title="    Por géneros", url="https://www.plusdede.com/pelis"))
-    itemlist.append(item.clone(action="peliculas", title="    Solo HD", url="https://www.plusdede.com/pelis?quality=3"))
+    item.thumbnail = "https://s18.postimg.cc/r5cylu6rd/12_-_oi_RDsdv.png"
+    itemlist.append(item.clone(action="peliculas", title="    Novedades", url="https://www.plusdede.com/pelis", thumbnail='https://s18.postimg.cc/in3ihji95/11_-_WPg_H5_Kx.png'))
+    itemlist.append(item.clone(action="generos", title="    Por géneros", url="https://www.plusdede.com/pelis", thumbnail='https://s18.postimg.cc/p0slktaah/5_-_c_Nf_KRvm.png'))
+    itemlist.append(item.clone(action="peliculas", title="    Solo HD", url="https://www.plusdede.com/pelis?quality=3", thumbnail='https://s18.postimg.cc/e17e95mfd/16_-_qmqn4_Si.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Pendientes", url="https://www.plusdede.com/pelis/pending"))
+        item.clone(action="peliculas", title="    Pendientes", url="https://www.plusdede.com/pelis/pending", thumbnail='https://s18.postimg.cc/4gnrmacix/13_-_cwl_TDog.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Recomendadas", url="https://www.plusdede.com/pelis/recommended"))
+        item.clone(action="peliculas", title="    Recomendadas", url="https://www.plusdede.com/pelis/recommended", thumbnail='https://s18.postimg.cc/bwn182sih/14_-_fin32_Kp.png'))
     itemlist.append(
-        item.clone(action="peliculas", title="    Favoritas", url="https://www.plusdede.com/pelis/favorites"))
-    itemlist.append(item.clone(action="peliculas", title="    Vistas", url="https://www.plusdede.com/pelis/seen"))
-    itemlist.append(item.clone(action="search", title="    Buscar...", url="https://www.plusdede.com/pelis"))
-
+        item.clone(action="peliculas", title="    Favoritas", url="https://www.plusdede.com/pelis/favorites", thumbnail='https://s18.postimg.cc/n8zmpwynd/4_-_JGrig_Ep.png'))
+    itemlist.append(item.clone(action="peliculas", title="    Vistas", url="https://www.plusdede.com/pelis/seen", thumbnail='https://s18.postimg.cc/5vpcay0qh/17_-_M2in_Fp_O.png'))
+    itemlist.append(item.clone(action="search", title="    Buscar...", url="https://www.plusdede.com/pelis", thumbnail='https://s18.postimg.cc/s7n54ghvt/1_-_01_ZDYii.png'))
     itemlist.append(item.clone(title="", folder=False, thumbnail=thumbnail_host))
-    item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/TV%20Series.png"
 
-    itemlist.append(item.clone(title="Series", action="menuseries", text_color=color3, text_blod=True))
-
-    itemlist.append(item.clone(title="Listas", action="menulistas", text_color=color3, text_blod=True))
-    itemlist.append(item.clone(title="", folder=False, thumbnail=thumbnail_host))
     item.thumbnail = ""
-    itemlist.append(item.clone(channel=item.channel, action="settingCanal", title="Configuración...", url=""))
+    itemlist.append(item.clone(channel=item.channel, action="settingCanal", title="Configuración...", url="", thumbnail='https://s18.postimg.cc/c9efeassp/3_-_QAHK2_Tc.png'))
     return itemlist
 
 
@@ -156,23 +169,16 @@ def menulistas(item):
     item.fanart = fanart_host
     item.text_color = None
 
-    item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/Directors%20Chair.png"
-    itemlist.append(item.clone(title="Películas", action="menupeliculas", text_color=color3, text_blod=True))
-
-    item.thumbnail = "https://github.com/master-1970/resources/raw/master/images/genres/0/TV%20Series.png"
-
-    itemlist.append(item.clone(title="Series", action="menuseries", text_color=color3, text_blod=True))
-
-    itemlist.append(item.clone(title="Listas:", folder=False, text_color=color3, text_blod=True))
     itemlist.append(
-        item.clone(action="listas", tipo="populares", title="    Populares", url="https://www.plusdede.com/listas"))
+        item.clone(action="listas", tipo="populares", title="    Populares", url="https://www.plusdede.com/listas", thumbnail='https://s18.postimg.cc/7aqwzrha1/8_-_3rn14_Tq.png'))
     itemlist.append(
-        item.clone(action="listas", tipo="siguiendo", title="    Siguiendo", url="https://www.plusdede.com/listas"))
+        item.clone(action="listas", tipo="siguiendo", title="    Siguiendo", url="https://www.plusdede.com/listas", thumbnail='https://s18.postimg.cc/4tf5sha89/9_-_z_F8c_UBT.png'))
     itemlist.append(
         item.clone(action="listas", tipo="tuslistas", title="    Tus Listas", url="https://www.plusdede.com/listas"))
     itemlist.append(item.clone(title="", folder=False, thumbnail=thumbnail_host))
+
     item.thumbnail = ""
-    itemlist.append(item.clone(channel=item.channel, action="settingCanal", title="Configuración...", url=""))
+    itemlist.append(item.clone(channel=item.channel, action="settingCanal", title="Configuración...", url="", thumbnail='https://s18.postimg.cc/c9efeassp/3_-_QAHK2_Tc.png'))
     return itemlist
 
 
@@ -464,7 +470,7 @@ def episodios(item):
         # Sin valoración:
         # show = re.sub(r"\s\(\d+\.\d+\)", "", item.show)
         itemlist.append(
-            Item(channel='plusdede', title="Añadir esta serie a la biblioteca de XBMC", url=item.url, token=token,
+            Item(channel='plusdede', title="Añadir esta serie a la videoteca", url=item.url, token=token,
                  action="add_serie_to_library", extra="episodios###", show=show))
         itemlist.append(
             Item(channel='plusdede', title="Descargar todos los episodios de la serie", url=item.url, token=token,
@@ -785,7 +791,6 @@ def checkseen(item):
                                  "Chrome/61.0.3163.100 Safari/537.36", "Referer": "https://www.plusdede.com/serie/",
                    "X-Requested-With": "XMLHttpRequest", "X-CSRF-TOKEN": item.token}
     data = httptools.downloadpage(url_temp, post="id=" + item.idtemp, headers=headers, replace_headers=True).data
-    #logger.debug(data)
     return True
 
 

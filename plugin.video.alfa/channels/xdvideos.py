@@ -20,8 +20,8 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorias", url=host,
-                         thumbnail=thumb_series))
+    itemlist.append(Item(channel=item.channel, action="categorias",
+                         title="Categorias", url=host, thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, action="episodios", title="Dragon Ball Super", url=hosts,
                          thumbnail=thumb_series))
     return itemlist
@@ -34,26 +34,27 @@ def categorias(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron = '<ul id="menu-menu-2" class="menu">(.+)>Problemas'
+    patron = '(?s)<ul id="nav">(.*)<li class="hd-search">'
     data = scrapertools.find_single_match(data, patron)
-    patron_cat = '<li id="menu-item-[^"]+" class=".+?"><a href="([^"]+)">([^"]+)<\/a><ulclass="sub-menu">'
+    patron_cat = '(?s)<li id="menu-item-[^"]+" class=".+?"><a href="([^"]+)">([^"]+)<\/a><ul class="sub-menu">'
     matches = scrapertools.find_multiple_matches(data, patron_cat)
     for url, name in matches:
         if name != 'Clasicos':
             title = name
-            itemlist.append(item.clone(title=title, url=url, action="lista", show=title))
+            itemlist.append(item.clone(title=title, url=url,
+                                   action="lista", show=title))
     return itemlist
 
 
 def lista(item):
     logger.info()
-
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+
     category = item.title
-    patron = '<li id="menu-item-[^"]+" class="menu-item menu-item-type-post_type menu-item-object-page current-menu-item page_item page-item-[^"]+ current_page_item menu-item-has-children menu-item-[^"]+"><a href="[^"]+">[^"]+<\/a>(.+?)<\/a><\/li><\/ul><\/li>'
+    patron = '<li id="menu-item-[^"]+" class="menu-item menu-item-type-post_type menu-item-object-page current-menu-item page_item page-item-[^"]+ current_page_item menu-item-has-children menu-item-[^"]+"><a href="[^"]+">[^"]+<\/a>(.+?)<\/ul><\/li>'
     content = scrapertools.find_single_match(data, patron)
     patron_lista = '<a href="([^"]+)">([^"]+)<\/a>'
     match_series = scrapertools.find_multiple_matches(content, patron_lista)
@@ -65,30 +66,41 @@ def lista(item):
                 show = show.rstrip(")")
         else:
             show = title
-        itemlist.append(item.clone(title=title, url=url, action="episodios", show=show, plot=show))
+        itemlist.append(item.clone(title=title, url=url,
+                                   action="episodios", show=show, plot=show))
     tmdb.set_infoLabels(itemlist)
     return itemlist
 
 
 def episodios(item):
     logger.info()
-
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    scrapedshow, scrapedthumbnail = scrapertools.find_single_match(data,
-                                                                   '<h1 class="entry-title">([^"]+)<\/h1>.+?<img .+? src="([^"]+)"')
-    data = scrapertools.find_single_match(data, '<div class="entry-content">(.+?)<div id="wpdevar')
+
+    scrapedshow = scrapertools.find_single_match(
+        data, '(?s)<h1 class="post-title">([^"]+)<\/h1>')
+
+    scrapedthumbnail = scrapertools.find_single_match(
+        data, '(?s)<h1 class="post-title">*?<img .+? src="([^"]+)"')
+
+    data = scrapertools.find_single_match(
+        data, '(?s)<div class="post-content">(.+?)<ul class="single-share">')
+
     patron_caps = '<a href="([^"]+)">([^"]+)<\/a>'
     matches = scrapertools.find_multiple_matches(data, patron_caps)
-    i = 0
+
     for url, name in matches:
-        i = i + 1
-        if i < 10:
-            title = "1x0" + str(i) + " " + name
+        patron_validation = 'temporada.*?-([0-9]+).*?[capitulo|episodio]-([0-9]+)'
+        validation = re.compile(patron_validation, re.DOTALL).findall(url)
+        if validation:
+            season, chapter = scrapertools.find_single_match(
+                url, patron_validation)
+            title = season + "x" + chapter.zfill(2) + " " + name
         else:
-            title = "1x" + str(i) + " " + name
+            title = name
+
         itemlist.append(
             item.clone(title=title, url=url, action="findvideos", show=scrapedshow, thumbnail=scrapedthumbnail))
 

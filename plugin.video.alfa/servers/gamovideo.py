@@ -7,9 +7,6 @@ from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
 
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36'}
-
-
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url, headers=headers).data

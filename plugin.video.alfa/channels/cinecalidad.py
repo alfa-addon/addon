@@ -67,7 +67,7 @@ def mainlist(item):
     itemlist.append(
         item.clone(title="CineCalidad Portugues",
                    action="submenu",
-                   host="http://cinemaqualidade.to/",
+                   host="http://www.cinemaqualidade.to/",
                    thumbnail=thumbbr,
                    extra="filmes",
                    ))
@@ -81,7 +81,7 @@ def submenu(item):
     idioma = 'peliculas'
     idioma2 = "destacada"
     host = item.host
-    if item.host == "http://cinemaqualidade.to/":
+    if item.host == "http://www.cinemaqualidade.to/":
         idioma = "filmes"
         idioma2 = "destacado"
     logger.info()
@@ -91,35 +91,35 @@ def submenu(item):
                          action="peliculas",
                          url=host,
                          thumbnail=get_thumb('movies', auto=True),
-                         fanart='https://s8.postimg.org/6wqwy2c2t/peliculas.png',
+                         fanart='https://s8.postimg.cc/6wqwy2c2t/peliculas.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Destacadas",
                          action="peliculas",
                          url=host + "/genero-" + idioma + "/" + idioma2 + "/",
                          thumbnail=get_thumb('hot', auto=True),
-                         fanart='https://s30.postimg.org/humqxklsx/destacadas.png',
+                         fanart='https://s30.postimg.cc/humqxklsx/destacadas.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Generos",
                          action="generos",
                          url=host + "/genero-" + idioma,
                          thumbnail=get_thumb('genres', auto=True),
-                         fanart='https://s3.postimg.org/5s9jg2wtf/generos.png',
+                         fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Por Año",
                          action="anyos",
                          url=host + idioma + "-por-ano",
                          thumbnail=get_thumb('year', auto=True),
-                         fanart='https://s8.postimg.org/7eoedwfg5/pora_o.png',
+                         fanart='https://s8.postimg.cc/7eoedwfg5/pora_o.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Buscar",
                          action="search",
                          thumbnail=get_thumb('search', auto=True),
                          url=host + '/?s=',
-                         fanart='https://s30.postimg.org/pei7txpa9/buscar.png',
+                         fanart='https://s30.postimg.cc/pei7txpa9/buscar.png',
                          host=item.host,
                          ))
 
@@ -153,21 +153,21 @@ def anyos(item):
 
 
 def generos(item):
-    tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
-               "Suspenso": "https://s13.postimg.org/wmw6vl1cn/suspenso.png",
-               "Drama": "https://s16.postimg.org/94sia332d/drama.png",
-               "Acción": "https://s3.postimg.org/y6o9puflv/accion.png",
-               "Aventura": "https://s10.postimg.org/6su40czih/aventura.png",
-               "Romance": "https://s15.postimg.org/fb5j8cl63/romance.png",
-               "Fantas\xc3\xada": "https://s13.postimg.org/65ylohgvb/fantasia.png",
-               "Infantil": "https://s23.postimg.org/g5rmazozv/infantil.png",
-               "Ciencia ficción": "https://s9.postimg.org/diu70s7j3/cienciaficcion.png",
-               "Terror": "https://s7.postimg.org/yi0gij3gb/terror.png",
-               "Com\xc3\xa9dia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
-               "Suspense": "https://s13.postimg.org/wmw6vl1cn/suspenso.png",
-               "A\xc3\xa7\xc3\xa3o": "https://s3.postimg.org/y6o9puflv/accion.png",
-               "Fantasia": "https://s13.postimg.org/65ylohgvb/fantasia.png",
-               "Fic\xc3\xa7\xc3\xa3o cient\xc3\xadfica": "https://s9.postimg.org/diu70s7j3/cienciaficcion.png"}
+    tgenero = {"Comedia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
+               "Suspenso": "https://s13.postimg.cc/wmw6vl1cn/suspenso.png",
+               "Drama": "https://s16.postimg.cc/94sia332d/drama.png",
+               "Acción": "https://s3.postimg.cc/y6o9puflv/accion.png",
+               "Aventura": "https://s10.postimg.cc/6su40czih/aventura.png",
+               "Romance": "https://s15.postimg.cc/fb5j8cl63/romance.png",
+               "Fantas\xc3\xada": "https://s13.postimg.cc/65ylohgvb/fantasia.png",
+               "Infantil": "https://s23.postimg.cc/g5rmazozv/infantil.png",
+               "Ciencia ficción": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png",
+               "Terror": "https://s7.postimg.cc/yi0gij3gb/terror.png",
+               "Com\xc3\xa9dia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
+               "Suspense": "https://s13.postimg.cc/wmw6vl1cn/suspenso.png",
+               "A\xc3\xa7\xc3\xa3o": "https://s3.postimg.cc/y6o9puflv/accion.png",
+               "Fantasia": "https://s13.postimg.cc/65ylohgvb/fantasia.png",
+               "Fic\xc3\xa7\xc3\xa3o cient\xc3\xadfica": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png"}
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -224,7 +224,7 @@ def peliculas(item):
                  url=url,
                  thumbnail=thumbnail,
                  plot=plot,
-                 fanart='https://s31.postimg.org/puxmvsi7v/cinecalidad.png',
+                 fanart='https://s31.postimg.cc/puxmvsi7v/cinecalidad.png',
                  contentTitle=contentTitle,
                  infoLabels={'year': year},
                  language=current_lang,
@@ -238,7 +238,7 @@ def peliculas(item):
                              action="peliculas",
                              title="Página siguiente >>",
                              url=next_page[0],
-                             fanart='https://s31.postimg.org/puxmvsi7v/cinecalidad.png',
+                             fanart='https://s31.postimg.cc/puxmvsi7v/cinecalidad.png',
                              language=item.language
                              ))
 
@@ -248,12 +248,12 @@ def peliculas(item):
     return itemlist
 
 
-def dec(item):
+def dec(item, dec_value):
     link = []
     val = item.split(' ')
     link = map(int, val)
     for i in range(len(link)):
-        link[i] = link[i] - 6
+        link[i] = link[i] - int(dec_value)
         real = ''.join(map(chr, link))
     return (real)
 
@@ -289,6 +289,14 @@ def findvideos(item):
     logger.info()
     itemlist = []
     duplicados = []
+
+    if 'cinemaqualidade' in item.url:
+        lang = 'portugues'
+    elif 'espana' in item.url:
+        lang = 'castellano'
+    elif 'cinecalidad' in item.url:
+        lang = 'latino'
+
     data = httptools.downloadpage(item.url).data
     patron = 'target="_blank".*? service=".*?" data="(.*?)"><li>(.*?)<\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -302,10 +310,10 @@ def findvideos(item):
                   'BitTorrent': '',
                   'Mega': '',
                   'MediaFire': ''}
-
+    dec_value = scrapertools.find_single_match(data, 'String\.fromCharCode\(parseInt\(str\[i\]\)-(\d+)\)')
     for video_cod, server_id in matches:
         if server_id not in ['Mega', 'MediaFire', 'Trailer', '']:
-            video_id = dec(video_cod)
+            video_id = dec(video_cod, dec_value)
 
         logger.debug('server_id %s' % server_id)
         if server_id in server_url:
@@ -315,9 +323,12 @@ def findvideos(item):
                 server = 'thevideome'
                 url = server_url[server_id] + video_id + '.html'
             elif server_id == 'BitTorrent':
-                base_url = 'http://www.cinecalidad.to/protect/contenido.php'
-                post = 'i=%s&title=%s' % (video_id, item.contentTitle)
-                protect = httptools.downloadpage(base_url, post=post).data
+                import urllib
+                base_url = '%s/protect/v.php' % host
+                post = {'i':video_id, 'title':item.title}
+                post = urllib.urlencode(post)
+                headers = {'Referer':item.url}
+                protect = httptools.downloadpage(base_url+'?'+post, headers=headers).data
                 url = scrapertools.find_single_match(protect, 'value="(magnet.*?)"')
                 server = 'torrent'
             else:
@@ -327,9 +338,9 @@ def findvideos(item):
 
         if server_id not in ['Mega', 'MediaFire', 'Trailer']:
             if server != 'torrent':
-                language = IDIOMAS[item.language]
+                language = IDIOMAS[lang]
             else:
-                language = [IDIOMAS[item.language], 'vose']
+                language = [IDIOMAS[lang], 'vose']
             if url not in duplicados:
                 new_item = Item(channel=item.channel,
                                 action='play',
@@ -423,6 +434,6 @@ def newest(categoria):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "-")
-    item.url = host + '/?s=' + texto
+    item.url = item.host + '?s=' + texto
     if texto != '':
         return peliculas(item)

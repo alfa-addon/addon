@@ -17,7 +17,7 @@
       "default": false,
       "enabled": true,
       "id": "black_list",
-      "label": "Incluir en lista negra",
+      "label": "@60654",
       "type": "bool",
       "visible": true
     },
@@ -25,7 +25,7 @@
       "default": 0,
       "enabled": true,
       "id": "favorites_servers_list",
-      "label": "Incluir en lista de favoritos",
+      "label": "@60655",
       "lvalues": [
         "No",
         "1",
@@ -38,6 +38,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s18.postimg.org/68colqvyx/logo-bdupload.png",
+  "thumbnail": "https://s18.postimg.cc/68colqvyx/logo-bdupload.png",
   "version": 1
 }

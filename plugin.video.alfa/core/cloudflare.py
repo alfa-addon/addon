@@ -9,7 +9,7 @@ import urllib
 import urlparse
 
 from platformcode import logger
-
+from decimal import Decimal
 
 class Cloudflare:
     def __init__(self, response):
@@ -65,9 +65,16 @@ class Cloudflare:
             jschl_answer = self.decode(self.js_data["value"])
 
             for op, v in self.js_data["op"]:
-                jschl_answer = eval(str(jschl_answer) + op + str(self.decode(v)))
+                if op == '+':
+                    jschl_answer = jschl_answer + self.decode(v)
+                elif op == '-':
+                    jschl_answer = jschl_answer - self.decode(v)
+                elif op == '*':
+                    jschl_answer = jschl_answer * self.decode(v)
+                elif op == '/':
+                    jschl_answer = jschl_answer / self.decode(v)
 
-            self.js_data["params"]["jschl_answer"] = jschl_answer + len(self.domain)
+            self.js_data["params"]["jschl_answer"] = round(jschl_answer, 10) + len(self.domain)
 
             response = "%s://%s%s?%s" % (
             self.protocol, self.domain, self.js_data["auth_url"], urllib.urlencode(self.js_data["params"]))
@@ -86,54 +93,22 @@ class Cloudflare:
             return response
 
     def decode(self, data):
-        t = time.time()
-        timeout = False
+        data = re.sub("\!\+\[\]", "1", data)
+        data = re.sub("\!\!\[\]", "1", data)
+        data = re.sub("\[\]", "0", data)
+        
+        pos = data.find("/")
+        numerador = data[:pos]
+        denominador = data[pos+1:]
+        
+        aux = re.compile('\(([0-9\+]+)\)').findall(numerador)
+        num1 = ""
+        for n in aux:
+            num1 += str(eval(n))
 
-        while not timeout:
-            data = re.sub("\[\]", "''", data)
-            data = re.sub("!\+''", "+1", data)
-            data = re.sub("!''", "0", data)
-            data = re.sub("!0", "1", data)
+        aux = re.compile('\(([0-9\+]+)\)').findall(denominador)
+        num2 = ""
+        for n in aux:
+            num2 += str(eval(n))
 
-            if "(" in data:
-                x, y = data.rfind("("), data.find(")", data.rfind("(")) + 1
-                part = data[x + 1:y - 1]
-            else:
-                x = 0
-                y = len(data)
-                part = data
-
-            val = ""
-
-            if not part.startswith("+"): part = "+" + part
-
-            for i, ch in enumerate(part):
-                if ch == "+":
-                    if not part[i + 1] == "'":
-                        if val == "": val = 0
-                        if type(val) == str:
-                            val = val + self.get_number(part, i + 1)
-                        else:
-                            val = val + int(self.get_number(part, i + 1))
-                    else:
-                        val = str(val)
-                        val = val + self.get_number(part, i + 1) or "0"
-
-            if type(val) == str: val = "'%s'" % val
-            data = data[0:x] + str(val) + data[y:]
-
-            timeout = time.time() - t > self.timeout
-
-            if not "+" in data and not "(" in data and not ")" in data:
-                return int(self.get_number(data))
-
-    def get_number(self, str, start=0):
-        ret = ""
-        for chr in str[start:]:
-            try:
-                int(chr)
-            except:
-                if ret: break
-            else:
-                ret += chr
-        return ret
+        return Decimal(Decimal(num1) / Decimal(num2)).quantize(Decimal('.0000000000000001'))

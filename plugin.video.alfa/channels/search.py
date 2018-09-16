@@ -8,46 +8,113 @@ from threading import Thread
 
 from channelselector import get_thumb
 from core import channeltools
+from core import scrapertools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
+from core import tmdb
+
+link_list = []
+max_links = 30
 
 
 def mainlist(item):
     logger.info()
     item.channel = "search"
 
+    itemlist = []
+    context = [{"title": config.get_localized_string(60412), "action": "setting_channel", "channel": item.channel}]
+    itemlist.append(Item(channel=item.channel, action="sub_menu", title=config.get_localized_string(70305), context=context,
+                         thumbnail=get_thumb("search.png")))
+
+    itemlist.append(Item(channel=item.channel, action='genres_menu', title=config.get_localized_string(70306), type='movie',
+                         thumbnail=get_thumb("genres.png")))
+
+    itemlist.append (Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70307),
+                          context=context, search_type='list', list_type='movie/popular',
+                          thumbnail=get_thumb("popular.png")))
+
+    itemlist.append(Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70308),
+                         context=context, search_type='list', list_type='movie/top_rated',
+                         thumbnail=get_thumb("top_rated.png")))
+
+    itemlist.append(
+        Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70309), context=context,
+             search_type='list', list_type='movie/now_playing',
+                         thumbnail=get_thumb("now_playing.png")))
+
+    itemlist.append(Item(channel=item.channel, action='genres_menu', title=config.get_localized_string(70310), type='tv',
+                         thumbnail=get_thumb("genres.png")))
+
+    itemlist.append(
+        Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70311), context=context,
+             search_type='list',list_type='tv/popular', thumbnail=get_thumb("popular.png")))
+
+    itemlist.append(Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70312), context=context,
+                         search_type='list', list_type='tv/on_the_air', thumbnail=get_thumb("on_the_air.png")))
+
+
+    itemlist.append(Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70313), context=context,
+                         search_type='list', list_type='tv/top_rated', thumbnail=get_thumb("top_rated.png")))
+
+
+
+
+    return itemlist
+
+
+def genres_menu(item):
+
+    itemlist = []
+
+    genres = tmdb.get_genres(item.type)
+
+    logger.debug(genres)
+    logger.debug(genres[item.type])
+
+    for key, value in genres[item.type].items():
+        itemlist.append(item.clone(title=value, action='discover_list', search_type='discover',
+                                   list_type=key, page='1'))
+    return sorted(itemlist, key=lambda it: it.title)
+
+def sub_menu(item):
+    logger.info()
+    item.channel = "search"
+
     itemlist = list()
-    context = [{"title": "Elegir canales incluidos",
+    context = [{"title": config.get_localized_string(70273),
                 "action": "setting_channel",
                 "channel": item.channel}]
     itemlist.append(Item(channel=item.channel, action="search",
-                         title="Buscar por titulo", context=context,
+                         title=config.get_localized_string(30980), context=context,
                          thumbnail=get_thumb("search.png")))
 
     thumbnail = get_thumb("search_star.png")
 
-    itemlist.append(Item(channel='tvmoviedb', title="Buscar actor/actriz", action="search_",
+    itemlist.append(Item(channel='tvmoviedb', title=config.get_localized_string(70036), action="search_",
                          search={'url': 'search/person', 'language': 'es', 'page': 1}, star=True,
                          thumbnail=thumbnail))
 
     itemlist.append(Item(channel=item.channel, action="search",
-                         title="Buscar por categorias (búsqueda avanzada)", extra="categorias",
+                         title=config.get_localized_string(59998), extra="categorias",
                          context=context,
                          thumbnail=get_thumb("search.png")))
-    itemlist.append(Item(channel=item.channel, action="opciones", title="Opciones",
+    itemlist.append(Item(channel=item.channel, action="opciones", title=config.get_localized_string(59997),
+                         thumbnail=get_thumb("search.png")))
+
+    itemlist.append(Item(channel="tvmoviedb", action="mainlist", title=config.get_localized_string(70274),
                          thumbnail=get_thumb("search.png")))
 
     saved_searches_list = get_saved_searches()
     context2 = context[:]
-    context2.append({"title": "Borrar búsquedas guardadas",
+    context2.append({"title": config.get_localized_string(59996),
                      "action": "clear_saved_searches",
                      "channel": item.channel})
     logger.info("saved_searches_list=%s" % saved_searches_list)
 
     if saved_searches_list:
         itemlist.append(Item(channel=item.channel, action="",
-                             title="Búsquedas guardadas:", context=context2,
+                             title=config.get_localized_string(59995), context=context2,
                              thumbnail=get_thumb("search.png")))
         for saved_search_text in saved_searches_list:
             itemlist.append(Item(channel=item.channel, action="do_search",
@@ -62,20 +129,99 @@ def mainlist(item):
 def opciones(item):
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="setting_channel",
-                         title="Elegir canales incluidos en la búsqueda", folder=False,
+                         title=config.get_localized_string(59994), folder=False,
                          thumbnail=get_thumb("search.png")))
-    itemlist.append(Item(channel=item.channel, action="clear_saved_searches", title="Borrar búsquedas guardadas",
+    itemlist.append(Item(channel=item.channel, action="clear_saved_searches", title=config.get_localized_string(59996),
                          folder=False, thumbnail=get_thumb("search.png")))
-    itemlist.append(Item(channel=item.channel, action="settings", title="Otros ajustes", folder=False,
+    itemlist.append(Item(channel=item.channel, action="settings", title=config.get_localized_string(60531), folder=False,
                          thumbnail=get_thumb("search.png")))
     return itemlist
 
 
 def settings(item):
-    return platformtools.show_channel_settings(caption="configuración -- Buscador")
+    return platformtools.show_channel_settings(caption=config.get_localized_string(59993))
 
 
 def setting_channel(item):
+    if config.get_platform(True)['num_version'] >= 17.0: # A partir de Kodi 16 se puede usar multiselect, y de 17 con preselect
+        return setting_channel_new(item)
+    else:
+        return setting_channel_old(item)
+
+def setting_channel_new(item):
+    import channelselector, xbmcgui
+    from core import channeltools
+
+    # Cargar lista de opciones (canales activos del usuario y que permitan búsqueda global)
+    # ------------------------
+    lista = []; ids = []; lista_lang = []
+    channels_list = channelselector.filterchannels('all')
+    for channel in channels_list:
+        channel_parameters = channeltools.get_channel_parameters(channel.channel)
+
+        # No incluir si en la configuracion del canal no existe "include_in_global_search"
+        if not channel_parameters['include_in_global_search']:
+            continue
+
+        lbl = '%s' % channel_parameters['language']
+        lbl += ' %s' % ', '.join(config.get_localized_category(categ) for categ in channel_parameters['categories'])
+
+        it = xbmcgui.ListItem(channel.title, lbl)
+        it.setArt({ 'thumb': channel.thumbnail, 'fanart': channel.fanart })
+        lista.append(it)
+        ids.append(channel.channel)
+        lista_lang.append(channel_parameters['language'])
+
+    # Diálogo para pre-seleccionar
+    # ----------------------------
+    preselecciones_std = ['Modificar selección actual', 'Modificar partiendo de Todos', 'Modificar partiendo de Ninguno', 'Modificar partiendo de Castellano', 'Modificar partiendo de Latino']
+    if item.action == 'setting_channel': 
+        # Configuración de los canales incluídos en la búsqueda
+        preselecciones = preselecciones_std
+        presel_values = [1, 2, 3, 4, 5]
+    else:
+        # Llamada desde "buscar en otros canales" (se puede saltar la selección e ir directo a la búsqueda)
+        preselecciones = ['Buscar con la selección actual'] + preselecciones_std
+        presel_values = [0, 1, 2, 3, 4, 5]
+    
+    ret = platformtools.dialog_select(config.get_localized_string(59994), preselecciones)
+    if ret == -1: return False # pedido cancel
+    if presel_values[ret] == 0: return True # continuar sin modificar
+    elif presel_values[ret] == 3: preselect = []
+    elif presel_values[ret] == 2: preselect = range(len(ids))
+    elif presel_values[ret] in [4, 5]:
+        busca = 'cast' if presel_values[ret] == 4 else 'lat'
+        preselect = []
+        for i, lg in enumerate(lista_lang):
+            if busca in lg or '*' in lg:
+                preselect.append(i)
+    else:
+        preselect = []
+        for i, canal in enumerate(ids):
+            channel_status = config.get_setting('include_in_global_search', canal)
+            if channel_status:
+                preselect.append(i)
+
+    # Diálogo para seleccionar
+    # ------------------------
+    ret = xbmcgui.Dialog().multiselect(config.get_localized_string(59994), lista, preselect=preselect, useDetails=True)
+    if ret == None: return False # pedido cancel
+    seleccionados = [ids[i] for i in ret]
+
+    # Guardar cambios en canales para la búsqueda
+    # -------------------------------------------
+    for canal in ids:
+        channel_status = config.get_setting('include_in_global_search', canal)
+        if channel_status is None: channel_status = True
+
+        if channel_status and canal not in seleccionados:
+            config.set_setting('include_in_global_search', False, canal)
+        elif not channel_status and canal in seleccionados:
+            config.set_setting('include_in_global_search', True, canal)
+
+    return True
+
+def setting_channel_old(item):
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
     channel_language = config.get_setting("channel_language", default="all")
 
@@ -116,12 +262,12 @@ def setting_channel(item):
         list_controls.append(control)
 
     if config.get_setting("custom_button_value", item.channel):
-        custom_button_label = "Ninguno"
+        custom_button_label = config.get_localized_string(59992)
     else:
-        custom_button_label = "Todos"
+        custom_button_label = config.get_localized_string(59991)
 
     return platformtools.show_channel_settings(list_controls=list_controls,
-                                               caption="Canales incluidos en la búsqueda",
+                                               caption=config.get_localized_string(59990),
                                                callback="save_settings", item=item,
                                                custom_button={'visible': True,
                                                               'function': "cb_custom_button",
@@ -130,13 +276,14 @@ def setting_channel(item):
 
 
 def save_settings(item, dict_values):
-    progreso = platformtools.dialog_progress("Guardando configuración...", "Espere un momento por favor.")
+    progreso = platformtools.dialog_progress(config.get_localized_string(59988), config.get_localized_string(59989))
     n = len(dict_values)
     for i, v in enumerate(dict_values):
-        progreso.update((i * 100) / n, "Guardando configuración...")
+        progreso.update((i * 100) / n, config.get_localized_string(59988))
         config.set_setting("include_in_global_search", dict_values[v], v)
 
     progreso.close()
+    return True
 
 
 def cb_custom_button(item, dict_values):
@@ -148,16 +295,16 @@ def cb_custom_button(item, dict_values):
         dict_values[v] = not value
 
     if config.set_setting("custom_button_value", not value, item.channel) == True:
-        return {"label": "Ninguno"}
+        return {"label": config.get_localized_string(59992)}
     else:
-        return {"label": "Todos"}
+        return {"label": config.get_localized_string(59991)}
 
 
 def searchbycat(item):
     # Only in xbmc/kodi
     # Abre un cuadro de dialogo con las categorías en las que hacer la búsqueda
 
-    categories = ["Películas", "Series", "Anime", "Documentales", "VOS", "Latino"]
+    categories = [config.get_localized_string(30122), config.get_localized_string(30123), config.get_localized_string(30124), config.get_localized_string(30125), config.get_localized_string(59975), config.get_localized_string(59976)]
     categories_id = ["movie", "tvshow", "anime", "documentary", "vos", "latino"]
     list_controls = []
     for i, category in enumerate(categories):
@@ -178,13 +325,13 @@ def searchbycat(item):
     list_controls.append(control)
     control = {'id': "torrent",
                'type': "bool",
-               'label': 'Incluir en la búsqueda canales Torrent',
+               'label': config.get_localized_string(70275),
                'default': True,
                'enabled': True,
                'visible': True}
     list_controls.append(control)
 
-    return platformtools.show_channel_settings(list_controls=list_controls, caption="Elegir categorías",
+    return platformtools.show_channel_settings(list_controls=list_controls, caption=config.get_localized_string(59974),
                                                callback="search_cb", item=item)
 
 
@@ -226,7 +373,7 @@ def show_result(item):
     tecleado = None
     if item.adult and config.get_setting("adult_request_password"):
         # Solicitar contraseña
-        tecleado = platformtools.dialog_input("", "Contraseña para canales de adultos", True)
+        tecleado = platformtools.dialog_input("", config.get_localized_string(60334), True)
         if tecleado is None or tecleado != config.get_setting("adult_password"):
             return []
 
@@ -285,10 +432,10 @@ def do_search(item, categories=None):
 
     if item.contextual==True:
         categories = ["Películas"]
-        setting_item = Item(channel=item.channel, title="Elegir canales incluidos en la búsqueda", folder=False,
+        setting_item = Item(channel=item.channel, title=config.get_localized_string(59994), folder=False,
                             thumbnail=get_thumb("search.png"))
-        setting_channel(setting_item)
-
+        if not setting_channel(setting_item):
+            return False
 
     if categories is None:
         categories = []
@@ -312,7 +459,7 @@ def do_search(item, categories=None):
     # Para Kodi es necesario esperar antes de cargar el progreso, de lo contrario
     # el cuadro de progreso queda "detras" del cuadro "cargando..." y no se le puede dar a cancelar
     time.sleep(0.5)
-    progreso = platformtools.dialog_progress("Buscando '%s'..." % tecleado, "")
+    progreso = platformtools.dialog_progress(config.get_localized_string(30993) % tecleado, "")
     channel_files = sorted(glob.glob(channels_path), key=lambda x: os.path.basename(x))
 
     import math
@@ -393,7 +540,7 @@ def do_search(item, categories=None):
 
             logger.info("%s incluido en la búsqueda" % basename_without_extension)
             progreso.update(percentage,
-                            "Buscando en %s..." % channel_parameters["title"])
+                            config.get_localized_string(60520) % channel_parameters["title"])
 
         except:
             logger.error("No se puede buscar en: %s" % channel_parameters["title"])
@@ -407,14 +554,14 @@ def do_search(item, categories=None):
     # es compatible tanto con versiones antiguas de python como nuevas
     if multithread:
         pendent = [a for a in threads if a.isAlive()]
-        t = float(100) / len(pendent)
-        while pendent:
+        if len(pendent) > 0: t = float(100) / len(pendent)
+        while len(pendent) > 0:
             index = (len(threads) - len(pendent)) + 1
             percentage = int(math.ceil(index * t))
 
             list_pendent_names = [a.getName() for a in pendent]
-            mensaje = "Buscando en %s" % (", ".join(list_pendent_names))
-            progreso.update(percentage, "Finalizado en %d/%d canales..." % (len(threads) - len(pendent), len(threads)),
+            mensaje = config.get_localized_string(70282) % (", ".join(list_pendent_names))
+            progreso.update(percentage, config.get_localized_string(60521) % (len(threads) - len(pendent), len(threads)),
                             mensaje)
             logger.debug(mensaje)
 
@@ -433,11 +580,11 @@ def do_search(item, categories=None):
             title = channel
 
             # resultados agrupados por canales
-            if item.contextual == True:
+            if item.contextual == True or item.action == 'search_tmdb':
                 result_mode = 1
             if result_mode == 0:
                 if len(search_results[channel]) > 1:
-                    title += " [%s]" % element["item"].title.strip()
+                    title += " -%s" % element["item"].title.strip()
                 title += " (%s)" % len(element["itemlist"])
 
                 title = re.sub("\[COLOR [^\]]+\]", "", title)
@@ -457,7 +604,7 @@ def do_search(item, categories=None):
                         itemlist.append(i.clone(title=title, from_action=i.action, from_channel=i.channel,
                                                 channel="search", action="show_result", adult=element["adult"]))
 
-    title = "Buscando: '%s' | Encontrado: %d vídeos | Tiempo: %2.f segundos" % (
+    title = config.get_localized_string(59972) % (
     tecleado, total, time.time() - start_time)
     itemlist.insert(0, Item(title=title, text_color='yellow'))
 
@@ -503,7 +650,7 @@ def save_search(text):
 
 def clear_saved_searches(item):
     config.set_setting("saved_searches_list", list(), "search")
-    platformtools.dialog_ok("Buscador", "Búsquedas borradas correctamente")
+    platformtools.dialog_ok(config.get_localized_string(60329), config.get_localized_string(60424))
 
 
 def get_saved_searches():
@@ -514,3 +661,90 @@ def get_saved_searches():
         saved_searches_list = list(current_saved_searches_list)
 
     return saved_searches_list
+
+
+def discover_list(item):
+    from platformcode import unify
+    itemlist = []
+
+    result = tmdb.discovery(item)
+
+    tvshow = False
+
+    logger.debug(item)
+
+    for elem in result:
+        elem['tmdb_id']=elem['id']
+        if 'title' in elem:
+            title = unify.normalize(elem['title']).capitalize()
+            elem['year'] = scrapertools.find_single_match(elem['release_date'], '(\d{4})-\d+-\d+')
+        else:
+            title = unify.normalize(elem['name']).capitalize()
+            tvshow = True
+
+        new_item = Item(channel='search', title=title, infoLabels=elem, action='search_tmdb', extra=title,
+                        category='Resultados', context ='')
+
+        if tvshow:
+            new_item.contentSerieName = title
+        else:
+            new_item.contentTitle = title
+
+        itemlist.append(new_item)
+
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+
+    if item.page != '' and len(itemlist)>0:
+        next_page = str(int(item.page)+1)
+        #if not 'similar' in item.list_type:
+        #    itemlist.append(item.clone(title='Pagina Siguente', page=next_page))
+        #else:
+        itemlist.append(Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70065),
+                             search_type=item.search_type, list_type=item.list_type, type=item.type, page=next_page))
+
+    return itemlist
+
+def search_tmdb(item):
+    logger.debug(item)
+
+    itemlist = []
+    threads = []
+    logger.debug(item)
+    wanted = item.contentTitle
+
+    search = do_search(item)
+
+    if item.contentSerieName == '':
+        results = exact_results(search, wanted)
+        for result in results:
+            logger.debug(result)
+            t = Thread(target=get_links, args=[result])
+            t.start()
+            threads.append(t)
+
+            for thread in threads:
+                thread.join()
+
+            # try:
+            #     get_links(result)
+            # except:
+            #     pass
+
+        for link in link_list:
+            if link.action == 'play' and not 'trailer' in link.title.lower() and len(itemlist) < max_links:
+                itemlist.append(link)
+
+        return sorted(itemlist, key=lambda it: it.server)
+    else:
+        for item in search:
+            if item.contentSerieName != '' and item.contentSerieName == wanted:
+                logger.debug(item)
+                itemlist.append(item)
+        return itemlist
+
+def get_links (item):
+    logger.info()
+    results =[]
+    channel = __import__('channels.%s' % item.from_channel, None, None, ["channels.%s" % item.from_channel])
+    if len(link_list) <= max_links:
+        link_list.extend(getattr(channel, item.from_action)(item))

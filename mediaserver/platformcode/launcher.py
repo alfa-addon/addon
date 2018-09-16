@@ -35,11 +35,12 @@ def run(item):
     if item.action == "mainlist":
         # Parental control
         if channeltools.is_adult(item.channel) and config.get_setting("adult_request_password"):
-            tecleado = platformtools.dialog_input("", "Contraseña para canales de adultos", True)
+            tecleado = platformtools.dialog_input("", config.get_localized_string(60334), True)
             if tecleado is None or tecleado != config.get_setting("adult_password"):
                 platformtools.render_items(None, item)
                 return
 
+    channelmodule = None
     # Importa el canal para el item, todo item debe tener un canal, sino sale de la función
     if item.channel:
         channelmodule = import_channel(item)

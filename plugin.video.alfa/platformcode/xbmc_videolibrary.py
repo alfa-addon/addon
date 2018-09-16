@@ -52,7 +52,7 @@ def mark_auto_as_watched(item):
                 item.playcount = 1
                 sync_with_trakt = True
                 from channels import videolibrary
-                videolibrary.mark_content_as_watched(item)
+                videolibrary.mark_content_as_watched2(item)
                 break
 
             time.sleep(30)
@@ -208,8 +208,8 @@ def sync_trakt_kodi(silent=True):
         logger.info("Sincronizacion con Trakt iniciada")
 
         if notificacion:
-            platformtools.dialog_notification("Alfa",
-                                              "Sincronizacion con Trakt iniciada",
+            platformtools.dialog_notification(config.get_localized_string(20000),
+                                              config.get_localized_string(60045),
                                               icon=0,
                                               time=2000)
 
@@ -235,8 +235,12 @@ def mark_content_as_watched_on_kodi(item, value=1):
         data = get_data(payload)
         if 'result' in data and "movies" in data['result']:
 
-            filename = filetools.basename(item.strm_path)
-            head, tail = filetools.split(filetools.split(item.strm_path)[0])
+            if item.strm_path:              #Si Item es de un episodio
+                filename = filetools.basename(item.strm_path)
+                head, tail = filetools.split(filetools.split(item.strm_path)[0])
+            else:                           #Si Item es de la Serie
+                filename = filetools.basename(item.path)
+                head, tail = filetools.split(filetools.split(item.path)[0])
             path = filetools.join(tail, filename)
 
             for d in data['result']['movies']:
@@ -258,8 +262,12 @@ def mark_content_as_watched_on_kodi(item, value=1):
         data = get_data(payload)
         if 'result' in data and "episodes" in data['result']:
 
-            filename = filetools.basename(item.strm_path)
-            head, tail = filetools.split(filetools.split(item.strm_path)[0])
+            if item.strm_path:              #Si Item es de un episodio
+                filename = filetools.basename(item.strm_path)
+                head, tail = filetools.split(filetools.split(item.strm_path)[0])
+            else:                           #Si Item es de la Serie
+                filename = filetools.basename(item.path)
+                head, tail = filetools.split(filetools.split(item.path)[0])
             path = filetools.join(tail, filename)
 
             for d in data['result']['episodes']:
@@ -311,12 +319,95 @@ def mark_season_as_watched_on_kodi(item, value=1):
     item_path2 = item_path1.replace("\\", "/")
 
     sql = 'update files set playCount= %s where idFile  in ' \
-          '(select idfile from episode_view where strPath like "%s" or strPath like "%s"%s)' % \
+          '(select idfile from episode_view where (strPath like "%s" or strPath like "%s")%s)' % \
           (value, item_path1, item_path2, request_season)
 
     execute_sql_kodi(sql)
 
 
+def mark_content_as_watched_on_alfa(path):
+    from channels import videolibrary
+    from core import videolibrarytools
+    from core import scrapertools
+    import re
+    """
+        marca toda la serie o película como vista o no vista en la Videoteca de Alfa basado en su estado en la Videoteca de Kodi
+        @type str: path
+        @param path: carpeta de contenido a marcar
+        """
+    logger.info()
+    #logger.debug("path: " + path)
+    
+    FOLDER_MOVIES = config.get_setting("folder_movies")
+    FOLDER_TVSHOWS = config.get_setting("folder_tvshows")
+    VIDEOLIBRARY_PATH = config.get_videolibrary_config_path()
+
+    # Solo podemos marcar el contenido como vista en la BBDD de Kodi si la BBDD es local,
+    # en caso de compartir BBDD esta funcionalidad no funcionara
+    #if config.get_setting("db_mode", "videolibrary"):
+    #    return
+    
+    path2 = ''
+    if "special://" in VIDEOLIBRARY_PATH:
+        if FOLDER_TVSHOWS in path:
+            path2 = re. sub(r'.*?%s' % FOLDER_TVSHOWS, VIDEOLIBRARY_PATH + "/" + FOLDER_TVSHOWS, path).replace("\\", "/")
+        if FOLDER_MOVIES in path:
+            path2 = re. sub(r'.*?%s' % FOLDER_MOVIES, VIDEOLIBRARY_PATH + "/" + FOLDER_MOVIES, path).replace("\\", "/")
+
+    if "\\" in path:
+        path = path.replace("/", "\\")
+    head_nfo, item = videolibrarytools.read_nfo(path)                   #Leo el .nfo del contenido
+
+    if FOLDER_TVSHOWS in path:                                          #Compruebo si es CINE o SERIE
+        contentType = "episode_view"                                    #Marco la tabla de BBDD de Kodi Video
+        nfo_name = "tvshow.nfo"                                         #Construyo el nombre del .nfo
+        path1 = path.replace("\\\\", "\\").replace(nfo_name, '')        #para la SQL solo necesito la carpeta
+        if not path2:
+            path2 = path1.replace("\\", "/")                            #Formato no Windows
+        else:
+            path2 = path2.replace(nfo_name, '')
+        
+    else:
+        contentType = "movie_view"                                      #Marco la tabla de BBDD de Kodi Video
+        path1 = path.replace("\\\\", "\\")                              #Formato Windows
+        if not path2:
+            path2 = path1.replace("\\", "/")                            #Formato no Windows
+        nfo_name = scrapertools.find_single_match(path2, '\]\/(.*?)$')  #Construyo el nombre del .nfo
+        path1 = path1.replace(nfo_name, '')                             #para la SQL solo necesito la carpeta
+        path2 = path2.replace(nfo_name, '')                             #para la SQL solo necesito la carpeta
+
+    #Ejecutmos la sentencia SQL
+    sql = 'select strFileName, playCount from %s where (strPath like "%s" or strPath like "%s")' % (contentType, path1, path2)
+    nun_records = 0
+    records = None
+    nun_records, records = execute_sql_kodi(sql)                        #ejecución de la SQL
+    if nun_records == 0:                                                #hay error?
+        logger.error("Error en la SQL: " + sql + ": 0 registros")
+        return                                                          #salimos: o no está catalogado en Kodi, o hay un error en la SQL
+    
+    for title, playCount in records:                                    #Ahora recorremos todos los registros obtenidos
+        if contentType == "episode_view":
+            title_plain = title.replace('.strm', '')                    #Si es Serie, quitamos el sufijo .strm
+        else:
+            title_plain = scrapertools.find_single_match(item.strm_path, '.(.*?\s\[.*?\])') #si es peli, quitamos el título
+        if playCount is None or playCount == 0:                         #todavía no se ha visto, lo ponemos a 0
+            playCount_final = 0
+        elif playCount >= 1:
+            playCount_final = 1
+        title_plain = title_plain.decode("utf-8").encode("utf-8")       #Hacemos esto porque si no genera esto: u'title_plain'
+        item.library_playcounts.update({title_plain: playCount_final})  #actualizamos el playCount del .nfo
+
+    if item.infoLabels['mediatype'] == "tvshow":                        #Actualizamos los playCounts de temporadas y Serie
+        for season in item.library_playcounts:
+            if "season" in season:                                      #buscamos las etiquetas "season" dentro de playCounts
+                season_num = int(scrapertools.find_single_match(season, 'season (\d+)'))    #salvamos el núm, de Temporada
+                item = videolibrary.check_season_playcount(item, season_num)    #llamamos al método que actualiza Temps. y Series
+
+    filetools.write(path, head_nfo + item.tojson())
+    
+    #logger.debug(item)
+    
+    
 def get_data(payload):
     """
     obtiene la información de la llamada JSON-RPC con la información pasada en payload
@@ -440,102 +531,107 @@ def set_content(content_type, silent=False):
     videolibrarypath = config.get_setting("videolibrarypath")
 
     if content_type == 'movie':
-        if not xbmc.getCondVisibility('System.HasAddon(metadata.themoviedb.org)'):
-            if not silent:
-                # Preguntar si queremos instalar metadata.themoviedb.org
-                install = platformtools.dialog_yesno("The Movie Database",
-                                                     "No se ha encontrado el Scraper de películas de TheMovieDB.",
-                                                     "¿Desea instalarlo ahora?")
-            else:
-                install = True
+        scraper = [config.get_localized_string(70093), config.get_localized_string(70096)]
+        seleccion = platformtools.dialog_select(config.get_localized_string(70094), scraper)
 
-            if install:
-                try:
-                    # Instalar metadata.themoviedb.org
-                    xbmc.executebuiltin('xbmc.installaddon(metadata.themoviedb.org)', True)
-                    logger.info("Instalado el Scraper de películas de TheMovieDB")
-                except:
-                    pass
+        # Instalar The Movie Database
+        if seleccion == -1 or seleccion == 0:
+            if not xbmc.getCondVisibility('System.HasAddon(metadata.themoviedb.org)'):
+                if not silent:
+                    # Preguntar si queremos instalar metadata.themoviedb.org
+                    install = platformtools.dialog_yesno(config.get_localized_string(60046))
+                else:
+                    install = True
 
-            continuar = (install and xbmc.getCondVisibility('System.HasAddon(metadata.themoviedb.org)'))
-            if not continuar:
-                msg_text = "The Movie Database no instalado."
+                if install:
+                    try:
+                        # Instalar metadata.themoviedb.org
+                        xbmc.executebuiltin('xbmc.installaddon(metadata.themoviedb.org)', True)
+                        logger.info("Instalado el Scraper de películas de TheMovieDB")
+                    except:
+                        pass
+
+                continuar = (install and xbmc.getCondVisibility('System.HasAddon(metadata.themoviedb.org)'))
+                if not continuar:
+                    msg_text = config.get_localized_string(60047)
+            if continuar:
+                xbmc.executebuiltin('xbmc.addon.opensettings(metadata.themoviedb.org)', True)
+
+        # Instalar Universal Movie Scraper
+        elif seleccion == 1:
+            if continuar and not xbmc.getCondVisibility('System.HasAddon(metadata.universal)'):
+                continuar = False
+                if not silent:
+                    # Preguntar si queremos instalar metadata.universal
+                    install = platformtools.dialog_yesno(config.get_localized_string(70095))
+                else:
+                    install = True
+
+                if install:
+                    try:
+                        xbmc.executebuiltin('xbmc.installaddon(metadata.universal)', True)
+                        if xbmc.getCondVisibility('System.HasAddon(metadata.universal)'):
+                            continuar = True
+                    except:
+                        pass
+
+                continuar = (install and continuar)
+                if not continuar:
+                    msg_text = config.get_localized_string(70097)
+            if continuar:
+                xbmc.executebuiltin('xbmc.addon.opensettings(metadata.universal)', True)
 
     else:  # SERIES
+        scraper = [config.get_localized_string(70098), config.get_localized_string(70093)]
+        seleccion = platformtools.dialog_select(config.get_localized_string(70107), scraper)
+
         # Instalar The TVDB
-        if not xbmc.getCondVisibility('System.HasAddon(metadata.tvdb.com)'):
-            if not silent:
-                # Preguntar si queremos instalar metadata.tvdb.com
-                install = platformtools.dialog_yesno("The TVDB",
-                                                     "No se ha encontrado el Scraper de series de The TVDB.",
-                                                     "¿Desea instalarlo ahora?")
-            else:
-                install = True
+        if seleccion == -1 or seleccion == 0:
+            if not xbmc.getCondVisibility('System.HasAddon(metadata.tvdb.com)'):
+                if not silent:
+                    # Preguntar si queremos instalar metadata.tvdb.com
+                    install = platformtools.dialog_yesno(config.get_localized_string(60048))
+                else:
+                    install = True
 
-            if install:
-                try:
-                    # Instalar metadata.tvdb.com
-                    xbmc.executebuiltin('xbmc.installaddon(metadata.tvdb.com)', True)
-                    logger.info("Instalado el Scraper de series de The TVDB")
-                except:
-                    pass
+                if install:
+                    try:
+                        # Instalar metadata.tvdb.com
+                        xbmc.executebuiltin('xbmc.installaddon(metadata.tvdb.com)', True)
+                        logger.info("Instalado el Scraper de series de The TVDB")
+                    except:
+                        pass
 
-            continuar = (install and xbmc.getCondVisibility('System.HasAddon(metadata.tvdb.com)'))
-            if not continuar:
-                msg_text = "The TVDB no instalado."
+                continuar = (install and xbmc.getCondVisibility('System.HasAddon(metadata.tvdb.com)'))
+                if not continuar:
+                    msg_text = config.get_localized_string(70099)
+            if continuar:
+                xbmc.executebuiltin('xbmc.addon.opensettings(metadata.tvdb.com)', True)
 
-        # Instalar TheMovieDB
-        if continuar and not xbmc.getCondVisibility('System.HasAddon(metadata.tvshows.themoviedb.org)'):
-            continuar = False
-            if not silent:
-                # Preguntar si queremos instalar metadata.tvshows.themoviedb.org
-                install = platformtools.dialog_yesno("The Movie Database",
-                                                     "No se ha encontrado el Scraper de series de TheMovieDB.",
-                                                     "¿Desea instalarlo ahora?")
-            else:
-                install = True
+        # Instalar The Movie Database
+        elif seleccion == 1:
+            if continuar and not xbmc.getCondVisibility('System.HasAddon(metadata.tvshows.themoviedb.org)'):
+                continuar = False
+                if not silent:
+                    # Preguntar si queremos instalar metadata.tvshows.themoviedb.org
+                    install = platformtools.dialog_yesno(config.get_localized_string(70100))
+                else:
+                    install = True
 
-            if install:
-                try:
-                    # Instalar metadata.tvshows.themoviedb.org
-                    # 1º Probar desde el repositorio ...
-                    xbmc.executebuiltin('xbmc.installaddon(metadata.tvshows.themoviedb.org)', True)
-                    if not xbmc.getCondVisibility('System.HasAddon(metadata.tvshows.themoviedb.org)'):
-                        # ...si no funciona descargar e instalar desde la web
-                        url = "http://mirrors.kodi.tv/addons/jarvis/metadata.tvshows.themoviedb.org/metadata.tvshows.themoviedb.org-1.3.1.zip"
-                        path_down = xbmc.translatePath(
-                            "special://home/addons/packages/metadata.tvshows.themoviedb.org-1.3.1.zip")
-                        path_unzip = xbmc.translatePath("special://home/addons/")
-                        header = ("User-Agent",
-                                  "Kodi/15.2 (Windows NT 10.0; WOW64) App_Bitness/32 Version/15.2-Git:20151019-02e7013")
+                if install:
+                    try:
+                        # Instalar metadata.tvshows.themoviedb.org
+                        xbmc.executebuiltin('xbmc.installaddon(metadata.tvshows.themoviedb.org)', True)
+                        if xbmc.getCondVisibility('System.HasAddon(metadata.tvshows.themoviedb.org)'):
+                            continuar = True
+                    except:
+                        pass
 
-                        from core import downloadtools
-                        from core import ziptools
-
-                        downloadtools.downloadfile(url, path_down, continuar=True, headers=[header])
-                        unzipper = ziptools.ziptools()
-                        unzipper.extract(path_down, path_unzip)
-                        xbmc.executebuiltin('UpdateLocalAddons')
-
-                    strSettings = '<settings>\n' \
-                                  '    <setting id="fanart" value="true" />\n' \
-                                  '    <setting id="keeporiginaltitle" value="false" />\n' \
-                                  '    <setting id="language" value="es" />\n' \
-                                  '</settings>'
-                    path_settings = xbmc.translatePath(
-                        "special://profile/addon_data/metadata.tvshows.themoviedb.org/settings.xml")
-                    tv_themoviedb_addon_path = filetools.dirname(path_settings)
-                    if not filetools.exists(tv_themoviedb_addon_path):
-                        filetools.mkdir(tv_themoviedb_addon_path)
-                    if filetools.write(path_settings, strSettings):
-                        continuar = True
-
-                except:
-                    pass
-
-            continuar = (install and continuar)
-            if not continuar:
-                msg_text = "The Movie Database no instalado."
+                continuar = (install and continuar)
+                if not continuar:
+                    msg_text = config.get_localized_string(60047)
+            if continuar:
+                xbmc.executebuiltin('xbmc.addon.opensettings(metadata.tvshows.themoviedb.org)', True)
 
     idPath = 0
     idParentPath = 0
@@ -581,7 +677,7 @@ def set_content(content_type, silent=False):
                 idParentPath = idPath
                 idPath += 1
             else:
-                msg_text = "Error al fijar videolibrarypath en BD"
+                msg_text = config.get_localized_string(70101)
 
     if continuar:
         continuar = False
@@ -589,26 +685,32 @@ def set_content(content_type, silent=False):
         # Fijamos strContent, strScraper, scanRecursive y strSettings
         if content_type == 'movie':
             strContent = 'movies'
-            strScraper = 'metadata.themoviedb.org'
             scanRecursive = 2147483647
-            strSettings = "<settings><setting id='RatingS' value='TMDb' /><setting id='certprefix' value='Rated ' />" \
-                          "<setting id='fanart' value='true' /><setting id='keeporiginaltitle' value='false' />" \
-                          "<setting id='language' value='es' /><setting id='tmdbcertcountry' value='us' />" \
-                          "<setting id='trailer' value='true' /></settings>"
+            if seleccion == -1 or seleccion == 0:
+                strScraper = 'metadata.themoviedb.org'
+                path_settings = xbmc.translatePath("special://profile/addon_data/metadata.themoviedb.org/settings.xml")
+            elif seleccion == 1: 
+                strScraper = 'metadata.universal'
+                path_settings = xbmc.translatePath("special://profile/addon_data/metadata.universal/settings.xml")
+            settings_data = filetools.read(path_settings)
+            strSettings = ' '.join(settings_data.split()).replace("> <", "><")
+            strSettings = strSettings.replace("\"","\'")
             strActualizar = "¿Desea configurar este Scraper en español como opción por defecto para películas?"
             if not videolibrarypath.endswith(sep):
                 videolibrarypath += sep
             strPath = videolibrarypath + config.get_setting("folder_movies") + sep
         else:
             strContent = 'tvshows'
-            strScraper = 'metadata.tvdb.com'
             scanRecursive = 0
-            strSettings = "<settings><setting id='RatingS' value='TheTVDB' />" \
-                          "<setting id='absolutenumber' value='false' />" \
-                          "<setting id='dvdorder' value='false' />" \
-                          "<setting id='fallback' value='true' />" \
-                          "<setting id='fanart' value='true' />" \
-                          "<setting id='language' value='es' /></settings>"
+            if seleccion == -1 or seleccion == 0:
+                strScraper = 'metadata.tvdb.com'
+                path_settings = xbmc.translatePath("special://profile/addon_data/metadata.tvdb.com/settings.xml")
+            elif seleccion == 1: 
+                strScraper = 'metadata.tvshows.themoviedb.org'
+                path_settings = xbmc.translatePath("special://profile/addon_data/metadata.tvshows.themoviedb.org/settings.xml")
+            settings_data = filetools.read(path_settings)
+            strSettings = ' '.join(settings_data.split()).replace("> <", "><")
+            strSettings = strSettings.replace("\"","\'")
             strActualizar = "¿Desea configurar este Scraper en español como opción por defecto para series?"
             if not videolibrarypath.endswith(sep):
                 videolibrarypath += sep
@@ -628,7 +730,7 @@ def set_content(content_type, silent=False):
         else:
             if not silent:
                 # Preguntar si queremos configurar themoviedb.org como opcion por defecto
-                actualizar = platformtools.dialog_yesno("The TVDB", strActualizar)
+                actualizar = platformtools.dialog_yesno(config.get_localized_string(70098), strActualizar)
             else:
                 actualizar = True
 
@@ -644,18 +746,19 @@ def set_content(content_type, silent=False):
                 continuar = True
 
         if not continuar:
-            msg_text = "Error al configurar el scraper en la BD."
+            msg_text = config.get_localized_string(60055)
 
     if not continuar:
-        heading = "Videoteca %s no configurada" % content_type
+        heading = config.get_localized_string(70102) % content_type
     elif content_type == 'SERIES' and not xbmc.getCondVisibility(
             'System.HasAddon(metadata.tvshows.themoviedb.org)'):
-        heading = "Videoteca %s configurada" % content_type
-        msg_text = "Es necesario reiniciar Kodi para que los cambios surtan efecto."
+        heading = config.get_localized_string(70103) % content_type
+        msg_text = config.get_localized_string(60058)
     else:
-        heading = "Videoteca %s configurada" % content_type
-        msg_text = "Felicidades la videoteca de Kodi ha sido configurada correctamente."
-    platformtools.dialog_notification(heading, msg_text, icon=1, time=10000)
+        heading = config.get_localized_string(70103) % content_type
+        msg_text = config.get_localized_string(70104)
+    platformtools.dialog_notification(heading, msg_text, icon=1, time=3000)
+
     logger.info("%s: %s" % (heading, msg_text))
 
 
@@ -804,9 +907,9 @@ def ask_set_content(flag, silent=False):
         add_sources(config.get_setting("downloadpath"))
 
     if not silent:
-        heading = "Alfa Auto-configuración"
-        linea1 = "¿Desea que Alfa auto-configure la videoteca de Kodi?"
-        linea2 = "Si pulsa 'No' podra hacerlo desde 'Configuración > Preferencia > Rutas'."
+        heading = config.get_localized_string(59971)
+        linea1 = config.get_localized_string(70105)
+        linea2 = config.get_localized_string(70106)
         if platformtools.dialog_yesno(heading, linea1, linea2):
             do_config()
         else:

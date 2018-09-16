@@ -21,7 +21,7 @@
       "default": false,
       "enabled": true,
       "id": "black_list",
-      "label": "Incluir en lista negra",
+      "label": "@60654",
       "type": "bool",
       "visible": true
     },
@@ -29,7 +29,7 @@
       "default": 0,
       "enabled": true,
       "id": "favorites_servers_list",
-      "label": "Incluir en lista de favoritos",
+      "label": "@60655",
       "lvalues": [
         "No",
         "1",
@@ -42,5 +42,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s1.postimg.org/597or3a31b/vidzi1.png"
+  "thumbnail": "https://s1.postimg.cc/597or3a31b/vidzi1.png"
 }

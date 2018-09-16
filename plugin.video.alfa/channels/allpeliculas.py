@@ -8,6 +8,9 @@ from core import tmdb
 from core.item import Item
 from channelselector import get_thumb
 from platformcode import config, logger
+from channels import autoplay
+from channels import filtertools
+
 
 __modo_grafico__ = config.get_setting('modo_grafico', "allpeliculas")
 __perfil__ = int(config.get_setting('perfil', "allpeliculas"))
@@ -18,10 +21,17 @@ perfil = [['0xFFFFE6CC', '0xFFFFCE9C', '0xFF994D00'],
           ['0xFF58D3F7', '0xFF2E9AFE', '0xFF2E64FE']]
 color1, color2, color3 = perfil[__perfil__]
 
-IDIOMAS = {"Castellano": "CAST", "Latino": "LAT", "Subtitulado": "VOSE", "Ingles": "VO"}
+IDIOMAS = {"Latino": "LAT"}
+list_language = IDIOMAS.values()
+
+list_quality = []
+
 SERVERS = {"26": "powvideo", "45": "okru", "75": "openload", "12": "netutv", "65": "thevideos",
            "67": "spruto", "71": "stormo", "73": "idowatch", "48": "okru", "55": "openload",
            "20": "nowvideo", "84": "fastplay", "96": "raptu", "94": "tusfiles"}
+
+list_servers = ['powvideo', 'okru', 'openload', 'netutv', 'thevideos', 'spruto', 'stormo', 'idowatch', 'nowvideo',
+                'fastplay', 'raptu', 'tusfiles']
 
 host = "http://allpeliculas.com/"
 
@@ -29,6 +39,8 @@ def mainlist(item):
     logger.info()
     itemlist = []
     item.text_color = color1
+
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(item.clone(title="Películas", action="lista", fanart="http://i.imgur.com/c3HS8kj.png",
                                url= host + "movies/newmovies?page=1", extra1 = 0,
@@ -39,6 +51,8 @@ def mainlist(item):
                                url= host, thumbnail=get_thumb('colections', auto=True)))
     itemlist.append(item.clone(title="", action=""))
     itemlist.append(item.clone(title="Buscar...", action="search", thumbnail=get_thumb('search', auto=True)))
+
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -134,20 +148,26 @@ def findvideos(item):
                              action = "play",
                              title = calidad,
                              fulltitle = item.title,
+                             thumbnail = item.thumbnail,
                              contentThumbnail = item.thumbnail,
                              url = url,
+                             language = IDIOMAS['Latino']
                              ))
-    try:
-        tmdb.set_infoLabels(itemlist, __modo_grafico__)
-    except:
-        pass
     itemlist = servertools.get_servers_itemlist(itemlist)
+    tmdb.set_infoLabels(itemlist, seekTmdb = True)
     itemlist.append(Item(channel=item.channel))
     if config.get_videolibrary_support():
         itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
                              action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
                              fulltitle = item.fulltitle
                              ))
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
     return itemlist
 
 

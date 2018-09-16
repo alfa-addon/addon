@@ -434,6 +434,7 @@ def nuevos_cap(item):
 
     data = httptools.downloadpage(item.url).data
     data = jsontools.load(data)
+    logger.debug(data)
     capitulos = []
     if "Nuevas" in item.title:
         for child in data["b"]:
@@ -455,12 +456,14 @@ def nuevos_cap(item):
             infoLabels['season'] = int(season)
         except:
             infoLabels['season'] = 0
-
         if "Nuevos" in item.title:
             if not child['episode']:
                 episode = scrapertools.find_single_match(child['name'], '\d+x(\d+)')
                 if not episode:
                     episode = "0"
+                infoLabels['episode'] = int(episode)
+            elif "al" in child['episode']:
+                episode = "0"
                 infoLabels['episode'] = int(episode)
             else:
                 infoLabels['episode'] = int(child['episode'])
@@ -516,6 +519,7 @@ def findvideos(item):
     if item.video_urls:
         import random
         import base64
+
         item.video_urls.sort(key=lambda it: (it[1], random.random()), reverse=True)
         i = 0
         actual_quality = ""
@@ -531,6 +535,7 @@ def findvideos(item):
                 title += " [COLOR green]Mirror %s[/COLOR] - %s" % (str(i + 1), item.fulltitle)
             url = vid % "%s" % base64.b64decode("dHQ9MTQ4MDE5MDQ1MSZtbT1NRzZkclhFand6QmVzbmxSMHNZYXhBJmJiPUUwb1dVVVgx"
                                                 "WTBCQTdhWENpeU9paUE=")
+            url += '|User-Agent=%s' % httptools.get_user_agent
             itemlist.append(item.clone(title=title, action="play", url=url, video_urls=""))
             i += 1
 

@@ -3,10 +3,11 @@
   "name": "AnimeYT",
   "active": true,
   "adult": false,
-  "language": "es",
+  "language": "cast, lat",
   "thumbnail": "http://i.imgur.com/dHpupFk.png",
   "categories": [
-    "anime"
+    "anime",
+    "vos"
   ],
   "settings": [
     {

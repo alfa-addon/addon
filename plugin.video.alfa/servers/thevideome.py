@@ -1,39 +1,32 @@
 # -*- coding: utf-8 -*-
 
+import urllib
 from core import httptools
 from core import scrapertools
-from platformcode import logger
+from platformcode import logger, config
 
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-
+    page_url = httptools.downloadpage(page_url, follow_redirects=False, only_headers=True).headers.get("location", "")
     data = httptools.downloadpage(page_url).data
-    if "File was deleted" in data or "Page Cannot Be Found" in data:
+    if "File was deleted" in data or "Page Cannot Be Found" in data or "<title>Video not found" in data:
         return False, "[thevideo.me] El archivo ha sido eliminado o no existe"
-
     return True, ""
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
-    if not "embed" in page_url:
-        page_url = page_url.replace("http://thevideo.me/", "http://thevideo.me/embed-") + ".html"
-
-    data = httptools.downloadpage(page_url).data
-
-    mpri_Key = scrapertools.find_single_match(data, "lets_play_a_game='([^']+)'")
-    data_vt = httptools.downloadpage("https://thevideo.me/vsign/player/%s" % mpri_Key).data
-    vt = scrapertools.find_single_match(data_vt, 'function\|([^\|]+)\|')
-    if "fallback" in vt:
-        vt = scrapertools.find_single_match(data_vt, 'jwConfig\|([^\|]+)\|')
-
-    media_urls = scrapertools.find_multiple_matches(data, '\{"file"\s*\:\s*"([^"]+)"\s*,\s*"label"\s*\:\s*"([^"]+)"')
     video_urls = []
-
-    for media_url, label in media_urls:
-        media_url += "?direct=false&ua=1&vt=%s" % vt
+    post = {}
+    post = urllib.urlencode(post)
+    if not "embed" in page_url:
+        page_url = page_url.replace("https://thevideo.me/", "https://thevideo.me/embed-") + ".html"
+    url = httptools.downloadpage(page_url, follow_redirects=False, only_headers=True).headers.get("location", "")
+    data = httptools.downloadpage("https://vev.io/api/serve/video/" + scrapertools.find_single_match(url, "embed/([A-z0-9]+)"), post=post).data
+    bloque = scrapertools.find_single_match(data, 'qualities":\{(.*?)\}')
+    matches = scrapertools.find_multiple_matches(bloque, '"([^"]+)":"([^"]+)')
+    for res, media_url in matches:
         video_urls.append(
-            [scrapertools.get_filename_from_url(media_url)[-4:] + " (" + label + ") [thevideo.me]", media_url])
-
+            [scrapertools.get_filename_from_url(media_url)[-4:] + " (" + res + ") [thevideo.me]", media_url])
     return video_urls

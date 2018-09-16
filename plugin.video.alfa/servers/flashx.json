@@ -4,7 +4,11 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "flashx.(?:tv|pw)/(?:embed.php\\?c=|embed-|playvid-|)([A-z0-9]+)",
+        "pattern": "flashx.co/([A-z0-9]+)\\.jsp",
+        "url": "https://www.flashx.co/\\1.jsp"
+      },
+      {
+        "pattern": "flashx.(?:tv|pw|ws|sx|to)/(?:embed.php\\?c=|embed-|playvid-|)([A-z0-9]+)",
         "url": "https://www.flashx.tv/\\1.html"
       }
     ]
@@ -17,7 +21,7 @@
       "default": false,
       "enabled": true,
       "id": "black_list",
-      "label": "Incluir en lista negra",
+      "label": "@60654",
       "type": "bool",
       "visible": true
     },
@@ -25,7 +29,7 @@
       "default": 0,
       "enabled": true,
       "id": "favorites_servers_list",
-      "label": "Incluir en lista de favoritos",
+      "label": "@60655",
       "lvalues": [
         "No",
         "1",

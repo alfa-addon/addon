@@ -8,6 +8,7 @@ import os
 import re
 import time
 import urlparse
+import filetools
 
 from core import httptools
 from core import jsontools
@@ -51,7 +52,7 @@ def find_video_items(item=None, data=None):
 
     # Busca los enlaces a los videos
     for label, url, server, thumbnail in findvideos(data):
-        title = "Enlace encontrado en %s" % label
+        title = config.get_localized_string(70206) % label
         itemlist.append(
             item.clone(title=title, action="play", url=url, thumbnail=thumbnail, server=server, folder=False))
 
@@ -153,9 +154,7 @@ def findvideos(data, skip=False):
             break
 
     if not devuelve and is_filter_servers:
-        platformtools.dialog_ok("Filtrar servidores (Lista Negra)",
-                                "No hay enlaces disponibles que cumplan los requisitos de su Lista Negra.",
-                                "Pruebe de nuevo modificando el fíltro en 'Configuracíon Servidores")
+        platformtools.dialog_ok(config.get_localized_string(60001))
 
     return devuelve
 
@@ -242,8 +241,8 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
         if server_parameters:
             # Muestra un diágo de progreso
             if muestra_dialogo:
-                progreso = platformtools.dialog_progress("alfa",
-                                                         "Conectando con %s" % server_parameters["name"])
+                progreso = platformtools.dialog_progress(config.get_localized_string(20000),
+                                                         config.get_localized_string(70180) % server_parameters["name"])
 
             # Cuenta las opciones disponibles, para calcular el porcentaje
 
@@ -264,7 +263,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
             logger.info("Opciones disponibles: %s | %s" % (len(opciones), opciones))
         else:
             logger.error("No existe conector para el servidor %s" % server)
-            error_messages.append("No existe conector para el servidor %s" % server)
+            error_messages.append(config.get_localized_string(60004) % server)
             muestra_dialogo = False
 
         # Importa el server
@@ -309,7 +308,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
 
                 # Muestra el progreso
                 if muestra_dialogo:
-                    progreso.update((100 / len(opciones)) * opciones.index(opcion), "Conectando con %s" % server_name)
+                    progreso.update((100 / len(opciones)) * opciones.index(opcion), config.get_localized_string(70180) % server_name)
 
                 # Modo free
                 if opcion == "free":
@@ -336,10 +335,10 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                         elif response and response[0][0]:
                             error_messages.append(response[0][0])
                         else:
-                            error_messages.append("Se ha producido un error en %s" % server_name)
+                            error_messages.append(config.get_localized_string(60006) % server_name)
                     except:
                         logger.error("Error en el servidor: %s" % opcion)
-                        error_messages.append("Se ha producido un error en %s" % server_name)
+                        error_messages.append(config.get_localized_string(60006) % server_name)
                         import traceback
                         logger.error(traceback.format_exc())
 
@@ -349,18 +348,18 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
 
             # Cerramos el progreso
             if muestra_dialogo:
-                progreso.update(100, "Proceso finalizado")
+                progreso.update(100, config.get_localized_string(60008))
                 progreso.close()
 
             # Si no hay opciones disponibles mostramos el aviso de las cuentas premium
             if video_exists and not opciones and server_parameters.get("premium"):
                 listapremium = [get_server_parameters(premium)["name"] for premium in server_parameters["premium"]]
                 error_messages.append(
-                    "Para ver un vídeo en %s necesitas<br/>una cuenta en: %s" % (server, " o ".join(listapremium)))
+                    config.get_localized_string(60009) % (server, " o ".join(listapremium)))
 
             # Si no tenemos urls ni mensaje de error, ponemos uno generico
             elif not video_urls and not error_messages:
-                error_messages.append("Se ha producido un error en %s" % get_server_parameters(server)["name"])
+                error_messages.append(config.get_localized_string(60006) % get_server_parameters(server)["name"])
 
     return video_urls, len(video_urls) > 0, "<br/>".join(error_messages)
 
@@ -451,8 +450,9 @@ def get_server_parameters(server):
             # Debriders
             elif os.path.isfile(os.path.join(config.get_runtime_path(), "servers", "debriders", server + ".json")):
                 path = os.path.join(config.get_runtime_path(), "servers", "debriders", server + ".json")
-
-            import filetools
+            #
+            #Cuando no está bien definido el server en el canal (no existe conector), muestra error por no haber "path" y se tiene que revisar el canal
+            #
             data = filetools.read(path)
             dict_server = jsontools.load(data)
 
@@ -466,13 +466,6 @@ def get_server_parameters(server):
                 if type(dict_server[k]) == str:
                     dict_server[k] = [dict_server[k]]
 
-                    # if not dict_server.has_key(k) or dict_server[k] == "":
-                    #     dict_server[k] = []
-                    # elif type(dict_server[k]) == dict:
-                    #     dict_server[k] = dict_server[k]["value"]
-                    # if type(dict_server[k]) == str:
-                    #     dict_server[k] = [dict_server[k]]
-
             if "find_videos" in dict_server:
                 dict_server['find_videos']["patterns"] = dict_server['find_videos'].get("patterns", list())
                 dict_server['find_videos']["ignore_urls"] = dict_server['find_videos'].get("ignore_urls", list())
@@ -485,7 +478,7 @@ def get_server_parameters(server):
             dict_servers_parameters[server] = dict_server
 
         except:
-            mensaje = "Error al cargar el servidor: %s\n" % server
+            mensaje = config.get_localized_string(59986) % server
             import traceback
             logger.error(mensaje + traceback.format_exc())
             return {}
@@ -495,7 +488,6 @@ def get_server_parameters(server):
 
 def get_server_json(server_name):
     # logger.info("server_name=" + server_name)
-    import filetools
     try:
         server_path = filetools.join(config.get_runtime_path(), "servers", server_name + ".json")
         if not filetools.exists(server_path):
@@ -699,9 +691,64 @@ def filter_servers(servers_list):
             servers_list_filter = filter(lambda x: not config.get_setting("black_list", server=x), servers_list)
 
         # Si no hay enlaces despues de filtrarlos
-        if servers_list_filter or not platformtools.dialog_yesno("Filtrar servidores (Lista Negra)",
-                                                                 "Todos los enlaces disponibles pertenecen a servidores incluidos en su Lista Negra.",
-                                                                 "¿Desea mostrar estos enlaces?"):
+        if servers_list_filter or not platformtools.dialog_yesno(config.get_localized_string(60000),
+                                                                 config.get_localized_string(60010),
+                                                                 config.get_localized_string(70281)):
             servers_list = servers_list_filter
 
     return servers_list
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Comprobación de enlaces
+# -----------------------
+
+def check_list_links(itemlist, numero='', timeout=3):
+    """
+    Comprueba una lista de enlaces a videos y la devuelve modificando el titulo con la verificacion.
+    El parámetro numero indica cuantos enlaces hay que verificar (0:5, 1:10, 2:15, 3:20)
+    El parámetro timeout indica un tope de espera para descargar la página
+    """
+    numero = ((int(numero) + 1) * 5) if numero != '' else 10
+    for it in itemlist:
+        if numero > 0 and it.server != '' and it.url != '':
+            verificacion = check_video_link(it.url, it.server, timeout)
+            it.title = verificacion + ', ' + it.title.strip()
+            it.alive = verificacion
+            numero -= 1
+    return itemlist
+
+def check_video_link(url, server, timeout=3):
+    """
+    Comprueba si el enlace a un video es valido y devuelve un string de 2 posiciones con la verificacion.
+    :param url, server: Link y servidor
+    :return: str(2) '??':No se ha podido comprobar. 'Ok':Parece que el link funciona. 'NO':Parece que no funciona.
+    """
+    try:
+        server_module = __import__('servers.%s' % server, None, None, ["servers.%s" % server])
+    except:
+        server_module = None
+        logger.info("[check_video_link] No se puede importar el servidor! %s" % server)
+        return "??"
+        
+    if hasattr(server_module, 'test_video_exists'):
+        ant_timeout = httptools.HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT
+        httptools.HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = timeout  # Limitar tiempo de descarga
+        try:
+            video_exists, message = server_module.test_video_exists(page_url=url)
+            if not video_exists:
+                logger.info("[check_video_link] No existe! %s %s %s" % (message, server, url))
+                resultado = "[COLOR red][B]NO[/B][/COLOR]"
+            else:
+                logger.info("[check_video_link] comprobacion OK %s %s" % (server, url))
+                resultado = "[COLOR green][B]OK[/B][/COLOR]"
+        except:
+            logger.info("[check_video_link] No se puede comprobar ahora! %s %s" % (server, url))
+            resultado = "??"
+
+        finally:
+            httptools.HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = ant_timeout  # Restaurar tiempo de descarga
+            return resultado
+
+    logger.info("[check_video_link] No hay test_video_exists para servidor: %s" % server)
+    return "??"

@@ -10,62 +10,82 @@ from channelselector import get_thumb
 from core import tmdb
 from core.item import Item
 from platformcode import logger, config
+from channels import autoplay
+from channels import filtertools
 
-tgenero = {"Comedia": "https://s7.postimg.org/ne9g9zgwb/comedia.png",
-           "Drama": "https://s16.postimg.org/94sia332d/drama.png",
-           "Acción": "https://s3.postimg.org/y6o9puflv/accion.png",
-           "Aventura": "https://s10.postimg.org/6su40czih/aventura.png",
-           "Romance": "https://s15.postimg.org/fb5j8cl63/romance.png",
-           "Ciencia ficción": "https://s9.postimg.org/diu70s7j3/cienciaficcion.png",
-           "Terror": "https://s7.postimg.org/yi0gij3gb/terror.png",
-           "Fantasía": "https://s13.postimg.org/65ylohgvb/fantasia.png",
-           "Misterio": "https://s1.postimg.org/w7fdgf2vj/misterio.png",
-           "Crimen": "https://s4.postimg.org/6z27zhirx/crimen.png",
-           "Hentai": "https://s29.postimg.org/aamrngu2f/hentai.png",
-           "Magia": "https://s9.postimg.org/nhkfzqffj/magia.png",
-           "Psicológico": "https://s13.postimg.org/m9ghzr86f/psicologico.png",
-           "Sobrenatural": "https://s9.postimg.org/6hxbvd4ov/sobrenatural.png",
-           "Torneo": "https://s2.postimg.org/ajoxkk9ih/torneo.png",
-           "Thriller": "https://s22.postimg.org/5y9g0jsu9/thriller.png",
-           "Otros": "https://s30.postimg.org/uj5tslenl/otros.png"}
+tgenero = {"Comedia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
+           "Drama": "https://s16.postimg.cc/94sia332d/drama.png",
+           "Acción": "https://s3.postimg.cc/y6o9puflv/accion.png",
+           "Aventura": "https://s10.postimg.cc/6su40czih/aventura.png",
+           "Romance": "https://s15.postimg.cc/fb5j8cl63/romance.png",
+           "Ciencia ficción": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png",
+           "Terror": "https://s7.postimg.cc/yi0gij3gb/terror.png",
+           "Fantasía": "https://s13.postimg.cc/65ylohgvb/fantasia.png",
+           "Misterio": "https://s1.postimg.cc/w7fdgf2vj/misterio.png",
+           "Crimen": "https://s4.postimg.cc/6z27zhirx/crimen.png",
+           "Hentai": "https://s29.postimg.cc/aamrngu2f/hentai.png",
+           "Magia": "https://s9.postimg.cc/nhkfzqffj/magia.png",
+           "Psicológico": "https://s13.postimg.cc/m9ghzr86f/psicologico.png",
+           "Sobrenatural": "https://s9.postimg.cc/6hxbvd4ov/sobrenatural.png",
+           "Torneo": "https://s2.postimg.cc/ajoxkk9ih/torneo.png",
+           "Thriller": "https://s22.postimg.cc/5y9g0jsu9/thriller.png",
+           "Otros": "https://s30.postimg.cc/uj5tslenl/otros.png"}
 
 host = "http://www.animeshd.tv"
 
-headers = [['User-Agent', 'Mozilla/50.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0'],
-           ['Referer', host]]
+__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'poseidonhd')
+__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'poseidonhd')
+
+
+IDIOMAS = {'Castellano':'CAST','Latino': 'LAT', 'Subtitulado': 'VOSE'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['rapidvideo', 'openload', 'gvideo', 'streamango']
 
 
 def mainlist(item):
     logger.info()
+
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist = []
 
-    itemlist.append(item.clone(title="Ultimas",
+
+    itemlist.append(item.clone(title="Castellano",
                                action="lista",
-                               thumbnail=get_thumb('last', auto=True),
-                               fanart='https://s22.postimg.org/cb7nmhwv5/ultimas.png',
-                               url=host + '/ultimos'
-                               ))
+                               thumbnail=get_thumb('channels_spanish.png'),
+                               fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
+                               url=host + '/castellano'))
+
+    itemlist.append(item.clone(title="Latino",
+                               action="lista",
+                               thumbnail=get_thumb('channels_latino.png'),
+                               fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
+                               url=host + '/latino'))
 
     itemlist.append(item.clone(title="Todas",
                                action="lista",
                                thumbnail=get_thumb('all', auto=True),
-                               fanart='https://s18.postimg.org/fwvaeo6qh/todas.png',
-                               url=host + '/buscar?t=todos&q='
-                               ))
+                               fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
+                               url=host + '/buscar?t=todo&q='))
 
     itemlist.append(item.clone(title="Generos",
                                action="generos",
                                url=host,
                                thumbnail=get_thumb('genres', auto=True),
-                               fanart='https://s3.postimg.org/5s9jg2wtf/generos.png'
-                               ))
+                               fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png'))
 
     itemlist.append(item.clone(title="Buscar",
                                action="search",
-                               url=host + '/buscar?t=todos&q=',
+                               url=host + '/buscar?t=todo&q=',
                                thumbnail=get_thumb('search', auto=True),
-                               fanart='https://s30.postimg.org/pei7txpa9/buscar.png'
+                               fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
                                ))
+
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
+
+    autoplay.show_option(item.channel, itemlist)
+
 
     return itemlist
 
@@ -98,21 +118,22 @@ def lista(item):
                                    title=title,
                                    url=url,
                                    thumbnail=thumbnail,
-                                   contentSerieName=title
+                                   contentSerieName=title,
+                                   context=filtertools.context(item, list_language, list_quality)
                                    ))
 
         # Paginacion
     next_page = scrapertools.find_single_match(data,
-                                               '<li class=active><span>.*?<\/span><\/li><li><a href=(.*?)>.*?<\/a><\/li>')
+                                               '<a href=([^ ]+) rel=next>&raquo;</a>')
     next_page_url = scrapertools.decodeHtmlentities(next_page)
     if next_page_url != "":
         itemlist.append(Item(channel=item.channel,
                              action="lista",
                              title=">> Página siguiente",
-                             url=next_page_url,
-                             thumbnail='https://s16.postimg.org/9okdu7hhx/siguiente.png'
+                             url=host+next_page_url,
+                             thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
                              ))
-    tmdb.set_infoLabels(itemlist)
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -137,7 +158,7 @@ def generos(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<li class=><a href=http:\/\/www\.animeshd\.tv\/genero\/(.*?)>(.*?)<\/a><\/li>'
+    patron = '<li class=><a href=https:\/\/www\.animeshd\.tv\/genero\/(.*?)>(.*?)<\/a><\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
@@ -159,16 +180,59 @@ def episodios(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<li id=epi-.*? class=list-group-item ><a href=(.*?) class=badge.*?width=25 title=(.*?)> <\/span>(.*?) (\d+)<\/li>'
+    patron = '<li id=epi-.*? class=list-group-item.*?><a href=(.*?) class=badge.*?width=25 title=(.*?)>.*?<\/span>(' \
+             '.*?) (\d+)<\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
+    infoLabels = item.infoLabels
     for scrapedurl, scrapedlang, scrapedtitle, episode in matches:
         language = scrapedlang
         title = scrapedtitle + " " + "1x" + episode
         url = scrapedurl
-        itemlist.append(item.clone(title=title, url=url, action='findvideos', language=language))
+        infoLabels['season'] ='1'
+        infoLabels['episode'] = episode
+
+        itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.contentSerieName, url=url,
+                             action='findvideos', language=IDIOMAS[language], infoLabels=infoLabels))
            
-    if config.get_videolibrary_support():
-        itemlist.append(Item(channel=item.channel, title="Añadir serie a la biblioteca", url=item.url, action="add_serie_to_library", extra="episodios", fanart=item.thumbnail, thumbnail=item.thumbnail, contentTitle=item.show, show=item.show)) 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+
+    if config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(
+            Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
+                 action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
+                 extra1='library'))
     
+    return itemlist
+
+def findvideos(item):
+    logger.info()
+
+    itemlist = []
+
+    data = get_source(item.url)
+    patron = "<option value=(.*?) data-content=.*?width='16'> (.*?) <span class='text-muted'>"
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for scrapedurl, language in matches:
+        if 'jpg' in scrapedurl:
+            vip_data = httptools.downloadpage(scrapedurl, follow_redirects=False)
+            scrapedurl = vip_data.headers['location']
+        title = '%s [%s]'
+        itemlist.append(item.clone(title=title, url=scrapedurl.strip(), action='play',
+                        language=IDIOMAS[language]))
+
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % (x.server.capitalize(), x.language))
+
+    if __comprueba_enlaces__:
+        itemlist = servertools.check_list_links(itemlist, __comprueba_enlaces_num__)
+
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
+
     return itemlist

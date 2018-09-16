@@ -94,7 +94,7 @@ function focus_element(element) {
 function image_error(thumbnail) {
     var src = thumbnail.src;
     if (thumbnail.src.indexOf(domain) == 0) {
-        thumbnail.src = "https://github.com/alfa-addon/addon/raw/master/plugin.video.alfa/resources/media/general/default/thumb_folder.png";
+        thumbnail.src = "https://github.com/alfa-addon/addon/raw/master/plugin.video.alfa/resources/media/themes/default/thumb_folder.png"
     }
 	else {
 		thumbnail.src = domain + "/proxy/" + encodeURIComponent(btoa(thumbnail.src));

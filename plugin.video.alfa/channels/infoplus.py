@@ -37,9 +37,9 @@ ACTION_MOVE_UP = 3
 
 set_animation = False
 xinfoplus_set = config.get_setting("infoplus_set")
-if xinfoplus_set == "Sin animación":
+if xinfoplus_set == config.get_localized_string(70129):
     set_animation = False
-if xinfoplus_set == "Con animación":
+if xinfoplus_set == config.get_localized_string(70130):
     set_animation = True
 
 def start(item, recomendaciones=[], from_window=False):
@@ -54,8 +54,8 @@ def start(item, recomendaciones=[], from_window=False):
         global SearchWindows
         SearchWindows = list()
 
-    dialog = platformtools.dialog_progress("Cargando nuevos datos",
-                                           "Buscandoen Tmdb.......")
+    dialog = platformtools.dialog_progress(config.get_localized_string(60469),
+                                           config.get_localized_string(60470))
 
     principal_window = main(item=item, recomendaciones=recomendaciones, dialog=dialog, from_window=from_window)
     try:
@@ -79,7 +79,7 @@ class main(xbmcgui.WindowDialog):
         else:
             tipo = "serie"
             tipo_busqueda = "tv"
-            icono = "http://s6.postimg.org/hzcjag975/tvdb.png"
+            icono = "http://s6.postimg.cc/hzcjag975/tvdb.png"
 
         if self.item.rating_filma:
             if "|" in self.item.show:
@@ -101,7 +101,7 @@ class main(xbmcgui.WindowDialog):
             self.item.infoLabels.pop("episode", None)
             if not self.item.infoLabels["year"]:
                 self.dialog.close()
-                platformtools.dialog_notification("Sin resultados. Falta información del año del video", "No hay info de la %s solicitada" % tipo)
+                platformtools.dialog_notification(config.get_localized_string(60471), config.get_localized_string(60472) % tipo)
                 global mainWindow
                 self.close()
                 del mainWindow
@@ -113,7 +113,7 @@ class main(xbmcgui.WindowDialog):
 
             if not self.infoLabels["tmdb_id"]:
                 self.dialog.close()
-                platformtools.dialog_notification("Sin resultados", "No hay info de la %s solicitada" % tipo)
+                platformtools.dialog_notification(config.get_localized_string(60473), config.get_localized_string(60474) % tipo)
                 global mainWindow
                 self.close()
                 del mainWindow
@@ -133,30 +133,30 @@ class main(xbmcgui.WindowDialog):
                 rating = "[COLOR crimson][B]%s[/B][/COLOR]" % self.infoLabels["rating"]
 
             self.dialog.update(40,
-                               'Registrando filmaffinity.......')
+                               config.get_localized_string(60475))
             rating_fa, plot_fa = get_filmaf(self.item, self.infoLabels)
             if not self.infoLabels.get("plot") and plot_fa:
                 self.infoLabels["plot"] = "[COLOR moccasin][B]%s[/B][/COLOR]" % plot_fa
             elif not self.infoLabels["plot"]:
-                self.infoLabels["plot"] = "[COLOR yellow][B]Esta pelicula no tiene informacion...[/B][/COLOR]"
+                self.infoLabels["plot"] = config.get_localized_string(60476)
             else:
                 self.infoLabels["plot"] = "[COLOR moccasin][B]%s[/B][/COLOR]" % self.infoLabels.get("plot")
 
-            self.dialog.update(60, 'Indagando recomendaciones.......')
+            self.dialog.update(60, config.get_localized_string(60477))
             thread1 = Thread(target=get_recomendations, args=[self.item, self.infoLabels, self.recomendaciones])
             thread1.setDaemon(True)
             thread1.start()
 
             if self.infoLabels.get("status") == "Ended" and tipo == "serie":
-                status = "[COLOR aquamarine][B]Finalizada %s[/B][/COLOR]"
+                status = config.get_localized_string(60478)
             elif self.infoLabels.get("status") and tipo == "serie":
-                status = "[COLOR aquamarine][B]En emisión %s[/B][/COLOR]"
+                status = config.get_localized_string(60479)
             else:
                 status = "[COLOR aquamarine][B]%s[/B][/COLOR]"
             if self.infoLabels.get("tagline") and tipo == "serie":
                 self.infoLabels["tagline"] = status % "(" + self.infoLabels["tagline"] + ")"
             elif not self.infoLabels.get("tagline") and tipo == "serie":
-                self.infoLabels["tagline"] = status % "(Temporadas: %s)" % self.infoLabels.get("number_of_seasons",
+                self.infoLabels["tagline"] = status % config.get_localized_string(60480) % self.infoLabels.get("number_of_seasons",
                                                                                                "---")
             else:
                 self.infoLabels["tagline"] = status % self.infoLabels.get("tagline", "")
@@ -184,7 +184,7 @@ class main(xbmcgui.WindowDialog):
 
         if self.item.contentType != "movie":
             self.dialog.update(60,
-                               'Recopilando imágenes en FANART.TV')
+                               config.get_localized_string(60481))
             try:
                 ###Busca música serie
                 titulo = re.sub('\[.*?\]', '', titulo)
@@ -210,9 +210,9 @@ class main(xbmcgui.WindowDialog):
                 logger.error(traceback.format_exc())
 
         if xbmc.Player().isPlaying():
-            self.dialog.update(80, 'Afinado instrumentos en Vtunes')
+            self.dialog.update(80, config.get_localized_string(60482))
         else:
-            self.dialog.update(80, 'Recopilando imágenes en FANART.TV')
+            self.dialog.update(80, config.get_localized_string(60483))
 
         while thread2.isAlive():
             xbmc.sleep(100)
@@ -277,12 +277,12 @@ class main(xbmcgui.WindowDialog):
         self.fonts = get_fonts(skin)
         self.setCoordinateResolution(2)
         self.actorButton = xbmcgui.ControlButton(995, 475, 55, 55, '', font='Font40', alignment=0x00000006,
-                                                 noFocusTexture='https://s17.postimg.org/40acsuihb/thumb_search_star_no.png',
-                                                 focusTexture='https://s33.postimg.org/ikk0qyvrj/thumb_search_star.png',
+                                                 noFocusTexture='https://s17.postimg.cc/40acsuihb/thumb_search_star_no.png',
+                                                 focusTexture='https://s33.postimg.cc/ikk0qyvrj/thumb_search_star.png',
                                                  focusedColor='0xFFAAAAAA')
         self.trailerButton = xbmcgui.ControlButton(910, 475, 55, 55, '', font='Font40', alignment=0x00000006,
-                                                   noFocusTexture='https://s17.postimg.org/774wcgv7j/thumb_search_trailer_no.png',
-                                                   focusTexture='https://s17.postimg.org/o9tfjmqvz/thumb_search_trailer.png')
+                                                   noFocusTexture='https://s17.postimg.cc/774wcgv7j/thumb_search_trailer_no.png',
+                                                   focusTexture='https://s17.postimg.cc/o9tfjmqvz/thumb_search_trailer.png')
 
         self.background = xbmcgui.ControlImage(-40, -40, 1500, 830, 'http://imgur.com/ur6H9Ps.png')
         self.title = xbmcgui.ControlTextBox(120, 8, 1130, 50, self.fonts["16"])
@@ -293,7 +293,7 @@ class main(xbmcgui.WindowDialog):
         self.fanart = xbmcgui.ControlImage(-40, -40, 1500, 830, self.infoLabels.get("fanart", ""))
         self.poster = xbmcgui.ControlImage(860, 140, 350, 330, self.item.thumbnail)
         self.icon = xbmcgui.ControlImage(200, 100, 40, 40, icono)
-        self.fa_icon = xbmcgui.ControlImage(350, 100, 60, 60, "http://s6.postimg.org/6yhe5fgy9/filma.png")
+        self.fa_icon = xbmcgui.ControlImage(350, 100, 60, 60, "http://s6.postimg.cc/6yhe5fgy9/filma.png")
 
         self.addControl(self.fanart)
         if set_animation:
@@ -337,7 +337,7 @@ class main(xbmcgui.WindowDialog):
                 [('conditional', 'effect=fade start=0% end=100% delay=2000 time=1500 condition=true',),
                  ('WindowClose', 'effect=fade start=100% end=0% time=800 condition=true',)])
             self.duration.setText(
-                "[COLOR mediumturquoise][B]Duración: %s minutos[/B][/COLOR]" % self.infoLabels["duration"])
+                config.get_localized_string(70252) % self.infoLabels["duration"])
         self.addControl(self.rating)
         if set_animation:
             self.rating.setAnimations(
@@ -400,7 +400,7 @@ class main(xbmcgui.WindowDialog):
             self.plot.autoScroll(11000, 6000, 30000)
         except:
             xbmc.executebuiltin(
-                'Notification([COLOR red][B]Actualiza Kodi a su última versión[/B][/COLOR], [COLOR skyblue]para mejor info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")')
+                config.get_localized_string(70500))
         self.plot.setText(dhe(self.infoLabels.get("plot", "")))
 
         xbmc.sleep(200)
@@ -410,8 +410,8 @@ class main(xbmcgui.WindowDialog):
         self.focus = -1
         i = 0
         count = 0
-        self.btn_left = xbmcgui.ControlButton(90, 490, 70, 29, '', "http://s6.postimg.org/i3pnobu6p/redarrow.png",
-                                              "http://s6.postimg.org/i3pnobu6p/redarrow.png")
+        self.btn_left = xbmcgui.ControlButton(90, 490, 70, 29, '', "http://s6.postimg.cc/i3pnobu6p/redarrow.png",
+                                              "http://s6.postimg.cc/i3pnobu6p/redarrow.png")
         self.addControl(self.btn_left)
         if set_animation:
             self.btn_left.setAnimations(
@@ -433,7 +433,7 @@ class main(xbmcgui.WindowDialog):
             if count % 8 == 0:
                 i = 0
             self.image = xbmcgui.ControlButton(65 + i, 538, 135, 160, '', thumb, thumb)
-            self.neon = xbmcgui.ControlImage(60 + i, 525, 145, 186, "http://s6.postimg.org/x0jspnxch/buttons.png")
+            self.neon = xbmcgui.ControlImage(60 + i, 525, 145, 186, "http://s6.postimg.cc/x0jspnxch/buttons.png")
             fadelabel = xbmcgui.ControlFadeLabel(67 + i, 698, 135, 50)
             self.botones.append(self.image)
             if len(self.recomendaciones) != 0:
@@ -481,8 +481,8 @@ class main(xbmcgui.WindowDialog):
         self.btn_right = None
         if len(self.recomendaciones) > 8:
             self.btn_right = xbmcgui.ControlButton(1150, 495, 60, 27, '',
-                                                   "http://s6.postimg.org/j4uhr70k1/greenarrow.png",
-                                                   "http://s6.postimg.org/j4uhr70k1/greenarrow.png")
+                                                   "http://s6.postimg.cc/j4uhr70k1/greenarrow.png",
+                                                   "http://s6.postimg.cc/j4uhr70k1/greenarrow.png")
             self.addControl(self.btn_right)
             if set_animation:
                 self.btn_right.setAnimations(
@@ -493,8 +493,8 @@ class main(xbmcgui.WindowDialog):
                  ('WindowClose', 'effect=slide end=0,700% time=1000 condition=true',)])
             self.botones.append(self.btn_right)
         xbmc.sleep(200)
-        self.global_search = xbmcgui.ControlButton(1080, 475, 55, 55, '', noFocusTexture='https://s17.postimg.org/u9vfbj1sv/thumb_search_no.png',
-                                                                          focusTexture='https://s17.postimg.org/gc289lvvz/thumb_search.png')
+        self.global_search = xbmcgui.ControlButton(1080, 475, 55, 55, '', noFocusTexture='https://s17.postimg.cc/u9vfbj1sv/thumb_search_no.png',
+                                                                          focusTexture='https://s17.postimg.cc/gc289lvvz/thumb_search.png')
         self.addControl(self.global_search)
         if set_animation:
             self.global_search.setAnimations(
@@ -741,8 +741,8 @@ class main(xbmcgui.WindowDialog):
         else:
             for boton, peli, id, poster2 in self.idps:
                 if control == boton:
-                    dialog = platformtools.dialog_progress("Cargando nueva info",
-                                                           "Buscando en Tmdb.......")
+                    dialog = platformtools.dialog_progress(config.get_localized_string(60486),
+                                                           config.get_localized_string(60487))
                     tipo = self.item.contentType
                     if tipo != "movie":
                         tipo = "tv"
@@ -807,20 +807,20 @@ class related(xbmcgui.WindowDialog):
 
         self.setCoordinateResolution(2)
         self.background = xbmcgui.ControlImage(178, 50, 1053, 634, self.infoLabels.get("fanart",
-                                                                                      "http://s6.postimg.org/fflvear2p/nofanart.png"))
+                                                                                      "http://s6.postimg.cc/fflvear2p/nofanart.png"))
         self.addControl(self.background)
         if set_animation:
             self.background.setAnimations(
             [('conditional', 'effect=slide start=1000% end=0% delay=670 time=2500 condition=true',),
              ('WindowClose', 'effect=slide end=-2000% time=1000 condition=true',)])
 
-        self.shadow = xbmcgui.ControlImage(175, 43, 1061, 649, 'http://s6.postimg.org/k05dw264x/marc_fanart.png')
+        self.shadow = xbmcgui.ControlImage(175, 43, 1061, 649, 'http://s6.postimg.cc/k05dw264x/marc_fanart.png')
         self.addControl(self.shadow)
         if set_animation:
             self.shadow.setAnimations(
             [('conditional', 'effect=slide start=1000% end=0% delay=660 time=2500 condition=true',),
              ('WindowClose', 'effect=slide end=-2000% time=1000 condition=true',)])
-        self.star = xbmcgui.ControlImage(955, 55, 67, 67, "http://s6.postimg.org/jzn0d3clt/star.png")
+        self.star = xbmcgui.ControlImage(955, 55, 67, 67, "http://s6.postimg.cc/jzn0d3clt/star.png")
         self.addControl(self.star) 
         if set_animation:
             self.star.setAnimations([('conditional', 'effect=slide delay=6000 start=2000 time=800 condition=true',),
@@ -834,7 +834,7 @@ class related(xbmcgui.WindowDialog):
             [('conditional', 'effect=slide delay=6000 start=2000 time=800 condition=true',),
              ('WindowClose', 'effect=slide end=0,-700% time=1000 condition=true',)])
 
-        self.info = "[COLOR lemonchiffon]%s[/COLOR]" % self.infoLabels.get("plot", "Sin información...")
+        self.info = "[COLOR lemonchiffon]%s[/COLOR]" % self.infoLabels.get("plot", config.get_localized_string(60488))
         self.info_peli = xbmcgui.ControlTextBox(455, 120, 750, 234)
         self.addControl(self.info_peli)
 
@@ -842,7 +842,7 @@ class related(xbmcgui.WindowDialog):
             self.info_peli.autoScroll(7000, 6000, 30000)
         except:
             xbmc.executebuiltin(
-                'Notification([COLOR red][B]Actualiza Kodi a su última versión[/B][/COLOR], [COLOR skyblue]para mejor info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")')
+                config.get_localized_string(70500))
         self.info_peli.setText(self.info)
         if set_animation:
            self.info_peli.setAnimations(
@@ -859,9 +859,9 @@ class related(xbmcgui.WindowDialog):
                                         ('WindowClose', 'effect=zoom end=0% time=1000 condition=true',)])
 
         if self.infoLabels.get("status") == "Ended" and self.item.contentType != "movie":
-            status = "[COLOR aquamarine][B]Finalizada %s[/B][/COLOR]"
+            status = config.get_localized_string(70515)
         elif self.infoLabels.get("status") and self.item.contentType != "movie":
-            status = "[COLOR aquamarine][B]En emisión %s[/B][/COLOR]"
+            status = config.get_localized_string(70516)
         else:
             status = "[COLOR aquamarine][B]%s[/B][/COLOR]"
 
@@ -891,7 +891,7 @@ class related(xbmcgui.WindowDialog):
 
         self.gt_peli = xbmcgui.ControlTextBox(210, 385, 1100, 60, self.fonts["12"])
         self.addControl(self.gt_peli)
-        self.gt_peli.setText("[COLOR limegreen][B]Género: [/B][/COLOR]")
+        self.gt_peli.setText("[COLOR limegreen][B]%s[/B][/COLOR]" % config.get_localized_string(70499))
         if set_animation:
             self.gt_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-7000 delay=5750 time=700 condition=true tween=circle easing=in',),
@@ -907,7 +907,7 @@ class related(xbmcgui.WindowDialog):
 
         self.pt_peli = xbmcgui.ControlTextBox(210, 410, 307, 60, self.fonts["12"])
         self.addControl(self.pt_peli)
-        self.pt_peli.setText("[COLOR limegreen][B]Productora: [/B][/COLOR]")
+        self.pt_peli.setText("[COLOR limegreen][B]%s[/B][/COLOR]" % config.get_localized_string(70498))
         if set_animation:
             self.pt_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-7000 delay=5700 time=700 condition=true tween=circle easing=in',),
@@ -923,7 +923,7 @@ class related(xbmcgui.WindowDialog):
 
         self.paist_peli = xbmcgui.ControlTextBox(210, 435, 400, 60, self.fonts["12"])
         self.addControl(self.paist_peli)
-        self.paist_peli.setText("[COLOR limegreen][B]País: [/B][/COLOR]")
+        self.paist_peli.setText(config.get_localized_string(60490))
         if set_animation:
             self.paist_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-700 delay=5650 time=700 condition=true tween=circle easing=in',),
@@ -939,7 +939,7 @@ class related(xbmcgui.WindowDialog):
 
         self.ft_peli = xbmcgui.ControlTextBox(210, 460, 1100, 60, self.fonts["12"])
         self.addControl(self.ft_peli)
-        self.ft_peli.setText("[COLOR limegreen][B]Estreno: [/B][/COLOR]")
+        self.ft_peli.setText(config.get_localized_string(60491))
         if set_animation:
             self.ft_peli.setAnimations(
             [('conditional', 'effect=slide start=0,-700 delay=5600 time=700 condition=true tween=circle easing=in',),
@@ -959,7 +959,7 @@ class related(xbmcgui.WindowDialog):
         if self.infoLabels.get("number_of_seasons"):
             self.seasons_txt = xbmcgui.ControlTextBox(210, 485, 200, 60, self.fonts["12"])
             self.addControl(self.seasons_txt)
-            self.seasons_txt.setText("[COLOR limegreen][B]Temporadas/Episodios: [/B][/COLOR]")
+            self.seasons_txt.setText(config.get_localized_string(60492))
             if set_animation:
                 self.seasons_txt.setAnimations([('conditional',
                                              'effect=slide start=0,-700 delay=5600 time=700 condition=true tween=circle easing=in',),
@@ -1040,7 +1040,7 @@ class related(xbmcgui.WindowDialog):
 
         try:
             if self.nd:
-                self.img_dir = xbmcgui.ControlImage(740, 380, 100, 90, "http://s6.postimg.org/k8kl30pe9/director.png")
+                self.img_dir = xbmcgui.ControlImage(740, 380, 100, 90, "http://s6.postimg.cc/k8kl30pe9/director.png")
                 self.addControl(self.img_dir)
                 if set_animation:
                     self.img_dir.setAnimations(
@@ -1106,8 +1106,8 @@ class related(xbmcgui.WindowDialog):
                                            'effect=zoom center=auto start=100% end=120% reversible=false tween=bounce time=1000 loop=true condition=Control.HasFocus(' + str(
                                                self.buscar.getId()) + ')'),
                                        ('WindowClose', 'effect=rotatey end=-300 time=1500 condition=true',)])
-        self.global_search = xbmcgui.ControlButton(1046, 620, 140, 53, '', 'https://s33.postimg.org/3k39ww24f/logo-alfa.png',
-                                                   'https://s33.postimg.org/3k39ww24f/logo-alfa.png')
+        self.global_search = xbmcgui.ControlButton(1046, 620, 140, 53, '', 'https://s33.postimg.cc/3k39ww24f/logo-alfa.png',
+                                                   'https://s33.postimg.cc/3k39ww24f/logo-alfa.png')
         self.addControl(self.global_search)
         self.botones.append(self.global_search)
         if set_animation:
@@ -1234,11 +1234,11 @@ class Busqueda(xbmcgui.WindowXMLDialog):
         except:
             pass
         if self.item.contentType != "movie":
-            self.getControl(1).setLabel("[COLOR orange][B]¿Está la serie que buscas?[/B][/COLOR]")
+            self.getControl(1).setLabel(config.get_localized_string(60493))
         else:
-            self.getControl(1).setLabel("[COLOR orange][B]¿Está la película que buscas?[/B][/COLOR]")
+            self.getControl(1).setLabel(config.get_localized_string(60494))
 
-        self.getControl(5).setLabel("[COLOR tomato][B]Cerrar[/B][/COLOR]")
+        self.getControl(5).setLabel(config.get_localized_string(60495))
         self.control_list.reset()
         items = []
         for item_l in self.lista:
@@ -1256,7 +1256,7 @@ class Busqueda(xbmcgui.WindowXMLDialog):
     def onAction(self, action):
         global BusquedaWindow
         if (action == ACTION_SELECT_ITEM or action == 100) and self.getFocusId() == 6:
-            dialog = platformtools.dialog_progress_bg("Cargando resultados", "Espere........")
+            dialog = platformtools.dialog_progress_bg(config.get_localized_string(60496), config.get_localized_string(60497))
             selectitem = self.getControl(6).getSelectedItem()
             item = Item().fromurl(selectitem.getProperty("item_copy"))
             exec "import channels." + item.channel + " as channel"
@@ -1289,8 +1289,8 @@ class GlobalSearch(xbmcgui.WindowXMLDialog):
         except:
             pass
 
-        self.getControl(1).setLabel("[COLOR orange][B]Selecciona...[/B][/COLOR]")
-        self.getControl(5).setLabel("[COLOR tomato][B]Cerrar[/B][/COLOR]")
+        self.getControl(1).setLabel(config.get_localized_string(60498))
+        self.getControl(5).setLabel(config.get_localized_string(60495))
         self.control_list.reset()
         if not self.lista:
             global SearchWindows
@@ -1327,7 +1327,7 @@ class GlobalSearch(xbmcgui.WindowXMLDialog):
                         item = itemlist[0]
                     else:
                         ventana_error = xbmcgui.Dialog()
-                        ok = ventana_error.ok("plugin", "No hay nada para reproducir")
+                        ok = ventana_error.ok("plugin", config.get_localized_string(60500))
                         return
 
                 global BusquedaWindow, exit_loop, mainWindow, ActorInfoWindow, relatedWindow, ActoresWindow
@@ -1375,7 +1375,7 @@ class GlobalSearch(xbmcgui.WindowXMLDialog):
 
             else:
                 try:
-                    dialog = platformtools.dialog_progress_bg("Cargando resultados", "Espere........")
+                    dialog = platformtools.dialog_progress_bg(config.get_localized_string(60496), config.get_localized_string(60497))
                     itemlist = getattr(channel, item.action)(item)
                     window = GlobalSearch('DialogSelect.xml', config.get_runtime_path(), itemlist=itemlist,
                                           dialog=dialog)
@@ -1416,8 +1416,8 @@ class Actores(xbmcgui.WindowXMLDialog):
             self.getControl(3).setVisible(0)
         except:
             pass
-        self.getControl(1).setLabel("[COLOR orange][B]Reparto[/B][/COLOR]")
-        self.getControl(5).setLabel("[COLOR red][B]Cerrar[/B][/COLOR]")
+        self.getControl(1).setLabel(config.get_localized_string(60501))
+        self.getControl(5).setLabel(config.get_localized_string(60495))
         self.control_list.reset()
         items = []
 
@@ -1470,8 +1470,8 @@ class Actores(xbmcgui.WindowXMLDialog):
             name_info = selectitem.getProperty("name_info")
             thumbnail = selectitem.getProperty("thumbnail")
             job = selectitem.getProperty("job")
-            dialog = platformtools.dialog_progress("Cargando nuevos datos",
-                                                   "Obteniendo datos del %s..." % job.lower())
+            dialog = platformtools.dialog_progress(config.get_localized_string(60502),
+                                                   config.get_localized_string(60503) % job.lower())
 
             global ActorInfoWindow
             ActorInfoWindow = ActorInfo(id=id_actor, name=name_info, thumbnail=thumbnail, item=self.item,
@@ -1542,7 +1542,7 @@ class ActorInfo(xbmcgui.WindowDialog):
                     bio = dhe(scrapertools.htmlclean(info.strip()))
                     actor_tmdb.result["biography"] = bio
             else:
-                actor_tmdb.result["biography"] = "Sin información"
+                actor_tmdb.result["biography"] = config.get_localized_string(60504)
         elif not actor_tmdb.result.get("biography"):
             actor_tmdb.result["biography"] = "Sin información"
 
@@ -1553,7 +1553,7 @@ class ActorInfo(xbmcgui.WindowDialog):
             self.background.setAnimations(
             [('conditional', 'effect=fade start=0% end=100% delay=2000 time=1500 condition=true',),
              ('WindowClose', 'effect=slide end=0,-700% time=1000 condition=true',)])
-        self.filmo = xbmcgui.ControlImage(330, 470, 230, 45, 'http://s6.postimg.org/rlktamqhd/filmography1.png')
+        self.filmo = xbmcgui.ControlImage(330, 470, 230, 45, 'http://s6.postimg.cc/rlktamqhd/filmography1.png')
         self.addControl(self.filmo)
         if set_animation:
             self.filmo.setAnimations([('conditional',
@@ -1577,9 +1577,9 @@ class ActorInfo(xbmcgui.WindowDialog):
             self.info_actor.autoScroll(7000, 6000, 30000)
         except:
             xbmc.executebuiltin(
-                'Notification([COLOR red][B]Actualiza Kodi a su última versión[/B][/COLOR], [COLOR skyblue]para mejor info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")')
+                config.get_localized_string(70500))
         self.info_actor.setText(
-            "[COLOR coral][B]%s[/B][/COLOR]" % actor_tmdb.result.get("biography", "Sin información"))
+            "[COLOR coral][B]%s[/B][/COLOR]" % actor_tmdb.result.get("biography", config.get_localized_string(60504)))
 
         self.titulos = []
         tipo_busqueda = "cast"
@@ -1595,13 +1595,13 @@ class ActorInfo(xbmcgui.WindowDialog):
             if entradas["poster_path"]:
                 thumb += entradas["poster_path"]
             else:
-                thumb = "http://s6.postimg.org/tw1vhymj5/noposter.png"
+                thumb = "http://s6.postimg.cc/tw1vhymj5/noposter.png"
             if self.item.contentType == "movie":
                 self.titulos.append([entradas["id"], entradas.get("title", entradas.get("original_title", "")), thumb])
             else:
                 self.titulos.append([entradas["id"], entradas.get("title", entradas.get("original_title", "")), thumb])
 
-        self.dialog.update(40, '[COLOR rosybrown]Obteniendo filmografía...[/COLOR]')
+        self.dialog.update(40, config.get_localized_string(60505))
         self.mas_pelis = 8
         self.idps = []
         self.botones = []
@@ -1609,8 +1609,8 @@ class ActorInfo(xbmcgui.WindowDialog):
         self.focus = -1
         i = 0
         count = 0
-        self.btn_left = xbmcgui.ControlButton(90, 490, 70, 29, '', "http://s6.postimg.org/i3pnobu6p/redarrow.png",
-                                              "http://s6.postimg.org/i3pnobu6p/redarrow.png")
+        self.btn_left = xbmcgui.ControlButton(90, 490, 70, 29, '', "http://s6.postimg.cc/i3pnobu6p/redarrow.png",
+                                              "http://s6.postimg.cc/i3pnobu6p/redarrow.png")
         self.addControl(self.btn_left)
         if set_animation:
             self.btn_left.setAnimations([('conditional',
@@ -1623,7 +1623,7 @@ class ActorInfo(xbmcgui.WindowDialog):
             if count % 8 == 0:
                 i = 0
             self.image = xbmcgui.ControlButton(65 + i, 538, 135, 160, '', foto, foto)
-            self.neon = xbmcgui.ControlImage(60 + i, 525, 145, 186, "http://s6.postimg.org/x0jspnxch/buttons.png")
+            self.neon = xbmcgui.ControlImage(60 + i, 525, 145, 186, "http://s6.postimg.cc/x0jspnxch/buttons.png")
             fadelabel = xbmcgui.ControlFadeLabel(67 + i, 698, 135, 50)
             self.botones.append(self.image)
 
@@ -1660,8 +1660,8 @@ class ActorInfo(xbmcgui.WindowDialog):
         xbmc.sleep(200)
         if len(self.titulos) > 8:
             self.btn_right = xbmcgui.ControlButton(1150, 495, 60, 27, '',
-                                                   "http://s6.postimg.org/j4uhr70k1/greenarrow.png",
-                                                   "http://s6.postimg.org/j4uhr70k1/greenarrow.png")
+                                                   "http://s6.postimg.cc/j4uhr70k1/greenarrow.png",
+                                                   "http://s6.postimg.cc/j4uhr70k1/greenarrow.png")
             self.addControl(self.btn_right)
             if set_animation:
                 self.btn_right.setAnimations(
@@ -1673,7 +1673,7 @@ class ActorInfo(xbmcgui.WindowDialog):
             self.botones.append(self.btn_right)
 
         xbmc.sleep(200)
-        self.dialog.update(80, '[COLOR plum]Recopilando imágenes...[/COLOR]')
+        self.dialog.update(80, config.get_localized_string(60506))
         self.images = []
         for images in actor_tmdb.result.get("images", {}).get("profiles", []):
             imagen = "https://image.tmdb.org/t/p/original" + images["file_path"]
@@ -1681,7 +1681,7 @@ class ActorInfo(xbmcgui.WindowDialog):
 
         if len(self.images) <= 1 or (len(self.images) == 2 and self.images[0] == self.images[1]):
             self.marco = xbmcgui.ControlImage(100, 23, 330, 425,
-                                              'http://s6.postimg.org/nkmk7b8nl/marco_foto2_copia.png')
+                                              'http://s6.postimg.cc/nkmk7b8nl/marco_foto2_copia.png')
             self.addControl(self.marco)
             if set_animation:
                 self.marco.setAnimations(
@@ -1712,7 +1712,7 @@ class ActorInfo(xbmcgui.WindowDialog):
                 if i == 0:
                     xbmc.sleep(300)
                     self.marco = xbmcgui.ControlImage(100, 23, 330, 425,
-                                                      'http://s6.postimg.org/nkmk7b8nl/marco_foto2_copia.png')
+                                                      'http://s6.postimg.cc/nkmk7b8nl/marco_foto2_copia.png')
                     self.thumb = xbmcgui.ControlImage(115, 40, 294, 397, "")
                     xbmc.sleep(500)
                     self.addControl(self.marco)
@@ -1741,7 +1741,7 @@ class ActorInfo(xbmcgui.WindowDialog):
                         break
                     xbmc.sleep(5200)
                     self.marco = xbmcgui.ControlImage(100, 23, 330, 425,
-                                                      'http://s6.postimg.org/4syg4krkh/marco_foto.png')
+                                                      'http://s6.postimg.cc/4syg4krkh/marco_foto.png')
                     self.addControl(self.marco)
                     if set_animation:
                         self.marco.setAnimations(
@@ -1914,8 +1914,8 @@ class ActorInfo(xbmcgui.WindowDialog):
 
         for boton, peli, id, poster2 in self.idps:
             if control == boton:
-                dialog = platformtools.dialog_progress("Cargando nueva info",
-                                                       "Buscando en Tmdb.......")
+                dialog = platformtools.dialog_progress(config.get_localized_string(60486),
+                                                       config.get_localized_string(60487))
                 tipo = self.item.contentType
                 if tipo != "movie":
                     tipo = "tv"
@@ -1975,8 +1975,8 @@ class images(xbmcgui.WindowDialog):
         self.focus = -1
         i = 0
         count = 0
-        self.btn_left = xbmcgui.ControlButton(293, 550, 70, 29, '', "http://s6.postimg.org/i3pnobu6p/redarrow.png",
-                                              "http://s6.postimg.org/i3pnobu6p/redarrow.png")
+        self.btn_left = xbmcgui.ControlButton(293, 550, 70, 29, '', "http://s6.postimg.cc/i3pnobu6p/redarrow.png",
+                                              "http://s6.postimg.cc/i3pnobu6p/redarrow.png")
         self.addControl(self.btn_left)
         if set_animation:
             self.btn_left.setAnimations(
@@ -1992,7 +1992,7 @@ class images(xbmcgui.WindowDialog):
             if count % 8 == 0:
                 i = 0
             self.image = xbmcgui.ControlButton(280 + i, 590, 100, 98, '', img, img)
-            self.neon = xbmcgui.ControlImage(280 + i, 590, 100, 98, "http://s6.postimg.org/x0jspnxch/buttons.png")
+            self.neon = xbmcgui.ControlImage(280 + i, 590, 100, 98, "http://s6.postimg.cc/x0jspnxch/buttons.png")
             self.botones.append(self.image)
             if count < 8:
                 self.addControl(self.image)
@@ -2015,8 +2015,8 @@ class images(xbmcgui.WindowDialog):
         xbmc.sleep(200)
         if len(self.imagenes) > 8:
             self.btn_right = xbmcgui.ControlButton(1150, 550, 60, 27, '',
-                                                   "http://s6.postimg.org/j4uhr70k1/greenarrow.png",
-                                                   "http://s6.postimg.org/j4uhr70k1/greenarrow.png")
+                                                   "http://s6.postimg.cc/j4uhr70k1/greenarrow.png",
+                                                   "http://s6.postimg.cc/j4uhr70k1/greenarrow.png")
             self.addControl(self.btn_right)
             if set_animation:
                 self.btn_right.setAnimations(
@@ -2177,8 +2177,8 @@ class Trailer(xbmcgui.WindowXMLDialog):
     def onInit(self):
         self.setCoordinateResolution(0)
         if not self.video_url:
-            platformtools.dialog_notification("[COLOR crimson][B]Error[/B][/COLOR]",
-                                              "[COLOR tomato]Vídeo no disponible[/COLOR]", 2)
+            platformtools.dialog_notification(config.get_localized_string(60507),
+                                              config.get_localized_string(60508), 2)
             self.close()
         elif self.video_url == "no_video":
             self.close()
