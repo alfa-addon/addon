@@ -234,16 +234,15 @@ def listado(item):
         url_next_page = urlparse.urljoin(item.url, scrapertools.find_single_match(data, patron_next_page) + str(cnt_pag_num + 2))
         #url_last_page = re.sub(r"\d+$", "9999", url_next_page)
         #data_last = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url_last_page).data)
-        if "/documentales" in item.url:
-            patron_last_page = '<a href="[^"]+\/(\d+)\/" class="paginar" >\d+<\/a>&nbsp;<\/div>'
-        else:
-            patron_last_page = '<a class="paginar" href="[^"]+\/(\d+)\/">&\w+;<\/a>&\w+;<\/div>'
+        #if "/documentales" in item.url:
+            #patron_last_page = '<a href="[^"]+\/(\d+)\/" class="paginar" >\d+<\/a>&nbsp;<\/div>'
+        patron_last_page = '<a class="paginar" href="[^"]+\/(\d+)\/">&\w+;<\/a>&\w+;<\/div>'
         #patron_last_page = '<span class="nopaginar">(\d+)<\/span>'
-        if "/documentales" in item.url:
-            item.last_page = int(scrapertools.find_single_match(data, patron_last_page))
-        else:
+        try:
             #item.last_page = int(scrapertools.find_single_match(data, patron_last_page)) * (len(matches) / cnt_tot)
             item.last_page = int(scrapertools.find_single_match(data, patron_last_page))
+        except:
+            item.last_page = 0
 
     if matches_cnt > cnt_tot and item.extra == "documentales" and pag:
         item.next_page = ''

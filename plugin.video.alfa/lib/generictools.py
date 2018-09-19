@@ -13,6 +13,7 @@ import sys
 import urllib
 import urlparse
 import datetime
+import time
 
 from channelselector import get_thumb
 from core import httptools
@@ -188,11 +189,11 @@ def update_title(item):
                 if new_item.contentSeason:                              #Restauramos el núm. de Temporada después de TMDB
                     item.contentSeason = new_item.contentSeason
                     
-                if item.from_update: 
+                if item.from_update:                                    #Si la llamda es desde el menú del canal...
                     item.from_update = True 
                     del item.from_update
-                    platformtools.itemlist_update(item)
-     
+                    xlistitem = refresh_screen(item)                    #Refrescamos la pantallas con el nuevo Item
+                    
         #Para evitar el "efecto memoria" de TMDB, se le llama con un título ficticio para que resetee los buffers
         if item.contentSerieName:
             new_item.infoLabels['tmdb_id'] = '289'                      #una serie no ambigua
@@ -208,6 +209,40 @@ def update_title(item):
     return item
     
 
+def refresh_screen(item):
+    logger.info()
+    
+    """
+    #### Compatibilidad con Kodi 18 ####
+    
+    Refresca la pantalla con el nuevo Item después que haber establecido un dialogo que ha causado el cambio de Item
+    Crea un xlistitem para engañar a Kodi con la función xbmcplugin.setResolvedUrl FALSE
+    
+    Entrada: item:          El Item actualizado
+    Salida: xlistitem       El xlistitem creado, por si resulta de alguna utilidad posterior
+    """
+
+    try:
+        import xbmcplugin
+        import xbmcgui
+        
+        xlistitem = xbmcgui.ListItem(path=item.url)                     #Creamos xlistitem por compatibilidad con Kodi 18
+        if config.get_platform(True)['num_version'] >= 16.0:
+            xlistitem.setArt({"thumb": item.contentThumbnail})          #Cargamos el thumb
+        else:
+            xlistitem.setThumbnailImage(item.contentThumbnail)
+        xlistitem.setInfo("video", item.infoLabels)                     #Copiamos infoLabel
+
+        xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, xlistitem)   #Preparamos el entorno para evitar error Kod1 18
+        time.sleep(1)                                                   #Dejamos tiempo para que se ejecute
+    except:
+        pass
+    
+    platformtools.itemlist_update(item)                                 #refrescamos la pantalla con el nuevo Item
+    
+    return xlistitem
+    
+    
 def post_tmdb_listado(item, itemlist):
     logger.info()
     itemlist_fo = []
@@ -297,6 +332,17 @@ def post_tmdb_listado(item, itemlist):
             item_local.infoLabels['year'] = ''
             item_local.infoLabels['aired'] = ''
             
+        #Si traía el TMDB-ID, pero no ha funcionado, lo reseteamos e intentamos de nuevo
+        if item_local.infoLabels['tmdb_id'] and not item_local.infoLabels['originaltitle']:
+            logger.error("*** TMDB-ID erroneo, reseteamos y reintentamos ***")
+            logger.error(item_local)
+            del item_local.infoLabels['tmdb_id']                #puede traer un TMDB-ID erroneo
+            try:
+                tmdb.set_infoLabels(item_local, True)           #pasamos otra vez por TMDB
+            except:
+                pass
+            logger.error(item_local)
+        
         # Si TMDB no ha encontrado nada y hemos usado el año de la web, lo intentamos sin año
         if not item_local.infoLabels['tmdb_id']:
             if item_local.infoLabels['year']:                   #lo intentamos de nuevo solo si había año, puede que erroneo
@@ -383,7 +429,7 @@ def post_tmdb_listado(item, itemlist):
             title = '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (title, str(item_local.infoLabels['year']), rating, item_local.quality, str(item_local.language))
 
         else:                                       #Si Titulos Inteligentes SÍ seleccionados:
-            title = title.replace("[", "-").replace("]", "-").replace(".", ",")
+            title = title.replace("[", "-").replace("]", "-").replace(".", ",").replace("GB", "G B").replace("Gb", "G b").replace("gb", "g b").replace("MB", "M B").replace("Mb", "M b").replace("mb", "m b")
         
         #Limpiamos las etiquetas vacías
         if item_local.infoLabels['episodio_titulo']:
@@ -393,9 +439,15 @@ def post_tmdb_listado(item, itemlist):
         title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', title).strip()
     
         if item.category_new == "newest":           #Viene de Novedades.  Marcamos el título con el nombre del canal
-            title += ' -%s-' % scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
-            if item_local.contentType == "movie": 
-                item_local.contentTitle += ' -%s-' % scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+            if scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/'):
+                title += ' -%s-' % scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+            else:
+                title += ' -%s-' % item_local.channel.capitalize()
+            if item_local.contentType == "movie":
+                if scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/'):
+                    item_local.contentTitle += ' -%s-' % scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+                else:
+                    item_local.contentTitle += ' -%s-' % item_local.channel.capitalize()
             elif "Episodio " in title:
                 if not item_local.contentSeason or not item_local.contentEpisodeNumber:
                     item_local.contentSeason, item_local.contentEpisodeNumber = scrapertools.find_single_match(title_add, 'Episodio (\d+)x(\d+)')
@@ -483,7 +535,7 @@ def post_tmdb_seasons(item, itemlist):
         del item_season.season_colapse
     title = '** Todas las Temporadas'                       #Agregamos título de TODAS las Temporadas (modo tradicional)
     if item_season.infoLabels['number_of_episodes']:        #Ponemos el núm de episodios de la Serie
-        title += ' [%s epi]' % str(item_season.infoLabels['number_of_episodes'])
+        title += ' [%sx%s epi]' % (str(item_season.infoLabels['number_of_seasons']), str(item_season.infoLabels['number_of_episodes']))
     
     rating = ''                                             #Ponemos el rating, si es diferente del de la Serie
     if item_season.infoLabels['rating'] and item_season.infoLabels['rating'] != 0.0:
@@ -543,7 +595,7 @@ def post_tmdb_seasons(item, itemlist):
             if not config.get_setting("unify"):                     #Si Titulos Inteligentes NO seleccionados:
                 item_local.title = '%s [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.title, item_local.quality, str(item_local.language))
             else:                                                   #Lo arreglamos un poco para Unify
-                item_local.title = item_local.title.replace('[', '-').replace(']', '-').replace('.', ',').strip()
+                item_local.title = item_local.title.replace("[", "-").replace("]", "-").replace(".", ",").replace("GB", "G B").replace("Gb", "G b").replace("gb", "g b").replace("MB", "M B").replace("Mb", "M b").replace("mb", "m b")
             item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
             
             #logger.debug(item_local)
@@ -795,6 +847,7 @@ def post_tmdb_episodios(item, itemlist):
         item_local.title = item_local.title.replace(" []", "").strip()
         item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?-?\s?\]?\]\[\/COLOR\]', '', item_local.title).strip()
         item_local.title = re.sub(r'\s?\[COLOR \w+\]-?\s?\[\/COLOR\]', '', item_local.title).strip()
+        item_local.title = item_local.title.replace("[", "-").replace("]", "-").replace(".", ",").replace("GB", "G B").replace("Gb", "G b").replace("gb", "g b").replace("MB", "M B").replace("Mb", "M b").replace("mb", "m b")
         
         #Si la información de num. total de episodios de TMDB no es correcta, tratamos de calcularla
         if num_episodios < item_local.contentEpisodeNumber:
@@ -996,7 +1049,15 @@ def post_tmdb_findvideos(item, itemlist):
     #busco "duration" en infoLabels
     tiempo = 0
     if item.infoLabels['duration']:
-        tiempo = item.infoLabels['duration']
+        try:
+            if config.get_platform(True)['num_version'] < 18:
+                tiempo = item.infoLabels['duration']
+            elif xbmc.getCondVisibility('Window.IsMedia') == 1:
+                item.quality = re.sub(r'\s?\[\d+:\d+\ h]', '', item.quality)
+            else:
+                tiempo = item.infoLabels['duration']
+        except:
+            tiempo = item.infoLabels['duration']
     
     elif item.contentChannel == 'videolibrary':                         #No hay, viene de la Videoteca? buscamos en la DB
     #Leo de la BD de Kodi la duración de la película o episodio.  En "from_fields" se pueden poner las columnas que se quiera
@@ -1212,7 +1273,7 @@ def get_torrent_size(url):
             
         #si tiene múltiples archivos sumamos la longitud de todos
         if not size:
-            check_video = scrapertools.find_multiple_matches(str(torrent["info"]["files"]), "'length': (\d+)}")
+            check_video = scrapertools.find_multiple_matches(str(torrent["info"]["files"]), "'length': (\d+).*?}")
             sizet = sum([int(i) for i in check_video])
             size = convert_size(sizet)
 
@@ -1651,6 +1712,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     channel_alt = item.channel
     if item.url:
         channel_alt = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()     #Salvamos en nombre del canal o clone
+        if not channel_alt:
+            channel_alt = item.channel
     channel = "'%s'" % channel_alt
     category = ''
     if channel_alt != 'videolibrary':

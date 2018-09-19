@@ -4,6 +4,7 @@ import re
 import sys
 import urllib
 import urlparse
+import time
 
 from channelselector import get_thumb
 from core import httptools
@@ -13,13 +14,24 @@ from core.item import Item
 from platformcode import config, logger
 from core import tmdb
 from lib import generictools
+from channels import filtertools
+from channels import autoplay
+
+
+#IDIOMAS = {'CAST': 'Castellano', 'LAT': 'Latino', 'VO': 'Version Original'}
+IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['torrent']
 
 host = "https://grantorrent.net/"
+channel = "grantorrent"
 
 dict_url_seasons = dict()
-__modo_grafico__ = config.get_setting('modo_grafico', 'grantorrent')
-modo_serie_temp = config.get_setting('seleccionar_serie_temporada', 'grantorrent')
-modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', 'grantorrent')
+__modo_grafico__ = config.get_setting('modo_grafico', channel)
+timeout = config.get_setting('timeout_downloadpage', channel)
+modo_serie_temp = config.get_setting('seleccionar_serie_temporada', channel)
+modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)
 
 
 def mainlist(item):
@@ -32,7 +44,10 @@ def mainlist(item):
     thumb_series = get_thumb("channels_tvshow.png")
     thumb_series_hd = get_thumb("channels_tvshow_hd.png")
     thumb_buscar = get_thumb("search.png")
+    thumb_separador = get_thumb("next.png")
     thumb_settings = get_thumb("setting_0.png")
+    
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url=host, extra="peliculas", thumbnail=thumb_pelis))
 
@@ -43,11 +58,12 @@ def mainlist(item):
 
     #Buscar series
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar en Series >>", url=host + "series/", extra="series", thumbnail=thumb_buscar))
+        
+    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", folder=False, thumbnail=thumb_separador))
     
-    itemlist.append(
-        Item(channel=item.channel, action="", title="[COLOR yellow]Configuración del Canal:[/COLOR]", url="", thumbnail=thumb_settings))
-    itemlist.append(
-        Item(channel=item.channel, action="settingCanal", title="Opciones de Videoteca y TMDB", url="", thumbnail=thumb_settings))
+    itemlist.append(Item(channel=item.channel, action="settingCanal", title="Configurar canal", thumbnail=thumb_settings))
+    
+    autoplay.show_option(item.channel, itemlist)            #Activamos Autoplay
 
     return itemlist
 
@@ -120,6 +136,8 @@ def listado(item):
     cnt_tot = 40                                                        # Poner el num. máximo de items por página
     cnt_title = 0                                                       # Contador de líneas insertadas en Itemlist
     result_mode = config.get_setting("result_mode", channel="search")   # Búsquedas globales: listado completo o no
+    if not item.extra2:
+        item.extra2 = ''
     
     #Sistema de paginado para evitar páginas vacías o semi-vacías en casos de búsquedas con series con muchos episodios
     title_lista = []                        # Guarda la lista de series que ya están en Itemlist, para no duplicar lineas
@@ -133,18 +151,25 @@ def listado(item):
     cnt_top = 10                            #max. num de páginas web a leer antes de pintar
     total_pag = 1
     post_num = 1                            #num pagina actual
+    inicio = time.time()                    # Controlaremos que el proceso no exceda de un tiempo razonable
+    fin = inicio + 5                        # Después de este tiempo pintamos (segundos)
+    timeout_search = timeout                # Timeout para descargas
+    if item.extra == 'search':
+        timeout_search = timeout * 2        # Timeout un poco más largo para las búsquedas
+        if timeout_search < 5:
+            timeout_search = 5              # Timeout un poco más largo para las búsquedas
     
     #Máximo num. de líneas permitidas por TMDB (40). Máx de 5 páginas por Itemlist para no degradar el rendimiento.  
     #Si itemlist sigue vacío después de leer 5 páginas, se pueden llegar a leer hasta 10 páginas para encontrar algo
 
-    while cnt_title <= cnt_tot and cnt_next < cnt_top:
+    while cnt_title <= cnt_tot and cnt_next < cnt_top and fin > time.time():
         # Descarga la página
         data = ''
         try:
             if not item.post:
                 item.post = item.url
             video_section = ''
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.post).data)
+            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.post, timeout=timeout_search).data)
             video_section = scrapertools.find_single_match(data, '<div class="contenedor-home">(.*?</div>)</div></div>')
         except:
             pass
@@ -234,6 +259,10 @@ def listado(item):
 
             if scrapedurl_alt in title_lista_alt or scrapedurl_alt in title_lista_alt_for:  # si ya se ha tratado, pasamos al siguiente item
                 continue
+            
+            #Verificamos si el idioma está dentro del filtro, si no pasamos
+            if not lookup_idiomas_paginacion(item, scrapedurl, scrapedtitle, quality, list_language):
+                continue
             title_lista_alt_for += [scrapedurl_alt]
             cnt_title += 1                      # Sería una línea real más para Itemlist
             
@@ -278,7 +307,7 @@ def listado(item):
         if scrapedurl_alt in title_lista:           # si ya se ha tratado, pasamos al siguiente item
             continue                                # solo guardamos la url para series y docus
         title_lista += [scrapedurl_alt]
-        cnt_title += 1                              # Sería una línea real más para Itemlist
+        #cnt_title += 1                              # Sería una línea real más para Itemlist
 
         item_local = item.clone()                   #Creamos copia de Item para trabajar y limpiamos campos innecesarios
         if item_local.media:                        #Viene de Búsquedas
@@ -315,6 +344,9 @@ def listado(item):
         if "dual" in lang.lower() or "dual" in title.lower():
             item_local.language[0:0] = ["DUAL"]
             
+        if item_local.language == []:
+            item_local.language = ['CAST']                  #Por defecto
+                
         #Limpiamos el título de la basuna innecesaria
         title = title.replace("Dual", "").replace("dual", "").replace("Subtitulada", "").replace("subtitulada", "").replace("Subt", "").replace("subt", "").replace("Sub", "").replace("sub", "").replace("(Reparado)", "").replace("(Proper)", "").replace("(proper)", "").replace("Proper", "").replace("proper", "").replace("(Latino)", "").replace("Latino", "")
         title = title.replace("- HDRip", "").replace("(HDRip)", "").replace("- Hdrip", "").replace("(microHD)", "").replace("(DVDRip)", "").replace("(HDRip)", "").replace("(BR-LINE)", "").replace("(HDTS-SCREENER)", "").replace("(BDRip)", "").replace("(BR-Screener)", "").replace("(DVDScreener)", "").replace("TS-Screener", "").replace(" TS", "").replace(" Ts", "")
@@ -346,8 +378,13 @@ def listado(item):
         item_local.from_title = title.strip()               #Guardamos esta etiqueta para posible desambiguación de título
         item_local.infoLabels['year'] = "-"                 #Reseteamos el año para que TMDB nos lo de
         
-        #Agrega el item local a la lista itemlist
-        itemlist.append(item_local.clone())
+        #Ahora se filtra por idioma, si procede, y se pinta lo que vale
+        if config.get_setting('filter_languages', channel) > 0:     #Si hay idioma seleccionado, se filtra
+            itemlist = filtertools.get_link(itemlist, item_local, list_language)
+        else:
+            itemlist.append(item_local.clone())                     #Si no, pintar pantalla
+        
+        cnt_title = len(itemlist)                                   #Contador de líneas añadidas
 
     #if not item.category and result_mode == 0:     #Si este campo no existe, viene de la primera pasada de una búsqueda global
     #    return itemlist                            #Retornamos sin pasar por la fase de maquillaje para ahorrar tiempo
@@ -373,7 +410,7 @@ def listado(item):
         else:
             title = '[COLOR gold]Página siguiente >>[/COLOR] %s' % post_num
         
-        itemlist.append(item.clone(action="listado", title=title, url=next_page, thumbnail=get_thumb("next.png"), title_lista=title_lista))
+        itemlist.append(item.clone(action="listado", title=title, url=next_page, thumbnail=get_thumb("next.png"), title_lista=title_lista, language=''))
 
     return itemlist
 
@@ -381,13 +418,17 @@ def listado(item):
 def findvideos(item):
     logger.info()
     itemlist = []
+    itemlist_t = []                                     #Itemlist total de enlaces
+    itemlist_f = []                                     #Itemlist de enlaces filtrados
+    if not item.language:
+        item.language = ['CAST']                        #Castellano por defecto
     
     #logger.debug(item)
 
     #Bajamos los datos de la página
     data = ''
     try:
-        data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url).data)
+        data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, timeout=timeout).data)
     except:
         pass
         
@@ -420,6 +461,14 @@ def findvideos(item):
     #Ahora recorremos todos los links por calidades
     for lang, quality, size, scrapedurl in matches:
         temp_epi = ''
+        if scrapertools.find_single_match(quality, '\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)'):
+            password = scrapertools.find_single_match(quality, '\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)')
+            quality = re.sub(r'\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)', '', quality)
+            quality += ' [Contraseña=%s]' % password
+        if scrapertools.find_single_match(size, '\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)'):
+            password = scrapertools.find_single_match(size, '\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)')
+            size = re.sub(r'\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)', '', size)
+            size += ' [Contraseña=%s]' % password
         if item.contentType == "episode":       #En Series los campos están en otro orden.  No hay size, en su lugar sxe
             temp_epi = quality
             quality = size
@@ -485,10 +534,10 @@ def findvideos(item):
             else:
                 item_local.quality = '%s [/COLOR][COLOR white][%s]' % (item_local.quality, size)
         if item_local.action == 'show_result':                                          #Viene de una búsqueda global
-            channel = item_local.channel.capitalize()
+            channel_alt = item_local.channel.capitalize()
             if item_local.from_channel:
-                channel = item_local.from_channel.capitalize()
-            item_local.quality = '[COLOR yellow][%s][/COLOR] %s' % (channel, item_local.quality)
+                channel_alt = item_local.from_channel.capitalize()
+            item_local.quality = '[COLOR yellow][%s][/COLOR] %s' % (channel_alt, item_local.quality)
 
         #Salvamos la url del .torrent
         if scrapedurl:
@@ -507,11 +556,26 @@ def findvideos(item):
             item_local.action = "play"                                                  #Visualizar vídeo
             item_local.server = "torrent"                                               #Seridor Torrent
         
-            itemlist.append(item_local.clone())                                         #Pintar pantalla
+            itemlist_t.append(item_local.clone())                               #Pintar pantalla, si no se filtran idiomas
+        
+            # Requerido para FilterTools
+            if config.get_setting('filter_languages', channel) > 0:                 #Si hay idioma seleccionado, se filtra
+                itemlist_f = filtertools.get_link(itemlist_f, item_local, list_language)    #Pintar pantalla, si no está vacío
             
         #logger.debug("TORRENT: " + item_local.url + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality)
         #logger.debug(item_local)
 
+    if len(itemlist_f) > 0:                                                     #Si hay entradas filtradas...
+        itemlist.extend(itemlist_f)                                             #Pintamos pantalla filtrada
+    else:                                                                       
+        if config.get_setting('filter_languages', channel) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
+            thumb_separador = get_thumb("next.png")                             #... pintamos todo con aviso
+            itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
+        itemlist.extend(itemlist_t)                                             #Pintar pantalla con todo si no hay filtrado
+
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)                                              #Lanzamos Autoplay
+    
     return itemlist
 
     
@@ -530,7 +594,7 @@ def episodios(item):
 
     data = ''
     try:
-        data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url).data)    #Cargamos los datos de la página
+        data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, timeout=timeout).data)    #Cargamos los datos de la página
 
         patron_actual = '<link rel="canonical" href="(.*?)"'                            #Patrón de url temporada actual
         patron_actual_num = 'temporadas?-(\d+)'                                         #Patrón de núm. de temporada actual
@@ -611,7 +675,7 @@ def episodios(item):
     while temp_actual != '':                            #revisamos las temporadas hasta el final
         if not data:                                    #si no hay datos, descargamos. Si los hay de loop anterior, los usamos
             try:
-                data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(temp_actual).data)
+                data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(temp_actual, timeout=timeout).data)
                 
                 #Controla que no haya un bucle en la cadena de links entre temporadas
                 if scrapertools.find_single_match(temp_actual, patron_actual_num) in temp_lista:
@@ -842,6 +906,32 @@ def episodios(item):
     item, itemlist = generictools.post_tmdb_episodios(item, itemlist)
         
     return itemlist
+    
+    
+def lookup_idiomas_paginacion(item, url, title, calidad, list_language):
+    logger.info()
+    estado = True
+    item.language = []
+    itemlist = []
+    
+    if "[vos" in title.lower()  or "v.o.s" in title.lower() or "vo" in title.lower() or "subs" in title.lower() or ".com/pelicula/" in url  or ".com/series-vo" in url or "-vo/" in url or "vos" in calidad.lower() or "vose" in calidad.lower() or "v.o.s" in calidad.lower() or "sub" in calidad.lower() or ".com/peliculas-vo" in item.url:
+        item.language += ["VOS"]
+    
+    if "latino" in title.lower() or "argentina" in title.lower() or "-latino/" in url or "latino" in calidad.lower() or "argentina" in calidad.lower():
+        item.language += ["LAT"]
+
+    if item.language == []:
+        item.language = ['CAST']                                #Por defecto
+    
+    #Ahora se filtra por idioma, si procede, y se pinta lo que vale.  Excluye categorías en otros idiomas.
+    if config.get_setting('filter_languages', channel) > 0 and item.extra2 != 'categorias':
+        itemlist = filtertools.get_link(itemlist, item, list_language)
+        
+        if len(itemlist) == 0:
+            estado = False
+    
+    #Volvemos a la siguiente acción en el canal
+    return estado
 
 
 def actualizar_titulos(item):

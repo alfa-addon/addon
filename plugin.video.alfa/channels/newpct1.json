@@ -33,6 +33,22 @@
       "visible": true
     },
     {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "CAST",
+        "LAT",
+        "VO",
+        "VOS",
+        "VOSE"
+      ]
+    },
+    {
       "id": "clonenewpct1_channel_default",
       "type": "list",
       "label": "Clone de NewPct1 por defecto",
