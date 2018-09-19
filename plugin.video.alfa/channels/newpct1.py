@@ -1240,7 +1240,8 @@ def findvideos(item):
     itemlist = []
     itemlist_t = []                                     #Itemlist total de enlaces
     itemlist_f = []                                     #Itemlist de enlaces filtrados
-    
+    if not item.language:
+        item.language = ['CAST']                        #Castellano por defecto
     
     #logger.debug(item)
     
