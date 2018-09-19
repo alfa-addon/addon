@@ -134,13 +134,13 @@ def open_settings():
                 if settings_post['adult_aux_new_password1'] == settings_post['adult_aux_new_password2']:
                     set_setting('adult_password', settings_post['adult_aux_new_password1'])
                 else:
-                    platformtools.dialog_ok(config.get_localized_string(60305),
-                                            config.get_localized_string(60306),
-                                            config.get_localized_string(60307))
+                    platformtools.dialog_ok(get_localized_string(60305),
+                                            get_localized_string(60306),
+                                            get_localized_string(60307))
 
         else:
-            platformtools.dialog_ok(config.get_localized_string(60305), config.get_localized_string(60309),
-                                    config.get_localized_string(60310))
+            platformtools.dialog_ok(get_localized_string(60305), get_localized_string(60309),
+                                    get_localized_string(60310))
 
             # Deshacer cambios
             set_setting("adult_mode", settings_pre.get("adult_mode", 0))
@@ -195,23 +195,23 @@ def get_setting(name, channel="", server="", default=None):
 
     # Specific channel setting
     if channel:
-        # logger.info("config.get_setting reading channel setting '"+name+"' from channel json")
+        # logger.info("get_setting reading channel setting '"+name+"' from channel json")
         from core import channeltools
         value = channeltools.get_channel_setting(name, channel, default)
-        # logger.info("config.get_setting -> '"+repr(value)+"'")
+        # logger.info("get_setting -> '"+repr(value)+"'")
         return value
 
     # Specific server setting
     elif server:
-        # logger.info("config.get_setting reading server setting '"+name+"' from server json")
+        # logger.info("get_setting reading server setting '"+name+"' from server json")
         from core import servertools
         value = servertools.get_server_setting(name, server, default)
-        # logger.info("config.get_setting -> '"+repr(value)+"'")
+        # logger.info("get_setting -> '"+repr(value)+"'")
         return value
 
     # Global setting
     else:
-        # logger.info("config.get_setting reading main setting '"+name+"'")
+        # logger.info("get_setting reading main setting '"+name+"'")
         value = __settings__.getSetting(name)
         if not value:
             return default

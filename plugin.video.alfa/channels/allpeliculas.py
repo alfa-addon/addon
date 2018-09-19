@@ -33,15 +33,13 @@ SERVERS = {"26": "powvideo", "45": "okru", "75": "openload", "12": "netutv", "65
 list_servers = ['powvideo', 'okru', 'openload', 'netutv', 'thevideos', 'spruto', 'stormo', 'idowatch', 'nowvideo',
                 'fastplay', 'raptu', 'tusfiles']
 
-host = "http://allpeliculas.com/"
+host = "http://allpeliculas.io/"
 
 def mainlist(item):
     logger.info()
     itemlist = []
     item.text_color = color1
-
     autoplay.init(item.channel, list_servers, list_quality)
-
     itemlist.append(item.clone(title="Películas", action="lista", fanart="http://i.imgur.com/c3HS8kj.png",
                                url= host + "movies/newmovies?page=1", extra1 = 0,
                                thumbnail=get_thumb('movies', auto=True)))
@@ -51,16 +49,13 @@ def mainlist(item):
                                url= host, thumbnail=get_thumb('colections', auto=True)))
     itemlist.append(item.clone(title="", action=""))
     itemlist.append(item.clone(title="Buscar...", action="search", thumbnail=get_thumb('search', auto=True)))
-
     autoplay.show_option(item.channel, itemlist)
-
     return itemlist
 
 
 def colecciones(item):
     logger.info()
     itemlist = []
-
     data = httptools.downloadpage(item.url).data
     patron  = 'href="(/peliculas[^"]+).*?'
     patron += 'title_geo"><span>([^<]+).*?'
@@ -143,11 +138,11 @@ def findvideos(item):
     patron += '>([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, calidad in matches:
+        calidad = scrapertools.find_single_match(calidad, "\d+") + scrapertools.find_single_match(calidad, "\..+")
         itemlist.append(item.clone(
                              channel = item.channel,
                              action = "play",
                              title = calidad,
-                             fulltitle = item.title,
                              thumbnail = item.thumbnail,
                              contentThumbnail = item.thumbnail,
                              url = url,
@@ -159,7 +154,7 @@ def findvideos(item):
     if config.get_videolibrary_support():
         itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
                              action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                             fulltitle = item.fulltitle
+                             contentTitle = item.contentTitle
                              ))
     # Requerido para FilterTools
 
@@ -183,31 +178,22 @@ def lista(item):
     dict_param = dict()
     item.infoLabels = {}
     item.text_color = color2
-
     params = '{}'
     if item.extra1 != 0:
         dict_param["genero"] = [item.extra1]
         params = jsontools.dump(dict_param)
-
     data = httptools.downloadpage(item.url, post=params).data
     data = data.replace("<mark>","").replace("<\/mark>","")
     dict_data = jsontools.load(data)
-
     for it in dict_data["items"]:
-        title = it["title"]
-        plot = it["slogan"]
-        rating = it["imdb"]
         year = it["year"]
         url = host + "pelicula/" + it["slug"]
+        title = it["title"] + " (%s)" %year
         thumb = host + it["image"]
         item.infoLabels['year'] = year
-        itemlist.append(item.clone(action="findvideos", title=title, fulltitle=title, url=url, thumbnail=thumb,
-                                   plot=plot, context=["buscar_trailer"], contentTitle=title, contentType="movie"))
-
-    try:
-        tmdb.set_infoLabels(itemlist, __modo_grafico__)
-    except:
-        pass
+        itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumb,
+                                   context=["buscar_trailer"], contentTitle=it["title"], contentType="movie"))
+    tmdb.set_infoLabels(itemlist, __modo_grafico__)
     pagina = scrapertools.find_single_match(item.url, 'page=([0-9]+)')
     item.url = item.url.replace(pagina, "")
     if pagina == "":
@@ -218,6 +204,7 @@ def lista(item):
         itemlist.append(Item(channel = item.channel, action="lista", title="Pagina %s" %pagina, url=item.url, extra1 = item.extra1
                              ))
     return itemlist
+
 
 def search(item, texto):
     logger.info()
@@ -246,12 +233,10 @@ def newest(categoria):
 
             if itemlist[-1].action == "lista":
                 itemlist.pop()
-
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
     except:
         import sys
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         return []
-
     return itemlist
