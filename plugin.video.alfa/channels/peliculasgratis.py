@@ -89,6 +89,7 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     item.url = host + "/search/%s" % texto
+    if item.contentType == '': item.contentType = 'movie'
     try:
         return scraper(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla

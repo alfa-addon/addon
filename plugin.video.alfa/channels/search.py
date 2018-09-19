@@ -143,6 +143,85 @@ def settings(item):
 
 
 def setting_channel(item):
+    if config.get_platform(True)['num_version'] >= 17.0: # A partir de Kodi 16 se puede usar multiselect, y de 17 con preselect
+        return setting_channel_new(item)
+    else:
+        return setting_channel_old(item)
+
+def setting_channel_new(item):
+    import channelselector, xbmcgui
+    from core import channeltools
+
+    # Cargar lista de opciones (canales activos del usuario y que permitan búsqueda global)
+    # ------------------------
+    lista = []; ids = []; lista_lang = []
+    channels_list = channelselector.filterchannels('all')
+    for channel in channels_list:
+        channel_parameters = channeltools.get_channel_parameters(channel.channel)
+
+        # No incluir si en la configuracion del canal no existe "include_in_global_search"
+        if not channel_parameters['include_in_global_search']:
+            continue
+
+        lbl = '%s' % channel_parameters['language']
+        lbl += ' %s' % ', '.join(config.get_localized_category(categ) for categ in channel_parameters['categories'])
+
+        it = xbmcgui.ListItem(channel.title, lbl)
+        it.setArt({ 'thumb': channel.thumbnail, 'fanart': channel.fanart })
+        lista.append(it)
+        ids.append(channel.channel)
+        lista_lang.append(channel_parameters['language'])
+
+    # Diálogo para pre-seleccionar
+    # ----------------------------
+    preselecciones_std = ['Modificar selección actual', 'Modificar partiendo de Todos', 'Modificar partiendo de Ninguno', 'Modificar partiendo de Castellano', 'Modificar partiendo de Latino']
+    if item.action == 'setting_channel': 
+        # Configuración de los canales incluídos en la búsqueda
+        preselecciones = preselecciones_std
+        presel_values = [1, 2, 3, 4, 5]
+    else:
+        # Llamada desde "buscar en otros canales" (se puede saltar la selección e ir directo a la búsqueda)
+        preselecciones = ['Buscar con la selección actual'] + preselecciones_std
+        presel_values = [0, 1, 2, 3, 4, 5]
+    
+    ret = platformtools.dialog_select(config.get_localized_string(59994), preselecciones)
+    if ret == -1: return False # pedido cancel
+    if presel_values[ret] == 0: return True # continuar sin modificar
+    elif presel_values[ret] == 3: preselect = []
+    elif presel_values[ret] == 2: preselect = range(len(ids))
+    elif presel_values[ret] in [4, 5]:
+        busca = 'cast' if presel_values[ret] == 4 else 'lat'
+        preselect = []
+        for i, lg in enumerate(lista_lang):
+            if busca in lg or '*' in lg:
+                preselect.append(i)
+    else:
+        preselect = []
+        for i, canal in enumerate(ids):
+            channel_status = config.get_setting('include_in_global_search', canal)
+            if channel_status:
+                preselect.append(i)
+
+    # Diálogo para seleccionar
+    # ------------------------
+    ret = xbmcgui.Dialog().multiselect(config.get_localized_string(59994), lista, preselect=preselect, useDetails=True)
+    if ret == None: return False # pedido cancel
+    seleccionados = [ids[i] for i in ret]
+
+    # Guardar cambios en canales para la búsqueda
+    # -------------------------------------------
+    for canal in ids:
+        channel_status = config.get_setting('include_in_global_search', canal)
+        if channel_status is None: channel_status = True
+
+        if channel_status and canal not in seleccionados:
+            config.set_setting('include_in_global_search', False, canal)
+        elif not channel_status and canal in seleccionados:
+            config.set_setting('include_in_global_search', True, canal)
+
+    return True
+
+def setting_channel_old(item):
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
     channel_language = config.get_setting("channel_language", default="all")
 
@@ -204,6 +283,7 @@ def save_settings(item, dict_values):
         config.set_setting("include_in_global_search", dict_values[v], v)
 
     progreso.close()
+    return True
 
 
 def cb_custom_button(item, dict_values):
@@ -354,8 +434,8 @@ def do_search(item, categories=None):
         categories = ["Películas"]
         setting_item = Item(channel=item.channel, title=config.get_localized_string(59994), folder=False,
                             thumbnail=get_thumb("search.png"))
-        setting_channel(setting_item)
-
+        if not setting_channel(setting_item):
+            return False
 
     if categories is None:
         categories = []
@@ -474,8 +554,8 @@ def do_search(item, categories=None):
     # es compatible tanto con versiones antiguas de python como nuevas
     if multithread:
         pendent = [a for a in threads if a.isAlive()]
-        t = float(100) / len(pendent)
-        while pendent:
+        if len(pendent) > 0: t = float(100) / len(pendent)
+        while len(pendent) > 0:
             index = (len(threads) - len(pendent)) + 1
             percentage = int(math.ceil(index * t))
 

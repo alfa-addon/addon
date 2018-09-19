@@ -319,7 +319,7 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es', lock=None):
 
                 __leer_datos(otmdb_global)
 
-            if lock:
+            if lock and lock.locked():
                 lock.release()
 
             if item.infoLabels['episode']:

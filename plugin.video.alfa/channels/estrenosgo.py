@@ -682,7 +682,7 @@ def findvideos(item):
     #Ahora tratamos los enlaces .torrent
     itemlist_alt = []                                                               #Usamos una lista intermedia para poder ordenar los episodios
     if matches_torrent:
-        for scrapedurl, scrapedquality, scrapedlang in matches_torrent:             #leemos los torrents con la diferentes calidades
+        for scrapedurl, scrapedquality, scrapedlang in matches_torrent:     #leemos los torrents con la diferentes calidades
             #Generamos una copia de Item para trabajar sobre ella
             item_local = item.clone()
             
@@ -756,9 +756,19 @@ def findvideos(item):
 
                 #Ahora pintamos el link del Torrent
                 item_local.url = host + scrapedtorrent
-                item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (quality, str(item_local.language))                                                  #Preparamos título de Torrent
-                item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title)    #Quitamos etiquetas vacías
-                item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)      #Quitamos colores vacíos
+                size = generictools.get_torrent_size(item_local.url)                    #Buscamos el tamaño en el .torrent
+                if size:
+                    quality += ' [%s]' % size
+                item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (quality, str(item_local.language))                                                  
+                
+                #Preparamos título y calidad, quitamos etiquetas vacías
+                item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
+                item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
+                item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+                quality = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', quality)
+                quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', quality)
+                quality = quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+                
                 item_local.alive = "??"                                                     #Calidad del link sin verificar
                 item_local.action = "play"                                                  #Visualizar vídeo
                 item_local.server = "torrent"                                               #Seridor Torrent
@@ -896,8 +906,15 @@ def findvideos(item):
 
                     #Ahora pintamos el link Directo
                     item_local.url = enlace
-                    item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title)    #Quitamos etiquetas vacías
-                    item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)  #Quitamos colores vacíos
+                    
+                    #Preparamos título y calidad, quitamos etiquetas vacías
+                    item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
+                    item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
+                    item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+                    quality = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', quality)
+                    quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', quality)
+                    quality = quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+                    
                     item_local.action = "play"                                                      #Visualizar vídeo
                     item_local.server = servidor                                                    #Seridor Directo
                     

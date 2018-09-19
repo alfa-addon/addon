@@ -1368,12 +1368,14 @@ def findvideos(item):
         size = scrapertools.find_single_match(data, '<div class="fichas-box"><div class="entry-right"><div style="[^"]+"><span class="[^"]+"><strong>Size:<\/strong>?\s(\d+?\.?\d*?\s\w[b|B])<\/span>')
     size = size.replace(".", ",")                                                   #sustituimos . por , porque Unify lo borra
     if not size:
-        size = scrapertools.find_single_match(item.quality, '\s\[(\d+,?\d*?\s\w[b|B])\]')
+        size = scrapertools.find_single_match(item.quality, '\s\[(\d+,?\d*?\s\w\s?[b|B])\]')
+    if not size:
+        size = generictools.get_torrent_size(item.url)                              #Buscamos el tamaño en el .torrent
     if size:
         item.title = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item.title)            #Quitamos size de título, si lo traía
         item.title = '%s [%s]' % (item.title, size)                                 #Agregamos size al final del título
         size = size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b')
-    item.quality = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item.quality)            #Quitamos size de calidad, si lo traía
+    item.quality = re.sub(r'\s\[\d+,?\d*?\s\w\s?[b|B]\]', '', item.quality)         #Quitamos size de calidad, si lo traía
     
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
@@ -1399,8 +1401,15 @@ def findvideos(item):
         else:
             quality = item_local.quality
         item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (quality, str(item_local.language))                       #Preparamos título de Torrent
-        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title).strip() #Quitamos etiquetas vacías
-        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title).strip() #Quitamos colores vacíos
+        
+        #Preparamos título y calidad, quitamos etiquetas vacías
+        item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
+        item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
+        item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+        quality = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', quality)
+        quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', quality)
+        quality = quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+        
         item_local.alive = "??"                                                     #Calidad del link sin verificar
         item_local.action = "play"                                                  #Visualizar vídeo
         item_local.server = "torrent"                                               #Servidor
@@ -1485,9 +1494,15 @@ def findvideos(item):
                         item_local.action = "play"
                         item_local.server = servidor
                         item_local.url = enlace
-                        item_local.title = item_local.title.replace("[]", "").strip()
-                        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title).strip()
-                        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title).strip()
+                        
+                        #Preparamos título y calidad, quitamos etiquetas vacías
+                        item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
+                        item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
+                        item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+                        item_local.quality = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.quality)
+                        item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality)
+                        item_local.quality = item_local.quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+                        
                         itemlist.append(item_local.clone())
 
                 except:
@@ -1582,9 +1597,16 @@ def findvideos(item):
                             item_local.action = "play"
                             item_local.server = servidor
                             item_local.url = enlace
-                            item_local.title = parte_title.replace("[]", "").strip()
-                            item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title).strip()
-                            item_local.title = re.sub(r'\[COLOR \w+\]-\[\/COLOR\]', '', item_local.title).strip()
+                            item_local.title = parte_title.strip()
+                            
+                            #Preparamos título y calidad, quitamos etiquetas vacías
+                            item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
+                            item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
+                            item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+                            item_local.quality = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.quality)
+                            item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality)
+                            item_local.quality = item_local.quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+                            
                             itemlist.append(item_local.clone())
 
                     except:

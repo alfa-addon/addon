@@ -1,0 +1,12 @@
+{
+"id": "maxipelis24",
+  "name": "Maxipelis24",
+  "active": true,
+  "adult": false,
+  "language": ["lat"],
+  "thumbnail": "maxipelis24.png",
+  "banner": "",
+  "categories": [
+    "movie"
+  ]
+}
