@@ -261,7 +261,7 @@ def listado(item):
                 continue
             
             #Verificamos si el idioma está dentro del filtro, si no pasamos
-            if not lookup_idiomas_paginacion(item, scrapedurl, scrapedtitle, quality, list_language):
+            if not lookup_idiomas_paginacion(item, scrapedurl, scrapedtitle, lang, list_language):
                 continue
             title_lista_alt_for += [scrapedurl_alt]
             cnt_title += 1                      # Sería una línea real más para Itemlist
@@ -908,17 +908,19 @@ def episodios(item):
     return itemlist
     
     
-def lookup_idiomas_paginacion(item, url, title, calidad, list_language):
+def lookup_idiomas_paginacion(item, scrapedurl, title, lang, list_language):
     logger.info()
     estado = True
     item.language = []
     itemlist = []
     
-    if "[vos" in title.lower()  or "v.o.s" in title.lower() or "vo" in title.lower() or "subs" in title.lower() or ".com/pelicula/" in url  or ".com/series-vo" in url or "-vo/" in url or "vos" in calidad.lower() or "vose" in calidad.lower() or "v.o.s" in calidad.lower() or "sub" in calidad.lower() or ".com/peliculas-vo" in item.url:
-        item.language += ["VOS"]
-    
-    if "latino" in title.lower() or "argentina" in title.lower() or "-latino/" in url or "latino" in calidad.lower() or "argentina" in calidad.lower():
-        item.language += ["LAT"]
+    if "latino" in lang.lower() or "latino" in item.url or "latino" in title.lower():
+        item_local.language += ["LAT"]
+    if "ingles" in lang.lower() or "ingles" in item.url or "vose" in scrapedurl or "vose" in item.url:
+        if "VOSE" in lang.lower() or "sub" in title.lower() or "vose" in scrapedurl or "vose" in item.url:
+            item_local.language += ["VOS"]
+        else:
+            item_local.language += ["VO"]
 
     if item.language == []:
         item.language = ['CAST']                                #Por defecto

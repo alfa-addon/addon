@@ -4,6 +4,7 @@ import re
 import sys
 import urllib
 import urlparse
+import time
 
 from channelselector import get_thumb
 from core import httptools
@@ -13,10 +14,23 @@ from core.item import Item
 from platformcode import config, logger
 from core import tmdb
 from lib import generictools
+from channels import filtertools
+from channels import autoplay
 
-host = config.get_setting('domain_name', 'mejortorrent1')
 
-__modo_grafico__ = config.get_setting('modo_grafico', 'mejortorrent1')
+#IDIOMAS = {'CAST': 'Castellano', 'LAT': 'Latino', 'VO': 'Version Original'}
+IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['torrent']
+
+channel = "mejortorrent1"
+host = config.get_setting('domain_name', channel)
+
+categoria = channel.capitalize()
+__modo_grafico__ = config.get_setting('modo_grafico', channel)
+timeout = config.get_setting('timeout_downloadpage', channel)
+
 
 def mainlist(item):
     logger.info()
@@ -30,7 +44,10 @@ def mainlist(item):
     thumb_series_az = get_thumb("channels_tvshow_az.png")
     thumb_docus = get_thumb("channels_documentary.png")
     thumb_buscar = get_thumb("search.png")
+    thumb_separador = get_thumb("next.png")
     thumb_settings = get_thumb("setting_0.png")
+    
+    autoplay.init(item.channel, list_servers, list_quality)
 
     #itemlist.append(Item(channel=item.channel, title="Novedades", action="listado_busqueda", extra="novedades", tipo=False,
     #                     url= host + "ultimos-torrents/", thumbnail=thumb_buscar))
@@ -46,19 +63,20 @@ def mainlist(item):
     
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", thumbnail=thumb_buscar, tipo=False))
     
-    itemlist.append(
-        Item(channel=item.channel, action="", title="[COLOR yellow]Configuración del Canal:[/COLOR]", url="", thumbnail=thumb_settings))
-    itemlist.append(
-        Item(channel=item.channel, action="settingCanal", title="URL del Canal y otros", url="", thumbnail=thumb_settings))
+    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", folder=False, thumbnail=thumb_separador))
+    
+    itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", thumbnail=thumb_settings))
+    
+    autoplay.show_option(item.channel, itemlist)            #Activamos Autoplay
 
     return itemlist
     
     
-def settingCanal(item):
+def configuracion(item):
     from platformcode import platformtools
-    platformtools.show_channel_settings()
+    ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
-    return 
+    return
 
     
 def submenu(item):
@@ -126,7 +144,7 @@ def listado(item):
     
     try:
         data = ''
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
+        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
         data = re.sub('\r\n', '', data).decode('utf8').encode('utf8')
         data = data.replace("'", '"')
     except:
@@ -322,7 +340,7 @@ def listado(item):
                 real_title, item_local.contentSeason, episodio, item_local.quality = scrapertools.find_single_match(scrapedurl, patron_title_ep)
                 
                 #Hay que buscar la raiz de la temporada
-                data_epi = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item_local.url).data)
+                data_epi = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item_local.url, timeout=timeout).data)
                 url = scrapertools.find_single_match(data_epi, '<tr><td>.*<a href="([^"]+)" style="text-decoration:none;"><h1 style=')
                 if not url:
                     url = scrapertools.find_single_match(data_epi, '<td><a href="(secciones.php\?sec\=descargas&ap=[^"]+)"')
@@ -410,6 +428,9 @@ def listado(item):
         if scrapertools.find_single_match(title, r'-\s[m|M].*?serie'):
             title = re.sub(r'-\s[m|M].*?serie', '', title)
             title_subs += ["Miniserie"]
+            
+        if item_local.language == []:
+            item_local.language = ['CAST']                              #Por defecto
         
         if title.endswith('.'):
             title = title[:-1]
@@ -521,6 +542,13 @@ def listado_busqueda(item):
     curr_page_num = 1           # Página actual
     category = ""               # Guarda la categoria que viene desde una busqueda global
     matches = []
+    inicio = time.time()                                    # Controlaremos que el proceso no exceda de un tiempo razonable
+    fin = inicio + 5                                        # Después de este tiempo pintamos (segundos)
+    timeout_search = timeout                                # Timeout para descargas
+    if item.extra == 'search':
+        timeout_search = timeout * 2                        # Timeout un poco más largo para las búsquedas
+        if timeout_search < 5:
+            timeout_search = 5                              # Timeout un poco más largo para las búsquedas
     
     if item.url_next_page:
         url_next_page = item.url_next_page
@@ -528,12 +556,12 @@ def listado_busqueda(item):
         url_next_page = item.url
 
     #Máximo num. de líneas permitidas por TMDB. Máx de 5 páginas por Itemlist para no degradar el rendimiento
-    while cnt_title <= cnt_tot and cnt_next < 5:
+    while cnt_title <= cnt_tot and fin > time.time():
         
         status = False          # Calidad de los datos leídos
         data = ''
         try:
-            data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(url_next_page, post=item.post).data)
+            data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(url_next_page, post=item.post, timeout=timeout_search).data)
             data = re.sub('\r\n', '', data).decode('utf8').encode('utf8')
             data = data.replace("'", '"')
         except:
@@ -565,8 +593,13 @@ def listado_busqueda(item):
         if len(matches_alt) > 0:
             status = True
             for scrapedurl, scrapedtitle, scrapedquality, scrapedtype in matches_alt:
-                if scrapedtype not in ['Juegos', 'Capitulos', 'Musica']:            #limpiamos de contenidos no deseados
-                    matches.append(matches_alt[i])                                  #acumulamos los títulos
+                if scrapedtype in ['Juegos', 'Capitulos', 'Musica']:                #limpiamos de contenidos no deseados
+                    i += 1
+                    continue
+                if not lookup_idiomas_paginacion(item, scrapedurl, scrapedtitle, scrapedquality, list_language):
+                    i += 1
+                    continue
+                matches.append(matches_alt[i])                                      #acumulamos los títulos
                 i += 1
         cnt_title = len(matches)                                                    #número de títulos a pintar
         
@@ -645,7 +678,7 @@ def listado_busqueda(item):
             title = title.replace(" Latino", "").replace(" latino", "").replace(" Argentina", "").replace(" argentina", "")
         title = title.replace("Castellano", "").replace("castellano", "").replace("inglés", "").replace("ingles", "").replace("Inglés", "").replace("Ingles", "")
         
-        if "audio" in title.lower():        #Reservamos info de audio para después de TMDB
+        if "audio" in title.lower():                                    #Reservamos info de audio para después de TMDB
             title_subs += ['[%s]' % scrapertools.find_single_match(title, r'(\[[a|A]udio.*?\])')]
             title = re.sub(r'\[[a|A]udio.*?\]', '', title)
         if "[dual" in title.lower():
@@ -654,6 +687,9 @@ def listado_busqueda(item):
         if scrapertools.find_single_match(title, r'-\s[m|M].*?serie'):
             title = re.sub(r'-\s[m|M].*?serie', '', title)
             title_subs += ["Miniserie"]
+            
+        if item_local.language == []:
+            item_local.language = ['CAST']                              #Por defecto
         
         if title.endswith('.'):
             title = title[:-1]
@@ -741,7 +777,13 @@ def listado_busqueda(item):
             item_local.contentSeason_save = item_local.contentSeason
             del item_local.infoLabels['season']
         
-        itemlist.append(item_local.clone())
+        #Ahora se filtra por idioma, si procede, y se pinta lo que vale
+        if config.get_setting('filter_languages', channel) > 0:     #Si hay idioma seleccionado, se filtra
+            itemlist = filtertools.get_link(itemlist, item_local, list_language)
+        else:
+            itemlist.append(item_local.clone())                     #Si no, pintar pantalla
+        
+        cnt_title = len(itemlist)                                   #Contador de líneas añadidas
         
         #logger.debug(item_local)
         
@@ -767,6 +809,10 @@ def listado_busqueda(item):
 def findvideos(item):
     logger.info()
     itemlist = []
+    itemlist_t = []                                     #Itemlist total de enlaces
+    itemlist_f = []                                     #Itemlist de enlaces filtrados
+    if not item.language:
+        item.language = ['CAST']                        #Castellano por defecto
     
     #logger.debug(item)
 
@@ -780,7 +826,7 @@ def findvideos(item):
     #Bajamos los datos de la página de todo menos de Documentales y Varios
     if not item.post:
         try:
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
+            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
             data = data.replace('"', "'")
             patron = "<form (?:.*?)?"
             patron += "name='episodios'.+action='([^']+)' method='post'>.*?"
@@ -881,11 +927,27 @@ def findvideos(item):
         item_local.action = "play"                                                  #Visualizar vídeo
         item_local.server = "torrent"                                               #Seridor Torrent
     
-        itemlist.append(item_local.clone())                                         #Pintar pantalla        
+        itemlist_t.append(item_local.clone())                                       #Pintar pantalla, si no se filtran idiomas
+        
+        # Requerido para FilterTools
+        if config.get_setting('filter_languages', channel) > 0:                     #Si hay idioma seleccionado, se filtra
+            itemlist_f = filtertools.get_link(itemlist_f, item_local, list_language)  #Pintar pantalla, si no está vacío
 
     #logger.debug("title=[" + item.title + "], torrent=[ " + item_local.url + " ], url=[ " + url + " ], post=[" + item.post + "], thumbnail=[ " + item.thumbnail + " ]" + " size: " + size)
+    
     #logger.debug(item_local)
 
+    if len(itemlist_f) > 0:                                                         #Si hay entradas filtradas...
+        itemlist.extend(itemlist_f)                                                 #Pintamos pantalla filtrada
+    else:                                                                       
+        if config.get_setting('filter_languages', channel) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
+            thumb_separador = get_thumb("next.png")                                 #... pintamos todo con aviso
+            itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
+        itemlist.extend(itemlist_t)                                                 #Pintar pantalla con todo si no hay filtrado
+
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)                                                  #Lanzamos Autoplay
+    
     return itemlist
  
 
@@ -900,7 +962,7 @@ def episodios(item):
     # Carga la página
     data_ini = ''
     try:
-        data_ini = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
+        data_ini = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
         data_ini = data_ini.replace('"', "'")
     except:                                                                         #Algún error de proceso, salimos
         pass
@@ -1015,8 +1077,34 @@ def episodios(item):
     item, itemlist = generictools.post_tmdb_episodios(item, itemlist)
 
     return itemlist
+    
+    
+def lookup_idiomas_paginacion(item, url, title, calidad, list_language):
+    logger.info()
+    estado = True
+    item.language = []
+    itemlist = []
+    
+    if "[subs" in title.lower() or "[vos" in title.lower()  or "v.o.s" in title.lower() or "vo" in title.lower():
+        item.language += ["VOS"]
 
+    if "latino" in title.lower() or "argentina" in title.lower():
+        item.language += ["LAT"]
 
+    if item.language == []:
+        item.language = ['CAST']                                #Por defecto
+
+    #Ahora se filtra por idioma, si procede, y se pinta lo que vale.  Excluye categorías en otros idiomas.
+    if config.get_setting('filter_languages', channel) > 0:
+        itemlist = filtertools.get_link(itemlist, item, list_language)
+        
+        if len(itemlist) == 0:
+            estado = False
+
+    #Volvemos a la siguiente acción en el canal
+    return estado
+
+    
 def actualizar_titulos(item):
     logger.info()
     
