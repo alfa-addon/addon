@@ -20,6 +20,20 @@
             "visible": true
         },
         {
+          "id": "filter_languages",
+          "type": "list",
+          "label": "Mostrar enlaces en idioma...",
+          "default": 0,
+          "enabled": true,
+          "visible": true,
+          "lvalues": [
+            "No filtrar",
+            "LAT",
+            "CAST",
+            "VOSE"
+          ]
+        },
+        {
           "id": "include_in_newest_latino",
           "type": "bool",
           "label": "Incluir en Novedades - Latino",

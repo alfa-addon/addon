@@ -324,7 +324,7 @@ def findvideos(item):
                 url = server_url[server_id] + video_id + '.html'
             elif server_id == 'BitTorrent':
                 import urllib
-                base_url = '%sprotect/v.php' % host
+                base_url = '%s/protect/v.php' % host
                 post = {'i':video_id, 'title':item.title}
                 post = urllib.urlencode(post)
                 headers = {'Referer':item.url}

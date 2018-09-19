@@ -161,6 +161,7 @@ def findvideos(item):
     itemlist.extend(servertools.find_video_items(data=data))
 
     for videoitem in itemlist:
+        videoitem.channel = item.channel
         videoitem.title = '[%s]' % videoitem.server.capitalize()
 
     return itemlist

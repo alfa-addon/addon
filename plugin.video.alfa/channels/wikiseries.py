@@ -221,7 +221,7 @@ def findvideos(item):
         language = ''
         if 'latino' in link.lower():
             language='Latino'
-        elif 'español' in link.lower():
+        elif 'espaÑol' in link.lower():
             language = 'Español'
         elif 'subtitulado' in link.lower():
             language = 'VOSE'

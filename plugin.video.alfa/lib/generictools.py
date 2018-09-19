@@ -8,6 +8,7 @@
 # ------------------------------------------------------------
 
 import re
+import os
 import sys
 import urllib
 import urlparse
@@ -236,8 +237,7 @@ def post_tmdb_listado(item, itemlist):
         del item.channel_alt
     if item.url_alt:
         del item.url_alt
-    if item.extra2:
-        del item.extra2
+
     #Ajustamos el nombre de la categoría
     if not item.category_new:
         item.category_new = ''
@@ -389,8 +389,8 @@ def post_tmdb_listado(item, itemlist):
         if item_local.infoLabels['episodio_titulo']:
             item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['episodio_titulo'].replace(" []", "").strip()
         title = title.replace("--", "").replace(" []", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
-        title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', title).strip()
-        title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', title).strip()
+        title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', title).strip()
+        title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', title).strip()
     
         if item.category_new == "newest":           #Viene de Novedades.  Marcamos el título con el nombre del canal
             title += ' -%s-' % scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
@@ -766,6 +766,7 @@ def post_tmdb_episodios(item, itemlist):
         #Si no está el título del episodio, pero sí está en "title", lo rescatamos
         if not item_local.infoLabels['episodio_titulo'] and item_local.infoLabels['title'].lower() != item_local.infoLabels['tvshowtitle'].lower():
             item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['title']
+        item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['episodio_titulo'].replace('GB', 'G B').replace('MB', 'M B')
         
         #Preparamos el título para que sea compatible con Añadir Serie a Videoteca
         if "Temporada" in item_local.title:             #Compatibilizamos "Temporada" con Unify
@@ -792,8 +793,8 @@ def post_tmdb_episodios(item, itemlist):
         item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['episodio_titulo'].replace(" []", "").strip()
         item_local.infoLabels['title'] = item_local.infoLabels['title'].replace(" []", "").strip()
         item_local.title = item_local.title.replace(" []", "").strip()
-        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title).strip()
-        item_local.title = re.sub(r'\s\[COLOR \w+\]-\[\/COLOR\]', '', item_local.title).strip()
+        item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?-?\s?\]?\]\[\/COLOR\]', '', item_local.title).strip()
+        item_local.title = re.sub(r'\s?\[COLOR \w+\]-?\s?\[\/COLOR\]', '', item_local.title).strip()
         
         #Si la información de num. total de episodios de TMDB no es correcta, tratamos de calcularla
         if num_episodios < item_local.contentEpisodeNumber:
@@ -1054,8 +1055,8 @@ def post_tmdb_findvideos(item, itemlist):
         title_gen = item.title
 
     #Limpiamos etiquetas vacías
-    title_gen = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', title_gen).strip()  #Quitamos etiquetas vacías
-    title_gen = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', title_gen).strip()            #Quitamos colores vacíos
+    title_gen = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', title_gen).strip()  #Quitamos etiquetas vacías
+    title_gen = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', title_gen).strip()            #Quitamos colores vacíos
     title_gen = title_gen.replace(" []", "").strip()                                    #Quitamos etiquetas vacías
     title_videoteca = title_gen                                                         #Salvamos el título para Videoteca
 
@@ -1103,7 +1104,131 @@ def post_tmdb_findvideos(item, itemlist):
     
     return (item, itemlist)
     
+    
+def get_torrent_size(url):
+    logger.info()
+    
+    """
+    
+    Módulo extraido del antiguo canal ZenTorrent
+    
+    Calcula el tamaño de los archivos que contienen un .torrent.  Descarga el archivo .torrent en una carpeta,
+    lo lee y descodifica.  Si contiene múltiples archivos, suma el tamaño de todos ellos
+    
+    Llamada:            generictools.get_torrent_size(url)
+    Entrada: url:       url del archivo .torrent
+    Salida: size:       str con el tamaño y tipo de medida ( MB, GB, etc)
+    
+    """
+    
+    def convert_size(size):
+        import math
+        if (size == 0):
+            return '0B'
+        size_name = ("B", "KB", "M B", "G B", "TB", "PB", "EB", "ZB", "YB")
+        i = int(math.floor(math.log(size, 1024)))
+        p = math.pow(1024, i)
+        s = round(size / p, 2)
+        return '%s %s' % (s, size_name[i])
+    
+    def decode(text):
+        try:
+            src = tokenize(text)
+            data = decode_item(src.next, src.next())
+            for token in src:  # look for more tokens
+                raise SyntaxError("trailing junk")
+        except (AttributeError, ValueError, StopIteration):
+            try:
+                data = data
+            except:
+                data = src
 
+        return data
+        
+    def tokenize(text, match=re.compile("([idel])|(\d+):|(-?\d+)").match):
+        i = 0
+        while i < len(text):
+            m = match(text, i)
+            s = m.group(m.lastindex)
+            i = m.end()
+            if m.lastindex == 2:
+                yield "s"
+                yield text[i:i + int(s)]
+                i = i + int(s)
+            else:
+                yield s
+
+    def decode_item(next, token):
+        if token == "i":
+            # integer: "i" value "e"
+            data = int(next())
+            if next() != "e":
+                raise ValueError
+        elif token == "s":
+            # string: "s" value (virtual tokens)
+            data = next()
+        elif token == "l" or token == "d":
+            # container: "l" (or "d") values "e"
+            data = []
+            tok = next()
+            while tok != "e":
+                data.append(decode_item(next, tok))
+                tok = next()
+            if token == "d":
+                data = dict(zip(data[0::2], data[1::2]))
+        else:
+            raise ValueError
+        return data
+        
+    
+    #Móludo principal
+    size = ""
+    try:
+        torrents_path = config.get_videolibrary_path() + '/torrents'            #path para dejar el .torrent
+
+        if not os.path.exists(torrents_path):
+            os.mkdir(torrents_path)                                             #si no está la carpeta la creamos
+        
+        urllib.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'
+        urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
+        torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
+
+        if "used CloudFlare" in torrent_file:                                   #Si tiene CloudFlare, usamos este proceso
+            try:
+                urllib.urlretrieve("http://anonymouse.org/cgi-bin/anon-www.cgi/" + url.strip(),
+                                   torrents_path + "/generictools.torrent")
+                torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()
+            except:
+                torrent_file = ""
+        
+        torrent = decode(torrent_file)                                          #decodificamos el .torrent
+
+        #si sólo tiene un archivo, tomamos la longitud y la convertimos a una unidad legible, si no dará error
+        try:
+            sizet = torrent["info"]['length']
+            size = convert_size(sizet)
+        except:
+            pass
+            
+        #si tiene múltiples archivos sumamos la longitud de todos
+        if not size:
+            check_video = scrapertools.find_multiple_matches(str(torrent["info"]["files"]), "'length': (\d+)}")
+            sizet = sum([int(i) for i in check_video])
+            size = convert_size(sizet)
+
+    except:
+        logger.error('ERROR al buscar el tamaño de un .Torrent: ' + url)
+        
+    try:
+        os.remove(torrents_path + "/generictools.torrent")                      #borramos el .torrent
+    except:
+        pass
+        
+    #logger.debug(url + ' / ' + size)
+    
+    return size
+
+    
 def get_field_from_kodi_DB(item, from_fields='*', files='file'):
     logger.info()
     """
