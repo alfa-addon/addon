@@ -17,10 +17,10 @@ from channels import autoplay
 from platformcode import config, logger
 
 
-IDIOMAS = {'1':'Cast', '2':'Lat', '3':'VOSE', '4':'VO'}
+IDIOMAS = {'EspaL':'Cast', 'LatinoL':'Lat', 'SubL':'VOSE', 'OriL':'VO'}
 list_language = IDIOMAS.values()
 
-CALIDADES = {'1':'1080','2':'720','3':'480','4':'360'}
+CALIDADES = {'1080p':'1080','720p':'720','480p':'480','360p':'360'}
 
 list_quality = ['1080', '720', '480', '360']
 
@@ -89,17 +89,20 @@ def section(item):
     logger.info()
     itemlist=[]
     data = get_source(host+item.type)
-
     if 'Genero' in item.title:
-        data = scrapertools.find_single_match(data, 'genero.*?</ul>')
+        data = scrapertools.find_single_match(data, 'Generos.*?</ul>')
     elif 'Año' in item.title:
-        data = scrapertools.find_single_match(data, 'año.*?</ul>')
-    patron = '<a href=(.*?) >(.*?)</a>'
+        data = scrapertools.find_single_match(data, 'Años.*?</ul>')
+    patron = "<li onclick=filter\(this, '([^']+)', \d+\);>"
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedtitle in matches:
+    for scrapedtitle in matches:
         title = scrapedtitle
-        itemlist.append(Item(channel=item.channel, url=scrapedurl, title=title, action='list_all',
+        if r'\d+' in scrapedtitle:
+            url = '%s%s/filtro/,/%s,' % (host, item.type, title)
+        else:
+            url = '%s%s/filtro/%s,/,' % (host, item.type, title)
+        itemlist.append(Item(channel=item.channel, url=url, title=title, action='list_all',
                                  type=item.type))
     return itemlist
 
@@ -109,46 +112,33 @@ def list_all(item):
     itemlist = []
 
     data = get_source(item.url)
-    #logger.debug(data)
-    #return
-    if item.type ==  'peliculas':
-        patron = '<article class=Items>.*?<img src=(.*?) />.*?<a href=(.*?)><h2>(.*?)</h2>.*?'
-        patron += "<p>(.*?)</p><span>(\d{4}) /.*?</span>.*?'(\d+)'"
-        matches = re.compile(patron, re.DOTALL).findall(data)
+    patron = '<article class=Item><a href=([^>]+)><div class=Poster>'
+    patron += '<img src=(.+?)(?:>|alt).*?<h2>([^>]+)</h2>.*?</article>'
+    matches = re.compile(patron, re.DOTALL).findall(data)
 
-        for scrapedthumbnail, scrapedurl, scrapedtitle, scrapedplot, year, video_id in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
 
-            title = '%s [%s]' % (scrapedtitle, year)
-            contentTitle = scrapedtitle
-            thumbnail = scrapedthumbnail
-            url = scrapedurl
+        title = scrapedtitle
+        thumbnail = scrapedthumbnail.strip()
+        url = scrapedurl
+        filter_thumb = thumbnail.replace("https://image.tmdb.org/t/p/w154", "")
+        filter_list = {"poster_path": filter_thumb}
+        filter_list = filter_list.items()
+        new_item = Item(channel=item.channel,
+                        title=title,
+                        url=url,
+                        thumbnail=thumbnail,
+                        plot=thumbnail,
+                        infoLabels={'filtro':filter_list})
 
-            itemlist.append(item.clone(action='findvideos',
-                            title=title,
-                            url=url,
-                            thumbnail=thumbnail,
-                            contentTitle=contentTitle,
-                            video_id=video_id,
-                            infoLabels={'year':year}))
+        if item.type == 'peliculas':
+            new_item.action = 'findvideos'
+            new_item.contentTitle = scrapedtitle
+        else:
+            new_item.action = 'seasons'
+            new_item.contentSerieName = scrapedtitle
 
-    elif item.type ==  'series':
-        patron = '<article class=GoItemEp>.*?<a href=(.*?)>.*?<img src=(.*?) />.*?'
-        patron +='<h2>(.*?)</h2><p>(.*?)</p><span>(\d{4}) /'
-        matches = re.compile(patron, re.DOTALL).findall(data)
-
-        for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedplot, year in matches:
-            title = scrapedtitle
-            contentSerieName = scrapedtitle
-            thumbnail = scrapedthumbnail
-            url = scrapedurl
-
-            itemlist.append(item.clone(action='seasons',
-                            title=title,
-                            url=url,
-                            thumbnail=thumbnail,
-                            plot=scrapedplot,
-                            contentSerieName=contentSerieName,
-                            infoLabels={'year':year}))
+        itemlist.append(new_item)
 
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
     #  Paginación
@@ -199,21 +189,18 @@ def episodesxseasons(item):
     itemlist = []
 
     data=get_source(item.url)
-    logger.debug(data)
-    patron= "ViewEpisode\('(\d+)', this\)><div class=num>%s - (\d+)</div>" % item.infoLabels['season']
-    patron += ".*?src=(.*?) />.*?namep>(.*?)<span>"
-
+    patron= "<li><a href=([^>]+)><b>%s - (\d+)</b><h2 class=eTitle>([^>]+)</h2>" % item.infoLabels['season']
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     infoLabels = item.infoLabels
 
-    for video_id, scrapedepisode, scrapedthumbnail, scrapedtitle in matches:
+    for url, scrapedepisode, scrapedtitle in matches:
 
         infoLabels['episode'] = scrapedepisode
         title = '%sx%s - %s' % (infoLabels['season'], infoLabels['episode'], scrapedtitle)
 
-        itemlist.append(Item(channel=item.channel, title= title, url=item.url, thumbnail=scrapedthumbnail,
-                             action='findvideos', video_id=video_id, infoLabels=infoLabels))
+        itemlist.append(Item(channel=item.channel, title= title, url=url, action='findvideos',
+                             infoLabels=infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
@@ -224,40 +211,33 @@ def findvideos(item):
     logger.info()
     from lib import jsunpack
     itemlist = []
-    headers = {'referer':item.url}
-    if item.video_id == '':
-        find_id = get_source(item.url)
-        #logger.debug(find_id)
-        #return
-        item.video_id = scrapertools.find_single_match(find_id, 'var centerClick = (\d+);')
-    url = 'https://goovie.co/api/links/%s' % item.video_id
-    data = httptools.downloadpage(url, headers=headers).data
-    video_list = jsontools.load(data)
-    for video_info in video_list:
-        logger.debug(video_info)
-        url = video_info['visor']
-        plot = 'idioma: %s calidad: %s' % (video_info['idioma'], video_info['calidad'])
+    data = get_source(item.url)
+
+    patron = "onclick=clickLink\(this, '([^']+)', '([^']+)', '([^']+)'\);>"
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    headers = {'referer': item.url}
+    for url, quality, language in matches:
+
         data = httptools.downloadpage(url, headers=headers, follow_redirects=False).data
         data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
         packed = scrapertools.find_single_match(data, '(eval\(.*?);var')
         unpacked = jsunpack.unpack(packed)
-        logger.debug('unpacked %s' % unpacked)
         server = scrapertools.find_single_match(unpacked, "src:.'(http://\D+)/")
         id = scrapertools.find_single_match(unpacked, "src:.'http://\D+/.*?description:.'(.*?).'")
         if server == '':
             if 'powvideo' in unpacked:
-                id = scrapertools.find_single_match(unpacked ,",description:.'(.*?).'")
-                server= 'https://powvideo.net'
+                id = scrapertools.find_single_match(unpacked, ",description:.'(.*?).'")
+                server = 'https://powvideo.net'
         url = '%s/%s' % (server, id)
         if server != '' and id != '':
-            language = IDIOMAS[video_info['idioma']]
-            quality = CALIDADES[video_info['calidad']]
+            language = IDIOMAS[language]
+            quality = CALIDADES[quality]
             title = ' [%s] [%s]' % (language, quality)
-            itemlist.append(Item(channel=item.channel, title='%s'+title, url=url, action='play', language=language,
-                                 quality=quality))
-
-    itmelist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+            itemlist.append(Item(channel=item.channel, title='%s' + title, url=url, action='play', language=language,
+                                 quality=quality, infoLabels=item.infoLabels))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return sorted(itemlist, key=lambda i: i.language)
+
 
 
 def search(item, texto):
@@ -266,44 +246,9 @@ def search(item, texto):
     item.url = item.url + texto
     item.type = 'peliculas'
     if texto != '':
-        return search_results(item)
+        return list_all(item)
     else:
         return []
-
-def search_results(item):
-    logger.info()
-
-    itemlist=[]
-
-    data=get_source(item.url)
-    logger.debug(data)
-    patron = '<article class=Items>.*?href=(.*?)>.*?typeContent>(.*?)<.*?'
-    patron += '<img src=(.*?) />.*?<h2>(.*?)</h2><p>(.*?)</p><span>(\d{4})<'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedurl, content_type ,scrapedthumb, scrapedtitle, scrapedplot, year in matches:
-
-        title = scrapedtitle
-        url = scrapedurl
-        thumbnail = scrapedthumb
-        plot = scrapedplot
-        if content_type != 'Serie':
-            action = 'findvideos'
-        else:
-            action = 'seasons'
-
-        new_item=Item(channel=item.channel, title=title, url=url, thumbnail=thumbnail, plot=plot,
-                             action=action, type=content_type, infoLabels={'year':year})
-        if new_item.action == 'findvideos':
-            new_item.contentTitle = new_item.title
-        else:
-            new_item.contentSerieName = new_item.title
-
-        itemlist.append(new_item)
-
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
-    return itemlist
 
 def newest(categoria):
     logger.info()
@@ -313,9 +258,9 @@ def newest(categoria):
         if categoria in ['peliculas']:
             item.url = host + 'peliculas'
         elif categoria == 'infantiles':
-            item.url = host + 'peliculas/generos/animación'
+            item.url = host + 'peliculas/filtro/Animación,/,'
         elif categoria == 'terror':
-            item.url = host + 'peliculas/generos/terror'
+            item.url = host + 'peliculas/filtro/Terror,/,'
         item.type='peliculas'
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>':

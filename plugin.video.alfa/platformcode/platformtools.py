@@ -154,6 +154,13 @@ def render_items(itemlist, parent_item):
                 valid_genre = True
             elif anime:
                 valid_genre = True
+        elif 'siguiente' in item.title.lower() and '>' in item.title:
+            item.thumbnail = get_thumb("next.png")
+        elif 'add' in item.action:
+            if 'pelicula' in item.action:
+                item.thumbnail = get_thumb("videolibrary_movie.png")
+            elif 'serie' in item.action:
+                    item.thumbnail = get_thumb("videolibrary_tvshow.png")
 
 
         if unify_enabled and parent_item.channel != 'alfavorites':
