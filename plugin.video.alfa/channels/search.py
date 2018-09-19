@@ -394,6 +394,10 @@ def show_result(item):
         return channel.search(item, tecleado)
     else:
         # Mostrar resultados: todos juntos
+        if item.infoPlus:                       #Si viene de una ventana de InfoPlus, hay que salir de esta forma...
+            del item.infoPlus                   #si no, se mete en un bucle mostrando la misma pantalla, 
+            item.title = item.title.strip()     #dando error en "handle -1"
+            return getattr(channel, item.action)(item)
         try:
             from platformcode import launcher
             launcher.run(item)
@@ -489,7 +493,7 @@ def do_search(item, categories=None):
             if categories:
 
                 # Si no se ha seleccionado torrent no se muestra
-                if "torrent" not in categories:
+                if "torrent" not in categories and "infoPlus" not in categories:
                     if "torrent" in channel_parameters["categories"]:
                         logger.info("%s -torrent-" % basename_without_extension)
                         continue
@@ -601,6 +605,8 @@ def do_search(item, categories=None):
                 for i in element["itemlist"]:
                     if i.action:
                         title = "    " + i.title
+                        if "infoPlus" in categories:            #Se manrca vi viene de una ventana de InfoPlus
+                            i.infoPlus = True
                         itemlist.append(i.clone(title=title, from_action=i.action, from_channel=i.channel,
                                                 channel="search", action="show_result", adult=element["adult"]))
 

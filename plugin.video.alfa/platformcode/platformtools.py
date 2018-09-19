@@ -1071,8 +1071,8 @@ def play_torrent(item, xlistitem, mediaurl):
         
         #### Compatibilidad con Kodi 18: evita cuelgues/cancelaciones cuando el .torrent se lanza desde pantalla convencional
         if xbmc.getCondVisibility('Window.IsMedia'):
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, xlistitem)   #Preparamos el entorno para evutar error Kod1 18
-            time.sleep(1)                                                   #Dejamos que se ejecute
+            xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, xlistitem)   #Preparamos el entorno para evitar error Kod1 18
+            time.sleep(1)                                                   #Dejamos tiempo para que se ejecute
 
         mediaurl = urllib.quote_plus(item.url)
         if ("quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]) and item.infoLabels['tmdb_id']:    #Llamada con más parámetros para completar el título
@@ -1083,17 +1083,17 @@ def play_torrent(item, xlistitem, mediaurl):
         
         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
 
-        #Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos
-        if "quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]:   
-            time_limit = time.time() + 150                          #Marcamos el timepo máx. de buffering
-            while not is_playing() and time.time() < time_limit:    #Esperamos mientra buffera    
-                time.sleep(5)                                       #Repetimos cada intervalo
-                #logger.debug(str(time_limit))
-            
-            if item.strm_path and is_playing():                     #Sólo si es de Videoteca
-                from platformcode import xbmc_videolibrary
-                xbmc_videolibrary.mark_auto_as_watched(item)        #Marcamos como visto al terminar
-                #logger.debug("Llamado el marcado")
+        #Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos: asumimos que todos funcionan
+        #if "quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]:   
+        time_limit = time.time() + 150                          #Marcamos el timepo máx. de buffering
+        while not is_playing() and time.time() < time_limit:    #Esperamos mientra buffera    
+            time.sleep(5)                                       #Repetimos cada intervalo
+            #logger.debug(str(time_limit))
+        
+        if item.strm_path and is_playing():                     #Sólo si es de Videoteca
+            from platformcode import xbmc_videolibrary
+            xbmc_videolibrary.mark_auto_as_watched(item)        #Marcamos como visto al terminar
+            #logger.debug("Llamado el marcado")
 
     if seleccion == 1:
         from platformcode import mct

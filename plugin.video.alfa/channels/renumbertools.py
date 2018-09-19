@@ -304,10 +304,12 @@ if xbmcgui:
         def __init__(self, *args, **kwargs):
             logger.debug()
 
-            if xbmcgui.__version__ == "1.2":
-                self.setCoordinateResolution(1)
-            else:
-                self.setCoordinateResolution(5)
+            #### Compatibilidad con Kodi 18 ####
+            if config.get_platform(True)['num_version'] < 18:
+                if xbmcgui.__version__ == "1.2":
+                    self.setCoordinateResolution(1)
+                else:
+                    self.setCoordinateResolution(5)
 
             self.show = kwargs.get("show")
             self.channel = kwargs.get("channel")

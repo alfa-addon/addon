@@ -23,6 +23,30 @@
       "visible": true
     },
     {
+      "id": "modo_grafico",
+      "type": "bool",
+      "label": "Buscar información extra (TMDB)",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "CAST",
+        "LAT",
+        "VO",
+        "VOS",
+        "VOSE"
+      ]
+    },
+    {
       "id": "seleccionar_serie_temporada",
       "type": "list",
       "label": "Seleccionar agrupar por Serie o Temporada",
@@ -43,12 +67,25 @@
       "visible": true
     },
     {
-      "id": "modo_grafico",
-      "type": "bool",
-      "label": "Buscar información extra (TMDB)",
-      "default": true,
+      "id": "timeout_downloadpage",
+      "type": "list",
+      "label": "Timeout (segs.) en descarga de páginas o verificación de servidores",
+      "default": 5,
       "enabled": true,
-      "visible": true
+      "visible": true,
+      "lvalues": [
+        "None",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ]
     }
   ]
 }
