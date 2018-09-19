@@ -519,17 +519,35 @@ def findvideos(item):
     item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent
-    for scrapedurl in matches:                                                              #leemos los torrents con la diferentes calidades
+    for scrapedurl in matches:                                          #leemos los torrents con la diferentes calidades
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
 
+        #Buscamos si ya tiene tamaño, si no, los buscamos en el archivo .torrent
+        size = scrapertools.find_single_match(item_local.quality, '\s\[(\d+,?\d*?\s\w\s?[b|B])\]')
+        if not size:
+            size = generictools.get_torrent_size(item_local.url)                #Buscamos el tamaño en el .torrent
+        if size:
+            item_local.title = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title)    #Quitamos size de título, si lo traía
+            item_local.title = '%s [%s]' % (item_local.title, size)                         #Agregamos size al final del título
+            size = size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b')
+        item_local.quality = re.sub(r'\s\[\d+,?\d*?\s\w\s?[b|B]\]', '', item_local.quality)    #Quitamos size de calidad, si lo traía
+        item_local.quality = '%s [%s]' % (item_local.quality, size)               #Agregamos size al final de la calidad
+        
         #Ahora pintamos el link del Torrent
         item_local.url = scrapedurl
         if host not in item_local.url and host.replace('https', 'http') not in item_local.url :
             item_local.url = host + item_local.url
-        item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))                                                 #Preparamos título de Torrent
-        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title)    #Quitamos etiquetas vacías
-        item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)      #Quitamos colores vacíos
+        item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))
+        
+        #Preparamos título y calidad, quitamos etiquetas vacías
+        item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
+        item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
+        item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+        item_local.quality = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.quality)
+        item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality)
+        item_local.quality = item_local.quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+        
         item_local.alive = "??"                                                             #Calidad del link sin verificar
         item_local.action = "play"                                                          #Visualizar vídeo
         item_local.server = "torrent"                                                       #Seridor Torrent

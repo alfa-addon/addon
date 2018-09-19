@@ -1,7 +1,7 @@
 {
   "id": "seriecanal",
   "name": "Seriecanal",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast"],
   "thumbnail": "http://i.imgur.com/EwMK8Yd.png",
