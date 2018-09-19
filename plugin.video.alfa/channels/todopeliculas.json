@@ -3,13 +3,14 @@
   "name": "TodoPeliculas",
   "active": true,
   "adult": false,
-  "language": ["cast"],
+  "language": ["cast", "lat"],
   "thumbnail": "http://www.todo-peliculas.com/images/logo.png",
   "banner": "",
   "version": 1,
   "categories": [
     "movie",
-	"torrent"
+	"torrent",
+    "vos"
   ],
   "settings": [
     {
@@ -21,6 +22,14 @@
       "visible": false
     },
     {
+      "id": "modo_grafico",
+      "type": "bool",
+      "label": "Buscar información extra en TMDB",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
       "id": "filter_languages",
       "type": "list",
       "label": "Mostrar enlaces en idioma...",
@@ -29,7 +38,11 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "Castellano"
+        "CAST",
+        "LAT",
+        "VO",
+        "VOS",
+        "VOSE"
       ]
     },
     {
@@ -55,6 +68,27 @@
       "default": true,
       "enabled": true,
       "visible": true
+    },
+    {
+      "id": "timeout_downloadpage",
+      "type": "list",
+      "label": "Timeout (segs.) en descarga de páginas o verificación de servidores",
+      "default": 5,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "None",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ]
     }
  ]
 }
