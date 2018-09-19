@@ -77,10 +77,10 @@ def submenu(item):
                              url=host % "list/ultimas-peliculas" + ext, text_color=color2,
                              thumbnail=host % "list/ultimas-peliculas/thumbnail_167x250.jpg",
                              fanart=host % "list/ultimas-peliculas/background_1080.jpg", viewmode="movie_with_plot"))
-        itemlist.append(Item(channel=item.channel, title="Destacados", action="entradas",
-                             url=host % "list/000-novedades" + ext, text_color=color2,
-                             thumbnail=host % "list/screener/thumbnail_167x250.jpg",
-                             fanart=host % "list/screener/background_1080.jpg", viewmode="movie_with_plot"))
+        # itemlist.append(Item(channel=item.channel, title="Destacados", action="entradas",
+        #                      url=host % "list/000-novedades" + ext, text_color=color2,
+        #                      thumbnail=host % "list/screener/thumbnail_167x250.jpg",
+        #                      fanart=host % "list/screener/background_1080.jpg", viewmode="movie_with_plot"))
         itemlist.append(Item(channel=item.channel, title="Más vistas", action="entradas",
                              url=host % "list/peliculas-mas-vistas" + ext, text_color=color2,
                              thumbnail=host % "list/peliculas-mas-vistas/thumbnail_167x250.jpg",
@@ -167,7 +167,7 @@ def entradas(item):
         #if child['year']:
         #    title += " (" + child['year'] + ")"
         #title += quality
-
+        thumbnail += "|User-Agent=%s" % httptools.get_user_agent
         video_urls = []
         for k, v in child.get("video", {}).items():
             for vid in v:
@@ -232,6 +232,7 @@ def entradasconlistas(item):
             thumbnail = host % "list/%s/thumbnail_167x250.jpg" % child["id"]
             fanart = host % "list/%s/background_1080.jpg" % child["id"]
 
+            thumbnail += "|User-Agent=%s" % httptools.get_user_agent
             itemlist.append(Item(channel=item.channel, action=action, title=title,
                                  url=url, thumbnail=thumbnail, fanart=fanart, fulltitle=fulltitle, show=show,
                                  infoLabels=infolabels, contentTitle=fulltitle, viewmode="movie_with_plot",
@@ -295,7 +296,7 @@ def entradasconlistas(item):
             for vid in v:
                 video_urls.append(["http://%s.pelisipad.com/s/transcoder/%s" % (vid["server"], vid["url"]) + "?%s",
                                    vid["height"]])
-
+        thumbnail += "|User-Agent=%s" % httptools.get_user_agent
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, video_urls=video_urls,
                              thumbnail=thumbnail, fanart=fanart, fulltitle=fulltitle, infoLabels=infolabels,
                              contentTitle=fulltitle, viewmode="movie_with_plot", text_color=color3))
@@ -347,6 +348,7 @@ def series(item):
         if child.get("numberOfSeasons") and "- Temporada" not in title:
             title += "  (Temps:%s)" % child['numberOfSeasons']
 
+        thumbnail += "|User-Agent=%s" % httptools.get_user_agent
         itemlist.append(Item(channel=item.channel, action="episodios", title=title, url=url, text_color=color3,
                              thumbnail=thumbnail, fanart=fanart, fulltitle=fulltitle, infoLabels=infolabels,
                              contentTitle=fulltitle, viewmode="movie_with_plot", show=fulltitle))
@@ -414,6 +416,7 @@ def episodios(item):
             title = fulltitle = child['name'].rsplit(" ", 1)[0] + " - " + child['name'].rsplit(" ", 1)[1]
         except:
             title = fulltitle = child['id'].replace("-", " ")
+        thumbnail += "|User-Agent=%s" % httptools.get_user_agent
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
                              fanart=fanart, fulltitle=fulltitle, contentTitle=fulltitle, viewmode="movie",
                              show=item.show, infoLabels=infoLabels, video_urls=video_urls, extra="episodios",
@@ -491,6 +494,7 @@ def nuevos_cap(item):
         else:
             title = fulltitle = child['name']
 
+        thumbnail += "|User-Agent=%s" % httptools.get_user_agent
         itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
                              fanart=fanart, fulltitle=fulltitle, contentTitle=fulltitle, viewmode="movie",
                              show=item.fulltitle, infoLabels=infoLabels, video_urls=video_urls, extra="nuevos",
@@ -571,6 +575,7 @@ def listas(item):
         infolabels['title'] = title
         try:
             from core import videolibrarytools
+            thumbnail += "|User-Agent=%s" % httptools.get_user_agent
             new_item = item.clone(title=title, url=url, fulltitle=title, fanart=fanart, extra="findvideos",
                                   thumbnail=thumbnail, infoLabels=infolabels, category="Cine")
             videolibrarytools.add_movie(new_item)

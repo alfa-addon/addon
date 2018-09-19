@@ -212,21 +212,21 @@ def new_episodes(item):
     itemlist = []
 
     data = get_source(item.url)
-
     data = scrapertools.find_single_match(data,
                                           '<center>Series Online : Capítulos estrenados recientemente</center>.*?</ul>')
-    patron = '<li><h6.*?src="([^"]+)".*?href="([^"]+)">.*?src="([^"]+)".*? data-original-title=" (\d+x\d+).*?'
+    patron = '<li><h6.*?src="([^"]+)".*?alt=" (\d+x\d+).+?".*?href="([^"]+)">.*?src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for lang_data, scrapedurl, scrapedthumbnail, scrapedinfo,  in matches:
+    for lang_data, scrapedinfo, scrapedurl, scrapedthumbnail in matches:
 
-        url = host+scrapedurl
+        url =scrapedurl
         thumbnail = scrapedthumbnail
         scrapedinfo = scrapedinfo.split('x')
         season = scrapedinfo[0]
         episode = scrapedinfo[1]
-        scrapedtitle = scrapertools.find_single_match(url, 'capitulo/([^/]+)/').replace("-", " ")
-        title = '%s - %sx%s' % (scrapedtitle, season, episode )
+        scrapedtitle = scrapertools.find_single_match(url, 'capitulo/([^/]+)/')
+        url = '%scapitulos/%s' % (host, scrapedtitle)
+        title = '%s - %sx%s' % (scrapedtitle.replace('-', ' '), season, episode )
         title, language = add_language(title, lang_data)
         itemlist.append(Item(channel=item.channel,
                              action='seasons',
