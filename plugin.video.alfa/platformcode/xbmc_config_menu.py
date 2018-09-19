@@ -469,6 +469,7 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
         self.ok_enabled = False
         self.default_enabled = False
 
+        #### Compatibilidad con Kodi 18 ####
         if config.get_platform(True)['num_version'] < 18:
             if xbmcgui.__version__ == "1.2":
                 self.setCoordinateResolution(1)

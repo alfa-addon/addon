@@ -275,7 +275,11 @@ class main(xbmcgui.WindowDialog):
 
         skin = xbmc.getSkinDir()
         self.fonts = get_fonts(skin)
-        self.setCoordinateResolution(2)
+        
+        #### Compatibilidad con Kodi 18 ####
+        if config.get_platform(True)['num_version'] < 18:
+            self.setCoordinateResolution(2)
+        
         self.actorButton = xbmcgui.ControlButton(995, 475, 55, 55, '', font='Font40', alignment=0x00000006,
                                                  noFocusTexture='https://s17.postimg.cc/40acsuihb/thumb_search_star_no.png',
                                                  focusTexture='https://s33.postimg.cc/ikk0qyvrj/thumb_search_star.png',
@@ -805,7 +809,10 @@ class related(xbmcgui.WindowDialog):
             import traceback
             logger.error(traceback.format_exc())
 
-        self.setCoordinateResolution(2)
+        #### Compatibilidad con Kodi 18 ####
+        if config.get_platform(True)['num_version'] < 18:
+            self.setCoordinateResolution(2)
+        
         self.background = xbmcgui.ControlImage(178, 50, 1053, 634, self.infoLabels.get("fanart",
                                                                                       "http://s6.postimg.cc/fflvear2p/nofanart.png"))
         self.addControl(self.background)
@@ -1207,6 +1214,7 @@ def busqueda_global(item, infoLabels, org_title=False):
         cat = ["serie"]
     else:
         cat = ["movie"]
+    cat += ["infoPlus"]
 
     new_item = Item()
     new_item.extra = infoLabels.get("title", "")
@@ -1546,7 +1554,10 @@ class ActorInfo(xbmcgui.WindowDialog):
         elif not actor_tmdb.result.get("biography"):
             actor_tmdb.result["biography"] = "Sin información"
 
-        self.setCoordinateResolution(2)
+        #### Compatibilidad con Kodi 18 ####
+        if config.get_platform(True)['num_version'] < 18:
+            self.setCoordinateResolution(2)
+        
         self.background = xbmcgui.ControlImage(30, -5, 1250, 730, 'http://imgur.com/7ccBX3g.png')
         self.addControl(self.background)
         if set_animation:
@@ -1952,7 +1963,10 @@ class images(xbmcgui.WindowDialog):
         for imagen, title in self.mal:
             self.imagenes.append(imagen)
 
-        self.setCoordinateResolution(2)
+        #### Compatibilidad con Kodi 18 ####
+        if config.get_platform(True)['num_version'] < 18:
+            self.setCoordinateResolution(2)
+        
         self.shadow = xbmcgui.ControlImage(245, 10, 1011, 700, 'http://imgur.com/66VSLTo.png')
         self.addControl(self.shadow)
         if set_animation:
@@ -2175,7 +2189,10 @@ class Trailer(xbmcgui.WindowXMLDialog):
         self.doModal()
 
     def onInit(self):
-        self.setCoordinateResolution(0)
+        #### Compatibilidad con Kodi 18 ####
+        if config.get_platform(True)['num_version'] < 18:
+            self.setCoordinateResolution(0)
+        
         if not self.video_url:
             platformtools.dialog_notification(config.get_localized_string(60507),
                                               config.get_localized_string(60508), 2)
