@@ -3,11 +3,12 @@
   "name": "Yape",
   "active": true,
   "adult": false,
-  "language": ["lat","cast","vose"],
+  "language": ["lat","cast"],
   "thumbnail": "https://s8.postimg.cc/71ed4op5d/yape1.png",
   "banner": "https://s8.postimg.cc/4wu03lfsx/yape2.png",
   "categories": [
-    "movie"
+    "movie",
+    "vos"
   ],
   "settings": [
     {
