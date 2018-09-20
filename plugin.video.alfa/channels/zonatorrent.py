@@ -14,6 +14,15 @@ from core.item import Item
 from platformcode import config, logger
 from core import tmdb
 from lib import generictools
+from channels import filtertools
+from channels import autoplay
+
+
+#IDIOMAS = {'CAST': 'Castellano', 'LAT': 'Latino', 'VO': 'Version Original'}
+IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['torrent']
 
 
 host = 'https://zonatorrent.tv/'
@@ -33,20 +42,35 @@ def mainlist(item):
     thumb_series = get_thumb("channels_tvshow.png")
     thumb_buscar = get_thumb("search.png")
     thumb_separador = get_thumb("next.png")
+    thumb_settings = get_thumb("setting_0.png")
 
+    autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(Item(channel=item.channel, title="Películas", action="submenu", url=host, thumbnail=thumb_pelis, extra="peliculas"))
     
     itemlist.append(Item(channel=item.channel, url=host, title="Series", action="submenu", thumbnail=thumb_series, extra="series"))
     
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + "?s=", thumbnail=thumb_buscar, extra="search"))
+    
+    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", folder=False, thumbnail=thumb_separador))
+    
+    itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", thumbnail=thumb_settings))
+    
+    autoplay.show_option(item.channel, itemlist)            #Activamos Autoplay
 
     return itemlist
+
+def configuracion(item):
+    from platformcode import platformtools
+    ret = platformtools.show_channel_settings()
+    platformtools.itemlist_refresh()
+    return
 
     
 def submenu(item):
     logger.info()
     itemlist = []
+    item.extra2 = ''
     
     thumb_cartelera = get_thumb("now_playing.png")
     thumb_pelis_az = get_thumb("channels_movie_az.png")
@@ -71,7 +95,7 @@ def submenu(item):
         itemlist.append(item.clone(title="Más vistas", action="listado", url=host +  "/peliculas-mas-vistas-2/", url_plus=item.url_plus, thumbnail=thumb_popular, extra2="popular"))
         itemlist.append(item.clone(title="Más votadas", action="listado", url=host + "/peliculas-mas-votadas/", url_plus=item.url_plus, thumbnail=thumb_popular, extra2="popular"))
         itemlist.append(item.clone(title="Castellano", action="listado", url=host + "?s=spanish", url_plus=item.url_plus, thumbnail=thumb_spanish, extra2="CAST"))
-        itemlist.append(item.clone(title="Latino", action="listado", url=host + "?s=latino", url_plus=item.url_plus, thumbnail=thumb_latino, lextra2="LAT"))
+        itemlist.append(item.clone(title="Latino", action="listado", url=host + "?s=latino", url_plus=item.url_plus, thumbnail=thumb_latino, extra2="LAT"))
         itemlist.append(item.clone(title="Subtitulado", action="listado", url=host + "?s=Subtitulado", url_plus=item.url_plus, thumbnail=thumb_pelis_vos, extra2="VOSE"))
 
     else:
@@ -288,8 +312,6 @@ def listado(item):
 
             title = scrapedtitle
             title = title.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&atilde;", "a").replace("&etilde;", "e").replace("&itilde;", "i").replace("&otilde;", "o").replace("&utilde;", "u").replace("&ntilde;", "ñ").replace("&#8217;", "'")
-
-            cnt_title += 1
             
             item_local = item.clone()                                                   #Creamos copia de Item para trabajar
             if item_local.tipo:                                                         #... y limpiamos
@@ -433,7 +455,14 @@ def listado(item):
             #Guarda la variable temporal que almacena la info adicional del título a ser restaurada después de TMDB
             item_local.title_subs = title_subs
 
-            itemlist.append(item_local.clone())                     #Pintar pantalla
+            logger.debug(item.extra2)
+            #Ahora se filtra por idioma, si procede, y se pinta lo que vale
+            if config.get_setting('filter_languages', channel) > 0 and item.extra2 not in ['CAST', 'LAT', 'VO', 'VOS', 'VOSE']:     #Si hay idioma seleccionado, se filtra
+                itemlist = filtertools.get_link(itemlist, item_local, list_language)
+            else:
+                itemlist.append(item_local.clone())                     #Si no, pintar pantalla
+            
+            cnt_title = len(itemlist)                                   #Contador de líneas añadidas
             
             #logger.debug(item_local)
 
@@ -458,6 +487,10 @@ def listado(item):
 def findvideos(item):
     logger.info()
     itemlist = []
+    itemlist_t = []                                     #Itemlist total de enlaces
+    itemlist_f = []                                     #Itemlist de enlaces filtrados
+    if not item.language:
+        item.language = ['CAST']                        #Castellano por defecto
     matches = []
     item.category = categoria
     
@@ -549,12 +582,26 @@ def findvideos(item):
         item_local.action = "play"                                                          #Visualizar vídeo
         item_local.server = "torrent"                                                       #Servidor Torrent
         
-        itemlist.append(item_local.clone())                                                 #Pintar pantalla
+        itemlist_t.append(item_local.clone())                                   #Pintar pantalla, si no se filtran idiomas
+        
+        # Requerido para FilterTools
+        if config.get_setting('filter_languages', channel) > 0:                 #Si hay idioma seleccionado, se filtra
+            itemlist_f = filtertools.get_link(itemlist_f, item_local, list_language)  #Pintar pantalla, si no está vacío
 
         #logger.debug("TORRENT: " + scrapedurl + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality + " / content: " + item_local.contentTitle + " / " + item_local.contentSerieName)
         #logger.debug(item_local)
     
+    if len(itemlist_f) > 0:                                                     #Si hay entradas filtradas...
+        itemlist.extend(itemlist_f)                                             #Pintamos pantalla filtrada
+    else:                                                                       
+        if config.get_setting('filter_languages', channel) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
+            thumb_separador = get_thumb("next.png")                             #... pintamos todo con aviso
+            itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
+        itemlist.extend(itemlist_t)                                             #Pintar pantalla con todo si no hay filtrado
+    
     #Ahora tratamos los Servidores Directos
+    itemlist_t = []                                                             #Itemlist total de enlaces
+    itemlist_f = []                                                             #Itemlist de enlaces filtrados
     titles = re.compile('data-TPlayerNv="Opt\d+">.*? <span>(.*?)</span></li>', re.DOTALL).findall(data)
     urls = re.compile('id="Opt\d+"><iframe[^>]+src="([^"]+)"', re.DOTALL).findall(data)
 
@@ -625,14 +672,30 @@ def findvideos(item):
                 item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality)
                 item_local.quality = item_local.quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
                 
-                item_local.action = "play"                                              #Visualizar vídeo
-                item_local.server = server                                              #Servidor Directo
+                item_local.action = "play"                                      #Visualizar vídeo
+                item_local.server = server                                      #Servidor Directo
                 
-                itemlist.append(item_local.clone())                                     #Pintar pantalla
+                itemlist_t.append(item_local.clone())                           #Pintar pantalla, si no se filtran idiomas
+        
+                # Requerido para FilterTools
+                if config.get_setting('filter_languages', channel) > 0:         #Si hay idioma seleccionado, se filtra
+                    itemlist_f = filtertools.get_link(itemlist_f, item_local, list_language)  #Pintar pantalla, si no está vacío
                 
                 #logger.debug("DIRECTO: " server + ' / ' + enlace + " / title: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality + " / content: " + item_local.contentTitle + " / " + item_local.contentSerieName)
+                
                 #logger.debug(item_local)
 
+    if len(itemlist_f) > 0:                                                     #Si hay entradas filtradas...
+        itemlist.extend(itemlist_f)                                             #Pintamos pantalla filtrada
+    else:                                                                       
+        if config.get_setting('filter_languages', channel) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
+            thumb_separador = get_thumb("next.png")                             #... pintamos todo con aviso
+            itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
+        itemlist.extend(itemlist_t)                                             #Pintar pantalla con todo si no hay filtrado
+    
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)                                              #Lanzamos Autoplay
+    
     return itemlist
 
     
@@ -855,11 +918,6 @@ def actualizar_titulos(item):
 def search(item, texto):
     logger.info()
     #texto = texto.replace(" ", "+")
-    
-    item.url = item.url + texto
-
-    if texto != '':
-        return listado(item)
     
     try:
         item.url = item.url + texto

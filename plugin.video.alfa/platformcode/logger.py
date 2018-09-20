@@ -35,7 +35,10 @@ def encode_log(message=""):
 def get_caller(message=None):
     module = inspect.getmodule(inspect.currentframe().f_back.f_back)
 
-    module = module.__name__
+    if module == None:
+        module = "None"
+    else:
+        module = module.__name__
 
     function = inspect.currentframe().f_back.f_back.f_code.co_name
 

@@ -57,15 +57,15 @@ def mainlist(item):
                                viewcontent='movies', thumbnail=thumbnail % 'generos',
                                viewmode="movie_with_plot", url=host + 'generos/'))
 
-    itemlist.append(Item(channel=item.channel, title="Filtrar por Idiomas",
+    itemlist.append(Item(channel=item.channel, title="[COLOR yellow][Filtrar por Idiomas][/COLOR]",
                          fanart=fanart_host, folder=False, text_color=color3,
                          text_blod=True, thumbnail=thumbnail % 'idiomas'))
 
-    itemlist.append(item.clone(title="Castellano", action="peliculas", text_blod=True,
+    itemlist.append(item.clone(title="    Castellano", action="peliculas", text_blod=True,
                                viewcontent='movies', thumbnail=thumbnail % 'castellano',
                                viewmode="movie_with_plot", url=host + 'idioma/castellano/'))
 
-    itemlist.append(item.clone(title="Latino", action="peliculas", text_blod=True,
+    itemlist.append(item.clone(title="    Latino", action="peliculas", text_blod=True,
                                viewcontent='movies', thumbnail=thumbnail % 'latino',
                                viewmode="movie_with_plot", url=host + 'idioma/latino/'))
 
@@ -173,15 +173,16 @@ def peliculas(item):
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
     patron_todas = '<div class="home-movies">(.*?)<footer>'
     data = scrapertools.find_single_match(data, patron_todas)
-    patron = 'col-sm-5"><a href="([^"]+)".+?'
-    patron += 'browse-movie-link-qd.*?>([^>]+)</.+?'
-    patron += '<p>([^>]+)</p>.+?'
-    patron += 'title one-line">([^>]+)</h2>.+?'
+    patron = 'col-sm-5".*?href="([^"]+)".+?'
+    patron += 'browse-movie-link-qd.*?>([^<]+)</.+?'
+    patron += '<p>([^<]+)</p>.+?'
+    patron += 'title one-line">([^<]+)</h2>.+?'
+    patron += 'title-category">([^<]+)</span>.*?'
     patron += 'img-responsive" src="([^"]+)".*?'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, quality, year, scrapedtitle, scrapedthumbnail in matches:
+    for scrapedurl, quality, year, scrapedtitle, category, scrapedthumbnail in matches:
         if '/ ' in scrapedtitle:
             scrapedtitle = scrapedtitle.partition('/ ')[2]
         title = scrapedtitle
@@ -192,7 +193,8 @@ def peliculas(item):
 
         itemlist.append(Item(channel=item.channel,
                              action="findvideos",
-                             title=title, url=url,
+                             title="%s [COLOR yellowgreen][%s][/COLOR] [COLOR violet][%s][/COLOR]" % (title, category, year), 
+                             url=url,
                              quality=quality,
                              thumbnail=thumbnail,
                              contentTitle=contentTitle,

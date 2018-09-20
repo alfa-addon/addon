@@ -184,10 +184,12 @@ class InfoWindow(xbmcgui.WindowXMLDialog):
         self.scraper = Tmdb
 
     def onInit(self):
-        if xbmcgui.__version__ == "1.2":
-            self.setCoordinateResolution(1)
-        else:
-            self.setCoordinateResolution(5)
+        #### Compatibilidad con Kodi 18 ####
+        if config.get_platform(True)['num_version'] < 18:
+            if xbmcgui.__version__ == "1.2":
+                self.setCoordinateResolution(1)
+            else:
+                self.setCoordinateResolution(5)
 
         # Ponemos el título y las imagenes
         self.getControl(10002).setLabel(self.caption)
