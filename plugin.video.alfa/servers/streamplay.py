@@ -38,13 +38,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     unpacked = jsunpack.unpack(packed)
 
     url = scrapertools.find_single_match(unpacked, '(http[^,]+\.mp4)')
-    itemlist.append([".mp4" + " [streamplay]", decode_video_url(url)])
+
+    from lib import alfaresolver
+    itemlist.append([".mp4" + " [streamplay]", alfaresolver.decode_video_url(url, data)])
+
     itemlist.sort(key=lambda x: x[0], reverse=True)
 
     return itemlist
-
-def decode_video_url(url):
-    tria = re.compile('[0-9a-z]{40,}', re.IGNORECASE).findall(url)[0]
-    gira = tria[::-1]
-    x = gira[:4] + gira[6:]
-    return re.sub(tria, x, url)

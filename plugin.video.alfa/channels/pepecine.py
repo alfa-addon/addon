@@ -15,7 +15,7 @@ from core.item import Item, InfoLabels
 from platformcode import config, logger
 from channels import filtertools
 
-host = "https://pepecine.io"
+host = "https://pepecine.me" # "https://pepecine.io"
 
 IDIOMAS = {'c': 'Castellano', 'i': 'Inglés', 'l': 'Latino', 's': 'VOSE', 'v': 'VO'}
 list_idiomas = IDIOMAS.values()
@@ -30,34 +30,34 @@ def mainlist(item):
 
     itemlist.append(item.clone(
                          title  = "    Últimas películas",
-                         url    = host + '/las-peliculas-online',
+                         url    = host + '/mis-peliculas-online',
                          action = 'list_latest',
                          type   = 'movie'))
 
     itemlist.append(item.clone(title  = "    Películas por género",
-                               url    = host + '/ver-pelicula',
+                               url    = host + '/ver-la-pelicula',
                                action = 'genero',
                                type   = 'movie'))
 
     itemlist.append(item.clone(title  = "    Todas las películas",
-                               url    = host + '/ver-pelicula',
+                               url    = host + '/ver-la-pelicula',
                                action = 'list_all',
                                type   = 'movie'))
 
     itemlist.append(Item(title = "Series"))
 
     itemlist.append(item.clone(title  = "    Últimos episodios",
-                               url    = host + '/las-series-online',
+                               url    = host + '/mis-series-online',
                                action = 'list_latest',
                                type   = 'series'))
 
     itemlist.append(item.clone(title  = "    Series por género",
-                               url    = host + '/ver-serie-tv',
+                               url    = host + '/ver-la-serie',
                                action = 'genero',
                                type   = 'series'))
 
     itemlist.append(item.clone(title  = "    Todas las series",
-                               url    = host + '/ver-serie-tv',
+                               url    = host + '/ver-la-serie',
                                action ='list_all',
                                type   = 'series'))
 
@@ -251,11 +251,11 @@ def list_all(item):
             new_item.contentTitle = element['title']
             new_item.fulltitle = element['title']
             if new_item.extra != "links_encoded":
-                new_item.url = host + "/ver-pelicula/" + str(element['id'])
+                new_item.url = host + "/ver-la-pelicula/" + str(element['id'])
 
         elif item.type == 'series':
                 new_item.action = 'seasons'
-                new_item.url = host + "/ver-serie-tv/" + str(element['id'])
+                new_item.url = host + "/ver-la-serie/" + str(element['id'])
                 new_item.show = element['title']
                 new_item.contentType = 'tvshow'
                 new_item.contentSerieName = element['title']
@@ -334,8 +334,8 @@ def findvideos(item):
 
     if item.extra != "links_encoded":
         data = httptools.downloadpage(item.url).data
-        patron  = "renderTab\.bind.*?'([^']+)"
-        patron += '.*?<img data-bind="[^"]+"><b>([^<]*)'
+        patron  = "renderTab\.bind[^']+'([^']+)"
+        patron += '.*?<b[^>]*>([^<]*)<img src='
         patron += '.*?<td [^>]*>([^<]*)'
         patron += '.*?<td [^>]*>([^<]*)'
 

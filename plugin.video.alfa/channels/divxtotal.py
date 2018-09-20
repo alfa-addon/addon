@@ -14,6 +14,15 @@ from core.item import Item
 from platformcode import config, logger
 from core import tmdb
 from lib import generictools
+from channels import filtertools
+from channels import autoplay
+
+
+#IDIOMAS = {'CAST': 'Castellano', 'LAT': 'Latino', 'VO': 'Version Original'}
+IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['torrent']
 
 host = 'https://www.divxtotal3.net/'
 channel = 'divxtotal'
@@ -33,6 +42,9 @@ def mainlist(item):
     thumb_series = get_thumb("channels_tvshow.png")
     thumb_buscar = get_thumb("search.png")
     thumb_separador = get_thumb("next.png")
+    thumb_settings = get_thumb("setting_0.png")
+    
+    autoplay.init(item.channel, list_servers, list_quality)
 
     item.url_plus = "peliculas/"
     itemlist.append(Item(channel=item.channel, title="Películas", action="categorias", url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_cartelera, extra="Películas"))
@@ -49,7 +61,20 @@ def mainlist(item):
     
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + "?s=%s", thumbnail=thumb_buscar, extra="search"))
 
+    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", folder=False, thumbnail=thumb_separador))
+    
+    itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", thumbnail=thumb_settings))
+    
+    autoplay.show_option(item.channel, itemlist)            #Activamos Autoplay
+
     return itemlist
+    
+    
+def configuracion(item):
+    from platformcode import platformtools
+    ret = platformtools.show_channel_settings()
+    platformtools.itemlist_refresh()
+    return
 
     
 def submenu(item):
@@ -174,7 +199,7 @@ def listado(item):
     cnt_tot = 40                                                                # Poner el num. máximo de items por página
     cnt_title = 0                                                               # Contador de líneas insertadas en Itemlist
     inicio = time.time()                                    # Controlaremos que el proceso no exceda de un tiempo razonable
-    fin = inicio + 10                                                           # Después de este tiempo pintamos (segundos)
+    fin = inicio + 5                                                               # Después de este tiempo pintamos (segundos)
     timeout_search = timeout                                                    # Timeout para descargas
     if item.extra == 'search':
         timeout_search = timeout * 2                                            # Timeout un poco más largo para las búsquedas
@@ -287,7 +312,7 @@ def listado(item):
                     else:
                         url = scrapedurl                                                #No se encuentra la Serie, se trata como Episodio suelto
 
-            cnt_title += 1
+            #cnt_title += 1
             item_local = item.clone()                                                   #Creamos copia de Item para trabajar
             if item_local.tipo:                                                         #... y limpiamos
                 del item_local.tipo
@@ -458,7 +483,13 @@ def listado(item):
                 item_local.contentSeason_save = item_local.contentSeason
                 del item_local.infoLabels['season']
 
-            itemlist.append(item_local.clone())                             #Pintar pantalla
+            #Ahora se filtra por idioma, si procede, y se pinta lo que vale
+            if config.get_setting('filter_languages', channel) > 0:     #Si hay idioma seleccionado, se filtra
+                itemlist = filtertools.get_link(itemlist, item_local, list_language)
+            else:
+                itemlist.append(item_local.clone())                     #Si no, pintar pantalla
+            
+            cnt_title = len(itemlist)                                   #Contador de líneas añadidas
             
             #logger.debug(item_local)
 
@@ -483,6 +514,10 @@ def listado(item):
 def findvideos(item):
     logger.info()
     itemlist = []
+    itemlist_t = []                                     #Itemlist total de enlaces
+    itemlist_f = []                                     #Itemlist de enlaces filtrados
+    if not item.language:
+        item.language = ['CAST']                        #Castellano por defecto
     matches = []
     item.category = categoria
     
@@ -552,11 +587,26 @@ def findvideos(item):
         item_local.action = "play"                                                          #Visualizar vídeo
         item_local.server = "torrent"                                                       #Seridor Torrent
         
-        itemlist.append(item_local.clone())                                                 #Pintar pantalla
+        itemlist_t.append(item_local.clone())                                   #Pintar pantalla, si no se filtran idiomas
+        
+        # Requerido para FilterTools
+        if config.get_setting('filter_languages', channel) > 0:                 #Si hay idioma seleccionado, se filtra
+            itemlist_f = filtertools.get_link(itemlist_f, item_local, list_language)  #Pintar pantalla, si no está vacío
 
         #logger.debug("TORRENT: " + scrapedurl + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality + " / content: " + item_local.contentTitle + " / " + item_local.contentSerieName)
         #logger.debug(item_local)
 
+    if len(itemlist_f) > 0:                                                     #Si hay entradas filtradas...
+        itemlist.extend(itemlist_f)                                             #Pintamos pantalla filtrada
+    else:                                                                       
+        if config.get_setting('filter_languages', channel) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
+            thumb_separador = get_thumb("next.png")                             #... pintamos todo con aviso
+            itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
+        itemlist.extend(itemlist_t)                                             #Pintar pantalla con todo si no hay filtrado
+    
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)                                              #Lanzamos Autoplay
+    
     return itemlist
 
     

@@ -97,7 +97,9 @@ class Main(xbmcgui.WindowXMLDialog):
         self.items = []
 
     def onInit(self):
-        self.setCoordinateResolution(2)
+        #### Compatibilidad con Kodi 18 ####
+        if config.get_platform(True)['num_version'] < 18:
+            self.setCoordinateResolution(2)
 
         for menuentry in MAIN_MENU.keys():
             item = xbmcgui.ListItem(MAIN_MENU[menuentry]["label"])

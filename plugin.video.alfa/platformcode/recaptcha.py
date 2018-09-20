@@ -40,7 +40,9 @@ class Recaptcha(xbmcgui.WindowXMLDialog):
         self.imagen = kwargs.get("imagen")
 
     def onInit(self):
-        self.setCoordinateResolution(2)
+        #### Compatibilidad con Kodi 18 ####
+        if config.get_platform(True)['num_version'] < 18:
+            self.setCoordinateResolution(2)
         self.update_window()
 
     def onClick(self, control):

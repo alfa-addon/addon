@@ -91,7 +91,10 @@ class Main(xbmcgui.WindowXMLDialog):
         self.items = []
 
     def onInit(self):
-        self.setCoordinateResolution(2)
+        #### Compatibilidad con Kodi 18 ####
+        if config.get_platform(True)['num_version'] < 18:
+            self.setCoordinateResolution(2)
+        
         self.focus = -1
         self.buttons = []
         posx= 0
