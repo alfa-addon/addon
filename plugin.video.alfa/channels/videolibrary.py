@@ -374,8 +374,9 @@ def findvideos(item):
         del list_canales['downloads']
 
         # Comprobar q el video no haya sido borrado
+        #### Compatibilidad con Kodi 18: evita que se quede la ruedecedita dando vueltas en enlaces Directos
         if filetools.exists(item_json.url):
-            item_local = item_json.clone(action='play')
+            item_local = item_json.clone(action='play', folder=False)
             itemlist.append(item_local)
         else:
             num_canales -= 1
@@ -460,6 +461,8 @@ def findvideos(item):
             server.channel = "videolibrary"
             server.nfo = item.nfo
             server.strm_path = item.strm_path
+            #### Compatibilidad con Kodi 18: evita que se quede la ruedecedita dando vueltas en enlaces Directos
+            server.folder = False
 
             # Se añade el nombre del canal si se desea
             if config.get_setting("quit_channel_name", "videolibrary") == 0:
