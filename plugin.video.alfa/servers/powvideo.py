@@ -29,7 +29,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     referer = page_url.replace('iframe', 'preview')
 
     data = httptools.downloadpage(page_url, headers={'referer': referer}).data
-    logger.debug(data)
 
     packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
     unpacked = jsunpack.unpack(packed)
