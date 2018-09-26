@@ -3245,6 +3245,10 @@ msgctxt "#70135"
 msgid "Custom Colours"
 msgstr "Colores Personalizados"
 
+msgctxt "#70136"
+msgid "Tv Show"
+msgstr "Serie"
+
 msgctxt "#70137"
 msgid "Movies"
 msgstr "Películas"
@@ -4000,7 +4004,7 @@ msgid "Error in the user and/or password. Check your credentials"
 msgstr "Error en el usuario y/o contraseña. Comprueba tus credenciales"
 
 msgctxt "#70331"
-msgid "Error during login. Check your credentials
+msgid "Error during login. Check your credentials"
 msgstr "Error durante el login. Comprueba tus credenciales"
 
 msgctxt "#70332"
@@ -4052,7 +4056,7 @@ msgid "[Trakt] Remove %s from your watchlist"
 msgstr "[Trakt] Eliminar %s de tu watchlist"
 
 msgctxt "#70344"
-msgid "Add to %s your watchlist""
+msgid "Add to %s your watchlist"
 msgstr "[Trakt] Añadir %s a tu watchlist"
 
 msgctxt "#70345"
@@ -4060,7 +4064,7 @@ msgid "[Trakt] Remove %s from your collection"
 msgstr "[Trakt] Eliminar %s de tu colección"
 
 msgctxt "#70346"
-msgid "[Trakt] Add %s to your collection
+msgid "[Trakt] Add %s to your collection"
 msgstr "[Trakt] Añadir %s a tu colección"
 
 msgctxt "#70347"
@@ -4684,8 +4688,8 @@ msgid "Genre: "
 msgstr "Género: "
 
 msgctxt "#70500"
-msgid "Notification([COLOR red][B]Update Kodi to its latest version[/B][/COLOR], [COLOR skyblue]for best info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")"
-msgstr "Notification([COLOR red][B]Actualiza Kodi a su última versión[/B][/COLOR], [COLOR skyblue]para mejor info[/COLOR],8000, "http://i.imgur.com/mHgwcn3.png")"
+msgid "Notification([COLOR red][B]Update Kodi to its latest version[/B][/COLOR], [COLOR skyblue]for best info[/COLOR],8000, \"http://i.imgur.com/mHgwcn3.png\")"
+msgstr "Notification([COLOR red][B]Actualiza Kodi a su última versión[/B][/COLOR], [COLOR skyblue]para mejor info[/COLOR],8000, \"http://i.imgur.com/mHgwcn3.png\")"
 
 msgctxt "#70501"
 msgid "Search did not match (%s)"
@@ -4928,7 +4932,7 @@ msgid "Movies by Genre"
 msgstr "Por generos"
 
 msgctxt "#70561"
-msgid "Search Similar
+msgid "Search Similar"
 msgstr "Buscar Similares"
 
 
