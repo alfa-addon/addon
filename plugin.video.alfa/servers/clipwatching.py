@@ -22,7 +22,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
     video_urls = []
     videos = scrapertools.find_multiple_matches(unpacked, 'file:"([^"]+).*?label:"([^"]+)')
     for video, label in videos:
-        video_urls.append([label + " [clipwatching]", video])
-    logger.info("Url: %s" % videos)
+        if ".jpg" not in video:
+            video_urls.append([label + " [clipwatching]", video])
     video_urls.sort(key=lambda it: int(it[0].split("p ", 1)[0]))
     return video_urls
