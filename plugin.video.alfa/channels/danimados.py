@@ -133,14 +133,15 @@ def episodios(item):
     itemlist = []
     infoLabels = {}
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)   
-    data_lista = scrapertools.find_single_match(data,
-                      '<ul class="episodios">(.+?)<\/ul><\/div><\/div><\/div>')
-    show = item.title
-    patron_caps =   '<img alt=".+?" src="([^"]+)"><\/a><\/div><div class=".+?">([^"]+)<\/div>.+?'
-    patron_caps +=  '<a .+? href="([^"]+)">([^"]+)<\/a>'
+    patron = '(?s)<ul class="episodios">(.+?)<\/ul>'
+    data_lista = scrapertools.find_single_match(data,patron)
+    contentSerieName = item.title
+    patron_caps  = 'href="([^"]+)".*?'
+    patron_caps += 'src="([^"]+)".*?'
+    patron_caps += 'numerando">([^<]+).*?'
+    patron_caps += 'link_go">.*?>([^<]+)'
     matches = scrapertools.find_multiple_matches(data_lista, patron_caps)
-    for scrapedthumbnail, scrapedtempepi, scrapedurl, scrapedtitle in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtempepi, scrapedtitle in matches:
         tempepi=scrapedtempepi.split(" - ")
         if tempepi[0]=='Pel':
             tempepi[0]=0
@@ -150,8 +151,8 @@ def episodios(item):
         itemlist.append(item.clone(thumbnail=scrapedthumbnail,
                         action="findvideos", title=title, url=scrapedurl))
     if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir " + show + " a la videoteca[/COLOR]", url=item.url,
-                             action="add_serie_to_library", extra="episodios", show=show))
+        itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir " + contentSerieName + " a la videoteca[/COLOR]", url=item.url,
+                             action="add_serie_to_library", extra="episodios", contentSerieName=contentSerieName))
     return itemlist
 
 
@@ -159,16 +160,17 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    data1 = scrapertools.find_single_match(data,
-                      '<div id="playex" .+?>(.+?)<\/nav>?\s<\/div><\/div>')
+    patron = '<div id="playex" .+?>(.+?)<\/nav>'
+    data1 = scrapertools.find_single_match(data, patron)
     patron = "changeLink\('([^']+)'\)"
-    matches = re.compile(patron, re.DOTALL).findall(data1)
+    matches = scrapertools.find_multiple_matches(data1, patron)
     for url64 in matches:
         url1 =base64.b64decode(url64)
         if 'danimados' in url1:
-            new_data = httptools.downloadpage('https:'+url1.replace('stream', 'stream_iframe')).data
-            logger.info("Intel33 %s" %new_data)
+            url = 'https:'+url1.replace('stream/', 'stream_iframe/')
+            id = scrapertools.find_single_match(url, 'iframe/(.*)')
+            url = url.replace(id, base64.b64encode(id))
+            new_data = httptools.downloadpage(url).data
             url = scrapertools.find_single_match(new_data, "sources: \[\{file:'([^']+)")
             if "zkstream" in url:
                 url1 = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
