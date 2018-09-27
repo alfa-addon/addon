@@ -14,7 +14,7 @@ from platformcode import config, logger
 from core import tmdb
 from lib import generictools
 
-host = 'http://www.mejortorrent.com/'
+host = 'http://www.mejortorrent.org/'
 #host = config.get_setting('domain_name', 'mejortorrent')
 
 __modo_grafico__ = config.get_setting('modo_grafico', 'mejortorrent')

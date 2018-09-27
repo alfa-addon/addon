@@ -1,6 +1,6 @@
 {
   "id": "mejortorrent",
-  "name": "Mejor Torrent",
+  "name": "MejorTorrent",
   "active": true,
   "adult": false,
   "language": ["*"],
@@ -17,7 +17,7 @@
       "id": "domain_name",
       "type": "text",
       "label": "URL actual de la Web Mejor Torrent",
-      "default": "http://www.mejortorrent.com/",
+      "default": "http://www.mejortorrent.org/",
       "enabled": true,
       "visible": true
     },
