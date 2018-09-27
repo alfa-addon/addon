@@ -3,7 +3,7 @@
   "name": "MejorTorrent",
   "active": true,
   "adult": false,
-  "language": ["*"],
+  "language": ["cast","lat"],
   "thumbnail": "mejortorrent.png",
   "banner": "mejortorrent.png",
   "categories": [
