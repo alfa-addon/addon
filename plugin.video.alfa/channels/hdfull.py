@@ -65,6 +65,7 @@ def menupeliculas(item):
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR orange][B]Pendientes[/B][/COLOR]",
                              url=host + "/a/my?target=movies&action=pending&start=-28&limit=28", folder=True))
+
     itemlist.append(Item(channel=item.channel, action="fichas", title="ABC", url=host + "/peliculas/abc", folder=True))
     itemlist.append(
         Item(channel=item.channel, action="fichas", title="Últimas películas", url=host + "/peliculas", folder=True))
@@ -94,6 +95,7 @@ def menuseries(item):
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR orange][B]Para Ver[/B][/COLOR]",
                              url=host + "/a/my?target=shows&action=watch&start=-28&limit=28", folder=True))
+
     itemlist.append(Item(channel=item.channel, action="series_abc", title="A-Z", folder=True))
     itemlist.append(Item(channel=item.channel, action="novedades_episodios", title="Últimos Emitidos",
                          url=host + "/a/episodes?action=latest&start=-24&limit=24&elang=ALL", folder=True))
@@ -109,6 +111,7 @@ def menuseries(item):
         Item(channel=item.channel, action="generos_series", title="Series por Género", url=host, folder=True))
     itemlist.append(Item(channel=item.channel, action="listado_series", title="Listado de todas las series",
                          url=host + "/series/list", folder=True))
+
     if account:
         itemlist.append(Item(channel=item.channel, action="items_usuario",
                              title="[COLOR orange][B]Favoritas[/B][/COLOR]",
@@ -235,6 +238,7 @@ def fichas(item):
     infoLabels=dict()
     ## Carga estados
     status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
+
     if item.title == "Buscar...":
         data = agrupa_datos(httptools.downloadpage(item.url, post=item.extra).data)
         s_p = scrapertools.get_match(data, '<h3 class="section-title">(.*?)<div id="footer-wrapper">').split(
@@ -248,6 +252,7 @@ def fichas(item):
             data = s_p[0] + s_p[1]
     else:
         data = agrupa_datos(httptools.downloadpage(item.url).data)
+
     data = re.sub(
         r'<div class="span-6[^<]+<div class="item"[^<]+' + \
         '<a href="([^"]+)"[^<]+' + \
@@ -496,9 +501,11 @@ def findvideos(item):
     itemlist = []
     it1 = []
     it2 = []
+
     ## Carga estados
     status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
     url_targets = item.url
+
     ## Vídeos
     id = ""
     type = ""
@@ -521,41 +528,43 @@ def findvideos(item):
                      thumbnail=item.thumbnail, show=item.show))
         it1.append(Item(channel=item.channel, action="set_status", title=title, fulltitle=title, url=url_targets,
                              thumbnail=item.thumbnail, show=item.show, language=item.language, folder=True))
+
     data_js = httptools.downloadpage("%s/templates/hdfull/js/jquery.hdfull.view.min.js" % host).data
     key = scrapertools.find_single_match(data_js, 'JSON.parse\(atob.*?substrings\((.*?)\)')
+
     data_js = httptools.downloadpage("%s/js/providers.js" % host).data
     try:
-        data_js = jhexdecode(data_js)
+        from lib import alfaresolver
+        provs = alfaresolver.hdfull_providers(data_js)
+        if provs == '': return []
     except:
-        from lib.aadecode import decode as aadecode
-        data_js = data_js.split(";ﾟωﾟ")
-        decode_aa = ""
-        for match in data_js:
-            decode_aa += aadecode(match)
-        data_js = re.sub(r':(function.*?\})', r':"\g<1>"', decode_aa)
-        data_js = re.sub(r':(var[^,]+),', r':"\g<1>",', data_js)
+        return []
+
     data = agrupa_datos(httptools.downloadpage(item.url).data)
     data_obf = scrapertools.find_single_match(data, "var ad\s*=\s*'([^']+)'")
     data_decrypt = jsontools.load(obfs(base64.b64decode(data_obf), 126 - int(key)))
+
     infolabels = {}
     year = scrapertools.find_single_match(data, '<span>A&ntilde;o:\s*</span>.*?(\d{4})')
     infolabels["year"] = year
     matches = []
     for match in data_decrypt:
-        prov = eval(scrapertools.find_single_match(data_js, 'p\[%s\]\s*=\s*(\{.*?\}[\']\})' % match["provider"]))
-        server_url = scrapertools.find_single_match(prov['l'], 'return\s*"(.*?)"')
-        url = '%s%s' % (server_url, match['code'])
-        url = re.sub(r'\'|"|\s|\+', '', url)
-        url = re.sub(r'var_\d+\[\d+\]', '', url)
-        embed = prov["e"]
-        matches.append([match["lang"], match["quality"], url, embed])
+        if match['provider'] in provs:
+            try:
+                embed = provs[match['provider']][0]
+                url = eval(provs[match['provider']][1].replace('_code_', "match['code']"))
+                matches.append([match['lang'], match['quality'], url, embed])
+            except:
+                pass
+
     for idioma, calidad, url, embed in matches:
-        mostrar_server = True
-        option = "Ver"
-        option1 = 1
-        if re.search(r'return ([\'"]{2,}|\})', embed):
+        if embed == 'd':
             option = "Descargar"
             option1 = 2
+        else:
+            option = "Ver"
+            option1 = 1
+
         calidad = unicode(calidad, "utf8").upper().encode("utf8")
         title = option + ": %s (" + calidad + ")" + " (" + idioma + ")"
         thumbnail = item.thumbnail
@@ -569,6 +578,7 @@ def findvideos(item):
             Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
                  plot=plot, fanart=fanart, show=item.show, folder=True, infoLabels=infolabels, language=idioma,
                  contentTitle=item.contentTitle, contentType=item.contentType, tipo=option, tipo1=option1, idioma=idioma))
+
     it2 = servertools.get_servers_itemlist(it2, lambda i: i.title % i.server.capitalize())
     it2.sort(key=lambda it: (it.tipo1, it.idioma, it.server))
     for item in it2:
@@ -576,6 +586,7 @@ def findvideos(item):
             item.url += "###" + id + ";" + type
     itemlist.extend(it1)
     itemlist.extend(it2)
+
     ## 2 = película
     if type == "2" and item.category != "Cine":
         if config.get_videolibrary_support():
