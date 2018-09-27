@@ -11,6 +11,8 @@ def test_video_exists(page_url):
     data = httptools.downloadpage(page_url).data
     if "Video not found..." in data:
         return False, config.get_localized_string(70292) % "Thevid"
+    if "Video removed for inactivity..." in data:
+        return False, "[Thevid] El video ha sido removido por inactividad"
     return True, ""
 
 
