@@ -4,6 +4,7 @@ import re
 import sys
 import urllib
 import urlparse
+import time
 
 from channelselector import get_thumb
 from core import httptools
@@ -13,11 +14,25 @@ from core.item import Item
 from platformcode import config, logger
 from core import tmdb
 from lib import generictools
+from channels import filtertools
+from channels import autoplay
 
-host = 'http://www.mejortorrent.com/'
-#host = config.get_setting('domain_name', 'mejortorrent')
 
-__modo_grafico__ = config.get_setting('modo_grafico', 'mejortorrent')
+#IDIOMAS = {'CAST': 'Castellano', 'LAT': 'Latino', 'VO': 'Version Original'}
+IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['torrent']
+
+channel = "mejortorrent"
+
+host = 'http://www.mejortorrent.org/'
+#host = config.get_setting('domain_name', channel)
+
+categoria = channel.capitalize()
+__modo_grafico__ = config.get_setting('modo_grafico', channel)
+timeout = config.get_setting('timeout_downloadpage', channel)
+
 
 def mainlist(item):
     logger.info()
@@ -31,9 +46,13 @@ def mainlist(item):
     thumb_series_az = get_thumb("channels_tvshow_az.png")
     thumb_docus = get_thumb("channels_documentary.png")
     thumb_buscar = get_thumb("search.png")
+    thumb_separador = get_thumb("next.png")
+    thumb_settings = get_thumb("setting_0.png")
+    
+    autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, title="Novedades", action="listado_busqueda", extra="novedades", tipo=False,
-                         url= host + "/secciones.php?sec=ultimos_torrents", thumbnail=thumb_buscar))
+    #itemlist.append(Item(channel=item.channel, title="Novedades", action="listado_busqueda", extra="novedades", tipo=False,
+    #                     url= host + "/secciones.php?sec=ultimos_torrents", thumbnail=thumb_buscar))
     itemlist.append(Item(channel=item.channel, title="Peliculas", action="listado", extra="peliculas", tipo=False,
                          url= host + "/torrents-de-peliculas.html", thumbnail=thumb_pelis))
     itemlist.append(Item(channel=item.channel, title="Peliculas HD", action="listado", extra="peliculas", tipo=False,
@@ -57,7 +76,20 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Documentales Listado Alfabetico", action="alfabeto", extra="documentales", url= host + "/torrents-de-documentales.html", thumbnail=thumb_docus))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", thumbnail=thumb_buscar, tipo=False))
 
+    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", folder=False, thumbnail=thumb_separador))
+    
+    itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", thumbnail=thumb_settings))
+    
+    autoplay.show_option(item.channel, itemlist)            #Activamos Autoplay
+
     return itemlist
+    
+    
+def configuracion(item):
+    from platformcode import platformtools
+    ret = platformtools.show_channel_settings()
+    platformtools.itemlist_refresh()
+    return
 
 
 def alfabeto(item):
@@ -366,6 +398,9 @@ def listado(item):
             title = re.sub(r'-\s[m|M].*?serie', '', title)
             title_subs += ["Miniserie"]
         
+        if item_local.language == []:
+            item_local.language = ['CAST']                              #Por defecto
+        
         if title.endswith('.'):
             title = title[:-1]
             
@@ -608,6 +643,9 @@ def listado_busqueda(item):
             title = re.sub(r'-\s[m|M].*?serie', '', title)
             title_subs += ["Miniserie"]
         
+        if item_local.language == []:
+            item_local.language = ['CAST']                              #Por defecto
+        
         if title.endswith('.'):
             title = title[:-1]
         
@@ -687,7 +725,13 @@ def listado_busqueda(item):
             item_local.contentSeason_save = item_local.contentSeason
             del item_local.infoLabels['season']
         
-        itemlist.append(item_local.clone())
+        #Ahora se filtra por idioma, si procede, y se pinta lo que vale
+        if config.get_setting('filter_languages', channel) > 0:     #Si hay idioma seleccionado, se filtra
+            itemlist = filtertools.get_link(itemlist, item_local, list_language)
+        else:
+            itemlist.append(item_local.clone())                     #Si no, pintar pantalla
+        
+        #cnt_title = len(itemlist)                                   #Contador de líneas añadidas
         
         #logger.debug(item_local)
         
@@ -715,6 +759,10 @@ def listado_busqueda(item):
 def findvideos(item):
     logger.info()
     itemlist = []
+    itemlist_t = []                                     #Itemlist total de enlaces
+    itemlist_f = []                                     #Itemlist de enlaces filtrados
+    if not item.language:
+        item.language = ['CAST']                        #Castellano por defecto
     
     #Bajamos los datos de la página
     data = ''
@@ -778,6 +826,8 @@ def findvideos(item):
         # Extrae la dimensión del vídeo
         size  = scrapertools.find_single_match(item_local.url, '(\d{1,3},\d{1,2}?\w+)\.torrent')
         size = size.upper().replace(".", ",").replace("G", " G ").replace("M", " M ") #sustituimos . por , porque Unify lo borra
+        if not size:
+            size = generictools.get_torrent_size(item_local.url)                        #Buscamos el tamaño en el .torrent
         if size:
             item_local.title = re.sub('\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title) #Quitamos size de título, si lo traía
             item_local.title = '%s [%s]' % (item_local.title, size)                     #Agregamos size al final del título
@@ -785,18 +835,40 @@ def findvideos(item):
             item_local.quality = '%s [%s]' % (item.quality, size)                         #Agregamos size al final de calidad
      
         #Ahora pintamos el link del Torrent, si lo hay
-        if item_local.url:		# Hay Torrent ?
-            item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))        #Preparamos título de Torrent
-            item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title)    #Quitamos etiquetas vacías
-            item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)          #Quitamos colores vacíos
-            item_local.alive = "??"         #Calidad del link sin verificar
-            item_local.action = "play"      #Visualizar vídeo
-            item_local.server = "torrent"   #Seridor Torrent
+        if item_local.url:		                                    # Hay Torrent ?
+            item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))            #Preparamos título de Torrent
+            
+            #Preparamos título y calidad, quitamos etiquetas vacías
+            item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
+            item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
+            item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+            item_local.quality = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.quality)
+            item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality)
+            item_local.quality = item_local.quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+            
+            item_local.alive = "??"                                                 #Calidad del link sin verificar
+            item_local.action = "play"                                              #Visualizar vídeo
+            item_local.server = "torrent"                                           #Seridor Torrent
         
-            itemlist.append(item_local.clone())     #Pintar pantalla        
+            itemlist_t.append(item_local.clone())                                   #Pintar pantalla, si no se filtran idiomas
+        
+            # Requerido para FilterTools
+            if config.get_setting('filter_languages', channel) > 0:                 #Si hay idioma seleccionado, se filtra
+                itemlist_f = filtertools.get_link(itemlist_f, item_local, list_language)  #Pintar pantalla, si no está vacío
 
         #logger.debug("title=[" + item.title + "], torrent=[ " + item_local.url + " ], url=[ " + url + " ], post=[" + item.post + "], thumbnail=[ " + item.thumbnail + " ]" + " size: " + size)
 
+    if len(itemlist_f) > 0:                                                         #Si hay entradas filtradas...
+        itemlist.extend(itemlist_f)                                                 #Pintamos pantalla filtrada
+    else:                                                                       
+        if config.get_setting('filter_languages', channel) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
+            thumb_separador = get_thumb("next.png")                                 #... pintamos todo con aviso
+            itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
+        itemlist.extend(itemlist_t)                                                 #Pintar pantalla con todo si no hay filtrado
+
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)                                                  #Lanzamos Autoplay
+    
     return itemlist
  
 

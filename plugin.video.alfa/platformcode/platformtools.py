@@ -179,6 +179,9 @@ def render_items(itemlist, parent_item):
         from core import httptools
 
         if item.action == 'play':
+            #### Compatibilidad con Kodi 18: evita que se quede la ruedecedita dando vueltas en enlaces Directos
+            item.folder = False
+            
             item.thumbnail = unify.thumbnail_type(item)
         else:
             item.thumbnail = httptools.get_url_headers(item.thumbnail)

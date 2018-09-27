@@ -1,7 +1,7 @@
 {
   "id": "tiotorrent",
   "name": "TioTorrent",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast","lat"],
   "thumbnail": "https://s1.postimg.cc/29eths1fi7/tiotorrent.png",
