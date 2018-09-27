@@ -14,6 +14,14 @@
   ],
   "settings": [
     {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
       "id": "modo_grafico",
       "type": "bool",
       "label": "Buscar información extra",
