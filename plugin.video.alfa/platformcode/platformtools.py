@@ -1005,12 +1005,6 @@ def set_player(item, xlistitem, mediaurl, view, strm):
 
             # Reproduce
             # xbmc_player = xbmc_player
-            
-            #### Compatibilidad con Kodi 18: evita cuelgues/cancelaciones cuando el .torrent se lanza desde pantalla convencional
-            if xbmc.getCondVisibility('Window.IsMedia'):
-                xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, xlistitem)   #Preparamos el entorno para evitar error Kod1 18
-                xbmc.sleep(100)                                                 #Dejamos tiempo para que se ejecute
-            
             xbmc_player.play(playlist, xlistitem)
             if config.get_setting('trakt_sync'):
                 trakt_tools.wait_for_update_trakt()
@@ -1028,10 +1022,6 @@ def set_player(item, xlistitem, mediaurl, view, strm):
             xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, xlistitem)
 
         elif config.get_setting("player_mode") == 2:
-            #### Compatibilidad con Kodi 18: evita cuelgues/cancelaciones cuando el .torrent se lanza desde pantalla convencional
-            if xbmc.getCondVisibility('Window.IsMedia'):
-                xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, xlistitem)   #Preparamos el entorno para evitar error Kod1 18
-                xbmc.sleep(100)                                                 #Dejamos tiempo para que se ejecute
             xbmc.executebuiltin("PlayMedia(" + mediaurl + ")")
 
     # TODO MIRAR DE QUITAR VIEW
@@ -1092,7 +1082,7 @@ def play_torrent(item, xlistitem, mediaurl):
         #### Compatibilidad con Kodi 18: evita cuelgues/cancelaciones cuando el .torrent se lanza desde pantalla convencional
         if xbmc.getCondVisibility('Window.IsMedia'):
             xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, xlistitem)   #Preparamos el entorno para evitar error Kod1 18
-            xbmc.sleep(500)                                                 #Dejamos tiempo para que se ejecute
+            xbmc.sleep(500)                                                                                                  #Dejamos tiempo para que se ejecute
 
         mediaurl = urllib.quote_plus(item.url)
         if ("quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]) and item.infoLabels['tmdb_id']:    #Llamada con más parámetros para completar el título
