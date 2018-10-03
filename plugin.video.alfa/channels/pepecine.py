@@ -62,7 +62,7 @@ def mainlist(item):
                                type   = 'series'))
 
     itemlist.append(item.clone(title  = "Buscar",
-                               url    = host + '/donde-ver?q=',
+                               url    = host + '/ver-online?q=',
                                action ='search',
                                type   = 'movie'))
 
