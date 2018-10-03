@@ -11,7 +11,8 @@
       "torrent",
       "movie",
       "tvshow",
-      "vos"
+      "vos",
+      "direct"
     ],
     "settings": [
     {
