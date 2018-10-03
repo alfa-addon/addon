@@ -56,21 +56,19 @@ def novedades(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<Br>|<BR>|<br>|<br/>|<br />|-\s", "", data)
     data = re.sub(r"<!--.*?-->", "", data)
-    patron = '<a title="([^"]+)" href="([^"]+)".*?>'
-    patron += "<img.*?src='([^']+)'"
+    data = scrapertools.find_single_match(data, "<div class='main section' id='main'>(.*?)</ul>")
+    patron = "<div class='post-header'>(.*?)</span>"
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedtitle, scrapedurl, scrapedthumb in matches:
-        # patron = "^(.*?)(?:Ya Disponible|Disponible|Disponbile|disponible|\(Actualizada\))$"
-        # match = re.compile(patron, re.DOTALL).findall(scrapedtitle)
+    for serie_data in matches:
+        scrapedtitle = scrapertools.find_single_match(serie_data, "title='([^']+)'")
+        scrapedurl = scrapertools.find_single_match(serie_data, 'href="([^"]+)"')
+        scrapedthumb = scrapertools.find_single_match(serie_data, "src='([^']+)'")
         title = scrapertools.decodeHtmlentities(scrapedtitle)
         language=''
-        # language = scrapertools.find_multiple_matches(title,'(Vose|Español|Latino)')
-        # for lang in language:
-        #     title = title.replace(lang,'')
-        # title = title.replace ('Disponible','')
-        # title = title.replace('Ya', '')
-        # title = title.strip()
+        title = title.replace ('Disponible','')
+        title = title.replace('Ya', '')
+        title = title.strip()
 
         show = scrapertools.find_single_match(title, "^(.+?) \d+[x|X]\d+")
 

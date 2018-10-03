@@ -147,7 +147,7 @@ def get_source(url):
 
     logger.info()
     data = httptools.downloadpage(url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
 def list_all (item):
@@ -159,17 +159,20 @@ def list_all (item):
     else:
         contentType = 'pelicula'
         action = 'findvideos'
-    if item.type not in ['normal', 'seccion', 'serie']:
+    if 'pagination' in item.url:
         post = {'page':item.page, 'type':item.type,'slug':item.slug,'id':item.id}
         post = urllib.urlencode(post)
         data =httptools.downloadpage(item.url, post=post, headers=CHANNEL_HEADERS).data
-        data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-        patron ='<a href=(.*?)><figure><img.*?src=(.*?) alt=.*?<p>(.*?)<\/p><span>(\d{4})<\/span>'
+        data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+        patron = '<a href="([^"]+)">.*?<figure><img.*?src="([^"]+)".*?'
+        patron +='<span class="year text-center">(\d{4})</span>.*?<p>([^<]+)</p>'
     else:
         data = get_source(item.url)
-        patron = 'item-%s><a href=(.*?)><figure><img.*?data-src=(.*?) alt=.*?<p>(.*?)<\/p><span>(\d{4})</span>'%contentType
+        patron = '<div class="item-pelicula pull-left"><a href="([^"]+)">.*?data-src="([^"]+)".*?'
+        patron += '<span class="year text-center">([^<]+)</span>.*?<p>([^<]+)</p>'
+
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear in matches:
+    for scrapedurl, scrapedthumbnail, scrapedyear, scrapedtitle in matches:
         url = host+scrapedurl+'p001/'
         thumbnail = scrapedthumbnail
         contentTitle=scrapedtitle
@@ -192,8 +195,8 @@ def list_all (item):
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb =True)
  #Paginacion
 
-    next_page_valid = scrapertools.find_single_match(data, '<div class=butmore(?: site=series|) page=(.*?) id=(.*?) '
-                                                           'type=(.*?) limit=.*?>')
+    next_page_valid = scrapertools.find_single_match(data, '<div class="butmore" site=(?:""|"series") page="(\d+)" '
+                                                           'id="(.*?)" type="([^"]+)" limit="\d+">')
     if item.type != 'normal' and (len(itemlist)>19 or next_page_valid):
         type = item.type
         if item.type == 'serie':
@@ -233,24 +236,18 @@ def seccion(item):
     data = get_source(item.url)
     page = "1"
     if item.seccion == 'generos':
-        patron = '<li><a href=(.*?)><i class=ion-cube><\/i>(.*?)<\/span>'
+        patron = '<li><a href="([^"]+)"><i class="ion-cube"></i>([^<]+)<'
         type = 'genre'
         pat = 'genero/'
     elif item.seccion == 'anios':
-        patron = '<li><a href=(\/peliculas.*?)>(\d{4})<\/a>'
+        patron = '<li><a href="(\/peliculas.*?)">(\d{4})<\/a>'
         type = 'year'
         pat = 'peliculas-'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle in matches:
         title = scrapedtitle
-        if item.seccion == 'generos':
-            cant = re.sub(r'.*?<span class=cant-genre>','',scrapedtitle)
-            only_title = re.sub(r'<.*','',scrapedtitle).rstrip()
-            title = only_title+' (%s)'%cant
         url = host+scrapedurl
         slug = scrapertools.find_single_match(scrapedurl, "%s(.*?)/" %pat)
-        if item.seccion in ['generos', 'anios']:
-            url = host + "/pagination/"
         itemlist.append(
             Item(action="list_all",
                  channel=item.channel,

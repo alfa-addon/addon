@@ -206,7 +206,7 @@ def episodesxseason(item):
                              language=language,
                              infoLabels=infoLabels
                              ))
-
+    itemlist = filtertools.get_links(itemlist, item, list_language)
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
