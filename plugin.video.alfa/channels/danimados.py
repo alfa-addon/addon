@@ -12,7 +12,7 @@ from core.item import Item
 from platformcode import config, logger
 from channels import autoplay
 
-host = "http://www.danimados.com/"
+host = "https://www.danimados.com/"
 
 list_servers = ['openload',
                 'okru',
@@ -48,12 +48,13 @@ def sub_search(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = 'class="thumbnail animation-.*?href="([^"]+).*?'
+    patron  = '(?s)class="thumbnail animation-.*?href="([^"]+).*?'
     patron += 'img src="([^"]+).*?'
     patron += 'alt="([^"]+).*?'
-    patron += 'class="year">(\d{4})'
+    patron += 'class="meta"(.*?)class="contenido"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear in matches:
+        scrapedyear = scrapertools.find_single_match(scrapedyear, 'class="year">(\d{4})')
         item.action = "findvideos"
         item.contentTitle = scrapedtitle
         item.contentSerieName = ""
@@ -95,7 +96,7 @@ def mainpage(item):
             itemlist.append(
                     Item(channel=item.channel, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, action="episodios",
                          show=scrapedtitle))
-            tmdb.set_infoLabels(itemlist)
+        tmdb.set_infoLabels(itemlist)
         return itemlist
     return itemlist
 
@@ -171,12 +172,14 @@ def findvideos(item):
             id = scrapertools.find_single_match(url, 'iframe/(.*)')
             url = url.replace(id, base64.b64encode(id))
             new_data = httptools.downloadpage(url).data
-            url = scrapertools.find_single_match(new_data, "sources: \[\{file:'([^']+)")
-            if "zkstream" in url:
+            new_data = new_data.replace('"',"'")
+            url = scrapertools.find_single_match(new_data, "sources:\s*\[\{file:\s*'([^']+)")
+            if "zkstream" in url or "cloudup" in url:
                 url1 = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
             else:
                 url1 = url
-        itemlist.append(item.clone(title='%s',url=url1, action="play"))
+        if url1:
+            itemlist.append(item.clone(title='%s',url=url1, action="play"))
     tmdb.set_infoLabels(itemlist)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentType=="movie" and item.contentChannel!='videolibrary':

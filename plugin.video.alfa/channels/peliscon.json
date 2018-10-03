@@ -1,7 +1,7 @@
 {
   "id": "peliscon",
   "name": "Peliscon",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast"],
   "thumbnail": "http://imgur.com/yTQRPUJ.png",
