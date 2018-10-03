@@ -1080,12 +1080,13 @@ def play_torrent(item, xlistitem, mediaurl):
     if seleccion > 1:
         
         #### Compatibilidad con Kodi 18: evita cuelgues/cancelaciones cuando el .torrent se lanza desde pantalla convencional
-        if xbmc.getCondVisibility('Window.IsMedia'):
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, xlistitem)   #Preparamos el entorno para evitar error Kod1 18
-            xbmc.sleep(500)                                                                                                  #Dejamos tiempo para que se ejecute
+        #if xbmc.getCondVisibility('Window.IsMedia'):
+        xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, xlistitem)       #Preparamos el entorno para evitar error Kod1 18
+        time.sleep(0.5)                                                     #Dejamos tiempo para que se ejecute
 
         mediaurl = urllib.quote_plus(item.url)
-        if ("quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]) and item.infoLabels['tmdb_id']:    #Llamada con más parámetros para completar el título
+        #Llamada con más parámetros para completar el título
+        if ("quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]) and item.infoLabels['tmdb_id']:
             if item.contentType == 'episode' and "elementum" not in torrent_options[seleccion][1]:
                 mediaurl += "&episode=%s&library=&season=%s&show=%s&tmdb=%s&type=episode" % (item.infoLabels['episode'], item.infoLabels['season'], item.infoLabels['tmdb_id'], item.infoLabels['tmdb_id'])
             elif item.contentType == 'movie':
