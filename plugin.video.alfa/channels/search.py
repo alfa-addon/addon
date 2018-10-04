@@ -154,7 +154,7 @@ def setting_channel_new(item):
 
     # Cargar lista de opciones (canales activos del usuario y que permitan búsqueda global)
     # ------------------------
-    lista = []; ids = []; lista_lang = []
+    lista = []; ids = []; lista_lang = []; lista_ctgs = []
     channels_list = channelselector.filterchannels('all')
     for channel in channels_list:
         channel_parameters = channeltools.get_channel_parameters(channel.channel)
@@ -171,35 +171,51 @@ def setting_channel_new(item):
         lista.append(it)
         ids.append(channel.channel)
         lista_lang.append(channel_parameters['language'])
+        lista_ctgs.append(channel_parameters['categories'])
 
     # Diálogo para pre-seleccionar
     # ----------------------------
-    preselecciones_std = ['Modificar selección actual', 'Modificar partiendo de Todos', 'Modificar partiendo de Ninguno', 'Modificar partiendo de Castellano', 'Modificar partiendo de Latino']
-    if item.action == 'setting_channel': 
-        # Configuración de los canales incluídos en la búsqueda
-        preselecciones = preselecciones_std
-        presel_values = [1, 2, 3, 4, 5]
-    else:
-        # Llamada desde "buscar en otros canales" (se puede saltar la selección e ir directo a la búsqueda)
-        preselecciones = ['Buscar con la selección actual'] + preselecciones_std
-        presel_values = [0, 1, 2, 3, 4, 5]
+    preselecciones = [
+        'Buscar con la selección actual', 
+        'Modificar selección actual', 
+        'Modificar partiendo de Todos', 
+        'Modificar partiendo de Ninguno', 
+        'Modificar partiendo de Castellano', 
+        'Modificar partiendo de Latino'
+    ]
+    presel_values = ['skip', 'actual', 'all', 'none', 'cast', 'lat']
+
+    categs = ['movie', 'tvshow', 'documentary', 'anime', 'vos', 'direct', 'torrent']
+    if config.get_setting('adult_mode') > 0: categs.append('adult')
+    for c in categs:
+        preselecciones.append('Modificar partiendo de %s' % config.get_localized_category(c))
+        presel_values.append(c)
+
+    if item.action == 'setting_channel': # Configuración de los canales incluídos en la búsqueda
+        del preselecciones[0]
+        del presel_values[0]
+    #else: # Llamada desde "buscar en otros canales" (se puede saltar la selección e ir directo a la búsqueda)
     
     ret = platformtools.dialog_select(config.get_localized_string(59994), preselecciones)
     if ret == -1: return False # pedido cancel
-    if presel_values[ret] == 0: return True # continuar sin modificar
-    elif presel_values[ret] == 3: preselect = []
-    elif presel_values[ret] == 2: preselect = range(len(ids))
-    elif presel_values[ret] in [4, 5]:
-        busca = 'cast' if presel_values[ret] == 4 else 'lat'
+    if presel_values[ret] == 'skip': return True # continuar sin modificar
+    elif presel_values[ret] == 'none': preselect = []
+    elif presel_values[ret] == 'all': preselect = range(len(ids))
+    elif presel_values[ret] in ['cast', 'lat']:
         preselect = []
         for i, lg in enumerate(lista_lang):
-            if busca in lg or '*' in lg:
+            if presel_values[ret] in lg or '*' in lg:
                 preselect.append(i)
-    else:
+    elif presel_values[ret] == 'actual':
         preselect = []
         for i, canal in enumerate(ids):
             channel_status = config.get_setting('include_in_global_search', canal)
             if channel_status:
+                preselect.append(i)
+    else:
+        preselect = []
+        for i, ctgs in enumerate(lista_ctgs):
+            if presel_values[ret] in ctgs:
                 preselect.append(i)
 
     # Diálogo para seleccionar
@@ -493,10 +509,10 @@ def do_search(item, categories=None):
             if categories:
 
                 # Si no se ha seleccionado torrent no se muestra
-                if "torrent" not in categories and "infoPlus" not in categories:
-                    if "torrent" in channel_parameters["categories"]:
-                        logger.info("%s -torrent-" % basename_without_extension)
-                        continue
+                #if "torrent" not in categories and "infoPlus" not in categories:
+                #    if "torrent" in channel_parameters["categories"]:
+                #        logger.info("%s -torrent-" % basename_without_extension)
+                #        continue
 
                 for cat in categories:
                     if cat not in channel_parameters["categories"]:
