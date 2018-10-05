@@ -264,39 +264,47 @@ def listado(item):
     logger.info()
     itemlist = []
 
-    action = "findvideos"
-    content_type = "movie"
-
-    if item.extra == 'serie':
-        action = "temporadas"
-        content_type = "tvshow"
-
     # ~ data = httptools.downloadpage(item.url).data
     data = obtener_data(item.url)
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<Br>|<BR>|<br>|<br/>|<br />|-\s", "", data)
-    # logger.info("data -- {}".format(data))
 
-    patron = '<li[^>]+><a href="([^"]+)" alt="([^<|\(]+).*?<img src="([^"]+).*?>.*?<span>\(([^)]+).*?' \
-             '<p class="font12">(.*?)</p>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    if item.extra == 'movies':
+        action = "findvideos"
+        content_type = "movie"
 
-    for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedyear, scrapedplot in matches:
-        title = "%s (%s)" % (scrapertools.unescape(scrapedtitle.strip()), scrapedyear)
-        plot = scrapertools.entityunescape(scrapedplot)
+        patron = '<li[^>]+><a href="([^"]+)" alt="([^<|\(]+).*?<img src="([^"]+).*?>.*?<span>\(([^)]+).*?' \
+                 '<p class="font12">(.*?)</p>'
+        matches = re.compile(patron, re.DOTALL).findall(data)
 
-        new_item = Item(channel=__channel__, title=title, url=urlparse.urljoin(CHANNEL_HOST, scrapedurl), action=action,
-                        thumbnail=scrapedthumbnail, plot=plot, context="", extra=item.extra,
-                        contentType=content_type, fulltitle=title)
+        for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedyear, scrapedplot in matches:
+            title = "%s (%s)" % (scrapertools.unescape(scrapedtitle.strip()), scrapedyear)
+            plot = scrapertools.entityunescape(scrapedplot)
 
-        if item.extra == 'serie':
-            new_item.show = scrapertools.unescape(scrapedtitle.strip())
-            # fix en algunos casos la url está mal
-            new_item.url = new_item.url.replace(CHANNEL_HOST + "pelicula", CHANNEL_HOST + "serie")
-        else:
+            new_item = Item(channel=__channel__, title=title, url=urlparse.urljoin(CHANNEL_HOST, scrapedurl), action=action,
+                            thumbnail=scrapedthumbnail, plot=plot, context="", extra=item.extra,
+                            contentType=content_type)
             new_item.fulltitle = scrapertools.unescape(scrapedtitle.strip())
             new_item.infoLabels = {'year': scrapedyear}
+            itemlist.append(new_item)
 
-        itemlist.append(new_item)
+    else:
+        action = "temporadas"
+        content_type = "tvshow"
+
+        patron = '<li[^>]+><a href="([^"]+)" alt="([^<|\(]+).*?<img src="([^"]+)'
+        matches = re.compile(patron, re.DOTALL).findall(data)
+        
+        for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
+            title = scrapertools.unescape(scrapedtitle.strip())
+
+            new_item = Item(channel=__channel__, title=title, url=urlparse.urljoin(CHANNEL_HOST, scrapedurl), action=action,
+                            thumbnail=scrapedthumbnail, context="", extra=item.extra,
+                            contentType=content_type, fulltitle=title)
+            new_item.show = title
+            # fix en algunos casos la url está mal
+            new_item.url = new_item.url.replace(CHANNEL_HOST + "pelicula", CHANNEL_HOST + "serie")
+            itemlist.append(new_item)
+
 
     # Obtenemos los datos basicos de todas las peliculas mediante multihilos
     tmdb.set_infoLabels(itemlist, __modo_grafico__)

@@ -49,8 +49,10 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     
     itemlist.append(Item(channel=item.channel, title="Películas", action="submenu", url=api, thumbnail=thumb_pelis, extra="peliculas"))
+    itemlist.append(Item(channel=item.channel, title="Buscar en Películas >>", action="search", url=api + "?keywords=%s&page=0", thumbnail=thumb_buscar, extra="peliculas"))
     
     itemlist.append(Item(channel=item.channel, title="Series", action="submenu", url=api_serie, thumbnail=thumb_series, extra="series"))
+    itemlist.append(Item(channel=item.channel, title="Buscar en Series >>", action="search", url=api_serie + "?keywords=%s&page=0", thumbnail=thumb_buscar, extra="series"))
     
     itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", folder=False, thumbnail=thumb_separador))
     
@@ -94,7 +96,6 @@ def submenu(item):
         itemlist.append(item.clone(action="listado", title="     + Valoradas", url=api + "?sort_by=rating&page=0", thumbnail=thumb_popular))
         itemlist.append(item.clone(action="alfabeto", title="     Ordenado Alfabético", url=api, thumbnail=thumb_pelis_az))
         itemlist.append(item.clone(action="categorias", title="     Ordenado por Género", url=api, thumbnail=thumb_generos))
-        itemlist.append(item.clone(action="search", title="Buscar Películas...", url=api + "?keywords=%s&page=0", thumbnail=thumb_buscar))
     
     else:
         itemlist.append(item.clone(action="listado", title="Series", url=api_serie + "?sort_by=''&page=0", thumbnail=thumb_series))
@@ -103,7 +104,6 @@ def submenu(item):
         itemlist.append(item.clone(action="listado", title="     + Valoradas", url=api_serie + "?sort_by=rating&page=0", thumbnail=thumb_popular))
         itemlist.append(item.clone(action="alfabeto", title="     Ordenado Alfabético", url=api_serie, thumbnail=thumb_series_az))
         itemlist.append(item.clone(action="categorias", title="     Ordenado por Género", url=api_serie, thumbnail=thumb_generos))
-        itemlist.append(item.clone(action="search", title="Buscar Series...", url=api_serie + "?keywords=%s&page=0", thumbnail=thumb_buscar))
     
     return itemlist
     
@@ -654,13 +654,15 @@ def actualizar_titulos(item):
     
 def search(item, texto):
     logger.info()
-    #texto = texto.replace(" ", "+")
-
+    itemlist = []
+    texto = texto.replace(' ', '%20')
+    
     try:
-        item.url = item.url % texto.replace(' ', '%20')
+        item.url = item.url % texto
 
         if texto != '':
-            return listado(item)
+            itemlist = listado(item)
+            return itemlist
     except:
         import sys
         for line in sys.exc_info():

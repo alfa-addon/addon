@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "streamix.cloud/(?:embed-|)([A-z0-9]+)",
-        "url": "http://streamix.cloud/embed-\\1.html"
+        "pattern": "(https://www.fembed.com/v/[A-z0-9]+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "streamixcloud",
-  "name": "streamixcloud",
+  "id": "fembed",
+  "name": "Fembed",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "http://i.imgur.com/NuD85Py.png?1"
+  "thumbnail": "https://i.postimg.cc/prdPwBhT/fembed1.png",
+  "version": 1
 }

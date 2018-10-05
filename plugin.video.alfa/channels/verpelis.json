@@ -6,9 +6,7 @@
     "language": ["cast", "lat"],
     "thumbnail": "http://imgur.com/lmYQgOu.png",
     "categories": [
-        "torrent",
         "movie",
-        "tvshow",
         "direct"
     ],
     "settings": [

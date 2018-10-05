@@ -493,10 +493,10 @@ def do_search(item, categories=None):
             if categories:
 
                 # Si no se ha seleccionado torrent no se muestra
-                if "torrent" not in categories and "infoPlus" not in categories:
-                    if "torrent" in channel_parameters["categories"]:
-                        logger.info("%s -torrent-" % basename_without_extension)
-                        continue
+                #if "torrent" not in categories and "infoPlus" not in categories:
+                #    if "torrent" in channel_parameters["categories"]:
+                #        logger.info("%s -torrent-" % basename_without_extension)
+                #        continue
 
                 for cat in categories:
                     if cat not in channel_parameters["categories"]:

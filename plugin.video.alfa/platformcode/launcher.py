@@ -386,7 +386,7 @@ def play_from_library(item):
         @param item: elemento con información
     """
     logger.info()
-    # logger.debug("item: \n" + item.tostring('\n'))
+    #logger.debug("item: \n" + item.tostring('\n'))
 
     import xbmcgui
     import xbmcplugin
@@ -437,33 +437,39 @@ def play_from_library(item):
             itemlist = reorder_itemlist(itemlist)
 
 
+        import time
         p_dialog.update(100, '')
-        xbmc.sleep(500)
+        time.sleep(0.5)
         p_dialog.close()
 
 
         if len(itemlist) > 0:
-            # El usuario elige el mirror
-            opciones = []
-            for item in itemlist:
-                opciones.append(item.title)
+            while not xbmc.Monitor().abortRequested():
+                # El usuario elige el mirror
+                opciones = []
+                for item in itemlist:
+                    opciones.append(item.title)
 
-            # Se abre la ventana de seleccion
-            if (item.contentSerieName != "" and
-                        item.contentSeason != "" and
-                        item.contentEpisodeNumber != ""):
-                cabecera = ("%s - %sx%s -- %s" %
-                            (item.contentSerieName,
-                             item.contentSeason,
-                             item.contentEpisodeNumber,
-                             config.get_localized_string(30163)))
-            else:
-                cabecera = config.get_localized_string(30163)
+                # Se abre la ventana de seleccion
+                if (item.contentSerieName != "" and
+                            item.contentSeason != "" and
+                            item.contentEpisodeNumber != ""):
+                    cabecera = ("%s - %sx%s -- %s" %
+                                (item.contentSerieName,
+                                 item.contentSeason,
+                                 item.contentEpisodeNumber,
+                                 config.get_localized_string(30163)))
+                else:
+                    cabecera = config.get_localized_string(30163)
 
-            seleccion = platformtools.dialog_select(cabecera, opciones)
+                seleccion = platformtools.dialog_select(cabecera, opciones)
 
-            if seleccion == -1:
-                return
-            else:
-                item = videolibrary.play(itemlist[seleccion])[0]
-                platformtools.play_video(item)
+                if seleccion == -1:
+                    return
+                else:
+                    item = videolibrary.play(itemlist[seleccion])[0]
+                    platformtools.play_video(item)
+
+                from channels import autoplay
+                if (platformtools.is_playing() and item.action) or item.server == 'torrent' or autoplay.is_active(item.contentChannel):
+                    break

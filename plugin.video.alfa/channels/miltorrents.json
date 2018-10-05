@@ -1,7 +1,7 @@
 {
   "id": "miltorrents",
   "name": "Miltorrents",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast"],
   "thumbnail": "http://imgur.com/KZoska0.png",

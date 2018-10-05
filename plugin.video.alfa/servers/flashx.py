@@ -13,7 +13,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
     data = httptools.downloadpage(page_url, cookies=False).data
-    if 'file was deleted' in data:
+    if 'file was deleted' in data or 'File Not Found (Deleted or Abused)' in data:
         return False, config.get_localized_string(70292) % "FlashX"
     elif 'Video is processing now' in data:
         return False, config.get_localized_string(70293) % "FlashX"
