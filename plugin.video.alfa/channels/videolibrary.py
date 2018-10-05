@@ -460,6 +460,10 @@ def findvideos(item):
             server.channel = "videolibrary"
             server.nfo = item.nfo
             server.strm_path = item.strm_path
+            
+            #### Compatibilidad con Kodi 18: evita que se quede la ruedecedita dando vueltas en enlaces Directos
+            if server.action == 'play':
+                server.folder = False
 
             # Se añade el nombre del canal si se desea
             if config.get_setting("quit_channel_name", "videolibrary") == 0:

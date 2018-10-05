@@ -9,10 +9,19 @@
   "banner": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/pelisplanetbaner.png",
   "categories": [
     "movie",
+    "tvshow",
     "direct",
     "vos"
   ],
   "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
     {
       "id": "modo_grafico",
       "type": "bool",

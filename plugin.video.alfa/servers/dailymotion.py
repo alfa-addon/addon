@@ -8,6 +8,8 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     response = httptools.downloadpage(page_url)
+    if "Contenido rechazado" in response.data:
+        return False, "[Dailymotion] El archivo no existe o ha sido borrado"
     if response.code == 404:
         return False, "[Dailymotion] El archivo no existe o ha sido borrado"
     return True, ""

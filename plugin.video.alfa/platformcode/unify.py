@@ -279,7 +279,7 @@ def title_format(item):
         visto = True
 
     # Se elimina cualquier formato previo en el titulo
-    if item.action != '':
+    if item.action != '' and item.action !='mainlist':
         item.title = remove_format(item.title)
 
     #logger.debug('visto? %s' % visto)

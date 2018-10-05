@@ -154,7 +154,7 @@ def render_items(itemlist, parent_item):
                 valid_genre = True
             elif anime:
                 valid_genre = True
-        elif 'siguiente' in item.title.lower() and '>' in item.title:
+        elif (('siguiente' in item.title.lower() and '>' in item.title) or ('pagina:' in item.title.lower())):
             item.thumbnail = get_thumb("next.png")
         elif 'add' in item.action:
             if 'pelicula' in item.action:
@@ -179,6 +179,9 @@ def render_items(itemlist, parent_item):
         from core import httptools
 
         if item.action == 'play':
+            #### Compatibilidad con Kodi 18: evita que se quede la ruedecedita dando vueltas en enlaces Directos
+            item.folder = False
+            
             item.thumbnail = unify.thumbnail_type(item)
         else:
             item.thumbnail = httptools.get_url_headers(item.thumbnail)
@@ -1077,12 +1080,13 @@ def play_torrent(item, xlistitem, mediaurl):
     if seleccion > 1:
         
         #### Compatibilidad con Kodi 18: evita cuelgues/cancelaciones cuando el .torrent se lanza desde pantalla convencional
-        if xbmc.getCondVisibility('Window.IsMedia'):
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, xlistitem)   #Preparamos el entorno para evitar error Kod1 18
-            time.sleep(1)                                                   #Dejamos tiempo para que se ejecute
+        #if xbmc.getCondVisibility('Window.IsMedia'):
+        xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, xlistitem)       #Preparamos el entorno para evitar error Kod1 18
+        time.sleep(0.5)                                                     #Dejamos tiempo para que se ejecute
 
         mediaurl = urllib.quote_plus(item.url)
-        if ("quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]) and item.infoLabels['tmdb_id']:    #Llamada con más parámetros para completar el título
+        #Llamada con más parámetros para completar el título
+        if ("quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]) and item.infoLabels['tmdb_id']:
             if item.contentType == 'episode' and "elementum" not in torrent_options[seleccion][1]:
                 mediaurl += "&episode=%s&library=&season=%s&show=%s&tmdb=%s&type=episode" % (item.infoLabels['episode'], item.infoLabels['season'], item.infoLabels['tmdb_id'], item.infoLabels['tmdb_id'])
             elif item.contentType == 'movie':

@@ -63,14 +63,15 @@ def categorias(item):
 
     data = httptools.downloadpage(item.url).data
     bloque = scrapertools.find_single_match(data, '<ul class="ordenar-por ordenar-por-categoria">'
-                                                  '(.*?)<div class="publis-bottom">')
+                                                  '(.*?)<\/ul>')
 
-    patron = '<div class="muestra-categorias">.*?<a class="thumb" href="([^"]+)".*?<img class="categorias" src="([^"]+)".*?<div class="nombre">([^"]+)</div>'
+    #patron = '<div class="muestra-categorias">.*?<a class="thumb" href="([^"]+)".*?<img class="categorias" src="([^"]+)".*?<div class="nombre">([^"]+)</div>'
+    patron = "<li><a href='([^']+)'\s?title='([^']+)'>.*?<\/a><\/li>"
     matches = scrapertools.find_multiple_matches(bloque, patron)
-    for url, thumbnail, title in matches:
+    for url, title in matches:
         url = host + url
-        thumbnail = "http:" + thumbnail
-        itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumbnail))
+        #thumbnail = "http:" + thumbnail
+        itemlist.append(item.clone(action="findvideos", title=title, url=url))
 
     return itemlist
 

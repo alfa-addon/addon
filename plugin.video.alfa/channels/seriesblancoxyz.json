@@ -1,13 +1,14 @@
 {
-  "id": "metaserie",
-  "name": "MetaSerie (Latino)",
+  "id": "seriesblancoxyz",
+  "name": "SeriesBlanco.xyz",
   "active": true,
   "adult": false,
-  "language": ["lat"],
-  "thumbnail": "https://s32.postimg.cc/7g50yo39h/metaserie.png",
-  "banner": "https://s31.postimg.cc/u6yddil8r/metaserie_banner.png",
+  "language": ["cast", "lat"],
+  "thumbnail": "https://s22.postimg.cc/nucz720sx/image.png",
+  "banner": "",
   "categories": [
-    "tvshow"
+    "tvshow",
+    "vos"
   ],
   "settings": [
     {
@@ -27,9 +28,10 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "Latino",
-        "Español",
-        "VOS"
+		"Cast",
+		"Lat",
+        "VOSE",
+        "VO"
       ]
     }
   ]
