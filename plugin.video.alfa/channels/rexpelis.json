@@ -1,11 +1,11 @@
 {
-  "id": "repelis",
-  "name": "Repelis",
+  "id": "rexpelis",
+  "name": "Rexpelis",
   "active": true,
   "adult": false,
   "language": ["lat","cast"],
-  "thumbnail": "https://s8.postimg.cc/yem7wyfw1/repelis1.png",
-  "banner": "https://s8.postimg.cc/p6tzg9gjl/repelis2.png",
+  "thumbnail": "https://i.postimg.cc/MMJ5g9Y1/rexpelis1.png",
+  "banner": "https://i.postimg.cc/XrXs5GJB/rexpelis2.png",
   "categories": [
     "movie"
   ],
