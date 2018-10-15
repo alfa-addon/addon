@@ -15,7 +15,7 @@ from platformcode import config, logger, platformtools
 
 
 idio = {'https://cdn.yape.nu//languajes/la.png': 'LAT','https://cdn.yape.nu//languajes/es.png': 'ESP','https://cdn.yape.nu//languajes/en_es.png': 'VOSE'}
-cali = {'HD 1080p': 'HD 1080p','TS Screener HQ':'TS Screener HQ', 'BR Screnner':'BR Screnner','HD Rip':'HD Rip','DVD Screnner':'DVD Screnner'}
+cali = {'TS Screnner': 'TS Screnner', 'HD 1080p': 'HD 1080p','TS Screener HQ':'TS Screener HQ', 'BR Screnner':'BR Screnner','HD Rip':'HD Rip','DVD Screnner':'DVD Screnner'}
 
 list_language = idio.values()
 list_quality = cali.values()
@@ -34,11 +34,13 @@ except:
 
 def mainlist(item):
     logger.info()
+    data = httptools.downloadpage(host + "/catalogue?sort=latest").data
+    total = scrapertools.find_single_match(data, 'class="font-weight-bold mr-2">([^<]+)')
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
     itemlist.append(Item(channel = item.channel, title = "Actualizadas", action = "peliculas", url = host + "/catalogue?sort=time_update&page=", page=1, thumbnail = get_thumb("updated", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Mas vistas", action = "peliculas", url = host + "/catalogue?sort=mosts-today&page=", page=1, thumbnail = get_thumb("more watched", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Ultimas agregadas", action = "peliculas", url = host + "/catalogue?sort=latest&page=", page=1, thumbnail = get_thumb("last", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Ultimas agregadas - (Total películas: %s)" %total, action = "peliculas", url = host + "/catalogue?sort=latest&page=", page=1, thumbnail = get_thumb("last", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos", url = host, extra = "Genero", thumbnail = get_thumb("genres", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = ""))
     itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "/search?term=", thumbnail = get_thumb("search", auto = True)))

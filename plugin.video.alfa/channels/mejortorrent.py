@@ -735,8 +735,8 @@ def listado_busqueda(item):
         
         #logger.debug(item_local)
         
-    if not category:            #Si este campo no existe es que viene de la primera pasada de una búsqueda global
-        return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
+    #if not category:            #Si este campo no existe es que viene de la primera pasada de una búsqueda global
+    #    return itemlist         #Retornamos sin pasar por la fase de maquillaje para ahorra tiempo
 
     #Llamamos a TMDB para que complete InfoLabels desde itemlist.  Mejor desde itemlist porque envía las queries en paralelo
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
