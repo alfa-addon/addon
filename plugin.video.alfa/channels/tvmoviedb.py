@@ -1496,7 +1496,7 @@ def detalles_fa(item):
 
     if item.contentType == "tvshow" and ob_tmdb.result:
         itemlist.append(item.clone(action="info_seasons", text_color=color4,
-                                   title=config.get_localized_string(7007) % item.infoLabels["number_of_seasons"]))
+                                   title=config.get_localized_string(70067) % item.infoLabels["number_of_seasons"]))
     if ob_tmdb.result:
         itemlist.append(item.clone(action="reparto", title=config.get_localized_string(70071), text_color=color4,
                                    infoLabels={'tmdb_id': item.infoLabels['tmdb_id'],
