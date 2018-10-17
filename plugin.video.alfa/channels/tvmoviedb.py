@@ -2457,7 +2457,7 @@ def detalles_mal(item):
 
     # Opción para ver la info de personajes y dobladores/equipo de rodaje
     if not "No characters or voice actors" in data and not "No staff for this anime" in data:
-        itemlist.append(item.clone(action="staff_mal", title=onfig.get_localized_string(70354), text_color=color2,
+        itemlist.append(item.clone(action="staff_mal", title=config.get_localized_string(70354), text_color=color2,
                                    url=item.url + "/characters"))
     if config.is_xbmc():
         item.contextual = True
@@ -2514,7 +2514,7 @@ def detalles_mal(item):
         for url, title in matches:
             new_item = item.clone(infoLabels={'mediatype': item.contentType}, extra="", fanart=default_fan,
                                   thumbnail="")
-            new_item.title = onfig.get_localized_string(70355) % title
+            new_item.title = config.get_localized_string(70355) % title
             new_item.contentTitle = title
             new_item.url = "https://myanimelist.net%s" % url
             itemlist.append(new_item)
@@ -2525,7 +2525,7 @@ def detalles_mal(item):
         for url, title in matches:
             new_item = item.clone(infoLabels={'mediatype': item.contentType}, extra="", fanart=default_fan,
                                   thumbnail="")
-            new_item.title = onfig.get_localized_string(70356) % title
+            new_item.title = config.get_localized_string(70356) % title
             new_item.contentTitle = title
             new_item.url = "https://myanimelist.net%s" % url
             itemlist.append(new_item)
@@ -2536,7 +2536,7 @@ def detalles_mal(item):
         for url, title in matches:
             new_item = item.clone(infoLabels={'mediatype': item.contentType}, extra="", fanart=default_fan,
                                   thumbnail="")
-            new_item.title = onfig.get_localized_string(70357) % title
+            new_item.title = config.get_localized_string(70357) % title
             new_item.contentTitle = title
             new_item.url = "https://myanimelist.net%s" % url
             itemlist.append(new_item)
@@ -2556,12 +2556,12 @@ def detalles_mal(item):
             itemlist.append(new_item)
 
         itemlist.append(
-            item.clone(title=onfig.get_localized_string(70358), action="listado_tmdb", infoLabels={'mediatype': item.contentType},
+            item.clone(title=config.get_localized_string(70358), action="listado_tmdb", infoLabels={'mediatype': item.contentType},
                        search={'url': '%s/%s/recommendations' % (item.extra, item.infoLabels['tmdb_id']),
                                'language': langt, 'page': 1}, text_color=color2))
 
     # Recomendaciones myanimelist y búsqueda de info en anidb (fansubs en español)
-    itemlist.append(item.clone(title=onfig.get_localized_string(70359), action="reco_mal"))
+    itemlist.append(item.clone(title=config.get_localized_string(70359), action="reco_mal"))
     anidb_link = scrapertools.find_single_match(data,
                                                 '<a href="(http://anidb.info/perl-bin/animedb.pl\?show=anime&amp;aid=\d+)')
     if anidb_link:
@@ -2597,7 +2597,7 @@ def videos_mal(item):
 
         next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="link-blue-box">More')
         if next_page:
-            itemlist.append(item.clone(title=onfig.get_localized_string(70361), url=next_page, text_color=""))
+            itemlist.append(item.clone(title=config.get_localized_string(70361), url=next_page, text_color=""))
     if itemlist:
         itemlist.insert(0, item.clone(title=config.get_localized_string(70362), action="", text_color=color3))
 
@@ -3142,7 +3142,7 @@ def login_mal(from_list=False):
 
         if not re.search(r'(?i)' + user, response.data):
             logger.error("Error en el login")
-            return False, onfig.get_localized_string(70330), user
+            return False, config.get_localized_string(70330), user
         else:
             if generic:
                 return False, config.get_localized_string(70381), user
