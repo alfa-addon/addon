@@ -229,8 +229,10 @@ def render_items(itemlist, parent_item):
         set_infolabels(listitem, item)
 
         # Montamos el menu contextual
-        context_commands = set_context_commands(item, parent_item)
-
+        if parent_item.channel != 'special':
+            context_commands = set_context_commands(item, parent_item)
+        else:
+            context_commands = []
         # Añadimos el item
         if config.get_platform(True)['num_version'] >= 17.0 and parent_item.list_type == '':
             listitem.addContextMenuItems(context_commands)
@@ -1091,16 +1093,19 @@ def play_torrent(item, xlistitem, mediaurl):
                 mediaurl += "&episode=%s&library=&season=%s&show=%s&tmdb=%s&type=episode" % (item.infoLabels['episode'], item.infoLabels['season'], item.infoLabels['tmdb_id'], item.infoLabels['tmdb_id'])
             elif item.contentType == 'movie':
                 mediaurl += "&library=&tmdb=%s&type=movie" % (item.infoLabels['tmdb_id'])
-        
+
         xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
 
         #Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos: asumimos que todos funcionan
         #if "quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]:   
+
         time_limit = time.time() + 150                          #Marcamos el timepo máx. de buffering
         while not is_playing() and time.time() < time_limit:    #Esperamos mientra buffera    
             time.sleep(5)                                       #Repetimos cada intervalo
             #logger.debug(str(time_limit))
-        
+        if item.subtitle != '':
+            xbmc_player.setSubtitles(item.subtitle)
+
         if item.strm_path and is_playing():                     #Sólo si es de Videoteca
             from platformcode import xbmc_videolibrary
             xbmc_videolibrary.mark_auto_as_watched(item)        #Marcamos como visto al terminar
