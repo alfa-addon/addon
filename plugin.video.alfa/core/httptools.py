@@ -309,16 +309,12 @@ def random_useragent():
     """
     
     import random
-    import csv
 
     UserAgentPath = os.path.join(config.get_runtime_path(), 'tools', 'UserAgent.csv')
     if os.path.exists(UserAgentPath):
-        UserAgentCSV = open(UserAgentPath, 'r')
-        UserAgentList = csv.reader(UserAgentCSV)
-        UserAgentList = [row for row in UserAgentList]
-        UserAgentList = [l[0] for l in UserAgentList]
-        random.shuffle(UserAgentList)
-        return random.choice(UserAgentList).strip()
+        UserAgentIem = random.choice(list(open(UserAgentPath))).strip()
+        if UserAgentIem:
+            return UserAgentIem
     
     return default_headers["User-Agent"]
 
