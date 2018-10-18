@@ -3251,7 +3251,7 @@ msgstr "Serie"
 
 msgctxt "#70137"
 msgid "Movies"
-msgstr "Películas"
+msgstr "Peliculas"
 
 msgctxt "#70138"
 msgid "Low Rating"
