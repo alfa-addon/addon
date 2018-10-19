@@ -1,0 +1,33 @@
+{
+  "id": "cineblog01",
+  "name": "Cineblog01 (IT)",
+  "active": true,
+  "adult": false,
+  "language": ["cast", "lat"],
+  "version": 1,
+  "thumbnail": "http://media.tvalacarta.info/pelisalacarta/squares/cineblog01.png",
+  "banner": "http://media.tvalacarta.info/pelisalacarta/squares/cineblog01.png",
+  "changes": [
+    {
+      "date": "25/08/2017",
+      "description": "Nuevo canal"
+    }
+  ],
+  "categories": [
+    "movie",
+    "serie",
+    "adult",
+    "latino",
+    "vos"
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": false,
+      "visible": false
+    }
+  ]
+}

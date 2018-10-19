@@ -3,9 +3,9 @@
   "name": "ThumbZilla",
   "active": true,
   "adult": true,
-  "language": "en",
+  "language": "*",
   "fanart": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/xthearebg.jpg",
-  "thumbnail": "https://image.spreadshirtmedia.com/image-server/v1/designs/1002274824,width=178,height=178/thumbzilla-womens-white-tee-big-logo.png",
+  "thumbnail": "https://ci.phncdn.com/www-static/thumbzilla/images/pc/logo.png",
   "banner": "",
    "categories": [
    "adult"

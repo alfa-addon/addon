@@ -129,6 +129,7 @@ def listado(item):
     cnt_tot = 40                                                                # Poner el num. máximo de items por página
     cnt_title = 0                                                               # Contador de líneas insertadas en Itemlist
     cnt_title_tot = 0                                                           # Contador de líneas insertadas en Itemlist, total
+    matches_len = 0                                                             # Longitud total de matches []
     if item.curr_page:
         curr_page = int(item.curr_page)                                         # Si viene de una pasada anterior, lo usamos
         del item.curr_page                                                      # ... y lo borramos
@@ -416,17 +417,21 @@ def listado(item):
 
     # Si es necesario añadir paginacion
     if (curr_page <= last_page and item.extra not in ['populares']) or (cnt_title_tot < matches_len and 'populares' in item.extra):
-        if last_page_foot > 1:
-            title = '%s de %s' % (curr_page_foot-1, last_page_foot)
-        else:
-            title = '%s' % curr_page_foot-1
+        try:
+            if last_page_foot > 1:
+                title = '%s de %s' % (curr_page_foot-1, last_page_foot)
+            else:
+                title = '%s' % curr_page_foot-1
+        except:
+            last_page = 0
         
         if item.extra not in ['populares', 'series']:
             cnt_title_tot = 0
 
-        itemlist.append(Item(channel=item.channel, action="listado", title=">> Página siguiente " + title, url=next_page_url, extra=item.extra, extra2=item.extra2, last_page=str(last_page), last_page_foot=str(last_page_foot), curr_page=str(curr_page), curr_page_foot=str(curr_page_foot), cnt_tot=str(cnt_tot), cnt_title_tot=str(cnt_title_tot)))
-        
-        #logger.debug(str(cnt_tot) + ' / ' + str(cnt_title) + ' / ' + str(cnt_title_tot))
+        if last_page > 0:
+            itemlist.append(Item(channel=item.channel, action="listado", title=">> Página siguiente " + title, url=next_page_url, extra=item.extra, extra2=item.extra2, last_page=str(last_page), last_page_foot=str(last_page_foot), curr_page=str(curr_page), curr_page_foot=str(curr_page_foot), cnt_tot=str(cnt_tot), cnt_title_tot=str(cnt_title_tot)))
+            
+            #logger.debug(str(cnt_tot) + ' / ' + str(cnt_title) + ' / ' + str(cnt_title_tot))
 
     return itemlist
 
@@ -459,6 +464,9 @@ def findvideos(item):
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
         return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
+    if "Lo sentimos este documental ha sido eliminado" in data:
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': El documental ha sido eliminado'))
+        return itemlist                                 #documental eliminado, pintamos lo que tenemos
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                     #error
@@ -489,6 +497,10 @@ def findvideos(item):
         #Buscamos la url del vídeo
         if 'cnubis.com' in scrapedplayer:
             videourl = conector_cnubis(scrapedurl, scrapedplayer)
+            if not videourl[0][1]:
+                logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web")
+                itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
+                continue                                        #si no hay más datos, algo no funciona, pintamos lo que tenemos
         else:
             videourl = servertools.findvideos(scrapedurl)
             
@@ -733,20 +745,23 @@ def actualizar_titulos(item):
 
 
 def conector_cnubis(scrapedurl, scrapedplayer):
-    logger.info("url=%s, player=https:%s" % (scrapedurl, scrapedplayer))
+    #logger.info("url=%s, player=https:%s" % (scrapedurl, scrapedplayer))
     videourl = []
 
     headers = { 'Referer': scrapedurl }                                                 #Referer con la url inical
     data = httptools.downloadpage('https:' + scrapedplayer, headers=headers).data       #busca el video a partir del player + url inical
+    #logger.debug(data)
 
-    #url_file, url_type = scrapertools.find_single_match(data, 'file\s*:\s*"([^"]*)"\s*,\s*type\s*:\s*"([^"]*)')
-    url_file = scrapertools.find_single_match(data, '<meta itemprop="contentURL" content="([^"]+)" />')     #obtiene la url de vídeo
+    if scrapertools.find_single_match(data, 'file\s*:\s*"([^"]*)"\s*,\s*type\s*:\s*"([^"]*)'):                  #obtiene la url de vídeo
+        url_file, url_type = scrapertools.find_single_match(data, 'file\s*:\s*"([^"]*)"\s*,\s*type\s*:\s*"([^"]*)')
+        url_file = 'https:%s' % (url_file)
+    else:
+        url_file = scrapertools.find_single_match(data, '<meta itemprop="contentURL" content="([^"]+)" />')     #obtiene la url de vídeo
     url_type = 'directo'
 
-    #videourl.append([url_type, 'https:' + url_file])
     videourl.append([url_type, url_file])                                              #responde como si volviera de servertools.findvideos()
     
-    logger.info(videourl)
+    #logger.info(videourl)
     return videourl
 
     

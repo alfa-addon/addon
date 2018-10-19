@@ -1,0 +1,22 @@
+{
+  "id": "filmoviXXX",
+  "name": "filmoviXXX",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "thumbnail": "http://www.filmovix.net/wp-content/themes/Video/skins/1-default/logo.png",
+  "banner": "",
+  "version": 1,
+  "changes": [
+    {
+      "date": "23/08/2017",
+      "description": "Primera version"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+
+  ]
+}

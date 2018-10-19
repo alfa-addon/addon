@@ -1,0 +1,22 @@
+{
+  "id": "tnaflix",
+  "name": "tnaflix",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "version": 1,
+  "thumbnail": "https://www.tnaflix.com/images/favicons/tnaflix/android-icon-192x192.png",
+  "banner": "",
+  "changes": [
+    {
+      "date": "25/08/2017",
+      "description": "Nuevo canal"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "coomelonitas",
+  "name": "Coomelonitas",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "thumbnail": "http://www.coomelonitas.com/wp-content/themes/3xTheme/images/logo.png",
+  "banner": "",
+  "version": 1,
+  "changes": [
+    {
+      "date": "23/08/2017",
+      "description": "Primera version"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+
+  ]
+}

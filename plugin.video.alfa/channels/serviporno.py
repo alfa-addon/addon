@@ -51,10 +51,13 @@ def videos(item):
     patron += '<div class="box-escena">.*?'
     patron += '<a\s*href="([^"]+)".*?'
     patron += 'data-stats-video-name="([^"]+)".*?'
-    patron += '<img\s*src="([^"]+)"'
+    patron += '<img\s*src="([^"]+)".*?'
+    patron += '<div class="duracion">(.*?) min</div>'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for url, title, thumbnail in matches:
+
+    for url, scrapedtitle, thumbnail, scrapedtime in matches:
         url = urlparse.urljoin(item.url, url)
+        title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         itemlist.append(Item(channel=item.channel, action='play', title=title, url=url, thumbnail=thumbnail))
 
     # Paginador

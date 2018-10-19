@@ -1,0 +1,22 @@
+{
+  "id": "foxtube",
+  "name": "foxtube",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "version": 1,
+  "thumbnail": "http://fxtimg.com/xlogo_.png.pagespeed.ic.doVRQMV5ub.png",
+  "banner": "",
+  "changes": [
+    {
+      "date": "25/08/2017",
+      "description": "Nuevo canal"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+
+  ]
+}

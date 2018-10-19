@@ -1,10 +1,10 @@
 {
   "id": "gmobi",
-  "name": "GNULA.mobi",
+  "name": "gmobi",
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "thumbnail": "http://www.gnula.mobi/wp-content/uploads/2018/05/Captura-1.png?%3E",
+  "thumbnail": "http://gnula.mobi/wp-content/uploads/2016/08/Untitled-6.png",
   "banner": "",
   "categories": [
     "movie"

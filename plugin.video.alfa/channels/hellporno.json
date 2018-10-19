@@ -1,0 +1,22 @@
+{
+  "id": "hellporno",
+  "name": "hellporno",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "version": 1,
+  "thumbnail": "http://hellporno.com/apple-touch-icon-152x152.png",
+  "banner": "",
+  "changes": [
+    {
+      "date": "25/08/2017",
+      "description": "Nuevo canal"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+  
+  ]
+}

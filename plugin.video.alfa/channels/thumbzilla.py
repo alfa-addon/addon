@@ -13,7 +13,7 @@ from channelselector import get_thumb
 
 __channel__ = "thumbzilla"
 
-host = 'https://www.thumbzilla.com/'
+host = 'https://www.thumbzilla.com'
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
     __perfil__ = int(config.get_setting('perfil', __channel__))
@@ -44,34 +44,34 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=__channel__, action="videos", title="Más Calientes", url=host,
-                         viewmode="movie", thumbnail=get_thumb("channels_adult.png")))
+                         viewmode="movie", thumbnail=get_thumb("/channels_adult.png")))
 
-    itemlist.append(Item(channel=__channel__, title="Nuevas", url=host + 'newest',
+    itemlist.append(Item(channel=__channel__, title="Nuevas", url=host + '/newest',
                          action="videos", viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(Item(channel=__channel__, title="Tendencias", url=host + 'tending',
+    itemlist.append(Item(channel=__channel__, title="Tendencias", url=host + '/trending',
                          action="videos", viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(Item(channel=__channel__, title="Mejores Videos", url=host + 'top',
+    itemlist.append(Item(channel=__channel__, title="Mejores Videos", url=host + '/top',
                          action="videos", viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(Item(channel=__channel__, title="Populares", url=host + 'popular',
+    itemlist.append(Item(channel=__channel__, title="Populares", url=host + '/popular',
                          action="videos", viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(Item(channel=__channel__, title="Videos en HD", url=host + 'hd',
+    itemlist.append(Item(channel=__channel__, title="Videos en HD", url=host + '/hd',
                          action="videos", viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(Item(channel=__channel__, title="Caseros", url=host + 'hd',
+    itemlist.append(Item(channel=__channel__, title="Caseros", url=host + '/hd',
                          action="videos", viewmode="movie_with_plot", viewcontent='homemade',
                          thumbnail=get_thumb("channels_adult.png")))
 
     itemlist.append(Item(channel=__channel__, title="Categorías", action="categorias",
-                         url=host + 'categories/', viewmode="movie_with_plot", viewcontent='movies',
+                         url=host + '/categories/', viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
     itemlist.append(Item(channel=__channel__, title="Buscador", action="search", url=host,
@@ -103,6 +103,35 @@ def videos(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+
+# <li>
+# 	<a class="js-thumb" href="/video/ph5b50336551d47/18-y-o-gf-fucks-me-like-a-pornstar-cumshot">
+# 					<img id="3866773749175120371" src="https://ci.phncdn.com/videos/201807/19/175120371/original/(m=eafTGgaaayrGbid)(mh=PkjDmjPSmVitYQ92)0.jpg" data-original="https://ci.phncdn.com/videos/201807/19/175120371/original/(m=eafTGgaaayrGbid)(mh=PkjDmjPSmVitYQ92)0.jpg" width="320" height="180" data-indexthumb="3866773749175120371" data-id="175120371" data-defaultThumb="https://ci.phncdn.com/videos/201807/19/175120371/original/(m=eafTGgaaayrGbid)(mh=PkjDmjPSmVitYQ92)0.jpg" data-thumb="https://ci.phncdn.com/videos/201807/19/175120371/original/(m=eafTGgaaayrGbid)(mh=PkjDmjPSmVitYQ92){index}.jpg" />
+# 				<noscript>
+# 			<img id="3866773749175120371"
+#                  class="lazy"
+#                  data-src="https://ci.phncdn.com/videos/201807/19/175120371/original/(m=eafTGgaaayrGbid)(mh=PkjDmjPSmVitYQ92)0.jpg"
+#                  src=""
+#                  width="320"
+#                  height="180"
+#                  data-indexthumb="3866773749175120371"
+#                  data-id="175120371"
+#                  data-defaultThumb="https://ci.phncdn.com/videos/201807/19/175120371/original/(m=eafTGgaaayrGbid)(mh=PkjDmjPSmVitYQ92)0.jpg"
+#                  data-thumb="https://ci.phncdn.com/videos/201807/19/175120371/original/(m=eafTGgaaayrGbid)(mh=PkjDmjPSmVitYQ92){index}.jpg" />
+# 		</noscript>
+#
+# 		<span class="hoverInfo videos">
+# 			<span><i class="views"></i>5.88K</span>
+# 			<span><i class="rating"></i>86%</span>
+# 		</span>
+# 		<span class="info">
+# 			<span class="title">18 y/o GF fucks me like a pornstar...cumshot</span>
+# 			<span class="duration">5:45</span>
+# 							<span class="hd">HD</span>
+# 					</span>
+# 	</a>
+# </li>
+
     patron = '<a class="[^"]+" href="([^"]+)">'  # url
     patron += '<img id="[^"]+".*?src="([^"]+)".*?'  # img
     patron += '<span class="title">([^<]+)</span>.*?'  # title
@@ -112,7 +141,7 @@ def videos(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle, time in matches:
         title = "[%s] %s" % (time, scrapedtitle)
 
-        itemlist.append(Item(channel=item.channel, action='findvideos', title=title, thumbnail=scrapedthumbnail,
+        itemlist.append(Item(channel=item.channel, action='play', title=title, thumbnail=scrapedthumbnail,
                              url=host + scrapedurl, contentTile=scrapedtitle, fanart=scrapedthumbnail))
 
     paginacion = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />').replace('amp;', '')
@@ -148,19 +177,25 @@ def categorias(item):
     return itemlist
 
 
-def findvideos(item):
+def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
     # logger.info(data)
-    patron = '"quality":"([^"]+)","videoUrl":"([^"]+)"'
+
+# <li><a class="qualityButton" data-quality="https://dm.phncdn.com/videos/201807/21/175417891/240P_400K_175417891.mp4?ttl=1532284143&ri=1228800&rs=552&hash=72a069b1aaf2fbd4f63f01b3879493eb">240P</a></li>
+# <li><a class="qualityButton" data-quality="https://dm.phncdn.com/videos/201807/21/175417891/480P_600K_175417891.mp4?ttl=1532284143&ri=1228800&rs=1128&hash=53fd8e919fad1181df81256230350c57">480P</a></li>
+# <li><a class="qualityButton active" data-quality="https://dm.phncdn.com/videos/201807/21/175417891/720P_1500K_175417891.mp4?ttl=1532284143&ri=1228800&rs=2096&hash=aaf7607b9432378cbec89c983e89b9fe">720P</a></li>
+
+#    patron = '<li><a class="qualityButton.*?data-quality="([^"]+)">([^"]+)</a></li>'
+    patron = '<li><a class="qualityButton active" data-quality="([^"]+)">([^"]+)</a></li>'
     matches = scrapertools.find_multiple_matches(data, patron)
 
-    for calidad, scrapedurl in matches:
-        scrapedurl = scrapedurl.replace('\\', '')
+    for scrapedurl,calidad in matches:
+    #    scrapedurl = scrapedurl.replace('\\', '')
         title = "[COLOR yellow](%s)[/COLOR] %s" % (calidad, item.contentTile)
-        server = servertools.get_server_from_url(scrapedurl)
-
-        itemlist.append(item.clone(action='play', title=title, server=server, mediatype='movie', url=scrapedurl))
+    #    server = servertools.get_server_from_url(scrapedurl)
+        itemlist.append(item.clone(channel=item.channel, action="play", title=item.title , url=scrapedurl , folder=True) )
+#        itemlist.append(item.clone(action='play', title=scrapedurl, server=scrapedurl, mediatype='movie', url=scrapedurl))
 
     return itemlist

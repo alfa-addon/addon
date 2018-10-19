@@ -90,16 +90,33 @@ def videos(item):
 
     data = httptools.downloadpage(item.url).data
 
-    patron = '<a href="([^"]+)" title="([^"]+)" id="[^"]+">.*?<img id="[^"]+" src="([^"]+)"[^>]+>.*?<div class="mbtim">([^<]+)</div>'
+
+               #     <div class="mb hdy" onmouseenter="show_video_prev(1920028,320,180,1,0);" id="vf1920028">
+               #    <div class="mvhdico"><span>1080p</span></div>
+               #    <a href="/hd-porn/ap7rgEHO2mc/VIXEN-Kendra-Sunderland-Passionate-Sex-On-A-Beach/" title="VIXEN Kendra Sunderland Passionate Sex On A Beach" id="ahh1920028">
+               #       <div id="tbn1920028" class="mbimg">
+               #          <div class="mbcontent"> <img id="t1920028" src="https://static-eu-cdn.eporner.com/thumbs/static4/1/19/192/1920028/14_240.jpg" onmouseout='endm("t1920028", 14, 1);' onmouseover='startm("t1920028", 0, 1);' alt="VIXEN Kendra Sunderland Passionate Sex On A Beach" /> </div>
+               #       </div>
+               #       <div class="mbtit">VIXEN Kendra Sunderland Passionate Sex On A Beach</div>
+               #    </a>
+               #    <div class="mbstats">
+               #       <div class="mbtim">12:27</div>
+               #       <div class="mbrate">86%</div>
+               #       <div class="mbvie">18,271</div>
+               #    </div>
+               # </div>
+
+    patron = '<a href="([^"]+)" title="([^"]+)" id="[^"]+">.*?<img id="[^"]+" src="([^"]+)".*?<div class="mbtim">(.*?)</div>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     for url, title, thumbnail, duration in matches:
-        itemlist.append(item.clone(title="%s (%s)" % (title, duration), url=urlparse.urljoin(item.url, url),
+        title = "[COLOR yellow]" + duration + "[/COLOR] " +  title
+        itemlist.append(item.clone(title=title, url=urlparse.urljoin(item.url, url),
                                    action="play", thumbnail=thumbnail, contentThumbnail=thumbnail,
                                    contentType="movie", contentTitle=title))
 
-    # Paginador
-    patron = "<span style='color:#FFCC00;'>[^<]+</span></a> <a href='([^']+)' title='[^']+'><span>[^<]+</span></a>"
+    # Paginador        <a href='/2/' title='Next page'><span style='color:#FFCC00;'>NEXT &raquo;</span></a> </div>
+    patron = "<a href='([^']+)' title='Next page'><span style='color:#FFCC00;'>NEXT &raquo;</span></a> "
     matches = re.compile(patron, re.DOTALL).findall(data)
     if matches:
         itemlist.append(item.clone(title="Página siguiente", url=urlparse.urljoin(item.url, matches[0])))

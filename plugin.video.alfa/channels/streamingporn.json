@@ -1,0 +1,22 @@
+{
+  "id": "streamingporn",
+  "name": "streamingporn",
+  "active": true,
+  "adult": false,
+  "language": ["*"],
+  "version": 1,
+  "thumbnail": "http://streamingporn.xyz/wp-content/uploads/2017/06/streamingporn.png",
+  "banner": "",
+  "changes": [
+    {
+      "date": "20/02/2018",
+      "description": "Nuevo canal"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+
+  ]
+}

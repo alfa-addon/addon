@@ -1,0 +1,22 @@
+{
+  "id": "retroporn",
+  "name": "retroporn",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "thumbnail": "http://retroporn.me/images/retroporn.png",
+  "banner": "",
+  "version": 1,
+  "changes": [
+    {
+      "date": "23/08/2017",
+      "description": "Primera version"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+
+  ]
+}

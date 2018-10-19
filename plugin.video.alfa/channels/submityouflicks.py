@@ -8,12 +8,22 @@ from core import scrapertools
 from core.item import Item
 from platformcode import logger
 
-
+host = 'http://www.submityourflicks.com'
 def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(
-        Item(channel=item.channel, action="videos", title="Útimos videos", url="http://www.submityourflicks.com/",
+        Item(channel=item.channel, action="videos", title="Útimos videos", url=host,
+             viewmode="movie"))
+    itemlist.append(
+        Item(channel=item.channel, action="videos", title="Populares", url=host + "/most-viewed/month/",
+             viewmode="movie"))
+    itemlist.append(
+        Item(channel=item.channel, action="videos", title="Mejor valorados", url=host + "/top-rated/month/",
+             viewmode="movie"))
+
+    itemlist.append(
+        Item(channel=item.channel, action="videos", title="Big Tits", url=host + "/search/big-tits/",
              viewmode="movie"))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar",
                          url="http://www.submityourflicks.com/index.php?mode=search&q=%s&submit=Search"))
@@ -42,10 +52,12 @@ def videos(item):
     patron += '<div class="inner-block[^<]+'
     patron += '<a href="([^"]+)" title="([^"]+)"[^<]+'
     patron += '<span class="image".*?'
-    patron += '<img src="([^"]+)"'
+    patron += '<img src="([^"]+)".*?'
+    patron += '<span class="icon i-time"></span>([^"]+)\| <span class="icon i-calendar">'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
-        title = scrapedtitle
+
+    for scrapedurl, scrapedtitle, scrapedthumbnail,scrapedtime in matches:
+        title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         url = scrapedurl
         thumbnail = scrapedthumbnail.replace(" ", "%20")
         logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")

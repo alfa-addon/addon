@@ -1,0 +1,22 @@
+{
+  "id": "TXXX",
+  "name": "TXXX",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "thumbnail": "http://www.txxx.com/images/desktop-logo.png",
+  "banner": "",
+  "version": 1,
+  "changes": [
+    {
+      "date": "23/08/2017",
+      "description": "Primera version"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+
+  ]
+}

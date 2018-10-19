@@ -1,0 +1,22 @@
+{
+  "id": "peliseroticas",
+  "name": "peliseroticas",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "thumbnail": "http://www.peliculaseroticas.net/img/logo-peli-ero.png",
+  "banner": "",
+  "version": 1,
+  "changes": [
+    {
+      "date": "23/08/2017",
+      "description": "Primera version"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+
+  ]
+}

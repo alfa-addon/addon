@@ -1,0 +1,22 @@
+{
+  "id": "xtapes",
+  "name": "xtapes",
+  "active": true,
+  "adult": false,
+  "language": ["*"],
+  "version": 1,
+  "thumbnail": "http://hd.xtapes.to/wp-content/uploads/xtapes.png",
+  "banner": "",
+  "changes": [
+    {
+      "date": "25/08/2017",
+      "description": "Nuevo canal"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+
+  ]
+}

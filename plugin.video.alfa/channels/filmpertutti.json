@@ -1,0 +1,22 @@
+{
+  "id": "filmpertutti",
+  "name": "filmpertutti",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "thumbnail": "http://media.tvalacarta.info/pelisalacarta/squares/filmpertutti.png",
+  "banner": "",
+  "version": 1,
+  "changes": [
+    {
+      "date": "23/08/2017",
+      "description": "Primera version"
+    }
+  ],
+  "categories": [
+    "movie"
+  ],
+  "settings": [
+
+  ]
+}

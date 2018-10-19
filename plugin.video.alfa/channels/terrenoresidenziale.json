@@ -1,0 +1,22 @@
+{
+  "id": "terrenoresidenziale",
+  "name": "terrenoresidenziale",
+  "active": true,
+  "adult": true,
+  "language": ["cast", "lat"],
+  "thumbnail": "http://terrenoresidenziale.com/wp-content/themes/peliculas/img/favicon.ico",
+  "banner": "",
+  "version": 1,
+  "changes": [
+    {
+      "date": "23/08/2017",
+      "description": "Primera version"
+    }
+  ],
+  "categories": [
+    "movie"
+  ],
+  "settings": [
+
+  ]
+}

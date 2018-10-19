@@ -1,0 +1,22 @@
+{
+  "id": "eroticage",
+  "name": "eroticage",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "thumbnail": "http://eroticage.net/wp-content/themes/oz-movie-v3/img/logo.png",
+  "banner": "",
+  "version": 1,
+  "changes": [
+    {
+      "date": "23/08/2017",
+      "description": "Primera version"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+
+  ]
+}

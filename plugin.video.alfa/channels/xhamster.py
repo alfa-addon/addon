@@ -2,7 +2,11 @@
 
 import re
 
+from channelselector import get_thumb
+from core import httptools
 from core import scrapertools
+from core import servertools
+from core import tmdb
 from core.item import Item
 from platformcode import logger
 
@@ -12,7 +16,7 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel, action="videos", title="Útimos vídeos", url="http://es.xhamster.com/",
                          viewmode="movie"))
-    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Categorías", url="http://es.xhamster.com/categories"))
     itemlist.append(Item(channel=item.channel, action="votados", title="Más votados"))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar",
                          url="http://xhamster.com/search.php?q=%s&qcat=video"))
@@ -43,13 +47,36 @@ def videos(item):
     data = scrapertools.cache_page(item.url)
     itemlist = []
 
-    data = scrapertools.get_match(data, '<div class="boxC videoList clearfix">(.*?)<div id="footer">')
+    data = scrapertools.get_match(data, '>Duración(.*?)</article>')
+
+
+#                                             <div class="thumb-list thumb-list--sidebar thumb-list--recent">
+#                             <div class="thumb-list__item video-thumb video-thumb--dated video-thumb--with-date">
+#         <div class="video-thumb__date-added">
+#             11 de septiembre de 2018<i class="video-thumb__arrow xh-icon arrow-right"></i><i class="video-thumb__arrow xh-icon arrow-right"></i>
+#         </div>
+#     <a class="video-thumb__image-container thumb-image-container" href="https://es.xhamster.com/videos/mature-busty-natural-mom-fucks-strong-boy-10102610" data-sprite="https://thumb-v0.xhcdn.com/a/L0HT9h6iU9_nKBEEutxW_A/010/102/610/240x135.s.jpg" data-previewvideo="https://thumb-v0.xhcdn.com/a/d_DRiRaMvU2_sSbYjbNg7w/010/102/610/240x135.t.mp4">
+#         <i class="thumb-image-container__icon thumb-image-container__icon--hd"></i>
+#
+#         <img class="thumb-image-container__image" src="https://thumb-v-cl2.xhcdn.com/a/tzuERGDMVPrAlP8syolBYw/010/102/610/240x135.1.jpg" onerror="window.Thumb && window.Thumb.onerror(this)" alt="Mature busty natural mom fucks strong boy">
+#
+#     <div class="thumb-image-container__duration">06:15</div>
+# </a>
+#
+# <div class="video-thumb-info">
+#     <a class="video-thumb-info__name" href="https://es.xhamster.com/videos/mature-busty-natural-mom-fucks-strong-boy-10102610">Mature busty natural mom fucks strong boy</a>
+#             <i class="video-thumb-info__views xh-icon beta-eye cobalt">24,811</i>
+#
+#             <i class="video-thumb-info__rating video-thumb-info__rating--like xh-icon beta-like">95%</i>
+# </div>
+# </div>
 
     # Patron #1
-    patron = '<div class="video"><a href="([^"]+)" class="hRotator">' + "<img src='([^']+)' class='thumb'" + ' alt="([^"]+)"'
+    patron = '<a class="video-thumb__image-container thumb-image-container" href="([^"]+)".*?src="([^"]+)".*?alt="([^"]+)">.*?<div class="thumb-image-container__duration">([^"]+)</div>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtitle,scrapedtime in matches:
         logger.debug("title=[" + scrapedtitle + "], url=[" + scrapedurl + "], thumbnail=[" + scrapedthumbnail + "]")
+        scrapedtitle = "[COLOR yellow](" + scrapedtime + ")[/COLOR] " + scrapedtitle
         itemlist.append(
             Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
                  folder=True))
@@ -64,7 +91,15 @@ def videos(item):
                  folder=True))
 
     # Paginador
-    patron = "<a href='([^']+)' class='last colR'><div class='icon iconPagerNextHover'></div>Próximo</a>"
+         # <li class="next">
+         #        <a
+         #           data-page="next" href="https://es.xhamster.com/2">
+         #            Siguiente
+         #            <i class="xh-icon arrow-right white"></i>
+         #        </a>
+         #    </li>
+
+    patron = 'data-page="next" href="([^"]+)">'
     matches = re.compile(patron, re.DOTALL).findall(data)
     if len(matches) > 0:
         itemlist.append(
@@ -80,11 +115,9 @@ def categorias(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(
-        Item(channel=item.channel, action="lista", title="Heterosexual", url="http://es.xhamster.com/channels.php"))
-    itemlist.append(
-        Item(channel=item.channel, action="lista", title="Transexuales", url="http://es.xhamster.com/channels.php"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Gays", url="http://es.xhamster.com/channels.php"))
+    itemlist.append( Item(channel=item.channel, action="lista", title="Heterosexual", url="http://es.xhamster.com/categories"))
+    itemlist.append( Item(channel=item.channel, action="lista", title="Transexuales", url="http://es.xhamster.com/shemale/categories"))
+    itemlist.append( Item(channel=item.channel, action="lista", title="Gays", url="http://es.xhamster.com/gay/categories"))
     return itemlist
 
 
@@ -106,30 +139,17 @@ def votados(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = scrapertools.downloadpageGzip(item.url)
-    # data = data.replace("\n","")
-    # data = data.replace("\t","")
+    data = scrapertools.cache_page(item.url)
+    data = scrapertools.get_match(data,'<div class="letter-blocks page">(.*?)<div class="letter">')
 
-    if item.title == "Gays":
-        data = scrapertools.get_match(data,
-                                      '<div class="title">' + item.title + '</div>.*?<div class="list">(.*?)<div id="footer">')
-    else:
-        data = scrapertools.get_match(data,
-                                      '<div class="title">' + item.title + '</div>.*?<div class="list">(.*?)<div class="catName">')
-    patron = '(<div.*?</div>)'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for match in matches:
-        data = data.replace(match, "")
-    patron = 'href="([^"]+)">(.*?)</a>'
-    data = ' '.join(data.split())
-    logger.info(data)
+    patron = '<a href="(.*?)" >(.*?) '
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle in matches:
-        itemlist.append(Item(channel=item.channel, action="videos", title=scrapedtitle, url=scrapedurl, folder=True,
+        itemlist.append( Item(channel=item.channel, action="videos", title=scrapedtitle, url=scrapedurl, folder=True,
                              viewmode="movie"))
 
-    sorted_itemlist = sorted(itemlist, key=lambda Item: Item.title)
-    return sorted_itemlist
+#    sorted_itemlist = sorted(itemlist, key=lambda Item: Item.title)
+    return itemlist
 
 
 # OBTIENE LOS ENLACES SEGUN LOS PATRONES DEL VIDEO Y LOS UNE CON EL SERVIDOR

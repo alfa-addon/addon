@@ -1,0 +1,22 @@
+{
+  "id": "sexkino",
+  "name": "sexkino",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "thumbnail": "http://sexkino.to/wp-content/uploads/2016/12/sexkino.to_.jpg",
+  "banner": "",
+  "version": 1,
+  "changes": [
+    {
+      "date": "23/08/2017",
+      "description": "Primera version"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+
+  ]
+}

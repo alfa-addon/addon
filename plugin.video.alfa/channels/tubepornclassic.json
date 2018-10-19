@@ -1,0 +1,22 @@
+{
+  "id": "tubepornclassic",
+  "name": "tubepornclassic",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "thumbnail": "http://tubepornclassic.com/images/tpc-logo-w.png",
+  "banner": "",
+  "version": 1,
+  "changes": [
+    {
+      "date": "23/08/2017",
+      "description": "Primera version"
+    }
+  ],
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+
+  ]
+}
