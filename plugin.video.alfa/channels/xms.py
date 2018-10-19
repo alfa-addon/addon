@@ -10,9 +10,9 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 
-__channel__ = "xtheatre"
+__channel__ = "xms"
 
-host = 'https://xtheatre.net/'
+host = 'https://xxxmoviestream.com/'
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
     __perfil__ = int(config.get_setting('perfil', __channel__))
@@ -43,7 +43,6 @@ def mainlist(item):
     logger.info()
 
     itemlist = []
-    # thumbnail = 'https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/%s.png'
 
     itemlist.append(Item(channel=__channel__, title="Últimas", url=host + '?filtre=date&cat=0',
                          action="peliculas", viewmode="movie_with_plot", viewcontent='movies',
@@ -75,37 +74,26 @@ def peliculas(item):
     # logger.info(data)
     patron_todos = '<div id="content">(.*?)<div id="footer"'
     data = scrapertools.find_single_match(data, patron_todos)
-    # logger.info(data)
 
-    patron = 'data-lazy-src="([^"]+)".*?'  # img
-    patron += 'title="([^"]+)"/>.*?'  # title
-    patron += '</noscript><a href="([^"]+)"'  # url
+    patron = 'src="([^"]+)" class="attachment-thumb_site.*?'  # img
+    patron += '<a href="([^"]+)" title="([^"]+)".*?'  #url, title
+    patron += '<div class="right"><p>([^<]+)</p>'  # plot
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedthumbnail, scrapedtitle, scrapedurl in matches:
-        title = "%s" % (scrapedtitle)
+    for scrapedthumbnail, scrapedurl, scrapedtitle, plot in matches:
 
-        itemlist.append(item.clone(channel=item.channel, action="findvideos", title=title,
-                                   url=scrapedurl, thumbnail=scrapedthumbnail, plot='',
-                                   viewmode="movie_with_plot", folder=True))
+        itemlist.append(item.clone(channel=__channel__, action="findvideos", title=scrapedtitle.capitalize(),
+                                   url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels={"plot": plot}, fanart=scrapedthumbnail,
+                                   viewmode="movie_with_plot", folder=True, contentTitle=scrapedtitle))
     # Extrae el paginador
     paginacion = scrapertools.find_single_match(data, '<a href="([^"]+)">Next &rsaquo;</a></li><li>')
-    # paginacion = paginacion.replace('#038;', '')
     paginacion = urlparse.urljoin(item.url, paginacion)
 
     if paginacion:
-        itemlist.append(Item(channel=item.channel, action="peliculas",
+        itemlist.append(Item(channel=__channel__, action="peliculas",
                              thumbnail=thumbnail % 'rarrow',
                              title="\xc2\xbb Siguiente \xc2\xbb", url=paginacion))
 
-    for item in itemlist:
-        if item.infoLabels['plot'] == '':
-            data = httptools.downloadpage(item.url).data
-            data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
-            patron = '<div id="video-synopsys" itemprop="description">(.*?)<div id="video-bottom">'
-            data = scrapertools.find_single_match(data, patron)
-            item.infoLabels['plot'] = scrapertools.find_single_match(data, '<p>(.*?)</p></div>')
-            item.infoLabels['plot'] = scrapertools.htmlclean(item.plot)
 
     return itemlist
 
@@ -115,7 +103,7 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    logger.info(data)
+    # logger.info(data)
     patron = 'data-lazy-src="([^"]+)".*?'  # img
     patron += '</noscript><a href="([^"]+)".*?'  # url
     patron += '<span>([^<]+)</span></a>.*?'  # title
@@ -124,11 +112,9 @@ def categorias(item):
 
     for scrapedthumbnail, scrapedurl, scrapedtitle, vids in matches:
         title = "%s (%s)" % (scrapedtitle, vids.title())
-        thumbnail = scrapedthumbnail
-        url = scrapedurl
-        itemlist.append(Item(channel=item.channel, action="peliculas", fanart=scrapedthumbnail,
-                             title=title, url=url, thumbnail=thumbnail, plot='',
-                             viewmode="movie_with_plot", folder=True))
+        itemlist.append(item.clone(channel=__channel__, action="peliculas", fanart=scrapedthumbnail,
+                                   title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
+                                   viewmode="movie_with_plot", folder=True))
 
     return itemlist
 
@@ -157,27 +143,22 @@ def sub_search(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
 
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron_todos = '<div id="content">(.*?)</li></ul></div></div>'
-    data = scrapertools.find_single_match(data, patron_todos)
-
     patron = 'data-lazy-src="([^"]+)".*?'  # img
-    patron += 'title="([^"]+)"/>.*?'  # title
-    patron += '</noscript><a href="([^"]+)"'  # url
+    patron += 'title="([^"]+)" />.*?'  # title
+    patron += '</noscript><a href="([^"]+)".*?'  # url
+    patron += '<div class="right"><p>([^<]+)</p>'  # plot
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedthumbnail, scrapedtitle, scrapedurl in matches:
-        title = "%s" % (scrapedtitle)
-        itemlist.append(item.clone(title=title, url=scrapedurl,
-                                   action="findvideos", thumbnail=scrapedthumbnail))
+    for scrapedthumbnail, scrapedtitle, scrapedurl, plot in matches:
+        itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, plot=plot, fanart=scrapedthumbnail,
+                             action="findvideos", thumbnail=scrapedthumbnail))
 
     paginacion = scrapertools.find_single_match(
         data, "<a href='([^']+)' class=\"inactive\">\d+</a>")
 
     if paginacion:
-        itemlist.append(Item(channel=item.channel, action="sub_search",
-                             title="\xc2\xbb Siguiente \xc2\xbb", url=paginacion))
+        itemlist.append(item.clone(channel=__channel__, action="sub_search",
+                                   title="\xc2\xbb Siguiente \xc2\xbb", url=paginacion))
 
     return itemlist
 
@@ -186,21 +167,15 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
-    logger.info(data)
-    patron_todos = '<div class="video-embed">(.*?)</div>'
-    data = scrapertools.find_single_match(data, patron_todos)
-    patron = '<iframe src="[^"]+" data-lazy-src="([^"]+)".*?</iframe>'
+
+    patron = '<iframe src="([^"]+)".*?webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>'
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for url in matches:
-        title = item.title
         server = servertools.get_server_from_url(url)
+        title = "Ver en: [COLOR yellow](%s)[/COLOR]" % server
 
-        itemlist.append(item.clone(action='play', title=title, server=server, mediatype='movie', url=url))
+        itemlist.append(item.clone(action='play', title=title, server=server, url=url))
 
-    for videoitem in itemlist:
-        videoitem.infoLabels = item.infoLabels
-        videoitem.channel = item.channel
-        videoitem.title = "%s [COLOR yellow](%s)[/COLOR]" % (item.title, videoitem.server)
 
     return itemlist
