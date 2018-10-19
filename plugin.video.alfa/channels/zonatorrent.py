@@ -455,7 +455,6 @@ def listado(item):
             #Guarda la variable temporal que almacena la info adicional del título a ser restaurada después de TMDB
             item_local.title_subs = title_subs
 
-            logger.debug(item.extra2)
             #Ahora se filtra por idioma, si procede, y se pinta lo que vale
             if config.get_setting('filter_languages', channel) > 0 and item.extra2 not in ['CAST', 'LAT', 'VO', 'VOS', 'VOSE']:     #Si hay idioma seleccionado, se filtra
                 itemlist = filtertools.get_link(itemlist, item_local, list_language)

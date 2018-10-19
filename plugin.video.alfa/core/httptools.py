@@ -55,6 +55,9 @@ default_headers["Accept-Encoding"] = "gzip"
 # Tiempo máximo de espera para downloadpage, si no se especifica nada
 HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = config.get_setting('httptools_timeout', default=15)
 if HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT == 0: HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT = None
+    
+# Uso aleatorio de User-Agents, si no se especifica nada
+HTTPTOOLS_DEFAULT_RANDOM_HEADERS = False
 
 def get_user_agent():
     # Devuelve el user agent global para ser utilizado cuando es necesario para la url.
@@ -96,7 +99,7 @@ load_cookies()
 
 
 def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=True, cookies=True, replace_headers=False,
-                 add_referer=False, only_headers=False, bypass_cloudflare=True, count_retries=0):
+                 add_referer=False, only_headers=False, bypass_cloudflare=True, count_retries=0, random_headers=False):
     """
     Abre una url y retorna los datos obtenidos
 
@@ -119,6 +122,8 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
     @type add_referer: bool
     @param only_headers: Si True, solo se descargarán los headers, omitiendo el contenido de la url.
     @type only_headers: bool
+    @param random_headers: Si True, utiliza el método de seleccionar headers aleatorios.
+    @type random_headers: bool
     @return: Resultado de la petición
     @rtype: HTTPResponse
 
@@ -147,6 +152,9 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
 
     if add_referer:
         request_headers["Referer"] = "/".join(url.split("/")[:3])
+        
+    if random_headers or HTTPTOOLS_DEFAULT_RANDOM_HEADERS:
+        request_headers['User-Agent'] = random_useragent()
 
     url = urllib.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
 
@@ -289,6 +297,26 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
                 logger.info("No se ha podido autorizar")
 
     return type('HTTPResponse', (), response)
+    
+    
+def random_useragent():
+    """
+    Based on code from https://github.com/theriley106/RandomHeaders
+    
+    Python Method that generates fake user agents with a locally saved DB (.csv file).
+
+    This is useful for webscraping, and testing programs that identify devices based on the user agent.
+    """
+    
+    import random
+
+    UserAgentPath = os.path.join(config.get_runtime_path(), 'tools', 'UserAgent.csv')
+    if os.path.exists(UserAgentPath):
+        UserAgentIem = random.choice(list(open(UserAgentPath))).strip()
+        if UserAgentIem:
+            return UserAgentIem
+    
+    return default_headers["User-Agent"]
 
 
 class NoRedirectHandler(urllib2.HTTPRedirectHandler):
