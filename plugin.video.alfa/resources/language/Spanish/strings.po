@@ -3251,7 +3251,7 @@ msgstr "Serie"
 
 msgctxt "#70137"
 msgid "Movies"
-msgstr "Películas"
+msgstr "Peliculas"
 
 msgctxt "#70138"
 msgid "Low Rating"
@@ -3358,8 +3358,16 @@ msgid "Press to 'Clear cache' saved"
 msgstr "Pulse para 'Borrar caché' guardada"
 
 msgctxt "#70164"
-msgid "Free First|Premium First|Debriders First"
-msgstr "Free primero|Premium primero|Debriders primero"
+msgid "Free First"
+msgstr "Free primero"
+
+msgctxt "#70165"
+msgid "Premium First"
+msgstr "Premium primero"
+
+msgctxt "#70166"
+msgid "Debriders First"
+msgstr "Debriders primero"
 
 msgctxt "#70167"
 msgid "Titles Options"

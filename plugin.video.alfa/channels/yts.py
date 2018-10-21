@@ -8,30 +8,68 @@ from core.item import Item
 from lib import generictools
 from platformcode import logger
 
+URL_BROWSE = "https://yts.am/browse-movies"
+URL = "https://yts.am"
+
 def mainlist(item):
     logger.info()
     itemlist = []
+
     itemlist.append(Item(channel = item.channel,
-                         title = "Browse",
+                         title = "Explorar por generos",
+                         action = "categories",
+                         opt = 'genre',
+                         url = URL_BROWSE
+                         ))
+
+    itemlist.append(Item(channel = item.channel,
+                         title = "Explorar por calidad",
+                         action = "categories",
+                         opt = 'quality',
+                         url = URL_BROWSE
+                         ))
+
+    itemlist.append(Item(channel = item.channel,
+                         title = "Explorar películas",
                          action = "movies",
                          opt = 0,
-                         url = "https://yts.am/browse-movies"
+                         url = URL_BROWSE
                         ))
 
     itemlist.append(Item(channel = item.channel,
-                         title = "Popular",
+                         title = "Más populares",
                          action = "movies",
                          opt = 1,
-                         url = "https://yts.am" ))    
+                         url = URL ))    
 
     itemlist.append(Item(channel = item.channel,
-                         title = "Search",
+                         title = "Buscar",
                          action = "search",
                          opt = 0,
-                         url = "https://yts.am/browse-movies"
+                         url = URL_BROWSE
                         ))
 
     return itemlist
+
+
+def categories(item):
+    logger.info()
+    itemList = []
+    data = httptools.downloadpage(item.url).data
+    
+    block = scrapertools.find_single_match( data, '(?s)<.*?="' + item.opt + '">(.*?)</select>')
+    pattern = '<option value=".*?">(?!All)(.*?)</option>'
+    categories = scrapertools.find_multiple_matches( block, pattern )
+
+    for category in categories:
+        url = URL_BROWSE + '/0/all/' + category + '/0/latest' if item.opt == "genre" else URL_BROWSE + '/0/' + category + '/all/0/latest'
+
+        itemList.append( Item( action = "movies",
+                               channel = item.channel,
+                               title = category,
+                               url = url ))
+
+    return itemList
 
 def movies(item):
     logger.info()
@@ -39,21 +77,22 @@ def movies(item):
     infoLabels = {}
     data = httptools.downloadpage(item.url).data
 
-    patron = '(?s)class="browse-movie-wrap.*?a href="([^"]+).*?' #Movie link
-    patron += 'img class.*?src="([^"]+).*?' #Image
-    patron += 'movie-title">.*?([^<]+)' #Movie title
-    patron += '.*?year">(.*?)<' #Year
+    pattern = '(?s)class="browse-movie-wrap.*?a href="([^"]+).*?' #Movie link
+    pattern += 'img class.*?src="([^"]+).*?' #Image
+    pattern += 'movie-title">.*?([^<]+)' #Movie title
+    pattern += '.*?year">(.*?)<' #Year
 
-    matches = scrapertools.find_multiple_matches(data, patron)
+    matches = scrapertools.find_multiple_matches(data, pattern)
     idx = 0
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, year in matches:
         if item.opt == 1:
-            scrapedthumbnail = 'https://yts.am' + scrapedthumbnail
-            infoLabels['plot'] = findplot(scrapedurl)
+            scrapedthumbnail = URL + scrapedthumbnail
+        infoLabels['year'] = year
 
         itemlist.append(Item(action = "findvideo",
                             channel = item.channel,
+                            contentTitle = scrapedtitle,
                             infoLabels = infoLabels,
                             title = scrapedtitle + ' (' + year + ')',
                             thumbnail = scrapedthumbnail,
@@ -64,35 +103,28 @@ def movies(item):
             break
     if itemlist != []:
         actual_page = item.url
-        pattern = '(?s)href="([^"]+)">Next.*?'
-        next_page = scrapertools.find_single_match(data, pattern)
+        nextPattern = '(?s)href="([^"]+)">Next.*?'
+        next_page = scrapertools.find_single_match(data, nextPattern)
 
         if next_page != '':
             itemlist.append(Item(channel=item.channel,
                                 action="movies",
                                 title='Next >>>',
-                                url='https://yts.am' + next_page))
+                                url=URL + next_page))
+
+    tmdb.set_infoLabels_itemlist( itemlist, seekTmdb=True)
 
     return itemlist
-
-def findplot(url):
-    data = httptools.downloadpage(url).data
-
-    pattern = '(?s)<p class="hidden-xs">(.*?)</p>' #Synopsis
-
-    plot = scrapertools.find_single_match(data, pattern)
-
-    return plot
 
 def findvideo(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
 
-    patron = '(?s)modal-quality.*?<span>(.*?)</span>' #Quality
-    patron += '.*?size">(.*?)</p>' #Type
-    patron += '.*?href="([^"]+)" rel' #Torrent link
+    pattern = '(?s)modal-quality.*?<span>(.*?)</span>' #Quality
+    pattern += '.*?size">(.*?)</p>' #Type
+    pattern += '.*?href="([^"]+)" rel' #Torrent link
 
-    matches = scrapertools.find_multiple_matches(data, patron)
+    matches = scrapertools.find_multiple_matches(data, pattern)
     
     for quality, videoType, link in matches:
         
@@ -111,7 +143,7 @@ def search(item, text):
     logger.info('search: ' + text)
 
     try:
-        item.url = 'https://yts.am/browse-movies/' + text + '/all/all/0/latest'
+        item.url = URL_BROWSE + text + '/all/all/0/latest'
         itemlist = movies(item)
 
         return itemlist

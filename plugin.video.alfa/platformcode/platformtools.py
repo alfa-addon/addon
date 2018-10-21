@@ -110,6 +110,8 @@ def render_items(itemlist, parent_item):
     @type parent_item: item
     @param parent_item: elemento padre
     """
+    logger.info('INICIO render_items')
+
     # Si el itemlist no es un list salimos
     if not type(itemlist) == list:
         return
@@ -284,6 +286,8 @@ def render_items(itemlist, parent_item):
         xbmc.executebuiltin("Container.SetViewMode(%s)" % viewmode_id)
     if parent_item.mode in ['silent', 'get_cached', 'set_cache', 'finish']:
         xbmc.executebuiltin("Container.SetViewMode(500)")
+
+    logger.info('FINAL render_items')
 
 
 def get_viewmode_id(parent_item):

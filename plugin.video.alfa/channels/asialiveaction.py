@@ -49,7 +49,7 @@ def category(item):
         data = scrapertools.find_single_match(data, '<span>Año</span>.*?</ul>')
     elif item.cat == 'quality':
         data = scrapertools.find_single_match(data, '<span>Calidad</span>.*?</ul>')
-    patron = "<li>([^<]+)<a href='([^']+)'>"
+    patron = "<li.*?>([^<]+)<a href='([^']+)'>"
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedtitle, scrapedurl  in matches:
         if scrapedtitle != 'Próximas Películas':
@@ -82,8 +82,10 @@ def search_results(item):
 
 def search(item, texto):
     logger.info()
+
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
+
     if texto != '':
         return search_results(item)
 
@@ -113,40 +115,67 @@ def lista(item):
     logger.info()
     next = True
     itemlist = []
+
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+
+    css_data = scrapertools.find_single_match(data, "<style id='page-skin-1' type='text/css'>(.*?)</style>")
+
     data = scrapertools.find_single_match(data, "itemprop='headline'>.*?</h2>.*?</ul>")
-    patron = '<span class="([^"]+)">.*?<figure class="poster-bg"><header><span>(\d{4})</span></header><img src="([^"]+)" />'
-    patron += '<footer>(.*?)</footer></figure><h6>([^<]+)</h6><a href="([^"]+)"></a>'
+
+    patron = '<span class="([^"]+)">.*?<figure class="poster-bg">(.*?)<img src="([^"]+)" />'
+    patron += '(.*?)</figure><h6>([^<]+)</h6><a href="([^"]+)"></a>'
     matches = scrapertools.find_multiple_matches(data, patron)
+
     first = int(item.first)
     last = first + 19
     if last > len(matches):
         last = len(matches)
         next = False
-    for scrapedtype, scrapedyear, scrapedthumbnail, scrapedquality, scrapedtitle ,scrapedurl in matches[first:last]:
-        patron_quality="<span>(.+?)</span>"
-        quality = scrapertools.find_multiple_matches(scrapedquality, patron_quality)
-        qual=""
-        for calidad in quality:
-            qual=qual+"["+calidad+"] "
-        title="%s [%s] %s" % (scrapedtitle,scrapedyear,qual)
-        new_item= Item(channel=item.channel, title=title, url=host+scrapedurl, thumbnail=scrapedthumbnail,
-                       type=scrapedtype, infoLabels={'year':scrapedyear})
+
+    for scrapedtype, scrapedyear, scrapedthumbnail, scrapedquality, scrapedtitle, scrapedurl in matches[first:last]:
+        year = scrapertools.find_single_match(scrapedyear, '<span>(\d{4})</span>')
+
+        if not year:
+            class_year = scrapertools.find_single_match(scrapedyear, 'class="([^\"]+)"')
+            year = scrapertools.find_single_match(css_data, "\." + class_year + ":after {content:'(\d{4})';}")
+            if not year:
+                year = scrapertools.find_single_match(data, "headline'>(\d{4})</h2>")
+
+        qual = ""
+        if scrapedquality:
+            patron_qualities='<i class="([^"]+)"></i>'
+            qualities = scrapertools.find_multiple_matches(scrapedquality, patron_qualities)
+
+            for quality in qualities:
+                patron_desc = "\." + quality + ":after {content:'([^\']+)';}"
+                quality_desc = scrapertools.find_single_match(css_data, patron_desc)
+
+                qual = qual+ "[" + quality_desc + "] "
+
+        title="%s [%s] %s" % (scrapedtitle,year,qual)
+
+        new_item = Item(channel=item.channel, title=title, url=host+scrapedurl, thumbnail=scrapedthumbnail,
+                       type=scrapedtype, infoLabels={'year':year})
+
         if scrapedtype.strip() == 'sr':
             new_item.contentSerieName = scrapedtitle
             new_item.action = 'episodios'
         else:
             new_item.contentTitle = scrapedtitle
             new_item.action = 'findvideos'
+
         if scrapedtype == item.type or item.type == 'cat':
             itemlist.append(new_item)
+
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+
     #pagination
     url_next_page = item.url
     first = last
     if next:
         itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='lista', first=first))
+
     return itemlist
 
 
