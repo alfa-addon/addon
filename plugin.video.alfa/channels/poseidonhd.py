@@ -291,7 +291,7 @@ def findvideos(item):
                         url = data_url.headers['location']
                 except:
                     pass
-
+            url = url.replace(" ", "%20")
             itemlist.append(item.clone(title = '[%s] [%s]', url=url, action='play', subtitle=subs,
                             language=language, quality=quality, infoLabels=item.infoLabels))
 

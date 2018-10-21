@@ -331,6 +331,8 @@ def seasons_episodes(item):
 def findvideos(item):
     logger.info()
     itemlist=[]
+    
+    tmdb.set_infoLabels(item, True) # para refrescar infolabels y obtener más datos en "segunda pasada"
 
     if item.extra != "links_encoded":
         data = httptools.downloadpage(item.url).data
@@ -366,7 +368,6 @@ def findvideos(item):
         for videoitem in itemlist:
             videoitem.title = '%s [%s] [%s]' % (videoitem.server.capitalize(), videoitem.language, videoitem.quality)
 
-    tmdb.set_infoLabels(itemlist)
     if itemlist and not item.show:
         itemlist.append(Item(channel = item.channel))
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",

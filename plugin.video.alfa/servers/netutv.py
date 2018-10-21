@@ -66,7 +66,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = httptools.downloadpage("http://hqq.watch/player/get_md5.php?" + params, headers=head).data
     media_urls = []
     url_data = jsontools.load(data)
-    media_url = "https:" + tb(url_data["obf_link"].replace("#", "")) + ".mp4.m3u8"
+    media_url = tb(url_data["obf_link"].replace("#", "")) + ".mp4.m3u8"
+    if not media_url.startswith("http"):
+        media_url = "https:" + media_url
     video_urls = []
     media = media_url + "|User-Agent=Mozilla/5.0 (iPhone; CPU iPhone OS 5_0_1 like Mac OS X)"
     video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [netu.tv]", media, 0, subtitle])
