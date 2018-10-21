@@ -194,6 +194,8 @@ def peliculas(item):
 def findvideos(item):
     logger.info()
     itemlist = []
+    
+    tmdb.set_infoLabels(item, True) # para refrescar infolabels y obtener más datos en "segunda pasada"
 
     data = httptools.downloadpage(item.url).data
 
@@ -250,8 +252,6 @@ def findvideos(item):
                              thumbnail=item.category,
                              language=idioma, quality=calidad))
                     break
-
-    tmdb.set_infoLabels(itemlist)
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 

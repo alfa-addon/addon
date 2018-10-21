@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "streamango.com/(?:embed|f)/([A-z0-9]+)",
-        "url": "http://streamango.com/embed/\\1"
-      },
-      {
-        "pattern": "https://fruitadblock.net/embed/([A-z0-9]+)",
-        "url": "http://streamango.com/embed/\\1"
+        "pattern": "https://vidcloud.co/embed/([a-z0-9]+)",
+        "url": "https://vidcloud.co/player?fid=\\1&page=embed"
       }
     ]
   },
   "free": true,
-  "id": "streamango",
-  "name": "streamango",
+  "id": "vidcloud",
+  "name": "vidcloud",
   "settings": [
     {
       "default": false,
@@ -42,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "http://i.imgur.com/o8XR8fL.png"
+  "thumbnail": "https://i.postimg.cc/xjpwG0rK/0a-RVDzlb-400x400.jpg"
 }

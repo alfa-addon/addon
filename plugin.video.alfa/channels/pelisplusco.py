@@ -301,7 +301,7 @@ def seasons(item):
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     itemlist = itemlist[::-1]
-    if config.get_videolibrary_support() and len(itemlist) > 0:
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'episodios':
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
@@ -322,10 +322,13 @@ def season_episodes(item):
     logger.info()
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    full_data = httptools.downloadpage(item.url).data
+    full_data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", full_data)
     season = str(item.infoLabels['season'])
-    patron = '<a href=(.*?temporada-%s\/.*?) title=.*?i-play><\/i> (.*?)<\/a>'%season
+    if int(season) <= 9:
+        season = '0'+season
+    data = scrapertools.find_single_match(full_data, '</i>Temporada %s</div>(.*?)(?:down arrow|cuadre_comments)' % season)
+    patron = '<a href="([^"]+)" title=".*?i-play"><\/i> (.*?)<\/a>'
     matches = matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
     for url, episode in matches:
@@ -390,6 +393,7 @@ def findvideos(item):
     video_list = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+
     patron_language ='(<ul id=level\d_.*?\s*class=.*?ul>)'
     matches = re.compile(patron_language, re.DOTALL).findall(data)
 

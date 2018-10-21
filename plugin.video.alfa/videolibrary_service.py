@@ -320,6 +320,10 @@ if __name__ == "__main__":
     from platformcode import updater
     updater.check_addon_init()
     
+    # Copia Custom code a las carpetas de Alfa desde la zona de Userdata
+    from platformcode import custom_code
+    custom_code.init()
+    
     if not config.get_setting("update", "videolibrary") == 2:
         check_for_update(overwrite=False)
 

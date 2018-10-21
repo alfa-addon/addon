@@ -14,6 +14,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
+from lib import generictools
 
 IDIOMAS = {'latino': 'Latino'}
 list_language = IDIOMAS.values()
@@ -157,7 +158,7 @@ def seasons(item):
                              infoLabels=infoLabels))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
-    if config.get_videolibrary_support() and len(itemlist) > 0:
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'episodios':
         itemlist.append(
                 Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                      action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName))
@@ -214,19 +215,32 @@ def section(item):
         itemlist.append(Item(channel=item.channel, url=url, title=title, action='list_all', type=item.type))
     return itemlist
 
+
 def findvideos(item):
     logger.info()
 
     itemlist = []
 
     data = get_source(item.url)
+
     servers_page = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
-    data = get_source(servers_page, referer=item.url)
+    data = get_source(servers_page)
     patron = '<a href="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for enc_url in matches:
         url_data = get_source(enc_url, referer=item.url)
-        url = scrapertools.find_single_match(url_data, '<iframe src="([^"]+)"')
+        hidden_url = scrapertools.find_single_match(url_data, '<iframe src="([^"]+)"')
+        if 'server' in hidden_url:
+            hidden_data = get_source(hidden_url)
+            url = scrapertools.find_single_match(hidden_data, '<iframe src="([^"]+)"')
+
+        else:
+            url = hidden_url
+            if 'pelishd.tv' in url:
+                vip_data = httptools.downloadpage(url, headers={'Referer':item.url}, follow_redirects=False).data
+                dejuiced = generictools.dejuice(vip_data)
+                url = scrapertools.find_single_match(dejuiced, '"file":"([^"]+)"')
+
         language = 'latino'
         if not config.get_setting('unify'):
             title = ' [%s]' % language.capitalize()
