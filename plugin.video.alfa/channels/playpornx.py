@@ -14,10 +14,10 @@ host = "https://watchfreexxx.net/"
 def mainlist(item):
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, title="Movies", action="lista",
+    itemlist.append(Item(channel=item.channel, title="Peliculas", action="lista",
                          url = urlparse.urljoin(host, "category/porn-movies/")))
 
-    itemlist.append(Item(channel=item.channel, title="Scenes", action="lista",
+    itemlist.append(Item(channel=item.channel, title="Escenas", action="lista",
                          url = urlparse.urljoin(host, "category/xxx-scenes/")))
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host+'?s=',
