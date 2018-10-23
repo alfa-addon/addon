@@ -6,6 +6,10 @@
       {
         "pattern": "streamango.com/(?:embed|f)/([A-z0-9]+)",
         "url": "http://streamango.com/embed/\\1"
+      },
+      {
+        "pattern": "https://fruitadblock.net/embed/([A-z0-9]+)",
+        "url": "http://streamango.com/embed/\\1"
       }
     ]
   },

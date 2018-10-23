@@ -1,12 +1,12 @@
 {
-  "id": "xtheatre",
-  "name": "xTheatre",
+  "id": "xms",
+  "name": "XMS",
   "active": true,
   "adult": true,
   "language": ["*"],
   "fanart": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/xthearebg.jpg",
-  "thumbnail": "https://xtheatre.net/wp-content/uploads/xtlogo.jpg",
-  "banner": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/xthearebm.png",
+  "thumbnail": "https://i.postimg.cc/wB0NsMTX/xms.png",
+  "banner": "https://i.postimg.cc/c6yh5C3K/xmsbn.png",
    "categories": [
    "adult"
  ],

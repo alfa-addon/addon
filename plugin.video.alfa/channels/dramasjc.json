@@ -1,13 +1,15 @@
 {
-  "id": "dilo",
-  "name": "Dilo",
+  "id": "dramasjc",
+  "name": "DramasJC",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
-  "thumbnail": "https://s22.postimg.cc/u6efsniqp/dilo.png",
+  "language": [],
+  "thumbnail": "https://www.dramasjc.com/wp-content/uploads/2018/03/logo.png",
   "banner": "",
+  "version": 1,
   "categories": [
     "tvshow",
+    "movie",
     "vos"
   ],
   "settings": [
@@ -28,10 +30,17 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "CAST",
-        "LAT",
-        "VOSE"
+        "VOSE",
+        "VO"
       ]
+    },
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": true
     }
   ]
 }
