@@ -4,7 +4,6 @@
 import re
 from core import httptools
 from core import scrapertools
-from lib import jsunpack
 from platformcode import logger
 
 
@@ -23,7 +22,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = data.replace('\\\\', '\\').replace('\\','')
     patron = '"file":"([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
-
     for url in matches:
-        video_urls.append(['vidcloud', url])
+        if not ".vtt" in url:
+            video_urls.append(['vidcloud', url])
     return video_urls
