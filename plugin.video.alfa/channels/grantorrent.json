@@ -70,7 +70,7 @@
       "id": "timeout_downloadpage",
       "type": "list",
       "label": "Timeout (segs.) en descarga de páginas o verificación de servidores",
-      "default": 5,
+      "default": 10,
       "enabled": true,
       "visible": true,
       "lvalues": [

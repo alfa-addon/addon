@@ -30,6 +30,7 @@ channel = "grantorrent"
 dict_url_seasons = dict()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
 timeout = config.get_setting('timeout_downloadpage', channel)
+if timeout <= 5: timeout = timeout*2
 modo_serie_temp = config.get_setting('seleccionar_serie_temporada', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)
 
@@ -154,10 +155,10 @@ def listado(item):
     inicio = time.time()                    # Controlaremos que el proceso no exceda de un tiempo razonable
     fin = inicio + 5                        # Después de este tiempo pintamos (segundos)
     timeout_search = timeout                # Timeout para descargas
-    if item.extra == 'search':
-        timeout_search = timeout * 2        # Timeout un poco más largo para las búsquedas
-        if timeout_search < 5:
-            timeout_search = 5              # Timeout un poco más largo para las búsquedas
+    if item.action == 'search':
+        timeout_search = int(timeout * 1.5) # Timeout un poco más largo para las búsquedas
+        if timeout_search < 10:
+            timeout_search = 10             # Timeout un poco más largo para las búsquedas
     
     #Máximo num. de líneas permitidas por TMDB (40). Máx de 5 páginas por Itemlist para no degradar el rendimiento.  
     #Si itemlist sigue vacío después de leer 5 páginas, se pueden llegar a leer hasta 10 páginas para encontrar algo
@@ -170,12 +171,12 @@ def listado(item):
                 item.post = item.url
             video_section = ''
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.post, timeout=timeout_search).data)
-            video_section = scrapertools.find_single_match(data, '<div class="contenedor-home">(.*?</div>)</div></div>')
+            video_section = scrapertools.find_single_match(data, '<div class="contenedor-home">(?:\s*<div class="titulo-inicial">\s*Últi.*?Añadi...\s*<\/div>)?\s*<div class="contenedor-imagen">\s*(<div class="imagen-post">.*?<\/div><\/div>)<\/div>')
         except:
             pass
             
         cnt_next += 1
-        if not data:                        #Si la web está caída salimos sin dar error
+        if not data or 'Error 503 Backend fetch failed' in data:            #Si la web está caída salimos sin dar error
             logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + video_section)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
             if len(itemlist) > 1:
@@ -217,12 +218,12 @@ def listado(item):
             cnt_next = 99       #No hay más páginas.  Salir del bucle después de procesar ésta
 
         # Preparamos un patron que pretende recoger todos los datos significativos del video
-        patron = '<a href="(?P<url>[^"]+)"><img.*?src="(?P<thumb>[^"]+)".*?'
+        patron = '<div class="imagen-post">\s*<a href="(?P<url>[^"]+)"><img.*?src="(?P<thumb>[^"]+)".*?'
         if "categoria" in item.url or item.media == "search":     #Patron distinto para páginas de Categorías o Búsquedas
             patron += 'class="attachment-(?P<quality>.*?)-(?P<lang>[^\s]+)\s.*?'
         else:
             patron += 'class="bloque-superior">\s*(?P<quality>.*?)\s*<div class="imagen-idioma">\s*<img src=".*?icono_(?P<lang>[^\.]+).*?'
-        patron += '<div class="bloque-inferior">\s*(?P<title>.*?)\s*<\/div>\s?<div class="bloque-date">\s*(?P<date>.*?)\s*<\/div>'
+        patron += '<div class="bloque-inferior">\s*(?P<title>.*?)\s*<\/div>\s*<div class="bloque-date">\s*(?P<date>.*?)\s*<\/div>\s*<\/div>'
 
         matches_alt = re.compile(patron, re.DOTALL).findall(video_section)
         if not matches_alt and not '<div class="titulo-load-core">0 resultados' in data:       #error
@@ -231,6 +232,7 @@ def listado(item):
                 item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error
                 return itemlist                                                     #Salimos
             
+            if video_section: data = video_section
             logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             if len(itemlist) > 1:
