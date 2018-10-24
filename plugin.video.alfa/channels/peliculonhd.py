@@ -76,7 +76,7 @@ def menu_movies(item):
 
 def get_source(url, referer=None):
     logger.info()
-    if referer is not None:
+    if referer is None:
         data = httptools.downloadpage(url).data
     else:
         data = httptools.downloadpage(url, headers={'Referer':referer}).data
@@ -262,7 +262,7 @@ def findvideos(item):
         post = urllib.urlencode(post)
 
         test_url = '%swp-admin/admin-ajax.php' % 'https://peliculonhd.com/'
-        new_data = httptools.downloadpage(test_url, post=post).data
+        new_data = httptools.downloadpage(test_url, post=post, headers={'Referer':item.url}).data
         test_url = scrapertools.find_single_match(new_data, "src='([^']+)'")
         if 'xyz' in test_url:
             new_data = get_source(test_url, item.url)
@@ -287,7 +287,6 @@ def findvideos(item):
                              language=IDIOMAS[lang], infoLabels=item.infoLabels))
         else:
             new_data = get_source(test_url, item.url)
-
             patron = 'data-embed="([^"]+)" data-issuer="([^"]+)" data-signature="([^"]+)"'
             matches = scrapertools.find_multiple_matches(new_data, patron)
 
