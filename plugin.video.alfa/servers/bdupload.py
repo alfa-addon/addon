@@ -5,7 +5,7 @@ from core import httptools
 from core import scrapertools
 from platformcode import logger
 
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'}
+headers = {'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Mobile Safari/537.36'}
 
 
 def test_video_exists(page_url):
@@ -28,7 +28,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
     time.sleep(1)
     data1 = httptools.downloadpage(page_url, post = post, headers = headers).data
     patron = "window.open\('([^']+)"
-    file = scrapertools.find_single_match(data1, patron)
+    file = scrapertools.find_single_match(data1, patron).replace(" ","%20")
     file += "|User-Agent=" + headers['User-Agent']
     video_urls = []
     videourl = file
