@@ -45,7 +45,7 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title='Peliculas', action='menu_movies',
                          thumbnail= get_thumb('movies', auto=True)))
-    itemlist.append(Item(channel=item.channel, title='Series', url=host+'tvshows', action='list_all', type='tvshows',
+    itemlist.append(Item(channel=item.channel, title='Series', url=host+'tvshows', action='list_all', type='tv',
                          thumbnail= get_thumb('tvshows', auto=True)))
     itemlist.append(
         item.clone(title="Buscar", action="search", url=host + '?s=', thumbnail=get_thumb("search", auto=True),
@@ -61,11 +61,11 @@ def menu_movies(item):
     itemlist=[]
 
     itemlist.append(Item(channel=item.channel, title='Todas', url=host + 'movies', action='list_all',
-                         thumbnail=get_thumb('all', auto=True), type='movies'))
+                         thumbnail=get_thumb('all', auto=True), type='movie'))
     itemlist.append(Item(channel=item.channel, title='Genero', action='section',
-                         thumbnail=get_thumb('genres', auto=True), type='movies'))
+                         thumbnail=get_thumb('genres', auto=True), type='movie'))
     itemlist.append(Item(channel=item.channel, title='Por Año', action='section',
-                         thumbnail=get_thumb('year', auto=True), type='movies'))
+                         thumbnail=get_thumb('year', auto=True), type='movie'))
 
     return itemlist
 
@@ -124,7 +124,7 @@ def list_all(item):
     itemlist = []
 
     data = get_source(item.url)
-    if item.type ==  'movies':
+    if item.type ==  'movie':
         patron = '<article id="post-\d+" class="item movies"><div class="poster">\s?<img src="([^"]+)" alt="([^"]+)">.*?'
         patron += '"quality">([^<]+)</span><\/div>\s?<a href="([^"]+)">.*?</h3>.*?<span>([^<]+)</'
         matches = re.compile(patron, re.DOTALL).findall(data)
@@ -144,9 +144,10 @@ def list_all(item):
                             thumbnail=thumbnail,
                             contentTitle=contentTitle,
                             quality=quality,
+                            type=item.type,
                             infoLabels={'year':year}))
 
-    elif item.type ==  'tvshows':
+    elif item.type ==  'tv':
         patron = '<article id="post-\d+" class="item tvshows"><div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'
         patron += '<a href="([^"]+)">.*?<span>(\d{4})<'
         matches = re.compile(patron, re.DOTALL).findall(data)
@@ -162,6 +163,7 @@ def list_all(item):
                             url=url,
                             thumbnail=thumbnail,
                             contentSerieName=contentSerieName,
+                            type=item.type,
                             infoLabels={'year':year}))
 
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
@@ -188,7 +190,7 @@ def seasons(item):
         season = season.lower().replace('temporada','')
         infoLabels['season']=season
         title = 'Temporada %s' % season
-        itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseasons',
+        itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseasons', type=item.type,
                              infoLabels=infoLabels))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
@@ -225,7 +227,8 @@ def episodesxseasons(item):
         url = scrapedurl
         title = '%sx%s - %s' % (infoLabels['season'], infoLabels['episode'], scrapedtitle)
 
-        itemlist.append(Item(channel=item.channel, title= title, url=url, action='findvideos', infoLabels=infoLabels))
+        itemlist.append(Item(channel=item.channel, title= title, url=url, action='findvideos', type=item.type,
+                             infoLabels=infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
@@ -244,7 +247,7 @@ def findvideos(item):
         lang = scrapertools.find_single_match(lang, '.*?/flags/(.*?).png')
         quality = ''
 
-        post = {'action': 'doo_player_ajax', 'post': id, 'nume': option}
+        post = {'action': 'doo_player_ajax', 'post': id, 'nume': option, 'type':'movie'}
         post = urllib.urlencode(post)
         test_url = 'https://pelisr.com/wp-admin/admin-ajax.php'
         new_data = httptools.downloadpage(test_url, post=post).data
@@ -255,13 +258,15 @@ def findvideos(item):
         title = '%s'
 
         if 'drive' in scrapedurl:
-            enc_data = httptools.downloadpage(scrapedurl, headers = {'Referer':item.url}).data
-
-            dec_data = generictools.dejuice(enc_data)
-            url, quality = scrapertools.find_single_match(dec_data, '"file":"(.*?)","label":"(.*?)"')
+            try:
+                enc_data = httptools.downloadpage(scrapedurl, headers = {'Referer':item.url}).data
+                dec_data = generictools.dejuice(enc_data)
+                url, quality = scrapertools.find_single_match(dec_data, '"file":"(.*?)","label":"(.*?)"')
+            except:
+                pass
         else:
             url = scrapedurl
-
+        url = url +"|referer=%s" % item.url
         itemlist.append(
             Item(channel=item.channel, url=url, title=title, action='play', quality=quality, language=IDIOMAS[lang],
                  infoLabels=item.infoLabels))
@@ -348,7 +353,7 @@ def newest(categoria):
             item.url = host + 'genre/animacion/'
         elif categoria == 'terror':
             item.url = host + 'genre/terror/'
-        item.type='movies'
+        item.type='movie'
         itemlist = list_all(item)
         if itemlist[-1].title == 'Siguiente >>':
             itemlist.pop()

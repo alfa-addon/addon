@@ -231,6 +231,8 @@ def findvideos(item):
         url = '%s/%s' % (server, id)
         if server != '' and id != '':
             language = IDIOMAS[language]
+            if quality.lower() == 'premium':
+                quality = '720p'
             quality = CALIDADES[quality]
             title = ' [%s] [%s]' % (language, quality)
             itemlist.append(Item(channel=item.channel, title='%s' + title, url=url, action='play', language=language,

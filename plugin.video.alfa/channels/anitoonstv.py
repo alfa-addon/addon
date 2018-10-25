@@ -98,7 +98,7 @@ def episodios(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron = '<div class="pagina">(.+?)<\/div><div id="fade".+?>'
+    patron = '<div class="pagina">(.*?)</ul>'
     data = scrapertools.find_single_match(data, patron)
     patron_caps = "<li><a href='(.+?)'>Cap(?:i|í)tulo: (.+?) - (.+?)<\/a>"
     matches = scrapertools.find_multiple_matches(data, patron_caps)
