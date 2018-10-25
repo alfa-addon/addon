@@ -327,6 +327,8 @@ def post_tmdb_listado(item, itemlist):
         except:
             pass
 
+        __modo_grafico__ = config.get_setting('modo_grafico', item.channel)    
+        
         # Si TMDB no ha encontrado el vídeo limpiamos el año
         if item_local.infoLabels['year'] == "-":
             item_local.infoLabels['year'] = ''
@@ -338,7 +340,7 @@ def post_tmdb_listado(item, itemlist):
             logger.error(item_local)
             del item_local.infoLabels['tmdb_id']                #puede traer un TMDB-ID erroneo
             try:
-                tmdb.set_infoLabels(item_local, True)           #pasamos otra vez por TMDB
+                tmdb.set_infoLabels(item_local, __modo_grafico__)       #pasamos otra vez por TMDB
             except:
                 pass
             logger.error(item_local)
@@ -349,7 +351,7 @@ def post_tmdb_listado(item, itemlist):
                 year = item_local.infoLabels['year']            #salvamos el año por si no tiene éxito la nueva búsqueda
                 item_local.infoLabels['year'] = "-"             #reseteo el año
                 try:
-                    tmdb.set_infoLabels(item_local, True)       #pasamos otra vez por TMDB
+                    tmdb.set_infoLabels(item_local, __modo_grafico__)   #pasamos otra vez por TMDB
                 except:
                     pass
                 if not item_local.infoLabels['tmdb_id']:        #ha tenido éxito?
