@@ -22,10 +22,12 @@ def get_video_url(page_url, user="", password="", video_password=""):
     packed = scrapertools.find_multiple_matches(data, "(?s)<script>\s*eval(.*?)\s*</script>")
     for pack in packed:
         unpacked = jsunpack.unpack(pack)
-        if "file" in unpacked:
-            videos = scrapertools.find_multiple_matches(unpacked, 'file.="(//[^"]+)')
+        if "tida" in unpacked:
+            videos = scrapertools.find_multiple_matches(unpacked, 'tid.="([^"]+)')
     video_urls = []
     for video in videos:
+        if not video.startswith("//"):
+            continue
         video = "https:" + video
         video_urls.append(["mp4 [Thevid]", video])
     logger.info("Url: %s" % videos)

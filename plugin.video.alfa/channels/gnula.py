@@ -8,7 +8,7 @@ from platformcode import config, logger
 from channelselector import get_thumb
 
 host = "http://gnula.nu/"
-host_search = "https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=small&num=20&hl=es&prettyPrint=false&source=gcsc&gss=.es&sig=45e50696e04f15ce6310843f10a3a8fb&cx=014793692610101313036:vwtjajbclpq&q=%s&cse_tok=%s&googlehost=www.google.com&callback=google.search.Search.apiary10745&nocache=1519145965573&start=0"
+host_search = "https://cse.google.com/cse/element/v1?rsz=filtered_cse&num=20&hl=es&source=gcsc&gss=.es&sig=c891f6315aacc94dc79953d1f142739e&cx=014793692610101313036:vwtjajbclpq&q=%s&safe=off&cse_tok=%s&googlehost=www.google.com&callback=google.search.Search.csqr6098&nocache=1540313852177&start=0"
 item_per_page = 20
 
 
@@ -58,9 +58,9 @@ def sub_search(item):
             break
         page = int(scrapertools.find_single_match(item.url, ".*?start=(\d+)")) + item_per_page
         item.url = scrapertools.find_single_match(item.url, "(.*?start=)") + str(page)
-        patron =  '(?s)clicktrackUrl":".*?q=(.*?)".*?'
-        patron += 'title":"([^"]+)".*?'
-        patron += 'cseImage":{"src":"([^"]+)"'
+        patron =  '(?s)clicktrackUrl":\s*".*?q=(.*?)".*?'
+        patron += 'title":\s*"([^"]+)".*?'
+        patron += '"src":\s*"([^"]+)"'
         matches = scrapertools.find_multiple_matches(data, patron)
         for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
             scrapedurl = scrapertools.find_single_match(scrapedurl, ".*?online/")

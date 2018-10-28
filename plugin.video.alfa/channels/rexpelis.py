@@ -104,9 +104,9 @@ def sub_search(item):
     data = httptools.downloadpage(item.url).data
     token = scrapertools.find_single_match(data, 'csrf-token" content="([^"]+)')
     data = httptools.downloadpage(item.url + "&_token=" + token, headers=headers).data
-    logger.info("Intel33 %s" %data)
+    #logger.info("Intel33 %s" %data)
     data_js = jsontools.load(data)["data"]["m"]
-    logger.info("Intel44 %s" %data_js)
+    #logger.info("Intel44 %s" %data_js)
     for js in data_js:
         itemlist.append(Item(channel = item.channel,
                              action = "findvideos",
@@ -139,14 +139,15 @@ def peliculas(item):
     post = "page=%s&type=%s&_token=%s" %(item.page, item.type, token)
     if item.slug:
         post += "&slug=%s" %item.slug
-    logger.info("Intel11 %s" %post)
+    #logger.info("Intel11 %s" %post)
     data = httptools.downloadpage(host + "/pagination", post=post, headers=headers).data
-    patron  = 'href="([^"]+)".*?'
+    #logger.info("Intel11 %s" %data)
+    patron  = '(?s)href="([^"]+)".*?'
     patron += 'src="([^"]+)".*?'
-    patron += '<p>([^<]+).*?'
-    patron += '<span>([^<]+)'
+    patron += 'text-center">([^<]+).*?'
+    patron += '<p>([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedthumbnail, scrapedtitle , scrapedyear in matches:
+    for scrapedurl, scrapedthumbnail, scrapedyear, scrapedtitle in matches:
         itemlist.append(Item(channel = item.channel,
                              action = "findvideos",
                              contentTitle = scrapedtitle,
