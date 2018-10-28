@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import urlparse
 
 from core import httptools
 from core import scrapertools
@@ -12,10 +13,12 @@ host = "https://watchfreexxx.net/"
 
 def mainlist(item):
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Todas", action="lista",
-                         thumbnail='https://s18.postimg.cc/fwvaeo6qh/todas.png',
-                         fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
-                         url =host))
+
+    itemlist.append(Item(channel=item.channel, title="Peliculas", action="lista",
+                         url = urlparse.urljoin(host, "category/porn-movies/")))
+
+    itemlist.append(Item(channel=item.channel, title="Escenas", action="lista",
+                         url = urlparse.urljoin(host, "category/xxx-scenes/")))
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host+'?s=',
                          thumbnail='https://s30.postimg.cc/pei7txpa9/buscar.png',
@@ -29,34 +32,27 @@ def lista(item):
 
     itemlist = []
     if item.url == '': item.url = host
+
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    if item.extra != 'Buscar':
-        patron = '<div class=item>.*?href=(.*?)><div.*?<img src=(.*?) alt=(.*?) width'
-    else:
-        patron = '<div class=movie>.*?<img src=(.*?) alt=(.*?) \/>.*?href=(.*?)\/>'
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+
+    patron = '<article id=.*?<a href="([^"]+)".*?<img data-src="([^"]+)" alt="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for data_1, data_2, data_3 in matches:
-        if item.extra != 'Buscar':
-            url = data_1
-            thumbnail = data_2
-            title = data_3
-        else:
-            url = data_3
-            thumbnail = data_1
-            title = data_2
-
+        url = data_1
+        thumbnail = data_2
+        title = data_3
         itemlist.append(Item(channel=item.channel, action='findvideos', title=title, url=url, thumbnail=thumbnail))
 
-    # #Paginacion
-
+    #Paginacion
     if itemlist != []:
         actual_page_url = item.url
-        next_page = scrapertools.find_single_match(data, '<link rel=next href=(.*?) \/>')
+        next_page = scrapertools.find_single_match(data, '<a href="([^"]+)">Next</a>')
         if next_page != '':
             itemlist.append(Item(channel=item.channel, action="lista", title='Siguiente >>>', url=next_page,
                                  thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png', extra=item.extra))
+    
     return itemlist
 
 

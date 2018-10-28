@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://(?:vidcloud.co|vcstream.to)/embed/([a-z0-9]+)",
-        "url": "https://vidcloud.co/player?fid=\\1&page=embed"
+        "pattern": "(https://fex.net/load/[A-z0-9]+/[A-z0-9]+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "vidcloud",
-  "name": "vidcloud",
+  "id": "fex",
+  "name": "Fex",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,6 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/xjpwG0rK/0a-RVDzlb-400x400.jpg"
+  "thumbnail": "https://i.postimg.cc/pdswzj8G/fex.png",
+  "version": 1
 }
