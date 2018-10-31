@@ -1478,8 +1478,8 @@ def findvideos(item):
                 quality = '%s [%s]' % (item_local.quality, size)                        #Agregamos size al final del título
             else:
                 quality = item_local.quality
-            #if item.armagedon:                                                          #Si es catastrófico, lo marcamos
-            quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % quality
+            if item.armagedon:                                                          #Si es catastrófico, lo marcamos
+                quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % quality
             item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (quality, str(item_local.language))                                        #Preparamos título de Torrent
             
             #Preparamos título y calidad, quitamos etiquetas vacías
