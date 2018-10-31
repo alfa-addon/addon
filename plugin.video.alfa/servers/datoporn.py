@@ -21,7 +21,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
 
     data = httptools.downloadpage(page_url).data
-    logger.debug(data)
     media_urls = scrapertools.find_multiple_matches(data, 'src: "([^"]+)",.*?label: "([^"]+)"')
     #media_urls = scrapertools.find_multiple_matches(data, 'file\:"([^"]+\.mp4)",label:"([^"]+)"')
     # if not media_urls:
