@@ -294,6 +294,8 @@ def post_tmdb_listado(item, itemlist):
             del item_local.url_alt
         if item_local.extra2:
             del item_local.extra2
+        if item_local.library_filter_show:
+            del item_local.library_filter_show
         
         #Ajustamos el nombre de la categoría
         if item_local.channel == channel_py:
@@ -508,6 +510,11 @@ def post_tmdb_seasons(item, itemlist):
     itemlist_temporadas = []
     itemlist_fo = []
     
+    if config.get_setting("no_pile_on_seasons", 'videolibrary') == 2:           #Si no se quiere mostrar por temporadas, nos vamos...
+        if item.season_colapse:                                                 #Quitamos el indicador de listado por Temporadas
+            del item.season_colapse
+        return (item, itemlist)
+    
     #Restauramos valores si ha habido fail-over
     channel_alt = ''
     if item.channel == channel_py:
@@ -555,7 +562,8 @@ def post_tmdb_seasons(item, itemlist):
         title = title.replace('[', '-').replace(']', '-').replace('.', ',').strip()
     title = title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
     
-    itemlist_temporadas.append(item_season.clone(title=title, from_title_season_colapse=item.title))
+    if config.get_setting("show_all_seasons", 'videolibrary'):
+        itemlist_temporadas.append(item_season.clone(title=title, from_title_season_colapse=item.title))
     
     #Repasamos todos los episodios para detectar las diferentes temporadas
     for item_local in itemlist:
@@ -566,8 +574,8 @@ def post_tmdb_seasons(item, itemlist):
             item_season.title = 'Temporada %s' % item_season.contentSeason
             itemlist_temporadas.append(item_season.clone(from_title_season_colapse=item.title))
             
-    #Si hay más de una temporada se sigue, si no se devuelve el Itemlist original
-    if len(itemlist_temporadas) > 2:
+    #Si hay más de una temporada se sigue, o se ha forzado a listar por temporadas, si no se devuelve el Itemlist original
+    if len(itemlist_temporadas) > 2 or config.get_setting("no_pile_on_seasons", 'videolibrary') == 0:
         for item_local in itemlist_temporadas:
             if "** Todas las Temporadas" in item_local.title:       #Si es el título de TODAS las Temporadas, lo ignoramos
                 continue
@@ -708,6 +716,8 @@ def post_tmdb_episodios(item, itemlist):
         del item.from_action
     if item.from_channel:
         del item.from_channel
+    if item.library_filter_show:
+        del item.library_filter_show
         
     for item_local in itemlist:                             #Recorremos el Itemlist generado por el canal
         if item_local.add_videolibrary:
@@ -742,6 +752,10 @@ def post_tmdb_episodios(item, itemlist):
             del item_local.from_action
         if item_local.from_channel:
             del item_local.from_channel
+        if item_local.emergency_urls and isinstance(item_local.emergency_urls, dict):
+            del item_local.emergency_urls
+        if item_local.library_filter_show:
+            del item_local.library_filter_show
         #logger.debug(item_local)
         
         #Ajustamos el nombre de la categoría si es un clone de NewPct1
@@ -977,9 +991,6 @@ def post_tmdb_findvideos(item, itemlist):
     """
     #logger.debug(item)
     
-    #Creción de título general del vídeo a visualizar en Findvideos
-    itemlist = []
-    
     # Saber si estamos en una ventana emergente lanzada desde una viñeta del menú principal,
     # con la función "play_from_library"
     item.unify = False
@@ -993,6 +1004,9 @@ def post_tmdb_findvideos(item, itemlist):
     if item.contentSeason_save:                                 #Restauramos el num. de Temporada
         item.contentSeason = item.contentSeason_save
         del item.contentSeason_save
+    
+    if item.library_filter_show:
+        del item.library_filter_show
 
     #Salvamos la información de max num. de episodios por temporada para despues de TMDB
     num_episodios = item.contentEpisodeNumber
@@ -1021,6 +1035,9 @@ def post_tmdb_findvideos(item, itemlist):
     #Ajustamos el nombre de la categoría
     if item.channel == channel_py:
         item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+    
+    if item.armagedon:                                          #Es una situación catastrófica?
+        itemlist.append(item.clone(action='', title=item.category + ': [COLOR hotpink]VIDEOTECA: Usando enlaces de emergencia[/COLOR]'))
     
     #Quitamos el la categoría o nombre del título, si lo tiene
     if item.contentTitle:
@@ -1154,10 +1171,10 @@ def post_tmdb_findvideos(item, itemlist):
     #agregamos la opción de Añadir a Videoteca para péliculas (no series)
     if (item.contentType == 'movie' or item.contentType == 'season') and item.contentChannel != "videolibrary":
         #Permitimos la actualización de los títulos, bien para uso inmediato, o para añadir a la videoteca
-        itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", action="actualizar_titulos", extra="películas", tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
+        itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", action="actualizar_titulos", extra="peliculas", tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
         
     if item.contentType == 'movie' and item.contentChannel != "videolibrary":
-        itemlist.append(item.clone(title="**-[COLOR yellow] Añadir a la videoteca [/COLOR]-**", action="add_pelicula_to_library", extra="películas", from_action=item.action, from_title_tmdb=item.title))
+        itemlist.append(item.clone(title="**-[COLOR yellow] Añadir a la videoteca [/COLOR]-**", action="add_pelicula_to_library", extra="peliculas", from_action=item.action, from_title_tmdb=item.title))
     
     #Añadimos la opción de ver trailers
     if item.contentChannel != "videolibrary":
@@ -1280,14 +1297,14 @@ def get_torrent_size(url):
             size = convert_size(sizet)
 
     except:
-        logger.error('ERROR al buscar el tamaño de un .Torrent: ' + url)
+        logger.error('ERROR al buscar el tamaño de un .Torrent: ' + str(url))
         
     try:
         os.remove(torrents_path + "/generictools.torrent")                      #borramos el .torrent
     except:
         pass
         
-    #logger.debug(url + ' / ' + size)
+    #logger.debug(str(url) + ' / ' + str(size))
     
     return size
 
@@ -1552,6 +1569,20 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
     return (item, data)
 
     
+def verify_channel(channel):
+    
+    #Lista con los datos de los canales alternativos
+    #Cargamos en .json del canal para ver las listas de valores en settings
+    clones = channeltools.get_channel_json(channel_py)
+    for settings in clones['settings']:                             #Se recorren todos los settings
+        if settings['id'] == "clonenewpct1_channels_list":          #Encontramos en setting
+            clones = settings['default']                            #Carga lista de clones
+            channel_alt = "'%s'" % channel
+            if channel_alt in clones:                               #Si es un clon se pone como canal newpct1, si no se deja
+                channel = channel_py
+            return channel
+    
+    
 def web_intervenida(item, data, desactivar=True):
     logger.info()
     
@@ -1663,24 +1694,27 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         - patron4:      expresión Regex aplicable a la url (opcional)
         - patron5:      expresión Regex aplicable a la url (opcional)
         - content_inc:  contenido al que aplica esta entrada, o * (item.contentType o item.extra)
-        - content_exc:  contenido que se excluye de esta entrada (item.contentType) (opcional)
+        - content_exc:  contenido que se excluye de esta entrada (item.contentType) (opcional).  opción para 'emerg'
         - ow_force:     indicador para la acción de "videolibrary_service.py".  Puede crear la variable item.ow_force:
                             - force:    indica al canal que analize toda la serie y que videolibrary_service la reescriba
                             - auto:     indica a videolibrary_service que la reescriba
                             - no:       no acción para videolibrary_service, solo redirige en visionado de videolibrary
                             - del:      borra las estrucuturas de un determinado canal en videolibrary_service, quizás creadas por errores de un canal
+                            - emerg:    funcionalidad muy similar a la de "del".  se general dinámicamente cada vez que entra un canal con el estado activado en el .json de "emergency_urls".  Permite cargar las urls de emergencia en todos los elementos existentes de la Videoteca para canal afectado
         ejemplos: 
         ('1', 'mejortorrent', 'mejortorrent1', 'http://www.mejortorrent.com/', 'https://mejortorrent1.com/', '(http.?:\/\/.*?\/)', 'http.?:\/\/.*?\/.*?-torrent.?-[^-]+-(?:[^-]+-)([^0-9]+-)', 'http.?:\/\/.*?\/.*?-torrent.?-[^-]+-(?:[^-]+-)[^0-9]+-\\d+-(Temporada-).html', 'http.?:\/\/.*?\/.*?-torrent.?-[^-]+-(?:[^-]+-)[^0-9]+-(\\d+)-', '', 'tvshow, season', '', 'force'), 
         ('1', 'mejortorrent', 'mejortorrent1', 'http://www.mejortorrent.com/', 'https://mejortorrent1.com/', '(http.?:\/\/.*?\/)', 'http.?:\/\/.*?\/.*?-torrent.?-[^-]+-([^.]+).html', '', '', '', 'movie', '', 'force')",
         ('1', 'torrentrapid', 'torrentlocura', 'http://torrentrapid.com/', 'http://torrentlocura.com/', '', '', '', '', '', '*', '', 'no'),
         ('1', 'newpct1', '', '', '', '', '', '', '', '', '*', '', 'del'),
+        ('1', 'torrentrapid', 'torrentrapid', '', '', '', '', '', '', '', '*', '1 ó 2', 'emerg'),
     
     La llamada recibe el parámetro Item, el .nfo y los devuleve actualizados, así como opcionalmente el parámetro "overwrite· que puede forzar la reescritura de todos los archivos de la serie, y el parámetro "path" si viene de videolibrary_service.  Por último, recibe opcionalmente el parámetro "lookup" si se quiere solo averigurar si habrá migración para ese título, pero sin realizarla.
     
     """
+    #logger.debug(item)
+    #if it != None: logger.debug(it)
     if not it:
         it = Item()
-    #logger.debug(item)
     ow_force_param = True
     channel_enabled = False
     update_stat = 0
@@ -1721,28 +1755,59 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     if channel_alt != 'videolibrary':
         item.category = channel_alt.capitalize()
         category = "'%s'" % channel_alt
-    channel_py_alt = ''
+    channel_py_alt = 'xyz123'
     if channel in fail_over_list :                                          #Si es un clone de Newpct1, se actualiza el canal y la categoría
         item.channel = channel_py
         channel_py_alt = "'%s'" % channel_py
         if item.channel_host:                                               #y se borran resto de pasadas anteriores
             del item.channel_host
 
-    #Ahora tratamos las webs intervenidas, tranformamos la url, el nfo y borramos los archivos obsoletos de la serie
-    if channel not in intervencion and channel_py_alt not in intervencion and category not in intervencion and channel_alt != 'videolibrary':  #lookup
-        return (item, it, overwrite)                                        #... el canal/clone está listado
+    #Analizamos si hay series o películas que migrar, debido a que se ha activado en el .json del canal la opción "guardar" 
+    #"emergency_urls = 1", y hay que calcularla para todos los episodios y película existentes en la Videoteca.
+    #Si "emergency_urls" está activada para uno o más canales, se verifica en el .nfo del vídeo si ya se ha realizado
+    #la carga de las urls de emergencia.  Sí se ha hecho, se ignora el proceso de conversión.  Si no, se convierte por el
+    #canal en curso cuando hay item.url, o para todos los canales en item.library_urls si no hay un canal específico en curso.
+    #El mecanismo consiste en generar una regla temporal de migración para cada canal activado.  Esta regla actua borrando
+    #todos los .json de la serie/película.  En el caso de la serie, el proceso de actualización de la videoteca los regenerará
+    #automáticamente.  En el caso de peliculas, se general aquí el json actualizado y se marca el .nfo como actualizado.
+    #Cuando en el .json se activa "Borrar", "emergency_urls = 2", se borran todos los enlaces existentes
+    #Cuando en el .json se activa "Actualizar", "emergency_urls = 3", se actualizan todos los enlaces existentes
+    
+    if it.emergency_urls:
+        item.emergency_urls = it.emergency_urls                             #Refrescar desde el .nfo
+        
+    if item.url:                                                            #Viene de actualización de videoteca de series
+        #Analizamos si el canal ya tiene las urls de emergencia: guardar o borrar
+        if (config.get_setting("emergency_urls", item.channel) == 1 and (not item.emergency_urls or (item.emergency_urls and not item.emergency_urls.get(channel_alt, False)))) or (config.get_setting("emergency_urls", item.channel) == 2 and item.emergency_urls.get(channel_alt, False)) or config.get_setting("emergency_urls", item.channel) == 3:
+            intervencion += ", ('1', '%s', '%s', '', '', '', '', '', '', '', '*', '%s', 'emerg')" % (channel_alt, channel_alt, config.get_setting("emergency_urls", item.channel))
 
+    elif it.library_urls:                                                   #Viene de "listar peliculas´"
+        for canal_vid, url_vid in it.library_urls.items():                  #Se recorre "item.library_urls" para buscar canales candidatos
+            canal_vid_alt = "'%s'" % canal_vid
+            if canal_vid_alt in fail_over_list:                             #Se busca si es un clone de newpct1
+                channel_bis = channel_py
+            else:
+                channel_bis = canal_vid
+            #Analizamos si el canal ya tiene las urls de emergencia: guardar o borrar
+            if (config.get_setting("emergency_urls", channel_bis) == 1 and (not it.emergency_urls or (it.emergency_urls and not it.emergency_urls.get(canal_vid, False)))) or (config.get_setting("emergency_urls", channel_bis) == 2 and it.emergency_urls.get(canal_vid, False)) or config.get_setting("emergency_urls", channel_bis) == 3:
+                intervencion += ", ('1', '%s', '%s', '', '', '', '', '', '', '', '*', '%s', 'emerg')" % (canal_vid, canal_vid, config.get_setting("emergency_urls", channel_bis))
+        
+    #Ahora tratamos las webs intervenidas, tranformamos la url, el nfo y borramos los archivos obsoletos de la serie
+    if channel not in intervencion and channel_py_alt not in intervencion and category not in intervencion and channel_alt != 'videolibrary':   #lookup
+        return (item, it, overwrite)                                        #... el canal/clone está listado
+        
     import ast
     intervencion_list = ast.literal_eval(intervencion)                      #Convertir a Array el string
     #logger.debug(intervencion_list)
-    
+
     if lookup == True:
         overwrite = False                                                   #Solo avisamos si hay cambios
     for activo, canal_org, canal_des, url_org, url_des, patron1, patron2, patron3, patron4, patron5, content_inc, content_exc, ow_force in intervencion_list:
+        opt = ''
         #Es esta nuestra entrada?
-        if activo == '1' and (canal_org == channel_alt or canal_org == item.channel or channel_alt == 'videolibrary' or ow_force == 'del'):     
+        if activo == '1' and (canal_org == channel_alt or canal_org == item.channel or channel_alt == 'videolibrary' or ow_force == 'del' or ow_force == 'emerg'):     
             
-            if ow_force == 'del':                                           #Si es un borrado de estructuras erroneas, hacemos un proceso aparte
+            if ow_force == 'del' or ow_force == 'emerg':                    #Si es un borrado de estructuras erroneas, hacemos un proceso aparte
                 canal_des_def = canal_des                                   #Si hay canal de sustitución para item.library_urls, lo usamos
                 if not canal_des_def and canal_org in item.library_urls and len(item.library_urls) == 1:    #Si no, lo extraemos de la url
                     canal_des_def = scrapertools.find_single_match(item.library_urls[canal_org], 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()                                                        #salvamos la url actual de la estructura a borrar
@@ -1762,7 +1827,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                         url_total_status = True                             #marcamos esta url como válida
                         overwrite = True                                    #Le decimos que sobreescriba todos los .jsons
                         item.ow_force = '1'                                 #Le decimos que revise todas las temporadas
-                    if len(item.library_urls) > 1:
+                    if len(item.library_urls) > 1 and ow_force == 'del':
                         item.library_urls.pop(canal_org, None)              #borramos la url del canal a borrar
                         overwrite = True                                    #Le decimos que sobreescriba todos los .jsons
                         item.ow_force = '1'                                 #Le decimos que revise todas las temporadas
@@ -1783,7 +1848,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 
                 if lookup == False:                                         #si es migración completa...
                     delete_stat += 1                                        #Ya hemos actualizado algo, o habrá que hacerlo...
-                    canal_org_des_list += [(canal_org, canal_des, url_total, ow_force)]     #salvamos el resultado para su proceso
+                    if ow_force == 'emerg': opt = content_exc               #Salvamos la opción de Guardar o Borrar enlaces
+                    canal_org_des_list += [(canal_org, canal_des, url_total, opt, ow_force)]     #salvamos el resultado para su proceso
 
             else:
                 if channel_alt == 'videolibrary':                           #Viene de videolibrary.list_movies: IMPRESCINDIBLE
@@ -1837,15 +1903,15 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 if url:
                     url_total = url                                             #Guardamos la suma de los resultados intermedios
                 update_stat += 1                                                #Ya hemos actualizado algo
-                canal_org_des_list += [(canal_org, canal_des, url_total, ow_force)]   #salvamos el resultado para su proceso
+                canal_org_des_list += [(canal_org, canal_des, url_total, opt, ow_force)]   #salvamos el resultado para su proceso
             
     if update_stat > 0 or delete_stat > 0:                                      #Ha habido alguna actualización o borrado?  Entonces salvamos
         if (update_stat > 0 and path != False) or item.ow_force == '1':
             logger.error('** Lista de Actualizaciones a realizar: ' + str(canal_org_des_list))
-        for canal_org_def, canal_des_def, url_total, ow_force_def in canal_org_des_list:    #pasamos por todas las "parejas" cambiadas
-            if ow_force_def != 'del':
+        for canal_org_def, canal_des_def, url_total, opt_def, ow_force_def in canal_org_des_list:   #pasamos por todas las "parejas" cambiadas
+            if ow_force_def != 'del' and ow_force_def != 'emerg':
                 url_total_def = url_total
-                if item.channel == channel_py or channel in fail_over_list:     #Si es Newpct1...
+                if (item.channel == channel_py or channel in fail_over_list):   #Si es Newpct1...
                     if item.contentType == "tvshow":
                         url_total_def = re.sub(r'\/\d+\/?$', '', url_total)     #parece que con el título encuentra la serie, normalmente...
                 if item.url:
@@ -1871,30 +1937,57 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         
             # Listamos todos los ficheros de la serie, asi evitamos tener que comprobar si existe uno por uno
             canal_erase_list = []
+            from core import videolibrarytools
             raiz, carpetas_series, ficheros = filetools.walk(path).next()
             ficheros = [filetools.join(path, f) for f in ficheros]              #Almacenamos la lista de archivos de la carpeta
+            #logger.error(ficheros)
             for archivo in ficheros:
-                for canal_org_def, canal_des_def, url_total, ow_force_def in canal_org_des_list:    #pasamos por todas las "parejas" a borrar
+                for canal_org_def, canal_des_def, url_total, opt_def, ow_force_def in canal_org_des_list: #pasamos por las "parejas" a borrar
                     canal_erase = '[%s]' % canal_org_def
+                    canal_erase_alt = "'%s'" % canal_org_def
                     canal_new = '[%s]' % canal_des_def
-                    if canal_erase in archivo:                                  #Borramos los .json que sean de los canal afectados
-                        if canal_des_def:
+                    archivo_alt = "'%s'" % scrapertools.find_single_match(archivo, '\[(\w+)\].json')
+                    if archivo_alt == "''": archivo_alt = "'xyz123'"
+                    #logger.error(canal_erase + canal_new + archivo + archivo_alt)
+                    #Borramos los .json que sean de los canal afectados, incluidos todos los de los clones de newpct1 si éste es el canal
+                    if canal_erase in archivo or (ow_force_def == 'emerg' and canal_erase_alt in fail_over_list and archivo_alt in fail_over_list):
+                        if canal_des_def and it.contentType == 'movie':         #Si es película ...
                             item_json = Item().fromjson(filetools.read(archivo))    #leemos el .json ante de borrarlo para salvar...
                             title = item_json.title                             #... el título con su formato
                             language = item_json.language                       #... los idiomas, que no están en el .nfo
                             wanted = item_json.wanted                           #... y wanted con el título original
                             json_path = archivo.replace(canal_erase, canal_new) #Salvamos el path del .json para luego crearlo
-                            json_path_list += [(canal_org_def, canal_des_def, url_total, json_path, title, language, wanted)]
+                            
+                            emer_urls = ''
+                            if ow_force_def == 'emerg' and opt_def in ['1', '3']:   #Si era una op. para añadir/actualizar urls de emergencia ...
+                                item_json = videolibrarytools.emergency_urls(item_json)   #... ejecutamos "findvideos" del canal para obtenerlas
+                                if item_json.emergency_urls:                    #... si las hay ...
+                                    emer_urls = item_json.emergency_urls        #... lo preparamos para el .json
+                                    if it.emergency_urls and not isinstance(it.emergency_urls, dict):
+                                        del it.emergency_urls
+                                    if not it.emergency_urls:                   #... lo actualizamos en el .nfo
+                                        it.emergency_urls = dict()              #... iniciamos la variable si no existe
+                                    it.emergency_urls.update({canal_des_def: True})     #... se marca como activo
+                                else:
+                                    continue                                    #Si no hay url, pasamos al siguiente, sin borrar el .json
+                            if ow_force_def == 'emerg' and opt_def == '2':      #Si era una operación para borrar urls de emergencia ...
+                                emer_urls = '2'                                 #borramos enlaces
+                                if it.emergency_urls and not isinstance(it.emergency_urls, dict):
+                                    del it.emergency_urls
+                                if it.emergency_urls and it.emergency_urls.get(item_json.channel, False):
+                                    it.emergency_urls.pop(item_json.channel, None)      #borramos la entrada del .nfo
+                            
+                            json_path_list += [(canal_org_def, canal_des_def, url_total, json_path, title, language, wanted, emer_urls)]
                         filetools.remove(archivo)                               #Borramos el .json
                         logger.error('** BORRAMOS: ' + str(archivo))
-                        if ow_force_def == 'del':                               #Si la función es 'del' ...
+                        if ow_force_def == 'del' or ow_force_def == 'emerg':    #Si la función es 'del' or 'emerg' ...
                             overwrite = True                                    #Le decimos que sobreescriba todos los .jsons
                             item.ow_force = '1'                                 #Le decimos que revise todas las temporadas
             
                 #Si se ha cambiado algo, se actualizan los .nfo
-                if item.contentType == "movie" and ".nfo" in archivo:
+                if item.contentType == "movie" and ".nfo" in archivo:           #Para películas
                     if it.ow_force: del it.ow_force
-                    filetools.write(archivo, head_nfo + it.tojson())            #escribo el .nfo de la peli por si aborta update
+                    filetools.write(archivo, head_nfo + it.tojson())            #escribo el .nfo de la peli
                 if item.contentType != "movie" and "tvshow.nfo" in archivo:
                     filetools.write(archivo, head_nfo + it.tojson())            #escribo el tvshow.nfo por si aborta update
             
@@ -1908,15 +2001,17 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 del item_movie.library_urls
                 del item_movie.nfo
                 del item_movie.path
-                del item_movie.strm_path
-                del item_movie.text_color
+                if item_movie.strm_path: del item_movie.strm_path
+                if item_movie.text_color: del item_movie.text_color
                 if not item_movie.context: item_movie.context = "['buscar_trailer']"
                 if not item_movie.extra: item_movie.extra = "peliculas"
                 
                 if json_path_list:
                     logger.error('** .json LIST: ' + str(json_path_list))
-                for canal_org_def, canal_des_def, url_total, json_path, title, language, wanted in json_path_list:      #pasamos por todas canales
+                for canal_org_def, canal_des_def, url_total, json_path, title, language, wanted, emer_urls in json_path_list:  #pasamos por todos canales
                     logger.error('** ESCRIBIMOS: ' + json_path)
+                    item_movie.emergency_urls = False
+                    del item_movie.emergency_urls
                     item_movie.channel = canal_des_def                          #mombre del canal migrado
                     if not item_movie.category: item_movie.category = canal_des_def.capitalize()        #categoría
                     item_movie.url = url_total                                  #url migrada
@@ -1924,10 +2019,17 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     if language: item_movie.language = language                 #restaurmos los idiomas
                     if wanted: item_movie.wanted = wanted                       #restaurmos wanted
                     item_movie.added_replacing = canal_org_def                  #guardamos la traza del canal reemplazado
+                    if emer_urls == '2':                                        #si estamos borrando urls de emergencia ...
+                        if item_movie.emergency_urls:
+                            del item_movie.emergency_urls                       #... las borramos
+                    elif emer_urls:                                             #si estamos añadiendo urls de emergencia ...
+                        item_movie.emergency_urls = emer_urls                   #... las copiamos al .json
                     filetools.write(json_path, item_movie.tojson())             #Salvamos el nuevo .json de la película
 
     if (update_stat > 0 and path != False and ow_force_def in ['force', 'auto']) or item.ow_force == '1' or len(json_path_list) > 0:
         logger.error('ITEM cambiado')
+        if it.emergency_urls:
+            logger.error(it.emergency_urls)
         logger.error(item)
 
     return (item, it, overwrite)
