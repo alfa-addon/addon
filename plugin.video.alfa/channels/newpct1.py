@@ -1478,7 +1478,9 @@ def findvideos(item):
                 quality = '%s [%s]' % (item_local.quality, size)                        #Agregamos size al final del título
             else:
                 quality = item_local.quality
-            item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (quality, str(item_local.language))                #Preparamos título de Torrent
+            #if item.armagedon:                                                          #Si es catastrófico, lo marcamos
+            quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % quality
+            item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (quality, str(item_local.language))                                        #Preparamos título de Torrent
             
             #Preparamos título y calidad, quitamos etiquetas vacías
             item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
@@ -1527,9 +1529,9 @@ def findvideos(item):
     if not item.armagedon:                                                  #Si es un proceso normal, seguimos
         enlaces_ver = re.compile(patron, re.DOTALL).findall(data)
     
-    if not enlaces_ver and item.emergency_urls and item.armagedon:          #Hay urls de emergencia?
-        if item.emergency_urls[1]:
-            enlaces_ver = item.emergency_urls[1]                            #Guardamos los datos iniciales de los Servidores Directos
+    if not enlaces_ver and item.emergency_urls[1]:                          #Si no hay enlaces, hay urls de emergencia?
+        enlaces_ver = item.emergency_urls[1]                                #Guardamos los datos iniciales de los Servidores Directos
+        item.armagedon = True                                               #Activamos el modo catástrofe
         
     enlaces_descargar = enlaces_ver
     #logger.debug(enlaces_ver)
@@ -1591,14 +1593,16 @@ def findvideos(item):
                             else:
                                 break                   #Si se ha agotado el contador de verificación, se sale de Ver Online
 
+                        if item.armagedon:                              #Si es catastrófico, lo marcamos
+                            item_local.quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % item_local.quality
                         #Si el link no está activo se ignora
-                        if "??" in item_local.alive:                            #dudoso
+                        if "??" in item_local.alive:                                #dudoso
                             item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (servidor.capitalize(), item_local.quality, str(item_local.language))
-                        elif "no" in item_local.alive.lower():                  #No está activo.  Lo preparo, pero no lo pinto
+                        elif "no" in item_local.alive.lower():                      #No está activo.  Lo preparo, pero no lo pinto
                             item_local.title = '[COLOR red][%s][/COLOR] [COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.alive, servidor.capitalize(), item_local.quality, str(item_local.language))
                             logger.debug(item_local.alive + ": ALIVE / " + title + " / " + servidor + " / " + enlace)
                             raise
-                        else:                                                   #Sí está activo
+                        else:                                           #Sí está activo
                             item_local.title = '[COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (servidor.capitalize(), item_local.quality, str(item_local.language))
 
                         #Preparamos el resto de variables de Item para ver los vídeos en directo    
