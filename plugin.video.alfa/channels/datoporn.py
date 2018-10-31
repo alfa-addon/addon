@@ -1,57 +1,73 @@
 # -*- coding: utf-8 -*-
 
+import re
+
 from core import httptools
 from core import scrapertools
-from lib import jsunpack
 from platformcode import logger
 
 
-def test_video_exists(page_url):
-    logger.info("(page_url='%s')" % page_url)
+def mainlist(item):
+    logger.info()
+    itemlist = []
 
-    data = httptools.downloadpage(page_url).data
-
-    if 'File Not Found' in data or '404 Not Found' in data:
-        return False, "[Datoporn] El archivo no existe o ha sido borrado"
-
-    return True, ""
+    itemlist.append(item.clone(action="categorias", title="Categorías", url="http://dato.porn/categories_all", contentType="movie", viewmode="movie"))
+    itemlist.append(item.clone(title="Buscar...", action="search", contentType="movie", viewmode="movie"))
+    return itemlist
 
 
-def get_video_url(page_url, premium=False, user="", password="", video_password=""):
-    logger.info("url=" + page_url)
+def search(item, texto):
+    logger.info()
+    item.url = "http://dato.porn/?k=%s&op=search" % texto.replace(" ", "+")
+    return lista(item)
 
-    data = httptools.downloadpage(page_url).data
-    logger.debug(data)
-    media_urls = scrapertools.find_multiple_matches(data, 'src: "([^"]+)",.*?label: "([^"]+)"')
-    #media_urls = scrapertools.find_multiple_matches(data, 'file\:"([^"]+\.mp4)",label:"([^"]+)"')
-    # if not media_urls:
-    #     match = scrapertools.find_single_match(data, "p,a,c,k(.*?)</script>")
-    #     try:
-    #         data = jsunpack.unpack(match)
-    #     except:
-    #         pass
-    #     media_urls = scrapertools.find_multiple_matches(data, 'file\:"([^"]+\.mp4)",label:"([^"]+)"')
 
-    # Extrae la URL
-    calidades = []
-    video_urls = []
-    for media_url in sorted(media_urls, key=lambda x: int(x[1][-3:])):
-        calidades.append(int(media_url[1][-3:]))
-        try:
-            title = ".%s %sp [datoporn]" % (media_url[0].rsplit('.', 1)[1], media_url[1][-3:])
-        except:
-            title = ".%s %sp [datoporn]" % (media_url[-4:], media_url[1][-3:])
-        video_urls.append([title, media_url[0]])
+def lista(item):
+    logger.info()
+    itemlist = []
 
-    sorted(calidades)
-    m3u8 = scrapertools.find_single_match(data, 'file\:"([^"]+\.m3u8)"')
-    if not m3u8:
-        m3u8 = str(scrapertools.find_multiple_matches(data, 'player.updateSrc\({src:.?"([^"]+\.m3u8)"')).replace("['", "").replace("']", "")
-        calidades = ['720p']
-    if m3u8:
-        video_urls.insert(0, [".m3u8 %s [datoporn]" % calidades[-1], m3u8])
+    # Descarga la pagina 
+    data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
 
-    for video_url in video_urls:
-        logger.info("%s - %s" % (video_url[0], video_url[1]))
+    # Extrae las entradas
+    patron = '<div class="videobox">\s*<a href="([^"]+)".*?url\(\'([^\']+)\'.*?<span>(.*?)<\/span><\/div><\/a>.*?class="title">(.*?)<\/a><span class="views">.*?<\/a><\/span><\/div> '
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl, scrapedthumbnail, duration, scrapedtitle in matches:
+        if "/embed-" not in scrapedurl:
+            #scrapedurl = scrapedurl.replace("dato.porn/", "dato.porn/embed-") + ".html"
+            scrapedurl = scrapedurl.replace("datoporn.co/", "datoporn.co/embed-") + ".html"
+        if duration:
+            scrapedtitle = "%s - %s" % (duration, scrapedtitle)
+        scrapedtitle += ' gb'
+        scrapedtitle = scrapedtitle.replace(":", "'")
 
-    return video_urls
+        #logger.debug(scrapedurl + ' / ' + scrapedthumbnail + ' / ' + duration + ' / ' + scrapedtitle)
+        itemlist.append(item.clone(action="play", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
+                                   server="datoporn", fanart=scrapedthumbnail.replace("_t.jpg", ".jpg")))
+
+    # Extrae la marca de siguiente página
+    #next_page = scrapertools.find_single_match(data, '<a href=["|\']([^["|\']+)["|\']>Next')
+    next_page = scrapertools.find_single_match(data, '<a class=["|\']page-link["|\'] href=["|\']([^["|\']+)["|\']>Next')
+    if next_page and itemlist:
+        itemlist.append(item.clone(action="lista", title=">> Página Siguiente", url=next_page))
+
+    return itemlist
+
+
+def categorias(item):
+    logger.info()
+    itemlist = []
+
+    # Descarga la pagina    
+    data = httptools.downloadpage(item.url).data
+
+    # Extrae las entradas (carpetas)
+    patron = '<div class="vid_block">\s*<a href="([^"]+)".*?url\((.*?)\).*?<span>(.*?)</span>.*?<b>(.*?)</b>'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl, scrapedthumbnail, numero, scrapedtitle in matches:
+        if numero:
+            scrapedtitle = "%s  (%s)" % (scrapedtitle, numero)
+
+        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail))
+
+    return itemlist
