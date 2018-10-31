@@ -30,8 +30,8 @@ def mainlist(item):
 
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, fanart=fanart, title="Todas", action="list_all", url=host,
-                         thumbnail=get_thumb('all', auto=True)))
+    itemlist.append(Item(channel=item.channel, fanart=fanart, title="Todas", action="list_all",
+                         url=host+'/category/terror', thumbnail=get_thumb('all', auto=True)))
 
     itemlist.append(Item(channel=item.channel, fanart=fanart, title="Asiaticas", action="list_all",
                          url=host+'/category/asiatico', thumbnail=get_thumb('asiaticas', auto=True)))

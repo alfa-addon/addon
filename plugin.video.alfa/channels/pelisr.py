@@ -266,10 +266,13 @@ def findvideos(item):
                 pass
         else:
             url = scrapedurl
-        url = url +"|referer=%s" % item.url
-        itemlist.append(
-            Item(channel=item.channel, url=url, title=title, action='play', quality=quality, language=IDIOMAS[lang],
-                 infoLabels=item.infoLabels))
+        try:
+            url = url +"|referer=%s" % item.url
+            itemlist.append(
+                Item(channel=item.channel, url=url, title=title, action='play', quality=quality, language=IDIOMAS[lang],
+                     infoLabels=item.infoLabels))
+        except:
+            pass
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 

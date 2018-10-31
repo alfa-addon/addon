@@ -19,7 +19,7 @@ from lib import generictools
 IDIOMAS = {'latino': 'Latino'}
 list_language = IDIOMAS.values()
 
-list_quality = []
+list_quality = ['360p', '480p', '720p', '1080']
 
 list_servers = [
     'directo',
@@ -109,7 +109,8 @@ def list_all(item):
 
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
 
-        title = scrapedtitle
+        year = scrapertools.find_single_match(scrapedtitle, '(\d{4})')
+        title = scrapertools.find_single_match(scrapedtitle, '([^\(]+)\(?').strip()
         thumbnail = scrapedthumbnail
         filter_thumb = thumbnail.replace("https://image.tmdb.org/t/p/w300", "")
         filter_list = {"poster_path": filter_thumb}
@@ -120,14 +121,14 @@ def list_all(item):
                         title=title,
                         url=url,
                         thumbnail=thumbnail,
-                        infoLabels={'filtro':filter_list})
+                        infoLabels={'filtro':filter_list, 'year':year})
 
         if item.type == 'peliculas' or 'serie' not in url:
             new_item.action = 'findvideos'
-            new_item.contentTitle = scrapedtitle
+            new_item.contentTitle = title
         else:
             new_item.action = 'seasons'
-            new_item.contentSerieName = scrapedtitle
+            new_item.contentSerieName = title
 
         itemlist.append(new_item)
 
@@ -147,7 +148,7 @@ def seasons(item):
     itemlist=[]
 
     data=get_source(item.url)
-    patron='data-toggle="tab">TEMPORADA (\d+)</a>'
+    patron='data-toggle="tab">TEMPORADA.?(\d+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     infoLabels = item.infoLabels
@@ -182,8 +183,7 @@ def episodesxseasons(item):
     season = item.infoLabels['season']
     data=get_source(item.url)
     season_data = scrapertools.find_single_match(data, 'id="pills-vertical-%s">(.*?)</div>' % season)
-
-    patron='href="([^"]+)".*?block">Capitulo (\d+) - ([^<]+)<'
+    patron='href="([^"]+)".*?block">Capitulo(\d+) -.?([^<]+)<'
     matches = re.compile(patron, re.DOTALL).findall(season_data)
 
     infoLabels = item.infoLabels
@@ -218,36 +218,53 @@ def section(item):
 
 def findvideos(item):
     logger.info()
-
+    import urllib
     itemlist = []
 
     data = get_source(item.url)
-
-    servers_page = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
-    data = get_source(servers_page)
-    patron = '<a href="([^"]+)"'
+    patron = 'video\[\d+\] = "([^"]+)";'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for enc_url in matches:
-        url_data = get_source(enc_url, referer=item.url)
-        hidden_url = scrapertools.find_single_match(url_data, '<iframe src="([^"]+)"')
-        if 'server' in hidden_url:
-            hidden_data = get_source(hidden_url)
-            url = scrapertools.find_single_match(hidden_data, '<iframe src="([^"]+)"')
 
-        else:
-            url = hidden_url
-            if 'pelishd.tv' in url:
-                vip_data = httptools.downloadpage(url, headers={'Referer':item.url}, follow_redirects=False).data
-                dejuiced = generictools.dejuice(vip_data)
-                url = scrapertools.find_single_match(dejuiced, '"file":"([^"]+)"')
+    for video_url in matches:
 
         language = 'latino'
         if not config.get_setting('unify'):
             title = ' [%s]' % language.capitalize()
         else:
             title = ''
-        itemlist.append(Item(channel=item.channel, title='%s'+title, url=url, action='play', language=IDIOMAS[language],
-        infoLabels=item.infoLabels))
+
+        if 'pelisplus.net' in video_url:
+            referer = video_url
+            post = {'r':item.url}
+            post = urllib.urlencode(post)
+            video_url = video_url.replace('/v/', '/api/sources/')
+            url_data = httptools.downloadpage(video_url, post=post, headers={'Referer':referer}).data
+            patron = '"file":"([^"]+)","label":"([^"]+)"'
+            matches = re.compile(patron, re.DOTALL).findall(url_data)
+            for url, quality in matches:
+                url = url.replace('\/', '/')
+                itemlist.append(
+                    Item(channel=item.channel, title='%s' + title, url=url, action='play', language=IDIOMAS[language],
+                         quality=quality, infoLabels=item.infoLabels))
+
+        else:
+            url_data = get_source(video_url)
+        url = scrapertools.find_single_match(url_data, '<iframe src="([^"]+)"')
+        if 'server' in url:
+            hidden_data = get_source(hidden_url)
+            url = scrapertools.find_single_match(hidden_data, '<iframe src="([^"]+)"')
+
+        else:
+            url = url
+            if 'pelishd.net' in url:
+                vip_data = httptools.downloadpage(url, headers={'Referer':item.url}, follow_redirects=False).data
+                dejuiced = generictools.dejuice(vip_data)
+                url = scrapertools.find_single_match(dejuiced, '"file":"([^"]+)"')
+
+
+        if url != '':
+            itemlist.append(Item(channel=item.channel, title='%s'+title, url=url, action='play', language=IDIOMAS[language],
+            infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 
