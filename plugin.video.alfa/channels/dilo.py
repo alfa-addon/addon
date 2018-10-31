@@ -204,14 +204,13 @@ def episodesxseason(item):
     data = jsontools.load(httptools.downloadpage(seasons_url, post=post, headers=headers).data)
     infoLabels = item.infoLabels
     for dict in data:
-
         episode = dict['number']
         epi_name = dict['name']
         title = '%sx%s - %s' % (season, episode, epi_name)
         url = '%s%s/' % (host, dict['permalink'])
         infoLabels['episode'] = episode
         itemlist.append(Item(channel=item.channel, title=title, action='findvideos', url=url,
-                             contentEpisodeNumber=season, id=item.id, infoLabels=infoLabels))
+                             contentEpisodeNumber=episode, id=item.id, infoLabels=infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
