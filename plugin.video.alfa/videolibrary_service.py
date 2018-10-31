@@ -25,6 +25,9 @@ def update(path, p_dialog, i, t, serie, overwrite):
         
         ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
         try:
+            head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')         #Refresca el .nfo para recoger actualizaciones
+            if it.emergency_urls:
+                serie.emergency_urls = it.emergency_urls
             serie, it, overwrite = generictools.redirect_clone_newpct1(serie, head_nfo, it, path, overwrite)
         except:
             pass
