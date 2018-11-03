@@ -19,14 +19,21 @@ def test_video_exists(page_url):
     return True, ""
 
 
-def get_video_url(page_url, user="", password="", video_password=""):
+def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    videourl = scrapertools.find_multiple_matches(data, "src: '([^']+).*?label: '([^']+)")
-    scrapertools.printMatches(videourl)
-    for scrapedurl, scrapedquality in videourl:
-        scrapedquality = scrapedquality.replace("&uarr;","")
-        video_urls.append([scrapedquality + " [xdrive]", scrapedurl])
-    video_urls.sort(key=lambda it: int(it[0].split("P ", 1)[0]))
+
+    from urllib2 import urlopen
+    my_ip = urlopen('http://ip.42.pl/raw').read()
+
+    videolink = scrapertools.find_single_match(data, r"response.data.ip;\s*axios.get.'(.*?)'\)")
+    videolink = videolink.replace("'+ip_adress+'", my_ip)
+    data = httptools.downloadpage(videolink).data
+    videourl = scrapertools.find_multiple_matches(data, '"(.*?)"')
+
+    for scrapedurl in videourl:
+        scrapedurl = scrapedurl.replace("\\", "")
+        if '.mp4' not in scrapedurl: continue
+        video_urls.append([ " [xdrive]", scrapedurl])
     return video_urls
