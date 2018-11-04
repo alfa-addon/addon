@@ -21,6 +21,11 @@ def load_data(url):
 
     return data
 
+def redirect_url(url, parameters=None):
+    data = httptools.downloadpage(url, post=parameters)
+    logger.info(data.url)
+    return data.url
+
 def mainlist(item):
     itemlist = []
     
@@ -33,8 +38,7 @@ def mainlist(item):
         url = host + "tendencias", thumbnail = get_thumb("hot", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Ranking IMDB", action = "moviesIMDB", 
         url = host + "raking-imdb", thumbnail = get_thumb("hot", auto = True) ))
-    itemlist.append(Item(channel = item.channel, title = "Busqueda", folder=False, text_bold=True,
-        thumbnail = get_thumb("search", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "--- Busqueda ---", folder=False, text_bold=True))
     itemlist.append(Item(channel = item.channel, title = "Por Letra", action = "letters",
         url = host, thumbnail = get_thumb("alphabet", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Buscar...", action = "search", 
@@ -149,7 +153,20 @@ def search(item, text):
 def GKPluginLink(hash):
     hashdata = urllib.urlencode({r'link':hash})
     json = httptools.downloadpage('https://player4.cuevana2.com/plugins/gkpluginsphp.php', post=hashdata).data
-    return jsontools.load(json)['link'] if json else ''
+    logger.info(jsontools.load(json))
+
+    data = jsontools.load(json) if json else False
+    if data:
+        return data['link'] if 'link' in data else None
+    else:
+        return None
+
+def OpenloadLink(hash):
+    hashdata = urllib.urlencode({r'h':hash})
+    json = httptools.downloadpage('http://cuevana2espanol.com/openload/api.php', post=hashdata).data
+    data = jsontools.load(json) if json else False
+
+    return data['url'] if data['status'] == 1 else None
 
 def getContent(item, data):
     item.infoLabels["year"] = scrapertools.find_single_match(data, 'class="date">.*?(\d+)</span>')
@@ -180,7 +197,10 @@ def findvideos(item):
         #url=(.*?)&
         if 'player4' in link:
             logger.info("CUEVANA LINK %s" % link)
-            if r'ir.php' in link:
+            if r'%2Fopenload%2F' in link:
+                link = scrapertools.find_single_match(link, 'h%3D(\w+)')
+                link = OpenloadLink(link)
+            elif r'ir.php' in link:
                 link = scrapertools.find_single_match(link, 'php.*?=(.*)').replace('%3A', ':').replace('%2F', '/')
                 logger.info("CUEVANA IR %s" % link)
             elif r'gdv.php' in link:
@@ -189,15 +209,16 @@ def findvideos(item):
             else:
                 link = scrapertools.find_single_match(link, 'php.*?=(\w+)')
                 link = GKPluginLink(link)
-                if not link:
-                    continue
-            
+                    
             title = "[COLOR blue]Servidor [%s][/COLOR]"
+            
         elif 'youtube' in link:
             title = "[COLOR yellow]Ver Trailer (%s)[/COLOR]"
         else: # En caso de que exista otra cosa no implementada, reportar si no aparece pelicula
             continue
 
+        if not link:
+            continue
         # GKplugin puede devolver multiples links con diferentes calidades, si se pudiera colocar una lista de opciones
         # personalizadas para Directo, se agradece, por ahora solo devuelve el primero que encuentre
         if type(link) is list:
