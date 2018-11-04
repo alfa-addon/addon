@@ -298,7 +298,7 @@ def findvideos(item):
         if r'chomikuj.pl' in link:
             # En algunas personas la opcion CH les da error 401
             link += "|Referer=https://player4.cuevana2.com/plugins/gkpluginsphp.php" 
-        if r'vidcache.net' in link:
+        elif r'vidcache.net' in link:
             # Para que no salga error 500
             link += '|Referer=https://player4.cuevana2.com/yourupload.com.php'
 
