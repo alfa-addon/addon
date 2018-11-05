@@ -544,15 +544,15 @@ def listado(item):
         
         if ("temp" in title.lower() or "cap" in title.lower()) and item_local.contentType != "movie":
             #Eliminamos Temporada de Series, solo nos interesa la serie completa
-            title = re.sub(r'-? [t|T]emp\w+ \d+ Comp\w+\d+[x|X]\d+', ' Completa', title)
-            title = re.sub(r'-? [t|T]emp\w+.?\d+.?[c|C]ap\w+.?\d+.?(?:al|Al|y).?\d+', '', title)
-            title = re.sub(r'-? [t|T]emp\w+ \d+x\d+', '', title)
-            title = re.sub(r'-? [t|T]emp\w+ \d+', '', title)
-            title = re.sub(r'-? [t|T]emp\w+.*?\d+', '', title)
-            title = re.sub(r' [t|T]emp.*?\d+[x|X]\d+', '', title)
-            title = re.sub(r' [t|T]emp.*?\d+', '', title)
-            title = re.sub(r' [c|C]ap.*?\d+ al \d+', '', title)
-            title = re.sub(r' [c|C]ap.*?\d+', '', title)
+            title = re.sub(r'-?\s*[t|T]emp\w+ \d+ Comp\w+\d+[x|X]\d+', ' Completa', title)
+            title = re.sub(r'-?\s*[t|T]emp\w+.?\d+.?[c|C]ap\w+.?\d+.?(?:al|Al|y).?\d+', '', title)
+            title = re.sub(r'-?\s*[t|T]emp\w+ \d+x\d+', '', title)
+            title = re.sub(r'-?\s*[t|T]emp\w+ \d+', '', title)
+            title = re.sub(r'-?\s*[t|T]emp\w+.*?\d+', '', title)
+            title = re.sub(r'\s*[t|T]emp.*?\d+[x|X]\d+', '', title)
+            title = re.sub(r'\s*[t|T]emp.*?\d+', '', title)
+            title = re.sub(r'\s*[c|C]ap.*?\d+ al \d+', '', title)
+            title = re.sub(r'\s*[c|C]ap.*?\d+', '', title)
         if "audio" in title.lower():                                #Reservamos info de audio para después de TMDB
             title_subs += ['[%s]' % scrapertools.find_single_match(title, r'(\[[a|A]udio.*?\])')]
             title = re.sub(r'\[[a|A]udio.*?\]', '', title)
@@ -1026,15 +1026,15 @@ def listado_busqueda(item):
         #Extraemos info adicional del título y la guardamos para después de TMDB
         if ("temp" in title.lower() or "cap" in title.lower()) and item_local.contentType != "movie":
             #Eliminamos Temporada de Series, solo nos interesa la serie completa
-            title = re.sub(r'-? [t|T]emp\w+ \d+ Comp\w+\d+[x|X]\d+', ' Completa', title)
-            title = re.sub(r'-? [t|T]emp\w+.?\d+.?[c|C]ap\w+.?\d+.?(?:al|Al|y).?\d+', '', title)
-            title = re.sub(r'-? [t|T]emp\w+ \d+x\d+', '', title)
-            title = re.sub(r'-? [t|T]emp\w+ \d+', '', title)
-            title = re.sub(r'-? [t|T]emp\w+.*?\d+', '', title)
-            title = re.sub(r' [t|T]emp.*?\d+[x|X]\d+', '', title)
-            title = re.sub(r' [t|T]emp.*?\d+', '', title)
-            title = re.sub(r' [c|C]ap.*?\d+ al \d+', '', title)
-            title = re.sub(r' [c|C]ap.*?\d+', '', title)
+            title = re.sub(r'-?\s*[t|T]emp\w+ \d+ Comp\w+\d+[x|X]\d+', ' Completa', title)
+            title = re.sub(r'-?\s*[t|T]emp\w+.?\d+.?[c|C]ap\w+.?\d+.?(?:al|Al|y).?\d+', '', title)
+            title = re.sub(r'-?\s*[t|T]emp\w+ \d+x\d+', '', title)
+            title = re.sub(r'-?\s*[t|T]emp\w+ \d+', '', title)
+            title = re.sub(r'-?\s*[t|T]emp\w+.*?\d+', '', title)
+            title = re.sub(r'\s*[t|T]emp.*?\d+[x|X]\d+', '', title)
+            title = re.sub(r'\s*[t|T]emp.*?\d+', '', title)
+            title = re.sub(r'\s*[c|C]ap.*?\d+ al \d+', '', title)
+            title = re.sub(r'\s*[c|C]ap.*?\d+', '', title)
         if "audio" in title.lower():                                    #Reservamos info de audio para después de TMDB
             title_subs += ['[%s]' % scrapertools.find_single_match(title, r'(\[[a|A]udio.*?\])')]
             title = re.sub(r'\[[a|A]udio.*?\]', '', title)
@@ -1250,7 +1250,7 @@ def findvideos(item):
     item.channel_host = host
     item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
     
-    verify_fo = True                                                            #Verificamos si el clone a usar está activo
+    verify_fo = True                                                #Verificamos si el clone a usar está activo
     item, data = generictools.fail_over_newpct1(item, verify_fo)
 
     # Cualquiera de las tres opciones son válidas
@@ -1259,113 +1259,115 @@ def findvideos(item):
     item.url = item.url.replace(".com/", ".com/descarga-torrent/")
     
     #Función para limitar la verificación de enlaces de Servidores para Ver online y Descargas
-    try:
-        #Inicializamos las variables por si hay un error en medio del proceso
-        channel_exclude = []
-        ver_enlaces = []
-        ver_enlaces_veronline = -1                              #Ver todos los enlaces Ver Online
-        verificar_enlaces_veronline = -1                        #Verificar todos los enlaces Ver Online
-        verificar_enlaces_veronline_validos = True              #"¿Contar sólo enlaces 'verificados' en Ver Online?"
-        excluir_enlaces_veronline = []                          #Lista vacía de servidores excluidos en Ver Online
-        ver_enlaces_descargas = 0                               #Ver todos los enlaces Descargar
-        verificar_enlaces_descargas = -1                        #Verificar todos los enlaces Descargar
-        verificar_enlaces_descargas_validos = True              #"¿Contar sólo enlaces 'verificados' en Descargar?"
-        excluir_enlaces_descargas = []                          #Lista vacía de servidores excluidos en Descargar
+    if not item.videolibray_emergency_urls:                         #Si es un proceso nomal...
+        try:
+            #Inicializamos las variables por si hay un error en medio del proceso
+            channel_exclude = []
+            ver_enlaces = []
+            ver_enlaces_veronline = -1                              #Ver todos los enlaces Ver Online
+            verificar_enlaces_veronline = -1                        #Verificar todos los enlaces Ver Online
+            verificar_enlaces_veronline_validos = True              #"¿Contar sólo enlaces 'verificados' en Ver Online?"
+            excluir_enlaces_veronline = []                          #Lista vacía de servidores excluidos en Ver Online
+            ver_enlaces_descargas = 0                               #Ver todos los enlaces Descargar
+            verificar_enlaces_descargas = -1                        #Verificar todos los enlaces Descargar
+            verificar_enlaces_descargas_validos = True              #"¿Contar sólo enlaces 'verificados' en Descargar?"
+            excluir_enlaces_descargas = []                          #Lista vacía de servidores excluidos en Descargar
+            
+            #Leemos las opciones de permitir Servidores para Ver Online y Descargas
+            #Cargamos en .json del canal para ver las listas de valores en  settings
+            channel_exclude = channeltools.get_channel_json(item.channel)
+            for settings in channel_exclude['settings']:                                #Se recorren todos los settings
+                if settings['id'] == "clonenewpct1_excluir1_enlaces_veronline":         #lista de enlaces a excluir
+                    max_excl = int(settings['max_excl'])                                #Máximo número de servidores excluidos
+                    channel_exclude = settings['lvalues']                               #Cargamos la lista de servidores
+                if settings['id'] == "clonenewpct1_ver_enlaces_descargas":              #Número de enlances a ver o verificar
+                    ver_enlaces = settings['lvalues']                                   #Cargamos la lista de num. de enlaces
         
-        #Leemos las opciones de permitir Servidores para Ver Online y Descargas
-        #Cargamos en .json del canal para ver las listas de valores en  settings
-        channel_exclude = channeltools.get_channel_json(item.channel)
-        for settings in channel_exclude['settings']:                                #Se recorren todos los settings
-            if settings['id'] == "clonenewpct1_excluir1_enlaces_veronline":         #lista de enlaces a excluir
-                max_excl = int(settings['max_excl'])                                #Máximo número de servidores excluidos
-                channel_exclude = settings['lvalues']                               #Cargamos la lista de servidores
-            if settings['id'] == "clonenewpct1_ver_enlaces_descargas":              #Número de enlances a ver o verificar
-                ver_enlaces = settings['lvalues']                                   #Cargamos la lista de num. de enlaces
-    
-        #Primer loop para enlaces de Ver Online.  
-        #Carga la variable de ver
-        ver_enlaces_veronline = int(config.get_setting("clonenewpct1_ver_enlaces_veronline", item.channel))
-        if ver_enlaces_veronline == 1:                                  #a "Todos" le damos valor -1.  Para "No" dejamos 0
-            ver_enlaces_veronline = -1
-        if ver_enlaces_veronline > 1:                                   #para los demás valores, tomamos los de la lista
-            ver_enlaces_veronline = int(ver_enlaces[ver_enlaces_veronline])
-    
-        #Carga la variable de verificar
-        verificar_enlaces_veronline = int(config.get_setting("clonenewpct1_verificar_enlaces_veronline", item.channel))
-        if verificar_enlaces_veronline == 1:                            #a "Todos" le damos valor -1.  Para "No" dejamos 0
-            verificar_enlaces_veronline = -1
-        if verificar_enlaces_veronline > 1:                             #para los demás valores, tomamos los de la lista
-            verificar_enlaces_veronline = int(ver_enlaces[verificar_enlaces_veronline])
+            #Primer loop para enlaces de Ver Online.  
+            #Carga la variable de ver
+            ver_enlaces_veronline = int(config.get_setting("clonenewpct1_ver_enlaces_veronline", item.channel))
+            if ver_enlaces_veronline == 1:                                  #a "Todos" le damos valor -1.  Para "No" dejamos 0
+                ver_enlaces_veronline = -1
+            if ver_enlaces_veronline > 1:                                   #para los demás valores, tomamos los de la lista
+                ver_enlaces_veronline = int(ver_enlaces[ver_enlaces_veronline])
+        
+            #Carga la variable de verificar
+            verificar_enlaces_veronline = int(config.get_setting("clonenewpct1_verificar_enlaces_veronline", item.channel))
+            if verificar_enlaces_veronline == 1:                            #a "Todos" le damos valor -1.  Para "No" dejamos 0
+                verificar_enlaces_veronline = -1
+            if verificar_enlaces_veronline > 1:                             #para los demás valores, tomamos los de la lista
+                verificar_enlaces_veronline = int(ver_enlaces[verificar_enlaces_veronline])
 
-        #Carga la variable de contar sólo los servidores verificados
-        verificar_enlaces_veronline_validos = int(config.get_setting("clonenewpct1_verificar_enlaces_veronline_validos", item.channel))
+            #Carga la variable de contar sólo los servidores verificados
+            verificar_enlaces_veronline_validos = int(config.get_setting("clonenewpct1_verificar_enlaces_veronline_validos", item.channel))
 
-        #Carga la variable de lista de servidores excluidos
-        x = 1
-        for x in range(1, max_excl+1):                                  #recorremos todas las opciones de canales exluidos
-            valor = str(config.get_setting("clonenewpct1_excluir%s_enlaces_veronline" % x, item.channel))
-            valor = int(valor)
-            if valor > 0:                                               #Evitamos "No"
-                excluir_enlaces_veronline += [channel_exclude[valor]]   #Añadimos el nombre de servidor excluido a la lista
-            x += 1
+            #Carga la variable de lista de servidores excluidos
+            x = 1
+            for x in range(1, max_excl+1):                                  #recorremos todas las opciones de canales exluidos
+                valor = str(config.get_setting("clonenewpct1_excluir%s_enlaces_veronline" % x, item.channel))
+                valor = int(valor)
+                if valor > 0:                                               #Evitamos "No"
+                    excluir_enlaces_veronline += [channel_exclude[valor]]   #Añadimos el nombre de servidor excluido a la lista
+                x += 1
 
-        #Segundo loop para enlaces de Descargar.  
-        #Carga la variable de ver
-        ver_enlaces_descargas = int(config.get_setting("clonenewpct1_ver_enlaces_descargas", item.channel))
-        if ver_enlaces_descargas == 1:                                  #a "Todos" le damos valor -1.  Para "No" dejamos 0
-            ver_enlaces_descargas = -1
-        if ver_enlaces_descargas > 1:                                   #para los demás valores, tomamos los de la lista
-            ver_enlaces_descargas = int(ver_enlaces[ver_enlaces_descargas])
-    
-        #Carga la variable de verificar
-        verificar_enlaces_descargas = int(config.get_setting("clonenewpct1_verificar_enlaces_descargas", item.channel))
-        if verificar_enlaces_descargas == 1:                            #a "Todos" le damos valor -1.  Para "No" dejamos 0
-            verificar_enlaces_descargas = -1
-        if verificar_enlaces_descargas > 1:                             #para los demás valores, tomamos los de la lista
-            verificar_enlaces_descargas = int(ver_enlaces[verificar_enlaces_descargas])
+            #Segundo loop para enlaces de Descargar.  
+            #Carga la variable de ver
+            ver_enlaces_descargas = int(config.get_setting("clonenewpct1_ver_enlaces_descargas", item.channel))
+            if ver_enlaces_descargas == 1:                                  #a "Todos" le damos valor -1.  Para "No" dejamos 0
+                ver_enlaces_descargas = -1
+            if ver_enlaces_descargas > 1:                                   #para los demás valores, tomamos los de la lista
+                ver_enlaces_descargas = int(ver_enlaces[ver_enlaces_descargas])
+        
+            #Carga la variable de verificar
+            verificar_enlaces_descargas = int(config.get_setting("clonenewpct1_verificar_enlaces_descargas", item.channel))
+            if verificar_enlaces_descargas == 1:                            #a "Todos" le damos valor -1.  Para "No" dejamos 0
+                verificar_enlaces_descargas = -1
+            if verificar_enlaces_descargas > 1:                             #para los demás valores, tomamos los de la lista
+                verificar_enlaces_descargas = int(ver_enlaces[verificar_enlaces_descargas])
 
-        #Carga la variable de contar sólo los servidores verificados
-        verificar_enlaces_descargas_validos = int(config.get_setting("clonenewpct1_verificar_enlaces_descargas_validos", item.channel))
+            #Carga la variable de contar sólo los servidores verificados
+            verificar_enlaces_descargas_validos = int(config.get_setting("clonenewpct1_verificar_enlaces_descargas_validos", item.channel))
 
-        #Carga la variable de lista de servidores excluidos
-        x = 1
-        for x in range(1, max_excl+1):                                  #recorremos todas las opciones de canales exluidos
-            valor = str(config.get_setting("clonenewpct1_excluir%s_enlaces_descargas" % x, item.channel))
-            valor = int(valor)
-            if valor > 0:                                               #Evitamos "No"
-                excluir_enlaces_descargas += [channel_exclude[valor]]   #Añadimos el nombre de servidor excluido a la lista
-            x += 1
+            #Carga la variable de lista de servidores excluidos
+            x = 1
+            for x in range(1, max_excl+1):                                  #recorremos todas las opciones de canales exluidos
+                valor = str(config.get_setting("clonenewpct1_excluir%s_enlaces_descargas" % x, item.channel))
+                valor = int(valor)
+                if valor > 0:                                               #Evitamos "No"
+                    excluir_enlaces_descargas += [channel_exclude[valor]]   #Añadimos el nombre de servidor excluido a la lista
+                x += 1
 
-    except Exception, ex:                                               #En caso de error, lo mostramos y reseteamos todas las variables
-        logger.error("Error en la lectura de parámentros del .json del canal: " + item.channel + " \n%s" % ex)
-        #Mostrar los errores
-        logger.error(ver_enlaces_veronline)
-        logger.error(verificar_enlaces_veronline)
-        logger.error(verificar_enlaces_veronline_validos)
-        logger.error(excluir_enlaces_veronline)
-        logger.error(ver_enlaces_descargas)
-        logger.error(verificar_enlaces_descargas)
-        logger.error(verificar_enlaces_descargas_validos)
-        logger.error(excluir_enlaces_descargas)
-        #Resetear las variables a sus valores por defecto
-        ver_enlaces_veronline = -1                                      #Ver todos los enlaces Ver Online
-        verificar_enlaces_veronline = -1                                #Verificar todos los enlaces Ver Online
-        verificar_enlaces_veronline_validos = True                      #"¿Contar sólo enlaces 'verificados' en Ver Online?"
-        excluir_enlaces_veronline = []                                  #Lista vacía de servidores excluidos en Ver Online
-        ver_enlaces_descargas = 0                                       #Ver todos los enlaces Descargar
-        verificar_enlaces_descargas = -1                                #Verificar todos los enlaces Descargar
-        verificar_enlaces_descargas_validos = True                      #"¿Contar sólo enlaces 'verificados' en Descargar?"
-        excluir_enlaces_descargas = []                                  #Lista vacía de servidores excluidos en Descargar
+        except Exception, ex:                                               #En caso de error, lo mostramos y reseteamos todas las variables
+            logger.error("Error en la lectura de parámentros del .json del canal: " + item.channel + " \n%s" % ex)
+            #Mostrar los errores
+            logger.error(ver_enlaces_veronline)
+            logger.error(verificar_enlaces_veronline)
+            logger.error(verificar_enlaces_veronline_validos)
+            logger.error(excluir_enlaces_veronline)
+            logger.error(ver_enlaces_descargas)
+            logger.error(verificar_enlaces_descargas)
+            logger.error(verificar_enlaces_descargas_validos)
+            logger.error(excluir_enlaces_descargas)
+            #Resetear las variables a sus valores por defecto
+            ver_enlaces_veronline = -1                                      #Ver todos los enlaces Ver Online
+            verificar_enlaces_veronline = -1                                #Verificar todos los enlaces Ver Online
+            verificar_enlaces_veronline_validos = True                      #"¿Contar sólo enlaces 'verificados' en Ver Online?"
+            excluir_enlaces_veronline = []                                  #Lista vacía de servidores excluidos en Ver Online
+            ver_enlaces_descargas = 0                                       #Ver todos los enlaces Descargar
+            verificar_enlaces_descargas = -1                                #Verificar todos los enlaces Descargar
+            verificar_enlaces_descargas_validos = True                      #"¿Contar sólo enlaces 'verificados' en Descargar?"
+            excluir_enlaces_descargas = []                                  #Lista vacía de servidores excluidos en Descargar
 
     # Descarga la página
     data = ''
+    data_servidores = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
         data = data.replace("$!", "#!").replace("'", "\"").replace("Ã±", "ñ").replace("//pictures", "/pictures")
         url_servidores = item.url
         category_servidores = item.category
-        data_servidores = data                                      #salvamos data para verificar servidores, si es necesario
-    except:
+        data_servidores = data                                              #salvamos data para verificar servidores, si es necesario
+    except:                                                                 #La web no responde.  Probemos las urls de emergencia
         pass
     
     patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'               #Patron para .torrent
@@ -1375,15 +1377,20 @@ def findvideos(item):
     if not data or not scrapertools.find_single_match(data, patron):
         item = generictools.web_intervenida(item, data)                             #Verificamos que no haya sido clausurada
         if item.intervencion:                                                       #Sí ha sido clausurada judicialmente
-            item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
-            return itemlist                                                         #Salimos
-        
-        logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url + " / DATA: " + data)
-        
-        #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el vídeo
-        item, data = generictools.fail_over_newpct1(item, patron)
+            item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)      #Llamamos al método para el pintado del error
+            if item.emergency_urls:                                                 #Hay urls de emergencia?
+                item.url = item.emergency_urls[0]                                   #Guardamos la url del .Torrent
+                enlaces_ver = item.emergency_urls[1]                                #Guardamos los datos iniciales de los Servidores Directos
+                item.armagedon = True                                               #Marcamos la situación como catastrófica 
+            else:
+                return itemlist                                                     #Salimos
+        else:
+            logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url + " / DATA: " + data)
+            
+            #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el vídeo
+            item, data = generictools.fail_over_newpct1(item, patron)
     
-    if not data:                                                                    #Si no ha logrado encontrar nada, verificamos si hay servidores
+    if not data:                                                            #Si no ha logrado encontrar nada, verificamos si hay servidores
         cnt_servidores = 0
         item.category = category_servidores                                         #restauramos valores originales
         item.url = url_servidores
@@ -1395,8 +1402,8 @@ def findvideos(item):
         enlaces_ver = re.compile(patron, re.DOTALL).findall(data_servidores)
         enlaces_descargar = enlaces_ver
         
-        for logo, servidor, idioma, calidad, enlace, title in enlaces_ver:  #buscamos enlaces de servidores de ver-online
-            if ver_enlaces_veronline == 0:                                  #Si no se quiere Ver Online, se sale del bloque
+        for logo, servidor, idioma, calidad, enlace, title in enlaces_ver:          #buscamos enlaces de servidores de ver-online
+            if ver_enlaces_veronline == 0:                                          #Si no se quiere Ver Online, se sale del bloque
                 break
             if "ver" in title.lower():
                 cnt_servidores += 1
@@ -1407,14 +1414,20 @@ def findvideos(item):
             #Miramos si ha servidores
             if not data_servidores:                                                 #Si no ha logrado encontrar nada nos vamos
                 itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.channel.capitalize() + '[/COLOR]: Ningún canal NewPct1 activo'))    
-                itemlist.append(item.clone(action='', title=item.category + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
-                return itemlist                             #si no hay más datos, algo no funciona, pintamos lo que tenemos
+                if item.emergency_urls:                                             #Hay urls de emergencia?
+                    item.url = str(item.emergency_urls[0]).replace ("'", "").replace ("[", "").replace ("]", "") #Guardamos la url del .Torrent
+                    enlaces_ver = item.emergency_urls[1]                            #Guardamos los datos iniciales de los Servidores Directos
+                    item.armagedon = True                                           #Marcamos la situación como catastrófica    
+                else:
+                    itemlist.append(item.clone(action='', title=item.category + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
+                    return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
         
         data = data_servidores                                                      #restauramos los datos
 
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
     data = data.replace("$!", "#!").replace("'", "\"").replace("Ã±", "ñ").replace("//pictures", "/pictures")
 
+    #buscamos el tamaño del .torrent
     size = scrapertools.find_single_match(data, '<div class="entry-left".*?><a href=".*?span class=.*?>Size:<\/strong>?\s(\d+?\.?\d*?\s\w[b|B])<\/span>')
     if not size:                                                                    #Para planetatorrent
         size = scrapertools.find_single_match(data, '<div class="fichas-box"><div class="entry-right"><div style="[^"]+"><span class="[^"]+"><strong>Size:<\/strong>?\s(\d+?\.?\d*?\s\w[b|B])<\/span>')
@@ -1435,57 +1448,72 @@ def findvideos(item):
     #Generamos una copia de Item para trabajar sobre ella
     item_local = item.clone()
     
-    # obtenemos la url torrent
-    patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'               #Patron para .torrent
-    if not scrapertools.find_single_match(data, patron):
-        patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'          #Patron para .torrent (planetatorrent)
-    item_local.url = scrapertools.find_single_match(data, patron)
-    if not item_local.url:                                                          #error
-        logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-    item_local.url = item_local.url.replace(" ", "%20")                         #sustituimos espacios por %20, por si acaso
-    #logger.debug("Patron: " + patron + " url: " + item_local.url)
-    #logger.debug(data)
-
-    #Ahora pintamos el link del Torrent, si lo hay
-    if item_local.url:		# Hay Torrent ?
-        if size:
-            quality = '%s [%s]' % (item_local.quality, size)                        #Agregamos size al final del título
-        else:
-            quality = item_local.quality
-        item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (quality, str(item_local.language))                #Preparamos título de Torrent
-        
-        #Preparamos título y calidad, quitamos etiquetas vacías
-        item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
-        item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
-        item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
-        quality = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', quality)
-        quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', quality)
-        item_local.quality = quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
-        
-        item_local.alive = "??"                                                 #Calidad del link sin verificar
-        item_local.action = "play"                                              #Visualizar vídeo
-        item_local.server = "torrent"                                           #Servidor
-        
-        itemlist_t.append(item_local.clone())                                   #Pintar pantalla, si no se filtran idiomas
-        
-        # Requerido para FilterTools
-        if config.get_setting('filter_languages', channel_py) > 0:              #Si hay idioma seleccionado, se filtra
-            itemlist_f = filtertools.get_link(itemlist_f, item_local, list_language)  #Pintar pantalla, si no está vacío
+    # obtenemos la url torrent o usamos la de emergencia
+    if not item.armagedon:                                                              #Si es un proceso normal, seguimos
+        patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'               #Patron para .torrent
+        if not scrapertools.find_single_match(data, patron):
+            patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'          #Patron para .torrent (planetatorrent)
+        item_local.url = scrapertools.find_single_match(data, patron)
+        if not item_local.url:                                                          #error
+            logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
+            if item.emergency_urls:                                                     #Hay urls de emergencia?
+                item.url = item.emergency_urls[0]                                       #Guardamos la url del .Torrent
+                item.armagedon = True                                                   #Marcamos la situación como catastrófica 
+        item_local.url = item_local.url.replace(" ", "%20")                             #sustituimos espacios por %20, por si acaso
+        #logger.debug("Patron: " + patron + " url: " + item_local.url)
+        #logger.debug(data)
     
-        logger.debug("TORRENT: " + item_local.url + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality + " / tamaño: " + size + " / content: " + item_local.contentTitle + " / " + item_local.contentSerieName)
-        #logger.debug(item_local)
+    #Si es un lookup para cargar las urls de emergencia en la Videoteca...
+    if item.videolibray_emergency_urls:
+        item.emergency_urls = []
+        url = item_local.url
+        if url == 'javascript:;':                                                       #No hay torrent...
+            url = ''                                                                    #... ignorar
+        item.emergency_urls.append([url])
+    #... si no, ejecutamos el proceso normal
+    else:
+        #Ahora pintamos el link del Torrent, si lo hay
+        if item_local.url:		# Hay Torrent ?
+            if size:
+                quality = '%s [%s]' % (item_local.quality, size)                        #Agregamos size al final del título
+            else:
+                quality = item_local.quality
+            if item.armagedon:                                                          #Si es catastrófico, lo marcamos
+                quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % quality
+            item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (quality, str(item_local.language))                                        #Preparamos título de Torrent
+            
+            #Preparamos título y calidad, quitamos etiquetas vacías
+            item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
+            item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
+            item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+            quality = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', quality)
+            quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', quality)
+            item_local.quality = quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
+            
+            item_local.alive = "??"                                                 #Calidad del link sin verificar
+            item_local.action = "play"                                              #Visualizar vídeo
+            item_local.server = "torrent"                                           #Servidor
+            
+            itemlist_t.append(item_local.clone())                                   #Pintar pantalla, si no se filtran idiomas
+            
+            # Requerido para FilterTools
+            if config.get_setting('filter_languages', channel_py) > 0:              #Si hay idioma seleccionado, se filtra
+                itemlist_f = filtertools.get_link(itemlist_f, item_local, list_language)  #Pintar pantalla, si no está vacío
+        
+            logger.debug("TORRENT: " + item_local.url + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality + " / tamaño: " + size + " / content: " + item_local.contentTitle + " / " + item_local.contentSerieName)
+            #logger.debug(item_local)
 
-    if len(itemlist_f) > 0:                                                     #Si hay entradas filtradas...
-        itemlist.extend(itemlist_f)                                             #Pintamos pantalla filtrada
-    else:                                                                       
-        if config.get_setting('filter_languages', channel_py) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
-            thumb_separador = get_thumb("next.png")                             #... pintamos todo con aviso
-            itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
-        itemlist.extend(itemlist_t)                                             #Pintar pantalla con todo si no hay filtrado
-    
+        if len(itemlist_f) > 0:                                                     #Si hay entradas filtradas...
+            itemlist.extend(itemlist_f)                                             #Pintamos pantalla filtrada
+        else:                                                                       
+            if config.get_setting('filter_languages', channel_py) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
+                thumb_separador = get_thumb("next.png")                             #... pintamos todo con aviso
+                itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
+            itemlist.extend(itemlist_t)                                             #Pintar pantalla con todo si no hay filtrado
+        
 
-    itemlist_t = []                                                             #Itemlist total de enlaces
-    itemlist_f = []                                                             #Itemlist de enlaces filtrados
+    itemlist_t = []                                                                 #Itemlist total de enlaces
+    itemlist_f = []                                                                 #Itemlist de enlaces filtrados
     # VER vídeos, descargar vídeos un link,  o múltiples links
     data = scrapertools.find_single_match(data, '<div id="tab1" class="tab_content"(.*?<\/ul>(?:<div.*?>)?<\/div><\/div><\/div>)')  #Seleccionar el bloque para evitar duplicados
     
@@ -1498,9 +1526,26 @@ def findvideos(item):
     patron += '<\/div[^<]+<div class="box4">([^<]+)?<\/div[^<]+<div class="box5"><a href=(.*?)? rel.*?'
     patron += '<\/div[^<]+<div class="box6">([^<]+)?<'
 
-    enlaces_ver = re.compile(patron, re.DOTALL).findall(data)
+    if not item.armagedon:                                                  #Si es un proceso normal, seguimos
+        enlaces_ver = re.compile(patron, re.DOTALL).findall(data)
+    
+    if not enlaces_ver and item.emergency_urls[1]:                          #Si no hay enlaces, hay urls de emergencia?
+        enlaces_ver = item.emergency_urls[1]                                #Guardamos los datos iniciales de los Servidores Directos
+        item.armagedon = True                                               #Activamos el modo catástrofe
+        
     enlaces_descargar = enlaces_ver
     #logger.debug(enlaces_ver)
+    
+    #Si es un lookup para cargar las urls de emergencia en la Videoteca, lo hacemos y nos vamos si más
+    if item.videolibray_emergency_urls:
+        emergency_urls_directos = []
+        i = 0
+        for logo, servidor, idioma, calidad, enlace, title in enlaces_ver:
+            if "ver" in title.lower():
+                emergency_urls_directos.append(enlaces_ver[i])
+            i += 1
+        item.emergency_urls.append(emergency_urls_directos)
+        return item
     
     #Recorre todos los links de VER, si está permitido
     cnt_enl_ver = 1
@@ -1548,14 +1593,16 @@ def findvideos(item):
                             else:
                                 break                   #Si se ha agotado el contador de verificación, se sale de Ver Online
 
+                        if item.armagedon:                              #Si es catastrófico, lo marcamos
+                            item_local.quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % item_local.quality
                         #Si el link no está activo se ignora
-                        if "??" in item_local.alive:                            #dudoso
+                        if "??" in item_local.alive:                                #dudoso
                             item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (servidor.capitalize(), item_local.quality, str(item_local.language))
-                        elif "no" in item_local.alive.lower():                  #No está activo.  Lo preparo, pero no lo pinto
+                        elif "no" in item_local.alive.lower():                      #No está activo.  Lo preparo, pero no lo pinto
                             item_local.title = '[COLOR red][%s][/COLOR] [COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.alive, servidor.capitalize(), item_local.quality, str(item_local.language))
                             logger.debug(item_local.alive + ": ALIVE / " + title + " / " + servidor + " / " + enlace)
                             raise
-                        else:                                                   #Sí está activo
+                        else:                                           #Sí está activo
                             item_local.title = '[COLOR yellow][%s][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (servidor.capitalize(), item_local.quality, str(item_local.language))
 
                         #Preparamos el resto de variables de Item para ver los vídeos en directo    
@@ -1827,6 +1874,7 @@ def episodios(item):
         list_pages = [item.url]
 
     season = max_temp
+    first = True
     #Comprobamos si realmente sabemos el num. máximo de temporadas
     if item.library_playcounts or (item.infoLabels['number_of_seasons'] and item.tmdb_stat):
         num_temporadas_flag = True
@@ -1971,12 +2019,16 @@ def episodios(item):
             item_local.contentEpisodeNumber = match['episode']
 
             if match["episode2"]:                                               #Hay episodio dos? es una entrada múltiple?
-                item_local.title = "%sx%s al %s -" % (str(match["season"]), str(match["episode"]).zfill(2), str(match["episode2"]).zfill(2))                                          #Creamos un título con el rango de episodios
+                item_local.title = "%sx%s al %s -" % (str(match["season"]), str(match["episode"]).zfill(2), str(match["episode2"]).zfill(2))                                                                #Creamos un título con el rango de episodios
             else:                                                               #Si es un solo episodio, se formatea ya
                 item_local.title = "%sx%s -" % (match["season"], str(match["episode"]).zfill(2))
 
-            if modo_ultima_temp_alt and item.library_playcounts:    #Si solo se actualiza la última temporada de Videoteca
-                if item_local.contentSeason < max_temp:
+            if modo_ultima_temp_alt and item.library_playcounts:                #Si solo se actualiza la última temporada de Videoteca
+                if first:                                                       #Si es el primer episodio, comprobamos que ...
+                    first = False
+                    if item_local.contentSeason < max_temp:                     #... la temporada sea la última ...
+                        modo_ultima_temp_alt = False                            #... si no, por seguridad leeremos toda la serie
+                if item_local.contentSeason < max_temp and modo_ultima_temp_alt:
                     list_pages = []                                             #Sale del bucle de leer páginas
                     break                                                       #Sale del bucle actual del FOR de episodios por página
                 #if ('%sx%s' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))) in item.library_playcounts:

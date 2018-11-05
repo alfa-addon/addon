@@ -59,29 +59,6 @@ def configuracion(item):
     return ret
 
 
-def estrenos(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron  = 'item-pelicula.*?href="([^"]+).*?'
-    patron += 'src="([^"]+).*?'
-    patron += '<p>([^<]+).*?'
-    patron += '<span>([^<]+)'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear in matches:
-        scrapedtitle = scrapedtitle.replace("Película ","")
-        itemlist.append(Item(channel = item.channel,
-                             action = "findvideos",
-                             contentTitle = scrapedtitle,
-                             infoLabels = {'year':scrapedyear},
-                             thumbnail = scrapedthumbnail,
-                             title = scrapedtitle + " (%s)" %scrapedyear,
-                             url = scrapedurl
-                             ))
-    tmdb.set_infoLabels(itemlist)
-    return itemlist
-
-
 def search(item, texto):
     logger.info()
     item.url = host + "/suggest?que=" + texto
@@ -104,9 +81,7 @@ def sub_search(item):
     data = httptools.downloadpage(item.url).data
     token = scrapertools.find_single_match(data, 'csrf-token" content="([^"]+)')
     data = httptools.downloadpage(item.url + "&_token=" + token, headers=headers).data
-    #logger.info("Intel33 %s" %data)
     data_js = jsontools.load(data)["data"]["m"]
-    #logger.info("Intel44 %s" %data_js)
     for js in data_js:
         itemlist.append(Item(channel = item.channel,
                              action = "findvideos",
@@ -128,6 +103,51 @@ def sub_search(item):
     return itemlist
     
     
+def peliculas_gen(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron  = 'item-pelicula.*?href="([^"]+)".*?'
+    patron += 'src="([^"]+)".*?'
+    patron += 'text-center">([^<]+).*?'
+    patron += '<p>([^<]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl, scrapedthumbnail, scrapedyear, scrapedtitle in matches:
+        itemlist.append(Item(channel = item.channel,
+                             action = "findvideos",
+                             contentTitle = scrapedtitle,
+                             infoLabels = {'year':scrapedyear},
+                             thumbnail = scrapedthumbnail,
+                             title = scrapedtitle + " (%s)" %scrapedyear,
+                             url = scrapedurl
+                             ))
+    tmdb.set_infoLabels(itemlist)
+    return itemlist
+
+
+def estrenos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron  = 'item-pelicula.*?href="([^"]+).*?'
+    patron += 'src="([^"]+).*?'
+    patron += 'text-center">([^<]+).*?'
+    patron += '<p>([^<]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl, scrapedthumbnail, scrapedyear, scrapedtitle in matches:
+        scrapedtitle = scrapedtitle.replace("Película ","")
+        itemlist.append(Item(channel = item.channel,
+                             action = "findvideos",
+                             contentTitle = scrapedtitle,
+                             infoLabels = {'year':scrapedyear},
+                             thumbnail = scrapedthumbnail,
+                             title = scrapedtitle + " (%s)" %scrapedyear,
+                             url = scrapedurl
+                             ))
+    tmdb.set_infoLabels(itemlist)
+    return itemlist
+
+
 def peliculas(item):
     logger.info()
     itemlist = []
@@ -139,9 +159,7 @@ def peliculas(item):
     post = "page=%s&type=%s&_token=%s" %(item.page, item.type, token)
     if item.slug:
         post += "&slug=%s" %item.slug
-    #logger.info("Intel11 %s" %post)
     data = httptools.downloadpage(host + "/pagination", post=post, headers=headers).data
-    #logger.info("Intel11 %s" %data)
     patron  = '(?s)href="([^"]+)".*?'
     patron += 'src="([^"]+)".*?'
     patron += 'text-center">([^<]+).*?'
@@ -215,28 +233,6 @@ def generos(item):
     return itemlist
 
 
-def peliculas_gen(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron  = 'item-pelicula.*?href="([^"]+)".*?'
-    patron += 'src="([^"]+)".*?'
-    patron += '<p>([^<]+).*?'
-    patron += '<span>([^<]+)'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedthumbnail, scrapedtitle , scrapedyear in matches:
-        itemlist.append(Item(channel = item.channel,
-                             action = "findvideos",
-                             contentTitle = scrapedtitle,
-                             infoLabels = {'year':scrapedyear},
-                             thumbnail = scrapedthumbnail,
-                             title = scrapedtitle + " (%s)" %scrapedyear,
-                             url = scrapedurl
-                             ))
-    tmdb.set_infoLabels(itemlist)
-    return itemlist
-
-
 def annos(item):
     logger.info()
     itemlist = []
@@ -260,18 +256,18 @@ def annos(item):
 def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = '(?i)<iframe.*?src="([^"]+).*?'
-    patron += ''
+    patron  = "video\[(\d)+\] = '([^']+)"
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl in matches:
-        titulo = "Ver en: %s"
+    for scrapedoption, scrapedurl in matches:
+        tit = scrapertools.find_single_match(data, 'option%s">([^<]+)' %scrapedoption)
+        if "VIP" in tit: tit = "fembed"
+        titulo = "Ver en %s" %tit.capitalize()
         itemlist.append(
                  item.clone(channel = item.channel,
                  action = "play",
                  title = titulo,
-                 url = scrapedurl
+                 url = host + "/embed/%s/" %scrapedurl
                  ))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
@@ -296,5 +292,12 @@ def findvideos(item):
 
 def play(item):
     logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    url = scrapertools.find_single_match(data, '<iframe src="([^"]+)')
+    headers = {"Referer":item.url}
+    item.url = httptools.downloadpage(url, follow_redirects=False, only_headers=True, headers=headers).headers.get("location", "")
+    itemlist.append(item.clone())
+    itemlist = servertools.get_servers_itemlist(itemlist)
     item.thumbnail = item.contentThumbnail
-    return [item]
+    return itemlist

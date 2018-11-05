@@ -9,7 +9,7 @@ headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
-    if "Archive no Encontrado" in data:
+    if "Archive no Encontrado" in data or  "File has been removed" in data:
         return False, "[bitertv] El fichero ha sido borrado"
     return True, ""
 

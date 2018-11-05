@@ -181,7 +181,7 @@ def episodios(item):
         itemlist.append(item.clone(title=title, url=url, action='findvideos', show=info[1]))
     itemlist = itemlist[::-1]
     if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca",
+        itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=item.url,
                              action="add_serie_to_library", extra="episodios"))
     return itemlist
 
