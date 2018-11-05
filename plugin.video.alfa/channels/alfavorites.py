@@ -81,6 +81,11 @@ def addFavourite(item):
             platformtools.dialog_notification('Enlace repetido', 'Ya tienes este enlace en la carpeta')
             return False
 
+    # Si es una película, completar información de tmdb si no se tiene activado tmdb_plus_info
+    if item.contentType == 'movie' and not config.get_setting('tmdb_plus_info', default=False):
+        from core import tmdb
+        tmdb.set_infoLabels(item, True) # obtener más datos en "segunda pasada" (actores, duración, ...)
+
     # Guardar
     alfav.user_favorites[i_perfil]['items'].append(item.tourl())
     alfav.save()
