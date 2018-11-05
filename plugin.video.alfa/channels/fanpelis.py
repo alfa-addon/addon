@@ -247,10 +247,17 @@ def episodesxseason(item):
 
 def findvideos(item):
     logger.info()
+    import urllib
+
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<div class="movieplay"><iframe src="([^"]+)"'
+    player = scrapertools.find_single_match(data, "({'action': 'movie_player','foobar_id':\d+,})")
+    post = eval(player)
+    post = urllib.urlencode(post)
+    data = httptools.downloadpage(host+'wp-admin/admin-ajax.php', post=post, headers={'Referer':item.url}).data
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    patron = '<iframe src="([^"]+)"'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 

@@ -452,7 +452,7 @@ def findvideos(item):
         data_subtitle = scrapertools.find_single_match(data_subtitle, patron)
         patron = '<tr class="fichserietabla_b">.*?<a href="([^"]+)"'
         subtitles = re.compile(patron, re.DOTALL).findall(data_subtitle)            #Creamos una lista con todos los sub-títulos
-        if subtitles and len(subtitles) > 1:                                        #Solo se guarda si hay más de un idioma.  Si no, automático
+        if subtitles:
             item.subtitle = []
             for subtitle in subtitles:
                 subtitle = subtitle.replace('&#038;', '&').replace('.io/', sufix).replace('.com/', sufix)

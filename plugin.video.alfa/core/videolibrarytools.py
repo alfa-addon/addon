@@ -12,6 +12,7 @@ from core import scrapertools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
+from lib import generictools
 
 FOLDER_MOVIES = config.get_setting("folder_movies")
 FOLDER_TVSHOWS = config.get_setting("folder_tvshows")
@@ -182,6 +183,19 @@ def save_movie(item):
         else:
             insertados += 1
 
+        # Si se ha marcado la opción de url de emergencia, se añade ésta a la película después de haber ejecutado Findvideos del canal
+        try:
+            channel = generictools.verify_channel(item.channel)
+            if config.get_setting("emergency_urls", channel) in [1, 3]:
+                item = emergency_urls(item)
+                if item_nfo.emergency_urls and not isinstance(item_nfo.emergency_urls, dict):
+                    del item_nfo.emergency_urls
+                if not item_nfo.emergency_urls:
+                    item_nfo.emergency_urls = dict()
+                item_nfo.emergency_urls.update({item.channel: True})
+        except:
+            logger.error("No se ha podido guardar las urls de emergencia de %s en la videoteca" % item.contentTitle)
+        
         if filetools.write(json_path, item.tojson()):
             p_dialog.update(100, 'Añadiendo película...', item.contentTitle)
             item_nfo.library_urls[item.channel] = item.url
@@ -309,6 +323,7 @@ def save_tvshow(item, episodelist):
 
     if item.channel != "downloads":
         item_tvshow.active = 1  # para que se actualice a diario cuando se llame a videolibrary_service
+
     filetools.write(tvshow_path, head_nfo + item_tvshow.tojson())
 
     if not episodelist:
@@ -377,6 +392,10 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         p_dialog = platformtools.dialog_progress(config.get_localized_string(20000), config.get_localized_string(60064))
         p_dialog.update(0, config.get_localized_string(60065))
 
+    channel_alt = generictools.verify_channel(serie.channel)                        #Preparamos para añadir las urls de emergencia
+    emergency_urls_stat = config.get_setting("emergency_urls", channel_alt)         #El canal quiere urls de emergencia?
+    emergency_urls_succ = False
+    channel = __import__('channels.%s' % channel_alt, fromlist=["channels.%s" % channel_alt])
     new_episodelist = []
     # Obtenemos el numero de temporada y episodio y descartamos los q no lo sean
     tags = []
@@ -385,13 +404,39 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     for e in episodelist:
         if tags != [] and tags != None and any(tag in e.title.lower() for tag in tags):
             continue
+        
         try:
             season_episode = scrapertools.get_season_and_episode(e.title)
-
+        
+            # Si se ha marcado la opción de url de emergencia, se añade ésta a cada episodio después de haber ejecutado Findvideos del canal
+            if e.emergency_urls and isinstance(e.emergency_urls, dict): del e.emergency_urls    #Borramos trazas anterioires
+            if emergency_urls_stat == 1 and not e.emergency_urls and e.contentType == 'episode':     #Guardamos urls de emergencia?
+                json_path = filetools.join(path, ("%s [%s].json" % (season_episode, e.channel)).lower())    #Path del .json del episodio
+                if json_path in ficheros:                                                       #Si existe el .json sacamos de ahí las urls
+                    if overwrite:                                                               #pero solo si se se sobrescriben los .json
+                        json_epi = Item().fromjson(filetools.read(json_path))                   #Leemos el .json
+                        if json_epi.emergency_urls:                                             #si existen las urls de emergencia...
+                            e.emergency_urls = json_epi.emergency_urls                          #... las copiamos
+                        else:                                                                   #y si no...
+                            e = emergency_urls(e, channel)                                      #... las generamos
+                else:
+                    e = emergency_urls(e, channel)                                              #Si el episodio no existe, generamos las urls
+                if e.emergency_urls:                                                            #Si ya tenemos urls...
+                    emergency_urls_succ = True                                                  #... es un éxito y vamos a marcar el .nfo
+            elif emergency_urls_stat == 2 and e.contentType == 'episode':                       #Borramos urls de emergencia?
+                if e.emergency_urls: del e.emergency_urls
+                emergency_urls_succ = True                                                      #... es un éxito y vamos a marcar el .nfo
+            elif emergency_urls_stat == 3 and e.contentType == 'episode':                       #Actualizamos urls de emergencia?
+                e = emergency_urls(e, channel)                                                  #generamos las urls
+                if e.emergency_urls:                                                            #Si ya tenemos urls...
+                    emergency_urls_succ = True                                                  #... es un éxito y vamos a marcar el .nfo
+            
             e.infoLabels = serie.infoLabels
             e.contentSeason, e.contentEpisodeNumber = season_episode.split("x")
             new_episodelist.append(e)
         except:
+            if e.contentType == 'episode':
+                logger.error("No se ha podido guardar las urls de emergencia de %s en la videoteca" % e.contentTitle)
             continue
 
     # No hay lista de episodios, no hay nada que guardar
@@ -495,7 +540,19 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             import datetime
             head_nfo, tvshow_item = read_nfo(tvshow_path)
             tvshow_item.library_playcounts.update(news_in_playcounts)
-
+            
+            #Si la operación de insertar/borrar urls de emergencia en los .jsons de los episodios ha tenido éxito, se marca el .nfo
+            if emergency_urls_succ:
+                if tvshow_item.emergency_urls and not isinstance(tvshow_item.emergency_urls, dict):
+                    del tvshow_item.emergency_urls
+                if emergency_urls_stat in [1, 3]:                                       #Operación de guardar/actualizar enlaces
+                    if not tvshow_item.emergency_urls:
+                        tvshow_item.emergency_urls = dict()
+                    tvshow_item.emergency_urls.update({serie.channel: True})
+                elif emergency_urls_stat == 2:                                          #Operación de Borrar enlaces
+                    if tvshow_item.emergency_urls and tvshow_item.emergency_urls.get(serie.channel, False):
+                        tvshow_item.emergency_urls.pop(serie.channel, None)             #borramos la entrada del .nfo
+                        
             if tvshow_item.active == 30:
                 tvshow_item.active = 1
             update_last = datetime.date.today()
@@ -506,6 +563,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             filetools.write(tvshow_path, head_nfo + tvshow_item.tojson())
         except:
             logger.error("Error al actualizar tvshow.nfo")
+            logger.error("No se ha podido guardar las urls de emergencia de %s en la videoteca" % tvshow_item.contentSerieName)
             fallidos = -1
         else:
             # ... si ha sido correcto actualizamos la videoteca de Kodi
@@ -546,11 +604,10 @@ def add_movie(item):
     #Si lo hace en "Completar Información", cambia parcialmente al nuevo título, pero no busca en TMDB.  Hay que hacerlo
     #Si se cancela la segunda pantalla, la variable "scraper_return" estará en False.  El usuario no quiere seguir
     
-    from lib import generictools
     item = generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
     #if item.tmdb_stat:
     #    del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
-
+    
     new_item = item.clone(action="findvideos")
     insertados, sobreescritos, fallidos = save_movie(new_item)
 
@@ -614,7 +671,6 @@ def add_tvshow(item, channel=None):
         #Si lo hace en "Completar Información", cambia parcialmente al nuevo título, pero no busca en TMDB.  Hay que hacerlo
         #Si se cancela la segunda pantalla, la variable "scraper_return" estará en False.  El usuario no quiere seguir
         
-        from lib import generictools
         item = generictools.update_title(item) #Llamamos al método que actualiza el título con tmdb.find_and_set_infoLabels
         #if item.tmdb_stat:
         #    del item.tmdb_stat          #Limpiamos el status para que no se grabe en la Videoteca
@@ -653,3 +709,24 @@ def add_tvshow(item, channel=None):
                 xbmc_videolibrary.sync_trakt_kodi()
                 # Se lanza la sincronización para la videoteca del addon
                 xbmc_videolibrary.sync_trakt_addon(path)
+
+
+def emergency_urls(item, channel=None):
+    """ 
+    Llamamos a Findvideos del canal con la variable "item.videolibray_emergency_urls = True" para obtener la variable
+    "item.matches" con la lista de listas de tuplas de los enlaces torrent y de servidores directos para ese episodio o película
+    """
+    
+    try:
+        if channel == None:
+            channel = generictools.verify_channel(item.channel)
+            channel = __import__('channels.%s' % channel, fromlist=["channels.%s" % channel])
+        if hasattr(channel, 'findvideos'):
+            item.videolibray_emergency_urls = True
+            item_res = getattr(channel, 'findvideos')(item)
+            del item_res.videolibray_emergency_urls
+    except:
+        item_res = item.clone()
+
+    #logger.debug(item_res.emergency_urls)
+    return item_res
