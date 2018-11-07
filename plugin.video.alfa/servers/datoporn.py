@@ -21,15 +21,15 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
 
     data = httptools.downloadpage(page_url).data
-
-    media_urls = scrapertools.find_multiple_matches(data, 'file\:"([^"]+\.mp4)",label:"([^"]+)"')
-    if not media_urls:
-        match = scrapertools.find_single_match(data, "p,a,c,k(.*?)</script>")
-        try:
-            data = jsunpack.unpack(match)
-        except:
-            pass
-        media_urls = scrapertools.find_multiple_matches(data, 'file\:"([^"]+\.mp4)",label:"([^"]+)"')
+    media_urls = scrapertools.find_multiple_matches(data, 'src: "([^"]+)",.*?label: "([^"]+)"')
+    #media_urls = scrapertools.find_multiple_matches(data, 'file\:"([^"]+\.mp4)",label:"([^"]+)"')
+    # if not media_urls:
+    #     match = scrapertools.find_single_match(data, "p,a,c,k(.*?)</script>")
+    #     try:
+    #         data = jsunpack.unpack(match)
+    #     except:
+    #         pass
+    #     media_urls = scrapertools.find_multiple_matches(data, 'file\:"([^"]+\.mp4)",label:"([^"]+)"')
 
     # Extrae la URL
     calidades = []

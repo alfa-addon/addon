@@ -348,31 +348,38 @@ def episodios(item):
 
     return itemlist
 
-
 def findvideos(item):
     logger.info()
+    from lib import generictools
+    import urllib
+    import base64
     itemlist = []
-
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
 
-    patron = '<div id="option-(\d+)" class="play-box-iframe.*?src="([^"]+)" frameborder="0" scrolling="no" allowfullscreen></iframe>'
+    patron = 'data-post="(\d+)" data-nume="(\d+)".*?img src=\'([^\']+)\''
     matches = re.compile(patron, re.DOTALL).findall(data)
+    for id, option, lang in matches:
+        lang = scrapertools.find_single_match(lang, '.*?/flags/(.*?).png')
+        if lang == 'en':
+            lang = 'VOSE'
+        post = {'action': 'doo_player_ajax', 'post': id, 'nume': option, 'type':'movie'}
+        post = urllib.urlencode(post)
+        test_url = '%swp-admin/admin-ajax.php' % host
+        new_data = httptools.downloadpage(test_url, post=post, headers={'Referer':item.url}).data
+        hidden_url = scrapertools.find_single_match(new_data, "src='([^']+)'")
+        new_data = httptools.downloadpage(hidden_url, follow_redirects=False)
+        try:
+            b64_url = scrapertools.find_single_match(new_data.headers['location'], "y=(.*)")
+            url = base64.b64decode(b64_url)
+        except:
+            url = hidden_url
+        if url != '':
+            itemlist.append(
+                Item(channel=item.channel, url=url, title='%s', action='play', language=lang,
+                     infoLabels=item.infoLabels))
 
-    for option, url in matches:
-        datas = httptools.downloadpage(urlparse.urljoin(host, url),
-                                                  headers={'Referer': item.url}).data
-
-        patron = '<iframe[^>]+src="([^"]+)"'
-        url = scrapertools.find_single_match(datas, patron)
-        lang = scrapertools.find_single_match(
-            data, '<li><a class="options" href="#option-%s"><b class="icon-play_arrow"><\/b> (.*?)<span class="dt_flag">' % option)
-        lang = lang.replace('Español ', '').replace('B.S.O. ', '')
-
-        server = servertools.get_server_from_url(url)
-        title = "%s [COLOR yellow](%s) (%s)[/COLOR]" % (item.contentTitle, server.title(), lang)
-        itemlist.append(item.clone(action='play', url=url, title=title, extra1=title,
-                                   server=server, language = lang, text_color=color3))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'episodios':
         itemlist.append(Item(channel=__channel__, url=item.url, action="add_pelicula_to_library", extra="findvideos",

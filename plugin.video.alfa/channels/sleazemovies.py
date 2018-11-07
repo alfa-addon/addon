@@ -30,7 +30,7 @@ def genero(item):
     itemlist = list()
     data = httptools.downloadpage(host).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron = '<li class="cat-item.*?<a href="([^"]+)">([^<]+)</a>'
+    patron = '<li class="cat-item.*?<a href="([^"]+)".*?>([^<]+)</a>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle in matches:
         

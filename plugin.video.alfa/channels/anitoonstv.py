@@ -22,7 +22,7 @@ list_servers = ['openload',
 list_quality = ['default']
 
 
-host = "http://www.anitoonstv.com"
+host = "https://www.anitoonstv.com"
 
 
 def mainlist(item):
@@ -38,17 +38,45 @@ def mainlist(item):
                          thumbnail=thumb_series, range=[0,19] ))
     itemlist.append(Item(channel=item.channel, action="lista", title="Especiales", url=host+"/catalogo.php?g=&t=especiales&o=0",
                          thumbnail=thumb_series, range=[0,19]))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar",
+                         thumbnail=thumb_series, range=[0,19]))
 
     itemlist = renumbertools.show_option(item.channel, itemlist)
     autoplay.show_option(item.channel, itemlist)
     return itemlist
 
 
+def search(item, texto):
+    logger.info()
+    texto = texto.replace(" ", "+")
+    item.url = host +"/php/buscar.php"
+    item.texto = texto
+    if texto != '':
+        return sub_search(item)
+    else:
+        return []
+
+
+def sub_search(item):
+    logger.info()
+    itemlist = []
+    post = "b=" + item.texto
+    headers = {"X-Requested-With":"XMLHttpRequest"}
+    data = httptools.downloadpage(item.url, post=post, headers=headers).data
+    patron  = "href='([^']+).*?"
+    patron += ">([^<]+)"
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl, scrapedtitle in matches:
+        itemlist.append(item.clone(action = "episodios",
+                                   title = scrapedtitle,
+                                   url = scrapedurl
+                        ))
+    return itemlist
+
+
 def lista(item):
     logger.info()
-
     itemlist = []
-
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     #logger.info("Pagina para regex "+data)
@@ -98,7 +126,7 @@ def episodios(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron = '<div class="pagina">(.*?)</ul>'
+    patron = '<div class="pagina">(.*?)cajaSocial'
     data = scrapertools.find_single_match(data, patron)
     patron_caps = "<li><a href='(.+?)'>Cap(?:i|í)tulo: (.+?) - (.+?)<\/a>"
     matches = scrapertools.find_multiple_matches(data, patron_caps)
@@ -172,6 +200,8 @@ def findvideos(item):
                 server=server1[0]
         if "goo" in url:
             url = googl(url)
+            server='netutv'
+        if "hqq" in url:
             server='netutv'
         if "ok" in url:
             url = "https:"+url
