@@ -7,7 +7,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import logger
 
-host = 'http://www.sipeliculas.com'
+host = 'http://www.siestrenos.com'
 
 def mainlist(item):
     logger.info()
