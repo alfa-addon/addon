@@ -1237,6 +1237,7 @@ def listado_busqueda(item):
 
 def findvideos(item):
     logger.info()
+    from core import videolibrarytools
     itemlist = []
     itemlist_t = []                                     #Itemlist total de enlaces
     itemlist_f = []                                     #Itemlist de enlaces filtrados
@@ -1361,38 +1362,46 @@ def findvideos(item):
     # Descarga la página
     data = ''
     data_servidores = ''
+    enlaces_ver = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
         data = data.replace("$!", "#!").replace("'", "\"").replace("Ã±", "ñ").replace("//pictures", "/pictures")
         url_servidores = item.url
         category_servidores = item.category
-        data_servidores = data                                              #salvamos data para verificar servidores, si es necesario
-    except:                                                                 #La web no responde.  Probemos las urls de emergencia
+        data_servidores = data                                                  #salvamos data para verificar servidores, si es necesario
+        data_servidores_stat = False
+    except:                                                                     #La web no responde.  Probemos las urls de emergencia
         pass
     
-    patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'               #Patron para .torrent
-    if not scrapertools.find_single_match(data, patron):
-        patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'          #Patron para .torrent (planetatorrent)
+    patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'           #Patron para .torrent
+    patron_mult = 'torrent:check:status|' + patron
+    if 'planetatorrent' in item.channel_host:
+        patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'      #Patron para .torrent (planetatorrent)
+    patron_mult += '|<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not data or not scrapertools.find_single_match(data, patron):
-        item = generictools.web_intervenida(item, data)                             #Verificamos que no haya sido clausurada
-        if item.intervencion:                                                       #Sí ha sido clausurada judicialmente
-            item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)      #Llamamos al método para el pintado del error
-            if item.emergency_urls:                                                 #Hay urls de emergencia?
-                item.url = item.emergency_urls[0]                                   #Guardamos la url del .Torrent
-                enlaces_ver = item.emergency_urls[1]                                #Guardamos los datos iniciales de los Servidores Directos
-                item.armagedon = True                                               #Marcamos la situación como catastrófica 
-            else:
-                return itemlist                                                     #Salimos
+    if not data or not scrapertools.find_single_match(data, patron) or not videolibrarytools.verify_url_torrent(scrapertools.find_single_match(data, patron)):                                                             # Si no hay datos o url, error
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
         else:
-            logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url + " / DATA: " + data)
-            
+            logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url + " / PATRON: " + patron + " / DATA: " + data)
+
+        if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
+            itemlist.append(item.clone(action='', title=item.category + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
+            item.url = item.emergency_urls[0][0]                                #Guardamos la url del .Torrent
+            try:
+                enlaces_ver = item.emergency_urls[1]                            #Guardamos los datos iniciales de los Servidores Directos
+            except:
+                pass
+            item.armagedon = True                                               #Marcamos la situación como catastrófica 
+            data = 'xyz123'                                                     #Para que no haga más preguntas
+        else:
             #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el vídeo
-            item, data = generictools.fail_over_newpct1(item, patron)
-    
+            item, data = generictools.fail_over_newpct1(item, patron_mult)
+
     if not data:                                                            #Si no ha logrado encontrar nada, verificamos si hay servidores
         cnt_servidores = 0
-        item.category = category_servidores                                         #restauramos valores originales
+        item.category = category_servidores                                     #restauramos valores originales
         item.url = url_servidores
         
         # Sistema de scrapeo de servidores creado por Torrentlocula, compatible con otros clones de Newpct1
@@ -1414,19 +1423,23 @@ def findvideos(item):
             #Miramos si ha servidores
             if not data_servidores:                                                 #Si no ha logrado encontrar nada nos vamos
                 itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.channel.capitalize() + '[/COLOR]: Ningún canal NewPct1 activo'))    
-                if item.emergency_urls:                                             #Hay urls de emergencia?
-                    item.url = str(item.emergency_urls[0]).replace ("'", "").replace ("[", "").replace ("]", "") #Guardamos la url del .Torrent
-                    enlaces_ver = item.emergency_urls[1]                            #Guardamos los datos iniciales de los Servidores Directos
-                    item.armagedon = True                                           #Marcamos la situación como catastrófica    
+                itemlist.append(item.clone(action='', title=item.category + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
+                if item.videolibray_emergency_urls:
+                    return item
                 else:
-                    itemlist.append(item.clone(action='', title=item.category + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
-                    return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+                    return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
         
         data = data_servidores                                                      #restauramos los datos
+        data_servidores_stat = True                                                 #Marcamos como que los hemos usado
 
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
     data = data.replace("$!", "#!").replace("'", "\"").replace("Ã±", "ñ").replace("//pictures", "/pictures")
 
+    # patrón para la url torrent
+    patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'               #Patron para .torrent
+    if not scrapertools.find_single_match(data, patron):
+        patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'          #Patron para .torrent (planetatorrent)
+    
     #buscamos el tamaño del .torrent
     size = scrapertools.find_single_match(data, '<div class="entry-left".*?><a href=".*?span class=.*?>Size:<\/strong>?\s(\d+?\.?\d*?\s\w[b|B])<\/span>')
     if not size:                                                                    #Para planetatorrent
@@ -1434,8 +1447,8 @@ def findvideos(item):
     size = size.replace(".", ",")                                                   #sustituimos . por , porque Unify lo borra
     if not size:
         size = scrapertools.find_single_match(item.quality, '\s?\[(\d+.?\d*?\s?\w\s?[b|B])\]')
-    if not size:
-        size = generictools.get_torrent_size(item.url)                              #Buscamos el tamaño en el .torrent
+    if not size and not item.armagedon:
+        size = generictools.get_torrent_size(scrapertools.find_single_match(data, patron))  #Buscamos el tamaño en el .torrent
     if size:
         item.title = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item.title)            #Quitamos size de título, si lo traía
         item.title = '%s [%s]' % (item.title, size)                                 #Agregamos size al final del título
@@ -1443,37 +1456,41 @@ def findvideos(item):
     item.quality = re.sub(r'\s\[\d+,?\d*?\s\w\s?[b|B]\]', '', item.quality)         #Quitamos size de calidad, si lo traía
     
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
-    item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
+    if not item.videolibray_emergency_urls:
+        item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Generamos una copia de Item para trabajar sobre ella
     item_local = item.clone()
     
-    # obtenemos la url torrent o usamos la de emergencia
-    if not item.armagedon:                                                              #Si es un proceso normal, seguimos
-        patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'               #Patron para .torrent
-        if not scrapertools.find_single_match(data, patron):
-            patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'          #Patron para .torrent (planetatorrent)
+    # Verificamos la url torrent o usamos la de emergencia
+    if not item.armagedon:
         item_local.url = scrapertools.find_single_match(data, patron)
-        if not item_local.url:                                                          #error
-            logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-            if item.emergency_urls:                                                     #Hay urls de emergencia?
-                item.url = item.emergency_urls[0]                                       #Guardamos la url del .Torrent
-                item.armagedon = True                                                   #Marcamos la situación como catastrófica 
+        if item_local.url == 'javascript:;': 
+            item_local.url = ''                                                         #evitamos url vacías
         item_local.url = item_local.url.replace(" ", "%20")                             #sustituimos espacios por %20, por si acaso
-        #logger.debug("Patron: " + patron + " url: " + item_local.url)
-        #logger.debug(data)
+    
+        if item_local.url and item.emergency_urls:                                      #la url no está verificada
+            item_local.torrent_alt = item.emergency_urls[0][0]                          #Guardamos la url del .Torrent ALTERNATIVA
+        
+    if not item_local.url:                                                              #error en url?
+        logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
+        if item.emergency_urls:                                                         #Hay urls de emergencia?
+            item.item_local = item.emergency_urls[0][0]                                 #Guardamos la url del .Torrent
+            item.armagedon = True                                                       #Marcamos la situación como catastrófica 
+            itemlist.append(item.clone(action='', title=item.category + ': [COLOR hotpink]Usando enlaces de emergencia[/COLOR]'))
+    
+    #logger.debug("Patron: " + patron + " url: " + item_local.url)
+    #logger.debug(data)
     
     #Si es un lookup para cargar las urls de emergencia en la Videoteca...
     if item.videolibray_emergency_urls:
+        if item.channel_host: del item.channel_host
         item.emergency_urls = []
-        url = item_local.url
-        if url == 'javascript:;':                                                       #No hay torrent...
-            url = ''                                                                    #... ignorar
-        item.emergency_urls.append([url])
+        item.emergency_urls.append([item_local.url])                                    #Guardamos el enlace del .torrent
     #... si no, ejecutamos el proceso normal
     else:
         #Ahora pintamos el link del Torrent, si lo hay
-        if item_local.url:		# Hay Torrent ?
+        if item_local.url:		                                                        # Hay Torrent ?
             if size:
                 quality = '%s [%s]' % (item_local.quality, size)                        #Agregamos size al final del título
             else:
@@ -1529,9 +1546,12 @@ def findvideos(item):
     if not item.armagedon:                                                  #Si es un proceso normal, seguimos
         enlaces_ver = re.compile(patron, re.DOTALL).findall(data)
     
-    if not enlaces_ver and item.emergency_urls[1]:                          #Si no hay enlaces, hay urls de emergencia?
-        enlaces_ver = item.emergency_urls[1]                                #Guardamos los datos iniciales de los Servidores Directos
-        item.armagedon = True                                               #Activamos el modo catástrofe
+    if not enlaces_ver:                                                     #Si no hay enlaces, hay urls de emergencia?
+        try:
+            enlaces_ver = item.emergency_urls[1]                            #Guardamos los datos iniciales de los Servidores Directos
+            item.armagedon = True                                           #Activamos el modo catástrofe
+        except:
+            pass
         
     enlaces_descargar = enlaces_ver
     #logger.debug(enlaces_ver)
