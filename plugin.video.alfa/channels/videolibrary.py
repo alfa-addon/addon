@@ -55,8 +55,11 @@ def list_movies(item, silent=False):
                 new_item.path = raiz
                 new_item.thumbnail = new_item.contentThumbnail
                 new_item.text_color = "blue"
+                strm_path = new_item.strm_path.replace("\\", "/").rstrip("/")
+                if '/' in new_item.path:
+                    new_item.strm_path = strm_path
 
-                if not filetools.exists(filetools.join(new_item.path, filetools.basename(new_item.strm_path))):
+                if not filetools.exists(filetools.join(new_item.path, filetools.basename(strm_path))):
                     # Si se ha eliminado el strm desde la bilbioteca de kodi, no mostrarlo
                     continue
 
