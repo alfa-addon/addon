@@ -450,7 +450,7 @@ def findvideos(item):
         if scrapedurl.startswith("https://cloud.pelispedia.vip/html5.php") or scrapedurl.startswith("https://cloud.pelispedia.stream/html5.php"):
             parms = dict(re.findall('[&|\?]{1}([^=]*)=([^&]*)', scrapedurl))
             for cal in ['360', '480', '720', '1080']:
-                if parms[cal]:
+                if cal in parms:
                     url_v = 'https://pelispedia.video/v.php?id=%s&sub=%s&active=%s' % (parms[cal], parms['sub'], cal)
                     title = "Ver video en [HTML5 " + cal + "p]"
                     new_item = item.clone(title=title, url=url_v, action="play", referer=item.url)
@@ -505,7 +505,8 @@ def play(item):
 
     elif item.url.startswith("https://load.pelispedia.vip/embed/"):
         # 1- Descargar
-        data, ck = gktools.get_data_and_cookie(item)
+        # ~ data, ck = gktools.get_data_and_cookie(item)
+        data, ck_sucuri, ck_cfduid = obtener_data_cookies(item.url, item.referer)
 
         # 2- Calcular datos
         gsv = scrapertools.find_single_match(data, '<meta name="google-site-verification" content="([^"]*)"')
@@ -519,7 +520,8 @@ def play(item):
         url = item.url.replace('/embed/', '/stream/') + '/' + token
 
         # 3- Descargar página
-        data = gktools.get_data_with_cookie(url, ck, item.url)
+        # ~ data = gktools.get_data_with_cookie(url, ck, item.url)
+        data, ck_sucuri, ck_cfduid = obtener_data_cookies(url, item.url, ck_sucuri, ck_cfduid)
 
         # 4- Extraer enlaces
         url = scrapertools.find_single_match(data, '<meta (?:name|property)="og:url" content="([^"]+)"')
@@ -555,6 +557,39 @@ def obtener_data(url, referer=''):
         logger.info("Añadida cookie %s con valor %s" % (cks[0], cks[1]))
 
     return data
+
+def obtener_data_cookies(url, referer='', ck_sucuri = '', ck_cfduid = ''):
+
+    headers = {}
+    if referer != '': headers['Referer'] = referer
+    if ck_sucuri != '' and ck_cfduid != '': headers['Cookie'] = ck_sucuri + '; __cfduid=' + ck_cfduid
+    elif ck_sucuri != '': headers['Cookie'] = ck_sucuri
+    elif ck_cfduid != '': headers['Cookie'] = '__cfduid=%s' % ck_cfduid
+
+    resp = httptools.downloadpage(url, headers=headers, cookies=False)
+    if ck_cfduid == '': ck_cfduid = obtener_cfduid(resp.headers)
+
+    if "Javascript is required" in resp.data:
+        ck_sucuri = decodificar_cookie(resp.data)
+        logger.info("Javascript is required. Cookie necesaria %s" % ck_sucuri)
+        
+        headers['Cookie'] = ck_sucuri
+        if ck_cfduid != '': headers['Cookie'] += '; __cfduid=%s' % ck_cfduid
+
+        resp = httptools.downloadpage(url, headers=headers, cookies=False)
+        if ck_cfduid == '': ck_cfduid = obtener_cfduid(resp.headers)
+
+    return resp.data, ck_sucuri, ck_cfduid
+
+def obtener_cfduid(headers):
+    ck_name = '__cfduid'
+    ck_value = ''
+    for h in headers:
+        ck = scrapertools.find_single_match(headers[h], '%s=([^;]*)' % ck_name)
+        if ck:
+            ck_value = ck
+            break
+    return ck_value
 
 
 def rshift(val, n): return val>>n if val >= 0 else (val+0x100000000)>>n

@@ -111,12 +111,22 @@ def search_section(item, data, sectionType):
 
     itemlist = []
     for url, thumbnail, title in sectionResultsRE:
+        filtro_list = {"poster_path": scrapertools.find_single_match(thumbnail, "w\w+(/\w+.....)")}
+
         newitem = item.clone(action = "seasons" if sectionType == "series" else "findvideos",
                              title = title,
                              thumbnail = thumbnail,
-                             url = url)
-        if sectionType == "series":
-            newitem.show = title;
+                             url = url, 
+                             infoLabels = {'filtro': filtro_list.items(), 'year': '-'})
+
+        if sectionType == 'series':
+            newitem.show = title
+            newitem.contentType = 'tvshow'
+            newitem.contentSerieName = title
+        else:
+            newitem.contentType = 'movie'
+            newitem.contentTitle = title
+
         itemlist.append(newitem)
 
     return itemlist
