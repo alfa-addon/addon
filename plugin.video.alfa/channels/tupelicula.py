@@ -141,8 +141,15 @@ def findvideos(item):
         hidden_url = get_source('%splayer/rep/%s' % (host, scraped_id), player)
         url = scrapertools.find_single_match(hidden_url, 'iframe src=.?"([^"]+)"').replace('\\','')
         lang = get_language(lang_data)
-        itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language=lang,
-                             infoLabels=item.infoLabels))
+
+        if not config.get_setting('unify'):
+            title = ' %s' % lang
+        else:
+            title = ''
+
+        if url != '':
+            itemlist.append(Item(channel=item.channel, title='%s'+title, url=url, action='play', language=lang,
+                                 infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
