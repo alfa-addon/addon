@@ -4,7 +4,6 @@
 # --------------------------------------------------------
 
 import re
-import urllib
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -29,12 +28,14 @@ def get_video_url(page_url, premium = False, user = "", password = "", video_pas
     headers = {'referer': page_url}
     for i in range(0, 3):
         data = httptools.downloadpage(page_url, headers=headers).data
-        data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-        if '<input type=hidden' in data:
+        if 'ﾟωﾟﾉ' in data:
             break
         else:
-            page_url = scrapertools.find_single_match(data, "iframe src=(.*?) scrolling")
-    code = re.findall('<script>\s*ﾟωﾟ(.*?)</script>', data, flags=re.DOTALL)[0]
+            page_url = scrapertools.find_single_match(data, '"iframe" src="([^"]+)')
+            if not page_url:
+                page_url = scrapertools.find_single_match(data, '<input type="hidden" id="link" value="([^"]+)')
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    code = scrapertools.find_single_match(data, '(?s)<script>\s*ﾟωﾟ(.*?)</script>').strip()
     text_decode = aadecode(code)
     funcion, clave = re.findall("func\.innerHTML = (\w*)\('([^']*)', ", text_decode, flags=re.DOTALL)[0]
     # decodificar javascript en campos html hidden

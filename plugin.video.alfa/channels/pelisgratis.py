@@ -45,7 +45,7 @@ thumbletras = {'#': 'https://s32.postimg.cc/drojt686d/image.png',
 audio = {'Latino': '[COLOR limegreen]LATINO[/COLOR]', 'Español': '[COLOR yellow]ESPAÑOL[/COLOR]',
          'Sub Español': '[COLOR red]SUB ESPAÑOL[/COLOR]'}
 
-host = 'http://pelisgratis.tv/'
+host = 'http://pelisgratis.me/'
 
 
 def mainlist(item):
@@ -187,9 +187,9 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<div class=TPlayerTb.Current id=(.*?)>.*?src=(.*?) frameborder'
+    data = data.replace("&lt;","<").replace("&quot;",'"').replace("&gt;",">").replace("&amp;","&").replace('\"',"")
+    patron = '<div class=TPlayerTb.*?id=(.*?)>.*?src=(.*?) frameborder'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    base_link = 'https://repros.live/player/ajaxdata'
     for opt, urls_page in matches:
         language = scrapertools.find_single_match (data,'TPlayerNv>.*?tplayernv=%s><span>Opción.*?<span>(.*?)</span>' % opt)
         headers = {'referer':item.url}
@@ -197,18 +197,11 @@ def findvideos(item):
             urls_page = scrapertools.decodeHtmlentities(urls_page)
             sub_data=httptools.downloadpage(urls_page).data
             urls_page = scrapertools.find_single_match(sub_data, 'src="(.*?)" ')
-        video_data = httptools.downloadpage(urls_page, headers=headers).data
-        servers = scrapertools.find_multiple_matches(video_data,'data-player="(.*?)" data-embed="(.*?)">')
-        for server, code in servers:
-            post = {'codigo':code}
-            post = urllib.urlencode(post)
-            video_json=jsontools.load(httptools.downloadpage('https://repros.live/player/ajaxdata', post=post).data)
-            url = video_json['url']
-            itemlist.append(item.clone(title='[%s][%s]',
-                                       url=url,
-                                       action='play',
-                                       language=language,
-                                       ))
+        itemlist.append(item.clone(title='[%s][%s]',
+                                   url=urls_page,
+                                   action='play',
+                                   language=language,
+                                   ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % (x.server.capitalize(), x.language))
     return itemlist
 

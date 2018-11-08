@@ -309,10 +309,10 @@ def listado(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    itemlist_t = []                                     #Itemlist total de enlaces
-    itemlist_f = []                                     #Itemlist de enlaces filtrados
+    itemlist_t = []                                                             #Itemlist total de enlaces
+    itemlist_f = []                                                             #Itemlist de enlaces filtrados
     if not item.language:
-        item.language = ['CAST']                        #Castellano por defecto
+        item.language = ['CAST']                                                #Castellano por defecto
 
     #Bajamos los datos de la página
     data = ''
@@ -324,8 +324,35 @@ def findvideos(item):
     if not data:
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
-        return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
+            link_torrent = item.emergency_urls[0][0]                            #Guardamos la url del .Torrent
+            link_magnet = item.emergency_urls[1][0]                             #Guardamos la url del .Magnet
+            item.armagedon = True                                               #Marcamos la situación como catastrófica 
+        else:
+            if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
+                return item                                                     #Devolvemos el Item de la llamada
+            else:
+                return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
     #data = unicode(data, "utf-8", errors="replace")
+
+    patron_t = '<div class="enlace_descarga".*?<a href="(.*?\.torrent)"'
+    patron_m = '<div class="enlace_descarga".*?<a href="(magnet:?.*?)"'
+    if not item.armagedon:                                                      #Si es un proceso normal, seguimos
+        link_torrent = scrapertools.find_single_match(data, patron_t)
+        link_torrent = urlparse.urljoin(item.url, link_torrent)
+        link_torrent = link_torrent.replace(" ", "%20")                         #sustituimos espacios por %20, por si acaso
+        #logger.info("link Torrent: " + link_torrent)
+        
+        link_magnet = scrapertools.find_single_match(data, patron_m)
+        link_magnet = urlparse.urljoin(item.url, link_magnet)
+        #logger.info("link Magnet: " + link_magnet)
+    
+    #Si es un lookup para cargar las urls de emergencia en la Videoteca...
+    if (link_torrent or link_magnet) and item.videolibray_emergency_urls:
+        item.emergency_urls = []
+        item.emergency_urls.append([link_torrent])                              #Salvamos el enlace de .torrent
+        item.emergency_urls.append([link_magnet])                               #Salvamos el enlace de .magnet
+        return item                                                             #... y nos vamos
     
     #Añadimos el tamaño para todos
     size = scrapertools.find_single_match(item.quality, '\s\[(\d+,?\d*?\s\w\s?[b|B]s)\]')
@@ -333,32 +360,28 @@ def findvideos(item):
         item.title = re.sub('\s\[\d+,?\d*?\s\w[b|B]s\]', '', item.title)        #Quitamos size de título, si lo traía
         item.title = '%s [%s]' % (item.title, size)                             #Agregamos size al final del título
         item.quality = re.sub('\s\[\d+,?\d*?\s\w\s?[b|B]s\]', '', item.quality) #Quitamos size de calidad, si lo traía
-
-    patron_t = '<div class="enlace_descarga".*?<a href="(.*?\.torrent)"'
-    link_torrent = scrapertools.find_single_match(data, patron_t)
-    link_torrent = urlparse.urljoin(item.url, link_torrent)
-    link_torrent = link_torrent.replace(" ", "%20")                             #sustituimos espacios por %20, por si acaso
-    #logger.info("link Torrent: " + link_torrent)
-    
-    patron_m = '<div class="enlace_descarga".*?<a href="(magnet:?.*?)"'
-    link_magnet = scrapertools.find_single_match(data, patron_m)
-    link_magnet = urlparse.urljoin(item.url, link_magnet)
-    #logger.info("link Magnet: " + link_magnet)
     
     if not link_torrent and not link_magnet:                                    #error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
             item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
-            return itemlist                                                     #Salimos
-            
-        logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron_t + " / " + patron_m + " / DATA: " + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log'))
-        return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        else:
+            logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron_t + " / " + patron_m + " / DATA: " + data)
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log'))
+        if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
+            link_torrent = item.emergency_urls[0][0]                            #Guardamos la url del .Torrent
+            link_magnet = item.emergency_urls[1][0]                             #Guardamos la url del .Magnet
+            item.armagedon = True                                               #Marcamos la situación como catastrófica 
+        else:
+            if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
+                return item                                                     #Devolvemos el Item de la llamada
+            else:
+                return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
     
-    if not size:
+    if not size and not item.armagedon:
         size = generictools.get_torrent_size(link_torrent)                      #Buscamos el tamaño en el .torrent
     if size:
         item.quality = '%s [%s]' % (item.quality, size)                         #Agregamos size al final de calidad
@@ -372,7 +395,12 @@ def findvideos(item):
         if item_local.quality:
             item_local.quality += " "
         item_local.quality += "[Torrent]"
+        if item.armagedon:                                                      #Si es catastrófico, lo marcamos
+            item_local.quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % item_local.quality
         item_local.url = link_torrent
+        if item_local.url and not item.armagedon:
+            item_local.torrent_alt = item.emergency_urls[0][0]                  #Guardamos la url del .Torrent ALTERNATIVA
+        
         item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))        #Preparamos título de Torrent
         
         #Preparamos título y calidad, quitamos etiquetas vacías
@@ -411,6 +439,8 @@ def findvideos(item):
         if item_local.quality:
             item_local.quality += " "
         item_local.quality = item_local.quality.replace("[Torrent]", "") + "[Magnet]"
+        if item.armagedon:                                                      #Si es catastrófico, lo marcamos
+            item_local.quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % item_local.quality
         item_local.url = link_magnet
         item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))        #Preparamos título de Magnet
         item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title)    #Quitamos etiquetas vacías

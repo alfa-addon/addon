@@ -113,7 +113,6 @@ def lista(item):
         data_lista = scrapertools.find_single_match(data, 
              '<div class="items">(.+?)<\/div><\/div><div class=.+?>')
     patron = '<img src="([^"]+)" alt="([^"]+)">.+?<a href="([^"]+)">.+?<div class="texto">(.+?)<\/div>'
-    #scrapedthumbnail,#scrapedtitle, #scrapedurl, #scrapedplot
     matches = scrapertools.find_multiple_matches(data_lista, patron)
     for scrapedthumbnail,scrapedtitle, scrapedurl, scrapedplot in matches:
         if item.title=="Peliculas Animadas":
@@ -134,13 +133,13 @@ def episodios(item):
     itemlist = []
     infoLabels = {}
     data = httptools.downloadpage(item.url).data
-    patron = '(?s)<ul class="episodios">(.+?)<\/ul>'
+    patron = '(?s)<ul class="episodios">(.+?)<span>Compartido'
     data_lista = scrapertools.find_single_match(data,patron)
     contentSerieName = item.title
     patron_caps  = 'href="([^"]+)".*?'
     patron_caps += 'src="([^"]+)".*?'
     patron_caps += 'numerando">([^<]+).*?'
-    patron_caps += 'link_go">.*?>([^<]+)'
+    patron_caps += 'episodiotitle">.*?>([^<]+)'
     matches = scrapertools.find_multiple_matches(data_lista, patron_caps)
     for scrapedurl, scrapedthumbnail, scrapedtempepi, scrapedtitle in matches:
         tempepi=scrapedtempepi.split(" - ")
@@ -161,25 +160,26 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<div id="playex" .+?>(.+?)<\/nav>'
-    data1 = scrapertools.find_single_match(data, patron)
-    patron = "changeLink\('([^']+)'\)"
-    matches = scrapertools.find_multiple_matches(data1, patron)
-    for url64 in matches:
-        url1 =base64.b64decode(url64)
-        if 'danimados' in url1:
-            url = 'https:'+url1.replace('stream/', 'stream_iframe/')
-            id = scrapertools.find_single_match(url, 'iframe/(.*)')
-            url = url.replace(id, base64.b64encode(id))
-            new_data = httptools.downloadpage(url).data
-            new_data = new_data.replace('"',"'")
-            url = scrapertools.find_single_match(new_data, "sources:\s*\[\{file:\s*'([^']+)")
-            if "zkstream" in url or "cloudup" in url:
-                url1 = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
-            else:
-                url1 = url
-        if url1:
-            itemlist.append(item.clone(title='%s',url=url1, action="play"))
+    if "onclick=\"changeLink('" in data:
+        patron  = "onclick=.changeLink\('([^']+)'"
+        matches = scrapertools.find_multiple_matches(data, patron)
+        for id in matches:
+            url = devuelve_enlace(base64.b64decode(id))
+            itemlist.append(item.clone(title="Ver en %s",url=url, action="play"))
+    else:
+        patron  = 'data-type="([^"]+).*?'
+        patron += 'data-post="([^"]+).*?'
+        patron += 'data-nume="([^"]+).*?'
+        patron += 'server">([^<]+).*?'
+        matches = scrapertools.find_multiple_matches(data, patron)
+        headers = {"X-Requested-With":"XMLHttpRequest"}
+        for scrapedtype, scrapedpost, scrapednume, scrapedserver in matches:
+            post = "action=doo_player_ajax&type=%s&post=%s&nume=%s" %(scrapedtype, scrapedpost, scrapednume)
+            data1 = httptools.downloadpage(host + "wp-admin/admin-ajax.php", headers=headers, post=post).data
+            url1 = scrapertools.find_single_match(data1, "src='([^']+)")
+            url1 = devuelve_enlace(url1)
+            if url1:
+               itemlist.append(item.clone(title="Ver en %s",url=url1, action="play"))
     tmdb.set_infoLabels(itemlist)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentType=="movie" and item.contentChannel!='videolibrary':
@@ -193,3 +193,18 @@ def findvideos(item):
 def play(item):
     item.thumbnail = item.contentThumbnail
     return [item]
+
+
+def devuelve_enlace(url1):
+    if 'danimados' in url1:
+        url = 'https:'+url1.replace('stream/', 'stream_iframe/')
+        id = scrapertools.find_single_match(url, 'iframe/(.*)')
+        url = url.replace(id, base64.b64encode(id))
+        new_data = httptools.downloadpage(url).data
+        new_data = new_data.replace('"',"'")
+        url = scrapertools.find_single_match(new_data, "sources:\s*\[\{file:\s*'([^']+)")
+        if "zkstream" in url or "cloudup" in url:
+            url1 = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
+        else:
+            url1 = url
+    return url1

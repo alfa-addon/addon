@@ -22,8 +22,7 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
     # PELICULAS
-    itemlist.append(Item(channel = item.channel, title = "Peliculas", folder=False, 
-        thumbnail = get_thumb("movies", auto = True), text_bold=True))
+    itemlist.append(Item(channel = item.channel, title = "--- Peliculas ---", folder=False, text_bold=True))
 
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "movies", 
         url = host + "pelicula", thumbnail = get_thumb("newest", auto = True)))
@@ -37,8 +36,7 @@ def mainlist(item):
         url = host + "search/", thumbnail = get_thumb("search", auto = True)))
 
     # SERIES
-    itemlist.append(Item(channel = item.channel, title = "Series", folder=False, 
-        thumbnail = get_thumb("tvshows", auto = True), text_bold=True))
+    itemlist.append(Item(channel = item.channel, title = "--- Series ---", folder=False, text_bold=True))
 
     itemlist.append(Item(channel = item.channel, title = "Todas las Series", action = "shows", 
         url = host + "listar-series", thumbnail = get_thumb("tvshows", auto = True)))
@@ -62,6 +60,11 @@ def load_data(url):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
 
     return data
+
+def redirect_url(url, parameters=None):
+    data = httptools.downloadpage(url, post=parameters)
+    logger.info(data.url)
+    return data.url
 
 def put_movies(itemlist, item, data, pattern):
     matches = scrapertools.find_multiple_matches(data, pattern)
@@ -201,7 +204,25 @@ def age(item):
 def GKPluginLink(hash):
     hashdata = urllib.urlencode({r'link':hash})
     json = httptools.downloadpage('https://player4.cuevana2.com/plugins/gkpluginsphp.php', post=hashdata).data
-    return jsontools.load(json)['link'] if json else ''
+    logger.info(jsontools.load(json))
+
+    data = jsontools.load(json) if json else False
+    if data:
+        return data['link'] if 'link' in data else None
+    else:
+        return None
+
+def RedirectLink(hash):
+    hashdata = urllib.urlencode({r'url':hash})
+    return redirect_url('https://player4.cuevana2.com/r.php', hashdata)
+
+def OpenloadLink(hash):
+    hashdata = urllib.urlencode({r'h':hash})
+    json = httptools.downloadpage('https://api.cuevana2.com/openload/api.php', post=hashdata).data
+    logger.info("CUEVANA OL JSON %s" % json)
+    data = jsontools.load(json) if json else False
+
+    return data['url'] if data['status'] == 1 else None
 
 #el pattern esta raro para eliminar los duplicados, de todas formas asi es un lenguaje de programacion verificando su sintaxis
 def getContentMovie(data, item):
@@ -235,27 +256,39 @@ def findvideos(item):
     pattern = '<iframe width="650" height="450" scrolling="no" src="([^"]+)'
     subtitles = scrapertools.find_single_match(data, '<iframe width="650" height="450" scrolling="no" src=".*?sub=([^"]+)"')
 
+    title = "[COLOR blue]Servidor [%s][/COLOR]"
     #itemlist.append(Item(channel = item.channel, title=item.url))
     for link in scrapertools.find_multiple_matches(data, pattern):
         #php.*?=(\w+)&
         #url=(.*?)&
         if 'player4' in link:
+            # Por si acaso están los dos metodos, de todas maneras esto es corto circuito
             if r'ir.php' in link:
                 link = scrapertools.find_single_match(link, 'php\?url=(.*?)&').replace('%3A', ':').replace('%2F', '/')
                 logger.info("CUEVANA IR %s" % link)
+            elif r'irgoto.php' in link:
+                link = scrapertools.find_single_match(link, 'php\?url=(.*?)&').replace('%3A', ':').replace('%2F', '/')
+                link = RedirectLink(link)
+                logger.info("CUEVANA IRGOTO %s" % link)
             elif r'gdv.php' in link:
                 # google drive hace lento la busqueda de links, ademas no es tan buena opcion y es el primero que eliminan
                 continue
             else:
                 link = scrapertools.find_single_match(link, 'php.*?=(\w+)&')
                 link = GKPluginLink(link)
-                if not link:
-                    continue
             
-            title = "[COLOR blue]Servidor [%s][/COLOR]"
+        elif 'openload' in link:
+            link = scrapertools.find_single_match(link, '\?h=(\w+)&')
+            logger.info("CUEVANA OL HASH %s" % link)
+            link = OpenloadLink(link) 
+            logger.info("CUEVANA OL %s" % link)
+
         elif 'youtube' in link:
             title = "[COLOR yellow]Ver Trailer (%s)[/COLOR]"
         else: # En caso de que exista otra cosa no implementada, reportar si no aparece pelicula
+            continue
+
+        if not link:
             continue
 
         # GKplugin puede devolver multiples links con diferentes calidades, si se pudiera colocar una lista de opciones
@@ -265,6 +298,9 @@ def findvideos(item):
         if r'chomikuj.pl' in link:
             # En algunas personas la opcion CH les da error 401
             link += "|Referer=https://player4.cuevana2.com/plugins/gkpluginsphp.php" 
+        elif r'vidcache.net' in link:
+            # Para que no salga error 500
+            link += '|Referer=https://player4.cuevana2.com/yourupload.com.php'
 
         itemlist.append(
             item.clone(

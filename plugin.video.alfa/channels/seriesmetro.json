@@ -1,10 +1,10 @@
 {
-  "id": "seriesblancoxyz",
-  "name": "SeriesBlanco.xyz",
+  "id": "seriesmetro",
+  "name": "SeriesMetro",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
-  "thumbnail": "https://s22.postimg.cc/nucz720sx/image.png",
+  "language": ["lat", "cast"],
+  "thumbnail": "https://i.postimg.cc/Kzh6DCqD/seriesmetro.png",
   "banner": "",
   "categories": [
     "tvshow",
@@ -27,12 +27,17 @@
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "No filtrar",
-		"Cast",
-		"Lat",
-        "VOSE",
-        "VO"
+        "No filtrar"
       ]
+    },
+    {
+      "id": "comprueba_enlaces_num",
+      "type": "list",
+      "label": "Número de enlaces a verificar",
+      "default": 1,
+      "enabled": true,
+      "visible": "eq(-1,true)",
+      "lvalues": [ "5", "10", "15", "20" ]
     }
   ]
 }

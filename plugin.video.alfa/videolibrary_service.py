@@ -17,6 +17,7 @@ def update(path, p_dialog, i, t, serie, overwrite):
     insertados_total = 0
       
     head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')
+    category = serie.category
 
     # logger.debug("%s: %s" %(serie.contentSerieName,str(list_canales) ))
     for channel, url in serie.library_urls.items():
@@ -28,6 +29,7 @@ def update(path, p_dialog, i, t, serie, overwrite):
             head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')         #Refresca el .nfo para recoger actualizaciones
             if it.emergency_urls:
                 serie.emergency_urls = it.emergency_urls
+            serie.category = category
             serie, it, overwrite = generictools.redirect_clone_newpct1(serie, head_nfo, it, path, overwrite)
         except:
             pass
