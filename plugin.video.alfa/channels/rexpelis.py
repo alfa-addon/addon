@@ -83,6 +83,7 @@ def sub_search(item):
     data = httptools.downloadpage(item.url + "&_token=" + token, headers=headers).data
     data_js = jsontools.load(data)["data"]["m"]
     for js in data_js:
+        js["title"] = quitano(js["title"])
         itemlist.append(Item(channel = item.channel,
                              action = "findvideos",
                              contentTitle = js["title"],
@@ -113,6 +114,7 @@ def peliculas_gen(item):
     patron += '<p>([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedyear, scrapedtitle in matches:
+        scrapedtitle = quitano(scrapedtitle)
         itemlist.append(Item(channel = item.channel,
                              action = "findvideos",
                              contentTitle = scrapedtitle,
@@ -136,6 +138,7 @@ def estrenos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedyear, scrapedtitle in matches:
         scrapedtitle = scrapedtitle.replace("Película ","")
+        scrapedtitle = quitano(scrapedtitle)
         itemlist.append(Item(channel = item.channel,
                              action = "findvideos",
                              contentTitle = scrapedtitle,
@@ -166,6 +169,7 @@ def peliculas(item):
     patron += '<p>([^<]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedyear, scrapedtitle in matches:
+        scrapedtitle = quitano(scrapedtitle)
         itemlist.append(Item(channel = item.channel,
                              action = "findvideos",
                              contentTitle = scrapedtitle,
@@ -301,3 +305,9 @@ def play(item):
     itemlist = servertools.get_servers_itemlist(itemlist)
     item.thumbnail = item.contentThumbnail
     return itemlist
+
+
+def quitano(title):
+    # Quita el año que muestran en el título en la página, para que funcione bien tmdb
+    t = title.replace(scrapertools.find_single_match(title, '\(\s*\d{4}\)'),"")
+    return t.strip()

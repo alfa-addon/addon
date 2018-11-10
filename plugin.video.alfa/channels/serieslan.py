@@ -147,25 +147,24 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-
     _sa = scrapertools.find_single_match(data, 'var _sa = (true|false);')
     _sl = scrapertools.find_single_match(data, 'var _sl = ([^;]+);')
     sl = eval(_sl)
+    #buttons = scrapertools.find_multiple_matches(data, '<button href="" class="selop" sl="([^"]+)">([^<]+)</button>')
 
-    buttons = scrapertools.find_multiple_matches(data, '<button href="" class="selop" sl="([^"]+)">([^<]+)</button>')
-    for id, title in buttons:
-        new_url = golink(int(id), _sa, sl)
-        data = httptools.downloadpage(new_url).data
-        _x0x = scrapertools.find_single_match(data, 'var x0x = ([^;]+);')
-        x0x = eval(_x0x)
+    #for id, title in buttons:
+    new_url = golink(0, _sa, sl)
+    data = httptools.downloadpage(new_url).data
+    _x0x = scrapertools.find_single_match(data, 'var x0x = ([^;]+);')
+    x0x = eval(_x0x)
 
-        url = resolve(x0x[4], base64.b64decode(x0x[1]))
-        if 'download' in url:
-            url = url.replace('download', 'preview')
-        title = '%s'
+    url = resolve(x0x[4], base64.b64decode(x0x[1]))
+    if 'download' in url:
+        url = url.replace('download', 'preview')
+    title = '%s'
 
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language='latino',
-                             infoLabels=item.infoLabels))
+    itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language='latino',
+                         infoLabels=item.infoLabels))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 
     # Requerido para FilterTools

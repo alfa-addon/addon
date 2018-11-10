@@ -22,11 +22,12 @@ def test_video_exists(page_url):
 def get_video_url(page_url, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
+    data1 = httptools.downloadpage("https://xdrive.cc/geo_ip").data
+    _ip = scrapertools.find_single_match(data1, 'ip":"([^"]+)')
     data = httptools.downloadpage(page_url).data
-    videourl = scrapertools.find_multiple_matches(data, "src: '([^']+).*?label: '([^']+)")
-    scrapertools.printMatches(videourl)
-    for scrapedurl, scrapedquality in videourl:
-        scrapedquality = scrapedquality.replace("&uarr;","")
-        video_urls.append([scrapedquality + " [xdrive]", scrapedurl])
-    video_urls.sort(key=lambda it: int(it[0].split("P ", 1)[0]))
+    video_id = scrapertools.find_single_match(data, '&video_id=(\d+)')
+    data = httptools.downloadpage("https://xdrive.cc/secure_link?ip=%s&video_id=%s" %(_ip, video_id)).data.replace("\\","")
+    videourl = scrapertools.find_multiple_matches(data, '"([^"]+)"')
+    for scrapedurl in videourl:
+        video_urls.append(["[xdrive]", scrapedurl])
     return video_urls
