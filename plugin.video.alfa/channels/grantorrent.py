@@ -427,41 +427,66 @@ def findvideos(item):
     
     #logger.debug(item)
 
+    timeout_find = timeout
+    if item.videolibray_emergency_urls:                 #Si se están cacheando enlaces aumentamos el timeout
+        timeout_find = timeout * 2
+    elif item.emergency_urls:                           #Si se llama desde la Videoteca con enlaces cacheados... 
+        timeout_find = timeout / 2                      #reducimos el timeout antes de saltar a los enlaces cacheados
+        
     #Bajamos los datos de la página
     data = ''
     try:
-        data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, timeout=timeout_find).data)
     except:
         pass
         
     if not data:
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
-        return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
+            matches = item.emergency_urls[1]                                    #Guardamos los matches de los .Torrent
+            item.armagedon = True                                               #Marcamos la situación como catastrófica 
+        else:
+            if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
+                return item                                                     #Devolvemos el Item de la llamada
+            else:
+                return itemlist                                                 #salimos
     data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     data = scrapertools.find_single_match(data, 'div id="Tokyo" [^>]+>(.*?)</div>')     #Seleccionamos la zona de links
     
     patron = '\/icono_.*?png" title="(?P<lang>.*?)?" [^>]+><\/td><td>(?P<quality>.*?)?<?\/td>.*?<td>(?P<size>.*?)?<\/td><td><a class="link" href="(?P<url>.*?)?"'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    if not item.armagedon:                                                      #Si es un proceso normal, seguimos
+        matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                                             #error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
             item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
-            return itemlist                                                     #Salimos
-        
-        logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log'))
-        return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        else:
+            logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log'))
+        if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
+            matches = item.emergency_urls[1]                                    #Guardamos los matches de los .Torrent
+            item.armagedon = True                                               #Marcamos la situación como catastrófica 
+        else:
+            if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
+                return item                                                     #Devolvemos el Item de la llamada
+            else:
+                return itemlist                                                 #salimos
             
     #logger.debug("PATRON: " + patron)
     #logger.debug(matches)
     #logger.debug(data)
-    
+
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora recorremos todos los links por calidades
+    if item.videolibray_emergency_urls:                                         #Viene de un lookup desde episodios para cachear enlaces
+        emergency_torrents = []
+        emergency_urls = []
+    i = -1
     for lang, quality, size, scrapedurl in matches:
+        i += 1
         temp_epi = ''
         if scrapertools.find_single_match(quality, '\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)'):
             password = scrapertools.find_single_match(quality, '\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)')
@@ -500,6 +525,12 @@ def findvideos(item):
             if (contentSeason != item.contentSeason or contentEpisodeNumber != item.contentEpisodeNumber) and item.contentEpisodeNumber != 0:
                 continue                        #si no son iguales, lo ignoramos
 
+        #Si es un looup desde episodios para cachear enlaces, lo salvamos en este momento
+        if item.videolibray_emergency_urls:
+            emergency_torrents.append(scrapedurl)
+            emergency_urls.append(matches[i])
+            continue
+        
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
         
@@ -527,7 +558,7 @@ def findvideos(item):
             item_local.quality = '%s [/COLOR][COLOR white][%s h]' % (item_local.quality, scrapertools.find_single_match(item.quality, '(\d+:\d+)'))
         
         #if size and item_local.contentType != "episode":
-        if not size:
+        if not size and not item.armagedon:
             size = generictools.get_torrent_size(scrapedurl)                            #Buscamos el tamaño en el .torrent
         if size:
             size = size.replace(".", ",").replace("B,", " B").replace("b,", " b")
@@ -544,8 +575,13 @@ def findvideos(item):
         #Salvamos la url del .torrent
         if scrapedurl:
             item_local.url = scrapedurl
+            if item_local.emergency_urls and not item.armagedon:
+                item_local = find_torrent_alt(item_local)                       #Si hay enlaces de emergencia los usamos como alternativos
+            if item.armagedon:                                                  #Si es catastrófico, lo marcamos
+                item_local.url = item.emergency_urls[0][i]
+                item_local.quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % item_local.quality
             item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))     #Preparamos título de Torrent
-            
+
             #Preparamos título y calidad, quitamos etiquetas vacías
             item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
             item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
@@ -554,19 +590,26 @@ def findvideos(item):
             item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality)
             item_local.quality = item_local.quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
             
-            item_local.alive = "??"                                                     #Calidad del link sin verificar
-            item_local.action = "play"                                                  #Visualizar vídeo
-            item_local.server = "torrent"                                               #Seridor Torrent
+            item_local.alive = "??"                                             #Calidad del link sin verificar
+            item_local.action = "play"                                          #Visualizar vídeo
+            item_local.server = "torrent"                                       #Seridor Torrent
         
             itemlist_t.append(item_local.clone())                               #Pintar pantalla, si no se filtran idiomas
         
             # Requerido para FilterTools
-            if config.get_setting('filter_languages', channel) > 0:                 #Si hay idioma seleccionado, se filtra
+            if config.get_setting('filter_languages', channel) > 0:             #Si hay idioma seleccionado, se filtra
                 itemlist_f = filtertools.get_link(itemlist_f, item_local, list_language)    #Pintar pantalla, si no está vacío
             
         #logger.debug("TORRENT: " + item_local.url + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality)
         #logger.debug(item_local)
 
+    if item.videolibray_emergency_urls:                                         #Viene de un lookup desde episodios para cachear enlaces
+        if len(emergency_torrents) > 0:
+            item.emergency_urls = []                                            #Le damos el formato estandar: lista de listas de tuplas
+            item.emergency_urls.append(emergency_torrents)                      #Devolvemos las urls de .torrents cacheadas
+            item.emergency_urls.append(emergency_urls)                          #Devolvemos los matches cacheados
+        return item
+    
     if len(itemlist_f) > 0:                                                     #Si hay entradas filtradas...
         itemlist.extend(itemlist_f)                                             #Pintamos pantalla filtrada
     else:                                                                       
@@ -651,26 +694,29 @@ def episodios(item):
                         if item.library_playcounts["season %d" % s] < temp_actual_num:    #Si menor que actual, es Temp.
                             item.contentType = "season"
                         else:
-                            item.contentType = "tvshow"     #No es Temporada 1, pero es más baja que la actual.  Es Serie
+                            item.contentType = "tvshow"         #No es Temporada 1, pero es más baja que la actual.  Es Serie
                         break
                     s += 1
-            else:                                           #Sí, es Serie
+            else:                                               #Sí, es Serie
                 item.contentType = "tvshow"
 
-        else:                                               #Solo hay una temporada en la Videoteca
-            if temp_actual_num > 1:                         #es Temporada la actual?
+        else:                                                   #Solo hay una temporada en la Videoteca
+            if temp_actual_num > 1:                             #es Temporada la actual?
                 if item.contentSeason:
-                    item.contentType = "season"             #Si está informado el num de Temp. se creó como Temporada
+                    item.contentType = "season"                 #Si está informado el num de Temp. se creó como Temporada
                 else:
-                    item.contentType = "tvshow"             #Si no, es Serie que no tiene Temp. 1
-            else:                                           #Si es Temp. 1, se procesa según el valor de configuración    
-                if modo_serie_temp == 0:                    #Es Temporada
+                    item.contentType = "tvshow"                 #Si no, es Serie que no tiene Temp. 1
+            else:                                               #Si es Temp. 1, se procesa según el valor de configuración    
+                if modo_serie_temp == 0:                        #Es Temporada
                     item.contentType = "season"
-                else:                                       #Es Serie
+                else:                                           #Es Serie
                     item.contentType = "tvshow"
     else:
         item.contentType = "list"
 
+    if item.ow_force == '1':                                    #Si viene formazado la reconstrucción de la serie, lo hacemo
+        item.contentType = "tvshow"
+    
     temp_lista = []
     temp_bucle = 0
     temp_next_alt = ''
@@ -753,7 +799,7 @@ def episodios(item):
                 break                                   #si no hay más datos, algo no funciona, pintamos lo que tenemos
         
         if item.contentType == "season":
-            temp_advance = ''                           #Es la única temporada
+            temp_advance = ''                           #Es la últica temporada
             if temp_next and item.library_playcounts:   #Permitimos en actualización de Videoteca añadir nuevas temporadas
                 temp_advance = 'forw'                   #Si hay nueva temporada, pasamos a esa como actual
             temp_previous = ''                          #lo limpiamos, por control
@@ -908,6 +954,22 @@ def episodios(item):
     item, itemlist = generictools.post_tmdb_episodios(item, itemlist)
         
     return itemlist
+    
+    
+def find_torrent_alt(item):
+    logger.info()
+    
+    if not item.emergency_urls:
+        return item
+        
+    i = 0    
+    for lang, quality, size, scrapedurl in item.emergency_urls[1]:      #buscamos la url actual en la lista de matches cacheada
+        if item.url == scrapedurl:                                      #si está ...
+            item.torrent_alt = item.emergency_urls[0][i]                #... copiamos la url o la dirección de .torrent local
+            break                                                       #... y nos vamos
+        i += 1
+    
+    return item
     
     
 def lookup_idiomas_paginacion(item, scrapedurl, title, lang, list_language):
