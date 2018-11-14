@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-# Alfa favoritos (Mis enlaces)
-# ============================
+# Alfa favoritos
+# ==============
 # - Lista de enlaces guardados como favoritos, solamente en Alfa, no Kodi.
-# - Los enlaces se organizan en carpetas que puede definir el usuario.
-# - Se utiliza un sólo fichero para guardar todas las carpetas y enlaces: user_favorites.json
-# - Se puede copiar user_favorites.json a otros dispositivos ya que la única dependencia local es el thumbnail asociado a los enlaces,
+# - Los enlaces se organizan en carpetas (virtuales) que puede definir el usuario.
+# - Se utiliza un sólo fichero para guardar todas las carpetas y enlaces: alfavorites-default.json
+# - Se puede copiar alfavorites-default.json a otros dispositivos ya que la única dependencia local es el thumbnail asociado a los enlaces,
 #   pero se detecta por código y se ajusta al dispositivo actual.
+# - Se pueden tener distintos ficheros de alfavoritos y alternar entre ellos, pero solamente uno de ellos es la "lista activa".
+# - Los ficheros deben estar en config.get_data_path() y empezar por alfavorites- y terminar en .json
 
 # Requerimientos en otros módulos para ejecutar este canal:
 # - Añadir un enlace a este canal en channelselector.py
@@ -14,35 +16,106 @@
 # ------------------------------------------------------------
 
 import os, re
+from datetime import datetime
 
-from core import filetools
-from core import jsontools
 from core.item import Item
-from platformcode import config, logger
-from platformcode import platformtools
+from platformcode import config, logger, platformtools
+
+from core import filetools, jsontools
+
+
+def fechahora_actual():
+    return datetime.now().strftime('%Y-%m-%d %H:%M')
+
+# Helpers para listas
+# -------------------
+
+PREFIJO_LISTA = 'alfavorites-'
+
+# Devuelve el nombre de la lista activa (Ej: alfavorites-default.json)
+def get_lista_activa():
+    return config.get_setting('lista_activa', default = PREFIJO_LISTA + 'default.json')
+
+# Extrae nombre de la lista del fichero, quitando prefijo y sufijo (Ej: alfavorites-Prueba.json => Prueba)
+def get_name_from_filename(filename):
+    return filename.replace(PREFIJO_LISTA, '').replace('.json', '')
+
+# Componer el fichero de lista a partir de un nombre, añadiendo prefijo y sufijo (Ej: Prueba => alfavorites-Prueba.json)
+def get_filename_from_name(name):
+    return PREFIJO_LISTA + name + '.json'
+
+# Apuntar en un fichero de log los códigos de los ficheros que se hayan compartido
+def save_log_lista_shared(msg):
+    msg = fechahora_actual() + ': ' + msg + os.linesep
+    fullfilename = os.path.join(config.get_data_path(), 'alfavorites_shared.log')
+    with open(fullfilename, 'a') as f: f.write(msg); f.close()
+
+# Limpiar texto para usar como nombre de fichero
+def text_clean(txt, disallowed_chars = '[^a-zA-Z0-9\-_()\[\]. ]+', blank_char = ' '):
+    import unicodedata
+    try:
+        txt = unicode(txt, 'utf-8')
+    except NameError: # unicode is a default on python 3 
+        pass
+    txt = unicodedata.normalize('NFKD', txt).encode('ascii', 'ignore')
+    txt = txt.decode('utf-8').strip()
+    if blank_char != ' ': txt = txt.replace(' ', blank_char)
+    txt = re.sub(disallowed_chars, '', txt)
+    return str(txt)
+
 
 
 # Clase para cargar y guardar en el fichero de Alfavoritos
 # --------------------------------------------------------
 class AlfavoritesData:
 
-    def __init__(self):
-        self.user_favorites_file = os.path.join(config.get_data_path(), 'user_favorites.json')
+    def __init__(self, filename = None):
+
+        # Si no se especifica ningún fichero se usa la lista_activa (si no la hay se crea)
+        if filename == None:
+            filename = get_lista_activa()
+
+        self.user_favorites_file = os.path.join(config.get_data_path(), filename)
 
         if not os.path.exists(self.user_favorites_file):
-            self.user_favorites = []
-        else:
-            try:
-                self.user_favorites = jsontools.load(filetools.read(self.user_favorites_file))
-            except:
+            fichero_anterior = os.path.join(config.get_data_path(), 'user_favorites.json')
+            if os.path.exists(fichero_anterior): # formato anterior, convertir (a eliminar después de algunas versiones)
+                jsondata = jsontools.load(filetools.read(fichero_anterior))
+                self.user_favorites = jsondata
+                self.info_lista = {}
+                self.save()
+                filetools.remove(fichero_anterior)
+            else:
                 self.user_favorites = []
+        else:
+            jsondata = jsontools.load(filetools.read(self.user_favorites_file))
+            if not 'user_favorites' in jsondata or not 'info_lista' in jsondata: # formato incorrecto
+                self.user_favorites = []
+            else:
+                self.user_favorites = jsondata['user_favorites']
+                self.info_lista = jsondata['info_lista']
+
 
         if len(self.user_favorites) == 0:
-            self.user_favorites.append({ 'title': 'Carpeta por defecto', 'items': [] })
+            self.info_lista = {}
+            
+            # Crear algunas carpetas por defecto
+            self.user_favorites.append({ 'title': 'Películas', 'items': [] })
+            self.user_favorites.append({ 'title': 'Series', 'items': [] })
+            self.user_favorites.append({ 'title': 'Otros', 'items': [] })
+
             self.save()
 
     def save(self):
-        filetools.write(self.user_favorites_file, jsontools.dump(self.user_favorites))
+        if 'created' not in self.info_lista: 
+            self.info_lista['created'] = fechahora_actual()
+        self.info_lista['updated'] = fechahora_actual()
+
+        jsondata = {}
+        jsondata['user_favorites'] = self.user_favorites
+        jsondata['info_lista'] = self.info_lista
+        if not filetools.write(self.user_favorites_file, jsontools.dump(jsondata)):
+            platformtools.dialog_ok('Alfa', 'Error, no se puede grabar la lista!', os.path.basename(self.user_favorites_file))
 
 
 # ============================
@@ -55,14 +128,14 @@ def addFavourite(item):
 
     # Si se llega aquí mediante el menú contextual, hay que recuperar los parámetros action y channel
     if item.from_action:
-        item.__dict__["action"] = item.__dict__.pop("from_action")
+        item.__dict__['action'] = item.__dict__.pop('from_action')
     if item.from_channel:
-        item.__dict__["channel"] = item.__dict__.pop("from_channel")
+        item.__dict__['channel'] = item.__dict__.pop('from_channel')
 
-    # Limpiar título y quitar color
+    # Limpiar título
     item.title = re.sub(r'\[COLOR [^\]]*\]', '', item.title.replace('[/COLOR]', '')).strip()
     if item.text_color:
-        item.__dict__.pop("text_color")
+        item.__dict__.pop('text_color')
 
     # Diálogo para escoger/crear carpeta
     i_perfil = _selecciona_perfil(alfav, 'Guardar enlace en:')
@@ -81,10 +154,13 @@ def addFavourite(item):
             platformtools.dialog_notification('Enlace repetido', 'Ya tienes este enlace en la carpeta')
             return False
 
-    # Si es una película, completar información de tmdb si no se tiene activado tmdb_plus_info
-    if item.contentType == 'movie' and not config.get_setting('tmdb_plus_info', default=False):
+    # Si es una película/serie, completar información de tmdb si no se tiene activado tmdb_plus_info (para season/episodio no hace falta pq ya se habrá hecho la "segunda pasada")
+    if (item.contentType == 'movie' or item.contentType == 'tvshow') and not config.get_setting('tmdb_plus_info', default=False):
         from core import tmdb
         tmdb.set_infoLabels(item, True) # obtener más datos en "segunda pasada" (actores, duración, ...)
+
+    # Añadir fecha en que se guarda
+    item.date_added = fechahora_actual()
 
     # Guardar
     alfav.user_favorites[i_perfil]['items'].append(item.tourl())
@@ -102,6 +178,7 @@ def addFavourite(item):
 def mainlist(item):
     logger.info()
     alfav = AlfavoritesData()
+    item.category = get_name_from_filename(os.path.basename(alfav.user_favorites_file))
 
     itemlist = []
     last_i = len(alfav.user_favorites) - 1
@@ -128,11 +205,10 @@ def mainlist(item):
         plot = '%d enlaces en la carpeta' % len(perfil['items'])
         itemlist.append(Item(channel=item.channel, action='mostrar_perfil', title=perfil['title'], plot=plot, i_perfil=i_perfil, context=context))
 
-    plot = '* Crea diferentes carpetas para guardar tus enlaces favoritos dentro de Alfa.[CR]'
-    plot += '* Para añadir enlaces a las carpetas accede al menú contextual desde cualquier punto de Alfa.[CR]'
-    plot += '* Los enlaces pueden ser canales, secciones dentro de los canales, búsquedas, e incluso películas y series aunque para esto último es preferible utilizar la videoteca.'
-    itemlist.append(item.clone(action='crear_perfil', title='Crear nueva carpeta ...', plot=plot, folder=False)) 
+    itemlist.append(item.clone(action='crear_perfil', title='Crear nueva carpeta ...', folder=False)) 
     
+    itemlist.append(item.clone(action='mainlist_listas', title='Gestionar listas de enlaces')) 
+
     return itemlist
 
 
@@ -149,38 +225,15 @@ def mostrar_perfil(item):
     ruta_runtime = config.get_runtime_path()
 
     for i_enlace, enlace in enumerate(alfav.user_favorites[i_perfil]['items']):
-        context = []
-
-        if i_enlace > 0:
-            context.append({'title': 'Mover arriba del todo', 'channel': item.channel, 'action': 'mover_enlace',
-                            'i_enlace': i_enlace, 'i_perfil': i_perfil, 'direccion': 'top'})
-            context.append({'title': 'Mover hacia arriba', 'channel': item.channel, 'action': 'mover_enlace',
-                            'i_enlace': i_enlace, 'i_perfil': i_perfil, 'direccion': 'arriba'})
-        if i_enlace < last_i:
-            context.append({'title': 'Mover hacia abajo', 'channel': item.channel, 'action': 'mover_enlace',
-                            'i_enlace': i_enlace, 'i_perfil': i_perfil, 'direccion': 'abajo'})
-            context.append({'title': 'Mover abajo del todo', 'channel': item.channel, 'action': 'mover_enlace',
-                            'i_enlace': i_enlace, 'i_perfil': i_perfil, 'direccion': 'bottom'})
-
-        if len(alfav.user_favorites) > 1: # si se tiene más de una carpeta permitir mover entre ellas
-            context.append({'title': 'Mover a otra carpeta', 'channel': item.channel, 'action': 'editar_enlace_carpeta',
-                            'i_enlace': i_enlace, 'i_perfil': i_perfil})
-
-        context.append({'title': 'Cambiar título', 'channel': item.channel, 'action': 'editar_enlace_titulo',
-                        'i_enlace': i_enlace, 'i_perfil': i_perfil})
-
-        context.append({'title': 'Cambiar color', 'channel': item.channel, 'action': 'editar_enlace_color',
-                        'i_enlace': i_enlace, 'i_perfil': i_perfil})
-
-        context.append({'title': 'Cambiar thumbnail', 'channel': item.channel, 'action': 'editar_enlace_thumbnail',
-                        'i_enlace': i_enlace, 'i_perfil': i_perfil})
-
-        context.append({'title': 'Eliminar enlace', 'channel': item.channel, 'action': 'eliminar_enlace',
-                        'i_enlace': i_enlace, 'i_perfil': i_perfil})
 
         it = Item().fromurl(enlace)
-        it.context = context
-        it.plot = '[COLOR blue]Canal: ' + it.channel + '[/COLOR][CR]' + it.plot
+        it.context = [ {'title': '[COLOR blue]Modificar enlace[/COLOR]', 'channel': item.channel, 'action': 'acciones_enlace',
+                        'i_enlace': i_enlace, 'i_perfil': i_perfil} ]
+
+        it.plot += '[CR][CR][COLOR blue]Canal:[/COLOR] ' + it.channel + ' [COLOR blue]Action:[/COLOR] ' + it.action
+        if it.extra != '': it.plot += ' [COLOR blue]Extra:[/COLOR] ' + it.extra
+        it.plot += '[CR][COLOR blue]Url:[/COLOR] ' + it.url if isinstance(it.url, str) else '...'
+        if it.date_added != '': it.plot += '[CR][COLOR blue]Added:[/COLOR] ' + it.date_added
 
         # Si no es una url, ni tiene la ruta del sistema, convertir el path ya que se habrá copiado de otro dispositivo.
         # Sería más óptimo que la conversión se hiciera con un menú de importar, pero de momento se controla en run-time.
@@ -277,6 +330,37 @@ def eliminar_perfil(item):
     return True
 
 
+def acciones_enlace(item):
+    logger.info()
+
+    acciones = ['Cambiar título', 'Cambiar color', 'Cambiar thumbnail', 'Mover a otra carpeta', 'Mover a otra lista', 'Eliminar enlace',
+                'Mover arriba del todo', 'Mover hacia arriba', 'Mover hacia abajo', 'Mover abajo del todo'] 
+
+    ret = platformtools.dialog_select('Acción a ejecutar', acciones)
+    if ret == -1: 
+        return False # pedido cancel
+    elif ret == 0:
+        return editar_enlace_titulo(item)
+    elif ret == 1:
+        return editar_enlace_color(item)
+    elif ret == 2:
+        return editar_enlace_thumbnail(item)
+    elif ret == 3:
+        return editar_enlace_carpeta(item)
+    elif ret == 4:
+        return editar_enlace_lista(item)
+    elif ret == 5:
+        return eliminar_enlace(item)
+    elif ret == 6:
+        return mover_enlace(item.clone(direccion='top'))
+    elif ret == 7:
+        return mover_enlace(item.clone(direccion='arriba'))
+    elif ret == 8:
+        return mover_enlace(item.clone(direccion='abajo'))
+    elif ret == 9:
+        return mover_enlace(item.clone(direccion='bottom'))
+
+
 def editar_enlace_titulo(item):
     logger.info()
     alfav = AlfavoritesData()
@@ -357,7 +441,7 @@ def editar_enlace_thumbnail(item):
     
     resource_path = os.path.join(config.get_runtime_path(), 'resources', 'media', 'themes', 'default')
     for f in sorted(os.listdir(resource_path)):
-        if f.startswith('thumb_') and not f.startswith('thumb_intervenido') and f != 'thumb_back.png':
+        if f.startswith('thumb_') and f != 'thumb_back.png':
             nombre = f.replace('thumb_', '').replace('_', ' ').replace('.png', '')
             if is_kodi17:
                 it_thumb = xbmcgui.ListItem(nombre)
@@ -396,6 +480,44 @@ def editar_enlace_carpeta(item):
 
     alfav.user_favorites[i_perfil]['items'].append(alfav.user_favorites[item.i_perfil]['items'][item.i_enlace])
     del alfav.user_favorites[item.i_perfil]['items'][item.i_enlace]
+    alfav.save()
+
+    platformtools.itemlist_refresh()
+    return True
+
+
+def editar_enlace_lista(item):
+    logger.info()
+    alfav = AlfavoritesData()
+
+    if not alfav.user_favorites[item.i_perfil]: return False
+    if not alfav.user_favorites[item.i_perfil]['items'][item.i_enlace]: return False
+
+    # Diálogo para escoger lista
+    opciones = []
+    itemlist_listas = mainlist_listas(item)
+    for it in itemlist_listas:
+        if it.lista != '' and '[lista activa]' not in it.title: # descarta item crear y lista activa
+            opciones.append(it.lista)
+
+    if len(opciones) == 0:
+        platformtools.dialog_ok('Alfa', 'No hay otras listas dónde mover el enlace.', 'Puedes crearlas desde el menú Gestionar listas de enlaces')
+        return False
+
+    ret = platformtools.dialog_select('Seleccionar lista destino', opciones)
+
+    if ret == -1: 
+        return False # pedido cancel
+
+    alfav_destino = AlfavoritesData(opciones[ret])
+
+    # Diálogo para escoger/crear carpeta en la lista de destino
+    i_perfil = _selecciona_perfil(alfav_destino, 'Seleccionar carpeta destino', -1)
+    if i_perfil == -1: return False
+
+    alfav_destino.user_favorites[i_perfil]['items'].append(alfav.user_favorites[item.i_perfil]['items'][item.i_enlace])
+    del alfav.user_favorites[item.i_perfil]['items'][item.i_enlace]
+    alfav_destino.save()
     alfav.save()
 
     platformtools.itemlist_refresh()
@@ -466,3 +588,339 @@ def _mover_item(lista, i_selected, direccion):
         lista.insert(last_i, lista.pop(i_selected))
 
     return lista
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Gestionar diferentes listas de alfavoritos
+# ------------------------------------------
+
+def mainlist_listas(item):
+    logger.info()
+    itemlist = []
+    item.category = 'Listas'
+
+    lista_activa = get_lista_activa()
+    
+    import glob
+
+    path = os.path.join(config.get_data_path(), PREFIJO_LISTA+'*.json')
+    for fichero in glob.glob(path):
+        lista = os.path.basename(fichero)
+        nombre = get_name_from_filename(lista)
+        titulo = nombre if lista != lista_activa else '[COLOR gold]%s[/COLOR] [lista activa]' % nombre
+        
+        itemlist.append(item.clone(action='acciones_lista', lista=lista, title=titulo, folder=False))
+
+    itemlist.append(item.clone(action='acciones_nueva_lista', title='Crear/descargar lista / Info ...', folder=False)) 
+    
+    return itemlist
+
+
+def acciones_lista(item):
+    logger.info()
+
+    acciones = ['Establecer como lista activa', 'Cambiar nombre de la lista', 
+                'Compartir en tinyupload', 'Eliminar lista', 'Información de la lista'] 
+
+    ret = platformtools.dialog_select(item.lista, acciones)
+
+    if ret == -1: 
+        return False # pedido cancel
+    elif ret == 0:
+        return activar_lista(item)
+    elif ret == 1:
+        return renombrar_lista(item)
+    elif ret == 2:
+        return compartir_lista(item)
+    elif ret == 3:
+        return eliminar_lista(item)
+    elif ret == 4:
+        return informacion_lista(item)
+
+
+def activar_lista(item):
+    logger.info()
+
+    fullfilename = os.path.join(config.get_data_path(), item.lista)
+    if not os.path.exists(fullfilename):
+        platformtools.dialog_ok('Alfa', 'Error, no se encuentra la lista!', item.lista)
+        return False
+
+    config.set_setting('lista_activa', item.lista)
+
+    from channelselector import get_thumb
+    item_inicio = Item(title=config.get_localized_string(70527), channel="alfavorites", action="mainlist",
+                       thumbnail=get_thumb("mylink.png"),
+                       category=config.get_localized_string(70527), viewmode="thumbnails")
+    platformtools.itemlist_update(item_inicio, replace=True)
+    return True
+
+
+def renombrar_lista(item):
+    logger.info()
+
+    fullfilename_current = os.path.join(config.get_data_path(), item.lista)
+    if not os.path.exists(fullfilename_current):
+        platformtools.dialog_ok('Alfa', 'Error, no se encuentra la lista!', fullfilename_current)
+        return False
+    
+    nombre = get_name_from_filename(item.lista)
+    titulo = platformtools.dialog_input(default=nombre, heading='Nombre de la lista')
+    if titulo is None or titulo == '' or titulo == nombre:
+        return False
+    titulo = text_clean(titulo, blank_char='_')
+
+    filename = get_filename_from_name(titulo)
+    fullfilename = os.path.join(config.get_data_path(), filename)
+
+    # Comprobar que el nuevo nombre no exista
+    if os.path.exists(fullfilename):
+        platformtools.dialog_ok('Alfa', 'Error, ya existe una lista con este nombre!', fullfilename)
+        return False
+
+    # Rename del fichero
+    if not filetools.rename(fullfilename_current, filename):
+        platformtools.dialog_ok('Alfa', 'Error, no se ha podido renombrar la lista!', fullfilename)
+        return False
+
+    # Update settings si es la lista activa
+    if item.lista == get_lista_activa():
+        config.set_setting('lista_activa', filename)
+
+
+    platformtools.itemlist_refresh()
+    return True
+
+
+def eliminar_lista(item):
+    logger.info()
+
+    fullfilename = os.path.join(config.get_data_path(), item.lista)
+    if not os.path.exists(fullfilename):
+        platformtools.dialog_ok('Alfa', 'Error, no se encuentra la lista!', item.lista)
+        return False
+
+    if item.lista == get_lista_activa():
+        platformtools.dialog_ok('Alfa', 'La lista activa no se puede eliminar', item.lista)
+        return False
+
+    if not platformtools.dialog_yesno('Eliminar lista', '¿Estás seguro de querer borrar la lista %s ?' % item.lista): return False
+    filetools.remove(fullfilename)
+
+    platformtools.itemlist_refresh()
+    return True
+
+
+def informacion_lista(item):
+    logger.info()
+    
+    fullfilename = os.path.join(config.get_data_path(), item.lista)
+    if not os.path.exists(fullfilename):
+        platformtools.dialog_ok('Alfa', 'Error, no se encuentra la lista!', item.lista)
+        return False
+
+    alfav = AlfavoritesData(item.lista)
+    
+    txt = 'Lista: [COLOR gold]%s[/COLOR]' % item.lista
+    txt += '[CR]Creada el %s y modificada el %s' % (alfav.info_lista['created'], alfav.info_lista['updated'])
+
+    if 'downloaded_date' in alfav.info_lista:
+        txt += '[CR]Descargada el %s desde [COLOR blue]%s[/COLOR]' % (alfav.info_lista['downloaded_date'], alfav.info_lista['downloaded_from'])
+
+    if 'tinyupload_date' in alfav.info_lista:
+        txt += '[CR]Compartida en tinyupload el %s con el código [COLOR blue]%s[/COLOR]' % (alfav.info_lista['tinyupload_date'], alfav.info_lista['tinyupload_code'])
+    
+    txt += '[CR]Número de carpetas: %d' % len(alfav.user_favorites)
+    for perfil in alfav.user_favorites:
+        txt += '[CR]- %s (%d enlaces)' % (perfil['title'], len(perfil['items']))
+
+    platformtools.dialog_textviewer('Información de la lista', txt)
+    return True
+
+
+def compartir_lista(item):
+    logger.info()
+
+    fullfilename = os.path.join(config.get_data_path(), item.lista)
+    if not os.path.exists(fullfilename):
+        platformtools.dialog_ok('Alfa', 'Error, no se encuentra la lista!', fullfilename)
+        return False
+
+    try:
+        progreso = platformtools.dialog_progress_bg('Compartir lista', 'Conectando con tinyupload ...')
+        
+        # Acceso a la página principal de tinyupload para obtener datos necesarios
+        from core import httptools, scrapertools
+        data = httptools.downloadpage('http://s000.tinyupload.com/index.php').data
+        upload_url = scrapertools.find_single_match(data, 'form action="([^"]+)')
+        sessionid = scrapertools.find_single_match(upload_url, 'sid=(.+)')
+        
+        progreso.update(10, 'Subiendo fichero', 'Espera unos segundos a que acabe de subirse tu fichero de lista a tinyupload')
+
+        # Envío del fichero a tinyupload mediante multipart/form-data 
+        from lib import MultipartPostHandler
+        import urllib2
+        opener = urllib2.build_opener(MultipartPostHandler.MultipartPostHandler)
+        params = { 'MAX_FILE_SIZE' : '52428800', 'file_description' : '', 'sessionid' : sessionid, 'uploaded_file' : open(fullfilename, 'rb') }
+        handle = opener.open(upload_url, params)
+        data = handle.read()
+        
+        progreso.close()
+
+        if not 'File was uploaded successfuly' in data:
+            logger.debug(data)
+            platformtools.dialog_ok('Alfa', 'Error, no se ha podido subir el fichero a tinyupload.com!')
+            return False
+
+        codigo = scrapertools.find_single_match(data, 'href="index\.php\?file_id=([^"]+)')
+
+    except:
+        platformtools.dialog_ok('Alfa', 'Error, al intentar subir el fichero a tinyupload.com!', item.lista)
+        return False
+
+    # Apuntar código en fichero de log y dentro de la lista
+    save_log_lista_shared('Subido fichero %s a tinyupload.com. El código para descargarlo es: %s' % (item.lista, codigo))
+    
+    alfav = AlfavoritesData(item.lista)
+    alfav.info_lista['tinyupload_date'] = fechahora_actual()
+    alfav.info_lista['tinyupload_code'] = codigo
+    alfav.save()
+
+    platformtools.dialog_ok('Alfa', 'Subida lista a tinyupload. Si quieres compartirla con alguien, pásale este código:', codigo)
+    return True
+        
+
+
+def acciones_nueva_lista(item):
+    logger.info()
+
+    acciones = ['Crear una nueva lista', 
+                'Descargar lista con código de tinyupload',
+                'Descargar lista de una url directa',
+                'Información sobre las listas'] 
+
+    ret = platformtools.dialog_select('Listas de enlaces', acciones)
+
+    if ret == -1: 
+        return False # pedido cancel
+
+    elif ret == 0:
+        return crear_lista(item)
+
+    elif ret == 1:
+        codigo = platformtools.dialog_input(default='', heading='Código de descarga de tinyupload') # 05370382084539519168
+        if codigo is None or codigo == '':
+            return False
+        return descargar_lista(item, 'http://s000.tinyupload.com/?file_id=' + codigo)
+
+    elif ret == 2:
+        url = platformtools.dialog_input(default='https://', heading='URL de dónde descargar la lista')
+        if url is None or url == '':
+            return False
+        return descargar_lista(item, url)
+
+    elif ret == 3:
+        txt = '- Puedes tener diferentes listas, pero solamente una de ellas está activa. La lista activa es la que se muestra en "Mis enlaces" y dónde se guardan los enlaces que se vayan añadiendo.'
+        txt += '[CR]- Puedes ir cambiando la lista activa y alternar entre las que tengas.'
+        txt += '[CR]- Puedes compartir una lista a través de tinyupload y luego pasarle el código resultante a tus amistades para que se la puedan bajar.'
+        txt += '[CR]- Puedes descargar una lista si te pasan un código de tinyupload o una url dónde esté alojada.'
+        txt += '[CR]- Si lo quieres hacer manualmente, puedes copiar una lista alfavorites-*.json que te hayan pasado a la carpeta userdata del addon. Y puedes subir estos json a algún servidor y pasar sus urls a tus amigos para compartirlas.'
+        txt += '[CR]- Para compartir listas desde el addon se utiliza el servicio de tinyupload.com por ser gratuíto, privado y relativamente rápido. Los ficheros se guardan mientras no pasen 100 días sin que nadie lo descargue, son privados porque requieren un código para acceder a ellos, y la limitación de 50MB es suficiente para las listas.'
+
+        platformtools.dialog_textviewer('Información sobre las listas', txt)
+        return False
+
+
+def crear_lista(item):
+    logger.info()
+
+    titulo = platformtools.dialog_input(default='', heading='Nombre de la lista')
+    if titulo is None or titulo == '':
+        return False
+    titulo = text_clean(titulo, blank_char='_')
+
+    filename = get_filename_from_name(titulo)
+    fullfilename = os.path.join(config.get_data_path(), filename)
+
+    # Comprobar que el fichero no exista ya
+    if os.path.exists(fullfilename):
+        platformtools.dialog_ok('Alfa', 'Error, ya existe una lista con este nombre!', fullfilename)
+        return False
+
+    # Provocar que se guarde con las carpetas vacías por defecto
+    alfav = AlfavoritesData(filename)
+
+    platformtools.itemlist_refresh()
+    return True
+
+
+def descargar_lista(item, url):
+    logger.info()
+    from core import httptools, scrapertools
+    
+    if 'tinyupload.com/' in url:
+        try:
+            from urlparse import urlparse
+            data = httptools.downloadpage(url).data
+            logger.debug(data)
+            down_url, url_name = scrapertools.find_single_match(data, ' href="(download\.php[^"]*)"><b>([^<]*)')
+            url_json = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(url)) + down_url
+        except:
+            platformtools.dialog_ok('Alfa', 'Error, no se puede descargar la lista!', url)
+            return False
+
+    elif 'zippyshare.com/' in url:
+        from core import servertools
+        video_urls, puedes, motivo = servertools.resolve_video_urls_for_playing('zippyshare', url)
+        
+        if not puedes:
+            platformtools.dialog_ok('Alfa', 'Error, no se puede descargar la lista!', motivo)
+            return False
+        url_json = video_urls[0][1] # https://www58.zippyshare.com/d/qPzzQ0UM/25460/alfavorites-testeanding.json
+        url_name = url_json[url_json.rfind('/')+1:]
+
+    elif 'friendpaste.com/' in url:
+        url_json = url if url.endswith('/raw') else url + '/raw'
+        url_name = 'friendpaste'
+
+    else:
+        url_json = url
+        url_name = url[url.rfind('/')+1:]
+
+
+    # Download json
+    data = httptools.downloadpage(url_json).data
+    
+    # Verificar formato json de alfavorites y añadir info de la descarga
+    jsondata = jsontools.load(data)
+    if 'user_favorites' not in jsondata or 'info_lista' not in jsondata:
+        logger.debug(data)
+        platformtools.dialog_ok('Alfa', 'Error, el fichero descargado no tiene el formato esperado!')
+        return False
+
+    jsondata['info_lista']['downloaded_date'] = fechahora_actual()
+    jsondata['info_lista']['downloaded_from'] = url
+    data = jsontools.dump(jsondata)
+
+    # Pedir nombre para la lista descargada
+    nombre = get_name_from_filename(url_name)
+    titulo = platformtools.dialog_input(default=nombre, heading='Nombre para guardar la lista')
+    if titulo is None or titulo == '':
+        return False
+    titulo = text_clean(titulo, blank_char='_')
+
+    filename = get_filename_from_name(titulo)
+    fullfilename = os.path.join(config.get_data_path(), filename)
+
+    # Si el nuevo nombre ya existe pedir confirmación para sobrescribir
+    if os.path.exists(fullfilename):
+        if not platformtools.dialog_yesno('Alfa', 'Ya existe una lista con este nombre.', '¿ Sobrescribir el fichero ?', filename):
+            return False
+    
+    if not filetools.write(fullfilename, data):
+        platformtools.dialog_ok('Alfa', 'Error, no se puede grabar la lista!', filename)
+
+    platformtools.dialog_ok('Alfa', 'Ok, lista descargada correctamente', filename)
+    platformtools.itemlist_refresh()
+    return True
