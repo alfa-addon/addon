@@ -441,7 +441,7 @@ def editar_enlace_thumbnail(item):
     
     resource_path = os.path.join(config.get_runtime_path(), 'resources', 'media', 'themes', 'default')
     for f in sorted(os.listdir(resource_path)):
-        if f.startswith('thumb_') and f != 'thumb_back.png':
+        if f.startswith('thumb_') and not f.startswith('thumb_intervenido') and f != 'thumb_back.png':
             nombre = f.replace('thumb_', '').replace('_', ' ').replace('.png', '')
             if is_kodi17:
                 it_thumb = xbmcgui.ListItem(nombre)
