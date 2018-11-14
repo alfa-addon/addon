@@ -142,7 +142,7 @@ def addFavourite(item):
     if i_perfil == -1: return False
 
     # Detectar que el mismo enlace no exista ya en la carpeta
-    campos = ['channel','action','url','extra'] # si todos estos campos coinciden se considera que el enlace ya existe
+    campos = ['channel','action','url','extra','list_type'] # si todos estos campos coinciden se considera que el enlace ya existe
     for enlace in alfav.user_favorites[i_perfil]['items']:
         it = Item().fromurl(enlace)
         repe = True
