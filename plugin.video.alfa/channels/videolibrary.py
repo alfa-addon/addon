@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os
+import os, traceback
 
 from channelselector import get_thumb
 from core import filetools
@@ -47,7 +47,7 @@ def list_movies(item, silent=False):
                         from platformcode import xbmc_videolibrary
                         xbmc_videolibrary.mark_content_as_watched_on_alfa(nfo_path)
                 except:
-                    pass
+                    logger.error(traceback.format_exc())
                 
                 head_nfo, new_item = videolibrarytools.read_nfo(nfo_path)
 
@@ -67,7 +67,7 @@ def list_movies(item, silent=False):
                 try:
                     new_item, new_item, overwrite = generictools.redirect_clone_newpct1(new_item, head_nfo, new_item, raiz)
                 except:
-                    pass
+                    logger.error(traceback.format_exc())
                 
                 # Menu contextual: Marcar como visto/no visto
                 visto = new_item.library_playcounts.get(os.path.splitext(f)[0], 0)
@@ -127,10 +127,10 @@ def list_tvshows(item):
                         from platformcode import xbmc_videolibrary
                         xbmc_videolibrary.mark_content_as_watched_on_alfa(tvshow_path)
                 except:
-                    pass
+                    logger.error(traceback.format_exc())
                 
                 head_nfo, item_tvshow = videolibrarytools.read_nfo(tvshow_path)
-                try:                                    #A veces da errores aleatorios, por no encontrar el .nfo.  Probablemente problemas de timing
+                try:                        #A veces da errores aleatorios, por no encontrar el .nfo.  Probablemente problemas de timing
                     item_tvshow.title = item_tvshow.contentTitle
                     item_tvshow.path = raiz
                     item_tvshow.nfo = tvshow_path
@@ -146,6 +146,7 @@ def list_tvshows(item):
                 
                 except:
                     logger.error('No encuentra: ' + str(tvshow_path))
+                    logger.error(traceback.format_exc())
                     continue
 
                 # Menu contextual: Buscar automáticamente nuevos episodios o no
@@ -368,7 +369,7 @@ def findvideos(item):
         try:
             item_json, it, overwrite = generictools.redirect_clone_newpct1(item_json)
         except:
-            pass
+            logger.error(traceback.format_exc())
         item_json.contentChannel = "local"
         # Soporte para rutas relativas en descargas
         if filetools.is_relative(item_json.url):
@@ -413,7 +414,7 @@ def findvideos(item):
         try:
             item_canal, it, overwrite = generictools.redirect_clone_newpct1(item_canal)
         except:
-            pass
+            logger.error(traceback.format_exc())
         nom_canal = item_canal.channel
             
         # Importamos el canal de la parte seleccionada
@@ -427,7 +428,7 @@ def findvideos(item):
         try:
             item_json, it, overwrite = generictools.redirect_clone_newpct1(item_json)
         except:
-            pass
+            logger.error(traceback.format_exc())
         list_servers = []
 
         try:
@@ -452,6 +453,7 @@ def findvideos(item):
             template = "An exception of type %s occured. Arguments:\n%r"
             message = template % (type(ex).__name__, ex.args)
             logger.error(message)
+            logger.error(traceback.format_exc())
 
         # Cambiarle el titulo a los servers añadiendoles el nombre del canal delante y
         # las infoLabels y las imagenes del item si el server no tiene
@@ -778,7 +780,7 @@ def mark_tvshow_as_updatable(item):
 def delete(item):
     def delete_all(_item):
         for file in filetools.listdir(_item.path):
-            if file.endswith(".strm") or file.endswith(".nfo") or file.endswith(".json"):
+            if file.endswith(".strm") or file.endswith(".nfo") or file.endswith(".json")or file.endswith(".torrent"):
                 filetools.remove(filetools.join(_item.path, file))
         raiz, carpeta_serie, ficheros = filetools.walk(_item.path).next()
         if ficheros == []:
@@ -822,7 +824,7 @@ def delete(item):
 
             num_enlaces = 0
             for fd in filetools.listdir(item.path):
-                if fd.endswith(canal + '].json'):
+                if fd.endswith(canal + '].json') or scrapertools.find_single_match(fd, '%s]_\d+.torrent' % canal):
                     if filetools.remove(filetools.join(item.path, fd)):
                         num_enlaces += 1
 
@@ -830,6 +832,8 @@ def delete(item):
                 # Actualizar .nfo
                 head_nfo, item_nfo = videolibrarytools.read_nfo(item.nfo)
                 del item_nfo.library_urls[canal]
+                if item_nfo.emergency_urls and item_nfo.emergency_urls.get(canal, False):
+                    del item_nfo.emergency_urls[canal]
                 filetools.write(item.nfo, head_nfo + item_nfo.tojson())
 
             msg_txt = config.get_localized_string(70087) % (num_enlaces, canal)
