@@ -3,7 +3,7 @@
 # Service for updating new episodes on library series
 # ------------------------------------------------------------
 
-import datetime, imp, math, threading
+import datetime, imp, math, threading, traceback
 
 from core import channeltools, filetools, videolibrarytools
 from platformcode import config, logger
@@ -32,7 +32,7 @@ def update(path, p_dialog, i, t, serie, overwrite):
             serie.category = category
             serie, it, overwrite = generictools.redirect_clone_newpct1(serie, head_nfo, it, path, overwrite)
         except:
-            pass
+            logger.error(traceback.format_exc())
 
         channel_enabled = channeltools.is_enabled(serie.channel)
 
@@ -89,7 +89,7 @@ def update(path, p_dialog, i, t, serie, overwrite):
             from platformcode import xbmc_videolibrary
             xbmc_videolibrary.mark_content_as_watched_on_alfa(path + '/tvshow.nfo')
     except:
-        pass
+        logger.error(traceback.format_exc())
     
     return insertados_total > 0
 
@@ -127,7 +127,7 @@ def check_for_update(overwrite=True):
                 try:
                     serie, serie, overwrite_forced = generictools.redirect_clone_newpct1(serie, head_nfo, serie, path, overwrite, lookup=True)
                 except:
-                    pass
+                    logger.error(traceback.format_exc())
                 if overwrite_forced == True:
                     overwrite = True
                     serie.update_next = ''
@@ -143,7 +143,7 @@ def check_for_update(overwrite=True):
                     if not estado or estado == False or not serie.library_playcounts:               #Si no se ha pasado antes, lo hacemos ahora
                         serie, estado = videolibrary.verify_playcount_series(serie, path)           #También se pasa si falta un PlayCount por completo
                 except:
-                    pass
+                    logger.error(traceback.format_exc())
                 else:
                     if estado:                                                                      #Si ha tenido éxito la actualización...
                         estado_verify_playcount_series = True                                       #... se marca para cambiar la opción de la Videoteca
@@ -159,7 +159,7 @@ def check_for_update(overwrite=True):
                                 from platformcode import xbmc_videolibrary
                                 xbmc_videolibrary.mark_content_as_watched_on_alfa(path + '/tvshow.nfo')
                         except:
-                            pass
+                            logger.error(traceback.format_exc())
                     
                         continue
 

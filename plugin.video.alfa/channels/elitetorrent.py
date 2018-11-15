@@ -398,7 +398,7 @@ def findvideos(item):
         if item.armagedon:                                                      #Si es catastrófico, lo marcamos
             item_local.quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % item_local.quality
         item_local.url = link_torrent
-        if item_local.url and not item.armagedon:
+        if item_local.url and item.emergency_urls and not item.armagedon:
             item_local.torrent_alt = item.emergency_urls[0][0]                  #Guardamos la url del .Torrent ALTERNATIVA
         
         item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))        #Preparamos título de Torrent

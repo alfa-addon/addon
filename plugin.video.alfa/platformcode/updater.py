@@ -6,6 +6,7 @@
 import os
 import time
 import threading
+import traceback
 
 from platformcode import config, logger, platformtools
 
@@ -140,6 +141,7 @@ def check_addon_updates(verbose=False):
 
     except:
         logger.error('Error al comprobar actualizaciones del addon!')
+        logger.error(traceback.format_exc())
         if verbose:
             platformtools.dialog_notification('Alfa actualizaciones', 'Error al comprobar actualizaciones')
         return False

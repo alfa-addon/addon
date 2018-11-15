@@ -267,11 +267,19 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
 
     if response["headers"].get('content-encoding') == 'gzip':
         logger.info("Descomprimiendo...")
+        data_alt = response["data"]
         try:
             response["data"] = gzip.GzipFile(fileobj=StringIO(response["data"])).read()
             logger.info("Descomprimido")
         except:
-            logger.info("No se ha podido descomprimir")
+            logger.info("No se ha podido descomprimir con gzip.  Intentando con zlib")
+            response["data"] = data_alt
+            try:
+                import zlib
+                response["data"] = zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(response["data"])
+            except:
+                logger.info("No se ha podido descomprimir con zlib")
+                response["data"] = data_alt
 
     # Anti Cloudflare
     if bypass_cloudflare and count_retries < 5:
