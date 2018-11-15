@@ -64,7 +64,7 @@ def list_all(item):
 
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
         url = scrapedurl
-
+        scrapedtitle = scrapedtitle.lower().replace('enlace permanente a', '').capitalize()
         contentSerieName = scrapedtitle
         action = 'seasons'
 
