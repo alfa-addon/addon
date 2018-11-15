@@ -93,12 +93,20 @@ def dialog_numeric(_type, heading, default=""):
     return d
 
 
+def dialog_textviewer(heading, text): # disponible a partir de kodi 16
+    return xbmcgui.Dialog().textviewer(heading, text)
+
+
+
 def itemlist_refresh():
     xbmc.executebuiltin("Container.Refresh")
 
 
-def itemlist_update(item):
-    xbmc.executebuiltin("Container.Update(" + sys.argv[0] + "?" + item.tourl() + ")")
+def itemlist_update(item, replace=False):
+    if replace: # reset the path history
+        xbmc.executebuiltin("Container.Update(" + sys.argv[0] + "?" + item.tourl() + ", replace)")
+    else:
+        xbmc.executebuiltin("Container.Update(" + sys.argv[0] + "?" + item.tourl() + ")")
 
 
 def render_items(itemlist, parent_item):
