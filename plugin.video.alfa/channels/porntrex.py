@@ -75,7 +75,7 @@ def lista(item):
         else:
             scrapedurl = urlparse.urljoin(host, scrapedurl)
             if not scrapedthumbnail.startswith("https"):
-                scrapedthumbnail = "https:%s" % scrapedthumbnail
+                scrapedthumbnail = host + "%s" % scrapedthumbnail
         if duration:
             scrapedtitle = "%s - %s" % (duration, scrapedtitle)
         if '>HD<' in quality:
@@ -83,7 +83,6 @@ def lista(item):
 
         itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, contentThumbnail=scrapedthumbnail,
                                    fanart=scrapedthumbnail))
-
     # Extrae la marca de siguiente página
     if item.extra:
         next_page = scrapertools.find_single_match(data, '<li class="next">.*?from_videos\+from_albums:(\d+)')

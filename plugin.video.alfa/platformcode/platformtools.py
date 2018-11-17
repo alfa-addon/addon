@@ -93,12 +93,20 @@ def dialog_numeric(_type, heading, default=""):
     return d
 
 
+def dialog_textviewer(heading, text): # disponible a partir de kodi 16
+    return xbmcgui.Dialog().textviewer(heading, text)
+
+
+
 def itemlist_refresh():
     xbmc.executebuiltin("Container.Refresh")
 
 
-def itemlist_update(item):
-    xbmc.executebuiltin("Container.Update(" + sys.argv[0] + "?" + item.tourl() + ")")
+def itemlist_update(item, replace=False):
+    if replace: # reset the path history
+        xbmc.executebuiltin("Container.Update(" + sys.argv[0] + "?" + item.tourl() + ", replace)")
+    else:
+        xbmc.executebuiltin("Container.Update(" + sys.argv[0] + "?" + item.tourl() + ")")
 
 
 def render_items(itemlist, parent_item):
@@ -1094,27 +1102,37 @@ def play_torrent(item, xlistitem, mediaurl):
         time.sleep(0.5)                                                     #Dejamos tiempo para que se ejecute
 
         #Nuevo método de descarga previa del .torrent.  Si da error, miramos si hay alternatica local.  Si ya es local, lo usamos
+        url = ''
         url_stat = False
+        torrents_path = ''
         videolibrary_path = config.get_videolibrary_path()                  #Calculamos el path absoluto a partir de la Videoteca
         if not filetools.exists(videolibrary_path):                         #Si no existe el path, pasamos al modo clásico
-            url_stat = True
-        elif not filetools.exists(videolibrary_path + 'temp_torrents_Alfa'):    #Si no existe la carpeta temporal para .torrents, la creamos
-            filetools.mkdir(videolibrary_path + 'temp_torrents_Alfa')
-        torrents_path = filetools.join(videolibrary_path, 'temp_torrents_Alfa', 'cliente_torrent_Alfa.torrent')    #path de descarga temporal
-        
+            videolibrary_path = False
+        else:
+            torrents_path = filetools.join(videolibrary_path, 'temp_torrents_Alfa', 'cliente_torrent_Alfa.torrent')    #path descarga temporal
+        if videolibrary_path and not filetools.exists(filetools.join(videolibrary_path, 'temp_torrents_Alfa')):   #Si no existe la carpeta temporal, la creamos
+            filetools.mkdir(filetools.join(videolibrary_path, 'temp_torrents_Alfa'))
+
         #identificamos si es una url o un path de archivo.  Los Magnets los tratamos de la forma clásica       
         if not item.url.startswith("\\") and not item.url.startswith("/") and not item.url.startswith("magnet:") and not url_stat:
             timeout = 10
             if item.torrent_alt:
                 timeout = 5
-            item.url = videolibrarytools.caching_torrents(item.url, torrents_path=torrents_path, timeout=timeout)  #Descargamos el .torrent
-            if item.url: url_stat = True
-                
-        if not item.url and item.torrent_alt:                               #Si hay error, se busca un .torrent alternativo
-            item.url = item.torrent_alt                                     #El .torrent alternativo puede estar en una url o en local
+            url = videolibrarytools.caching_torrents(item.url, torrents_path=torrents_path, timeout=timeout)  #Descargamos el .torrent
+            if url:
+                url_stat = True
+                item.url = url
+                if "torrentin" in torrent_options[seleccion][1]:
+                    item.url = 'file://' + item.url
+
+        if not url and item.torrent_alt:                                    #Si hay error, se busca un .torrent alternativo
+            if (item.torrent_alt.startswith("\\") or item.torrent_alt.startswith("/")) and videolibrary_path:
+                item.url = item.torrent_alt                                 #El .torrent alternativo puede estar en una url o en local
+            elif not item.url.startswith("\\") and not item.url.startswith("/") and not item.url.startswith("magnet:"):
+                item.url = item.torrent_alt
         
         #Si es un archivo .torrent local, actualizamos el path relativo a path absoluto
-        if item.url.startswith("\\") or item.url.startswith("/") and not url_stat:      #.torrent alternativo local
+        if (item.url.startswith("\\") or item.url.startswith("/")) and not url_stat and videolibrary_path:      #.torrent alternativo local
             movies = config.get_setting("folder_movies")
             series = config.get_setting("folder_tvshows")
             if item.contentType == 'movie': 
@@ -1122,7 +1140,11 @@ def play_torrent(item, xlistitem, mediaurl):
             else:
                 folder = series                                             #o series
             item.url = filetools.join(videolibrary_path, folder, item.url)  #dirección del .torrent local en la Videoteca
-        
+            if filetools.copy(item.url, torrents_path, silent=True):        #se copia a la carpeta generíca para evitar problemas de encode
+                item.url = torrents_path
+            if "torrentin" in torrent_options[seleccion][1]:                #Si es Torrentin, hay que añadir un prefijo
+                item.url = 'file://' + item.url
+
         mediaurl = urllib.quote_plus(item.url)
         #Llamada con más parámetros para completar el título
         if ("quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]) and item.infoLabels['tmdb_id']:
