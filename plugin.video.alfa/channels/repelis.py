@@ -27,7 +27,7 @@ list_servers = ['rapidvideo', 'streamango', 'fastplay', 'openload', 'netu', 'vid
 
 __channel__='repelis'
 
-host = "https://repelis.io"
+host = "https://repelisgo.io"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -93,7 +93,7 @@ def peliculas(item):
         bloquex = scrapertools.find_single_match(data, 'window.__NUXT__={.*?movies":(.*?\])')
         dict = jsontools.load(bloquex)
     else:
-        dd = httptools.downloadpage("https://repelis.io/graph", post=jsontools.dump(item.post), headers=headers).data
+        dd = httptools.downloadpage(host + "/graph", post=jsontools.dump(item.post), headers=headers).data
         dict = jsontools.load(dd)["data"]["movies"]
     for datos in dict:
         scrapedurl = host + "/pelicula/" + datos["slug"] + "-" + datos["id"]
@@ -222,6 +222,7 @@ def findvideos(item):
 
 
 def play(item):
+    logger.info()
     itemlist = []
     url1 = httptools.downloadpage(host + item.url, follow_redirects=False, only_headers=True).headers.get("location", "")
     if "storage" in url1:
