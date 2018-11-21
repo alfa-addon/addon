@@ -14,7 +14,7 @@ import urllib
 from base64 import b64decode
 
 from core import httptools
-from platformcode import config
+from platformcode import config, logger
 
 
 def find_in_text(regex, text, flags=re.IGNORECASE | re.DOTALL):
@@ -355,7 +355,6 @@ class UnshortenIt(object):
         try:
             r = httptools.downloadpage(uri, timeout=self._timeout)
             html = r.data
-
             session_id = re.findall(r'sessionId\:(.*?)\"\,', html)
             if len(session_id) > 0:
                 session_id = re.sub(r'\s\"', '', session_id[0])
@@ -366,8 +365,9 @@ class UnshortenIt(object):
                 http_header["Referer"] = uri
                 http_header["Origin"] = "http://sh.st"
                 http_header["X-Requested-With"] = "XMLHttpRequest"
-                
+
                 if config.is_xbmc():
+                    import xbmc
                     xbmc.sleep(5 * 1000)
                 else:
                     time.sleep(5 * 1000)
