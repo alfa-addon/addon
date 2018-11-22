@@ -801,7 +801,7 @@ def caching_torrents(url, torrents_path=None, timeout=10, lookup=False, data_tor
         torrents_path += '.torrent'                                                 #path para dejar el .torrent
     torrents_path_encode = filetools.encode(torrents_path)                          #encode utf-8 del path
     
-    if url.endswith(".rar"):                                                        #No es un archivo .torrent
+    if url.endswith(".rar") or url.startswith("magnet:"):                           #No es un archivo .torrent
         logger.error('No es un archivo Torrent: ' + url)
         torrents_path = ''
         if data_torrent:

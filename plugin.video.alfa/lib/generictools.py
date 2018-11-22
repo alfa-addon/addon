@@ -863,6 +863,7 @@ def post_tmdb_episodios(item, itemlist):
         
         #Componemos el título final, aunque con Unify usará infoLabels['episodio_titulo']
         item_local.infoLabels['title'] = item_local.infoLabels['episodio_titulo']
+        item_local.title = item_local.title.replace("[", "-").replace("]", "-")
         item_local.title = '%s [%s] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.title, item_local.infoLabels['year'], rating, item_local.quality, str(item_local.language))
     
         #Quitamos campos vacíos
@@ -871,7 +872,7 @@ def post_tmdb_episodios(item, itemlist):
         item_local.title = item_local.title.replace(" []", "").strip()
         item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?-?\s?\]?\]\[\/COLOR\]', '', item_local.title).strip()
         item_local.title = re.sub(r'\s?\[COLOR \w+\]-?\s?\[\/COLOR\]', '', item_local.title).strip()
-        item_local.title = item_local.title.replace("[", "-").replace("]", "-").replace(".", ",").replace("GB", "G B").replace("Gb", "G b").replace("gb", "g b").replace("MB", "M B").replace("Mb", "M b").replace("mb", "m b")
+        item_local.title = item_local.title.replace(".", ",").replace("GB", "G B").replace("Gb", "G b").replace("gb", "g b").replace("MB", "M B").replace("Mb", "M b").replace("mb", "m b")
         
         #Si la información de num. total de episodios de TMDB no es correcta, tratamos de calcularla
         if num_episodios < item_local.contentEpisodeNumber:
@@ -1161,7 +1162,8 @@ def post_tmdb_findvideos(item, itemlist):
 
     if item.channel_alt:
         title_gen = '[COLOR yellow]%s [/COLOR][ALT]: %s' % (item.category.capitalize(), title_gen)
-    elif (config.get_setting("quit_channel_name", "videolibrary") == 1 or item.channel == channel_py) and item.contentChannel == "videolibrary":
+    #elif (config.get_setting("quit_channel_name", "videolibrary") == 1 or item.channel == channel_py) and item.contentChannel == "videolibrary":
+    else:
         title_gen = '%s: %s' % (item.category.capitalize(), title_gen)
 
     #Si intervención judicial, alerto!!!
@@ -1814,6 +1816,9 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         if item.channel_host:                                               #y se borran resto de pasadas anteriores
             del item.channel_host
 
+    if it.emergency_urls:
+        item.emergency_urls = it.emergency_urls                             #Refrescar desde el .nfo
+    
     #Analizamos si hay series o películas que migrar, debido a que se ha activado en el .json del canal la opción "guardar" 
     #"emergency_urls = 1", y hay que calcularla para todos los episodios y película existentes en la Videoteca.
     #Si "emergency_urls" está activada para uno o más canales, se verifica en el .nfo del vídeo si ya se ha realizado
@@ -1824,10 +1829,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #automáticamente.  En el caso de peliculas, se general aquí el json actualizado y se marca el .nfo como actualizado.
     #Cuando en el .json se activa "Borrar", "emergency_urls = 2", se borran todos los enlaces existentes
     #Cuando en el .json se activa "Actualizar", "emergency_urls = 3", se actualizan todos los enlaces existentes
-    
-    if it.emergency_urls:
-        item.emergency_urls = it.emergency_urls                             #Refrescar desde el .nfo
-    
+    """
     verify_cached_torrents()                                                #TEMPORAL: verificamos si los .torrents son correctos
     try:                                                                    #Si ha habido errores, vemos la lista y los reparamos
         json_error_path = filetools.join(config.get_runtime_path(), 'error_cached_torrents.json')
@@ -1875,7 +1877,12 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 if not encontrado:
                     logger.error('REGENERANDO: ' + str(item.emergency_urls))
                     item.emergency_urls.pop(channel_alt, None)
-            
+        except:
+        logger.error('Error en el proceso de RECARGA de URLs de Emergencia')
+        logger.error(traceback.format_exc())
+    """
+        
+    try:    
         if item.url:                                                            #Viene de actualización de videoteca de series
             #Analizamos si el canal ya tiene las urls de emergencia: guardar o borrar
             if (config.get_setting("emergency_urls", item.channel) == 1 and (not item.emergency_urls or (item.emergency_urls and not item.emergency_urls.get(channel_alt, False)))) or (config.get_setting("emergency_urls", item.channel) == 2 and item.emergency_urls.get(channel_alt, False)) or config.get_setting("emergency_urls", item.channel) == 3 or emergency_urls_force:
@@ -1894,7 +1901,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     except:
         logger.error('Error en el proceso de ALMACENAMIENTO de URLs de Emergencia')
         logger.error(traceback.format_exc())
-        
+
     #Ahora tratamos las webs intervenidas, tranformamos la url, el nfo y borramos los archivos obsoletos de la serie
     if channel not in intervencion and channel_py_alt not in intervencion and category not in intervencion and channel_alt != 'videolibrary':   #lookup
         return (item, it, overwrite)                                        #... el canal/clone está listado
