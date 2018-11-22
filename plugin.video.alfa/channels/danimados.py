@@ -160,26 +160,19 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    if "onclick=\"changeLink('" in data:
-        patron  = "onclick=.changeLink\('([^']+)'"
-        matches = scrapertools.find_multiple_matches(data, patron)
-        for id in matches:
-            url = devuelve_enlace(base64.b64decode(id))
-            itemlist.append(item.clone(title="Ver en %s",url=url, action="play"))
-    else:
-        patron  = 'data-type="([^"]+).*?'
-        patron += 'data-post="([^"]+).*?'
-        patron += 'data-nume="([^"]+).*?'
-        patron += 'server">([^<]+).*?'
-        matches = scrapertools.find_multiple_matches(data, patron)
-        headers = {"X-Requested-With":"XMLHttpRequest"}
-        for scrapedtype, scrapedpost, scrapednume, scrapedserver in matches:
-            post = "action=doo_player_ajax&type=%s&post=%s&nume=%s" %(scrapedtype, scrapedpost, scrapednume)
-            data1 = httptools.downloadpage(host + "wp-admin/admin-ajax.php", headers=headers, post=post).data
-            url1 = scrapertools.find_single_match(data1, "src='([^']+)")
-            url1 = devuelve_enlace(url1)
-            if url1:
-               itemlist.append(item.clone(title="Ver en %s",url=url1, action="play"))
+    patron  = 'data-type="(tv).*?'
+    patron += 'data-post="([^"]+).*?'
+    patron += 'data-nume="([^"]+).*?'
+    patron += 'server">([^<]+).*?'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    headers = {"X-Requested-With":"XMLHttpRequest"}
+    for scrapedtype, scrapedpost, scrapednume, scrapedserver in matches:
+        post = "action=doo_player_ajax&type=%s&post=%s&nume=%s" %(scrapedtype, scrapedpost, scrapednume)
+        data1 = httptools.downloadpage(host + "wp-admin/admin-ajax.php", headers=headers, post=post).data
+        url1 = scrapertools.find_single_match(data1, "src='([^']+)")
+        url1 = devuelve_enlace(url1)
+        if url1:
+            itemlist.append(item.clone(title="Ver en %s",url=url1, action="play"))
     tmdb.set_infoLabels(itemlist)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentType=="movie" and item.contentChannel!='videolibrary':

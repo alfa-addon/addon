@@ -143,10 +143,12 @@ def series_menu(item):
     return itemlist
 
 
-def get_source(url):
-
+def get_source(url, referer=None):
     logger.info()
-    data = httptools.downloadpage(url).data
+    if referer is None:
+        data = httptools.downloadpage(url).data
+    else:
+        data = httptools.downloadpage(url, headers={'Referer':referer, 'x-requested-with': 'XMLHttpRequest'}).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
@@ -173,7 +175,7 @@ def list_all (item):
 
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedyear, scrapedtitle in matches:
-        url = host+scrapedurl+'p001/'
+        url = host+scrapedurl
         thumbnail = scrapedthumbnail
         contentTitle=scrapedtitle
         title = contentTitle
@@ -349,16 +351,15 @@ def season_episodes(item):
 
 def get_links_by_language(item, data):
     logger.info()
-
     video_list = []
 
-    language = scrapertools.find_single_match(data, 'ul id=level\d_(.*?)\s*class=')
-    patron = 'data-source=(.*?)data.*?srt=(.*?)data-iframe.*?Opci.*?<.*?hidden>[^\(]\((.*?)\)'
+    language = scrapertools.find_single_match(data, 'ul id="level\d_([^"]+)"\s*class=')
+    patron = 'data-source="([^"]+)"data-quality="([^"]+)"data-srt="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
     if language in IDIOMAS:
         language = IDIOMAS[language]
 
-    for url, sub, quality in matches:
+    for url, quality, sub in matches:
         if 'http' not in url:
 
             new_url = 'https://onevideo.tv/api/player?key=90503e3de26d45e455b55e9dc54f015b3d1d4150&link' \
@@ -391,15 +392,19 @@ def findvideos(item):
     logger.info()
     itemlist = []
     video_list = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    if item.contentType == 'movie':
+        new_url = new_url = item.url.replace('/pelicula/', '/player/%s/' % item.contentType)
+    else:
+        base_url = scrapertools.find_single_match(item.url, '(.*?)/temporada')
+        new_url = base_url.replace('/serie/', '/player/serie/')
+        new_url += '|%s|%s/'  % (item.contentSeason, item.contentEpisodeNumber)
+    data = get_source(new_url, referer=item.url)
 
-    patron_language ='(<ul id=level\d_.*?\s*class=.*?ul>)'
+    patron_language ='(<ul id="level\d_.*?"*class=.*?ul>)'
     matches = re.compile(patron_language, re.DOTALL).findall(data)
 
     for language in matches:
         video_list.extend(get_links_by_language(item, language))
-
     video_list = servertools.get_servers_itemlist(video_list, lambda i: i.title % (i.server.capitalize(), i.language,
                                                                                    i.quality) )
     # Requerido para FilterTools
