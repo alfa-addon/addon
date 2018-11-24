@@ -5,6 +5,7 @@
 
 import errno
 import math
+import traceback
 
 from core import filetools
 from core import scraper
@@ -195,6 +196,7 @@ def save_movie(item):
                 item_nfo.emergency_urls.update({item.channel: True})
         except:
             logger.error("No se ha podido guardar las urls de emergencia de %s en la videoteca" % item.contentTitle)
+            logger.error(traceback.format_exc())
         
         if filetools.write(json_path, item.tojson()):
             p_dialog.update(100, 'Añadiendo película...', item.contentTitle)
@@ -441,6 +443,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         except:
             if e.contentType == 'episode':
                 logger.error("No se ha podido guardar las urls de emergencia de %s en la videoteca" % e.contentTitle)
+                logger.error(traceback.format_exc())
             continue
 
     # No hay lista de episodios, no hay nada que guardar
@@ -568,6 +571,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         except:
             logger.error("Error al actualizar tvshow.nfo")
             logger.error("No se ha podido guardar las urls de emergencia de %s en la videoteca" % tvshow_item.contentSerieName)
+            logger.error(traceback.format_exc())
             fallidos = -1
         else:
             # ... si ha sido correcto actualizamos la videoteca de Kodi
@@ -731,16 +735,18 @@ def emergency_urls(item, channel=None, path=None):
             channel = __import__('channels.%s' % channel, fromlist=["channels.%s" % channel])
         if hasattr(channel, 'findvideos'):                                  #Si el canal tiene "findvideos"...
             item.videolibray_emergency_urls = True                          #... se marca como "lookup"
-            item_res = getattr(channel, 'findvideos')(item)                 #... se procesa
+            channel_save = item.channel                                     #... guarda el canal original por si hay fail-over en Newpct1
+            item_res = getattr(channel, 'findvideos')(item)                 #... se procesa Findvideos
+            item_res.channel = channel_save                                 #... restaura el canal original por si hay fail-over en Newpct1
+            item_res.category = channel_save.capitalize()                   #... y la categoría
             del item_res.videolibray_emergency_urls                         #... y se borra la marca de lookup
     except:
-        logger.error('ERROR al procesar el episodio')
+        logger.error('ERROR al procesar el título en Findvideos del Canal: ' + item.channel + ' / ' + item.title)
+        logger.error(traceback.format_exc())
         item_res = item.clone()                                             #Si ha habido un error, se devuelve el Item original
     
     #Si el usuario ha activado la opción "emergency_urls_torrents", se descargarán los archivos .torrent de cada título
     else:                                                                   #Si se han cacheado con éxito los enlaces...
-        logger.debug('HOLA')
-        logger.debug(item_res.emergency_urls)
         try:
             channel_bis = generictools.verify_channel(item.channel)
             if config.get_setting("emergency_urls_torrents", channel_bis) and item_res.emergency_urls and path != None:
@@ -760,13 +766,15 @@ def emergency_urls(item, channel=None, path=None):
                         item_res.emergency_urls[0][i-1] = path_real.replace(videolibrary_path, '')  #se guarda el "path" relativo
                     i += 1
         except:
+            logger.error('ERROR al cachear el .torrent de: ' + item.channel + ' / ' + item.title)
+            logger.error(traceback.format_exc())
             item_res = item.clone()                                         #Si ha habido un error, se devuelve el Item original
 
     #logger.debug(item_res.emergency_urls)
     return item_res                                                         #Devolvemos el Item actualizado con los enlaces de emergencia
     
     
-def caching_torrents(url, torrents_path=None, decode_flag=False, timeout=10, lookup=False):
+def caching_torrents(url, torrents_path=None, timeout=10, lookup=False, data_torrent=False):
     if torrents_path != None:
         logger.info("path = " + torrents_path)
     else:
@@ -774,98 +782,80 @@ def caching_torrents(url, torrents_path=None, decode_flag=False, timeout=10, loo
     import urllib
     import re
     from core import httptools
+    torrent_file = ''
     
     """
     Descarga en el path recibido el .torrent de la url recibida, y pasa el decode
     Devuelve el path real del .torrent, o el path vacío si la operación no ha tenido éxito
     """
     
-    def decode(text):
-        try:
-            src = tokenize(text)
-            data = decode_item(src.next, src.next())
-            for token in src:  # look for more tokens
-                raise SyntaxError("trailing junk")
-        except (AttributeError, ValueError, StopIteration):
-            try:
-                data = data
-            except:
-                data = src
-
-        return data
-        
-    def tokenize(text, match=re.compile("([idel])|(\d+):|(-?\d+)").match):
-        i = 0
-        while i < len(text):
-            m = match(text, i)
-            s = m.group(m.lastindex)
-            i = m.end()
-            if m.lastindex == 2:
-                yield "s"
-                yield text[i:i + int(s)]
-                i = i + int(s)
-            else:
-                yield s
-
-    def decode_item(next, token):
-        if token == "i":
-            # integer: "i" value "e"
-            data = int(next())
-            if next() != "e":
-                raise ValueError
-        elif token == "s":
-            # string: "s" value (virtual tokens)
-            data = next()
-        elif token == "l" or token == "d":
-            # container: "l" (or "d") values "e"
-            data = []
-            tok = next()
-            while tok != "e":
-                data.append(decode_item(next, tok))
-                tok = next()
-            if token == "d":
-                data = dict(zip(data[0::2], data[1::2]))
-        else:
-            raise ValueError
-        return data
+    if torrents_path == None:
+        videolibrary_path = config.get_videolibrary_path()                          #Calculamos el path absoluto a partir de la Videoteca
+        if not videolibrary_path:
+            torrents_path = ''
+            if data_torrent:
+                return (torrents_path, torrent_file)
+            return torrents_path                                                    #Si hay un error, devolvemos el "path" vacío
+        torrents_path = filetools.join(videolibrary_path, 'temp_torrents_Alfa', 'cliente_torrent_Alfa.torrent')    #path de descarga temporal
+    if '.torrent' not in torrents_path:
+        torrents_path += '.torrent'                                                 #path para dejar el .torrent
+    torrents_path_encode = filetools.encode(torrents_path)                          #encode utf-8 del path
     
-    #Módulo PRINCIPAL
+    if url.endswith(".rar") or url.startswith("magnet:"):                           #No es un archivo .torrent
+        logger.error('No es un archivo Torrent: ' + url)
+        torrents_path = ''
+        if data_torrent:
+            return (torrents_path, torrent_file)
+        return torrents_path                                                        #Si hay un error, devolvemos el "path" vacío
+    
     try:
-        if lookup:
-            torrents_path = lookup
-        else:
-            if '.torrent' not in torrents_path:
-                torrents_path += '.torrent'                                         #path para dejar el .torrent
-                
-            torrents_path_encode = filetools.encode(torrents_path)                  #encode utf-8 del path
         response = httptools.downloadpage(url, timeout=timeout)                     #Descargamos el .torrent
         if not response.sucess:
             logger.error('Archivo .torrent no encontrado: ' + url)
             torrents_path = ''
+            if data_torrent:
+                return (torrents_path, torrent_file)
             return torrents_path                                                    #Si hay un error, devolvemos el "path" vacío
         torrent_file = response.data
-        
+
         if "used CloudFlare" in torrent_file:                                       #Si tiene CloudFlare, usamos este proceso
             response = httptools.downloadpage("http://anonymouse.org/cgi-bin/anon-www.cgi/" + url.strip(), timeout=timeout)
             if not response.sucess:
                 logger.error('Archivo .torrent no encontrado: ' + url)
                 torrents_path = ''
+                if data_torrent:
+                    return (torrents_path, torrent_file)
                 return torrents_path                                                #Si hay un error, devolvemos el "path" vacío
             torrent_file = response.data
         
-        if decode_flag:
-            torrent_file = decode(torrent_file)                                     #decodificamos el .torrent
+        if not scrapertools.find_single_match(torrent_file, '^d\d+:\w+\d+:'):       #No es un archivo .torrent (RAR, ZIP, HTML,..., vacío)
+            logger.error('No es un archivo Torrent: ' + url)
+            torrents_path = ''
+            if data_torrent:
+                return (torrents_path, torrent_file)
+            return torrents_path                                                    #Si hay un error, devolvemos el "path" vacío
         
         if not lookup:
-            filetools.write(torrents_path_encode, torrent_file)                     #Salvamos el .torrent
+            if not filetools.write(torrents_path_encode, torrent_file):             #Salvamos el .torrent
+                logger.error('ERROR: Archivo .torrent no escrito: ' + torrents_path_encode)
+                torrents_path = ''                                                  #Si hay un error, devolvemos el "path" vacío
+                torrent_file = ''                                                   #... y el buffer del .torrent
+                if data_torrent:
+                    return (torrents_path, torrent_file)
+                return torrents_path
     except:
         torrents_path = ''                                                          #Si hay un error, devolvemos el "path" vacío
-
+        torrent_file = ''                                                           #... y el buffer del .torrent
+        logger.error('Error en el proceso de descarga del .torrent: ' + url + ' / ' + torrents_path_encode)
+        logger.error(traceback.format_exc())
+    
     #logger.debug(torrents_path)
+    if data_torrent:
+        return (torrents_path, torrent_file)
     return torrents_path
     
     
-def verify_url_torrent(url, decode_flag=False, timeout=5):
+def verify_url_torrent(url, timeout=5):
     """
     Verifica si el archivo .torrent al que apunta la url está disponible, descargándolo en un area temporal
     Entrada:    url
@@ -874,12 +864,8 @@ def verify_url_torrent(url, decode_flag=False, timeout=5):
 
     if not url or url == 'javascript:;':                                            #Si la url viene vacía...
         return False                                                                #... volvemos con error
-    torrents_path = caching_torrents(url, timeout=timeout, lookup=True)         #Descargamos el .torrent, sin decode
-    if torrents_path:                                                           #Si ha tenido éxito...
+    torrents_path = caching_torrents(url, timeout=timeout, lookup=True)             #Descargamos el .torrent
+    if torrents_path:                                                               #Si ha tenido éxito...
         return True
-    try:
-        torrents_path = caching_torrents(url, timeout=timeout, lookup=True)         #Descargamos el .torrent, sin decode
-        if torrents_path:                                                           #Si ha tenido éxito...
-            return True
-    except:
-        return False                                                                #en caso de error, False
+    else:
+        return False

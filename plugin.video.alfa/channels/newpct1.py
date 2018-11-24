@@ -6,6 +6,7 @@ import urllib
 import urlparse
 import datetime
 import ast
+import random
 
 from channelselector import get_thumb
 from core import httptools
@@ -31,27 +32,45 @@ channel_py = 'newpct1'
 #Código para permitir usar un único canal para todas las webs clones de NewPct1
 #Cargamos en .json del canal para ver las listas de valores en settings
 clone_list = channeltools.get_channel_json(channel_py)
-for settings in clone_list['settings']:                                         #Se recorren todos los settings
-    if settings['id'] == "clonenewpct1_channels_list":                          #Encontramos en setting
-        clone_list = settings['default']                                        #Carga lista de clones
+for settings in clone_list['settings']:                                             #Se recorren todos los settings
+    if settings['id'] == "clonenewpct1_channels_list":                              #Encontramos en setting
+        clone_list = settings['default']                                            #Carga lista de clones
         break
-clone_list = ast.literal_eval(clone_list)                                       #la convierte en array
+clone_list = ast.literal_eval(clone_list)                                           #la convierte en array
 host_index = 0
-host_index = config.get_setting('clonenewpct1_channel_default', channel_py)     #Clone por defecto
-i = 0
-for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
-    if i == host_index:
-        channel_clone_name = channel_clone                                      #Nombre del Canal elegido
-        host = host_clone                                                       #URL del Canal elegido
-        if active_clone == "1":                                                 #Comprueba que el clone esté activo
+host_index = config.get_setting('clonenewpct1_channel_default', channel_py)         #Clone por defecto
+
+clone_list_random = []                                                              #Iniciamos la lista aleatoria de clones
+
+if host_index == 0:                                                                 #Si el clones es "Aleatorio"...
+    i = 0
+    j = 2                                                                           #... marcamos el último de los clones "buenos"
+    for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
+        if i <= j and active_clone == "1":
+            clone_list_random += [clone_list[i]]                                    #... añadimos el clone activo "bueno" a la lista
+        else:
             break
-        channel_clone_name = "*** DOWN ***"                                     #es un fallo masivo ???
-        for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
-            if active_clone == "1":                                             #Comprueba que el clone esté activo
-                channel_clone_name = channel_clone                              #Nombre del Canal elegido
-                host = host_clone                                               #URL del Canal elegido
+        i += 1
+    if clone_list_random:                                                           #Si hay clones en la lista aleatoria...
+        clone_list = [random.choice(clone_list_random)]                             #Seleccionamos un clone aleatorio
+        #logger.debug(clone_list)
+    host_index = 1                                              #mutamos el num. de clone para que se procese en el siguiente loop
+        
+if host_index > 0 or not clone_list_random:                     #Si el Clone por defecto no es Aleatorio, o hay ya un aleatorio sleccionado...
+    i = 1
+    for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
+        if i == host_index:
+            channel_clone_name = channel_clone                                      #Nombre del Canal elegido
+            host = host_clone                                                       #URL del Canal elegido
+            if active_clone == "1":                                                 #Comprueba que el clone esté activo
                 break
-    i += 1
+            channel_clone_name = "*** DOWN ***"                                     #es un fallo masivo ???
+            for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
+                if active_clone == "1":                                             #Comprueba que el clone esté activo
+                    channel_clone_name = channel_clone                              #Nombre del Canal elegido
+                    host = host_clone                                               #URL del Canal elegido
+                    break
+        i += 1
     
 item = Item()
 if item.channel != channel_py:
@@ -114,8 +133,11 @@ def mainlist(item):
                          thumbnail=thumb_docus, category=item.category, channel_host=item.channel_host))
     itemlist.append(
         Item(channel=item.channel, action="search", title="Buscar", url=item.channel_host + "buscar", thumbnail=thumb_buscar, category=item.category, channel_host=item.channel_host))
-        
-    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", folder=False, thumbnail=thumb_separador, category=item.category, channel_host=item.channel_host))
+    
+    clone_act = 'Clone: '
+    if config.get_setting('clonenewpct1_channel_default', channel_py) == 0:
+        clone_act = 'Aleatorio: '
+    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR] (" + clone_act + item.category + ")", folder=False, thumbnail=thumb_separador, category=item.category, channel_host=item.channel_host))
     
     itemlist.append(Item(channel=item.channel, action="settingCanal", title="Configurar canal", thumbnail=thumb_settings, category=item.category, channel_host=item.channel_host))
     
@@ -138,6 +160,11 @@ def submenu(item):
     
     itemlist = []
     item.extra2 = ''
+    
+    #Renombramos el canal al nombre de clone inicial desde la URL
+    host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
+    item.channel_host = host
+    item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
     
     data = ''
     try:
@@ -217,6 +244,10 @@ def submenu_novedades(item):
     itemlist = []
     itemlist_alt = []
     item.extra2 = ''
+    
+    #Renombramos el canal al nombre de clone inicial desde la URL
+    item.channel_host = host
+    item.category = channel_clone_name.capitalize()
     
     data = ''
     timeout_search=timeout * 2                                                  #Más tiempo para Novedades, que es una búsqueda
@@ -315,6 +346,11 @@ def submenu_novedades(item):
 def alfabeto(item):
     logger.info()
     itemlist = []
+    
+    #Renombramos el canal al nombre de clone inicial desde la URL
+    host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
+    item.channel_host = host
+    item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
 
     data = ''
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
@@ -365,6 +401,12 @@ def alfabeto(item):
 def listado(item):
     logger.info()
     itemlist = []
+    
+    #Renombramos el canal al nombre de clone inicial desde la URL
+    host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
+    item.channel_host = host
+    item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+    
     clase = "pelilist"                                          # etiqueta para localizar zona de listado de contenidos
     url_next_page =''                                           # Control de paginación
     cnt_tot = 30                                                # Poner el num. máximo de items por página
@@ -1249,7 +1291,7 @@ def findvideos(item):
     #Renombramos el canal al nombre de clone elegido.  Actualizados URL
     host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
     item.channel_host = host
-    item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+    item.category = host.capitalize()
     
     verify_fo = True                                                #Verificamos si el clone a usar está activo
     item, data = generictools.fail_over_newpct1(item, verify_fo)
@@ -1374,10 +1416,11 @@ def findvideos(item):
         pass
     
     patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'           #Patron para .torrent
-    patron_mult = 'torrent:check:status|' + patron
-    if 'planetatorrent' in item.channel_host:
-        patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'      #Patron para .torrent (planetatorrent)
-    patron_mult += '|<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'
+    patron_mult = 'torrent:check:status|' + patron + '|<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'
+    if not scrapertools.find_single_match(data, patron):
+        patron_alt = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'  #Patron para .torrent (planetatorrent)
+        if scrapertools.find_single_match(data, patron):
+            patron = patron_alt
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not data or not scrapertools.find_single_match(data, patron) or not videolibrarytools.verify_url_torrent(scrapertools.find_single_match(data, patron)):                                                             # Si no hay datos o url, error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
@@ -1475,7 +1518,7 @@ def findvideos(item):
     if not item_local.url:                                                              #error en url?
         logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
         if item.emergency_urls:                                                         #Hay urls de emergencia?
-            item.item_local = item.emergency_urls[0][0]                                 #Guardamos la url del .Torrent
+            item_local.url = item.emergency_urls[0][0]                                  #Restauramos la url del .Torrent
             item.armagedon = True                                                       #Marcamos la situación como catastrófica 
             itemlist.append(item.clone(action='', title=item.category + ': [COLOR hotpink]Usando enlaces de emergencia[/COLOR]'))
     
@@ -1821,12 +1864,14 @@ def episodios(item):
             pass
         
     modo_ultima_temp_alt = modo_ultima_temp
-    if item.ow_force == "1":                                        #Si hay un traspaso de canal o url, se actualiza todo 
+    if item.ow_force == "1":                                                #Si hay un traspaso de canal o url, se actualiza todo 
         modo_ultima_temp_alt = False
     
     max_temp = 1
     if item.infoLabels['number_of_seasons']:
         max_temp = item.infoLabels['number_of_seasons']
+    else:
+        modo_ultima_temp_alt = False                                        #No sabemos cuantas temporadas hay
     y = []
     if modo_ultima_temp_alt and item.library_playcounts:                    #Averiguar cuantas temporadas hay en Videoteca
         patron = 'season (\d+)'
@@ -2008,7 +2053,15 @@ def episodios(item):
             if match['episode'] is None: match['episode'] = "0"
             try:
                 match['season'] = int(match['season'])
+                season_alt = match['season']
                 match['episode'] = int(match['episode'])
+                if match['season'] > max_temp:
+                    logger.error("ERROR 07: EPISODIOS: Error en número de Temporada o Episodio: " + " / TEMPORADA/EPISODIO: " + str(match['season']) + " / " + str(match['episode']) + " / NUM_TEMPORADA: " + str(max_temp) + " / " + str(season) + " / MATCHES: " + str(matches))
+                    match['season'] = scrapertools.find_single_match(item_local.url, '\/[t|T]emp\w+-*(\d+)\/')
+                    if not match['season']:
+                        match['season'] = season_alt
+                    else:
+                        match['season'] = int(match['season'])
             except:
                 logger.error("ERROR 07: EPISODIOS: Error en número de Temporada o Episodio: " + " / TEMPORADA/EPISODIO: " + str(match['season']) + " / " + str(match['episode']) + " / NUM_TEMPORADA: " + str(max_temp) + " / " + str(season) + " / MATCHES: " + str(matches))
 
@@ -2043,11 +2096,12 @@ def episodios(item):
             else:                                                               #Si es un solo episodio, se formatea ya
                 item_local.title = "%sx%s -" % (match["season"], str(match["episode"]).zfill(2))
 
+            if first:                                                           #Si es el primer episodio, comprobamos que ...
+                first = False
+                if item_local.contentSeason < max_temp:                         #... la temporada sea la última ...
+                    modo_ultima_temp_alt = False                                #... si no, por seguridad leeremos toda la serie
+            
             if modo_ultima_temp_alt and item.library_playcounts:                #Si solo se actualiza la última temporada de Videoteca
-                if first:                                                       #Si es el primer episodio, comprobamos que ...
-                    first = False
-                    if item_local.contentSeason < max_temp:                     #... la temporada sea la última ...
-                        modo_ultima_temp_alt = False                            #... si no, por seguridad leeremos toda la serie
                 if item_local.contentSeason < max_temp and modo_ultima_temp_alt:
                     list_pages = []                                             #Sale del bucle de leer páginas
                     break                                                       #Sale del bucle actual del FOR de episodios por página
@@ -2055,7 +2109,7 @@ def episodios(item):
                 #    continue
               
             if season_display > 0:
-                if item_local.contentSeason > season_display:
+                if item_local.contentSeason > season_display or (not modo_ultima_temp_alt and item_local.contentSeason != season_display):
                     continue
                 elif item_local.contentSeason < season_display:
                     list_pages = []                                             #Sale del bucle de leer páginas

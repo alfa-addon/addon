@@ -428,15 +428,17 @@ def findvideos(item):
     #logger.debug(item)
 
     timeout_find = timeout
+    follow_redirects=True
     if item.videolibray_emergency_urls:                 #Si se están cacheando enlaces aumentamos el timeout
         timeout_find = timeout * 2
     elif item.emergency_urls:                           #Si se llama desde la Videoteca con enlaces cacheados... 
         timeout_find = timeout / 2                      #reducimos el timeout antes de saltar a los enlaces cacheados
+        follow_redirects=False
         
     #Bajamos los datos de la página
     data = ''
     try:
-        data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, timeout=timeout_find).data)
+        data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, timeout=timeout_find, follow_redirects=follow_redirects).data)
     except:
         pass
         
@@ -633,6 +635,8 @@ def episodios(item):
     temp_next = ''
     item.extra = "episodios"
     
+    #logger.debug(item)
+    
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
     if not item.infoLabels['tmdb_id']:
         tmdb.set_infoLabels(item, True)
@@ -715,6 +719,8 @@ def episodios(item):
         item.contentType = "list"
 
     if item.ow_force == '1':                                    #Si viene formazado la reconstrucción de la serie, lo hacemo
+        item.contentType = "tvshow"
+    if not modo_ultima_temp:                                    #Si se quiere actualiar toda la serie en vez de la última temporada...
         item.contentType = "tvshow"
     
     temp_lista = []

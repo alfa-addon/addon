@@ -599,7 +599,7 @@ def findvideos(item):
         item_local.url = scrapedurl
         if host not in item_local.url and host.replace('https', 'http') not in item_local.url and not item.armagedon:
             item_local.url = host + item_local.url
-        if item_local.url and not item.armagedon:
+        if item_local.url and not item.armagedon and item.emergency_urls:
             item_local.torrent_alt = item.emergency_urls[0][0]                      #Guardamos la url del .Torrent ALTERNATIVA
         if item.armagedon:                                                          #Si es catastrófico, lo marcamos
             item_local.quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % item_local.quality

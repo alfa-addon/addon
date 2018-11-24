@@ -433,7 +433,14 @@ def newest(categoria):
 
 def search(item, texto):
     logger.info()
+    itemlist = []
     texto = texto.replace(" ", "-")
-    item.url = item.host + '?s=' + texto
-    if texto != '':
-        return peliculas(item)
+    if item.host != '':
+        host_list = [item.host]
+    else:
+        host_list = ['http://www.cinecalidad.to', 'http://cinecalidad.to/espana/']
+    for host_name in host_list:
+        item.url = host_name + '?s=' + texto
+        if texto != '':
+            itemlist.extend(peliculas(item))
+    return itemlist
