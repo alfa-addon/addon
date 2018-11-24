@@ -1,0 +1,16 @@
+{
+  "id": "vporn",
+  "name": "vporn",
+  "active": true,
+  "adult": true,
+  "language": ["*"],
+  "thumbnail": "https://th-us2.vporn.com/images/logo%20Dark%20theme.png",
+  "banner": "",
+  "categories": [
+    "adult"
+  ],
+  "settings": [
+
+  ]
+}
+

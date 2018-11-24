@@ -47,7 +47,6 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     patron  = '&nbsp;<a href="([^"]+)" class="link1">([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""

@@ -19,7 +19,6 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Peliculas" , action="peliculas", url=host + "/list-movies"))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/list-movies"))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host + "/list-movies"))
-
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -47,7 +46,6 @@ def categorias(item):
         data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
         patron  = '<li><a title=".*?" href="([^"]+)">([^<]+)</a>'
         matches = re.compile(patron,re.DOTALL).findall(data)
-        scrapertools.printMatches(matches)
         for scrapedurl,scrapedtitle in matches:
             scrapedplot = ""
             scrapedthumbnail = ""

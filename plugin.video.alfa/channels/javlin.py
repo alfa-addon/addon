@@ -42,7 +42,6 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     patron  = '<option class="level-0" value="([^"]+)">([^"]+)&nbsp;&nbsp;\((.*?)\)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle,number in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
@@ -59,11 +58,10 @@ def peliculas(item):
     data = httptools.downloadpage(item.url).data
     patron = '<div class="featured-wrap clearfix">.*?<a href="([^"]+)" title="([^"]+)".*?src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
         scrapedplot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
-    next_page_url = scrapertools.find_single_match(data,'<li><a rel=\'nofollow\' href=\'([^\']+)\' class=\'inactive\'>Next')
+    next_page_url = scrapertools.find_single_match(data,'<span class=\'currenttext\'>.*?href=\'([^\']+)\' class=\'inactive\'>')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
         itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
@@ -75,7 +73,6 @@ def play(item):
     logger.info()
     data = scrapertools.cachePage(item.url)
     itemlist = servertools.find_video_items(data=data)
-
     for videoitem in itemlist:
         videoitem.title = item.title
         videoitem.fulltitle = item.fulltitle
