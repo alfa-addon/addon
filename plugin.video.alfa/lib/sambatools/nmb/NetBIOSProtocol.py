@@ -1,13 +1,9 @@
-import logging
-import random
-import socket
-import time
 
+import os, logging, random, socket, time
 from twisted.internet import reactor, defer
 from twisted.internet.protocol import DatagramProtocol
-
-from base import NBNS
 from nmb_constants import TYPE_SERVER
+from base import NBNS
 
 IP_QUERY, NAME_QUERY = range(2)
 

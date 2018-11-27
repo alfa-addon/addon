@@ -329,6 +329,7 @@ def mark_content_as_watched_on_alfa(path):
     from channels import videolibrary
     from core import videolibrarytools
     from core import scrapertools
+    from core import filetools
     import re
     """
         marca toda la serie o película como vista o no vista en la Videoteca de Alfa basado en su estado en la Videoteca de Kodi
@@ -375,7 +376,8 @@ def mark_content_as_watched_on_alfa(path):
         nfo_name = scrapertools.find_single_match(path2, '\]\/(.*?)$')  #Construyo el nombre del .nfo
         path1 = path1.replace(nfo_name, '')                             #para la SQL solo necesito la carpeta
         path2 = path2.replace(nfo_name, '')                             #para la SQL solo necesito la carpeta
-
+    path2 = filetools.remove_smb_credential(path2)                      #Si el archivo está en un servidor SMB, quiamos las credenciales
+    
     #Ejecutmos la sentencia SQL
     sql = 'select strFileName, playCount from %s where (strPath like "%s" or strPath like "%s")' % (contentType, path1, path2)
     nun_records = 0

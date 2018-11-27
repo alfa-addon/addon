@@ -576,3 +576,24 @@ def remove_tags(title):
         return title_without_tags
     else:
         return title
+        
+    
+def remove_smb_credential(path):
+    """
+    devuelve el path sin contraseña/usuario para paths de SMB
+    @param path: ruta
+    @type path: str
+    @return: cadena sin credenciales
+    @rtype: str
+    """
+    logger.info()
+    
+    if not path.startswith("smb://"):
+        return path
+
+    path_without_credentials = scrapertools.find_single_match(path, '^smb:\/\/(?:[^;\n]+;)?(?:[^:@\n]+[:|@])?(?:[^@\n]+@)?(.*?$)')
+
+    if path_without_credentials:
+        return ('smb://' + path_without_credentials)
+    else:
+        return path
