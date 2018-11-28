@@ -4,6 +4,7 @@
 # -*- By the Alfa Develop Group -*-
 
 import re
+import base64
 
 from channels import autoplay
 from channels import filtertools
@@ -178,8 +179,8 @@ def findvideos(item):
 
     data = get_source(item.url)
     video_id = scrapertools.find_single_match(data, 'getEnlaces\((\d+)\)')
-    links_url = '%s%s%s' % (host,'/link/repro.php/',video_id)
-    online_url = '%s%s%s' % (host, '/link/enlaces_online.php/', video_id)
+    links_url = '%s%s%s' % (host,'link/repro.php/',video_id)
+    online_url = '%s%s%s' % (host, 'link/enlaces_online.php/', video_id)
 
     # listado de opciones links_url
 
@@ -223,10 +224,14 @@ def findvideos(item):
             video_id = scrapertools.find_single_match(scrapedurl, 'index.php/(\d+)/')
             new_url = '%s%s%s%s' % (host, 'ext/index-include.php?id=', video_id, '&tipo=1')
             data = get_source(new_url)
-            video_url = scrapertools.find_single_match(data, '<div class=container><a href=(.*?)>')
-            video_url = video_url.replace('enlace.php', 'r')
-            data = httptools.downloadpage(video_url, follow_redirects=False)
-            url = data.headers['location']
+            video_url = scrapertools.find_single_match(data, '<div class=container><a onclick=addURL.*?href=(.*?)>')
+            video_url = video_url.replace('%3D', '&')+'status'
+            headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                       'Referer': item.url}
+            data = httptools.downloadpage(video_url, headers=headers, ignore_response_code=True).data
+            b64_url = scrapertools.find_single_match(data, "var string = '([^']+)';")+'=='
+            url = base64.b64decode(b64_url)
+
             title = '%s '+ '[%s]' % language
             if url != '':
                 itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language=language,
