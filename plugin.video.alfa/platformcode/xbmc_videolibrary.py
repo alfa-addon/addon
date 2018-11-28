@@ -488,7 +488,8 @@ def update(folder_content=config.get_setting("folder_tvshows"), folder=""):
         else:
             update_path = filetools.join(videolibrarypath, folder_content, folder) + "/"
 
-        payload["params"] = {"directory": update_path}
+        if not update_path.startswith("smb://"):
+            payload["params"] = {"directory": update_path}
 
     while xbmc.getCondVisibility('Library.IsScanningVideo()'):
         xbmc.sleep(500)

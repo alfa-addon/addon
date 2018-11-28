@@ -1164,7 +1164,7 @@ def post_tmdb_findvideos(item, itemlist):
         title_gen = '[COLOR yellow]%s [/COLOR][ALT]: %s' % (item.category.capitalize(), title_gen)
     #elif (config.get_setting("quit_channel_name", "videolibrary") == 1 or item.channel == channel_py) and item.contentChannel == "videolibrary":
     else:
-        title_gen = '%s: %s' % (item.category.capitalize(), title_gen)
+        title_gen = '[COLOR white]%s: %s' % (item.category.capitalize(), title_gen)
 
     #Si intervención judicial, alerto!!!
     if item.intervencion:
@@ -1768,7 +1768,6 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     item_back = item.clone()
     it_back = item.clone()
     ow_force_param = True
-    channel_enabled = False
     update_stat = 0
     delete_stat = 0
     canal_org_des_list = []
@@ -1883,13 +1882,15 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     """
         
     try:    
-        if item.url:                                                            #Viene de actualización de videoteca de series
+        if item.url and not channel_py in item.url and it.emergency_urls:       #Viene de actualización de videoteca de series
             #Analizamos si el canal ya tiene las urls de emergencia: guardar o borrar
             if (config.get_setting("emergency_urls", item.channel) == 1 and (not item.emergency_urls or (item.emergency_urls and not item.emergency_urls.get(channel_alt, False)))) or (config.get_setting("emergency_urls", item.channel) == 2 and item.emergency_urls.get(channel_alt, False)) or config.get_setting("emergency_urls", item.channel) == 3 or emergency_urls_force:
                 intervencion += ", ('1', '%s', '%s', '', '', '', '', '', '', '', '*', '%s', 'emerg')" % (channel_alt, channel_alt, config.get_setting("emergency_urls", item.channel))
 
         elif it.library_urls:                                                   #Viene de "listar peliculas´"
             for canal_vid, url_vid in it.library_urls.items():                  #Se recorre "item.library_urls" para buscar canales candidatos
+                if canal_vid == channel_py:                                     #Si tiene Newcpt1 en canal, es un error
+                    continue
                 canal_vid_alt = "'%s'" % canal_vid
                 if canal_vid_alt in fail_over_list:                             #Se busca si es un clone de newpct1
                     channel_bis = channel_py
@@ -1903,7 +1904,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         logger.error(traceback.format_exc())
 
     #Ahora tratamos las webs intervenidas, tranformamos la url, el nfo y borramos los archivos obsoletos de la serie
-    if channel not in intervencion and channel_py_alt not in intervencion and category not in intervencion and channel_alt != 'videolibrary':   #lookup
+    if (channel not in intervencion and channel_py_alt not in intervencion and category not in intervencion and channel_alt != 'videolibrary') or not item.infoLabels:                                                 #lookup
         return (item, it, overwrite)                                        #... el canal/clone está listado
         
     import ast
@@ -1915,7 +1916,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     for activo, canal_org, canal_des, url_org, url_des, patron1, patron2, patron3, patron4, patron5, content_inc, content_exc, ow_force in intervencion_list:
         opt = ''
         #Es esta nuestra entrada?
-        if activo == '1' and (canal_org == channel_alt or canal_org == item.channel or channel_alt == 'videolibrary' or ow_force == 'del' or ow_force == 'emerg'):     
+        if activo == '1' and (canal_org == channel_alt or canal_org == item.category.lower() or channel_alt == 'videolibrary' or ow_force == 'del' or ow_force == 'emerg'):     
             
             if ow_force == 'del' or ow_force == 'emerg':                    #Si es un borrado de estructuras erroneas, hacemos un proceso aparte
                 canal_des_def = canal_des                                   #Si hay canal de sustitución para item.library_urls, lo usamos
@@ -1981,10 +1982,15 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     continue
                 if item.contentType in content_exc:                         #Está el contenido excluido?
                     continue
+                channel_enabled = 0
+                channel_enabled_alt = 1
                 if item.channel != channel_py:
-                    channel_enabled = channeltools.is_enabled(channel_alt)  #Verificamos que el canal esté inactivo
-                    channel_enabled_alt = config.get_setting('enabled', channel_alt)
-                    channel_enabled = channel_enabled * channel_enabled_alt #Si está inactivo en algún sitio, tomamos eso
+                    try:
+                        if channeltools.is_enabled(channel_alt): channel_enabled = 1    #Verificamos que el canal esté inactivo
+                        if config.get_setting('enabled', channel_alt) == False: channel_enabled_alt = 0
+                        channel_enabled = channel_enabled * channel_enabled_alt         #Si está inactivo en algún sitio, tomamos eso
+                    except:
+                        pass
                 if channel_enabled == 1 and canal_org != canal_des:         #Si el canal está activo, puede ser solo...
                     continue                                                #... una intervención que afecte solo a una región
                 if ow_force == 'no' and it.library_urls:                    #Esta regla solo vale para findvideos...
@@ -2012,6 +2018,9 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     url += scrapertools.find_single_match(url_total, patron5)   #La aplicamos a url
                 if url:
                     url_total = url                                             #Guardamos la suma de los resultados intermedios
+                if item.channel == channel_py or channel in fail_over_list:     #Si es Newpct1...
+                    if item.contentType == "tvshow":
+                        url_total = re.sub(r'\/\d+\/?$', '', url_total)         #parece que con el título encuentra la serie, normalmente...
                 update_stat += 1                                                #Ya hemos actualizado algo
                 canal_org_des_list += [(canal_org, canal_des, url_total, opt, ow_force)]   #salvamos el resultado para su proceso
             
@@ -2019,13 +2028,10 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         if (update_stat > 0 and path != False) or item.ow_force == '1':
             logger.error('** Lista de Actualizaciones a realizar: ' + str(canal_org_des_list))
         for canal_org_def, canal_des_def, url_total, opt_def, ow_force_def in canal_org_des_list:   #pasamos por todas las "parejas" cambiadas
+            url_total_def = url_total
             if ow_force_def != 'del' and ow_force_def != 'emerg':
-                url_total_def = url_total
-                if (item.channel == channel_py or channel in fail_over_list):   #Si es Newpct1...
-                    if item.contentType == "tvshow":
-                        url_total_def = re.sub(r'\/\d+\/?$', '', url_total)     #parece que con el título encuentra la serie, normalmente...
                 if item.url:
-                    item.url = url_total_def                                    #Salvamos la url convertida
+                    item.url = url_total                                        #Salvamos la url convertida
                 if item.library_urls:
                     item.library_urls.pop(canal_org_def, None)
                     item.library_urls.update({canal_des_def: url_total})
@@ -2048,10 +2054,18 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
             #Verificamos que las webs de los canales estén activas antes de borrar los .json, para asegurar que se pueden regenerar
             i = 0
             for canal_org_def, canal_des_def, url_total, opt_def, ow_force_def in canal_org_des_list: #pasamos por las "parejas" a borrar
+                if "magnet:" in url_total or type(url_total) != str:            #Si la url es un Magnet, o es una lista, pasamos
+                    i += 1
+                    continue
                 try:
                     response = httptools.downloadpage(url_total, only_headers=True)
                 except:
                     logger.error(traceback.format_exc())
+                    logger.error('Web ' + canal_des_def.upper() + ' ERROR.  Regla no procesada: ' + str(canal_org_des_list[i]))
+                    item = item_back.clone()                                    #Restauro las imágenes inciales
+                    it = it_back.clone()
+                    item.torrent_caching_fail = True                            #Marcamos el proceso como fallido
+                    return (item, it, False)
                 if not response.sucess:
                     logger.error('Web ' + canal_des_def.upper() + ' INACTIVA.  Regla no procesada: ' + str(canal_org_des_list[i]))
                     item = item_back.clone()                                    #Restauro las imágenes inciales
