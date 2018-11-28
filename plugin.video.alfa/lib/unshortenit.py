@@ -14,7 +14,7 @@ import urllib
 from base64 import b64decode
 
 from core import httptools
-from platformcode import config
+from platformcode import config, logger
 
 
 def find_in_text(regex, text, flags=re.IGNORECASE | re.DOTALL):
@@ -26,7 +26,7 @@ def find_in_text(regex, text, flags=re.IGNORECASE | re.DOTALL):
 
 
 class UnshortenIt(object):
-    _adfly_regex = r'adf\.ly|j\.gs|q\.gs|u\.bb|ay\.gy|atominik\.com|tinyium\.com|microify\.com|threadsphere\.bid|clearload\.bid|activetect\.net'
+    _adfly_regex = r'adf\.ly|j\.gs|q\.gs|u\.bb|ay\.gy|atominik\.com|tinyium\.com|microify\.com|threadsphere\.bid|clearload\.bid|activetect\.net|swiftviz\.net'
     _linkbucks_regex = r'linkbucks\.com|any\.gs|cash4links\.co|cash4files\.co|dyo\.gs|filesonthe\.net|goneviral\.com|megaline\.co|miniurls\.co|qqc\.co|seriousdeals\.net|theseblogs\.com|theseforums\.com|tinylinks\.co|tubeviral\.com|ultrafiles\.net|urlbeat\.net|whackyvidz\.com|yyv\.co'
     _adfocus_regex = r'adfoc\.us'
     _lnxlu_regex = r'lnx\.lu'
@@ -355,7 +355,6 @@ class UnshortenIt(object):
         try:
             r = httptools.downloadpage(uri, timeout=self._timeout)
             html = r.data
-
             session_id = re.findall(r'sessionId\:(.*?)\"\,', html)
             if len(session_id) > 0:
                 session_id = re.sub(r'\s\"', '', session_id[0])
@@ -366,8 +365,9 @@ class UnshortenIt(object):
                 http_header["Referer"] = uri
                 http_header["Origin"] = "http://sh.st"
                 http_header["X-Requested-With"] = "XMLHttpRequest"
-                
+
                 if config.is_xbmc():
+                    import xbmc
                     xbmc.sleep(5 * 1000)
                 else:
                     time.sleep(5 * 1000)
