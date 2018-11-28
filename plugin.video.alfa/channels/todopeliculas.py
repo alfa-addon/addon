@@ -345,56 +345,100 @@ def findvideos(item):
     if not data:
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
-        return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        
+        if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
+            matches = item.emergency_urls[1]                                    #Restauramos matches
+            item.armagedon = True                                               #Marcamos la situación como catastrófica 
+        else:
+            if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
+                return item                                                     #Devolvemos el Item de la llamada
+            else:
+                return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    if not item.armagedon:
+        matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                     #error
-        logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " + " / PATRON: " + patron + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
-        return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
+        if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
+            item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
+        else:
+            logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " + " / PATRON: " + patron + data)
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
+        
+        if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
+            matches = item.emergency_urls[1]                                    #Restauramos matches
+            item.armagedon = True                                               #Marcamos la situación como catastrófica 
+        else:
+            if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
+                return item                                                     #Devolvemos el Item de la llamada
+            else:
+                return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     #logger.debug("PATRON: " + patron)
     #logger.debug(matches)
     #logger.debug(data)
     
+    #Si es un lookup para cargar las urls de emergencia en la Videoteca...
+    if item.videolibray_emergency_urls:
+        item.emergency_urls = []                                                #Iniciamos emergency_urls
+        item.emergency_urls.append([])                                          #Reservamos el espacio para los .torrents locales
+        item.emergency_urls.append(matches)                                     #Salvamnos matches de los vídeos...  
+    
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
-    item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
+    if not item.videolibray_emergency_urls:
+        item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent
-    for scrapedurl in matches:                                          #leemos los torrents con la diferentes calidades
-        if 'javascript' in scrapedurl:                                  #evitamos la basura
+    for scrapedurl in matches:                                                  #leemos los torrents con la diferentes calidades
+        if 'javascript' in scrapedurl:                                          #evitamos la basura
             continue
-        
-        url = urlparse.urljoin(host, scrapedurl)
-        #Leemos la siguiente página, que es de verdad donde está el magnet/torrent
-        try:
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(url, timeout=timeout).data)
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
-        except:
-            pass
-        
-        patron = "window.open\('([^']+)'"
-        url = scrapertools.find_single_match(data, patron)
-        if not url:                                         #error
-            logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " + " / PATRON: " + patron + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
-            continue                                        #si no hay más datos, algo no funciona, pasamos al siguiente
+        url = ''
+        if not item.armagedon:
+            url = urlparse.urljoin(host, scrapedurl)
+            #Leemos la siguiente página, que es de verdad donde está el magnet/torrent
+            try:
+                data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(url, timeout=timeout).data)
+                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+            except:
+                pass
+            
+            patron = "window.open\('([^']+)'"
+            url = scrapertools.find_single_match(data, patron)
+            if not url:                                                                 #error
+                logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " + " / PATRON: " + patron + data)
+                itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
+            
+                if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
+                    item.armagedon = True                                               #Marcamos la situación como catastrófica 
+                else:
+                    continue                                        #si no hay más datos, algo no funciona, pasamos al siguiente
         
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
-            
+          
         item_local.url = urlparse.urljoin(host, url)
+        if item.videolibray_emergency_urls:
+            item.emergency_urls[0].append(item_local.url)                       #guardamos la url y pasamos a la siguiente
+            continue
+        if item.emergency_urls and not item.videolibray_emergency_urls:
+            item_local.torrent_alt = item.emergency_urls[0][0]                  #Guardamos la url del .Torrent ALTERNATIVA
+            if item.armagedon:
+                item_local.url = item.emergency_urls[0][0]                      #Restauramos la url
+            if len(item.emergency_urls[0]) > 1:
+                del item.emergency_urls[0][0]
         
         #Buscamos si ya tiene tamaño, si no, los buscamos en el archivo .torrent
-        size = scrapertools.find_single_match(item_local.quality, '\s\[(\d+,?\d*?\s\w\s?[b|B])\]')
-        if not size:
+        size = scrapertools.find_single_match(item_local.quality, '\s?\[(\d+,?\d*?\s\w\s?[b|B])\]')
+        if not size and not item.armagedon:
             size = generictools.get_torrent_size(item_local.url)                #Buscamos el tamaño en el .torrent
         if size:
-            item_local.title = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title) #Quitamos size de título, si lo traía
+            item_local.title = re.sub(r'\s?\[\d+,?\d*?\s\w\s?[b|B]\]', '', item_local.title) #Quitamos size de título, si lo traía
             item_local.title = '%s [%s]' % (item_local.title, size)             #Agregamos size al final del título
             size = size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b')
-        item_local.quality = re.sub(r'\s\[\d+,?\d*?\s\w\s?[b|B]\]', '', item_local.quality)    #Quitamos size de calidad, si lo traía
-        item_local.quality = '%s [%s]' % (item_local.quality, size)             #Agregamos size al final de la calidad
+            item_local.quality = re.sub(r'\s?\[\d+,?\d*?\s\w\s?[b|B]\]', '', item_local.quality)    #Quitamos size de calidad, si lo traía
+            item_local.quality = '%s [%s]' % (item_local.quality, size)         #Agregamos size al final de la calidad
+        if item.armagedon:                                                      #Si es catastrófico, lo marcamos
+            item_local.quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % item_local.quality
         
         #Ahora pintamos el link del Torrent
         item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))
@@ -421,6 +465,9 @@ def findvideos(item):
         
         #logger.debug(item_local)
         
+    if item.videolibray_emergency_urls:                                         #Si ya hemos guardado todas las urls...
+        return item                                                             #... nos vamos
+    
     if len(itemlist_f) > 0:                                                     #Si hay entradas filtradas...
         itemlist.extend(itemlist_f)                                             #Pintamos pantalla filtrada
     else:                                                                       

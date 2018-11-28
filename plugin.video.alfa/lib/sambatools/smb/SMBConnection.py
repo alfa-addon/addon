@@ -1,9 +1,8 @@
-import select
-import socket
-import types
 
-from base import SMB, NotConnectedError, SMBTimeout
+import os, logging, select, socket, struct, errno
+from smb_constants import *
 from smb_structs import *
+from base import SMB, NotConnectedError, NotReadyError, SMBTimeout
 
 
 class SMBConnection(SMB):
@@ -154,15 +153,23 @@ class SMBConnection(SMB):
         return results
 
     def listPath(self, service_name, path,
-                 search = SMB_FILE_ATTRIBUTE_READONLY | SMB_FILE_ATTRIBUTE_HIDDEN | SMB_FILE_ATTRIBUTE_SYSTEM | SMB_FILE_ATTRIBUTE_DIRECTORY | SMB_FILE_ATTRIBUTE_ARCHIVE,
+                 search = SMB_FILE_ATTRIBUTE_READONLY | SMB_FILE_ATTRIBUTE_HIDDEN | SMB_FILE_ATTRIBUTE_SYSTEM | SMB_FILE_ATTRIBUTE_DIRECTORY | SMB_FILE_ATTRIBUTE_ARCHIVE | SMB_FILE_ATTRIBUTE_INCL_NORMAL,
                  pattern = '*', timeout = 30):
         """
         Retrieve a directory listing of files/folders at *path*
 
+        For simplicity, pysmb defines a "normal" file as a file entry that is not read-only, not hidden, not system, not archive and not a directory.
+        It ignores other attributes like compression, indexed, sparse, temporary and encryption.
+
+        Note that the default search parameter will query for all read-only (SMB_FILE_ATTRIBUTE_READONLY), hidden (SMB_FILE_ATTRIBUTE_HIDDEN),
+        system (SMB_FILE_ATTRIBUTE_SYSTEM), archive (SMB_FILE_ATTRIBUTE_ARCHIVE), normal (SMB_FILE_ATTRIBUTE_INCL_NORMAL) files
+        and directories (SMB_FILE_ATTRIBUTE_DIRECTORY).
+        If you do not need to include "normal" files in the result, define your own search parameter without the SMB_FILE_ATTRIBUTE_INCL_NORMAL constant.
+        SMB_FILE_ATTRIBUTE_NORMAL should be used by itself and not be used with other bit constants.
+
         :param string/unicode service_name: the name of the shared folder for the *path*
         :param string/unicode path: path relative to the *service_name* where we are interested to learn about its files/sub-folders.
         :param integer search: integer value made up from a bitwise-OR of *SMB_FILE_ATTRIBUTE_xxx* bits (see smb_constants.py).
-                               The default *search* value will query for all read-only, hidden, system, archive files and directories.
         :param string/unicode pattern: the filter to apply to the results before returning to the client.
         :return: A list of :doc:`smb.base.SharedFile<smb_SharedFile>` instances.
         """
@@ -225,7 +232,7 @@ class SMBConnection(SMB):
     def getAttributes(self, service_name, path, timeout = 30):
         """
         Retrieve information about the file at *path* on the *service_name*.
-        
+
         :param string/unicode service_name: the name of the shared folder for the *path*
         :param string/unicode path: Path of the file on the remote server. If the file cannot be opened for reading, an :doc:`OperationFailure<smb_exceptions>` will be raised.
         :return: A :doc:`smb.base.SharedFile<smb_SharedFile>` instance containing the attributes of the file.
@@ -246,6 +253,37 @@ class SMBConnection(SMB):
         self.is_busy = True
         try:
             self._getAttributes(service_name, path, cb, eb, timeout)
+            while self.is_busy:
+                self._pollForNetBIOSPacket(timeout)
+        finally:
+            self.is_busy = False
+
+        return results[0]
+
+    def getSecurity(self, service_name, path, timeout = 30):
+        """
+        Retrieve the security descriptor of the file at *path* on the *service_name*.
+
+        :param string/unicode service_name: the name of the shared folder for the *path*
+        :param string/unicode path: Path of the file on the remote server. If the file cannot be opened for reading, an :doc:`OperationFailure<smb_exceptions>` will be raised.
+        :return: A :class:`smb.security_descriptors.SecurityDescriptor` instance containing the security information of the file.
+        """
+        if not self.sock:
+            raise NotConnectedError('Not connected to server')
+
+        results = [ ]
+
+        def cb(info):
+            self.is_busy = False
+            results.append(info)
+
+        def eb(failure):
+            self.is_busy = False
+            raise failure
+
+        self.is_busy = True
+        try:
+            self._getSecurity(service_name, path, cb, eb, timeout)
             while self.is_busy:
                 self._pollForNetBIOSPacket(timeout)
         finally:
@@ -302,7 +340,7 @@ class SMBConnection(SMB):
             self.is_busy = False
 
         return results[0]
-    
+
     def storeFile(self, service_name, path, file_obj, timeout = 30):
         """
         Store the contents of the *file_obj* at *path* on the *service_name*.
@@ -385,9 +423,10 @@ class SMBConnection(SMB):
         It supports the use of wildcards in file names, allowing for unlocking of multiple files/folders in a single request.
         This function is very helpful when deleting files/folders that are read-only.
         Note: this function is currently only implemented for SMB2! Technically, it sets the FILE_ATTRIBUTE_NORMAL flag, therefore clearing all other flags. (See https://msdn.microsoft.com/en-us/library/cc232110.aspx for further information)
+
         :param string/unicode service_name: Contains the name of the shared folder.
         :param string/unicode path_file_pattern: The pathname of the file(s) to be deleted, relative to the service_name.
-                                                 Wildcards may be used in th filename component of the path.
+                                                 Wildcards may be used in the filename component of the path.
                                                  If your path/filename contains non-English characters, you must pass in an unicode string.
         :return: None
         """
@@ -495,7 +534,7 @@ class SMBConnection(SMB):
         """
         Send an echo command containing *data* to the remote SMB/CIFS server. The remote SMB/CIFS will reply with the same *data*.
 
-        :param string data: Data to send to the remote server.
+        :param bytes data: Data to send to the remote server. Must be a bytes object.
         :return: The *data* parameter
         """
         if not self.sock:
@@ -546,15 +585,24 @@ class SMBConnection(SMB):
                 data = data + d
                 read_len -= len(d)
             except select.error, ex:
-                if type(ex) is types.TupleType:
+                if isinstance(ex, types.TupleType):
                     if ex[0] != errno.EINTR and ex[0] != errno.EAGAIN:
                         raise ex
                 else:
                     raise ex
 
-        type, flags, length = struct.unpack('>BBH', data)
-        if flags & 0x01:
-            length = length | 0x10000
+        type_, flags, length = struct.unpack('>BBH', data)
+        if type_ == 0x0:
+            # This is a Direct TCP packet
+            # The length is specified in the header from byte 8. (0-indexed) 
+            # we read a structure assuming NBT, so to get the real length
+            # combine the length and flag fields together
+            length = length + (flags << 16)
+        else:
+            # This is a NetBIOS over TCP (NBT) packet
+            # The length is specified in the header from byte 16. (0-indexed)
+            if flags & 0x01:
+                length = length | 0x10000
 
         read_len = length
         while read_len > 0:
@@ -573,7 +621,7 @@ class SMBConnection(SMB):
                 data = data + d
                 read_len -= len(d)
             except select.error, ex:
-                if type(ex) is types.TupleType:
+                if isinstance(ex, types.TupleType):
                     if ex[0] != errno.EINTR and ex[0] != errno.EAGAIN:
                         raise ex
                 else:

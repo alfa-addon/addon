@@ -1,6 +1,6 @@
 
-from pyasn1.codec.der import encoder, decoder
 from pyasn1.type import tag, univ, namedtype, namedval, constraint
+from pyasn1.codec.der import encoder, decoder
 
 __all__ = [ 'generateNegotiateSecurityBlob', 'generateAuthSecurityBlob', 'decodeChallengeSecurityBlob', 'decodeAuthResponseSecurityBlob' ]
 

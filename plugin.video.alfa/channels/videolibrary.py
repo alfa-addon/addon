@@ -52,6 +52,9 @@ def list_movies(item, silent=False):
                 
                 head_nfo, new_item = videolibrarytools.read_nfo(nfo_path)
 
+                if not new_item:                        #Si no ha leído bien el .nfo, pasamos a la siguiente
+                    continue
+                
                 if len(new_item.library_urls) > 1:
                     multicanal = True
                 else:

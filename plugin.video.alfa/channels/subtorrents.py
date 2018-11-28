@@ -372,6 +372,7 @@ def findvideos(item):
     if not item.language:
         item.language = ['CAST']                        #Castellano por defecto
     matches = []
+    subtitles = []
     item.category = categoria
     
     #logger.debug(item)
@@ -389,51 +390,74 @@ def findvideos(item):
         if not data:
             logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
-            return itemlist                                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
-
-        #Extraemos el thumb
-        if not item.thumbnail:
-            item.thumbnail = scrapertools.find_single_match(data, patron)           #guardamos thumb si no existe
             
-        #Extraemos quality, audio, year, country, size, scrapedlanguage
-        patron = '<\/script><\/div><ul>(?:<li><label>Fecha de estreno <\/label>[^<]+<\/li>)?(?:<li><label>Genero <\/label>[^<]+<\/li>)?(?:<li><label>Calidad <\/label>([^<]+)<\/li>)?(?:<li><label>Audio <\/label>([^<]+)<\/li>)?(?:<li><label>Fecha <\/label>.*?(\d+)<\/li>)?(?:<li><label>Pais de Origen <\/label>([^<]+)<\/li>)?(?:<li><label>Tama&ntilde;o <\/label>([^<]+)<\/li>)?(<li> Idioma[^<]+<img src=.*?<br \/><\/li>)?'
-        try:
-            quality, audio, year, country, size, scrapedlanguage = scrapertools.find_single_match(data, patron)
-        except:
-            quality = ''
-            audio = ''
-            year = ''
-            country = ''
-            size = ''
-            scrapedlanguage = ''
-        if quality: item.quality = quality
-        if audio: item.quality += ' %s' % audio.strip()
-        if not item.infoLabels['year'] and year: item.infoLabels['year'] = year
-        if size: item.quality += ' [%s]' % size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b').replace('.', ',').strip()
-        if size: item.title += ' [%s]' % size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b').replace('.', ',').strip()
-        language = []
-        matches = re.compile('(\d+.png)', re.DOTALL).findall(scrapedlanguage)
-        for lang in matches:
-            if "1.png" in lang and not 'CAST' in language: language += ['CAST']
-            if "512.png" in lang and not 'LAT' in language: language += ['LAT']
-            if ("1.png" not in lang and "512.png" not in lang) and not 'VOSE' in language: language += ['VOSE']
-        if language: item.language = language
-    
-        #Extraemos los enlaces .torrent
-        ##Modalidad de varios archivos
-        patron = '<div class="fichadescargat"><\/div><div class="table-responsive"[^>]+>.*?<\/thead><tbody>(.*?)<\/tbody><\/table><\/div>'
-        if scrapertools.find_single_match(data, patron):
-            data_torrents = scrapertools.find_single_match(data, patron)
-            patron = '<tr><td>.*?<\/td><td><a href="([^"]+)"[^>]+><[^>]+><\/a><\/td><\/tr>'
-        #Modalidad de un archivo
-        else:
-            data_torrents = data
-            patron = '<div class="fichasubtitulos">.*?<\/div><\/li><\/ul>.*?<a href="([^"]+)"'
-        matches = re.compile(patron, re.DOTALL).findall(data_torrents)
-        if not matches:                                                             #error
-            logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " + " / PATRON: " + patron + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
-            return itemlist                                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+            if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
+                matches = item.emergency_urls[1]                                    #Restauramos matches de vídeos
+                subtitles = item.emergency_urls[2]                                  #Restauramos matches de subtítulos
+                item.armagedon = True                                               #Marcamos la situación como catastrófica 
+            else:
+                if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
+                    return item                                                     #Devolvemos el Item de la llamada
+                else:
+                    return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
+
+        if not item.armagedon:
+            #Extraemos el thumb
+            if not item.thumbnail:
+                item.thumbnail = scrapertools.find_single_match(data, patron)           #guardamos thumb si no existe
+            
+            #Extraemos quality, audio, year, country, size, scrapedlanguage
+            patron = '<\/script><\/div><ul>(?:<li><label>Fecha de estreno <\/label>[^<]+<\/li>)?(?:<li><label>Genero <\/label>[^<]+<\/li>)?(?:<li><label>Calidad <\/label>([^<]+)<\/li>)?(?:<li><label>Audio <\/label>([^<]+)<\/li>)?(?:<li><label>Fecha <\/label>.*?(\d+)<\/li>)?(?:<li><label>Pais de Origen <\/label>([^<]+)<\/li>)?(?:<li><label>Tama&ntilde;o <\/label>([^<]+)<\/li>)?(<li> Idioma[^<]+<img src=.*?<br \/><\/li>)?'
+            try:
+                quality = ''
+                audio = ''
+                year = ''
+                country = ''
+                size = ''
+                scrapedlanguage = ''
+                quality, audio, year, country, size, scrapedlanguage = scrapertools.find_single_match(data, patron)
+            except:
+                pass
+            if quality: item.quality = quality
+            if audio: item.quality += ' %s' % audio.strip()
+            if not item.infoLabels['year'] and year: item.infoLabels['year'] = year
+            if size: item.quality += ' [%s]' % size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b').replace('.', ',').strip()
+            if size:
+                item.title = re.sub(r'\s*\[\d+,?\d*?\s\w\s*[b|B]\]', '', item.title)        #Quitamos size de título, si lo traía
+                item.title += ' [%s]' % size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b').replace('.', ',').strip()
+            
+            language = []
+            matches_lang = re.compile('(\d+.png)', re.DOTALL).findall(scrapedlanguage)
+            for lang in matches_lang:
+                if "1.png" in lang and not 'CAST' in language: language += ['CAST']
+                if "512.png" in lang and not 'LAT' in language: language += ['LAT']
+                if ("1.png" not in lang and "512.png" not in lang) and not 'VOSE' in language: language += ['VOSE']
+            if language: item.language = language
+        
+            #Extraemos los enlaces .torrent
+            #Modalidad de varios archivos
+            patron = '<div class="fichadescargat"><\/div><div class="table-responsive"[^>]+>.*?<\/thead><tbody>(.*?)<\/tbody><\/table><\/div>'
+            if scrapertools.find_single_match(data, patron):
+                data_torrents = scrapertools.find_single_match(data, patron)
+                patron = '<tr><td>.*?<\/td><td><a href="([^"]+)"[^>]+><[^>]+><\/a><\/td><\/tr>'
+            #Modalidad de un archivo
+            else:
+                data_torrents = data
+                patron = '<div class="fichasubtitulos">.*?<\/div><\/li><\/ul>.*?<a href="([^"]+)"'
+            matches = re.compile(patron, re.DOTALL).findall(data_torrents)
+            if not matches:                                                             #error
+                logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " + " / PATRON: " + patron + data)
+                itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
+                
+                if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
+                    matches = item.emergency_urls[1]                                    #Restauramos matches de vídeos
+                    subtitles = item.emergency_urls[2]                                  #Restauramos matches de subtítulos
+                    item.armagedon = True                                               #Marcamos la situación como catastrófica 
+                else:
+                    if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
+                        return item                                                     #Devolvemos el Item de la llamada
+                    else:
+                        return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     else:                                                                           #SERIES: ya viene con las urls
         data = item.url                                                             #inicio data por compatibilidad
@@ -447,11 +471,22 @@ def findvideos(item):
             del item.subtitle
         else:
             subtitle = scrapertools.find_single_match(data, patron).replace('&#038;', '&').replace('.io/', sufix).replace('.com/', sufix)
-        data_subtitle = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(subtitle, timeout=timeout).data)
-        patron = '<tbody>(<tr class="fichserietabla_b">.*?<\/tr>)<\/tbody>'         #salvamos el bloque
-        data_subtitle = scrapertools.find_single_match(data_subtitle, patron)
-        patron = '<tr class="fichserietabla_b">.*?<a href="([^"]+)"'
-        subtitles = re.compile(patron, re.DOTALL).findall(data_subtitle)            #Creamos una lista con todos los sub-títulos
+        
+        try:
+            data_subtitle = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(subtitle, timeout=timeout).data)
+        except:
+            pass
+            
+        if not data_subtitle:
+            if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
+                matches = item.emergency_urls[1]                                    #Restauramos matches de vídeos
+                subtitles = item.emergency_urls[2]                                  #Restauramos matches de subtítulos
+                item.armagedon = True                                               #Marcamos la situación como catastrófica 
+        else:
+            patron = '<tbody>(<tr class="fichserietabla_b">.*?<\/tr>)<\/tbody>'         #salvamos el bloque
+            data_subtitle = scrapertools.find_single_match(data_subtitle, patron)
+            patron = '<tr class="fichserietabla_b">.*?<a href="([^"]+)"'
+            subtitles = re.compile(patron, re.DOTALL).findall(data_subtitle)            #Creamos una lista con todos los sub-títulos
         if subtitles:
             item.subtitle = []
             for subtitle in subtitles:
@@ -460,29 +495,49 @@ def findvideos(item):
 
     #logger.debug("PATRON: " + patron)
     #logger.debug(matches)
+    #logger.debug(subtitles)
     #logger.debug(data)
     
+    #Si es un lookup para cargar las urls de emergencia en la Videoteca...
+    if item.videolibray_emergency_urls:
+        item.emergency_urls = []                                                #Iniciamos emergency_urls
+        item.emergency_urls.append([])                                          #Reservamos el espacio para los .torrents locales
+        item.emergency_urls.append(matches)                                     #Salvamnos matches de los vídeos...  
+        item.emergency_urls.append(subtitles)                                   #Salvamnos matches de los subtítulos
+    
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
-    item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
+    if not item.videolibray_emergency_urls:
+        item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent
     for scrapedurl in matches:                                                  #leemos los torrents con la diferentes calidades
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
 
+        item_local.url = scrapedurl.replace('&#038;', '&').replace('.io/', sufix).replace('.com/', sufix)
+        if item.videolibray_emergency_urls:
+            item.emergency_urls[0].append(scrapedurl)                           #guardamos la url y pasamos a la siguiente
+            continue
+        if item.emergency_urls and not item.videolibray_emergency_urls:
+            item_local.torrent_alt = item.emergency_urls[0][0]                  #Guardamos la url del .Torrent ALTERNATIVA
+            if item.armagedon:
+                item_local.url = item.emergency_urls[0][0]                      #... ponemos la emergencia como primaria
+            del item.emergency_urls[0][0]                                       #Una vez tratado lo limpiamos
+        
         #Buscamos si ya tiene tamaño, si no, los buscamos en el archivo .torrent
-        size = scrapertools.find_single_match(item_local.quality, '\s\[(\d+,?\d*?\s\w\s?[b|B])\]')
-        if not size:
+        size = scrapertools.find_single_match(item_local.quality, '\s*\[(\d+,?\d*?\s\w\s*[b|B])\]')
+        if not size and not item.armagedon:
             size = generictools.get_torrent_size(scrapedurl)                    #Buscamos el tamaño en el .torrent
         if size:
-            item_local.title = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title)        #Quitamos size de título, si lo traía
-            item_local.title = '%s [%s]' % (item_local.title, size)                             #Agregamos size al final del título
             size = size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b')
-        item_local.quality = re.sub(r'\s\[\d+,?\d*?\s\w\s?[b|B]\]', '', item_local.quality)    #Quitamos size de calidad, si lo traía
-        item_local.quality = '%s [%s]' % (item_local.quality, size)             #Agregamos size al final de la calidad
+            item_local.title = re.sub(r'\s*\[\d+,?\d*?\s\w\s*[b|B]\]', '', item_local.title)        #Quitamos size de título, si lo traía
+            item_local.title = '%s [%s]' % (item_local.title, size)                                 #Agregamos size al final del título
+            item_local.quality = re.sub(r'\s*\[\d+,?\d*?\s\w\s*[b|B]\]', '', item_local.quality)    #Quitamos size de calidad, si lo traía
+            item_local.quality = '%s [%s]' % (item_local.quality, size)         #Agregamos size al final de la calidad
+        if item.armagedon:                                                      #Si es catastrófico, lo marcamos
+            item_local.quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % item_local.quality
         
         #Ahora pintamos el link del Torrent
-        item_local.url = scrapedurl.replace('&#038;', '&').replace('.io/', sufix).replace('.com/', sufix)
         item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))
         
         #Preparamos título y calidad, quitamos etiquetas vacías
@@ -506,6 +561,9 @@ def findvideos(item):
         #logger.debug("TORRENT: " + scrapedurl + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality + " / content: " + item_local.contentTitle + " / " + item_local.contentSerieName)
         #logger.debug(item_local)
 
+    if item.videolibray_emergency_urls:                                         #Si ya hemos guardado todas las urls...
+        return item                                                             #... nos vamos
+    
     if len(itemlist_f) > 0:                                                     #Si hay entradas filtradas...
         itemlist.extend(itemlist_f)                                             #Pintamos pantalla filtrada
     else:                                                                       
