@@ -183,7 +183,7 @@ def episodesxseasons(item):
     season = item.infoLabels['season']
     data=get_source(item.url)
     season_data = scrapertools.find_single_match(data, 'id="pills-vertical-%s">(.*?)</div>' % season)
-    patron='href="([^"]+)".*?block">Capitulo(\d+) -.?([^<]+)<'
+    patron='href="([^"]+)".*?block">Capitulo.?(\d+) -.?([^<]+)<'
     matches = re.compile(patron, re.DOTALL).findall(season_data)
 
     infoLabels = item.infoLabels
