@@ -47,7 +47,6 @@ def categorias(item):
     data = scrapertools.get_match(data,'<div class="tagcloud">(.*?)<p>')
     patron  = '<a href="(.*?)".*?>(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle  in matches:
         itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , folder=True) )
     return itemlist
@@ -60,7 +59,6 @@ def catalogo(item):
     data = scrapertools.get_match(data,'>Best Porn Studios</a>(.*?)</ul>')
     patron  = '<a href="(.*?)">(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle  in matches:
         itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , folder=True) )
     return itemlist
@@ -71,7 +69,6 @@ def anual(item):
     data = httptools.downloadpage(item.url).data
     patron  = '<li><a href="([^<]+)">([^<]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
@@ -85,16 +82,14 @@ def peliculas(item):
     data = httptools.downloadpage(item.url).data
     patron  = '<div class="post-thumbnail.*?<a href="([^"]+)" title="(.*?)".*?src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
         scrapedplot = ""
-        scrapedtitle = scrapedtitle.replace(" Porn DVD", "")
+        scrapedtitle = scrapedtitle.replace(" Porn DVD", "").replace("Permalink to ", "").replace(" Porn Movie", "")
         itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle , url=scrapedurl, thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
     next_page_url = scrapertools.find_single_match(data,'<a class="nextpostslink" rel="next" href="([^"]+)">&raquo;</a>')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
         itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
-
     return itemlist
 
 

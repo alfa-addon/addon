@@ -18,8 +18,6 @@ def mainlist(item):
     itemlist = []
     itemlist.append( Item(channel=item.channel, title="Ultimos" , action="peliculas", url=host))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
-
-#    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
@@ -30,7 +28,6 @@ def categorias(item):
     data = scrapertools.get_match(data,'<h3>Categories</h3>(.*?)</ul>')
     patron  = '<li class="cat-item cat-item-\d+"><a href="(.*?)" >(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
@@ -45,7 +42,6 @@ def peliculas(item):
     data = httptools.downloadpage(item.url).data
     patron = '<div class="post" id="post-\d+">.*?<a href="([^"]+)" title="(.*?)"><img src="(.*?)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
         scrapedplot = ""
         scrapedtitle = scrapedtitle.replace(" &#8211; Free Porn Download", "")
@@ -63,7 +59,6 @@ def play(item):
     logger.info()
     data = scrapertools.cachePage(item.url)
     itemlist = servertools.find_video_items(data=data)
-
     for videoitem in itemlist:
         videoitem.title = item.title
         videoitem.fulltitle = item.fulltitle
