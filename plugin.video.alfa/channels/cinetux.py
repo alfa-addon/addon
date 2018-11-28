@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import re
 from channels import autoplay
 from channels import filtertools
 from core import httptools
@@ -176,11 +175,11 @@ def destacadas(item):
     item.text_color = color2
     data = httptools.downloadpage(item.url).data
     bloque = scrapertools.find_single_match(data, 'peliculas_destacadas.*?class="letter_home"')
-    patron = '(?s)title="([^"]+)".*?'
-    patron += 'href="([^"]+)".*?'
+    patron = '(?s)href="([^"]+)".*?'
+    patron += 'alt="([^"]+)".*?'
     patron += 'src="([^"]+)'
     matches = scrapertools.find_multiple_matches(bloque, patron)
-    for scrapedtitle, scrapedurl, scrapedthumbnail in matches:
+    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
         scrapedurl = CHANNEL_HOST + scrapedurl
         itemlist.append(item.clone(action="findvideos", title=scrapedtitle, fulltitle=scrapedtitle,
                               url=scrapedurl, thumbnail=scrapedthumbnail,
@@ -224,11 +223,12 @@ def findvideos(item):
     logger.info()
     itemlist=[]
     data = httptools.downloadpage(item.url).data
-    patron = 'class="title">.*?src.*?/>([^>]+)</span>.*?data-type="([^"]+).*?data-post="(\d+)".*?data-nume="(\d+)'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    #logger.info("Intel66")
-    #scrapertools.printMatches(matches)
-    for language, tp, pt, nm in matches:
+    patron  = 'tooltipctx.*?data-type="([^"]+).*?'
+    patron += 'data-post="(\d+)".*?'
+    patron += 'data-nume="(\d+).*?'
+    patron += 'class="title">.*?src.*?/>([^<]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for tp, pt, nm, language in matches:
         language = language.strip()
         post = {'action':'doo_player_ajax', 'post':pt, 'nume':nm, 'type':tp}
         post = urllib.urlencode(post)
@@ -242,17 +242,12 @@ def findvideos(item):
         else:
             title = ''
         url = scrapertools.find_single_match(new_data, "src='([^']+)'")
-        #logger.info("Intel33 %s" %url)
-        url = get_url(url)
-        if "mega" not in url and "mediafire" not in url:
+        url = get_url(url.replace('\\/', '/'))
+        if url:
             itemlist.append(Item(channel=item.channel, title ='%s'+title, url=url, action='play', quality=item.quality,
                                  language=IDIOMAS[language], infoLabels=item.infoLabels))
-    #logger.info("Intel44")
-    #scrapertools.printMatches(itemlist)
     patron = "<a class='optn' href='([^']+)'.*?<img src='.*?>([^<]+)<.*?<img src='.*?>([^<]+)<"
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    #logger.info("Intel66a")
-    #scrapertools.printMatches(matches)
+    matches = scrapertools.find_multiple_matches(data, patron)
     for hidden_url, quality, language in matches:
         if not config.get_setting('unify'):
             title = ' [%s][%s]' % (quality, IDIOMAS[language])
@@ -260,27 +255,32 @@ def findvideos(item):
             title = ''
         new_data = httptools.downloadpage(hidden_url).data
         url = scrapertools.find_single_match(new_data, 'id="link" href="([^"]+)"')
-        url = url.replace('\\/', '/')
-        url = get_url(url)
-        if "mega" not in url and "mediafire" not in url:
+        url = get_url(url.replace('\\/', '/'))
+        if url:
             itemlist.append(Item(channel=item.channel, title='%s'+title, url=url, action='play', quality=quality,
                                  language=IDIOMAS[language], infoLabels=item.infoLabels))
-    #logger.info("Intel55")
-    #scrapertools.printMatches(itemlist)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    itemlist.sort(key=lambda it: (it.language, it.server, it.quality))
+    tmdb.set_infoLabels(itemlist, __modo_grafico__)
     return itemlist
 
 
 def get_url(url):
+    logger.info()
     if "cinetux.me" in url:
         d1 = httptools.downloadpage(url).data
-        if "mail" in url:
-            id = scrapertools.find_single_match(d1, '<img src="[^#]+#(\w+)')
-            #logger.info("Intel77b %s" %id)
-            url = "https://my.mail.ru/video/embed/" + id
+        if "mail" in url or "drive" in url or "ok.cinetux" in url or "mp4/" in url:
+            id = scrapertools.find_single_match(d1, '<img src="[^#]+#([^"]+)"')
+            d1 = d1.replace("'",'"')
+            url = scrapertools.find_single_match(d1, '<iframe src="([^"]+)') + id
+            if "drive" in url:
+                url += "/preview"
         else:
             url = scrapertools.find_single_match(d1, 'document.location.replace\("([^"]+)')
-        #logger.info("Intel22a %s" %d1)
-        #logger.info("Intel77a %s" %url)
     url = url.replace("povwideo","powvideo")
     return url
+
+
+def play(item):
+    item.thumbnail = item.contentThumbnail
+    return [item]

@@ -81,6 +81,7 @@ def peliculas(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedthumbnail, scrapedurl, scrapedtitle, plot in matches:
+        plot = scrapertools.decodeHtmlentities(plot)
 
         itemlist.append(item.clone(channel=__channel__, action="findvideos", title=scrapedtitle.capitalize(),
                                    url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels={"plot": plot}, fanart=scrapedthumbnail,
@@ -167,13 +168,14 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
+    # logger.info(data)
 
-    patron = '<iframe src="([^"]+)".*?webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>'
+    patron = '<iframe src="[^"]+".*?<iframe src="([^"]+)" scrolling="no" frameborder="0"'
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for url in matches:
         server = servertools.get_server_from_url(url)
-        title = "Ver en: [COLOR yellow](%s)[/COLOR]" % server
+        title = "Ver en: [COLOR yellow](%s)[/COLOR]" % server.title()
 
         itemlist.append(item.clone(action='play', title=title, server=server, url=url))
 
