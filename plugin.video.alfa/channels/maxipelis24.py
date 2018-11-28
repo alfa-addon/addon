@@ -100,7 +100,7 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;","", data) 
     patron = scrapertools.find_single_match(data, '<div id="player2">(.*?)</div>')
-    patron = '<div id="div.*?<div class="movieplay">.*?(?:iframe src|IFRAME src)="([^&]+)&'
+    patron = '<div id="div.*?<div class="movieplay">.+?[a-zA-Z]="([^&]+)&'
     
     matches = re.compile(patron, re.DOTALL).findall(data)
 
