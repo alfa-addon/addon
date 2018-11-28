@@ -122,8 +122,13 @@ def check_addon_updates(verbose=False):
         
         # Descomprimir zip dentro del addon
         # ---------------------------------
-        unzipper = ziptools.ziptools()
-        unzipper.extract(localfilename, config.get_runtime_path())
+        try:
+            unzipper = ziptools.ziptools()
+            unzipper.extract(localfilename, config.get_runtime_path())
+        except:
+            import xbmc
+            xbmc.executebuiltin('XBMC.Extract("%s", "%s")' % (localfilename, config.get_runtime_path()))
+            time.sleep(1)
         
         # Borrar el zip descargado
         # ------------------------
