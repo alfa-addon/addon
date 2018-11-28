@@ -171,6 +171,8 @@ def findvideos(item):
         data1 = httptools.downloadpage(host + "wp-admin/admin-ajax.php", headers=headers, post=post).data
         url1 = scrapertools.find_single_match(data1, "src='([^']+)")
         url1 = devuelve_enlace(url1)
+        if "drive.google" in url1:
+            url1 = url1.replace("view","preview")
         if url1:
             itemlist.append(item.clone(title="Ver en %s",url=url1, action="play"))
     tmdb.set_infoLabels(itemlist)

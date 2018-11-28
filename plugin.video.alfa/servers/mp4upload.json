@@ -6,7 +6,7 @@
     ],
     "patterns": [
       {
-        "pattern": "mp4upload.com/embed-([A-Za-z0-9]+)",
+        "pattern": "mp4upload.com(?:/embed-|/)([A-Za-z0-9]+)",
         "url": "http://www.mp4upload.com/embed-\\1.html"
       }
     ]
