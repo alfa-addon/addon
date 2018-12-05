@@ -178,7 +178,9 @@ def listado(item):
         #logger.debug(data)
         
         #Buscamos la url de paginado y la última página
-        patron = '<a href="([^"]+=(\d+))" title="Siguiente">Siguiente<\/a>'
+        patron = '<a href="([^"]+=(\d+))" title="Next">Next<\/a>'
+        if not scrapertools.find_single_match(data, patron):
+            patron = '<a href="([^"]+=(\d+))" title="Siguiente">Siguiente<\/a>'
         try:
             next_page_url, curr_page = scrapertools.find_single_match(data, patron)
             curr_page = int(curr_page) / len(matches)
