@@ -3,11 +3,11 @@
   "name": "ThumbZilla",
   "active": true,
   "adult": true,
-  "language": "*",
+  "language": "en",
   "fanart": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/adults/xthearebg.jpg",
-  "thumbnail": "https://ci.phncdn.com/www-static/thumbzilla/images/pc/logo.png",
+  "thumbnail": "https://ci.phncdn.com/www-static/thumbzilla/images/pc/logo.png?cache=2018110203",
   "banner": "",
-  "categories": [
+   "categories": [
    "adult"
  ],
  "settings": [
@@ -35,4 +35,3 @@
     }
   ]
 }
-

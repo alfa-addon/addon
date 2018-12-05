@@ -66,16 +66,21 @@ def lista(item):
         action = "menu_info"
 
     # Extrae las entradas
-    patron = '<div class="video-item.*?href="([^"]+)" title="([^"]+)".*?data-original="([^"]+)"(.*?)<div class="durations">.*?</i>([^<]+)<'
+    patron  = '<div class="video-item.*?href="([^"]+)" '
+    patron += 'title="([^"]+)".*?'
+    patron += 'data-src="([^"]+)"'
+    patron += '(.*?)<div class="durations">.*?'
+    patron += '</i>([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle, scrapedthumbnail, quality, duration in matches:
         if "go.php?" in scrapedurl:
             scrapedurl = urllib.unquote(scrapedurl.split("/go.php?u=")[1].split("&")[0])
-            scrapedthumbnail = urlparse.urljoin(host, scrapedthumbnail)
+            if not scrapedthumbnail.startswith("https"):
+                scrapedthumbnail = "https:%s" % scrapedthumbnail
         else:
             scrapedurl = urlparse.urljoin(host, scrapedurl)
             if not scrapedthumbnail.startswith("https"):
-                scrapedthumbnail = host + "%s" % scrapedthumbnail
+                scrapedthumbnail = "https:%s" % scrapedthumbnail
         if duration:
             scrapedtitle = "%s - %s" % (duration, scrapedtitle)
         if '>HD<' in quality:
@@ -110,7 +115,6 @@ def lista(item):
                     next_page = "%s?mode=async&function=get_block&block_id=list_videos_common_videos_list&sort_by=post_date&from=%s" % (
                         item.url, next_page)
                 itemlist.append(item.clone(action="lista", title=">> Página Siguiente", url=next_page))
-
     return itemlist
 
 
@@ -225,7 +229,6 @@ def play(item):
     itemlist = []
 
     data = get_data(item.url)
-
     patron = '(?:video_url|video_alt_url[0-9]*)\s*:\s*\'([^\']+)\'.*?(?:video_url_text|video_alt_url[0-9]*_text)\s*:\s*\'([^\']+)\''
     matches = scrapertools.find_multiple_matches(data, patron)
     if not matches:

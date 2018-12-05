@@ -2,7 +2,7 @@
   "id": "youporn",
   "name": "youporn",
   "active": true,
-  "adult": false,
+  "adult": true,
   "language": ["*"],
   "thumbnail": "https://fs.ypncdn.com/cb/bundles/youpornwebfront/images/l_youporn_black.png",
   "banner": "",

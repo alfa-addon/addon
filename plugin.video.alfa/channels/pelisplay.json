@@ -1,13 +1,16 @@
 {
-  "id": "rexpelis",
-  "name": "Rexpelis",
-  "active": false,
+  "id": "pelisplay",
+  "name": "PelisPlay",
+  "active": true,
   "adult": false,
-  "language": ["lat","cast"],
-  "thumbnail": "https://i.postimg.cc/MMJ5g9Y1/rexpelis1.png",
-  "banner": "https://i.postimg.cc/XrXs5GJB/rexpelis2.png",
+  "language": ["cast", "lat"],
+  "fanart": "https://s33.postimg.cc/d3ioghaof/image.png",
+  "thumbnail": "https://www.pelisplay.tv/static/img/logo.png",
+  "banner": "https://s33.postimg.cc/cyex6xlen/image.png",
   "categories": [
-    "movie"
+    "movie",
+    "tvshow",
+    "vos"
   ],
   "settings": [
     {
@@ -19,10 +22,16 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "LAT",
-        "ESP",
-        "VO"
+        "Latino"
       ]
+    },
+     {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
     },
      {
       "id": "modo_grafico",
@@ -33,18 +42,26 @@
       "visible": true
     },
     {
-      "id": "include_in_newest_latino",
-      "type": "bool",
-      "label": "Incluir en Novedades - Latino",
-      "default": true,
+      "id": "perfil",
+      "type": "list",
+      "label": "Perfil de color",
+      "default": 3,
       "enabled": true,
-      "visible": true
+      "visible": true,
+      "lvalues": [
+        "Sin color",
+        "Perfil 5",
+        "Perfil 4",
+        "Perfil 3",
+        "Perfil 2",
+        "Perfil 1"
+      ]
     },
     {
-      "id": "include_in_global_search",
+      "id": "orden_episodios",
       "type": "bool",
-      "label": "Incluir en busqueda global",
-      "default": true,
+      "label": "Mostrar los episodios de las series en orden descendente",
+      "default": false,
       "enabled": true,
       "visible": true
     },
