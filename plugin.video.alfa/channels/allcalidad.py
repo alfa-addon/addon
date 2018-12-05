@@ -124,12 +124,12 @@ def peliculas(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = '(?s)short_overlay.*?<a href="([^"]+)'
-    patron += '.*?img.*?src="([^"]+)'
-    patron += '.*?title="([^"]+).*?'
-    patron += 'data-postid="([^"]+)'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for url, thumbnail, titulo, datapostid in matches:
+    matches = scrapertools.find_multiple_matches(data, '(?s)shortstory cf(.*?)rate_post')
+    for datos in matches:
+        url = scrapertools.find_single_match(datos, 'href="([^"]+)')
+        titulo = scrapertools.find_single_match(datos, 'short_header">([^<]+)').strip()
+        datapostid = scrapertools.find_single_match(datos, 'data-postid="([^"]+)')
+        thumbnail = scrapertools.find_single_match(datos, 'img w.*?src="([^"]+)')
         post = 'action=get_movie_details&postID=%s' %datapostid
         data1 = httptools.downloadpage(host + "wp-admin/admin-ajax.php", post=post).data
         idioma = "Latino"
