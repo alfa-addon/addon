@@ -136,7 +136,7 @@ def peliculas(item):
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
-    pagination = scrapertools.find_single_match(data, "<span class=\"current\">\d+</span><a href='([^']+)'")
+    pagination = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
 
     if pagination:
         itemlist.append(Item(channel=__channel__, action="peliculas", title="» Siguiente »",
@@ -239,7 +239,7 @@ def series(item):
                              action="temporadas", contentType='tvshow'))
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
 
-    pagination = scrapertools.find_single_match(data, "<link rel='next' href='([^']+)' />")
+    pagination = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
 
     if pagination:
         itemlist.append(Item(channel=__channel__, action="series", title="» Siguiente »", url=pagination,
