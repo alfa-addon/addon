@@ -98,29 +98,31 @@ def findvideos(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;","", data) 
-    patron = scrapertools.find_single_match(data, '<div id="player2">(.*?)</div>')
-    patron = '<div id="div.*?<div class="movieplay">.+?[a-zA-Z]="([^&]+)&'
-    
+    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;","", data)
+
+    patron = '<div id="div.*?<div class="movieplay".*?(?:iframe.*?src|IFRAME SRC)="([^&]+)&'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for  link in matches:
-        if 'id=' in link:
-            id_type = 'id'
-            ir_type = 'ir'
-        elif 'ud=' in link:
-            id_type = 'ud'
-            ir_type = 'ur'
-        elif 'od=' in link:
-            id_type = 'od'
-            ir_type = 'or'
-        elif 'ad=' in link:
-            id_type = 'ad'
-            ir_type = 'ar'
-        elif 'ed=' in link:
-            id_type = 'ed'
-            ir_type = 'er'
-        
+    for link in matches:
+        if 'maxipelis24.tv/hideload/?' in link:
+            if 'id=' in link:
+                id_type = 'id'
+                ir_type = 'ir'
+            elif 'ud=' in link:
+                id_type = 'ud'
+                ir_type = 'ur'
+            elif 'od=' in link:
+                id_type = 'od'
+                ir_type = 'or'
+            elif 'ad=' in link:
+                id_type = 'ad'
+                ir_type = 'ar'
+            elif 'ed=' in link:
+                id_type = 'ed'
+                ir_type = 'er'
+        else:
+            continue
+
         id = scrapertools.find_single_match(link, '%s=(.*)' % id_type)
         base_link = scrapertools.find_single_match(link, '(.*?)%s=' % id_type)
 
@@ -131,11 +133,18 @@ def findvideos(item):
         url = video_data.headers['location']
         title = '%s'
 
+
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='play',
                              language='', infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
-
+    if itemlist:
+        if config.get_videolibrary_support():
+                itemlist.append(Item(channel = item.channel, action = ""))
+                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                                     action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
+                                     contentTitle = item.contentTitle
+                                     ))
 
 
     return itemlist
