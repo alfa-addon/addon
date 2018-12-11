@@ -1,5 +1,5 @@
-import re
-import string
+
+import string, re
 
 
 def encode_name(name, type, scope = None):

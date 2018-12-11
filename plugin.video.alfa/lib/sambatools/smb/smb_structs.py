@@ -1,11 +1,8 @@
-import binascii
-import logging
-import os
-import struct
-import time
-from StringIO import StringIO
 
+import os, sys, struct, types, logging, binascii, time
+from StringIO import StringIO
 from smb_constants import *
+
 
 # Set to True if you want to enable support for extended security. Required for Windows Vista and later
 SUPPORT_EXTENDED_SECURITY = True
@@ -13,17 +10,20 @@ SUPPORT_EXTENDED_SECURITY = True
 # Set to True if you want to enable SMB2 protocol.
 SUPPORT_SMB2 = True
 
+# Set to True if you want to enable SMB2.1 and above protocol.
+SUPPORT_SMB2x = True
+
 # Supported dialects
-DIALECTS = [ ]
-for i, ( name, dialect ) in enumerate([ ( 'NT_LAN_MANAGER_DIALECT', 'NT LM 0.12' ), ]):
-    DIALECTS.append(dialect)
-    globals()[name] = i
+NT_LAN_MANAGER_DIALECT = 0  # 'NT LM 0.12' is always the first element in the dialect list and must always be included (MS-SMB 2.2.4.5.1)
 
-DIALECTS2 = [ ]
-for i, ( name, dialect ) in enumerate([ ( 'SMB2_DIALECT', 'SMB 2.002' ) ]):
-    DIALECTS2.append(dialect)
-    globals()[name] = i + len(DIALECTS)
-
+# Return the list of support SMB dialects based on the SUPPORT_x constants
+def init_dialects_list():
+    dialects = [ 'NT LM 0.12' ]
+    if SUPPORT_SMB2:
+        dialects.append('SMB 2.002')
+    if SUPPORT_SMB2x:
+        dialects.append('SMB 2.???')
+    return dialects
 
 class UnsupportedFeature(Exception):
     """
@@ -111,8 +111,9 @@ class SMBMessage:
     log = logging.getLogger('SMB.SMBMessage')
     protocol = 1
 
-    def __init__(self, payload = None):
+    def __init__(self, conn, payload = None):
         self.reset()
+        self.conn = conn
         if payload:
             self.payload = payload
             self.payload.initMessage(self)
@@ -293,10 +294,7 @@ class ComNegotiateRequest(Payload):
     def prepare(self, message):
         assert message.payload == self
         message.parameters_data = ''
-        if SUPPORT_SMB2:
-            message.data = ''.join(map(lambda s: '\x02'+s+'\x00', DIALECTS + DIALECTS2))
-        else:
-            message.data = ''.join(map(lambda s: '\x02'+s+'\x00', DIALECTS))
+        message.data = ''.join(map(lambda s: '\x02'+s+'\x00', init_dialects_list()))
 
 
 class ComNegotiateResponse(Payload):
@@ -1283,7 +1281,7 @@ class ComEchoRequest(Payload):
     - [MS-CIFS]: 2.2.4.39.1
     """
 
-    def __init__(self, echo_data = '', echo_count = 1):
+    def __init__(self, echo_data = b'', echo_count = 1):
         self.echo_count = echo_count
         self.echo_data = echo_data
 

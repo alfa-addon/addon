@@ -2,9 +2,7 @@
 __author__ = 'Thomas Dixon'
 __license__ = 'MIT'
 
-import copy
-import struct
-import sys
+import copy, struct, sys
 
 digest_size = 32
 blocksize = 1

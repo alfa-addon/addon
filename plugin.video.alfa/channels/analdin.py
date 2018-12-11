@@ -45,7 +45,6 @@ def catalogo(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<li><a class="item" href="([^"]+)" title="([^"]+)">'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
@@ -66,7 +65,6 @@ def categorias(item):
     patron += 'src="([^"]+)".*?'
     patron += '<div class="videos">([^"]+)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
         scrapedplot = ""
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
@@ -105,7 +103,6 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     patron  = 'video_url: \'([^\']+)\''
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl  in matches:
         url = scrapedurl
     itemlist.append(item.clone(action="play", title=url, fulltitle = item.title, url=url))

@@ -45,7 +45,6 @@ def peliculas(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a class="clip-link" data-id="\d+" title="([^"]+)" href="([^"]+)">.*?<img src="([^"]+)".*?<span class="timer">(.*?)</span></div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedtitle,scrapedurl,scrapedthumbnail,scrapedtime in matches:
         scrapedplot = ""
         scrapedtitle = "[COLOR yellow]" + (scrapedtime) + "[/COLOR] " + scrapedtitle
@@ -62,7 +61,6 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     patron = '"video-setup".*?file: "(.*?)",'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl in matches:
         scrapedurl = str(scrapedurl)
     itemlist.append(Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=scrapedurl,

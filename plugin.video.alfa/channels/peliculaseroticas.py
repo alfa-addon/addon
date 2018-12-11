@@ -46,6 +46,6 @@ def mainlist(item):
         next_page_url = "http://www.peliculaseroticas.net/cine-erotico/" + str(next_page) + ".html"
 
     itemlist.append(
-        Item(channel=item.channel, action="peliculas", title=">> Página siguiente", url=next_page_url, folder=True))
+        Item(channel=item.channel, action="mainlist", title=">> Página siguiente", url=next_page_url, folder=True))
 
     return itemlist

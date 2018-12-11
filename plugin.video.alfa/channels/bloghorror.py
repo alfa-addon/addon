@@ -47,11 +47,11 @@ def list_all(item):
 
     itemlist = []
     data = get_source(item.url)
-    patron = '<divclass="post-thumbnail">.?<.*?href="([^"]+)" title="([^"]+)".*?src="([^"]+)".*?'
+    patron = '<article id="post-\d+".*?data-background="([^"]+)".*?href="([^"]+)".*?<h3.*?internal">([^<]+)'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
+    for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
         url = scrapedurl
         title = scrapertools.find_single_match(scrapedtitle, '(.*?)(?:|\(|\| )\d{4}').strip()
         year = scrapertools.find_single_match(scrapedtitle, '(\d{4})')
@@ -68,7 +68,7 @@ def list_all(item):
 
     if itemlist != []:
 
-        next_page = scrapertools.find_single_match(data, '<a class="next" href="([^"]+)"')
+        next_page = scrapertools.find_single_match(data, 'page-numbers current.*?<a class="page-numbers" href="([^"]+)"')
         if next_page != '':
             itemlist.append(Item(channel=item.channel, fanart=fanart, action="list_all", title='Siguiente >>>', url=next_page))
         else:

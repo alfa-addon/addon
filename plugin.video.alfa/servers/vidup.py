@@ -20,8 +20,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     post= {}
     post = urllib.urlencode(post)
-    url = httptools.downloadpage(page_url, follow_redirects=False, only_headers=True).headers.get("location", "")
-    data = httptools.downloadpage("https://vidup.io/api/serve/video/" + scrapertools.find_single_match(url, "embed/([A-z0-9]+)"), post=post).data
+    headers = {"Referer":page_url}
+    url = httptools.downloadpage(page_url, follow_redirects=False, headers=headers, only_headers=True).headers.get("location", "")
+    data = httptools.downloadpage("https://vidup.io/api/serve/video/" + scrapertools.find_single_match(url, "embed.([A-z0-9]+)"), post=post).data
     bloque = scrapertools.find_single_match(data, 'qualities":\{(.*?)\}')
     matches = scrapertools.find_multiple_matches(bloque, '"([^"]+)":"([^"]+)')
     for res, media_url in matches:

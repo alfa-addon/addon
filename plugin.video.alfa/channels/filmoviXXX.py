@@ -27,10 +27,23 @@ def mainlist(item):
         thumbnail = scrapedthumbnail
         plot = ""
         year = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos" , title=title , url=scrapedurl, thumbnail=thumbnail, plot=plot, contentTitle=contentTitle, infoLabels={'year':year} ))
+        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=scrapedurl, thumbnail=thumbnail, plot=plot, contentTitle=contentTitle, infoLabels={'year':year} ))
     next_page_url = scrapertools.find_single_match(data,'<a class="nextpostslink" rel="next" href="([^"]+)">')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
         itemlist.append( Item(channel=item.channel , action="mainlist" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+    return itemlist
+    
+    
+def play(item):
+    logger.info()
+    data = scrapertools.cachePage(item.url)
+    itemlist = servertools.find_video_items(data=data)
+
+    for videoitem in itemlist:
+        videoitem.title = item.title
+        videoitem.fulltitle = item.fulltitle
+        videoitem.thumbnail = item.thumbnail
+        videoitem.channel = item.channel
     return itemlist
 

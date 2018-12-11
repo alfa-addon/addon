@@ -43,7 +43,6 @@ def categorias(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<li>.*?<a href="([^"]+)".*?<img class="thumb" src="([^"]+)" alt="([^"]+)".*?<span class="videos-count">(\d+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedthumbnail,scrapedtitle,vidnum in matches:
         scrapedplot = ""
         title = scrapedtitle + " \(" + vidnum + "\)"

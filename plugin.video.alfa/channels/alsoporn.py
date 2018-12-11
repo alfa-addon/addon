@@ -43,7 +43,6 @@ def catalogo(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<li><a href="([^"]+)" title="">.*?<span class="videos-count">([^"]+)</span><span class="title">([^"]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,cantidad,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
@@ -59,7 +58,6 @@ def categorias(item):
     patron = '<a href="([^"]+)">.*?'
     patron += '<img src="([^"]+)" alt="([^"]+)" />'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         scrapedplot = ""
         scrapedurl = scrapedurl.replace("top", "new")

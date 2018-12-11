@@ -133,8 +133,11 @@ def mainlist(item):
                          thumbnail=thumb_docus, category=item.category, channel_host=item.channel_host))
     itemlist.append(
         Item(channel=item.channel, action="search", title="Buscar", url=item.channel_host + "buscar", thumbnail=thumb_buscar, category=item.category, channel_host=item.channel_host))
-        
-    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", folder=False, thumbnail=thumb_separador, category=item.category, channel_host=item.channel_host))
+    
+    clone_act = 'Clone: '
+    if config.get_setting('clonenewpct1_channel_default', channel_py) == 0:
+        clone_act = 'Aleatorio: '
+    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR] (" + clone_act + item.category + ")", folder=False, thumbnail=thumb_separador, category=item.category, channel_host=item.channel_host))
     
     itemlist.append(Item(channel=item.channel, action="settingCanal", title="Configurar canal", thumbnail=thumb_settings, category=item.category, channel_host=item.channel_host))
     
@@ -243,9 +246,8 @@ def submenu_novedades(item):
     item.extra2 = ''
     
     #Renombramos el canal al nombre de clone inicial desde la URL
-    host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
     item.channel_host = host
-    item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+    item.category = channel_clone_name.capitalize()
     
     data = ''
     timeout_search=timeout * 2                                                  #Más tiempo para Novedades, que es una búsqueda
@@ -2051,7 +2053,15 @@ def episodios(item):
             if match['episode'] is None: match['episode'] = "0"
             try:
                 match['season'] = int(match['season'])
+                season_alt = match['season']
                 match['episode'] = int(match['episode'])
+                if match['season'] > max_temp:
+                    logger.error("ERROR 07: EPISODIOS: Error en número de Temporada o Episodio: " + " / TEMPORADA/EPISODIO: " + str(match['season']) + " / " + str(match['episode']) + " / NUM_TEMPORADA: " + str(max_temp) + " / " + str(season) + " / MATCHES: " + str(matches))
+                    match['season'] = scrapertools.find_single_match(item_local.url, '\/[t|T]emp\w+-*(\d+)\/')
+                    if not match['season']:
+                        match['season'] = season_alt
+                    else:
+                        match['season'] = int(match['season'])
             except:
                 logger.error("ERROR 07: EPISODIOS: Error en número de Temporada o Episodio: " + " / TEMPORADA/EPISODIO: " + str(match['season']) + " / " + str(match['episode']) + " / NUM_TEMPORADA: " + str(max_temp) + " / " + str(season) + " / MATCHES: " + str(matches))
 

@@ -52,9 +52,6 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Generos", action="section",
                          thumbnail=get_thumb('genres', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Por Años", action="section",
-                         thumbnail=get_thumb('year', auto=True)))
-
     itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url=host + 'search?q=',
                          thumbnail=get_thumb('search', auto=True)))
 

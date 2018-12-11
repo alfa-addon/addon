@@ -59,7 +59,7 @@ def list_all(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<div class="post-thumbnail"><a href="([^"]+)" title="([^"]+)">.*?data-src="([^"]+)"'
+    patron = '<div class="post-thumbnail"><a href="([^"]+)" title="([^"]+)">.*?data-lazy-src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:

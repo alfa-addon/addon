@@ -210,7 +210,7 @@ def render_items(itemlist, parent_item):
         if item.fanart:
             fanart = item.fanart
         else:
-            fanart = os.path.join(config.get_runtime_path(), "fanart.jpg")
+            fanart = os.path.join(config.get_runtime_path(), "fanart1.jpg")
 
         # Creamos el listitem
         #listitem = xbmcgui.ListItem(item.title)
@@ -1106,6 +1106,8 @@ def play_torrent(item, xlistitem, mediaurl):
         url_stat = False
         torrents_path = ''
         videolibrary_path = config.get_videolibrary_path()                  #Calculamos el path absoluto a partir de la Videoteca
+        if videolibrary_path.lower().startswith("smb://"):                  #Si es una conexión SMB, usamos userdata local
+            videolibrary_path = config.get_data_path()                      #Calculamos el path absoluto a partir de Userdata
         if not filetools.exists(videolibrary_path):                         #Si no existe el path, pasamos al modo clásico
             videolibrary_path = False
         else:
@@ -1139,7 +1141,7 @@ def play_torrent(item, xlistitem, mediaurl):
                 folder = movies                                             #películas
             else:
                 folder = series                                             #o series
-            item.url = filetools.join(videolibrary_path, folder, item.url)  #dirección del .torrent local en la Videoteca
+            item.url = filetools.join(config.get_videolibrary_path(), folder, item.url)     #dirección del .torrent local en la Videoteca
             if filetools.copy(item.url, torrents_path, silent=True):        #se copia a la carpeta generíca para evitar problemas de encode
                 item.url = torrents_path
             if "torrentin" in torrent_options[seleccion][1]:                #Si es Torrentin, hay que añadir un prefijo

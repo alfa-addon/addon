@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 
 from nmb.NetBIOS import NetBIOS
 from platformcode import logger
 from smb.SMBConnection import SMBConnection
+
+GitHub = 'https://github.com/miketeo/pysmb'     #buscar aquí de vez en cuando la última versiónde SMB-pysmb, y actualizar en Alfa
+vesion_actual_pysmb = '1.1.25'                  #actualizada el 25/11/2018
 
 remote = None
 
@@ -12,7 +16,6 @@ remote = None
 def parse_url(url):
     # logger.info("Url: %s" % url)
     url = url.strip()
-    import re
     patron = "^smb://(?:([^;\n]+);)?(?:([^:@\n]+)[:|@])?(?:([^@\n]+)@)?([^/]+)/([^/\n]+)([/]?.*?)$"
     domain, user, password, server_name, share_name, path = re.compile(patron, re.DOTALL).match(url).groups()
 
@@ -29,8 +32,7 @@ def parse_url(url):
 
 
 def get_server_name_ip(server):
-    import re
-    if re.compile("^\d+.\d+.\d+.\d+$").findall(server):
+    if re.compile("^\d+.\d+.\d+.\d+$").findall(server) or re.compile("^([^\.]+\.(?:[^\.]+\.)?(?:\w+)?)$").findall(server):
         server_ip = server
         server_name = None
     else:
