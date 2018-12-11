@@ -11,27 +11,28 @@ from lib import unshortenit
 
 host = "http://www.descargacineclasico.net"
 
-
-def agrupa_datos(data):
-    # Agrupa los datos
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|<!--.*?-->', '', data)
-    data = re.sub(r'\s+', ' ', data)
-    data = re.sub(r'>\s<', '><', data)
-    return data
-
-
 def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, title="Últimas agregadas", action="agregadas",
-                         url=host, viewmode="movie_with_plot",
-                               thumbnail=get_thumb('last', auto=True)))
+                         url=host, viewmode="movie_with_plot", thumbnail=get_thumb('last', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Listado por género", action="porGenero",
-                         url=host,
-                               thumbnail=get_thumb('genres', auto=True)))
-    itemlist.append(
-        Item(channel=item.channel, title="Buscar", action="search", url=host,
-                               thumbnail=get_thumb('search', auto=True)))
+                         url=host, thumbnail=get_thumb('genres', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Listado alfabetico", action="porLetra",
+                         url=host + "/cine-online/", thumbnail=get_thumb('alphabet', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host,
+                         thumbnail=get_thumb('search', auto=True)))
+    return itemlist
+
+
+def porLetra(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron = 'noindex,nofollow" href="([^"]+)">(\w+)<'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url, titulo in matches:
+        itemlist.append( Item(channel=item.channel , action="agregadas" , title=titulo, url=url, viewmode="movie_with_plot"))
     return itemlist
 
 
@@ -43,7 +44,9 @@ def porGenero(item):
     data = re.compile(patron,re.DOTALL).findall(data)
     patron = '<li.*?>.*?href="([^"]+).*?>([^<]+)'                                            
     matches = re.compile(patron,re.DOTALL).findall(data[0])
-    for url,genero in matches:
+    for url, genero in matches:
+        if genero == "Erótico" and config.get_setting("adult_mode") == 0:
+            continue
         itemlist.append( Item(channel=item.channel , action="agregadas" , title=genero,url=url, viewmode="movie_with_plot"))
     return itemlist
 
@@ -128,7 +131,6 @@ def findvideos(item):
                                      action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
                                      contentTitle = item.contentTitle
                                      ))
-    return itemlist
     return itemlist
 
 

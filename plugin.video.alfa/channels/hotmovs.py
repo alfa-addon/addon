@@ -45,7 +45,6 @@ def catalogo(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<a class="thumbnail" href="([^"]+)">.*?<img src="([^"]+)".*?<span class="thumbnail__info__right">\s+([^"]+)\s+</span>.*?<h5>([^"]+)</h5>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedthumbnail,cantidad,scrapedtitle in matches:
         scrapedplot = ""
         cantidad = cantidad.replace("         ", "")
@@ -66,7 +65,6 @@ def categorias(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<a class="thumbnail" href="([^"]+)" title="([^"]+)">.*?<img src="([^"]+)".*?<i class="mdi mdi-video"></i>([^"]+)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
         scrapedplot = ""
         cantidad = cantidad.replace("        ", "")
@@ -99,6 +97,7 @@ def peliculas(item):
         next_page_url = urlparse.urljoin(item.url,next_page_url)
         itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
     return itemlist
+
 
 def play(item):
     logger.info()

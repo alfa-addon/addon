@@ -46,7 +46,6 @@ def catalogo(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<li id="menu-item-\d+".*?u=([^"]+)">(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
@@ -59,7 +58,6 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     patron  = '<li><a href="([^"]+)" rel="nofollow">(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
@@ -75,25 +73,26 @@ def peliculas(item):
     patron  = '<article id="post-\d+".*?<a href="([^"]+)" rel="bookmark">(.*?)</a>.*?<img src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
-        contentTitle = scrapedtitle
         title = scrapedtitle
         thumbnail = scrapedthumbnail.replace("jpg#", "jpg")
         plot = ""
         year = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos" , title=title , url=scrapedurl, thumbnail=thumbnail, plot=plot, contentTitle=contentTitle, infoLabels={'year':year} ))
-
+        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=scrapedurl, thumbnail=thumbnail, plot=plot, fulltitle=title, infoLabels={'year':year} ))
     next_page_url = scrapertools.find_single_match(data, '<div class="nav-previous"><a href="([^"]+)"')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
         itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
-
-
-    # else:
-        # patron  = '<div class="nav-previous"><a href="(.*?)"'
-        # next_page = re.compile(patron,re.DOTALL).findall(data)
-       #next_page = scrapertools.find_single_match(data,'class="last" title=.*?<a href="([^"]+)">')
-        # next_page =  next_page[0]
-       #next_page = host + next_page
-        # itemlist.append( Item(channel=item.channel, action="peliculas", title=next_page , text_color="blue", url=next_page ) )
     return itemlist
 
+
+def play(item):
+    logger.info()
+    data = scrapertools.cachePage(item.url)
+    itemlist = servertools.find_video_items(data=data)
+    for videoitem in itemlist:
+        videoitem.title = item.fulltitle
+        videoitem.fulltitle = item.fulltitle
+        videoitem.thumbnail = item.thumbnail
+        videochannel=item.channel
+    return itemlist
+    

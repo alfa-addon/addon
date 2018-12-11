@@ -577,7 +577,8 @@ def findvideos(item):
         return item                                                                 #... y nos vamos
     
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
-    item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
+    if not item.videolibray_emergency_urls:
+        item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent
     for scrapedurl in matches:                                                      #leemos los torrents con la diferentes calidades

@@ -44,7 +44,6 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     patron  = '<a class="item" href="([^"]+)" title="([^"]+)">.*?<div class="videos">(\d+) video.*?</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle,numero in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
@@ -61,7 +60,6 @@ def peliculas(item):
     data = httptools.downloadpage(item.url).data
     patron = '<a href="http://xxx.justporno.tv/videos/(\d+)/.*?" title="([^"]+)" >.*?data-original="([^"]+)".*?<div class="duration">(.*?)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle,scrapedthumbnail,scrapedtime in matches:
         scrapedplot = ""
         scrapedtitle = "[COLOR yellow]" + (scrapedtime) + "[/COLOR] " + scrapedtitle
@@ -81,7 +79,6 @@ def play(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = 'video_url: \'([^\']+)\''
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl in matches:
         scrapedplot = ""
         itemlist.append(item.clone(channel=item.channel, action="play", title=scrapedurl , url=scrapedurl , plot="" , folder=True) )

@@ -43,9 +43,8 @@ def catalogo(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<a itemprop="url" href="([^"]+)".*?title="([^"]+)">.*?<img itemprop="image" src=([^"]+) alt=.*?</svg>          ([^"]+)</li>'
+    patron  = '<a itemprop="url" href="([^"]+)".*?title="([^"]+)">.*?<img itemprop="image" src=([^"]+) alt=.*?</svg>\s+([^"]+)           </li>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
         scrapedplot = ""
         scrapedtitle = scrapedtitle + " (" + cantidad +")"
@@ -65,11 +64,10 @@ def categorias(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<a itemprop="url" href="([^"]+)".*?title="([^"]+)">.*?<img itemprop="image" src="([^"]+)".*?</svg>([^"]+)               </small>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
         scrapedplot = ""
         scrapedtitle = scrapedtitle + " (" + cantidad +")"
-        scrapedurl = urlparse.urljoin(item.url,scrapedurl)
+        scrapedurl = urlparse.urljoin(item.url,scrapedurl) + "/?sort=latest"
         itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
     next_page_url = scrapertools.find_single_match(data,'<a class="btn btn-primary--light btn-pagination" itemprop="name" href="([^"]+)" title="Siguiente">')
     if next_page_url!="":

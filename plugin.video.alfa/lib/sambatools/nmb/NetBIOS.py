@@ -1,12 +1,7 @@
-import logging
-import random
-import select
-import socket
-import time
 
+import os, logging, random, socket, time, select
 from base import NBNS, NotConnectedError
-from nmb_constants import TYPE_SERVER
-
+from nmb_constants import TYPE_CLIENT, TYPE_SERVER, TYPE_WORKSTATION
 
 class NetBIOS(NBNS):
 

@@ -42,7 +42,6 @@ def catalogo(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<a class="pornstar_link js_mpop js-pop" href="([^"]+)".*?"([^"]+)"\s+title="([^"]+)".*?<div class="ps_info_count">\s+([^"]+)\s+Videos'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         scrapedtitle = scrapedtitle +  " [COLOR yellow]" + cantidad + "[/COLOR] "
@@ -61,7 +60,6 @@ def categorias(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<div class="category_item_wrapper">.*?<a href="([^"]+)".*?data-thumb_url="([^"]+)".*?alt="([^"]+)".*?<span class="category_count">\s+([^"]+) Videos'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"

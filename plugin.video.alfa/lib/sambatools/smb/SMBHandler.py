@@ -1,14 +1,9 @@
-import mimetools
-import mimetypes
-import os
-import socket
-import sys
-import tempfile
-import urllib2
-from urllib import (unquote, addinfourl, splitport, splitattr, splituser, splitpasswd)
 
+import os, sys, socket, urllib2, mimetypes, mimetools, tempfile
+from urllib import (unwrap, unquote, splittype, splithost, quote,
+     addinfourl, splitport, splittag,
+     splitattr, ftpwrapper, splituser, splitpasswd, splitvalue)
 from nmb.NetBIOS import NetBIOS
-
 from smb.SMBConnection import SMBConnection
 
 try:

@@ -52,6 +52,9 @@ def list_movies(item, silent=False):
                 
                 head_nfo, new_item = videolibrarytools.read_nfo(nfo_path)
 
+                if not new_item:                        #Si no ha leído bien el .nfo, pasamos a la siguiente
+                    continue
+                
                 if len(new_item.library_urls) > 1:
                     multicanal = True
                 else:
@@ -62,7 +65,6 @@ def list_movies(item, silent=False):
 
                 for canal_org in new_item.library_urls:
                     canal = generictools.verify_channel(canal_org)
-                    logger.error(canal)
                     try:
                         channel_verify = __import__('channels.%s' % canal, fromlist=["channels.%s" % canal])
                         logger.debug('El canal %s parece correcto' % channel_verify)
@@ -286,8 +288,6 @@ def list_tvshows(item):
                 # logger.debug("item_tvshow:\n" + item_tvshow.tostring('\n'))
 
                 ## verifica la existencia de los canales ##
-
-                logger.debug(item_tvshow)
                 if len(item_tvshow.library_urls) > 0:
                     itemlist.append(item_tvshow)
 

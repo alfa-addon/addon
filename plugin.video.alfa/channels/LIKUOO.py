@@ -42,7 +42,6 @@ def categorias(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<div class="item_p">.*?<a href="([^"]+)" title="([^"]+)"><img src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
         scrapedplot = ""
         scrapedthumbnail = "https:" + scrapedthumbnail
@@ -78,7 +77,6 @@ def play(item):
     logger.info()
     data = scrapertools.cachePage(item.url)
     itemlist = servertools.find_video_items(data=data)
-
     for videoitem in itemlist:
         videoitem.title = item.fulltitle
         videoitem.fulltitle = item.fulltitle

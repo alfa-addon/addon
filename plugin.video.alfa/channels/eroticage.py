@@ -43,7 +43,6 @@ def catalogo(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<a class=""\s+title="([^"]+)"\s+href="([^"]+)">'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedtitle,scrapedurl in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
@@ -59,7 +58,6 @@ def categorias(item):
     data = scrapertools.get_match(data,'<h2>TAGS</h2>(.*?)<div class="sideitem"')
     patron  = '<a href="(.*?)".*?>(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
@@ -92,9 +90,8 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = scrapertools.get_match(data,'<div id="wrapper" class="ortala">(.*?)<div class="butonlar">')
-    patron  = '<iframe.*?src="([^"]+)"'
+    patron  = '<iframe\s+src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
-
     for scrapedurl  in matches:
         itemlist.append( Item(action="play", title=scrapedurl, fulltitle = item.title, url=scrapedurl))
     return itemlist
@@ -104,7 +101,7 @@ def play(item):
     data = scrapertools.cachePage(item.url)
     itemlist = servertools.find_video_items(data=data)
     for videoitem in itemlist:
-        videoitem.title = item.fulltitle
+        videoitem.title = item.title
         videoitem.fulltitle = item.fulltitle
         videoitem.thumbnail = item.thumbnail
         videochannel=item.channel

@@ -36,11 +36,8 @@ def search(item, texto):
 def categorias(item):
         itemlist = []
         data = scrapertools.cache_page(item.url)
-        #data = scrapertools.get_match(data,'<div class="sidetitle">Categorías</div>(.*?)</ul>')
-		#<li class="cat-item cat-item-203077"><a href="http://www.coomelonitas.com/Categoria/asiaticas">ASIÁTICAS</a>
         patron  = '<li class="cat-item cat-item-\d+"><a href="([^"]+)">([^"]+)</a>'
         matches = re.compile(patron,re.DOTALL).findall(data)
-        scrapertools.printMatches(matches)
         for scrapedurl,scrapedtitle in matches:
             scrapedplot = ""
             scrapedthumbnail = ""

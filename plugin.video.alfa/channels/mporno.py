@@ -44,7 +44,6 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     patron  = '<h3><a href="([^"]+)">(.*?)</a> <small>(.*?)</small></h3>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle,cantidad in matches:
         scrapedplot = scrapedurl.replace("http://mporno.unblckd.org/", "").replace("page1.html", "")
         scrapedthumbnail = ""
@@ -58,9 +57,6 @@ def peliculas(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-	
-
-	
     patron  = '<img class="content_image" src="([^"]+).mp4/.*?" alt="([^"]+)".*?this.src="(.*?)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
@@ -76,14 +72,5 @@ def peliculas(item):
         next_page_url = urlparse.urljoin(item.url,next_page_url)
         itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
         
-
-    # else:
-        # patron  = '<a href=\'([^\']+)\' class="next">Next &gt;&gt;</a>'
-        # next_page = re.compile(patron,re.DOTALL).findall(data)
-        # next_page = scrapertools.find_single_match(data,'class="last" title=.*?<a href="([^"]+)">')
-        # plot = item.plot
-        # next_page =  next_page[0]
-        # next_page = host + plot + next_page
-        # itemlist.append( Item(channel=item.channel, action="peliculas", title=next_page , text_color="blue", url=next_page, plot=plot ) )
     return itemlist
 

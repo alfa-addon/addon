@@ -355,7 +355,7 @@ def listado(item):
             title = re.sub(r'[\(|\[]\s+[\)|\]]', '', title)
             title = title.replace('()', '').replace('[]', '').strip().lower().title()
 
-            item_local.from_title = title.strip().lower().title()   #Guardamos esta etiqueta para posible desambiguación de título
+            item_local.from_title = title.strip().lower().title()       #Guardamos esta etiqueta para posible desambiguación de título
 
             #Salvamos el título según el tipo de contenido
             if item_local.contentType == "movie":
@@ -387,8 +387,8 @@ def listado(item):
 
         title = '%s' % curr_page
 
-        if cnt_matches + 1 >= last_title:                           #Si hemos pintado ya todo lo de esta página...
-            cnt_matches = 0                                         #... la próxima pasada leeremos otra página
+        if cnt_matches + 1 >= last_title:                               #Si hemos pintado ya todo lo de esta página...
+            cnt_matches = 0                                             #... la próxima pasada leeremos otra página
             next_page_url = re.sub(r'page=(\d+)', r'page=' + str(int(re.search('\d+', next_page_url).group()) + 1), next_page_url)
         
         itemlist.append(Item(channel=item.channel, action="listado", title=">> Página siguiente " + title, url=next_page_url, extra=item.extra, extra2=item.extra2, last_page=str(last_page), curr_page=str(curr_page + 1), cnt_matches=str(cnt_matches)))
@@ -399,10 +399,10 @@ def listado(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    itemlist_t = []                                     #Itemlist total de enlaces
-    itemlist_f = []                                     #Itemlist de enlaces filtrados
+    itemlist_t = []                                                         #Itemlist total de enlaces
+    itemlist_f = []                                                         #Itemlist de enlaces filtrados
     if not item.language:
-        item.language = ['CAST']                        #Castellano por defecto
+        item.language = ['CAST']                                            #Castellano por defecto
     matches = []
     item.category = categoria
     
@@ -412,22 +412,53 @@ def findvideos(item):
     #logger.debug(item)
 
     matches = item.url
-    if not matches:                                     #error
-        logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web: " + item)
+    if not matches:                                                         #error
+        logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web: " + str(item))
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
-        return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        
+        if item.emergency_urls and not item.videolibray_emergency_urls:     #Hay urls de emergencia?
+            matches = item.emergency_urls[1]                                #Restauramos matches
+            item.armagedon = True                                           #Marcamos la situación como catastrófica 
+        else:
+            if item.videolibray_emergency_urls:                             #Si es llamado desde creación de Videoteca...
+                return item                                                 #Devolvemos el Item de la llamada
+            else:
+                return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     #logger.debug(matches)
     
+    #Si es un lookup para cargar las urls de emergencia en la Videoteca...
+    if item.videolibray_emergency_urls:
+        item.emergency_urls = []                                            #Iniciamos emergency_urls
+        item.emergency_urls.append([])                                      #Reservamos el espacio para los .torrents locales
+        item.emergency_urls.append(matches)                                 #Salvamnos matches...  
+    
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
-    item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
+    if not item.videolibray_emergency_urls:
+        item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent
-    for scrapedurl, quality in matches:                 #leemos los magnets con la diferentes calidades
+    for scrapedurl, quality in matches:                                     #leemos los magnets con la diferentes calidades
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
             
         item_local.url = scrapedurl
+        if item.videolibray_emergency_urls:
+            item.emergency_urls[0].append(scrapedurl)                       #guardamos la url y pasamos a la siguiente
+            continue
+        if item.emergency_urls and not item.videolibray_emergency_urls:
+            item_local.torrent_alt = item.emergency_urls[0][0]              #Guardamos la url del .Torrent ALTERNATIVA
+            if item.armagedon:
+                item_local.url = item.emergency_urls[0][0]                  #... ponemos la emergencia como primaria
+            del item.emergency_urls[0][0]                                   #Una vez tratado lo limpiamos
+        
+        size = ''
+        if not item.armagedon:
+            size = generictools.get_torrent_size(item_local.url)            #Buscamos el tamaño en el .torrent
+        if size:
+            quality += ' [%s]' % size
+        if item.armagedon:                                                  #Si es catastrófico, lo marcamos
+            quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % quality
             
         #Añadimos la calidad y copiamos la duración
         item_local.quality = quality
@@ -445,9 +476,9 @@ def findvideos(item):
         item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality).strip()
         item_local.quality = item_local.quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
 
-        item_local.alive = "??"                                                             #Calidad del link sin verificar
-        item_local.action = "play"                                                          #Visualizar vídeo
-        item_local.server = "torrent"                                                       #Servidor Torrent
+        item_local.alive = "??"                                                 #Calidad del link sin verificar
+        item_local.action = "play"                                              #Visualizar vídeo
+        item_local.server = "torrent"                                           #Servidor Torrent
         
         itemlist_t.append(item_local.clone())                                   #Pintar pantalla, si no se filtran idiomas
         
@@ -459,6 +490,9 @@ def findvideos(item):
         
         #logger.debug(item_local)
 
+    if item.videolibray_emergency_urls:                                         #Si ya hemos guardado todas las urls...
+        return item                                                             #... nos vamos
+    
     if len(itemlist_f) > 0:                                                     #Si hay entradas filtradas...
         itemlist.extend(itemlist_f)                                             #Pintamos pantalla filtrada
     else:                                                                       
