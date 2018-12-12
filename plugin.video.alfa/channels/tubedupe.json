@@ -1,16 +1,16 @@
 {
-  "id": "yuuk",
-  "name": "yuuk",
+  "id": "tubedupe",
+  "name": "tubedupe",
   "active": true,
   "adult": true,
   "language": ["*"],
-  "thumbnail": "http://yuuk.net/wp-content/uploads/2018/06/yuuk_net_logo.png",
+  "thumbnail": "https://tubedupe.com/apple-touch-icon-180x180-precomposed.png",
   "banner": "",
   "categories": [
     "adult"
   ],
   "settings": [
-
   ]
 }
+
 

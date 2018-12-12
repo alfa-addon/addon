@@ -17,7 +17,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append( Item(channel=item.channel, title="Peliculas" , action="peliculas", url=host))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
+    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/list-genres/"))
     itemlist.append( Item(channel=item.channel, title="Buscar" , action="search"))
     return itemlist
 
@@ -39,11 +39,13 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    itemlist.append( Item(channel=item.channel, action="peliculas", title="Big Tits" , url="http://yuuk.net/?s=big+tit" , folder=True) )
-    patron  = 'menu-item-object-category"><a href="([^"]+)">.*?</style>([^"]+)</a>'
+    itemlist.append( Item(channel=item.channel, title="Censored" , action="peliculas", url=host + "/category/censored/"))
+    itemlist.append( Item(channel=item.channel, title="Uncensored" , action="peliculas", url=host + "/category/uncensored/"))
+    patron  = '<li><a href="([^"]+)" title="[^"]+"><span>([^"]+)</span><span>([^"]+)</span></a></li>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     scrapertools.printMatches(matches)
-    for scrapedurl,scrapedtitle in matches:
+    for scrapedurl,scrapedtitle,cantidad in matches:
+        scrapedtitle = scrapedtitle + " (" + cantidad + ")"
         scrapedplot = ""
         scrapedthumbnail = ""
         itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
@@ -54,11 +56,12 @@ def peliculas(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<div class="featured-wrap clearfix">.*?<a href="([^"]+)" title="([^"]+)".*?src="([^"]+)"'
+    patron = '<div class="featured-wrap clearfix">.*?<a href="([^"]+)" title="([^"]+)".*?src="([^"]+)".*?>#([^"]+) Full HD JAV</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     scrapertools.printMatches(matches)
-    for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
+    for scrapedurl,scrapedtitle,scrapedthumbnail,calidad in matches:
         scrapedplot = ""
+        scrapedtitle = "[COLOR red]" + calidad + "[/COLOR] " + scrapedtitle
         itemlist.append( Item(channel=item.channel, action="findvideos", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
     next_page_url = scrapertools.find_single_match(data,'<li><a rel=\'nofollow\' href=\'([^\']+)\' class=\'inactive\'>Next')
     if next_page_url!="":
