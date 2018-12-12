@@ -3,14 +3,14 @@
   "name": "PelisPlay",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
-  "fanart": "https://s33.postimg.cc/d3ioghaof/image.png",
+  "language": ["cast", "lat", "vose"],
+  "fanart": "https://i.postimg.cc/qvFCZNKT/Alpha-652355392-large.jpg",
   "thumbnail": "https://www.pelisplay.tv/static/img/logo.png",
-  "banner": "https://s33.postimg.cc/cyex6xlen/image.png",
+  "banner": "https://i.postimg.cc/tCb8wh8s/pelisplaybn.jpg",
   "categories": [
     "movie",
     "tvshow",
-    "vos"
+    "vose"
   ],
   "settings": [
     {
@@ -22,7 +22,9 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "Latino"
+        "Latino",
+        "Castellano",
+        "Subtitulado"
       ]
     },
      {
