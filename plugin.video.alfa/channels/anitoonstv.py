@@ -32,11 +32,11 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, action="lista", title="Series", url=host+"/lista-de-anime.php",
+    itemlist.append(Item(channel=item.channel, action="lista", title="Series", contentTitle="Series", url=host+"/lista-de-anime.php",
                          thumbnail=thumb_series, range=[0,19]))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Películas", url=host+"/catalogo.php?g=&t=peliculas&o=0",
+    itemlist.append(Item(channel=item.channel, action="lista", title="Películas", contentTitle="Películas", url=host+"/catalogo.php?g=&t=peliculas&o=0",
                          thumbnail=thumb_series, range=[0,19] ))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Especiales", url=host+"/catalogo.php?g=&t=especiales&o=0",
+    itemlist.append(Item(channel=item.channel, action="lista", title="Especiales", contentTitle="Especiales", url=host+"/catalogo.php?g=&t=especiales&o=0",
                          thumbnail=thumb_series, range=[0,19]))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar",
                          thumbnail=thumb_series, range=[0,19]))
@@ -109,14 +109,14 @@ def lista(item):
         context2 = autoplay.context
         context.extend(context2)
         scrapedurl=host+scrapedurl
-        if item.title!="Series":
+        if item.contentTitle!="Series":
             itemlist.append(item.clone(title=scrapedtitle, contentTitle=show,url=scrapedurl,
                thumbnail=scrapedthumbnail, action="findvideos", context=context))
         else:
             itemlist.append(item.clone(title=scrapedtitle, contentSerieName=show,url=scrapedurl, plot=scrapedplot,
         	   thumbnail=scrapedthumbnail, action="episodios", context=context))
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
-    itemlist.append(Item(channel=item.channel, url=item.url, range=next_page, title='Pagina Siguente >>>', action='lista'))
+    itemlist.append(Item(channel=item.channel, url=item.url, range=next_page, title='Pagina Siguente >>>', contentTitle=item.title, action='lista'))
 
     return itemlist
 
