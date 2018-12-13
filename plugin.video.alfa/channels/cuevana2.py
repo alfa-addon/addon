@@ -33,7 +33,7 @@ def mainlist(item):
     itemlist.append(Item(channel = item.channel, title = "Favoritas", action = "movies", 
         url = host + "peliculas-destacadas", thumbnail = get_thumb("favorites", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = "Buscar...", action = "search", 
-        url = host + "search/", thumbnail = get_thumb("search", auto = True)))
+        url = host + "pelicula/?s=", thumbnail = get_thumb("search", auto = True)))
 
     # SERIES
     itemlist.append(Item(channel = item.channel, title = "--- Series ---", folder=False, text_bold=True))
@@ -152,7 +152,6 @@ def searchShows(itemlist, item, texto):
             itemlist.append(Item(channel = item.channel, title=title, url=host + link, action="episodes"))
 
 def searchMovies(itemlist, item, texto):
-    texto = texto.replace(' ', '+').lower()
     data = load_data(item.url + texto)
     #patron para buscar las peliculas
     pattern = '<a href="([^"]+)"><div class="img">' #link
@@ -160,14 +159,12 @@ def searchMovies(itemlist, item, texto):
     pattern += '<span style="width:([0-9]+)%">.*?'
     pattern += '"txt">(.*?)</div>' # text
 
-    #coloca las peliculas encontradas en la lista, improvisando do while
-    next_page = True
-    while next_page:
-        put_movies(itemlist, item, data, pattern)
-        next_page = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)">')
+    #ahora ya no se necesita el do while
+    put_movies(itemlist, item, data, pattern)
+    next_page = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)">')
 
-        if next_page:
-            data = load_data(next_page)
+    if next_page:
+        itemlist.append(Item(channel = item.channel, title='Siguiente Pagina', url=next_page, action="movies"))
 
 def search(item, texto):
     itemlist = []
