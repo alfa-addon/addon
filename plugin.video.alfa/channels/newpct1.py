@@ -44,19 +44,19 @@ clone_list_random = []                                                          
 
 if host_index == 0:                                                                 #Si el clones es "Aleatorio"...
     i = 0
-    j = 2                                                                           #... marcamos el último de los clones "buenos"
+    j = 3                                                                   #... marcamos el último de los clones "buenos"
     for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
         if i <= j and active_clone == "1":
-            clone_list_random += [clone_list[i]]                                    #... añadimos el clone activo "bueno" a la lista
+            clone_list_random += [clone_list[i]]                            #... añadimos el clone activo "bueno" a la lista
         else:
             break
         i += 1
     if clone_list_random:                                                           #Si hay clones en la lista aleatoria...
         clone_list = [random.choice(clone_list_random)]                             #Seleccionamos un clone aleatorio
         #logger.debug(clone_list)
-    host_index = 1                                              #mutamos el num. de clone para que se procese en el siguiente loop
+    host_index = 1                              #mutamos el num. de clone para que se procese en el siguiente loop
         
-if host_index > 0 or not clone_list_random:                     #Si el Clone por defecto no es Aleatorio, o hay ya un aleatorio sleccionado...
+if host_index > 0 or not clone_list_random:     #Si el Clone por defecto no es Aleatorio, o hay ya un aleatorio sleccionado...
     i = 1
     for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
         if i == host_index:
@@ -202,20 +202,29 @@ def submenu(item):
     if "pelisyseries.com" in item.channel_host and item.extra == "varios":      #compatibilidad con mispelisy.series.com
         data = '<li><a href="' + item.channel_host + 'varios/" title="Documentales">Documentales</a></li>'
     else:
-        data = scrapertools.get_match(data, patron)                             #Seleccionamos el trozo que nos interesa
-    if not data:
+        data_menu = scrapertools.get_match(data, patron)                        #Seleccionamos el trozo que nos interesa
+    if not data_menu:
         logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
         itemlist.append(item.clone(action='', title=item.category + ': ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     patron = '<li><a.*?href="([^"]+)"\s?.itle="[^"]+"\s?>([^>]+)<\/a><\/li>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = re.compile(patron, re.DOTALL).findall(data_menu)
 
     if not matches:
-        logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
+        logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data_menu)
         itemlist.append(item.clone(action='', title=item.category + ': ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
+    matches_hd = []
+    if item.extra == "peliculas":
+        patron = '<h3\s*(?:style="[^"]+")?>(?:<strong>)?Peliculas(?:<\/strong>)? en HD <a href="[^"]+"\s*class="[^"]+"\s*title="[^"]+">(?:ver .*?)?<\/a><span(?: style="[^"]+")?>(.*?)(?:<\/span>)?<\/h3>'
+        data_hd = scrapertools.find_single_match(data, patron)              #Seleccionamos el trozo que nos interesa
+        if data_hd:
+            patron = '<a href="([^"]+)"\s*.itle="[^"]+"\s*>([^<]+)<\/a>'
+            matches_hd = re.compile(patron, re.DOTALL).findall(data_hd)
+            #logger.debug(matches_hd)
+    
     for scrapedurl, scrapedtitle in matches:
         title = scrapedtitle.strip()
 
@@ -229,8 +238,19 @@ def submenu(item):
                 item.extra2 = ""
             
             itemlist.append(item.clone(action="listado", title=title, url=scrapedurl))
+            
+            if matches_hd and 'HD' in title:
+                for scrapedurlcat, scrapedtitlecat in matches_hd:           #Pintamos las categorías de peliculas en HD
+                    if '4k' in scrapedtitlecat.lower():                     #... ignoramos 4K, no funcionan las categorías
+                        continue
+                    itemlist.append(item.clone(action="listado", title="   - Calidad: " + scrapedtitlecat, url=scrapedurlcat))
+            
             itemlist.append(item.clone(action="alfabeto", title=title + " [A-Z]", url=scrapedurl))
             
+    if item.extra == "varios" and len(itemlist) == 0:
+        itemlist.append(item.clone(action="listado", title="Varios", url=item.channel_host + "varios/"))
+        itemlist.append(item.clone(action="alfabeto", title="Varios" + " [A-Z]", url=item.channel_host + "varios/"))
+    
     if item.extra == "peliculas":
         itemlist.append(item.clone(action="listado", title="Películas 4K", url=item.channel_host + "peliculas-hd/4kultrahd/"))
         itemlist.append(item.clone(action="alfabeto", title="Películas 4K" + " [A-Z]", url=item.channel_host + "peliculas-hd/4kultrahd/"))

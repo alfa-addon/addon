@@ -49,9 +49,15 @@ def connect(url):
     # logger.info("Url: %s" % url)
     global remote
     server_name, server_ip, share_name, path, user, password, domain = parse_url(url)
+    
+    #Da problemas asumir que la sesión está abierta.  Si se abrió pero ha caducado, dará error.  Mejor conectar siempre
+    """
     if not remote or not remote.sock or not server_name == remote.remote_name:
         remote = SMBConnection(user, password, domain, server_name)
         remote.connect(server_ip, 139)
+    """
+    remote = SMBConnection(user, password, domain, server_name)
+    remote.connect(ip=server_ip, timeout=20)
 
     return remote, share_name, path
 
