@@ -152,7 +152,10 @@ def search(item, text):
 
 def GKPluginLink(hash):
     hashdata = urllib.urlencode({r'link':hash})
-    json = httptools.downloadpage('https://player4.cuevana2.com/plugins/gkpluginsphp.php', post=hashdata).data
+    try:
+        json = httptools.downloadpage('https://player4.cuevana2.com/plugins/gkpluginsphp.php', post=hashdata).data
+    except:
+        return None
     logger.info(jsontools.load(json))
 
     data = jsontools.load(json) if json else False
