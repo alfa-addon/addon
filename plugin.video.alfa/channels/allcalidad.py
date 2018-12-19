@@ -11,7 +11,7 @@ from core.item import Item
 from platformcode import config, logger
 
 
-IDIOMAS = {'Latino': 'LAT'}
+IDIOMAS = {'Latino': 'Latino'}
 list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['rapidvideo', 'streamango', 'fastplay', 'flashx', 'openload', 'vimeo', 'netutv']
@@ -19,7 +19,7 @@ list_servers = ['rapidvideo', 'streamango', 'fastplay', 'flashx', 'openload', 'v
 
 __channel__='allcalidad'
 
-host = "http://allcalidad.com/"
+host = "http://allcalidad.net/"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)

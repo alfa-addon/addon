@@ -1,7 +1,7 @@
 {
   "id": "mundoflv",
   "name": "MundoFlv",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://s32.postimg.cc/h1ewz9hhx/mundoflv.png",
