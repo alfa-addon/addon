@@ -3,15 +3,29 @@
   "name": "HDFilmologia",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["cast", "lat", "vose"],
   "fanart": "https://i.postimg.cc/qvFCZNKT/Alpha-652355392-large.jpg",
   "thumbnail": "https://hdfilmologia.com/templates/gorstyle/images/logo.png",
   "banner": "",
   "categories": [
     "movie",
-    "vos"
+    "vose",
   ],
   "settings": [
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "Latino",
+        "Castellano",
+        "English"
+      ]
+    },
     {
       "id": "modo_grafico",
       "type": "bool",

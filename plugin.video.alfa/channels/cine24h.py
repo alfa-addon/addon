@@ -138,10 +138,10 @@ def peliculas(item):
             contentType = 'movie'
             title = scrapedtitle
 
-        itemlist.append(item.clone(channel=__channel__, action=action, text_color=color3, show=scrapedtitle,
-                                   url=scrapedurl, infoLabels={'year': year}, contentType=contentType,
-                                   contentTitle=scrapedtitle, thumbnail='https:' + scrapedthumbnail,
-                                   title=title, context="buscar_trailer"))
+        itemlist.append(Item(channel=__channel__, action=action, text_color=color3, show=scrapedtitle,
+                             url=scrapedurl, infoLabels={'year': year}, contentType=contentType,
+                             contentTitle=scrapedtitle, thumbnail='https:' + scrapedthumbnail,
+                             title=title, context="buscar_trailer"))
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 

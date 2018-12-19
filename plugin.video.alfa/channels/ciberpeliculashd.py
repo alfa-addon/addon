@@ -232,11 +232,11 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, 'iframe-.*?src="([^"]+)')
-    data = httptools.downloadpage(url).data
-    patron  = '<a href="([^"]+)'
+    patron  = '(?i)src=&quot;([^&]+)&'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl in matches:
+        if ".gif" in scrapedurl:
+            continue
         title = "Ver en: %s"
         itemlist.append(item.clone(action = "play",
                                    title = title,

@@ -415,9 +415,11 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             season_episode = scrapertools.get_season_and_episode(e.title)
         
             # Si se ha marcado la opción de url de emergencia, se añade ésta a cada episodio después de haber ejecutado Findvideos del canal
-            if e.emergency_urls and isinstance(e.emergency_urls, dict): del e.emergency_urls    #Borramos trazas anterioires
+            if e.emergency_urls and isinstance(e.emergency_urls, dict): del e.emergency_urls    #Borramos trazas anteriores
             json_path = filetools.join(path, ("%s [%s].json" % (season_episode, e.channel)).lower())    #Path del .json del episodio
             if emergency_urls_stat == 1 and not e.emergency_urls and e.contentType == 'episode':     #Guardamos urls de emergencia?
+                if not silent:
+                    p_dialog.update(0, 'Cacheando enlaces y archivos .torrent...', e.title)     #progress dialog
                 if json_path in ficheros:                                                       #Si existe el .json sacamos de ahí las urls
                     if overwrite:                                                               #pero solo si se se sobrescriben los .json
                         json_epi = Item().fromjson(filetools.read(json_path))                   #Leemos el .json
@@ -433,6 +435,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 if e.emergency_urls: del e.emergency_urls
                 emergency_urls_succ = True                                                      #... es un éxito y vamos a marcar el .nfo
             elif emergency_urls_stat == 3 and e.contentType == 'episode':                       #Actualizamos urls de emergencia?
+                if not silent:
+                    p_dialog.update(0, 'Cacheando enlaces y archivos .torrent...', e.title)     #progress dialog
                 e = emergency_urls(e, channel, json_path)                                       #generamos las urls
                 if e.emergency_urls:                                                            #Si ya tenemos urls...
                     emergency_urls_succ = True                                                  #... es un éxito y vamos a marcar el .nfo

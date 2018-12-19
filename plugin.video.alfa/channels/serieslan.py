@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 
@@ -32,6 +32,8 @@ def mainlist(item):
 
     itemlist.append(
         Item(channel=item.channel, action="lista", title="Series", url=host, thumbnail=thumb_series, page=0))
+    itemlist.append(
+        Item(channel=item.channel, action="lista", title="Live Action", url=host+"/liveaction", thumbnail=thumb_series, page=0))
     itemlist = renumbertools.show_option(item.channel, itemlist)
     autoplay.show_option(item.channel, itemlist)
     return itemlist
@@ -45,9 +47,12 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     patron = '<a href="([^"]+)" '
-    patron += 'class="link">.+?<img src="([^"]+)".*?'
+    if item.title == "Series":
+        patron += 'class="link">.+?<img src="([^"]+)".*?'
+    else:
+        patron += 'class="link-la">.+?<img src="([^"]+)".*?'
     patron += 'title="([^"]+)">'
-    if item.url==host:
+    if item.url==host or item.url==host+"/liveaction":
         a=1
     else:
         num=(item.url).split('-')
@@ -150,25 +155,24 @@ def findvideos(item):
     _sa = scrapertools.find_single_match(data, 'var _sa = (true|false);')
     _sl = scrapertools.find_single_match(data, 'var _sl = ([^;]+);')
     sl = eval(_sl)
-    #buttons = scrapertools.find_multiple_matches(data, '<button href="" class="selop" sl="([^"]+)">([^<]+)</button>')
-
-    #for id, title in buttons:
-    new_url = golink(0, _sa, sl)
-    data = httptools.downloadpage(new_url).data
-    _x0x = scrapertools.find_single_match(data, 'var x0x = ([^;]+);')
-    x0x = eval(_x0x)
-
-    url = resolve(x0x[4], base64.b64decode(x0x[1]))
-    if 'download' in url:
-        url = url.replace('download', 'preview')
-    title = '%s'
-
-    itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language='latino',
+    #buttons = scrapertools.find_multiple_matches(data, '<button href="" class="selop" sl="([^"]+)">')
+    buttons = [0,1,2]
+    for id in buttons:
+        new_url = golink(int(id), _sa, sl)
+        data_new = httptools.downloadpage(new_url).data
+        _x0x = scrapertools.find_single_match(data_new, 'var x0x = ([^;]+);')
+        try:
+            x0x = eval(_x0x)
+            url = resolve(x0x[4], base64.b64decode(x0x[1]))
+            if 'download' in url:
+                url = url.replace('download', 'preview')
+            title = '%s'
+            itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language='latino',
                          infoLabels=item.infoLabels))
+        except Exception as e:
+            logger.info(e)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-
     # Requerido para FilterTools
-
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
     # Requerido para AutoPlay
