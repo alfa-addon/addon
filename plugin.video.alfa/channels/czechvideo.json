@@ -1,10 +1,10 @@
 {
-  "id": "yuuk",
-  "name": "yuuk",
+  "id": "czechvideo",
+  "name": "Czechvideo",
   "active": true,
   "adult": true,
   "language": ["*"],
-  "thumbnail": "http://yuuk.net/wp-content/uploads/2018/06/yuuk_net_logo.png",
+  "thumbnail": "http://czechvideo.org/templates/Default/images/black75.png",
   "banner": "",
   "categories": [
     "adult"
@@ -13,4 +13,3 @@
 
   ]
 }
-

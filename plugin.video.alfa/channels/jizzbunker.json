@@ -1,10 +1,10 @@
 {
-  "id": "yuuk",
-  "name": "yuuk",
+  "id": "jizzbunker",
+  "name": "jizzbunker",
   "active": true,
   "adult": true,
   "language": ["*"],
-  "thumbnail": "http://yuuk.net/wp-content/uploads/2018/06/yuuk_net_logo.png",
+  "thumbnail": "http://s0.cdn3x.com/jb/i/logo-new.png",
   "banner": "",
   "categories": [
     "adult"
@@ -13,4 +13,5 @@
 
   ]
 }
+
 
