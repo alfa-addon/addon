@@ -151,6 +151,10 @@ def render_items(itemlist, parent_item):
         # Si el item no contiene categoria, le ponemos la del item padre
         if item.category == "":
             item.category = parent_item.category
+        
+        # Si title no existe, lo iniciamos como str, para evitar errones "NoType"
+        if not item.title:
+            item.title = ''
 
         # Si el item no contiene fanart, le ponemos el del item padre
         if item.fanart == "":
