@@ -3,7 +3,7 @@
   "name": "CanalPelis",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["cast", "lat", "vose"],
   "fanart": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/canalpelisbg.jpg",
   "thumbnail": "http://www.canalpelis.com/wp-content/uploads/2016/11/logo_web.gif",
   "banner": "",
@@ -42,6 +42,38 @@
       "type": "bool",
       "label": "Mostrar los episodios de las series en orden descendente",
       "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_infantiles",
+      "type": "bool",
+      "label": "Incluir en Novedades - Infantiles",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_terror",
+      "type": "bool",
+      "label": "Incluir en Novedades - terror",
+      "default": true,
       "enabled": true,
       "visible": true
     }

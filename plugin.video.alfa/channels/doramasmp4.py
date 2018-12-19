@@ -40,9 +40,14 @@ def mainlist(item):
 
     itemlist.append(Item(channel= item.channel, title="Doramas", action="doramas_menu",
                          thumbnail=get_thumb('doramas', auto=True), type='dorama'))
+
+    itemlist.append(Item(channel=item.channel, title="Variedades", action="list_all",
+                         url=host + 'catalogue?format%5B%5D=varieties&sort=latest',
+                         thumbnail='', type='dorama'))
+
     itemlist.append(Item(channel=item.channel, title="Películas", action="list_all",
-                         url=host + 'catalogue?format%5B%5D=movie', thumbnail=get_thumb('movies', auto=True),
-                         type='movie'))
+                         url=host + 'catalogue?format%5B%5D=movie&sort=latest',
+                         thumbnail=get_thumb('movies', auto=True), type='movie'))
     itemlist.append(Item(channel=item.channel, title = 'Buscar', action="search", url= host+'search?s=',
                          thumbnail=get_thumb('search', auto=True)))
 
@@ -55,8 +60,9 @@ def doramas_menu(item):
 
     itemlist =[]
 
-    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host + 'catalogue?format%5B%5D=drama',
-                         thumbnail=get_thumb('all', auto=True), type='dorama'))
+    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all",
+                         url=host + 'catalogue?format%5B%5D=drama&sort=latest', thumbnail=get_thumb('all', auto=True),
+                         type='dorama'))
     itemlist.append(Item(channel=item.channel, title="Nuevos capitulos", action="latest_episodes",
                          url=host + 'latest-episodes', thumbnail=get_thumb('new episodes', auto=True), type='dorama'))
     return itemlist
@@ -67,6 +73,7 @@ def list_all(item):
     itemlist = []
 
     data = get_source(item.url)
+
     patron = '<div class="col-lg-2 col-md-3 col-6 mb-3"><a href="([^"]+)".*?<img src="([^"]+)".*?'
     patron += 'txt-size-12">(\d{4})<.*?text-truncate">([^<]+)<.*?description">([^<]+)<.*?'
 
@@ -93,14 +100,10 @@ def list_all(item):
     # Paginacion
 
     if itemlist != []:
-        if item.type != 'dorama':
-            page_base = host+'catalogue?type[]=pelicula'
-        else:
-            page_base = host + 'catalogue'
-        next_page = scrapertools.find_single_match(data, '<a href=([^ ]+) aria-label=Netx>')
+        next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" aria-label="Netx">')
         if next_page != '':
             itemlist.append(Item(channel=item.channel, action="list_all", title='Siguiente >>>',
-                                 url=page_base+next_page, thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png',
+                                 url=host+'catalogue'+next_page, thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png',
                                  type=item.type))
     return itemlist
 

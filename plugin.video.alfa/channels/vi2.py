@@ -75,10 +75,10 @@ def select_menu(item):
                          thumbnail=get_thumb('all', auto=True), type=item.type))
 
     itemlist.append(Item(channel=item.channel, title='Generos', action='section', url=url,
-                         thumbnail=get_thumb('genres', auto=True), type=item.type))
+                         thumbnail=get_thumb('genres', auto=True), type='all'))
 
     itemlist.append(Item(channel=item.channel, title='Por Año', action='section', url=url,
-                         thumbnail=get_thumb('year', auto=True), type=item.type))
+                         thumbnail=get_thumb('year', auto=True), type='all'))
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=url + 'ajax/1/?q=',
                          thumbnail=get_thumb("search", auto=True), type=item.type))
@@ -202,7 +202,7 @@ def list_all(item):
             if lang != '':
                 title = '%s [%s]' % (title, lang)
 
-        thumbnail = scrapedthumbnail
+        thumbnail = host+scrapedthumbnail
         url = host+scrapedurl
         if item.type == 'series':
             season, episode = scrapertools.find_single_match(scrapedtitle, '(\d+)x(\d+)')
@@ -225,7 +225,7 @@ def list_all(item):
                             infoLabels = infoLabels
                             )
 
-            if item.type == 'peliculas':
+            if item.type == 'peliculas' or item.type == 'all':
                 new_item.contentTitle = scrapedtitle
             else:
                 scrapedtitle = scrapedtitle.split(' - ')
@@ -235,6 +235,7 @@ def list_all(item):
             listed.append(title)
 
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
+    itemlist.sort(key=lambda it: it.title)
     #  Paginación
 
     if json_data['next']:
@@ -263,16 +264,19 @@ def findvideos(item):
     for url in matches:
         title = ''
         link_type = ''
+        server = ''
         url = base64.b64decode(url)
 
-        if 'torrent' in url and item.link_type == 'torrent':
-            server = 'torrent'
-            link_type = 'torrent'
-            title = ' [%s]' % item.torrent_data
+        if 'torrent' in url:
+            if item.link_type == 'torrent' or item.type == 'all':
+                server = 'torrent'
+                link_type = 'torrent'
+                title = ' [%s]' % item.torrent_data
         elif 'torrent' not in url:
             link_type = 'flash'
 
-        if url != '' and (link_type == item.link_type.lower()):
+
+        if link_type == item.link_type.lower() or item.type == 'all':
             itemlist.append(Item(channel=item.channel, url=url, title='%s'+title, action='play', server=server,
                                  language=lang, quality=quality, infoLabels=item.infoLabels))
 
