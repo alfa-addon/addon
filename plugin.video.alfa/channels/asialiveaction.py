@@ -97,13 +97,13 @@ def episodios(item):
     data = data.replace('"ep0','"epp"')
     patron  = '(?is)<div id="ep(\d+)".*?'
     patron += 'src="([^"]+)".*?'
-    patron += 'href="([^"]+)" target="_blank"'
+    patron += '(href.*?)fa fa-download'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedepi, scrapedthumbnail, scrapedurl in matches:
-        url = scrapedurl
+    for scrapedepi, scrapedthumbnail, scrapedurls in matches:
         title="1x%s - %s" % (scrapedepi, item.contentSerieName)
-        itemlist.append(item.clone(action='findvideos', title=title, url=url, thumbnail=scrapedthumbnail, type=item.type,
-                                   infoLabels=item.infoLabels))
+        urls = scrapertools.find_multiple_matches(scrapedurls, 'href="([^"]+)')
+        itemlist.append(item.clone(action='findvideos', title=title, url=item.url, thumbnail=scrapedthumbnail, type=item.type,
+                                   urls = urls, infoLabels=item.infoLabels))
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]",
                              url=item.url, action="add_serie_to_library", extra="episodios",
@@ -182,35 +182,37 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    dl_links = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    ### obtiene los gvideo
-    patron = 'class="Button Sm fa fa-download mg"></a><a target="_blank" rel="nofollow" href="([^"]+)"'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for dl_url in matches:
-        g_data = httptools.downloadpage(dl_url).data
-        video_id = scrapertools.find_single_match(g_data, 'jfk-button jfk-button-action" href="([^"]+)">')
-        g_url = '%s%s' % ('https://drive.google.com', video_id)
-        g_url = g_url.replace('&amp;', '&')
-        g_data = httptools.downloadpage(g_url, follow_redirects=False, only_headers=True).headers
-        url = g_data['location']
-        dl_links.append(Item(channel=item.channel, title='%s', url=url, action='play', infoLabels=item.infoLabels))
-    if item.type == 'pl':
-        new_url = scrapertools.find_single_match(data, '<div class="player">.*?<a href="([^"]+)" target')
-        data = httptools.downloadpage(new_url).data
-        data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron = '<li class="btn.*?" data-video="([^"]+)">'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for video_id in matches:
-        url_data = httptools.downloadpage('https://tinyurl.com/%s' % video_id, follow_redirects=False)
-        url = url_data.headers['location']
-        itemlist.append(Item(channel=item.channel, title = '%s', url=url, action='play', infoLabels=item.infoLabels))
-    patron = '<iframe src="([^"]+)"'
-    matches = scrapertools.find_multiple_matches(data, patron)
+    if not item.urls:
+        data = httptools.downloadpage(item.url).data
+        matches = scrapertools.find_multiple_matches(data, 'http://www.sutorimu[^"]+')
+    else:
+        matches = item.urls
     for url in matches:
-        itemlist.append(item.clone(title = '%s', url=url, action='play'))
-    itemlist.extend(dl_links)
+        if "spotify" in url:
+            continue
+        data = httptools.downloadpage(url).data
+        bloque = scrapertools.find_single_match(data, "description articleBody(.*)/div")
+        urls = scrapertools.find_multiple_matches(bloque, "iframe src='([^']+)")
+        if urls:
+            # cuando es streaming
+            for url1 in urls:
+                if "luis" in url1:
+                    data = httptools.downloadpage(url1).data
+                    url1 = scrapertools.find_single_match(data, 'file: "([^"]+)')
+                itemlist.append(item.clone(action = "play", title = "Ver en %s", url = url1))
+        else:
+            # cuando es descarga
+            bloque = bloque.replace('"',"'")
+            urls = scrapertools.find_multiple_matches(bloque, "href='([^']+)")
+            for url2 in urls:
+                itemlist.append(item.clone(action = "play", title = "Ver en %s", url = url2))
+        if "data-video" in bloque:
+            urls = scrapertools.find_multiple_matches(bloque, 'data-video="([^"]+)')
+            for url2 in urls:
+                itemlist.append(item.clone(action = "play", title = "Ver en %s", url = "https://tinyurl.com/%s" %url2 ))
+    for item1 in itemlist:
+        if "tinyurl" in item1.url:
+            item1.url = httptools.downloadpage(item1.url, follow_redirects=False, only_headers=True).headers.get("location", "")
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
      # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)

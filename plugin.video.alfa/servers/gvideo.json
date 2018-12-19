@@ -4,19 +4,23 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?s)https://youtube.googleapis.com.*?docid=([0-9a-zA-Z-_]+)",
+        "pattern": "(?s)https://youtube.googleapis.com.*?docid=([A-z0-9-_=]+)",
         "url": "http://docs.google.com/get_video_info?docid=\\1"
       },
       {
-        "pattern": "(?s)http://docs.google.com/get_video_info.*?docid=([0-9a-zA-Z-_]+)",
+        "pattern": "(?s)http://docs.google.com/get_video_info.*?docid=([A-z0-9-_=]+)",
         "url": "http://docs.google.com/get_video_info?docid=\\1"
       },
       {
-        "pattern": "(?s)https://(?:docs|drive).google.com/file/d/([^/]+)/preview",
+        "pattern": "https://drive.google.com/uc\\?id=([A-z0-9-_=]+)",
         "url": "http://docs.google.com/get_video_info?docid=\\1"
       },
       {
-        "pattern": "(?s)https://(lh.).googleusercontent.com/([0-9a-zA-Z-_=]+)",
+        "pattern": "(?s)https://(?:docs|drive).google.com/file/d/([^/]+)/(?:preview|edit)",
+        "url": "http://docs.google.com/get_video_info?docid=\\1"
+      },
+      {
+        "pattern": "(?s)https://(lh.).googleusercontent.com/([A-z0-9-_=]+)",
         "url": "https://\\1.googleusercontent.com/\\2"
       }
     ]
