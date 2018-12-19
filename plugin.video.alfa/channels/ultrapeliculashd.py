@@ -10,26 +10,9 @@ from core import tmdb
 from core.item import Item
 from channels import filtertools, autoplay
 from platformcode import config, logger
+from channelselector import get_thumb
 
 host = 'http://www.ultrapeliculashd.com'
-
-tgenero = {"ACCIÓN": "https://s3.postimg.cc/y6o9puflv/accion.png,",
-           "ANIMACIÓN": "https://s13.postimg.cc/5on877l87/animacion.png",
-           "AVENTURA": "https://s10.postimg.cc/6su40czih/aventura.png",
-           "CIENCIA FICCIÓN": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png",
-           "COMEDIA": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
-           "CRIMEN": "https://s4.postimg.cc/6z27zhirx/crimen.png",
-           "DRAMA": "https://s16.postimg.cc/94sia332d/drama.png",
-           "ESTRENOS": "https://s21.postimg.cc/fy69wzm93/estrenos.png",
-           "FAMILIA": "https://s7.postimg.cc/6s7vdhqrf/familiar.png",
-           "FANTASÍA": "https://s13.postimg.cc/65ylohgvb/fantasia.png",
-           "GUERRA": "https://s4.postimg.cc/n1h2jp2jh/guerra.png",
-           "INFANTIL": "https://s23.postimg.cc/g5rmazozv/infantil.png",
-           "MISTERIO": "https://s1.postimg.cc/w7fdgf2vj/misterio.png",
-           "ROMANCE": "https://s15.postimg.cc/fb5j8cl63/romance.png",
-           "SUSPENSO": "https://s13.postimg.cc/wmw6vl1cn/suspenso.png",
-           "TERROR": "https://s7.postimg.cc/yi0gij3gb/terror.png"
-           }
 
 thumbletras = {'#': 'https://s32.postimg.cc/drojt686d/image.png',
                'a': 'https://s32.postimg.cc/llp5ekfz9/image.png',
@@ -81,31 +64,27 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Todas",
                          action="lista",
-                         thumbnail='https://s18.postimg.cc/fwvaeo6qh/todas.png',
-                         fanart='https://s18.postimg.cc/fwvaeo6qh/todas.png',
+                         thumbnail=get_thumb('all', auto=True),
                          url=host + '/movies/'
                          ))
 
     itemlist.append(Item(channel=item.channel, title="Generos",
                          action="generos",
                          url=host,
-                         thumbnail='https://s3.postimg.cc/5s9jg2wtf/generos.png',
-                         fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png'
+                         thumbnail=get_thumb('genres', auto=True)
                          ))
 
     itemlist.append(Item(channel=item.channel, title="Alfabetico",
                          action="seccion",
                          url=host,
-                         thumbnail='https://s17.postimg.cc/fwi1y99en/a-z.png',
-                         fanart='https://s17.postimg.cc/fwi1y99en/a-z.png',
+                         thumbnail=get_thumb('alphabet', auto=True),
                          extra='alfabetico'
                          ))
 
     itemlist.append(Item(channel=item.channel, title="Buscar",
                          action="search",
                          url=host + '/?s=',
-                         thumbnail='https://s30.postimg.cc/pei7txpa9/buscar.png',
-                         fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
+                         thumbnail=get_thumb('search', auto=True)
                          ))
 
     autoplay.show_option(item.channel, itemlist)
@@ -168,8 +147,6 @@ def generos(item):
     for scrapedurl, scrapedtitle in matches:
         thumbnail = ''
         fanart = ''
-        if scrapedtitle in tgenero:
-            thumbnail = tgenero[scrapedtitle]
         title = scrapedtitle
         url = scrapedurl
         if scrapedtitle not in ['PRÓXIMAMENTE', 'EN CINE']:
@@ -221,56 +198,46 @@ def alpha(item):
     return itemlist
 
 
+def get_source(url, referer=None):
+    logger.info()
+    if referer is None:
+        data = httptools.downloadpage(url).data
+    else:
+        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    return data
+
 def findvideos(item):
     from lib import jsunpack
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = '<div id=(option.*?) class=play.*?<iframe.*?'
-    patron += 'rptss src=(.*?) (?:width.*?|frameborder.*?) allowfullscreen><\/iframe>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
+    full_data = get_source(item.url)
+    patron = '<div id="([^"]+)" class="play-box-iframe.*?src="([^"]+)"'
+    matches = re.compile(patron, re.DOTALL).findall(full_data)
     for option, video_url in matches:
-        language = scrapertools.find_single_match(data, '#%s>.*?-->(.*?)(?:\s|<)' % option)
+        language = scrapertools.find_single_match(full_data, '"#%s">.*?-->(.*?)(?:\s|<)' % option)
         if 'sub' in language.lower():
             language = 'SUB'
         language = IDIOMAS[language]
-        if 'ultrapeliculashd' in video_url:
-            new_data = httptools.downloadpage(video_url).data
-            new_data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", new_data)
-            if 'drive' not in video_url:
-                quality= '1080p'
-                packed = scrapertools.find_single_match(new_data, '<script>(eval\(.*?)eval')
-                unpacked = jsunpack.unpack(packed)
-                url = scrapertools.find_single_match(unpacked, 'file:(http.?:.*?)\}')
-            else:
-                quality= '1080p'
-                url = scrapertools.find_single_match(new_data, '</div><iframe src=([^\s]+) webkitallowfullscreen')
 
-        elif 'stream' in video_url and 'streamango' not in video_url:
-            data = httptools.downloadpage('https:'+video_url).data
-            if not 'iframe' in video_url:
-                new_url=scrapertools.find_single_match(data, 'iframe src="(.*?)"')
-                new_data = httptools.downloadpage(new_url).data
-            url= ''
-            try:
-                url, quality = scrapertools.find_single_match(new_data, 'file:.*?(?:\"|\')(https.*?)(?:\"|\'),'
-                                                                        'label:.*?(?:\"|\')(.*?)(?:\"|\'),')
-            except:
-                pass
-            if url != '':
-                headers_string = '|Referer=%s' % url
-                url = url.replace('download', 'preview')+headers_string
+        data = httptools.downloadpage(video_url, follow_redirects=False, headers={'Referer': item.url}).data
 
-                sub = scrapertools.find_single_match(new_data, 'file:.*?"(.*?srt)"')
-                new_item = (Item(title=item.title, url=url, quality=quality, subtitle=sub, server='directo',
-                                 language = language))
-                itemlist.append(new_item)
-
-        else:
-            url = video_url
-            quality = 'default'
+        if 'hideload' in video_url:
+            quality = ''
+            new_id = scrapertools.find_single_match(data, "var OLID = '([^']+)'")
+            new_url = 'https://www.ultrapeliculashd.com/hideload/?ir=%s' % new_id[::-1]
+            data = httptools.downloadpage(new_url, follow_redirects=False, headers={'Referer': video_url}).headers
+            url = data['location']+"|%s" % video_url
+        elif 'd.php' in video_url:
+            data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+            quality = '1080p'
+            packed = scrapertools.find_single_match(data, '<script>(eval\(.*?)eval')
+            unpacked = jsunpack.unpack(packed)
+            url = scrapertools.find_single_match(unpacked, '"file":("[^"]+)"')
+        elif 'drive' in video_url:
+            quality = '1080p'
+            data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+            url = scrapertools.find_single_match(data, 'src="([^"]+)"')
 
         if not config.get_setting("unify"):
             title = ' [%s] [%s]' % (quality, language)
