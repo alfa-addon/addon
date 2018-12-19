@@ -17,7 +17,6 @@ host = "https://maxipelis24.tv"
 
 def mainlist(item):
     logger.info()
-
     itemlist = []
 
     itemlist.append(Item(channel = item.channel, title = "peliculas", action = "movies", url = host, thumbnail = get_thumb('movies', auto = True)))
@@ -40,7 +39,6 @@ def category(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;","", data)
-
     if item.cat == 'genre':
         data = scrapertools.find_single_match(data, '<h3>Géneros <span class="icon-sort">.*?</ul>')
         patron = '<li class="cat-item cat-item.*?<a href="([^"]+)" >([^<]+)<'
@@ -50,7 +48,6 @@ def category(item):
     elif item.cat == 'quality':
         data = scrapertools.find_single_match(data, '<h3>Calidad.*?</div>')
         patron = 'li><a href="([^"]+)">([^<]+)<'
-
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle in matches:
         itemlist.append(Item(channel = item.channel, action = 'movies', title =scrapedtitle, url = scrapedurl, type = 'cat', first = 0))
@@ -59,15 +56,12 @@ def category(item):
 def movies(item):
     logger.info()
     itemlist = []
-
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;","", data)
-
     patron = '<div id="mt.+?href="([^"]+)".+?'
     patron += '<img src="([^"]+)" alt="([^"]+)".+?'
     patron += '<span class="ttx">([^<]+).*?'
     patron += 'class="year">([^<]+).+?class="calidad2">([^<]+)<'
-    
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, img, scrapedtitle, resto,  year, quality in matches:
         scrapedtitle = re.sub(r'\d{4}|[()]','', scrapedtitle)
@@ -83,26 +77,21 @@ def movies(item):
                              contentType = "movie",
                              quality = quality,
                              infoLabels = {'year': year}))
-
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb = True)
     #Paginacion
     matches = re.compile('class="respo_pag"><div class="pag.*?<a href="([^"]+)" >Siguiente</a><', re.DOTALL).findall(data)
     if matches:
         url = urlparse.urljoin(item.url, matches[0])
         itemlist.append(Item(channel = item.channel, action = "movies", title = "Página siguiente >>", url = url))
-    
     return itemlist
 
 def findvideos(item):
     logger.info()
     itemlist = []
-
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;","", data)
-
     patron = '<div id="div.*?<div class="movieplay".*?(?:iframe.*?src|IFRAME SRC)="([^&]+)&'
     matches = re.compile(patron, re.DOTALL).findall(data)
-
     for link in matches:
         if 'maxipelis24.tv/hideload/?' in link:
             if 'id=' in link:
@@ -120,24 +109,25 @@ def findvideos(item):
             elif 'ed=' in link:
                 id_type = 'ed'
                 ir_type = 'er'
-        else:
-            continue
-
-        id = scrapertools.find_single_match(link, '%s=(.*)' % id_type)
-        base_link = scrapertools.find_single_match(link, '(.*?)%s=' % id_type)
-
-        ir = id[::-1]
-        referer = base_link+'%s=%s&/' % (id_type, ir)
-        video_data = httptools.downloadpage('%s%s=%s' % (base_link, ir_type, ir), headers={'Referer':referer},
+            id = scrapertools.find_single_match(link, '%s=(.*)' % id_type)
+            base_link = scrapertools.find_single_match(link, '(.*?)%s=' % id_type)
+            ir = id[::-1]
+            referer = base_link+'%s=%s&/' % (id_type, ir)
+            video_data = httptools.downloadpage('%s%s=%s' % (base_link, ir_type, ir), headers={'Referer':referer},
                                             follow_redirects=False)
-        url = video_data.headers['location']
-        title = '%s'
-
-
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='play',
-                             language='', infoLabels=item.infoLabels))
-
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
+            url = video_data.headers['location']
+            title = '%s'
+            new_item = Item(channel=item.channel, title=title, url=url, action='play', language = '', infoLabels=item.infoLabels)
+            itemlist.append(new_item)
+        else:
+            patron = '<div id="div.*?<div class="movieplay".*?(?:iframe.*?src|IFRAME SRC)="([^"]+)"'
+            matches = re.compile(patron, re.DOTALL).findall(data)
+            for link in matches:
+                url = link
+                title = '%s'
+                new_item = Item(channel=item.channel, title=title, url=url, action='play', language = '', infoLabels=item.infoLabels)
+                itemlist.append(new_item)
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())        
     if itemlist:
         if config.get_videolibrary_support():
                 itemlist.append(Item(channel = item.channel, action = ""))
@@ -145,6 +135,4 @@ def findvideos(item):
                                      action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
                                      contentTitle = item.contentTitle
                                      ))
-
-
     return itemlist
