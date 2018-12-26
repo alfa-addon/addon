@@ -90,10 +90,13 @@ def mainlist(item):
     return itemlist
 
 
-def get_source(url):
+def get_source(url, referer=None):
     logger.info()
-    data = httptools.downloadpage(url).data
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}|"|\(|\)', "", data)
+    if referer is None:
+        data = httptools.downloadpage(url).data
+    else:
+        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
 
@@ -107,10 +110,11 @@ def lista(item):
         post = {'tipo': 'episodios', '_token': 'rAqVX74O9HVHFFigST3M9lMa5VL7seIO7fT8PBkl'}
         post = urllib.urlencode(post)
     data = get_source(item.url)
-    patron = 'class=anime><div class=cover style=background-image: url(.*?)>.*?<a href=(.*?)><h2>(.*?)<\/h2><\/a><\/div>'
+    patron = 'class="anime"><a href="([^"]+)">'
+    patron +='<div class="cover" style="background-image: url\((.*?)\)">.*?<h2>([^<]+)<\/h2>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         url = scrapedurl
         thumbnail = host + scrapedthumbnail
         title = scrapedtitle
@@ -124,13 +128,13 @@ def lista(item):
 
         # Paginacion
     next_page = scrapertools.find_single_match(data,
-                                               '<a href=([^ ]+) rel=next>&raquo;</a>')
+                                               '<a href="([^"]+)" data-ci-pagination-page="\d+" rel="next"')
     next_page_url = scrapertools.decodeHtmlentities(next_page)
     if next_page_url != "":
         itemlist.append(Item(channel=item.channel,
                              action="lista",
                              title=">> Página siguiente",
-                             url=host+next_page_url,
+                             url=next_page_url,
                              thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
                              ))
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
@@ -158,7 +162,7 @@ def generos(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<li class=><a href=https:\/\/www\.animeshd\.tv\/genero\/(.*?)>(.*?)<\/a><\/li>'
+    patron = '<a href="https:\/\/www\.animeshd\.tv\/genero\/([^"]+)">([^<]+)<\/a><\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
@@ -180,8 +184,8 @@ def episodios(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<li id=epi-.*? class=list-group-item.*?><a href=(.*?) class=badge.*?width=25 title=(.*?)>.*?<\/span>(' \
-             '.*?) (\d+)<\/li>'
+    patron = '<li id="epi-.*? class="list-group-item.*?"><a href="([^"]+)".*?'
+    patron += 'class="badge".*?width="25" title="([^"]+)">.*?<\/span>(.*?) (\d+)<\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     infoLabels = item.infoLabels
