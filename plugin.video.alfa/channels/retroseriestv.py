@@ -138,11 +138,14 @@ def episodesxseason(item):
     data = get_source(item.url)
     infoLabels = item.infoLabels
     season = infoLabels['season']
-    patron = '<img src="([^>]+)"></a></div><div class="numerando">%s+ - (\d+)</div>' % season
+    patron = '<img src="([^>]+)"></a></div><div class="numerando">%s+ - (\d+|\d+\/\d+)</div>' % season
     patron += '<div class="episodiotitle"><a href="([^"]+)">(.*?)</a><'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedthumbnail, scrapedepi, scrapedurl, scrapedtitle in matches:
+
+        if '/' in scrapedepi:
+            scrapedepi = scrapertools.find_single_match (scrapedepi, '(\d+)\/\d+')
 
         title = '%sx%s - %s' % (season, scrapedepi, scrapedtitle)
         infoLabels['episode'] = scrapedepi
