@@ -3,13 +3,11 @@
 # Conector UpVID By Alfa development Group
 # --------------------------------------------------------
 
-import re
+import re, base64
 from core import httptools
 from core import scrapertools
-from platformcode import logger
-
-import re, base64
 from lib.aadecode import decode as aadecode
+from platformcode import logger
 
 
 def test_video_exists(page_url):

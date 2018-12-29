@@ -246,9 +246,10 @@ def findvideos(item):
     import urllib
     itemlist = []
     data = get_source(item.url)
-    patron = 'data-post="(\d+)" data-nume="(\d+)".*?img src=\'([^\']+)\''
+    data = data.replace("'",'"')
+    patron = 'data-type="([^"]+)" data-post="(\d+)" data-nume="(\d+).*?img src=\"([^"]+)\"'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for id, option, lang in matches:
+    for type, id, option, lang in matches:
         lang = scrapertools.find_single_match(lang, '.*?/flags/(.*?).png')
         quality = ''
         if lang not in IDIOMAS:
@@ -258,7 +259,7 @@ def findvideos(item):
         else:
             title = ''
 
-        post = {'action': 'doo_player_ajax', 'post': id, 'nume': option, 'type':item.type}
+        post = {'action': 'doo_player_ajax', 'post': id, 'nume': option, 'type':type}
         post = urllib.urlencode(post)
 
         test_url = '%swp-admin/admin-ajax.php' % 'https://peliculonhd.com/'

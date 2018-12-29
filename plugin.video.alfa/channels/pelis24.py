@@ -53,34 +53,31 @@ list_quality = []
 list_servers = ['rapidvideo', 'streamango', 'openload', 'streamcherry']
 
 
-
-
-
-
 def mainlist(item):
     logger.info()
     autoplay.init(item.channel, list_servers, list_quality)
-    itemlist = [item.clone(title="Novedades", action="peliculas",thumbnail=get_thumb('newest', auto=True),
-                               text_blod=True, page=0, viewcontent='movies',
-                               url=host + 'movies/', viewmode="movie_with_plot"),
+    itemlist = [item.clone(title="Novedades", action="peliculas", thumbnail=get_thumb('newest', auto=True),
+                           text_blod=True, page=0, viewcontent='movies',
+                           url=host + 'movies/', viewmode="movie_with_plot"),
 
-                item.clone(title="Tendencias", action="peliculas",thumbnail=get_thumb('newest', auto=True),
-                               text_blod=True, page=0, viewcontent='movies',
-                               url=host + 'tendencias/?get=movies', viewmode="movie_with_plot"),
+                item.clone(title="Tendencias", action="peliculas", thumbnail=get_thumb('newest', auto=True),
+                           text_blod=True, page=0, viewcontent='movies',
+                           url=host + 'tendencias/?get=movies', viewmode="movie_with_plot"),
 
-                item.clone(title="Estrenos", action="peliculas",thumbnail=get_thumb('estrenos', auto=True),
-                               text_blod=True, page=0, viewcontent='movies',
-                               url=host + 'genre/estrenos/', viewmode="movie_with_plot"),                
+                item.clone(title="Estrenos", action="peliculas", thumbnail=get_thumb('estrenos', auto=True),
+                           text_blod=True, page=0, viewcontent='movies',
+                           url=host + 'genre/estrenos/', viewmode="movie_with_plot"),
 
-                item.clone(title="Géneros", action="genresYears",thumbnail=get_thumb('genres', auto=True),
-                               text_blod=True, page=0, viewcontent='movies',
-                               url=host, viewmode="movie_with_plot"),
+                item.clone(title="Géneros", action="genresYears", thumbnail=get_thumb('genres', auto=True),
+                           text_blod=True, page=0, viewcontent='movies',
+                           url=host, viewmode="movie_with_plot"),
 
-                item.clone(title="Buscar", action="search",thumbnail=get_thumb('search', auto=True),
-                               text_blod=True, url=host, page=0)]
+                item.clone(title="Buscar", action="search", thumbnail=get_thumb('search', auto=True),
+                           text_blod=True, url=host, page=0)]
 
     autoplay.show_option(item.channel, itemlist)
     return itemlist
+
 
 def search(item, texto):
     logger.info()
@@ -98,6 +95,7 @@ def search(item, texto):
             logger.error("{0}".format(line))
         return []
 
+
 def sub_search(item):
     logger.info()
 
@@ -107,7 +105,7 @@ def sub_search(item):
     # logger.info(data)
     data = scrapertools.find_single_match(data, '<header><h1>Resultados encontrados(.*?)resppages')
     # logger.info(data)
-    patron = '<a href="([^"]+)"><img src="([^"]+)" alt="([^"]+)" />.*?' # url, img, title
+    patron = '<a href="([^"]+)"><img src="([^"]+)" alt="([^"]+)" />.*?'  # url, img, title
     patron += '<span class="year">([^<]+)</span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -139,7 +137,8 @@ def peliculas(item):
     data = scrapertools.decodeHtmlentities(data)
     # logger.info(data)
 
-    patron = '<article id="post-\w+" class="item movies"><div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'  # img, title
+    # img, title
+    patron = '<article id="post-\w+" class="item movies"><div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'
     patron += '<span class="quality">([^<]+)</span> </div>\s*<a href="([^"]+)">.*?'  # quality, url
     patron += '</h3><span>([^<]+)</span>'    # year
 
@@ -148,11 +147,10 @@ def peliculas(item):
     for scrapedthumbnail, scrapedtitle, quality, scrapedurl, year in matches[item.page:item.page + 30]:
         title = '%s [COLOR yellowgreen](%s)[/COLOR]' % (scrapedtitle, quality)
 
-        itemlist.append(item.clone(channel=__channel__, action="findvideos", text_color=color3,
-                                   url=scrapedurl, infoLabels={'year': year}, quality=quality,
-                                   contentTitle=scrapedtitle, thumbnail=scrapedthumbnail,
-                                   title=title, context="buscar_trailer"))
-            
+        itemlist.append(Item(channel=__channel__, action="findvideos", text_color=color3,
+                             url=scrapedurl, infoLabels={'year': year}, quality=quality,
+                             contentTitle=scrapedtitle, thumbnail=scrapedthumbnail,
+                             title=title, context="buscar_trailer"))
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
@@ -163,7 +161,6 @@ def peliculas(item):
         next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
         if next_page:
             itemlist.append(item.clone(url=next_page, page=0, title="» Siguiente »", text_color=color3))
-
 
     return itemlist
 
@@ -180,10 +177,10 @@ def genresYears(item):
     else:
         patron_todas = '<h2>Generos</h2>(.*?)</div><aside'
         # logger.error(texto='***********uuuuuuu*****' + patron_todas)
-        
+
     data = scrapertools.find_single_match(data, patron_todas)
     # logger.error(texto='***********uuuuuuu*****' + data)
-    patron = '<a href="([^"]+)">([^<]+)</a> <i>([^<]+)</i>' # url, title, videos
+    patron = '<a href="([^"]+)">([^<]+)</a> <i>([^<]+)</i>'  # url, title, videos
     # patron = '<a href="([^"]+)">([^<]+)</a>' # url, title
     matches = scrapertools.find_multiple_matches(data, patron)
 
@@ -191,7 +188,6 @@ def genresYears(item):
         title = '%s (%s)' % (scrapedtitle, videos_num.replace('.', ','))
 
         itemlist.append(item.clone(title=title, url=scrapedurl, action="peliculas"))
-
 
     return itemlist
 
@@ -222,7 +218,7 @@ def series(item):
     data = re.sub(r"\n|\r|\t|\(.*?\)|&nbsp;|<br>", "", data)
     # logger.info(data)
 
-    patron = '<article class="TPost C TPostd">\s*<a href="([^"]+)">.*?' # url
+    patron = '<article class="TPost C TPostd">\s*<a href="([^"]+)">.*?'  # url
     patron += '<img src="([^"]+)".*?'                                   # img
     patron += '<h3 class="Title">([^<]+)</h3>'                          # title
 
@@ -232,7 +228,7 @@ def series(item):
 
         itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, action="temporadas",
                                    contentSerieName=scrapedtitle, show=scrapedtitle,
-                                   thumbnail='https:'+scrapedthumbnail, contentType='tvshow'))
+                                   thumbnail='https:' + scrapedthumbnail, contentType='tvshow'))
 
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
 
@@ -360,7 +356,8 @@ def findvideos(item):
     # urls = re.compile(patron2, re.DOTALL).findall(data)
 
     for option, lang in matches:
-        url = scrapertools.find_single_match(data, '<div id="option-%s" class="[^"]+"><iframe class="metaframe rptss" src="([^"]+)"' % option)
+        url = scrapertools.find_single_match(
+            data, '<div id="option-%s" class="[^"]+"><iframe class="metaframe rptss" src="([^"]+)"' % option)
         lang = lang.lower().strip()
         languages = {'latino': '[COLOR cornflowerblue](LAT)[/COLOR]',
                      'castellano': '[COLOR green](CAST)[/COLOR]',
@@ -374,10 +371,9 @@ def findvideos(item):
         server = servertools.get_server_from_url(url)
         title = "»» [COLOR yellow](%s)[/COLOR] [COLOR goldenrod](%s)[/COLOR] %s ««" % (server.title(), item.quality, lang)
         # if 'google' not in url and 'directo' not in server:
-        
- 
+
         itemlist.append(item.clone(action='play', url=url, title=title, language=lang, text_color=color3))
-    
+
     itemlist = servertools.get_servers_itemlist(itemlist)
     itemlist.sort(key=lambda it: it.language, reverse=False)
 
@@ -387,7 +383,6 @@ def findvideos(item):
     # Requerido para AutoPlay
 
     autoplay.start(itemlist, item)
-
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'episodios':
         itemlist.append(Item(channel=__channel__, url=item.url, action="add_pelicula_to_library", extra="findvideos",

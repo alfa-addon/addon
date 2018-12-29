@@ -238,14 +238,15 @@ def findvideos(item):
     import urllib
     itemlist = []
     data = get_source(item.url)
-    patron = 'data-post="(\d+)" data-nume="(\d+).*?class="title">([^>]+)<'
+    data = data.replace("'", '"')
+    patron = 'data-type="([^"]+)" data-post="(\d+)" data-nume="(\d+).*?class="title">([^>]+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for pt, nm, language in matches:
+    for type, pt, nm, language in matches:
 
         if 'sub' in language.lower() or language not in IDIOMAS:
             language = 'VOSE'
-        post = {'action': 'doo_player_ajax', 'post': pt, 'nume': nm}
+        post = {'action': 'doo_player_ajax', 'post': pt, 'nume': nm, 'type': type}
         post = urllib.urlencode(post)
         new_data = httptools.downloadpage(host + 'wp-admin/admin-ajax.php', post=post,
                                           headers={'Referer': item.url}).data

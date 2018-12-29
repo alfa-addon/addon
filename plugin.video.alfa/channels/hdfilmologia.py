@@ -7,7 +7,8 @@ import re
 import sys
 import urllib
 import urlparse
-
+from channels import autoplay
+from channels import filtertools
 from core import httptools
 from core import scrapertools
 from core import servertools
@@ -46,39 +47,45 @@ fanart_host = parameters['fanart']
 thumbnail_host = parameters['thumbnail']
 
 
+IDIOMAS = {'Latino': 'LAT', 'Castellano': 'CAST'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['rapidvideo', 'streamango', 'openload', 'streamcherry']
+
+
 def mainlist(item):
     logger.info()
+    autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
 
-    itemlist.append(item.clone(title="Últimas Agregadas", action="movies",thumbnail=get_thumb('last', auto=True),
+    itemlist.append(item.clone(title="Últimas Agregadas", action="movies", thumbnail=get_thumb('last', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
                                url=host + 'index.php?do=lastnews', viewmode="movie_with_plot"))
 
     itemlist.append(item.clone(title="Estrenos", action="movies", thumbnail=get_thumb('premieres', auto=True),
-                                   text_blod=True, page=0, viewcontent='movies', url=host + 'estrenos',
-                                   viewmode="movie_with_plot"))
+                               text_blod=True, page=0, viewcontent='movies', url=host + 'estrenos',
+                               viewmode="movie_with_plot"))
 
-    itemlist.append(item.clone(title="Más Vistas", action="movies",thumbnail=get_thumb('more watched', auto=True),
+    itemlist.append(item.clone(title="Más Vistas", action="movies", thumbnail=get_thumb('more watched', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
                                url=host + 'mas-vistas/', viewmode="movie_with_plot"))
 
-    itemlist.append(item.clone(title="Películas Por País", action="countriesYears",thumbnail=get_thumb('country', auto=True),
+    itemlist.append(item.clone(title="Películas Por País", action="countriesYears", thumbnail=get_thumb('country',
+                                                                                                        auto=True), text_blod=True, page=0, viewcontent='movies',
+                               url=host, viewmode="movie_with_plot"))
+
+    itemlist.append(item.clone(title="Películas Por Año", action="countriesYears", thumbnail=get_thumb('year', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
                                url=host, viewmode="movie_with_plot"))
 
-    itemlist.append(item.clone(title="Películas Por Año", action="countriesYears",thumbnail=get_thumb('year', auto=True),
+    itemlist.append(item.clone(title="Géneros", action="genres", thumbnail=get_thumb('genres', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
                                url=host, viewmode="movie_with_plot"))
 
-    itemlist.append(item.clone(title="Géneros", action="genres",thumbnail=get_thumb('genres', auto=True),
-                               text_blod=True, page=0, viewcontent='movies',
-                               url=host, viewmode="movie_with_plot"))
-
-    
-
-    itemlist.append(item.clone(title="Buscar", action="search",thumbnail=get_thumb('search', auto=True),
+    itemlist.append(item.clone(title="Buscar", action="search", thumbnail=get_thumb('search', auto=True),
                                text_blod=True, url=host, page=0))
 
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -107,7 +114,7 @@ def sub_search(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<a class="sres-wrap clearfix" href="([^"]+)">'                    #url
+    patron = '<a class="sres-wrap clearfix" href="([^"]+)">'  # url
     patron += '<div class="sres-img"><img src="/([^"]+)" alt="([^"]+)" />.*?'   # img, title
     patron += '<div class="sres-desc">(.*?)</div>'                              # plot
 
@@ -117,7 +124,7 @@ def sub_search(item):
 
         itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, contentTitle=scrapedtitle,
                                    action="findvideos", text_color=color3, page=0, plot=plot,
-                                   thumbnail=host+scrapedthumbnail))
+                                   thumbnail=host + scrapedthumbnail))
 
     pagination = scrapertools.find_single_match(data, 'class="pnext"><a href="([^"]+)">')
 
@@ -147,10 +154,10 @@ def movies(item):
         scrapedthumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
         title = "%s [COLOR yellow][%s][/COLOR]" % (scrapedtitle, quality)
 
-        itemlist.append(item.clone(channel=__channel__, action="findvideos", text_color=color3,
-                                   url=scrapedurl, infoLabels={'year': year.strip()},
-                                   contentTitle=scrapedtitle, thumbnail=scrapedthumbnail,
-                                   title=title, context="buscar_trailer"))
+        itemlist.append(Item(channel=__channel__, action="findvideos", text_color=color3,
+                             url=scrapedurl, infoLabels={'year': year.strip()},
+                             contentTitle=scrapedtitle, thumbnail=scrapedthumbnail,
+                             title=title, context="buscar_trailer"))
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
@@ -164,7 +171,6 @@ def movies(item):
         if next_page:
             itemlist.append(item.clone(url=next_page, page=0,
                                        title="» Siguiente »", text_color=color3))
-
 
     return itemlist
 
@@ -182,7 +188,7 @@ def genres(item):
     for scrapedurl, scrapedtitle in matches:
 
         itemlist.append(item.clone(channel=__channel__, action="movies", title=scrapedtitle,
-                                   url=host+scrapedurl, text_color=color3, viewmode="movie_with_plot"))
+                                   url=host + scrapedurl, text_color=color3, viewmode="movie_with_plot"))
 
     return itemlist
 
@@ -197,15 +203,14 @@ def countriesYears(item):
         patron_todas = 'Por País</option>(.*?)</option></select>'
     else:
         patron_todas = 'Por Año</option>(.*?)<option value="/">Peliculas'
-        
+
     data = scrapertools.find_single_match(data, patron_todas)
-    patron = '<option value="/([^"]+)">([^<]+)</option>' # url, title
+    patron = '<option value="/([^"]+)">([^<]+)</option>'  # url, title
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for scrapedurl, scrapedtitle in matches:
 
-        itemlist.append(item.clone(title=scrapedtitle, url=host+scrapedurl, action="movies"))
-
+        itemlist.append(item.clone(title=scrapedtitle, url=host + scrapedurl, action="movies"))
 
     return itemlist
 
@@ -246,13 +251,17 @@ def findvideos(item):
 
         title = "Ver en: [COLOR yellow](%s)[/COLOR] [COLOR yellowgreen]%s[/COLOR]" % (server.title(), lang)
         if 'youtube' not in server:
- 
+
             itemlist.append(item.clone(action='play', url=url, title=title, language=lang,
                                        text_color=color3))
-    
+
     itemlist = servertools.get_servers_itemlist(itemlist)
     itemlist.sort(key=lambda it: it.language, reverse=False)
 
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'episodios':
         itemlist.append(Item(channel=__channel__, url=item.url, action="add_pelicula_to_library", extra="findvideos",

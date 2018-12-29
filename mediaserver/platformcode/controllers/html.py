@@ -626,7 +626,7 @@ class platform(Platformtools):
         # Obtenemos el canal desde donde se ha echo la llamada y cargamos los settings disponibles para ese canal
         if not channelpath:
             channelpath = inspect.currentframe().f_back.f_back.f_code.co_filename
-        channelname = os.path.basename(channelpath).replace(".py", "")
+        channelname = os.path.basename(channelpath).split(".")[0]
         ch_type = os.path.basename(os.path.dirname(channelpath))
 
         # Si no tenemos list_controls, hay que sacarlos del json del canal

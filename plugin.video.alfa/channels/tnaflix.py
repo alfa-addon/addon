@@ -41,7 +41,7 @@ def search(item, texto):
 def catalogo(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     patron  = '<div class="vidcountSp">(\d+)</div>.*?<a class="categoryTitle channelTitle" href="([^"]+)" title="([^"]+)">.*?data-original="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for cantidad,scrapedurl,scrapedtitle,scrapedthumbnail in matches:
@@ -62,7 +62,7 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     if item.title=="PornStars" :
-        data = scrapertools.get_match(data,'</i> Hall Of Fame Pornstars</h2>(.*?)</section>')
+        data = scrapertools.get_match(data,'</i> Hall Of Fame Pornstars</h1>(.*?)</section>')
     patron  = '<a class="thumb" href="([^"]+)">.*?<img src="([^"]+)".*?<div class="vidcountSp">(.*?)</div>.*?<a class="categoryTitle".*?>([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,cantidad,scrapedtitle in matches:
@@ -84,7 +84,7 @@ def categorias(item):
 def peliculas(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<a class=\'thumb no_ajax\' href=\'(.*?)\'.*?data-original=\'(.*?)\' alt="([^"]+)"><div class=\'videoDuration\'>([^<]+)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -106,7 +106,7 @@ def peliculas(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     patron  = '<meta itemprop="contentUrl" content="([^"]+)" />'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url  in matches:

@@ -151,6 +151,10 @@ def render_items(itemlist, parent_item):
         # Si el item no contiene categoria, le ponemos la del item padre
         if item.category == "":
             item.category = parent_item.category
+        
+        # Si title no existe, lo iniciamos como str, para evitar errones "NoType"
+        if not item.title:
+            item.title = ''
 
         # Si el item no contiene fanart, le ponemos el del item padre
         if item.fanart == "":
@@ -210,7 +214,7 @@ def render_items(itemlist, parent_item):
         if item.fanart:
             fanart = item.fanart
         else:
-            fanart = os.path.join(config.get_runtime_path(), "fanart1.jpg")
+            fanart = os.path.join(config.get_runtime_path(), "fanart-xmas.jpg")
 
         # Creamos el listitem
         #listitem = xbmcgui.ListItem(item.title)

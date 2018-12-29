@@ -195,6 +195,7 @@ def findvideos(item):
                  action = "play",
                  language = idio[datos["audio"]],
                  quality = cali[datos["quality"]],
+                 server = "",
                  title = titulo,
                  url = url1
                  ))

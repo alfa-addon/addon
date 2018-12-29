@@ -108,8 +108,8 @@ def series(item):
                  plot=scrapedplot, show=scrapedtitle))
     tmdb.set_infoLabels(itemlist)
     try:
-        siguiente = scrapertools.find_single_match(data, '<a class="listsiguiente" href="([^"]+)" >Resultados Siguientes')
-        scrapedurl = item.url + siguiente
+        siguiente = scrapertools.find_single_match(data, '<a class="text nav-next" href="([^"]+)"')
+        scrapedurl = siguiente
         scrapedtitle = ">> Pagina Siguiente"
         scrapedthumbnail = ""
         scrapedplot = ""
