@@ -168,6 +168,7 @@ def findvideos(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for url, language in matches:
+        url = url.replace('&#038;','&')
         data = httptools.downloadpage(url, follow_redirects=False, headers={'Referer':item.url}, only_headers=True)
         url = data.headers['location']
 

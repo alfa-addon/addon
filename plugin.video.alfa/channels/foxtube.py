@@ -54,13 +54,13 @@ def peliculas(item):
     logger.info()
     itemlist = []
     data = scrapertools.cachePage(item.url)
-    patron  = '<a class="thumb tco1" href="([^"]+)">.*?src="([^"]+)".*?alt="([^"]+)">.*?<i class="m tc2">(.*?)</i>'
+    patron  = '<a class="thumb tco1" href="([^"]+)">.*?src="([^"]+)".*?alt="([^"]+)".*?<i class="m tc2">(.*?)</i>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,duracion  in matches:
         url = host + scrapedurl
         title = "[COLOR yellow]" + duracion + "[/COLOR] " + scrapedtitle
         contentTitle = title
-        thumbnail = scrapedthumbnail
+        thumbnail = scrapedthumbnail + "|Referer=%s" %host
         plot = ""
         year = ""
         itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, plot=plot, contentTitle = contentTitle, infoLabels={'year':year} ))
@@ -80,7 +80,7 @@ def play(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:
         scrapedurl = scrapedurl.replace("\/", "/")
-        itemlist.append(Item(channel=item.channel, action="play", title=scrapedurl, fulltitle=scrapedurl, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=scrapedurl,
                             thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
     return itemlist
 

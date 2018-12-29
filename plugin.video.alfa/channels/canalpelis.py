@@ -52,11 +52,11 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append(item.clone(title="Peliculas", action="peliculas",thumbnail=get_thumb('movies', auto=True),
+    itemlist.append(item.clone(title="Peliculas", action="peliculas", thumbnail=get_thumb('movies', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
                                url=host + 'movies/', viewmode="movie_with_plot"))
 
-    itemlist.append(item.clone(title="Géneros", action="generos",thumbnail=get_thumb('genres', auto=True),
+    itemlist.append(item.clone(title="Géneros", action="generos", thumbnail=get_thumb('genres', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
                                url=host + 'genre/', viewmode="movie_with_plot"))
 
@@ -64,7 +64,7 @@ def mainlist(item):
                                text_blod=True, page=0, viewcontent='movies', url=host + 'release/',
                                viewmode="movie_with_plot"))
 
-    itemlist.append(item.clone(title="Buscar", action="search",thumbnail=get_thumb('search', auto=True),
+    itemlist.append(item.clone(title="Buscar", action="search", thumbnail=get_thumb('search', auto=True),
                                text_blod=True, url=host, page=0))
 
     itemlist.append(item.clone(title="Series", action="series", extra='serie', url=host + 'tvshows/',
@@ -122,6 +122,34 @@ def sub_search(item):
     return itemlist
 
 
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == 'peliculas':
+            item.url = host + 'movies/'
+        elif categoria == 'infantiles':
+            item.url = host + "genre/cine-animacion/"
+        elif categoria == 'terror':
+            item.url = host + "genre/cine-terror/"
+        else:
+            return []
+
+        itemlist = peliculas(item)
+        if itemlist[-1].title == "» Siguiente »":
+            itemlist.pop()
+
+    # Se captura la excepción, para no interrumpir al canal novedades si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist
+
+
 def peliculas(item):
     logger.info()
     itemlist = []
@@ -137,7 +165,7 @@ def peliculas(item):
 
     matches = scrapertools.find_multiple_matches(data, patron)
 
-    for scrapedthumbnail, scrapedtitle, rating, quality, scrapedurl, year in matches[item.page:item.page + 20]:
+    for scrapedthumbnail, scrapedtitle, rating, quality, scrapedurl, year in matches[item.page:item.page + 30]:
         if 'Próximamente' not in quality and '-XXX.jpg' not in scrapedthumbnail:
 
             scrapedtitle = scrapedtitle.replace('Ver ', '').strip()
@@ -148,12 +176,12 @@ def peliculas(item):
             itemlist.append(item.clone(channel=__channel__, action="findvideos", text_color=color3,
                                        url=scrapedurl, infoLabels={'year': year},
                                        contentTitle=contentTitle, thumbnail=scrapedthumbnail,
-                                       title=title, context="buscar_trailer", quality = quality))
+                                       title=title, context="buscar_trailer", quality=quality))
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
-    if item.page + 20 < len(matches):
-        itemlist.append(item.clone(page=item.page + 20,
+    if item.page + 30 < len(matches):
+        itemlist.append(item.clone(page=item.page + 30,
                                    title="» Siguiente »", text_color=color3))
     else:
         next_page = scrapertools.find_single_match(
@@ -223,13 +251,12 @@ def series(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\(.*?\)|&nbsp;|<br>", "", data)
-
     patron = '<div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?<a href="([^"]+)">.*?'
     patron += '<div class="texto">([^<]+)</div>'
 
     matches = scrapertools.find_multiple_matches(data, patron)
 
-    for scrapedthumbnail, scrapedtitle, scrapedurl, plot in matches:
+    for scrapedthumbnail, scrapedtitle, scrapedurl, plot in matches[item.page:item.page + 30]:
         if plot == '':
             plot = scrapertools.find_single_match(data, '<div class="texto">([^<]+)</div>')
         scrapedtitle = scrapedtitle.replace('Ver ', '').replace(
@@ -238,13 +265,20 @@ def series(item):
                                    contentSerieName=scrapedtitle, show=scrapedtitle, plot=plot,
                                    thumbnail=scrapedthumbnail, contentType='tvshow'))
 
-    url_next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
+    # url_next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
 
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
 
-    if url_next_page:
-        itemlist.append(Item(channel=__channel__, action="series",
-                             title="» Siguiente »", url=url_next_page))
+    if item.page + 30 < len(matches):
+        itemlist.append(item.clone(page=item.page + 30,
+                                   title="» Siguiente »", text_color=color3))
+    else:
+        next_page = scrapertools.find_single_match(
+            data, '<link rel="next" href="([^"]+)" />')
+
+        if next_page:
+            itemlist.append(item.clone(url=next_page, page=0,
+                                       title="» Siguiente »", text_color=color3))
 
     return itemlist
 
@@ -348,27 +382,32 @@ def episodios(item):
 
     return itemlist
 
+
 def findvideos(item):
     logger.info()
-    from lib import generictools
-    import urllib
     import base64
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
 
-    patron = 'data-post="(\d+)" data-nume="(\d+)".*?img src=\'([^\']+)\''
+    patron = "data-post='(\d+)' data-nume='(\d+)'.*?img src='([^']+)'>"
     matches = re.compile(patron, re.DOTALL).findall(data)
     for id, option, lang in matches:
         lang = scrapertools.find_single_match(lang, '.*?/flags/(.*?).png')
-        if lang == 'en':
-            lang = 'VOSE'
-        post = {'action': 'doo_player_ajax', 'post': id, 'nume': option, 'type':'movie'}
+        lang = lang.lower().strip()
+        idioma = {'mx': '[COLOR cornflowerblue](LAT)[/COLOR]',
+                  'es': '[COLOR green](CAST)[/COLOR]',
+                  'en': '[COLOR red](VOSE)[/COLOR]',
+                  'gb': '[COLOR red](VOSE)[/COLOR]'}
+        if lang in idioma:
+            lang = idioma[lang]
+        post = {'action': 'doo_player_ajax', 'post': id, 'nume': option, 'type': 'movie'}
         post = urllib.urlencode(post)
         test_url = '%swp-admin/admin-ajax.php' % host
-        new_data = httptools.downloadpage(test_url, post=post, headers={'Referer':item.url}).data
+        new_data = httptools.downloadpage(test_url, post=post, headers={'Referer': item.url}).data
         hidden_url = scrapertools.find_single_match(new_data, "src='([^']+)'")
         new_data = httptools.downloadpage(hidden_url, follow_redirects=False)
+
         try:
             b64_url = scrapertools.find_single_match(new_data.headers['location'], "y=(.*)")
             url = base64.b64decode(b64_url)
@@ -376,10 +415,11 @@ def findvideos(item):
             url = hidden_url
         if url != '':
             itemlist.append(
-                Item(channel=item.channel, url=url, title='%s', action='play', language=lang,
-                     infoLabels=item.infoLabels))
+                Item(channel=item.channel, action='play', language=lang, infoLabels=item.infoLabels,
+                     url=url, title='Ver en: ' + '[COLOR yellowgreen]%s [/COLOR]' + lang))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
+    itemlist.sort(key=lambda it: it.language, reverse=False)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'episodios':
         itemlist.append(Item(channel=__channel__, url=item.url, action="add_pelicula_to_library", extra="findvideos",
