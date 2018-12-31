@@ -426,7 +426,10 @@ def findvideos(item):
                 url = url.replace('\\', '')
                 servername = servertools.get_server_from_url(url)
                 if 'pelishd24.net' in url or 'stream.pelishd24.com' in url:
+                    url = url.strip()
                     vip_data = httptools.downloadpage(url).data
+                    if 'Archivo ELiminado' in vip_data:
+                        continue
                     dejuiced = generictools.dejuice(vip_data)
                     patron = '"file":"([^"]+)"'
                     match = re.compile(patron, re.DOTALL).findall(dejuiced)
