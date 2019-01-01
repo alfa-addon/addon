@@ -45,10 +45,11 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title='Nuevos Capitulos', url=host, action='new_episodes', type='tvshows',
                          thumbnail=get_thumb('new_episodes', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='Ultimas', url=host + 'series?', action='list_all', type='tvshows',
+    itemlist.append(Item(channel=item.channel, title='Ultimas', url=host + 'series/estrenos', action='list_all',
+                         type='tvshows',
                          thumbnail=get_thumb('last', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title='Todas', url=host + 'series?', action='list_all', type='tvshows',
+    itemlist.append(Item(channel=item.channel, title='Todas', url=host + 'series', action='list_all', type='tvshows',
                          thumbnail=get_thumb('all', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + 'search?s=',
@@ -83,19 +84,14 @@ def list_all(item):
     itemlist = []
 
     data = get_source(item.url)
-
-    patron = '<article class=".*?">.*?<a href="([^"]+)".*?<img src="([^"]+)" alt="([^"]+)">.*?'
-    patron +='<span class="year">(\d{4})</span>.*?<span class="(?:animes|tvs)">([^<]+)<'
+    patron = '<article class=".*?">.*? href="([^"]+)".*?<img src="([^"]+)".*?<h3 class="card-tvshow__title">([^<]+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedthumbnail, scrapedtitle, year, scrapedtype in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         title = scrapedtitle
         thumbnail = scrapedthumbnail
         url = scrapedurl
-        if scrapedtype == 'Anime':
-            action = 'episodesxseasons'
-        elif scrapedtype == 'Serie':
-            action = 'seasons'
+        action = 'seasons'
 
         new_item = Item(channel=item.channel,
                         action=action,
@@ -103,15 +99,14 @@ def list_all(item):
                         url=url,
                         contentSerieName=scrapedtitle,
                         thumbnail=thumbnail,
-                        type=scrapedtype,
-                        infoLabels={'year':year})
+                        )
 
         itemlist.append(new_item)
 
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
     #  Paginación
 
-    url_next_page = scrapertools.find_single_match(data,'li><a href="([^"]+)" rel="next">&raquo;</a>')
+    url_next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)" rel="next">')
     if url_next_page:
         itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='list_all'))
 
@@ -123,14 +118,16 @@ def seasons(item):
     itemlist=[]
 
     data=get_source(item.url)
-    patron='<li class="gridseason"><a href="([^"]+)"><span class="title">Temporada (\d+)</span>'
+    patron='<div class="season__title">Temporada (\d+)</div>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-
+    if len(matches) == 0:
+        item.type = 'Anime'
+        return episodesxseasons(item)
     infoLabels = item.infoLabels
-    for scrapedurl, season in matches:
+    for season in matches:
         infoLabels['season']=season
         title = 'Temporada %s' % season
-        itemlist.append(Item(channel=item.channel, title=title, url=scrapedurl, action='episodesxseasons',
+        itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseasons',
                              infoLabels=infoLabels))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
@@ -156,23 +153,27 @@ def episodesxseasons(item):
     itemlist = []
 
     data=get_source(item.url)
-    patron='<a href="([^"]+)" title="([^"]+)">'
-    matches = re.compile(patron, re.DOTALL).findall(data)
 
     infoLabels = item.infoLabels
     if item.type == 'Anime':
         season = '1'
+        patron = '<a class="episodie-list" href="([^"]+)" .*?</i> Episodio (\d+).*?</span>'
     else:
         season = item.infoLabels['season']
-    episode = len(matches)
-    for scrapedurl, scrapedtitle in matches:
+
+        patron = 'class="episodie-list" href="([^"]+)" title=".*?Temporada %s .*?pisodio (\d+).*?">' % season
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    if not matches:
+        patron = 'class="episodie-list" href="([^"]+)" title=".*?pisodio (\d+).*?">'
+        matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for scrapedurl, episode in matches:
         infoLabels['episode'] = episode
         url = scrapedurl
-        title = scrapedtitle.replace(' online', '')
-        title = '%sx%s - %s' % (season, episode, title)
+        title = '%sx%s - Episodio %s' % (season, episode, episode)
 
         itemlist.append(Item(channel=item.channel, title= title, url=url, action='findvideos', infoLabels=infoLabels))
-        episode -= 1
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     return itemlist[::-1]
@@ -183,7 +184,7 @@ def new_episodes(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<article class="contenedor">.*?<a href="([^"]+)" title=".*?">.*?data-src="([^"]+)" alt="([^"]+)">'
+    patron = '<div class="card-episodie shadow-sm"><a href="([^"]+)".*?data-src="([^"]+)" alt="([^"]+)">'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -248,34 +249,10 @@ def search(item, texto):
     item.url = item.url + texto
 
     if texto != '':
-        return search_results(item)
+        return list_all(item)
     else:
         return []
 
-def search_results(item):
-    logger.info()
-
-    itemlist=[]
-
-    data=get_source(item.url)
-
-    patron = '<div class="search-results__img"><a href="([^"]+)" title=".*?"><img src="([^"]+)".*?'
-    patron += '<h2>([^<]+)</h2></a><div class="description">([^<]+)</div>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedurl, scrapedthumb, scrapedtitle, scrapedplot in matches:
-
-        title = scrapedtitle
-        url = scrapedurl
-        thumbnail = scrapedthumb
-        plot = scrapedplot
-        new_item=Item(channel=item.channel, title=title, url=url, contentSerieName=title, thumbnail=thumbnail,
-                      plot=plot, action='seasons')
-        itemlist.append(new_item)
-
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
-    return itemlist
 
 def newest(categoria):
     logger.info()
