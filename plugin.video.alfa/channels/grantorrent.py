@@ -30,7 +30,7 @@ channel = "grantorrent"
 dict_url_seasons = dict()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
 timeout = config.get_setting('timeout_downloadpage', channel)
-if timeout <= 5: timeout = timeout*2
+if timeout > 0 and timeout <= 10: timeout = 15
 modo_serie_temp = config.get_setting('seleccionar_serie_temporada', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)
 
@@ -82,7 +82,7 @@ def submenu(item):
     
     data = ''
     try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
+        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
     except:
         pass
         
@@ -157,7 +157,7 @@ def listado(item):
     timeout_search = timeout                # Timeout para descargas
     if item.action == 'search':
         timeout_search = int(timeout * 1.5) # Timeout un poco más largo para las búsquedas
-        if timeout_search < 10:
+        if timeout_search > 0 and timeout_search < 10:
             timeout_search = 10             # Timeout un poco más largo para las búsquedas
     
     #Máximo num. de líneas permitidas por TMDB (40). Máx de 5 páginas por Itemlist para no degradar el rendimiento.  

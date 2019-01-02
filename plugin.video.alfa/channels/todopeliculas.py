@@ -163,7 +163,7 @@ def listado(item):
             patron = '<div class="blogitem "><a title="([^"]+)"\s+href="([^"]+)">.*?src="([^"]+)" onload'
             
         matches = re.compile(patron, re.DOTALL).findall(data)
-        if not matches and not 'Total: 0 resultados encontrados' in data:           #error
+        if not matches and not 'Total: 0 resultados encontrados' in data and not 'Total: 0 results found' in data:
             item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
             if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
                 item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
