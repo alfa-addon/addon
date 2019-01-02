@@ -10,7 +10,7 @@ from core import httptools
 from core import tmdb
 from core import jsontools
 
-host = 'http://www.alsoporn.com/en'
+host = 'http://www.alsoporn.com'
 
 def mainlist(item):
     logger.info()

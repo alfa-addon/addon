@@ -15,8 +15,8 @@ host = 'https://www.tnaflix.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevas" , action="peliculas", url=host + "/new/1"))
-    itemlist.append( Item(channel=item.channel, title="Popular" , action="peliculas", url=host + "/popular/?period=month&d=all"))
+    itemlist.append( Item(channel=item.channel, title="Nuevas" , action="peliculas", url=host + "/new/?d=all&period=all"))
+    itemlist.append( Item(channel=item.channel, title="Popular" , action="peliculas", url=host + "/popular/?d=all&period=all"))
     itemlist.append( Item(channel=item.channel, title="Mejor valorado" , action="peliculas", url=host + "/toprated/?d=all&period=month"))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "/channels/all/top-rated/1/all"))
     itemlist.append( Item(channel=item.channel, title="PornStars" , action="categorias", url=host + "/pornstars"))
@@ -86,7 +86,8 @@ def peliculas(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<a class=\'thumb no_ajax\' href=\'(.*?)\'.*?data-original=\'(.*?)\' alt="([^"]+)"><div class=\'videoDuration\'>([^<]+)</div>'
+    patron = '<a class=\'thumb no_ajax\' href=\'(.*?)\'.*?'
+    patron += 'data-original=\'(.*?)\' alt="([^"]+)"><div class=\'videoDuration\'>([^<]+)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,duracion  in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
