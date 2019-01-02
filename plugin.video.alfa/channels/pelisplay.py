@@ -286,7 +286,7 @@ def temporadas(item):
 
     if len(matches) > 1:
         for scrapedthumbnail, temporada, url in matches:
-            new_item = item.clone(action="episodios", season=temporada, url=url,
+            new_item = item.clone(action="episodesxseason", season=temporada, url=url,
                                   thumbnail=host + scrapedthumbnail, extra='serie')
             new_item.infoLabels['season'] = temporada
             new_item.extra = ""
@@ -308,10 +308,18 @@ def temporadas(item):
                              text_color=color1, thumbnail=get_thumb("videolibrary_tvshow.png"), fanart=fanart_host))
         return itemlist
     else:
-        return episodios(item)
-
+        return episdesxseason(item)
 
 def episodios(item):
+    logger.info()
+    itemlist = []
+    templist = temporadas(item)
+    for tempitem in templist:
+        itemlist += episodesxseason(tempitem)
+    return itemlist
+
+
+def episodesxseason(item):
     logger.info()
     itemlist = []
     from core import jsontools
@@ -331,7 +339,6 @@ def episodios(item):
         episode = element['metas_formateadas']['nepisodio']
         season = element['metas_formateadas']['ntemporada']
         scrapedurl = element['url_directa']
-
         if 'season' in item.infoLabels and int(item.infoLabels['season']) != int(season):
             continue
         title = "%sx%s: %s" % (season, episode.zfill(
@@ -359,10 +366,10 @@ def episodios(item):
                   reverse=config.get_setting('orden_episodios', __channel__))
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     # Opción "Añadir esta serie a la videoteca"
-    if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=__channel__, title="Añadir esta serie a la videoteca", url=item.url,
-                             action="add_serie_to_library", extra="episodios", show=item.show, category="Series",
-                             text_color=color1, thumbnail=get_thumb("videolibrary_tvshow.png"), fanart=fanart_host))
+    # if config.get_videolibrary_support() and len(itemlist) > 0:
+    #     itemlist.append(Item(channel=__channel__, title="Añadir esta serie a la videoteca", url=item.url,
+    #                          action="add_serie_to_library", extra="episodios", show=item.show, category="Series",
+    #                          text_color=color1, thumbnail=get_thumb("videolibrary_tvshow.png"), fanart=fanart_host))
     return itemlist
 
 
