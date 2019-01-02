@@ -11,7 +11,7 @@ from core.item import Item
 from platformcode import config, platformtools, logger
 from channelselector import get_thumb
 
-host = "http://www.clasicofilm.com/"
+host = "http://www.classicofilm.com/"
 # Configuracion del canal
 __modo_grafico__ = config.get_setting('modo_grafico', 'clasicofilm')
 __perfil__ = config.get_setting('perfil', 'clasicofilm')
@@ -34,8 +34,8 @@ def mainlist(item):
     itemlist.append(item.clone(action="peliculas", title="      Novedades",
                                url = host + "feeds/posts/summary?start-index=1&max-results=20&alt=json-in-script&callback=finddatepost",
                                thumbnail=get_thumb('newest', auto=True), text_color=color1))
-    itemlist.append(item.clone(action="generos", title="      Por géneros", url=host,
-                               thumbnail=get_thumb('genres', auto=True), text_color=color1))
+    #itemlist.append(item.clone(action="generos", title="      Por géneros", url=host,
+    #                           thumbnail=get_thumb('genres', auto=True), text_color=color1))
     itemlist.append(item.clone(title="", action=""))
     itemlist.append(item.clone(action="search", title="Buscar...", text_color=color3,
                                thumbnail=get_thumb('search', auto=True)))
@@ -92,12 +92,16 @@ def peliculas(item):
     data = scrapertools.find_single_match(data, 'finddatepost\((\{.*?\]\}\})\);')
     data = jsontools.load(data)["feed"]
     for entry in data["entry"]:
+        bb=jsontools.dump(entry["author"])
+        aa=scrapertools.find_single_match(bb, '(?s)src": "([^"]+)')
+        if "Enviar comentarios" in entry: continue
         for link in entry["link"]:
             if link["rel"] == "alternate":
                 title = link["title"]
                 url = link["href"]
                 break
-        thumbnail = entry["media$thumbnail"]["url"].replace("s72-c/", "")
+        thumbnail = "https:" + bb 
+        thumbnail = thumbnail.replace("s72-c/", "") #"" #entry["media$thumbnail"]["url"].replace("s72-c/", "")
         try:
             title_split = re.split(r"\s*\((\d)", title, 1)
             year = title_split[1] + scrapertools.find_single_match(title_split[2], '(\d{3})\)')
