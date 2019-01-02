@@ -57,7 +57,7 @@ def peliculas(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<a class="thumb" href="([^"]+)" title="([^"]+)">.*?'
+    patron = '<a class="thumb" href="([^"]+)" title="([^"]+)".*?'
     patron += '<img class="lazyload" data-src="([^"]+)".*?'
     patron += '<span>(.*?)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
