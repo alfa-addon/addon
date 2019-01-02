@@ -190,12 +190,11 @@ def play(item):
 
 def devuelve_enlace(url1):
     if 'danimados' in url1:
-        url = 'https:'+url1
+        url = 'https:' + url1
         new_data = httptools.downloadpage(url).data
         new_data = new_data.replace('"',"'")
         url1 = scrapertools.find_single_match(new_data, "iframe src='([^']+)")
         new_data = httptools.downloadpage(url1).data
-        logger.info("Intel22 %s" %new_data)
         url = scrapertools.find_single_match(new_data, "sources:\s*\[\{file:\s*'([^']+)")
         if "zkstream" in url or "cloudup" in url:
             url1 = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
