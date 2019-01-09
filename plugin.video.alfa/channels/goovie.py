@@ -206,11 +206,12 @@ def episodesxseasons(item):
 
     return itemlist
 
-
 def findvideos(item):
+    from lib.generictools import privatedecrypt
     logger.info()
-    from lib import jsunpack
+
     itemlist = []
+
     data = get_source(item.url)
 
     patron = "onclick=clickLink\(this, '([^']+)', '([^']+)', '([^']+)'\);>"
@@ -218,18 +219,8 @@ def findvideos(item):
     headers = {'referer': item.url}
     for url, quality, language in matches:
 
-        data = httptools.downloadpage(url, headers=headers, follow_redirects=False).data
-        data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-        packed = scrapertools.find_single_match(data, '(eval\(.*?);var')
-        unpacked = jsunpack.unpack(packed)
-        server = scrapertools.find_single_match(unpacked, "src:.'(http://\D+)/")
-        id = scrapertools.find_single_match(unpacked, "src:.'http://\D+/.*?description:.'(.*?).'")
-        if server == '':
-            if 'powvideo' in unpacked:
-                id = scrapertools.find_single_match(unpacked, ",description:.'(.*?).'")
-                server = 'https://powvideo.net'
-        url = '%s/%s' % (server, id)
-        if server != '' and id != '':
+        url = privatedecrypt(url, headers)
+        if url != '':
             language = IDIOMAS[language]
             if quality.lower() == 'premium':
                 quality = '720p'
