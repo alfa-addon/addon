@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
-import urllib
+import urllib, random, base64
 
 from core import httptools
 from core import jsontools
@@ -12,7 +12,7 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     # http://netu.tv/watch_video.php=XX solo contiene una redireccion, ir directamente a http://hqq.tv/player/embed_player.php?vid=XX
-    page_url = page_url.replace("http://netu.tv/watch_video.php?v=", "http://hqq.tv/player/embed_player.php?vid=")
+    page_url = page_url.replace("/watch_video.php?v=", "/player/embed_player.php?vid=")
     data = httptools.downloadpage(page_url).data
     if "var userid = '';" in data.lower():
         return False, "[netutv] El archivo no existe o  ha sido borrado"
@@ -21,70 +21,72 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
+    video_urls = []
+
     if "hash=" in page_url:
         data = urllib.unquote(httptools.downloadpage(page_url).data)
         id_video = scrapertools.find_single_match(data, "vid':'([^']+)'")
+        page_url = "http://hqq.watch/player/embed_player.php?vid=%s" % id_video
     else:
-        id_video = page_url.rsplit("=", 1)[1]
-    page_url_hqq = "http://hqq.watch/player/embed_player.php?vid=%s&autoplay=no" % id_video
-    data_page_url_hqq = httptools.downloadpage(page_url_hqq, add_referer=True).data
-    js_wise = scrapertools.find_single_match(data_page_url_hqq,
-                                             "<script type=[\"']text/javascript[\"']>\s*;?(eval.*?)</script>")
-    data_unwise = jswise(js_wise).replace("\\", "")
-    at = scrapertools.find_single_match(data_unwise, 'at=(\w+)')
-    http_referer = scrapertools.find_single_match(data_unwise, 'http_referer=(.*?)&')
-    url = "http://hqq.watch/sec/player/embed_player.php?iss=&vid=%s&at=%s&autoplayed=yes&referer=on" \
-          "&http_referer=%s&pass=&embed_from=&need_captcha=0&hash_from=" % (id_video, at, http_referer)
-    data_player = httptools.downloadpage(url, add_referer=True).data
-    data_unescape = scrapertools.find_multiple_matches(data_player, 'document.write\(unescape\("([^"]+)"')
-    data = ""
-    for d in data_unescape:
-        data += urllib.unquote(d)
-    subtitle = scrapertools.find_single_match(data, 'value="sublangs=Spanish.*?sub=([^&]+)&')
-    if not subtitle:
-        subtitle = scrapertools.find_single_match(data, 'value="sublangs=English.*?sub=([^&]+)&')
-    data_unwise_player = ""
-    js_wise = scrapertools.find_single_match(data_player,
-                                             "<script type=[\"']text/javascript[\"']>\s*;?(eval.*?)</script>")
-    if js_wise:
-        data_unwise_player = jswise(js_wise).replace("\\", "")
-    vars_data = scrapertools.find_single_match(data, '/player/get_md5.php",\s*\{(.*?)\}')
-    matches = scrapertools.find_multiple_matches(vars_data, '\s*([^:]+):\s*([^,]*)[,"]')
-    params = {}
-    for key, value in matches:
-        if key == "adb":
-            params[key] = "0/"
-        elif '"' in value:
-            params[key] = value.replace('"', '')
-        else:
-            value_var = scrapertools.find_single_match(data, 'var\s*%s\s*=\s*"([^"]+)"' % value)
-            if not value_var and data_unwise_player:
-                value_var = scrapertools.find_single_match(data_unwise_player, 'var\s*%s\s*=\s*"([^"]+)"' % value)
-            params[key] = value_var
-    params = urllib.urlencode(params)
-    head = {'X-Requested-With': 'XMLHttpRequest', 'Referer': url}
-    data = httptools.downloadpage("http://hqq.watch/player/get_md5.php?" + params, headers=head).data
-    media_urls = []
-    url_data = jsontools.load(data)
-    media_url = tb(url_data["obf_link"].replace("#", "")) + ".mp4.m3u8"
-    if not media_url.startswith("http"):
-        media_url = "https:" + media_url
-    video_urls = []
-    media = media_url + "|User-Agent=Mozilla/5.0 (iPhone; CPU iPhone OS 5_0_1 like Mac OS X)"
-    video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [netu.tv]", media, 0, subtitle])
-    for video_url in video_urls:
-        logger.info("%s - %s" % (video_url[0], video_url[1]))
+        page_url = page_url.replace("/watch_video.php?v=", "/player/embed_player.php?vid=")
+
+    page_url = page_url.replace('https://netu.tv/', 'http://hqq.watch/')
+    page_url = page_url.replace('https://waaw.tv/', 'http://hqq.watch/')
+
+    data = httptools.downloadpage(page_url).data
+    # ~ logger.debug(data)
+
+    js_wise = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>\s*;?(eval.*?)</script>")
+    data = jswise(js_wise).replace("\\", "")
+    # ~ logger.debug(data)
+
+    alea = str(random.random())[2:]
+    data_ip = httptools.downloadpage('http://hqq.watch/player/ip.php?type=json&rand=%s' % alea).data
+    # ~ logger.debug(data_ip)
+    json_data_ip = jsontools.load(data_ip)
+
+    url = scrapertools.find_single_match(data, 'self\.location\.replace\("([^)]+)\)')
+    url = url.replace('"+rand+"', alea)
+    url = url.replace('"+data.ip+"', json_data_ip['ip'])
+    url = url.replace('"+need_captcha+"', '0') #json_data_ip['need_captcha'])
+    url = url.replace('"+token', '')
+    # ~ logger.debug(url)
+
+    headers = { "User-Agent": 'Mozilla/5.0 (X11; U; Linux i686; en-US) AppleWebKit/533.4 (KHTML, like Gecko) Chrome/5.0.375.127 Large Screen Safari/533.4 GoogleTV/162671' }
+    data = httptools.downloadpage('http://hqq.watch'+url, headers=headers).data
+    # ~ logger.debug(data)
+    
+    codigo_js = scrapertools.find_multiple_matches(data, '<script>document.write\(unescape\("([^"]+)')
+    # ~ logger.debug(codigo_js)
+    
+    js_aux = urllib.unquote(codigo_js[0])
+    at = scrapertools.find_single_match(js_aux, 'var at = "([^"]+)')
+
+    js_aux = urllib.unquote(codigo_js[1])
+    var_link_1 = scrapertools.find_single_match(js_aux, '&link_1=\\"\+encodeURIComponent\(([^)]+)')
+    var_server_2 = scrapertools.find_single_match(js_aux, '&server_2=\\"\+encodeURIComponent\(([^)]+)')
+    vid = scrapertools.find_single_match(js_aux, '&vid=\\"\+encodeURIComponent\(\\"([^"]+)')
+    ext = '.mp4.m3u8'
+    # ~ logger.debug('%s %s %s %s' % (at, var_link_1, var_server_2, vid))
+
+    js_wise = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>\s*;?(eval.*?)</script>")
+    data = jswise(js_wise).replace("\\", "")
+    # ~ logger.debug(data)
+
+    variables = scrapertools.find_multiple_matches(data, 'var ([a-zA-Z0-9]+) = "([^"]+)";')
+    # ~ logger.debug(variables)
+    
+    for nombre, valor in variables:
+        # ~ logger.debug('%s %s' % (nombre, valor))
+        if nombre == var_link_1: link_1 = valor
+        if nombre == var_server_2: server_2 = valor
+    
+    link_m3u8 = 'http://hqq.watch/player/get_md5.php?ver=2&at=%s&adb=0&b=1&link_1=%s&server_2=%s&vid=%s&ext=%s' % (at, link_1, server_2, vid, ext)
+    # ~ logger.debug(link_m3u8)
+    
+    video_urls.append(["[netu.tv]", link_m3u8])
+
     return video_urls
-
-
-## Obtener la url del m3u8
-def tb(b_m3u8_2):
-    j = 0
-    s2 = ""
-    while j < len(b_m3u8_2):
-        s2 += "\\u0" + b_m3u8_2[j:(j + 3)]
-        j += 3
-    return s2.decode('unicode-escape').encode('ASCII', 'ignore')
 
 
 ## --------------------------------------------------------------------------------

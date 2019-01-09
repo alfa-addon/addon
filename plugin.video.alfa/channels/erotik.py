@@ -101,7 +101,7 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    item.url = scrapertools.find_single_match(data, 'Playerholder.*?src="([^"]+)"')
+    item.url = scrapertools.find_single_match(data, '(?i)Playerholder.*?src="([^"]+)"')
     if "tubst.net" in item.url:
         url = scrapertools.find_single_match(data, 'itemprop="embedURL" content="([^"]+)')
         data = httptools.downloadpage(url).data
