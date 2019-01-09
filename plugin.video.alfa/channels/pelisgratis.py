@@ -2,6 +2,7 @@
 
 import re
 import urllib
+import base64
 
 from core import httptools
 from core import scrapertools
@@ -185,25 +186,68 @@ def search(item, texto):
 def findvideos(item):
     logger.info()
     itemlist = []
-
+    global new_data
+    new_data = []
     data = get_source(item.url)
     data = data.replace("&lt;","<").replace("&quot;",'"').replace("&gt;",">").replace("&amp;","&").replace('\"',"")
     patron = '<div class=TPlayerTb.*?id=(.*?)>.*?src=(.*?) frameborder'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = scrapertools.find_multiple_matches(data, patron)
+    headers = {'referer':item.url}
     for opt, urls_page in matches:
         language = scrapertools.find_single_match (data,'TPlayerNv>.*?tplayernv=%s><span>Opción.*?<span>(.*?)</span>' % opt)
-        headers = {'referer':item.url}
         if 'trembed' in urls_page:
             urls_page = scrapertools.decodeHtmlentities(urls_page)
-            sub_data=httptools.downloadpage(urls_page).data
-            urls_page = scrapertools.find_single_match(sub_data, 'src="(.*?)" ')
-        itemlist.append(item.clone(title='[%s][%s]',
-                                   url=urls_page,
-                                   action='play',
-                                   language=language,
-                                   ))
+            sub_data = httptools.downloadpage(urls_page).data
+            urls_page = scrapertools.find_single_match(sub_data, 'src="([^"]+)" ')
+            if "repro.live" in urls_page:
+                server_repro(urls_page)
+            if "itatroniks.com" in urls_page:
+                server_itatroniks(urls_page)
+        for url in new_data:
+            itemlist.append(item.clone(title='[%s][%s]',
+                            url=url,
+                            action='play',
+                            language=language,
+                            ))
+        new_data = []
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % (x.server.capitalize(), x.language))
     return itemlist
+
+
+def server_itatroniks(urls_page):
+    logger.info()
+    headers = {"Referer":urls_page}
+    id = scrapertools.find_single_match(urls_page, 'embed/(\w+)')
+    sub_data = httptools.downloadpage(urls_page, headers = headers).data
+    matches = scrapertools.find_multiple_matches(sub_data, 'button id="([^"]+)')
+    headers1 = ({"X-Requested-With":"XMLHttpRequest"})
+    for serv in matches:
+        data1 = httptools.downloadpage("https://itatroniks.com/get/%s/%s" %(id, serv), headers = headers1).data
+        data_json = jsontools.load(data1)
+        urls_page = ""
+        try:
+            if "finished" == data_json["status"]: urls_page = "https://%s/embed/%s" %(data_json["server"], data_json["extid"])
+            if "propio" == data_json["status"]: urls_page = "https://%s/e/%s" %(data_json["server"], data_json["extid"])
+        except:
+            continue
+        new_data.append(urls_page)
+
+
+def server_repro(urls_page):
+    logger.info()
+    headers = {"Referer":urls_page}
+    sub_data = httptools.downloadpage(urls_page, headers = headers).data
+    urls_page1 = scrapertools.find_multiple_matches(sub_data, 'data-embed="([^"]+)"')
+    for urls_page in urls_page1:
+        urls_page += "=="   # base64.decode no decodifica si no tiene al final "=="
+        urls_page = base64.b64decode(urls_page)
+        if "repro.live" in urls_page:
+            data1 = httptools.downloadpage(urls_page, headers = headers).data
+            urls_page1 = scrapertools.find_multiple_matches(data1, 'source src="([^"]+)')
+            for urls_page in urls_page1:
+                new_data.append(urls_page)
+        else:
+            new_data.append(urls_page)
 
 
 def newest(categoria):

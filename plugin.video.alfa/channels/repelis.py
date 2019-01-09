@@ -186,7 +186,7 @@ def findvideos(item):
     for datos in dict:
         url1 = datos["url"]
         hostname = scrapertools.find_single_match(datos["hostname"].replace("www.",""), "(.*?)\.")
-        if "repelisgo" in hostname: continue
+        if "repelisgo" in hostname or "repelis.io" in datos["hostname"]: continue
         if hostname == "my": hostname = "mailru"
         titulo = "Ver en: " + hostname.capitalize() + " (" + cali[datos["quality"]] + ") (" + idio[datos["audio"]] + ")"
         itemlist.append(
