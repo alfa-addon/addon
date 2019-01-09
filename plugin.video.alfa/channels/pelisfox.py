@@ -46,7 +46,7 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Por Año",
                                action="seccion",
-                               url=host + '/peliculas/2017/',
+                               url=host + '/peliculas/2019/',
                                thumbnail=get_thumb('year', auto=True),
                                seccion='anios'
                                ))
@@ -60,7 +60,7 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Buscar",
                                action="search",
-                               url=host + '/api/elastic/suggest?query=',
+                               url=host + '/api/suggest?query=',
                                thumbnail=get_thumb('search', auto=True)
                                ))
 
@@ -185,14 +185,16 @@ def seccion(item):
 def busqueda(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    headers = {'referer':host, 'X-Requested-With': 'XMLHttpRequest'}
+    data = httptools.downloadpage(item.url, headers=headers).data
+    logger.debug(data)
     dict_data = jsontools.load(data)
-    resultados = dict_data['result'][0]['options']
+    resultados = dict_data['suggest']['result'][0]['options']
 
     for resultado in resultados:
         if 'title' in resultado['_source']:
             title = resultado['_source']['title']
-            thumbnail = 'http://s3.amazonaws.com/pelisfox' + '/' + resultado['_source']['cover']
+            thumbnail = 'https://static.pelisfox.tv/static/movie' + '/' + resultado['_source']['cover']
             plot = resultado['_source']['sinopsis']
             url = host + resultado['_source']['url'] + '/'
 

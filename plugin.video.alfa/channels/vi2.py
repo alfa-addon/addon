@@ -80,9 +80,6 @@ def select_menu(item):
     itemlist.append(Item(channel=item.channel, title='Por Año', action='section', url=url,
                          thumbnail=get_thumb('year', auto=True), type='all'))
 
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=url + 'ajax/1/?q=',
-                         thumbnail=get_thumb("search", auto=True), type=item.type))
-
     return itemlist
 
 def sub_menu(item):
@@ -121,6 +118,8 @@ def sub_menu(item):
                          url=url + '?q=%s+subtitulado' % link_type, action='list_all',
                          thumbnail=get_thumb('vose', auto=True), type=item.type, send_lang='VOSE',
                          link_type=link_type))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=url + '?q=',
+                         thumbnail=get_thumb("search", auto=True), type=item.type, link_type=link_type))
 
     return itemlist
 
