@@ -19,7 +19,7 @@ def mainlist(item):
     itemlist = []
 
     itemlist.append( Item(channel=item.channel, title="Nuevos" , action="peliculas", url=host + "/wall-date-1.html"))
-    itemlist.append( Item(channel=item.channel, title="Mejor valorados" , action="peliculas", url=host + "/wall-note-1.html"))
+    itemlist.append( Item(channel=item.channel, title="Mas valorados" , action="peliculas", url=host + "/wall-note-1.html"))
     itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="peliculas", url=host + "/wall-main-1.html"))
     itemlist.append( Item(channel=item.channel, title="Mas largos" , action="peliculas", url=host + "/wall-time-1.html"))
 
@@ -52,7 +52,8 @@ def categorias(item):
         scrapedthumbnail = ""
         scrapedurl = scrapedurl.replace(".html", "_date.html")
         scrapedurl = host +"/" + scrapedurl
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
+                              thumbnail=scrapedthumbnail , plot=scrapedplot) )
     return itemlist
 
 
@@ -60,6 +61,7 @@ def peliculas(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="thumb-main-titre"><a href="([^"]+)".*?'
     patron += 'title="([^"]+)".*?'
     patron += 'src="([^"]+)".*?'
@@ -71,11 +73,13 @@ def peliculas(item):
         thumbnail = scrapedthumbnail
         plot = ""
         year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, plot=plot, contentTitle = title, infoLabels={'year':year} ))
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
+                              contentTitle = title, infoLabels={'year':year} ))
     next_page = scrapertools.find_single_match(data, '<span class="text16">\d+</span> <a href="..([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title="Página Siguiente >>" , text_color="blue", url=next_page ) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title="Página Siguiente >>", text_color="blue", 
+                              url=next_page ) )
     return itemlist
 
 

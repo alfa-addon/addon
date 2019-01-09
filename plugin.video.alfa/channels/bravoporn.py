@@ -42,23 +42,28 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<a href="([^"]+)" class="th">.*?<img src="([^"]+)".*?<span>([^"]+)</span>\s*(\d+) movies.*?</strong>'
+    patron = '<a href="([^"]+)" class="th">.*?'
+    patron += '<img src="([^"]+)".*?'
+    patron += '<span>([^"]+)</span>\s*(\d+) movies.*?</strong>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
         scrapedthumbnail = "http:" + scrapedthumbnail
         scrapedurl = urlparse.urljoin(item.url,scrapedurl) + "/latest/"
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
+                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
 def peliculas(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<div class=".*?video_block"><a href="([^"]+)".*?<img src="([^"]+)".*?alt="([^"]+)".*?<span class="time">([^"]+)</span>'
+    patron = '<div class=".*?video_block"><a href="([^"]+)".*?'
+    patron += '<img src="([^"]+)".*?alt="([^"]+)".*?'
+    patron += '<span class="time">([^"]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,duracion in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
@@ -66,21 +71,23 @@ def peliculas(item):
         thumbnail = "https:" + scrapedthumbnail
         plot = ""
         year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, plot=plot, contentTitle = title, infoLabels={'year':year} ))
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
+                               plot=plot, contentTitle = title, infoLabels={'year':year} ))
     next_page_url = scrapertools.find_single_match(data,'<a href="([^"]+)" class="next" title="Next">Next</a>')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title="Página Siguiente >>", text_color="blue",
+                               url=next_page_url) )
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     patron  = '<source src="([^"]+)" type=\'video/mp4\' title="HQ" />'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:
-        itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=scrapedurl, folder=True))
+        itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=scrapedurl))
     return itemlist
 
