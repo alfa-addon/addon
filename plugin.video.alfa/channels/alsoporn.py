@@ -15,9 +15,8 @@ host = 'http://www.alsoporn.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevas" , action="peliculas", url=host +"/g/All/new/1"))
-    itemlist.append( Item(channel=item.channel, title="Popular" , action="peliculas", url=host + "/g/All/top/1"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/"))
+    itemlist.append( Item(channel=item.channel, title="Top" , action="peliculas", url=host + "/g/All/top/1"))
+    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -41,12 +40,14 @@ def catalogo(item):
     data = httptools.downloadpage(item.url).data
     data = scrapertools.get_match(data,'<h3>CLIPS</h3>(.*?)<h3>FILM</h3>')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<li><a href="([^"]+)" title="">.*?<span class="videos-count">([^"]+)</span><span class="title">([^"]+)</span>'
+    patron  = '<li><a href="([^"]+)" title="">.*?'
+    patron  += '<span class="videos-count">([^"]+)</span><span class="title">([^"]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,cantidad,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl, 
+                               thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
     return itemlist
 
 
@@ -60,9 +61,9 @@ def categorias(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         scrapedplot = ""
-        scrapedurl = scrapedurl.replace("top", "new")
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl, 
+                              thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
     return itemlist
 
 
@@ -82,23 +83,26 @@ def peliculas(item):
         thumbnail = scrapedthumbnail
         plot = ""
         year = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos" , title=title , url=url, thumbnail=thumbnail, plot=plot, contentTitle = title, infoLabels={'year':year} ))
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
+                              plot=plot, contentTitle = title, infoLabels={'year':year} ))
     next_page_url = scrapertools.find_single_match(data,'<li><a href="([^"]+)" target="_self"><span class="alsoporn_page">NEXT</span></a>')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append( Item(channel=item.channel , action="peliculas", title="Página Siguiente >>", text_color="blue",
+                              url=next_page_url , folder=True) )
     return itemlist
 
 
-def findvideos(item):
+def play(item):
     logger.info()
     itemlist = []
     data = scrapertools.cachePage(item.url)
     scrapedurl = scrapertools.find_single_match(data,'<iframe frameborder=0 scrolling="no"  src=\'([^\']+)\'')
     data = scrapertools.cachePage(scrapedurl)
     scrapedurl1 = scrapertools.find_single_match(data,'<iframe src="(.*?)"')
-    scrapedurl1 = scrapedurl1.replace("//www.playercdn.com/ec/i2.php?", "https://www.synergytube.xyz/ec/i2.php?")
+    scrapedurl1 = scrapedurl1.replace("//www.playercdn.com/ec/i2.php?", "https://www.trinitytube.xyz/ec/i2.php?")
     data = scrapertools.cachePage(scrapedurl1)
-    scrapedurl2 = scrapertools.find_single_match(data,'<source src="(.*?)" type=\'video/mp4\'>')
+    scrapedurl2 = scrapertools.find_single_match(data,'<source src="(.*?)"')
     itemlist.append(item.clone(action="play", title=item.title, fulltitle = item.title, url=scrapedurl2))
     return itemlist
+
