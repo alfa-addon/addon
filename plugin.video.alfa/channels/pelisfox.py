@@ -187,7 +187,6 @@ def busqueda(item):
     itemlist = []
     headers = {'referer':host, 'X-Requested-With': 'XMLHttpRequest'}
     data = httptools.downloadpage(item.url, headers=headers).data
-    logger.debug(data)
     dict_data = jsontools.load(data)
     resultados = dict_data['suggest']['result'][0]['options']
 
