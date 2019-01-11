@@ -50,11 +50,13 @@ def catalogo(item):
         scrapedplot = ""
         scrapedurl = host + scrapedurl
         title = scrapedtitle + "[COLOR yellow]  " + num + "[/COLOR]"
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=title , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title=title , url=scrapedurl , 
+                        thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
     next_page_url = scrapertools.find_single_match(data,'<a class=" btn btn--size--l btn--next" href="([^"]+)" title="Next Page"')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel , action="catalogo" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append( Item(channel=item.channel , action="catalogo" , title="Página Siguiente >>" , 
+                        text_color="blue", url=next_page_url , folder=True) )
     return itemlist
 
 
@@ -62,12 +64,17 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = '<div class="c-thumb">.*?<a href="([^"]+)".*?<img src="([^"]+)".*?<div class="c-thumb--overlay c-thumb--overlay-title">([^"]+)</div>.*?<span>(.*?)</span>'
+    patron = '<a class="categories-list__link" href="([^"]+)">.*?'
+    patron += '<span class="categories-list__name cat-icon" data-title="([^"]+)">.*?'
+    patron += '<span class="categories-list__badge">(.*?)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,num in matches:
+    for scrapedurl,scrapedtitle,num in matches:
+        url = urlparse.urljoin(item.url,scrapedurl)
+        scrapedthumbnail = ""
         scrapedplot = ""
         title = scrapedtitle + "[COLOR yellow]  " + num + "[/COLOR]"
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=title , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title=title , url=url , 
+                        thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
     return itemlist
 
 
@@ -76,7 +83,9 @@ def peliculas(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = 'data-video-id="\d+">.*?<a href="([^"]+)".*?<img src="([^"]+)" alt="([^"]+)".*?<span class="thumb__duration">(.*?)</span>'
+    patron = 'data-video-id="\d+">.*?<a href="([^"]+)".*?'
+    patron += '<img src="([^"]+)" alt="([^"]+)".*?'
+    patron += '<span class="thumb__duration">(.*?)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,time in matches:
         contentTitle = scrapedtitle
@@ -84,11 +93,13 @@ def peliculas(item):
         thumbnail = scrapedthumbnail
         plot = ""
         year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=scrapedurl, thumbnail=thumbnail, plot=plot, contentTitle=contentTitle, infoLabels={'year':year} ))
+        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=scrapedurl, thumbnail=thumbnail, 
+                        plot=plot, contentTitle=contentTitle, infoLabels={'year':year} ))
     next_page_url = scrapertools.find_single_match(data,'<a class=" btn btn--size--l btn--next" href="([^"]+)" title="Next Page"')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , 
+                        text_color="blue", url=next_page_url , folder=True) )
     return itemlist
 
 

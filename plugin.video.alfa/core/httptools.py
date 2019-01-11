@@ -162,6 +162,7 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
 
     # Limitar tiempo de descarga si no se ha pasado timeout y hay un valor establecido en la variable global
     if timeout is None and HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT is not None: timeout = HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT
+    if timeout == 0: timeout = None
 
     logger.info("----------------------------------------------")
     logger.info("downloadpage Alfa: %s" %__version)

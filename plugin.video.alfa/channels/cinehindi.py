@@ -38,14 +38,13 @@ def genero(item):
     logger.info()
     itemlist = list()
     data = httptools.downloadpage(host).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron_generos = '<ul id="menu-submenu" class=""><li id="menu-item-.+?"(.+)<\/li><\/ul>'
-    data_generos = scrapertools.find_single_match(data, patron_generos)
-    patron = 'class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-.*?"><a href="(.*?)">(.*?)<\/a><\/li>'
-    matches = scrapertools.find_multiple_matches(data_generos, patron)
+    patron  = 'level-0.*?value="([^"]+)"'
+    patron += '>([^<]+)'
+    matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle in matches:
-        if scrapedtitle != 'Próximas Películas':
-            itemlist.append(item.clone(action='lista', title=scrapedtitle, url=scrapedurl))
+        if 'Próximas Películas' in scrapedtitle:
+            continue
+        itemlist.append(item.clone(action='lista', title=scrapedtitle, cat=scrapedurl))
     return itemlist
 
 
@@ -90,13 +89,18 @@ def proximas(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    if not item.cat:
+        data = httptools.downloadpage(item.url).data
+    else:
+        url = httptools.downloadpage("%s?cat=%s" %(host, item.cat), follow_redirects=False, only_headers=True).headers.get("location", "")
+        data = httptools.downloadpage(url).data
+    bloque = scrapertools.find_single_match(data, """class="item_1 items.*?id="paginador">""")
     patron = 'class="item">.*?'  # Todos los items de peliculas (en esta web) empiezan con esto
     patron += '<a href="([^"]+).*?'  # scrapedurl
     patron += '<img src="([^"]+).*?'  # scrapedthumbnail
     patron += 'alt="([^"]+).*?'  # scrapedtitle
     patron += '<div class="fixyear">(.*?)</span></div><'  # scrapedfixyear
-    matches = scrapertools.find_multiple_matches(data, patron)
+    matches = scrapertools.find_multiple_matches(bloque, patron)
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedfixyear in matches:
         patron = '<span class="year">([^<]+)'  # scrapedyear
         scrapedyear = scrapertools.find_single_match(scrapedfixyear, patron)
@@ -113,14 +117,8 @@ def lista(item):
             item.clone(title=title, url=scrapedurl, action="findvideos", extra=scrapedtitle,
                        contentTitle=scrapedtitle, thumbnail=scrapedthumbnail, contentType="movie", context=["buscar_trailer"]))
     tmdb.set_infoLabels(itemlist)
-    scrapertools.printMatches(itemlist)
     # Paginacion
-    patron_genero = '<h1>([^"]+)<\/h1>'
-    genero = scrapertools.find_single_match(data, patron_genero)
-    if genero == "Romance" or genero == "Drama":
-        patron = "<a rel='nofollow' class=previouspostslink' href='([^']+)'>Siguiente "
-    else:
-        patron = "<span class='current'>.+?href='(.+?)'>"
+    patron = 'rel="next" href="([^"]+)'
     next_page_url = scrapertools.find_single_match(data, patron)
     if next_page_url != "":
         item.url = next_page_url

@@ -3,8 +3,6 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
-import urllib
-
 from channelselector import get_thumb
 from channels import autoplay
 from channels import filtertools
@@ -188,6 +186,7 @@ def findvideos(item):
     for datos in dict:
         url1 = datos["url"]
         hostname = scrapertools.find_single_match(datos["hostname"].replace("www.",""), "(.*?)\.")
+        if "repelisgo" in hostname or "repelis.io" in datos["hostname"]: continue
         if hostname == "my": hostname = "mailru"
         titulo = "Ver en: " + hostname.capitalize() + " (" + cali[datos["quality"]] + ") (" + idio[datos["audio"]] + ")"
         itemlist.append(
@@ -226,8 +225,6 @@ def play(item):
     logger.info()
     itemlist = []
     url1 = httptools.downloadpage(host + item.url, follow_redirects=False, only_headers=True).headers.get("location", "")
-    if "storage" in url1:
-        url1 = scrapertools.find_single_match(url1, "src=(.*mp4)").replace("%3A",":").replace("%2F","/")
     itemlist.append(item.clone(url=url1))
     itemlist = servertools.get_servers_itemlist(itemlist)
     itemlist[0].thumbnail = item.contentThumbnail

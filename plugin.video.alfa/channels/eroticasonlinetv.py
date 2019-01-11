@@ -40,11 +40,11 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     patron  = '<li class="cat-item cat-item-\d+"><a href="([^"]+)".*?>([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
+                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
@@ -55,17 +55,16 @@ def peliculas(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<div class="movie-poster"><a href="([^"]+)".*?<img src="([^"]+)" alt="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         plot = ""
-        contentTitle = scrapedtitle
         url = urlparse.urljoin(item.url,scrapedurl)
-        year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=scrapedtitle , url=url, thumbnail=scrapedthumbnail, plot=plot, contentTitle = contentTitle, infoLabels={'year':year} ))
+        itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=url, thumbnail=scrapedthumbnail,
+                               plot=plot, contentTitle = scrapedtitle) )
     next_page = scrapertools.find_single_match(data, '<div class="naviright"><a href="([^"]+)">Siguiente &raquo;</a>')
     if next_page:
         next_page = urlparse.urljoin(item.url, next_page)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title="Página Siguiente >>" , text_color="blue", url=next_page ))
+        itemlist.append( Item(channel=item.channel, action="peliculas", title="Página Siguiente >>", text_color="blue",
+                              url=next_page ))
     return itemlist
 
 
@@ -76,10 +75,7 @@ def play(item):
     url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
     url = urlparse.urljoin(item.url, url)
     data = httptools.downloadpage(url).data
-    url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
-    if url == "":
-        url = scrapertools.find_single_match(data, 'window.location="([^"]+)"')
-    itemlist = servertools.find_video_items(data=url)
+    itemlist = servertools.find_video_items(data=data)
     for videoitem in itemlist:
         videoitem.title = item.title
         videoitem.fulltitle = item.fulltitle

@@ -549,7 +549,7 @@ def findvideos(item):
     
     #logger.debug("PATRON: " + patron)
     #logger.debug(matches)
-    logger.debug(data)
+    #logger.debug(data)
     
     #Si es un lookup para cargar las urls de emergencia en la Videoteca...
     if item.videolibray_emergency_urls:

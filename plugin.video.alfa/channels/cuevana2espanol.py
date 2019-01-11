@@ -198,7 +198,7 @@ def findvideos(item):
     for link in scrapertools.find_multiple_matches(data, pattern):
         #php.*?=(\w+)&
         #url=(.*?)&
-        if 'player4' in link:
+        if 'player' in link:
             logger.info("CUEVANA LINK %s" % link)
             if r'%2Fopenload%2F' in link:
                 link = scrapertools.find_single_match(link, 'h%3D(\w+)')

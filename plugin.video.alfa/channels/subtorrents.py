@@ -591,7 +591,8 @@ def play(item):                                                                 
             os.mkdir(os.path.join(config.get_setting("videolibrarypath"), "subtitles"))
         subtitles = []
         subtitles.extend(item.subtitle)
-        item.subtitle = subtitles[0]                                            #ponemos por defecto el primero
+        item.subtitle = subtitles[0]                                            #ponemos por defecto el primeroç
+        #item.subtitle = os.path.join(config.get_setting("videolibrarypath"), os.path.join("subtitles", scrapertools.find_single_match(subtitles[0], '\/\d{2}\/(.*?\.\w+)$')))
         for subtitle in subtitles:                                              #recorremos la lista
             subtitle_name = scrapertools.find_single_match(subtitle, '\/\d{2}\/(.*?\.\w+)$')                #se pone el nombre del Sub-título
             subtitle_folder_path = os.path.join(config.get_setting("videolibrarypath"), "subtitles", subtitle_name)         #Path de descarga

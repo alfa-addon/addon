@@ -30,7 +30,7 @@ channel = "grantorrent"
 dict_url_seasons = dict()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
 timeout = config.get_setting('timeout_downloadpage', channel)
-if timeout <= 5: timeout = timeout*2
+if timeout > 0 and timeout <= 10: timeout = 15
 modo_serie_temp = config.get_setting('seleccionar_serie_temporada', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)
 
@@ -82,7 +82,7 @@ def submenu(item):
     
     data = ''
     try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
+        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
     except:
         pass
         
@@ -102,15 +102,17 @@ def submenu(item):
                     itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
                 return itemlist                                             #Salimos
         
-        itemlist.append(item.clone(action="listado", title="Novedades", url=host))       #Menú principal películas
+        itemlist.append(item.clone(action="listado", title="Novedades", url=host))          #Menú principal películas
+        
+        itemlist.append(item.clone(action="generos", title="Películas **Géneros**", url=host))         #Lista de Géneros
     
         for scrapedurl, scrapedtitle in matches:
-            scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('utf8').encode('utf8').strip()
+            title = re.sub('\r\n', '', scrapedtitle).decode('utf8').encode('utf8').strip()
         
             if not "películas" in scrapedtitle.lower():                     #Evita la entrada de ayudas y demás
                 continue
 
-            itemlist.append(item.clone(action="listado", title=scrapedtitle, url=scrapedurl))       #Menú películas
+            itemlist.append(item.clone(action="listado", title=title, url=scrapedurl))              #Menú películas
 
     else:                                                                   #Tratamos Series
         patron = '<li class="navigation-top-dcha">.*?<a href="(.*?)".*?class="series"> (.*?)\s?<\/a><\/li>'
@@ -124,9 +126,49 @@ def submenu(item):
                 return itemlist                                             #Salimos
 
         for scrapedurl, scrapedtitle in matches:
-            scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('utf8').encode('utf8').strip()
+            title = re.sub('\r\n', '', scrapedtitle).decode('utf8').encode('utf8').strip()
 
-            itemlist.append(item.clone(action="listado", title=scrapedtitle, url=scrapedurl))       #Menú series
+            itemlist.append(item.clone(action="listado", title=title, url=scrapedurl))              #Menú series
+            
+            itemlist.append(item.clone(action="generos", title="Series **Géneros**", url=host + "series/")) #Lista de Géneros
+
+    return itemlist
+    
+    
+def generos(item):
+    logger.info()
+    itemlist = []
+    
+    thumb_buscar = get_thumb("search.png")
+    
+    data = ''
+    try:
+        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+    except:
+        pass
+        
+    if not data:
+        logger.error("ERROR 01: GÉNEROS: La Web no responde o ha cambiado de URL: " + item.url)
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
+        return itemlist                                                     #Algo no funciona, pintamos lo que tenemos
+    
+    item.extra2 = 'generos'
+    patron = '<div class="titulo-sidebar">CATEGORÍAS<\/div><div class="contenedor-sidebar"><ul class="categorias-home">(.*?)<\/ul><\/div><\/aside>'     
+    data = scrapertools.find_single_match(data, patron)
+    patron = '\s*<a href="([^"]+)"><li class="categorias">(.*?)<\/li><\/a>'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    if not matches:
+        item = generictools.web_intervenida(item, data)                 #Verificamos que no haya sido clausurada
+        if item.intervencion:                                           #Sí ha sido clausurada judicialmente
+            for clone_inter, autoridad in item.intervencion:
+                thumb_intervenido = get_thumb(autoridad)
+                itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
+            return itemlist                                             #Salimos
+
+    for scrapedurl, scrapedtitle in matches:
+        title = re.sub('\r\n', '', scrapedtitle).decode('utf8').encode('utf8').strip().capitalize()
+
+        itemlist.append(item.clone(action="listado", title=title, url=scrapedurl))          #Listado de géneros
 
     return itemlist
 
@@ -157,7 +199,7 @@ def listado(item):
     timeout_search = timeout                # Timeout para descargas
     if item.action == 'search':
         timeout_search = int(timeout * 1.5) # Timeout un poco más largo para las búsquedas
-        if timeout_search < 10:
+        if timeout_search > 0 and timeout_search < 10:
             timeout_search = 10             # Timeout un poco más largo para las búsquedas
     
     #Máximo num. de líneas permitidas por TMDB (40). Máx de 5 páginas por Itemlist para no degradar el rendimiento.  
@@ -205,10 +247,10 @@ def listado(item):
             if "page/" in item.post:
                 item.post = re.sub(r"page\/\d+\/", "page/%s/" % post, item.post)
             else:
-                if "/series" in item.post:
-                    item.post = re.sub(r"\/series\/", "/series/page/%s/" % post, item.post)
-                elif "/categoria" in item.post:
+                if "/categoria" in item.post:
                     item.post = re.sub(r"\/$", "/page/%s/" % post, item.post)
+                elif "/series" in item.post:
+                    item.post = re.sub(r"\/series\/", "/series/page/%s/" % post, item.post)
                 else:
                     item.post = re.sub(r"\.net\/", ".net/page/%s/" % post, item.post)
                 
@@ -328,9 +370,12 @@ def listado(item):
         item_local.url = urlparse.urljoin(host, scrapedurl)
 
         if "categoria" in item.url:                 #En páginas de Categorias no viene ni la calidad ni el idioma
-            item_local.quality = scrapertools.find_single_match(item.url, r'\/categoria\/(.*?)\/')
-            if "4k" in item_local.quality.lower():
-                item_local.quality = "4K HDR"       #Maquillamos un poco la calidad
+            if not item.extra2:
+                item_local.quality = scrapertools.find_single_match(item.url, r'\/categoria\/(.*?)\/')
+                if "4k" in item_local.quality.lower():
+                    item_local.quality = "4K HDR"       #Maquillamos un poco la calidad
+            else:
+                item_local.quality = ''
             lang = ''                               #Ignoramos el idioma
         elif not "post" in quality:
             item_local.quality = quality            #Salvamos la calidad en el resto de páginas
