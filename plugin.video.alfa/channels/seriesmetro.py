@@ -77,7 +77,7 @@ def list_all(item):
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     # Paginacion
-    next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" >Página siguiente')
+    next_page = scrapertools.find_single_match(data, 'class=\'current\'>\d</span>.*?href="([^"]+)">')
     if next_page != '':
         itemlist.append(Item(channel=item.channel, action="list_all", title='Siguiente >>>',
                              url=next_page, thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png',
@@ -187,12 +187,12 @@ def findvideos(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for link in matches:
-        if 'id=' in link:
-            id_type = 'id'
-            ir_type = 'ir'
-        elif 'ud=' in link:
-            id_type = 'ud'
-            ir_type = 'ur'
+
+        id_letter = scrapertools.find_single_match(link, '?(\w)d')
+
+        id_type = '%sd' % id_letter
+        ir_type = '%sr' % id_letter
+
         id = scrapertools.find_single_match(link, '%s=(.*)' % id_type)
         base_link = scrapertools.find_single_match(link, '(.*?)%s=' % id_type)
 

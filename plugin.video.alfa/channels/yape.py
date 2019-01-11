@@ -15,7 +15,7 @@ from platformcode import config, logger, platformtools
 
 
 idio = {'https://cdn.yape.nu//languajes/la.png': 'LAT','https://cdn.yape.nu//languajes/es.png': 'ESP','https://cdn.yape.nu//languajes/en_es.png': 'VOSE'}
-cali = {'TS Screnner': 'TS Screnner', 'HD 1080p': 'HD 1080p','TS Screener HQ':'TS Screener HQ', 'BR Screnner':'BR Screnner','HD Rip':'HD Rip','DVD Screnner':'DVD Screnner', 'DVD Rip':'DVD Rip'}
+cali = {'TS Screnner': 'TS Screnner', 'HD 1080p': 'HD 1080p','TS Screener HQ':'TS Screener HQ', 'BR Screnner':'BR Screnner','HD Rip':'HD Rip','DVD Screnner':'DVD Screnner', 'DVD Rip':'DVD Rip', 'HD 720':'HD 720'}
 
 list_language = idio.values()
 list_quality = cali.values()

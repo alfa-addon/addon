@@ -2,7 +2,7 @@
   "id": "xdvideos",
   "name": "XDVideos",
   "active": true,
-  "adult": false,
+  "adult": true,
   "language": ["lat"],
   "thumbnail": "http://i.imgur.com/vKcZxXS.png",
   "categories": [

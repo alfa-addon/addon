@@ -53,7 +53,7 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Géneros", action="generos", url="http://www.inkapelis.com/", text_color=color1,
                                thumbnail=get_thumb('genres', auto=True),))
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="", text_color=color1))
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url="http://www.inkapelis.com/?s=", text_color=color1))
     itemlist.append(Item(channel=item.channel, action="", title=""))
     itemlist.append(
         Item(channel=item.channel, action="filtro", title="Filtrar películas", url="http://www.inkapelis.com/?s=", text_color=color1))

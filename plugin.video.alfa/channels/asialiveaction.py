@@ -12,6 +12,7 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
+
 host = "http://www.asialiveaction.com"
 
 IDIOMAS = {'Japones': 'Japones'}
@@ -66,7 +67,7 @@ def search_results(item):
     patron +=">(\d{4})</a>.*?<h6>([^<]+)<a href='([^']+)"
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedtype, scrapedthumbnail, scrapedyear, scrapedtitle ,scrapedurl in matches:
-        title="%s [%s]" % (scrapedtitle,scrapedyear)
+        title="%s [%s]" % (scrapedtitle, scrapedyear)
         new_item= Item(channel=item.channel, title=title, url=scrapedurl, thumbnail=scrapedthumbnail)
         if scrapedtype.strip() == 'Serie':
             new_item.contentSerieName = scrapedtitle
@@ -191,6 +192,8 @@ def findvideos(item):
         if "spotify" in url:
             continue
         data = httptools.downloadpage(url).data
+        language = scrapertools.find_single_match(data, '(?:ɥɔɐәlq|lɐʇәɯllnɟ) (\w+)')
+        if not language: language = "VOS"
         bloque = scrapertools.find_single_match(data, "description articleBody(.*)/div")
         urls = scrapertools.find_multiple_matches(bloque, "iframe src='([^']+)")
         if urls:
@@ -199,17 +202,17 @@ def findvideos(item):
                 if "luis" in url1:
                     data = httptools.downloadpage(url1).data
                     url1 = scrapertools.find_single_match(data, 'file: "([^"]+)')
-                itemlist.append(item.clone(action = "play", title = "Ver en %s", url = url1))
+                itemlist.append(item.clone(action = "play", title = "Ver en %s (" + language + ")", language = language, url = url1))
         else:
             # cuando es descarga
             bloque = bloque.replace('"',"'")
             urls = scrapertools.find_multiple_matches(bloque, "href='([^']+)")
             for url2 in urls:
-                itemlist.append(item.clone(action = "play", title = "Ver en %s", url = url2))
+                itemlist.append(item.clone(action = "play", title = "Ver en %s (" + language + ")", language = language, url = url2))
         if "data-video" in bloque:
-            urls = scrapertools.find_multiple_matches(bloque, 'data-video="([^"]+)')
+            urls = scrapertools.find_multiple_matches(bloque, "data-video='([^']+)")
             for url2 in urls:
-                itemlist.append(item.clone(action = "play", title = "Ver en %s", url = "https://tinyurl.com/%s" %url2 ))
+                itemlist.append(item.clone(action = "play", title = "Ver en %s (" + language + ")", language = language, url = "https://tinyurl.com/%s" %url2 ))
     for item1 in itemlist:
         if "tinyurl" in item1.url:
             item1.url = httptools.downloadpage(item1.url, follow_redirects=False, only_headers=True).headers.get("location", "")

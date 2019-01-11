@@ -19,7 +19,7 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Mas Vistas" , action="peliculas", url=host + "/más-visto/"))
     itemlist.append( Item(channel=item.channel, title="Mejor valorada" , action="peliculas", url=host + "/mejor-valorado/"))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="catalogo", url=host))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url="https://www.analdin.com/categories/"))
+    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categorías/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -48,11 +48,13 @@ def catalogo(item):
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
+                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
     next_page_url = scrapertools.find_single_match(data,'<li class="arrow"><a rel="next" href="([^"]+)">&raquo;</a>')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel , action="catalogo" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="catalogo", title="Página Siguiente >>", text_color="blue",
+                               url=next_page_url) )
     return itemlist
 
 
@@ -69,14 +71,15 @@ def categorias(item):
         scrapedplot = ""
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
+                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
 def peliculas(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a class="popup-video-link" href="([^"]+)".*?'
     patron += 'thumb="([^"]+)".*?'
@@ -89,11 +92,13 @@ def peliculas(item):
         thumbnail = scrapedthumbnail
         plot = ""
         year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, plot=plot, contentTitle = title, infoLabels={'year':year} ))
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
+                              contentTitle = title, infoLabels={'year':year} ))
     next_page_url = scrapertools.find_single_match(data,'<li class="next"><a href="([^"]+)"')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title="Página Siguiente >>", text_color="blue",
+                              url=next_page_url) )
     return itemlist
 
 
@@ -107,16 +112,4 @@ def play(item):
         url = scrapedurl
     itemlist.append(item.clone(action="play", title=url, fulltitle = item.title, url=url))
     return itemlist
-
-
-# def play(item):
-    # logger.info()
-    # itemlist = []
-    # data = scrapertools.cachePage(item.url)
-    # patron  = 'video_url: \'([^\']+)\''
-    # matches = scrapertools.find_multiple_matches(data, patron)
-    # for scrapedurl  in matches:
-        # title = scrapedurl
-    # itemlist.append(item.clone(action="play", title=title, fulltitle = item.title, url=scrapedurl))
-    # return itemlist
 

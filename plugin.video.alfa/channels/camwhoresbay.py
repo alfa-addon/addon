@@ -13,6 +13,7 @@ from core import jsontools
 
 host = 'https://www.camwhoresbay.com'
 
+# EN CATALOGO Y BUSQUEDA LA PAGINACION FUNCIONA CON UN AJAX 
 
 def mainlist(item):
     logger.info()
@@ -20,7 +21,6 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Nuevos" , action="peliculas", url=host + "/latest-updates/"))
     itemlist.append( Item(channel=item.channel, title="Mejor valorados" , action="peliculas", url=host + "/top-rated/"))
     itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="peliculas", url=host + "/most-popular/"))
-
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -51,7 +51,8 @@ def categorias(item):
     for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad  in matches:
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
         scrapedplot = ""
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
+                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
@@ -70,11 +71,13 @@ def peliculas(item):
         thumbnail = scrapedthumbnail
         plot = ""
         year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, plot=plot, contentTitle = title, infoLabels={'year':year} ))
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
+                              contentTitle = title, infoLabels={'year':year} ))
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title="Página Siguiente >>" , text_color="blue", url=next_page ) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title="Página Siguiente >>", text_color="blue",
+                              url=next_page ) )
     return itemlist
 
 

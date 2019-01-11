@@ -2185,21 +2185,20 @@ def acciones_trakt(item):
                        'runtime': config.get_localized_string(70471), 'popularity': config.get_localized_string(70472), 'percentage': config.get_localized_string(70473),
                        'votes': config.get_localized_string(70474), 'asc': config.get_localized_string(70475), 'desc': config.get_localized_string(70476)}
             orden = valores[item.order] + " " + valores[item.how]
-            itemlist.append(item.clone(title=config.get_localized_string(70349) % orden, action="order_list",
-                                       text_color=color4))
+            # itemlist.append(item.clone(title=config.get_localized_string(70349) % orden, action="order_list",
+            #                            text_color=color4))
         ratings = []
         try:
-            if item.order:
-                if item.how == "asc":
-                    reverse = False
-                else:
-                    reverse = True
-
-                if item.order == "rank" or item.order == "added":
-                    data = sorted(data, key=lambda x: x[item.order.replace("added", "listed_at")], reverse=reverse)
-                else:
-                    order = item.order.replace("popularity", "votes").replace("percentage", "rating")
-                    data = sorted(data, key=lambda x: x[x['type']].get(order, 0), reverse=reverse)
+            # if item.order:
+            #     if item.how == "asc":
+            #         reverse = False
+            #     else:
+            #         reverse = True
+            #     if item.order == "rank" or item.order == "added":
+            #         data = sorted(data, key=lambda x: x[item.order.replace("added", "last_collected_at")], reverse=reverse)
+            #     else:
+            #         order = item.order.replace("popularity", "votes").replace("percentage", "rating")
+            #         data = sorted(data, key=lambda x: x[x['type']].get(order, 0), reverse=reverse)
 
             for entry in data:
                 try:
@@ -2259,7 +2258,7 @@ def order_list(item):
     logger.info()
 
     list_controls = []
-    valores1 = ['rank', 'added', 'title', 'released', 'runtime', 'popularity', 'percentage', 'votes']
+    valores1 = ['rating', 'added', 'title', 'released', 'runtime', 'popularity', 'percentage', 'votes']
     valores2 = ['asc', 'desc']
 
     dict_values = {'orderby': valores1.index(item.order), 'orderhow': valores2.index(item.how)}
@@ -2268,9 +2267,8 @@ def order_list(item):
                           'type': 'list', 'default': 0, 'visible': True})
     list_controls.append({'id': 'orderhow', 'label': 'De forma:', 'enabled': True,
                           'type': 'list', 'default': 0, 'visible': True})
-    list_controls[0]['lvalues'] = [config.get_localized_string(70003), config.get_localized_string(70469), config.get_localized_string(60230), config.get_localized_string(70470), config.get_localized_string(70471), config.get_localized_string(70472),
-                                   config.get_localized_string(70473), config.get_localized_string(70474)]
-    list_controls[1]['lvalues'] = [config.get_localized_string(70477), config.get_localized_string(70478)]
+    list_controls[0]['lvalues'] = ['rank', 'added', 'title', 'released', 'runtime', 'popularity', 'percentage', 'votes']
+    list_controls[1]['lvalues'] = ['asc', 'desc']
     return platformtools.show_channel_settings(list_controls=list_controls, dict_values=dict_values,
                                                caption=config.get_localized_string(70320), item=item, callback='order_trakt')
 

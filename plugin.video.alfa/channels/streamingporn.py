@@ -48,7 +48,8 @@ def catalogo(item):
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , 
+                        thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
     return itemlist
 
 
@@ -56,7 +57,7 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'<a href="#">Categories</a>(.*?)<li id="menu-item-30919')
+    data = scrapertools.get_match(data,'<a href="#">Categories</a>(.*?)</ul>')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<li id="menu-item-\d+".*?<a href="([^"]+)">([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -66,7 +67,8 @@ def categorias(item):
         scrapedthumbnail = ""
         scrapedtitle = scrapedtitle
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , 
+                        thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
     return itemlist
 
 
@@ -84,11 +86,13 @@ def peliculas(item):
         thumbnail = scrapedthumbnail
         plot = ""
         year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, plot=plot, contentTitle = contentTitle, infoLabels={'year':year} ))
+        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, 
+                        plot=plot, contentTitle = contentTitle, infoLabels={'year':year} ))
     next_page_url = scrapertools.find_single_match(data,'<div class="loadMoreInfinite"><a href="(.*?)" >Load More')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , 
+                        text_color="blue", url=next_page_url , folder=True) )
     return itemlist
 
 

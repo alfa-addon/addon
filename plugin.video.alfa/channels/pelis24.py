@@ -102,14 +102,14 @@ def sub_search(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    # logger.info(data)
-    data = scrapertools.find_single_match(data, '<header><h1>Resultados encontrados(.*?)resppages')
-    # logger.info(data)
-    patron = '<a href="([^"]+)"><img src="([^"]+)" alt="([^"]+)" />.*?'  # url, img, title
-    patron += '<span class="year">([^<]+)</span>'
+    data = scrapertools.find_single_match(data, 'Archivos (.*?)resppages')
+    patron  = 'img alt="([^"]+)".*?'
+    patron += 'src="([^"]+)".*?'
+    patron += 'href="([^"]+)".*?'
+    patron += 'fechaestreno">([^<]+)'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedthumbnail, scrapedtitle, year in matches:
+    for scrapedtitle, scrapedthumbnail, scrapedurl, year in matches:
         if 'tvshows' not in scrapedurl:
 
             itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, contentTitle=scrapedtitle,
@@ -133,18 +133,19 @@ def peliculas(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
     data = scrapertools.decodeHtmlentities(data)
     # logger.info(data)
 
     # img, title
-    patron = '<article id="post-\w+" class="item movies"><div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'
-    patron += '<span class="quality">([^<]+)</span> </div>\s*<a href="([^"]+)">.*?'  # quality, url
-    patron += '</h3><span>([^<]+)</span>'    # year
+    patron  = '(?is)movie-img img-box.*?alt="([^"]+).*?'
+    patron += 'src="([^"]+).*?'
+    patron += 'href="([^"]+).*?'
+    patron += 'fechaestreno">([^<]+).*?'
+    patron += 'quality">([^<]+)'
 
     matches = scrapertools.find_multiple_matches(data, patron)
 
-    for scrapedthumbnail, scrapedtitle, quality, scrapedurl, year in matches[item.page:item.page + 30]:
+    for scrapedtitle, scrapedthumbnail, scrapedurl, year, quality in matches[item.page:item.page + 30]:
         title = '%s [COLOR yellowgreen](%s)[/COLOR]' % (scrapedtitle, quality)
 
         itemlist.append(Item(channel=__channel__, action="findvideos", text_color=color3,
@@ -172,10 +173,10 @@ def genresYears(item):
     data = re.sub(r"\n|\r|\t|\(.*?\)|&nbsp;|<br>", "", data)
     data = scrapertools.decodeHtmlentities(data)
 
-    if item.title == "Estrenos por Año":
+    if item.title == "Estrenos":
         patron_todas = 'ESTRENOS</a>(.*?)</i> Géneros'
     else:
-        patron_todas = '<h2>Generos</h2>(.*?)</div><aside'
+        patron_todas = '(?is)genres falsescroll(.*?)</div> </aside'
         # logger.error(texto='***********uuuuuuu*****' + patron_todas)
 
     data = scrapertools.find_single_match(data, patron_todas)

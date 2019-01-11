@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import re
-
 from core import httptools
+from core import scrapertools
 from platformcode import logger
 
 
@@ -21,7 +20,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     data = httptools.downloadpage(page_url).data
     patron = "DownloadButtonAd-startDownload gbtnSecondary.*?href='([^']+)'"
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = scrapertools.find_multiple_matches(data, patron)
+    if len(matches) == 0:
+        patron = 'Download file.*?href="([^"]+)"'
+        matches = scrapertools.find_multiple_matches(data, patron)
     if len(matches) > 0:
         video_urls.append([matches[0][-4:] + " [mediafire]", matches[0]])
     for video_url in video_urls:

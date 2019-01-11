@@ -165,7 +165,7 @@ def findvideos(item):
             if contentTitle != "":
                 item.contentTitle = contentTitle
     bloque = scrapertools.find_single_match(data, '(?s)<div class="bottomPlayer">(.*?)<script>')
-    match = scrapertools.find_multiple_matches(bloque, '(?is)data-Url="([^"]+).*?data-postId="([^"]+)')
+    match = scrapertools.find_multiple_matches(bloque, '(?is)data-Url="([^"]+).*?data-postId="([^"]*)')
     for dataurl, datapostid in match:
         page_url = host + "wp-admin/admin-ajax.php"
         post = "action=get_more_top_news&postID=%s&dataurl=%s" %(datapostid, dataurl)
@@ -178,7 +178,7 @@ def findvideos(item):
         if "youtube" in url:
             titulo = "Ver trailer: %s"
             text_color = "yellow"
-        if "ad.js" in url or "script" in url or "jstags.js" in url:
+        if "ad.js" in url or "script" in url or "jstags.js" in url or not datapostid:
             continue
         elif "vimeo" in url:
             url += "|" + "http://www.allcalidad.com"
