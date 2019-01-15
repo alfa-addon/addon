@@ -423,10 +423,10 @@ def post_tmdb_listado(item, itemlist):
                 else:
                     title = '%s -Temporada !!!' % (title)
 
-            elif item.action == "search":
+            elif item.action == "search" or item.extra == "search":
                 title += " -Serie-"
         
-        if (item_local.extra == "varios" or item_local.extra == "documentales") and (item.action == "search" or item.action == "listado_busqueda"):
+        if (item_local.extra == "varios" or item_local.extra == "documentales") and (item.action == "search" or item.extra == "search" or item.action == "listado_busqueda"):
             title += " -Varios-"
             item_local.contentTitle += " -Varios-"
         
@@ -764,6 +764,17 @@ def post_tmdb_episodios(item, itemlist):
             del item_local.library_filter_show
         if item_local.extra2:
             del item_local.extra2
+        item_local.wanted = 'xyz'
+        del item_local.wanted
+        item_local.text_color = 'xyz'
+        del item_local.text_color
+        item_local.tmdb_stat = 'xyz'
+        del item_local.tmdb_stat
+        item_local.totalItems = 'xyz'
+        del item_local.totalItems
+        item_local.unify = 'xyz'
+        del item_local.unify
+        
         #logger.debug(item_local)
         
         #Ajustamos el nombre de la categoría si es un clone de NewPct1
@@ -868,9 +879,9 @@ def post_tmdb_episodios(item, itemlist):
         item_local.title = '%s [%s] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.title, item_local.infoLabels['year'], rating, item_local.quality, str(item_local.language))
     
         #Quitamos campos vacíos
-        item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['episodio_titulo'].replace(" []", "").strip()
-        item_local.infoLabels['title'] = item_local.infoLabels['title'].replace(" []", "").strip()
-        item_local.title = item_local.title.replace(" []", "").strip()
+        item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['episodio_titulo'].replace("[]", "").strip()
+        item_local.infoLabels['title'] = item_local.infoLabels['title'].replace("[]", "").strip()
+        item_local.title = item_local.title.replace("[]", "").strip()
         item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?-?\s?\]?\]\[\/COLOR\]', '', item_local.title).strip()
         item_local.title = re.sub(r'\s?\[COLOR \w+\]-?\s?\[\/COLOR\]', '', item_local.title).strip()
         item_local.title = item_local.title.replace(".", ",").replace("GB", "G B").replace("Gb", "G b").replace("gb", "g b").replace("MB", "M B").replace("Mb", "M b").replace("mb", "m b")
@@ -1831,11 +1842,11 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #Cuando en el .json se activa "Borrar", "emergency_urls = 2", se borran todos los enlaces existentes
     #Cuando en el .json se activa "Actualizar", "emergency_urls = 3", se actualizan todos los enlaces existentes
     
-    status_migration = regenerate_clones()                                  #TEMPORAL: Reparación de Videoteca con Newpct1
-    
     """
-    verify_cached_torrents()                                                #TEMPORAL: verificamos si los .torrents son correctos
-    try:                                                                    #Si ha habido errores, vemos la lista y los reparamos
+    status_migration = regenerate_clones()                          #TEMPORAL: Reparación de Videoteca con Newpct1
+    
+    verify_cached_torrents()                                        #TEMPORAL: verificamos si los .torrents son correctos
+    try:                                                            #Si ha habido errores, vemos la lista y los reparamos
         json_error_path = filetools.join(config.get_runtime_path(), 'error_cached_torrents.json')
         if filetools.exists(json_error_path):                               #hay erroer que hay que reparar?
             from core import jsontools
