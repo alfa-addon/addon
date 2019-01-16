@@ -139,7 +139,7 @@ def lista(item):
 
     if itemlist != []:
         actual_page_url = item.url
-        next_page = scrapertools.find_single_match(data, '<a class=nextpostslink rel=next href=(.*?)>')
+        next_page = scrapertools.find_single_match(data, 'rel=next href=(.*?) /')
         if next_page != '':
             itemlist.append(item.clone(action="lista",
                                        title='Siguiente >>>',
@@ -192,7 +192,6 @@ def findvideos(item):
     data = data.replace("&lt;","<").replace("&quot;",'"').replace("&gt;",">").replace("&amp;","&").replace('\"',"")
     patron = '<div class=TPlayerTb.*?id=(.*?)>.*?src=(.*?) frameborder'
     matches = scrapertools.find_multiple_matches(data, patron)
-    headers = {'referer':item.url}
     for opt, urls_page in matches:
         language = scrapertools.find_single_match (data,'TPlayerNv>.*?tplayernv=%s><span>Opción.*?<span>(.*?)</span>' % opt)
         if 'trembed' in urls_page:
@@ -201,6 +200,8 @@ def findvideos(item):
             urls_page = scrapertools.find_single_match(sub_data, 'src="([^"]+)" ')
             if "repro.live" in urls_page:
                 server_repro(urls_page)
+            if "repros.live" in urls_page:
+                server_repros(urls_page)
             if "itatroniks.com" in urls_page:
                 server_itatroniks(urls_page)
         for url in new_data:
@@ -231,6 +232,20 @@ def server_itatroniks(urls_page):
         except:
             continue
         new_data.append(urls_page)
+
+
+def server_repros(urls_page):
+    logger.info()
+    headers  = {"Referer":host}
+    headers1 = {"X-Requested-With":"XMLHttpRequest"}
+    sub_data = httptools.downloadpage(urls_page, headers = headers).data
+    urls_page1 = scrapertools.find_multiple_matches(sub_data, 'data-embed="([^"]+)"')
+    for idurl in urls_page1:
+        #post = {"codigo":idurl}
+        #post = urllib.urlencode(post)
+        dd1 = httptools.downloadpage("https://repros.live/player/ajaxdata", post = urllib.urlencode({"codigo":idurl}), headers = headers1).data
+        data_json = jsontools.load(dd1)
+        new_data.append(data_json["url"])
 
 
 def server_repro(urls_page):
