@@ -215,7 +215,6 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
-    logger.debug(data)
     patron = "<option value=\"([^\"]+)\" data-content=.*?width='16'> (.*?) <span class='text-muted'>"
     matches = re.compile(patron, re.DOTALL).findall(data)
 
