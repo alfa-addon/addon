@@ -22,25 +22,25 @@ def mainlist(item):
 
     itemlist.append(Item(channel=CHANNELNAME, title="", action="", folder=False, thumbnail=get_thumb("setting_0.png")))
 
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60536), action="", folder=False,
+    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60536) + ":", text_bold=True, action="", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60537), action="menu_channels", folder=True,
+    itemlist.append(Item(channel=CHANNELNAME, title="     " + config.get_localized_string(60537), action="menu_channels", folder=True,
                          thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60538), action="menu_servers", folder=True,
+    itemlist.append(Item(channel=CHANNELNAME, title="     " + config.get_localized_string(60538), action="menu_servers", folder=True,
                          thumbnail=get_thumb("channels.png")))
-    itemlist.append(Item(channel="news", title=config.get_localized_string(60539), action="menu_opciones",
+    itemlist.append(Item(channel="news", title="     " + config.get_localized_string(60539), action="menu_opciones",
                          folder=True, thumbnail=get_thumb("news.png")))
-    itemlist.append(Item(channel="search", title=config.get_localized_string(60540), action="opciones", folder=True,
+    itemlist.append(Item(channel="search", title="     " + config.get_localized_string(60540), action="opciones", folder=True,
                          thumbnail=get_thumb("search.png")))
-    #itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(60541), action="channel_config",
-    #                     config="downloads", folder=True, thumbnail=get_thumb("downloads.png")))
+    itemlist.append(Item(channel=CHANNELNAME, title="     " + config.get_localized_string(60541), action="channel_config",
+                         config="downloads", folder=True, thumbnail=get_thumb("downloads.png")))
 
     if config.get_videolibrary_support():
-        itemlist.append(Item(channel="videolibrary", title=config.get_localized_string(60542), action="channel_config",
+        itemlist.append(Item(channel="videolibrary", title="     " + config.get_localized_string(60542), action="channel_config",
                              folder=True, thumbnail=get_thumb("videolibrary.png")))
 
     if config.is_xbmc():
-        itemlist.append(Item(channel=CHANNELNAME, title=config.get_localized_string(70253), action="setting_torrent",
+        itemlist.append(Item(channel=CHANNELNAME, title="     " + config.get_localized_string(70253), action="setting_torrent",
                              folder=True, thumbnail=get_thumb("channels_torrent.png")))
 
     itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False, thumbnail=get_thumb("setting_0.png")))

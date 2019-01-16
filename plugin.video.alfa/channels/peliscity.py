@@ -1,65 +1,39 @@
 # -*- coding: utf-8 -*-
 
 import re
+import urllib
 
+from channelselector import get_thumb
 from core import httptools
+from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 
-host = "http://peliscity.com"
+host = "https://www.pelisvips.com"
 
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    data = httptools.downloadpage(host).data
-    patron = 'cat-item.*?span>([^<]+)'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    can = 0
-    for cantidad in matches:
-        can += int(cantidad.replace(".", ""))
-
-
-    itemlist.append(
-        Item(channel=item.channel, title="Películas: (%s)" %can, text_bold=True))
-    itemlist.append(
-        Item(channel=item.channel, title="    Últimas agregadas", action="agregadas", url= host,
-             viewmode="movie_with_plot"))
-    itemlist.append(Item(channel=item.channel, title="    Peliculas HD", action="agregadas",
-                         url= host + "/calidad/hd-real-720", viewmode="movie_with_plot"))
-    itemlist.append(
-        Item(channel=item.channel, title="    Listado por género", action="porGenero", url= host))
-    itemlist.append(Item(channel=item.channel, title="    Idioma", action="porIdioma", url= host))
-    itemlist.append(Item(channel=item.channel, title="    Buscar", action="search", url= host + "/?s="))
+    itemlist.append(Item(channel=item.channel, title="Ultimas", action="agregadas",
+                         url= host, viewmode="movie_with_plot", thumbnail = get_thumb("last", auto = True)))
+    itemlist.append(Item(channel=item.channel, title="Género", action="porGenero_Idioma", tipo = "g", url= host, thumbnail = get_thumb("genres", auto = True)))
+    itemlist.append(Item(channel=item.channel, title="Audio", action="porGenero_Idioma", tipo = "a", url= host, thumbnail = get_thumb("audio", auto = True)))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url= host + "/?s=", thumbnail = get_thumb("search", auto = True)))
 
     return itemlist
 
 
-def porIdioma(item):
-    itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Castellano", action="agregadas",
-                         url= host + "/idioma/espanol-castellano/", viewmode="movie_with_plot"))
-    itemlist.append(
-        Item(channel=item.channel, title="VOSE", action="agregadas", url= host + "/idioma/subtitulada/",
-             viewmode="movie_with_plot"))
-    itemlist.append(Item(channel=item.channel, title="Latino", action="agregadas",
-                         url= host + "/idioma/espanol-latino/", viewmode="movie_with_plot"))
-
-    return itemlist
-
-
-def porGenero(item):
+def porGenero_Idioma(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = 'cat-item.*?href="([^"]+).*?>(.*?)<.*?span>([^<]+)'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for urlgen, genero, cantidad in matches:
-        cantidad = cantidad.replace(".", "")
-        titulo = genero + " (" + cantidad + ")"
+    bloque = scrapertools.find_single_match(data, 'culas por %s(.*?)slidebar-item' %item.tipo)
+    patron = 'href="([^"]+).*?span>([^<]+)'
+    matches = scrapertools.find_multiple_matches(bloque, patron)
+    for urlgen, titulo in matches:
         itemlist.append(Item(channel=item.channel, action="agregadas", title=titulo, url=urlgen, folder=True,
                              viewmode="movie_with_plot"))
 
@@ -80,55 +54,50 @@ def search(item, texto):
         return []
 
 
+def listaBuscar(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron  = '<li class="itemlist".*?href="([^"]+)".*?'
+    patron += 'src="([^"]+)".*?'
+    patron += 'title="([^"]+)".*?'
+    patron += 'text-list">([^<]+)<'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url, thumbnail, title, sinopsis in matches:
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title + " ", fulltitle=title, url=url,
+                             thumbnail=thumbnail, show=title, plot=sinopsis))
+    return itemlist
+
+
 def agregadas(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r'\n|\r|\t|\s{2}|&nbsp;|"', "", data)
-    patron = scrapertools.find_multiple_matches (data,'<divclass=col-mt-5 postsh>.*?Duración')
-    for element in patron:
-        info = scrapertools.find_single_match(element,
-                                              "calidad>(.*?)<.*?ahref=(.*?)>.*?'reflectMe' src=(.*?)\/>.*?<h2>(.*?)"
-                                              "<\/h2>.*?sinopsis>(.*?)<\/div>.*?Año:<\/span>(.*?)<\/li>")
-        quality = info[0]
-        url = info[1]
-        thumbnail = info[2]
-        title = info[3]
-        plot = info[4]
-        year = info[5].strip()
-        itemlist.append(Item(channel=item.channel,
-                             action='findvideos',
-                             contentType = "movie",
-                             contentTitle = title,
-                             fulltitle = title,
-                             infoLabels={'year':year},
-                             quality=quality,
-                             thumbnail=thumbnail,
-                             title=title,
-                             url=url
+    bloque = scrapertools.find_single_match(data, '<div id="movie-list"(.*?)<div class="pagination movie-pagination')
+    patron  = '(?is)href="([^"]+)".*?'
+    patron += 'class="_format"> <span class=".*?>([^<]+)<.*?'
+    patron += 'src="([^"]+)".*?'
+    patron += 'alt="([^"]+)".*?'
+    patron += '<div class="_audio">(.*?)/div.*?'
+    patron += 'label_year">([^ ]+) '
+    matches = scrapertools.find_multiple_matches(bloque, patron)
+    for scrapedurl, scrapedquality, scrapedthumbnail, scrapedtitle, scrapedaudio, scrapedyear in matches:
+        title = scrapedtitle + " (%s)" %scrapedyear
+        itemlist.append(Item(channel = item.channel,
+                             action = 'findvideos',
+                             contentTitle = scrapedtitle,
+                             fulltitle = scrapedtitle,
+                             infoLabels = {'year':scrapedyear},
+                             quality = scrapedquality,
+                             thumbnail = scrapedthumbnail,
+                             title = title,
+                             url = scrapedurl
                              ))
     tmdb.set_infoLabels(itemlist, True)
-    next_page = scrapertools.find_single_match(data,'tima>.*?href=(.*?) ><i')
+    next_page = scrapertools.find_single_match(data, "next'.*?href='([^']+)'")
     itemlist.append(Item(channel=item.channel, action="agregadas", title='Pagina Siguiente >>',
                          url=next_page.strip(),
                          viewmode="movie_with_plot"))
-
-    return itemlist
-
-
-def listaBuscar(item):
-    logger.info()
-    itemlist = []
-
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n", " ", data)
-    patron = 'class="row"> <a.*?="([^"]+).*?src="([^"]+).*?title="([^"]+).*?class="text-list">(.*?)</p>'
-
-    matches = scrapertools.find_multiple_matches(data, patron)
-
-    for url, thumbnail, title, sinopsis in matches:
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title + " ", fulltitle=title, url=url,
-                             thumbnail=thumbnail, show=title, plot=sinopsis))
 
     return itemlist
 
@@ -144,6 +113,16 @@ def findvideos(item):
         title = "%s [" + scrapedcalidad + "][" + scrapedidioma +"]"
         quality = scrapedcalidad
         language = scrapedidioma
+        if "pelisup.com" in scrapedurl:
+            scrapedurl = scrapedurl.replace("/v/","/api/source/")
+            post = urllib.urlencode({"r":item.url,"d":"www.pelisup.com"})
+            data1 = httptools.downloadpage(scrapedurl, post=post).data
+            json_data = jsontools.load(data1)
+            for dataj in json_data["data"]:
+                itemlist.append(
+                    item.clone(channel=item.channel, action="play", title=title + " - %s" %dataj["label"], fulltitle=item.title, url="https://www.pelisup.com" + dataj["file"],
+                         quality= quality, language=language, extra = item.thumbnail))
+            scrapedurl = "omina.farlante1"  # para ya no agregar al itemlist
         if not ("omina.farlante1" in scrapedurl or "404" in scrapedurl):
             itemlist.append(
                 item.clone(channel=item.channel, action="play", title=title, fulltitle=item.title, url=scrapedurl,
@@ -151,7 +130,7 @@ def findvideos(item):
     tmdb.set_infoLabels(itemlist, True)
     itemlist=servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Opción "Añadir esta película a la biblioteca de KODI"
-    if item.extra != "library":
+    if itemlist and item.contentChannel != "videolibrary":
         if config.get_videolibrary_support():
             itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
                                  action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,

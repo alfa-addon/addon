@@ -137,11 +137,11 @@ def peliculas(item):
     # logger.info(data)
 
     # img, title
-    patron  = '(?is)movie-img img-box.*?alt="([^"]+).*?'
-    patron += 'src="([^"]+).*?'
-    patron += 'href="([^"]+).*?'
-    patron += 'fechaestreno">([^<]+).*?'
-    patron += 'quality">([^<]+)'
+    patron  = '(?is)movie-img img-box.*?alt="([^"]+)".*?'
+    patron += 'src="([^"]+)".*?'
+    patron += 'href="([^"]+)".*?'
+    patron += 'fechaestreno">([^<]+)<.*?'
+    patron += 'quality">([^<]+)<'
 
     matches = scrapertools.find_multiple_matches(data, patron)
 
@@ -176,20 +176,19 @@ def genresYears(item):
     if item.title == "Estrenos":
         patron_todas = 'ESTRENOS</a>(.*?)</i> Géneros'
     else:
-        patron_todas = '(?is)genres falsescroll(.*?)</div> </aside'
+        patron_todas = '(?is)data-label="CATEGORIAS">(.*?)show-bigmenu'
         # logger.error(texto='***********uuuuuuu*****' + patron_todas)
 
     data = scrapertools.find_single_match(data, patron_todas)
     # logger.error(texto='***********uuuuuuu*****' + data)
-    patron = '<a href="([^"]+)">([^<]+)</a> <i>([^<]+)</i>'  # url, title, videos
+    patron = '<a href="([^"]+)".*?title="([^"]+)"'  # url, title
     # patron = '<a href="([^"]+)">([^<]+)</a>' # url, title
     matches = scrapertools.find_multiple_matches(data, patron)
 
-    for scrapedurl, scrapedtitle, videos_num in matches:
-        title = '%s (%s)' % (scrapedtitle, videos_num.replace('.', ','))
-
+    for scrapedurl, scrapedtitle in matches:
+        title = '%s' % (scrapedtitle)
+        title = title.replace("Peliculas de ","").replace(" Online","")
         itemlist.append(item.clone(title=title, url=scrapedurl, action="peliculas"))
-
     return itemlist
 
 

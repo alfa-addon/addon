@@ -2550,7 +2550,7 @@ msgid "Show option \"All Seasons\"."
 msgstr ""
 
 msgctxt "#60643"
-msgid "Do not combine the seasons of the series""
+msgid "Do not combine the seasons of the series"
 msgstr ""
 
 msgctxt "#60644"

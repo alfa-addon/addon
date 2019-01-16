@@ -244,8 +244,8 @@ def findvideos(item):
         url = scrapertools.find_single_match(new_data, "src='([^']+)'")
         url = get_url(url.replace('\\/', '/'))
         if url:
-            itemlist.append(Item(channel=item.channel, title ='%s'+title, url=url, action='play', quality=item.quality,
-                                 language=IDIOMAS[language], infoLabels=item.infoLabels))
+            itemlist.append(item.clone(title ='%s'+title, url=url, action='play',
+                                 language=IDIOMAS[language], text_color = ""))
     patron = "<a class='optn' href='([^']+)'.*?<img src='.*?>([^<]+)<.*?<img src='.*?>([^<]+)<"
     matches = scrapertools.find_multiple_matches(data, patron)
     for hidden_url, quality, language in matches:
@@ -258,10 +258,23 @@ def findvideos(item):
         url = get_url(url.replace('\\/', '/'))
         if url:
             itemlist.append(Item(channel=item.channel, title='%s'+title, url=url, action='play', quality=quality,
-                                 language=IDIOMAS[language], infoLabels=item.infoLabels))
+                                 language=IDIOMAS[language], infoLabels=item.infoLabels, text_color = ""))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     itemlist.sort(key=lambda it: (it.language, it.server, it.quality))
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
+    if itemlist:
+        if item.contentChannel != "videolibrary":
+            if config.get_videolibrary_support():
+                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                                     action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
+                                     contentTitle = item.contentTitle
+                                     ))
     return itemlist
 
 

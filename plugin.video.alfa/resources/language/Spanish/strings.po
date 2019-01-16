@@ -3682,7 +3682,7 @@ msgid "Reorder"
 msgstr "Reordenar"
 
 msgctxt "#70246"
-msgid "  - Lingua preferita"
+msgid "  - Preferred language"
 msgstr "  - Idioma preferido"
 
 msgctxt "#70247"

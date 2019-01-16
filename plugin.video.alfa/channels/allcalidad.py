@@ -198,17 +198,16 @@ def findvideos(item):
 
     autoplay.start(itemlist, item)
 
-    if itemlist:
+    if itemlist and item.contentChannel != "videolibrary":
         itemlist.append(Item(channel = item.channel))
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
                                    text_color="magenta"))
         # Opción "Añadir esta película a la biblioteca de KODI"
-        if item.extra != "library":
-            if config.get_videolibrary_support():
-                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
-                                     action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                     contentTitle = item.contentTitle
-                                     ))
+        if config.get_videolibrary_support():
+            itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                                 action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
+                                 contentTitle = item.contentTitle
+                                 ))
     return itemlist
 
 

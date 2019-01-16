@@ -10,12 +10,24 @@ from core import servertools
 from core import scrapertools
 from core.item import Item
 from platformcode import config, logger
+from channels import autoplay
+from channels import filtertools
+
+
+IDIOMAS = {'LAT': 'LAT','SUB': 'VOSE'}
+list_language = IDIOMAS.values()
+list_servers = ['directo', 'rapidvideo', 'streamango', 'yourupload', 'mailru', 'netutv', 'okru']
+list_quality = ['default']
+
 
 HOST = "https://animeflv.net/"
 
 
 def mainlist(item):
     logger.info()
+
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="novedades_episodios", title="Últimos episodios", url=HOST))
     itemlist.append(Item(channel=item.channel, action="novedades_anime", title="Últimos animes", url=HOST))
@@ -31,6 +43,9 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="search_section", title="    Estado", url=HOST + "browse",
                          extra="status"))
     itemlist = renumbertools.show_option(item.channel, itemlist)
+
+    autoplay.show_option(item.channel, itemlist)
+
     return itemlist
 
 
@@ -188,32 +203,38 @@ def episodios(item):
 
 def findvideos(item):
     logger.info()
+    from core import jsontools
     itemlist = []
     data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", httptools.downloadpage(item.url).data)
-    list_videos = scrapertools.find_multiple_matches(data, 'video\[\d\]\s=\s\'<iframe.+?src="([^"]+)"')
-    download_list = scrapertools.find_multiple_matches(data, 'video\[\d+\] = \'<iframe .*?src="(.*?)"')
-    for url in download_list:
-        data = httptools.downloadpage(url).data
-        if 'izanagi' in url:
-            new_url = url.replace('embed', 'check')
-            new_data = httptools.downloadpage(new_url).data
-            url = scrapertools.find_single_match(new_data, '"file":"(.*?)"')
-        else:
-            url = scrapertools.find_single_match(data, 'var redir = "(.*?)"')
-        if url != '':
-            url = url.replace("\\","")
-            itemlist.append(item.clone(title='%s', url=url, action='play'))
+    videos = scrapertools.find_single_match(data, 'var videos = (.*?);')
+    videos_json = jsontools.load(videos)
+    for video_lang in videos_json.items():
+        language = video_lang[0]
+        matches = scrapertools.find_multiple_matches(str(video_lang[1]), 'src="([^"]+)"')
+        for source in matches:
+            new_data = httptools.downloadpage(source).data
+            if 'redirector' in source:
+
+                url = scrapertools.find_single_match(new_data, 'window.location.href = "([^"]+)"')
+            elif 'embed' in source:
+                source = source.replace('embed', 'check')
+                new_data = httptools.downloadpage(source).data
+                json_data = jsontools.load(new_data)
+                try:
+                    url = json_data['file']
+                except:
+                    continue
+
+            itemlist.append(Item(channel=item.channel, url=url, title='%s', action='play', language=language))
+
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server)
+
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
+
     return itemlist
-
-
-def play(item):
-    logger.info()
-    itemlist = []
-    if item.video_urls:
-        for it in item.video_urls:
-            title = ".%s %sp [directo]" % (it[1].replace("video/", ""), it[0])
-            itemlist.append([title, it[2]])
-        return itemlist
-    else:
-        return [item]
