@@ -33,8 +33,8 @@ tgenero = {"Comedia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
 
 host = "http://www.animeshd.tv"
 
-__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'poseidonhd')
-__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'poseidonhd')
+__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'animeshd')
+__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'animeshd')
 
 
 IDIOMAS = {'Castellano':'CAST','Latino': 'LAT', 'Subtitulado': 'VOSE'}
@@ -215,16 +215,37 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = "<option value=(.*?) data-content=.*?width='16'> (.*?) <span class='text-muted'>"
+    logger.debug(data)
+    patron = "<option value=\"([^\"]+)\" data-content=.*?width='16'> (.*?) <span class='text-muted'>"
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, language in matches:
-        if 'jpg' in scrapedurl:
-            vip_data = httptools.downloadpage(scrapedurl, follow_redirects=False)
-            scrapedurl = vip_data.headers['location']
+        vip = False
+
         title = '%s [%s]'
-        itemlist.append(item.clone(title=title, url=scrapedurl.strip(), action='play',
-                        language=IDIOMAS[language]))
+
+        if 'pelisplus.net' in scrapedurl:
+            referer = scrapedurl
+            post = {'r':item.url, 'd': 'www.pelisplus.net'}
+            post = urllib.urlencode(post)
+            scrapedurl = scrapedurl.replace('/v/', '/api/source/')
+            url_data = httptools.downloadpage(scrapedurl, post=post, headers={'Referer':referer}).data
+            patron = '"file":"([^"]+)","label":"([^"]+)"'
+            matches = re.compile(patron, re.DOTALL).findall(url_data)
+            for url, quality in matches:
+                url = 'https://www.pelisplus.net' + url.replace('\/', '/')
+                itemlist.append(
+                    Item(channel=item.channel, title=title, url=url, action='play', language=IDIOMAS[language],
+                         quality=quality, infoLabels=item.infoLabels, server='directo'))
+            vip = True
+        elif 'server' in scrapedurl:
+            new_data = get_source(scrapedurl)
+            scrapedurl = scrapertools.find_single_match(new_data, '<iframe src="([^"]+)"')
+
+
+        if not vip:
+            itemlist.append(item.clone(title=title, url=scrapedurl.strip(), action='play',
+                            language=IDIOMAS[language]))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % (x.server.capitalize(), x.language))
 

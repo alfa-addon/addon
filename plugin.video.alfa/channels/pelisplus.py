@@ -247,11 +247,11 @@ def findvideos(item):
                          quality=quality, infoLabels=item.infoLabels))
 
         else:
-            if not 'vidoza' in video_url:
+            if not 'vidoza' in video_url and not 'pelishd' in video_url:
                 url_data = get_source(video_url)
 
 
-        if 'vidoza' not in video_url:
+        if 'vidoza' not in video_url and not 'pelishd' in video_url:
             url = scrapertools.find_single_match(url_data, '<iframe src="([^"]+)"')
         else:
             url = video_url
@@ -262,11 +262,17 @@ def findvideos(item):
                 vip_data = httptools.downloadpage(url, headers={'Referer':item.url}, follow_redirects=False)
                 try:
                     dejuiced = generictools.dejuice(vip_data.data)
-                    url = scrapertools.find_single_match(dejuiced, '"file":"([^"]+)"')
+                    urls = scrapertools.find_multiple_matches(dejuiced, '"file":"([^"]+)","label":"([^"]+)"')
+                    for new_url, quality in urls:
+                        new_url = new_url.replace('unicorn', 'dragon')
+                        new_url = new_url + '|referer:%s' % url
+                        itemlist.append(
+                            Item(channel=item.channel, title='%s' + title, url=new_url, action='play',
+                                 language=IDIOMAS[language], quality=quality, infoLabels=item.infoLabels))
                 except:
                     pass
 
-        if url != '' and 'rekovers' not in url:
+        if url != '' and 'rekovers' not in url and not 'pelishd' in url:
             itemlist.append(Item(channel=item.channel, title='%s'+title, url=url, action='play', language=IDIOMAS[language],
             infoLabels=item.infoLabels))
 

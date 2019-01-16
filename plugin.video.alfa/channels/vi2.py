@@ -86,7 +86,8 @@ def sub_menu(item):
     logger.info()
 
     itemlist = []
-    url = host + '/%s/es/ajax/1/' % item.type
+    url = host + '/%s/es/' % item.type
+    search_url = host + '/search/'
     link_type = item.title.lower()
     if link_type == 'streaming':
         link_type = 'flash'
@@ -118,8 +119,8 @@ def sub_menu(item):
                          url=url + '?q=%s+subtitulado' % link_type, action='list_all',
                          thumbnail=get_thumb('vose', auto=True), type=item.type, send_lang='VOSE',
                          link_type=link_type))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=url + '?q=',
-                         thumbnail=get_thumb("search", auto=True), type=item.type, link_type=link_type))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=search_url + '?q=',
+                         thumbnail=get_thumb("search", auto=True), type='search', link_type=link_type))
 
     return itemlist
 
@@ -144,7 +145,7 @@ def section(item):
 
     for scrapedurl, scrapedtitle in matches:
         title = scrapedtitle
-        url = host+scrapedurl.replace('/?','/ajax/1/?')
+        url = host+scrapedurl
         if (item.title=='Generos' and title.lower() not in excluded and not title.isdigit()) or (item.title=='Por Año' and title.isdigit()):
             itemlist.append(Item(channel=item.channel, url=url, title=title, action='list_all',  type=item.type))
 
@@ -158,11 +159,8 @@ def list_all(item):
     listed =[]
     quality=''
     infoLabels = {}
-    json_data= jsontools.load(get_source(item.url))
-    data = json_data['render']
-    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    data= get_source(item.url, referer='%s/%s/es/' %(host, item.type))
 
-    #if item.type ==  'peliculas':
     patron = '<img class="cover".*?src="([^"]+)" data-id="\d+" '
     patron +='alt="Ver ([^\(]+)(.*?)">'
     patron += '<div class="mdl-card__menu"><a class="clean-link" href="([^"]+)">'
@@ -224,7 +222,7 @@ def list_all(item):
                             infoLabels = infoLabels
                             )
 
-            if item.type == 'peliculas' or item.type == 'all':
+            if item.type == 'peliculas' or item.type == 'all' or item.type == 'search':
                 new_item.contentTitle = scrapedtitle
             else:
                 scrapedtitle = scrapedtitle.split(' - ')
@@ -237,12 +235,12 @@ def list_all(item):
     itemlist.sort(key=lambda it: it.title)
     #  Paginación
 
-    if json_data['next']:
-        actual_page = scrapertools.find_single_match(item.url, 'ajax/(\d+)/')
-        next_page =int(actual_page) + 1
-        url_next_page = item.url.replace('ajax/%s' % actual_page, 'ajax/%s' % next_page)
-        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, type=item.type,
-                                   action='list_all', send_lang=item.send_lang))
+    # if json_data['next']:
+    #     actual_page = scrapertools.find_single_match(item.url, 'ajax/(\d+)/')
+    #     next_page =int(actual_page) + 1
+    #     url_next_page = item.url.replace('ajax/%s' % actual_page, 'ajax/%s' % next_page)
+    #     itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, type=item.type,
+    #                                action='list_all', send_lang=item.send_lang))
 
     return itemlist
 
@@ -304,7 +302,7 @@ def findvideos(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = item.url + texto
+    item.url = '%spelicula+%s+%s&o=2' % (item.url, texto, item.link_type)
 
     if texto != '':
         return list_all(item)
