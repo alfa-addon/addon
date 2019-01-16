@@ -7,7 +7,6 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-from core import tmdb
 
 host = 'http://www.perfectgirls.net'
 
@@ -17,7 +16,6 @@ def mainlist(item):
     itemlist = []
     itemlist.append( Item(channel=item.channel, title="Ultimos" , action="peliculas", url=host))
     itemlist.append( Item(channel=item.channel, title="Top" , action="peliculas", url=host + "/top/3days/"))
-    
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -47,7 +45,8 @@ def categorias(item):
         scrapedplot = ""
         scrapedthumbnail = ""
         url = urlparse.urljoin(item.url,scrapedurl) + "/1"
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=url , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=url,
+                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
@@ -61,24 +60,21 @@ def peliculas(item):
     patron  += '<time>(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     scrapertools.printMatches(matches)
-    for scrapedurl,scrapedtitle,scrapedthumbnail,time in matches:
+    for scrapedurl,scrapedtitle,scrapedthumbnail,duracion in matches:
         plot = ""
-        contentTitle = scrapedtitle
-        scrapedhd = scrapertools.find_single_match(time, '<div class="hd">([^"]+)</div>')
-        if scrapedhd == 'HD':
-            time = scrapertools.find_single_match(time, '([^"]+)</time>')
-            title = "[COLOR yellow]" + time + "[/COLOR] " + "[COLOR red]" + scrapedhd  + "[/COLOR]  " + scrapedtitle
-        else:
-            time = scrapertools.find_single_match(time, '([^"]+)</time>')
+        time = scrapertools.find_single_match(duracion, '([^"]+)</time>')
+        if not 'HD' in duracion :
             title = "[COLOR yellow]" + time + "[/COLOR] " + scrapedtitle
+        else:
+            title = "[COLOR yellow]" + time + "[/COLOR] " + "[COLOR red]" + "HD" + "[/COLOR]  " + scrapedtitle
         scrapedthumbnail = "http:" + scrapedthumbnail
         url = urlparse.urljoin(item.url,scrapedurl)
-        year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=scrapedthumbnail, plot=plot, contentTitle = contentTitle, infoLabels={'year':year} ))
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=scrapedthumbnail,
+                              plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<a class="btn_wrapper__btn" href="([^"]+)">Next</a></li>')
     if next_page:
         next_page = urlparse.urljoin(item.url, next_page)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title="Página Siguiente >>" , text_color="blue", url=next_page ))
+        itemlist.append(item.clone(action="peliculas", title="Página Siguiente >>", text_color="blue", url=next_page ))
     return itemlist
 
 
@@ -89,6 +85,6 @@ def play(item):
     patron  = '<source src="([^"]+)" res="\d+" label="([^"]+)" type="video/mp4" default/>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle  in matches:
-        itemlist.append(item.clone(action="play", title=scrapedtitle, fulltitle = item.title, url=scrapedurl))
+        itemlist.append(item.clone(action="play", title=scrapedtitle, url=scrapedurl))
     return itemlist
 

@@ -7,20 +7,16 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-from core import tmdb
-from core import jsontools
-
 
 host = 'https://www.camwhoresbay.com'
 
-# EN CATALOGO Y BUSQUEDA LA PAGINACION FUNCIONA CON UN AJAX 
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="peliculas", url=host + "/latest-updates/"))
-    itemlist.append( Item(channel=item.channel, title="Mejor valorados" , action="peliculas", url=host + "/top-rated/"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="peliculas", url=host + "/most-popular/"))
+    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/latest-updates/"))
+    itemlist.append( Item(channel=item.channel, title="Mejor valorados" , action="lista", url=host + "/top-rated/"))
+    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/most-popular/"))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -28,10 +24,11 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = host + "/search/%s/" % texto
+    item.url = "%s/search/%s/" % (host, texto.replace("+", "-"))
+    item.extra = texto
     try:
-        return peliculas(item)
+        return lista(item)
+    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
     except:
         import sys
         for line in sys.exc_info():
@@ -51,12 +48,12 @@ def categorias(item):
     for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad  in matches:
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
         scrapedplot = ""
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
-def peliculas(item):
+def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -70,14 +67,31 @@ def peliculas(item):
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        year = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                              contentTitle = title, infoLabels={'year':year} ))
-    next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
-    if next_page:
-        next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title="Página Siguiente >>", text_color="blue",
-                              url=next_page ) )
+                              contentTitle = scrapedtitle, fanart=scrapedthumbnail))
+    if item.extra:
+       next_page = scrapertools.find_single_match(data, '<li class="next">.*?from_videos\+from_albums:(\d+)')
+       if next_page:
+           if "from_videos=" in item.url:
+               next_page = re.sub(r'&from_videos=(\d+)', '&from_videos=%s' % next_page, item.url)
+           else:
+               next_page = "%s?mode=async&function=get_block&block_id=list_videos_videos_list_search_result" \
+                           "&q=%s&category_ids=&sort_by=post_date&from_videos=%s" % (item.url, item.extra, next_page)
+           itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page))
+    else:
+        next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
+        if next_page and not next_page.startswith("#"):
+            next_page = urlparse.urljoin(item.url,next_page)
+            itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
+        else:
+            next_page = scrapertools.find_single_match(data, '<li class="next">.*?from:(\d+)')
+            if next_page:
+                if "from" in item.url:
+                    next_page = re.sub(r'&from=(\d+)', '&from=%s' % next_page, item.url)
+                else:
+                    next_page = "%s?mode=async&function=get_block&block_id=list_videos_common_videos_list&sort_by=post_date&from=%s" % (
+                         item.url, next_page)
+                itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page))
     return itemlist
 
 
@@ -94,7 +108,7 @@ def play(item):
         scrapedurl = scrapertools.find_single_match(data, 'video_url: \'([^\']+)\'')
 
     itemlist.append(Item(channel=item.channel, action="play", title=scrapedurl, fulltitle=item.title, url=scrapedurl,
-                        thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
+                        thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo"))
     return itemlist
 
 

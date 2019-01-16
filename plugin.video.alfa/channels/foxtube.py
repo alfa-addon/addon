@@ -7,15 +7,13 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-from core import tmdb
-from core import jsontools
 
 host = 'http://es.foxtube.com'
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="peliculas", url=host))
+    itemlist.append( Item(channel=item.channel, title="Ultimos" , action="lista", url=host))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -26,7 +24,7 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     item.url = host + "/buscador/%s" % texto
     try:
-        return peliculas(item)
+        return lista(item)
     except:
         import sys
         for line in sys.exc_info():
@@ -45,29 +43,37 @@ def categorias(item):
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
-        scrapedurl = host + scrapedurl
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        scrapedurl = urlparse.urljoin(item.url,scrapedurl)
+        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
+                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
-def peliculas(item):
+def lista(item):
     logger.info()
     itemlist = []
     data = scrapertools.cachePage(item.url)
-    patron  = '<a class="thumb tco1" href="([^"]+)">.*?src="([^"]+)".*?alt="([^"]+)".*?<i class="m tc2">(.*?)</i>'
+    patron = '<a class="thumb tco1" href="([^"]+)">.*?'
+    patron += 'src="([^"]+)".*?'
+    patron += 'alt="([^"]+)".*?'
+    patron += '<span class="t">(.*?)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,duracion  in matches:
-        url = host + scrapedurl
-        title = "[COLOR yellow]" + duracion + "[/COLOR] " + scrapedtitle
-        contentTitle = title
+        url = urlparse.urljoin(item.url,scrapedurl)
+        contentTitle = scrapedtitle
+        time = scrapertools.find_single_match(duracion, '<i class="m tc2">([^"]+)</i>')
+        if not 'HD' in duracion :
+            title = "[COLOR yellow]" + time + "[/COLOR] " + scrapedtitle
+        else:
+            title = "[COLOR yellow]" + time + "[/COLOR] " + "[COLOR red]" + "HD" + "[/COLOR]  " + scrapedtitle
         thumbnail = scrapedthumbnail + "|Referer=%s" %host
         plot = ""
-        year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, plot=plot, contentTitle = contentTitle, infoLabels={'year':year} ))
-	next_page_url = scrapertools.find_single_match(data,'<a class="bgco2 tco3" rel="next" href="([^"]+)">&gt</a>')
-    if next_page_url!="":
-        next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
+                               plot=plot, contentTitle = contentTitle))
+	next_page = scrapertools.find_single_match(data,'<a class="bgco2 tco3" rel="next" href="([^"]+)">&gt</a>')
+    if next_page!="":
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(item.clone(action="lista" , title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 
@@ -76,7 +82,7 @@ def play(item):
     itemlist = []
     url = scrapertools.find_single_match(scrapertools.cachePage(item.url),'<iframe src="([^"]+)"')
     data = httptools.downloadpage(url).data
-    patron  = 'html5player.setVideoUrlHigh\\(\'([^\']+)\''
+    patron  = 'html5player.setVideoHLS\\(\'([^\']+)\''
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:
         scrapedurl = scrapedurl.replace("\/", "/")
