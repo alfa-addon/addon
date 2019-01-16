@@ -7,9 +7,6 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-from core import tmdb
-from core import jsontools
-
 
 host = 'http://www.absoluporn.es'
 
@@ -18,10 +15,10 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="peliculas", url=host + "/wall-date-1.html"))
-    itemlist.append( Item(channel=item.channel, title="Mas valorados" , action="peliculas", url=host + "/wall-note-1.html"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="peliculas", url=host + "/wall-main-1.html"))
-    itemlist.append( Item(channel=item.channel, title="Mas largos" , action="peliculas", url=host + "/wall-time-1.html"))
+    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/wall-date-1.html"))
+    itemlist.append( Item(channel=item.channel, title="Mas valorados" , action="lista", url=host + "/wall-note-1.html"))
+    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/wall-main-1.html"))
+    itemlist.append( Item(channel=item.channel, title="Mas largos" , action="lista", url=host + "/wall-time-1.html"))
 
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
@@ -33,7 +30,7 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     item.url = host + "/search-%s-1.html" % texto
     try:
-        return peliculas(item)
+        return lista(item)
     except:
         import sys
         for line in sys.exc_info():
@@ -52,12 +49,12 @@ def categorias(item):
         scrapedthumbnail = ""
         scrapedurl = scrapedurl.replace(".html", "_date.html")
         scrapedurl = host +"/" + scrapedurl
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
     return itemlist
 
 
-def peliculas(item):
+def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -72,14 +69,13 @@ def peliculas(item):
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        year = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                              contentTitle = title, infoLabels={'year':year} ))
+                              contentTitle = scrapedtitle))
     next_page = scrapertools.find_single_match(data, '<span class="text16">\d+</span> <a href="..([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title="Página Siguiente >>", text_color="blue", 
-                              url=next_page ) )
+        itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
+                              url=next_page) )
     return itemlist
 
 
