@@ -98,13 +98,11 @@ def list_all(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
-        logger.info(scrapedtitle)
         new_item = Item(channel=item.channel, title=scrapedtitle, url=scrapedurl,
                         thumbnail=scrapedthumbnail)
         if scrapedtitle.startswith("Pelicula"):
             new_item.action = 'findvideos'
             new_item.contentTitle = scrapedtitle
-
         else:
             new_item.contentSerieName=scrapedtitle
             new_item.action = 'episodios'
@@ -126,32 +124,27 @@ def episodios(item):
     logger.info()
     itemlist = []
     data = get_source(item.url)
+    
     plot_regex = '(<span class="clms"><b>Nombre.*?)<\/div>'
     plot_match = re.compile(plot_regex, re.DOTALL).findall(data)
     if plot_match:
         plot = scrapertools.htmlclean(plot_match[0].replace('<br />', '\n'))
-
+    
     data = scrapertools.find_single_match(data, '<ul class="lcp_catlist".*?</ul>')
-    patron = '<li.*?<a href="(.*?)" title="(.*?)">.*?Capitulo (\d+)</a>'
-
+    patron = '<li.*?<a href="(.*?)" title="(.*?)">.*?(\d*?)<\/a>'
+    
     matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
 
     for scrapedurl, scrapedtitle, scrapedep in matches:
-        url = scrapedurl
+        url = scrapedurl        
         contentEpisodeNumber = scrapedep
 
         infoLabels['season'] = 1
         infoLabels['episode'] = contentEpisodeNumber
-
-        if scrapedtitle != '':
-            title = '%sx%s - %s' % ('1',scrapedep, scrapedtitle)
-        else:
-            title = 'episodio %s' % scrapedep
-
         infoLabels = item.infoLabels
 
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, plot=plot,
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=url, plot=plot,
                              contentEpisodeNumber=contentEpisodeNumber, type='episode', infoLabels=infoLabels))
 
 
