@@ -1,0 +1,12 @@
+{
+  "id": "mixtoon",
+  "name": "MixToon",
+  "active": true,
+  "adult": false,
+  "language": ["cast"],
+  "thumbnail": "http://i.imgur.com/s6CBxlw.png",
+  "banner": "http://i.imgur.com/c1YTgNT.png",
+  "categories": [
+    "tvshow"
+  ]
+}
