@@ -16,7 +16,7 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'https://www2.doramasmp4.com/'
+host = 'https://www3.doramasmp4.com/'
 
 IDIOMAS = {'sub': 'VOSE', 'VO': 'VO'}
 list_language = IDIOMAS.values()
@@ -191,7 +191,7 @@ def findvideos(item):
             video_data = httptools.downloadpage(video_url, headers=headers).data
             url = scrapertools.find_single_match(video_data, "'file':'([^']+)'")
         else:
-            video_url = 'https://www2.doramasmp4.com/api/redirect.php?token=%s' % token
+            video_url = 'https://www3.doramasmp4.com/api/redirect.php?token=%s' % token
             video_data = httptools.downloadpage(video_url, headers=headers, follow_redirects=False).headers
             url = scrapertools.find_single_match(video_data['location'], '\d+@@@(.*?)@@@')
 
