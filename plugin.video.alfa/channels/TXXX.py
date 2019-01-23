@@ -2,7 +2,6 @@
 #------------------------------------------------------------
 import urlparse,urllib2,urllib,re
 import os, sys
-
 from core import scrapertools
 from core import servertools
 from core.item import Item

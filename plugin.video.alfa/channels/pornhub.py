@@ -14,7 +14,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="peliculas", title="Novedades", fanart=item.fanart,
                          url="http://es.pornhub.com/video?o=cm"))
     itemlist.append(Item(channel=item.channel, action="categorias", title="Categorias", fanart=item.fanart,
-                         url="http://es.pornhub.com/categories?o=al"))
+                         url="http://es.pornhub.com/categories"))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar", fanart=item.fanart,
                          url="http://es.pornhub.com/video/search?search=%s&o=mr"))
     return itemlist
@@ -38,19 +38,18 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, '<div id="categoriesStraightImages">(.*?)</ul>')
-    
-    
     patron = '<li class="cat_pic" data-category=".*?'
     patron += '<a href="([^"]+)".*?'
-    patron += 'src="([^"]+)".*?'
-    patron += 'alt="([^"]+)"'
+    patron += 'data-thumb_url="(.*?)".*?'
+    patron += 'alt="([^"]+)".*?'
+    patron += '<var>(.*?)</var>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtitle, cantidad in matches:
         if "?" in scrapedurl:
             url = urlparse.urljoin(item.url, scrapedurl + "&o=cm")
         else:
             url = urlparse.urljoin(item.url, scrapedurl + "?o=cm")
+        scrapedtitle = scrapedtitle + " (" + cantidad + ")"
         itemlist.append(Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=url, fanart=item.fanart,
                              thumbnail=scrapedthumbnail))
     itemlist.sort(key=lambda x: x.title)
@@ -64,10 +63,10 @@ def peliculas(item):
     videodata = scrapertools.find_single_match(data, 'videos search-video-thumbs">(.*?)<div class="reset"></div>')
     patron = '<div class="phimage">.*?'
     patron += '<a href="([^"]+)" title="([^"]+).*?'
-    patron += '<var class="duration">([^<]+)</var>(.*?)</div>.*?'
-    patron += 'data-mediumthumb="([^"]+)"'
+    patron += 'data-mediumthumb="([^"]+)".*?'
+    patron += '<var class="duration">([^<]+)</var>(.*?)</div>'
     matches = re.compile(patron, re.DOTALL).findall(videodata)
-    for url, scrapedtitle, duration, scrapedhd, thumbnail in matches:
+    for url, scrapedtitle, thumbnail, duration, scrapedhd in matches:
         title =  "(" + duration + ") " + scrapedtitle.replace("&amp;amp;", "&amp;")
         scrapedhd = scrapertools.find_single_match(scrapedhd, '<span class="hd-thumbnail">(.*?)</span>')
         if scrapedhd == 'HD':
@@ -90,7 +89,7 @@ def play(item):
     logger.info()
     itemlist = []
     data = scrapertools.cachePage(item.url)
-    patron  = '"defaultQuality":true,"format":"","quality":"\d+","videoUrl":"(.*?)"'
+    patron  = '"defaultQuality":true,"format":"mp4","quality":"\d+","videoUrl":"(.*?)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl  in matches:
         url = scrapedurl.replace("\/", "/")
