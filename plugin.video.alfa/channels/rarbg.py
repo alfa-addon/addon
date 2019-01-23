@@ -214,7 +214,7 @@ def listado(item):
             return itemlist                                                         #Salimos
         
         #logger.debug("PATRON: " + patron)
-        logger.debug(matches)
+        #logger.debug(matches)
         #logger.debug(data)
         
         #Buscamos la próxima y la última página
@@ -543,6 +543,7 @@ def play(item):                                 #Permite preparar la descarga de
     if status:
         return itemlist                                                 #IP bloqueada
     if not scrapertools.find_single_match(data, patron):
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: PLAY: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
         return itemlist
     item.url = urlparse.urljoin(host, scrapertools.find_single_match(data, patron))
     
@@ -756,7 +757,7 @@ def episodios(item):
                 item_local.infoLabels['episodio_titulo'] = 'al 99'
                 item_local.title = '%sx%s al 99 - Season Pack' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
             else:
-                item_local.title = '%sx%s - %s' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2), scrapedtitle)
+                item_local.title = '%sx%s - ' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
 
             if season_display > 0:
                 if item_local.contentSeason > season_display:
@@ -765,7 +766,7 @@ def episodios(item):
                     break
             
             itemlist.append(item_local.clone())
-            
+
             #logger.debug(item_local)
             
     if len(itemlist) > 1:
@@ -794,6 +795,8 @@ def check_blocked_IP(data, itemlist):
         logger.error("ERROR 99: La IP ha sido bloqueada por la Web" + " / DATA: " + data)
         itemlist.append(Item(channel=channel, url=host, title="[COLOR yellow]La IP ha sido bloqueada por la Web.[/COLOR]", folder=False, thumbnail=thumb_separador))
         itemlist.append(Item(channel=channel, url=host, title="[COLOR yellow]Fuerce la renovación de la IP en el Router[/COLOR]", folder=False, thumbnail=thumb_separador))
+        from platformcode import platformtools
+        platformtools.dialog_notification("IP bloqueada", "RARBG: Reiniciar ROUTER")
     
         return (True, itemlist)
     return (False, itemlist)
