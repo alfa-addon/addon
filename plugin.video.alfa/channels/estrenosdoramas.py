@@ -15,10 +15,12 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
+import ast
 
 host = 'https://www.estrenosdoramas.net/'
 
 IDIOMAS = {'Latino': 'LAT', 'Vo':'VO', 'Vose': 'VOSE'}
+IDIOMA = "no filtrar"
 list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['openload', 'streamango', 'netutv', 'okru', 'mp4upload']
@@ -48,7 +50,7 @@ def mainlist(item):
     
     itemlist.append(Item(channel=item.channel, title="Últimos capítulos", action="list_all",
                          url=host + 'category/ultimos-capitulos-online',
-                         thumbnail=get_thumb('doramas', auto=True), type='dorama'))
+                         thumbnail=get_thumb('doramas', auto=True), type='movie'))
 
     itemlist.append(Item(channel=item.channel, title="Por Genero", action="menu_generos",
                          url=host,
@@ -88,7 +90,6 @@ def menu_generos(item):
 
 def list_all(item):
     logger.info()
-
     itemlist = []
 
     data = get_source(item.url)
@@ -100,7 +101,7 @@ def list_all(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         new_item = Item(channel=item.channel, title=scrapedtitle, url=scrapedurl,
                         thumbnail=scrapedthumbnail)
-        if scrapedtitle.startswith("Pelicula"):
+        if scrapedtitle.startswith("Pelicula") or item.type == "movie":
             new_item.action = 'findvideos'
             new_item.contentTitle = scrapedtitle
         else:
@@ -137,17 +138,24 @@ def episodios(item):
     infoLabels = item.infoLabels
 
     for scrapedurl, scrapedtitle, scrapedep in matches:
+        if item.url == scrapedurl:
+            continue
         url = scrapedurl        
         contentEpisodeNumber = scrapedep
+        if contentEpisodeNumber == "":
+            title = '1xEE - ' + scrapedtitle
+        else:
+            title = '1x' + ("0" + contentEpisodeNumber)[-2:] + " - " + scrapedtitle
+            # title = ("0" + contentEpisodeNumber)[-2:]
 
         infoLabels['season'] = 1
         infoLabels['episode'] = contentEpisodeNumber
         infoLabels = item.infoLabels
 
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=url, plot=plot,
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, plot=plot,
                              contentEpisodeNumber=contentEpisodeNumber, type='episode', infoLabels=infoLabels))
 
-
+    itemlist.sort(key=lambda x: x.title)
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
@@ -192,7 +200,7 @@ def findvideos(item):
         if scrapedurl.find("https://repro") != 0:
             logger.info("Caso 0: url externa")
             url = scrapedurl
-            itemlist.append(Item(channel=item.channel, title=option, url=url, action='play'))
+            itemlist.append(Item(channel=item.channel, title=option, url=url, action='play', language=IDIOMA))
         elif scrapedurl.find("pi76823.php") > 0:
             logger.info("Caso 1")
             source_data = get_source(scrapedurl)
@@ -204,7 +212,7 @@ def findvideos(item):
                                                        source_id + '&tk=' + source_tk, source_headers)
                 if source_result.code == 200:
                     source_json = jsontools.load(source_result.data)
-                    itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play'))
+                    itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play', language=IDIOMA))
         elif scrapedurl.find("pi7.php") > 0:
             logger.info("Caso 2")
             source_data = get_source(scrapedurl)
@@ -216,7 +224,7 @@ def findvideos(item):
                                                        source_id + '&tk=' + source_tk, source_headers)
                 if source_result.code == 200:
                     source_json = jsontools.load(source_result.data)
-                    itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play'))
+                    itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play', language=IDIOMA))
         elif scrapedurl.find("reproducir120.php") > 0:
             logger.info("Caso 3")
             source_data = get_source(scrapedurl)
@@ -232,7 +240,10 @@ def findvideos(item):
                                                        videoidn + '&tk=' + tokensn, source_headers)
                 if source_result.code == 200:
                     source_json = jsontools.load(source_result.data)
-                    itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play'))
+                    urlremoto_regex = "file:'(.*?)'"
+                    urlremoto_matches = re.compile(urlremoto_regex, re.DOTALL).findall(source_json['urlremoto'])
+                    if len(urlremoto_matches) == 1:
+                        itemlist.append(Item(channel=item.channel, title=option, url=urlremoto_matches[0], action='play', language=IDIOMA))
         elif scrapedurl.find("reproducir14.php") > 0:
             logger.info("Caso 4")
             source_data = get_source(scrapedurl)
@@ -250,7 +261,7 @@ def findvideos(item):
                                                        videoidn + '&tk=' + tokensn, source_headers)
                 if source_result.code == 200:
                     source_json = jsontools.load(source_result.data)
-                    itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play'))
+                    itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play', language=IDIOMA))
         else:
             logger.info("Caso nuevo")      
 
