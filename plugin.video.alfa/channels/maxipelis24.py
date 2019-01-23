@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import re
-import urlparse
-import urllib
 
+from channels import autoplay
+from channels import filtertools
 from core import tmdb
 from core import servertools
 from core import httptools
@@ -14,10 +14,15 @@ from channelselector import get_thumb
 
 host = "https://maxipelis24.tv"
 
+list_language = []
+list_quality = []
+list_servers = ['rapidvideo', 'vidoza', 'openload', 'streamango']
+
 
 def mainlist(item):
     logger.info()
     itemlist = []
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, title="Peliculas",
                          action="movies", url=host, page=0, thumbnail=get_thumb('movies', auto=True)))
@@ -30,6 +35,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search",
                          url=host + "?s=", page=0, thumbnail=get_thumb("search", auto=True)))
 
+    autoplay.show_option(item.channel, itemlist)
     return itemlist
 
 
@@ -110,21 +116,9 @@ def findvideos(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     for link in matches:
         if 'maxipelis24.tv/hideload/?' in link:
-            if 'id=' in link:
-                id_type = 'id'
-                ir_type = 'ir'
-            elif 'ud=' in link:
-                id_type = 'ud'
-                ir_type = 'ur'
-            elif 'od=' in link:
-                id_type = 'od'
-                ir_type = 'or'
-            elif 'ad=' in link:
-                id_type = 'ad'
-                ir_type = 'ar'
-            elif 'ed=' in link:
-                id_type = 'ed'
-                ir_type = 'er'
+            id_letter = scrapertools.find_single_match(link, '?(\w)d')
+            id_type = '%sd' % id_letter
+            ir_type = '%sr' % id_letter
             id = scrapertools.find_single_match(link, '%s=(.*)' % id_type)
             base_link = scrapertools.find_single_match(
                 link, '(.*?)%s=' % id_type)
@@ -155,4 +149,12 @@ def findvideos(item):
                                  action="add_pelicula_to_library", url=item.url, thumbnail=item.thumbnail,
                                  contentTitle=item.contentTitle
                                  ))
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
+
     return itemlist
