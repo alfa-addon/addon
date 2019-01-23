@@ -279,8 +279,8 @@ def post_tmdb_listado(item, itemlist):
     if not item.category_new:
         item.category_new = ''
 
-    for item_local in itemlist:                                 #Recorremos el Itenlist generado por el canal
-        title = item_local.title
+    for item_local in itemlist:                                 #Recorremos el Itemlist generado por el canal
+        title = re.sub(r'online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title, flags=re.IGNORECASE).strip()
         #logger.debug(item_local)
         
         item_local.last_page = 0
@@ -375,6 +375,7 @@ def post_tmdb_listado(item, itemlist):
                 item_local.contentSerieName = item_local.from_title
             if item_local.contentType == 'season':
                 item_local.title = item_local.from_title
+            title = re.sub(r'online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title, flags=re.IGNORECASE).strip()
         
         #Limpiamos calidad de títulos originales que se hayan podido colar
         if item_local.infoLabels['originaltitle'].lower() in item_local.quality.lower():
@@ -774,6 +775,7 @@ def post_tmdb_episodios(item, itemlist):
         del item_local.totalItems
         item_local.unify = 'xyz'
         del item_local.unify
+        item_local.title = re.sub(r'online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title, flags=re.IGNORECASE).strip()
         
         #logger.debug(item_local)
         
@@ -1017,9 +1019,11 @@ def post_tmdb_findvideos(item, itemlist):
     # Saber si estamos en una ventana emergente lanzada desde una viñeta del menú principal,
     # con la función "play_from_library"
     item.unify = False
+    Window_IsMedia = False
     try:
         import xbmc
         if xbmc.getCondVisibility('Window.IsMedia') == 1:
+            Window_IsMedia = True
             item.unify = config.get_setting("unify")
     except:
         item.unify = config.get_setting("unify")
@@ -1095,7 +1099,7 @@ def post_tmdb_findvideos(item, itemlist):
     tiempo = 0
     if item.infoLabels['duration']:
         try:
-            if config.get_platform(True)['num_version'] < 18:
+            if config.get_platform(True)['num_version'] < 18 or not Window_IsMedia:
                 tiempo = item.infoLabels['duration']
             elif xbmc.getCondVisibility('Window.IsMedia') == 1:
                 item.quality = re.sub(r'\s?\[\d+:\d+\ h]', '', item.quality)
