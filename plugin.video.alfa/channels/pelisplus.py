@@ -148,7 +148,7 @@ def seasons(item):
     itemlist=[]
 
     data=get_source(item.url)
-    patron='data-toggle="tab">TEMPORADA.?(\d+)</a>'
+    patron='data-toggle="tab">TEMPORADA\s?(\d+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     infoLabels = item.infoLabels

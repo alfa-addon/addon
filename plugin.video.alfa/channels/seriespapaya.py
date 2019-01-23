@@ -216,9 +216,11 @@ def play(item):
     logger.info("play: %s" % item.url)
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    item.url = scrapertools.find_single_match(data, "location.href='([^']+)")
-    item.server = ""
+    new_url = scrapertools.find_single_match(data, "location.href='([^']+)")
+    if new_url != '':
+        item.url = new_url
     itemlist.append(item.clone())
     itemlist = servertools.get_servers_itemlist(itemlist)
     itemlist[0].thumbnail=item.contentThumbnail
     return itemlist
+
