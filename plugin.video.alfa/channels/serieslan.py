@@ -37,10 +37,43 @@ def mainlist(item):
         Item(channel=item.channel, action="lista", title="Live Action", contentSerieName="Live Action", url=host+"/liveaction", thumbnail=thumb_series, page=0))
     #itemlist.append(
     #    Item(channel=item.channel, action="peliculas", title="Películas", contentSerieName="Películas", url=host+"/peliculas", thumbnail=thumb_series, page=0))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar",
+                         thumbnail=thumb_series))
     itemlist = renumbertools.show_option(item.channel, itemlist)
     autoplay.show_option(item.channel, itemlist)
     return itemlist
 
+def search(item, texto):
+    logger.info()
+    #texto = texto.replace(" ", "+")
+    item.url = host +"/buscar.php"
+    item.texto = texto
+    if texto != '':
+        return sub_search(item)
+    else:
+        return []
+
+def sub_search(item):
+    logger.info()
+    itemlist = []
+    post = "k=" + item.texto
+    results = httptools.downloadpage(item.url, post=post).data
+    results = eval(results)
+    logger.info(results)
+    for result in results:
+        scrapedthumbnail = host + "/tb/" + result[0] + ".jpg"
+        scrapedtitle = result[1].decode('unicode_escape')
+        logger.info(scrapedtitle)
+        scrapedurl = host + "/" + result[2]
+        #scrapedyear = result[3]
+        itemlist.append(item.clone(action = "episodios",
+                                   title = scrapedtitle,
+                                   thumbnail = scrapedthumbnail,
+                                   url = scrapedurl,
+                                   contentSerieName = scrapedtitle
+                        ))
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
+    return itemlist
 
 def lista(item):
     logger.info()
