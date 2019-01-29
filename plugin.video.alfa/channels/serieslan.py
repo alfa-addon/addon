@@ -59,11 +59,9 @@ def sub_search(item):
     post = "k=" + item.texto
     results = httptools.downloadpage(item.url, post=post).data
     results = eval(results)
-    logger.info(results)
     for result in results:
         scrapedthumbnail = host + "/tb/" + result[0] + ".jpg"
         scrapedtitle = result[1].decode('unicode_escape')
-        logger.info(scrapedtitle)
         scrapedurl = host + "/" + result[2]
         #scrapedyear = result[3]
         itemlist.append(item.clone(action = "episodios",
