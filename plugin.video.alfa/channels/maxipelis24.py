@@ -14,7 +14,8 @@ from channelselector import get_thumb
 
 host = "https://maxipelis24.tv"
 
-list_language = []
+IDIOMAS = {'Latino': 'Latino', 'Subtitulado': 'VOSE', 'Español': 'CAST'}
+list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['rapidvideo', 'vidoza', 'openload', 'streamango']
 
@@ -112,6 +113,12 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+    data1= scrapertools.find_single_match(data,'<ul class="idTabs">.*?</ul></div>') 
+    patron = "li>.*?href=.*?>([^\s]+)"
+    matches1 = re.compile(patron, re.DOTALL).findall(data1)
+    for lang in matches1:
+        idioma = lang
+
     patron = '<div id="div.*?<div class="movieplay".*?(?:iframe.*?src|IFRAME SRC)="([^&]+)&'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for link in matches:
@@ -128,20 +135,19 @@ def findvideos(item):
                                                 follow_redirects=False)
             url = video_data.headers['location']
             title = '%s'
-            new_item = Item(channel=item.channel, title=title, url=url,
-                            action='play', language='', infoLabels=item.infoLabels)
-            itemlist.append(new_item)
+
+            
         else:
             patron = '<div id="div.*?<div class="movieplay".*?(?:iframe.*?src|IFRAME SRC)="([^"]+)"'
             matches = re.compile(patron, re.DOTALL).findall(data)
             for link in matches:
                 url = link
                 title = '%s'
-                new_item = Item(channel=item.channel, title=title, url=url,
-                                action='play', language='', infoLabels=item.infoLabels)
-                itemlist.append(new_item)
-    itemlist = servertools.get_servers_itemlist(
-        itemlist, lambda x: x.title % x.server.capitalize())
+        new_item = Item(channel=item.channel, title=title, url=url,
+                        action='play', language= IDIOMAS[idioma], infoLabels=item.infoLabels)
+        itemlist.append(new_item)
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % '%s [%s]'%(i.server.capitalize(),i.language))
+    #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     if itemlist:
         if config.get_videolibrary_support():
             itemlist.append(Item(channel=item.channel, action=""))
