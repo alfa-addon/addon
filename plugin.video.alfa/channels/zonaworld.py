@@ -33,8 +33,8 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host + 'pelicula/',
                          thumbnail=get_thumb('all', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Generos", action="section", section='genre',
-                         thumbnail=get_thumb('genres', auto=True)))
+    # itemlist.append(Item(channel=item.channel, title="Generos", action="section", section='genre',
+    #                      thumbnail=get_thumb('genres', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host + '?s=',
                          thumbnail=get_thumb('search', auto=True)))
@@ -48,7 +48,6 @@ def get_source(url):
     logger.info()
     data = httptools.downloadpage(url).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    logger.debug(data)
     return data
 
 
@@ -56,43 +55,45 @@ def list_all(item):
     logger.info()
     itemlist = []
 
-    try:
-        patron = '<article id="post-.*?<a href="([^"]+)">.*?"Langu">([^<]+)<.*?src="([^"]+)".*?'
-        patron += '<h3 class="Title">([^<]+)<\/h3>.*?date_range">(\d{4})<'
-        data = get_source(item.url)
-        matches = re.compile(patron, re.DOTALL).findall(data)
+    #try:
+    data = get_source(item.url)
 
-        for scrapedurl, language, scrapedthumbnail, scrapedtitle, year in matches:
+    patron = '<article id="post-.*?<a href="([^"]+)">.*?"Langu">([^ ]+) .*?<.*?src="([^"]+)".*?'
+    patron += '<h3 class="Title">([^<]+)<\/h3>.*?date_range">(\d{4})<'
 
-            url = scrapedurl
-            if "|" in scrapedtitle:
-                scrapedtitle = scrapedtitle.split("|")
-                contentTitle = scrapedtitle[0].strip()
-            else:
-                contentTitle = scrapedtitle
+    matches = re.compile(patron, re.DOTALL).findall(data)
 
-            contentTitle = re.sub('\(.*?\)', '', contentTitle)
+    for scrapedurl, language, scrapedthumbnail, scrapedtitle, year in matches:
 
-            title = '%s [%s]' % (contentTitle, year)
-            thumbnail = 'http:' + scrapedthumbnail
-            itemlist.append(Item(channel=item.channel, action='findvideos',
-                                 title=title,
-                                 url=url,
-                                 thumbnail=thumbnail,
-                                 contentTitle=contentTitle,
-                                 language=IDIOMAS[language],
-                                 infoLabels={'year': year}
-                                 ))
-        tmdb.set_infoLabels_itemlist(itemlist, True)
+        url = scrapedurl
+        if "|" in scrapedtitle:
+            scrapedtitle = scrapedtitle.split("|")
+            contentTitle = scrapedtitle[0].strip()
+        else:
+            contentTitle = scrapedtitle
 
-        #  Paginación
+        contentTitle = re.sub('\(.*?\)', '', contentTitle)
 
-        url_next_page = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)">')
-        if url_next_page:
-            itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all',
-                                 section=item.section))
-    except:
-        pass
+        title = '%s [%s]' % (contentTitle, year)
+        thumbnail = 'http:' + scrapedthumbnail
+        itemlist.append(Item(channel=item.channel, action='findvideos',
+                             title=title,
+                             url=url,
+                             thumbnail=thumbnail,
+                             contentTitle=contentTitle,
+                             language=IDIOMAS[language],
+                             infoLabels={'year': year}
+                             ))
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
+    #  Paginación
+
+    url_next_page = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)">')
+    if url_next_page:
+        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all',
+                             section=item.section))
+    #except:
+    #    pass
     return itemlist
 
 def search_results(item):
@@ -100,7 +101,7 @@ def search_results(item):
     itemlist = []
 
     try:
-        patron = '<article id="post-.*?<a href="([^"]+)">.*?src="([^"]+)".*?"Langu">([^<]+)<.*?'
+        patron = '<article id="post-.*?<a href="([^"]+)">.*?src="([^"]+)".*?"Langu">([^ ]+) .*?<.*?'
         patron += '<h3 class="Title">([^<]+)<\/h3>.*?date_range">(\d{4})<'
         data = get_source(item.url)
         matches = re.compile(patron, re.DOTALL).findall(data)
@@ -169,7 +170,7 @@ def findvideos(item):
         data_video = get_source(scrapedurl)
         opt_data = scrapertools.find_single_match(data, '"%s"><span>.*?</span>.*?<span>([^<]+)</span>' %
                                                   option).split('-')
-        language = opt_data[0].strip()
+        language = scrapertools.find_single_match(opt_data[0].strip(), '([^ ]+) ')
         quality = opt_data[1].strip()
         quality = re.sub('Full|HD', '', quality).strip()
         if 'rip' in quality.lower():
