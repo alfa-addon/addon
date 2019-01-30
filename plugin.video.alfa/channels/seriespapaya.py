@@ -18,7 +18,7 @@ from platformcode import config, logger
 
 HOST = "http://www.seriespapaya.com"
 
-IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán', 'sub': 'VOSE', 'Español Latino':'lat',
+IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán', 'sub': 'VOSE', 'Español Latino':'Latino',
            'Español Castellano':'es', 'Sub Español':'VOSE'}
 list_idiomas = IDIOMAS.values()
 list_quality = ['360p', '480p', '720p HD', '1080p HD', 'default']
@@ -199,12 +199,13 @@ def findvideos(item):
                     server=server.rstrip().capitalize(),
                     quality=quality,
                     uploader=uploader),
-                server=server.lower().rstrip(),
+                server=server.rstrip().lower(),
                 url=urlparse.urljoin(HOST, url),
                 language=IDIOMAS.get(lang,lang),
                 quality=quality
             )
         )
+
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
     # Requerido para AutoPlay
@@ -216,11 +217,11 @@ def play(item):
     logger.info("play: %s" % item.url)
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    new_url = scrapertools.find_single_match(data, "location.href='([^']+)")
-    if new_url != '':
-        item.url = new_url
+    if item.server not in ['openload', 'streamcherry', 'streamango']:
+        item.server = ''
+    item.url = scrapertools.find_single_match(data, "location.href='([^']+)'")
     itemlist.append(item.clone())
     itemlist = servertools.get_servers_itemlist(itemlist)
-    itemlist[0].thumbnail=item.contentThumbnail
+
     return itemlist
 
