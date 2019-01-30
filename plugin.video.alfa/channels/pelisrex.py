@@ -19,7 +19,7 @@ from channels import filtertools
 
 host = 'https://www.pelisrex.com/'
 
-IDIOMAS = {'Latino': 'LAT'}
+IDIOMAS = {'Latino': 'LAT', 'Subtitulada': 'VOSE'}
 list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['gounlimited', 'rapidvideo', 'vshare', 'clipwatching', 'jawclowd', 'streamango']
