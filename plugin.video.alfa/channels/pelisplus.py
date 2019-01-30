@@ -241,7 +241,7 @@ def findvideos(item):
             patron = '"file":"([^"]+)","label":"([^"]+)"'
             matches = re.compile(patron, re.DOTALL).findall(url_data)
             for url, quality in matches:
-                url = 'https://www.pelisplus.net' + url.replace('\/', '/')
+                url = url.replace('\/', '/')
                 itemlist.append(
                     Item(channel=item.channel, title='%s' + title, url=url, action='play', language=IDIOMAS[language],
                          quality=quality, infoLabels=item.infoLabels))

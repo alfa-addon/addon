@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel CineDeTodo -*-
+# -*- Channel PelisRex -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -17,7 +17,7 @@ from channels import filtertools
 
 
 
-host = 'https://www.cinedetodo.net/'
+host = 'https://www.pelisrex.com/'
 
 IDIOMAS = {'Latino': 'LAT'}
 list_language = IDIOMAS.values()
