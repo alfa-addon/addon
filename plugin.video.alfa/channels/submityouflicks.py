@@ -42,7 +42,7 @@ def videos(item):
     patron += '<div class="inner-block[^<]+'
     patron += '<a href="([^"]+)" title="([^"]+)"[^<]+'
     patron += '<span class="image".*?'
-    patron += '<img src="([^"]+)"'
+    patron += '<img.*? data-src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
         title = scrapedtitle
