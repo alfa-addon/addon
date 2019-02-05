@@ -192,14 +192,15 @@ def episodios(item):
     episodes = eval(scrapertools.find_single_match(data, 'var episodes = (.*?);'))
     for episode in episodes:
         url = '%s/ver/%s/%s-%s' % (HOST, episode[1], info[2], episode[0])
-        season, episodeRenumber = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, episode[0])
+        season = 1
+        season, episodeRenumber = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, season, int(episode[0]))
         #title = '1x%s Episodio %s' % (episode[0], episode[0])
-        title = '%sx%s Episodio %s' % (season, episodeRenumber, episodeRenumber)
-        itemlist.append(item.clone(title=title, url=url, action='findvideos', show=info[1]))
+        title = '%sx%s Episodio %s' % (season, str(episodeRenumber).zfill(2), episodeRenumber)
+        itemlist.append(item.clone(title=title, url=url, action='findvideos', contentSerieName=item.contentSerieName))
     itemlist = itemlist[::-1]
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=item.url,
-                             action="add_serie_to_library", extra="episodios"))
+                             action="add_serie_to_library", extra="episodios", show=item.contentSerieName))
     return itemlist
 
 
