@@ -65,6 +65,10 @@ def search(item, texto):
                 _id = e["id"]
             url = "%sanime/%s/%s" % (HOST, _id, e["slug"])
             title = e["title"]
+            #if "&#039;" in title:
+            #    title = title.replace("&#039;","")
+            #if "&deg;" in title:
+            #    title = title.replace("&deg;","")
             thumbnail = "%suploads/animes/covers/%s.jpg" % (HOST, e["id"])
             new_item = item.clone(action="episodios", title=title, url=url, thumbnail=thumbnail)
             if e["type"] != "movie":
@@ -188,18 +192,20 @@ def episodios(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
-    info = eval(scrapertools.find_single_match(data, 'anime_info = (.*?);'))
-    episodes = eval(scrapertools.find_single_match(data, 'var episodes = (.*?);'))
+    info = scrapertools.find_single_match(data, "anime_info = \[(.*?)\];")
+    info = eval(info)
+    episodes = eval(scrapertools.find_single_match(data, "var episodes = (.*?);"))
     for episode in episodes:
         url = '%s/ver/%s/%s-%s' % (HOST, episode[1], info[2], episode[0])
-        season, episodeRenumber = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, episode[0])
+        season = 1
+        season, episodeRenumber = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, season, int(episode[0]))
         #title = '1x%s Episodio %s' % (episode[0], episode[0])
-        title = '%sx%s Episodio %s' % (season, episodeRenumber, episodeRenumber)
-        itemlist.append(item.clone(title=title, url=url, action='findvideos', show=info[1]))
+        title = '%sx%s Episodio %s' % (season, str(episodeRenumber).zfill(2), episodeRenumber)
+        itemlist.append(item.clone(title=title, url=url, action='findvideos', contentSerieName=item.contentSerieName))
     itemlist = itemlist[::-1]
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=item.url,
-                             action="add_serie_to_library", extra="episodios"))
+                             action="add_serie_to_library", extra="episodios", show=item.contentSerieName))
     return itemlist
 
 
