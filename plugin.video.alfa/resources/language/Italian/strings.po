@@ -498,12 +498,12 @@ msgid "Search for actor/actress"
 msgstr "Cerca attore/attrice"
 
 msgctxt "#60000"
-msgid "Filtra server (Black List)"
+msgid "Filter server (Black List)"
 msgstr "Filtra server (Black List)"
 
 msgctxt "#60001"
-msgid "Filtra server (Black List)\nNessun collegamento disponibile che soddisfi i requisiti della Black list.\nRiprova modificando il filtro in 'Configurazione Server"
-msgstr "Filtra server (Black List)\nNessun collegamento disponibile che soddisfi i requisiti della Black list.\nRiprova modificando il filtro in 'Configurazione Server"
+msgid "No links available that meets the requirements of the Black list. Try again by changing the filter in 'Server Configuration"
+msgstr "Nessun collegamento disponibile che soddisfi i requisiti della Black list. Riprova modificando il filtro in 'Configurazione Server"
 
 msgctxt "#60003"
 msgid "Connessione con %s"

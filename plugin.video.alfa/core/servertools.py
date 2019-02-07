@@ -152,9 +152,9 @@ def findvideos(data, skip=False):
         if skip and len(devuelve) >= skip:
             devuelve = devuelve[:skip]
             break
-
+    if config.get_setting("filter_servers") == False:  is_filter_servers = False
     if not devuelve and is_filter_servers:
-        platformtools.dialog_ok(config.get_localized_string(60001))
+        platformtools.dialog_ok(config.get_localized_string(60000), config.get_localized_string(60001))
 
     return devuelve
 
