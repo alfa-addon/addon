@@ -19,7 +19,7 @@ list_servers = ['rapidvideo', 'streamango', 'fastplay', 'flashx', 'openload', 'v
 
 __channel__='allcalidad'
 
-host = "http://allcalidad.net/"
+host = "https://allcalidad.net/"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)

@@ -534,7 +534,7 @@ def show_channels(item):
 def menu_opciones(item):
     itemlist = list()
     itemlist.append(Item(channel=item.channel, title=config.get_localized_string(60525),
-                         thumbnail=get_thumb("setting_0.png"),
+                         text_bold = True, thumbnail=get_thumb("setting_0.png"),
                          folder=False))
     itemlist.append(Item(channel=item.channel, action="setting_channel", extra="peliculas", title=config.get_localized_string(60526),
                          thumbnail=get_thumb("channels_movie.png"),

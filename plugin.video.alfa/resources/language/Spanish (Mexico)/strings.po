@@ -502,8 +502,8 @@ msgid "Filter server (Black List)"
 msgstr "Filtrar servidores (Lista Negra)"
 
 msgctxt "#60001"
-msgid "Filter server (Black List)\nNo connection available that meets the requirements of the Black list.\nTry again by changing the filter in 'Server Configuration"
-msgstr "Filtrar servidores (Lista Negra)\nNo hay enlaces disponibles que cumplan los requisitos de su Lista Negra.\nPruebe de nuevo modificando el fíltro en 'Configuracíon Servidores"
+msgid "No links available that meets the requirements of the Black list. Try again by changing the filter in 'Server Configuration"
+msgstr "No hay enlaces disponibles que cumplan los requisitos de su Lista Negra. Pruebe de nuevo modificando el filtro en 'Configuracíon - Servidores"
 
 msgctxt "#60003"
 msgid "Connecting with %s"
