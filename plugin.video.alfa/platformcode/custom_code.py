@@ -5,8 +5,11 @@
 
 import os
 import json
+import traceback
+import xbmc
+import xbmcaddon
 
-from platformcode import config, logger
+from platformcode import config, logger, platformtools
 
 from core import jsontools
 from core import filetools
@@ -54,6 +57,15 @@ def init():
     """
     
     try:
+        #QUASAR: Preguntamos si se hacen modificaciones a Quasar
+        if not filetools.exists(os.path.join(config.get_data_path(), "quasar.json")) and not config.get_setting('addon_quasar_update', default=False):
+            question_update_external_addon("quasar")
+        
+        #QUASAR: Hacemos las modificaciones a Quasar, si está permitido, y si está instalado
+        if config.get_setting('addon_quasar_update', default=False):
+            if not update_external_addon("quasar"):
+                platformtools.dialog_notification("Actualización Quasar", "Ha fallado. Consulte el log")
+        
         #Existe carpeta "custom_code" ? Si no existe se crea y se sale
         custom_code_dir = os.path.join(config.get_data_path(), 'custom_code')
         if os.path.exists(custom_code_dir) == False:
@@ -70,7 +82,7 @@ def init():
             #Se verifica si la versión del .json y del add-on son iguales.  Si es así se sale.  Si no se copia "custom_code" al add-on
             verify_copy_folders(custom_code_dir, custom_code_json_path)
     except:
-        pass
+        logger.error(traceback.format_exc())
             
 
 def create_folder_structure(custom_code_dir):
@@ -88,11 +100,11 @@ def create_folder_structure(custom_code_dir):
     return
 
 
-def create_json(custom_code_json_path):
+def create_json(custom_code_json_path, json_name=json_data_file_name):
     logger.info()
 
     #Guardamaos el json con la versión de Alfa vacía, para permitir hacer la primera copia
-    json_data_file = filetools.join(custom_code_json_path, json_data_file_name)
+    json_data_file = filetools.join(custom_code_json_path, json_name)
     json_file = open(json_data_file, "a+")
     json_file.write(json.dumps({"addon_version": ""}))
     json_file.close()
@@ -123,3 +135,55 @@ def verify_copy_folders(custom_code_dir, custom_code_json_path):
     filetools.write(json_data_file, jsontools.dump(json_data))
 
     return
+
+    
+def question_update_external_addon(addon_name):
+    logger.info(addon_name)
+    
+    #Verificamos que el addon está instalado
+    stat = False
+    if xbmc.getCondVisibility('System.HasAddon("plugin.video.%s")' % addon_name):
+        #Si es la primera vez que se pregunta por la actualización del addon externo, recogemos la respuesta,  
+        # guardaos un .json en userdat/alfa para no volver a preguntar otra vez, y se actualiza el setting en Alfa.
+        stat = platformtools.dialog_yesno('Actualización de %s' % addon_name.capitalize(), '¿Quiere que actualicemos Quasar para que sea compatible con las últimas versiones de Kodi? (recomendado: SÍ)', '', 'Si actualiza Quasar, reinicie Kodi en un par de minutos')
+
+        #Con la respuesta actualizamos la variable en Alfa settings.xml.  Se puede cambiar en Ajustes de Alfa, Otros
+        if stat:
+            config.set_setting('addon_quasar_update', True)
+        else:
+            config.set_setting('addon_quasar_update', False)
+            
+        #Creamos un .json en userdata para no volver a preguntar otra vez
+        create_json(config.get_data_path(), "%s.json" % addon_name)
+    
+    return stat
+    
+def update_external_addon(addon_name):
+    logger.info(addon_name)
+    
+    #Verificamos que el addon está instalado
+    if xbmc.getCondVisibility('System.HasAddon("plugin.video.%s")' % addon_name):
+        #Path de actuali<aciones de Alfa
+        alfa_addon_updates = filetools.join(config.get_runtime_path(), filetools.join("lib", addon_name))
+        
+        #Path de destino en addon externo
+        __settings__ = xbmcaddon.Addon(id="plugin.video." + addon_name)
+        if addon_name.lower() in ['quasar', 'elementum']:
+            addon_path = filetools.join(xbmc.translatePath(__settings__.getAddonInfo('Path')), filetools.join("resources", filetools.join("site-packages", addon_name)))
+        else:
+            addon_path = ''
+        
+        #Hay modificaciones en Alfa? Las copiamos al addon
+        if filetools.exists(alfa_addon_updates) and filetools.exists(addon_path):
+            for root, folders, files in os.walk(alfa_addon_updates):
+                for file in files:
+                    input_file = filetools.join(root, file)
+                    output_file = input_file.replace(alfa_addon_updates, addon_path)
+                    if filetools.copy(input_file, output_file, silent=True) == False:
+                        logger.error('Error en la copia: Input: %s o Output: %s' % (input_file, output_file))
+                        return False
+            return True
+        else:
+            logger.error('Alguna carpeta no existe: Alfa: %s o %s: %s' % (alfa_addon_updates, addon_name, addon_path))
+    
+    return False

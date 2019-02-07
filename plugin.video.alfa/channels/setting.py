@@ -306,6 +306,8 @@ def submenu_tools(item):
 
     itemlist.append(Item(channel=CHANNELNAME, action="check_quickfixes", folder=False,
                          title="Comprobar actualizaciones urgentes", plot="Versión actual: %s" % config.get_addon_version() ))
+    itemlist.append(Item(channel=CHANNELNAME, action="update_quasar", folder=False,
+                         title="Actualizar addon externo Quasar"))
     itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
 
@@ -336,6 +338,18 @@ def check_quickfixes(item):
     return updater.check_addon_updates(verbose=True)
 
 
+def update_quasar(item):
+    logger.info()
+    
+    from platformcode import custom_code, platformtools
+    stat = False
+    stat = custom_code.update_external_addon("quasar")
+    if stat:
+        platformtools.dialog_notification("Actualización Quasar", "Realizada con éxito")
+    else:
+        platformtools.dialog_notification("Actualización Quasar", "Ha fallado. Consulte el log")
+    
+    
 def conf_tools(item):
     logger.info()
 
