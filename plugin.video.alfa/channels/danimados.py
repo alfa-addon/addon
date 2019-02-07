@@ -167,8 +167,12 @@ def findvideos(item):
     headers = {"X-Requested-With":"XMLHttpRequest"}
     for scrapedserver, scrapeduser in matches:
         data1 = httptools.downloadpage("https://space.danimados.space/gilberto.php?id=%s&sv=mp4" %scrapeduser).data
-        url = base64.b64decode(scrapertools.find_single_match(data1, 'hashUser = "([^"]+)'))
+        data1 = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data1)
+        logger.info("data1111"+data1)
+        url = base64.b64decode(scrapertools.find_single_match(data1, '<iframe data-source="([^"]+)"'))
+        logger.info("sadad"+url)
         url1 = devuelve_enlace(url)
+        logger.info("sadadss"+url1)
         if "drive.google" in url1:
             url1 = url1.replace("view","preview")
         if url1:
