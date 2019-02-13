@@ -481,19 +481,16 @@ def do_search(item, categories=None):
     time.sleep(0.5)
     progreso = platformtools.dialog_progress(config.get_localized_string(30993) % tecleado, "")
     channel_files = sorted(glob.glob(channels_path), key=lambda x: os.path.basename(x))
-
     import math
-    # fix float porque la division se hace mal en python 2.x
-    number_of_channels = float(100) / len(channel_files)
 
     threads = []
     search_results = {}
     start_time = time.time()
+    list_channels_search = []
 
+    # Extrae solo los canales a buscar
     for index, infile in enumerate(channel_files):
         try:
-            percentage = int(math.ceil((index + 1) * number_of_channels))
-
             basename = os.path.basename(infile)
             basename_without_extension = basename[:-5]
             logger.info("%s..." % basename_without_extension)
@@ -539,29 +536,40 @@ def do_search(item, categories=None):
             if not include_in_global_search:
                 logger.info("%s -no incluido en lista a buscar-" % basename_without_extension)
                 continue
+            list_channels_search.append(infile)
+        except:
+            logger.error("No se puede buscar en: %s" % channel_parameters["title"])
+            import traceback
+            logger.error(traceback.format_exc())
+            continue
 
+
+    for index, infile in enumerate(list_channels_search):
+        try:
+           # fix float porque la division se hace mal en python 2.x
+            percentage = int(float((index+1))/len(list_channels_search)*float(100))
+            basename = os.path.basename(infile)
+            basename_without_extension = basename[:-5]
+            logger.info("%s..." % basename_without_extension)
+            channel_parameters = channeltools.get_channel_parameters(basename_without_extension)
+            # Movido aqui el progreso, para que muestre el canal exacto que está buscando
+            progreso.update(percentage,
+                            config.get_localized_string(60520) % (channel_parameters["title"]))
+            # Modo Multi Thread
             if progreso.iscanceled():
                 progreso.close()
                 logger.info("Búsqueda cancelada")
                 return itemlist
-
-            # Modo Multi Thread
             if multithread:
                 t = Thread(target=channel_search, args=[search_results, channel_parameters, tecleado],
                            name=channel_parameters["title"])
                 t.setDaemon(True)
                 t.start()
                 threads.append(t)
-
             # Modo single Thread
             else:
                 logger.info("Intentado búsqueda en %s de %s " % (basename_without_extension, tecleado))
                 channel_search(search_results, channel_parameters, tecleado)
-
-            logger.info("%s incluido en la búsqueda" % basename_without_extension)
-            progreso.update(percentage,
-                            config.get_localized_string(60520) % channel_parameters["title"])
-
         except:
             logger.error("No se puede buscar en: %s" % channel_parameters["title"])
             import traceback
@@ -581,24 +589,18 @@ def do_search(item, categories=None):
 
             list_pendent_names = [a.getName() for a in pendent]
             mensaje = config.get_localized_string(70282) % (", ".join(list_pendent_names))
-            progreso.update(percentage, config.get_localized_string(60521) % (len(threads) - len(pendent), len(threads)),
+            progreso.update(percentage, config.get_localized_string(60521) % (len(threads) - len(pendent) + 1, len(threads)),
                             mensaje)
-            logger.debug(mensaje)
-
             if progreso.iscanceled():
                 logger.info("Búsqueda cancelada")
                 break
-
             time.sleep(0.5)
             pendent = [a for a in threads if a.isAlive()]
-
     total = 0
-
     for channel in sorted(search_results.keys()):
         for element in search_results[channel]:
             total += len(element["itemlist"])
             title = channel
-
             # resultados agrupados por canales
             if item.contextual == True or item.action == 'search_tmdb':
                 result_mode = 1
@@ -606,10 +608,8 @@ def do_search(item, categories=None):
                 if len(search_results[channel]) > 1:
                     title += " -%s" % element["item"].title.strip()
                 title += " (%s)" % len(element["itemlist"])
-
                 title = re.sub("\[COLOR [^\]]+\]", "", title)
                 title = re.sub("\[/COLOR]", "", title)
-
                 itemlist.append(Item(title=title, channel="search", action="show_result", url=element["item"].url,
                                      extra=element["item"].extra, folder=True, adult=element["adult"],
                                      from_action="search", from_channel=element["item"].channel, tecleado=tecleado))
@@ -625,13 +625,10 @@ def do_search(item, categories=None):
                             i.infoPlus = True
                         itemlist.append(i.clone(title=title, from_action=i.action, from_channel=i.channel,
                                                 channel="search", action="show_result", adult=element["adult"]))
-
     title = config.get_localized_string(59972) % (
     tecleado, total, time.time() - start_time)
     itemlist.insert(0, Item(title=title, text_color='yellow'))
-
     progreso.close()
-
     #Para opcion Buscar en otros canales
     if item.contextual == True:
         return exact_results(itemlist, tecleado)
