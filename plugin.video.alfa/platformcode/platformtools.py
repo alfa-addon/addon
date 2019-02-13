@@ -1109,6 +1109,8 @@ def play_torrent(item, xlistitem, mediaurl):
         url = ''
         url_stat = False
         torrents_path = ''
+        referer = None
+        post = None
         videolibrary_path = config.get_videolibrary_path()                  #Calculamos el path absoluto a partir de la Videoteca
         if videolibrary_path.lower().startswith("smb://"):                  #Si es una conexión SMB, usamos userdata local
             videolibrary_path = config.get_data_path()                      #Calculamos el path absoluto a partir de Userdata
@@ -1124,7 +1126,11 @@ def play_torrent(item, xlistitem, mediaurl):
             timeout = 10
             if item.torrent_alt:
                 timeout = 5
-            url = videolibrarytools.caching_torrents(item.url, torrents_path=torrents_path, timeout=timeout)  #Descargamos el .torrent
+            #Si es una llamada con POST, lo preparamos
+            if item.referer: referer = item.referer
+            if item.post: post = item.post
+            #Descargamos el .torrent
+            url = videolibrarytools.caching_torrents(item.url, referer, post, torrents_path=torrents_path, timeout=timeout)
             if url:
                 url_stat = True
                 item.url = url
