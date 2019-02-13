@@ -292,7 +292,8 @@ def entradas(item):
     else:
         # Extrae las entradas
         if item.extra == "Novedades":
-            data2 = data.split("<h3>Últimas Películas Agregadas</h3>", 1)[1]
+            data2 = data.split("<h3>Últimas Películas Agregadas y Actualizadas</h3>", 1)[1]
+
             entradas = scrapertools.find_multiple_matches(data2, '<div class="col-mt-5 postsh">(.*?)</div></div></div>')
         else:
             entradas = scrapertools.find_multiple_matches(data, '<div class="col-mt-5 postsh">(.*?)</div></div></div>')

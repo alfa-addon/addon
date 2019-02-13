@@ -44,6 +44,8 @@ def mainlist(item):
                          thumbnail= get_thumb('movies', auto=True)))
     itemlist.append(Item(channel=item.channel, title='Series', action='sub_menu', type='series',
                          thumbnail= get_thumb('tvshows', auto=True)))
+    itemlist.append(Item(channel=item.channel, title='Colecciones', action='list_collections',
+                        url= host+'listas=populares', thumbnail=get_thumb('colections', auto=True)))
     itemlist.append(
         item.clone(title="Buscar", action="search", url=host + 'search?go=', thumbnail=get_thumb("search", auto=True),
                    extra='movie'))
@@ -66,10 +68,13 @@ def sub_menu(item):
 
     return itemlist
 
-def get_source(url):
+def get_source(url, referer=None):
     logger.info()
-    data = httptools.downloadpage(url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    if referer is None:
+        data = httptools.downloadpage(url).data
+    else:
+        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
 
@@ -93,7 +98,7 @@ def section(item):
         data = scrapertools.find_single_match(data, 'Generos.*?</ul>')
     elif 'Año' in item.title:
         data = scrapertools.find_single_match(data, 'Años.*?</ul>')
-    patron = "<li onclick=filter\(this, '([^']+)', \d+\);>"
+    patron = '<li onclick="filter\(this, \'([^\']+)\', \d+\);">'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedtitle in matches:
@@ -112,8 +117,8 @@ def list_all(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<article class=Item><a href=([^>]+)><div class=Poster>'
-    patron += '<img src=(.+?)(?:>|alt).*?<h2>([^>]+)</h2>.*?</article>'
+    patron = '<article class="Item"><a href="([^>]+)"><div class="Poster"><img src="([^"]+)".*?'
+    patron += '<h2>([^>]+)</h2>.*?</article>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
@@ -128,10 +133,9 @@ def list_all(item):
                         title=title,
                         url=url,
                         thumbnail=thumbnail,
-                        plot=thumbnail,
                         infoLabels={'filtro':filter_list})
 
-        if item.type == 'peliculas':
+        if item.type == 'peliculas' or 'peliculas' in url:
             new_item.action = 'findvideos'
             new_item.contentTitle = scrapedtitle
         else:
@@ -143,10 +147,29 @@ def list_all(item):
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
     #  Paginación
 
-    url_next_page = scrapertools.find_single_match(data,"<link rel=next href=(.*?) />")
+    url_next_page = scrapertools.find_single_match(data,'<link rel="next" href="([^"]+)"')
     if url_next_page:
         itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='list_all'))
 
+    return itemlist
+
+def list_collections(item):
+    logger.info()
+
+    itemlist = []
+
+    data = get_source(item.url)
+    patron = '<li><a href="([^"]+)">.*?"first-lIMG"><img src="([^"]+)">.*?<h2>([^<]+)</h2>.*?Fichas:?\s(\d+)'
+
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for url, thumb, title, cant in matches:
+        plot = 'Contiene %s elementos' % cant
+        itemlist.append(Item(channel=item.channel, action='list_all', title=title, url=url, thumbnail=thumb, plot=plot))
+
+    url_next_page = scrapertools.find_single_match(data, 'class="PageActiva">\d+</a><a href="([^"]+)"')
+    if url_next_page:
+        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='list_collections'))
     return itemlist
 
 def seasons(item):
@@ -155,7 +178,7 @@ def seasons(item):
     itemlist=[]
 
     data=get_source(item.url)
-    patron='<div class=season temporada-(\d+)>'
+    patron='<div class="season temporada-(\d+)">'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     infoLabels = item.infoLabels
@@ -189,7 +212,7 @@ def episodesxseasons(item):
     itemlist = []
 
     data=get_source(item.url)
-    patron= "<li><a href=([^>]+)><b>%s - (\d+)</b><h2 class=eTitle>([^>]+)</h2>" % item.infoLabels['season']
+    patron= '<li><a href="([^"]+)"><b>%s - (\d+)</b><h2 class="eTitle">([^>]+)</h2>' % item.infoLabels['season']
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     infoLabels = item.infoLabels
@@ -207,29 +230,50 @@ def episodesxseasons(item):
     return itemlist
 
 def findvideos(item):
-    from lib.generictools import privatedecrypt
+
     logger.info()
 
     itemlist = []
 
     data = get_source(item.url)
-
-    patron = "onclick=clickLink\(this, '([^']+)', '([^']+)', '([^']+)'\);>"
+    data = data.replace('"', "'")
+    patron = "onclick='clickLink\(this, '([^']+)', '([^']+)', '([^']+)'\);'>.*?<b>([a-zA-Z]+)"
     matches = re.compile(patron, re.DOTALL).findall(data)
     headers = {'referer': item.url}
-    for url, quality, language in matches:
+    for url, quality, language, server in matches:
 
-        url = privatedecrypt(url, headers)
         if url != '':
             language = IDIOMAS[language]
             if quality.lower() == 'premium':
                 quality = '720p'
             quality = CALIDADES[quality]
             title = ' [%s] [%s]' % (language, quality)
+            if 'visor/vdz' in url:
+                server = 'powvideo'
             itemlist.append(Item(channel=item.channel, title='%s' + title, url=url, action='play', language=language,
-                                 quality=quality, infoLabels=item.infoLabels))
+                                 quality=quality, server=server, headers=headers, infoLabels=item.infoLabels))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return sorted(itemlist, key=lambda i: i.language)
+
+
+def play(item):
+    from lib.generictools import privatedecrypt
+    logger.info()
+    itemlist = []
+    url = ''
+    item.server = ''
+    data = httptools.downloadpage(item.url, headers=item.headers, follow_redirects=False)
+    if 'visor/vdz' in item.url:
+        url = scrapertools.find_single_match(data.data, 'IFRAME SRC="([^"]+)"')
+    elif 'visor/if' in item.url:
+        url = data.headers['location']
+
+    itemlist.append(Item(channel=item.channel, url=url, action='play', server=item.server,
+                         infoLabels=item.infoLabels))
+
+    itemlist = servertools.get_servers_itemlist(itemlist)
+    return itemlist
+
 
 
 
