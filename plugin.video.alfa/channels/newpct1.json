@@ -93,7 +93,7 @@
       "id": "clonenewpct1_channels_list",
       "type": "text",
       "label": "Lista de clones de NewPct1 y orden de uso",
-      "default": "('1', 'descargas2020', 'http://descargas2020.com/', 'movie, tvshow, season, episode', ''), ('1', 'tumejortorrent', 'http://tumejortorrent.com/', 'movie, tvshow, season, episode', ''), ('1', 'torrentrapid', 'http://torrentrapid.com/', 'movie, tvshow, season, episode', 'serie_episodios'), ('1', 'pctnew', 'http://pctnew.com/', 'movie, tvshow, season, episode', ''), ('1', 'torrentlocura', 'http://torrentlocura.com/', 'movie, tvshow, season, episode', ''), ('1', 'tvsinpagar', 'http://www.tvsinpagar.com/', 'tvshow, season, episode', ''), ('1', 'planetatorrent', 'http://planetatorrent.com/', 'movie, tvshow, season, episode', ''), ('1', 'mispelisyseries', 'http://mispelisyseries.com/', 'movie', 'search, listado_busqueda')",
+      "default": "('1', 'descargas2020', 'https://descargas2020.com/', 'movie, tvshow, season, episode', ''), ('1', 'tumejortorrent', 'https://tumejortorrent.com/', 'movie, tvshow, season, episode', ''), ('1', 'torrentrapid', 'https://torrentrapid.com/', 'movie, tvshow, season, episode', 'serie_episodios'), ('1', 'pctnew', 'https://pctnew.com/', 'movie, tvshow, season, episode', ''), ('1', 'torrentlocura', 'http://torrentlocura.com/', 'movie, tvshow, season, episode', ''), ('1', 'tvsinpagar', 'http://www.tvsinpagar.com/', 'tvshow, season, episode', ''), ('1', 'planetatorrent', 'http://planetatorrent.com/', 'movie, tvshow, season, episode', ''), ('1', 'mispelisyseries', 'http://mispelisyseries.com/', 'movie', 'search, listado_busqueda')",
       "enabled": true,
       "visible": false
     },

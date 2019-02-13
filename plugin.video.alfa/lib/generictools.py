@@ -1217,7 +1217,7 @@ def post_tmdb_findvideos(item, itemlist):
     return (item, itemlist)
     
     
-def get_torrent_size(url, data_torrent=False):
+def get_torrent_size(url, referer=None, post=None, data_torrent=False):
     logger.info()
     from core import videolibrarytools
     
@@ -1230,6 +1230,8 @@ def get_torrent_size(url, data_torrent=False):
     
     Llamada:            generictools.get_torrent_size(url, data_torrent=False)
     Entrada: url:       url del archivo .torrent
+    Entrada: referer:   url de referer en caso de llamada con post
+    Entrada: post:      contenido del post en caso de llamada con post
     Entrada: data_torrent:  Flag por si se quiere el contenido del .torretn de vuelta
     Salida: size:       str con el tamaño y tipo de medida ( MB, GB, etc)
     Salida: torrent:    dict() con el contenido del .torrent (opcional)
@@ -1309,11 +1311,11 @@ def get_torrent_size(url, data_torrent=False):
         #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
         #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
         
-        torrents_path, torrent_file = videolibrarytools.caching_torrents(url, timeout=2, lookup=True, data_torrent=True)
+        torrents_path, torrent_file = videolibrarytools.caching_torrents(url, referer=referer, post=post, timeout=2, lookup=True, data_torrent=True)
         if not torrent_file:
             if data_torrent:
                 return (size, torrent)
-            return size                                                         #Si hay un error, devolvemos el "size" y "torrent" vacíos
+            return size                                         #Si hay un error, devolvemos el "size" y "torrent" vacíos
 
         torrent = decode(torrent_file)                                          #decodificamos el .torrent
 

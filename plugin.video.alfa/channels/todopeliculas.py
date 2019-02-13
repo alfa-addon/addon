@@ -24,7 +24,7 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['torrent']
 
-host = 'http://www.todo-peliculas.com/'
+host = 'http://www.todo-peliculas.net/'
 channel = "todopeliculas"
 
 categoria = channel.capitalize()
