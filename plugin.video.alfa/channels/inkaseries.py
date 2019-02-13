@@ -52,7 +52,7 @@ def list_all(item):
     itemlist = []
     data = get_source(item.url)
     data1 = scrapertools.find_single_match(data, '<div class=col-md-80 lado2(.*?)</div></div></div>')
-    patron = '<a class=poster href=(.*?) title=(.*?)> <img.*?src=(.*?) alt.*?'
+    patron = '<a class=poster href=(.*?) title=(.*?)> <img.*?src=(.*?) alt'
     matches = re.compile(patron, re.DOTALL).findall(data1)
 
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
