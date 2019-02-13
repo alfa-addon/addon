@@ -525,7 +525,7 @@ def findvideos(item):
 
     #Bajamos los datos de la página
     data = ''
-    patron = '<a onclick="eventDownloadTorrent\(.*?\)".?class="linktorrent" href="([^"]+)">'
+    patron = '<a onclick="eventDownloadTorrent\(.*?\)".?class="linktorrent" href="([^"]+)"'
     if item.contentType == 'movie':                                                 #Es una peli
         try:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
@@ -588,7 +588,7 @@ def findvideos(item):
         #Buscamos si ya tiene tamaño, si no, los buscamos en el archivo .torrent
         size = scrapertools.find_single_match(item_local.quality, '\s\[(\d+,?\d*?\s\w\s?[b|B])\]')
         if not size and not item.armagedon:
-            size = generictools.get_torrent_size(item_local.url)                    #Buscamos el tamaño en el .torrent
+            size = generictools.get_torrent_size(scrapedurl)                        #Buscamos el tamaño en el .torrent
         if size:
             item_local.title = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title)    #Quitamos size de título, si lo traía
             item_local.title = '%s [%s]' % (item_local.title, size)                         #Agregamos size al final del título

@@ -172,7 +172,7 @@ def submenu(item):
     except:
         pass
         
-    patron = '<li><a\s?class="[^"]+"\s?href="http:[^"]+"><i\s?class=.*><\/i>.*Inicio<\/a><\/li>(.+)<\/ul>\s?<\/nav>'
+    patron = '<li><a\s*class="[^"]+"\s*href="http.*:[^"]+"><i\s*class=.*><\/i>.*Inicio<\/a><\/li>(.+)<\/ul>\s*<\/nav>'
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not data or not scrapertools.find_single_match(data, patron):
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
@@ -1434,9 +1434,9 @@ def findvideos(item):
         data = data.replace("$!", "#!").replace("'", "\"").replace("Ã±", "ñ").replace("//pictures", "/pictures")
         url_servidores = item.url
         category_servidores = item.category
-        data_servidores = data                                                  #salvamos data para verificar servidores, si es necesario
+        data_servidores = data                                  #salvamos data para verificar servidores, si es necesario
         data_servidores_stat = False
-    except:                                                                     #La web no responde.  Probemos las urls de emergencia
+    except:                                                     #La web no responde.  Probemos las urls de emergencia
         pass
     
     patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'           #Patron para .torrent
@@ -1446,7 +1446,7 @@ def findvideos(item):
         if scrapertools.find_single_match(data, patron):
             patron = patron_alt
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not data or not scrapertools.find_single_match(data, patron) or not videolibrarytools.verify_url_torrent(scrapertools.find_single_match(data, patron)):                                                             # Si no hay datos o url, error
+    if not data or not scrapertools.find_single_match(data, patron) or not videolibrarytools.verify_url_torrent(scrapertools.find_single_match(data, patron)):                                           # Si no hay datos o url, error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
             item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
@@ -1466,7 +1466,7 @@ def findvideos(item):
             #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el vídeo
             item, data = generictools.fail_over_newpct1(item, patron_mult)
 
-    if not data:                                                            #Si no ha logrado encontrar nada, verificamos si hay servidores
+    if not data:                                            #Si no ha logrado encontrar nada, verificamos si hay servidores
         cnt_servidores = 0
         item.category = category_servidores                                     #restauramos valores originales
         item.url = url_servidores
@@ -1478,8 +1478,8 @@ def findvideos(item):
         enlaces_ver = re.compile(patron, re.DOTALL).findall(data_servidores)
         enlaces_descargar = enlaces_ver
         
-        for logo, servidor, idioma, calidad, enlace, title in enlaces_ver:          #buscamos enlaces de servidores de ver-online
-            if ver_enlaces_veronline == 0:                                          #Si no se quiere Ver Online, se sale del bloque
+        for logo, servidor, idioma, calidad, enlace, title in enlaces_ver:  #buscamos enlaces de servidores de ver-online
+            if ver_enlaces_veronline == 0:                                  #Si no se quiere Ver Online, se sale del bloque
                 break
             if "ver" in title.lower():
                 cnt_servidores += 1
@@ -1488,13 +1488,13 @@ def findvideos(item):
             item, data_servidores = generictools.fail_over_newpct1(item, patron)    #intentamos recuperar servidores
             
             #Miramos si ha servidores
-            if not data_servidores:                                                 #Si no ha logrado encontrar nada nos vamos
+            if not data_servidores:                                         #Si no ha logrado encontrar nada nos vamos
                 itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.channel.capitalize() + '[/COLOR]: Ningún canal NewPct1 activo'))    
                 itemlist.append(item.clone(action='', title=item.category + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
                 if item.videolibray_emergency_urls:
                     return item
                 else:
-                    return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
+                    return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
         
         data = data_servidores                                                      #restauramos los datos
         data_servidores_stat = True                                                 #Marcamos como que los hemos usado
@@ -1514,7 +1514,7 @@ def findvideos(item):
     size = size.replace(".", ",")                                                   #sustituimos . por , porque Unify lo borra
     if not size:
         size = scrapertools.find_single_match(item.quality, '\s?\[(\d+.?\d*?\s?\w\s?[b|B])\]')
-    if not size and not item.armagedon:
+    if not size and not item.armagedon and not item.videolibray_emergency_urls:
         size = generictools.get_torrent_size(scrapertools.find_single_match(data, patron))  #Buscamos el tamaño en el .torrent
     if size:
         item.title = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item.title)            #Quitamos size de título, si lo traía
@@ -2102,7 +2102,7 @@ def episodios(item):
                 if season > max_temp:
                     max_temp = season
                     
-            if match['quality'] and not item_local.quality and estado == True:
+            if match['quality'] and estado == True:
                 item_local.quality = match['quality']                           #Si hay quality se coge, si no, la de la serie
                 item_local.quality = item_local.quality.replace("ALTA DEFINICION", "HDTV")
             
