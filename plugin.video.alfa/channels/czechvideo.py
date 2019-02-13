@@ -76,9 +76,8 @@ def lista(item):
 def play(item):
     logger.info()
     data = scrapertools.cachePage(item.url)
-    url = scrapertools.find_single_match(data,'<div id=\'dle-content\'>.*?<iframe src="([^"]+)"')
-    url = "http:" + url
-    itemlist = servertools.find_video_items(data=url)
+
+    itemlist = servertools.find_video_items(data=data)
     for videoitem in itemlist:
         videoitem.title = item.title
         videoitem.fulltitle = item.fulltitle
