@@ -498,11 +498,11 @@ msgid "Search for actor/actress"
 msgstr ""
 
 msgctxt "#60000"
-msgid "Filtra server (Black List)"
+msgid "Filter server (Black List)"
 msgstr ""
 
 msgctxt "#60001"
-msgid "Filtra server (Black List)\nNessun collegamento disponibile che soddisfi i requisiti della Black list.\nRiprova modificando il filtro in 'Configurazione Server"
+msgid "No links available that meets the requirements of the Black list. Try again by changing the filter in 'Server Configuration"
 msgstr ""
 
 msgctxt "#60003"
@@ -2550,7 +2550,7 @@ msgid "Show option \"All Seasons\"."
 msgstr ""
 
 msgctxt "#60643"
-msgid "Do not combine the seasons of the series""
+msgid "Do not combine the seasons of the series"
 msgstr ""
 
 msgctxt "#60644"

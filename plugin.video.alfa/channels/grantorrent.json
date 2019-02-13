@@ -113,6 +113,14 @@
         "14",
         "15"
       ]
+    },
+    {
+      "id": "include_in_newest_4k",
+      "type": "bool",
+      "label": "Incluir en Novedades - 4K",
+      "default": true,
+      "enabled": true,
+      "visible": true
     }
   ]
 }

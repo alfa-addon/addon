@@ -279,8 +279,8 @@ def post_tmdb_listado(item, itemlist):
     if not item.category_new:
         item.category_new = ''
 
-    for item_local in itemlist:                                 #Recorremos el Itenlist generado por el canal
-        title = item_local.title
+    for item_local in itemlist:                                 #Recorremos el Itemlist generado por el canal
+        title = re.sub(r'online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title, flags=re.IGNORECASE).strip()
         #logger.debug(item_local)
         
         item_local.last_page = 0
@@ -375,6 +375,7 @@ def post_tmdb_listado(item, itemlist):
                 item_local.contentSerieName = item_local.from_title
             if item_local.contentType == 'season':
                 item_local.title = item_local.from_title
+            title = re.sub(r'online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title, flags=re.IGNORECASE).strip()
         
         #Limpiamos calidad de títulos originales que se hayan podido colar
         if item_local.infoLabels['originaltitle'].lower() in item_local.quality.lower():
@@ -423,10 +424,10 @@ def post_tmdb_listado(item, itemlist):
                 else:
                     title = '%s -Temporada !!!' % (title)
 
-            elif item.action == "search":
+            elif item.action == "search" or item.extra == "search":
                 title += " -Serie-"
         
-        if (item_local.extra == "varios" or item_local.extra == "documentales") and (item.action == "search" or item.action == "listado_busqueda"):
+        if (item_local.extra == "varios" or item_local.extra == "documentales") and (item.action == "search" or item.extra == "search" or item.action == "listado_busqueda"):
             title += " -Varios-"
             item_local.contentTitle += " -Varios-"
         
@@ -764,6 +765,18 @@ def post_tmdb_episodios(item, itemlist):
             del item_local.library_filter_show
         if item_local.extra2:
             del item_local.extra2
+        item_local.wanted = 'xyz'
+        del item_local.wanted
+        item_local.text_color = 'xyz'
+        del item_local.text_color
+        item_local.tmdb_stat = 'xyz'
+        del item_local.tmdb_stat
+        item_local.totalItems = 'xyz'
+        del item_local.totalItems
+        item_local.unify = 'xyz'
+        del item_local.unify
+        item_local.title = re.sub(r'online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title, flags=re.IGNORECASE).strip()
+        
         #logger.debug(item_local)
         
         #Ajustamos el nombre de la categoría si es un clone de NewPct1
@@ -868,9 +881,9 @@ def post_tmdb_episodios(item, itemlist):
         item_local.title = '%s [%s] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.title, item_local.infoLabels['year'], rating, item_local.quality, str(item_local.language))
     
         #Quitamos campos vacíos
-        item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['episodio_titulo'].replace(" []", "").strip()
-        item_local.infoLabels['title'] = item_local.infoLabels['title'].replace(" []", "").strip()
-        item_local.title = item_local.title.replace(" []", "").strip()
+        item_local.infoLabels['episodio_titulo'] = item_local.infoLabels['episodio_titulo'].replace("[]", "").strip()
+        item_local.infoLabels['title'] = item_local.infoLabels['title'].replace("[]", "").strip()
+        item_local.title = item_local.title.replace("[]", "").strip()
         item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?-?\s?\]?\]\[\/COLOR\]', '', item_local.title).strip()
         item_local.title = re.sub(r'\s?\[COLOR \w+\]-?\s?\[\/COLOR\]', '', item_local.title).strip()
         item_local.title = item_local.title.replace(".", ",").replace("GB", "G B").replace("Gb", "G b").replace("gb", "g b").replace("MB", "M B").replace("Mb", "M b").replace("mb", "m b")
@@ -1006,9 +1019,11 @@ def post_tmdb_findvideos(item, itemlist):
     # Saber si estamos en una ventana emergente lanzada desde una viñeta del menú principal,
     # con la función "play_from_library"
     item.unify = False
+    Window_IsMedia = False
     try:
         import xbmc
         if xbmc.getCondVisibility('Window.IsMedia') == 1:
+            Window_IsMedia = True
             item.unify = config.get_setting("unify")
     except:
         item.unify = config.get_setting("unify")
@@ -1084,7 +1099,7 @@ def post_tmdb_findvideos(item, itemlist):
     tiempo = 0
     if item.infoLabels['duration']:
         try:
-            if config.get_platform(True)['num_version'] < 18:
+            if config.get_platform(True)['num_version'] < 18 or not Window_IsMedia:
                 tiempo = item.infoLabels['duration']
             elif xbmc.getCondVisibility('Window.IsMedia') == 1:
                 item.quality = re.sub(r'\s?\[\d+:\d+\ h]', '', item.quality)
@@ -1202,7 +1217,7 @@ def post_tmdb_findvideos(item, itemlist):
     return (item, itemlist)
     
     
-def get_torrent_size(url, data_torrent=False):
+def get_torrent_size(url, referer=None, post=None, data_torrent=False):
     logger.info()
     from core import videolibrarytools
     
@@ -1215,6 +1230,8 @@ def get_torrent_size(url, data_torrent=False):
     
     Llamada:            generictools.get_torrent_size(url, data_torrent=False)
     Entrada: url:       url del archivo .torrent
+    Entrada: referer:   url de referer en caso de llamada con post
+    Entrada: post:      contenido del post en caso de llamada con post
     Entrada: data_torrent:  Flag por si se quiere el contenido del .torretn de vuelta
     Salida: size:       str con el tamaño y tipo de medida ( MB, GB, etc)
     Salida: torrent:    dict() con el contenido del .torrent (opcional)
@@ -1294,11 +1311,11 @@ def get_torrent_size(url, data_torrent=False):
         #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
         #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
         
-        torrents_path, torrent_file = videolibrarytools.caching_torrents(url, timeout=2, lookup=True, data_torrent=True)
+        torrents_path, torrent_file = videolibrarytools.caching_torrents(url, referer=referer, post=post, timeout=2, lookup=True, data_torrent=True)
         if not torrent_file:
             if data_torrent:
                 return (size, torrent)
-            return size                                                         #Si hay un error, devolvemos el "size" y "torrent" vacíos
+            return size                                         #Si hay un error, devolvemos el "size" y "torrent" vacíos
 
         torrent = decode(torrent_file)                                          #decodificamos el .torrent
 
@@ -1831,11 +1848,11 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #Cuando en el .json se activa "Borrar", "emergency_urls = 2", se borran todos los enlaces existentes
     #Cuando en el .json se activa "Actualizar", "emergency_urls = 3", se actualizan todos los enlaces existentes
     
-    status_migration = regenerate_clones()                                  #TEMPORAL: Reparación de Videoteca con Newpct1
-    
     """
-    verify_cached_torrents()                                                #TEMPORAL: verificamos si los .torrents son correctos
-    try:                                                                    #Si ha habido errores, vemos la lista y los reparamos
+    status_migration = regenerate_clones()                          #TEMPORAL: Reparación de Videoteca con Newpct1
+    
+    verify_cached_torrents()                                        #TEMPORAL: verificamos si los .torrents son correctos
+    try:                                                            #Si ha habido errores, vemos la lista y los reparamos
         json_error_path = filetools.join(config.get_runtime_path(), 'error_cached_torrents.json')
         if filetools.exists(json_error_path):                               #hay erroer que hay que reparar?
             from core import jsontools

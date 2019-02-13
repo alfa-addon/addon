@@ -289,9 +289,9 @@ def temporadas(item):
 
     data = httptools.downloadpage(item.url).data
     datas = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<span class="title">([^<]+)<i>.*?'  # numeros de temporadas
-    patron += '<img src="([^"]+)"></a></div>'  # capitulos
-
+    patron = "<span class='title'>([^<]+)<i>.*?"  # numeros de temporadas
+    patron += "<img src='([^']+)'>"  # capitulos
+    # logger.info(datas)
     matches = scrapertools.find_multiple_matches(datas, patron)
     if len(matches) > 1:
         for scrapedseason, scrapedthumbnail in matches:
@@ -331,14 +331,13 @@ def episodios(item):
 
     data = httptools.downloadpage(item.url).data
     datas = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    # logger.info(datas)
-    patron = '<div class="imagen"><a href="([^"]+)">.*?'  # url cap, img
-    patron += '<div class="numerando">(.*?)</div>.*?'  # numerando cap
-    patron += '<a href="[^"]+">([^<]+)</a>'  # title de episodios
+    patron = "<div class='imagen'>.*?"
+    patron += "<div class='numerando'>(.*?)</div>.*?"
+    patron += "<a href='([^']+)'>([^<]+)</a>"
 
     matches = scrapertools.find_multiple_matches(datas, patron)
 
-    for scrapedurl, scrapedtitle, scrapedname in matches:
+    for scrapedtitle, scrapedurl, scrapedname in matches:
         scrapedtitle = scrapedtitle.replace('--', '0')
         patron = '(\d+) - (\d+)'
         match = re.compile(patron, re.DOTALL).findall(scrapedtitle)

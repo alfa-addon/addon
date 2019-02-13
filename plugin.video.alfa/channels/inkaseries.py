@@ -38,9 +38,6 @@ def mainlist(item):
                          thumbnail=get_thumb('all', auto=True)))
     itemlist.append(Item(channel= item.channel, title="Generos", action="genres", url=host + 'ultimas-series-agregadas/',
                          thumbnail=get_thumb('genres', auto=True)))
-    itemlist.append(Item(channel= item.channel, title="Recomendadas", action="list_all",
-                         url=host + 'ultimas-series-agregadas/', type='recomended',
-                         thumbnail=get_thumb('recomended', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host+'?s=',
                          thumbnail=get_thumb('search', auto=True)))
 
@@ -54,18 +51,9 @@ def list_all(item):
 
     itemlist = []
     data = get_source(item.url)
-    if item.type != 'search':
-        if item.type == 'recomended':
-            class_type = 'list_mt'
-        else:
-            class_type = 'info'
-
-        patron = '<a class=poster href=(.*?) title=(.*?)> <img src=(.*?) alt.*?class=%s' % class_type
-    else:
-        patron = 'item> <a class=poster href=(.*?) title=(.*?)> <img src=(.*?) alt.*?class=info'
-
-
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    data1 = scrapertools.find_single_match(data, '<div class=col-md-80 lado2(.*?)</div></div></div>')
+    patron = '<a class=poster href=(.*?) title=(.*?)> <img.*?src=(.*?) alt'
+    matches = re.compile(patron, re.DOTALL).findall(data1)
 
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
         url = scrapedurl
@@ -82,7 +70,7 @@ def list_all(item):
 
     if itemlist != []:
         actual_page_url = item.url
-        next_page = scrapertools.find_single_match(data, '<li><a href=([^ ]+) ><span aria-hidden=true>&raquo;</span>')
+        next_page = scrapertools.find_single_match(data, '<li><a href=([^ ]+)><span aria-hidden=true>&raquo;</span>')
         if next_page != '':
             itemlist.append(Item(channel=item.channel, action="list_all", title='Siguiente >>>', url=next_page,
                                  thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'))
@@ -160,13 +148,13 @@ def genres(item):
     itemlist = []
     norep = []
     data = get_source(item.url)
-    patron = '<a href=([^>]+)><span.*?<i>(.*?)</i>'
+    patron = '<a href=([^>]+)><span.*?<i>(.*?)</i>.*?>(.*?)</b>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedtitle in matches:
+    for scrapedurl, scrapedtitle, cantidad in matches:
 
         url = scrapedurl
-        title = scrapedtitle.capitalize()
+        title = "%s - %s" % (scrapedtitle.capitalize(), cantidad)
         itemactual = Item(channel=item.channel, action='list_all', title=title, url=url)
 
         if title not in norep:

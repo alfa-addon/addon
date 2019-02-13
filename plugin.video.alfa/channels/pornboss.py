@@ -15,11 +15,11 @@ host = 'http://pornboss.org'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="peliculas", url=host + "/category/movies/"))
+    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/category/movies/"))
     itemlist.append( Item(channel=item.channel, title="     categorias" , action="categorias", url=host + "/category/movies/"))
     
-    itemlist.append( Item(channel=item.channel, title="Videos" , action="peliculas", url=host + "/category/clips/"))
-    itemlist.append( Item(channel=item.channel, title="     categorias" , action="peliculas", url=host + "/category/clips/"))
+    itemlist.append( Item(channel=item.channel, title="Videos" , action="lista", url=host + "/category/clips/"))
+    itemlist.append( Item(channel=item.channel, title="     categorias" , action="lista", url=host + "/category/clips/"))
     return itemlist
 
 
@@ -28,7 +28,7 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     item.url = host + "/?s=%s" % texto
     try:
-        return peliculas(item)
+        return lista(item)
     except:
         import sys
         for line in sys.exc_info():
@@ -51,23 +51,27 @@ def categorias(item):
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
+                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
-def peliculas(item):
+def lista(item):
     logger.info()
     itemlist = []
     data = scrapertools.cachePage(item.url)
-    patron  = '<article id="post-\d+".*?<img class="center cover" src="([^"]+)" alt="([^"]+)".*?<blockquote>.*?<a href=\'([^\']+)\''
+    patron = '<article id="post-\d+".*?'
+    patron += '<img class="center cover" src="([^"]+)" alt="([^"]+)".*?'
+    patron += '<blockquote>.*?<a href=\'([^\']+)\''
     matches = re.compile(patron,re.DOTALL).findall(data)
     scrapertools.printMatches(matches)
     for scrapedthumbnail,scrapedtitle,scrapedurl in matches:
         scrapedplot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
-    next_page_url = scrapertools.find_single_match(data,'<a class="nextpostslink" rel="next" href="([^"]+)">')
-    if next_page_url!="":
-        itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl,
+                              thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
+    next_page = scrapertools.find_single_match(data,'<a class="nextpostslink" rel="next" href="([^"]+)">')
+    if next_page!="":
+        itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 def play(item):

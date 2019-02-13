@@ -8,25 +8,25 @@ from core import scrapertools
 from core.item import Item
 from platformcode import logger
 
+host = 'http://www.submityourflicks.com'
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(
-        Item(channel=item.channel, action="videos", title="Útimos videos", url="http://www.submityourflicks.com/",
-             viewmode="movie"))
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar",
-                         url="http://www.submityourflicks.com/index.php?mode=search&q=%s&submit=Search"))
+    
+    itemlist.append(Item(channel=item.channel, action="videos", title="Útimos videos", url= host))
+    itemlist.append(Item(channel=item.channel, action="videos", title="Mas vistos", url= host + "/most-viewed/"))
+    itemlist.append(Item(channel=item.channel, action="videos", title="Mejor valorados", url= host + "/top-rated/"))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", url= host))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
-    tecleado = texto.replace(" ", "+")
-    item.url = item.url % tecleado
+    texto = texto.replace(" ", "-")
+    item.url = host + "/search/%s/" % texto
     try:
         return videos(item)
-    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
     except:
         import sys
         for line in sys.exc_info():
@@ -38,24 +38,21 @@ def videos(item):
     logger.info()
     itemlist = []
     data = scrapertools.downloadpageGzip(item.url)
-    patron = '<div class="item-block[^<]+'
-    patron += '<div class="inner-block[^<]+'
-    patron += '<a href="([^"]+)" title="([^"]+)"[^<]+'
-    patron += '<span class="image".*?'
-    patron += '<img src="([^"]+)"'
+    patron = '<div class="item-block item-normal col" >.*?'
+    patron += '<a href="([^"]+)" title="([^"]+)">.*?'
+    patron += 'data-src="([^"]+)".*?'
+    patron += '</span> ([^"]+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
-        title = scrapedtitle
+    for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedtime in matches:
+        title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         url = scrapedurl
         thumbnail = scrapedthumbnail.replace(" ", "%20")
-        logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
         itemlist.append(Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                             folder=False))
-    next_page_url = scrapertools.find_single_match(data, "<a href='([^']+)' class=\"next\">NEXT</a>")
-    if next_page_url != "":
-        url = urlparse.urljoin(item.url, next_page_url)
-        itemlist.append(Item(channel=item.channel, action="videos", title=">> Página siguiente", url=url, folder=True,
-                             viewmode="movie"))
+                             fanart=thumbnail))
+    next_page = scrapertools.find_single_match(data, "<a href='([^']+)' class=\"next\">NEXT</a>")
+    if next_page != "":
+        url = urlparse.urljoin(item.url, next_page)
+        itemlist.append(Item(channel=item.channel, action="videos", title=">> Página siguiente", url=url))
     return itemlist
 
 
@@ -67,3 +64,4 @@ def play(item):
     itemlist.append(Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=media_url,
                          thumbnail=item.thumbnail, show=item.title, server="directo", folder=False))
     return itemlist
+

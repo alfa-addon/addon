@@ -6,8 +6,11 @@
 import os
 import re
 import time
+import unicodedata
+
 
 from core import filetools
+from core import jsontools
 from core import scraper
 from core import scrapertools
 from core import servertools
@@ -53,7 +56,7 @@ def mainlist(item):
                     title = TITLE_TVSHOW % (
                         STATUS_COLORS[i.downloadStatus], i.downloadProgress, i.contentSerieName, i.contentChannel)
 
-                    itemlist.append(Item(title=title, channel="descargas", action="mainlist", contentType="tvshow",
+                    itemlist.append(Item(title=title, channel="downloads", action="mainlist", contentType="tvshow",
                                          contentSerieName=i.contentSerieName, contentChannel=i.contentChannel,
                                          downloadStatus=i.downloadStatus, downloadProgress=[i.downloadProgress],
                                          fanart=i.fanart, thumbnail=i.thumbnail))
@@ -308,7 +311,6 @@ def update_json(path, params):
 
 
 def save_server_statistics(server, speed, success):
-    from core import jsontools
     if os.path.isfile(STATS_FILE):
         servers = jsontools.load(open(STATS_FILE, "rb").read())
     else:
@@ -330,7 +332,6 @@ def save_server_statistics(server, speed, success):
 
 
 def get_server_position(server):
-    from core import jsontools
     if os.path.isfile(STATS_FILE):
         servers = jsontools.load(open(STATS_FILE, "rb").read())
     else:
@@ -360,7 +361,6 @@ def get_match_list(data, match_list, order_list=None, only_ascii=False, ignoreca
      coincidira con "Idioma Español" pero no con "Español" ya que la coincidencia mas larga tiene prioridad.
      
     """
-    import unicodedata
     match_dict = dict()
     matches = []
 

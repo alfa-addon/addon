@@ -7,17 +7,15 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-from core import tmdb
-from core import jsontools
 
 host = 'http://www.hdzog.com'
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="peliculas", url=host + "/new/"))
-    itemlist.append( Item(channel=item.channel, title="Popular" , action="peliculas", url=host + "/popular/"))
-    itemlist.append( Item(channel=item.channel, title="Longitud" , action="peliculas", url=host + "/longest/"))
+    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/new/"))
+    itemlist.append( Item(channel=item.channel, title="Popular" , action="lista", url=host + "/popular/"))
+    itemlist.append( Item(channel=item.channel, title="Longitud" , action="lista", url=host + "/longest/"))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -27,7 +25,7 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     item.url = host + "/search/?q=%s" % texto
     try:
-        return peliculas(item)
+        return lista(item)
     except:
         import sys
         for line in sys.exc_info():
@@ -41,33 +39,40 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     data = scrapertools.get_match(data,'<ul class="cf">(.*?)</ul>')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<li>.*?<a href="([^"]+)".*?<img class="thumb" src="([^"]+)" alt="([^"]+)".*?<span class="videos-count">(\d+)</span>'
+    patron = '<li>.*?<a href="([^"]+)".*?'
+    patron += '<img class="thumb" src="([^"]+)" alt="([^"]+)".*?'
+    patron += '<span class="videos-count">(\d+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,vidnum in matches:
         scrapedplot = ""
+        
+        url= scrapedurl + "?sortby=post_date"
         title = scrapedtitle + " \(" + vidnum + "\)"
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=url,
+                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
-def peliculas(item):
+def lista(item):
     logger.info()
     itemlist = []
     data = scrapertools.cachePage(item.url)
     data = scrapertools.get_match(data,'<ul class="cf">(.*?)<h2>Advertisement</h2>')
-    patron  = '<li>.*?<a href="([^"]+)".*?src="([^"]+)" alt="([^"]+)" />.*?<span class="time">(.*?)</span>'
+    patron  = '<li>.*?<a href="([^"]+)".*?'
+    patron += 'src="([^"]+)" alt="([^"]+)".*?'
+    patron += '<span class="time">(.*?)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,time  in matches:
         contentTitle = scrapedtitle
         title = "[COLOR yellow]" + time + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=scrapedurl, thumbnail=thumbnail, plot=plot, contentTitle = contentTitle, infoLabels={'year':year} ))
-    next_page_url = scrapertools.find_single_match(data,'<a href="([^"]+)" title="Next Page" data-page-num="\d+">Next page &raquo;</a>')
-    if next_page_url!="":
-        next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
+                               thumbnail=thumbnail, plot=plot, contentTitle = contentTitle))
+    next_page = scrapertools.find_single_match(data,'<a href="([^"]+)" title="Next Page" data-page-num="\d+">Next page &raquo;</a>')
+    if next_page!="":
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 

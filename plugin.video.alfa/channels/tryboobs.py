@@ -7,18 +7,16 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-from core import tmdb
-from core import jsontools
 
 host = 'http://www.tryboobs.com'
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevas" , action="peliculas", url=host))
-    itemlist.append( Item(channel=item.channel, title="Popular" , action="peliculas", url=host + "/most-popular/week/"))
-    itemlist.append( Item(channel=item.channel, title="Mejor Valorado" , action="peliculas", url=host + "/top-rated/week/"))
-    itemlist.append( Item(channel=item.channel, title="Modelos" , action="modelos", url=host + "/models/model-viewed/1/"))
+    itemlist.append( Item(channel=item.channel, title="Nuevas" , action="lista", url=host))
+    itemlist.append( Item(channel=item.channel, title="Popular" , action="lista", url=host + "/most-popular/week/"))
+    itemlist.append( Item(channel=item.channel, title="Mejor Valorado" , action="lista", url=host + "/top-rated/week/"))
+    itemlist.append( Item(channel=item.channel, title="Modelos" , action="categorias", url=host + "/models/model-viewed/1/"))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -29,7 +27,7 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     item.url = host + "/search/?q=%s" % texto
     try:
-        return peliculas(item)
+        return lista(item)
     except:
         import sys
         for line in sys.exc_info():
@@ -37,44 +35,37 @@ def search(item, texto):
         return []
 
 
-def modelos(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<a href="([^"]+)" class="th-model">.*?src="([^"]+)".*?<span class="roliks"><span>(\d+)</span>.*?<span class="title">([^"]+)</span>'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,cantidad,scrapedtitle in matches:
-        scrapedplot = ""
-        scrapedtitle = scrapedtitle + "   (" + cantidad + ")"
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
-    next_page_url = scrapertools.find_single_match(data,'<li><a class="pag-next" href="([^"]+)"><ins>Next</ins></a>')
-    if next_page_url!="":
-        next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel , action="modelos" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
-    return itemlist
-
-
 def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<a href="([^"]+)" class="th-cat">.*?<img src="([^"]+)".*?<span>(\d+)</span>.*?<span class="title">([^"]+)</span>'
+    patron = '<a href="([^"]+)" class="th-[^"]+">.*?'
+    patron += 'src="([^"]+)".*?'
+    patron += '<span>(\d+)</span>.*?'
+    patron += '<span class="title">([^"]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,cantidad,scrapedtitle in matches:
         scrapedplot = ""
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
+                              thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
+    next_page = scrapertools.find_single_match(data,'<li><a class="pag-next" href="([^"]+)"><ins>Next</ins></a>')
+    if next_page!="":
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(item.clone(action="categorias", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 
-def peliculas(item):
+def lista(item):
     logger.info()
     itemlist = []
     data = scrapertools.cachePage(item.url)
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = 'href="([^"]+)"\s*class="th-video.*?<img src="([^"]+)".*?<span class="time">([^"]+)</span>.*?<span class="title">([^"]+)</span>'
+    patron = 'href="([^"]+)"\s*class="th-video.*?'
+    patron += '<img src="([^"]+)".*?'
+    patron += '<span class="time">([^"]+)</span>.*?'
+    patron += '<span class="title">([^"]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,duracion,scrapedtitle  in matches:
         url = scrapedurl
@@ -82,12 +73,12 @@ def peliculas(item):
         title = "[COLOR yellow]" + duracion + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, plot=plot, contentTitle = contentTitle, infoLabels={'year':year} ))
-    next_page_url = scrapertools.find_single_match(data,'<li><a class="pag-next" href="([^"]+)"><ins>Next</ins></a>')
-    if next_page_url!="":
-        next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="play" , title=title, url=url, thumbnail=thumbnail,
+                              fanart=thumbnail, plot=plot, contentTitle = contentTitle))
+    next_page = scrapertools.find_single_match(data,'<li><a class="pag-next" href="([^"]+)"><ins>Next</ins></a>')
+    if next_page!="":
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 

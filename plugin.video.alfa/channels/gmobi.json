@@ -4,35 +4,59 @@
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "thumbnail": "http://www.gnula.mobi/wp-content/uploads/2018/05/Captura-1.png?%3E",
+  "thumbnail": "https://gnula.mobi/wp-content/uploads/2018/12/gnula-logo.png",
   "banner": "",
   "categories": [
     "movie"
   ],
   "settings": [
     {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "LAT",
+        "ESP",
+        "VOSE"
+      ]
+    },
+     {
+      "id": "modo_grafico",
+      "type": "bool",
+      "label": "Buscar información extra",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "comprueba_enlaces",
+      "type": "bool",
+      "label": "Verificar si los enlaces existen",
       "default": false,
-      "enabled": false,
-      "visible": false
-    },
-    {
-      "id": "include_in_newest_castellano",
-      "type": "bool",
-      "label": "Incluir en Novedades - Castellano",
-      "default": true,
       "enabled": true,
       "visible": true
     },
     {
-      "id": "include_in_newest_latino",
-      "type": "bool",
-      "label": "Incluir en Novedades - Latino",
-      "default": true,
+      "id": "comprueba_enlaces_num",
+      "type": "list",
+      "label": "Número de enlaces a verificar",
+      "default": 1,
       "enabled": true,
-      "visible": true
-    }
-  ]
+      "visible": "eq(-1,true)",
+      "lvalues": [ "5", "10", "15", "20" ]
+    } 
+ ]
 }
+
