@@ -13,7 +13,7 @@ host = 'http://mirapeliculas.net'
 
 IDIOMAS = {'Latino': 'LAT', 'Español': 'ESP', 'Subtitulado': 'VOSE'}
 list_language = IDIOMAS.values()
-list_servers = ['Streamango', 'Streamplay', 'Openload', 'Okru']
+list_servers = ['streamango', 'streamplay', 'openload', 'okru']
 list_quality = ['BR-Rip', 'HD-Rip', 'DVD-Rip', 'TS-HQ', 'TS-Screner', 'Cam']
 
 __channel__='mirapeliculas'
@@ -67,7 +67,6 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     patron  = '<li class="cat-item cat-item-3"><a href="([^"]+)" title="([^"]+)">'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches) # esto luego de terminado el canal se debe eliminar
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
