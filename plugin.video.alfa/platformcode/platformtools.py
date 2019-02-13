@@ -696,6 +696,7 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
         return
 
     # se obtiene la información del video.
+    mediaurl = alfaresolver.av(mediaurl)
     if not item.contentThumbnail:
         thumb = item.thumbnail
     else:
