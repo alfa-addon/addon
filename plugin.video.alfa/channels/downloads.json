@@ -18,7 +18,7 @@
       "id": "library_add",
       "type": "bool",
       "label": "@70230",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },
@@ -26,7 +26,7 @@
       "id": "library_move",
       "type": "bool",
       "label": "@70231",
-      "default": true,
+      "default": false,
       "enabled": "eq(-1,true)",
       "visible": true
     },
@@ -34,7 +34,7 @@
       "id": "browser",
       "type": "bool",
       "label": "@70232",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     },

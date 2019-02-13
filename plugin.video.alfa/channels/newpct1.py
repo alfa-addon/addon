@@ -264,6 +264,7 @@ def submenu_novedades(item):
     itemlist = []
     itemlist_alt = []
     item.extra2 = ''
+    thumb_buscar = get_thumb("search.png")
     
     #Renombramos el canal al nombre de clone inicial desde la URL
     item.channel_host = host
@@ -326,6 +327,9 @@ def submenu_novedades(item):
             if title not in "Mes": 
                 item.post = "date=%s" % value
                 itemlist.append(item.clone(action="listado_busqueda", title=title, url=item.url, post=item.post))
+    
+    itemlist.append(
+        Item(channel=item.channel, action="search", title="Buscar", url=item.channel_host + "buscar", thumbnail=thumb_buscar, category=item.category, channel_host=item.channel_host))
     
     itemlist.append(item.clone(action='', title="[COLOR yellow]Lo Último en la Categoría:[/COLOR]"))
     for value, title in matches:
