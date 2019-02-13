@@ -16,7 +16,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import tmdb
 
-host = "http://fanpelis.com/"
+host = "https://fanpelis.com/"
 
 def mainlist(item):
     logger.info()

@@ -39,7 +39,7 @@ list_servers = [
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'peliculonhd')
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'peliculonhd')
 
-host = 'https://peliculonhd.com/'
+host = 'https://peliculonhd.tv/'
 
 def mainlist(item):
     logger.info()
@@ -50,7 +50,7 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title='Peliculas', action='menu_movies',
                          thumbnail= get_thumb('movies', auto=True)))
-    itemlist.append(Item(channel=item.channel, title='Series', url=host+'serie', action='list_all', type='tv',
+    itemlist.append(Item(channel=item.channel, title='Series', url=host+'ver-serie', action='list_all', type='tv',
                          thumbnail= get_thumb('tvshows', auto=True)))
     itemlist.append(
         item.clone(title="Buscar", action="search", url=host + '?s=', thumbnail=get_thumb("search", auto=True),
@@ -65,7 +65,7 @@ def menu_movies(item):
 
     itemlist=[]
 
-    itemlist.append(Item(channel=item.channel, title='Todas', url=host + 'ver', action='list_all',
+    itemlist.append(Item(channel=item.channel, title='Todas', url=host + 'ver-pelicula', action='list_all',
                          thumbnail=get_thumb('all', auto=True), type='movie'))
     itemlist.append(Item(channel=item.channel, title='Genero', action='section',
                          thumbnail=get_thumb('genres', auto=True), type='movie'))
@@ -145,8 +145,8 @@ def list_all(item):
                                 title=title,
                                 url=url,
                                 thumbnail=thumbnail,
-                                contentTitle=contentTitle,
                                 quality=quality,
+                                contentTitle= contentTitle,
                                 type=item.type,
                                 infoLabels={'year':year}))
 
@@ -221,7 +221,8 @@ def episodesxseasons(item):
     itemlist = []
 
     data=get_source(item.url)
-    patron='class="numerando">%s - (\d+)</div><div class="episodiotitle">.?<a href="([^"]+)">([^<]+)<' % item.infoLabels['season']
+    data = data.replace('"','\'')
+    patron="class='numerando'>%s - (\d+)</div><div class='episodiotitle'>.?<a href='([^']+)'>([^<]+)<" % item.infoLabels['season']
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     infoLabels = item.infoLabels
@@ -262,7 +263,7 @@ def findvideos(item):
         post = {'action': 'doo_player_ajax', 'post': id, 'nume': option, 'type':type}
         post = urllib.urlencode(post)
 
-        test_url = '%swp-admin/admin-ajax.php' % 'https://peliculonhd.com/'
+        test_url = '%swp-admin/admin-ajax.php' % host
         new_data = httptools.downloadpage(test_url, post=post, headers={'Referer':item.url}).data
         test_url = scrapertools.find_single_match(new_data, "src='([^']+)'")
         if 'xyz' in test_url:

@@ -46,9 +46,12 @@ def mainlist(item):
     return itemlist
 
 
-def get_source(url):
+def get_source(url, referer=None):
     logger.info()
-    data = httptools.downloadpage(url).data
+    if referer is None:
+        data = httptools.downloadpage(url, ignore_response_code=True).data
+    else:
+        data = httptools.downloadpage(url, headers={'Referer':referer}).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
