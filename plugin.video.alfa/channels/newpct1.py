@@ -1445,8 +1445,11 @@ def findvideos(item):
         patron_alt = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'  #Patron para .torrent (planetatorrent)
         if scrapertools.find_single_match(data, patron):
             patron = patron_alt
+    url_torr = scrapertools.find_single_match(data, patron)
+    if  not url_torr.startswith("http"):                                        #Si le falta el http.: lo ponemos
+        url_torr = scrapertools.find_single_match(host, '(\w+:)//') + url_torr
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not data or not scrapertools.find_single_match(data, patron) or not videolibrarytools.verify_url_torrent(scrapertools.find_single_match(data, patron)):                                           # Si no hay datos o url, error
+    if not data or not scrapertools.find_single_match(data, patron) or not videolibrarytools.verify_url_torrent(url_torr):                                                                            # Si no hay datos o url, error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
             item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
@@ -1515,7 +1518,7 @@ def findvideos(item):
     if not size:
         size = scrapertools.find_single_match(item.quality, '\s?\[(\d+.?\d*?\s?\w\s?[b|B])\]')
     if not size and not item.armagedon and not item.videolibray_emergency_urls:
-        size = generictools.get_torrent_size(scrapertools.find_single_match(data, patron))  #Buscamos el tamaño en el .torrent
+        size = generictools.get_torrent_size(url_torr)                              #Buscamos el tamaño en el .torrent
     if size:
         item.title = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item.title)            #Quitamos size de título, si lo traía
         item.title = '%s [%s]' % (item.title, size)                                 #Agregamos size al final del título
@@ -1531,13 +1534,13 @@ def findvideos(item):
     
     # Verificamos la url torrent o usamos la de emergencia
     if not item.armagedon:
-        item_local.url = scrapertools.find_single_match(data, patron)
+        item_local.url = url_torr
         if item_local.url == 'javascript:;': 
             item_local.url = ''                                                         #evitamos url vacías
         item_local.url = item_local.url.replace(" ", "%20")                             #sustituimos espacios por %20, por si acaso
     
         if item_local.url and item.emergency_urls:                                      #la url no está verificada
-            item_local.torrent_alt = item.emergency_urls[0][0]                          #Guardamos la url del .Torrent ALTERNATIVA
+            item_local.torrent_alt = item.emergency_urls[0][0]              #Guardamos la url del .Torrent ALTERNATIVA
         
     if not item_local.url:                                                              #error en url?
         logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
