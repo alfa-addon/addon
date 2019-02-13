@@ -17,6 +17,7 @@ import xbmc
 import xbmcgui
 import xbmcplugin
 from channelselector import get_thumb
+from lib import alfaresolver
 from platformcode import unify
 from core import channeltools
 from core import trakt_tools
