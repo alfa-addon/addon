@@ -38,10 +38,10 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<article id="post-\d+".*?<a href="([^"]+)" title="([^"]+)">.*?data-src="([^"]+)"'
+    patron = '<article id="post-\d+".*?<a href="([^"]+)".*?data-src="([^"]+)".*?alt="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     scrapertools.printMatches(matches)
-    for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         scrapedplot = ""
         scrapedtitle = scrapedtitle.replace("Permalink to Watch ", "").replace("Porn Online", "").replace("Permalink to ", "")
         itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl,

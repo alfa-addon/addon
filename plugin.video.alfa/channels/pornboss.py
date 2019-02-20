@@ -19,7 +19,7 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="     categorias" , action="categorias", url=host + "/category/movies/"))
     
     itemlist.append( Item(channel=item.channel, title="Videos" , action="lista", url=host + "/category/clips/"))
-    itemlist.append( Item(channel=item.channel, title="     categorias" , action="lista", url=host + "/category/clips/"))
+    itemlist.append( Item(channel=item.channel, title="     categorias" , action="categorias", url=host + "/category/clips/"))
     return itemlist
 
 
@@ -41,11 +41,11 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    if item.url == host + "/category/movies/":
+    if "/category/movies/" in item.url:
         data = scrapertools.get_match(data,'>Movies</a>(.*?)</ul>')
     else:
         data = scrapertools.get_match(data,'>Clips</a>(.*?)</ul>')
-    patron  = '<a href="([^"]+)">([^"]+)</a>'
+    patron  = '<a href=([^"]+)>([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle in matches:
@@ -60,19 +60,20 @@ def lista(item):
     logger.info()
     itemlist = []
     data = scrapertools.cachePage(item.url)
-    patron = '<article id="post-\d+".*?'
-    patron += '<img class="center cover" src="([^"]+)" alt="([^"]+)".*?'
-    patron += '<blockquote>.*?<a href=\'([^\']+)\''
+    patron = '<article id=post-\d+.*?'
+    patron += '<img class="center cover" src=([^"]+) alt="([^"]+)".*?'
+    patron += '<blockquote>.*?<a href=(.*?) target=_blank>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     scrapertools.printMatches(matches)
     for scrapedthumbnail,scrapedtitle,scrapedurl in matches:
         scrapedplot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
-    next_page = scrapertools.find_single_match(data,'<a class="nextpostslink" rel="next" href="([^"]+)">')
+    next_page = scrapertools.find_single_match(data,'<a class=nextpostslink rel=next href=(.*?)>')
     if next_page!="":
-        itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
+        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
+
 
 def play(item):
     logger.info()
