@@ -17,7 +17,6 @@ import xbmc
 import xbmcgui
 import xbmcplugin
 from channelselector import get_thumb
-from lib import alfaresolver
 from platformcode import unify
 from core import channeltools
 from core import trakt_tools
@@ -697,7 +696,6 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
         return
 
     # se obtiene la información del video.
-    mediaurl = alfaresolver.av(mediaurl)
     if not item.contentThumbnail:
         thumb = item.thumbnail
     else:
