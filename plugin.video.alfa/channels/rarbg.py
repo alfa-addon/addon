@@ -533,7 +533,7 @@ def play(item):                                 #Permite preparar la descarga de
     from core import ziptools
     
     #buscamos la url del .torrent
-    patron = '<tr><td align="(?:[^"]+)?"\s*class="(?:[^"]+)?"\s*width="(?:[^"]+)?">\s*Torrent:<\/td><td class="(?:[^"]+)?">\s*<img src="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*border="(?:[^"]+)?"\s*\/>\s*<a onmouseover="(?:[^"]+)?"\s*onmouseout="(?:[^"]+)?" href="([^"]+)">.*?<\/a>'
+    patron = '<tr><td align="(?:[^"]+)?"\s*class="(?:[^"]+)?"\s*width="(?:[^"]+)?">\s*Torrent:<\/td><td class="(?:[^"]+)?">\s*<img src="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*border="(?:[^"]+)?"\s*\/>\s*<a onmouseover="(?:[^"]+)?"\s*onmouseout="(?:[^"]+)?" href="([^"]+)".*?<\/a>'
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
         data = unicode(data, "utf-8", errors="replace").encode("utf-8")
@@ -543,6 +543,7 @@ def play(item):                                 #Permite preparar la descarga de
     if status:
         return itemlist                                                 #IP bloqueada
     if not scrapertools.find_single_match(data, patron):
+        logger.error('ERROR 02: PLAY: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log: PATRON: ' + patron + ' / DATA: ' + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: PLAY: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
         return itemlist
     item.url = urlparse.urljoin(host, scrapertools.find_single_match(data, patron))

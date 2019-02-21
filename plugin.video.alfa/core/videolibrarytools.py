@@ -441,7 +441,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 if e.emergency_urls:                                                            #Si ya tenemos urls...
                     emergency_urls_succ = True                              #... es un éxito y vamos a marcar el .nfo
             
-            if not e.infoLabels:                                            #en series multicanal, prevalece el infolabels...
+            if not e.infoLabels["tmdb_id"] or (serie.infoLabels["tmdb_id"] and e.infoLabels["tmdb_id"] != serie.infoLabels["tmdb_id"]):                         #en series multicanal, prevalece el infolabels...
                 e.infoLabels = serie.infoLabels                             #... del canal actual y no el del original
             e.contentSeason, e.contentEpisodeNumber = season_episode.split("x")
             new_episodelist.append(e)
@@ -516,7 +516,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 if not item_nfo:
                     head_nfo, item_nfo = read_nfo(nfo_path)
 
-                if not e.infoLabels:                            #en series multicanal, prevalece el infolabels...
+                if not e.infoLabels["tmdb_id"] or (item_nfo.infoLabels["tmdb_id"] and e.infoLabels["tmdb_id"] != item_nfo.infoLabels["tmdb_id"]):                         #en series multicanal, prevalece el infolabels...
                     e.infoLabels = item_nfo.infoLabels          #... del canal actual y no el del original
 
                 if filetools.write(json_path, e.tojson()):
