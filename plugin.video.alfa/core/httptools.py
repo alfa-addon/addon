@@ -99,7 +99,7 @@ load_cookies()
 
 
 def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=True, cookies=True, replace_headers=False,
-                 add_referer=False, only_headers=False, bypass_cloudflare=True, count_retries=0, random_headers=False, ignore_response_code=False):
+                 add_referer=False, only_headers=False, bypass_cloudflare=True, count_retries=0, random_headers=False, ignore_response_code=False, alfa_s=False):
     """
     Abre una url y retorna los datos obtenidos
 
@@ -164,22 +164,23 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
     if timeout is None and HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT is not None: timeout = HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT
     if timeout == 0: timeout = None
 
-    logger.info("----------------------------------------------")
-    logger.info("downloadpage Alfa: %s" %__version)
-    logger.info("----------------------------------------------")
-    logger.info("Timeout: %s" % timeout)
-    logger.info("URL: " + url)
-    logger.info("Dominio: " + urlparse.urlparse(url)[1])
-    if post:
-        logger.info("Peticion: POST")
-    else:
-        logger.info("Peticion: GET")
-    logger.info("Usar Cookies: %s" % cookies)
-    logger.info("Descargar Pagina: %s" % (not only_headers))
-    logger.info("Fichero de Cookies: " + ficherocookies)
-    logger.info("Headers:")
-    for header in request_headers:
-        logger.info("- %s: %s" % (header, request_headers[header]))
+    if not alfa_s:
+        logger.info("----------------------------------------------")
+        logger.info("downloadpage Alfa: %s" %__version)
+        logger.info("----------------------------------------------")
+        logger.info("Timeout: %s" % timeout)
+        logger.info("URL: " + url)
+        logger.info("Dominio: " + urlparse.urlparse(url)[1])
+        if post:
+            logger.info("Peticion: POST")
+        else:
+            logger.info("Peticion: GET")
+            logger.info("Usar Cookies: %s" % cookies)
+            logger.info("Descargar Pagina: %s" % (not only_headers))
+            logger.info("Fichero de Cookies: " + ficherocookies)
+            logger.info("Headers:")
+            for header in request_headers:
+                logger.info("- %s: %s" % (header, request_headers[header]))
 
     # Handlers
     handlers = [urllib2.HTTPHandler(debuglevel=False)]
@@ -192,7 +193,8 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
 
     opener = urllib2.build_opener(*handlers)
 
-    logger.info("Realizando Peticion")
+    if not alfa_s:
+        logger.info("Realizando Peticion")
 
     # Contador
     inicio = time.time()
@@ -243,15 +245,17 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
         response["time"] = time.time() - inicio
         response["url"] = handle.geturl()
 
-    logger.info("Terminado en %.2f segundos" % (response["time"]))
-    logger.info("Response sucess: %s" % (response["sucess"]))
-    logger.info("Response code: %s" % (response["code"]))
-    logger.info("Response error: %s" % (response["error"]))
-    logger.info("Response data length: %s" % (len(response["data"])))
-    logger.info("Response headers:")
+    if not alfa_s:
+        logger.info("Terminado en %.2f segundos" % (response["time"]))
+        logger.info("Response sucess: %s" % (response["sucess"]))
+        logger.info("Response code: %s" % (response["code"]))
+        logger.info("Response error: %s" % (response["error"]))
+        logger.info("Response data length: %s" % (len(response["data"])))
+        logger.info("Response headers:")
     server_cloudflare = ""
     for header in response["headers"]:
-        logger.info("- %s: %s" % (header, response["headers"][header]))
+        if not alfa_s:
+            logger.info("- %s: %s" % (header, response["headers"][header]))
         if "cloudflare" in response["headers"][header]:
             server_cloudflare = "cloudflare"
 
@@ -266,22 +270,27 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
     if cookies:
         save_cookies()
 
-    logger.info("Encoding: %s" % (response["headers"].get('content-encoding')))
+    if not alfa_s:
+        logger.info("Encoding: %s" % (response["headers"].get('content-encoding')))
 
     if response["headers"].get('content-encoding') == 'gzip':
-        logger.info("Descomprimiendo...")
+        if not alfa_s:
+            logger.info("Descomprimiendo...")
         data_alt = response["data"]
         try:
             response["data"] = gzip.GzipFile(fileobj=StringIO(response["data"])).read()
-            logger.info("Descomprimido")
+            if not alfa_s:
+                logger.info("Descomprimido")
         except:
-            logger.info("No se ha podido descomprimir con gzip.  Intentando con zlib")
+            if not alfa_s:
+                logger.info("No se ha podido descomprimir con gzip.  Intentando con zlib")
             response["data"] = data_alt
             try:
                 import zlib
                 response["data"] = zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(response["data"])
             except:
-                logger.info("No se ha podido descomprimir con zlib")
+                if not alfa_s:
+                    logger.info("No se ha podido descomprimir con zlib")
                 response["data"] = data_alt
 
     # Anti Cloudflare
@@ -289,11 +298,14 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
         cf = Cloudflare(response)
         if cf.is_cloudflare:
             count_retries += 1
-            logger.info("cloudflare detectado, esperando %s segundos..." % cf.wait_time)
+            if not alfa_s:
+                logger.info("cloudflare detectado, esperando %s segundos..." % cf.wait_time)
             auth_url = cf.get_url()
-            logger.info("Autorizando... intento %d url: %s" % (count_retries, auth_url))
+            if not alfa_s:
+                logger.info("Autorizando... intento %d url: %s" % (count_retries, auth_url))
             if downloadpage(auth_url, headers=request_headers, replace_headers=True, count_retries=count_retries).sucess:
-                logger.info("Autorización correcta, descargando página")
+                if not alfa_s:
+                    logger.info("Autorización correcta, descargando página")
                 resp = downloadpage(url=response["url"], post=post, headers=headers, timeout=timeout,
                                     follow_redirects=follow_redirects,
                                     cookies=cookies, replace_headers=replace_headers, add_referer=add_referer)
@@ -305,7 +317,8 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
                 response["time"] = resp.time
                 response["url"] = resp.url
             else:
-                logger.info("No se ha podido autorizar")
+                if not alfa_s:
+                    logger.info("No se ha podido autorizar")
 
     return type('HTTPResponse', (), response)
     

@@ -533,17 +533,17 @@ def findvideos(item):
     key = scrapertools.find_single_match(data_js, 'JSON.parse\(atob.*?substrings\((.*?)\)')
 
     data_js = httptools.downloadpage("%s/js/providers.js" % host).data
-    try:
-        from lib import alfaresolver
-        provs = alfaresolver.hdfull_providers(data_js)
-        if provs == '': return []
-    except:
-        return []
+    decoded = jhexdecode(data_js)
+    providers_pattern = 'p\[(\d+)\]= {"t":"([^"]+)","d":".*?","e":.function.*?,"l":.function.*?return "([^"]+)".*?};'
+    providers = scrapertools.find_multiple_matches (decoded, providers_pattern)
+    provs = {}
+    for provider, e, l in providers:
+        provs[provider]=[e,l]
 
     data = agrupa_datos(httptools.downloadpage(item.url).data)
     data_obf = scrapertools.find_single_match(data, "var ad\s*=\s*'([^']+)'")
-    data_decrypt = jsontools.load(obfs(base64.b64decode(data_obf), 126 - int(key)))
 
+    data_decrypt = jsontools.load(obfs(base64.b64decode(data_obf), 126 - int(key)))
     infolabels = {}
     year = scrapertools.find_single_match(data, '<span>A&ntilde;o:\s*</span>.*?(\d{4})')
     infolabels["year"] = year
@@ -552,7 +552,7 @@ def findvideos(item):
         if match['provider'] in provs:
             try:
                 embed = provs[match['provider']][0]
-                url = eval(provs[match['provider']][1].replace('_code_', "match['code']"))
+                url = provs[match['provider']][1]+match['code']
                 matches.append([match['lang'], match['quality'], url, embed])
             except:
                 pass
@@ -690,7 +690,6 @@ def get_status(status, type, id):
 
 ## --------------------------------------------------------------------------------
 ## --------------------------------------------------------------------------------
-
 
 def jhexdecode(t):
     r = re.sub(r'_\d+x\w+x(\d+)', 'var_' + r'\1', t)

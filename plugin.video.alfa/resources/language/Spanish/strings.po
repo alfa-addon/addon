@@ -1046,8 +1046,8 @@ msgid "Movie"
 msgstr "Película"
 
 msgctxt "#60245"
-msgid "Series"
-msgstr "Serie"
+msgid "tv show"
+msgstr "serie"
 
 msgctxt "#60246"
 msgid "Full information"
@@ -1248,10 +1248,6 @@ msgstr "Buscando información de la serie"
 msgctxt "#60297"
 msgid "Find %s possible matches"
 msgstr "Encontrados %s posibles coincidencias"
-
-msgctxt "#60298"
-msgid "[%s]: Select the correct TV series"
-msgstr "[%s]: Selecciona la serie correcta"
 
 msgctxt "#60299"
 msgid "Not found in the language '%s'"
@@ -4263,10 +4259,6 @@ msgctxt "#70392"
 msgid "Rate with a [COLOR %s]%s[/ COLOR]"
 msgstr "Puntuar con un [COLOR %s]%s[/COLOR]"
 
-msgctxt "#70393"
-msgid "[%s]: Select the correct %s "
-msgstr "[%s]: Selecciona la %s correcta"
-
 msgctxt "#70394"
 msgid "Action"
 msgstr "Accion"
@@ -4810,10 +4802,6 @@ msgstr "Mis enlaces"
 msgctxt "#70528"
 msgid "Default folder"
 msgstr "Carpeta por defecto"
-
-msgctxt "#70529"
-msgid "Repeated link"
-msgstr "Enlace repetido"
 
 msgctxt "#70530"
 msgid "You already have this link in the folder"
