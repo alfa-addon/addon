@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "((?:fembed|divload).com/v/[A-z0-9_-]+)",
-        "url": "https://www.\\1"
+        "pattern": "(https://www.filepup.net/play/\\w+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "fembed",
-  "name": "Fembed",
+  "id": "filepup",
+  "name": "filepup",
   "settings": [
     {
       "default": false,
@@ -38,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/prdPwBhT/fembed1.png",
-  "version": 1
+  "thumbnail": "http://static.filepup.net/fplogoV2s.png"
 }
