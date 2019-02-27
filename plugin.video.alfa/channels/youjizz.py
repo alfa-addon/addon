@@ -38,9 +38,8 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'<h4>Trending Categories</h4>(.*?)</ul>')
+    data = scrapertools.get_match(data,'<h4>Trending(.*?)</ul>')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    itemlist.append( Item(channel=item.channel, action="lista", title="big tits", url= host + "/search/big-tits-1.html?") )
     patron  = '<li><a href="([^"]+)">([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle in matches:
