@@ -14,7 +14,6 @@ host = 'https://www.cine-online.eu'
 IDIOMAS = {'Español': 'ESP', 'Cast': 'ESP', 'Latino': 'LAT', 'Lat': 'LAT', 'Subtitulado': 'VOSE', 'Sub': 'VOSE'}
 list_language = IDIOMAS.values()
 list_servers = ['Streamango', 'Vidoza', 'Openload', 'Streamcherry', 'Netutv']
-# list_quality = ['Brscreener', 'HD', 'TS']
 list_quality = []
 __channel__='cineonline'
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', __channel__)
@@ -90,9 +89,6 @@ def categorias(item):
     return itemlist
 
 
-
-    
-    
 def lista(item):
     logger.info()
     itemlist = []
@@ -168,36 +164,6 @@ def episodesxseason(item):
     return itemlist
 
 
-def findlinks (item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '<li class="elemento">\s+<a href="([^"]+)".*?'
-    patron += 'alt="([^"]+)".*?'
-    patron += '<span class="c">([^<]+)</span>.*?'
-    patron += '<span class="d">([^<]+)</span>.*?'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for url, server, lang, calidad in matches:
-        server = server.replace(".com", "").replace(".net","").replace(".co","").replace(".nz","").replace("Oload", "Openload")
-        if 'HD' in calidad:
-            quality = "HD"
-        if lang in IDIOMAS:
-            lang = IDIOMAS[lang]
-        if not config.get_setting('unify'):
-            title = '%s [COLOR red] %s [/COLOR] (%s)' % (server, calidad , lang)
-        else:
-            title = ''
-        itemlist.append(item.clone(action="play", title=title, url=url, server=server, language=lang, quality=calidad ))
-    # Requerido para FilterTools
-    itemlist = filtertools.get_links(itemlist, item, list_language)
-    # Requerido para AutoPlay
-    autoplay.start(itemlist, item)
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra !='findvideos' :
-        itemlist.append(Item(channel=item.channel, action="add_pelicula_to_library", 
-                             title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
-                             extra="findvideos", contentTitle=item.contentTitle)) 
-    return itemlist
-
 def findvideos(item):
     logger.info()
     itemlist = []
@@ -234,11 +200,11 @@ def findvideos(item):
     itemlist = filtertools.get_links(itemlist, item, list_language)
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
-
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra !='findvideos' and not "/episodios/" in item.url :
-        itemlist.append(Item(channel=item.channel, action="add_pelicula_to_library", 
-                             title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
-                             extra="findvideos", contentTitle=item.contentTitle)) 
+    if not "/episodios/" in item.url:
+        if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra !='findvideos':
+            itemlist.append(Item(channel=item.channel, action="add_pelicula_to_library", 
+                                 title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
+                                 extra="findvideos", contentTitle=item.contentTitle)) 
     return itemlist
 
 
