@@ -19,7 +19,8 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url = " + page_url)
-    data = httptools.downloadpage(page_url).data
+    headers = {"Referer":page_url}
+    data = httptools.downloadpage(page_url, headers=headers).data
     flowplayer = re.search("url: [\"']([^\"']+)", data)
     if flowplayer:
         return [["FLV", flowplayer.group(1)]]
@@ -37,6 +38,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             logger.debug(strResult)
             videoSources = re.findall("<source[\s]+src=[\"'](?P<url>[^\"']+)[^>]+label=[\"'](?P<label>[^\"']+)", strResult)
             for url, label in videoSources:
+                url += "|Referer=%s" %page_url
                 video_urls.append([label, url])
             video_urls.sort(key=lambda i: int(i[0].replace("p","")))
     except:
