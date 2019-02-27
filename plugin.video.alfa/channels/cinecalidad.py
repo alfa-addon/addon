@@ -130,7 +130,7 @@ def anyos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<a href="([^"]+)">([^<]+)</a><br'
+    patron = '<a href=([^>]+)>([^<]+)</a><br'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
@@ -171,8 +171,8 @@ def generos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<li id="menu-item-.*?" class="menu-item menu-item-type-taxonomy menu-item-object-category ' \
-             'menu-item-.*?"><a href="([^"]+)">([^<]+)<\/a></li>'
+    patron = '<li id=menu-item-.*? class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-.*?'
+    patron +='"><a href=([^>]+)>([^<]+)<\/a></li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle in matches:
         url = urlparse.urljoin(item.url, scrapedurl)
@@ -206,8 +206,8 @@ def peliculas(item):
 
 
     data = httptools.downloadpage(item.url).data
-    patron = '<div class="home_post_cont.*? post_box">.*?<a href="(.*?)".*?'
-    patron += 'src="(.*?)".*?title="(.*?) \((.*?)\).*?".*?p&gt;(.*?)&lt'
+    patron = '<div class="home_post_cont.*? post_box">.*?<a href=([^>]+)>.*?src=([^ ]+).*?'
+    patron += 'title="(.*?) \((.*?)\).*?".*?p&gt;(.*?)&lt'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedplot in matches:
@@ -232,7 +232,7 @@ def peliculas(item):
                  ))
 
     try:
-        patron = "<link rel='next' href='([^']+)' />"
+        patron = "<link rel=next href=([^>]+)>"
         next_page = re.compile(patron, re.DOTALL).findall(data)
         itemlist.append(Item(channel=item.channel,
                              action="peliculas",
@@ -298,7 +298,7 @@ def findvideos(item):
         lang = 'latino'
 
     data = httptools.downloadpage(item.url).data
-    patron = 'target="_blank".*? service=".*?" data="(.*?)"><li>(.*?)<\/li>'
+    patron = 'target=_blank.*? service=.*? data="(.*?)"><li>(.*?)<\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     server_url = {'YourUpload': 'https://www.yourupload.com/embed/',
@@ -315,7 +315,6 @@ def findvideos(item):
         if server_id not in ['Mega', 'MediaFire', 'Trailer', '']:
             video_id = dec(video_cod, dec_value)
 
-        logger.debug('server_id %s' % server_id)
         if server_id in server_url:
             server = server_id.lower()
             thumbnail = item.thumbnail

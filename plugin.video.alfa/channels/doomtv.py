@@ -15,18 +15,18 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-IDIOMAS = {'latino': 'Latino'}
+IDIOMAS = {'Latino': 'Latino'}
 list_language = IDIOMAS.values()
-
-CALIDADES = {'1080p': '1080p', '720p': '720p', '480p': '480p', '360p': '360p'}
-list_quality = CALIDADES.values()
-list_servers = ['directo', 'openload']
+list_quality = []
+list_servers = ['dostream', 'openload']
 
 host = 'http://doomtv.net/'
 
 
 def mainlist(item):
     logger.info()
+
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = []
 
@@ -65,6 +65,8 @@ def mainlist(item):
                    fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'
                    ))
 
+    autoplay.show_option(item.channel, itemlist)
+
     return itemlist
 
 
@@ -75,7 +77,6 @@ def get_source(url, referer=None):
     else:
         data = httptools.downloadpage(url, headers={'Referer':referer}).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    logger.debug(data)
     return data
 
 def lista(item):
@@ -98,9 +99,9 @@ def lista(item):
 
     for scrapedurl, quality, scrapedthumbnail, scrapedtitle, plot in matches[first:last]:
 
-        url = 'http:'+scrapedurl
-        thumbnail = scrapedthumbnail
-        filtro_thumb = scrapedthumbnail.replace("https://image.tmdb.org/t/p/w185", "")
+        url = host+scrapedurl
+        thumbnail = 'https:'+scrapedthumbnail.strip()
+        filtro_thumb = thumbnail.replace("https://image.tmdb.org/t/p/w185", "")
         filtro_list = {"poster_path": filtro_thumb.strip()}
         filtro_list = filtro_list.items()
         title = scrapedtitle
@@ -144,7 +145,7 @@ def seccion(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
-        url = 'http:'+ scrapedurl
+        url = host+scrapedurl
         title = scrapedtitle
         thumbnail = ''
         if url not in duplicado:
@@ -196,22 +197,36 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
-
     patron = 'id="(tab\d+)"><div class="movieplay">.*?src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for option, urls in matches:
+        language = 'Latino'
         if 'http' not in urls:
             urls = 'https:'+urls
+        if not config.get_setting('unify'):
+            title = ' [%s]' % language
+        else:
+            title = '%s'
         new_item = Item(
                         channel=item.channel,
                         url=urls,
-                        title=item.title,
+                        title= '%s'+ title,
                         contentTitle=item.title,
                         action='play',
+                        language = IDIOMAS[language],
+                        infoLabels = item.infoLabels
                         )
         itemlist.append(new_item)
-    itemlist = servertools.get_servers_itemlist(itemlist)
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(
@@ -222,5 +237,6 @@ def findvideos(item):
                  extra="findvideos",
                  contentTitle=item.contentTitle,
                  ))
+
 
     return itemlist
