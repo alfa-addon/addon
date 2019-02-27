@@ -27,8 +27,8 @@ def mainlist(item):
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="genero", title="Generos", url=host, thumbnail = get_thumb("genres", auto = True)))
     itemlist.append(Item(channel=item.channel, action="lista", title="Novedades", url=host, thumbnail = get_thumb("newest", auto = True)))
-    itemlist.append(Item(channel=item.channel, action="proximas", title="Próximas Películas",
-                         url=urlparse.urljoin(host, "proximamente")))
+    #itemlist.append(Item(channel=item.channel, action="proximas", title="Próximas Películas",
+    #                     url=urlparse.urljoin(host, "proximamente")))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=urlparse.urljoin(host, "?s="), thumbnail = get_thumb("search", auto = True)))
     autoplay.show_option(item.channel, itemlist)
     return itemlist
@@ -38,8 +38,8 @@ def genero(item):
     logger.info()
     itemlist = list()
     data = httptools.downloadpage(host).data
-    patron  = 'level-0.*?value="([^"]+)"'
-    patron += '>([^<]+)'
+    patron  = '<option class=.*? value=([^<]+)>'
+    patron += '([^<]+)<\/option>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle in matches:
         if 'Próximas Películas' in scrapedtitle:
@@ -94,28 +94,29 @@ def lista(item):
     else:
         url = httptools.downloadpage("%s?cat=%s" %(host, item.cat), follow_redirects=False, only_headers=True).headers.get("location", "")
         data = httptools.downloadpage(url).data
-    bloque = scrapertools.find_single_match(data, """class="item_1 items.*?id="paginador">""")
-    patron = 'class="item">.*?'  # Todos los items de peliculas (en esta web) empiezan con esto
-    patron += '<a href="([^"]+).*?'  # scrapedurl
-    patron += '<img src="([^"]+).*?'  # scrapedthumbnail
-    patron += 'alt="([^"]+).*?'  # scrapedtitle
-    patron += '<div class="fixyear">(.*?)</span></div><'  # scrapedfixyear
+    bloque = data#scrapertools.find_single_match(data, """class="item_1 items.*?id="paginador">""")
+    patron = '<div id=mt.+?>'  # Todos los items de peliculas (en esta web) empiezan con esto
+    patron += '<a href=([^"]+)\/><div class=image>'  # scrapedurl
+    patron += '<img src=([^"]+) alt=.*?'  # scrapedthumbnail
+    patron += '<span class=tt>([^"]+)<\/span>' # scrapedtitle
+    patron += '<span class=ttx>([^"]+)<div class=degradado>.*?'  # scrapedplot
+    patron += '<span class=year>([^"]+)<\/span><\/div><\/div>'  # scrapedfixyear
     matches = scrapertools.find_multiple_matches(bloque, patron)
-    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedfixyear in matches:
-        patron = '<span class="year">([^<]+)'  # scrapedyear
-        scrapedyear = scrapertools.find_single_match(scrapedfixyear, patron)
+    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedplot, scrapedyear in matches:
+        #patron = '<span class="year">([^<]+)'  # scrapedyear
+        #scrapedyear = scrapertools.find_single_match(scrapedfixyear, patron)
         scrapedtitle = scrapedtitle.replace(scrapertools.find_single_match(scrapedtitle,'\(\d{4}\)'),'').strip()
         title = scrapedtitle
         if scrapedyear:
             title += ' (%s)' % (scrapedyear)
             item.infoLabels['year'] = int(scrapedyear)
         patron = '<span class="calidad2">([^<]+).*?'  # scrapedquality
-        scrapedquality = scrapertools.find_single_match(scrapedfixyear, patron)
-        if scrapedquality:
-            title += ' [%s]' % (scrapedquality)
+        #scrapedquality = scrapertools.find_single_match(scrapedfixyear, patron)
+        #if scrapedquality:
+        #    title += ' [%s]' % (scrapedquality)
         itemlist.append(
             item.clone(title=title, url=scrapedurl, action="findvideos", extra=scrapedtitle,
-                       contentTitle=scrapedtitle, thumbnail=scrapedthumbnail, contentType="movie", context=["buscar_trailer"]))
+                       contentTitle=scrapedtitle, thumbnail=scrapedthumbnail, plot=scrapedplot, contentType="movie", context=["buscar_trailer"]))
     tmdb.set_infoLabels(itemlist)
     # Paginacion
     patron = 'rel="next" href="([^"]+)'
