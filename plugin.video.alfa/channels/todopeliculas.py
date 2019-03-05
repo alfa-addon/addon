@@ -274,7 +274,7 @@ def listado(item):
             
             #Limpiamos el título de la basura innecesaria
             title = re.sub(r'- $', '', title)
-            title = re.sub(r'TV|Online|Spanish|Torrent|en Espa\xc3\xb1ol|Español|Latino|Subtitulado|Blurayrip|Bluray rip|\[.*?\]|R2 Pal|\xe3\x80\x90 Descargar Torrent \xe3\x80\x91|Completa|Temporada|Descargar|Torren', '', title, flags=re.IGNORECASE)
+            title = re.sub(r'(?i)TV|Online|Spanish|Torrent|en Espa\xc3\xb1ol|Español|Latino|Subtitulado|Blurayrip|Bluray rip|\[.*?\]|R2 Pal|\xe3\x80\x90 Descargar Torrent \xe3\x80\x91|Completa|Temporada|Descargar|Torren', '', title)
 
             #Terminamos de limpiar el título
             title = re.sub(r'\??\s?\d*?\&.*', '', title)

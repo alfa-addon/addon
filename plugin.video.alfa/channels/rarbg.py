@@ -336,8 +336,8 @@ def listado(item):
                 item_local.season_colapse = True                            #Muestra las series agrupadas por temporadas
 
             #Limpiamos el título de la basura innecesaria
-            title = re.sub(r'TV|Online', '', title, flags=re.IGNORECASE).strip()
-            item_local.quality = re.sub(r'proper|unrated|directors|cut|german|repack|internal|real|korean|extended|masted|docu|oar|super|duper|amzn|uncensored|hulu', '', item_local.quality, flags=re.IGNORECASE).strip()
+            title = re.sub(r'(?i)TV|Online', '', title).strip()
+            item_local.quality = re.sub(r'(?i)proper|unrated|directors|cut|german|repack|internal|real|korean|extended|masted|docu|oar|super|duper|amzn|uncensored|hulu', '', item_local.quality).strip()
 
             #Analizamos el año.  Si no está claro ponemos '-'
             try:
@@ -472,7 +472,7 @@ def findvideos(item):
             item_local.quality = ''
         title = title.replace('.', ' ')
         item_local.quality = item_local.quality.replace('.', ' ')
-        item_local.quality = re.sub(r'proper|unrated|directors|cut|german|repack|internal|real|korean|extended|masted|docu|oar|super|duper|amzn|uncensored|hulu', '', item_local.quality, flags=re.IGNORECASE).strip()
+        item_local.quality = re.sub(r'(?i)proper|unrated|directors|cut|german|repack|internal|real|korean|extended|masted|docu|oar|super|duper|amzn|uncensored|hulu', '', item_local.quality).strip()
         
         #Buscamos si ya tiene tamaño, si no, los buscamos en el archivo .torrent
         size = scrapedsize
