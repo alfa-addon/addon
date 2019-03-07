@@ -1315,7 +1315,7 @@ def findvideos(item):
     #Renombramos el canal al nombre de clone elegido.  Actualizados URL
     host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
     item.channel_host = host
-    item.category = host.capitalize()
+    item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
     
     verify_fo = True                                                #Verificamos si el clone a usar está activo
     item, data = generictools.fail_over_newpct1(item, verify_fo)
@@ -1446,8 +1446,9 @@ def findvideos(item):
         if scrapertools.find_single_match(data, patron):
             patron = patron_alt
     url_torr = scrapertools.find_single_match(data, patron)
-    if  not url_torr.startswith("http"):                                        #Si le falta el http.: lo ponemos
-        url_torr = scrapertools.find_single_match(host, '(\w+:)//') + url_torr
+    if not url_torr.startswith("http"):                                         #Si le falta el http.: lo ponemos
+        url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
+    
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not data or not scrapertools.find_single_match(data, patron) or not videolibrarytools.verify_url_torrent(url_torr):                                                                            # Si no hay datos o url, error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
@@ -1509,6 +1510,9 @@ def findvideos(item):
     patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'               #Patron para .torrent
     if not scrapertools.find_single_match(data, patron):
         patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'          #Patron para .torrent (planetatorrent)
+    url_torr = scrapertools.find_single_match(data, patron)
+    if not url_torr.startswith("http"):                                             #Si le falta el http.: lo ponemos
+        url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
     
     #buscamos el tamaño del .torrent
     size = scrapertools.find_single_match(data, '<div class="entry-left".*?><a href=".*?span class=.*?>Size:<\/strong>?\s(\d+?\.?\d*?\s\w[b|B])<\/span>')
@@ -1884,11 +1888,11 @@ def episodios(item):
         season_display = item.from_num_season_colapse
 
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
-    if not item.infoLabels['tmdb_id']:
-        try:
-            tmdb.set_infoLabels(item, True)                                 #TMDB de cada Temp
-        except:
-            pass
+    #if not item.infoLabels['tmdb_id']:
+    try:
+        tmdb.set_infoLabels(item, True)                                     #TMDB de cada Temp
+    except:
+        pass
         
     modo_ultima_temp_alt = modo_ultima_temp
     if item.ow_force == "1":                                                #Si hay un traspaso de canal o url, se actualiza todo 
@@ -1972,6 +1976,7 @@ def episodios(item):
         num_temporadas_flag = True
     else:
         num_temporadas_flag = False
+
     for page in list_pages:                                                     #Recorre la lista de páginas
         if not list_pages:
             break
@@ -2075,7 +2080,7 @@ def episodios(item):
                 itemlist.append(item.clone(action='', title=item.category + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
                 break                                   #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
-            #Si no se encuentran valores, pero poner lo básico
+            #Si no se encuentran valores, se pone lo básico
             if match['season'] is None or match['season'] == "0" or not match['season']: match['season'] = season
             if match['episode'] is None: match['episode'] = "0"
             try:
@@ -2085,6 +2090,7 @@ def episodios(item):
                 if match['season'] > max_temp:
                     logger.error("ERROR 07: EPISODIOS: Error en número de Temporada o Episodio: " + " / TEMPORADA/EPISODIO: " + str(match['season']) + " / " + str(match['episode']) + " / NUM_TEMPORADA: " + str(max_temp) + " / " + str(season) + " / MATCHES: " + str(matches))
                     match['season'] = scrapertools.find_single_match(item_local.url, '\/[t|T]emp\w+-*(\d+)\/')
+                    num_temporadas_flag = False
                     if not match['season']:
                         match['season'] = season_alt
                     else:
