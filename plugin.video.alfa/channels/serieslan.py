@@ -226,10 +226,40 @@ def findvideos(item):
     for id in buttons:
         new_url = golink(int(id), _sa, sl)
         data_new = httptools.downloadpage(new_url).data
-        _x0x = scrapertools.find_single_match(data_new, 'var x0x = ([^;]+);')
+        logger.info(data_new)
+        valor = scrapertools.find_single_match(data_new, '\+ x92\((.*?)\)\+ ')
+        valores = valor.split("atob")
+        valor2 = valores[1].replace('(','').replace(')','')
+        valor1 = valores[0].split('+')
+        datos = []
+        logger.info("f4d5as6f")
+        logger.info(valor1)
+        stringTodo = ''
+        for val in valor1:
+            if '()' in val:
+                funcion = val.split('(')[0]
+                scrapedvalue = scrapertools.find_single_match(data_new, funcion+'.+?return (.+?);')
+                datos.append(scrapedvalue)
+            elif '.charAt' in val:
+                funcion = val.split('.charAt(')
+                stringTodo = funcion[0]
+                position = funcion[1].split(')')[0]
+        posiciones = []
+        logger.info(datos)
+        if datos:
+            for dato in datos:
+                logger.info(dato)
+                try:
+                    posiciones.append(int(dato))
+                except Exception as e:
+                    scrapedvalue = scrapertools.find_single_match(data_new, 'var %s = (.+?);'  % (dato))
+                    logger.info("scrapedvalue")
+                    logger.info(scrapedvalue)
+                    posiciones.append(int(scrapedvalue))
+        logger.info("positiones"+posiciones)
         try:
-            x0x = eval(_x0x)
-            url = base64.b64decode(gktools.transforma_gsv(x0x[4], base64.b64decode(x0x[1])))
+            logger.info(base64.b64decode(data1, data2))
+            url = x92(data1, data2)
             if 'download' in url:
                 url = url.replace('download', 'preview')
             title = '%s'
@@ -250,11 +280,65 @@ def findvideos(item):
 def golink (num, sa, sl):
     import urllib
     b = [3, 10, 5, 22, 31]
-    d = ''
-    for i in range(len(b)):
-        d += sl[2][b[i]+num:b[i]+num+1]
+    #d = ''
+    #for i in range(len(b)):
+    #    d += sl[2][b[i]+num:b[i]+num+1]
 
     SVR = "https://viteca.stream" if sa == 'true' else "http://serieslan.com"
     TT = "/" + urllib.quote_plus(sl[3].replace("/", "><")) if num == 0 else ""
+    url_end = link(num,sl)
+    #return SVR + "/el/" + sl[0] + "/" + sl[1] + "/" + str(num) + "/" + sl[2] + d + TT
+    return SVR + "/el/" + sl[0] + "/" + sl[1] + "/" + str(num) + "/" + sl[2] + url_end + TT
 
-    return SVR + "/el/" + sl[0] + "/" + sl[1] + "/" + str(num) + "/" + sl[2] + d + TT
+def link(ida,sl):
+    a=ida
+    b=[3,10,5,22,31]
+    c=1
+    d=""
+    e=sl[2]
+    for i in range(len(b)):
+      d=d+substr(e,b[i]+a,c)
+    return d
+
+def substr(st,a,b):
+    return st[a:a+b]
+
+def x92(data1, data2):
+    data3 = []
+    data4 = 0
+    data5 = ""
+    data6 = ""
+    for i in range(len(256)):
+      data3[i] = i
+    for i in range(len(256)):
+      data4 = (data4 + data3[i] + ord(data1[i])) % 256
+      data5 = data3[i]
+      data3[i] = data3[data4]
+      data3[data4] = data5
+    i = 0
+    data4 = 0
+    for j in range(len(data2)):
+        i = (i + 1) % 256
+        data4 = (data4 + data3[i]) % 256
+        data5 = data3[i]
+        data3[i] = data3[data4]
+        data3[data4] = data5
+        data6 =1#+= str(unichr(data2[ord(str(j)) ^ data3[(data3[i] + data3[data4]) % 256]))
+    return data6
+
+def _ieshlgagkP(umZFJ):
+    return umZFJ
+def _RyHChsfwdd(ZBKux):
+    return ZBKux
+def _eladjkKtjf(czuwk):
+    return czuwk
+def _slSekoKrHb():
+    return ''
+def _VySdeBApGO():
+    return 'Z'
+
+def _nEgqhkiRub():
+    return 28
+
+def _lTjZxWGNnE():
+    return 57
