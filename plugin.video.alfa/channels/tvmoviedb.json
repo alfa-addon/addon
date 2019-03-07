@@ -15,7 +15,7 @@
       "id": "tmdb",
       "type": "list",
       "label": "@70418",
-      "default": 3,
+      "default": 4,
       "enabled": true,
       "visible": true,
       "lvalues": [
@@ -52,7 +52,7 @@
       "type": "list",
       "label": "@70427",
       "color": "0xFFE0F04B",
-      "default": 3,
+      "default": 4,
       "enabled": true,
       "visible": true,
       "lvalues": [
