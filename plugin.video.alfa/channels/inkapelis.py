@@ -28,6 +28,8 @@ list_language = IDIOMAS.values()
 list_quality = ['Cam', 'TSHQ', 'Dvdrip', 'Blurayrip', 'HD Rip 320p', 'hd rip 320p', 'HD Real 720p', 'Full HD 1080p']
 list_servers = ['openload', 'gamovideo', 'streamplay', 'streamango', 'vidoza']
 
+host = 'https://www.inkapelis.to/'
+
 
 def mainlist(item):
     logger.info()
@@ -35,28 +37,28 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, title="Novedades", action="entradas", url="http://www.inkapelis.com/",
+    itemlist.append(Item(channel=item.channel, title="Novedades", action="entradas", url=host,
                                extra="Novedades", text_color=color1, thumbnail=get_thumb('newest', auto=True)))
     #itemlist.append(Item(channel=item.channel, title="Estrenos", action="entradas", url="http://www.inkapelis.com/genero/estrenos/",
     #                           text_color=color1, thumbnail=get_thumb('premieres', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Castellano", action="entradas",
-                               url="https://www.inkapelis.com/?anio=&genero=&calidad=&idioma=Castellano&s=",
+                               url=host+"?anio=&genero=&calidad=&idioma=Castellano&s=",
                                extra="Buscar", text_color=color1, thumbnail=get_thumb('espanolas', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Latino", action="entradas",
-                               url="https://www.inkapelis.com/?anio=&genero=&calidad=&idioma=Latino&s=",
+                               url=host+"?anio=&genero=&calidad=&idioma=Latino&s=",
                                extra="Buscar", text_color=color1, thumbnail=get_thumb('latino', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="VOSE", action="entradas",
-                               url="https://www.inkapelis.com/?anio=&genero=&calidad=&idioma=Subtitulada&s=",
+                               url=host+"?anio=&genero=&calidad=&idioma=Subtitulada&s=",
                                extra="Buscar", text_color=color1, thumbnail=get_thumb('newest', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Géneros", action="generos", url="http://www.inkapelis.com/", text_color=color1,
+    itemlist.append(Item(channel=item.channel, title="Géneros", action="generos", url=host, text_color=color1,
                                thumbnail=get_thumb('genres', auto=True),))
-    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url="http://www.inkapelis.com/?s=", text_color=color1))
+    itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host+"?s=", text_color=color1))
     itemlist.append(Item(channel=item.channel, action="", title=""))
     itemlist.append(
-        Item(channel=item.channel, action="filtro", title="Filtrar películas", url="http://www.inkapelis.com/?s=", text_color=color1))
+        Item(channel=item.channel, action="filtro", title="Filtrar películas", url=host+"?s=", text_color=color1))
     # Filtros personalizados para peliculas
     for i in range(1, 4):
         filtros = config.get_setting("pers_peliculas" + str(i), item.channel)
@@ -65,7 +67,7 @@ def mainlist(item):
             new_item = item.clone()
             new_item.values = filtros
             itemlist.append(
-                new_item.clone(action="filtro", title=title, url="http://www.inkapelis.com/?s=", text_color=color2))
+                new_item.clone(action="filtro", title=title, url=host+"?s=", text_color=color2))
     itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal...", text_color="gold", folder=False))
 
     autoplay.show_option(item.channel, itemlist)
@@ -86,21 +88,21 @@ def newest(categoria):
     item = Item()
     try:
         if categoria == "peliculas":
-            item.url = "http://www.inkapelis.com/"
+            item.url = host
             item.action = "entradas"
             item.extra = "Novedades"
 
         if categoria == "terror":
-            item.url = "https://www.inkapelis.com/genero/terror/"
+            item.url = host+"genero/terror/"
             item.action = "entradas"
 
         if categoria == "castellano":
-            item.url = "https://www.inkapelis.com/?anio=&genero=&calidad=&idioma=Castellano&s="
+            item.url = host+"?anio=&genero=&calidad=&idioma=Castellano&s="
             item.extra = "Buscar"
             item.action = "entradas"
 
         if categoria == "latino":
-            item.url = "https://www.inkapelis.com/?anio=&genero=&calidad=&idioma=Latino&s="
+            item.url = host+"?anio=&genero=&calidad=&idioma=Latino&s="
             item.extra = "Buscar"
             item.action = "entradas"
         itemlist = entradas(item)
@@ -122,7 +124,7 @@ def search(item, texto):
     logger.info()
     itemlist = []
     item.extra = "Buscar"
-    item.url = "http://www.inkapelis.com/?s=%s" % texto
+    item.url = host+"?s=%s" % texto
 
     try:
         return entradas(item)
@@ -254,7 +256,7 @@ def filtrado(item, values):
 
     item.valores = "Filtro: " + ", ".join(sorted(strings))
     item.strings = ""
-    item.url = "http://www.inkapelis.com/?anio=%s&genero=%s&calidad=%s&idioma=%s&s=%s" % \
+    item.url = host+"?anio=%s&genero=%s&calidad=%s&idioma=%s&s=%s" % \
                (year, genero, calidad, idioma, texto)
     item.extra = "Buscar"
 
@@ -292,7 +294,7 @@ def entradas(item):
     else:
         # Extrae las entradas
         if item.extra == "Novedades":
-            data2 = data.split("<h3>Últimas Películas Agregadas y Actualizadas</h3>", 1)[1]
+            data2 = data.split("<h2>Últimas Películas Agregadas y Actualizadas</h2>", 1)[1]
 
             entradas = scrapertools.find_multiple_matches(data2, '<div class="col-mt-5 postsh">(.*?)</div></div></div>')
         else:
