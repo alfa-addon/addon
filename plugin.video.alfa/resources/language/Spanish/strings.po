@@ -4931,7 +4931,9 @@ msgctxt "#70561"
 msgid "Search Similar"
 msgstr "Buscar Similares"
 
-
+msgctxt "#70562"
+msgid "autoplay"
+msgstr "Habilitar reproducción automática en todos los canales"
 
 
 
