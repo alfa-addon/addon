@@ -3,7 +3,7 @@
   "name": "Cinemasubito", 
   "active": true, 
   "adult": false, 
-  "language": ["it"], 
+  "language": ["ita"],
   "thumbnail": "https://www.cinemasubito.biz/uploads/custom-logo.png", 
   "banner": "https://www.cinemasubito.biz/uploads/custom-logo.png", 
   "version": "5", 

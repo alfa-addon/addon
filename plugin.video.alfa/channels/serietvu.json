@@ -1,7 +1,7 @@
 {
 	"id": "serietvu",
 	"name": "SerieTVU",
-	"language": ["it"],
+	"language": ["ita"],
 	"active": true,
 	"adult": false,
 	"thumbnail": "http://www.serietvu.com/wp-content/themes/gurarjbar/images/logo.png",

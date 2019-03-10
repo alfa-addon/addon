@@ -1,7 +1,7 @@
 {
 	"id": "ricettevideo",
 	"name": "Ricette Video",
-	"language": ["it"],
+	"language": ["ita"],
 	"active": true,
 	"adult": false,
 	"thumbnail": "http://ricettevideo.net/wp-content/uploads/2013/08/Ricette-Video-Logo.png",

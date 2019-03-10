@@ -1,10 +1,10 @@
 {
 	"id": "dreamsub",
 	"name": "DreamSub",
-	"language": ["it"],
+	"language": ["ita"],
 	"active": true,
 	"adult": false,
-	"language": "it",
+	"language": ["ita"],
 	"thumbnail": "http://www.dreamsub.it/res/img/logo.png",
 	"banner": "http://www.dreamsub.it/res/img/logo.png",
 	"version": "11", 

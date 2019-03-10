@@ -1,7 +1,7 @@
 {
 	"id": "serietvsubita",
 	"name": "Serie TV Sub ITA",
-	"language": ["it"],
+	"language": ["ita"],
 	"active": true,
 	"adult": false,
 	"thumbnail": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/serietvsubita.png",

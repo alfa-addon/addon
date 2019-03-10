@@ -1,10 +1,10 @@
 {
 	"id": "programmazione",
 	"name": "Programmazione",
-	"language": ["it"],
+	"language": ["ita"],
 	"active": true,
 	"adult": false,
-	"language": "it",
+	"language": ["ita"],
 	"thumbnail": "http://www.smartworld.it/wp-content/uploads/2015/02/codice-code-programmazione-fhd-720x480.png",
 	"banner": "http://www.smartworld.it/wp-content/uploads/2015/02/codice-code-programmazione-fhd-720x480.png",
 	"version": "7", 

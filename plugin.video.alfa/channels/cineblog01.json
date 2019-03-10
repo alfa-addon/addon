@@ -1,7 +1,7 @@
 {
 	"id": "cineblog01",
 	"name": "Cineblog01",
-	"language": ["it"],
+	"language": ["ita"],
 	"active": true,
 	"adult": false,
 	"thumbnail": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/cineblog01.png",

@@ -1,7 +1,7 @@
 {
 	"id": "filmontv",
 	"name": "Filmontv",
-	"language": ["it"],
+	"language": ["ita"],
 	"active": false,
 	"adult": false,
 	"thumbnail": null,

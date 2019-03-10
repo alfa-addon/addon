@@ -1,10 +1,10 @@
 {
 	"id": "eurostreaming",
 	"name": "Eurostreaming",
-	"language": ["it"],
+	"language": ["ita"],
 	"active": true,
 	"adult": false,
-	"language": "it",
+	"language": ["ita"],
 	"thumbnail": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/eurostreaming.png",
 	"banner": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/eurostreaming.png",
 	"version": "8", 

@@ -5,7 +5,7 @@
         <setting id="default_action" type="enum" lvalues="30006|30007|30008" label="30005" default="0"/>
         <setting id="autoplay" type="bool" label="70562" default="false" visible="true"/>
         <setting id="thumbnail_type" type="enum" lvalues="30011|30012|30200" label="30010" default="2"/>
-        <setting id="channel_language" type="labelenum" values="all|cast|lat|it" label="30019" default="all"/>
+        <setting id="channel_language" type="labelenum" values="all|cast|lat|ita" label="30019" default="all"/>
         <setting id="trakt_sync" type="bool" label="70109" default="false"/>
         <setting id="forceview" type="bool" label="30043" default="false"/>
         <setting id="faster_item_serialization" type="bool" label="30300" default="false"/>

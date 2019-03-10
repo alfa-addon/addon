@@ -3,7 +3,7 @@
   "name": "AnimeWorld", 
   "active": true, 
   "adult": false, 
-  "language": ["it"], 
+  "language": ["ita"],
   "thumbnail": "https://cdn.animeworld.it/static/images/general/logoaw.png", 
   "version": "2", 
   "date": "14/02/2019", 

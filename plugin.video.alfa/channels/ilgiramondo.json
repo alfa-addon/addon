@@ -1,10 +1,10 @@
 {
 	"id": "ilgiramondo",
 	"name": "IlGiramondo",
-	"language": ["it"],
+	"language": ["ita"],
 	"active": true,
 	"adult": false,
-	"language": "it",
+	"language": ["ita"],
 	"thumbnail": "http://www.ilgiramondo.net/wp-content/uploads/2013/05/logo-fixed.jpg",
 	"banner": "http://www.ilgiramondo.net/wp-content/uploads/2013/05/logo-fixed.jpg",
 	"version": "7", 

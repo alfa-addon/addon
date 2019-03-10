@@ -1,10 +1,10 @@
 {
 	"id": "hdblog",
 	"name": "Hdblog",
-	"language": ["it"],
+	"language": ["ita"],
 	"active": true,
 	"adult": false,
-	"language": "it",
+	"language": ["ita"],
 	"thumbnail": "http://css.hd-cdn.it/new_files/templates/theme_darklight/img/logos_wt/logohdhardware.png",
 	"banner": "http://css.hd-cdn.it/new_files/templates/theme_darklight/img/logos_wt/logohdhardware.png",
 	"version": "7", 
