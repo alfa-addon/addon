@@ -1,0 +1,24 @@
+{
+	"id": "eurostreaming",
+	"name": "Eurostreaming",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"language": "it",
+	"thumbnail": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/eurostreaming.png",
+	"banner": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/eurostreaming.png",
+	"version": "8", 
+	"date": "16/06/2016", 
+	"changes": "Small Fix", 	
+	"categories": ["tvshow","anime"],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Includi ricerca globale",
+		  "default": true,
+		  "enabled": true,
+		  "visible": true
+		}
+	]
+}

@@ -1,0 +1,30 @@
+{
+	"id": "cineblog01blog",
+	"name": "Cineblog01Blog",
+	"language": ["it"],
+	"active": false,
+	"adult": false,
+	"thumbnail": "https://www.cineblog01.cloud/templates/cineblog01/images/logo.png",
+	"banner": "https://www.cineblog01.cloud/templates/cineblog01/images/logo.png",
+	"categories": [
+	  "movie"
+	],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": false,
+		  "enabled": false,
+		  "visible": false
+		},
+		{
+		  "id": "include_in_newest_film",
+		  "type": "bool",
+		  "label": "Includi in novità - Film",
+		  "default": false,
+		  "enabled": false,
+		  "visible": false
+		}
+	  ]
+}

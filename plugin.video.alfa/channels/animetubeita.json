@@ -1,0 +1,24 @@
+{
+    "id": "animetubeita",
+    "name": "Animetubeita",
+    "active": true,
+    "adult": false,
+    "language": [
+        "it"
+    ],
+    "thumbnail": "http:\/\/i.imgur.com\/rQPx1iQ.png",
+    "bannermenu": "http:\/\/i.imgur.com\/rQPx1iQ.png",
+    "categories": [
+        "anime"
+    ],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi ricerca globale",
+            "default": false,
+            "enabled": false,
+            "visible": false
+        }
+    ]
+}

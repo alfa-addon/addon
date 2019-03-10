@@ -1,0 +1,23 @@
+{
+	"id": "filmontv",
+	"name": "Filmontv",
+	"language": ["it"],
+	"active": false,
+	"adult": false,
+	"thumbnail": null,
+	"banner": null,
+	"categories": [
+	  null
+	],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": false,
+		  "enabled": false,
+		  "visible": false
+		}
+	  ]
+}
+

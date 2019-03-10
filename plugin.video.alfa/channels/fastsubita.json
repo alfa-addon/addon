@@ -1,0 +1,60 @@
+{
+	"id": "fastsubita",
+	"name": "Fastsubita",
+	"language": ["ita"],
+	"active": true,
+	"adult": false,
+	"thumbnail": "http://fastsubita.ml/wp-content/uploads/2017/10/Untitled-222255xxx.jpg",
+	"banner": "http://fastsubita.ml/wp-content/uploads/2017/10/Untitled-222255xxx.jpg",
+	"version": "2", 
+	"date": "03/06/2017", 
+	"changes": "New", 
+	"categories": ["tvshow","vos","top channels"	],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Includi ricerca globale",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+		{
+			"id": "include_in_newest_series",
+			"type": "bool",
+			"label": "Includi in Novità - Serie TV",
+			"default": true,
+			"enabled": true,
+			"visible": true
+		},
+    {
+      "id": "comprueba_enlaces",
+      "type": "bool",
+      "label": "Verifica se i link esistono",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "comprueba_enlaces_num",
+      "type": "list",
+      "label": "Numero de link da verificare",
+      "default": 1,
+      "enabled": true,
+      "visible": "eq(-1,true)",
+      "lvalues": [ "5", "10", "15", "20" ]
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostra link in lingua...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Non filtrare",
+        "IT"
+      ]
+    }
+	  ]
+}

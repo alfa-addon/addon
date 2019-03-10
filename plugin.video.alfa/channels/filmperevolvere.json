@@ -1,0 +1,30 @@
+{
+    "id": "filmperevolvere",
+    "name": "FilmPerEvolvere",
+    "active": true,
+    "adult": false,
+    "language": [
+        "it"
+    ],
+    "thumbnail": "https:\/\/filmperevolvere.it\/wp-content\/uploads\/2017\/06\/cropped-coversito.jpg",
+    "bannermenu": "https:\/\/filmperevolvere.it\/wp-content\/uploads\/2017\/06\/cropped-coversito.jpg",
+    "categories": ["cult","vos","movie"],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Incluir en busqueda global",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_film",
+            "type": "bool",
+            "label": "Includi in novità - film",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        }
+    ]
+}

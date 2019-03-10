@@ -1,0 +1,25 @@
+{
+    "id": "guardogratis",
+    "name": "GuardoGratis",
+    "active": true,
+    "adult": false,
+    "language": [
+        "it"
+    ],
+    "thumbnail": "https:\/\/guardogratis.com\/wp-content\/uploads\/2018\/01\/Logo-4.png",
+    "bannermenu": "https:\/\/guardogratis.com\/wp-content\/uploads\/2018\/01\/Logo-4.png",
+    "categories": [
+        "movie",
+        "tvshow"
+    ],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi ricerca globale",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        }
+    ]
+}

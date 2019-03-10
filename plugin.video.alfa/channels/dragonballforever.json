@@ -1,0 +1,24 @@
+{
+	"id": "dragonballforever",
+	"name": "Dragonball Forever",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"language": "it",
+	"thumbnail": "https://www.dragonballforever.it/wp-content/uploads/2017/02/header_dbf-1.jpg",
+	"banner": "https://www.dragonballforever.it/wp-content/uploads/2017/02/header_dbf-1.jpg",
+	"version": "1", 
+	"date": "23/10/2017", 
+	"changes": "New Channel", 	
+	"categories": ["anime"],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Includi ricerca globale",
+		  "default": false,
+		  "enabled": false,
+		  "visible": false
+		}
+	]
+}

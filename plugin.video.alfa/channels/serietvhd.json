@@ -1,0 +1,24 @@
+{
+    "id": "serietvhd",
+    "name": "SerieTvHd",
+    "active": false,
+    "adult": false,
+    "language": [
+        "it"
+    ],
+    "thumbnail": "https:\/\/serietvhd.stream\/wp-content\/uploads\/2017\/12\/logo-nuovo.png",
+    "bannermenu": "https:\/\/serietvhd.stream\/wp-content\/uploads\/2017\/12\/logo-nuovo.png",
+    "categories": [
+        "tvshow"
+    ],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi ricerca globale",
+            "default": false,
+            "enabled": false,
+            "visible": false
+        }
+    ]
+}

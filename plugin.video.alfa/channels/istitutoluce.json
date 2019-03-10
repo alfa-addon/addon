@@ -1,0 +1,28 @@
+{
+	"id": "istitutoluce",
+	"name": "Istituto Luce",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"language": "it",
+	"thumbnail": "http://www.archivioluce.com/wp-content/themes/wpbootstrap/bootstrap/img/luce-logo.png",
+	"banner": "http://www.archivioluce.com/wp-content/themes/wpbootstrap/bootstrap/img/luce-logo.png",
+	"version": "7", 
+	"date": "26/05/2017", 
+	"changes": "re-added",	
+	"categories": [
+	"cult", "documentary"
+	
+	],	
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": false,
+		  "enabled": false,
+		  "visible": false
+		}
+	]
+}
+

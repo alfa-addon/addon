@@ -1,0 +1,33 @@
+{
+    "id": "altadefinizionehd",
+    "name": "AltadefinizioneHD",
+    "active": true,
+    "adult": false,
+    "language": [
+        "it"
+    ],
+    "thumbnail": "https://altadefinizione.wiki/logowiki.png",
+    "bannermenu": "https://altadefinizione.wiki/logowiki.png",
+    "categories": [
+        "tvshow",
+        "movie"
+    ],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi ricerca globale",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_film",
+            "type": "bool",
+            "label": "Includi in novità - film",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        }
+    ]
+}

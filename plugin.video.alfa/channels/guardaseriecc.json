@@ -1,0 +1,24 @@
+{
+    "id": "guardaseriecc",
+    "name": "Guardaserie.cc",
+    "active": true,
+    "adult": false,
+    "language": [
+        "it"
+    ],
+    "thumbnail": "https:\/\/raw.githubusercontent.com\/costaplus\/images\/master\/posters\/guardaseriecc.png",
+    "bannermenu": "https:\/\/raw.githubusercontent.com\/costaplus\/images\/master\/posters\/guardaseriecc.png",
+    "categories": [
+        "tvshow"
+    ],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi ricerca globale",
+            "default": false,
+            "enabled": false,
+            "visible": false
+        }
+    ]
+}

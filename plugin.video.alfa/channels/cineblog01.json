@@ -1,0 +1,31 @@
+{
+	"id": "cineblog01",
+	"name": "Cineblog01",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"thumbnail": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/cineblog01.png",
+	"banner": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/cineblog01.png",
+	"categories": [
+	  "tvshow",
+	  "movie","cult","top channels"
+	],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": true,
+		  "enabled": true,
+		  "visible": true
+		},
+		{
+		  "id": "include_in_newest_film",
+		  "type": "bool",
+		  "label": "Includi in novità - Film",
+		  "default": true,
+		  "enabled": true,
+		  "visible": true
+		}
+	  ]
+}

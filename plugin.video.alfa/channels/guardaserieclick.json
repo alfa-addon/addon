@@ -1,0 +1,36 @@
+{
+    "id": "guardaserieclick",
+    "name": "GuardaSerie.click",
+    "active": true,
+    "adult": false,
+    "language": [
+        "it"
+    ],
+    "thumbnail": "http://www.guardaserie.click/wp-content/themes/guardaserie/images/logogd.png",
+    "bannermenu": "http://www.guardaserie.click/wp-content/themes/guardaserie/images/logogd.png",
+    "version": "1",
+	"date": "24/05/2018",
+	"changes": "Re Enabled Channel",
+    "categories": [
+        "tvshow",
+        "anime"
+    ],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi ricerca globale",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_series",
+            "type": "bool",
+            "label": "Includi in novità - Serie TV",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        }
+    ]
+}

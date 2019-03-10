@@ -1,0 +1,24 @@
+{
+    "id": "umsfunsub",
+    "name": "UMSFunSub",
+    "active": true,
+    "adult": false,
+    "language": [
+        "it"
+    ],
+    "thumbnail": "http:\/\/www.hiumi.it\/public\/forum\/styles\/art_deluxe\/imageset\/logo.png",
+    "bannermenu": "http:\/\/www.hiumi.it\/public\/forum\/styles\/art_deluxe\/imageset\/logo.png",
+    "categories": [
+        "anime"
+    ],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi ricerca globale",
+            "default": false,
+            "enabled": false,
+            "visible": true
+        }
+    ]
+}

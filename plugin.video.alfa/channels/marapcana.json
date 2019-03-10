@@ -1,0 +1,32 @@
+{
+	"id": "marapcana",
+	"name": "Marapcana",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"thumbnail": "http://marapcana.site/maraplogo7.png",
+	"banner": "http://marapcana.site/maraplogo7.png",
+	"categories": [
+      "movie",
+      "tvshow",
+      "top channels"
+	],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": false,
+		  "enabled": false,
+		  "visible": false
+		},
+		{
+		  "id": "include_in_newest_film",
+		  "type": "bool",
+		  "label": "Includi in novità - Film",
+		  "default": true,
+		  "enabled": true,
+		  "visible": true
+		}
+	  ]
+}

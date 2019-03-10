@@ -1,0 +1,22 @@
+{
+	"id": "mondolunatico_new",
+	"name": "Mondo Lunatico New",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"thumbnail": "http://mondolunatico.org/stream/wp-content/uploads/2016/10/dooplay1-2.png",
+	"banner": "http://mondolunatico.org/stream/wp-content/uploads/2016/10/dooplay1-2.png",
+	"categories": [
+	  "movie","cult","top channels"
+	],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": true,
+		  "enabled": true,
+		  "visible": true
+		}
+	  ]
+}

@@ -1,0 +1,24 @@
+{
+	"id": "serietvsubita",
+	"name": "Serie TV Sub ITA",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"thumbnail": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/serietvsubita.png",
+	"banner": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/serietvsubita.png",
+	"categories": [
+	  "tvshow",
+	  "vos"
+	],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": false,
+		  "enabled": false,
+		  "visible": false
+		}
+	  ]
+}
+

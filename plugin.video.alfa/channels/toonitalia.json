@@ -1,0 +1,24 @@
+{
+    "id": "toonitalia",
+    "name": "ToonItalia",
+    "active": true,
+    "adult": false,
+    "language": [
+        "it"
+    ],
+    "thumbnail": "https://toonitalia.org/wp-content/themes/seos-video/images/header.png",
+    "bannermenu": "https://toonitalia.org/wp-content/themes/seos-video/images/header.png",
+    "categories": [
+        "anime"
+    ],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi ricerca globale",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        }
+    ]
+}

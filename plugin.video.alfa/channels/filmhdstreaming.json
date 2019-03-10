@@ -1,0 +1,32 @@
+{
+    "id": "filmhdstreaming",
+    "name": "Filmhdstreaming",
+    "active": true,
+    "adult": false,
+    "language": [
+        "it"
+    ],
+    "thumbnail": "http:\/\/hdcineblog01.com\/css\/images\/logo3.png",
+    "bannermenu": "http:\/\/hdcineblog01.com\/css\/images\/logo3.png",
+    "categories": [
+        "movie"
+    ],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi ricerca globale",
+            "default": false,
+            "enabled": false,
+            "visible": false
+        },
+        {
+            "id": "include_in_newest_film",
+            "type": "bool",
+            "label": "Includi in novit\u00e0 - film",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        }
+    ]
+}

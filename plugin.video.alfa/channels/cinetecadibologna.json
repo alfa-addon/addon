@@ -1,0 +1,22 @@
+{
+	"id": "cinetecadibologna",
+	"name": "Cinetecadibologna",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"thumbnail": "http://cinestore.cinetecadibologna.it/pics/logo.gif",
+	"banner": "http://cinestore.cinetecadibologna.it/pics/logo.gif",
+	"categories": [
+	  "documentary", "cult"
+	],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": false,
+		  "enabled": false,
+		  "visible": false
+		}
+	  ]
+}

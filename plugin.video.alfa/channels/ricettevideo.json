@@ -1,0 +1,23 @@
+{
+	"id": "ricettevideo",
+	"name": "Ricette Video",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"thumbnail": "http://ricettevideo.net/wp-content/uploads/2013/08/Ricette-Video-Logo.png",
+	"banner": "http://ricettevideo.net/wp-content/uploads/2013/08/Ricette-Video-Logo.png",
+	"categories": [
+	  "documentary"
+	],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": false,
+		  "enabled": false,
+		  "visible": false
+		}
+	  ]
+}
+

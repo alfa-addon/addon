@@ -1,0 +1,25 @@
+{
+	"id": "ilgiramondo",
+	"name": "IlGiramondo",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"language": "it",
+	"thumbnail": "http://www.ilgiramondo.net/wp-content/uploads/2013/05/logo-fixed.jpg",
+	"banner": "http://www.ilgiramondo.net/wp-content/uploads/2013/05/logo-fixed.jpg",
+	"version": "7", 
+	"date": "26/05/2017", 
+	"changes": "re-added", 	
+	"categories": ["documentary"],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": false,
+		  "enabled": false,
+		  "visible": false
+		}
+	]
+}
+

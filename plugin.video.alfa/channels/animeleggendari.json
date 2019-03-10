@@ -1,0 +1,58 @@
+{
+    "id": "animeleggendari",
+    "name": "AnimeLeggendari",
+    "active": true,
+    "adult": false,
+    "language": [
+        "it"
+    ],
+    "thumbnail": "https://animeleggendari.com/wp-content/uploads/2018/01/123header.jpg",
+    "bannermenu": "https://animeleggendari.com/wp-content/uploads/2018/01/123header.jpg",
+    "categories": [
+        "anime"
+    ],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi ricerca globale",
+            "default": false,
+            "enabled": false,
+            "visible": false
+        },
+        {
+            "id": "include_in_newest_anime",
+            "type": "bool",
+            "label": "Includi in novit\u00e0 - Anime",
+            "default": false,
+            "enabled": false,
+            "visible": false
+        },
+        {
+            "id": "comprueba_enlaces",
+            "type": "bool",
+            "label": "Verifica se i link esistono",
+            "default": false,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "comprueba_enlaces_num",
+            "type": "list",
+            "label": "Numero de link da verificare",
+            "default": 1,
+            "enabled": true,
+            "visible": "eq(-1,true)",
+            "lvalues": [ "1", "3", "5", "10" ]
+        },
+        {
+            "id": "filter_languages",
+            "type": "list",
+            "label": "Mostra link in lingua...",
+            "default": 0,
+            "enabled": true,
+            "visible": true,
+            "lvalues": ["Non filtrare", "IT"]
+        }
+    ]
+}

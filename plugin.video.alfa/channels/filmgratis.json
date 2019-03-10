@@ -1,0 +1,61 @@
+{
+	"id": "filmgratis",
+	"name": "Filmgratis",
+	"language": ["it"],
+	"active": false,
+	"adult": false,
+	"thumbnail": "https://www.filmgratis.video/templates/itafilm/images/logo.png",
+	"banner": "https://www.filmgratis.video/templates/itafilm/images/logo.png",
+	"version": "1", 
+	"date": "15/09/2017", 
+	"changes": "Re-enabled Channel", 
+	"categories": ["movie"],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Includi ricerca globale",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+		{
+		  "id": "include_in_newest_film",
+		  "type": "bool",
+		  "label": "Includi in novità - Film",
+		  "default": true,
+		  "enabled": true,
+		  "visible": true
+    },
+		
+    {
+      "id": "comprueba_enlaces",
+      "type": "bool",
+      "label": "Verifica se i link esistono",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "comprueba_enlaces_num",
+      "type": "list",
+      "label": "Numero de link da verificare",
+      "default": 1,
+      "enabled": true,
+      "visible": "eq(-1,true)",
+      "lvalues": [ "1", "2", "5", "10" ]
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostra link in lingua...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Non filtrare",
+        "IT"
+      ]
+    }
+	  ]
+}

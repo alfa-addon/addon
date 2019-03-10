@@ -1,0 +1,22 @@
+{
+	"id": "cb01anime",
+	"name": "Cb01anime",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"thumbnail": "http://i.imgur.com/bHoUMo2.png",
+	"banner": "http://i.imgur.com/bHoUMo2.png",
+	"categories": [
+	  "anime"
+	],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": false,
+		  "enabled": false,
+		  "visible": false
+		}
+	  ]
+}

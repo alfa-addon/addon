@@ -1,0 +1,32 @@
+{
+	"id": "dreamsub",
+	"name": "DreamSub",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"language": "it",
+	"thumbnail": "http://www.dreamsub.it/res/img/logo.png",
+	"banner": "http://www.dreamsub.it/res/img/logo.png",
+	"version": "11", 
+	"date": "06/09/2017", 
+	"changes": "Small Fix", 	
+	"categories": ["anime","vos"],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Includi ricerca globale",
+		  "default": true,
+		  "enabled": true,
+		  "visible": true
+		},
+		{
+		  "id": "include_in_newest_anime",
+		  "type": "bool",
+		  "label": "Includi in novità - Anime",
+		  "default": true,
+		  "enabled": true,
+		  "visible": true
+		}
+	]
+}

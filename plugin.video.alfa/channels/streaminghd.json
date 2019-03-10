@@ -1,0 +1,24 @@
+{
+	"id": "streaminghd",
+	"name": "Streaming HD*",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"thumbnail": "https://www.visions.tn/wp-content/uploads/2015/11/large_news_HD-STREAMING.jpg",
+	"banner": "https://www.visions.tn/wp-content/uploads/2015/11/large_news_HD-STREAMING.jpg",
+	"categories": [
+	  "tvshow",
+	  "movie","vos"
+	],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": true,
+		  "enabled": true,
+		  "visible": true
+		}
+	  ]
+}
+

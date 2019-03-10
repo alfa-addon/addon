@@ -1,0 +1,31 @@
+{
+	"id": "serietvu",
+	"name": "SerieTVU",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"thumbnail": "http://www.serietvu.com/wp-content/themes/gurarjbar/images/logo.png",
+	"banner": "http://www.serietvu.com/wp-content/themes/gurarjbar/images/logo.png",
+	"categories": [
+	  "tvshow"
+	],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": true,
+		  "enabled": true,
+		  "visible": true
+		},
+		{
+		  "id": "include_in_newest_series",
+		  "type": "bool",
+		  "label": "Includi in novità - Serie TV",
+		  "default": true,
+		  "enabled": true,
+		  "visible": true
+		}
+	  ]
+}
+

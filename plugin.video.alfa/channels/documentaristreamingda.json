@@ -1,0 +1,31 @@
+{
+	"id": "documentaristreamingda",
+	"name": "DocumentariStreamingDa",
+	"language": ["it"],
+	"active": true,
+	"adult": false,
+	"thumbnail": "documentaristreamingda.png",
+	"banner": "documentaristreamingda.png",
+	"version": "1", 
+	"date": "27/05/2017", 
+	"changes": "Fix import", 	
+	"categories": ["documentary"],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Includi ricerca globale",
+		  "default": false,
+		  "enabled": false,
+		  "visible": false
+		},
+		{
+		  "id": "include_in_newest_documentales",
+		  "type": "bool",
+		  "label": "Includi in novità - Documentari",
+		  "default": true,
+		  "enabled": true,
+		  "visible": true
+		}
+	]
+}

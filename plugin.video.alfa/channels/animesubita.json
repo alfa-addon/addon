@@ -1,0 +1,33 @@
+{
+    "id": "animesubita",
+    "name": "AnimeSubIta",
+    "active": true,
+    "adult": false,
+    "language": [
+        "it"
+    ],
+    "thumbnail": "animesubita.png",
+    "bannermenu": "animesubita.png",
+    "categories": [
+        "anime"
+    ],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi ricerca globale",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_anime",
+            "type": "bool",
+            "label": "Includi in novit\u00e0 - Anime",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        }
+    ]
+}
+
