@@ -13,6 +13,10 @@ from core.item import InfoLabels
 from platformcode import config
 from platformcode import logger
 
+import xbmc, xbmcaddon
+addon = xbmcaddon.Addon('metadata.themoviedb.org')
+def_lang = addon.getSetting('language')
+
 # -----------------------------------------------------------------------------------------------------------
 # Conjunto de funciones relacionadas con las infoLabels.
 #   version 1.0:
@@ -184,7 +188,7 @@ def cache_response(fn):
     return wrapper
 
 
-def set_infoLabels(source, seekTmdb=True, idioma_busqueda='es'):
+def set_infoLabels(source, seekTmdb=True, idioma_busqueda=def_lang):
     """
     Dependiendo del tipo de dato de source obtiene y fija (item.infoLabels) los datos extras de una o varias series,
     capitulos o peliculas.
@@ -210,7 +214,7 @@ def set_infoLabels(source, seekTmdb=True, idioma_busqueda='es'):
     return ret
 
 
-def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda='es'):
+def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=def_lang):
     """
     De manera concurrente, obtiene los datos de los items incluidos en la lista item_list.
 
@@ -264,7 +268,7 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda='es'):
     return [ii[2] for ii in r_list]
 
 
-def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es', lock=None):
+def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=def_lang, lock=None):
     """
     Obtiene y fija (item.infoLabels) los datos extras de una serie, capitulo o pelicula.
 
@@ -541,13 +545,13 @@ def discovery(item):
     from platformcode import unify
 
     if item.search_type == 'discover':
-        listado = Tmdb(discover={'url':'discover/%s' % item.type, 'with_genres':item.list_type, 'language':'es',
+        listado = Tmdb(discover={'url':'discover/%s' % item.type, 'with_genres':item.list_type, 'language':def_lang,
                                  'page':item.page})
 
     elif item.search_type == 'list':
         if item.page == '':
             item.page = '1'
-        listado = Tmdb(list={'url': item.list_type, 'language':'es', 'page':item.page})
+        listado = Tmdb(list={'url': item.list_type, 'language':def_lang, 'page':item.page})
 
     logger.debug(listado.get_list_resultados())
     result = listado.get_list_resultados()
@@ -555,7 +559,7 @@ def discovery(item):
     return result
 
 def get_genres(type):
-    lang = 'es'
+    lang = def_lang
     genres = Tmdb(tipo=type)
 
     return genres.dic_generos[lang]
@@ -783,7 +787,7 @@ class Tmdb(object):
         self.busqueda_id = kwargs.get('id_Tmdb', '')
         self.busqueda_texto = re.sub('\[\\\?(B|I|COLOR)\s?[^\]]*\]', '', self.texto_buscado).strip()
         self.busqueda_tipo = kwargs.get('tipo', '')
-        self.busqueda_idioma = kwargs.get('idioma_busqueda', 'es')
+        self.busqueda_idioma = kwargs.get('idioma_busqueda', def_lang)
         self.busqueda_include_adult = kwargs.get('include_adult', False)
         self.busqueda_year = kwargs.get('year', '')
         self.busqueda_filtro = kwargs.get('filtro', {})
@@ -863,7 +867,7 @@ class Tmdb(object):
         return dict_data
 
     @classmethod
-    def rellenar_dic_generos(cls, tipo='movie', idioma='es'):
+    def rellenar_dic_generos(cls, tipo='movie', idioma=def_lang):
         # Rellenar diccionario de generos del tipo e idioma pasados como parametros
         if idioma not in cls.dic_generos:
             cls.dic_generos[idioma] = {}

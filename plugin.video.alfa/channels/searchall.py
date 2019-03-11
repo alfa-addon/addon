@@ -673,7 +673,8 @@ def do_channels_search(item):
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
     logger.info(" channels_path=" + channels_path)
 
-    channel_language = config.get_setting("channel_language")
+    # channel_language = config.get_setting("channel_language")
+    channel_language = auto_filter()
     logger.info(" channel_language=" + channel_language)
     if channel_language == "":
         channel_language = "all"

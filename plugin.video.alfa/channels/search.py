@@ -6,7 +6,7 @@ import re
 import time
 from threading import Thread
 
-from channelselector import get_thumb
+from channelselector import get_thumb, auto_filter
 from core import channeltools
 from core import scrapertools
 from core.item import Item
@@ -239,7 +239,8 @@ def setting_channel_new(item):
 
 def setting_channel_old(item):
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
-    channel_language = config.get_setting("channel_language", default="all")
+    # channel_language = config.get_setting("channel_language", default="all")
+    channel_language = auto_filter()
 
     list_controls = []
     for infile in sorted(glob.glob(channels_path)):
@@ -473,7 +474,8 @@ def do_search(item, categories=None):
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
     logger.info("channels_path=%s" % channels_path)
 
-    channel_language = config.get_setting("channel_language", default="all")
+    # channel_language = config.get_setting("channel_language", default="all")
+    channel_language = auto_filter()
     logger.info("channel_language=%s" % channel_language)
 
     # Para Kodi es necesario esperar antes de cargar el progreso, de lo contrario

@@ -71,7 +71,8 @@ def getchanneltypes(view="thumb_"):
     if config.get_setting("adult_mode") != 0:
         channel_types.append("adult")
 
-    channel_language = config.get_setting("channel_language", default="all")
+    # channel_language = config.get_setting("channel_language", default="all")
+    channel_language = auto_filter()
     logger.info("channel_language=%s" % channel_language)
 
     # Ahora construye el itemlist ordenadamente
@@ -111,7 +112,8 @@ def filterchannels(category, view="thumb_"):
     channel_files = glob.glob(channel_path)
     logger.info("channel_files encontrados %s" % (len(channel_files)))
 
-    channel_language = config.get_setting("channel_language", default="all")
+    # channel_language = config.get_setting("channel_language", default="all")
+    channel_language = auto_filter()
     logger.info("channel_language=%s" % channel_language)
 
     for channel_path in channel_files:
@@ -274,3 +276,26 @@ def set_channel_info(parameters):
 
     info = '[COLOR yellow]Tipo de contenido:[/COLOR] %s\n\n[COLOR yellow]Idiomas:[/COLOR] %s' % (content, language)
     return info
+
+
+def auto_filter():
+    import xbmc, xbmcaddon
+
+    addon = xbmcaddon.Addon('metadata.themoviedb.org')
+    def_lang = addon.getSetting('language')
+
+    if config.get_setting("channel_language") == 'auto':
+        if def_lang == 'it':
+            lang = 'ita'
+        elif def_lang == 'eu-ES' :
+            lang = 'cast'
+        elif def_lang == 'es' :
+            lang = 'esp'
+        elif def_lang == 'es-MX':
+            lang = 'lat'
+        else:
+            lang = 'all'
+    else:
+        lang = config.get_setting("channel_language", default="all")
+
+    return lang
