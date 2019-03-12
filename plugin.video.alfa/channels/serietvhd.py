@@ -233,11 +233,12 @@ def topimdb(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  extra=item.extra,
-                 viewmode="movie_with_plot")))
+                 viewmode="movie_with_plot"))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
-	
+
+
 def search(item, texto):
     try:
         item.url = host + "/?s=" + texto
@@ -255,7 +256,7 @@ def search(item, texto):
             scrapedthumbnail = urlparse.urljoin(item.url, match.group(2))
             scrapedthumbnail = scrapedthumbnail.replace(" ", "%20")
             scrapedtitle = scrapertools.unescape(match.group(3))
-            itemlist.append(infoIca(
+            itemlist.append(
                 Item(channel=item.channel,
                      action="serietv",
                      contentType="movie",
@@ -265,8 +266,9 @@ def search(item, texto):
                      url=scrapedurl,
                      thumbnail=scrapedthumbnail,
                      extra=item.extra,
-                     viewmode="movie_with_plot"), tipo='serie'))
+                     viewmode="movie_with_plot"))
 
+        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
         return itemlist
     except:
         import sys
