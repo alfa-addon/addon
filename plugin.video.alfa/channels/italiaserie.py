@@ -9,7 +9,7 @@ import urlparse
 
 from core import httptools, scrapertools, servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from lib import unshortenit
 from platformcode import config, logger
 
@@ -87,7 +87,7 @@ def latestep(item):
                 seasonandep = scrapertools.find_single_match(ep, r'(\d+x[0-9\-?]+)')
                 completetitle = "%s %s" % (scrapedtitle, ep)
 
-                itemlist.append(infoIca(
+                itemlist.append(
                     Item(channel=item.channel,
                          action="findepvideos",
                          title=completetitle,
@@ -95,7 +95,7 @@ def latestep(item):
                          fulltitle=fulltitle,
                          url=scrapedurl,
                          extra=extra % seasonandep.replace('x', '×'),
-                         folder=True), tipo='tv'))
+                         folder=True))
             continue
 
         # Ep singolo
@@ -103,7 +103,7 @@ def latestep(item):
         extra = extra % (correct_scraped_number)
         completetitle = ("%s %s %s" % (
             scrapedtitle, scraped_number_and_title, "(%s)" % scrapedlang if scrapedlang else scrapedlang)).strip()
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findepvideos",
                  title=completetitle,
@@ -111,8 +111,9 @@ def latestep(item):
                  fulltitle=fulltitle,
                  url=scrapedurl,
                  extra=extra,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -132,7 +133,7 @@ def peliculas(item):
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
         scrapedurl = scrapedurl.replace("-1/", "-links/")
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodios",
                  fulltitle=scrapedtitle,
@@ -141,9 +142,9 @@ def peliculas(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = '<a class="next page-numbers" href="(.*?)">'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -157,6 +158,7 @@ def peliculas(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 def search(item, texto):

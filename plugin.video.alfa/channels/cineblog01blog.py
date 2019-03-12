@@ -9,7 +9,7 @@ import re
 from platformcode import logger, config
 from core import httptools, scrapertools, servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 
 host = "https://www.cineblog01.cloud"
 
@@ -154,7 +154,7 @@ def peliculas(item):
             for url in matches:
                 if "scrolling" not in url: continue
 
-                itemlist.append(infoIca(
+                itemlist.append(
                     Item(channel=item.channel,
                          action="findvideos",
                          contentType="movie",
@@ -163,7 +163,7 @@ def peliculas(item):
                          url=scrapedurl,
                          extra="movie",
                          thumbnail=scrapedthumbnail,
-                         folder=True), tipo="movie"))
+                         folder=True))
 
         # Pagine
         patronvideos = r'<a href="([^"]+)">Avanti</a>'
@@ -184,6 +184,7 @@ def peliculas(item):
                         folder=True))
                 break
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 # ================================================================================================================

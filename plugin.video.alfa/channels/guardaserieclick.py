@@ -9,7 +9,7 @@ import re
 
 from core import httptools,  scrapertools, servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from platformcode import logger, config
 
 
@@ -109,7 +109,7 @@ def nuoveserie(item):
 
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodi",
                  contentType="tv",
@@ -119,8 +119,9 @@ def nuoveserie(item):
                  extra="tv",
                  show=scrapedtitle,
                  thumbnail=scrapedthumbnail,
-                 folder=True), tipo="tv"))
+                 folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -145,7 +146,7 @@ def serietvaggiornate(item):
         title = "%s %s" % (scrapedtitle, scrapedep)
         extra = r'<span\s*.*?meta-stag="%s" meta-ep="%s" meta-embed="([^"]+)"[^>]*>' % (
             episode[0][0], episode[0][1].lstrip("0"))
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findepvideos",
                  contentType="tv",
@@ -155,7 +156,8 @@ def serietvaggiornate(item):
                  url=scrapedurl,
                  extra=extra,
                  thumbnail=scrapedthumbnail,
-                 folder=True), tipo="tv"))
+                 folder=True))
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -201,7 +203,7 @@ def lista_serie(item):
 
     for scrapedurl, scrapedimg, scrapedtitle in matches:
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodi",
                  title=scrapedtitle,
@@ -210,7 +212,8 @@ def lista_serie(item):
                  thumbnail=scrapedimg,
                  extra=item.extra,
                  show=scrapedtitle,
-                 folder=True), tipo="tv"))
+                 folder=True))
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

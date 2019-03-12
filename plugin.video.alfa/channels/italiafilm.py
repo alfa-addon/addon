@@ -11,7 +11,7 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from lib.unshortenit import unshorten_only
 from platformcode import logger, config
 
@@ -171,14 +171,14 @@ def latestep(item):
             continue
 
         if 'completa' in scrapedtitle.lower():
-            itemlist.append(infoIca(
+            itemlist.append(
                 Item(channel=item.channel,
                      action="episodios",
                      title=completetitle,
                      contentSerieName=completetitle,
                      fulltitle=scrapedtitle,
                      url=scrapedurl,
-                     folder=True), tipo='tv'))
+                     folder=True))
         else:
             if 'episodio' not in scrapedepisode:
                 replace = re.compile(r'(\d+)x(\d+)')
@@ -186,7 +186,7 @@ def latestep(item):
             else:
                 ep_pattern = r'%s(.*?(?:<br\s*/>|</p>))' % scrapedepisode
 
-            itemlist.append(infoIca(
+            itemlist.append(
                 Item(channel=item.channel,
                      action="findvideos_single_ep",
                      title=completetitle,
@@ -194,8 +194,9 @@ def latestep(item):
                      fulltitle=scrapedtitle,
                      url=scrapedurl,
                      extra=ep_pattern,
-                     folder=True), tipo='tv'))
+                     folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -216,7 +217,7 @@ def peliculas(item):
         plot = ""
         thumbnail = scrapertools.find_single_match(match, 'data-echo="([^"]+)"')
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  extra=item.extra,
                  action='findvideos',
@@ -228,7 +229,7 @@ def peliculas(item):
                  thumbnail=thumbnail,
                  plot=plot,
                  viewmode="movie_with_plot",
-                 folder=True), tipo='movie'))
+                 folder=True))
 
     # Pagina successiva
     try:
@@ -244,6 +245,7 @@ def peliculas(item):
     except:
         pass
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -292,7 +294,7 @@ def peliculas_tv(item):
         plot = ""
         thumbnail = scrapertools.find_single_match(match, 'data-echo="([^"]+)"')
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  extra=item.extra,
                  action='episodios',
@@ -303,7 +305,7 @@ def peliculas_tv(item):
                  thumbnail=thumbnail,
                  plot=plot,
                  viewmode="movie_with_plot",
-                 folder=True), tipo='tv'))
+                 folder=True))
 
     # Successivo
     try:
@@ -319,6 +321,7 @@ def peliculas_tv(item):
     except:
         pass
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -336,7 +339,7 @@ def pel_tv(item):
         thumbnail = ""
         url = scrapedurl
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  extra=item.extra,
                  action='episodios',
@@ -347,7 +350,7 @@ def pel_tv(item):
                  thumbnail=thumbnail,
                  plot=plot,
                  viewmode="movie_with_plot",
-                 folder=True), tipo='tv'))
+                 folder=True))
 
     # Siguiente
     try:
@@ -363,6 +366,7 @@ def pel_tv(item):
     except:
         pass
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

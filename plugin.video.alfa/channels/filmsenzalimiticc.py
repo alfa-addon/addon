@@ -14,7 +14,7 @@ from core import scrapertools, servertools, httptools
 from platformcode import logger, config
 from core.item import Item
 from platformcode import config
-from core.tmdb import infoIca
+from core import tmdb
 
 # Necessario per Autoplay
 __channel__ = 'filmsenzalimiticc'
@@ -173,7 +173,7 @@ def video(item):
             azione='episodios'
             tipologia = 'tv'
         
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action=azione,
                  contentType=item.contentType,
@@ -183,7 +183,7 @@ def video(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  infoLabels=infolabels,
-                 show=scrapedtitle), tipo=tipologia))
+                 show=scrapedtitle))
 
     # Next page
     next_page = scrapertools.find_single_match(data, '<a class="nextpostslink".*?href="([^"]+)">')
@@ -197,6 +197,7 @@ def video(item):
                  contentType=item.contentType,
                  thumbnail='http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png'))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

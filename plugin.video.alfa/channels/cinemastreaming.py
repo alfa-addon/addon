@@ -9,7 +9,7 @@ from channels import  filtertools
 from core import scrapertools, servertools, httptools
 from core.item import Item
 from platformcode import config
-from core.tmdb import infoIca
+from core import tmdb
 
 host = 'https://cinemastreaming.info'
 
@@ -70,7 +70,7 @@ def video(item):
                     url=scrapedurl,
                     thumbnail=scrapedthumb,
                     infoLabels = infoLabels,
-                    show=scrapedtitle,))
+                    show=scrapedtitle))
 
     return itemlist
 

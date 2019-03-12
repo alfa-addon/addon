@@ -11,7 +11,7 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from platformcode import logger, config
 
 host = "https://www.guardarefilm.video"
@@ -152,7 +152,7 @@ def peliculas(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         scrapedplot = ""
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodios" if item.extra == "tvshow" else "findvideos",
                  contentType="movie",
@@ -162,7 +162,7 @@ def peliculas(item):
                  url=scrapedurl,
                  thumbnail=urlparse.urljoin(host, scrapedthumbnail),
                  plot=scrapedplot,
-                 folder=True), tipo='movie'))
+                 folder=True))
 
     # Paginazione 
     patronvideos = '<div class="pages".*?<span>.*?<a href="([^"]+)">'
@@ -196,7 +196,7 @@ def peliculas_tv(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         scrapedplot = ""
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodios" if item.extra == "tvshow" else "findvideos",
                  fulltitle=scrapedtitle,
@@ -205,7 +205,7 @@ def peliculas_tv(item):
                  url=scrapedurl,
                  thumbnail=urlparse.urljoin(host, scrapedthumbnail),
                  plot=scrapedplot,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
     # Paginazione 
     patronvideos = '<div class="pages".*?<span>.*?<a href="([^"]+)">'

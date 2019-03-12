@@ -12,7 +12,7 @@ from core import httptools
 from platformcode import logger
 from core import scrapertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 
 
 
@@ -93,7 +93,7 @@ def lista_anime(item):
     for scrapedthumbnail, scrapeddetails, scrapedurl, scrapedtitle in matches:
         scrapedurl = item.url.replace(item.url.split("/")[-1], scrapedurl)
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodi",
                  title="%s %s %s" % (
@@ -102,7 +102,7 @@ def lista_anime(item):
                  show=scrapedtitle,
                  url=scrapedurl,
                  thumbnail=makeurl(scrapedthumbnail),
-                 folder=True), tipo='tv'))
+                 folder=True))
 
     return itemlist
 

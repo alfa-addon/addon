@@ -11,7 +11,7 @@ import urlparse
 from core import scrapertools, httptools
 from core import servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from platformcode import logger, config
 
 
@@ -133,7 +133,7 @@ def searchfilm(item):
         # ------------------------------------------------
         scrapedthumbnail = httptools.get_url_headers(scrapedthumbnail)
         # ------------------------------------------------
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  title=scrapedtitle,
@@ -141,7 +141,7 @@ def searchfilm(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  fulltitle=scrapedtitle,
-                 show=scrapedtitle), tipo='movie'))
+                 show=scrapedtitle))
 
     # Paginación
     next_page = scrapertools.find_single_match(data, "href='([^']+)'>Seguente &rsaquo;")
@@ -153,6 +153,7 @@ def searchfilm(item):
                  url=next_page,
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -268,14 +269,14 @@ def fichas(item):
         # ------------------------------------------------
         scrapedthumbnail = httptools.get_url_headers(scrapedthumbnail)
         # ------------------------------------------------
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  title=scrapedtitle,
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  fulltitle=scrapedtitle,
-                 show=scrapedtitle), tipo='movie'))
+                 show=scrapedtitle))
 
     # Paginación
     next_page = scrapertools.find_single_match(data, "href='([^']+)'>Seguente &rsaquo;")
@@ -287,6 +288,7 @@ def fichas(item):
                  url=next_page,
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

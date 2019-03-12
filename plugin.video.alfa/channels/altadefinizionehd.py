@@ -9,7 +9,7 @@ import re
 from core import httptools, scrapertools, servertools
 from platformcode import logger, config
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 
 
 
@@ -119,14 +119,14 @@ def elenco(item):
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
         logger.info("title=[" + scrapedtitle + "] url=[" + scrapedurl + "] thumbnail=[" + scrapedthumbnail + "]")
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  contentType="movie",
                  title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
                  fulltitle=scrapedtitle,
                  url=scrapedurl,
-                 thumbnail=scrapedthumbnail), tipo="movie"))
+                 thumbnail=scrapedthumbnail))
 
     # Paginazione
     # ===========================================================================================================================
@@ -140,7 +140,8 @@ def elenco(item):
         itemlist.append(Item(channel=item.channel, action="mainlist", title=ListTxt, folder=True))
     # ===========================================================================================================================
 
-    
+
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -158,13 +159,13 @@ def search(item, texto):
 
     for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
                  fulltitle=scrapedtitle,
                  url=scrapedurl,
-                 thumbnail=scrapedthumbnail), tipo="movie"))
+                 thumbnail=scrapedthumbnail))
 
     # Paginazione
     # ===========================================================================================================================
@@ -176,6 +177,7 @@ def search(item, texto):
     else:
         itemlist.append(Item(channel=item.channel, action="mainlist", title=ListTxt, folder=True))
     # ===========================================================================================================================
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

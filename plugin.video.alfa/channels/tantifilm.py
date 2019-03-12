@@ -11,7 +11,7 @@ from channels import autoplay
 from channels import filtertools
 from core import scrapertools, servertools, httptools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from lib.unshortenit import unshorten_only
 from platformcode import config
 from platformcode import logger
@@ -217,7 +217,7 @@ def peliculas(item):
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
         scrapedtitle = scrapedtitle.replace("streaming", "")
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  contentType="movie",
@@ -227,9 +227,9 @@ def peliculas(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
-                 folder=True), tipo='movie'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = '<a class="nextpostslink".*?href="([^"]+)"' ### <-  Fix Pagina successiva '<a class="nextpostslink" rel="next" href="([^"]+)">»</a>'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -243,6 +243,7 @@ def peliculas(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -267,7 +268,7 @@ def peliculas_tv(item):
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
         scrapedtitle = scrapedtitle.replace("streaming", "")
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodios",
                  fulltitle=scrapedtitle,
@@ -276,9 +277,9 @@ def peliculas_tv(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = '<a class="nextpostslink" rel="next" href="([^"]+)">»</a>'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -292,6 +293,7 @@ def peliculas_tv(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 def latest(item):
@@ -317,7 +319,7 @@ def latest(item):
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
         scrapedtitle = scrapedtitle.replace("Permalink to ", "")
         scrapedtitle = scrapedtitle.replace("streaming", "")
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  contentType="movie",
@@ -327,9 +329,9 @@ def latest(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
-                 folder=True), tipo='movie'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = '<a class="nextpostslink" rel="next" href="([^"]+)">»</a>'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -343,6 +345,7 @@ def latest(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

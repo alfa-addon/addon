@@ -11,7 +11,7 @@ from channels import autoplay
 from channels import filtertools
 from core import scrapertools, servertools, httptools, scrapertoolsV2
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from lib.unshortenit import unshorten
 from platformcode import logger, config
 
@@ -101,7 +101,7 @@ def search_peliculas(item):
         scrapedthumbnail = ""
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  fulltitle=scrapedtitle,
@@ -111,8 +111,9 @@ def search_peliculas(item):
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
                  extra=item.extra,
-                 folder=True), tipo='movie'))
+                 folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 def search_peliculas_tv(item):
@@ -131,7 +132,7 @@ def search_peliculas_tv(item):
         scrapedthumbnail = ""
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodios",
                  fulltitle=scrapedtitle,
@@ -141,8 +142,9 @@ def search_peliculas_tv(item):
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
                  extra=item.extra,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 def peliculas(item):
@@ -164,7 +166,7 @@ def peliculas(item):
         if (p - 1) * PERPAGE > i: continue
         if i >= p * PERPAGE: break
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(Item(channel=item.channel,
+        itemlist.append(Item(channel=item.channel,
                                      contentType="movie",
                                      action="findvideos",
                                      title=scrapedtitle,
@@ -172,7 +174,7 @@ def peliculas(item):
                                      url=scrapedurl,
                                      fanart=item.fanart if item.fanart != "" else item.scrapedthumbnail,
                                      show=item.fulltitle,
-                                     folder=True), tipo='movie'))
+                                     folder=True))
 
     if len(matches) >= p * PERPAGE:
         scrapedurl = item.url + '{}' + str(p + 1)
@@ -185,6 +187,7 @@ def peliculas(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -208,14 +211,14 @@ def lista_serie(item):
         if (p - 1) * PERPAGE > i: continue
         if i >= p * PERPAGE: break
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(Item(channel=item.channel,
+        itemlist.append(Item(channel=item.channel,
                                      action="episodios",
                                      title=scrapedtitle,
                                      fulltitle=scrapedtitle,
                                      url=scrapedurl,
                                      fanart=item.fanart if item.fanart != "" else item.scrapedthumbnail,
                                      show=item.fulltitle,
-                                     folder=True), tipo='tv'))
+                                     folder=True))
 
     if len(matches) >= p * PERPAGE:
         scrapedurl = item.url + '{}' + str(p + 1)
@@ -228,6 +231,7 @@ def lista_serie(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

@@ -12,7 +12,7 @@ from channels import autoplay
 from channels import filtertools
 from core import scrapertools, servertools, httptools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from platformcode import logger, config
 
 IDIOMAS = {'Italiano': 'IT'}
@@ -158,7 +158,7 @@ def fichas(item):
         # ------------------------------------------------
         scrapedthumbnail = httptools.get_url_headers(scrapedthumbnail)
         # ------------------------------------------------
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  contentType="movie",
@@ -166,7 +166,7 @@ def fichas(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  fulltitle=title,
-                 show=scrapedtitle), tipo='movie'))
+                 show=scrapedtitle))
 
     # Paginación
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)"\s*><span aria-hidden="true">&raquo;')
@@ -180,6 +180,7 @@ def fichas(item):
                  text_color="orange",
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -195,7 +196,7 @@ def tv_series(item):
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="seasons",
                  contentType="tv",
@@ -204,7 +205,7 @@ def tv_series(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  fulltitle=scrapedtitle,
-                 show=scrapedtitle), tipo='tv'))
+                 show=scrapedtitle))
 
     # Pagine
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)"\s*><span aria-hidden="true">&raquo;')
@@ -218,6 +219,7 @@ def tv_series(item):
                  url=next_page,
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

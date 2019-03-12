@@ -13,7 +13,7 @@ from platformcode import logger, config
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 
 
 
@@ -152,7 +152,7 @@ def peliculas(item):
         scrapedtitle = scrapedtitle.title()
         txt = "Serie Tv"
         if txt in scrapedtitle: continue
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  fulltitle=scrapedtitle,
@@ -161,9 +161,9 @@ def peliculas(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
-                 folder=True), tipo='movie'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = '<span class=\'current\'>[^<]+</span><a class=[^=]+=[^=]+="(.*?)">'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -177,6 +177,7 @@ def peliculas(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

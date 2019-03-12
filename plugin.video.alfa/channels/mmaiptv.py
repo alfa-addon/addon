@@ -12,7 +12,7 @@ from platformcode import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 
 
 

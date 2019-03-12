@@ -15,7 +15,7 @@ from platformcode import logger, config
 from core.item import Item
 from lib import unshortenit
 from platformcode import config
-from core.tmdb import infoIca
+from core import tmdb
 
 # Necessario per Autoplay
 IDIOMAS = {'Italiano': 'IT'}
@@ -136,7 +136,7 @@ def video(item):
             tipologia = 'movie'
             action = 'select'
         
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action=action,
                  contentType=item.contentType,
@@ -146,7 +146,7 @@ def video(item):
                  url=url,
                  thumbnail=thumb,
                  infoLabels=year,
-                 show=title), tipo=tipologia))
+                 show=title))
 
     # Next page
     next_page = scrapertools.find_single_match(data, '<a class="next page-numbers".*?href="([^"]+)">')
@@ -160,6 +160,7 @@ def video(item):
                  contentType=item.contentType,
                  thumbnail='http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png'))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

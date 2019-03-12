@@ -10,7 +10,7 @@ import urlparse
 from channels import autoplay
 from core import scrapertools, servertools, httptools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from lib import unshortenit
 from platformcode import config, logger
 
@@ -93,7 +93,7 @@ def peliculas(item):
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, scraprate in matches:
         scrapedplot = ""
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  contentType="movie",
@@ -104,9 +104,9 @@ def peliculas(item):
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
                  extra=item.extra,
-                 folder=True), tipo='movie'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = '<a href="([^"]+)"[^>]+>Pagina'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -121,6 +121,7 @@ def peliculas(item):
                  extra=item.extra,
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -138,7 +139,7 @@ def peliculas_tv(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         title = scrapertools.decodeHtmlentities(scrapedtitle)
         scrapedplot = ""
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodios",
                  fulltitle=title,
@@ -148,9 +149,9 @@ def peliculas_tv(item):
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
                  extra=item.extra,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = '<a href="([^"]+)"[^>]+>Pagina'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -165,6 +166,7 @@ def peliculas_tv(item):
                  extra=item.extra,
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 def categorias(item):

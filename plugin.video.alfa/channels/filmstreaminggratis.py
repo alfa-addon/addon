@@ -11,7 +11,7 @@ from channels import autoplay
 from channels import filtertools
 from core import scrapertools, servertools, httptools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from platformcode import logger, config
 
 IDIOMAS = {'Italiano': 'IT'}
@@ -99,7 +99,7 @@ def ultimifilm(item):
 
     for scrapedurl, scrapedtitle in matches:
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  contentType="movie",
@@ -108,8 +108,9 @@ def ultimifilm(item):
                  url=scrapedurl,
                  extra="movie",
                  thumbnail=item.thumbnail,
-                 folder=True), tipo="movie"))
+                 folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -152,7 +153,7 @@ def loadfilms(item):
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedplot in matches:
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
         scrapedplot = scrapertools.decodeHtmlentities(scrapedplot.strip())
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  title=scrapedtitle,
@@ -160,7 +161,7 @@ def loadfilms(item):
                  url=scrapedurl,
                  plot=scrapedplot,
                  thumbnail=scrapedthumbnail,
-                 folder=True), tipo=item.extra))
+                 folder=True))
 
     patronvideos = '<link rel="next" href="([^"]+)"\s*/>'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
@@ -175,6 +176,7 @@ def loadfilms(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

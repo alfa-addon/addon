@@ -14,7 +14,7 @@ from core import scrapertools, servertools, httptools
 from platformcode import logger, config
 from core.item import Item
 from platformcode import config
-from core.tmdb import infoIca
+from core import tmdb
 
 __channel__ = "seriehd"
 
@@ -111,14 +111,14 @@ def fichas(item):
     for scrapedtitle, scrapedthumbnail, scrapedurl in matches:
         scrapedthumbnail = httptools.get_url_headers(scrapedthumbnail)
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=__channel__,
                  action="episodios",
                  title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
                  fulltitle=scrapedtitle,
                  url=scrapedurl,
                  show=scrapedtitle,
-                 thumbnail=scrapedthumbnail), tipo='tv'))
+                 thumbnail=scrapedthumbnail))
 
     patron = "<span class='current'>\d+</span><a rel='nofollow' class='page larger' href='([^']+)'>\d+</a>"
     next_page = scrapertools.find_single_match(data, patron)
@@ -129,6 +129,7 @@ def fichas(item):
                  title="[COLOR lightgreen]" + config.get_localized_string(30992) + "[/COLOR]",
                  url=next_page))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

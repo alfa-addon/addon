@@ -7,7 +7,7 @@
 from core import httptools, scrapertools, servertools, listtools
 from core.item import Item
 from platformcode import logger
-from core.tmdb import infoIca
+from core import tmdb
 import re
 
 __channel__ = "streaminghd"
@@ -191,7 +191,7 @@ def peliculas_src(item):
         scrapedplot = ""
         scrapedthumbnail = ""
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  contentType="movie",
@@ -199,8 +199,9 @@ def peliculas_src(item):
                  title=scrapedtitle,
                  fulltitle=scrapedtitle,
                  url=scrapedurl,
-                 thumbnail=scrapedthumbnail), tipo="movie"))
+                 thumbnail=scrapedthumbnail))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 def peliculas_tv_src(item):
@@ -218,7 +219,7 @@ def peliculas_tv_src(item):
         scrapedplot = ""
         scrapedthumbnail = ""
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodios",
                  contentType="episode",
@@ -226,8 +227,9 @@ def peliculas_tv_src(item):
                  title=scrapedtitle,
                  fulltitle=scrapedtitle,
                  url=scrapedurl,
-                 thumbnail=scrapedthumbnail), tipo="tv"))
+                 thumbnail=scrapedthumbnail))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 def by_anno_or_by_genere(item):

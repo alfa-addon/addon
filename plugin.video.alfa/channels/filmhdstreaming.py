@@ -12,7 +12,7 @@ from core import httptools
 from platformcode import logger, config
 from core import scrapertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 
 
 
@@ -90,14 +90,14 @@ def elenco_top(item):
         # sempre per controllare il log
         logger.info("Url:" + scrapedurl + " thumbnail:" + scrapedimg + " title:" + scrapedtitle)
         title = scrapedtitle.split("(")[0]
-        itemlist.append(infoIca(Item(channel=item.channel,
+        itemlist.append(Item(channel=item.channel,
                                      action="findvideos",
                                      title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
                                      fulltitle=scrapedtitle,
                                      url=scrapedurl,
                                      thumbnail=scrapedimg,
                                      fanart=""
-                                     )))
+                                     ))
 
     return itemlist
 
@@ -118,7 +118,7 @@ def elenco(item):
         scrapedtitle = scrapedtitle.replace(" streaming ita", "")
         scrapedtitle = scrapedtitle.replace(" film streaming", "")
         scrapedtitle = scrapedtitle.replace(" streaming gratis", "")
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  contentType="movie",
@@ -128,9 +128,9 @@ def elenco(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
-                 folder=True), tipo='movie'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = r'<a class="page dark gradient" href=["|\']+([^"]+)["|\']+>AVANTI'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -144,6 +144,7 @@ def elenco(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -188,14 +189,14 @@ def elenco_ten(item):
 
     for scrapedurl, scrapedtitle in matches:
         logger.info("Url:" + scrapedurl + " title:" + scrapedtitle)
-        itemlist.append(infoIca(Item(channel=item.channel,
+        itemlist.append(Item(channel=item.channel,
                                      action="findvideos",
                                      title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
                                      fulltitle=scrapedtitle,
                                      url=scrapedurl,
                                      thumbnail="",
                                      fanart=""
-                                     )))
+                                     ))
 
     return itemlist
 

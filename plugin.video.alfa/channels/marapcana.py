@@ -8,7 +8,7 @@ import re
 
 from core import scrapertools, httptools, servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from lib import unshortenit
 from platformcode import logger, config
 
@@ -66,7 +66,7 @@ def peliculas(item):
 
     for scrapedurl, scrapedtitle in matches:
         scrapedthumbnail = ""
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  fulltitle=scrapedtitle,
@@ -76,7 +76,7 @@ def peliculas(item):
                  thumbnail=scrapedthumbnail,
                  extra=item.extra,
                  viewmode="movie_with_plot",
-                 Folder=True), tipo='movie'))
+                 Folder=True))
 
     nextpage_regex = '<a class="nextpostslink".*?href="([^"]+)".*?<\/a>'
     next_page = scrapertools.find_single_match(data, nextpage_regex)
@@ -88,6 +88,7 @@ def peliculas(item):
                  url="%s" % next_page,
                  extra=item.extra,
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"))
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -138,7 +139,7 @@ def peliculas_tv(item):
         if (p - 1) * PERPAGE > i: continue
         if i >= p * PERPAGE: break
         title = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  extra=item.extra,
                  action="episodios",
@@ -148,7 +149,7 @@ def peliculas_tv(item):
                  fulltitle=title,
                  show=title,
                  plot=scrapedplot,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
     if len(matches) >= p * PERPAGE:
         scrapedurl = item.url + '{}' + str(p + 1)
@@ -161,6 +162,7 @@ def peliculas_tv(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

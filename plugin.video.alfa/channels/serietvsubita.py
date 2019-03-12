@@ -9,7 +9,7 @@ import re, urlparse
 from platformcode import logger, config
 from core import scrapertools, httptools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 
 
 
@@ -75,7 +75,7 @@ def episodios(item):
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
         scrapedtitle = scrapedtitle.replace(scraped_1, "")
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  fulltitle=scraped_1,
@@ -84,7 +84,7 @@ def episodios(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
     # paginación
     patron = '<div id="navigation">.*?\d+</a> <a href="([^"]+)"'
@@ -98,6 +98,7 @@ def episodios(item):
                  extra=item.extra,
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

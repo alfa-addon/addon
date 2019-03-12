@@ -9,7 +9,7 @@ import urlparse
 
 from core import httptools, scrapertools, servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from platformcode import logger, config
 
 host = "http://mondolunatico.org"
@@ -89,7 +89,7 @@ def pelis_movie_src(item):
     scrapedplot = ""
     for scrapedurl, scrapedthumbnail, scrapedtitle, in matches:
         title = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  extra=item.extra,
                  action="findvideos",
@@ -100,8 +100,9 @@ def pelis_movie_src(item):
                  fulltitle=title,
                  show=title,
                  plot=scrapedplot,
-                 folder=True), tipo='movie'))
+                 folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -121,7 +122,7 @@ def peliculas(item):
         scrapedplot = ""
         scrapedthumbnail = ""
         title = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  extra=item.extra,
                  action="findvideos",
@@ -132,9 +133,9 @@ def peliculas(item):
                  fulltitle=title,
                  show=title,
                  plot=scrapedplot,
-                 folder=True), tipo='movie'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = '<span class="current">[^<]+</span><a href=\'(.*?)\''
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -149,6 +150,7 @@ def peliculas(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

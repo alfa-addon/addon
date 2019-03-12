@@ -1,3 +1,5 @@
+*
+!plugin.video.alfa
 *.pyo
 *.pyc
 .DS_Store

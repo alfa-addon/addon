@@ -10,7 +10,7 @@ from core import scrapertools, servertools, httptools
 from core.item import Item
 from channels import autoplay
 from channels import filtertools
-from core.tmdb import infoIca
+from core import tmdb
 
 __channel__ = "ilgeniodellostreaming"
 
@@ -146,7 +146,7 @@ def peliculas_src(item):
         logger.info("title=[" + scrapedtitle + "], url=[" + scrapedurl + "], thumbnail=[" + scrapedthumbnail + "]")
 
         if scrapedtipo == "TV":
-            itemlist.append(infoIca(
+            itemlist.append(
                 Item(channel=__channel__,
                      action="episodios",
                      fulltitle=scrapedtitle,
@@ -154,9 +154,9 @@ def peliculas_src(item):
                      title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
                      url=scrapedurl,
                      thumbnail=scrapedthumbnail,
-                     folder=True), tipo='tv'))
+                     folder=True))
         else:
-            itemlist.append(infoIca(
+            itemlist.append(
                 Item(channel=__channel__,
                      action="findvideos",
                      contentType="movie",
@@ -165,8 +165,9 @@ def peliculas_src(item):
                      title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
                      url=scrapedurl,
                      thumbnail=scrapedthumbnail,
-                     folder=True), tipo='movie'))
+                     folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -184,7 +185,7 @@ def peliculas(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         scrapedplot = ""
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=__channel__,
                  action="findvideos",
                  contentType="movie",
@@ -194,9 +195,9 @@ def peliculas(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
-                 folder=True), tipo='movie'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = '<span class="current">[^<]+<[^>]+><a href=\'(.*?)\''
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -210,6 +211,7 @@ def peliculas(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -236,7 +238,7 @@ def nuoviep(item):
         if i >= p * PERPAGE: break
         scrapedplot = ""
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=__channel__,
                  action="findvideos",
                  fulltitle=scrapedtitle,
@@ -245,7 +247,7 @@ def nuoviep(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
     if len(matches) >= p * PERPAGE:
         scrapedurl = item.url + '{}' + str(p + 1)
@@ -258,6 +260,7 @@ def nuoviep(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -275,7 +278,7 @@ def serie(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         scrapedplot = ""
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=__channel__,
                  action="episodios",
                  fulltitle=scrapedtitle,
@@ -284,9 +287,9 @@ def serie(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = '<span class="current">[^<]+<[^>]+><a href=\'(.*?)\''
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -300,6 +303,7 @@ def serie(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

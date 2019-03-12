@@ -16,7 +16,7 @@ from platformcode import logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 
 __channel__ = "mondolunatico"
 
@@ -135,7 +135,7 @@ def peliculas(item):
     scrapedplot = ""
     for scrapedurl, scrapedthumbnail, scrapedtitle, in matches:
         title = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  extra=item.extra,
                  action="findvideos",
@@ -146,9 +146,9 @@ def peliculas(item):
                  fulltitle=title,
                  show=title,
                  plot=scrapedplot,
-                 folder=True), tipo='movie'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = '<a class="nextpostslink" rel="next" href="([^"]+)">'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -163,6 +163,7 @@ def peliculas(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -190,7 +191,7 @@ def serietv(item):
         if (p - 1) * PERPAGE > i: continue
         if i >= p * PERPAGE: break
         title = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  extra=item.extra,
                  action="episodios",
@@ -200,7 +201,7 @@ def serietv(item):
                  fulltitle=title,
                  show=title,
                  plot=scrapedplot,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
     if len(matches) >= p * PERPAGE:
         scrapedurl = item.url + '{}' + str(p + 1)
@@ -213,6 +214,7 @@ def serietv(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -236,7 +238,7 @@ def search_serietv(item, texto):
     for i, (scrapedurl, scrapedtitle) in enumerate(matches):
         title = scrapertools.decodeHtmlentities(scrapedtitle)
         if texto not in title.lower(): continue
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  extra=item.extra,
                  action="episodios",
@@ -246,8 +248,9 @@ def search_serietv(item, texto):
                  fulltitle=title,
                  show=title,
                  plot=scrapedplot,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 def episodios(item):

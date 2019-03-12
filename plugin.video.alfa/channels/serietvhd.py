@@ -12,7 +12,7 @@ from platformcode import logger, config
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 
 
 
@@ -89,7 +89,7 @@ def lista_serie(item):
         scrapedthumbnail = scrapedthumbnail.replace(" ", "%20")
         scrapedtitle = scrapertools.unescape(match.group(2)).replace("[", "").replace("]", "")
         scrapedurl = urlparse.urljoin(item.url, match.group(3))
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="serietv",
                  contentType="serietv",
@@ -99,7 +99,7 @@ def lista_serie(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  extra=item.extra,
-                 viewmode="movie_with_plot"), tipo='serie'))
+                 viewmode="movie_with_plot"))
 
     next_page = scrapertools.find_single_match(dataoriginale, '<div class="pagination">.*?href="([^"]+)".*?</div>')
     if next_page != "":
@@ -111,6 +111,7 @@ def lista_serie(item):
                  extra=item.extra,
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 def serietv(item):
@@ -222,7 +223,7 @@ def topimdb(item):
         scrapedurl = scrapertools.unescape(match.group(5))
         scrapedtitle = scrapertools.unescape(match.group(6))
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="serietv",
                  contentType="serietv",
@@ -232,8 +233,9 @@ def topimdb(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  extra=item.extra,
-                 viewmode="movie_with_plot"), tipo='serie'))
+                 viewmode="movie_with_plot")))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 	
 def search(item, texto):

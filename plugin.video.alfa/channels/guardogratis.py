@@ -12,7 +12,7 @@ from platformcode import logger, config
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 
 __channel__ = "guardogratis"
 
@@ -84,7 +84,7 @@ def list_titles(item):
         rate='  IMDb: [[COLOR orange]%s[/COLOR]]' % match.group(4) if match.group(4)!='N/A'else ''
         scrapedtitle = scrapertools.unescape(match.group(3))
         #scrapedtitle = scrapertools.unescape(match.group(3))+rate
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos" if not 'tvshow' in item.extra else 'serietv',
                  contentType="movie" if not 'tvshow' in item.extra else 'serie',
@@ -94,7 +94,7 @@ def list_titles(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  extra=item.extra,
-                 viewmode="movie_with_plot"), tipo=tipo))
+                 viewmode="movie_with_plot"))
 
     nextpage_regex=''
     if item.extra in "movies,tvshow":
@@ -113,6 +113,7 @@ def list_titles(item):
                      extra=item.extra,
                      thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 def search(item, texto):
@@ -176,7 +177,7 @@ def serietv(item):
         scrapedtitle = scrapedtitle.replace("/", "")
         scrapedtitle = scrapedtitle.replace("-", " ")
         scrapedtitle = scrapedtitle.title()
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  fulltitle=scrapedtitle,
@@ -185,7 +186,7 @@ def serietv(item):
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
     if config.get_videolibrary_support() and len(itemlist) != 0:
         itemlist.append(
@@ -196,6 +197,7 @@ def serietv(item):
                 extra="serietv",
                 show=item.show))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 def findvideos(item):

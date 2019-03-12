@@ -10,7 +10,7 @@ import urlparse
 from platformcode import logger, config
 from core import servertools, httptools, scrapertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 
 host = "https://toonitalia.org"
 
@@ -79,7 +79,7 @@ def src_list(item):
 
         scrapedtitle = scrapertools.decodeHtmlentities(url_title[0][1])
         scrapedurl = url_title[0][0]
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="links",
                  text_color="azure",
@@ -89,8 +89,9 @@ def src_list(item):
                  url=scrapedurl,
                  show=scrapedtitle,
                  extra=item.extra,
-                 folder=True), tipo=item.extra))
+                 folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 def lista_anime(item):

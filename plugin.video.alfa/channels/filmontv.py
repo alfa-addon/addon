@@ -12,7 +12,7 @@ from core import httptools
 from platformcode import logger
 from core import scrapertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 
 
 
@@ -66,7 +66,7 @@ def tvoggi(item):
         scrapedurl = ""
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="do_search",
                  extra=urllib.quote_plus(scrapedtitle) + '{}' + 'movie',
@@ -74,7 +74,7 @@ def tvoggi(item):
                  fulltitle=scrapedtitle,
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
-                 folder=True), tipo="movie"))
+                 folder=True), tipo="movie")
 
     return itemlist
 

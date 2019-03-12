@@ -8,7 +8,7 @@ import re
 
 from core import httptools, scrapertools, servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from lib import unshortenit
 from platformcode import logger, config
 
@@ -70,14 +70,14 @@ def lista_serie(item):
     for scrapedthumbnail, scrapedtitle, scrapedurl in matches:
         scrapedtitle = scrapedtitle.split("(")[0]
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodios",
                  title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  fulltitle=scrapedtitle,
-                 show=scrapedtitle, viewmode="movie"), tipo='tv'))
+                 show=scrapedtitle, viewmode="movie"))
 
     # Paginazione
     # ===========================================================
@@ -95,6 +95,7 @@ def lista_serie(item):
                  thumbnail=thumbnail_successivo,
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -209,15 +210,16 @@ def ricerca(item):
 
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         scrapedtitle = scrapedtitle.split("(")[0]
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodios",
                  title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  fulltitle=scrapedtitle,
-                 show=scrapedtitle, viewmode="movie"), tipo='tv'))
+                 show=scrapedtitle, viewmode="movie"))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -245,15 +247,16 @@ def search(item, texto):
 
     for scrapedurl,scrapedthumbnail,scrapedtitle  in matches:
         scrapedtitle = scrapedtitle.split("(")[0]
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="stagione",
                  title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
                  url=scrapedurl,
                  thumbnail=scrapedthumbnail,
                  fulltitle=scrapedtitle,
-                 show=scrapedtitle, viewmode="movie"), tipo='tv'))
+                 show=scrapedtitle, viewmode="movie")))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

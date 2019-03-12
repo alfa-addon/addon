@@ -9,7 +9,8 @@ import re
 from core import httptools, scrapertools
 from core import servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
+from lib.unshortenit import unshorten
 from platformcode import logger, config
 from lib import unshortenit
 
@@ -91,7 +92,7 @@ def peliculas(item):
         #scrapedtitle = scrapedtitle.split("&#8211;")[0]
         #scrapedtitle = scrapedtitle.split(" Download")[0]
         scrapedthumbnail = ""
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos" if 'movie' in item.extra else 'episodes',
                  text_color="azure",
@@ -100,7 +101,7 @@ def peliculas(item):
                  title=scrapedtitle,
                  url="%s/%s" % (host, scrapedurl),
                  viewmode="movie_with_plot",
-                 thumbnail=scrapedthumbnail), tipo=item.extra))
+                 thumbnail=scrapedthumbnail))
 
     nextpage_regex = '<a class="next page-numbers" href="([^"]+)">'
     next_page = scrapertools.find_single_match(data, nextpage_regex)

@@ -8,7 +8,7 @@ import re
 
 from core import httptools, scrapertools, servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from platformcode import logger, config
 
 
@@ -137,7 +137,7 @@ def latestep(item):
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle.strip())
         episodio = re.compile(r'(\d+)x(\d+)', re.DOTALL).findall(scrapedinfo)
         title = "%s %s" % (scrapedtitle, scrapedinfo)
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findepisodevideo",
                  title=title,
@@ -146,7 +146,8 @@ def latestep(item):
                  extra=episodio,
                  thumbnail=scrapedimg,
                  show=title,
-                 folder=True), tipo="tv"))
+                 folder=True))
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -165,7 +166,7 @@ def lista_serie(item):
 
     for scrapedurl, scrapedimg, scrapedtitle in matches:
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle.strip())
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodios",
                  title=scrapedtitle,
@@ -173,7 +174,7 @@ def lista_serie(item):
                  url=scrapedurl,
                  thumbnail=scrapedimg,
                  show=scrapedtitle,
-                 folder=True), tipo="tv"))
+                 folder=True))
 
     # Pagine
     patron = '<a href="([^"]+)"[^>]+>Pagina'
@@ -186,6 +187,7 @@ def lista_serie(item):
                  url=next_page,
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 

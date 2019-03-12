@@ -15,7 +15,7 @@ from core import scrapertools, servertools, httptools
 from platformcode import logger, config
 from core.item import Item
 from platformcode import config
-from core.tmdb import infoIca
+from core import tmdb
 
 __channel__ = 'filmsenzalimiti'
 
@@ -134,7 +134,7 @@ def video(item):
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
         scrapedrating = scrapertools.decodeHtmlentities(scrapedrating)
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action='findvideos',
                  title=scrapedtitle + ' (' + scrapedrating + ')',
@@ -142,7 +142,7 @@ def video(item):
                  url=scrapedurl,
                  show=scrapedtitle,
                  contentType=item.contentType,
-                 thumbnail=scrapedthumbnail), tipo='movie'))
+                 thumbnail=scrapedthumbnail), tipo='movie')
 
     patron = '<a href="([^"]+)"><i class="glyphicon glyphicon-chevron-right"'
     next_page = scrapertools.find_single_match(data, patron)
@@ -172,7 +172,7 @@ def cerca(item):
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
         scrapedrating = scrapertools.decodeHtmlentities(scrapedrating)
 
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action='findvideos',
                  title=scrapedtitle + ' (' + scrapedrating + ')',
@@ -180,7 +180,7 @@ def cerca(item):
                  url=scrapedurl,
                  show=scrapedtitle,
                  contentType=item.contentType,
-                 thumbnail=scrapedthumbnail), tipo='movie'))
+                 thumbnail=scrapedthumbnail), tipo='movie')
 
     patron = '<a href="([^"]+)"><i class="glyphicon glyphicon-chevron-right"'
     next_page = scrapertools.find_single_match(data, patron)

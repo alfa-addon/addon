@@ -11,7 +11,7 @@ from channels import autoplay
 from channels import filtertools
 from core import httptools, scrapertools, servertools
 from core.item import Item
-from core.tmdb import infoIca
+from core import tmdb
 from lib import unshortenit
 from platformcode import logger, config
 
@@ -85,7 +85,7 @@ def peliculas(item):
         scrapedthumbnail = ""
         scrapedplot = ""
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
                  contentType="movie",
@@ -96,9 +96,9 @@ def peliculas(item):
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
                  extra=item.extra,
-                 folder=True), tipo='movie'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = '<a\s*class="nextpostslink" rel="next" href="([^"]+)">Avanti'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -112,6 +112,7 @@ def peliculas(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -130,7 +131,7 @@ def peliculas_tv(item):
         scrapedthumbnail = ""
         scrapedplot = ""
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
-        itemlist.append(infoIca(
+        itemlist.append(
             Item(channel=item.channel,
                  action="episodios",
                  fulltitle=scrapedtitle,
@@ -140,9 +141,9 @@ def peliculas_tv(item):
                  thumbnail=scrapedthumbnail,
                  plot=scrapedplot,
                  extra=item.extra,
-                 folder=True), tipo='tv'))
+                 folder=True))
 
-    # Paginazione 
+    # Paginazione
     patronvideos = '<a\s*class="nextpostslink" rel="next" href="([^"]+)">Avanti'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
 
@@ -156,6 +157,7 @@ def peliculas_tv(item):
                  thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
                  folder=True))
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 def search(item, texto):
