@@ -14,7 +14,7 @@ from channelselector import get_thumb
 
 host = "https://maxipelis24.tv"
 
-IDIOMAS = {'Latino': 'Latino', 'Subtitulado': 'VOSE', 'Español': 'CAST'}
+IDIOMAS = {'Latino': 'Latino', 'Subtitulado': 'VOSE', 'Español': 'CAST', 'Castellano':'CAST'}
 list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['rapidvideo', 'vidoza', 'openload', 'streamango', 'okru']
@@ -113,18 +113,17 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    data1 = scrapertools.find_single_match(
-        data, '<ul class="idTabs">.*?</ul></div>')
-    patron = "li>.*?href=.*?>([^\s]+)"
-    matches1 = re.compile(patron, re.DOTALL).findall(data1)
-    for lang in matches1:
-        if "VIP" in lang:
-            continue
-        idioma = lang
-
-    patron = '<div id="div.*?<div class="movieplay".*?(?:iframe.*?src|IFRAME SRC)="([^&]+)&'
+    patron = '<div id="div(\d+)".*?<div class="movieplay".*?(?:iframe.*?src|IFRAME SRC)="([^&]+)&'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for link in matches:
+    for ot, link in matches:
+        data1 = scrapertools.find_single_match(data, '<ul class="idTabs">.*?</ul></div>')
+        patron = 'li>.*?href="#div%s.*?>.*?([^\s]+)' % ot
+        matches1 = re.compile(patron, re.DOTALL).findall(data1)
+        for lang in matches1:
+            if "VIP" in lang:
+                continue
+            idioma = lang
+
         if 'ok.ru' in link:
             patron = '<div id="div.*?<div class="movieplay".*?(?:iframe.*?src|IFRAME SRC)="([^"]+)"'
             matches = re.compile(patron, re.DOTALL).findall(data)
