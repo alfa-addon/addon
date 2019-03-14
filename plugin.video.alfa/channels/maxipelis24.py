@@ -14,7 +14,7 @@ from channelselector import get_thumb
 
 host = "https://maxipelis24.tv"
 
-IDIOMAS = {'Latino': 'Latino', 'Subtitulado': 'VOSE', 'Español': 'CAST', 'Castellano':'CAST'}
+IDIOMAS = {'Latino': 'Latino', 'Sub':'VOSE', 'Subtitulado': 'VOSE', 'Español': 'CAST', 'Castellano':'CAST'}
 list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['rapidvideo', 'vidoza', 'openload', 'streamango', 'okru']
@@ -117,7 +117,7 @@ def findvideos(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     for ot, link in matches:
         data1 = scrapertools.find_single_match(data, '<ul class="idTabs">.*?</ul></div>')
-        patron = 'li>.*?href="#div%s.*?>.*?([^\s]+)' % ot
+        patron = 'li>.*?href="#div%s.*?>.*?([^<|\s]+)' % ot
         matches1 = re.compile(patron, re.DOTALL).findall(data1)
         for lang in matches1:
             if "VIP" in lang:
