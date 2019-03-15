@@ -31,23 +31,29 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, title="Ultimas", action="list_all", url=host,
-                         thumbnail=get_thumb('last', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host+'peliculas',
+                         thumbnail=get_thumb('all', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Estrenos", action="list_all", url=host+'estrenos',
+                         thumbnail=get_thumb('premieres', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Mas vistas", action="list_all", url=host+'peliculas-mas-vistas',
+                         thumbnail=get_thumb('more watched', auto=True)))
+    itemlist.append(Item(channel=item.channel, title="Mas votadas", action="list_all", url=host+'peliculas-mas-valoradas',
+                         thumbnail=get_thumb('more voted', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Generos", action="section", section='genre',
                          thumbnail=get_thumb('genres', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Castellano", action="list_all", url= host+'espanol',
-                         thumbnail=get_thumb('audio', auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title="Latino", action="list_all", url=host + 'latino',
-                         thumbnail=get_thumb('audio', auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title="VOSE", action="list_all", url=host + 'subtitulado',
-                         thumbnail=get_thumb('audio', auto=True)))
-
-    itemlist.append(Item(channel=item.channel, title="Alfabetico", action="section", section='alpha',
-                         thumbnail=get_thumb('alphabet', auto=True)))
+    # itemlist.append(Item(channel=item.channel, title="Castellano", action="list_all", url= host+'espanol',
+    #                      thumbnail=get_thumb('audio', auto=True)))
+    #
+    # itemlist.append(Item(channel=item.channel, title="Latino", action="list_all", url=host + 'latino',
+    #                      thumbnail=get_thumb('audio', auto=True)))
+    #
+    # itemlist.append(Item(channel=item.channel, title="VOSE", action="list_all", url=host + 'subtitulado',
+    #                      thumbnail=get_thumb('audio', auto=True)))
+    #
+    # itemlist.append(Item(channel=item.channel, title="Alfabetico", action="section", section='alpha',
+    #                      thumbnail=get_thumb('alphabet', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host+'?s=',
                          thumbnail=get_thumb('search', auto=True)))
@@ -69,17 +75,16 @@ def list_all(item):
     itemlist = []
 
     try:
-        data = get_source(item.url)
-        if item.section == 'alpha':
-          patron = '<span class="Num">\d+.*?<a href="([^"]+)" class.*?'
-          patron += 'src="([^"]+)" class.*?<strong>([^<]+)</strong>.*?<td>(\d{4})</td>'
-        else:
-            patron = '<article id="post-\d+".*?<a href="([^"]+)">.*?'
-            patron += 'src="([^"]+)".*?<h2 class="Title">([^<]+)<\/h2>.*?<span class="Year">([^<]+)<\/span>'
+        # if item.section == 'alpha':
+        #   patron = '<span class="Num">\d+.*?<a href="([^"]+)" class.*?'
+        #   patron += 'src="([^"]+)" class.*?<strong>([^<]+)</strong>.*?<td>(\d{4})</td>'
+        # else:
+        patron = '<article class="TPost C post-\d+.*?<a href="([^"]+)">.*?'
+        patron +='"Year">(\d{4})<.*?src="([^"]+)".*?"Title">([^"]+)</h2>'
         data = get_source(item.url)
         matches = re.compile(patron, re.DOTALL).findall(data)
 
-        for scrapedurl, scrapedthumbnail, scrapedtitle, year in matches:
+        for scrapedurl, year, scrapedthumbnail, scrapedtitle in matches:
 
             url = scrapedurl
             if "|" in scrapedtitle:
@@ -103,7 +108,7 @@ def list_all(item):
 
         #  Paginación
 
-        url_next_page = scrapertools.find_single_match(data,'<a class="next.*?" rel="next" href="([^"]+)"')
+        url_next_page = scrapertools.find_single_match(data,'<a href="([^"]+)" class="next page-numbers">')
         if url_next_page:
             itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all',
                                  section=item.section))
