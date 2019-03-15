@@ -4931,3 +4931,6 @@ msgctxt "#70561"
 msgid "Search Similar
 msgstr ""
 
+msgctxt "#70562"
+msgid "autoplay"
+msgstr "Enable autoplay in all channels"
