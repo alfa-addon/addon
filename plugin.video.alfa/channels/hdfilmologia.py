@@ -179,7 +179,7 @@ def genres(item):
     logger.info()
     itemlist = []
 
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
 
     patron = '<li class="myli"><a href="/([^"]+)">([^<]+)</a>'

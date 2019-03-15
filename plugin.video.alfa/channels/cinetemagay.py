@@ -5,6 +5,7 @@ import re
 
 from core import scrapertools
 from core import servertools
+from core import httptools
 from core.item import Item
 from platformcode import config, logger
 
@@ -43,7 +44,7 @@ def lista(item):
     itemlist = []
 
     # Descarga la pagina
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
 
     # Extrae las entradas (carpetas)
     patronvideos = '&lt;img .*?src=&quot;(.*?)&quot;'
@@ -92,7 +93,7 @@ def detail(item):
     itemlist = []
 
     # Descarga la pagina
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
 
     data = data.replace("%3A", ":")
     data = data.replace("%2F", "/")
