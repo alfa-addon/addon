@@ -200,7 +200,6 @@ def peliculas(item):
 
     paginacion = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)">')
     if paginacion:
-
         itemlist.append(Item(channel=item.channel, action="peliculas",
                              title="» Siguiente »", url=paginacion, plot="Página Siguiente",
                              thumbnail='https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/next.png'))
@@ -219,7 +218,7 @@ def generos(item):
     logger.info()
     itemlist = []
 
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     # logger.info(data)
     patron = '<div class="todos">.*?'
@@ -270,8 +269,9 @@ def findvideos(item):
                 server = servertools.get_server_from_url(scrapedurl)
                 quality = scrapertools.find_single_match(
                     datas, '<p class="hidden-xs hidden-sm">.*?class="magnet-download">([^<]+)p</a>')
-                title = "Ver en: [COLOR yellowgreen][{}][/COLOR] [COLOR yellow][{}][/COLOR]".format(servidores.capitalize(),
-                                                                                                    quality.upper())
+                title = "Ver en: [COLOR yellowgreen][{}][/COLOR] [COLOR yellow][{}][/COLOR]".format(
+                    servidores.capitalize(),
+                    quality.upper())
 
                 itemlist.append(item.clone(action='play', title=title, url=scrapedurl, quality=item.quality,
                                            server=server, language=lang.replace('Español ', ''),

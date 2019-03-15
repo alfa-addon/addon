@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(thevid.net/e/\\w+)",
-        "url": "https://\\1"
+        "pattern": "(https://vup.to/embed-[A-z0-9]+.html)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "thevid",
-  "name": "thevid",
+  "id": "vup",
+  "name": "vup",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "http://thevid.net/imgs/thevid.png"
+  "thumbnail": "https://i.postimg.cc/ZKjvqXxj/vup.png"
 }
