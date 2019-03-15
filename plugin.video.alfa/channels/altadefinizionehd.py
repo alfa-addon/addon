@@ -1,71 +1,103 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
 # Kodi on Demand - Kodi Addon
-# Canale per filmissimi
-# https://alfa-addon.com/categories/kod-addon.50/
+# Canale per Altadefinizione HD
 # ----------------------------------------------------------
 import re
 
-from core import httptools, scrapertools, servertools
+from core import httptools, scrapertools, servertools, tmdb
 from platformcode import logger, config
 from core.item import Item
-from core import tmdb
 
 
 
-host = "https://altadefinizione.wiki"
+host = "https://altadefinizione.doctor"
 
 headers = [['Referer', host]]
 
 
 def mainlist(item):
-    logger.info("[filmissimi.py] mainlist")
+    logger.info("[altadefinizionehd.py] mainlist")
     itemlist = [Item(channel=item.channel,
-                     action="elenco",
-                     title="[COLOR yellow]Novita'[/COLOR]",
+                     action="video",
+                     title="[B]Film[/B]",
+                     url=host + '/movies/',
+                     thumbnail=NovitaThumbnail,
+                     fanart=FilmFanart),
+                Item(channel=item.channel,
+                     action="menu",
+                     title="[B]Genere >[/B]",
                      url=host,
+                     extra='GENERE',
                      thumbnail=NovitaThumbnail,
                      fanart=FilmFanart),
                 Item(channel=item.channel,
-                     action="elenco",
-                     title="[COLOR azure]Film Sub-Ita[/COLOR]",
-                     url=host + "/genere/sub-ita",
-                     thumbnail=NovitaThumbnail,
-                     fanart=FilmFanart),
-                Item(channel=item.channel,
-                     action="elenco",
-                     title="[COLOR azure]Film HD[/COLOR]",
-                     url=host + "/genere/film-in-hd",
-                     thumbnail=NovitaThumbnail,
-                     fanart=FilmFanart),
-                Item(channel=item.channel,
-                     action="genere",
-                     title="[COLOR azure]Genere[/COLOR]",
+                     action="menu",
+                     title="[B]Anno >[/B]",
                      url=host,
-                     thumbnail=GenereThumbnail,
+                     extra='ANNO',
+                     thumbnail=NovitaThumbnail,
+                     fanart=FilmFanart),
+                Item(channel=item.channel,
+                     action="video",
+                     title="Film Sub-Ita",
+                     url=host + "/genre/sub-ita/",
+                     thumbnail=NovitaThumbnail,
+                     fanart=FilmFanart),
+                Item(channel=item.channel,
+                     action="video",
+                     title="Film Rip",
+                     url=host + "/genre/dvdrip-bdrip-brrip/",
+                     thumbnail=NovitaThumbnail,
+                     fanart=FilmFanart),
+                Item(channel=item.channel,
+                     action="video",
+                     title="Film al Cinema",
+                     url=host + "/genre/cinema/",
+                     thumbnail=NovitaThumbnail,
                      fanart=FilmFanart),
                 Item(channel=item.channel,
                      action="search",
                      extra="movie",
-                     title="[COLOR orange]Cerca..[/COLOR]",
+                     title="[B]Cerca...[/B]",
                      thumbnail=CercaThumbnail,
                      fanart=FilmFanart)]
 
     return itemlist
 
 
+def menu(item):
+    logger.info("[altadefinizionehd.py] menu")
+    itemlist = []
+    data = httptools.downloadpage(item.url, headers=headers).data
+    logger.info("[altadefinizionehd.py] DATA"+data)
+    patron = r'<li id="menu.*?><a href="#">FILM PER ' + item.extra + r'<\/a><ul class="sub-menu">(.*?)<\/ul>'
+    logger.info("[altadefinizionehd.py] BLOCK"+patron)
+    block = scrapertools.get_match(data, patron)
+    logger.info("[altadefinizionehd.py] BLOCK"+block)
+    patron = r'<li id=[^>]+><a href="(.*?)">(.*?)<\/a><\/li>'
+    matches = re.compile(patron, re.DOTALL).findall(block)
+    for url, title in matches:
+        itemlist.append(
+            Item(channel=item.channel,
+            action='video',
+            title=title,
+            url=url))
+    return itemlist
+
+
 
 def newest(categoria):
-    logger.info("[filmissimi.py] newest" + categoria)
+    logger.info("[altadefinizionehd.py] newest" + categoria)
     itemlist = []
     item = Item()
     try:
         if categoria == "film":
-            item.url = "http://www.filmissimi.net"
-            item.action = "elenco"
-            itemlist = elenco(item)
+            item.url = host
+            item.action = "video"
+            itemlist = video(item)
 
-            if itemlist[-1].action == "elenco":
+            if itemlist[-1].action == "video":
                 itemlist.pop()
 
     # Continua la ricerca in caso di errore 
@@ -78,145 +110,132 @@ def newest(categoria):
     return itemlist
 
 
-
-def genere(item):
-    logger.info("[filmissimi.py] genere")
+def video(item):
+    logger.info("[altadefinizionehd.py] video")
     itemlist = []
 
     data = httptools.downloadpage(item.url, headers=headers).data
-    bloque = scrapertools.get_match(data, '<ul id="menu-categorie-1" class="ge">(.*?)</div>')
+    logger.info("[altadefinizionehd.py] Data" +data)
+    if 'archive-content' in data:
+        regex = r'<div id="archive-content".*?>(.*?)<div class="pagination'
+    else:
+        regex = r'<div class="items".*?>(.*?)<div class="pagination'
+    block = scrapertools.find_single_match(data, regex)
+    logger.info("[altadefinizionehd.py] Block" +block)
+    
+    patron = r'<article .*?class="item movies">.*?<img src="([^"]+)".*?<span class="quality">(.*?)<\/span>.*?<a href="([^"]+)">.*?<h4>([^<]+)<\/h4>(.*?)<\/article>'
+    matches = re.compile(patron, re.DOTALL).findall(block)
 
-    patron = '<li id=[^>]+><a href="(.*?)">(.*?)</a></li>'
-    matches = re.compile(patron, re.DOTALL).findall(bloque)
+    for scrapedthumb, scrapedquality, scrapedurl, scrapedtitle, scrapedinfo in matches:
+        title = scrapedtitle + " [" + scrapedquality + "]"
+        
+        patron = r'IMDb: (.*?)<\/span> <span>(.*?)<\/span>.*?"texto">(.*?)<\/div>'
+        matches = re.compile(patron, re.DOTALL).findall(scrapedinfo)
+        logger.info("[altadefinizionehd.py] MATCHES" + str(matches))
+        for rating, year, plot in matches:
+        
+            infoLabels = {}
+            infoLabels['Year'] = year
+            infoLabels['Rating'] = rating
+            infoLabels['Plot'] = plot
+            itemlist.append(
+                Item(channel=item.channel,
+                    action="findvideos",
+                    contentType="movie",
+                    title=title,
+                    fulltitle=scrapedtitle,
+                    infoLabels=infoLabels,
+                    url=scrapedurl,
+                    thumbnail=scrapedthumb))
 
-    for scrapedurl, scrapedtitle in matches:
-        scrapedplot = ""
-        scrapedthumbnail = ""
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
+    patron = '<a class='+ "'arrow_pag'" + ' href="([^"]+)"'
+    next_page = scrapertools.find_single_match(data, patron)
+    if next_page != "":
         itemlist.append(
             Item(channel=item.channel,
-                 action="elenco",
-                 title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
-                 url=scrapedurl,
-                 thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png",
+                 action="video",
+                 title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
+                 url=next_page))
+
+    return itemlist
+
+
+def search(item, texto):
+    logger.info("[altadefinizionehd.py] init texto=[" + texto + "]")
+    item.url = host + "/?s=" + texto
+    return search_page(item)
+
+def search_page(item):
+        itemlist = []
+        data = httptools.downloadpage(item.url, headers=headers).data
+
+        patron = r'<img src="([^"]+)".*?.*?<a href="([^"]+)">(.*?)<\/a>'
+        matches = re.compile(patron, re.DOTALL).findall(data)
+
+        for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
+            scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
+            itemlist.append(
+                Item(channel=item.channel,
+                    action="findvideos",
+                    title=scrapedtitle,
+                    fulltitle=scrapedtitle,
+                    url=scrapedurl,
+                    thumbnail=scrapedthumbnail))
+
+        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+
+        patron = '<a class='+ "'arrow_pag'" + ' href="([^"]+)"'
+        next_page = scrapertools.find_single_match(data, patron)
+        if next_page != "":
+            itemlist.append(
+                Item(channel=item.channel,
+                    action="search_page",
+                    title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
+                    url=next_page))
+    
+        return itemlist    
+
+
+def findvideos(item):
+    data = httptools.downloadpage(item.url).data
+    patron = r"<li id='player-.*?'.*?class='dooplay_player_option'\sdata-type='(.*?)'\sdata-post='(.*?)'\sdata-nume='(.*?)'>.*?'title'>(.*?)</"
+    matches = re.compile(patron, re.IGNORECASE).findall(data)
+
+    itemlist = []
+
+    for scrapedtype, scrapedpost, scrapednume, scrapedtitle in matches:
+        itemlist.append(
+            Item(channel=item.channel,
+                 action="play",
+                 fulltitle=item.title + " [" + scrapedtitle + "]",
+                 show=scrapedtitle,
+                 title="[COLOR azure]" + item.title + "[/COLOR] " + " [" + scrapedtitle + "]",
+                 url="%swp-admin/admin-ajax.php" % host,
+                 post=scrapedpost,
+                 nume=scrapednume,
+                 type=scrapedtype,
+                 extra=item.extra,
                  folder=True))
 
     return itemlist
 
+def play(item):
+    import urllib
+    payload = urllib.urlencode({'action': 'doo_player_ajax', 'post': item.post, 'nume': item.nume, 'type': item.type})
+    data = httptools.downloadpage(item.url, post=payload).data
 
+    patron = r"<iframe.*src='(([^']+))'\s"
+    matches = re.compile(patron, re.IGNORECASE).findall(data)
 
-def elenco(item):
-    logger.info("[filmissimi.py] elenco")
-    itemlist = []
-
-    data = httptools.downloadpage(item.url, headers=headers).data
-
-    elemento = scrapertools.find_single_match(data, r'<div class="estre">(.*?)<div class="paginacion">')
-
-    patron = r'<a href="([^"]+)" title="([^"]+)"[^>]*>[^>]+>\s*.*?img src="([^"]+)"[^>]*>'
-    matches = re.compile(patron, re.DOTALL).findall(elemento)
-
-    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
-        scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
-        logger.info("title=[" + scrapedtitle + "] url=[" + scrapedurl + "] thumbnail=[" + scrapedthumbnail + "]")
-        itemlist.append(
-            Item(channel=item.channel,
-                 action="findvideos",
-                 contentType="movie",
-                 title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
-                 fulltitle=scrapedtitle,
-                 url=scrapedurl,
-                 thumbnail=scrapedthumbnail))
-
-    # Paginazione
-    # ===========================================================================================================================
-    matches = scrapedSingle(item.url, '<div class="paginacion">(.*?)</div>',
-                            "current'>.*?<\/span><.*?href='(.*?)'>.*?</a>")
-    if len(matches) > 0:
-        paginaurl = matches[0]
-        itemlist.append(
-            Item(channel=item.channel, action="elenco", title=AvantiTxt, url=paginaurl, thumbnail=AvantiImg))
-    else:
-        itemlist.append(Item(channel=item.channel, action="mainlist", title=ListTxt, folder=True))
-    # ===========================================================================================================================
-
-
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    return itemlist
-
-
-
-
-def search(item, texto):
-    logger.info("[filmissimi.py] init texto=[" + texto + "]")
-    itemlist = []
-    url = host + "/?s=" + texto
-
+    url = matches[0][0]
+    url = url.strip()
     data = httptools.downloadpage(url, headers=headers).data
 
-    patron = 'src="([^"]+)"[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>[^>]+><a href="([^"]+)"[^>]*>([^<]+)<\/a>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
-        scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(
-            Item(channel=item.channel,
-                 action="findvideos",
-                 title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
-                 fulltitle=scrapedtitle,
-                 url=scrapedurl,
-                 thumbnail=scrapedthumbnail))
-
-    # Paginazione
-    # ===========================================================================================================================
-    matches = scrapedSingle(url, '<div class="paginacion">(.*?)</div>', "current'>.*?<\/span><.*?href='(.*?)'>.*?</a>")
-
-    if len(matches) > 0:
-        paginaurl = matches[0]
-        itemlist.append(Item(channel=item.channel, action="elenco", title=AvantiTxt, url=paginaurl, thumbnail=AvantiImg))
-    else:
-        itemlist.append(Item(channel=item.channel, action="mainlist", title=ListTxt, folder=True))
-    # ===========================================================================================================================
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    return itemlist
-
-
-def findvideos(item):
-    logger.info()
-
-    data = httptools.downloadpage(item.url).data
     itemlist = servertools.find_video_items(data=data)
 
-    for videoitem in itemlist:
-        server = re.sub(r'[-\[\]\s]+', '', videoitem.title)
-        videoitem.title = "".join(["[COLOR azure][[COLOR orange]%s[/COLOR]][/COLOR] " % server.capitalize(), item.title])
-        videoitem.fulltitle = item.fulltitle
-        videoitem.show = item.show
-        videoitem.thumbnail = item.thumbnail
-        videoitem.channel = item.channel
-        
     return itemlist
-
-
-
-def scrapedAll(url="", patron=""):
-    matches = []
-    data = httptools.downloadpage(url, headers=headers).data
-    MyPatron = patron
-    matches = re.compile(MyPatron, re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
-
-    return matches
-
-
-
-def scrapedSingle(url="", single="", patron=""):
-    data = httptools.downloadpage(url, headers=headers).data
-    elemento = scrapertools.find_single_match(data, single)
-    matches = re.compile(patron, re.DOTALL).findall(elemento)
-    scrapertools.printMatches(matches)
-
-    return matches
 
 
 
@@ -225,7 +244,7 @@ GenereThumbnail = "https://farm8.staticflickr.com/7562/15516589868_13689936d0_o.
 FilmFanart = "https://superrepo.org/static/images/fanart/original/script.artwork.downloader.jpg"
 CercaThumbnail = "http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search"
 CercaFanart = "https://i.ytimg.com/vi/IAlbvyBdYdY/maxresdefault.jpg"
-ListTxt = "[COLOR orange]Torna a elenco principale [/COLOR]"
+ListTxt = "[COLOR orange]Torna a video principale [/COLOR]"
 AvantiTxt = config.get_localized_string(30992)
 AvantiImg = "http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"
 thumbnail = "http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"
