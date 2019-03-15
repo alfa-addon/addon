@@ -1,11 +1,11 @@
 {
-	"id": "cineblog01",
-	"name": "Cineblog01",
+	"id": "cb01",
+	"name": "CB01",
 	"language": ["ita"],
 	"active": true,
 	"adult": false,
-	"thumbnail": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/cineblog01.png",
-	"banner": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/cineblog01.png",
+	"thumbnail": "cb01.png",
+	"banner": "cb01.png",
 	"categories": [
 	  "tvshow",
 	  "movie","cult","top channels"
@@ -26,6 +26,43 @@
 		  "default": true,
 		  "enabled": true,
 		  "visible": true
-		}
+		},
+		{
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Includi in novità - Film",
+      "default": true,
+      "enabled": true,
+      "visible": true
+		},
+		{
+      "id": "comprueba_enlaces",
+      "type": "bool",
+      "label": "Verifica se i link esistono",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "comprueba_enlaces_num",
+      "type": "list",
+      "label": "Numero de link da verificare",
+      "default": 1,
+      "enabled": true,
+      "visible": "eq(-1,true)",
+      "lvalues": [ "5", "10", "15", "20" ]
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostra link in lingua...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Non filtrare",
+        "IT"
+      ]
+    }
 	  ]
 }
