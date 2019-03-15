@@ -3,11 +3,12 @@
   "name": "mundopelis",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["vos"],
   "thumbnail": "https://mundopelis.xyz/images/logo.png",
   "banner": "",
   "categories": [
-    "movie"
+    "movie",
+    "vos"
   ],
   "settings": [
     {
