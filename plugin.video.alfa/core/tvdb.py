@@ -19,8 +19,11 @@ from platformcode import platformtools
 HOST = "https://api.thetvdb.com"
 HOST_IMAGE = "http://thetvdb.com/banners/"
 
+import xbmc, xbmcaddon
+addon = xbmcaddon.Addon('metadata.tvdb.com')
+
 TOKEN = config.get_setting("tvdb_token", default="")
-DEFAULT_LANG = "es"
+DEFAULT_LANG = addon.getSetting('language')
 DEFAULT_HEADERS = {
     'Content-Type': 'application/json',
     'Accept': 'application/json, application/vnd.thetvdb.v2.1.1',
