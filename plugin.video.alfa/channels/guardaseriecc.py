@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-# Kodi on Demand - Kodi Addon
+# Ringraziamo Icarus crew
 # Canale per guardaseriecc
 #
 # ----------------------------------------------------------
@@ -18,7 +18,7 @@ headers = [['Referer', host]]
 
 
 def mainlist(item):
-    logger.info("Kodi on Demand.leserietv mainlist")
+    logger.info("Alfa.leserietv mainlist")
     itemlist = [Item(channel=item.channel,
                      action="lista_serie",
                      title="[COLOR azure]Tutte le serie[/COLOR]",
@@ -40,7 +40,7 @@ def mainlist(item):
 
 
 def categoria(item):
-    logger.info("[Kodi on Demand].[guardareseriecc] [categoria]")
+    logger.info("[Alfa].[guardareseriecc] [categoria]")
     itemlist = []
 
     patron = '<li class="cat-item cat-item.*?"><a href="(.*?)".*?>(.*?)</a>'
@@ -60,7 +60,7 @@ def categoria(item):
 
 
 def lista_serie(item):
-    logger.info("[Kodi on Demand].[guardareseriecc] [lista_serie]")
+    logger.info("[Alfa].[guardareseriecc] [lista_serie]")
     itemlist = []
     patron = '<div.*?class="poster">[^<]+<img.*?src="(.*?)".*?alt="(.*?)"[^<]+<[^<]+<[^<]+<[^<]+<[^<]+<[^<]+<[^<]+<a.*?href="(.*?)">'
     data = httptools.downloadpage(item.url, headers=headers).data
@@ -100,7 +100,7 @@ def lista_serie(item):
 
 
 def episodios(item):
-    logger.info("[Kodi on Demand].[guardareseriecc] [stagione]")
+    logger.info("[Alfa].[guardareseriecc] [stagione]")
     itemlist = []
 
     patron = '<iframe.*class="metaframe rptss".*?src="(.*?)".*?frameborder=".*?".*?scrolling=".*?".*?allowfullscreen>.*?</iframe>'
@@ -149,7 +149,7 @@ def episodios(item):
 
 
 def findvideos(item):
-    logger.info("[Kodi on Demand].[guardareseriecc] [findvideos]")
+    logger.info("[Alfa].[guardareseriecc] [findvideos]")
     itemlist = []
     listurl = set()
 
@@ -185,7 +185,7 @@ def findvideos(item):
 
 
 def search(item, texto):
-    logger.info("[Kodi on Demand].[guardareseriecc][search] " + texto)
+    logger.info("[Alfa].[guardareseriecc][search] " + texto)
 
     item.url = host + "/?s=" + texto
 
@@ -201,7 +201,7 @@ def search(item, texto):
 
 
 def ricerca(item):
-    logger.info("[Kodi on Demand].[guardareseriecc][ricerca] ")
+    logger.info("[Alfa].[guardareseriecc][ricerca] ")
     itemlist = []
 
     patron = '<div class="result-item">[^>]+>[^>]+>[^>]+>[^<]+<a href="(.*?)">[^<]+<img src="(.*?)" alt="(.*?)" '
@@ -236,7 +236,7 @@ thumbnail_successivo = "http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAA
 
 
 def search(item, texto):
-    logger.info("[Kodi on Demand].[guardareseriecc][search] " + texto)
+    logger.info("[Alfa].[guardareseriecc][search] " + texto)
     itemlist = []
 
     item.url = host + "/?s=" + texto

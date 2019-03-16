@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-# Kodi onDemand - XBMC Plugin
+# Ringraziamo Icarus crew
 # Canale per documentaristreamingda
 # ------------------------------------------------------------
 import re, urlparse

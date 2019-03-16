@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-# Kodi on Demand .- XBMC Plugin
+# Ringraziamo Icarus crew
 # Canale downloadme
 # Version: 201804162230
 # ------------------------------------------------------------

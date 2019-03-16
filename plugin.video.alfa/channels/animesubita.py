@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# Kodi on Demand - Kodi Addon
+# Ringraziamo Icarus crew
 # ------------------------------------------------------------
-# Kodi on Demand - Kodi Addon
+# Ringraziamo Icarus crew
 # Canale per AnimeSubIta
 # ------------------------------------------------------------
 

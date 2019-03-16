@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-# Kodi on Demand - Kodi Addon
 # Canale per animeworld
 # ----------------------------------------------------------
 import re, urlparse

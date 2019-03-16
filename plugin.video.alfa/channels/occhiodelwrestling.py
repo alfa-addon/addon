@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-# Kod .- XBMC Plugin
 # Canale  per http://www.occhiodelwrestling.netsons.org/
-# https://alfa-addon.com/categories/kod-addon.50/
-# Kod By iSOD
+# Ringraziamo Icarus crew
 # ------------------------------------------------------------
 
 import re

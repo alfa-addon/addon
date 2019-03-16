@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  Kodi on Demand - Kodi Addon
+# Ringraziamo Icarus crew
 # ------------------------------------------------------------
 # XBMC Plugin
 # Canale  per cineblog01 - anime

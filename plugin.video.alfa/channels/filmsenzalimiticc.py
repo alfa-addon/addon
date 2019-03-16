@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-# Kodi on Demand - Kodi Addon
 # Canale per Filmsenzalimiti CC
-# Alhaziel
 # ------------------------------------------------------------
 import base64
 import re

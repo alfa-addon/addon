@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-# Kodi on Demand - Kodi Addon
+# Ringraziamo Icarus crew
 # Canale per http://animeinstreaming.net/
 # ------------------------------------------------------------
 import re, urllib, urlparse

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-# Kodi on Demand - Kodi Addon
+# Ringraziamo Icarus crew
 # Canale filmontv
-# https://alfa-addon.com/categories/kod-addon.50/
 # ------------------------------------------------------------
 
 import re
