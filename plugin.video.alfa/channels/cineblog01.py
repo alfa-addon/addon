@@ -8,7 +8,7 @@ import re
 import urlparse
 
 from channels import autoplay, filtertools
-from core import scrapertools, httptools, servertools, tmdb
+from core import scrapertoolsV2, httptools, servertools, tmdb
 from core.item import Item
 from lib import unshortenit
 from platformcode import logger, config
@@ -117,7 +117,7 @@ def menu(item):
     itemlist= []
     data = httptools.downloadpage(item.url, headers=headers).data
     data = re.sub('\n|\t','',data)
-    block =  scrapertools.get_match(data, item.extra + r'<span.*?><\/span>.*?<ul.*?>(.*?)<\/ul>')
+    block =  scrapertoolsV2.get_match(data, item.extra + r'<span.*?><\/span>.*?<ul.*?>(.*?)<\/ul>')
     patron = r'href="([^"]+)">(.*?)<\/a>'
     matches = re.compile(patron, re.DOTALL).findall(block)
     for scrapedurl, scrapedtitle in matches:
@@ -157,7 +157,7 @@ def newest(categoria):
             # Carica la pagina 
             data = httptools.downloadpage(item.url).data
             logger.info("[cineblog01.py] DATA: "+data)
-            blocco = scrapertools.get_match(data, r'Ultimi 100 film aggiunti:.*?<\/td>')
+            blocco = scrapertoolsV2.get_match(data, r'Ultimi 100 film aggiunti:.*?<\/td>')
             patron = r'<a href="([^"]+)">([^<]+)<\/a>'
             matches = re.compile(patron, re.DOTALL).findall(blocco)
 
@@ -187,20 +187,21 @@ def video(item):
 
     data = httptools.downloadpage(item.url, headers=headers).data
     data = re.sub('\n|\t','',data)
-    block = scrapertools.get_match(data, r'<div class="sequex-page-left">(.*?)<aside class="sequex-page-right">')
+    block = scrapertoolsV2.get_match(data, r'<div class="sequex-page-left">(.*?)<aside class="sequex-page-right">')
 
     if item.contentType == 'movie' or '/serietv/' not in item.url:
         action = 'findvideos'     
         logger.info("### FILM ###")
         patron = r'type-post.*?>.*?<img src="([^"]+)".*?<h3.*?<a href="([^"]+)">([^<]+)<\/a>.*?<strong>([^<]+)<.*?br \/>\s+(.*?)   '
         matches = re.compile(patron, re.DOTALL).findall(block)
+
         logger.info("### MATCHES ###" + str(matches))
         for scrapedthumb, scrapedurl, scrapedtitle, scrapedinfo, scrapedplot in matches:
             title = re.sub(r'(?:\[HD/?3?D?\]|\[Sub-ITA\])', '', scrapedtitle)
-            year = scrapertools.find_single_match(scrapedtitle, r'\((\d{4})\)')
-            quality = scrapertools.find_single_match(scrapedtitle, r'\[(.*?)\]')
-            genre = scrapertools.find_single_match(scrapedinfo, '([A-Z]+) &')
-            duration = scrapertools.find_single_match(scrapedinfo,'DURATA ([0-9]+)&')
+            year = scrapertoolsV2.find_single_match(scrapedtitle, r'\((\d{4})\)')
+            quality = scrapertoolsV2.find_single_match(scrapedtitle, r'\[(.*?)\]')
+            genre = scrapertoolsV2.remove_htmltags(scrapertoolsV2.find_single_match(scrapedinfo, '([A-Z]+) &'))
+            duration = scrapertoolsV2.find_single_match(scrapedinfo,'DURATA ([0-9]+)&')
 
             infolabels = {}
             if year:
@@ -215,7 +216,7 @@ def video(item):
             else:
                 longtitle = '[B]' + title + '[/B]'
 
-            infolabels['Plot'] = scrapedplot + '...'
+            infolabels['Plot'] = scrapertoolsV2.decodeHtmlentities(scrapedplot) + '...'
             
             if not scrapedtitle in blacklist:
                 itemlist.append(
@@ -236,16 +237,15 @@ def video(item):
         matches = re.compile(patron, re.DOTALL).findall(block)
 
         for match in matches:
-            patron = r'<img src="([^"]+)".*?<h3.*?<a href="([^"]+)">([^<]+)<\/a>.*?<p>(.*?)\(([0-9]+).*?\) (.*?)<\/p>'
+            patron = r'<img src="([^"]+)".*?<h3.*?<a href="([^"]+)">([^<]+)<\/a>.*?<p>(.*?)\(([0-9]+).*?\).*?<\/p>([^<>]*)(?:<\/p>)?'
             matches = re.compile(patron, re.DOTALL).findall(match)
             for scrapedthumb, scrapedurl, scrapedtitle, scrapedgenre, scrapedyear, scrapedplot in matches:
-                
                 longtitle = '[B]' + scrapedtitle + '[/B]'
                 title = scrapedtitle
                 infolabels = {}
                 infolabels['Year'] = scrapedyear
-                infolabels['Genre'] = scrapedgenre
-                infolabels['Plot'] = scrapedplot
+                infolabels['Genre'] = scrapertoolsV2.remove_htmltags(scrapedgenre)
+                infolabels['Plot'] = scrapertoolsV2.decodeHtmlentities(scrapedplot)
                 if not scrapedtitle in blacklist:
                     itemlist.append(
                         Item(channel=item.channel,
@@ -261,9 +261,9 @@ def video(item):
                     )
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    
-    patron =  "<a class='page-link'" + ' href="(.*?)"><i class="fa fa-angle-right">'
-    next_page = scrapertools.find_single_match(data, patron)
+
+    patron =  "<a class='page-link'" + ' href="([^"]+)"><i class="fa fa-angle-right">'
+    next_page = scrapertoolsV2.find_single_match(data, patron)
     logger.info('NEXT '+next_page) 
 
     if next_page != "":
@@ -282,22 +282,31 @@ def episodios(item):
     itemlist = []
     data = httptools.downloadpage(item.url, headers=headers).data
     data = re.sub('\n|\t','',data)
-    block = scrapertools.get_match(data, r'<article class="sequex-post-content">(.*?)<\/article>').replace('&#215;','x').replace(' &#8211; ','')
-    patron = r'<p>([0-9]+x[0-9]+)(.*?)<\/p>'
-    matches = re.compile(patron, re.DOTALL).findall(block)
-    for scrapedtitle, scrapedurl in matches:
-        title = '[B]' + scrapedtitle + '[/B] - ' + item.title
-        itemlist.append(
-                Item(channel=item.channel,
-                    action="findvideos",
-                    contentType=item.contentType,
-                    title=title,
-                    fulltitle=title,
-                    show=title,
-                    url=scrapedurl,
+    block = scrapertoolsV2.get_match(data, r'<article class="sequex-post-content">(.*?)<\/article>').replace('&#215;','x').replace(' &#8211; ','')
+    logger.info(block)
+    blockSeason = scrapertoolsV2.find_multiple_matches(block, '<div class="sp-head[a-z ]*?" title="Espandi">([^<>]*?)</div>(.*?)<div class="spdiv">\[riduci\]</div>')
+    for season, block in blockSeason:
+        patron = r'(?:<p>)?([0-9]+x[0-9]+)(.*?)(?:</p>|<br)'
+        matches = re.compile(patron, re.DOTALL).findall(block)
+        for scrapedtitle, scrapedurl in matches:
+            title = '[B]' + scrapedtitle + '[/B] - ' + item.title + (' (SUB ITA)' if 'SUB ITA' in season else ' (ITA)')
+            itemlist.append(
+                    Item(channel=item.channel,
+                        action="findvideos",
+                        contentType=item.contentType,
+                        title=title,
+                        fulltitle=item.fulltitle,
+                        show=item.fulltitle,
+                        url=scrapedurl,
+                        )
                     )
-                )
 
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
+        itemlist.append(
+            Item(channel=item.channel, title='[COLOR yellow][B]'+config.get_localized_string(30161)+'[/B][/COLOR]', url=item.url,
+                 action="add_serie_to_library", extra="episodios", show=item.show))
 
     return itemlist
 
@@ -305,7 +314,7 @@ def findvideos(item):
     if item.contentType == "episode":
         return findvid_serie(item)
     def load_links(itemlist, re_txt, color, desc_txt, quality=""):
-        streaming = scrapertools.find_single_match(data, re_txt)
+        streaming = scrapertoolsV2.find_single_match(data, re_txt)
         patron = '<td><a[^h]href="([^"]+)"[^>]+>([^<]+)<'
         matches = re.compile(patron, re.DOTALL).findall(streaming)
         for scrapedurl, scrapedtitle in matches:
@@ -336,7 +345,7 @@ def findvideos(item):
     matches = re.compile(patronvideos, re.DOTALL).finditer(data)
     QualityStr = ""
     for match in matches:
-        QualityStr = scrapertools.unescape(match.group(1))[6:]
+        QualityStr = scrapertoolsV2.decodeHtmlentities(match.group(1))[6:]
 
     # Estrae i contenuti - Streaming
     load_links(itemlist, '<strong>Streaming:</strong>(.*?)<table class="cbtable" height="30">', "orange", "Streaming", "SD")
@@ -375,8 +384,8 @@ def findvideos(item):
     if item.contentType != 'episode':
         if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
             itemlist.append(
-                Item(channel=item.channel, title='[COLOR yellow][B]Aggiungi alla videoteca[/B][/COLOR]', url=item.url,
-                     action="add_pelicula_to_library", extra="findvideos", contentTitle=item.contentTitle))
+                Item(channel=item.channel, title='[COLOR yellow][B]'+config.get_localized_string(30161)+'[/B][/COLOR]', url=item.url,
+                     action="add_pelicula_to_library", extra="findvideos", contentTitle=item.fulltitle))
 
     return itemlist
 
@@ -461,12 +470,12 @@ def play(item):
     if "go.php" in item.url:
         data = httptools.downloadpage(item.url).data
         try:
-            data = scrapertools.get_match(data, 'window.location.href = "([^"]+)";')
+            data = scrapertoolsV2.get_match(data, 'window.location.href = "([^"]+)";')
         except IndexError:
             try:
-                # data = scrapertools.get_match(data, r'<a href="([^"]+)">clicca qui</a>')
+                # data = scrapertoolsV2.get_match(data, r'<a href="([^"]+)">clicca qui</a>')
                 # In alternativa, dato che a volte compare "Clicca qui per proseguire":
-                data = scrapertools.get_match(data, r'<a href="([^"]+)".*?class="btn-wrapper">.*?licca.*?</a>')
+                data = scrapertoolsV2.get_match(data, r'<a href="([^"]+)".*?class="btn-wrapper">.*?licca.*?</a>')
             except IndexError:
                 data = httptools.downloadpage(item.url, only_headers=True, follow_redirects=False).headers.get(
                     "location", "")
@@ -477,13 +486,13 @@ def play(item):
         from lib import jsunpack
 
         try:
-            data = scrapertools.get_match(data, r"(eval\(function\(p,a,c,k,e,d.*?)</script>")
+            data = scrapertoolsV2.get_match(data, r"(eval\(function\(p,a,c,k,e,d.*?)</script>")
             data = jsunpack.unpack(data)
             logger.debug("##### play /link/ unpack ##\n%s\n##" % data)
         except IndexError:
             logger.debug("##### The content is yet unpacked ##\n%s\n##" % data)
 
-        data = scrapertools.find_single_match(data, r'var link(?:\s)?=(?:\s)?"([^"]+)";')
+        data = scrapertoolsV2.find_single_match(data, r'var link(?:\s)?=(?:\s)?"([^"]+)";')
         data, c = unshortenit.unwrap_30x_only(data)
         if data.startswith('/'):
             data = urlparse.urljoin("http://swzz.xyz", data)
