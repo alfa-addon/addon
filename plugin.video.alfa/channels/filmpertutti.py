@@ -13,7 +13,7 @@ from core import tmdb
 from lib import unshortenit
 from platformcode import config, logger
 
-host = "https://www.filmpertutti.uno"
+host = "https://www.filmpertutti.club"
 list_servers = ['akvideo', 'openload', 'streamango', 'wstream']
 list_quality = ['default']
 
