@@ -79,8 +79,8 @@ def mainpage(item):
     itemlist = []
     data1 = httptools.downloadpage(item.url).data
     data1 = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data1)
-    patron_sec='<ul id="main_header".+?>(.+?)<\/ul><\/div>'
-    patron='<a href="([^"]+)">([^"]+)<\/a>'#scrapedurl, #scrapedtitle
+    patron_sec='<divclass=head-main-nav>(.+?)peliculas\/>'
+    patron='<ahref=([^"]+)>([^"]+)<\/a>'#scrapedurl, #scrapedtitle
     data = scrapertools.find_single_match(data1, patron_sec)
     matches = scrapertools.find_multiple_matches(data, patron)
     if item.title=="Géneros" or item.title=="Categorías":
@@ -111,8 +111,8 @@ def lista(item):
              '<div id="archive-content" class="animation-2 items">(.*)<a href=\'')
     else:
         data_lista = scrapertools.find_single_match(data, 
-             '<div class="items">(.+?)<\/div><\/div><div class=.+?>')
-    patron = '<img src="([^"]+)" alt="([^"]+)">.+?<a href="([^"]+)">.+?<div class="texto">(.+?)<\/div>'
+             '<divclass=items><article(.+?)<\/div><\/article><\/div>')
+    patron = '<imgsrc=([^"]+) alt="([^"]+)">.+?<ahref=([^"]+)><divclass=see>.+?<divclass=texto>(.+?)<\/div>'
     matches = scrapertools.find_multiple_matches(data_lista, patron)
     for scrapedthumbnail,scrapedtitle, scrapedurl, scrapedplot in matches:
         if item.title=="Peliculas Animadas":
@@ -133,13 +133,15 @@ def episodios(item):
     itemlist = []
     infoLabels = {}
     data = httptools.downloadpage(item.url).data
-    patron = '(?s)<ul class="episodios">(.+?)<span>Compartido'
+    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+    logger.info(data)
+    patron = '<divid=episodes (.+?)<\/div><\/div><\/div>'
     data_lista = scrapertools.find_single_match(data,patron)
     contentSerieName = item.title
-    patron_caps  = 'href="([^"]+)".*?'
-    patron_caps += 'src="([^"]+)".*?'
-    patron_caps += 'numerando">([^<]+).*?'
-    patron_caps += 'episodiotitle">.*?>([^<]+)'
+    patron_caps  = 'href=(.+?)><imgalt=".+?" '
+    patron_caps += 'src=([^"]+)><\/a>.*?'
+    patron_caps += 'numerando>([^<]+).*?'
+    patron_caps += 'episodiotitle>.*?>([^<]+)<\/a>'
     matches = scrapertools.find_multiple_matches(data_lista, patron_caps)
     for scrapedurl, scrapedthumbnail, scrapedtempepi, scrapedtitle in matches:
         tempepi=scrapedtempepi.split(" - ")
@@ -148,7 +150,7 @@ def episodios(item):
         title="{0}x{1} - ({2})".format(tempepi[0], tempepi[1].zfill(2), scrapedtitle)
         item.infoLabels["season"] = tempepi[0]
         item.infoLabels["episode"] = tempepi[1]
-        itemlist.append(item.clone(thumbnail=scrapedthumbnail,
+        itemlist.append(item.clone(#thumbnail=scrapedthumbnail,
                         action="findvideos", title=title, url=scrapedurl))
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir " + contentSerieName + " a la videoteca[/COLOR]", url=item.url,
