@@ -13,7 +13,7 @@ from core.item import Item
 from platformcode import logger, config
 
 #URL che reindirizza sempre al dominio corrente
-host = "https://altadefinizione01.to"
+host = "https://altadefinizione01.team"
 
 IDIOMAS = {'Italiano': 'IT'}
 list_language = IDIOMAS.values()
