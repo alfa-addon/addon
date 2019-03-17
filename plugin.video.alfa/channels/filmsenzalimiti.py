@@ -17,7 +17,7 @@ from core import tmdb
 
 __channel__ = 'filmsenzalimiti'
 
-host = 'https://filmsenzalimiti.app'
+host = 'https://filmsenzalimiti.space'
 
 IDIOMAS = {'Italiano': 'IT'}
 list_language = IDIOMAS.values()
