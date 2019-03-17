@@ -468,27 +468,26 @@ def play(item):
     logger.debug("##############################################################")
     if "go.php" in item.url:
         data = httptools.downloadpage(item.url).data
-        try:
-            data = scrapertoolsV2.get_match(data, 'window.location.href = "([^"]+)";')
-        except IndexError:
-            try:
-                # data = scrapertoolsV2.get_match(data, r'<a href="([^"]+)">clicca qui</a>')
-                # In alternativa, dato che a volte compare "Clicca qui per proseguire":
-                data = scrapertoolsV2.get_match(data, r'<a href="([^"]+)".*?class="btn-wrapper">.*?licca.*?</a>')
-            except IndexError:
-                data = httptools.downloadpage(item.url, only_headers=True, follow_redirects=False).headers.get(
+        match = scrapertoolsV2.get_match(data, 'window.location.href = "([^"]+)";')
+        if match=="":
+            # data = scrapertoolsV2.get_match(data, r'<a href="([^"]+)">clicca qui</a>')
+            # In alternativa, dato che a volte compare "Clicca qui per proseguire":
+            match = scrapertoolsV2.get_match(data, r'<a href="([^"]+)".*?class="btn-wrapper">.*?licca.*?</a>')
+            if match=="":
+                match = httptools.downloadpage(item.url, only_headers=True, follow_redirects=False).headers.get(
                     "location", "")
+        data = match
         data, c = unshortenit.unwrap_30x_only(data)
         logger.debug("##### play go.php data ##\n%s\n##" % data)
     elif "/link/" in item.url:
         data = httptools.downloadpage(item.url).data
         from lib import jsunpack
 
-        try:
-            data = scrapertoolsV2.get_match(data, r"(eval\(function\(p,a,c,k,e,d.*?)</script>")
-            data = jsunpack.unpack(data)
+        match = scrapertoolsV2.get_match(data, r"(eval\(function\(p,a,c,k,e,d.*?)</script>")
+        if match:
+            match = jsunpack.unpack(match)
             logger.debug("##### play /link/ unpack ##\n%s\n##" % data)
-        except IndexError:
+        else:
             logger.debug("##### The content is yet unpacked ##\n%s\n##" % data)
 
         data = scrapertoolsV2.find_single_match(data, r'var link(?:\s)?=(?:\s)?"([^"]+)";')
