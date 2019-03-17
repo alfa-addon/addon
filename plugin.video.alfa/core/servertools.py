@@ -15,6 +15,7 @@ from core import jsontools
 from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
+from servers.decrypters import zcrypt
 
 dict_servers_parameters = {}
 
@@ -39,6 +40,8 @@ def find_video_items(item=None, data=None):
     # Descarga la página
     if data is None:
         data = httptools.downloadpage(item.url).data
+
+    data = zcrypt.get_video_url(data)
 
     # Crea un item si no hay item
     if item is None:
