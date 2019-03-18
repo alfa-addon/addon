@@ -10,14 +10,13 @@ from platformcode import logger, config
 from core.item import Item
 
 
-
 host = "https://altadefinizione.doctor"
 
 headers = [['Referer', host]]
 
-
 def mainlist(item):
     logger.info("[altadefinizionehd.py] mainlist")
+
     itemlist = [Item(channel=item.channel,
                      action="video",
                      title="[B]Film[/B]",
@@ -26,14 +25,14 @@ def mainlist(item):
                      fanart=FilmFanart),
                 Item(channel=item.channel,
                      action="menu",
-                     title="[B]Genere >[/B]",
+                     title="[B] > Genere[/B]",
                      url=host,
                      extra='GENERE',
                      thumbnail=NovitaThumbnail,
                      fanart=FilmFanart),
                 Item(channel=item.channel,
                      action="menu",
-                     title="[B]Anno >[/B]",
+                     title="[B] > Anno[/B]",
                      url=host,
                      extra='ANNO',
                      thumbnail=NovitaThumbnail,
@@ -211,13 +210,14 @@ def findvideos(item):
                  action="play",
                  fulltitle=item.title + " [" + scrapedtitle + "]",
                  show=scrapedtitle,
-                 title="[COLOR azure]" + item.title + "[/COLOR] " + " [" + scrapedtitle + "]",
-                 url="%swp-admin/admin-ajax.php" % host,
+                 title=item.title + " [COLOR blue][" + scrapedtitle + "][/COLOR]",
+                 url=host + "/wp-admin/admin-ajax.php",
                  post=scrapedpost,
                  nume=scrapednume,
                  type=scrapedtype,
                  extra=item.extra,
                  folder=True))
+
 
     return itemlist
 
