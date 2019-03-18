@@ -4912,10 +4912,13 @@ msgid "Movies by Genre"
 msgstr "Per genere"
 
 msgctxt "#70561"
-msgid "Search Similar
+msgid "Search Similar"
 msgstr "Cerca Simili"
-
 
 msgctxt "#70562"
 msgid "Autoplay (Enable autoplay in all channels)"
 msgstr "Autoplay (Abilita autoplay in tutti i canali)"
+
+msgctxt "#70563"
+msgid "Italian"
+msgstr "Italiano"

@@ -4930,3 +4930,15 @@ msgstr "Buscar Similares"
 msgctxt "#70562"
 msgid "Autoplay (Enable autoplay on all supported channels)"
 msgstr "Autoplay (Habilitar autoplay en todos los canales soportados)"
+
+msgctxt "#70563"
+msgid "Italian"
+msgstr "Italiano"
+
+
+
+
+
+
+
+
