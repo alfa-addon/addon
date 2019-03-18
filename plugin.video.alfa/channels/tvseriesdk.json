@@ -3,7 +3,7 @@
   "name": "TVSeriesdk",
   "active": true,
   "adult": false,
-  "language": ["lat"],
+  "language": ["esp", "lat"],
   "thumbnail": "https://s13.postimg.cc/jrvqmqfnb/tvseriesdk.png",
   "banner": "https://s16.postimg.cc/r6mbel0f9/tvseriesdk-banner.png",
   "version": 1,

@@ -3,7 +3,7 @@
   "name": "SubTorrents",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://www.subtorrents.tv/wp-content/themes/SubTorrent/css/images/logo2.png",
   "categories": [
     "movie",

@@ -3,7 +3,7 @@
   "name": "GranTorrent",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "grantorrent.jpg",
   "banner": "grantorrent.png",
   "fanart": "grantorrent.png",

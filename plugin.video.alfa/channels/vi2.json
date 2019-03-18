@@ -3,7 +3,7 @@
   "name": "vi2",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://i.postimg.cc/0Qy9wf8b/vi2.png",
   "banner": "",
   "categories": [

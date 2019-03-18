@@ -3,7 +3,7 @@
   "name": "Discoverymx",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "discoverymx.png",
   "banner": "discoverymx.png",
   "categories": [

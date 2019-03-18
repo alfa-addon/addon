@@ -3,7 +3,7 @@
   "name": "PeliculasHindu",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "peliculashindu.png",
   "banner": "peliculashindu.png",
   "categories": [

@@ -3,7 +3,7 @@
   "name": "SiPeliculas",
   "active": true,
   "adult": false,
-  "language": ["lat"],
+  "language": ["esp", "lat"],
   "banner": "https://s24.postimg.cc/5wcznkxhv/sipeliculas.png",
   "thumbnail": "https://s23.postimg.cc/adrl2k5mz/sipeliculas.png",
   "categories": [

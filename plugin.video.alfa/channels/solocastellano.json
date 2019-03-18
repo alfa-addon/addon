@@ -3,7 +3,7 @@
   "name": "SoloCastellano",
   "active": true,
   "adult": false,
-  "language": ["cast"],
+  "language": ["esp", "cast"],
   "thumbnail": "https://s31.postimg.cc/uotcf3owb/solocastellano.png",
   "banner": "",
   "categories": [

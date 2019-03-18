@@ -3,7 +3,7 @@
   "name": "PelisPedia",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "fanart": "http://i.imgur.com/9QbyJrf.jpg",
   "thumbnail": "pelispedia.png",
   "banner": "pelispedia.png",

@@ -3,7 +3,7 @@
   "name": "Pepecine",
   "active": true,
   "adult": false,
-  "language": ["cast"],
+  "language": ["esp", "cast"],
   "fanart": "https://d12.usercdn.com/i/02278/u875vjx9c0xs.png",
   "thumbnail": "pepecine.png",
   "banner": "pepecine.png",

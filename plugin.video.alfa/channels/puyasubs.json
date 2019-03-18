@@ -3,7 +3,7 @@
   "name": "PuyaSubs!",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "http://i.imgur.com/aad4psi.png",
   "banner": "http://i.imgur.com/trFDT39.png",
   "categories": [

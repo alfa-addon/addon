@@ -3,7 +3,7 @@
   "name": "AnimeFLV",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "animeflv.png",
   "banner": "animeflv.png",
   "categories": [

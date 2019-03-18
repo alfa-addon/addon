@@ -3,7 +3,7 @@
   "name": "PeliculonHD",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://peliculonhd.com/wp-content/uploads/2018/09/peliculonnewlogo3-.png",
   "banner": "",
   "categories": [

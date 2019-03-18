@@ -3,7 +3,7 @@
   "name": "MiraPeliculas",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "http://mirapeliculas.net/favicon.ico",
   "banner": "",
   "categories": [

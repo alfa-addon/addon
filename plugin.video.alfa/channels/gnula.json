@@ -3,7 +3,7 @@
   "name": "Gnula",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "gnula.png",
   "banner": "gnula.png",
   "categories": [

@@ -1,7 +1,7 @@
 {
   "id": "allpeliculas",
   "name": "Allpeliculas",
-  "language": ["lat"],
+  "language": ["esp", "lat"],
   "active": true,
   "adult": false,
   "thumbnail": "http://i.imgur.com/aWCDWtn.png",

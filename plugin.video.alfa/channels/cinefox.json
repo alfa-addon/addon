@@ -3,7 +3,7 @@
   "name": "Cinefox",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "cinefox.png",
   "banner": "cinefox.png",
   "categories": [

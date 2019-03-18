@@ -3,7 +3,7 @@
   "name": "Maxipelis24",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat", "vose"],
+  "language": ["esp", "lat", "cast", "vose"],
   "thumbnail": "maxipelis24.png",
   "categories": [
     "movie"

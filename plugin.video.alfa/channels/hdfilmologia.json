@@ -3,7 +3,7 @@
   "name": "HDFilmologia",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat", "vose"],
+  "language": ["esp", "lat", "cast", "vose"],
   "fanart": "https://i.postimg.cc/qvFCZNKT/Alpha-652355392-large.jpg",
   "thumbnail": "https://hdfilmologia.com/templates/gorstyle/images/logo.png",
   "banner": "",

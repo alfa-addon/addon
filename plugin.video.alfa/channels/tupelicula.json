@@ -3,7 +3,7 @@
   "name": "TuPelicula",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://i.postimg.cc/W4TbdCDP/tupelicula.png",
   "banner": "",
   "categories": [

@@ -3,7 +3,7 @@
   "name": "Rey Anime",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://reyanimeonline.com/assets/img/logo.png",
   "banner": "",
   "categories": [

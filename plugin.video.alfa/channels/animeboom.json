@@ -3,7 +3,7 @@
   "name": "AnimeBoom",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://animeboom.net/images/logo.png",
   "banner": "",
   "categories": [

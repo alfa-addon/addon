@@ -3,7 +3,7 @@
   "name": "LOCOPELIS",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://s31.postimg.cc/5worjw2nv/locopelis.png",
   "banner": "https://s31.postimg.cc/ng87bb9jv/locopelis_banner.png",
   "categories": [

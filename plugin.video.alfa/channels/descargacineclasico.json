@@ -1,7 +1,7 @@
 {
   "id": "descargacineclasico",
   "name": "descargacineclasico",
-  "language": ["cast"],
+  "language": ["esp", "cast"],
   "active": true,
   "adult": false,
   "banner": "descargacineclasico2.png",

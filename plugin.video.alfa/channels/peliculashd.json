@@ -3,7 +3,7 @@
   "name": "PeliculasHD",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://i.postimg.cc/05HTS7wC/peliculashd.png",
   "banner": "",
   "categories": [

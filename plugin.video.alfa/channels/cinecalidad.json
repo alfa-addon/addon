@@ -3,7 +3,7 @@
   "name": "CineCalidad",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat", "por"],
+  "language": ["esp", "lat", "cast", "por"],
   "thumbnail": "https://s9.postimg.cc/58xyblsvj/cinecalidad.png",
   "banner": "https://s32.postimg.cc/kihkdpx1x/banner_cinecalidad.png",
   "categories": [

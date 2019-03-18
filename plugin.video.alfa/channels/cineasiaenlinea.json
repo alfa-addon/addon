@@ -3,7 +3,7 @@
   "name": "CineAsiaEnLinea",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "http://i.imgur.com/5KOU8uy.png?3",
   "banner": "cineasiaenlinea.png",
   "categories": [

@@ -3,7 +3,7 @@
   "name": "XDVideos",
   "active": true,
   "adult": true,
-  "language": ["lat"],
+  "language": ["esp", "lat"],
   "thumbnail": "http://i.imgur.com/vKcZxXS.png",
   "categories": [
     "tvshow"

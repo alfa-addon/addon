@@ -3,7 +3,7 @@
   "name": "Newpct1",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "newpct1.png",
   "banner": "newpct1.png",
   "categories": [

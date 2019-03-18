@@ -3,7 +3,7 @@
   "name": "doomtv",
   "active": true,
   "adult": false,
-  "language": ["lat"],
+  "language": ["esp", "lat"],
   "thumbnail": "https://s2.postimg.cc/jivgi4ak9/doomtv.png",
   "banner": "https://s32.postimg.cc/6gxyripvp/doomtv_banner.png",
   "version": 1,

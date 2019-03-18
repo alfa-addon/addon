@@ -1,7 +1,7 @@
 {
   "id": "areadocumental",
   "name": "Area-Documental",
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "adult": false,
   "active": true,
   "banner": "areadocumental.png",

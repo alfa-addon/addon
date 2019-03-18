@@ -3,7 +3,7 @@
   "name": "PelisRex",
   "active": true,
   "adult": false,
-  "language": ["lat"],
+  "language": ["esp", "lat"],
   "thumbnail": "https://www.pelisrex.com/wp-content/uploads/2018/11/hjko.png",
   "banner": "",
   "version": 1,

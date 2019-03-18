@@ -3,7 +3,7 @@
     "name": "Yts",
     "active": true,
     "adult": false,
-    "language": ["lat", "cast"],
+    "language": ["esp", "lat", "cast"],
     "thumbnail": "yts.jpg",
     "categories": [
     "movie",

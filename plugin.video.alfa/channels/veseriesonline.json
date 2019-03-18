@@ -3,7 +3,7 @@
   "name": "VeSeriesOnline",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "http://www.veseriesonline.com/wp-content/themes/theme-fb4/images/logo.png",
   "banner": "",
   "categories": [

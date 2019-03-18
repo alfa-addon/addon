@@ -3,7 +3,7 @@
   "name": "AnimesHD",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://s21.postimg.cc/b43i3ljav/animeshd.png",
   "banner": "https://s4.postimg.cc/lulxulmql/animeshd-banner.png",
   "categories": [

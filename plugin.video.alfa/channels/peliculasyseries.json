@@ -3,7 +3,7 @@
   "name": "PeliculasySeries",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://s22.postimg.cc/xy1burkep/peliculasyseries.png",
   "banner": "",
   "categories": [

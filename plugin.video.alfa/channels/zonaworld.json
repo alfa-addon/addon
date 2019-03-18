@@ -3,7 +3,7 @@
   "name": "Zona World",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://i.postimg.cc/tR67dQzH/zona-world.png",
   "banner": "",
   "version": 1,

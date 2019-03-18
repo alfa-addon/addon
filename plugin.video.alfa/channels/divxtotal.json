@@ -3,7 +3,7 @@
   "name": "Divxtotal",
   "active": true,
   "adult": false,
-  "language": ["cast"],
+  "language": ["esp", "cast"],
   "thumbnail": "http://imgur.com/Madj03A.jpg",
   "categories": [
     "torrent",

@@ -3,7 +3,7 @@
   "name": "Cinetux",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "cinetux.png",
   "banner": "cinetux.png",
   "fanart": "cinetux.jpg",

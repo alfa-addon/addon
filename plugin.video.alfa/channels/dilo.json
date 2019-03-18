@@ -3,7 +3,7 @@
   "name": "Dilo",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://s22.postimg.cc/u6efsniqp/dilo.png",
   "banner": "",
   "categories": [

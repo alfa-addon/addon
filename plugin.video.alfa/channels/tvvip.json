@@ -3,7 +3,7 @@
   "name": "TV-VIP",
   "active": true,
   "adult": false,
-  "language": ["cast"],
+  "language": ["esp", "cast"],
   "thumbnail": "http://i.imgur.com/gNHVlI4.png",
   "banner": "http://i.imgur.com/wyRk5AG.png",
   "categories": [

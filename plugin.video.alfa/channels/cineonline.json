@@ -3,7 +3,7 @@
   "name": "cineonline",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://www.cine-online.eu/wp-content/uploads/2015/04/CINE-logo-bueno.png",
   "banner": "",
   "categories": [

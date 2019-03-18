@@ -3,7 +3,7 @@
   "name": "Trailers ecartelera",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "ecarteleratrailers.png",
   "banner": "ecarteleratrailers.png",
   "categories": [

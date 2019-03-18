@@ -3,7 +3,7 @@
   "name": "Gnula.Biz",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "gnula_biz.png",
   "banner": "gnula_biz.png",
   "categories": [

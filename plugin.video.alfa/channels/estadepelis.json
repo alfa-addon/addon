@@ -3,7 +3,7 @@
   "name": "Estadepelis",
   "active": true,
   "adult": false,
-  "language": ["lat"],
+  "language": ["esp", "lat"],
   "thumbnail": "https://s24.postimg.cc/nsgit7fhh/estadepelis.png",
   "banner": "https://s28.postimg.cc/ud0l032ul/estadepelis_banner.png",
   "categories": [

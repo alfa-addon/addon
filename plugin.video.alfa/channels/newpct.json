@@ -3,7 +3,7 @@
   "name": "Newpct",
   "active": true,
   "adult": false,
-  "language": ["cast"],
+  "language": ["esp", "cast"],
   "thumbnail": "newpct.png",
   "banner": "newpct.png",
   "categories": [

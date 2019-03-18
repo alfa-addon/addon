@@ -3,7 +3,7 @@
   "name": "Legalmente Gratis (clasicos)",
   "active": true,
   "adult": false,
-  "language": ["cast"],
+  "language": ["esp", "cast"],
   "thumbnail": "https://i.postimg.cc/NFGv0pN3/legalgratis.png",
   "banner": "",
   "version": 1,

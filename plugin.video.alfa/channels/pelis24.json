@@ -3,7 +3,7 @@
   "name": "Pelis24",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast", "vose"],
+  "language": ["esp", "lat", "cast", "vose"],
   "fanart": "https://i.postimg.cc/WpqD2n77/cine24bg.jpg",
   "thumbnail": "https://www.pelis24.in/wp-content/uploads/2018/05/44.png",
   "banner": "",

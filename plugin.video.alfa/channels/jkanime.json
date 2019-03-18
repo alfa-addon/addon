@@ -3,7 +3,7 @@
   "name": "JKanime",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "jkanime.png",
   "banner": "jkanime.png",
   "categories": [

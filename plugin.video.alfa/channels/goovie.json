@@ -3,7 +3,7 @@
   "name": "Goovie",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://s15.postimg.cc/n9wp4nnzv/goovie.png",
   "banner": "",
   "categories": [

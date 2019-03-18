@@ -3,7 +3,7 @@
   "name": "PelisPlus",
   "active": true,
   "adult": false,
-  "language": ["lat"],
+  "language": ["esp", "lat"],
   "thumbnail": "https://s13.postimg.cc/z5dbzfasn/pelisplus.png",
   "banner": "https://s16.postimg.cc/p9xz2vlo5/pelisplus_banner.png",
   "categories": [

@@ -3,7 +3,7 @@
   "name": "Peliscity",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "peliscity.png",
   "banner": "peliscity.png",
   "categories": [

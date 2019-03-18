@@ -3,7 +3,7 @@
   "name": "DosPelis",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://www.dospelis.net/wp-content/uploads/2019/02/logodospelisamor.png",
   "banner": "",
   "categories": [

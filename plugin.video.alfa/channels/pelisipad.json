@@ -1,7 +1,7 @@
 {
   "id": "pelisipad",
   "name": "PelisIpad",
-  "language": ["cast"],
+  "language": ["esp", "cast"],
   "active": true,
   "adult": false,
   "thumbnail": "http://i.imgur.com/FzLmGKK.png",

@@ -3,7 +3,7 @@
   "name": "AnimeFLV.RU",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "http://i.imgur.com/5nRR9qq.png",
   "banner": "animeflv_ru.png",
   "compatible": {

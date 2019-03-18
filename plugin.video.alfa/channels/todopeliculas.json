@@ -3,7 +3,7 @@
   "name": "TodoPeliculas",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "http://www.todo-peliculas.com/images/logo.png",
   "banner": "",
   "version": 1,

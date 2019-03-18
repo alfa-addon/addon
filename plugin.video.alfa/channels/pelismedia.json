@@ -3,7 +3,7 @@
 	"name": "PelisMedia",
 	"active": true,
 	"adult": false,
-	"language": ["lat"],
+	"language": ["esp", "lat"],
 	"thumbnail": "https://s14.postimg.cc/eclmujsch/12715507_1112827435402340_7302361220060367711_n.jpg",
 	"categories": ["movie", "tvshow"],
 	"settings": [

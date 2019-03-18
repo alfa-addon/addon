@@ -3,7 +3,7 @@
   "name": "Pelismundo",
   "active": true,
   "adult": false,
-  "language": ["lat"],
+  "language": ["esp", "lat"],
   "thumbnail": "https://s26.postimg.cc/72c9mr3ux/pelismundo1.png",
   "banner": "",
   "categories": [

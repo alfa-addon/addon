@@ -3,7 +3,7 @@
   "name": "PeliculasMX",
   "active": true,
   "adult": false,
-  "language": ["lat"],
+  "language": ["esp", "lat"],
   "thumbnail": "peliculasmx.png",
   "banner": "peliculasmx.png",
   "categories": [

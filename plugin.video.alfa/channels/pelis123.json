@@ -3,7 +3,7 @@
   "name": "Pelis123",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "pelis123.png",
   "banner": "",
   "categories": [

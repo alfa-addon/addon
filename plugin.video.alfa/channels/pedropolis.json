@@ -3,7 +3,7 @@
   "name": "PedroPolis",
   "active": true,
   "adult": true,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "fanart": "https://s33.postimg.cc/d3ioghaof/image.png",
   "thumbnail": "https://s33.postimg.cc/aft86728f/image.jpg",
   "banner": "https://s33.postimg.cc/cyex6xlen/image.png",

@@ -3,7 +3,7 @@
   "name": "AniToons TV",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "http://i.imgur.com/9Zu5NBc.png",
   "banner": "http://i.imgur.com/JQSXCaB.png",
   "categories": [

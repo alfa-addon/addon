@@ -3,7 +3,7 @@
   "name": "Cuevana 3",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "http://www.cuevana3.com/wp-content/uploads/2017/08/logo-v10.png",
   "banner": "",
   "version": 1,

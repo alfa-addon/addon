@@ -3,7 +3,7 @@
   "name": "SeriesBlanco.org",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://s22.postimg.cc/nucz720sx/image.png",
   "banner": "seriesblanco.png",
   "categories": [

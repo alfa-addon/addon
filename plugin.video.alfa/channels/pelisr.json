@@ -3,7 +3,7 @@
   "name": "PelisR",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://s22.postimg.cc/gcp2jqbs1/pelisr.png",
   "banner": "",
   "categories": [

@@ -3,7 +3,7 @@
   "name": "PeliculasGratis",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "http://imgur.com/ThH8Zmk.png",
   "banner": "peliculasgratis.png",
   "categories": [

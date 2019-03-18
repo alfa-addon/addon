@@ -3,7 +3,7 @@
   "name": "Danimados",
   "active": true,
   "adult": false,
-  "language": ["lat"],
+  "language": ["esp", "lat"],
   "thumbnail": "https://imgur.com/kU5Lx1S.png",
   "banner": "https://imgur.com/xG5xqBq.png",
   "categories": [

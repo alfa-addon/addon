@@ -3,7 +3,7 @@
   "name": "PelisPlay",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat", "vose"],
+  "language": ["esp", "lat", "cast", "vose"],
   "fanart": "https://i.postimg.cc/qvFCZNKT/Alpha-652355392-large.jpg",
   "thumbnail": "https://www.pelisplay.tv/static/img/logo.png",
   "banner": "https://i.postimg.cc/tCb8wh8s/pelisplaybn.jpg",

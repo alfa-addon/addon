@@ -3,7 +3,7 @@
   "name": "Cine24H",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast", "vose"],
+  "language": ["esp", "lat", "cast", "vose"],
   "fanart": "https://i.postimg.cc/WpqD2n77/cine24bg.jpg",
   "thumbnail": "https://cine24h.net/wp-content/uploads/2018/06/cine24hv2.png",
   "banner": "",

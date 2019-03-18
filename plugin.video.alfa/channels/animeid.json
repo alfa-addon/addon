@@ -3,7 +3,7 @@
   "name": "Animeid",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "animeid.png",
   "banner": "animeid.png",
   "categories": [

@@ -3,7 +3,7 @@
     "name": "ZonaTorrent",
     "active": true,
     "adult": false,
-    "language": ["cast", "lat"],
+    "language": ["esp", "lat", "cast"],
     "banner": "",
     "thumbnail": "zonatorrent.png",
     "version": 1,

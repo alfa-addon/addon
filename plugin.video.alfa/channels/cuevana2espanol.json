@@ -3,7 +3,7 @@
     "name": "Cuevana2español",
     "active": true,
     "adult": false,
-    "language": ["lat"],
+    "language": ["esp", "lat"],
     "thumbnail": "cuevana2espanol.png",
     "categories": [
         "movie"

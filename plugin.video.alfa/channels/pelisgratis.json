@@ -3,7 +3,7 @@
   "name": "PelisGratis",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["esp", "lat", "cast"],
   "thumbnail": "https://s30.postimg.cc/kilh4lr4x/pelisgratis.png",
   "banner": "https://s15.postimg.cc/nztottswb/pelisgratis-banner.png",
   "categories": [
