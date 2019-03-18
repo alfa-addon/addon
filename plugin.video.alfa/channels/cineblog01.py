@@ -452,7 +452,6 @@ def findvid_serie(item):
 def play(item):
     logger.info("[cineblog01.py] play")
     itemlist = []
-
     ### Handling new cb01 wrapper
     if host[9:] + "/film/" in item.url:
         iurl = httptools.downloadpage(item.url, only_headers=True, follow_redirects=False).headers.get("location", "")
@@ -468,30 +467,32 @@ def play(item):
     logger.debug("##############################################################")
     if "go.php" in item.url:
         data = httptools.downloadpage(item.url).data
-        match = scrapertoolsV2.get_match(data, 'window.location.href = "([^"]+)";')
-        if match=="":
-            # data = scrapertoolsV2.get_match(data, r'<a href="([^"]+)">clicca qui</a>')
-            # In alternativa, dato che a volte compare "Clicca qui per proseguire":
-            match = scrapertoolsV2.get_match(data, r'<a href="([^"]+)".*?class="btn-wrapper">.*?licca.*?</a>')
-            if match=="":
-                match = httptools.downloadpage(item.url, only_headers=True, follow_redirects=False).headers.get(
-                    "location", "")
-        data = match
-        data, c = unshortenit.unwrap_30x_only(data)
+        if "window.location.href" in data:
+            try:
+                data = scrapertoolsV2.get_match(data, 'window.location.href = "([^"]+)";')
+            except IndexError:
+                data = httptools.downloadpage(item.url, only_headers=True, follow_redirects=False).headers.get("location", "")
+            data, c = unshortenit.unwrap_30x_only(data)
+        else:
+            data = scrapertoolsV2.get_match(data, r'<a href="([^"]+)".*?class="btn-wrapper">.*?licca.*?</a>')
+        
         logger.debug("##### play go.php data ##\n%s\n##" % data)
     elif "/link/" in item.url:
         data = httptools.downloadpage(item.url).data
-        from lib import jsunpack
-
-        match = scrapertoolsV2.get_match(data, r"(eval\(function\(p,a,c,k,e,d.*?)</script>")
-        if match:
-            match = jsunpack.unpack(match)
-            logger.debug("##### play /link/ unpack ##\n%s\n##" % data)
+        if "link =" in data:
+            data = scrapertoolsV2.get_match(data, 'link = "([^"]+)"')
         else:
-            logger.debug("##### The content is yet unpacked ##\n%s\n##" % data)
+            from lib import jsunpack
 
-        data = scrapertoolsV2.find_single_match(data, r'var link(?:\s)?=(?:\s)?"([^"]+)";')
-        data, c = unshortenit.unwrap_30x_only(data)
+            try:
+                data = scrapertoolsV2.get_match(data, r"(eval\(function\(p,a,c,k,e,d.*?)</script>")
+                data = jsunpack.unpack(data)
+                logger.debug("##### play /link/ unpack ##\n%s\n##" % data)
+            except IndexError:
+                logger.debug("##### The content is yet unpacked ##\n%s\n##" % data)
+
+            data = scrapertoolsV2.find_single_match(data, r'var link(?:\s)?=(?:\s)?"([^"]+)";')
+            data, c = unshortenit.unwrap_30x_only(data)
         if data.startswith('/'):
             data = urlparse.urljoin("http://swzz.xyz", data)
             data = httptools.downloadpage(data).data
