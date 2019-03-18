@@ -3,14 +3,10 @@
     "name": "Italia Serie",
     "active": true,
     "adult": false,
-    "language": [
-        "ita"
-    ],
+    "language": ["ita"],
     "thumbnail": "https:\/\/raw.githubusercontent.com\/Zanzibar82\/images\/master\/posters\/italiaserie.png",
     "bannermenu": "https:\/\/raw.githubusercontent.com\/Zanzibar82\/images\/master\/posters\/italiaserie.png",
-    "categories": [
-        "tvshow"
-    ],
+    "categories": ["tvshow"],
     "settings": [
         {
             "id": "include_in_global_search",
@@ -23,7 +19,15 @@
         {
             "id": "include_in_newest_series",
             "type": "bool",
-            "label": "Includi in novit\u00e0 - Serie TV",
+            "label": "Includi in Novità - Serie TV",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
             "default": true,
             "enabled": true,
             "visible": true

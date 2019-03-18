@@ -1,49 +1,52 @@
 {
-  "id": "animeworld", 
-  "name": "AnimeWorld", 
-  "active": true, 
-  "adult": false, 
-  "language": ["ita"],
-  "thumbnail": "https://cdn.animeworld.it/static/images/general/logoaw.png", 
-  "version": "2", 
-  "date": "14/02/2019", 
-  "changes": "TUTTO", 
-  "categories": [
-   "anime"
-  ], 
-  "settings": [
-   {
-    "id": "include_in_global_search", 
-    "type": "bool", 
-    "label": "Includi ricerca globale", 
-    "default": false, 
-    "enabled": false, 
-    "visible": false
-   }, 
-   {
-    "id": "include_in_newest_anime", 
-    "type": "bool", 
-    "label": "Includi in novità - Anime", 
-    "default": true, 
-    "enabled": true, 
-    "visible": true
-   },
-   {
-    "id": "comprueba_enlaces",
-    "type": "bool",
-    "label": "Verifica se i link esistono",
-    "default": false,
-    "enabled": true,
-    "visible": true
-  },
-  {
-    "id": "comprueba_enlaces_num",
-    "type": "list",
-    "label": "Numero de link da verificare",
-    "default": 1,
-    "enabled": true,
-    "visible": "eq(-1,true)",
-    "lvalues": [ "1", "3", "5", "10" ]
-  }
-  ]
+    "id": "animeworld", 
+    "name": "AnimeWorld", 
+    "active": true, 
+    "adult": false, 
+    "language": ["ita"],
+    "thumbnail": "https://cdn.animeworld.it/static/images/general/logoaw.png", 
+    "categories": ["anime"], 
+    "settings": [
+        {
+            "id": "include_in_global_search", 
+            "type": "bool", 
+            "label": "Includi ricerca globale", 
+            "default": false, 
+            "enabled": false, 
+            "visible": false
+        }, 
+        {
+            "id": "include_in_newest_anime", 
+            "type": "bool", 
+            "label": "Includi in Novità - Anime", 
+            "default": true, 
+            "enabled": true, 
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "comprueba_enlaces",
+            "type": "bool",
+            "label": "Verifica se i link esistono",
+            "default": false,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "comprueba_enlaces_num",
+            "type": "list",
+            "label": "Numero de link da verificare",
+            "default": 1,
+            "enabled": true,
+            "visible": "eq(-1,true)",
+            "lvalues": [ "1", "3", "5", "10" ]
+        }
+    ]
 }

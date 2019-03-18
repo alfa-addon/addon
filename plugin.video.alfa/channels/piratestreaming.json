@@ -6,11 +6,7 @@
     "language": ["ita"],
     "thumbnail": "https:\/\/raw.githubusercontent.com\/Zanzibar82\/images\/master\/posters\/piratestreaming.png",
     "bannermenu": "https:\/\/raw.githubusercontent.com\/Zanzibar82\/images\/master\/posters\/piratestreaming.png",
-    "categories": [
-        "anime",
-        "movie",
-        "tvshow"
-    ],
+    "categories": ["anime","movie","tvshow"],
     "settings": [
         {
             "id": "include_in_global_search",
@@ -19,18 +15,47 @@
             "default": true,
             "enabled": true,
             "visible": true
-		},
+        },
         {
-          "id": "filter_languages",
-          "type": "list",
-          "label": "Mostrar enlaces en idioma...",
-          "default": 0,
-          "enabled": true,
-          "visible": true,
-          "lvalues": [
-            "No filtrar",
-            "IT"
-          ]
-        }
-          ]
-    }
+            "id": "include_in_newest_peliculas",
+            "type": "bool",
+            "label": "Includi in Novità - Film",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_series",
+            "type": "bool",
+            "label": "Includi in Novità - Serie TV",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_anime",
+            "type": "bool",
+            "label": "Includi in Novità - Anime",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "filter_languages",
+            "type": "list",
+            "label": "Mostrar enlaces en idioma...",
+            "default": 0,
+            "enabled": true,
+            "visible": true,
+            "lvalues": ["No filtrar","IT"]
+            }
+    ]
+}

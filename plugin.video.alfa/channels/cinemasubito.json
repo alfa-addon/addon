@@ -1,74 +1,71 @@
 {
-  "id": "cinemasubito", 
-  "name": "Cinemasubito", 
-  "active": true, 
-  "adult": false, 
-  "language": ["ita"],
-  "thumbnail": "https://www.cinemasubito.biz/uploads/custom-logo.png", 
-  "banner": "https://www.cinemasubito.biz/uploads/custom-logo.png", 
-  "version": "5", 
-  "date": "02/07/2017", 
-  "categories": [
-    "tvshow", 
-    "movie"
-   ], 
- "settings": [
-			{
-			"id": "include_in_global_search",
-			"type": "bool",
-			"label": "Includi in ricerca globale",
-			"default": true,
-			"enabled": true,
-			"visible": true
-		},
-		{
-			"id": "include_in_newest_film",
-			"type": "bool",
-			"label": "Includi in Novità - Film",
-			"default": true,
-			"enabled": true,
-			"visible": true
+    "id": "cinemasubito", 
+    "name": "Cinemasubito", 
+    "active": true, 
+    "adult": false, 
+    "language": ["ita"],
+    "thumbnail": "https://www.cinemasubito.biz/uploads/custom-logo.png", 
+    "banner": "https://www.cinemasubito.biz/uploads/custom-logo.png", 
+    "categories": ["tvshow", "movie"], 
+    "settings": [
+            {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi in ricerca globale",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_peliculas",
+            "type": "bool",
+            "label": "Includi in Novità - Film",
+            "default": true,
+            "enabled": true,
+            "visible": true
 
-		},
-		
-		{
-			"id": "include_in_newest_series",
-			"type": "bool",
-			"label": "Includi in Novità - Serie TV",
-			"default": true,
-			"enabled": true,
-			"visible": true
-		},
-		
-
-		{
-		  "id": "comprueba_enlaces",
-		  "type": "bool",
-		  "label": "Verifica se i link esistono",
-		  "default": false,
-		  "enabled": true,
-		  "visible": true
-		},
-		{
-		  "id": "comprueba_enlaces_num",
-		  "type": "list",
-		  "label": "Numero di link da verificare",
-		  "default": 1,
-		  "enabled": true,
-		  "visible": "eq(-1,true)",
-		  "lvalues": [ "2", "5", "10", "15" ]
-		},
-		{
-		  "id": "filter_languages",
-		  "type": "list",
-		  "label": "Mostra link in lingua...",
-		  "default": 0,
-		  "enabled": true,
-		  "visible": true,
-		  "lvalues": [
-			"Non filtrare",
-			"IT"
-		  ]
-		}
-		]
-	}
+        },		
+        {
+            "id": "include_in_newest_series",
+            "type": "bool",
+            "label": "Includi in Novità - Serie TV",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "comprueba_enlaces",
+            "type": "bool",
+            "label": "Verifica se i link esistono",
+            "default": false,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "comprueba_enlaces_num",
+            "type": "list",
+            "label": "Numero di link da verificare",
+            "default": 1,
+            "enabled": true,
+            "visible": "eq(-1,true)",
+            "lvalues": [ "2", "5", "10", "15" ]
+        },
+        {
+            "id": "filter_languages",
+            "type": "list",
+            "label": "Mostra link in lingua...",
+            "default": 0,
+            "enabled": true,
+            "visible": true,
+            "lvalues": ["Non filtrare","IT"]
+        }
+    ]
+}

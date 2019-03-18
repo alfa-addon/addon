@@ -6,11 +6,7 @@
   "language": ["ita"],
   "thumbnail": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/seriehd.png",
   "banner": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/seriehd.png",
-  "categories": [
-    "tvshow",
-	"top channels"
-    
-  ],
+  "categories": ["tvshow"],
  "settings": [
     {
       "id": "include_in_global_search",

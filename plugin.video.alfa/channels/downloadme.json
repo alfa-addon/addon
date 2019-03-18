@@ -3,14 +3,10 @@
     "name": "DownloadMe",
     "active": false,
     "adult": false,
-    "language": [
-        "ita"
-    ],
+    "language": ["ita"],
     "thumbnail": "https://www.downloadme.gratis/wp-content/uploads/2018/07/downloadme-retina-cropped-alternativo.png",
     "bannermenu": "https://www.downloadme.gratis/wp-content/uploads/2018/07/downloadme-retina-cropped-alternativo.png",
-    "categories": [
-        "movie"
-    ],
+    "categories": ["movie"],
     "settings": [
         {
             "id": "include_in_global_search",

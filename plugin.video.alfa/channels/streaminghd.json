@@ -6,19 +6,40 @@
 	"adult": false,
 	"thumbnail": "https://www.visions.tn/wp-content/uploads/2015/11/large_news_HD-STREAMING.jpg",
 	"banner": "https://www.visions.tn/wp-content/uploads/2015/11/large_news_HD-STREAMING.jpg",
-	"categories": [
-	  "tvshow",
-	  "movie","vos"
-	],
+	"categories": ["tvshow","movie","vos"],
 	"settings": [
 		{
-		  "id": "include_in_global_search",
-		  "type": "bool",
-		  "label": "Incluir en busqueda global",
-		  "default": true,
-		  "enabled": true,
-		  "visible": true
-		}
-	  ]
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Incluir en busqueda global",
+            "default": true,
+            "enabled": true,
+            "visible": true
+		},
+        {
+            "id": "include_in_newest_peliculas",
+            "type": "bool",
+            "label": "Includi in Novità - Film",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_series",
+            "type": "bool",
+            "label": "Includi in Novità - Serie TV",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        }
+	]
 }
 

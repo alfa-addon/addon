@@ -6,10 +6,7 @@
 	"adult": false,
 	"thumbnail": "cb01.png",
 	"banner": "cb01.png",
-	"categories": [
-	  "tvshow",
-	  "movie","cult","top channels"
-	],
+	"categories": ["tvshow", "movie", "vos"],
 	"settings": [
 		{
 		  "id": "include_in_global_search",
@@ -20,21 +17,21 @@
 		  "visible": true
 		},
 		{
-		  "id": "include_in_newest_film",
-		  "type": "bool",
-		  "label": "Includi in novità - Film",
-		  "default": true,
-		  "enabled": true,
-		  "visible": true
-		},
-		{
       "id": "include_in_newest_peliculas",
       "type": "bool",
-      "label": "Includi in novità - Film",
+      "label": "Includi in Novità - Film",
       "default": true,
       "enabled": true,
       "visible": true
-		},
+    },
+    {
+      "id": "include_in_newest_italiano",
+      "type": "bool",
+      "label": "Includi in Novità - Italiano",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
 		{
       "id": "comprueba_enlaces",
       "type": "bool",
@@ -60,8 +57,8 @@
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "Non filtrare",
-        "IT"
+        "No filtrar",
+        "Italiano"
       ]
     }
 	  ]

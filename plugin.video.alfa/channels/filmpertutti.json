@@ -6,9 +6,9 @@
   "language": ["ita"],
   "thumbnail": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/filmpertutti.png",
   "banner": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/filmpertutti.png",
-  "categories": ["tvshow","movie","top channels"],
+  "categories": ["tvshow","movie"],
   "settings": [
-			{
+        {
 			"id": "include_in_global_search",
 			"type": "bool",
 			"label": "Includi in ricerca globale",
@@ -17,9 +17,9 @@
 			"visible": true
 		},
 		{
-			"id": "include_in_newest_film",
+			"id": "include_in_newest_peliculas",
 			"type": "bool",
-			"label": "Includi in novità - Film",
+			"label": "Includi in Novità - Film",
 			"default": true,
 			"enabled": true,
 			"visible": true
@@ -31,6 +31,14 @@
 			"default": true,
 			"enabled": true,
 			"visible": true
-		}
+		},
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        }
 	]
 }

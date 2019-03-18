@@ -3,16 +3,12 @@
     "name": "ItaliaFilm HD",
     "active": true,
     "adult": false,
-    "language": [
-        "ita"
-    ],
+    "language": ["ita"],
     "thumbnail": "https://italiafilm.network/wp-content/uploads/2018/06/ITALIAFILM-HD.png",
     "bannermenu": "https://italiafilm.network/wp-content/uploads/2018/06/ITALIAFILM-HD.png",
-    "categories": [
-        "movie"
-    ],
- "settings": [
-			{
+    "categories": ["movie"],
+    "settings": [
+        {
 			"id": "include_in_global_search",
 			"type": "bool",
 			"label": "Includi in ricerca globale",
@@ -21,7 +17,7 @@
 			"visible": true
 		},
 		{
-			"id": "include_in_newest_film",
+			"id": "include_in_newest_peliculas",
 			"type": "bool",
 			"label": "Includi in Novità - Film",
 			"default": true,
@@ -29,24 +25,30 @@
 			"visible": true
 
 		},
-		
-
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
 		{
-		  "id": "comprueba_enlaces",
-		  "type": "bool",
-		  "label": "Verifica se i link esistono",
-		  "default": false,
-		  "enabled": true,
-		  "visible": true
+            "id": "comprueba_enlaces",
+            "type": "bool",
+            "label": "Verifica se i link esistono",
+            "default": false,
+            "enabled": true,
+            "visible": true
 		},
 		{
-		  "id": "comprueba_enlaces_num",
-		  "type": "list",
-		  "label": "Numero di link da verificare",
-		  "default": 1,
-		  "enabled": true,
-		  "visible": "eq(-1,true)",
-		  "lvalues": [ "2", "5", "10", "15" ]
+            "id": "comprueba_enlaces_num",
+            "type": "list",
+            "label": "Numero di link da verificare",
+            "default": 1,
+            "enabled": true,
+            "visible": "eq(-1,true)",
+            "lvalues": [ "2", "5", "10", "15" ]
 		},
 		{
 		  "id": "filter_languages",
@@ -55,10 +57,7 @@
 		  "default": 0,
 		  "enabled": true,
 		  "visible": true,
-		  "lvalues": [
-			"Non filtrare",
-			"IT"
-		  ]
+		  "lvalues": ["Non filtrare","IT"]
 		}
-		]
-	}
+    ]
+}

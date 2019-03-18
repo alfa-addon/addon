@@ -4,22 +4,34 @@
 	"language": ["ita"],
 	"active": true,
 	"adult": false,
-	"language": ["ita"],
 	"thumbnail": "http://css.hd-cdn.it/new_files/templates/theme_darklight/img/logos_wt/logohdhardware.png",
 	"banner": "http://css.hd-cdn.it/new_files/templates/theme_darklight/img/logos_wt/logohdhardware.png",
-	"version": "7", 
-	"date": "26/05/2017", 
-	"changes": "re-added", 	
 	"categories": ["documentary"],
 	"settings": [
 		{
-		  "id": "include_in_global_search",
-		  "type": "bool",
-		  "label": "Incluir en busqueda global",
-		  "default": false,
-		  "enabled": false,
-		  "visible": false
-		}
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Incluir en busqueda global",
+            "default": false,
+            "enabled": false,
+            "visible": false
+		},
+		{
+            "id": "include_in_newest_documentales",
+            "type": "bool",
+            "label": "Includi in Novità - Documentari",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        }
 	]
 }
 

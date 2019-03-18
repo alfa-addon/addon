@@ -3,20 +3,39 @@
     "name": "GuardoGratis",
     "active": true,
     "adult": false,
-    "language": [
-        "ita"
-    ],
+    "language": ["ita"],
     "thumbnail": "https:\/\/guardogratis.com\/wp-content\/uploads\/2018\/01\/Logo-4.png",
     "bannermenu": "https:\/\/guardogratis.com\/wp-content\/uploads\/2018\/01\/Logo-4.png",
-    "categories": [
-        "movie",
-        "tvshow"
-    ],
+    "categories": ["movie","tvshow"],
     "settings": [
         {
             "id": "include_in_global_search",
             "type": "bool",
             "label": "Includi ricerca globale",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_peliculas",
+            "type": "bool",
+            "label": "Includi in Novità - Film",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },		
+		{
+			"id": "include_in_newest_series",
+			"type": "bool",
+			"label": "Includi in Novità - Serie TV",
+			"default": true,
+			"enabled": true,
+			"visible": true
+		},
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
             "default": true,
             "enabled": true,
             "visible": true

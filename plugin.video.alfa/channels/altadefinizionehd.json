@@ -3,28 +3,39 @@
     "name": "AltadefinizioneHD",
     "active": true,
     "adult": false,
-    "language": [
-        "ita"
-    ],
+    "language": ["ita"],
     "thumbnail": "https://altadefinizione.doctor/wp-content/uploads/2019/02/logo.png",
     "bannermenu": "https://altadefinizione.doctor/wp-content/uploads/2019/02/logo.png",
-    "categories": [
-        "tvshow",
-        "movie"
-    ],
+    "categories": ["tvshow","movie"],
     "settings": [
         {
             "id": "include_in_global_search",
             "type": "bool",
-            "label": "Includi ricerca globale",
+            "label": "Includi in Ricerca Globale",
             "default": true,
             "enabled": true,
             "visible": true
         },
         {
-            "id": "include_in_newest_film",
+            "id": "include_in_newest_peliculas",
             "type": "bool",
-            "label": "Includi in novità - film",
+            "label": "Includi in Novità - Film",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_series",
+            "type": "bool",
+            "label": "Includi in Novità - Serie TV",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
             "default": true,
             "enabled": true,
             "visible": true

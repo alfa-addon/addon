@@ -7,18 +7,16 @@
     "fanart": "http://i39.tinypic.com/35ibvcx.jpg",
 	"thumbnail": "http://www.bleachportal.it/images/index_r1_c1.jpg",
 	"banner": "http://cgi.di.uoa.gr/~std05181/images/bleach.jpg",
-	"categories": [
-	  "anime"
-	],
+	"categories": ["anime"],
 	"settings": [
 		{
-		  "id": "include_in_global_search",
-		  "type": "bool",
-		  "label": "Incluir en busqueda global",
-		  "default": false,
-		  "enabled": false,
-		  "visible": false
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Incluir en busqueda global",
+            "default": false,
+            "enabled": false,
+            "visible": false
 		}
-	  ]
+    ]
 }
 

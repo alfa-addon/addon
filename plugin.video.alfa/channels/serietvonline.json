@@ -3,21 +3,39 @@
     "name": "SerieTvOnline",
     "active": true,
     "adult": false,
-    "language": [
-        "ita"
-    ],
+    "language": ["ita"],
     "thumbnail": "https:\/\/serietvonline.com\/wp-content\/uploads\/2016\/08\/logo2016-1.png",
     "bannermenu": "https:\/\/serietvonline.com\/wp-content\/uploads\/2016\/08\/logo2016-1.png",
-    "categories": [
-        "anime",
-        "tvshow",
-        "cult"
-    ],
+    "categories": ["anime","tvshow"],
     "settings": [
         {
             "id": "include_in_global_search",
             "type": "bool",
             "label": "Includi ricerca globale",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_series",
+            "type": "bool",
+            "label": "Includi in Novità - Serie TV",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_anime",
+            "type": "bool",
+            "label": "Includi in Novità - Anime",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
             "default": true,
             "enabled": true,
             "visible": true

@@ -6,26 +6,32 @@
 	"adult": false,
 	"thumbnail": "http://www.serietvu.com/wp-content/themes/gurarjbar/images/logo.png",
 	"banner": "http://www.serietvu.com/wp-content/themes/gurarjbar/images/logo.png",
-	"categories": [
-	  "tvshow"
-	],
+	"categories": [ "tvshow"],
 	"settings": [
 		{
-		  "id": "include_in_global_search",
-		  "type": "bool",
-		  "label": "Incluir en busqueda global",
-		  "default": true,
-		  "enabled": true,
-		  "visible": true
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Incluir en busqueda global",
+            "default": true,
+            "enabled": true,
+            "visible": true
 		},
 		{
-		  "id": "include_in_newest_series",
-		  "type": "bool",
-		  "label": "Includi in novità - Serie TV",
-		  "default": true,
-		  "enabled": true,
-		  "visible": true
-		}
-	  ]
+            "id": "include_in_newest_series",
+            "type": "bool",
+            "label": "Includi in Novità - Serie TV",
+            "default": true,
+            "enabled": true,
+            "visible": true
+		},
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        }
+	]
 }
 

@@ -4,21 +4,17 @@
 	"language": ["ita"],
 	"active": true,
 	"adult": false,
-	"language": ["ita"],
 	"thumbnail": "http://www.smartworld.it/wp-content/uploads/2015/02/codice-code-programmazione-fhd-720x480.png",
 	"banner": "http://www.smartworld.it/wp-content/uploads/2015/02/codice-code-programmazione-fhd-720x480.png",
-	"version": "7", 
-	"date": "26/05/2017", 
-	"changes": "re-added", 	
 	"categories": ["documentary"],
 	"settings": [
 		{
-		  "id": "include_in_global_search",
-		  "type": "bool",
-		  "label": "Incluir en busqueda global",
-		  "default": false,
-		  "enabled": false,
-		  "visible": false
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Incluir en busqueda global",
+            "default": false,
+            "enabled": false,
+            "visible": false
 		}
 	]
 }

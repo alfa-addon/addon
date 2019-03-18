@@ -6,55 +6,57 @@
     "language": ["ita"],
     "thumbnail": "http:\/\/www.filmstreaminggratis.org\/wp-content\/uploads\/2016\/10\/filmstreaminglogo.png",
     "bannermenu": "http:\/\/www.filmstreaminggratis.org\/wp-content\/uploads\/2016\/10\/filmstreaminglogo.png",
-    "categories": [
-        "movie"
-    ],
-  "settings": [
-    {
-      "id": "include_in_global_search",
-      "type": "bool",
-      "label": "Includi ricerca globale",
-      "default": true,
-      "enabled": true,
-      "visible": true
-    },
-		{
-		  "id": "include_in_newest_film",
-		  "type": "bool",
-		  "label": "Includi in novità - Film",
-		  "default": true,
-		  "enabled": true,
-		  "visible": true
-    },
-		
-    {
-      "id": "comprueba_enlaces",
-      "type": "bool",
-      "label": "Verifica se i link esistono",
-      "default": false,
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "comprueba_enlaces_num",
-      "type": "list",
-      "label": "Numero di link da verificare",
-      "default": 1,
-      "enabled": true,
-      "visible": "eq(-1,true)",
-      "lvalues": [ "3", "5", "10", "15" ]
-    },
-    {
-      "id": "filter_languages",
-      "type": "list",
-      "label": "Mostra link in lingua...",
-      "default": 0,
-      "enabled": true,
-      "visible": true,
-      "lvalues": [
-        "Non filtrare",
-        "IT"
-      ]
-    }
-	  ]
+    "categories": ["movie"],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi ricerca globale",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_peliculas",
+            "type": "bool",
+            "label": "Includi in Novità - Film",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },		
+        {
+            "id": "comprueba_enlaces",
+            "type": "bool",
+            "label": "Verifica se i link esistono",
+            "default": false,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "comprueba_enlaces_num",
+            "type": "list",
+            "label": "Numero di link da verificare",
+            "default": 1,
+            "enabled": true,
+            "visible": "eq(-1,true)",
+            "lvalues": [ "3", "5", "10", "15" ]
+        },
+        {
+        "id": "filter_languages",
+        "type": "list",
+        "label": "Mostra link in lingua...",
+        "default": 0,
+        "enabled": true,
+        "visible": true,
+        "lvalues": ["Non filtrare","IT"]
+        }
+    ]
 }

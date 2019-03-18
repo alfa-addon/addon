@@ -6,17 +6,31 @@
 	"adult": false,
 	"thumbnail": "http://mondolunatico.org/stream/wp-content/uploads/2016/10/dooplay1-2.png",
 	"banner": "http://mondolunatico.org/stream/wp-content/uploads/2016/10/dooplay1-2.png",
-	"categories": [
-	  "movie","cult","top channels"
-	],
+	"categories": ["movie"],
 	"settings": [
 		{
-		  "id": "include_in_global_search",
-		  "type": "bool",
-		  "label": "Incluir en busqueda global",
-		  "default": true,
-		  "enabled": true,
-		  "visible": true
-		}
-	  ]
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Incluir en busqueda global",
+            "default": true,
+            "enabled": true,
+            "visible": true
+            },
+        {
+            "id": "include_in_newest_peliculas",
+            "type": "bool",
+            "label": "Includi in Novità - Film",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        }
+    ]
 }

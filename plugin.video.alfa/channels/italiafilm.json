@@ -3,16 +3,10 @@
     "name": "Italia-Film.co",
     "active": true,
     "adult": false,
-    "language": [
-        "ita"
-    ],
+    "language": ["ita"],
     "thumbnail": "https:\/\/raw.githubusercontent.com\/Zanzibar82\/images\/master\/posters\/italiafilm.png",
     "bannermenu": "https:\/\/raw.githubusercontent.com\/Zanzibar82\/images\/master\/posters\/italiafilm.png",
-    "categories": [
-        "movie",
-        "tvshow",
-        "top channels"
-    ],
+    "categories": ["movie", "tvshow"],
     "settings": [
         {
             "id": "include_in_global_search",
@@ -23,9 +17,9 @@
             "visible": true
         },
         {
-            "id": "include_in_newest_film",
+            "id": "include_in_newest_peliculas",
             "type": "bool",
-            "label": "Includi in novità - film",
+            "label": "Includi in Novità - Film",
             "default": true,
             "enabled": true,
             "visible": true
@@ -33,7 +27,15 @@
         {
             "id": "include_in_newest_series",
             "type": "bool",
-            "label": "Includi in novità - Serie TV",
+            "label": "Includi in Novità - Serie TV",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        },
+        {
+            "id": "include_in_newest_italiano",
+            "type": "bool",
+            "label": "Includi in Novità - Italiano",
             "default": true,
             "enabled": true,
             "visible": true
