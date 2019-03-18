@@ -9,7 +9,7 @@ import re
 import time
 from threading import Thread
 
-from channelselector import get_thumb
+from channelselector import get_thumb, auto_filter
 from core import channeltools
 from core import scrapertools
 from core.item import Item
@@ -135,6 +135,8 @@ def get_channels_list():
     # Rellenar listas de canales disponibles
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
     channel_language = config.get_setting("channel_language", default="all")
+    if channel_language =="auto":
+        channel_language = auto_filter()
 
     for infile in sorted(glob.glob(channels_path)):
         channel_id = os.path.basename(infile)[:-5]
