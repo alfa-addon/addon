@@ -8,14 +8,20 @@ import re
 from core import httptools, scrapertools, servertools, tmdb
 from platformcode import logger, config
 from core.item import Item
+from channels import autoplay
 
 
 host = "https://altadefinizione.doctor"
 
 headers = [['Referer', host]]
 
+list_servers = ['openload']
+list_quality = ['default']
+
 def mainlist(item):
     logger.info("[altadefinizionehd.py] mainlist")
+
+    autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = [Item(channel=item.channel,
                      action="video",
@@ -61,6 +67,8 @@ def mainlist(item):
                      title="[B]Cerca...[/B]",
                      thumbnail=CercaThumbnail,
                      fanart=FilmFanart)]
+
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -213,11 +221,13 @@ def findvideos(item):
                  title=item.title + " [COLOR blue][" + scrapedtitle + "][/COLOR]",
                  url=host + "/wp-admin/admin-ajax.php",
                  post=scrapedpost,
+                 server=scrapedtitle,
                  nume=scrapednume,
                  type=scrapedtype,
                  extra=item.extra,
                  folder=True))
 
+    autoplay.start(itemlist, item)
 
     return itemlist
 
