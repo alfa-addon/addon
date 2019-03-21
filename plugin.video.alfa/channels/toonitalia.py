@@ -192,5 +192,5 @@ def findvideos(item):
         videoitem.channel = item.channel
     return itemlist
 
-def color(text, color):
-    return "[COLOR %s]%s[/COLOR]" % (color, text)
+\r
+

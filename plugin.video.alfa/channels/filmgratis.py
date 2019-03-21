@@ -31,32 +31,32 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = [Item(channel=item.channel,
                      action="peliculas",
-                     title=color("Home", "orange"),
+                     title=support.color("Home", "orange"),
                      url=host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="annoattuale",
-                     title=color("Film di quest'anno", "azure"),
+                     title=support.color("Film di quest'anno", "azure"),
                      url=host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="categorie",
-                     title=color("Categorie", "azure"),
+                     title=support.color("Categorie", "azure"),
                      url=host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="peranno",
-                     title=color("Per anno", "azure"),
+                     title=support.color("Per anno", "azure"),
                      url=host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="perpaese",
-                     title=color("Per paese", "azure"),
+                     title=support.color("Per paese", "azure"),
                      url=host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="search",
-                     title=color("Cerca ...", "yellow"),
+                     title=support.color("Cerca ...", "yellow"),
                      extra="movie",
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png")]
 
@@ -227,7 +227,7 @@ def peliculas(item):
                 Item(channel=item.channel,
                      action="findvideos",
                      contentType="movie",
-                     title=scrapedtitle.replace(year, color("%s" % year, "red")),
+                     title=scrapedtitle.replace(year, support.color("%s" % year, "red")),
                      fulltitle=cleantitle,
                      text_color="azure",
                      url=scrapedurl,
@@ -295,11 +295,3 @@ def findvideos(item):
                      action="add_pelicula_to_library", extra="findvideos", contentTitle=item.contentTitle))
 
     return itemlist
-
-# ================================================================================================================
-
-# ----------------------------------------------------------------------------------------------------------------
-def color(text, color):
-    return "[COLOR "+color+"]"+text+"[/COLOR]"
-
-# ================================================================================================================

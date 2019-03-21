@@ -26,27 +26,27 @@ def mainlist(item):
     logger.info("[SerieTVU.py]==> mainlist")
     itemlist = [Item(channel=item.channel,
                      action="lista_serie",
-                     title=color("Nuove serie TV", "orange"),
+                     title=support.color("Nuove serie TV", "orange"),
                      url="%s/category/serie-tv" % host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="latestep",
-                     title=color("Nuovi Episodi", "azure"),
+                     title=support.color("Nuovi Episodi", "azure"),
                      url="%s/ultimi-episodi" % host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="lista_serie",
-                     title=color("Serie TV Aggiornate", "azure"),
+                     title=support.color("Serie TV Aggiornate", "azure"),
                      url="%s/ultimi-episodi" % host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="categorie",
-                     title=color("Categorie", "azure"),
+                     title=support.color("Categorie", "azure"),
                      url=host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="search",
-                     title=color("Cerca ...", "yellow"),
+                     title=support.color("Cerca ...", "yellow"),
                      extra="tvshow",
                      thumbnail="http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search")]
 
@@ -288,7 +288,7 @@ def findepisodevideo(item):
 # ================================================================================================================
 
 # ----------------------------------------------------------------------------------------------------------------
-def color(text, color):
-    return "[COLOR %s]%s[/COLOR]" % (color, text)
+\r
+
 
 # ================================================================================================================

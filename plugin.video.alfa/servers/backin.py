@@ -27,8 +27,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     headers = [["User-Agent", "Mozilla/5.0 (Windows NT 6.1; rv:54.0) Gecko/20100101 Firefox/54.0"]]
 
-    # import web_pdb;
-    # web_pdb.set_trace()
+
 
     # First access
     httptools.downloadpage("http://backin.net/s/streams.php?s=%s" % page_url, headers=headers)

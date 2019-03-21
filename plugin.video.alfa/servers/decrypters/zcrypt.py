@@ -9,7 +9,7 @@ from platformcode import logger
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
-    # import web_pdb; web_pdb.set_trace()
+
     encontrados = {
         'https://vcrypt.net/images/logo', 'https://vcrypt.net/css/out',
         'https://vcrypt.net/images/favicon', 'https://vcrypt.net/css/open',
@@ -76,7 +76,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                         url = rdata.url
 
                     if "wstream" in url:
-                        # import web_pdb; web_pdb.set_trace()
+
                         url = url.replace("/video/", "/")
 
                     data = url

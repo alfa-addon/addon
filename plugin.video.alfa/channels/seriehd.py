@@ -9,7 +9,7 @@ import re
 import urlparse
 
 from channels import autoplay
-from channels import filtertools
+from channels import filtertools, support
 from core import scrapertools, servertools, httptools
 from platformcode import logger, config
 from core.item import Item
@@ -190,50 +190,7 @@ def findvideos(item):
 
     itemlist = []
 
-    # Carica la pagina 
-    data = httptools.downloadpage(item.url).data.replace('\n', '')
-
-    patron = r'<iframe[^s]+src="([^"]+)" allowfullscreen[^>]+>'
-    url = scrapertools.find_single_match(data, patron)
-
-    if 'hdpass' in url:
-        data = httptools.downloadpage("http:%s" % url if 'http' not in url else url).data
-
-        start = data.find('<div class="row mobileRes">')
-        end = data.find('<div id="playerFront">', start)
-        data = data[start:end]
-
-        patron_res = '<div class="row mobileRes">(.*?)</div>'
-        patron_mir = '<div class="row mobileMirrs">(.*?)</div>'
-        patron_media = r'<input type="hidden" name="urlEmbed" data-mirror="[^"]+" id="urlEmbed" value="([^"]+)"[^>]+>'
-
-        res = scrapertools.find_single_match(data, patron_res)
-
-        urls = []
-        for res_url in scrapertools.find_multiple_matches(res, '<option[^v]+value="([^"]*)">[^<]*</option>'):
-            res_url = urlparse.urljoin(url, res_url)
-            data = httptools.downloadpage("http:%s" % res_url if 'http' not in res_url else res_url).data.replace('\n', '')
-
-            mir = scrapertools.find_single_match(data, patron_mir)
-
-            for mir_url in scrapertools.find_multiple_matches(mir, '<option[^v]+value="([^"]*)">[^<]*</value>'):
-                mir_url = urlparse.urljoin(url, mir_url)
-                data = httptools.downloadpage("http:%s" % mir_url if 'http' not in mir_url else mir_url).data.replace('\n', '')
-
-                for media_url in re.compile(patron_media).findall(data):
-                    urls.append(url_decode(media_url))
-
-        itemlist = servertools.find_video_items(data='\n'.join(urls))
-        for videoitem in itemlist:
-            server = re.sub(r'[-\[\]\s]+', '', videoitem.title).capitalize()
-            videoitem.title = "[[COLOR orange]%s[/COLOR]] %s" % (server, item.title)
-            videoitem.fulltitle = item.fulltitle
-            videoitem.thumbnail = item.thumbnail
-            videoitem.show = item.show
-            videoitem.plot = item.plot
-            videoitem.channel = __channel__
-            videoitem.contentType = item.contentType
-            videoitem.language = IDIOMAS['Italiano']
+    itemlist = support.hdpass_get_servers(item)
 
     # Requerido para Filtrar enlaces
 
@@ -255,29 +212,6 @@ def findvideos(item):
                      #action="add_pelicula_to_library", extra="findvideos", contentTitle=item.contentTitle))
 
     return itemlist
-
-
-def url_decode(url_enc):
-    lenght = len(url_enc)
-    if lenght % 2 == 0:
-        len2 = lenght / 2
-        first = url_enc[0:len2]
-        last = url_enc[len2:lenght]
-        url_enc = last + first
-        reverse = url_enc[::-1]
-        return base64.b64decode(reverse)
-
-    last_car = url_enc[lenght - 1]
-    url_enc[lenght - 1] = ' '
-    url_enc = url_enc.strip()
-    len1 = len(url_enc)
-    len2 = len1 / 2
-    first = url_enc[0:len2]
-    last = url_enc[len2:len1]
-    url_enc = last + first
-    reverse = url_enc[::-1]
-    reverse = reverse + last_car
-    return base64.b64decode(reverse)
 
 
 def newest(categoria):

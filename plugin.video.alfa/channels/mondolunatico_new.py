@@ -10,6 +10,7 @@ from core import httptools, scrapertools, servertools
 from core.item import Item
 from core import tmdb
 from platformcode import logger, config
+from channels import support
 
 host = "http://mondolunatico.org"
 
@@ -171,7 +172,7 @@ def findvideos(item):
     itemlist = servertools.find_video_items(data=data)
     for videoitem in itemlist:
         server = re.sub(r'[-\[\]\s]+', '', videoitem.title).capitalize()
-        videoitem.title = "".join(["[%s] " % color(server, 'orange'), item.title])
+        videoitem.title = "".join(["[%s] " % support.color(server, 'orange'), item.title])
         videoitem.fulltitle = item.fulltitle
         videoitem.thumbnail = item.thumbnail
         videoitem.show = item.show
@@ -180,7 +181,3 @@ def findvideos(item):
         videoitem.contentType = item.contentType
 
     return itemlist
-
-
-def color(text, color):
-    return "[COLOR " + color + "]" + text + "[/COLOR]"

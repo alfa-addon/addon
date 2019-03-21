@@ -174,8 +174,7 @@ def episodios(item):
 
     for match in matches:
         season_title = match.group()
-        # import web_pdb;
-        # web_pdb.set_trace()
+
         if season_title != '':
             lang_titles.append('SUB ITA' if 'SUB' in season_title.upper() else 'ITA')
             starts.append(match.end())

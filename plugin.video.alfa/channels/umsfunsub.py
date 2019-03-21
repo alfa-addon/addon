@@ -23,18 +23,18 @@ headers = [['Referer', host]]
 def mainlist(item):
     logger.info("[UMSFunSub.py]==> mainlist")
     itemlist = [Item(channel=item.channel,
-                     title=color("Progetti", "azure"),
+                     title=support.color("Progetti", "azure"),
                      action="progetti",
                      plot="- In corso\n- Conclusi",
                      url=makeurl("progetti-fansub-anime-giapponesi-attivi-shoujo-shounen-manga.php"),
                      thumbnail="http://www.hiumi.it/public/forum/styles/art_deluxe/imageset/logo.png"),
                 Item(channel=item.channel,
-                     title=color("Lista Completa", "azure"),
+                     title=support.color("Lista Completa", "azure"),
                      action="lista_anime",
                      url=makeurl("streaming-fansub-gratuiti.php?categoria=In_corso&cat=Conclusi"),
                      thumbnail="http://www.hiumi.it/public/forum/styles/art_deluxe/imageset/logo.png"),
                 Item(channel=item.channel,
-                     title=color("Cerca ...", "yellow"),
+                     title=support.color("Cerca ...", "yellow"),
                      action="search",
                      thumbnail="http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search")
                 ]
@@ -96,7 +96,7 @@ def lista_anime(item):
             Item(channel=item.channel,
                  action="episodi",
                  title="%s %s %s" % (
-                 color(scrapedtitle, "azure"), color(" | ", "red"), color(scrapeddetails, "deepskyblue")),
+                 color(scrapedtitle, "azure"), support.color(" | ", "red"), color(scrapeddetails, "deepskyblue")),
                  fulltitle=scrapedtitle,
                  show=scrapedtitle,
                  url=scrapedurl,
@@ -148,17 +148,12 @@ def findvideos(item):
 
     itemlist.append(Item(channel=item.channel,
                          action="play",
-                         title="[%s] %s" % (color("." + estensionevideo, "orange"), item.title),
+                         title="[%s] %s" % (support.color("." + estensionevideo, "orange"), item.title),
                          fulltitle=item.fulltitle,
                          show=item.show,
                          url=urlvideo,
                          thumbnail=item.thumbnail))
     return itemlist
-
-
-
-def color(text, color):
-    return "[COLOR " + color + "]" + text + "[/COLOR]"
 
 
 def makeurl(text, title=""):

@@ -10,6 +10,7 @@ from platformcode import logger, config
 from core import httptools, scrapertools, servertools
 from core.item import Item
 from core import tmdb
+from channels import support
 
 host = "https://www.cineblog01.cloud"
 
@@ -20,21 +21,21 @@ def mainlist(item):
     logger.info()
     itemlist = [Item(channel=item.channel,
                      action="peliculas",
-                     title=color("Nuovi film", "azure"),
+                     title=support.color("Nuovi film", "azure"),
                      url="%s/new-film-streaming/" % host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="categorie",
-                     title=color("Categorie", "azure"),
+                     title=support.color("Categorie", "azure"),
                      url=host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="filmperanno",
-                     title=color("Film per anno", "azure"),
+                     title=support.color("Film per anno", "azure"),
                      url=host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
-                     title=color("Cerca ..." , "yellow"),
+                     title=support.color("Cerca ..." , "yellow"),
                      action="search",
                      extra="movie",
                      thumbnail="http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search")]
@@ -144,7 +145,7 @@ def peliculas(item):
         for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
             scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
             year = scrapertools.find_single_match(scrapedtitle, r'\((\d{4})\)')
-            scrapedtitle = scrapedtitle.replace(year, color(year, "red"))
+            scrapedtitle = scrapedtitle.replace(year, support.color(year, "red"))
 
             # Bypass fake links
             html = httptools.downloadpage(scrapedurl).data
@@ -204,11 +205,3 @@ def findvideos(item):
         videoitem.thumbnail = item.thumbnail
         videoitem.channel = item.channel
     return itemlist
-
-# ================================================================================================================
-
-# ----------------------------------------------------------------------------------------------------------------
-def color(text, color):
-    return "[COLOR "+color+"]"+text+"[/COLOR]"
-
-# ================================================================================================================

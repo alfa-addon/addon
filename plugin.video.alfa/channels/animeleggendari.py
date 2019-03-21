@@ -7,7 +7,7 @@
 import re
 
 from channels import autoplay
-from channels import filtertools
+from channels import filtertools, support
 from core import servertools, httptools, scrapertools, tmdb
 from platformcode import logger, config
 from core.item import Item
@@ -164,7 +164,7 @@ def episodios(item):
              contentType=item.contentType,
              title="Episodio: 1",
              text_color="azure",
-             fulltitle="%s %s %s " % (color(item.title, "deepskyblue"), color("|", "azure"), color("1", "orange")),
+             fulltitle="%s %s %s " % (support.color(item.title, "deepskyblue"), support.color("|", "azure"), support.color("1", "orange")),
              url=item.url,
              thumbnail=item.thumbnail,
              folder=True))
@@ -178,7 +178,7 @@ def episodios(item):
                      contentType=item.contentType,
                      title="Episodio: %s" % scrapednumber,
                      text_color="azure",
-                     fulltitle="%s %s %s " % (color(item.title, "deepskyblue"), color("|", "azure"), color(scrapednumber, "orange")),
+                     fulltitle="%s %s %s " % (support.color(item.title, "deepskyblue"), support.color("|", "azure"), color(scrapednumber, "orange")),
                      url=scrapedurl,
                      thumbnail=item.thumbnail,
                      folder=True))
@@ -202,7 +202,7 @@ def findvideos(item):
 
     for videoitem in itemlist:
         server = re.sub(r'[-\[\]\s]+', '', videoitem.title)
-        videoitem.title = "".join(["[%s] " % color(server.capitalize(), 'orange'), item.title])
+        videoitem.title = "".join(["[%s] " % support.color(server.capitalize(), 'orange'), item.title])
         videoitem.fulltitle = item.fulltitle
         videoitem.show = item.show
         videoitem.thumbnail = item.thumbnail
@@ -219,6 +219,3 @@ def findvideos(item):
     autoplay.start(itemlist, item)
     
     return itemlist
-
-def color(text, color):
-    return "[COLOR %s]%s[/COLOR]" % (color, text)

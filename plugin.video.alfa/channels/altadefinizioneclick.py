@@ -8,7 +8,7 @@ import re
 import urlparse
 
 from channels import autoplay
-from channels import filtertools
+from channels import filtertools, support
 from core import scrapertools, servertools, httptools, tmdb
 from core.item import Item
 from platformcode import logger, config
@@ -18,7 +18,7 @@ host = "https://altadefinizione.center"   ### <- cambio Host da .fm a .center
 IDIOMAS = {'Italiano': 'IT'}
 list_language = IDIOMAS.values()
 list_servers = ['openload', 'streamango', "vidoza", "thevideo", "okru", 'youtube']
-list_quality = ['default']
+list_quality = ['1080p']
 
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'altadefinizioneclick')
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'altadefinizioneclick')
@@ -221,49 +221,7 @@ def findvideos(item):
 
     itemlist = []
 
-    # Carica la pagina 
-    data = httptools.downloadpage(item.url, headers=headers).data.replace('\n', '')
-    patron = r'<iframe id="[^"]+" width="[^"]+" height="[^"]+" src="([^"]+)"[^>]+><\/iframe>'
-    url = scrapertools.find_single_match(data, patron).replace("?alta", "")
-    url = url.replace("&download=1", "")
-
-    if 'hdpass' in url:
-        data = httptools.downloadpage(url, headers=headers).data
-
-        start = data.find('<div class="row mobileRes">')
-        end = data.find('<div id="playerFront">', start)
-        data = data[start:end]
-
-        patron_res = '<div class="row mobileRes">(.*?)</div>'
-        patron_mir = '<div class="row mobileMirrs">(.*?)</div>'
-        patron_media = r'<input type="hidden" name="urlEmbed" data-mirror="([^"]+)" id="urlEmbed" value="([^"]+)"\s*/>'
-
-        res = scrapertools.find_single_match(data, patron_res)
-
-        urls = []
-        for res_url, res_video in scrapertools.find_multiple_matches(res, '<option.*?value="([^"]+?)">([^<]+?)</option>'):
-
-            data = httptools.downloadpage(urlparse.urljoin(url, res_url), headers=headers).data.replace('\n', '')
-
-            mir = scrapertools.find_single_match(data, patron_mir)
-
-            for mir_url in scrapertools.find_multiple_matches(mir, '<option.*?value="([^"]+?)">[^<]+?</value>'):
-
-                data = httptools.downloadpage(urlparse.urljoin(url, mir_url), headers=headers).data.replace('\n', '')
-
-                for media_label, media_url in re.compile(patron_media).findall(data):
-                    urls.append(url_decode(media_url))
-
-        itemlist = servertools.find_video_items(data='\n'.join(urls))
-        for videoitem in itemlist:
-            videoitem.title = item.title + videoitem.title
-            videoitem.fulltitle = item.fulltitle
-            videoitem.thumbnail = item.thumbnail
-            videoitem.show = item.show
-            videoitem.plot = item.plot
-            videoitem.channel = item.channel
-            videoitem.contentType = item.contentType
-            videoitem.language = IDIOMAS['Italiano']
+    itemlist = support.hdpass_get_servers(item)
 
     # Requerido para Filtrar enlaces
 
@@ -285,26 +243,3 @@ def findvideos(item):
                      action="add_pelicula_to_library", extra="findvideos", contentTitle=item.contentTitle))
 
     return itemlist
-
-
-def url_decode(url_enc):
-    lenght = len(url_enc)
-    if lenght % 2 == 0:
-        len2 = lenght / 2
-        first = url_enc[0:len2]
-        last = url_enc[len2:lenght]
-        url_enc = last + first
-        reverse = url_enc[::-1]
-        return base64.b64decode(reverse)
-
-    last_car = url_enc[lenght - 1]
-    url_enc[lenght - 1] = ' '
-    url_enc = url_enc.strip()
-    len1 = len(url_enc)
-    len2 = len1 / 2
-    first = url_enc[0:len2]
-    last = url_enc[len2:len1]
-    url_enc = last + first
-    reverse = url_enc[::-1]
-    reverse = reverse + last_car
-    return base64.b64decode(reverse)

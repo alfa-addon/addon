@@ -8,7 +8,7 @@ import re
 import urlparse
 
 from channels import autoplay
-from channels import filtertools
+from channels import filtertools, support
 from core import scrapertools, servertools, httptools
 from core.item import Item
 from core import tmdb
@@ -350,7 +350,7 @@ def findvid_series(item):
             data = httptools.downloadpage(urlparse.urljoin(url, mir_url), headers=headers).data.replace('\n', '')
 
             for media_label, media_url in re.compile(patron_media).findall(data):
-                urls.append(url_decode(media_url))
+                urls.append(support.url_decode(media_url))
 
     itemlist = servertools.find_video_items(data='\n'.join(urls))
     for videoitem in itemlist:
@@ -364,24 +364,3 @@ def findvid_series(item):
 
     return itemlist
 
-def url_decode(url_enc):
-    lenght = len(url_enc)
-    if lenght % 2 == 0:
-        len2 = lenght / 2
-        first = url_enc[0:len2]
-        last = url_enc[len2:lenght]
-        url_enc = last + first
-        reverse = url_enc[::-1]
-        return base64.b64decode(reverse)
-
-    last_car = url_enc[lenght - 1]
-    url_enc[lenght - 1] = ' '
-    url_enc = url_enc.strip()
-    len1 = len(url_enc)
-    len2 = len1 / 2
-    first = url_enc[0:len2]
-    last = url_enc[len2:len1]
-    url_enc = last + first
-    reverse = url_enc[::-1]
-    reverse = reverse + last_car
-    return base64.b64decode(reverse)

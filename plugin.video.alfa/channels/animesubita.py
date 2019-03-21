@@ -10,6 +10,7 @@ import re, urllib, urlparse
 from core import servertools, httptools, scrapertools, tmdb
 from platformcode import logger, config
 from core.item import Item
+from channels import support
 
 
 
@@ -22,27 +23,27 @@ def mainlist(item):
     logger.info()
     itemlist = [Item(channel=item.channel,
                      action="lista_anime_completa",
-                     title=color("Lista Anime", "azure"),
+                     title=support.color("Lista Anime", "azure"),
                      url="%s/lista-anime/" % host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="ultimiep",
-                     title=color("Ultimi Episodi", "azure"),
+                     title=support.color("Ultimi Episodi", "azure"),
                      url="%s/category/ultimi-episodi/" % host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="lista_anime",
-                     title=color("Anime in corso", "azure"),
+                     title=support.color("Anime in corso", "azure"),
                      url="%s/category/anime-in-corso/" % host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="categorie",
-                     title=color("Categorie", "azure"),
+                     title=support.color("Categorie", "azure"),
                      url="%s/generi/" % host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="search",
-                     title=color("Cerca anime ...", "yellow"),
+                     title=support.color("Cerca anime ...", "yellow"),
                      extra="anime",
                      thumbnail="http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search")
                 ]
@@ -136,7 +137,7 @@ def ultimiep(item):
             eptype += ":? " + epnumber
                 
         extra = "<tr>\s*<td[^>]+><strong>(?:[^>]+>|)%s(?:[^>]+>[^>]+>|[^<]*|[^>]+>)</strong>" % eptype
-        itm.title = color(title, 'azure').strip()
+        itm.title = support.color(title, 'azure').strip()
         itm.action = "findvideos"
         itm.url = url
         itm.fulltitle = cleantitle
@@ -179,7 +180,7 @@ def lista_anime(item, nextpage=True, show_lang=True):
             Item(channel=item.channel,
                  action="episodi",
                  contentType="tvshow" if 'oav' not in scrapedtitle.lower() else "movie",
-                 title=color(scrapedtitle.replace(lang, "(%s)" % color(lang, "red") if show_lang else "").strip(), 'azure'),
+                 title=color(scrapedtitle.replace(lang, "(%s)" % support.color(lang, "red") if show_lang else "").strip(), 'azure'),
                  fulltitle=cleantitle,
                  url=scrapedurl,
                  show=cleantitle,
@@ -231,7 +232,7 @@ def lista_anime_completa(item):
             Item(channel=item.channel,
                  action="episodi",
                  contentType="tvshow" if 'oav' not in scrapedtitle.lower() else "movie",
-                 title=color(scrapedtitle, 'azure'),
+                 title=support.color(scrapedtitle, 'azure'),
                  fulltitle=cleantitle,
                  show=cleantitle,
                  url=scrapedurl,
@@ -333,7 +334,7 @@ def findvideos(item):
             Item(channel=item.channel,
                 action="play",
                 text_color="azure",
-                title="[%s] %s" % (color("Diretto", "orange"), item.title),
+                title="[%s] %s" % (support.color("Diretto", "orange"), item.title),
                 fulltitle=item.fulltitle,
                 url=url,
                 thumbnail=item.thumbnail,
@@ -341,11 +342,3 @@ def findvideos(item):
                 plot=item.plot))
 
     return itemlist
-
-# ================================================================================================================
-
-# ----------------------------------------------------------------------------------------------------------------
-def color(text, color):
-    return "[COLOR %s]%s[/COLOR]" % (color, text)
-
-# ================================================================================================================

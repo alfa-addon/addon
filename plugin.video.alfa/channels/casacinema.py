@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-# Ringraziamo Icarus crew
+# Kodi on Demand - Kodi Addon
 # Canale per casacinema
 # ------------------------------------------------------------
 import re, urlparse
 
 from core import scrapertools, scrapertoolsV2, httptools, servertools, tmdb
-from channels import autoplay, filtertools
+from channels import autoplay, filtertools, support
 from core.item import Item
 from platformcode import logger, config
 
 
-host = 'https://www.casacinema.news'  ### <- Camio Host da .video a .news -> Continua. riga 164
+host = 'https://www.casacinema.site'
 
 IDIOMAS = {'Italiano': 'IT'}
 list_language = IDIOMAS.values()
@@ -341,7 +341,7 @@ def findvideos(item):
     itemlist = servertools.find_video_items(data=data)
     for videoitem in itemlist:
         server = re.sub(r'[-\[\]\s]+', '', videoitem.title).capitalize()
-        videoitem.title = "".join(["[%s] " % color(server, 'orange'), item.title])
+        videoitem.title = "".join(["[%s] " % support.color(server, 'orange'), item.title])
         videoitem.fulltitle = item.fulltitle
         videoitem.thumbnail = item.thumbnail
         videoitem.show = item.show
@@ -371,5 +371,3 @@ def findvideos(item):
 
     return itemlist
 
-def color(text, color):
-    return "[COLOR " + color + "]" + text + "[/COLOR]"

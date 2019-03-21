@@ -10,7 +10,7 @@ from core import httptools,  scrapertools, servertools
 from core.item import Item
 from core import tmdb
 from platformcode import logger, config
-
+from channels import support
 
 
 host = "http://www.guardaserie.watch"
@@ -23,27 +23,27 @@ def mainlist(item):
     logger.info("[GuardaSerieClick.py]==> mainlist")
     itemlist = [Item(channel=item.channel,
                      action="nuoveserie",
-                     title=color("Nuove serie TV", "orange"),
+                     title=support.color("Nuove serie TV", "orange"),
                      url="%s/lista-serie-tv" % host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="serietvaggiornate",
-                     title=color("Serie TV Aggiornate", "azure"),
+                     title=support.color("Serie TV Aggiornate", "azure"),
                      url="%s/lista-serie-tv" % host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="lista_serie",
-                     title=color("Anime", "azure"),
+                     title=support.color("Anime", "azure"),
                      url="%s/category/animazione/" % host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="categorie",
-                     title=color("Categorie", "azure"),
+                     title=support.color("Categorie", "azure"),
                      url=host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="search",
-                     title=color("Cerca ...", "yellow"),
+                     title=support.color("Cerca ...", "yellow"),
                      extra="serie",
                      thumbnail="http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search")]
 
@@ -266,7 +266,7 @@ def findepvideos(item):
 
     for videoitem in itemlist:
         server = re.sub(r'[-\[\]\s]+', '', videoitem.title).capitalize()
-        videoitem.title = "".join(["[%s] " % color(server.capitalize(), 'orange'), item.title])
+        videoitem.title = "".join(["[%s] " % support.color(server.capitalize(), 'orange'), item.title])
         videoitem.fulltitle = item.fulltitle
         videoitem.thumbnail = item.thumbnail
         videoitem.show = item.show
@@ -286,7 +286,7 @@ def findvideos(item):
 
     for videoitem in itemlist:
         server = re.sub(r'[-\[\]\s]+', '', videoitem.title).capitalize()
-        videoitem.title = "".join(["[%s] " % color(server.capitalize(), 'orange'), item.title])
+        videoitem.title = "".join(["[%s] " % support.color(server.capitalize(), 'orange'), item.title])
         videoitem.fulltitle = item.fulltitle
         videoitem.thumbnail = item.thumbnail
         videoitem.show = item.show
@@ -294,12 +294,3 @@ def findvideos(item):
         videoitem.channel = item.channel
 
     return itemlist
-
-
-# ================================================================================================================
-
-# ----------------------------------------------------------------------------------------------------------------
-def color(text, color):
-    return "[COLOR %s]%s[/COLOR]" % (color, text)
-
-# ================================================================================================================

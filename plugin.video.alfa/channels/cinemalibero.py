@@ -201,7 +201,7 @@ def select(item):
 def findvideos(item): # Questa def. deve sempre essere nominata findvideos
     logger.info('[cinemalibero.py] findvideos')
     itemlist = []
-    # import web_pdb; web_pdb.set_trace()
+
     if item.contentType == 'episode':
         data = item.url.lower()
         block = scrapertools.find_single_match(data,r'>streaming.*?<\/strong>*?<\/h2>(.*?)<\/div>')

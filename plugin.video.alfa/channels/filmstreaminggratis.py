@@ -7,7 +7,7 @@
 import re
 
 from channels import autoplay
-from channels import filtertools
+from channels import filtertools, support
 from core import scrapertools, servertools, httptools
 from core.item import Item
 from core import tmdb
@@ -29,17 +29,17 @@ def mainlist(item):
     logger.info("[FilmStreamingGratis.py]==> mainlist")
     itemlist = [Item(channel=item.channel,
                      action="ultimifilm",
-                     title=color("Ultimi Film", "azure"),
+                     title=support.color("Ultimi Film", "azure"),
                      url=host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="categorie",
-                     title=color("Categorie", "azure"),
+                     title=support.color("Categorie", "azure"),
                      url=host,
                      thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
                 Item(channel=item.channel,
                      action="search",
-                     title=color("Cerca film ...", "yellow"),
+                     title=support.color("Cerca film ...", "yellow"),
                      extra="movie",
                      thumbnail="http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search")]
 
@@ -195,7 +195,7 @@ def findvideos(item):
 
     for videoitem in itemlist:
         server = re.sub(r'[-\[\]\s]+', '', videoitem.title)
-        videoitem.title = "".join(["[%s] " % color(server.capitalize(), 'orange'), item.title])
+        videoitem.title = "".join(["[%s] " % support.color(server.capitalize(), 'orange'), item.title])
         videoitem.fulltitle = item.fulltitle
         videoitem.show = item.show
         videoitem.thumbnail = item.thumbnail
@@ -224,8 +224,4 @@ def findvideos(item):
 
     return itemlist
 
-
-
-def color(text, color):
-    return "[COLOR %s]%s[/COLOR]" % (color, text)
 

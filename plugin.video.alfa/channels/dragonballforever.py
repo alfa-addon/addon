@@ -8,6 +8,7 @@ from platformcode import logger
 from core import httptools
 from core import scrapertools
 from core.item import Item
+from channels import support
 
 
 
@@ -19,13 +20,13 @@ def mainlist(item):
     logger.info()
     itemlist = [Item(channel=item.channel,
                      action="episodi",
-                     title=color("Dragon Ball Kai", "azure"),
+                     title=support.color("Dragon Ball Kai", "azure"),
                      url="%s/dragon-ball-kai-episodi/" % host,
                      extra="Kai",
                      show="Dragon Ball Kai",
                      thumbnail="https://www.dragonballforever.it/wp-content/uploads/2016/11/dragonball_kai_cover.jpg"),
                 Item(channel=item.channel,
-                     title=color("Dragon Ball Super", "azure"),
+                     title=support.color("Dragon Ball Super", "azure"),
                      action="episodi",
                      url="%s/dragon-ball-super/" % host,
                      extra="Super",
@@ -52,7 +53,7 @@ def episodi(item):
         itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
-                 title=re.sub(r'\d+', 'Episodio: %s' % color(epnumber, 'red'), scrapedtitle),
+                 title=re.sub(r'\d+', 'Episodio: %s' % support.color(epnumber, 'red'), scrapedtitle),
                  fulltitle="Dragon Ball %s Episodio: %s" % (item.extra, scrapedtitle),
                  url=scrapedurl,
                  extra=item.extra,
@@ -79,18 +80,10 @@ def findvideos(item):
     itemlist.append(
         Item(channel=item.channel,
             action="play",
-            title="%s [.%s]" % (color(item.show, 'azure'), color(item.url.split('.')[-1], 'orange')),
-            fulltitle=color(item.fulltitle, 'orange') if 'Super' in item.extra else color(item.fulltitle, 'deepskyblue'),
+            title="%s [.%s]" % (support.color(item.show, 'azure'), support.color(item.url.split('.')[-1], 'orange')),
+            fulltitle=support.color(item.fulltitle, 'orange') if 'Super' in item.extra else support.color(item.fulltitle, 'deepskyblue'),
             url=item.url,
             show=item.show,
             extra=item.extra,
             thumbnail=item.thumbnail))
     return itemlist
-
-# ================================================================================================================
-
-# ----------------------------------------------------------------------------------------------------------------
-def color(text, color):
-    return "[COLOR "+color+"]"+text+"[/COLOR]"
-
-# ================================================================================================================

@@ -8,7 +8,7 @@ import urlparse
 
 from channelselector import get_thumb
 from channels import autoplay
-from channels import filtertools
+from channels import filtertools, support
 from core import scrapertools, servertools, httptools
 from platformcode import logger, config
 from core.item import Item
@@ -196,54 +196,7 @@ def cerca(item):
 def findvideos(item):
     logger.info('[filmsenzalimiti.py] findvideos')
 
-    itemlist = []
-
-    # Carica la pagina 
-    data = httptools.downloadpage(item.url).data.replace('\t', '').replace('\n', '')
-    logger.info('[filmsenzalimiti.py] findvideos page download= '+data)
-
-    patron = r'Streaming in HD<\/a><\/li><\/ul><br><p><iframe width="100%" height="430px" src="([^"]+)"'
-    url = scrapertools.find_single_match(data, patron)
-
-    if 'hdpass' in url:
-        data = httptools.downloadpage('http:%s' % url if 'http' not in url else url).data
-
-        start = data.find('<div class="row mobileRes">')
-        end = data.find('<div id="playerFront">', start)
-        data = data[start:end]
-
-        patron_res = '<div class="row mobileRes">(.*?)</div>'
-        patron_mir = '<div class="row mobileMirrs">(.*?)</div>'
-        patron_media = r'<input type="hidden" name="urlEmbed" data-mirror="[^"]+" id="urlEmbed" value="([^"]+)"[^>]+>'
-
-        res = scrapertools.find_single_match(data, patron_res)
-
-        for res_url, resolution in scrapertools.find_multiple_matches(res, '<option[^v]+value="([^"]*)">([^<]*)</option>'):
-            res_url = urlparse.urljoin(url, res_url)
-            data = httptools.downloadpage('http:%s' % res_url if 'http' not in res_url else res_url).data.replace('\n', '')
-
-            mir = scrapertools.find_single_match(data, patron_mir)
-
-            for mir_url, server in scrapertools.find_multiple_matches(mir, '<option[^v]+value="([^"]*)">([^<]*)</value>'):
-                mir_url = urlparse.urljoin(url, mir_url)
-                data = httptools.downloadpage('http:%s' % mir_url if 'http' not in mir_url else mir_url).data.replace('\n', '')
-
-                for media_url in re.compile(patron_media).findall(data):
-                    scrapedurl = url_decode(media_url)
-                    logger.info(scrapedurl)
-                    itemlist.append(
-                        Item(channel=item.channel,
-                             action="play",
-                             title='[[COLOR green]%s[/COLOR]][[COLOR orange]%s[/COLOR]] %s' % (resolution, server, item.title),
-                             url=scrapedurl,
-                             server=server,
-                             fulltitle=item.fulltitle,
-                             thumbnail=item.thumbnail,
-                             show=item.show,
-                             plot=item.plot,
-                             quality=resolution,
-                             contentType=item.contentType,
-                             folder=False))
+    itemlist = support.hdpass_get_servers(item)
 
    # Link Aggiungi alla Libreria
     if item.contentType == 'movie':
@@ -269,30 +222,6 @@ def play(item):
     itemlist = servertools.find_video_items(data=item.url)
 
     return itemlist
-
-def url_decode(url_enc):
-    lenght = len(url_enc)
-    if lenght % 2 == 0:
-        len2 = lenght / 2
-        first = url_enc[0:len2]
-        last = url_enc[len2:lenght]
-        url_enc = last + first
-        reverse = url_enc[::-1]
-        return base64.b64decode(reverse)
-
-    last_car = url_enc[lenght - 1]
-    url_enc[lenght - 1] = ' '
-    url_enc = url_enc.strip()
-    len1 = len(url_enc)
-    len2 = len1 / 2
-    first = url_enc[0:len2]
-    last = url_enc[len2:len1]
-    url_enc = last + first
-    reverse = url_enc[::-1]
-    reverse = reverse + last_car
-    return base64.b64decode(reverse)
-
-
 
 def newest(categoria):
     logger.info('[filmsenzalimiti.py] newest' + categoria)
