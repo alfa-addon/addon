@@ -26,7 +26,8 @@ list_servers = ['torrent']
 
 channel = "mejortorrent"
 
-host = 'http://www.mejortorrent.org/'
+host = 'http://www.mejortorrent.tv/'
+host_sufix = '.tv'
 #host = config.get_setting('domain_name', channel)
 
 categoria = channel.capitalize()
@@ -296,8 +297,8 @@ def listado(item):
 
         item_local.title = scrapertools.get_match(scrapedurl, patron_enlace)
         item_local.title = item_local.title.replace("-", " ")
-        item_local.url = urlparse.urljoin(item_local.url, scrapedurl)
-        item_local.thumbnail = host + urllib.quote(scrapedthumbnail)
+        item_local.url = verificar_url(urlparse.urljoin(item_local.url, scrapedurl))
+        item_local.thumbnail = verificar_url(host + urllib.quote(scrapedthumbnail))
         item_local.contentThumbnail = item_local.thumbnail
         item_local.infoLabels['year'] = '-'  # Al no saber el año, le ponemos "-" y TmDB lo calcula automáticamente
         
@@ -660,7 +661,7 @@ def listado_busqueda(item):
             item_local.quality = scrapertools.remove_htmltags(scrapedinfo).decode('iso-8859-1').encode('utf8')
         item_local.quality = item_local.quality.replace("(", "").replace(")", "").replace("[", "").replace("]", "").replace("Documental", "").replace("documental", "")
         
-        item_local.url = urlparse.urljoin(item.url, scrapedurl)
+        item_local.url = verificar_url(urlparse.urljoin(item.url, scrapedurl))
         
         #Preparamos la información básica para TMDB
         if "/serie-" in scrapedurl or "/doc-" in scrapedurl:
@@ -829,10 +830,10 @@ def findvideos(item):
     for scrapedurl in matches:
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
-        url = urlparse.urljoin(item.url, scrapedurl)
+        url = verificar_url(urlparse.urljoin(item.url, scrapedurl))
         
         # Localiza el .torrent en el siguiente link
-        if not item.post and not item.armagedon:                            # Si no es llamada con Post, hay que bajar un nivel más
+        if not item.post and not item.armagedon:                    # Si no es llamada con Post, hay que bajar un nivel más
             try:
                 torrent_data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url).data)
             except:                                                                     #error
@@ -849,15 +850,15 @@ def findvideos(item):
                     if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
                         return item                                                     #Devolvemos el Item de la llamada
                     else:
-                        return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+                        return itemlist                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
             
             #logger.debug(torrent_data)
             if not item.armagedon:
                 item_local.url = scrapertools.get_match(torrent_data, ">Pincha.*?<a href='(.*?\/uploads\/torrents\/\w+\/.*?\.torrent)'")
-                item_local.url = urlparse.urljoin(url, item_local.url)
+                item_local.url = verificar_url(urlparse.urljoin(url, item_local.url))
         
         elif not item.armagedon:
-            item_local.url = url          # Ya teníamos el link desde el primer nivel (documentales)
+            item_local.url = url                                # Ya teníamos el link desde el primer nivel (documentales)
         item_local.url = item_local.url.replace(" ", "%20")
         
         if item.armagedon and item.emergency_urls and not item.videolibray_emergency_urls:
@@ -867,10 +868,10 @@ def findvideos(item):
                     del item.emergency_urls[0][0]
         if not item.armagedon and item.emergency_urls and not item.videolibray_emergency_urls:
             if len(item.emergency_urls[0]):
-                item_local.torrent_alt = item.emergency_urls[0][0]                      #Guardamos la primera url del .Torrent ALTERNATIVA
+                item_local.torrent_alt = item.emergency_urls[0][0]      #Guardamos la primera url del .Torrent ALTERNATIVA
         
         if item.videolibray_emergency_urls:
-            item.emergency_urls[0].append(item_local.url)                               #Salvamnos la url...
+            item.emergency_urls[0].verificar_url(append(item_local.url))                #Salvamnos la url...
 
         # Poner la calidad, si es necesario
         if not item_local.quality:
@@ -1003,7 +1004,7 @@ def episodios(item):
         item_local.title = ''
         item_local.context = "['buscar_trailer']"
 
-        item_local.url = urlparse.urljoin(host, scrapedurl)
+        item_local.url = verificar_url(urlparse.urljoin(host, scrapedurl))
         
         scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf8').strip()
         if scrapedtitle.endswith('.'):
@@ -1030,7 +1031,7 @@ def episodios(item):
         else:       #Se prepara el Post para documentales
             item_local.contentSeason = 1
             item_local.contentEpisodeNumber = 1
-            item_local.url = host + "/secciones.php?sec=descargas&ap=contar_varios"
+            item_local.url = verificar_url(host + "/secciones.php?sec=descargas&ap=contar_varios")
             item_local.post = urllib.urlencode({name: value, "total_capis": total_capis, "tabla": tabla, "titulo": titulo_post})
         
         if year:
@@ -1050,6 +1051,15 @@ def episodios(item):
     item, itemlist = generictools.post_tmdb_episodios(item, itemlist)
 
     return itemlist
+    
+    
+def verificar_url(url):
+    if '.com' in url or '.net' in url or '.org' in url:
+        url = url.replace('.com', '.tv').replace('.net', '.tv').replace('.org', '.tv')
+        url = url.replace('torrents/tmp/torrent.php?table=peliculas/&name=', 'torrents/peliculas/')
+        url = url.replace('torrents/tmp/torrent.php?table=series/&name=', 'torrents/series/')
+        url = url.replace('torrents/tmp/torrent.php?table=documentales/&name=', 'torrents/documentales/')
+    return url
 
 
 def actualizar_titulos(item):

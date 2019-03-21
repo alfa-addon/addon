@@ -392,12 +392,15 @@ def play_from_library(item):
     import xbmcgui
     import xbmcplugin
     import xbmc
+    from time import sleep
+    
     # Intentamos reproducir una imagen (esto no hace nada y ademas no da error)
     xbmcplugin.setResolvedUrl(int(sys.argv[1]), True,
                               xbmcgui.ListItem(
                                   path=os.path.join(config.get_runtime_path(), "resources", "subtitle.mp4")))
 
     # Por si acaso la imagen hiciera (en futuras versiones) le damos a stop para detener la reproduccion
+    sleep(0.5)              ### Si no se pone esto se bloquea Kodi
     xbmc.Player().stop()
 
     # modificamos el action (actualmente la videoteca necesita "findvideos" ya que es donde se buscan las fuentes
@@ -421,7 +424,6 @@ def play_from_library(item):
 
         while platformtools.is_playing():
                 # Ventana convencional
-                from time import sleep
                 sleep(5)
         p_dialog.update(50, '')
 

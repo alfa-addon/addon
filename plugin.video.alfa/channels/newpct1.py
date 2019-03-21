@@ -7,6 +7,7 @@ import urlparse
 import datetime
 import ast
 import random
+import traceback
 
 from channelselector import get_thumb
 from core import httptools
@@ -700,8 +701,12 @@ def listado(item):
         
         #Guardamos el resto de variables del vídeo
         item_local.url = scrapedurl
+        if not item_local.url.startswith("http"):                           #Si le falta el http.: lo ponemos
+            item_local.url = scrapertools.find_single_match(item_local.channel_host, '(\w+:)//') + item_local.url
         item_local.thumbnail = scrapedthumbnail
-        item_local.contentThumbnail = scrapedthumbnail
+        if not item_local.thumbnail.startswith("http"):                     #Si le falta el http.: lo ponemos
+            item_local.thumbnail = scrapertools.find_single_match(item_local.channel_host, '(\w+:)//') + item_local.thumbnail
+        item_local.contentThumbnail = item_local.thumbnail
 
         #Guardamos el año que puede venir en la url, por si luego no hay resultados desde TMDB
         year = ''
@@ -1008,7 +1013,7 @@ def listado_busqueda(item):
             if not data_serie:                                                  #Si no ha logrado encontrar nada, salimos
                 title_subs += ["ERR"]
             
-            elif item_local.channel_alt:                                                    #Si ha habido fail-over, lo comento
+            elif item_local.channel_alt:                                        #Si ha habido fail-over, lo comento
                 url = url.replace(item_local.channel_alt, item_local.category.lower())
                 title_subs += ["ALT"]
 
@@ -1029,8 +1034,10 @@ def listado_busqueda(item):
                     title_subs += ["Episodio %sx%s" % (scrapertools.find_single_match(url, '\/temp.*?-(\d+)-?\/cap.*?-(\d+(?:-al-\d+)?)-?\/'))]
                     url = item_local.url
             except:
-                pass
+                logger.error(traceback.format_exc())
                 
+            #logger.debug(item_local.url)
+            
         if item.extra == "novedades" and "/serie" in url:
             if not item_local.url or episodio_serie == 0:
                 item_local.url = url
@@ -1204,8 +1211,12 @@ def listado_busqueda(item):
         
         #Guardamos el resto de variables del vídeo
         item_local.url = url
+        if not item_local.url.startswith("http"):                           #Si le falta el http.: lo ponemos
+            item_local.url = scrapertools.find_single_match(item_local.channel_host, '(\w+:)//') + item_local.url
         item_local.thumbnail = scrapedthumbnail
-        item_local.contentThumbnail = scrapedthumbnail
+        if not item_local.thumbnail.startswith("http"):                     #Si le falta el http.: lo ponemos
+            item_local.thumbnail = scrapertools.find_single_match(item_local.channel_host, '(\w+:)//') + item_local.thumbnail
+        item_local.contentThumbnail = item_local.thumbnail
 
         #Guardamos el año que puede venir en la url, por si luego no hay resultados desde TMDB
         try:
@@ -2019,7 +2030,12 @@ def episodios(item):
             
             item_local = item.clone()                                           #Creamos copia local de Item por episodio
             item_local.url = url
-            item_local.contentThumbnail = thumb
+            if not item_local.url.startswith("http"):                           #Si le falta el http.: lo ponemos
+                item_local.url = scrapertools.find_single_match(item_local.channel_host, '(\w+:)//') + item_local.url
+            item_local.thumbnail = thumb
+            if not item_local.thumbnail.startswith("http"):                     #Si le falta el http.: lo ponemos
+                item_local.thumbnail = scrapertools.find_single_match(item_local.channel_host, '(\w+:)//') + item_local.thumbnail
+            item_local.contentThumbnail = item_local.thumbnail
             estado = True                                                       #Buena calidad de datos por defecto
 
             if "<span" in info:                                                 # new style

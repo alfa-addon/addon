@@ -14,10 +14,10 @@ from channelselector import get_thumb
 
 host = "https://maxipelis24.tv"
 
-IDIOMAS = {'Latino': 'Latino', 'Subtitulado': 'VOSE', 'Español': 'CAST'}
+IDIOMAS = {'Latino': 'Latino', 'Sub':'VOSE', 'Subtitulado': 'VOSE', 'Español': 'CAST', 'Castellano':'CAST'}
 list_language = IDIOMAS.values()
 list_quality = []
-list_servers = ['rapidvideo', 'vidoza', 'openload', 'streamango']
+list_servers = ['rapidvideo', 'vidoza', 'openload', 'streamango', 'okru']
 
 
 def mainlist(item):
@@ -53,7 +53,6 @@ def category(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-
     if item.cat == 'genre':
         data = scrapertools.find_single_match(
             data, '<h3>Géneros <span class="icon-sort">.*?</ul>')
@@ -106,7 +105,6 @@ def movies(item):
         if next_page:
             itemlist.append(item.clone(url=next_page, page=0,
                                        title=" Siguiente »"))
-
     return itemlist
 
 
@@ -115,16 +113,28 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    data1 = scrapertools.find_single_match(
-        data, '<ul class="idTabs">.*?</ul></div>')
-    patron = "li>.*?href=.*?>([^\s]+)"
-    matches1 = re.compile(patron, re.DOTALL).findall(data1)
-    for lang in matches1:
-        idioma = lang
-
-    patron = '<div id="div.*?<div class="movieplay".*?(?:iframe.*?src|IFRAME SRC)="([^&]+)&'
+    patron = '<div id="div(\d+)".*?<div class="movieplay".*?(?:iframe.*?src|IFRAME SRC)="([^&]+)&'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for link in matches:
+    for ot, link in matches:
+        data1 = scrapertools.find_single_match(data, '<ul class="idTabs">.*?</ul></div>')
+        patron = 'li>.*?href="#div%s.*?>.*?([^<|\s]+)' % ot
+        matches1 = re.compile(patron, re.DOTALL).findall(data1)
+        for lang in matches1:
+            if "VIP" in lang:
+                continue
+            idioma = lang
+
+        if 'ok.ru' in link:
+            patron = '<div id="div.*?<div class="movieplay".*?(?:iframe.*?src|IFRAME SRC)="([^"]+)"'
+            matches = re.compile(patron, re.DOTALL).findall(data)
+            for link in matches:
+                if not link.startswith("https"):
+                    url = "https:%s" % link
+                    title = '%s'
+                    new_item = Item(channel=item.channel, title=title, url=url,
+                                    action='play', language=IDIOMAS[idioma], infoLabels=item.infoLabels)
+                    itemlist.append(new_item)
+
         if 'maxipelis24.tv/hideload/?' in link:
             id_letter = scrapertools.find_single_match(link, '?(\w)d')
             id_type = '%sd' % id_letter
@@ -138,7 +148,6 @@ def findvideos(item):
                                                 follow_redirects=False)
             url = video_data.headers['location']
             title = '%s'
-
         else:
             patron = '<div id="div.*?<div class="movieplay".*?(?:iframe.*?src|IFRAME SRC)="([^"]+)"'
             matches = re.compile(patron, re.DOTALL).findall(data)
