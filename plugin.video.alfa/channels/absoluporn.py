@@ -70,7 +70,7 @@ def lista(item):
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                              contentTitle = scrapedtitle))
+                              fanart=thumbnail, contentTitle = scrapedtitle))
     next_page = scrapertools.find_single_match(data, '<span class="text16">\d+</span> <a href="..([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)

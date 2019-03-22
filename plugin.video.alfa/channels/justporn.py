@@ -51,7 +51,7 @@ def categorias(item):
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
 
-    return itemlist
+    return sorted(itemlist, key=lambda i: i.title)
 
 
 def lista(item):
@@ -67,7 +67,7 @@ def lista(item):
         scrapedtitle = "[COLOR yellow]" + (scrapedtime) + "[/COLOR] " + scrapedtitle
         scrapedurl = "http://xxx.justporno.tv/embed/" + scrapedurl
         itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail , plot=scrapedplot) )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
                               
     if item.extra:
         next_page = scrapertools.find_single_match(data, '<li class="next">.*?from_videos\+from_albums:(.*?)>')

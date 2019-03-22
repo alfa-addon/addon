@@ -69,7 +69,7 @@ def lista(item):
         url="https:" + scrapedurl
         thumbnail="https:" + scrapedthumbnail
         itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=url, thumbnail=thumbnail,
-                               plot=scrapedplot) )
+                              fanart=thumbnail, plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<li class="float-xs-right"><a href=\'([^\']+)\' title=\'Pagina \d+\'>')
     if next_page == "":
         next_page = scrapertools.find_single_match(data,'<li><a href=\'([^\']+)\' title=\'Pagina \d+\'>&raquo;</a>')

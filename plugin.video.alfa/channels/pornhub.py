@@ -50,8 +50,8 @@ def categorias(item):
         else:
             url = urlparse.urljoin(item.url, scrapedurl + "?o=cm")
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
-        itemlist.append(Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=url, fanart=item.fanart,
-                             thumbnail=scrapedthumbnail))
+        itemlist.append(Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=url,
+                             fanart=scrapedthumbnail, thumbnail=scrapedthumbnail))
     itemlist.sort(key=lambda x: x.title)
     return itemlist
 
@@ -73,7 +73,7 @@ def peliculas(item):
             title += ' [HD]'
         url = urlparse.urljoin(item.url, url)
         itemlist.append(
-            Item(channel=item.channel, action="play", title=title, url=url, fanart=item.fanart, thumbnail=thumbnail))
+            Item(channel=item.channel, action="play", title=title, url=url, fanart=thumbnail, thumbnail=thumbnail))
     if itemlist:
         # Paginador
         patron = '<li class="page_next"><a href="([^"]+)"'
@@ -88,7 +88,7 @@ def peliculas(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     patron  = '"defaultQuality":true,"format":"mp4","quality":"\d+","videoUrl":"(.*?)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl  in matches:
@@ -96,3 +96,4 @@ def play(item):
     itemlist.append(item.clone(action="play", title=url, fulltitle = item.title, url=url))
     return itemlist
 
+    

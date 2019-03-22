@@ -8,15 +8,15 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://www.muchoporno.xxx'
+host = 'https://www.pornburst.xxx'
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevas" , action="lista", url=host))
+    itemlist.append( Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "/page3.html"))
     itemlist.append( Item(channel=item.channel, title="Pornstars" , action="categorias", url=host + "/pornstars/"))
-    #itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host + "/sitios/"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categorias/"))
+    itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host + "/sites/"))
+    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -39,11 +39,12 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    if "/sitios/" in item.url:
-        patron = '<div class="muestra-escena muestra-canales">.*?href="(.*?)">.*?'
-        patron += 'src="(.*?)".*?'
-        patron += '<a title="(.*?)".*?'
-        patron += '</span> (.*?) videos</span>'
+    if "/sites/" in item.url:
+        patron = '<div class="muestra-escena muestra-canales">.*?'
+        patron += 'href="([^"]+)">.*?'
+        patron += 'src="([^"]+)".*?'
+        patron += '<a title="([^"]+)".*?'
+        patron += '</span> (\d+) videos</span>'
     if "/pornstars/" in item.url:
         patron = '<a class="muestra-escena muestra-pornostar" href="([^"]+)">.*?'
         patron += 'src="([^"]+)".*?'
@@ -62,8 +63,8 @@ def categorias(item):
         scrapedtitle = scrapedtitle +  cantidad
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail , plot=scrapedplot) )
-    next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)">Siguiente</a></li>')
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail , plot=scrapedplot) )
+    next_page = scrapertools.find_single_match(data,'<link rel="next" href="([^"]+)"')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="categorias", title="Página Siguiente >>", text_color="blue", url=next_page) )
@@ -74,7 +75,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a class="muestra-escena"\s*href="([^"]+)".*?'
     patron += 'data-stats-video-name="([^"]+)".*?'
@@ -89,8 +90,8 @@ def lista(item):
         plot = ""
         year = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                              plot=plot, contentTitle = contentTitle))
-    next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)">Siguiente</a></li>')
+                              fanart=thumbnail, plot=plot, contentTitle = contentTitle))
+    next_page = scrapertools.find_single_match(data,'<link rel="next" href="([^"]+)"')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
@@ -100,7 +101,7 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     patron  = '<source src="([^"]+)" type="video/mp4"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:

@@ -69,7 +69,11 @@ def mainlist(item):
     itemlist.append(Item(channel=__channel__, title="Caseros", url=host + '/hd',
                          action="videos", viewmode="movie_with_plot", viewcontent='homemade',
                          thumbnail=get_thumb("channels_adult.png")))
-
+ 
+    itemlist.append(Item(channel=__channel__, title="PornStar", action="catalogo",
+                         url=host + '/pornstars/', viewmode="movie_with_plot", viewcontent='movies',
+                         thumbnail=get_thumb("channels_adult.png")))
+ 
     itemlist.append(Item(channel=__channel__, title="Categorías", action="categorias",
                          url=host + '/categories/', viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
@@ -100,28 +104,45 @@ def search(item, texto):
 def videos(item):
     logger.info()
     itemlist = []
-
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     patron = '<a class="[^"]+" href="([^"]+)">'  # url
     patron += '<img id="[^"]+".*?src="([^"]+)".*?'  # img
     patron += '<span class="title">([^<]+)</span>.*?'  # title
-    patron += '<span class="duration">([^<]+)</span>'  # time
+    patron += '<span class="duration"(.*?)</a>'  # time
     matches = scrapertools.find_multiple_matches(data, patron)
-
-    for scrapedurl, scrapedthumbnail, scrapedtitle, time in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedtime in matches:
+        time = scrapertools.find_single_match(scrapedtime, '>([^<]+)</span>')
         title = "[%s] %s" % (time, scrapedtitle)
-
+        if ">HD<" in scrapedtime:
+            title = "[COLOR yellow]" + time + "[/COLOR] " + "[COLOR red]" + "HD" + "[/COLOR] " + scrapedtitle
         itemlist.append(Item(channel=item.channel, action='play', title=title, thumbnail=scrapedthumbnail,
                              url=host + scrapedurl, contentTile=scrapedtitle, fanart=scrapedthumbnail))
-
     paginacion = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />').replace('amp;', '')
-
     if paginacion:
         itemlist.append(Item(channel=item.channel, action="videos",
                              thumbnail=thumbnail % 'rarrow',
                              title="\xc2\xbb Siguiente \xc2\xbb", url=paginacion))
+    return itemlist
 
+
+def catalogo(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    patron = '<li class="pornstars">.*?<a href="([^"]+)".*?'
+    patron += '<img src="([^"]+)" alt="([^"]+)"'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
+        url = urlparse.urljoin(item.url, scrapedurl)
+        itemlist.append(Item(channel=item.channel, action="videos", url=url, title=scrapedtitle, fanart=scrapedthumbnail,
+                             thumbnail=scrapedthumbnail, viewmode="movie_with_plot"))
+    paginacion = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />').replace('amp;', '')
+    if paginacion:
+        itemlist.append(Item(channel=item.channel, action="catalogo",
+                             thumbnail=thumbnail % 'rarrow',
+                             title="\xc2\xbb Siguiente \xc2\xbb", url=paginacion))
     return itemlist
 
 
@@ -133,9 +154,7 @@ def categorias(item):
     # logger.info(data)
     patron = 'class="checkHomepage"><a href="([^"]+)".*?'  # url
     patron += '<span class="count">([^<]+)</span>'  # title, vids
-
     matches = re.compile(patron, re.DOTALL).findall(data)
-
     for scrapedurl, vids in matches:
         scrapedtitle = scrapedurl.replace('/categories/', '').replace('-', ' ').title()
         title = "%s (%s)" % (scrapedtitle, vids.title())
@@ -144,7 +163,6 @@ def categorias(item):
         itemlist.append(Item(channel=item.channel, action="videos", fanart=thumbnail,
                              title=title, url=url, thumbnail=thumbnail,
                              viewmode="movie_with_plot", folder=True))
-
     return itemlist
 
 
@@ -153,5 +171,5 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, '"quality":"[^"]+","videoUrl":"([^"]+)"').replace('\\', '')
     itemlist.append(item.clone(url=url, title=item.contentTile))
-
     return itemlist
+

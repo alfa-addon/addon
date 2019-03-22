@@ -47,7 +47,7 @@ def catalogo(item):
         scrapedplot = ""
         scrapedurl = urlparse.urljoin(item.url,scrapedurl) + "/movies"
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail , plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<li class="arrow"><a rel="next" href="([^"]+)">&raquo;</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
@@ -68,7 +68,7 @@ def categorias(item):
         scrapedtitle = scrapedtitle
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
@@ -86,7 +86,7 @@ def lista(item):
         plot = ""
         year = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                               contentTitle = title, infoLabels={'year':year} ))
+                              fanart=thumbnail, contentTitle = title, infoLabels={'year':year} ))
     next_page = scrapertools.find_single_match(data,'<li class="arrow"><a rel="next" href="([^"]+)">&raquo;</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
