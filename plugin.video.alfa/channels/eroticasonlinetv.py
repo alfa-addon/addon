@@ -57,8 +57,8 @@ def lista(item):
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         plot = ""
         url = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=url, thumbnail=scrapedthumbnail,
-                               plot=plot, contentTitle = scrapedtitle) )
+        itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=url, 
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=plot, contentTitle = scrapedtitle) )
     next_page = scrapertools.find_single_match(data, '<div class="naviright"><a href="([^"]+)">Siguiente &raquo;</a>')
     if next_page:
         next_page = urlparse.urljoin(item.url, next_page)

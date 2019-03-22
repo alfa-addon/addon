@@ -10,6 +10,7 @@ from core import httptools
 
 host = 'http://yuuk.net'
 
+
 def mainlist(item):
     logger.info()
     itemlist = []
