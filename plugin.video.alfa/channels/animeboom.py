@@ -15,7 +15,7 @@ from core.item import Item
 from platformcode import logger, config
 from channels import autoplay
 from channels import filtertools
-
+from channels import renumbertools
 
 host = "https://animeboom.net/"
 
@@ -84,6 +84,7 @@ def mainlist(item):
                                ))
 
     autoplay.show_option(item.channel, itemlist)
+    itemlist = renumbertools.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -113,12 +114,16 @@ def list_all(item):
         else:
             lang = 'VOSE'
         title = re.sub('Audio Latino', '', scrapedtitle)
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
         itemlist.append(Item(channel=item.channel, action='episodios',
                                    title=title,
                                    url=url,
                                    thumbnail=thumbnail,
                                    contentSerieName=title,
                                    language = lang,
+                                   context = context,
                                    infoLabels={'year':year}
                                    ))
 
@@ -153,11 +158,17 @@ def search_results(item):
 
         url = scrapedurl
         title = re.sub('online|Audio|Latino', '', scrapedtitle)
-
+        title = title.lstrip()
+        title = title.rstrip()
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
         itemlist.append(Item(channel=item.channel,
                              action="episodios",
                              title=title,
+                             contentSerieName=title,
                              url=url,
+                             context = context,
                              thumbnail=scrapedthumbnail))
 
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
@@ -217,9 +228,10 @@ def episodios(item):
             lang='Latino'
         else:
             lang = 'VOSE'
-        title = "1x" + episode + " - Episodio %s" % episode
+        season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, int(episode))
+        title = "%sx%s - %s" % (season, str(episode).zfill(2),item.contentSerieName)
         url = scrapedurl
-        infoLabels['season'] = '1'
+        infoLabels['season'] = season
         infoLabels['episode'] = episode
 
         itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.contentSerieName, url=url,

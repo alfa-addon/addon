@@ -1,26 +1,23 @@
 # -*- coding: utf-8 -*-
 
-from core import jsontools
+from core import httptools
 from core import scrapertools
 from platformcode import logger
 
 
 # Returns an array of possible video url's from the page_url
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
-    logger.info("(page_url='%s' , user='%s' , password='%s', video_password=%s)" % (
-        page_url, user, "**************************"[0:len(password)], video_password))
+    logger.info()
     page_url = correct_url(page_url)
-
-    url = 'http://www.alldebrid.com/service.php?pseudo=%s&password=%s&link=%s&nb=0&json=true&pw=' % (
-        user, password, page_url)
-
-    data = jsontools.load(scrapertools.downloadpage(url))
-
+    dd1 = httptools.downloadpage("https://api.alldebrid.com/user/login?agent=mySoft&username=%s&password=%s" %(user, password)).data
+    token = scrapertools.find_single_match(dd1, 'token":"([^"]+)')
+    dd2 = httptools.downloadpage("https://api.alldebrid.com/link/unlock?agent=mySoft&token=%s&link=%s" %(token, page_url)).data
+    link = scrapertools.find_single_match(dd2, 'link":"([^"]+)')
+    link = link.replace("\\","")
     video_urls = []
-    if data and data["link"] and not data["error"]:
-        extension = ".%s [alldebrid]" % data["filename"].rsplit(".", 1)[1]
-        video_urls.append([extension, data["link"]])
-
+    if link:
+        extension = "mp4 [alldebrid]"
+        video_urls.append([extension, link])
     else:
         try:
             server_error = "Alldebrid: " + data["error"].decode("utf-8", "ignore")
@@ -30,16 +27,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                          "Servidor no soportado o en mantenimiento")
         except:
             server_error = "Alldebrid: Error en el usuario/password o en la web"
-
         video_urls.append([server_error, ''])
-
     return video_urls
 
 
 def correct_url(url):
     if "userporn.com" in url:
         url = url.replace("/e/", "/video/")
-
     if "putlocker" in url:
         url = url.replace("/embed/", "/file/")
     return url

@@ -12,6 +12,7 @@ from core.item import Item
 from platformcode import config, logger
 from channels import filtertools
 from channels import autoplay
+from lib import gktools
 
 IDIOMAS = {'latino': 'Latino'}
 list_language = IDIOMAS.values()
@@ -31,13 +32,46 @@ def mainlist(item):
     itemlist = list()
 
     itemlist.append(
-        Item(channel=item.channel, action="lista", title="Series", url=host, thumbnail=thumb_series, page=0))
+        Item(channel=item.channel, action="lista", title="Series", contentSerieName="Series", url=host, thumbnail=thumb_series, page=0))
     itemlist.append(
-        Item(channel=item.channel, action="lista", title="Live Action", url=host+"/liveaction", thumbnail=thumb_series, page=0))
+        Item(channel=item.channel, action="lista", title="Live Action", contentSerieName="Live Action", url=host+"/liveaction", thumbnail=thumb_series, page=0))
+    #itemlist.append(
+    #    Item(channel=item.channel, action="peliculas", title="Películas", contentSerieName="Películas", url=host+"/peliculas", thumbnail=thumb_series, page=0))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar",
+                         thumbnail=thumb_series))
     itemlist = renumbertools.show_option(item.channel, itemlist)
     autoplay.show_option(item.channel, itemlist)
     return itemlist
 
+def search(item, texto):
+    logger.info()
+    #texto = texto.replace(" ", "+")
+    item.url = host +"/buscar.php"
+    item.texto = texto
+    if texto != '':
+        return sub_search(item)
+    else:
+        return []
+
+def sub_search(item):
+    logger.info()
+    itemlist = []
+    post = "k=" + item.texto
+    results = httptools.downloadpage(item.url, post=post).data
+    results = eval(results)
+    for result in results:
+        scrapedthumbnail = host + "/tb/" + result[0] + ".jpg"
+        scrapedtitle = result[1].decode('unicode_escape')
+        scrapedurl = host + "/" + result[2]
+        #scrapedyear = result[3]
+        itemlist.append(item.clone(action = "episodios",
+                                   title = scrapedtitle,
+                                   thumbnail = scrapedthumbnail,
+                                   url = scrapedurl,
+                                   contentSerieName = scrapedtitle
+                        ))
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
+    return itemlist
 
 def lista(item):
     logger.info()
@@ -47,7 +81,7 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     patron = '<a href="([^"]+)" '
-    if item.title == "Series":
+    if item.contentSerieName == "Series":
         patron += 'class="link">.+?<img src="([^"]+)".*?'
     else:
         patron += 'class="link-la">.+?<img src="([^"]+)".*?'
@@ -84,14 +118,46 @@ def lista(item):
         url=host+"/pag-"+str(a)
         if b>10:
             itemlist.append(
-                Item(channel=item.channel, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=url, action="lista", page=0))
+                Item(channel=item.channel, contentSerieName=item.contentSerieName, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=url, action="lista", page=0))
     else:    
         itemlist.append(
-             Item(channel=item.channel, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=item.url, action="lista", page=item.page + 1))
+             Item(channel=item.channel, contentSerieName=item.contentSerieName, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=item.url, action="lista", page=item.page + 1))
 
     tmdb.set_infoLabels(itemlist)
     return itemlist
 
+def peliculas(item):
+    logger.info()
+
+    itemlist = []
+
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+    patron = '<div class="pel play" dt="(.+?)" .+?><img src="(.+?)" .+? title="(.*?)"><span class=".+?">(.+?)<\/span><a href="(.+?)" class.+?>'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    # Paginacion
+    num_items_x_pagina = 30
+    min = item.page * num_items_x_pagina
+    min=min-item.page
+    max = min + num_items_x_pagina - 1
+    b=0
+    for scrapedplot,scrapedthumbnail, scrapedtitle, scrapedyear, scrapedurl in matches[min:max]:
+        b=b+1
+        url = host + scrapedurl
+        thumbnail = host +scrapedthumbnail
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
+        itemlist.append(item.clone(title=scrapedtitle+"-"+scrapedyear, url=url, action="findvideos", thumbnail=thumbnail, plot=scrapedplot,
+                show=scrapedtitle,contentSerieName=scrapedtitle,context=context))
+    if b<29:
+        pass
+    else:    
+        itemlist.append(
+             Item(channel=item.channel, contentSerieName=item.contentSerieName, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=item.url, action="peliculas", page=item.page + 1))
+
+    tmdb.set_infoLabels(itemlist)
+    return itemlist
 
 def episodios(item):
     logger.info()
@@ -160,10 +226,40 @@ def findvideos(item):
     for id in buttons:
         new_url = golink(int(id), _sa, sl)
         data_new = httptools.downloadpage(new_url).data
-        _x0x = scrapertools.find_single_match(data_new, 'var x0x = ([^;]+);')
+        logger.info(data_new)
+        valor = scrapertools.find_single_match(data_new, '\+ x92\((.*?)\)\+ ')
+        valores = valor.split("atob")
+        valor2 = valores[1].replace('(','').replace(')','')
+        valor1 = valores[0].split('+')
+        datos = []
+        logger.info("f4d5as6f")
+        logger.info(valor1)
+        stringTodo = ''
+        for val in valor1:
+            if '()' in val:
+                funcion = val.split('(')[0]
+                scrapedvalue = scrapertools.find_single_match(data_new, funcion+'.+?return (.+?);')
+                datos.append(scrapedvalue)
+            elif '.charAt' in val:
+                funcion = val.split('.charAt(')
+                stringTodo = funcion[0]
+                position = funcion[1].split(')')[0]
+        posiciones = []
+        logger.info(datos)
+        if datos:
+            for dato in datos:
+                logger.info(dato)
+                try:
+                    posiciones.append(int(dato))
+                except Exception as e:
+                    scrapedvalue = scrapertools.find_single_match(data_new, 'var %s = (.+?);'  % (dato))
+                    logger.info("scrapedvalue")
+                    logger.info(scrapedvalue)
+                    posiciones.append(int(scrapedvalue))
+        logger.info("positiones"+posiciones)
         try:
-            x0x = eval(_x0x)
-            url = resolve(x0x[4], base64.b64decode(x0x[1]))
+            logger.info(base64.b64decode(data1, data2))
+            url = x92(data1, data2)
             if 'download' in url:
                 url = url.replace('download', 'preview')
             title = '%s'
@@ -184,34 +280,65 @@ def findvideos(item):
 def golink (num, sa, sl):
     import urllib
     b = [3, 10, 5, 22, 31]
-    d = ''
-    for i in range(len(b)):
-        d += sl[2][b[i]+num:b[i]+num+1]
+    #d = ''
+    #for i in range(len(b)):
+    #    d += sl[2][b[i]+num:b[i]+num+1]
 
     SVR = "https://viteca.stream" if sa == 'true' else "http://serieslan.com"
     TT = "/" + urllib.quote_plus(sl[3].replace("/", "><")) if num == 0 else ""
+    url_end = link(num,sl)
+    #return SVR + "/el/" + sl[0] + "/" + sl[1] + "/" + str(num) + "/" + sl[2] + d + TT
+    return SVR + "/el/" + sl[0] + "/" + sl[1] + "/" + str(num) + "/" + sl[2] + url_end + TT
 
-    return SVR + "/el/" + sl[0] + "/" + sl[1] + "/" + str(num) + "/" + sl[2] + d + TT
+def link(ida,sl):
+    a=ida
+    b=[3,10,5,22,31]
+    c=1
+    d=""
+    e=sl[2]
+    for i in range(len(b)):
+      d=d+substr(e,b[i]+a,c)
+    return d
 
+def substr(st,a,b):
+    return st[a:a+b]
 
-def resolve(value1, value2):
-    reto = ''
-    lista = range(256)
-    j = 0
-    for i in range(256):
-        j = (j + lista[i] + ord(value1[i % len(value1)])) % 256
-        k = lista[i]
-        lista[i] = lista[j]
-        lista[j] = k
+def x92(data1, data2):
+    data3 = []
+    data4 = 0
+    data5 = ""
+    data6 = ""
+    for i in range(len(256)):
+      data3[i] = i
+    for i in range(len(256)):
+      data4 = (data4 + data3[i] + ord(data1[i])) % 256
+      data5 = data3[i]
+      data3[i] = data3[data4]
+      data3[data4] = data5
+    i = 0
+    data4 = 0
+    for j in range(len(data2)):
+        i = (i + 1) % 256
+        data4 = (data4 + data3[i]) % 256
+        data5 = data3[i]
+        data3[i] = data3[data4]
+        data3[data4] = data5
+        data6 =1#+= str(unichr(data2[ord(str(j)) ^ data3[(data3[i] + data3[data4]) % 256]))
+    return data6
 
-    m = 0;
-    j = 0;
-    for i in range(len(value2)):
-        m = (m + 1) % 256
-        j = (j + lista[m]) % 256
-        k = lista[m]
-        lista[m] = lista[j]
-        lista[j] = k
-        reto += chr(ord(value2[i]) ^ lista[(lista[m] + lista[j]) % 256])
+def _ieshlgagkP(umZFJ):
+    return umZFJ
+def _RyHChsfwdd(ZBKux):
+    return ZBKux
+def _eladjkKtjf(czuwk):
+    return czuwk
+def _slSekoKrHb():
+    return ''
+def _VySdeBApGO():
+    return 'Z'
 
-    return reto
+def _nEgqhkiRub():
+    return 28
+
+def _lTjZxWGNnE():
+    return 57

@@ -18,7 +18,7 @@
       "id": "domain_name",
       "type": "text",
       "label": "URL actual de la Web Mejor Torrent",
-      "default": "http://www.mejortorrent.org/",
+      "default": "http://www.mejortorrent.tv/",
       "enabled": true,
       "visible": true
     },

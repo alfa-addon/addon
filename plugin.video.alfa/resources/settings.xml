@@ -3,6 +3,7 @@
     <category label="70168">
         <setting id="player_mode" type="enum" values="Direct|SetResolvedUrl|Built-In|Download and Play" label="30044" default="0"/>
         <setting id="default_action" type="enum" lvalues="30006|30007|30008" label="30005" default="0"/>
+        <setting id="autoplay" type="bool" label="70562" default="false" visible="true"/>
         <setting id="thumbnail_type" type="enum" lvalues="30011|30012|30200" label="30010" default="2"/>
         <setting id="channel_language" type="labelenum" values="all|cast|lat" label="30019" default="all"/>
         <setting id="trakt_sync" type="bool" label="70109" default="false"/>
@@ -124,9 +125,13 @@
         <setting type="sep"/>
         <setting label="Gestión de actualizaciones urgentes de módulos de Alfa (Quick Fixes):" type="lsep"/>
         <setting id="addon_update_timer" type="labelenum" values="0|6|12|24" label="Intervalo entre actualizaciones automáticas (horas)" default="12"/>
-        <setting id="addon_update_message" type="bool" label="Quiere ver mensajes de las actualizaciones" default="false"/>
+        <setting id="addon_update_message" type="bool" label="¿Quiere ver mensajes de las actualizaciones?" default="false"/>
 
         <setting label="Lista activa" type="text" id="lista_activa" default="alfavorites-default.json" visible="false"/>
+        
+        <setting type="sep"/>
+        <setting label="Gestión de actualizaciones de otros addon relacionados con Alfa:" type="lsep"/>
+        <setting id="addon_quasar_update" type="bool" label="¿Quiere actualizar Quasar para evitar errores?" default="false"/>
     </category>
 
 </settings>

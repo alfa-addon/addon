@@ -116,7 +116,7 @@ def lista(item):
             itemlist.append(item.clone(title=scrapedtitle, contentSerieName=show,url=scrapedurl, plot=scrapedplot,
         	   thumbnail=scrapedthumbnail, action="episodios", context=context))
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
-    itemlist.append(Item(channel=item.channel, url=item.url, range=next_page, title='Pagina Siguente >>>', contentTitle=item.title, action='lista'))
+    itemlist.append(Item(channel=item.channel, url=item.url, range=next_page, title='Pagina Siguente >>>', contentTitle=item.contentTitle, action='lista'))
 
     return itemlist
 

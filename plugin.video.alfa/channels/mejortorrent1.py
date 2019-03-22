@@ -809,10 +809,10 @@ def listado_busqueda(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    itemlist_t = []                                     #Itemlist total de enlaces
-    itemlist_f = []                                     #Itemlist de enlaces filtrados
+    itemlist_t = []                                                 #Itemlist total de enlaces
+    itemlist_f = []                                                 #Itemlist de enlaces filtrados
     if not item.language:
-        item.language = ['CAST']                        #Castellano por defecto
+        item.language = ['CAST']                                    #Castellano por defecto
     matches = []
     
     #logger.debug(item)
@@ -827,7 +827,7 @@ def findvideos(item):
     #Si es un lookup para cargar las urls de emergencia en la Videoteca...
     if item.videolibray_emergency_urls:
         item.emergency_urls = []
-        item.emergency_urls.append([])                                              #Reservamos el espacio para los .torrents locales
+        item.emergency_urls.append([])                              #Reservamos el espacio para los .torrents locales
     
     #Bajamos los datos de la página de todo menos de Documentales y Varios
     if not item.post:
@@ -836,7 +836,7 @@ def findvideos(item):
             data = data.replace('"', "'")
             patron = "<form (?:.*?)?"
             patron += "name='episodios'.+action='([^']+)' method='post'>.*?"
-            patron += "<input.+type='[^']+'.+name='([^']+)'.+value='([^']+)'>.*<input.+type='hidden'.+value='([^']+)'.+name='([^']+)'>"
+            patron += "<input\s*type='[^']+'\s*name='([^']+)'\s*value='([^']+)'>\s*<input\s*type='[^']+'\s*value='([^']+)'\s*name='([^']+)'>(?:\s*<input\s*type='[^']+'\s*value='([^']+)'\s*name='([^']+)'\s*id='([^']+)'>)?"
         except:
             pass
         if not data:
@@ -846,10 +846,10 @@ def findvideos(item):
                 matches = item.emergency_urls[1]                                    #Restauramos matches
                 item.armagedon = True                                               #Marcamos la situación como catastrófica 
             else:
-                if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
+                if item.videolibray_emergency_urls:         #Si es llamado desde creación de Videoteca...
                     return item                                                     #Devolvemos el Item de la llamada
                 else:
-                    return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+                    return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         if not item.armagedon:                                                      #Si es un proceso normal, seguimos
             matches = re.compile(patron, re.DOTALL).findall(data)
@@ -878,55 +878,72 @@ def findvideos(item):
         if item.videolibray_emergency_urls:
             item.emergency_urls.append(matches)                                 #Salvamnos matches...
         
-        for scrapedurl, name1, value1, value2, name2 in matches:                #Hacemos el FOR aunque solo habrá un item
-            #Generamos una copia de Item para trabajar sobre ella
-            item_local = item.clone()
+        for scrapedurl, name1, value1, value2, name2, value3, name3, id3 in matches: #Hacemos el FOR aunque solo habrá un item
             url = scrapedurl
 
             # Localiza el .torrent en el siguiente link con Post
             post = '%s=%s&%s=%s' % (name1, value1, name2, value2)
+            #post = '%s=%s&%s=%s&%s=%s' % (name1, value1, name2, value2, name3, value3)
             if not item.armagedon:
                 try:
                     torrent_data = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=False)
                 except:                                                         #error
                     pass
 
+                    
     else:
         #Viene de SERIES y DOCUMENTALES. Generamos una copia de Item para trabajar sobre ella
-        item_local = item.clone()
         try:                     #Localiza el .torrent en el siguiente link con Post.  Viene de Documentales y Varios
             url = item.url_post
-            torrent_data = httptools.downloadpage(url, post=item.post, headers=headers, follow_redirects=False)
+            del item.url_post
+            post = item.post
+            torrent_data = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=False)
         except:
             pass
 
-    if not torrent_data or not 'location' in torrent_data.headers or not torrent_data.headers['location']:
+    if not torrent_data and not ('location' in torrent_data.headers or 'zip' in torrent_data.headers['content-type']):
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
             item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
         elif not item.armagedon:
-            logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / URL: " + url + " / DATA: " + data)
+            logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / URL: " + url + " / POST: " + post + " / DATA: " + str(torrent_data.headers))
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log'))
-        
+            
         if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
-            item_local.url = item.emergency_urls[0][0]                          #Restauramos la url del .torrent
+            item.url = item.emergency_urls[0][0]                                #Restauramos la url del .torrent
             item.armagedon = True                                               #Marcamos la situación como catastrófica 
         else:
             if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
                 return item                                                     #Devolvemos el Item de la llamada
             else:
-                return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
+                return itemlist                             #si no hay más datos, algo no funciona, pintamos lo que tenemos
+    
+    #Si el torrent viene en un .zip en vez de desde una url, lo preparamos todo para el play
+    referer_zip = None
+    post_zip = None
+    if 'location' not in torrent_data.headers and 'zip' in torrent_data.headers['content-type'] and not item.armagedon:
+        item.referer = item.url
+        referer_zip = item.referer
+        item.url = url
+        item.post = post
+        post_zip = item.post
+    
+    #Generamos una copia de Item para trabajar sobre ella
+    item_local = item.clone()
     
     #Capturamos la url del .torrent desde el Header
     if not item.armagedon:
-        item_local.url = torrent_data.headers['location'] if 'location' in torrent_data.headers else item.url_post
+        item_local.url = torrent_data.headers['location'] if 'location' in torrent_data.headers else item.url
         item_local.url = item_local.url.replace(" ", "%20")                     #Quitamos espacios
         if item.emergency_urls:
             item_local.torrent_alt = item.emergency_urls[0][0]                  #Guardamos la url del .Torrent ALTERNATIVA
     
     #Si es un lookup para cargar las urls de emergencia en la Videoteca...
     if item.videolibray_emergency_urls:
-        item.emergency_urls[0].append(item_local.url)                           #Salvamnos la url...
+        if 'location' in torrent_data.headers or config.get_setting("emergency_urls_torrents", item_local.channel):
+            item.emergency_urls[0].append(item_local.url)                       #Salvamnos la url...
+        elif not config.get_setting("emergency_urls_torrents", item_local.channel):
+            item.emergency_urls[0].append(item_local.referer)                   #Salvamnos el referer...
         return item                                                             #... y nos vamos
         
     # Poner la calidad, si es necesario
@@ -947,7 +964,7 @@ def findvideos(item):
         size  = scrapertools.find_single_match(item_local.url, '(\d{1,3},\d{1,2}?\w+)\.torrent')
     size = size.upper().replace(".", ",").replace("G", " G ").replace("M", " M ") #sustituimos . por , porque Unify lo borra
     if not size and not item.armagedon:
-        size = generictools.get_torrent_size(item_local.url)                        #Buscamos el tamaño en el .torrent
+        size = generictools.get_torrent_size(item_local.url, referer_zip, post_zip) #Buscamos el tamaño en el .torrent
     if size:
         item_local.title = re.sub('\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title) #Quitamos size de título, si lo traía
         item_local.title = '%s [%s]' % (item_local.title, size)                     #Agregamos size al final del título
@@ -1021,7 +1038,7 @@ def episodios(item):
     # Prepara el patrón de búsqueda
     patron = "<form (?:style='[^']+'\s)?name='episodios' action='([^']+)'"
     url = scrapertools.find_single_match(data, patron)                          #Salvamos la url de descarga
-    url = url.replace('descargar_series.php', 'descargar.php')                  #ESTA DESCARGARÍA EL TORRENT EN VEZ DEL ENLACE
+    url = url.replace('descargar_tv.php', 'descargar_post.php')                 #ESTA DESCARGARÍA EL TORRENT EN VEZ DEL ENLACE
     patron = "<form (?:style='[^']+'\s)?name='episodios' action='[^']+'.*?<input type='hidden' value='([^']+)' name='([^']+)'>"
     value2 = ''                                                                 #Patrón general para Documentales (1)
     name2 = ''

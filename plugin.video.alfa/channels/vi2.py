@@ -304,7 +304,7 @@ def findvideos(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = item.url + texto
+    item.url = '%spelicula+%s+%s&o=2' % (item.url, texto, item.link_type)
 
     if texto != '':
         return list_all(item)

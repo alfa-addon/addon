@@ -498,12 +498,12 @@ msgid "Search for actor/actress"
 msgstr "Cerca attore/attrice"
 
 msgctxt "#60000"
-msgid "Filtra server (Black List)"
+msgid "Filter server (Black List)"
 msgstr "Filtra server (Black List)"
 
 msgctxt "#60001"
-msgid "Filtra server (Black List)\nNessun collegamento disponibile che soddisfi i requisiti della Black list.\nRiprova modificando il filtro in 'Configurazione Server"
-msgstr "Filtra server (Black List)\nNessun collegamento disponibile che soddisfi i requisiti della Black list.\nRiprova modificando il filtro in 'Configurazione Server"
+msgid "No links available that meets the requirements of the Black list. Try again by changing the filter in 'Server Configuration"
+msgstr "Nessun collegamento disponibile che soddisfi i requisiti della Black list. Riprova modificando il filtro in 'Configurazione Server"
 
 msgctxt "#60003"
 msgid "Connessione con %s"
@@ -1034,8 +1034,8 @@ msgid "Movie"
 msgstr "Film"
 
 msgctxt "#60245"
-msgid "Series"
-msgstr "Serie"
+msgid "tv show"
+msgstr "serie"
 
 msgctxt "#60246"
 msgid "Full information"
@@ -1236,10 +1236,6 @@ msgstr "Ricerca di informazioni sulla serie"
 msgctxt "#60297"
 msgid "Find %s possible matches"
 msgstr "Trovate %s possibili corrispondenze"
-
-msgctxt "#60298"
-msgid "[%s]: Select the correct TV series"
-msgstr "[%s]: Seleziona la serie corretta"
 
 msgctxt "#60299"
 msgid "Not found in the language '%s'"
@@ -4247,10 +4243,6 @@ msgctxt "#70392"
 msgid "Rate with a [COLOR %s]%s[/ COLOR]"
 msgstr "Dai un punteggio con un [COLOR %s]%s[/COLOR]"
 
-msgctxt "#70393"
-msgid "[%s]: Select the correct %s "
-msgstr "[%s]: Seleziona il %s corretto"
-
 msgctxt "#70394"
 msgid "Action"
 msgstr "Azione"
@@ -4799,10 +4791,6 @@ msgctxt "#70528"
 msgid "Default folder"
 msgstr "Cartella di Default"
 
-msgctxt "#70529"
-msgid "Repeated link"
-msgstr "Link ripetuto"
-
 msgctxt "#70530"
 msgid "You already have this link in the folder"
 msgstr "C'è già un link nella cartella"
@@ -4932,3 +4920,6 @@ msgid "Search Similar
 msgstr "Cerca Simili"
 
 
+msgctxt "#70562"
+msgid "autoplay"
+msgstr "Abilita autoplay in tutti i canali"

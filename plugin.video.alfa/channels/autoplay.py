@@ -9,6 +9,7 @@ from platformcode import config, logger
 from platformcode import platformtools
 from platformcode import launcher
 from time import sleep
+from platformcode.config import get_setting
 
 __channel__ = "autoplay"
 
@@ -117,7 +118,7 @@ def start(itemlist, item):
     # Obtiene los ajustes des autoplay para este canal
     settings_node = channel_node.get('settings', {})
 
-    if settings_node['active']:
+    if get_setting('autoplay') or settings_node['active']:
         url_list_valid = []
         autoplay_list = []
         autoplay_b = []
@@ -142,7 +143,7 @@ def start(itemlist, item):
         #       2: Solo servidores
         #       3: Solo calidades
         #       4: No ordenar
-        if settings_node['custom_servers'] and settings_node['custom_quality']:
+        if (settings_node['custom_servers'] and settings_node['custom_quality']) or get_setting('autoplay'):
             priority = settings_node['priority']  # 0: Servidores y calidades o 1: Calidades y servidores
         elif settings_node['custom_servers']:
             priority = 2  # Solo servidores
@@ -391,14 +392,15 @@ def init(channel, list_servers, list_quality, reset=False):
             # Se comprueba que no haya calidades ni servidores duplicados
             if 'default' not in list_quality:
                 list_quality.append('default')
-            list_servers = list(set(list_servers))
-            list_quality = list(set(list_quality))
+            # list_servers = list(set(list_servers))
+            # list_quality = list(set(list_quality))
 
             # Creamos el nodo del canal y lo añadimos
             channel_node = {"servers": list_servers,
                             "quality": list_quality,
                             "settings": {
                                 "active": False,
+                                "plan_b": True,
                                 "custom_servers": False,
                                 "custom_quality": False,
                                 "priority": 0}}
@@ -455,7 +457,7 @@ def check_value(channel, itemlist):
 
     for item in itemlist:
         if item.server.lower() not in server_list and item.server !='':
-            server_list.append(item.server)
+            server_list.append(item.server.lower())
             change = True
         if item.quality not in quality_list and item.quality !='':
             quality_list.append(item.quality)
@@ -672,7 +674,7 @@ def is_active(channel):
     # Obtiene los ajustes des autoplay para este canal
     settings_node = channel_node.get('settings', {})
 
-    return settings_node.get('active', False)
+    return settings_node.get('active', False) or get_setting('autoplay')
 
 
 def reset(item, dict):

@@ -19,7 +19,7 @@ def youtube_api_call(method, parameters):
     url = "https://www.googleapis.com/youtube/v3/" + method + "?" + encoded_parameters + "&key=" + YOUTUBE_V3_API_KEY;
     logger.info("url=" + url)
 
-    data = scrapertools.cache_page(url)
+    data = httptools.downloadpage(url).data
     logger.info("data=" + data)
 
     json_object = jsontools.load(data)
@@ -37,7 +37,7 @@ def youtube_get_user_playlists(user_id, pageToken=""):
                                    {"part": "snippet,contentDetails", "channelId": channel_id, "maxResults": 50,
                                     "pageToken": pageToken})
 
-    return json_object;
+    return json_object
 
 
 def youtube_get_playlist_items(playlist_id, pageToken=""):

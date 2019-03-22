@@ -47,8 +47,7 @@ def todas(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = '<div class=shortf><div><div class=shortf-img><a href=(.*?)><img src=(.*?) alt=.*?quality>(.*?)<.*?Ver ' \
-             'Serie><span>(.*?)<\/span>'
+    patron = '<div class=shortstory-in><div class=shortstory radius-3><div class=short-images radius-3><a href=(.*?) title=(.*?) class=.*?><img src=(.*?) alt.*?><\/a><\/div>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     # Paginacion
@@ -57,16 +56,15 @@ def todas(item):
     min=int(min)-int(item.page)
     max = min + num_items_x_pagina - 1
     
-    for scrapedurl, scrapedthumbnail, scrapedcalidad, scrapedtitle in matches[min:max]:
+    for scrapedurl, scrapedtitle, scrapedthumbnail,  in matches[min:max]:
         url = host + scrapedurl
-        calidad = scrapedcalidad
         title = scrapedtitle.decode('utf-8')
         thumbnail = scrapedthumbnail
         fanart = 'https://s32.postimg.cc/gh8lhbkb9/seodiv.png'
-        if not 'xxxxxx' in scrapedtitle:
+        if 'TITULO' != title:
             itemlist.append(
                 Item(channel=item.channel,
-                 action="temporadas",
+                 action="episodios",
                  title=title, url=url,
                  thumbnail=thumbnail,
                  fanart=fanart,
@@ -85,153 +83,70 @@ def todas(item):
     return itemlist
 
 
-def temporadas(item):
-    logger.info()
-    itemlist = []
-    data = get_source(item.url)
-    url_base = item.url
-    patron = '<li class=item\d+><a href=#>(.*?) <\/a>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    temp = 1
-    if matches:
-        for scrapedtitle in matches:
-            url = url_base
-            tempo = re.findall(r'\d+', scrapedtitle)
-            # if tempo:
-            #    title = 'Temporada' + ' ' + tempo[0]
-            # else:
-            title = scrapedtitle
-            thumbnail = item.thumbnail
-            plot = item.plot
-            fanart = scrapertools.find_single_match(data, '<img src="([^"]+)"/>.*?</a>')
-            itemlist.append(
-                Item(channel=item.channel,
-                     action="episodiosxtemp",
-                     title=title,
-                     fulltitle=item.title,
-                     url=url,
-                     thumbnail=thumbnail,
-                     plot=plot, fanart=fanart,
-                     temp=str(temp),
-                     contentSerieName=item.contentSerieName,
-                     context=item.context
-                     ))
-            temp = temp + 1
-
-        if config.get_videolibrary_support() and len(itemlist) > 0:
-            itemlist.append(
-                Item(channel=item.channel,
-                     title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
-                     url=item.url,
-                     action="add_serie_to_library",
-                     extra="episodios",
-                     contentSerieName=item.contentSerieName,
-                     extra1=item.extra1,
-                     temp=str(temp)
-                     ))
-        return itemlist
-    else:
-        itemlist = episodiosxtemp(item)
-        if config.get_videolibrary_support() and len(itemlist) > 0:
-            itemlist.append(
-                Item(channel=item.channel,
-                     title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
-                     url=item.url,
-                     action="add_serie_to_library",
-                     extra="episodios",
-                     contentSerieName=item.contentSerieName,
-                     extra1=item.extra1,
-                     temp=str(temp)
-                     ))
-        return itemlist
-
-
 def episodios(item):
     logger.info()
     itemlist = []
-    templist = temporadas(item)
-    for tempitem in templist:
-        itemlist += episodiosxtemp(tempitem)
-
-    return itemlist
-
-
-def get_source(url):
-    logger.info()
-    data = httptools.downloadpage(url, add_referer=True).data
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    return data
-
-
-def episodiosxtemp(item):
-    logger.info()
-
-    logger.info()
-    itemlist = []
-    item.title = 'Temporada %s' % item.temp.zfill(2)
-    patron_temp = '<li class=item\d+><a href=#>%s <\/a><ul><!--initiate accordion-->.*?<!--initiate ' \
-                  'accordion-->' % item.title
-    all_data = get_source(item.url)
-    data = scrapertools.find_single_match(all_data, patron_temp)
-    tempo = item.title
-    if 'Temporada' in item.title:
-        item.title = 'temporada-%s'%item.temp.zfill(2)
-    patron = '<li><a href=(.*?)>.*?(Capitulo|Pelicula).*?(\d+).*?<'
-
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedurl, scrapedtipo, scrapedtitle in matches:
-        url = host + scrapedurl
-        plot = item.plot
-        if scrapedtipo == 'Capitulo' and item.temp != '':
-            title = item.contentSerieName + ' ' + item.temp + 'x' + scrapedtitle
-            itemlist.append(
-                Item(channel=item.channel,
-                     action="findvideos",
-                     title=title,
-                     fulltitle=item.fulltitle,
-                     url=url,
-                     thumbnail=item.thumbnail,
-                     plot=plot,
-                     language=language,
-                     contentSerieName=item.contentSerieName,
-                     context=item.context
-                     ))
-
-        if item.title not in scrapedurl and scrapedtipo == 'Capitulo' and item.temp \
-                == '':
-            if item.temp == '': temp = '1'
-            title = item.contentSerieName + ' ' + temp + 'x' + scrapedtitle
-            if '#' not in scrapedurl:
-                itemlist.append(
-                    Item(channel=item.channel,
-                         action="findvideos",
-                         title=title,
-                         fulltitle=item.fulltitle,
-                         url=url,
-                         thumbnail=item.thumbnail,
-                         plot=plot,
-                         contentSerieName=item.contentSerieName,
-                         context=item.context
-                         ))
-
-        if 'temporada' not in item.title and item.title not in scrapedurl and scrapedtipo == 'Pelicula':
-            title = scrapedtipo + ' ' + scrapedtitle
-            itemlist.append(
-                Item(channel=item.channel,
-                     action="findvideos",
-                     title=title,
-                     fulltitle=item.fulltitle,
-                     url=url,
-                     thumbnail=item.thumbnail,
-                     plot=plot,
-                     language=language,
-                     contentSerieName=item.contentSerieName,
-                     context=item.context
-                     ))
-
+    patronpags = "<div class=pages>.+?<\/div><div class=col-lg-1 col-sm-2 col-xs-2 pages-next>"
+    data2 = scrapertools.find_single_match(data, patronpags)
+    patrontotal = "<a href=.*?>(.*?)<\/a>"
+    matches = scrapertools.find_multiple_matches(data2, patrontotal)
+    itemlist = capitulosxpagina(item,item.url)
+    total = 0
+    for totales in matches:
+        total = int(totales)
+    for x in range(1, total):
+        url = item.url+"page/"+str(x+1)+"/"
+        listitem = capitulosxpagina(item,url)
+        if isinstance(listitem, list):
+            itemlist= itemlist + listitem
+    if config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]", url=item.url,
+                             action="add_serie_to_library", extra="episodios", show=item.contentSerieName))
     return itemlist
 
+def capitulosxpagina(item,url):
+    itemlist = []
+    data = httptools.downloadpage(url).data
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    patron = '<div class=col-sm-4 col-xs-12><a href=(.*?) title=(.*?) class=.*?><img src=(.*?) class.*?>'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    temp = 1
+    if matches:
+        for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
+            url = scrapedurl
+            serieName = item.contentSerieName
+            title = scrapedtitle.lower()
+            logger.info
+            if serieName.lower() in title:
+            	title = title.split(serieName.lower())
+            	title = title[1]
+            thumbnail = scrapedthumbnail
+            plot = item.plot
+            fanart = scrapertools.find_single_match(data, '<img src="([^"]+)"/>.*?</a>')
+            if "audio" not in title:
+                if "temporada" in title:
+                    title = title.split("temporada")
+                    title = title[1]
+                elif "capitulo" in title:
+                    title = "01"+title
+                if "capitulo" in title:
+                    title = title.replace(" capitulo ","x")
+                if len(title) > 3:
+                    itemlist.append(
+                        Item(channel=item.channel,
+                        action="findvideos",
+                        title=title,
+                        fulltitle=item.title,
+                        url=url,
+                        thumbnail=thumbnail,
+                        plot=plot, fanart=fanart,
+                        temp=str(temp),
+                        contentSerieName=item.contentSerieName,
+                        context=item.context
+                        ))
+        return itemlist
 
 def findvideos(item):
     logger.info()

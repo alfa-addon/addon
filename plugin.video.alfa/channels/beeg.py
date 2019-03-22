@@ -3,7 +3,7 @@
 import re
 import urllib
 
-from core import jsontools as json
+from core import jsontools as json, httptools
 from core import scrapertools
 from core.item import Item
 from platformcode import logger
@@ -11,6 +11,7 @@ from platformcode import logger
 url_api = ""
 beeg_salt = ""
 Host = "https://beeg.com"
+
 
 def get_api_url():
     global url_api
@@ -53,7 +54,7 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel, action="videos", title="Útimos videos", url=url_api + "/index/main/0/pc",
                          viewmode="movie"))
-    #itemlist.append(Item(channel=item.channel, action="listcategorias", title="Listado categorias Populares",
+    # itemlist.append(Item(channel=item.channel, action="listcategorias", title="Listado categorias Populares",
     #                     url=url_api + "/index/main/0/pc", extra="popular"))
     itemlist.append(Item(channel=item.channel, action="listcategorias", title="Listado categorias completo",
                          url=url_api + "/index/main/0/pc", extra="nonpopular"))
@@ -65,7 +66,7 @@ def mainlist(item):
 def videos(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     JSONData = json.load(data)
 
     for Video in JSONData["videos"]:
@@ -90,14 +91,14 @@ def videos(item):
 def listcategorias(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     JSONData = json.load(data)
 
-    #for Tag in JSONData["tags"][item.extra]:
+    # for Tag in JSONData["tags"][item.extra]:
     for Tag in JSONData["tags"]:
         url = url_api + "/index/tag/0/pc?tag=" + Tag["tag"]
         title = '%s - %s' % (str(Tag["tag"]), str(Tag["videos"]))
-        #title = title[:1].upper() + title[1:]
+        # title = title[:1].upper() + title[1:]
         itemlist.append(
             Item(channel=item.channel, action="videos", title=title, url=url, folder=True, viewmode="movie"))
 
@@ -109,7 +110,7 @@ def search(item, texto):
 
     texto = texto.replace(" ", "+")
     item.url = item.url % (texto)
-    
+
     try:
         return videos(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -136,7 +137,8 @@ def play(item):
                 viedokey = re.compile("key=(.*?)%2Cend=", re.DOTALL).findall(url)[0]
 
                 url = url.replace(viedokey, decode(viedokey))
-                if not url.startswith("https:"): url = "https:" + url
+                if not url.startswith("https:"):
+                    url = "https:" + url
                 title = videourl
                 itemlist.append(["%s %s [directo]" % (title, url[-4:]), url])
 

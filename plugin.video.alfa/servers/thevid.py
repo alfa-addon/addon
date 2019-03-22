@@ -25,7 +25,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
         unpacked = jsunpack.unpack(pack)
         logger.info("Intel11 %s" %unpacked)
         if "ldaa" in unpacked:
-            videos = scrapertools.find_multiple_matches(unpacked, 'lda.="([^"]+)')
+            videos = scrapertools.find_multiple_matches(unpacked, '(?is)lda.="([^"]+)')
     video_urls = []
     for video in videos:
         if not video.startswith("//"):

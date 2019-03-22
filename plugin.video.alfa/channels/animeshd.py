@@ -10,7 +10,7 @@ from channelselector import get_thumb
 from core import tmdb
 from core.item import Item
 from platformcode import logger, config
-from channels import autoplay
+from channels import autoplay, renumbertools
 from channels import filtertools
 
 tgenero = {"Comedia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
@@ -33,8 +33,8 @@ tgenero = {"Comedia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
 
 host = "http://www.animeshd.tv"
 
-__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'poseidonhd')
-__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'poseidonhd')
+__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'animeshd')
+__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'animeshd')
 
 
 IDIOMAS = {'Castellano':'CAST','Latino': 'LAT', 'Subtitulado': 'VOSE'}
@@ -83,7 +83,7 @@ def mainlist(item):
                                ))
 
     itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
-
+    itemlist = renumbertools.show_option(item.channel, itemlist)
     autoplay.show_option(item.channel, itemlist)
 
 
@@ -113,7 +113,9 @@ def lista(item):
     patron = 'class="anime"><a href="([^"]+)">'
     patron +='<div class="cover" style="background-image: url\((.*?)\)">.*?<h2>([^<]+)<\/h2>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-
+    context = renumbertools.context(item)
+    context2 = autoplay.context
+    context.extend(context2)
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         url = scrapedurl
         thumbnail = host + scrapedthumbnail
@@ -191,10 +193,11 @@ def episodios(item):
     infoLabels = item.infoLabels
     for scrapedurl, scrapedlang, scrapedtitle, episode in matches:
         language = scrapedlang
-        title = scrapedtitle + " " + "1x" + episode
+        season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1, int(episode))
+        title = scrapedtitle + " " + str(season) +"x" + str(episode)
         url = scrapedurl
-        infoLabels['season'] ='1'
-        infoLabels['episode'] = episode
+        infoLabels['season'] = str(season)
+        infoLabels['episode'] = str(episode)
 
         itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.contentSerieName, url=url,
                              action='findvideos', language=IDIOMAS[language], infoLabels=infoLabels))
@@ -211,22 +214,32 @@ def episodios(item):
 
 def findvideos(item):
     logger.info()
-
+    from channels.pelisplus import add_vip
     itemlist = []
 
     data = get_source(item.url)
-    patron = "<option value=(.*?) data-content=.*?width='16'> (.*?) <span class='text-muted'>"
+    patron = "<option value=\"([^\"]+)\" data-content=.*?width='16'> (.*?) <span class='text-muted'>"
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, language in matches:
-        if 'jpg' in scrapedurl:
-            vip_data = httptools.downloadpage(scrapedurl, follow_redirects=False)
-            scrapedurl = vip_data.headers['location']
-        title = '%s [%s]'
-        itemlist.append(item.clone(title=title, url=scrapedurl.strip(), action='play',
-                        language=IDIOMAS[language]))
+        vip = False
+        if not config.get_setting('unify'):
+            title = ' [%s]' % IDIOMAS[language]
+        else:
+            title = ''
+        if 'pelisplus.net' in scrapedurl:
+            itemlist += add_vip(item, scrapedurl, IDIOMAS[language])
+            vip = True
+        elif 'server' in scrapedurl:
+            new_data = get_source(scrapedurl)
+            scrapedurl = scrapertools.find_single_match(new_data, '<iframe src="([^"]+)"')
 
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % (x.server.capitalize(), x.language))
+
+        if not vip:
+            itemlist.append(item.clone(title='%s'+title, url=scrapedurl.strip(), action='play',
+                            language=IDIOMAS[language]))
+
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     if __comprueba_enlaces__:
         itemlist = servertools.check_list_links(itemlist, __comprueba_enlaces_num__)

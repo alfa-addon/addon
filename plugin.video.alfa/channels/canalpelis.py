@@ -40,7 +40,6 @@ else:
 headers = [['User-Agent', 'Mozilla/50.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0'],
            ['Referer', host]]
 
-
 parameters = channeltools.get_channel_parameters(__channel__)
 fanart_host = parameters['fanart']
 thumbnail_host = parameters['thumbnail']
@@ -105,7 +104,6 @@ def sub_search(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, tipo, year in matches:
-
         itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, contentTitle=scrapedtitle,
                                    action="findvideos", infoLabels={"year": year},
                                    thumbnail=scrapedthumbnail, text_color=color3, page=0))
@@ -167,7 +165,6 @@ def peliculas(item):
 
     for scrapedthumbnail, scrapedtitle, rating, quality, scrapedurl, year in matches[item.page:item.page + 30]:
         if 'Próximamente' not in quality and '-XXX.jpg' not in scrapedthumbnail:
-
             scrapedtitle = scrapedtitle.replace('Ver ', '').strip()
             contentTitle = scrapedtitle.partition(':')[0].partition(',')[0]
             title = "%s [COLOR green][%s][/COLOR] [COLOR yellow][%s][/COLOR]" % (
@@ -212,7 +209,7 @@ def generos(item):
     logger.info()
     itemlist = []
 
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
 
     patron = '<li class="cat-item cat-item-[^"]+"><a href="([^"]+)" title="[^"]+">([^<]+)</a> <i>([^<]+)</i></li>'
@@ -231,14 +228,13 @@ def year_release(item):
     logger.info()
     itemlist = []
 
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     # logger.info(data)
     patron = '<li><a href="([^"]+)">([^<]+)</a></li>'  # url, title
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
-
         itemlist.append(item.clone(channel=item.channel, action="peliculas", title=scrapedtitle, page=0,
                                    url=scrapedurl, text_color=color3, viewmode="movie_with_plot", extra='next'))
 
@@ -289,9 +285,9 @@ def temporadas(item):
 
     data = httptools.downloadpage(item.url).data
     datas = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<span class="title">([^<]+)<i>.*?'  # numeros de temporadas
-    patron += '<img src="([^"]+)"></a></div>'  # capitulos
-
+    patron = "<span class='title'>([^<]+)<i>.*?"  # numeros de temporadas
+    patron += "<img src='([^']+)'>"  # capitulos
+    # logger.info(datas)
     matches = scrapertools.find_multiple_matches(datas, patron)
     if len(matches) > 1:
         for scrapedseason, scrapedthumbnail in matches:
@@ -331,14 +327,13 @@ def episodios(item):
 
     data = httptools.downloadpage(item.url).data
     datas = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    # logger.info(datas)
-    patron = '<div class="imagen"><a href="([^"]+)">.*?'  # url cap, img
-    patron += '<div class="numerando">(.*?)</div>.*?'  # numerando cap
-    patron += '<a href="[^"]+">([^<]+)</a>'  # title de episodios
+    patron = "<div class='imagen'>.*?"
+    patron += "<div class='numerando'>(.*?)</div>.*?"
+    patron += "<a href='([^']+)'>([^<]+)</a>"
 
     matches = scrapertools.find_multiple_matches(datas, patron)
 
-    for scrapedurl, scrapedtitle, scrapedname in matches:
+    for scrapedtitle, scrapedurl, scrapedname in matches:
         scrapedtitle = scrapedtitle.replace('--', '0')
         patron = '(\d+) - (\d+)'
         match = re.compile(patron, re.DOTALL).findall(scrapedtitle)
@@ -366,7 +361,7 @@ def episodios(item):
             if i.infoLabels['title']:
                 # Si el capitulo tiene nombre propio añadirselo al titulo del item
                 i.title = "%sx%s %s" % (i.infoLabels['season'], i.infoLabels[
-                                        'episode'], i.infoLabels['title'])
+                    'episode'], i.infoLabels['title'])
             if i.infoLabels.has_key('poster_path'):
                 # Si el capitulo tiene imagen propia remplazar al poster
                 i.thumbnail = i.infoLabels['poster_path']

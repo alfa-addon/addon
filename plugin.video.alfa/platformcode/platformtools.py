@@ -19,7 +19,7 @@ import xbmcplugin
 from channelselector import get_thumb
 from platformcode import unify
 from core import channeltools
-from core import trakt_tools
+from core import trakt_tools, scrapertoolsV2
 from core.item import Item
 from platformcode import logger
 
@@ -739,13 +739,51 @@ def get_seleccion(default_action, opciones, seleccion, video_urls):
         seleccion = dialog_select(config.get_localized_string(30163), opciones)
     # Ver en calidad baja
     elif default_action == 1:
-        seleccion = 0
+        resolutions = []
+        for url in video_urls:
+            res = calcResolution(url[0])
+            if res:
+                resolutions.append(res)
+        if resolutions:
+            seleccion = resolutions.index(min(resolutions))
+        else:
+            seleccion = 0
     # Ver en alta calidad
     elif default_action == 2:
-        seleccion = len(video_urls) - 1
+        resolutions = []
+        for url in video_urls:
+            res = calcResolution(url[0])
+            if res:
+                resolutions.append(res)
+        if resolutions:
+            seleccion = resolutions.index(max(resolutions))
+        else:
+            seleccion = len(video_urls) - 1
     else:
         seleccion = 0
     return seleccion
+
+
+def calcResolution(option):
+    match = scrapertoolsV2.find_single_match(option, '([0-9]{2,4})x([0-9]{2,4})')
+    resolution = False
+    if match:
+        resolution = int(match[0])*int(match[1])
+    else:
+        if '240p' in option:
+            resolution = 320 * 240
+        elif '360p' in option:
+            resolution = 480 * 360
+        elif ('480p' in option) or ('480i' in option):
+            resolution = 720 * 480
+        elif ('576p' in option) or ('576p' in option):
+            resolution = 720 * 576
+        elif ('720p' in option) or ('HD' in option):
+            resolution = 1280 * 720
+        elif ('1080p' in option) or ('1080i' in option) or ('Full HD' in option):
+            resolution = 1920 * 1080
+
+    return resolution
 
 
 def show_channel_settings(**kwargs):
@@ -1109,6 +1147,8 @@ def play_torrent(item, xlistitem, mediaurl):
         url = ''
         url_stat = False
         torrents_path = ''
+        referer = None
+        post = None
         videolibrary_path = config.get_videolibrary_path()                  #Calculamos el path absoluto a partir de la Videoteca
         if videolibrary_path.lower().startswith("smb://"):                  #Si es una conexión SMB, usamos userdata local
             videolibrary_path = config.get_data_path()                      #Calculamos el path absoluto a partir de Userdata
@@ -1124,7 +1164,11 @@ def play_torrent(item, xlistitem, mediaurl):
             timeout = 10
             if item.torrent_alt:
                 timeout = 5
-            url = videolibrarytools.caching_torrents(item.url, torrents_path=torrents_path, timeout=timeout)  #Descargamos el .torrent
+            #Si es una llamada con POST, lo preparamos
+            if item.referer: referer = item.referer
+            if item.post: post = item.post
+            #Descargamos el .torrent
+            url = videolibrarytools.caching_torrents(item.url, referer, post, torrents_path=torrents_path, timeout=timeout)
             if url:
                 url_stat = True
                 item.url = url

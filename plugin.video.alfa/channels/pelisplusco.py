@@ -324,14 +324,15 @@ def season_episodes(item):
     logger.info()
     itemlist = []
 
-    full_data = httptools.downloadpage(item.url).data
+    full_data = httptools.downloadpage(item.url+'/').data
     full_data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", full_data)
+
     season = str(item.infoLabels['season'])
     if int(season) <= 9:
         season = '0'+season
     data = scrapertools.find_single_match(full_data, '</i>Temporada %s</div>(.*?)(?:down arrow|cuadre_comments)' % season)
     patron = '<a href="([^"]+)" title=".*?i-play"><\/i> (.*?)<\/a>'
-    matches = matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
     for url, episode in matches:
         episodenumber = re.sub('C.* ','',episode)
@@ -354,7 +355,7 @@ def get_links_by_language(item, data):
     video_list = []
 
     language = scrapertools.find_single_match(data, 'ul id="level\d_([^"]+)"\s*class=')
-    patron = 'data-source="([^"]+)"data-quality="([^"]+)"data-srt="([^"]+)"'
+    patron = 'data-source="([^"]+)"data-quality="([^"]+)"data-srt="([^"]+)?"'
     matches = re.compile(patron, re.DOTALL).findall(data)
     if language in IDIOMAS:
         language = IDIOMAS[language]
@@ -399,7 +400,6 @@ def findvideos(item):
         new_url = base_url.replace('/serie/', '/player/serie/')
         new_url += '|%s|%s/'  % (item.contentSeason, item.contentEpisodeNumber)
     data = get_source(new_url, referer=item.url)
-
     patron_language ='(<ul id="level\d_.*?"*class=.*?ul>)'
     matches = re.compile(patron_language, re.DOTALL).findall(data)
 

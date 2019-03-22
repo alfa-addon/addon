@@ -9,11 +9,19 @@ from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
+from channels import renumbertools, autoplay
 
 CHANNEL_HOST = "https://www.animeid.tv/"
 
+IDIOMAS = {'Latino': 'LAT', 'VOSE': 'VOSE'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['animeid']
+
+
 def mainlist(item):
     logger.info()
+    autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
     itemlist.append(
         Item(channel=item.channel, action="novedades_series", title="Últimas series", url=CHANNEL_HOST))
@@ -24,6 +32,9 @@ def mainlist(item):
     itemlist.append(
         Item(channel=item.channel, action="letras", title="Listado alfabetico", url=CHANNEL_HOST))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar..."))
+
+    itemlist = renumbertools.show_option(item.channel, itemlist)
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -59,7 +70,7 @@ def search(item, texto):
             ["User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0"])
         headers.append(["Referer", CHANNEL_HOST])
         headers.append(["X-Requested-With", "XMLHttpRequest"])
-        data = scrapertools.cache_page(item.url, headers=headers)
+        data = httptools.downloadpage(item.url, headers=headers).data
         data = data.replace("\\", "")
         patron = '{"id":"([^"]+)","text":"([^"]+)","date":"[^"]*","image":"([^"]+)","link":"([^"]+)"}'
         matches = re.compile(patron, re.DOTALL).findall(data)
@@ -69,9 +80,12 @@ def search(item, texto):
             url = urlparse.urljoin(item.url, scrapedurl)
             thumbnail = scrapedthumbnail
             plot = ""
+            context = renumbertools.context(item)
+            context2 = autoplay.context
+            context.extend(context2)
             itemlist.append(
                 Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                     show=title, viewmode="movie_with_plot"))
+                     context=context, show=title, viewmode="movie_with_plot"))
 
         return itemlist
 
@@ -93,8 +107,11 @@ def novedades_series(item):
     for url, tipo, title in matches:
         scrapedtitle = title + " (" + tipo + ")"
         scrapedurl = urlparse.urljoin(item.url, url)
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
         itemlist.append(Item(channel=item.channel, action="episodios", title=scrapedtitle, url=scrapedurl,
-                             show=title, viewmode="movie_with_plot"))
+                             context=context, show=title, viewmode="movie_with_plot"))
     return itemlist
 
 
@@ -102,7 +119,7 @@ def novedades_episodios(item):
     logger.info()
     data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, '<section class="lastcap">(.*?)</section>')
-    patronvideos  = '(?s)<a href="([^"]+)">[^<]+<header>([^<]+).*?src="([^"]+)"[\s\S]+?<p>(.+?)</p>'
+    patronvideos = '(?s)<a href="([^"]+)">[^<]+<header>([^<]+).*?src="([^"]+)"[\s\S]+?<p>(.+?)</p>'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
     itemlist = []
     for url, title, thumbnail, plot in matches:
@@ -165,13 +182,16 @@ def series(item):
         scrapedurl = urlparse.urljoin(item.url, url)
         scrapedthumbnail = thumbnail
         scrapedplot = plot
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
         itemlist.append(Item(channel=item.channel, action="episodios", title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, plot=scrapedplot, show=scrapedtitle,
+                             thumbnail=scrapedthumbnail, plot=scrapedplot, show=scrapedtitle, context=context,
                              viewmode="movie_with_plot"))
     itemlist = sorted(itemlist, key=lambda it: it.title)
     try:
         page_url = scrapertools.find_single_match(data, '<li><a href="([^"]+)">&gt;</a></li>')
-        itemlist.append(Item(channel=item.channel, action="series", title=">> Página siguiente",
+        itemlist.append(Item(channel=item.channel, action="series", title="[COLOR cyan]>> Página siguiente[/COLOR]",
                              url=urlparse.urljoin(item.url, page_url), viewmode="movie_with_plot", thumbnail="",
                              plot=""))
     except:
@@ -185,33 +205,39 @@ def episodios(item, final=True):
     data = httptools.downloadpage(item.url).data
     data_id = scrapertools.find_single_match(data, 'data-id="([^"]+)')
     CHANNEL_HEADERS = [
-    ["Host", "m.animeid.tv"],
-    ["X-Requested-With", "XMLHttpRequest"]
+        ["Host", "m.animeid.tv"],
+        ["X-Requested-With", "XMLHttpRequest"]
     ]
     page = 0
     while True:
         page += 1
-        u = "https://m.animeid.tv/ajax/caps?id=%s&ord=DESC&pag=%s" %(data_id, page)
+        u = "https://m.animeid.tv/ajax/caps?id=%s&ord=DESC&pag=%s" % (data_id, page)
         data = httptools.downloadpage(u, headers=CHANNEL_HEADERS).data
         # Cuando ya no hay datos devuelve: "list":[]
         if '"list":[]' in data:
             break
         dict_data = jsontools.load(data)
-        list = dict_data['list']
+        list = dict_data['list'][::-1]
         for dict in list:
-             itemlist.append(Item(action = "findvideos",
-                                  channel = item.channel,
-                                  title = "1x" + dict["numero"] + " - " + dict["date"],
-                                  url = CHANNEL_HOST + dict['href'],
-                                  thumbnail = item.thumbnail,
-                                  show = item.show,
-                                  viewmode = "movie_with_plot"
-                                  ))
+            season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1,
+                                                               int(dict["numero"]))
+            title = "%sx%s - %s" % (season, str(episode).zfill(2), dict["date"])
+            itemlist.append(Item(action="findvideos",
+                                 channel=item.channel,
+                                 title=title,
+                                 url=CHANNEL_HOST + dict['href'],
+                                 thumbnail=item.thumbnail,
+                                 show=item.show,
+                                 viewmode="movie_with_plot"
+                                 ))
     if config.get_videolibrary_support():
-        itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=item.url,
-                             action="add_serie_to_library", extra="episodios", show=item.show))
-        itemlist.append(Item(channel=item.channel, title="Descargar todos los episodios de la serie", url=item.url,
-                             action="download_all_episodes", extra="episodios", show=item.show))
+        itemlist.append(
+            Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]", url=item.url,
+                 action="add_serie_to_library", extra="episodios", show=item.show))
+        itemlist.append(
+            Item(channel=item.channel, title="[COLOR white]Descargar todos los episodios de la serie[/COLOR]",
+                 url=item.url,
+                 action="download_all_episodes", extra="episodios", show=item.show))
     return itemlist
 
 
@@ -249,4 +275,8 @@ def findvideos(item):
         itemlist.append(Item(channel=item.channel, action="findvideos", title="Siguiente: " + title_siguiente,
                              url=CHANNEL_HOST + url_siguiente, thumbnail=item.thumbnail, plot=item.plot, show=item.show,
                              fanart=item.thumbnail, folder=True))
+
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
+
     return itemlist

@@ -7,21 +7,16 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-from core import tmdb
-from core import jsontools
-
 
 host = 'https://es.spankbang.com'
-
 
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    itemlist.append( Item(channel=item.channel, title="Nuevos", action="peliculas", url= host + "/new_videos/"))
-    itemlist.append( Item(channel=item.channel, title="Mas valorados", action="peliculas", url=host + "/trending_videos/"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos", action="peliculas", url= host + "/most_popular/"))
-    itemlist.append( Item(channel=item.channel, title="Mas largos", action="peliculas", url= host + "/longest_videos/"))
+    itemlist.append( Item(channel=item.channel, title="Nuevos", action="lista", url= host + "/new_videos/"))
+    itemlist.append( Item(channel=item.channel, title="Mas valorados", action="lista", url=host + "/trending_videos/"))
+    itemlist.append( Item(channel=item.channel, title="Mas vistos", action="lista", url= host + "/most_popular/"))
+    itemlist.append( Item(channel=item.channel, title="Mas largos", action="lista", url= host + "/longest_videos/"))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -32,7 +27,7 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     item.url = host + "/s/%s" % texto
     try:
-        return peliculas(item)
+        return lista(item)
     except:
         import sys
         for line in sys.exc_info():
@@ -51,12 +46,12 @@ def categorias(item):
         scrapedplot = ""
         scrapedurl =  urlparse.urljoin(item.url,scrapedurl)
         scrapedthumbnail =  urlparse.urljoin(item.url,scrapedthumbnail)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , 
-                              thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle , url=scrapedurl , 
+                              thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
-def peliculas(item):
+def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -70,18 +65,18 @@ def peliculas(item):
         scrapedhd = scrapertools.find_single_match(scrapedtime, '<span class="i-hd">(.*?)</span>')
         duration = scrapertools.find_single_match(scrapedtime, '<i class="fa fa-clock-o"></i>(.*?)</span>')
         if scrapedhd != '':
-            title = "[COLOR yellow]" +duration+ " min[/COLOR] " + "[COLOR red]" +scrapedhd+ "[/COLOR]  "+scrapedtitle
+            title = "[COLOR yellow]" + duration + " min[/COLOR] " + "[COLOR red]" +scrapedhd+ "[/COLOR]  "+scrapedtitle
         else:
             title = "[COLOR yellow]" + duration + " min[/COLOR] " + scrapedtitle
         thumbnail = "http:" + scrapedthumbnail
         plot = ""
         year = ""
         itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, 
-                              plot=plot, contentTitle=title ))
+                              fanart=thumbnail, plot=plot, contentTitle=title) )
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title="Página Siguiente >>" , text_color="blue",
+        itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>" , text_color="blue",
                               url=next_page ) )
     return itemlist
 

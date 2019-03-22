@@ -7,17 +7,17 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-from core import tmdb
-from core import jsontools
+
 
 host = 'https://www.analdin.com/es'
+
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevas" , action="peliculas", url=host + "/más-reciente/"))
-    itemlist.append( Item(channel=item.channel, title="Mas Vistas" , action="peliculas", url=host + "/más-visto/"))
-    itemlist.append( Item(channel=item.channel, title="Mejor valorada" , action="peliculas", url=host + "/mejor-valorado/"))
+    itemlist.append( Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "/más-reciente/"))
+    itemlist.append( Item(channel=item.channel, title="Mas Vistas" , action="lista", url=host + "/más-visto/"))
+    itemlist.append( Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "/mejor-valorado/"))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="catalogo", url=host))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categorías/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
@@ -29,7 +29,7 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     item.url = host + "/?s=%s" % texto
     try:
-        return peliculas(item)
+        return lista(item)
     except:
         import sys
         for line in sys.exc_info():
@@ -48,13 +48,12 @@ def catalogo(item):
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
-                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
-    next_page_url = scrapertools.find_single_match(data,'<li class="arrow"><a rel="next" href="([^"]+)">&raquo;</a>')
-    if next_page_url!="":
-        next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel, action="catalogo", title="Página Siguiente >>", text_color="blue",
-                               url=next_page_url) )
+        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
+                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
+    next_page = scrapertools.find_single_match(data,'<li class="arrow"><a rel="next" href="([^"]+)">&raquo;</a>')
+    if next_page!="":
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(item.clone(action="catalogo", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 
@@ -71,12 +70,12 @@ def categorias(item):
         scrapedplot = ""
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                                thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
-def peliculas(item):
+def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -91,14 +90,13 @@ def peliculas(item):
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        year = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                              contentTitle = title, infoLabels={'year':year} ))
-    next_page_url = scrapertools.find_single_match(data,'<li class="next"><a href="([^"]+)"')
-    if next_page_url!="":
-        next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title="Página Siguiente >>", text_color="blue",
-                              url=next_page_url) )
+                              contentTitle = title))
+    next_page = scrapertools.find_single_match(data,'<li class="next"><a href="([^"]+)"')
+    if next_page!="":
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue",
+                              url=next_page) )
     return itemlist
 
 

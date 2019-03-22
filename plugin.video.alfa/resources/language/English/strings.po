@@ -498,11 +498,11 @@ msgid "Search for actor/actress"
 msgstr ""
 
 msgctxt "#60000"
-msgid "Filtra server (Black List)"
+msgid "Filter server (Black List)"
 msgstr ""
 
 msgctxt "#60001"
-msgid "Filtra server (Black List)\nNessun collegamento disponibile che soddisfi i requisiti della Black list.\nRiprova modificando il filtro in 'Configurazione Server"
+msgid "No links available that meets the requirements of the Black list. Try again by changing the filter in 'Server Configuration"
 msgstr ""
 
 msgctxt "#60003"
@@ -1046,7 +1046,7 @@ msgid "Movie"
 msgstr ""
 
 msgctxt "#60245"
-msgid "Series"
+msgid "tv show"
 msgstr ""
 
 msgctxt "#60246"
@@ -1247,10 +1247,6 @@ msgstr ""
 
 msgctxt "#60297"
 msgid "Find %s possible matches"
-msgstr ""
-
-msgctxt "#60298"
-msgid "[%s]: Select the correct TV series"
 msgstr ""
 
 msgctxt "#60299"
@@ -2550,7 +2546,7 @@ msgid "Show option \"All Seasons\"."
 msgstr ""
 
 msgctxt "#60643"
-msgid "Do not combine the seasons of the series""
+msgid "Do not combine the seasons of the series"
 msgstr ""
 
 msgctxt "#60644"
@@ -4267,10 +4263,6 @@ msgctxt "#70392"
 msgid "Rate with a [COLOR %s]%s[/ COLOR]"
 msgstr ""
 
-msgctxt "#70393"
-msgid "[%s]: Select the correct %s "
-msgstr ""
-
 msgctxt "#70394"
 msgid "Action"
 msgstr ""
@@ -4811,10 +4803,6 @@ msgctxt "#70528"
 msgid "Default folder"
 msgstr ""
 
-msgctxt "#70529"
-msgid "Repeated link"
-msgstr ""
-
 msgctxt "#70530"
 msgid "You already have this link in the folder"
 msgstr ""
@@ -4943,3 +4931,6 @@ msgctxt "#70561"
 msgid "Search Similar
 msgstr ""
 
+msgctxt "#70562"
+msgid "autoplay"
+msgstr "Enable autoplay in all channels"

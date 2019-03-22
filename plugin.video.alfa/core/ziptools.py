@@ -22,8 +22,9 @@ class ziptools:
             self._createstructure(file, dir)
         num_files = len(zf.namelist())
 
-        for name in zf.namelist():
-            logger.info("name=%s" % name)
+        for nameo in zf.namelist():
+            name = nameo.replace(':', '_').replace('<', '_').replace('>', '_').replace('|', '_').replace('"', '_').replace('?', '_').replace('*', '_')
+            logger.info("name=%s" % nameo)
             if not name.endswith('/'):
                 logger.info("no es un directorio")
                 try:
@@ -62,9 +63,9 @@ class ziptools:
                             shutil.copy2(outfilename, os.path.join(backup, os.path.basename(outfilename)))
 
                     outfile = open(outfilename, 'wb')
-                    outfile.write(zf.read(name))
+                    outfile.write(zf.read(nameo))
                 except:
-                    logger.error("Error en fichero " + name)
+                    logger.error("Error en fichero " + nameo)
 
     def _createstructure(self, file, dir):
         self._makedirs(self._listdirs(file), dir)

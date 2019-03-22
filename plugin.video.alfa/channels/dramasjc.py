@@ -208,7 +208,8 @@ def findvideos(item):
     data = scrapertools.unescape(data)
     data = scrapertools.decodeHtmlentities(data)
 
-    patron = 'id="(Opt\d+)">.*?src="([^"]+)" frameborder.*?</iframe>'
+    # patron = 'id="(Opt\d+)">.*?src="([^"]+)" frameborder.*?</iframe>'
+    patron = 'id="(Opt\d+)">.*?src="(?!about:blank)([^"]+)" frameborder.*?</iframe>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for option, scrapedurl in matches:

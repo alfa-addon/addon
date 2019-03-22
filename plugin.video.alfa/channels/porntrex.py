@@ -64,15 +64,14 @@ def lista(item):
     action = "play"
     if config.get_setting("menu_info", "porntrex"):
         action = "menu_info"
-
-    # Extrae las entradas
-    patron  = '<div class="video-item.*?href="([^"]+)" '
-    patron += 'title="([^"]+)".*?'
-    patron += 'data-src="([^"]+)"'
-    patron += '(.*?)<div class="durations">.*?'
+    # Quita las entradas, que no son private
+    patron  = '<div class="video-preview-screen video-item thumb-item  ".*?<a href="([^"]+)".*?'
+    patron += 'data-src="([^"]+)".*?'
+    patron += 'alt="([^"]+)".*?'
+    patron += '<span class="quality">(.*?)<.*?'
     patron += '</i>([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedtitle, scrapedthumbnail, quality, duration in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtitle, quality, duration in matches:
         if "go.php?" in scrapedurl:
             scrapedurl = urllib.unquote(scrapedurl.split("/go.php?u=")[1].split("&")[0])
             if not scrapedthumbnail.startswith("https"):
@@ -81,13 +80,10 @@ def lista(item):
             scrapedurl = urlparse.urljoin(host, scrapedurl)
             if not scrapedthumbnail.startswith("https"):
                 scrapedthumbnail = "https:%s" % scrapedthumbnail
-        if duration:
-            scrapedtitle = "%s - %s" % (duration, scrapedtitle)
-        if '>HD<' in quality:
-            scrapedtitle += "  [COLOR red][HD][/COLOR]"
-
-        itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, contentThumbnail=scrapedthumbnail,
-                                   fanart=scrapedthumbnail))
+        scrapedtitle = "%s - [COLOR red]%s[/COLOR] %s" % (duration, quality, scrapedtitle)
+        scrapedthumbnail += "|Referer=https://www.porntrex.com/"
+        itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, 
+                                   contentThumbnail=scrapedthumbnail, fanart=scrapedthumbnail))
     # Extrae la marca de siguiente página
     if item.extra:
         next_page = scrapertools.find_single_match(data, '<li class="next">.*?from_videos\+from_albums:(\d+)')
@@ -95,7 +91,7 @@ def lista(item):
             if "from_videos=" in item.url:
                 next_page = re.sub(r'&from_videos=(\d+)', '&from_videos=%s' % next_page, item.url)
             else:
-                next_page = "%s?mode=async&function=get_block&block_id=list_videos_videos_list_search_result" \
+                next_page = "%s?mode=async&function=get_block&block_id=list_videos_videos" \
                             "&q=%s&category_ids=&sort_by=post_date&from_videos=%s" % (item.url, item.extra, next_page)
             itemlist.append(item.clone(action="lista", title=">> Página Siguiente", url=next_page))
     else:
@@ -107,12 +103,13 @@ def lista(item):
                 next_page = urlparse.urljoin(host, next_page)
             itemlist.append(item.clone(action="lista", title=">> Página Siguiente", url=next_page))
         else:
-            next_page = scrapertools.find_single_match(data, '<li class="next">.*?from:(\d+)')
+            next_page = scrapertools.find_single_match(data, '<li class="next">.*?from4:(\d+)')
             if next_page:
-                if "from=" in item.url:
-                    next_page = re.sub(r'&from=(\d+)', '&from=%s' % next_page, item.url)
+                if "from4" in item.url:
+                    next_page = re.sub(r'&from4=(\d+)', '&from4=%s' % next_page, item.url)
                 else:
-                    next_page = "%s?mode=async&function=get_block&block_id=list_videos_common_videos_list&sort_by=post_date&from=%s" % (
+                    next_page = "%s?mode=async&function=get_block&block_id=list_videos_common_videos_list_norm" \
+                                "&sort_by=post_date&from4=%s" % (
                         item.url, next_page)
                 itemlist.append(item.clone(action="lista", title=">> Página Siguiente", url=next_page))
     return itemlist
@@ -260,6 +257,7 @@ def menu_info(item):
         if i == 0:
             continue
         img = urlparse.urljoin(host, img)
+        img += "|Referer=https://www.porntrex.com/"
         title = "Imagen %s" % (str(i))
         itemlist.append(item.clone(action="", title=title, thumbnail=img, fanart=img))
 

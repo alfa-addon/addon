@@ -2,23 +2,19 @@
 #------------------------------------------------------------
 import urlparse,urllib2,urllib,re
 import os, sys
-
-from core import jsontools as json
 from core import scrapertools
 from core import servertools
 from core.item import Item
 from platformcode import config, logger
 from core import httptools
-from core import tmdb
 
 host = 'http://www.pornhive.tv/en'
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="MOVIES" , action="peliculas", url=host))
-	# No busca los videos tiene un capchka
-    # itemlist.append( Item(channel=item.channel, title="CHANNELS" , action="catalogo", url=host))
+    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host))
+    itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -29,7 +25,7 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     item.url = host + "/search?keyword=%s" % texto
     try:
-        return peliculas(item)
+        return lista(item)
     except:
         import sys
         for line in sys.exc_info():
@@ -41,18 +37,22 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'Categories(.*?)<li class="divider"')
+    if item.title == "Categorias" :
+        data = scrapertools.get_match(data,'Categories(.*?)Channels')
+    else:
+        data = scrapertools.get_match(data,'Channels(.*?)</ul>')
     patron  = '<li><a href="([^"]+)" title="[^"]+">(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle , url=scrapedurl , thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
+                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
-def peliculas(item):
+def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -66,11 +66,11 @@ def peliculas(item):
         title = scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=scrapedurl, thumbnail=thumbnail, plot=plot, contentTitle=title, infoLabels={'year':year} ))
-    next_page_url = scrapertools.find_single_match(data,'<li><a href="([^"]+)" data-ci-pagination-page="\d+" rel="next">Next &rsaquo;')
-    if next_page_url!="":
-        itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append( Item(channel=item.channel, action="play" , title=title, url=scrapedurl, thumbnail=thumbnail,
+                              plot=plot, contentTitle=title))
+    next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)" data-ci-pagination-page="\d+" rel="next">Next &rsaquo;')
+    if next_page != "" :
+        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 
@@ -79,9 +79,8 @@ def play(item):
     itemlist = servertools.find_video_items(data=item.url)
     data = scrapertools.cachePage(item.url)
     itemlist = servertools.find_video_items(data=data)
-
     for videoitem in itemlist:
-        videoitem.title = item.fulltitle
+        videoitem.title = item.title
         videoitem.fulltitle = item.fulltitle
         videoitem.thumbnail = item.thumbnail
         videochannel=item.channel

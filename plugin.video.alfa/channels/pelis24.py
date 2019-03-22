@@ -42,7 +42,6 @@ else:
 headers = [['User-Agent', 'Mozilla/50.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0'],
            ['Referer', host]]
 
-
 parameters = channeltools.get_channel_parameters(__channel__)
 fanart_host = parameters['fanart']
 thumbnail_host = parameters['thumbnail']
@@ -103,7 +102,7 @@ def sub_search(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     data = scrapertools.find_single_match(data, 'Archivos (.*?)resppages')
-    patron  = 'img alt="([^"]+)".*?'
+    patron = 'img alt="([^"]+)".*?'
     patron += 'src="([^"]+)".*?'
     patron += 'href="([^"]+)".*?'
     patron += 'fechaestreno">([^<]+)'
@@ -111,7 +110,6 @@ def sub_search(item):
 
     for scrapedtitle, scrapedthumbnail, scrapedurl, year in matches:
         if 'tvshows' not in scrapedurl:
-
             itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, contentTitle=scrapedtitle,
                                        action="findvideos", infoLabels={"year": year},
                                        thumbnail=scrapedthumbnail, text_color=color3))
@@ -137,11 +135,11 @@ def peliculas(item):
     # logger.info(data)
 
     # img, title
-    patron  = '(?is)movie-img img-box.*?alt="([^"]+).*?'
-    patron += 'src="([^"]+).*?'
-    patron += 'href="([^"]+).*?'
-    patron += 'fechaestreno">([^<]+).*?'
-    patron += 'quality">([^<]+)'
+    patron = '(?is)movie-img img-box.*?alt="([^"]+)".*?'
+    patron += 'src="([^"]+)".*?'
+    patron += 'href="([^"]+)".*?'
+    patron += 'fechaestreno">([^<]+)<.*?'
+    patron += 'quality">([^<]+)<'
 
     matches = scrapertools.find_multiple_matches(data, patron)
 
@@ -176,20 +174,19 @@ def genresYears(item):
     if item.title == "Estrenos":
         patron_todas = 'ESTRENOS</a>(.*?)</i> Géneros'
     else:
-        patron_todas = '(?is)genres falsescroll(.*?)</div> </aside'
+        patron_todas = '(?is)data-label="CATEGORIAS">(.*?)show-bigmenu'
         # logger.error(texto='***********uuuuuuu*****' + patron_todas)
 
     data = scrapertools.find_single_match(data, patron_todas)
     # logger.error(texto='***********uuuuuuu*****' + data)
-    patron = '<a href="([^"]+)">([^<]+)</a> <i>([^<]+)</i>'  # url, title, videos
+    patron = '<a href="([^"]+)".*?title="([^"]+)"'  # url, title
     # patron = '<a href="([^"]+)">([^<]+)</a>' # url, title
     matches = scrapertools.find_multiple_matches(data, patron)
 
-    for scrapedurl, scrapedtitle, videos_num in matches:
-        title = '%s (%s)' % (scrapedtitle, videos_num.replace('.', ','))
-
+    for scrapedurl, scrapedtitle in matches:
+        title = '%s' % (scrapedtitle)
+        title = title.replace("Peliculas de ", "").replace(" Online", "")
         itemlist.append(item.clone(title=title, url=scrapedurl, action="peliculas"))
-
     return itemlist
 
 
@@ -197,14 +194,13 @@ def year_release(item):
     logger.info()
     itemlist = []
 
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     # logger.info(data)
     patron = '<li><a href="([^"]+)">([^<]+)</a></li>'  # url, title
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
-
         itemlist.append(item.clone(channel=item.channel, action="peliculas", title=scrapedtitle, page=0,
                                    url=scrapedurl, text_color=color3, viewmode="movie_with_plot", extra='next'))
 
@@ -220,13 +216,12 @@ def series(item):
     # logger.info(data)
 
     patron = '<article class="TPost C TPostd">\s*<a href="([^"]+)">.*?'  # url
-    patron += '<img src="([^"]+)".*?'                                   # img
-    patron += '<h3 class="Title">([^<]+)</h3>'                          # title
+    patron += '<img src="([^"]+)".*?'  # img
+    patron += '<h3 class="Title">([^<]+)</h3>'  # title
 
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches[item.page:item.page + 30]:
-
         itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, action="temporadas",
                                    contentSerieName=scrapedtitle, show=scrapedtitle,
                                    thumbnail='https:' + scrapedthumbnail, contentType='tvshow'))
@@ -292,7 +287,7 @@ def episodios(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<td class="MvTbImg B"><a href="([^"]+)".*?'                                     # url
+    patron = '<td class="MvTbImg B"><a href="([^"]+)".*?'  # url
     patron += '<td class="MvTbTtl"><a href="https://cine24h.net/episode/(.*?)/">([^<]+)</a>'  # title de episodios
 
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -325,7 +320,7 @@ def episodios(item):
             if i.infoLabels['title']:
                 # Si el capitulo tiene nombre propio añadirselo al titulo del item
                 i.title = "%sx%s %s" % (i.infoLabels['season'], i.infoLabels[
-                                        'episode'], i.infoLabels['title'])
+                    'episode'], i.infoLabels['title'])
             if i.infoLabels.has_key('poster_path'):
                 # Si el capitulo tiene imagen propia remplazar al poster
                 i.thumbnail = i.infoLabels['poster_path']
@@ -370,7 +365,8 @@ def findvideos(item):
             lang = languages[lang]
 
         server = servertools.get_server_from_url(url)
-        title = "»» [COLOR yellow](%s)[/COLOR] [COLOR goldenrod](%s)[/COLOR] %s ««" % (server.title(), item.quality, lang)
+        title = "»» [COLOR yellow](%s)[/COLOR] [COLOR goldenrod](%s)[/COLOR] %s ««" % (
+            server.title(), item.quality, lang)
         # if 'google' not in url and 'directo' not in server:
 
         itemlist.append(item.clone(action='play', url=url, title=title, language=lang, text_color=color3))

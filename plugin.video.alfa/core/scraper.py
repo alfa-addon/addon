@@ -151,7 +151,7 @@ def cuadro_completar(item):
                           'default': mediatype_default,
                           'enabled': True,
                           'visible': True,
-                          'lvalues': [config.get_localized_string(60244), config.get_localized_string(60245)]
+                          'lvalues': [config.get_localized_string(60244), config.get_localized_string(70136)]
                           }]
 
     for i, c in enumerate(controls):

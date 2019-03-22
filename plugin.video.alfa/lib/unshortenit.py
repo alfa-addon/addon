@@ -26,7 +26,7 @@ def find_in_text(regex, text, flags=re.IGNORECASE | re.DOTALL):
 
 
 class UnshortenIt(object):
-    _adfly_regex = r'adf\.ly|j\.gs|q\.gs|u\.bb|ay\.gy|atominik\.com|tinyium\.com|microify\.com|threadsphere\.bid|clearload\.bid|activetect\.net|swiftviz\.net|briskgram\.net|activetect\.net|baymaleti\.net|thouth\.net'
+    _adfly_regex = r'adf\.ly|j\.gs|q\.gs|u\.bb|ay\.gy|atominik\.com|tinyium\.com|microify\.com|threadsphere\.bid|clearload\.bid|activetect\.net|swiftviz\.net|briskgram\.net|activetect\.net|baymaleti\.net|thouth\.net|uclaut.net'
     _linkbucks_regex = r'linkbucks\.com|any\.gs|cash4links\.co|cash4files\.co|dyo\.gs|filesonthe\.net|goneviral\.com|megaline\.co|miniurls\.co|qqc\.co|seriousdeals\.net|theseblogs\.com|theseforums\.com|tinylinks\.co|tubeviral\.com|ultrafiles\.net|urlbeat\.net|whackyvidz\.com|yyv\.co'
     _adfocus_regex = r'adfoc\.us'
     _lnxlu_regex = r'lnx\.lu'
@@ -76,7 +76,7 @@ class UnshortenIt(object):
         if re.search(self._cryptmango_regex, uri, re.IGNORECASE):
             return self._unshorten_cryptmango(uri)
 
-        return uri, 200
+        return uri, 0
 
     def unwrap_30x(self, uri, timeout=10):
         def unwrap_30x(uri, timeout=10):
@@ -442,12 +442,15 @@ class UnshortenIt(object):
             r = httptools.downloadpage(uri, timeout=self._timeout, cookies=False)
             html = r.data
 
-            uri = re.findall(r'<a class="push_button blue" href=([^>]+)>', html)[0]
+            if 'embed' in uri:
+                uri = re.findall(r'<a class="play-btn" href=([^">]*)>', html)[0]
+            else:
+                uri = re.findall(r'<a class="push_button blue" href=([^>]+)>', html)[0]
 
             return uri, r.code
 
         except Exception as e:
-            return uri, str(e)
+            return uri, 0
 
     def _unshorten_cryptmango(self, uri):
         try:

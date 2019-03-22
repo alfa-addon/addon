@@ -1,0 +1,69 @@
+{
+  "id": "pelisrex",
+  "name": "PelisRex",
+  "active": true,
+  "adult": false,
+  "language": ["lat"],
+  "thumbnail": "https://www.pelisrex.com/wp-content/uploads/2018/11/hjko.png",
+  "banner": "",
+  "version": 1,
+  "categories": [
+    "movie",
+    "vos"
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": false,
+      "visible": false
+    },
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar",
+        "LAT",
+        "VOSE"
+      ]
+    },
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Peliculas",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_infantiles",
+      "type": "bool",
+      "label": "Incluir en Novedades - Infantiles",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_latino",
+      "type": "bool",
+      "label": "Incluir en Novedades - latino",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_terror",
+      "type": "bool",
+      "label": "Incluir en Novedades - Terror",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}
