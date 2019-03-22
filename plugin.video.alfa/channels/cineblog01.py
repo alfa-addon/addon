@@ -11,6 +11,7 @@ from core import scrapertoolsV2, httptools, servertools, tmdb
 from core.item import Item
 from lib import unshortenit
 from platformcode import logger, config
+from channelselector import thumb
 
 #impostati dinamicamente da getUrl()
 host = ""
@@ -42,73 +43,65 @@ def mainlist(item):
                      action="video",
                      title="[B]Film[/B]",
                      url=host,
-                     contentType="movie",
-                     thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
+                     contentType="movie"),
                 Item(channel=item.channel,
                      action="menu",
-                     title="[B] > Menù HD[/B]",
+                     title="[B] > Film HD[/B]",
                      extra='Film HD Streaming',
                      url=host,
-                     contentType="movie",
-                     thumbnail="http://jcrent.com/apple%20tv%20final/HD.png"),
+                     contentType="movie"),
                 Item(channel=item.channel,
                      action="menu",
                      title="[B] > Film per Genere[/B]",
                      extra='Film per Genere',
                      url=host,
-                     contentType="movie",
-                     thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
+                     contentType="movie"),
                 Item(channel=item.channel,
                      action="menu",
                      title="[B] > Film per Anno[/B]",
                      extra='Film per Anno',
                      url=host,
-                     contentType="movie",
-                     thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
+                     contentType="movie"),
                 Item(channel=item.channel,
                      action="search",
                      title="[COLOR blue] > Cerca Film[/COLOR]",
                      contentType="movie",
-                     url=host,
-                     thumbnail="http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search"),
+                     url=host,),
                
                 Item(channel=item.channel,
                      action="video",
                      title="[B]Serie TV[/B]",
                      url=host + '/serietv/',
-                     contentType="episode",
-                     thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
+                     contentType="episode"),
                 Item(channel=item.channel,
                      action="menu",
                      title="[B] > Serie-Tv per Lettera[/B]",
                      extra='Serie-Tv per Lettera',
                      url=host + '/serietv/',
-                     contentType="episode",
-                     thumbnail="http://jcrent.com/apple%20tv%20final/HD.png"),
+                     contentType="episode"),
                 Item(channel=item.channel,
                      action="menu",
                      title="[B] > Serie-Tv per Genere[/B]",
                      extra='Serie-Tv per Genere',
                      url=host + '/serietv/',
-                     contentType="episode",
-                     thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
+                     contentType="episode"),
                 Item(channel=item.channel,
                      action="menu",
                      title="[B] > Serie-Tv per Anno[/B]",
                      extra='Serie-Tv per Anno',
                      url=host + '/serietv/',
-                     contentType="episode",
-                     thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
+                     contentType="episode"),
                 Item(channel=item.channel,
                      action="search",
                      title="[COLOR blue] > Cerca Serie TV[/COLOR]",
                      contentType="episode",
-                     url=host + '/serietv/',
-                     thumbnail="http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search"),
-                
+                     url=host + '/serietv/'),                
                 ]
-
+    
     autoplay.show_option(item.channel, itemlist)
+
+    # auto thumb
+    itemlist=thumb(itemlist) 
 
     return itemlist
 
@@ -117,7 +110,8 @@ def menu(item):
     data = httptools.downloadpage(item.url, headers=headers).data
     data = re.sub('\n|\t','',data)
     block =  scrapertoolsV2.get_match(data, item.extra + r'<span.*?><\/span>.*?<ul.*?>(.*?)<\/ul>')
-    patron = r'href="([^"]+)">(.*?)<\/a>'
+    logger.info('MENU BLOCK= '+block)
+    patron = r'href=([^>]+)>(.*?)<\/a>'
     matches = re.compile(patron, re.DOTALL).findall(block)
     for scrapedurl, scrapedtitle in matches:
         itemlist.append(
@@ -186,12 +180,14 @@ def video(item):
 
     data = httptools.downloadpage(item.url, headers=headers).data
     data = re.sub('\n|\t','',data)
-    block = scrapertoolsV2.get_match(data, r'<div class="sequex-page-left">(.*?)<aside class="sequex-page-right">')
-
+    # block = scrapertoolsV2.get_match(data, r'<div class="sequex-page-left">(.*?)<aside class="sequex-page-right">')
+    block = scrapertoolsV2.get_match(data, r'<div class=sequex-page-left>(.*?)<aside class=sequex-page-right>')
+    # logger.info('BLOCK= '+block)
     if item.contentType == 'movie' or '/serietv/' not in item.url:
         action = 'findvideos'     
         logger.info("### FILM ###")
-        patron = r'type-post.*?>.*?<img src="([^"]+)".*?<h3.*?<a href="([^"]+)">([^<]+)<\/a>.*?<strong>([^<]+)<.*?br \/>\s+(.*?)   '
+        # patron = r'type-post.*?>.*?<img src="([^"]+)".*?<h3.*?<a href="([^"]+)">([^<]+)<\/a>.*?<strong>([^<]+)<.*?br \/>\s+(.*?)   '
+        patron = r'<div class=card-image>.*?<img src=(.*?)alt.*?<h3.*?<a href=(.*?)\/>([^<]+)<\/a><\/h3>(.*?)<br \/>(.*?)<\/a>'
         matches = re.compile(patron, re.DOTALL).findall(block)
 
         logger.info("### MATCHES ###" + str(matches))
@@ -232,11 +228,12 @@ def video(item):
                 )
     else:
         action = 'episodios'
-        patron = 'type-post.*?>(.*?)<div class="card-action">'
+        patron = 'type-post.*?>(.*?)<div class=card-action>'
         matches = re.compile(patron, re.DOTALL).findall(block)
 
         for match in matches:
-            patron = r'<img src="([^"]+)".*?<h3.*?<a href="([^"]+)">([^<]+)<\/a>.*?<p>(.*?)\(([0-9]+).*?\).*?<\/p>([^<>]*)(?:<\/p>)?'
+            # patron = r'<img src="([^"]+)".*?<h3.*?<a href="([^"]+)">([^<]+)<\/a>.*?<p>(.*?)\(([0-9]+).*?\).*?<\/p>([^<>]*)(?:<\/p>)?'
+            patron = r'<img src=(.*?)alt.*?.*?<h3.*?<a href=(.*?)\/>([^<]+)<\/a>.*?<span.*?>(.*?)\(([0-9]+).*?\).*?<\/p>([^<>]*)(?:<\/p>)?'
             matches = re.compile(patron, re.DOTALL).findall(match)
             for scrapedthumb, scrapedurl, scrapedtitle, scrapedgenre, scrapedyear, scrapedplot in matches:
                 longtitle = '[B]' + scrapedtitle + '[/B]'
@@ -283,7 +280,7 @@ def episodios(item):
     data = re.sub('\n|\t','',data)
     block = scrapertoolsV2.get_match(data, r'<article class="sequex-post-content">(.*?)<\/article>').replace('&#215;','x').replace(' &#8211; ','')
     logger.info(block)
-    blockSeason = scrapertoolsV2.find_multiple_matches(block, '<div class="sp-head[a-z ]*?" title="Espandi">([^<>]*?)</div>(.*?)<div class="spdiv">\[riduci\]</div>')
+    blockSeason = scrapertoolsV2.find_multiple_matches(block, r'<div class="sp-head[a-z ]*?" title="Espandi">([^<>]*?)</div>(.*?)<div class="spdiv">\[riduci\]</div>')
     for season, block in blockSeason:
         patron = r'(?:<p>)?([0-9]+x[0-9]+)(.*?)(?:</p>|<br)'
         matches = re.compile(patron, re.DOTALL).findall(block)
@@ -313,8 +310,9 @@ def findvideos(item):
     if item.contentType == "episode":
         return findvid_serie(item)
     def load_links(itemlist, re_txt, color, desc_txt, quality=""):
-        streaming = scrapertoolsV2.find_single_match(data, re_txt)
-        patron = '<td><a[^h]href="([^"]+)"[^>]+>([^<]+)<'
+        streaming = scrapertoolsV2.find_single_match(data, re_txt).replace('"','')
+        logger.info('STREAMING='+streaming)
+        patron = '<td><a[^h]href=(.*?) target[^>]+>([^<]+)<'
         matches = re.compile(patron, re.DOTALL).findall(streaming)
         for scrapedurl, scrapedtitle in matches:
             logger.debug("##### findvideos %s ## %s ## %s ##" % (desc_txt, scrapedurl, scrapedtitle))
@@ -338,6 +336,7 @@ def findvideos(item):
 
     # Carica la pagina 
     data = httptools.downloadpage(item.url).data
+    logger.info("DATA= "+data)
 
     # Extract the quality format
     patronvideos = '>([^<]+)</strong></div>'
@@ -347,21 +346,21 @@ def findvideos(item):
         QualityStr = scrapertoolsV2.decodeHtmlentities(match.group(1))[6:]
 
     # Estrae i contenuti - Streaming
-    load_links(itemlist, '<strong>Streaming:</strong>(.*?)<table class="cbtable" height="30">', "orange", "Streaming", "SD")
+    load_links(itemlist, '<strong>Streaming:</strong>(.*?)<table class=cbtable height=30>', "orange", "Streaming", "SD")
 
     # Estrae i contenuti - Streaming HD
-    load_links(itemlist, '<strong>Streaming HD[^<]+</strong>(.*?)<table class="cbtable" height="30">', "yellow", "Streaming HD", "HD")
+    load_links(itemlist, '<strong>Streaming HD[^<]+</strong>(.*?)<table class=cbtable height=30>', "yellow", "Streaming HD", "HD")
 
     autoplay.start(itemlist, item)
 
     # Estrae i contenuti - Streaming 3D
-    load_links(itemlist, '<strong>Streaming 3D[^<]+</strong>(.*?)<table class="cbtable" height="30">', "pink", "Streaming 3D")
+    load_links(itemlist, '<strong>Streaming 3D[^<]+</strong>(.*?)<table class=cbtable height=30>', "pink", "Streaming 3D")
 
     # Estrae i contenuti - Download
-    load_links(itemlist, '<strong>Download:</strong>(.*?)<table class="cbtable" height="30">', "aqua", "Download")
+    load_links(itemlist, '<strong>Download:</strong>(.*?)<table class=cbtable height=30>', "aqua", "Download")
 
     # Estrae i contenuti - Download HD
-    load_links(itemlist, '<strong>Download HD[^<]+</strong>(.*?)<table class="cbtable" width="100%" height="20">', "azure",
+    load_links(itemlist, '<strong>Download HD[^<]+</strong>(.*?)<table class=cbtable width=100% height=20>', "azure",
                "Download HD")
 
     if len(itemlist) == 0:
