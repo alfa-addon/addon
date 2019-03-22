@@ -49,7 +49,7 @@ def catalogo(item):
         scrapedplot = ""
         scrapedthumbnail = ""
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
+                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<li class="arrow"><a rel="next" href="([^"]+)">&raquo;</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
@@ -71,8 +71,8 @@ def categorias(item):
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
-    return itemlist
+                              fanart=scrapedthumbnail,  thumbnail=scrapedthumbnail, plot=scrapedplot) )
+    return sorted(itemlist, key=lambda i: i.title)
 
 
 def lista(item):
@@ -91,7 +91,7 @@ def lista(item):
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                              contentTitle = title))
+                              fanart=thumbnail, contentTitle = title))
     next_page = scrapertools.find_single_match(data,'<li class="next"><a href="([^"]+)"')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)

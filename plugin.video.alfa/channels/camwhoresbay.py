@@ -49,8 +49,8 @@ def categorias(item):
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
         scrapedplot = ""
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
-    return itemlist
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
+    return sorted(itemlist, key=lambda i: i.title)
 
 
 def lista(item):
@@ -68,7 +68,7 @@ def lista(item):
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                              contentTitle = scrapedtitle, fanart=scrapedthumbnail))
+                              contentTitle = scrapedtitle, fanart=thumbnail))
     if item.extra:
        next_page = scrapertools.find_single_match(data, '<li class="next">.*?from_videos\+from_albums:(\d+)')
        if next_page:

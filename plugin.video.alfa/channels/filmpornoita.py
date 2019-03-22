@@ -30,7 +30,7 @@ def categorias(item):
         scrapedplot = ""
         scrapedthumbnail = ""
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
+                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
@@ -47,7 +47,7 @@ def lista(item):
     for scrapedurl,scrapedtitle,scrapedthumbnail  in matches:
         plot = ""
         itemlist.append( Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
-                               thumbnail=scrapedthumbnail , plot=plot , viewmode="movie") )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail , plot=plot , viewmode="movie") )
     next_page = scrapertools.find_single_match(data,'<a href="([^"]+)">Next')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)

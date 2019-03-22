@@ -52,7 +52,7 @@ def lista(item):
         scrapedplot = ""
         scrapedtitle = "[COLOR yellow]" + (scrapedtime) + "[/COLOR] " + scrapedtitle
         itemlist.append(Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, plot=scrapedplot))
+                             fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot))
     next_page = scrapertools.find_single_match(data, '<nav id="page_nav"><a href="(.*?)"')
     if next_page != "":
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page))

@@ -59,16 +59,16 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     patron = '<article id=post-\d+.*?'
     patron += '<img class="center cover" src=([^"]+) alt="([^"]+)".*?'
-    patron += '<blockquote>.*?<a href=(.*?) target=_blank>'
+    patron += '<blockquote><p> <a href=(.*?) target=_blank'
     matches = re.compile(patron,re.DOTALL).findall(data)
     scrapertools.printMatches(matches)
     for scrapedthumbnail,scrapedtitle,scrapedurl in matches:
         scrapedplot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<a class=nextpostslink rel=next href=(.*?)>')
     if next_page!="":
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
@@ -77,6 +77,7 @@ def lista(item):
 
 def play(item):
     logger.info()
+    data = httptools.downloadpage(item.url).data
     itemlist = servertools.find_video_items(data=item.url)
     for videoitem in itemlist:
         videoitem.title = item.title

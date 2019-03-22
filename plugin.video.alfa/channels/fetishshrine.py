@@ -48,7 +48,7 @@ def categorias(item):
         scrapedplot = ""
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
@@ -59,11 +59,14 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a href="([^"]+)" itemprop="url">.*?'
     patron += '<img src="([^"]+)" alt="([^"]+)">.*?'
-    patron += '<span itemprop="duration" class="length">(.*?)</span>'
+    patron += '<span itemprop="duration" class="length">(.*?)</span>(.*?)<span class="thumb-info">'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,duracion  in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle,duracion,calidad  in matches:
         url = scrapedurl
-        title = "[COLOR yellow]" + duracion + "[/COLOR] " + scrapedtitle
+        if ">HD<" in calidad:
+            title = "[COLOR yellow]" + duracion + "[/COLOR] " + "[COLOR red]" + "HD" + "[/COLOR] " +scrapedtitle
+        else:
+            title = "[COLOR yellow]" + duracion + "[/COLOR] " + scrapedtitle
         contentTitle = scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""

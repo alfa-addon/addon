@@ -8,7 +8,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import httptools
 
-
+# BLOQUEO ESET INTERNET SECURITY
 def mainlist(item):
     logger.info()
     itemlist = []
