@@ -25,14 +25,14 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="lista", title="Peliculas",
-                             url=urlparse.urljoin(host, "p/peliculas.html"), type='pl', first=0))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Series",
-                         url=urlparse.urljoin(host, "p/series.html"), type='sr', first=0))
+                             url=urlparse.urljoin(host, "/category/pelicula"), type='pl', pag=1))
+    #itemlist.append(Item(channel=item.channel, action="lista", title="Series",
+    #                     url=urlparse.urljoin(host, "/category/serie"), type='sr', pag=1))
     itemlist.append(Item(channel=item.channel, action="category", title="Géneros", url=host, cat='genre'))
     itemlist.append(Item(channel=item.channel, action="category", title="Calidad", url=host, cat='quality'))
     itemlist.append(Item(channel=item.channel, action="category", title="Orden Alfabético", url=host, cat='abc'))
     itemlist.append(Item(channel=item.channel, action="category", title="Año de Estreno", url=host, cat='year'))
-    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host+"/search?q="))
+    #itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host+"/search?q="))
     autoplay.show_option(item.channel, itemlist)
     return itemlist
 
@@ -43,18 +43,18 @@ def category(item):
     data = httptools.downloadpage(host).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     if item.cat == 'abc':
-        data = scrapertools.find_single_match(data, '<span>Orden Alfabético</span>.*?</ul>')
+        data = scrapertools.find_single_match(data, '<div class="Body Container">(.+?)<main>')
     elif item.cat == 'genre':
-        data = scrapertools.find_single_match(data, '<span>Géneros</span>.*?</ul>')
+        data = scrapertools.find_single_match(data, '<a>Géneros<\/a><ul class="sub.menu">(.+?)<a>Año<\/a>')
     elif item.cat == 'year':
-        data = scrapertools.find_single_match(data, '<span>Año</span>.*?</ul>')
+        data = scrapertools.find_single_match(data, '<a>Año<\/a><ul class="sub.menu">(.+?)<a>Idioma<\/a>')
     elif item.cat == 'quality':
-        data = scrapertools.find_single_match(data, '<span>Calidad</span>.*?</ul>')
-    patron = "<li.*?>([^<]+)<a href='([^']+)'>"
+        data = scrapertools.find_single_match(data, '<a>Calidad<\/a><ul class="sub-menu">(.+?)<a>Géneros<\/a>')
+    patron = '<li.*?><a href="(.*?)">(.*?)<\/a><\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedtitle, scrapedurl  in matches:
+    for scrapedurl,scrapedtitle  in matches:
         if scrapedtitle != 'Próximas Películas':
-            itemlist.append(item.clone(action='lista', title=scrapedtitle, url=host+scrapedurl, type='cat', first=0))
+            itemlist.append(item.clone(action='lista', title=scrapedtitle, url=host+scrapedurl, type='cat', pag=0))
     return itemlist
 
 
@@ -63,6 +63,7 @@ def search_results(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+    logger.info(data)
     patron = '<span class=.post-labels.>([^<]+)</span>.*?class="poster-bg" src="([^"]+)"/>.*?<h4>.*?'
     patron +=">(\d{4})</a>.*?<h6>([^<]+)<a href='([^']+)"
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -90,28 +91,6 @@ def search(item, texto):
     if texto != '':
         return search_results(item)
 
-
-def episodios(item):
-    logger.info()
-    itemlist = list()
-    data = httptools.downloadpage(item.url).data
-    data = data.replace('"ep0','"epp"')
-    patron  = '(?is)<div id="ep(\d+)".*?'
-    patron += 'src="([^"]+)".*?'
-    patron += '(href.*?)fa fa-download'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedepi, scrapedthumbnail, scrapedurls in matches:
-        title="1x%s - %s" % (scrapedepi, item.contentSerieName)
-        urls = scrapertools.find_multiple_matches(scrapedurls, 'href="([^"]+)')
-        itemlist.append(item.clone(action='findvideos', title=title, url=item.url, thumbnail=scrapedthumbnail, type=item.type,
-                                   urls = urls, infoLabels=item.infoLabels))
-    if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]",
-                             url=item.url, action="add_serie_to_library", extra="episodios",
-                             contentSerieName=item.contentSerieName))
-    return itemlist
-
-
 def lista(item):
     logger.info()
     next = True
@@ -119,64 +98,37 @@ def lista(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-
-    css_data = scrapertools.find_single_match(data, "<style id='page-skin-1' type='text/css'>(.*?)</style>")
-
-    data = scrapertools.find_single_match(data, "itemprop='headline'>.*?</h2>.*?</ul>")
-
-    patron = '<span class="([^"]+)">.*?<figure class="poster-bg">(.*?)<img src="([^"]+)" />'
-    patron += '(.*?)</figure><h6>([^<]+)</h6><a href="([^"]+)"></a>'
+        
+    patron = '<article .*?">'
+    patron += '<a href="([^"]+)"><.*?><figure.*?>' #scrapedurl
+    patron += '<img.*?src="([^"]+)".*?>.*?' #scrapedthumbnail
+    patron += '<h3 class=".*?">([^"]+)<\/h3>' #scrapedtitle
+    patron += '<span.*?>([^"]+)<\/span>.+?' #scrapedyear
+    patron += '<a.+?>([^"]+)<\/a>' #scrapedtype
     matches = scrapertools.find_multiple_matches(data, patron)
 
-    first = int(item.first)
-    last = first + 19
-    if last > len(matches):
-        last = len(matches)
-        next = False
+    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedtype in matches:
+        title="%s - %s" % (scrapedtitle,scrapedyear)
 
-    for scrapedtype, scrapedyear, scrapedthumbnail, scrapedquality, scrapedtitle, scrapedurl in matches[first:last]:
-        year = scrapertools.find_single_match(scrapedyear, '<span>(\d{4})</span>')
+        new_item = Item(channel=item.channel, title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
+                       type=scrapedtype, infoLabels={'year':scrapedyear})
 
-        if not year:
-            class_year = scrapertools.find_single_match(scrapedyear, 'class="([^\"]+)"')
-            year = scrapertools.find_single_match(css_data, "\." + class_year + ":after {content:'(\d{4})';}")
-            if not year:
-                year = scrapertools.find_single_match(data, "headline'>(\d{4})</h2>")
-
-        qual = ""
-        if scrapedquality:
-            patron_qualities='<i class="([^"]+)"></i>'
-            qualities = scrapertools.find_multiple_matches(scrapedquality, patron_qualities)
-
-            for quality in qualities:
-                patron_desc = "\." + quality + ":after {content:'([^\']+)';}"
-                quality_desc = scrapertools.find_single_match(css_data, patron_desc)
-
-                qual = qual+ "[" + quality_desc + "] "
-
-        title="%s [%s] %s" % (scrapedtitle,year,qual)
-
-        new_item = Item(channel=item.channel, title=title, url=host+scrapedurl, thumbnail=scrapedthumbnail,
-                       type=scrapedtype, infoLabels={'year':year})
-
-        if scrapedtype.strip() == 'sr':
+        if scrapedtype == 'sr':
             new_item.contentSerieName = scrapedtitle
             new_item.action = 'episodios'
         else:
             new_item.contentTitle = scrapedtitle
             new_item.action = 'findvideos'
-
-        if scrapedtype == item.type or item.type == 'cat':
-            itemlist.append(new_item)
+            
+        itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     #pagination
-    url_next_page = item.url
-    first = last
-    if next:
-        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='lista', first=first))
-
+    pag = item.pag + 1
+    url_next_page = item.url+"/page/"+str(pag)+"/"
+    if len(itemlist)>19:
+        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='lista', pag=pag))
     return itemlist
 
 

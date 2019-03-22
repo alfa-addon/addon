@@ -5,28 +5,34 @@ import sys
 import urlparse
 
 from platformcode import logger
-from core import scrapertools
+from core import scrapertools, httptools
 from core.item import Item
 
 HOST = "http://es.xhamster.com/"
+
 
 def mainlist(item):
     logger.info()
 
     itemlist = []
-    itemlist.append( Item(channel=item.channel, action="videos"      , title="Útimos videos" , url=HOST, viewmode="movie"))
-    itemlist.append( Item(channel=item.channel, action="categorias"    , title="Categorías", url=HOST))
-    itemlist.append( Item(channel=item.channel, action="votados"    , title="Lo mejor"))
-    itemlist.append( Item(channel=item.channel, action="vistos"    , title="Los mas vistos"))
-    itemlist.append( Item(channel=item.channel, action="videos"    , title="Recomendados", url=urlparse.urljoin(HOST,"/videos/recommended")))
-    itemlist.append( Item(channel=item.channel, action="search"    , title="Buscar", url=urlparse.urljoin(HOST,"/search?q=%s")))
+    itemlist.append(Item(channel=item.channel, action="videos", title="Útimos videos", url=HOST, viewmode="movie"))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=HOST))
+    itemlist.append(Item(channel=item.channel, action="votados", title="Lo mejor"))
+    itemlist.append(Item(channel=item.channel, action="vistos", title="Los mas vistos"))
+    itemlist.append(Item(channel=item.channel, action="videos", title="Recomendados",
+                         url=urlparse.urljoin(HOST, "/videos/recommended")))
+    itemlist.append(
+        Item(channel=item.channel, action="search", title="Buscar", url=urlparse.urljoin(HOST, "/search?q=%s")))
 
     return itemlist
 
+
 # REALMENTE PASA LA DIRECCION DE BUSQUEDA
-def search(item,texto):
+
+
+def search(item, texto):
     logger.info()
-    tecleado = texto.replace( " ", "+" )
+    tecleado = texto.replace(" ", "+")
     item.url = item.url % tecleado
     item.extra = "buscar"
     try:
@@ -37,71 +43,95 @@ def search(item,texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
+
+
 # SECCION ENCARGADA DE BUSCAR
+
 
 def videos(item):
     logger.info()
-    data = scrapertools.cache_page(item.url)
+    data = httptools.downloadpage(item.url).data
     itemlist = []
 
-    data = scrapertools.get_match(data,'<article.+?>(.*?)</article>')
-    
-    #Patron
+    data = scrapertools.get_match(data, '<article.+?>(.*?)</article>')
+
+    # Patron
     patron = '(?s)<div class="thumb-list__item.*?href="([^"]+)".*?src="([^"]+)".*?alt="([^"]+)">.*?'
     patron += '<div class="thumb-image-container__duration">(.+?)</div>'
-    matches = re.compile(patron,re.DOTALL).findall(data)
+    matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl,scrapedthumbnail,scrapedtitle,duration in matches:
-        #logger.debug("title=["+scrapedtitle+"], url=["+scrapedurl+"], thumbnail=["+scrapedthumbnail+"]")
+    for scrapedurl, scrapedthumbnail, scrapedtitle, duration in matches:
+        # logger.debug("title=["+scrapedtitle+"], url=["+scrapedurl+"], thumbnail=["+scrapedthumbnail+"]")
         fullTitle = scrapedtitle.strip() + " [" + duration + "]"
-        itemlist.append( Item(channel=item.channel, action="play" , title=fullTitle , url=scrapedurl, thumbnail=scrapedthumbnail, folder=True))     
+        itemlist.append(
+            Item(channel=item.channel, action="play", title=fullTitle, url=scrapedurl, thumbnail=scrapedthumbnail,
+                 folder=True))
 
-    #Paginador
+    # Paginador
     patron = '(?s)<div class="pager-container".*?<li class="next">.*?href="([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)  
-    if len(matches) >0:
-      itemlist.append( Item(channel=item.channel, action="videos", title="Página Siguiente" , url=matches[0] , thumbnail="" , folder=True, viewmode="movie") )
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    if len(matches) > 0:
+        itemlist.append(
+            Item(channel=item.channel, action="videos", title="Página Siguiente", url=matches[0], thumbnail="",
+                 folder=True, viewmode="movie"))
 
     return itemlist
 
+
 # SECCION ENCARGADA DE VOLCAR EL LISTADO DE CATEGORIAS CON EL LINK CORRESPONDIENTE A CADA PAGINA
-    
+
+
 def categorias(item):
     logger.info()
     itemlist = []
 
+    data = httptools.downloadpage(item.url).data
 
-    data = scrapertools.cache_page(item.url)
-
-    data = scrapertools.get_match(data,'(?s)<div class="all-categories">(.*?)</aside>')    
+    data = scrapertools.get_match(data, '(?s)<div class="all-categories">(.*?)</aside>')
 
     patron = '(?s)<li>.*?<a href="([^"]+)".*?>([^<]+).*?</a></li>'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle in matches:
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    for scrapedurl, scrapedtitle in matches:
         fullTitle = scrapedtitle.strip()
-        itemlist.append( Item(channel=item.channel, action="videos" , title=fullTitle , url=scrapedurl))     
-
+        itemlist.append(Item(channel=item.channel, action="videos", title=fullTitle, url=scrapedurl))
 
     return itemlist
+
 
 def votados(item):
     logger.info()
     itemlist = []
 
-    itemlist.append( Item(channel=item.channel, action="videos" , title="Día", url=urlparse.urljoin(HOST,"/best/daily"), viewmode="movie"))
-    itemlist.append( Item(channel=item.channel, action="videos" , title="Semana"  , url=urlparse.urljoin(HOST,"/best/weekly"), viewmode="movie"))
-    itemlist.append( Item(channel=item.channel, action="videos" , title="Mes"  , url=urlparse.urljoin(HOST,"/best/monthly"), viewmode="movie"))
-    itemlist.append( Item(channel=item.channel, action="videos" , title="De siempre"  , url=urlparse.urljoin(HOST,"/best/"), viewmode="movie"))
+    itemlist.append(Item(channel=item.channel, action="videos", title="Día", url=urlparse.urljoin(HOST, "/best/daily"),
+                         viewmode="movie"))
+    itemlist.append(
+        Item(channel=item.channel, action="videos", title="Semana", url=urlparse.urljoin(HOST, "/best/weekly"),
+             viewmode="movie"))
+    itemlist.append(
+        Item(channel=item.channel, action="videos", title="Mes", url=urlparse.urljoin(HOST, "/best/monthly"),
+             viewmode="movie"))
+    itemlist.append(
+        Item(channel=item.channel, action="videos", title="De siempre", url=urlparse.urljoin(HOST, "/best/"),
+             viewmode="movie"))
     return itemlist
+
 
 def vistos(item):
     logger.info()
     itemlist = []
 
-    itemlist.append( Item(channel=item.channel, action="videos" , title="Día", url=urlparse.urljoin(HOST,"/most-viewed/daily"), viewmode="movie"))
-    itemlist.append( Item(channel=item.channel, action="videos" , title="Semana"  , url=urlparse.urljoin(HOST,"/most-viewed/weekly"), viewmode="movie"))
-    itemlist.append( Item(channel=item.channel, action="videos" , title="Mes"  , url=urlparse.urljoin(HOST,"/most-viewed/monthly"), viewmode="movie"))
-    itemlist.append( Item(channel=item.channel, action="videos" , title="De siempre"  , url=urlparse.urljoin(HOST,"/most-viewed/"), viewmode="movie"))
+    itemlist.append(
+        Item(channel=item.channel, action="videos", title="Día", url=urlparse.urljoin(HOST, "/most-viewed/daily"),
+             viewmode="movie"))
+    itemlist.append(
+        Item(channel=item.channel, action="videos", title="Semana", url=urlparse.urljoin(HOST, "/most-viewed/weekly"),
+             viewmode="movie"))
+    itemlist.append(
+        Item(channel=item.channel, action="videos", title="Mes", url=urlparse.urljoin(HOST, "/most-viewed/monthly"),
+             viewmode="movie"))
+    itemlist.append(
+        Item(channel=item.channel, action="videos", title="De siempre", url=urlparse.urljoin(HOST, "/most-viewed/"),
+             viewmode="movie"))
 
     return itemlist
 
@@ -111,15 +141,15 @@ def play(item):
     logger.info()
     itemlist = []
 
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     logger.debug(data)
 
     patron = '"([0-9]+p)":"([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
     for res, url in matches:
         url = url.replace("\\", "")
-        logger.debug("url="+url)
-        itemlist.append(["%s %s [directo]" % (res, scrapertools.get_filename_from_url(url)[-4:]), url])  
-        
+        logger.debug("url=" + url)
+        itemlist.append(["%s %s [directo]" % (res, scrapertools.get_filename_from_url(url)[-4:]), url])
+
     return itemlist

@@ -26,7 +26,7 @@ def mainlist(item):
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
-                               thumbnail=thumbnail, plot=plot, contentTitle=contentTitle))
+                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle=contentTitle))
     next_page_url = scrapertools.find_single_match(data,'<a class="nextpostslink" rel="next" href="([^"]+)">')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
@@ -36,7 +36,7 @@ def mainlist(item):
     
 def play(item):
     logger.info()
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     itemlist = servertools.find_video_items(data=data)
     for videoitem in itemlist:
         videoitem.title = item.title

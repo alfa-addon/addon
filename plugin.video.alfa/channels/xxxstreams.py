@@ -79,7 +79,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'--more--></p>(.*?)/a></p>')
+    data = scrapertools.get_match(data,'--more-->(.*?)/a>')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<a href="([^"]+)".*?class="external">(.*?)<'
     matches = re.compile(patron,re.DOTALL).findall(data)

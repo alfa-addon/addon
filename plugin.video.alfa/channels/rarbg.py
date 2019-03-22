@@ -336,8 +336,8 @@ def listado(item):
                 item_local.season_colapse = True                            #Muestra las series agrupadas por temporadas
 
             #Limpiamos el título de la basura innecesaria
-            title = re.sub(r'TV|Online', '', title, flags=re.IGNORECASE).strip()
-            item_local.quality = re.sub(r'proper|unrated|directors|cut|german|repack|internal|real|korean|extended|masted|docu|oar|super|duper|amzn|uncensored|hulu', '', item_local.quality, flags=re.IGNORECASE).strip()
+            title = re.sub(r'(?i)TV|Online', '', title).strip()
+            item_local.quality = re.sub(r'(?i)proper|unrated|directors|cut|german|repack|internal|real|korean|extended|masted|docu|oar|super|duper|amzn|uncensored|hulu', '', item_local.quality).strip()
 
             #Analizamos el año.  Si no está claro ponemos '-'
             try:
@@ -472,7 +472,7 @@ def findvideos(item):
             item_local.quality = ''
         title = title.replace('.', ' ')
         item_local.quality = item_local.quality.replace('.', ' ')
-        item_local.quality = re.sub(r'proper|unrated|directors|cut|german|repack|internal|real|korean|extended|masted|docu|oar|super|duper|amzn|uncensored|hulu', '', item_local.quality, flags=re.IGNORECASE).strip()
+        item_local.quality = re.sub(r'(?i)proper|unrated|directors|cut|german|repack|internal|real|korean|extended|masted|docu|oar|super|duper|amzn|uncensored|hulu', '', item_local.quality).strip()
         
         #Buscamos si ya tiene tamaño, si no, los buscamos en el archivo .torrent
         size = scrapedsize
@@ -533,7 +533,7 @@ def play(item):                                 #Permite preparar la descarga de
     from core import ziptools
     
     #buscamos la url del .torrent
-    patron = '<tr><td align="(?:[^"]+)?"\s*class="(?:[^"]+)?"\s*width="(?:[^"]+)?">\s*Torrent:<\/td><td class="(?:[^"]+)?">\s*<img src="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*border="(?:[^"]+)?"\s*\/>\s*<a onmouseover="(?:[^"]+)?"\s*onmouseout="(?:[^"]+)?" href="([^"]+)">.*?<\/a>'
+    patron = '<tr><td align="(?:[^"]+)?"\s*class="(?:[^"]+)?"\s*width="(?:[^"]+)?">\s*Torrent:<\/td><td class="(?:[^"]+)?">\s*<img src="(?:[^"]+)?"\s*alt="(?:[^"]+)?"\s*border="(?:[^"]+)?"\s*\/>\s*<a onmouseover="(?:[^"]+)?"\s*onmouseout="(?:[^"]+)?" href="([^"]+)".*?<\/a>'
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
         data = unicode(data, "utf-8", errors="replace").encode("utf-8")
@@ -543,6 +543,7 @@ def play(item):                                 #Permite preparar la descarga de
     if status:
         return itemlist                                                 #IP bloqueada
     if not scrapertools.find_single_match(data, patron):
+        logger.error('ERROR 02: PLAY: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log: PATRON: ' + patron + ' / DATA: ' + data)
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: PLAY: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
         return itemlist
     item.url = urlparse.urljoin(host, scrapertools.find_single_match(data, patron))

@@ -280,7 +280,9 @@ def post_tmdb_listado(item, itemlist):
         item.category_new = ''
 
     for item_local in itemlist:                                 #Recorremos el Itemlist generado por el canal
-        title = re.sub(r'online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title, flags=re.IGNORECASE).strip()
+        item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
+        #item_local.title = re.sub(r'online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title, flags=re.IGNORECASE).strip()
+        title = item_local.title
         #logger.debug(item_local)
         
         item_local.last_page = 0
@@ -375,11 +377,13 @@ def post_tmdb_listado(item, itemlist):
                 item_local.contentSerieName = item_local.from_title
             if item_local.contentType == 'season':
                 item_local.title = item_local.from_title
-            title = re.sub(r'online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title, flags=re.IGNORECASE).strip()
+            item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
+            title = item_local.title
         
         #Limpiamos calidad de títulos originales que se hayan podido colar
         if item_local.infoLabels['originaltitle'].lower() in item_local.quality.lower():
-            item_local.quality = re.sub(item_local.infoLabels['originaltitle'], '', item_local.quality, flags=re.IGNORECASE)
+            item_local.quality = re.sub(item_local.infoLabels['originaltitle'], '', item_local.quality)
+            #item_local.quality = re.sub(item_local.infoLabels['originaltitle'], '', item_local.quality, flags=re.IGNORECASE)
         
         # Preparamos el título para series, con los núm. de temporadas, si las hay
         if item_local.contentType in ['season', 'tvshow', 'episode']:
@@ -775,7 +779,7 @@ def post_tmdb_episodios(item, itemlist):
         del item_local.totalItems
         item_local.unify = 'xyz'
         del item_local.unify
-        item_local.title = re.sub(r'online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title, flags=re.IGNORECASE).strip()
+        item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
         
         #logger.debug(item_local)
         
@@ -851,7 +855,8 @@ def post_tmdb_episodios(item, itemlist):
 
         #Limpiamos calidad de títulos originales que se hayan podido colar
         if item_local.infoLabels['originaltitle'].lower() in item_local.quality.lower():
-            item_local.quality = re.sub(item_local.infoLabels['originaltitle'], '', item_local.quality, flags=re.IGNORECASE)
+            item_local.quality = re.sub(item_local.infoLabels['originaltitle'], '', item_local.quality)
+            #item_local.quality = re.sub(item_local.infoLabels['originaltitle'], '', item_local.quality, flags=re.IGNORECASE)
         
         #Si no está el título del episodio, pero sí está en "title", lo rescatamos
         if not item_local.infoLabels['episodio_titulo'] and item_local.infoLabels['title'].lower() != item_local.infoLabels['tvshowtitle'].lower():
@@ -1489,8 +1494,9 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
             fail_over = settings['default']                             #Carga lista de clones
             break
     fail_over_list = ast.literal_eval(fail_over)
+    #logger.debug(str(fail_over_list))
 
-    if item.from_channel and item.from_channel != 'videolibrary':       #Desde search puede venir con el nombre de canal equivocado
+    if item.from_channel and item.from_channel != 'videolibrary': #Desde search puede venir con el nombre de canal equivocado
         item.channel = item.from_channel
     #Recorremos el Array identificando el canal que falla
     for active, channel, channel_host, contentType, action_excluded in fail_over_list:
@@ -1503,10 +1509,11 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         channel_failed = channel                                        #salvamos el nombre del canal o categoría
         channel_host_failed = channel_host                              #salvamos el nombre del host
         channel_url_failed = item.url                                   #salvamos la url
+        #logger.debug(channel_failed + ' / ' + channel_host_failed)
         
         if patron == True and active == '1':                            #solo nos han pedido verificar el clone
             return (item, data)                                         #nos vamos, con el mismo clone, si está activo
-        if (item.action == 'episodios' or item.action == 'findvideos') and item.contentType not in contentType:        #soporta el fail_over de este contenido?
+        if (item.action == 'episodios' or item.action == "update_tvshow" or item.action == "get_seasons" or item.action == 'findvideos') and item.contentType not in contentType:          #soporta el fail_over de este contenido?
             logger.error("ERROR 99: " + item.action.upper() + ": Acción no soportada para Fail-Over en canal: " + item.url)
             return (item, data)                         #no soporta el fail_over de este contenido, no podemos hacer nada
         break
@@ -1521,7 +1528,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         data_alt = ''
         if channel == channel_failed or active == '0' or item.action in action_excluded or item.extra2 in action_excluded:  #es válido el nuevo canal?
             continue
-        if (item.action == 'episodios' or item.action == 'findvideos') and item.contentType not in contentType:     #soporta el contenido?
+        if (item.action == 'episodios' or item.action == "update_tvshow" or item.action == "get_seasons" or item.action == 'findvideos') and item.contentType not in contentType:          #soporta el contenido?
             continue
         
         #Hacemos el cambio de nombre de canal y url, conservando las anteriores como ALT
@@ -1531,12 +1538,16 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         item.category = channel.capitalize()
         item.url_alt = channel_url_failed
         item.url = channel_url_failed
-        item.url = item.url.replace(channel_host_failed, channel_host)
+        channel_host_bis = re.sub(r'(?i)http.*://', '', channel_host)
+        channel_host_failed_bis = re.sub(r'(?i)http.*://', '', channel_host_failed)
+        item.url = item.url.replace(channel_host_failed_bis, channel_host_bis)
+        
         url_alt += [item.url]                               #salvamos la url para el bucle
         item.channel_host = channel_host
+        #logger.debug(str(url_alt))
         
         #quitamos el código de series, porque puede variar entre webs
-        if item.action == "episodios" or item.action == "get_seasons":
+        if item.action == "episodios" or item.action == "get_seasons" or item.action == "update_tvshow":
             item.url = re.sub(r'\/\d+\/?$', '', item.url)   #parece que con el título solo ecuentra la serie, normalmente...
             url_alt = [item.url]    #salvamos la url para el bucle, pero de momento ignoramos la inicial con código de serie
         
@@ -1597,9 +1608,11 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                     #Función especial para encontrar en otro clone un .torrent válido
                     if verify_torrent == 'torrent:check:status':
                         from core import videolibrarytools
+                        if not data_alt.startswith("http"):                     #Si le falta el http.: lo ponemos
+                            data_alt = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + data_alt
                         if videolibrarytools.verify_url_torrent(data_alt):      #verificamos si el .torrent existe
                             item.url = url                                      #guardamos la url que funciona
-                            break                                               #nos vamos, con la nueva url del .torrent verificada
+                            break                           #nos vamos, con la nueva url del .torrent verificada
                         data = ''
                         continue                                                #no vale el .torrent, continuamos
                     item.url = url                          #guardamos la url que funciona, sin verificar

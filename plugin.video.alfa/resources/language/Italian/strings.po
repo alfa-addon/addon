@@ -1034,8 +1034,8 @@ msgid "Movie"
 msgstr "Film"
 
 msgctxt "#60245"
-msgid "Series"
-msgstr "Serie"
+msgid "tv show"
+msgstr "serie"
 
 msgctxt "#60246"
 msgid "Full information"
@@ -1236,10 +1236,6 @@ msgstr "Ricerca di informazioni sulla serie"
 msgctxt "#60297"
 msgid "Find %s possible matches"
 msgstr "Trovate %s possibili corrispondenze"
-
-msgctxt "#60298"
-msgid "[%s]: Select the correct TV series"
-msgstr "[%s]: Seleziona la serie corretta"
 
 msgctxt "#60299"
 msgid "Not found in the language '%s'"
@@ -4247,10 +4243,6 @@ msgctxt "#70392"
 msgid "Rate with a [COLOR %s]%s[/ COLOR]"
 msgstr "Dai un punteggio con un [COLOR %s]%s[/COLOR]"
 
-msgctxt "#70393"
-msgid "[%s]: Select the correct %s "
-msgstr "[%s]: Seleziona il %s corretto"
-
 msgctxt "#70394"
 msgid "Action"
 msgstr "Azione"
@@ -4799,10 +4791,6 @@ msgctxt "#70528"
 msgid "Default folder"
 msgstr "Cartella di Default"
 
-msgctxt "#70529"
-msgid "Repeated link"
-msgstr "Link ripetuto"
-
 msgctxt "#70530"
 msgid "You already have this link in the folder"
 msgstr "C'è già un link nella cartella"
@@ -4932,3 +4920,6 @@ msgid "Search Similar
 msgstr "Cerca Simili"
 
 
+msgctxt "#70562"
+msgid "autoplay"
+msgstr "Abilita autoplay in tutti i canali"

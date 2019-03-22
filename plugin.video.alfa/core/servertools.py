@@ -144,10 +144,9 @@ def findvideos(data, skip=False):
     for serverid in servers_list:
         if not is_server_enabled(serverid):
             continue
-        if config.get_setting("black_list", server=serverid):
+        if config.get_setting("filter_servers") == True and config.get_setting("black_list", server=serverid):
             is_filter_servers = True
             continue
-
         devuelve.extend(findvideosbyserver(data, serverid))
         if skip and len(devuelve) >= skip:
             devuelve = devuelve[:skip]
@@ -166,7 +165,6 @@ def findvideosbyserver(data, serverid):
 
     server_parameters = get_server_parameters(serverid)
     devuelve = []
-
     if "find_videos" in server_parameters:
         # Recorre los patrones
         for pattern in server_parameters["find_videos"].get("patterns", []):

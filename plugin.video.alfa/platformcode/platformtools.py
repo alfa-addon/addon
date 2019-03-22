@@ -19,7 +19,7 @@ import xbmcplugin
 from channelselector import get_thumb
 from platformcode import unify
 from core import channeltools
-from core import trakt_tools
+from core import trakt_tools, scrapertoolsV2
 from core.item import Item
 from platformcode import logger
 
@@ -696,7 +696,6 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
         return
 
     # se obtiene la información del video.
-    mediaurl = alfaresolver.av(mediaurl)
     if not item.contentThumbnail:
         thumb = item.thumbnail
     else:
@@ -740,13 +739,51 @@ def get_seleccion(default_action, opciones, seleccion, video_urls):
         seleccion = dialog_select(config.get_localized_string(30163), opciones)
     # Ver en calidad baja
     elif default_action == 1:
-        seleccion = 0
+        resolutions = []
+        for url in video_urls:
+            res = calcResolution(url[0])
+            if res:
+                resolutions.append(res)
+        if resolutions:
+            seleccion = resolutions.index(min(resolutions))
+        else:
+            seleccion = 0
     # Ver en alta calidad
     elif default_action == 2:
-        seleccion = len(video_urls) - 1
+        resolutions = []
+        for url in video_urls:
+            res = calcResolution(url[0])
+            if res:
+                resolutions.append(res)
+        if resolutions:
+            seleccion = resolutions.index(max(resolutions))
+        else:
+            seleccion = len(video_urls) - 1
     else:
         seleccion = 0
     return seleccion
+
+
+def calcResolution(option):
+    match = scrapertoolsV2.find_single_match(option, '([0-9]{2,4})x([0-9]{2,4})')
+    resolution = False
+    if match:
+        resolution = int(match[0])*int(match[1])
+    else:
+        if '240p' in option:
+            resolution = 320 * 240
+        elif '360p' in option:
+            resolution = 480 * 360
+        elif ('480p' in option) or ('480i' in option):
+            resolution = 720 * 480
+        elif ('576p' in option) or ('576p' in option):
+            resolution = 720 * 576
+        elif ('720p' in option) or ('HD' in option):
+            resolution = 1280 * 720
+        elif ('1080p' in option) or ('1080i' in option) or ('Full HD' in option):
+            resolution = 1920 * 1080
+
+    return resolution
 
 
 def show_channel_settings(**kwargs):

@@ -81,6 +81,7 @@ def lista(item):
             if not scrapedthumbnail.startswith("https"):
                 scrapedthumbnail = "https:%s" % scrapedthumbnail
         scrapedtitle = "%s - [COLOR red]%s[/COLOR] %s" % (duration, quality, scrapedtitle)
+        scrapedthumbnail += "|Referer=https://www.porntrex.com/"
         itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, 
                                    contentThumbnail=scrapedthumbnail, fanart=scrapedthumbnail))
     # Extrae la marca de siguiente página
@@ -256,6 +257,7 @@ def menu_info(item):
         if i == 0:
             continue
         img = urlparse.urljoin(host, img)
+        img += "|Referer=https://www.porntrex.com/"
         title = "Imagen %s" % (str(i))
         itemlist.append(item.clone(action="", title=title, thumbnail=img, fanart=img))
 

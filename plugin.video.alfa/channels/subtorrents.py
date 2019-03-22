@@ -294,7 +294,7 @@ def listado(item):
             title = re.sub(r'\d+[M|m|G|g][B|b]', '', title)
 
             #Limpiamos el título de la basura innecesaria
-            title = re.sub(r'TV|Online|Spanish|Torrent|en Espa\xc3\xb1ol|Español|Latino|Subtitulado|Blurayrip|Bluray rip|\[.*?\]|R2 Pal|\xe3\x80\x90 Descargar Torrent \xe3\x80\x91|Completa|Temporada|Descargar|Torren|\(iso\)|\(dvd.*?\)|(?:\d+\s*)?\d{3,4}p.*?$|extended|(?:\d+\s*)?bdrip.*?$|\(.*?\).*?$|iso$|unrated|\[.*?$|\d{4}$', '', title, flags=re.IGNORECASE)
+            title = re.sub(r'(?i)TV|Online|Spanish|Torrent|en Espa\xc3\xb1ol|Español|Latino|Subtitulado|Blurayrip|Bluray rip|\[.*?\]|R2 Pal|\xe3\x80\x90 Descargar Torrent \xe3\x80\x91|Completa|Temporada|Descargar|Torren|\(iso\)|\(dvd.*?\)|(?:\d+\s*)?\d{3,4}p.*?$|extended|(?:\d+\s*)?bdrip.*?$|\(.*?\).*?$|iso$|unrated|\[.*?$|\d{4}$', '', title)
 
             #Obtenemos temporada y episodio si se trata de Episodios
             if item_local.contentType == "episode":

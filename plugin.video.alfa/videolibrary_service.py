@@ -12,6 +12,7 @@ from channels import videolibrary
 from lib import generictools
 
 
+
 def update(path, p_dialog, i, t, serie, overwrite):
     logger.info("Actualizando " + path)
     insertados_total = 0
@@ -96,7 +97,6 @@ def update(path, p_dialog, i, t, serie, overwrite):
 
 def check_for_update(overwrite=True):
     logger.info("Actualizando series...")
-
     p_dialog = None
     serie_actualizada = False
     update_when_finished = False
@@ -284,7 +284,9 @@ def start(thread=True):
 
 def monitor_update():
     update_setting = config.get_setting("update", "videolibrary")
+
     # "Actualizar "Una sola vez al dia" o "al inicar Kodi y al menos una vez al dia"
+
     if update_setting == 2 or update_setting == 3:
         hoy = datetime.date.today()
         last_check = config.get_setting("updatelibrary_last_check", "videolibrary")
@@ -310,9 +312,14 @@ if __name__ == "__main__":
     import xbmc
     import time
 
+
     # modo adulto:
     # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie Kodi
     # si es == 2 lo desactivamos.
+    if config.get_platform(True)['num_version'] >= 17.0:
+        from lib.alfaresolver import updated, update_now
+        if not updated():
+            update_now()
     if config.get_setting("adult_mode") == 2:
         config.set_setting("adult_mode", 0)
 
@@ -320,6 +327,7 @@ if __name__ == "__main__":
     wait = update_wait[int(config.get_setting("update_wait", "videolibrary"))]
     if wait > 0:
         xbmc.sleep(wait)
+
 
     # Verificar quick-fixes al abrirse Kodi, y dejarlo corriendo como Thread
     from platformcode import updater

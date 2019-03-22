@@ -12,7 +12,7 @@ from platformcode import config, logger
 
 __channel__ = "xms"
 
-host = 'https://xxxmoviestream.com/'
+host = 'https://xtheatre.org'
 host1 = 'https://www.cam4.com/'
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -90,8 +90,6 @@ def peliculas(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|#038;", "", data)
-    patron_todos = '<div id="content">(.*?)<div id="footer"'
-    data = scrapertools.find_single_match(data, patron_todos)
     patron = 'src="([^"]+)" class="attachment-thumb_site.*?'  # img
     patron += '<a href="([^"]+)" title="([^"]+)".*?'          # url, title
     patron += '<div class="right"><p>([^<]+)</p>'             # plot
@@ -119,20 +117,19 @@ def peliculas(item):
 def webcam(item):
     logger.info()
     itemlist = []
-
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|#038;", "", data)
     patron = '<div class="profileBox">.*?<a href="/([^"]+)".*?'  # url
     patron += 'data-hls-preview-url="([^"]+)">.*?'               # video_url
     patron += 'data-username="([^"]+)".*?'                       # username
     patron += 'title="([^"]+)".*?'                               # title
-    patron += 'data-profile="([^"]+)" />'                        # img
+    patron += 'data-profile="([^"]+)"'                        # img
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, video_url, username, scrapedtitle, scrapedthumbnail in matches:
         scrapedtitle = scrapedtitle.replace(' Chat gratis con webcam.', '')
 
-        itemlist.append(item.clone(channel=__channel__, action="play", title=scrapedtitle,
+        itemlist.append(item.clone(channel=__channel__, action="play", title=username,
                                    url=video_url, thumbnail=scrapedthumbnail, fanart=scrapedthumbnail,
                                    viewmode="movie_with_plot", folder=True, contentTitle=scrapedtitle))
     # Extrae el paginador

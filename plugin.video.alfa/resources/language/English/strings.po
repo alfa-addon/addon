@@ -1046,7 +1046,7 @@ msgid "Movie"
 msgstr ""
 
 msgctxt "#60245"
-msgid "Series"
+msgid "tv show"
 msgstr ""
 
 msgctxt "#60246"
@@ -1247,10 +1247,6 @@ msgstr ""
 
 msgctxt "#60297"
 msgid "Find %s possible matches"
-msgstr ""
-
-msgctxt "#60298"
-msgid "[%s]: Select the correct TV series"
 msgstr ""
 
 msgctxt "#60299"
@@ -4267,10 +4263,6 @@ msgctxt "#70392"
 msgid "Rate with a [COLOR %s]%s[/ COLOR]"
 msgstr ""
 
-msgctxt "#70393"
-msgid "[%s]: Select the correct %s "
-msgstr ""
-
 msgctxt "#70394"
 msgid "Action"
 msgstr ""
@@ -4811,10 +4803,6 @@ msgctxt "#70528"
 msgid "Default folder"
 msgstr ""
 
-msgctxt "#70529"
-msgid "Repeated link"
-msgstr ""
-
 msgctxt "#70530"
 msgid "You already have this link in the folder"
 msgstr ""
@@ -4943,3 +4931,6 @@ msgctxt "#70561"
 msgid "Search Similar
 msgstr ""
 
+msgctxt "#70562"
+msgid "autoplay"
+msgstr "Enable autoplay in all channels"
