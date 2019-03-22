@@ -2,23 +2,21 @@
 
 import re
 
+from core import httptools
 from core import scrapertools
 from platformcode import logger
 
 
-# Returns an array of possible video url's from the page_url
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
-
     video_urls = []
-
     # Lo extrae a partir de flashvideodownloader.org
     if page_url.startswith("http://"):
         url = 'http://www.flashvideodownloader.org/download.php?u=' + page_url
     else:
         url = 'http://www.flashvideodownloader.org/download.php?u=http://video.google.com/videoplay?docid=' + page_url
     logger.info("url=" + url)
-    data = scrapertools.cache_page(url)
+    data = httptools.downloadpage(url).data
 
     # Extrae el vídeo
     newpatron = '</script>.*?<a href="(.*?)" title="Click to Download">'

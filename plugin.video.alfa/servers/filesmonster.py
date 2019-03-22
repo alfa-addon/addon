@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from core import httptools
 from core import scrapertools
 from platformcode import logger
 
@@ -15,7 +16,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     enlace = "no"
     post2 = "username=" + user + "&password=" + password
     login_url = "http://filesmonster.com/api/public/login"
-    data1 = scrapertools.cache_page(login_url, post=post2)
+    data1 = httptools.downloadpage(login_url, post=post2).data
     partes1 = data1.split('"')
     estado = partes1[3]
     if estado != 'success': alerta = "[error de filesmonster premium]: " + estado
@@ -24,7 +25,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     id = id.replace("http://filesmonster.com/download.php", "")
     post = id.replace("?", "")
     url = 'http://filesmonster.com/api/public/premiumDownload'
-    data2 = scrapertools.cache_page(url, post=post)
+    data2 = httptools.downloadpage(url, post=post).data
 
     partes = data2.split('"')
 

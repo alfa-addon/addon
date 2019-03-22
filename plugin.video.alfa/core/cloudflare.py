@@ -34,6 +34,8 @@ class Cloudflare:
             re.compile('var s,t,o,p,b,r,e,a,k,i,n,g,f[^:]+"([^"]+)":([^\n]+)};', re.DOTALL).findall(response["data"])[0]
             self.js_data["op"] = re.compile(var + "([\+|\-|\*|\/])=([^;]+)", re.MULTILINE).findall(response["data"])
             self.js_data["wait"] = int(re.compile("\}, ([\d]+)\);", re.MULTILINE).findall(response["data"])[0]) / 1000
+            self.js_data["params"]["s"] = \
+            re.compile('<input type="hidden" name="s" value="([^"]+)"').findall(response["data"])[0]
         except:
             logger.debug("Metodo #1 (javascript): NO disponible")
             self.js_data = {}
