@@ -270,6 +270,7 @@ def entradas(item):
     item.text_color = color2
     # Descarga la página
     data = httptools.downloadpage(item.url).data
+    data = re.sub("\n", "", data)
     if "valores" in item and item.valores:
         itemlist.append(item.clone(action="", title=item.valores, text_color=color4))
 
@@ -295,7 +296,6 @@ def entradas(item):
         # Extrae las entradas
         if item.extra == "Novedades":
             data2 = data.split("<h2>Últimas Películas Agregadas y Actualizadas</h2>", 1)[1]
-
             entradas = scrapertools.find_multiple_matches(data2, '<div class="col-mt-5 postsh">(.*?)</div></div></div>')
         else:
             entradas = scrapertools.find_multiple_matches(data, '<div class="col-mt-5 postsh">(.*?)</div></div></div>')
@@ -381,6 +381,7 @@ def findvideos(item):
 
     # Descarga la pagina
     data = httptools.downloadpage(item.url).data
+    data = re.sub("\n", "", data)
     sinopsis = scrapertools.find_single_match(data, '<h2>Sinopsis</h2>.*?>(.*?)</p>')
     item.infoLabels["plot"] = scrapertools.htmlclean(sinopsis)
     # Busca en tmdb si no se ha hecho antes
@@ -409,8 +410,8 @@ def findvideos(item):
         if server == "Ul":
             server = "Uploaded"
         title = "%s  [%s][%s]" % (server, idioma, calidad)
-        itemlist.append(Item(channel=item.channel, action="play", title=title, url=url, language=idioma, quality=calidad,
-                                   server=server, infoLabels=item.infoLabels))
+        itemlist.append(Item(channel=item.channel, action="play", title=title, url=url, language=idioma,
+                             quality=calidad, server=server, infoLabels=item.infoLabels))
 
     patron = 'id="(embed[0-9]*)".*?<div class="calishow">(.*?)<.*?src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -420,8 +421,8 @@ def findvideos(item):
             title = "Directo"
         idioma = scrapertools.find_single_match(data, 'href="#%s".*?>([^<]+)<' % id_embed)
         title = "%s  [%s][%s]" % (title.capitalize(), idioma, calidad)
-        itemlist.append(Item(channel=item.channel, action="play", title=title, url=url, language=idioma, quality=calidad,
-                                   server=server))
+        itemlist.append(Item(channel=item.channel, action="play", title=title, url=url, language=idioma,
+                             quality=calidad, server=server))
     # Requerido para FilterTools
 
     itemlist = filtertools.get_links(itemlist, item, list_language)
