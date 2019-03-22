@@ -4922,3 +4922,14 @@ msgstr "Autoplay (Abilita autoplay in tutti i canali)"
 msgctxt "#70563"
 msgid "Italian"
 msgstr "Italiano"
+<<<<<<< HEAD
+=======
+
+msgctxt "#70564"
+msgid "Enable Custom Theme"
+msgstr "Abilita Tema Personalizzato"
+
+msgctxt "#70565"
+msgid "Custom Theme Path"
+msgstr "Percorso Tema Personalizzato"
+>>>>>>> e253911b... Add Custom Theme Setting and Auto Thumb (partial)

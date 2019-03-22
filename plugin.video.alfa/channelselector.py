@@ -224,25 +224,54 @@ def filterchannels(category, view="thumb_"):
     return channelslist
 
 
+# def get_thumb(thumb_name, view="thumb_", auto=False):
+
+#     if auto:
+#         thumbnail = ''
+
+#         thumb_name = unify.set_genre(unify.simplify(thumb_name))
+
+
+#         if thumb_name in thumb_dict:
+#             thumbnail = thumb_dict[thumb_name]
+#         return thumbnail
+#     else:
+#         icon_pack_name = config.get_setting('icon_set', default="default")
+#         if icon_pack_name == "default":
+#             resource_path = os.path.join(config.get_runtime_path(), "resources", "media", "themes")
+#         else:
+#             resource_path = "https://raw.githubusercontent.com/alfa-addon/media/master/themes/"
+
+#         media_path = os.path.join(resource_path, icon_pack_name)
+
+#         return os.path.join(media_path, view + thumb_name)
+
 def get_thumb(thumb_name, view="thumb_", auto=False):
 
     if auto:
         thumbnail = ''
 
         thumb_name = unify.set_genre(unify.simplify(thumb_name))
-
+        
 
         if thumb_name in thumb_dict:
             thumbnail = thumb_dict[thumb_name]
         return thumbnail
+       
     else:
         icon_pack_name = config.get_setting('icon_set', default="default")
-        if icon_pack_name == "default":
-            resource_path = os.path.join(config.get_runtime_path(), "resources", "media", "themes")
-        else:
-            resource_path = "https://raw.githubusercontent.com/alfa-addon/media/master/themes/"
-
+        
+        if auto_filter() == 'ita' and icon_pack_name == "default":
+            icon_pack_name = 'default_ita'
+        resource_path = os.path.join(config.get_runtime_path(), "resources", "media", "themes")
         media_path = os.path.join(resource_path, icon_pack_name)
+        if config.get_setting('enable_custom_theme') and config.get_setting('custom_theme'):
+            media_path = config.get_setting('custom_theme')
+        elif os.path.isdir(media_path) == False:
+            media_path = os.path.join("https://raw.githubusercontent.com/alfa-addon/media/master/themes/", icon_pack_name)
+        else:
+            media_path = os.path.join(resource_path, icon_pack_name)
+        
 
         return os.path.join(media_path, view + thumb_name)
 
@@ -299,3 +328,43 @@ def auto_filter():
         lang = config.get_setting("channel_language", default="all")
 
     return lang
+
+def thumb(itemlist):
+    
+    for item in itemlist:
+        thumb = ''
+        logger.info("TITLE= " + item.title.lower())
+        if 'film' in item.title.lower():
+            thumb = 'channels_movie'
+        if 'serie' in item.title.lower():
+            thumb = 'channels_tvshow'
+        if 'autoplay' in item.title.lower():
+            thumb = 'autoplay'
+    
+        
+        
+        
+        if 'hd' in item.title.lower():
+            thumb = thumb + '_hd'
+        if '4k' in item.title.lower():
+            thumb = thumb + '_4k'
+        if any( word in item.title.lower() for word in ['lettera','lista','alfabetico','a-z']):
+            thumb = thumb + '_az'
+        if 'anno' in item.title.lower():
+            thumb = thumb + '_year'
+        if 'genere' in item.title.lower():
+            thumb = thumb + '_genre'
+
+
+
+        if 'cerca' in item.title.lower():
+            thumb = 'search'
+            if 'film' in item.title.lower():
+                thumb = thumb + '_movie'
+            if 'serie' in item.title.lower():
+                thumb = thumb + '_tvshow'
+
+        item.thumbnail = get_thumb(thumb + '.png')
+        item.fanart = get_thumb(thumb + '.png', 'fanart_')
+
+    return itemlist

@@ -4934,3 +4934,11 @@ msgstr "Autoplay (Enable autoplay on all supported channels)"
 msgctxt "#70563"
 msgid "Italian"
 msgstr ""
+
+msgctxt "#70564"
+msgid "Enable Custom Theme"
+msgstr ""
+
+msgctxt "#70565"
+msgid "Custom Theme Path"
+msgstr ""

@@ -4935,10 +4935,10 @@ msgctxt "#70563"
 msgid "Italian"
 msgstr "Italiano"
 
+msgctxt "#70564"
+msgid "Enable Custom Theme"
+msgstr "Abilita Tema Personalizado"
 
-
-
-
-
-
-
+msgctxt "#70565"
+msgid "Custom Theme Path"
+msgstr "Percorso Tema Personalizado"
