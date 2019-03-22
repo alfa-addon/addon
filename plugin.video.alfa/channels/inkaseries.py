@@ -25,7 +25,7 @@ list_servers = ['openload', 'gamovideo', 'streamplay', 'flashx', 'streamito', 's
 def get_source(url):
     logger.info()
     data = httptools.downloadpage(url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
 def mainlist(item):
@@ -51,8 +51,8 @@ def list_all(item):
 
     itemlist = []
     data = get_source(item.url)
-    data1 = scrapertools.find_single_match(data, '<div class=col-md-80 lado2(.*?)</div></div></div>')
-    patron = '<a class=poster href=(.*?) title=(.*?)> <img.*?src=(.*?) alt'
+    data1 = scrapertools.find_single_match(data, '<div class="col-md-80 lado2"(.*?)</div></div></div>')
+    patron = '<a class="poster" href="([^"]+)" title="([^"]+)"><img.*?src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data1)
 
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
@@ -70,7 +70,7 @@ def list_all(item):
 
     if itemlist != []:
         actual_page_url = item.url
-        next_page = scrapertools.find_single_match(data, '<li><a href=([^ ]+)><span aria-hidden=true>&raquo;</span>')
+        next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)"><span aria-hidden="true">&raquo;</span>')
         if next_page != '':
             itemlist.append(Item(channel=item.channel, action="list_all", title='Siguiente >>>', url=next_page,
                                  thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'))
@@ -83,7 +83,7 @@ def seasons(item):
 
     data = get_source(item.url)
 
-    patron = '</span> Temporada (\d+) </a>'
+    patron = '</span>Temporada (\d+)</a>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
@@ -118,9 +118,9 @@ def episodesxseason(item):
     data = get_source(item.url)
 
     if item.extra1 != 'library':
-        patron = '<tr><td>.*?<a href=([^\s]+) title=Temporada %s, Episodio (\d+.*?)>' % item.contentSeasonNumber
+        patron = '<tr><td>.*?<a href="([^"]+)" title="Temporada %s, Episodio (\d+.*?)>' % item.contentSeasonNumber
     else:
-        patron = '<tr><td>.*?<a href=([^\s]+) title=Temporada \d+, Episodio (\d+.*?)>'
+        patron = '<tr><td>.*?<a href="([^"]+)" title=Temporada \d+, Episodio (\d+.*?)>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
@@ -148,7 +148,7 @@ def genres(item):
     itemlist = []
     norep = []
     data = get_source(item.url)
-    patron = '<a href=([^>]+)><span.*?<i>(.*?)</i>.*?>(.*?)</b>'
+    patron = '<a href="([^"]+)"><span.*?<i>([^<])</i>.*?>(.*?)</b>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle, cantidad in matches:
@@ -167,7 +167,7 @@ def findvideos(item):
 
     itemlist = []
     data = get_source(item.url)
-    patron = '<td><a ([^\s]+) class=btn.*?style=margin:.*?<span>.*?</span></td><td>(.*?)</td><td>.*?</td>'
+    patron = '<td><a href="([^"]+)" class="btn.*?style="margin:.*?<span>.*?</span></td><td>(.*?)</td><td>.*?</td>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for url, language in matches:

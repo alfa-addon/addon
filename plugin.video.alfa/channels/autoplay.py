@@ -143,7 +143,7 @@ def start(itemlist, item):
         #       2: Solo servidores
         #       3: Solo calidades
         #       4: No ordenar
-        if (settings_node['custom_servers'] and settings_node['custom_quality']) or get_setting('autoplay'):
+        if (settings_node['custom_servers'] and settings_node['custom_quality']):
             priority = settings_node['priority']  # 0: Servidores y calidades o 1: Calidades y servidores
         elif settings_node['custom_servers']:
             priority = 2  # Solo servidores
@@ -254,7 +254,10 @@ def start(itemlist, item):
             autoplay_list.sort(key=lambda orden: orden['indice_quality'])
 
         # Se prepara el plan b, en caso de estar activo se agregan los elementos no favoritos al final
-        plan_b = settings_node['plan_b']
+        try:
+            plan_b = settings_node['plan_b']
+        except:
+            plan_b = True
         text_b = ''
         if plan_b:
             autoplay_list.extend(autoplay_b)
@@ -321,7 +324,7 @@ def start(itemlist, item):
                             platformtools.play_video(videoitem, autoplay=True)
                     except:
                         pass
-
+                    sleep(3)
                     try:
                         if platformtools.is_playing():
                             PLAYED = True

@@ -311,6 +311,34 @@ def findvideos(item):
                   'Mega': '',
                   'MediaFire': ''}
     dec_value = scrapertools.find_single_match(data, 'String\.fromCharCode\(parseInt\(str\[i\]\)-(\d+)\)')
+
+    torrent_link = scrapertools.find_single_match(data, '<a href="/protect/v\.php\?i=([^"]+)"')
+    if torrent_link != '':
+        import urllib
+        base_url = '%s/protect/v.php' % host
+        post = {'i': torrent_link, 'title': item.title}
+        post = urllib.urlencode(post)
+        headers = {'Referer': item.url}
+        protect = httptools.downloadpage(base_url + '?' + post, headers=headers).data
+        url = scrapertools.find_single_match(protect, 'value="(magnet.*?)"')
+        server = 'torrent'
+
+        title = item.contentTitle + ' (%s)' % server
+        quality = 'default'
+        language = IDIOMAS[lang]
+
+        new_item = Item(channel=item.channel,
+                        action='play',
+                        title=title,
+                        fulltitle=item.contentTitle,
+                        url=url,
+                        language=language,
+                        thumbnail=item.thumbnail,
+                        quality=quality,
+                        server=server
+                        )
+        itemlist.append(new_item)
+
     for video_cod, server_id in matches:
         if server_id not in ['Mega', 'MediaFire', 'Trailer', '']:
             video_id = dec(video_cod, dec_value)
@@ -321,25 +349,14 @@ def findvideos(item):
             if server_id == 'TVM':
                 server = 'thevideome'
                 url = server_url[server_id] + video_id + '.html'
-            elif server_id == 'BitTorrent':
-                import urllib
-                base_url = '%s/protect/v.php' % host
-                post = {'i':video_id, 'title':item.title}
-                post = urllib.urlencode(post)
-                headers = {'Referer':item.url}
-                protect = httptools.downloadpage(base_url+'?'+post, headers=headers).data
-                url = scrapertools.find_single_match(protect, 'value="(magnet.*?)"')
-                server = 'torrent'
             else:
                 url = server_url[server_id] + video_id
         title = item.contentTitle + ' (%s)' % server
         quality = 'default'
 
         if server_id not in ['Mega', 'MediaFire', 'Trailer']:
-            if server != 'torrent':
-                language = IDIOMAS[lang]
-            else:
-                language = [IDIOMAS[lang], 'vose']
+
+            language = [IDIOMAS[lang], 'vose']
             if url not in duplicados:
                 new_item = Item(channel=item.channel,
                                 action='play',
