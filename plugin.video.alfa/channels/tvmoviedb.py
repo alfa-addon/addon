@@ -13,6 +13,10 @@ from core.tmdb import Tmdb
 from core import trakt_tools
 from platformcode import config, logger
 from platformcode import platformtools
+import xbmc, xbmcaddon
+
+addon = xbmcaddon.Addon('metadata.themoviedb.org')
+def_lang = addon.getSetting('language')
 
 __perfil__ = config.get_setting('perfil', "tvmoviedb")
 
@@ -25,13 +29,19 @@ if __perfil__ < 3:
 else:
     color1 = color2 = color3 = color4 = color5 = color6 = ""
 
-langs = ['de', 'fr', 'pt', 'it', 'es-MX', 'ca', 'en', 'es']
+langs = ['auto', 'de', 'fr', 'pt', 'it', 'es-MX', 'ca', 'en', 'es']
 langt = langs[config.get_setting('tmdb', "tvmoviedb")]
+if langt == 'auto':
+    langt = def_lang
 langt_alt = langs[config.get_setting('tmdb_alternativo', "tvmoviedb")]
-langs = ['co', 'cl', 'ar', 'mx', 'en', 'es']
+langs = ['auto', 'co', 'cl', 'ar', 'mx', 'en', 'es']
 langf = langs[config.get_setting('filmaff', "tvmoviedb")]
-langs = ['de-de', 'fr-fr', 'pt-pt', 'it-it', 'es-MX', 'ca-es', 'en', 'es']
+if langf == 'auto':
+    langf = def_lang
+langs = ['auto', 'de-de', 'fr-fr', 'pt-pt', 'it-it', 'es-MX', 'ca-es', 'en', 'es']
 langi = langs[config.get_setting('imdb', "tvmoviedb")]
+if langi == 'auto':
+    langi = def_lang
 adult_mal = config.get_setting('adult_mal', "tvmoviedb")
 mal_ck = "MzE1MDQ2cGQ5N2llYTY4Z2xwbGVzZjFzbTY="
 images_predef = "https://raw.githubusercontent.com/master-1970/resources/master/images/genres/"
