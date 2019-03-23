@@ -14,8 +14,8 @@ host = 'http://sexgalaxy.net'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, title="Ultimos", action="lista", url=host + "/new-releases/"))
     itemlist.append(Item(channel=item.channel, title="Peliculas", action="lista", url=host + "/full-movies/"))
+    itemlist.append(Item(channel=item.channel, title="Videos", action="lista", url=host + "/new-releases/"))
     itemlist.append(Item(channel=item.channel, title="Canales", action="canales", url=host))
     itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
@@ -81,10 +81,10 @@ def lista(item):
         if calidad:
             scrapedtitle = "[COLOR red]" + calidad + "[/COLOR] " + scrapedtitle
         itemlist.append(Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, fulltitle=scrapedtitle, plot=scrapedplot))
+                             fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, fulltitle=scrapedtitle, plot=scrapedplot))
     next_page = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)"')
     if next_page != "":
-        itemlist.append(item.clone(action="lista", title="Next page >>", text_color="blue", url=next_page))
+        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page))
     return itemlist
 
 

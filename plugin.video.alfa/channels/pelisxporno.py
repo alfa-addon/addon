@@ -35,7 +35,8 @@ def lista(item):
         if duration:
             scrapedtitle += "  (%s)" % duration
 
-        itemlist.append(item.clone(action="findvideos", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail))
+        itemlist.append(item.clone(action="findvideos", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
+                                   fanart=scrapedthumbnail))
 
     # Extrae la marca de siguiente página
     next_page = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)"')

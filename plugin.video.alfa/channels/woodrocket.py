@@ -31,7 +31,7 @@ def categorias(item):
         scrapedplot = ""
         scrapedthumbnail =  host + scrapedthumbnail
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
@@ -60,7 +60,7 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     scrapedurl  = scrapertools.find_single_match(data,'<iframe src="(.*?)"')
     scrapedurl = scrapedurl.replace("pornhub.com/embed/", "pornhub.com/view_video.php?viewkey=")
     data = httptools.downloadpage(scrapedurl).data

@@ -87,6 +87,9 @@ def getchanneltypes(view="thumb_"):
                              channel_type=channel_type, viewmode="thumbnails",
                              thumbnail=get_thumb("channels_%s.png" % channel_type, view)))
 
+    itemlist.append(Item(title='Comunidad', channel="community", action="mainlist", view=view,
+                         category=title, channel_type="all", thumbnail=get_thumb("channels_community.png", view),
+                         viewmode="thumbnails"))
     return itemlist
 
 
@@ -118,6 +121,9 @@ def filterchannels(category, view="thumb_"):
 
         try:
             channel_parameters = channeltools.get_channel_parameters(channel)
+
+            if channel_parameters["channel"] == 'community':
+                continue
 
             # si el canal no es compatible, no se muestra
             if not channel_parameters["compatible"]:

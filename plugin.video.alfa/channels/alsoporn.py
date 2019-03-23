@@ -62,14 +62,14 @@ def categorias(item):
         scrapedplot = ""
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl, 
-                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
-    return itemlist
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
+    return sorted(itemlist, key=lambda i: i.title)
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="alsoporn_prev">.*?'
     patron += '<a href="([^"]+)">.*?'
@@ -82,7 +82,8 @@ def lista(item):
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                              plot=plot, contentTitle = scrapedtitle))
+                              fanart=thumbnail, plot=plot, contentTitle = scrapedtitle))
+
     next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)" target="_self"><span class="alsoporn_page">NEXT</span></a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
@@ -93,7 +94,7 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     scrapedurl = scrapertools.find_single_match(data,'<iframe frameborder=0 scrolling="no"  src=\'([^\']+)\'')
     data = scrapertools.cachePage(scrapedurl)
     scrapedurl1 = scrapertools.find_single_match(data,'<iframe src="(.*?)"')

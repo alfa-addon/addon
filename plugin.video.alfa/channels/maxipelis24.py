@@ -12,7 +12,7 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = "https://maxipelis24.tv"
+host = "https://maxipelis24.live"
 
 IDIOMAS = {'Latino': 'Latino', 'Sub':'VOSE', 'Subtitulado': 'VOSE', 'Español': 'CAST', 'Castellano':'CAST'}
 list_language = IDIOMAS.values()
@@ -135,7 +135,7 @@ def findvideos(item):
                                     action='play', language=IDIOMAS[idioma], infoLabels=item.infoLabels)
                     itemlist.append(new_item)
 
-        if 'maxipelis24.tv/hideload/?' in link:
+        if '/hideload/?' in link:
             id_letter = scrapertools.find_single_match(link, '?(\w)d')
             id_type = '%sd' % id_letter
             ir_type = '%sr' % id_letter

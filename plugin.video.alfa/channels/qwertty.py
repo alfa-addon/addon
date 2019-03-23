@@ -10,6 +10,7 @@ from core import httptools
 
 host = 'http://qwertty.net'
 
+
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -64,7 +65,7 @@ def lista(item):
         scrapedplot = ""
         title = "[COLOR yellow]" + duracion + "[/COLOR] " + scrapedtitle
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
-                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)">Next</a>')
     if next_page=="":
         next_page = scrapertools.find_single_match(data,'<li><a class="current">.*?<li><a href=\'([^\']+)\' class="inactive">')
@@ -77,10 +78,11 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data,'<meta itemprop="embedURL" content="([^"]+)"')
     url = url.replace("pornhub.com/embed/", "pornhub.com/view_video.php?viewkey=")
-    data = scrapertools.cachePage(url)
+    data = httptools.downloadpage(url).data
+    # data = scrapertools.cachePage(url)  https://www.spankwire.com/EmbedPlayer.aspx?ArticleId=14049072
     if "xvideos" in url : 
         scrapedurl  = scrapertools.find_single_match(data,'setVideoHLS\(\'([^\']+)\'')
     if "pornhub" in url : 

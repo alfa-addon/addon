@@ -50,7 +50,7 @@ def categorias(item):
         scrapedthumbnail = "http:" + scrapedthumbnail
         scrapedurl = urlparse.urljoin(item.url,scrapedurl) + "/latest/"
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
@@ -69,7 +69,7 @@ def lista(item):
         thumbnail = "https:" + scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                               plot=plot, contentTitle = scrapedtitle))
+                              fanart=thumbnail, plot=plot, contentTitle = scrapedtitle))
     next_page = scrapertools.find_single_match(data,'<a href="([^"]+)" class="next" title="Next">Next</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)

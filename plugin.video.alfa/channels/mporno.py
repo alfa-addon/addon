@@ -64,7 +64,7 @@ def peliculas(item):
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl, thumbnail=thumbnail,
-                              plot=plot, contentTitle=contentTitle))
+                              fanart=thumbnail, plot=plot, contentTitle=contentTitle))
     next_page_url = scrapertools.find_single_match(data,'<a href=\'([^\']+)\' class="next">Next &gt;&gt;</a>')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)

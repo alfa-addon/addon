@@ -27,7 +27,7 @@ def mainlist(item):
         fanart = ''
 
         itemlist.append(
-            Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail, fanart=fanart))
+            Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail, fanart=thumbnail))
 
     # Paginacion
     title = ''

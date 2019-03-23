@@ -52,7 +52,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     patron = '<a class="thumb tco1" href="([^"]+)">.*?'
     patron += 'src="([^"]+)".*?'
     patron += 'alt="([^"]+)".*?'
@@ -69,7 +69,7 @@ def lista(item):
         thumbnail = scrapedthumbnail + "|Referer=%s" %host
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                               plot=plot, contentTitle = contentTitle))
+                              fanart=thumbnail, plot=plot, contentTitle = contentTitle))
 	next_page = scrapertools.find_single_match(data,'<a class="bgco2 tco3" rel="next" href="([^"]+)">&gt</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)

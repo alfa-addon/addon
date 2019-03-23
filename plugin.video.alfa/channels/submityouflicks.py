@@ -38,7 +38,7 @@ def videos(item):
     logger.info()
     itemlist = []
     data = scrapertools.downloadpageGzip(item.url)
-    patron = '<div class="item-block item-normal col" >.*?'
+    patron = '<div class="item-block item-normal col".*?'
     patron += '<a href="([^"]+)" title="([^"]+)">.*?'
     patron += 'data-src="([^"]+)".*?'
     patron += '</span> ([^"]+)<'

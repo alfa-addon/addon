@@ -19,7 +19,7 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="SexMUSIC" , action="lista", url=host + "/topics/sexo-music-videos/"))
     itemlist.append( Item(channel=item.channel, title="Xshows" , action="lista", url=host + "/xshows/"))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
+    # itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -42,29 +42,16 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     if item.title == "Canal" :
-        data = scrapertools.get_match(data,'>Best Porn Studios</a>(.*?)</ul>')
+        data = scrapertools.get_match(data,'>Adult Porn Parodies</a></li>(.*?)</ul>')
     else:
         data = scrapertools.get_match(data,'<div class="nav-wrap">(.*?)<ul class="sub-menu">')
         itemlist.append( Item(channel=item.channel, action="lista", title="Big tit", url="https://sexofilm.com/?s=big+tits"))
-
-
-    patron  = '<a href="(.*?)".*?>(.*?)</a>'
+    patron  = '<a href="([^<]+)">([^<]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle  in matches:
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl) )
     return itemlist
 
-
-def catalogo(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'<div class="nav-wrap">(.*?)<ul class="sub-menu">')
-    patron  = '<a href="(.*?)">(.*?)</a>'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle  in matches:
-        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl) )
-    return itemlist
 
 def anual(item):
     logger.info()
@@ -83,9 +70,9 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = '<div class="post-thumbnail.*?<a href="([^"]+)" title="(.*?)".*?src="([^"]+)"'
+    patron  = '<div class="post-thumbnail.*?<a href="([^"]+)".*?src="([^"]+)".*?title="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         plot = ""
         title = scrapedtitle.replace(" Porn DVD", "").replace("Permalink to ", "").replace(" Porn Movie", "")
         itemlist.append(item.clone(action="play", title=title, url=scrapedurl, thumbnail=scrapedthumbnail,

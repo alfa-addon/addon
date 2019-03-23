@@ -77,11 +77,12 @@ def lista(item):
     patron += '<img src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
-        title = scrapedtitle
+        calidad = scrapertools.find_single_match(scrapedtitle, '(\(.*?\))')
+        title = "[COLOR yellow]" + calidad + "[/COLOR] "  + scrapedtitle.replace( "%s" % calidad, "")
         thumbnail = scrapedthumbnail.replace("jpg#", "jpg")
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl, thumbnail=thumbnail,
-                               plot=plot, fulltitle=title) )
+                              fanart=thumbnail, plot=plot, fulltitle=title) )
     next_page = scrapertools.find_single_match(data, '<div class="nav-previous"><a href="([^"]+)"')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
