@@ -1,0 +1,36 @@
+{
+	"id": "vedohd",
+	"name": "VedoHD",
+	"language": ["ita"],
+	"active": true,
+	"adult": false,
+	"thumbnail": "https://vedohd.pw/wp-content/uploads/2018/12/imgpsh_fullsize.png",
+	"banner": "https://vedohd.pw/wp-content/uploads/2018/12/imgpsh_fullsize.png",
+	"categories": ["movie"],
+	"settings": [
+		{
+		  "id": "include_in_global_search",
+		  "type": "bool",
+		  "label": "Incluir en busqueda global",
+		  "default": true,
+		  "enabled": true,
+		  "visible": true
+		},
+		{
+          "id": "include_in_newest_peliculas",
+          "type": "bool",
+          "label": "Includi in Novità - Film",
+          "default": true,
+          "enabled": true,
+          "visible": true
+        },
+        {
+          "id": "include_in_newest_italiano",
+          "type": "bool",
+          "label": "Includi in Novità - Italiano",
+          "default": true,
+          "enabled": true,
+          "visible": true
+        }
+	  ]
+}
