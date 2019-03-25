@@ -245,3 +245,16 @@ def swzz_get_url(item):
         data = item.url
 
     return data
+
+def menu(itemlist, item, title='', action='', url='', contentType='movie'):
+
+    itemlist.append(Item(
+        channel = item.channel,
+        title = title,
+        action = action,
+        url = url,
+        contentType = contentType
+    ))
+    from channelselector import thumb
+    itemlist = thumb(itemlist)
+    return itemlist
