@@ -218,7 +218,7 @@ def filterchannels(category, view="thumb_"):
                 Item(channel='search', action='discover_list', title=title, search_type='list',
                      list_type='%s/%s' % (category.replace('show',''), id), thumbnail=get_thumb(id+".png")))
 
-        channelslist.insert(3, Item(channel='search', action='genres_menu', title='Generos',
+        channelslist.insert(3, Item(channel='search', action='genres_menu', title=config.get_localized_string(30987),
                                     type=category.replace('show',''), thumbnail=get_thumb("genres.png")))
 
     return channelslist
@@ -329,42 +329,52 @@ def auto_filter():
 
     return lang
 
-def thumb(itemlist):
-    
-    for item in itemlist:
+def thumb(itemlist=[]):
+
+    def suffix(item):
         thumb = ''
-        logger.info("TITLE= " + item.title.lower())
-        if 'film' in item.title.lower():
-            thumb = 'channels_movie'
-        if 'serie' in item.title.lower():
-            thumb = 'channels_tvshow'
-        if 'autoplay' in item.title.lower():
-            thumb = 'autoplay'
-    
-        
-        
-        
-        if 'hd' in item.title.lower():
-            thumb = thumb + '_hd'
+        if any( word in item.title.lower() for word in ['hd', 'rip']):
+            thumb = '_hd'
         if '4k' in item.title.lower():
-            thumb = thumb + '_4k'
+            thumb = '_4k'
         if any( word in item.title.lower() for word in ['lettera','lista','alfabetico','a-z']):
-            thumb = thumb + '_az'
+            thumb = '_az'
         if 'anno' in item.title.lower():
-            thumb = thumb + '_year'
-        if 'genere' in item.title.lower():
-            thumb = thumb + '_genre'
+            thumb = '_year'
+        if any( word in item.title.lower() for word in ['genere', 'categori']):
+            thumb = '_genre'
+        return thumb
 
-
-
-        if 'cerca' in item.title.lower():
-            thumb = 'search'
+    if itemlist:
+        for item in itemlist:
+            thumb = ''
+            logger.info("TITLE= " + item.title.lower())
+            if any( word in item.title.lower() for word in ['genere', 'categori']):
+                thumb = thumb + 'genres'
             if 'film' in item.title.lower():
-                thumb = thumb + '_movie'
+                thumb = 'channels_movie' + suffix(item)
             if 'serie' in item.title.lower():
-                thumb = thumb + '_tvshow'
+                thumb = 'channels_tvshow' + suffix(item)
+            if 'autoplay' in item.title.lower():
+                thumb = 'autoplay'
+            if 'novit' in item.title.lower():
+                thumb = 'news'
+            if 'cinema' in item.title.lower():
+                thumb = 'now_playing'
+            if 'anime' in item.title.lower():
+                thumb = 'channels_anime'
 
-        item.thumbnail = get_thumb(thumb + '.png')
-        item.fanart = get_thumb(thumb + '.png', 'fanart_')
+            if 'cerca' in item.title.lower():
+                thumb = 'search'
+                if 'film' in item.title.lower():
+                    thumb = thumb + '_movie'
+                if 'serie' in item.title.lower():
+                    thumb = thumb + '_tvshow'
 
-    return itemlist
+            item.thumbnail = get_thumb(thumb + '.png')
+            item.fanart = get_thumb(thumb + '.png', 'fanart_')
+            logger.info("Thumb= " + item.thumbnail)
+
+        return itemlist
+    else:
+        return get_thumb('next.png')
