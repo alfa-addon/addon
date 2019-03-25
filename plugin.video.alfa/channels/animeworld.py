@@ -4,10 +4,10 @@
 # ----------------------------------------------------------
 import re, urlparse
 
-from core import httptools, scrapertoolsV2, tmdb
+from core import httptools, scrapertoolsV2, servertools, tmdb
 from core.item import Item
 from platformcode import logger, config
-from platformcode.logger import log
+from channels import autoplay, filtertools, support
 
 
 
@@ -15,53 +15,73 @@ host = "https://www.animeworld.it"
 
 headers = [['Referer', host]]
 
+IDIOMAS = {'Italiano': 'Italiano'}
+list_language = IDIOMAS.values()
+list_servers = ['diretto']
+list_quality = []
 
-# -----------------------------------------------------------------
+__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'animeworld')
+__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'animeworld')
+
+
 def mainlist(item):
-    log()
-    itemlist = [        
-        Item(
-            channel=item.channel,
-            action="build_menu",
-            title="[B]Anime ITA[/B]",
-            url=host+'/filter?language[]=1',
-            thumbnail=CategoriaThumbnail,
-            fanart=CategoriaFanart),
-        Item(
-            channel=item.channel,
-            action="build_menu",
-            title="[B]Anime SUB[/B]",
-            url=host+'/filter?language[]=0',
-            thumbnail=CategoriaThumbnail,
-            fanart=CategoriaFanart),
-        Item(
-            channel=item.channel,
-            action="alfabetico",
-            title="Anime A-Z",
-            url=host + "/az-list",
-            thumbnail=CategoriaThumbnail,
-            fanart=CategoriaFanart),
-        Item(
-            channel=item.channel,
-            action="video",
-            title="Ultime Aggiunte",
-            url=host + "/newest",
-            thumbnail=CategoriaThumbnail,
-            fanart=CategoriaFanart),
-        Item(
-            channel=item.channel,
-            action="video",
-            title="Ultimi Episodi",
-            url=host + "/updated",
-            thumbnail=CategoriaThumbnail,
-            fanart=CategoriaFanart),
-        Item(
-            channel=item.channel,
-            action="search",
-            title="[B]Cerca ...[/B]",
-            thumbnail=
-            "http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search")
-    ]
+    logger.info("[animeworld.py] mainlist")
+
+    autoplay.init(item.channel, list_servers, list_quality)
+    itemlist =[]
+    menu = support.menu
+    menu(itemlist, item, '[B]Anime ITA[/B]', 'build_menu', host+'/filter?language[]=1')
+    menu(itemlist, item, '[B]Anime SUB[/B]', 'build_menu', host+'/filter?language[]=0')
+    menu(itemlist, item, 'Anime A-Z', 'alfabetico', host+'/az-list')
+    menu(itemlist, item, 'Anime - Ultimi Aggiunti', 'alfabetico', host+'/newest')
+    menu(itemlist, item, 'Anime - Ultimi Episodi', 'alfabetico', host+'/newest')
+    menu(itemlist, item, '[COLOR blue]Cerca...[/COLOR]', 'search')
+
+    # itemlist = [        
+    #     Item(
+    #         channel=item.channel,
+    #         action="build_menu",
+    #         title="[B]Anime ITA[/B]",
+    #         url=host+'/filter?language[]=1',
+    #         thumbnail=CategoriaThumbnail,
+    #         fanart=CategoriaFanart),
+    #     Item(
+    #         channel=item.channel,
+    #         action="build_menu",
+    #         title="[B]Anime SUB[/B]",
+    #         url=host+'/filter?language[]=0',
+    #         thumbnail=CategoriaThumbnail,
+    #         fanart=CategoriaFanart),
+    #     Item(
+    #         channel=item.channel,
+    #         action="alfabetico",
+    #         title="Anime A-Z",
+    #         url=host + "/az-list",
+    #         thumbnail=CategoriaThumbnail,
+    #         fanart=CategoriaFanart),
+    #     Item(
+    #         channel=item.channel,
+    #         action="video",
+    #         title="Ultime Aggiunte",
+    #         url=host + "/newest",
+    #         thumbnail=CategoriaThumbnail,
+    #         fanart=CategoriaFanart),
+    #     Item(
+    #         channel=item.channel,
+    #         action="video",
+    #         title="Ultimi Episodi",
+    #         url=host + "/updated",
+    #         thumbnail=CategoriaThumbnail,
+    #         fanart=CategoriaFanart),
+    #     Item(
+    #         channel=item.channel,
+    #         action="search",
+    #         title="[B]Cerca ...[/B]",
+    #         thumbnail=
+    #         "http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search")
+    # ]
+
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -123,7 +143,7 @@ def build_sub_menu(item):
 # Novità ======================================================
 
 def newest(categoria):
-    log()
+    logger.info("[animeworld.py] newest")
     itemlist = []
     item = Item()
     try:
@@ -147,7 +167,7 @@ def newest(categoria):
 # Cerca ===========================================================
 
 def search(item, texto):
-    log(texto)
+    logger.info(texto)
     item.url = host + '/search?keyword=' + texto
     try:
         return video(item)
@@ -164,7 +184,7 @@ def search(item, texto):
 # Lista A-Z ====================================================
 
 def alfabetico(item):
-    log()
+    logger.info("[animeworld.py] alfabetico")
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
@@ -190,7 +210,7 @@ def alfabetico(item):
     return itemlist
 
 def lista_anime(item):
-    log()
+    logger.info("[animeworld.py] lista_anime")
 
     itemlist = []
 
@@ -252,7 +272,7 @@ def lista_anime(item):
 
 
 def video(item):
-    log()
+    logger.info("[animeworld.py] video")
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
@@ -349,7 +369,7 @@ def video(item):
 
 
 def episodios(item):
-    log()
+    logger.info("[animeworld.py] episodios")
     itemlist = []
 
     data = httptools.downloadpage(item.url).data.replace('\n', '')
@@ -390,7 +410,7 @@ def episodios(item):
 
 
 def findvideos(item):
-    log()
+    logger.info("[animeworld.py] findvideos")
 
     itemlist = []
    
@@ -406,8 +426,22 @@ def findvideos(item):
                 action="play",
                 title=item.title + " [[COLOR orange]Diretto[/COLOR]]",
                 url=video,
+                server='directo',
                 contentType=item.contentType,
                 folder=False))
+
+    # Requerido para Filtrar enlaces
+
+    if __comprueba_enlaces__:
+        itemlist = servertools.check_list_links(itemlist, __comprueba_enlaces_num__)
+
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+
+    # Requerido para AutoPlay
+
+    autoplay.start(itemlist, item)
 
     return itemlist
 
