@@ -1,7 +1,7 @@
 {
     "id": "cinemasubito", 
     "name": "Cinemasubito", 
-    "active": true, 
+    "active": false, 
     "adult": false, 
     "language": ["ita"],
     "thumbnail": "https://www.cinemasubito.biz/uploads/custom-logo.png", 
