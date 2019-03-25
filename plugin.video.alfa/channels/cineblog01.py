@@ -182,7 +182,7 @@ def video(item):
     data = re.sub('\n|\t','',data)
     # block = scrapertoolsV2.get_match(data, r'<div class="sequex-page-left">(.*?)<aside class="sequex-page-right">')
     block = scrapertoolsV2.get_match(data, r'<div class=sequex-page-left>(.*?)<aside class=sequex-page-right>')
-    # logger.info('BLOCK= '+block)
+    logger.info('DATA= '+data)
     if item.contentType == 'movie' or '/serietv/' not in item.url:
         action = 'findvideos'     
         logger.info("### FILM ###")
@@ -258,7 +258,7 @@ def video(item):
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
-    patron =  "<a class='page-link'" + ' href="([^"]+)"><i class="fa fa-angle-right">'
+    patron =  '<a class=page-link href=([^>]+)><i class="fa fa-angle-right">'
     next_page = scrapertoolsV2.find_single_match(data, patron)
     logger.info('NEXT '+next_page) 
 
@@ -267,8 +267,9 @@ def video(item):
             Item(channel=item.channel,
                 action="video",
                 contentType=item.contentType,
-                title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
-                url=next_page))
+                title="[COLOR blue]" + config.get_localized_string(30992) + "[/COLOR]",
+                url=next_page,
+                thumbnail=thumb()))
       
     return itemlist
 
