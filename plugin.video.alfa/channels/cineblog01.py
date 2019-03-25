@@ -151,7 +151,7 @@ def newest(categoria):
             data = httptools.downloadpage(item.url).data
             logger.info("[cineblog01.py] DATA: "+data)
             blocco = scrapertoolsV2.get_match(data, r'Ultimi 100 film aggiunti:.*?<\/td>')
-            patron = r'<a href="([^"]+)">([^<]+)<\/a>'
+            patron = r'<a href=([^>]+)>([^<]+)<\/a>'
             matches = re.compile(patron, re.DOTALL).findall(blocco)
 
             for scrapedurl, scrapedtitle in matches:
