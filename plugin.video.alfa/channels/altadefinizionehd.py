@@ -9,6 +9,7 @@ from core import httptools, scrapertools, servertools, tmdb
 from platformcode import logger, config
 from core.item import Item
 from channels import autoplay
+from channelselector import thumb
 
 
 host = "https://altadefinizione.doctor"
@@ -31,14 +32,14 @@ def mainlist(item):
                      fanart=FilmFanart),
                 Item(channel=item.channel,
                      action="menu",
-                     title="[B] > Genere[/B]",
+                     title="[B] > Film per Genere[/B]",
                      url=host,
                      extra='GENERE',
                      thumbnail=NovitaThumbnail,
                      fanart=FilmFanart),
                 Item(channel=item.channel,
                      action="menu",
-                     title="[B] > Anno[/B]",
+                     title="[B] > Film per Anno[/B]",
                      url=host,
                      extra='ANNO',
                      thumbnail=NovitaThumbnail,
@@ -64,11 +65,13 @@ def mainlist(item):
                 Item(channel=item.channel,
                      action="search",
                      extra="movie",
-                     title="[B]Cerca...[/B]",
+                     title="[COLOR blue]Cerca Film...[/COLOR]",
                      thumbnail=CercaThumbnail,
                      fanart=FilmFanart)]
 
     autoplay.show_option(item.channel, itemlist)
+
+    itemlist = thumb(itemlist)
 
     return itemlist
 
@@ -163,8 +166,9 @@ def video(item):
         itemlist.append(
             Item(channel=item.channel,
                  action="video",
-                 title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
-                 url=next_page))
+                 title="[COLOR blue]" + config.get_localized_string(30992) + "[/COLOR]",
+                 url=next_page,
+                 thumbnail=thumb()))
 
     return itemlist
 
@@ -199,8 +203,9 @@ def search_page(item):
             itemlist.append(
                 Item(channel=item.channel,
                     action="search_page",
-                    title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
-                    url=next_page))
+                    title="[COLOR blue]" + config.get_localized_string(30992) + "[/COLOR]",
+                    url=next_page,
+                    thumbnail=thumb()))
     
         return itemlist    
 

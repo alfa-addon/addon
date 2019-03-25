@@ -2,21 +2,16 @@
 # ------------------------------------------------------------
 # Ringraziamo Icarus crew
 # Canale per seriehd
-# Alhaziel
 # ------------------------------------------------------------
 import base64
 import re
 import urlparse
 
-from channels import autoplay
-from channels import filtertools, support
-from core import scrapertools, servertools, httptools
+from channels import autoplay, filtertools, support
+from core import scrapertools, servertools, httptools, tmdb
 from platformcode import logger, config
 from core.item import Item
-from platformcode import config
-from core import tmdb
-
-__channel__ = "seriehd"
+from channelselector import thumb
 
 host = "https://www.seriehd.video"
 
@@ -38,21 +33,26 @@ def mainlist(item):
 
     itemlist = [Item(channel=item.channel,
                      action="fichas",
-                     title="[COLOR azure]Serie TV[/COLOR]",
-                     url=host + "/serie-tv-streaming/",
-                     thumbnail="http://i.imgur.com/rO0ggX2.png"),
-                Item(channel=__channel__,
+                     title="[B]Serie TV[/B]",
+                     url=host + "/serie-tv-streaming/"),
+                Item(channel=item.channel,
                      action="sottomenu",
-                     title="[COLOR orange]Categoria[/COLOR]",
-                     url=host,
-                     thumbnail="http://i.imgur.com/rO0ggX2.png"),
-                Item(channel=__channel__,
+                     title=" > Serie TV per Genere",
+                     url=host),
+                Item(channel=item.channel,
+                     action="nation",
+                     title=" > Serie TV per Nazione",
+                     url=host),
+                Item(channel=item.channel,
                      action="search",
                      extra="tvshow",
-                     title="[COLOR limegreen]Cerca...[/COLOR]",
+                     title="[COLOR blue]Cerca...[/COLOR]",
                      thumbnail="")]
 
     autoplay.show_option(item.channel, itemlist)
+
+    # auto thumb
+    itemlist=thumb(itemlist) 
 
     return itemlist
 
@@ -85,16 +85,32 @@ def sottomenu(item):
 
     for scrapedurl, scrapedtitle in matches:
         itemlist.append(
-            Item(channel=__channel__,
+            Item(channel=item.channel,
                  action="fichas",
                  title=scrapedtitle,
                  url=scrapedurl))
 
-    # Elimina 'Serie TV' de la lista de 'sottomenu'
+    # Elimina 'voci dal menu' de la lista de 'sottomenu'
     itemlist.pop(0)
+    itemlist.pop(0)
+    itemlist.pop(0)
+    itemlist.pop(28)
 
     return itemlist
 
+def nation(item):
+    itemlist = [Item(channel=item.channel,
+                     action="fichas",
+                     title="Serie TV Americane",
+                     url=host+'/serie-tv-streaming/serie-tv-americane/'),
+                Item(channel=item.channel,
+                     action="fichas",
+                     title="Serie TV Italiane",
+                     url=host+'/serie-tv-streaming/serie-tv-italiane/')]
+    # auto thumb
+    itemlist=thumb(itemlist) 
+
+    return itemlist
 
 def fichas(item):
     logger.info("[seriehd.py] fichas")
@@ -102,8 +118,8 @@ def fichas(item):
 
     data = httptools.downloadpage(item.url).data
 
-    patron = '<h2>(.*?)</h2>\s*'
-    patron += '<img src="([^"]+)" alt="[^"]*" />\s*'
+    patron = r'<h2>(.*?)</h2>\s*'
+    patron += r'<img src="([^"]+)" alt="[^"]*" />\s*'
     patron += '<A HREF="([^"]+)">'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -112,7 +128,7 @@ def fichas(item):
         scrapedthumbnail = httptools.get_url_headers(scrapedthumbnail)
         scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
         itemlist.append(
-            Item(channel=__channel__,
+            Item(channel=item.channel,
                  action="episodios",
                  title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
                  fulltitle=scrapedtitle,
@@ -120,14 +136,15 @@ def fichas(item):
                  show=scrapedtitle,
                  thumbnail=scrapedthumbnail))
 
-    patron = "<span class='current'>\d+</span><a rel='nofollow' class='page larger' href='([^']+)'>\d+</a>"
+    patron = r"<span class='current'>\d+</span><a rel='nofollow' class='page larger' href='([^']+)'>\d+</a>"
     next_page = scrapertools.find_single_match(data, patron)
     if next_page != "":
         itemlist.append(
-            Item(channel=__channel__,
+            Item(channel=item.channel,
                  action="fichas",
-                 title="[COLOR lightgreen]" + config.get_localized_string(30992) + "[/COLOR]",
-                 url=next_page))
+                 title="[COLOR blue]" + config.get_localized_string(30992) + "[/COLOR]",
+                 url=next_page,
+                 thumbnali=thumb()))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
@@ -146,7 +163,7 @@ def episodios(item):
 
 
     section_stagione = scrapertools.find_single_match(data, '<h3>STAGIONE</h3><ul>(.*?)</ul>')
-    patron = '<li[^>]+><a href="([^"]+)">(\d+)<'
+    patron = r'<li[^>]+><a href="([^"]+)">(\d+)<'
     seasons = re.compile(patron, re.DOTALL).findall(section_stagione)
 
     for scrapedseason_url, scrapedseason in seasons:
@@ -155,7 +172,7 @@ def episodios(item):
         data = httptools.downloadpage(season_url).data.replace('\t', '').replace('\n', '').replace(' class="active"', '')
 
         section_episodio = scrapertools.find_single_match(data, '<h3>EPISODIO</h3><ul>(.*?)</ul>')
-        patron = '<a href="([^"]+)">(\d+)<'
+        patron = r'<a href="([^"]+)">(\d+)<'
         episodes = re.compile(patron, re.DOTALL).findall(section_episodio)
 
         for scrapedepisode_url, scrapedepisode in episodes:
@@ -164,7 +181,7 @@ def episodios(item):
             title = scrapedseason + "x" + scrapedepisode.zfill(2)
 
             itemlist.append(
-                Item(channel=__channel__,
+                Item(channel=item.channel,
                      action="findvideos",
                      contentType="episode",
                      title=title,
@@ -175,7 +192,7 @@ def episodios(item):
 
     if config.get_videolibrary_support() and len(itemlist) != 0:
         itemlist.append(
-            Item(channel=__channel__,
+            Item(channel=item.channel,
                  title="[COLOR lightblue]%s[/COLOR]" % config.get_localized_string(30161),
                  url=item.url,
                  action="add_serie_to_library",
@@ -205,11 +222,8 @@ def findvideos(item):
 
     autoplay.start(itemlist, item)
 
-    #if item.contentType != 'episode':
-        #if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
-            #itemlist.append(
-                #Item(channel=item.channel, title='[COLOR yellow][B]Aggiungi alla videoteca[/B][/COLOR]', url=item.url,
-                     #action="add_pelicula_to_library", extra="findvideos", contentTitle=item.contentTitle))
+    for item in itemlist:
+        logger.info('ITEM= ' +str(item))
 
     return itemlist
 

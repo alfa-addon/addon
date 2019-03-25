@@ -10,6 +10,7 @@ from core import scrapertools, httptools, servertools, tmdb, scrapertoolsV2
 from core.item import Item
 from lib import unshortenit
 from platformcode import logger, config
+from channelselector import thumb
 
 host = "https://eurostreaming.one"
 list_servers = ['openload', 'speedvideo', 'wstream', 'streamango' 'flashx', 'nowvideo']
@@ -23,7 +24,7 @@ def mainlist(item):
     itemlist = [
         Item(
             channel=item.channel,
-            title="[COLOR azure]Serie TV[/COLOR]",
+            title="[B]Serie TV[/B]",
             action="serietv",
             extra="tvshow",
             url="%s/category/serie-tv-archive/" % host,
@@ -32,7 +33,7 @@ def mainlist(item):
         ),
         Item(
             channel=item.channel,
-            title="[COLOR azure]Anime / Cartoni[/COLOR]",
+            title="[B]Anime / Cartoni[/B]",
             action="serietv",
             extra="tvshow",
             url="%s/category/anime-cartoni-animati/" % host,
@@ -41,7 +42,7 @@ def mainlist(item):
         ),
         Item(
             channel=item.channel,
-            title="[COLOR yellow]Cerca...[/COLOR]",
+            title="[COLOR blue]Cerca...[/COLOR]",
             action="search",
             extra="tvshow",
             thumbnail=
@@ -49,6 +50,8 @@ def mainlist(item):
     ]
 
     autoplay.show_option(item.channel, itemlist)
+
+    itemlist = thumb(itemlist)
 
     return itemlist
 
@@ -99,10 +102,9 @@ def serietv(item):
             Item(
                 channel=item.channel,
                 action="serietv",
-                title="[COLOR lightgreen]" + config.get_localized_string(30992) + "[/COLOR]",
+                title="[COLOR blue]" + config.get_localized_string(30992) + "[/COLOR]",
                 url=scrapedurl,
-                thumbnail=
-                "http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
+                thumbnail=thumb(),
                 extra=item.extra,
                 folder=True))
 

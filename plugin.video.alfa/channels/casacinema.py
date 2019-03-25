@@ -9,6 +9,7 @@ from core import scrapertools, scrapertoolsV2, httptools, servertools, tmdb
 from channels import autoplay, filtertools, support
 from core.item import Item
 from platformcode import logger, config
+from channelselector import thumb, get_thumb
 
 
 host = 'https://www.casacinema.site'
@@ -30,48 +31,44 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = [Item(channel=item.channel,
-                     title="[COLOR azure]Film - Novita'[/COLOR]",
+                     title="[B]Film[/B]",
                      action="peliculas",
                      extra="movie",
-                     url="%s/genere/film" % host,
-                     thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
+                     url="%s/genere/film" % host),
                 Item(channel=item.channel,
-                     title="[COLOR azure]Film - HD[/COLOR]",
+                     title="[B]Film - HD[/B]",
                      action="peliculas",
                      extra="movie",
-                     url="%s/?s=[HD]" % host,
-                     thumbnail="http://jcrent.com/apple%20tv%20final/HD.png"),
+                     url="%s/?s=[HD]" % host),
                 Item(channel=item.channel,
-                     title="[COLOR azure]Categorie[/COLOR]",
+                     title="[B] > Categorie[/B]",
                      action="categorias",
                      extra="movie",
-                     url="%s/genere/film" % host,
-                     thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
+                     url="%s/genere/film" % host),
                 Item(channel=item.channel,
-                     title="[COLOR azure]Film Sub - Ita[/COLOR]",
+                     title="[B]Film Sub - Ita[/B]",
                      action="peliculas",
                      extra="movie",
-                     url="%s/genere/sub-ita" % host,
-                     thumbnail="http://i.imgur.com/qUENzxl.png"),
+                     url="%s/genere/sub-ita" % host),
                 Item(channel=item.channel,
-                     title="[COLOR yellow]Cerca...[/COLOR]",
+                     title="[COLOR blue]Cerca Film...[/COLOR]",
                      action="search",
-                     extra="movie",
-                     thumbnail="http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search"),
+                     extra="movie",),
                 Item(channel=item.channel,
-                     title="[COLOR azure]Serie TV[/COLOR]",
+                     title="[B]Serie TV[/B]",
                      extra="tvshow",
                      action="peliculas_tv",
-                     url="%s/genere/serie-tv" % host,
-                     thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
+                     url="%s/genere/serie-tv" % host),
                 Item(channel=item.channel,
-                     title="[COLOR yellow]Cerca Serie TV...[/COLOR]",
+                     title="[COLOR blue]Cerca Serie TV...[/COLOR]",
                      action="search",
-                     extra="tvshow",
-                     thumbnail="http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search")]
+                     extra="tvshow")]
 
     
     autoplay.show_option(item.channel, itemlist)
+
+    # auto thumb
+    itemlist=thumb(itemlist) 
 
     return itemlist
 
@@ -125,6 +122,7 @@ def peliculas(item):
 
     # Carica la pagina 
     data = httptools.downloadpage(item.url, headers=headers).data
+    logger.info('DATA=' +data)
 
     # Estrae i contenuti 
     patron = '<li><a href="([^"]+)"[^=]+="([^"]+)"><div>\s*<div[^>]+>(.*?)<'
@@ -161,16 +159,16 @@ def peliculas(item):
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     ## Paginación
-    next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)">Pagina')  ### <- Regex rimosso spazio - precedente <li><a href="([^"]+)" >Pagina -> Continua. riga 221
+    next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)".*?>Pagina')
 
     if next_page != "":
         itemlist.append(
             Item(channel=item.channel,
                  action="peliculas",
-                 title="[COLOR lightgreen]" + config.get_localized_string(30992) + "[/COLOR]",
+                 title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
                  url=next_page,
                  extra=item.extra,
-                 thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"))
+                 thumbnail=get_thumb('next.png')))
 
     return itemlist
 
@@ -227,7 +225,7 @@ def peliculas_tv(item):
                  title="[COLOR lightgreen]" + config.get_localized_string(30992) + "[/COLOR]",
                  url=next_page,
                  extra=item.extra,
-                 thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"))
+                 thumbnail=get_thumb('next.png')))
 
     return itemlist
 

@@ -7,11 +7,11 @@ import base64
 import re
 import urlparse
 
-from channels import autoplay
-from channels import filtertools, support
+from channels import autoplay, filtertools, support
 from core import scrapertools, servertools, httptools, tmdb
 from core.item import Item
 from platformcode import logger, config
+from channelselector import thumb, get_thumb
 
 host = "https://altadefinizione.center"   ### <- cambio Host da .fm a .center
 
@@ -31,32 +31,35 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = [
         Item(channel=item.channel,
-             title="[COLOR azure]Novita'[/COLOR]",
+             title="[B]Novità[/B]",
              action="fichas",
              url=host + "/nuove-uscite/",
              thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
         Item(channel=item.channel,
-             title="[COLOR azure]Film per Genere[/COLOR]",
+             title="[B] > Film per Genere[/B]",
              action="genere",
              url=host,
              thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
         Item(channel=item.channel,
-             title="[COLOR azure]Film per Anno[/COLOR]",
+             title="[B] > Film per Anno[/B]",
              action="anno",
              url=host,
              thumbnail="http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"),
         Item(channel=item.channel,
-             title="[COLOR azure]Film Sub-Ita[/COLOR]",
+             title="Film Sub-Ita",
              action="fichas",
              url=host + "/sub-ita/",
              thumbnail="http://i.imgur.com/qUENzxl.png"),
         Item(channel=item.channel,
-             title="[COLOR orange]Cerca...[/COLOR]",
+             title="[COLOR blue]Cerca Film...[/COLOR]",
              action="search",
              extra="movie",
              thumbnail="http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search")]
 
     autoplay.show_option(item.channel, itemlist)
+
+    # auto thumb
+    itemlist=thumb(itemlist) 
 
     return itemlist
 
@@ -167,7 +170,7 @@ def fichas(item):
                  action="fichas",
                  title="[COLOR lightgreen]" + config.get_localized_string(30992) + "[/COLOR]",
                  url=next_page,
-                 thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"))
+                 thumbnail=thumb()))
 
     return itemlist
 
@@ -212,7 +215,7 @@ def fichas_src(item):
                  action="fichas_src",
                  title="[COLOR lightgreen]" + config.get_localized_string(30992) + "[/COLOR]",
                  url=next_page,
-                 thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"))
+                 thumbnail=thumb(item)))
 
     return itemlist
 
