@@ -14,6 +14,8 @@ def hdpass_get_servers(item):
     patron = r'<iframe(?: id="[^"]+")? width="[^"]+" height="[^"]+" src="([^"]+)"[^>]+><\/iframe>'
     url = scrapertoolsV2.find_single_match(data, patron).replace("?alta", "")
     url = url.replace("&download=1", "")
+    if 'https' not in url:
+        url = 'https:' + url
 
     if 'hdpass' in url:
         data = httptools.downloadpage(url).data
@@ -50,6 +52,7 @@ def hdpass_get_servers(item):
                                          contentType=item.contentType,
                                          server=server,
                                          url=url_decode(media_url)))
+                    logger.info("video ->" + res_video)
 
     return itemlist
 
