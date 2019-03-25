@@ -47,15 +47,16 @@ def show_option(channel, itemlist, text_color='yellow', thumbnail=None, fanart=N
     :param thumbnail: str (direccion donde se encuentra el thumbnail para la opcion Configurar Autoplay)
     :return:
     '''
+    from channelselector import get_thumb
     logger.info()
 
     if not config.is_xbmc():
         return itemlist
 
     if thumbnail == None:
-        thumbnail = 'https://s7.postimg.cc/65ooga04b/Auto_Play.png'
+        thumbnail = get_thumb('autoplay.png')
     if fanart == None:
-        fanart = 'https://s7.postimg.cc/65ooga04b/Auto_Play.png'
+        fanart = get_thumb('autoplay.png')
 
     plot_autoplay = config.get_localized_string(60399)
     itemlist.append(

@@ -355,8 +355,6 @@ def thumb(itemlist=[]):
                 thumb = 'channels_movie' + suffix(item)
             if 'serie' in item.title.lower():
                 thumb = 'channels_tvshow' + suffix(item)
-            if 'autoplay' in item.title.lower():
-                thumb = 'autoplay'
             if 'novit' in item.title.lower():
                 thumb = 'news'
             if 'cinema' in item.title.lower():
