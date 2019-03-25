@@ -3511,7 +3511,7 @@ msgstr "- Upload tests su web!"
 
 msgctxt "#70206"
 msgid "Link found in %s"
-msgstr "Link su %s"
+msgstr "%s"
 
 msgctxt "#70207"
 msgid "    - Movies 4K "
