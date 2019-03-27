@@ -8,6 +8,7 @@ from core import httptools, scrapertoolsV2, servertools, tmdb
 from core.item import Item
 from platformcode import logger, config
 from channels import autoplay, filtertools, support
+from channelselector import thumb
 
 
 
@@ -26,61 +27,18 @@ __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'animewo
 
 def mainlist(item):
     logger.info("[animeworld.py] mainlist")
-
-    autoplay.init(item.channel, list_servers, list_quality)
+    
     itemlist =[]
-    menu = support.menu
-    menu(itemlist, item, '[B]Anime ITA[/B]', 'build_menu', host+'/filter?language[]=1')
-    menu(itemlist, item, '[B]Anime SUB[/B]', 'build_menu', host+'/filter?language[]=0')
-    menu(itemlist, item, 'Anime A-Z', 'alfabetico', host+'/az-list')
-    menu(itemlist, item, 'Anime - Ultimi Aggiunti', 'alfabetico', host+'/newest')
-    menu(itemlist, item, 'Anime - Ultimi Episodi', 'alfabetico', host+'/newest')
-    menu(itemlist, item, '[COLOR blue]Cerca...[/COLOR]', 'search')
+    
+    support.menu(itemlist, '[B] > Anime ITA[/B]', 'build_menu', host+'/filter?language[]=1')
+    support.menu(itemlist, '[B] > Anime SUB[/B]', 'build_menu', host+'/filter?language[]=0')
+    support.menu(itemlist, ' > Anime A-Z', 'alfabetico', host+'/az-list')
+    support.menu(itemlist, 'Anime - Ultimi Aggiunti', 'alfabetico', host+'/newest')
+    support.menu(itemlist, 'Anime - Ultimi Episodi', 'alfabetico', host+'/newest')
+    support.menu(itemlist, '[COLOR blue]Cerca...[/COLOR]', 'search')
 
-    # itemlist = [        
-    #     Item(
-    #         channel=item.channel,
-    #         action="build_menu",
-    #         title="[B]Anime ITA[/B]",
-    #         url=host+'/filter?language[]=1',
-    #         thumbnail=CategoriaThumbnail,
-    #         fanart=CategoriaFanart),
-    #     Item(
-    #         channel=item.channel,
-    #         action="build_menu",
-    #         title="[B]Anime SUB[/B]",
-    #         url=host+'/filter?language[]=0',
-    #         thumbnail=CategoriaThumbnail,
-    #         fanart=CategoriaFanart),
-    #     Item(
-    #         channel=item.channel,
-    #         action="alfabetico",
-    #         title="Anime A-Z",
-    #         url=host + "/az-list",
-    #         thumbnail=CategoriaThumbnail,
-    #         fanart=CategoriaFanart),
-    #     Item(
-    #         channel=item.channel,
-    #         action="video",
-    #         title="Ultime Aggiunte",
-    #         url=host + "/newest",
-    #         thumbnail=CategoriaThumbnail,
-    #         fanart=CategoriaFanart),
-    #     Item(
-    #         channel=item.channel,
-    #         action="video",
-    #         title="Ultimi Episodi",
-    #         url=host + "/updated",
-    #         thumbnail=CategoriaThumbnail,
-    #         fanart=CategoriaFanart),
-    #     Item(
-    #         channel=item.channel,
-    #         action="search",
-    #         title="[B]Cerca ...[/B]",
-    #         thumbnail=
-    #         "http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search")
-    # ]
-
+    
+    autoplay.init(item.channel, list_servers, list_quality)
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
@@ -111,14 +69,17 @@ def build_menu(item):
             Item(channel=item.channel,
                  action='build_sub_menu',
                  contentType="tvshow",
-                 title='[B]' + title + ' >[/B]',
+                 title='[B] > ' + title + '[/B]',
                  fulltitle=title,
                  show=title,
                  url=item.url,
                  html=html))
 
     # Elimina FLingua dal Menu
-    itemlist.pop(5)
+    itemlist.pop(6)
+    itemlist.pop(6)
+
+    itemlist = thumb(itemlist)
 
     return itemlist
 
@@ -137,7 +98,7 @@ def build_sub_menu(item):
                  show=title,
                  url=item.url + '&' + name + '=' + value,
                  plot=""))
-
+    itemlist = thumb(itemlist)
     return itemlist
 
 # Novità ======================================================
