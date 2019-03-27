@@ -16,6 +16,7 @@ from channelselector import get_thumb
 
 host = "https://hdfull.me"
 
+
 if config.get_setting('hdfulluser', 'hdfull'):
     account = True
 else:
@@ -128,10 +129,11 @@ def menuseries(item):
 def search(item, texto):
     logger.info()
     data = agrupa_datos(httptools.downloadpage(host).data)
-    sid = scrapertools.get_match(data, '.__csrf_magic. value="(sid:[^"]+)"')
+    sid = scrapertools.find_single_match(data, '.__csrf_magic. value="(sid:[^"]+)"')
     item.extra = urllib.urlencode({'__csrf_magic': sid}) + '&menu=search&query=' + texto
     item.title = "Buscar..."
     item.url = host + "/buscar"
+    item.texto = texto
     try:
         return fichas(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -246,7 +248,7 @@ def fichas(item):
         if len(s_p) == 1:
             data = s_p[0]
             if 'Lo sentimos</h3>' in s_p[0]:
-                return [Item(channel=item.channel, title="[COLOR gold][B]HDFull:[/B][/COLOR] [COLOR blue]" + texto.replace('%20',
+                return [Item(channel=item.channel, title="[COLOR gold][B]HDFull:[/B][/COLOR] [COLOR blue]" + item.texto.replace('%20',
                                                                                        ' ') + "[/COLOR] sin resultados")]
         else:
             data = s_p[0] + s_p[1]
