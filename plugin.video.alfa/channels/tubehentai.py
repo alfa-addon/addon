@@ -38,7 +38,7 @@ def novedades(item):
     logger.info()
 
     # Descarga la página
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     # <a href="http://tubehentai.com/videos/slave_market_¨c_ep1-595.html"><img class="img" width="145" src="http://tubehentai.com/media/thumbs/5/9/5/./f/595/595.flv-3.jpg" alt="Slave_Market_&Acirc;&uml;C_Ep1" id="4f4fbf26f36
     patron = '<a href="(http://tubehentai.com/videos/[^"]+)"><img.*?src="(http://tubehentai.com/media/thumbs/[^"]+)" alt="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -80,7 +80,7 @@ def play(item):
     # s1.addParam("flashvars","overlay=http://tubehentai.com/media/thumbs/5/2/3/9/c/5239cf74632cbTHLaBlueGirlep3%20%20Segment2000855.000001355.000.mp4
     # http://tubehentai.com/media/thumbs/5/2/3/9/c/5239cf74632cbTHLaBlueGirlep3%20%20Segment2000855.000001355.000.mp4
     # http://tubehentai.com/media/videos/5/2/3/9/c/5239cf74632cbTHLaBlueGirlep3%20%20Segment2000855.000001355.000.mp4?start=0
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     url = scrapertools.get_match(data, 's1.addParam\("flashvars","bufferlength=1&autostart=true&overlay=(.*?\.mp4)')
     url = url.replace("/thumbs", "/videos")
     # url = url+"?start=0"
