@@ -6,7 +6,7 @@
 	"adult": false,
 	"thumbnail": "http://www.dreamsub.it/res/img/logo.png",
 	"banner": "http://www.dreamsub.it/res/img/logo.png",
-	"categories": ["anime","vos"],
+	"categories": ["anime","vosi"],
 	"settings": [
 		{
             "id": "include_in_global_search",

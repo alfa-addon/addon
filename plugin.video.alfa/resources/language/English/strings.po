@@ -4942,3 +4942,15 @@ msgstr ""
 msgctxt "#70565"
 msgid "Custom Theme Path"
 msgstr ""
+
+msgctxt "#70566"
+msgid "VOSI (Original Subtitled Italian Version)"
+msgstr ""
+
+msgctxt "#70567"
+msgid "Type of content:"
+msgstr ""
+
+msgctxt "#70568"
+msgid "Languages:"
+msgstr ""

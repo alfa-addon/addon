@@ -6,7 +6,7 @@
 	"adult": false,
 	"thumbnail": "cb01.png",
 	"banner": "cb01.png",
-	"categories": ["tvshow", "movie", "vos"],
+	"categories": ["tvshow", "movie", "vosi"],
 	"settings": [
 		{
 		  "id": "include_in_global_search",

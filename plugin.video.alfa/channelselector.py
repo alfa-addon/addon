@@ -263,10 +263,13 @@ def get_thumb(thumb_name, view="thumb_", auto=False):
         
         if auto_filter() == 'ita' and icon_pack_name == "default":
             icon_pack_name = 'default_ita'
+
         resource_path = os.path.join(config.get_runtime_path(), "resources", "media", "themes")
         media_path = os.path.join(resource_path, icon_pack_name)
-        if config.get_setting('enable_custom_theme') and config.get_setting('custom_theme'):
+
+        if config.get_setting('enable_custom_theme') and config.get_setting('custom_theme') and os.path.isfile(config.get_setting('custom_theme') + view + thumb_name):
             media_path = config.get_setting('custom_theme')
+
         elif os.path.isdir(media_path) == False:
             media_path = os.path.join("https://raw.githubusercontent.com/alfa-addon/media/master/themes/", icon_pack_name)
         else:
@@ -283,10 +286,18 @@ def set_channel_info(parameters):
     language = ''
     content = ''
     langs = parameters['language']
-    lang_dict = {'lat':'Latino', 'cast':'Castellano', '*':'Latino, Castellano, VOSE, VO'}
+    lang_dict = {'ita':'Italiano',
+                 'lat':'Latino',
+                 'cast':'Castellano',
+                 'esp':'Latino, Castellano, VOSE, VO',
+                 '*':'Latino, Castellano, VOSE, VO'}
     for lang in langs:
         if 'vos' in parameters['categories']:
             lang = '*'
+        if 'vosi' in parameters['categories']:
+            lang = 'ita'
+        if 'vose' in parameters['categories']:
+            lang = 'esp'
 
         if lang in lang_dict:
             if language != '' and language != '*' and not parameters['adult']:
@@ -303,7 +314,8 @@ def set_channel_info(parameters):
         else:
             content = config.get_localized_category(cat)
 
-    info = '[COLOR yellow]Tipo de contenido:[/COLOR] %s\n\n[COLOR yellow]Idiomas:[/COLOR] %s' % (content, language)
+    info = '[COLOR yellow]' + config.get_localized_string(70567) + ' [/COLOR]' + content + '\n\n'
+    info += '[COLOR yellow]' + config.get_localized_string(70568) + ' [/COLOR] ' + language
     return info
 
 
@@ -312,66 +324,63 @@ def auto_filter():
 
     addon = xbmcaddon.Addon('metadata.themoviedb.org')
     def_lang = addon.getSetting('language')
+    lang = 'all'
 
+    lang_dict = {'ita':'it',
+                 'esp':'es',
+                 'cast':'eu-ES',
+                 'lat':'es-MX'}
+  
     if config.get_setting("channel_language") == 'auto':
-        if def_lang == 'it':
-            lang = 'ita'
-        elif def_lang == 'eu-ES' :
-            lang = 'cast'
-        elif def_lang == 'es' :
-            lang = 'esp'
-        elif def_lang == 'es-MX':
-            lang = 'lat'
-        else:
-            lang = 'all'
+        for langs, variant in lang_dict.items():
+            if def_lang in variant:
+                lang = langs
+                
     else:
         lang = config.get_setting("channel_language", default="all")
 
     return lang
 
+
 def thumb(itemlist=[]):
-
-    def suffix(item):
-        thumb = ''
-        if any( word in item.title.lower() for word in ['hd', 'rip']):
-            thumb = '_hd'
-        if '4k' in item.title.lower():
-            thumb = '_4k'
-        if any( word in item.title.lower() for word in ['lettera','lista','alfabetico','a-z']):
-            thumb = '_az'
-        if 'anno' in item.title.lower():
-            thumb = '_year'
-        if any( word in item.title.lower() for word in ['genere', 'categori']):
-            thumb = '_genre'
-        return thumb
-
     if itemlist:
+        import re
+
+        icon_dict = {'channels_movie':['film'],
+                     'channels_tvshow':['serie','tv'],
+                     'news':['novità', "novita'"],
+                     'now_playing':['cinema'],
+                     'channels_anime':['anime'],
+                     'genres':['genere', 'generi', 'categorie', 'categoria']}
+
+        suffix_dict = {'_hd':['hd'],
+                       '_4k':['4K'],
+                       '_az':['lettera','lista','alfabetico','a-z'],
+                       '_year':['anno'],
+                       '_genre':['genere', 'generi', 'categorie', 'categoria']}
+
+        search = ['cerca']
+
+        search_suffix ={'_movie':['film'],
+                        '_tvshow':['sarie','tv']}
+        
         for item in itemlist:
-            thumb = ''
-            logger.info("TITLE= " + item.title.lower())
-            if any( word in item.title.lower() for word in ['genere', 'categori']):
-                thumb = thumb + 'genres'
-            if 'film' in item.title.lower():
-                thumb = 'channels_movie' + suffix(item)
-            if 'serie' in item.title.lower():
-                thumb = 'channels_tvshow' + suffix(item)
-            if 'novit' in item.title.lower():
-                thumb = 'news'
-            if 'cinema' in item.title.lower():
-                thumb = 'now_playing'
-            if 'anime' in item.title.lower():
-                thumb = 'channels_anime'
-
-            if 'cerca' in item.title.lower():
-                thumb = 'search'
-                if 'film' in item.title.lower():
-                    thumb = thumb + '_movie'
-                if 'serie' in item.title.lower():
-                    thumb = thumb + '_tvshow'
-
-            item.thumbnail = get_thumb(thumb + '.png')
-            item.fanart = get_thumb(thumb + '.png', 'fanart_')
-            logger.info("Thumb= " + item.thumbnail)
+            for thumb, titles in icon_dict.items():
+                if any( word in item.title.lower() for word in search):
+                    thumb = 'search'
+                    for suffix, titles in search_suffix.items():
+                        if any( word in item.title.lower() for word in titles ): 
+                            thumb = thumb + suffix
+                    item.thumbnail = get_thumb(thumb + '.png')
+                elif any( word in item.title.lower() for word in titles ):
+                    thumb = thumb
+                    if thumb == 'channels_movie' or 'channels_tvshow':
+                        for suffix, titles in suffix_dict.items():
+                            if any( word in item.title.lower() for word in titles ):
+                                thumb = thumb + suffix
+                    item.thumbnail = get_thumb(thumb + '.png')
+                else:
+                    thumb = item.thumbnails
 
         return itemlist
     else:

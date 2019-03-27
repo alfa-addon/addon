@@ -4942,3 +4942,15 @@ msgstr "Abilita Tema Personalizado"
 msgctxt "#70565"
 msgid "Custom Theme Path"
 msgstr "Percorso Tema Personalizado"
+
+msgctxt "#70566"
+msgid "VOSI (Original Subtitled Italian Version)"
+msgstr "VOSI (Versión Original Subtitulado Italiano)"
+
+msgctxt "#70567"
+msgid "Type of content:"
+msgstr "Tipo de contenido:"
+
+msgctxt "#70568"
+msgid "Languages:"
+msgstr "Idiomas"

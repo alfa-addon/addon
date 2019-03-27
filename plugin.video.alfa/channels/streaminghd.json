@@ -6,7 +6,7 @@
 	"adult": false,
 	"thumbnail": "https://www.visions.tn/wp-content/uploads/2015/11/large_news_HD-STREAMING.jpg",
 	"banner": "https://www.visions.tn/wp-content/uploads/2015/11/large_news_HD-STREAMING.jpg",
-	"categories": ["tvshow","movie","vos"],
+	"categories": ["tvshow","movie","vosi"],
 	"settings": [
 		{
             "id": "include_in_global_search",

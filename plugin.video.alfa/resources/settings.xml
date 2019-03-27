@@ -85,24 +85,27 @@
         <setting id="vose_color" type="labelenum" label="70142"
                  values="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-10,true)+eq(-11,true)"/>
-        <setting id="vos_color" type="labelenum" label="70143"
+        <setting id="vosi_color" type="labelenum" label="70566"
                  values="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-11,true)+eq(-12,true)"/>
-        <setting id="vo_color" type="labelenum" label="70144"
+        <setting id="vos_color" type="labelenum" label="70143"
                  values="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-12,true)+eq(-13,true)"/>
-        <setting id="server_color" type="labelenum" label="70145"
+        <setting id="vo_color" type="labelenum" label="70144"
                  values="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-13,true)+eq(-14,true)"/>
-        <setting id="library_color" type="labelenum" label="70146"
+        <setting id="server_color" type="labelenum" label="70145"
                  values="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-14,true)+eq(-15,true)"/>
-        <setting id="update_color" type="labelenum" label="70147"
+        <setting id="library_color" type="labelenum" label="70146"
                  values="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-15,true)+eq(-16,true)"/>
-        <setting id="no_update_color" type="labelenum" label="70148"
+        <setting id="update_color" type="labelenum" label="70147"
                  values="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
                  default="white" visible="eq(-16,true)+eq(-17,true)"/>
+        <setting id="no_update_color" type="labelenum" label="70148"
+                 values="[COLOR white]white[/COLOR]|[COLOR cyan]cyan[/COLOR]|[COLOR deepskyblue]deepskyblue[/COLOR]|[COLOR firebrick]firebrick[/COLOR]|[COLOR gold]gold[/COLOR]|[COLOR goldenrod]goldenrod[/COLOR]|[COLOR hotpink]hotpink[/COLOR]|[COLOR limegreen]limegreen[/COLOR]|[COLOR orange]orange[/COLOR]|[COLOR orchid]orchid[/COLOR]|[COLOR red]red[/COLOR]|[COLOR salmon]salmon[/COLOR]|[COLOR yellow]yellow[/COLOR]"
+                 default="white" visible="eq(-17,true)+eq(-18,true)"/>
    </category>
     <category label="70149">
         <setting label="70150" type="lsep"/>

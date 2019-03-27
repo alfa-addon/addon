@@ -3255,15 +3255,15 @@ msgstr "Qualita"
 
 msgctxt "#70142"
 msgid "VOSE (Original Subtitled Spanish Version)"
-msgstr "VOSE (Version Original Sottotitolato Spagnolo)"
+msgstr "VOSE (Versione Originale Sottotitolato Spagnolo)"
 
 msgctxt "#70143"
 msgid "VOS (Original Subtitled Version)"
-msgstr "VOS (Version Original Sottotitolato)"
+msgstr "VOS (Versione Originale Sottotitolato)"
 
 msgctxt "#70144"
 msgid "VO (Original Version)"
-msgstr "VO (Original)"
+msgstr "VO (Versione Originale)"
 
 msgctxt "#70145"
 msgid "Servers"
@@ -3992,12 +3992,12 @@ msgid "Error in the user and/or password. Check your credentials"
 msgstr "Errore in username e/o password. Controlla le tue credenziali"
 
 msgctxt "#70331"
-msgid "Error during login. Check your credentials
+msgid "Error during login. Check your credentials"
 msgstr "Errore durante il login. Controlla le tue credenziali"
 
 msgctxt "#70332"
 msgid "My votes"
-msgstr "I miei voti
+msgstr "I miei voti"
 
 msgctxt "#70333"
 msgid "Add new list"
@@ -4932,4 +4932,19 @@ msgstr "Abilita Tema Personalizzato"
 msgctxt "#70565"
 msgid "Custom Theme Path"
 msgstr "Percorso Tema Personalizzato"
+<<<<<<< HEAD
 >>>>>>> e253911b... Add Custom Theme Setting and Auto Thumb (partial)
+=======
+
+msgctxt "#70566"
+msgid "VOSI (Original Subtitled Italian Version)"
+msgstr "VOSI (Versione Originale Sottotitolato Italiano)"
+
+msgctxt "#70567"
+msgid "Type of content:"
+msgstr "Tipo di contenuto:"
+
+msgctxt "#70568"
+msgid "Languages:"
+msgstr "Lingue"
+>>>>>>> a2ca6152... Languages fix, and more efficent thumb function

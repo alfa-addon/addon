@@ -6,7 +6,7 @@
 	"adult": false,
 	"thumbnail": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/serietvsubita.png",
 	"banner": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/serietvsubita.png",
-	"categories": ["tvshow","vos"],
+	"categories": ["tvshow","vosi"],
 	"settings": [
 		{
             "id": "include_in_global_search",
