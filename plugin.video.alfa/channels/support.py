@@ -1,5 +1,5 @@
 # support functions that are needed by many channels, to no repeat the same code
-import base64, urlparse, re
+import base64, urlparse, re, os, inspect
 from core import httptools, scrapertoolsV2, servertools, tmdb
 from core.item import Item
 import urllib
@@ -246,10 +246,14 @@ def swzz_get_url(item):
 
     return data
 
-def menu(itemlist, item, title='', action='', url='', contentType='movie'):
+def menu(itemlist, title='', action='', url='', contentType='movie'):
+    frame = inspect.stack()[1]
+    filename = frame[0].f_code.co_filename
+    filename = os.path.basename(filename).replace('.py','')
+    logger.info('FILENAME= ' + filename)
 
     itemlist.append(Item(
-        channel = item.channel,
+        channel = filename,
         title = title,
         action = action,
         url = url,
