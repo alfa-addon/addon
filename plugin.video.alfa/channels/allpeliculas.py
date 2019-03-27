@@ -183,7 +183,6 @@ def lista(item):
         dict_param["genero"] = [item.extra1]
         params = jsontools.dump(dict_param)
     data = httptools.downloadpage(item.url, post=params).data
-    logger.info("Intel11 %s" %data)
     data = data.replace("<mark>","").replace("<\/mark>","")
     dict_data = jsontools.load(data)
     for it in dict_data["items"]:
