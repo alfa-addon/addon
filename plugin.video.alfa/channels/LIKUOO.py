@@ -46,7 +46,7 @@ def categorias(item):
         scrapedthumbnail = "https:" + scrapedthumbnail
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'...<a href="([^"]+)" class="next">&#187;</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
@@ -57,7 +57,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="item">.*?'
     patron += '<a href="([^"]+)" title="(.*?)">.*?'
@@ -72,7 +72,7 @@ def lista(item):
         thumbnail = "https:" + scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                              plot=plot, contentTitle = contentTitle))
+                              fanart=thumbnail, plot=plot, contentTitle = contentTitle))
     next_page = scrapertools.find_single_match(data,'...<a href="([^"]+)" class="next">&#187;</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
@@ -82,7 +82,7 @@ def lista(item):
 
 def play(item):
     logger.info()
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     itemlist = servertools.find_video_items(data=data)
     for videoitem in itemlist:
         videoitem.title = item.fulltitle

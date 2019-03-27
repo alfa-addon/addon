@@ -32,7 +32,7 @@ def mainlist(item):
 
     itemlist = list()
 
-    itemlist.append(Item(channel=item.channel, action="lista", title="Series", contentTitle="Series", url=host+"/lista-de-anime.php",
+    itemlist.append(Item(channel=item.channel, action="lista", title="Series", contentTitle="Series", url=host+"/catalogo.php?g=&t=series&o=0",
                          thumbnail=thumb_series, range=[0,19]))
     itemlist.append(Item(channel=item.channel, action="lista", title="Películas", contentTitle="Películas", url=host+"/catalogo.php?g=&t=peliculas&o=0",
                          thumbnail=thumb_series, range=[0,19] ))

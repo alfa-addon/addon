@@ -3,6 +3,7 @@
 import re
 import urllib
 
+from core import httptools
 from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
@@ -10,17 +11,13 @@ from platformcode import logger
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
-
-    data = scrapertools.cache_page(page_url)
-
-    # Submit
+    data = httptools.downloadpage(page_url).data
     post = {}
     r = re.findall(r'type="hidden" name="(.+?)"\s* value="?(.+?)">', data)
     for name, value in r:
         post[name] = value
         post.update({'method_free': 'Free Download'})
-    data = scrapertools.cache_page(page_url, post=urllib.urlencode(post))
-
+    data = httptools.downloadpage(page_url, post=urllib.urlencode(post)).data
     # Get link
     sPattern = '''<div id="player_code">.*?<script type='text/javascript'>(eval.+?)</script>'''
     r = re.findall(sPattern, data, re.DOTALL | re.I)
