@@ -11,8 +11,9 @@ from core.item import Item
 from core import tmdb
 from lib import unshortenit
 from platformcode import logger, config
+from channels import support
 
-host = "https://serietvonline.net"
+host = "https://serietvonline.co"
 headers = [['Referer', host]]
 
 PERPAGE = 14
@@ -21,42 +22,17 @@ PERPAGE = 14
 def mainlist(item):
     logger.info("kod.serietvonline mainlist")
 
-    itemlist = [Item(channel=item.channel,
-                     action="lista_serie",
-                     title="[COLOR azure]Lista Cartoni Animati e Anime[/COLOR]",
-                     url=("%s/lista-cartoni-animati-e-anime/" % host),
-                     thumbnail=thumbnail_lista,
-                     fanart=thumbnail_lista),
-                Item(channel=item.channel,
-                     action="lista_serie",
-                     title="[COLOR azure]Lista Documentari[/COLOR]",
-                     url=("%s/lista-documentari/" % host),
-                     thumbnail=thumbnail_lista,
-                     fanart=thumbnail_lista),
-                Item(channel=item.channel,
-                     action="lista_serie",
-                     title="[COLOR azure]Lista Serie Tv Anni 50 60 70 80[/COLOR]",
-                     url=("%s/lista-serie-tv-anni-60-70-80/" % host),
-                     thumbnail=thumbnail_lista,
-                     fanart=thumbnail_lista),
-                Item(channel=item.channel,
-                     action="lista_serie",
-                     title="[COLOR azure]Lista serie Alta Definizione[/COLOR]",
-                     url=("%s/lista-serie-tv-in-altadefinizione/" % host),
-                     thumbnail=thumbnail_lista,
-                     fanart=thumbnail_lista),
-                Item(channel=item.channel,
-                     action="lista_serie",
-                     title="[COLOR azure]Lista Serie Tv Italiane[/COLOR]",
-                     url=("%s/lista-serie-tv-italiane/" % host),
-                     thumbnail=thumbnail_lista,
-                     fanart=thumbnail_lista),
+    itemlist=[]
+    data = httptools.downloadpage(host, headers=headers).data
+    matches = scrapertools.find_multiple_matches(data, r'<li class="page_item.*?><a href="([^"]+)">(.*?)<\/a>')
+    blacklist = ['DMCA','Contatti','Attenzione NON FARTI OSCURARE']
+    for url, title in matches:
+        if not title in blacklist:
+            title = '[B]' + title.replace('Lista ','') + '[/B]'
+            support.menu(itemlist,title,'lista_serie',url)
+    support.menu(itemlist,"[COLOR blue]Cerca...[/COLOR]",'search')
 
-                Item(channel=item.channel,
-                     title="[COLOR yellow]Cerca...[/COLOR]",
-                     action="search",
-                     extra="tvshow",
-                     thumbnail="http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search")]
+                
     return itemlist
 
 
@@ -157,8 +133,8 @@ def episodios(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url, headers=headers).data
-    blocco = scrapertools.get_match(data, '</table></p>(.*?)</table></p>')
-    # logger.debug(blocco)
+    logger.info('DATA=' + data)
+    blocco = scrapertools.find_single_match(data, '<table>(.*?)<\/table>')
 
     patron = '<tr><td>(.*?)</td><tr>'
     matches = re.compile(patron, re.DOTALL).findall(blocco)
