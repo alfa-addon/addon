@@ -4,8 +4,8 @@
   "active": true,
   "adult": false,
   "language": ["ita"],
-  "thumbnail": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/filmpertutti.png",
-  "banner": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/filmpertutti.png",
+  "thumbnail": "https://www.filmpertutti.club/wp-content/themes/blunge/assets/logo.png",
+  "banner": "https://www.filmpertutti.club/wp-content/themes/blunge/assets/logo.png",
   "categories": ["tvshow","movie"],
   "settings": [
         {
@@ -32,13 +32,13 @@
 			"enabled": true,
 			"visible": true
 		},
-        {
-            "id": "include_in_newest_italiano",
-            "type": "bool",
-            "label": "Includi in Novità - Italiano",
-            "default": true,
-            "enabled": true,
-            "visible": true
-        }
-	]
+		{
+				"id": "include_in_newest_italiano",
+				"type": "bool",
+				"label": "Includi in Novità - Italiano",
+				"default": true,
+				"enabled": true,
+				"visible": true
+		}
+]
 }
