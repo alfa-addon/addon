@@ -28,7 +28,7 @@ def mainlist(item):
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="mainpage", title="Categorías", url=host,
                          thumbnail=thumb_series))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Peliculas Animadas", url=host+"peliculas/",
+    itemlist.append(Item(channel=item.channel, action="lista", title="Peliculas Animadas", url=host+"peliculas/", extra="Peliculas Animadas",
                          thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar", url=host + "?s=",
                          thumbnail=thumb_series))
@@ -48,10 +48,10 @@ def sub_search(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = '(?s)class="thumbnail animation-.*?href="([^"]+).*?'
-    patron += 'img src="([^"]+).*?'
-    patron += 'alt="([^"]+).*?'
-    patron += 'class="meta"(.*?)class="contenido"'
+    patron  = '(?s)class="thumbnail animation-.*?href=([^>]+).*?'
+    patron += 'src=(.*?(?:jpg|jpeg)).*?'
+    patron += 'alt=(?:"|)(.*?)(?:"|>).*?'
+    patron += 'class=year>(.*?)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear in matches:
         scrapedyear = scrapertools.find_single_match(scrapedyear, 'class="year">(\d{4})')
@@ -105,26 +105,28 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    if item.title=="Peliculas Animadas":
-        data_lista = scrapertools.find_single_match(data, 
-             '<div id="archive-content" class="animation-2 items">(.*)<a href=\'')
+    if item.extra == "Peliculas Animadas":
+        data_lista = scrapertools.find_single_match(data, '(?is)archive-content(.*?)class=pagination')
     else:
-        data_lista = scrapertools.find_single_match(data, 
-             '<divclass=items><article(.+?)<\/div><\/article><\/div>')
-    patron = '<imgsrc=([^"]+) alt="([^"]+)">.+?<ahref=([^"]+)><divclass=see>.+?<divclass=texto>(.+?)<\/div>'
+        data_lista = scrapertools.find_single_match(data, 'class=items><article(.+?)<\/div><\/article><\/div>')
+    patron  = '(?is)src=(.*?(?:jpg|jpeg)).*?'
+    patron += 'alt=(?:"|)(.*?)(?:"|>).*?'
+    patron += 'href=([^>]+)>.*?'
+    patron += 'title.*?<span>([^<]+)<'
     matches = scrapertools.find_multiple_matches(data_lista, patron)
-    for scrapedthumbnail,scrapedtitle, scrapedurl, scrapedplot in matches:
+    for scrapedthumbnail, scrapedtitle, scrapedurl, scrapedyear in matches:
         if item.title=="Peliculas Animadas":
             itemlist.append(
-                item.clone(title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, contentType="movie", 
-                       plot=scrapedplot, action="findvideos", show=scrapedtitle))            
+                item.clone(title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, contentType="movie",
+                       action="findvideos", contentTitle=scrapedtitle, infoLabels={'year':scrapedyear}))
         else:    
             itemlist.append(
                 item.clone(title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, 
-                       context=autoplay.context,plot=scrapedplot, action="episodios", show=scrapedtitle))
-    if item.title!="Peliculas Animadas":
-        tmdb.set_infoLabels(itemlist)
+                       context=autoplay.context,action="episodios", contentSerieName=scrapedtitle))
+    tmdb.set_infoLabels(itemlist)
+    next_page = scrapertools.find_single_match(data, 'rel=next href=([^>]+)>')
+    if next_page:
+        itemlist.append(item.clone(action="lista", title="Página siguiente>>", url=next_page, extra=item.extra))
     return itemlist
 
 
@@ -163,7 +165,7 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     patron  = 'player-option-\d+.*?'
-    patron += 'data-sv="([^"]+).*?'
+    patron += 'data-sv=(\w+).*?'
     patron += 'data-user="([^"]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     headers = {"X-Requested-With":"XMLHttpRequest"}
@@ -172,8 +174,6 @@ def findvideos(item):
         data1 = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data1)
         url = base64.b64decode(scrapertools.find_single_match(data1, '<iframe data-source="([^"]+)"'))
         url1 = devuelve_enlace(url)
-        if "drive.google" in url1:
-            url1 = url1.replace("view","preview")
         if url1:
             itemlist.append(item.clone(title="Ver en %s",url=url1, action="play"))
     tmdb.set_infoLabels(itemlist)
@@ -196,11 +196,5 @@ def devuelve_enlace(url1):
         url = 'https:' + url1
         new_data = httptools.downloadpage(url).data
         new_data = new_data.replace('"',"'")
-        url1 = scrapertools.find_single_match(new_data, "iframe src='([^']+)")
-        new_data = httptools.downloadpage(url1).data
-        url = scrapertools.find_single_match(new_data, "sources:\s*\[\{file:\s*'([^']+)")
-        if "zkstream" in url or "cloudup" in url:
-            url1 = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
-        else:
-            url1 = url
+        url1 = scrapertools.find_single_match(new_data, "sources.*?file: '([^']+)")
     return url1
