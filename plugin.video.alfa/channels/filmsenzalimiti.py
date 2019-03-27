@@ -120,37 +120,10 @@ def video(item):
     logger.info('[filmsenzalimiti.py] video')
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data.replace('\t','').replace('\n','')
-    logger.info('[filmsenzalimiti.py] video' +data)
-
     patron = '<div class="col-mt-5 postsh">.*?<a href="([^"]+)" title="([^"]+)">.*?<span class="rating-number">(.*?)<.*?<img src="([^"]+)"'
+    patronNext = '<a href="([^"]+)"><i class="glyphicon glyphicon-chevron-right"'
 
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedurl, scrapedtitle, scrapedrating, scrapedthumbnail in matches:
-        scrapedthumbnail = httptools.get_url_headers(scrapedthumbnail)
-        scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
-        scrapedrating = scrapertools.decodeHtmlentities(scrapedrating)
-
-        itemlist.append(
-            Item(channel=item.channel,
-                 action='findvideos',
-                 title=scrapedtitle + ' (' + scrapedrating + ')',
-                 fulltitle=scrapedtitle,
-                 url=scrapedurl,
-                 show=scrapedtitle,
-                 contentType=item.contentType,
-                 thumbnail=scrapedthumbnail), tipo='movie')
-
-    patron = '<a href="([^"]+)"><i class="glyphicon glyphicon-chevron-right"'
-    next_page = scrapertools.find_single_match(data, patron)
-    if next_page != '':
-        itemlist.append(
-            Item(channel=item.channel,
-                 action='video',
-                 title='[COLOR lightgreen]' + config.get_localized_string(30992) + '[/COLOR]',
-                 contentType=item.contentType,
-                 url=next_page))
+    support.scrape(item, itemlist, patron, ['url', 'title', 'rating', 'thumb'], patronNext=patronNext)
 
     return itemlist
 

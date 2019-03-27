@@ -84,13 +84,18 @@ def color(text, color):
     return "[COLOR " + color + "]" + text + "[/COLOR]"
 
 
-def scrape(item, itemlist, patron, listGroups, headers="", blacklist="", data="", patron_block="", patronNext="", action="findvideos", url_host=""):
+def scrape(item, patron = '', listGroups = [], headers="", blacklist="", data="", patron_block="",
+           patronNext="", action="findvideos", url_host=""):
     # patron: the patron to use for scraping page, all capturing group must match with listGroups
     # listGroups: a list containing the scraping info obtained by your patron, in order
-    # accepted values are: url, title, thumb, quality, year, plot, duration, genre
+    # accepted values are: url, title, thumb, quality, year, plot, duration, genre, rating
 
     # header: values to pass to request header
     # blacklist: titles that you want to exclude(service articles for example)
+    # data: if you want to pass data manually, maybe because you need some custom replacement
+    # patron_block: patron to get parts of the page (to scrape with patron attribute),
+    #               if you need a "block inside another block" you can create a list, please note that all matches
+    #               will be packed as string
     # patronNext: patron for scraping next page link
     # action: if you want results perform an action different from "findvideos", useful when scraping film by genres
     # url_host: string to prepend to scrapedurl, useful when url don't contain host
@@ -100,77 +105,92 @@ def scrape(item, itemlist, patron, listGroups, headers="", blacklist="", data=""
     #   patron = 'blablabla'
     #   headers = [['Referer', host]]
     #   blacklist = 'Request a TV serie!'
-    #   support.scrape(item, itemlist, patron, ['thumb', 'quality', 'url', 'title', 'year', 'plot'], headers=headers, blacklist=blacklist)
-    #   return itemlist
-    # return data for debugging purposes
+    #   return support.scrape(item, itemlist, patron, ['thumb', 'quality', 'url', 'title', 'year', 'plot'],
+    #                           headers=headers, blacklist=blacklist)
+
+    itemlist = []
 
     if not data:
         data = httptools.downloadpage(item.url, headers=headers).data.replace("'", '"')
-        # replace all ' with ", so we don't need to worry about
+        data = re.sub('\n|\t', '', data)
+        # replace all ' with " and eliminate newline, so we don't need to worry about
+        logger.info('DATA ='+data)
 
-    if patron_block:
-        block = scrapertoolsV2.get_match(data, patron_block)
-    else:
-        block = data
+        if patron_block:
+            if type(patron_block) == str:
+                patron_block = [patron_block]
 
-    matches = scrapertoolsV2.find_multiple_matches(block, patron)
+            for n, regex in enumerate(patron_block):
+                blocks = scrapertoolsV2.find_multiple_matches(data, regex)
+                data = str(blocks)
+                logger.info('BLOCK '+str(n)+'=' + data)
+    if patron and listGroups:
+        matches = scrapertoolsV2.find_multiple_matches(data, patron)
+        logger.info('MATCHES ='+str(matches))
 
-    for match in matches:
-        scrapedurl = url_host+match[listGroups.index('url')] if 'url' in listGroups else ''
-        scrapedtitle = match[listGroups.index('title')] if 'title' in listGroups else ''
-        scrapedthumb = match[listGroups.index('thumb')] if 'thumb' in listGroups else ''
-        scrapedquality = match[listGroups.index('quality')] if 'quality' in listGroups else ''
-        scrapedyear = match[listGroups.index('year')] if 'year' in listGroups else ''
-        scrapedplot = match[listGroups.index('plot')] if 'plot' in listGroups else ''
-        scrapedduration = match[listGroups.index('duration')] if 'duration' in listGroups else ''
-        scrapedgenre = match[listGroups.index('genre')] if 'genre' in listGroups else ''
+        for match in matches:
+            if len(listGroups) > len(match):  # to fix a bug
+                match = list(match)
+                match.extend([''] * (len(listGroups)-len(match)))
 
-        title = scrapertoolsV2.decodeHtmlentities(scrapedtitle)
-        plot = scrapertoolsV2.decodeHtmlentities(scrapedplot)
-        if scrapedquality:
-            longtitle = '[B]' + title + '[/B] [COLOR blue][' + scrapedquality + '][/COLOR]'
-        else:
-            longtitle = '[B]' + title + '[/B]'
+            scrapedurl = url_host+match[listGroups.index('url')] if 'url' in listGroups else ''
+            scrapedtitle = match[listGroups.index('title')] if 'title' in listGroups else ''
+            scrapedthumb = match[listGroups.index('thumb')] if 'thumb' in listGroups else ''
+            scrapedquality = match[listGroups.index('quality')] if 'quality' in listGroups else ''
+            scrapedyear = match[listGroups.index('year')] if 'year' in listGroups else ''
+            scrapedplot = match[listGroups.index('plot')] if 'plot' in listGroups else ''
+            scrapedduration = match[listGroups.index('duration')] if 'duration' in listGroups else ''
+            scrapedgenre = match[listGroups.index('genre')] if 'genre' in listGroups else ''
+            scrapedrating = match[listGroups.index('rating')] if 'rating' in listGroups else ''
 
-        infolabels = {}
-        if scrapedyear:
-            infolabels['year'] = scrapedyear
-        if scrapedplot:
-            infolabels['plot'] = plot
-        if scrapedduration:
-            infolabels['duration'] = scrapedduration
-        if scrapedgenre:
-            infolabels['genre'] = scrapertoolsV2.find_multiple_matches(scrapedgenre, '(?:<[^<]+?>)?([^<>]+)') # delete all html tags and match text
-        if not scrapedtitle in blacklist:
-            itemlist.append(
-                Item(channel=item.channel,
-                     action=action,
-                     contentType=item.contentType,
-                     title=longtitle,
-                     fulltitle=title,
-                     show=title,
-                     quality=scrapedquality,
-                     url=scrapedurl,
-                     infoLabels=infolabels,
-                     thumbnail=scrapedthumb
-                     )
-            )
+            title = scrapertoolsV2.decodeHtmlentities(scrapedtitle)
+            plot = scrapertoolsV2.decodeHtmlentities(scrapedplot)
+            if scrapedquality:
+                longtitle = '[B]' + title + '[/B] [COLOR blue][' + scrapedquality + '][/COLOR]'
+            else:
+                longtitle = '[B]' + title + '[/B]'
 
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+            infolabels = {}
+            if scrapedyear:
+                infolabels['year'] = scrapedyear
+            if scrapedplot:
+                infolabels['plot'] = plot
+            if scrapedduration:
+                infolabels['duration'] = scrapedduration
+            if scrapedgenre:
+                infolabels['genre'] = scrapertoolsV2.find_multiple_matches(scrapedgenre, '(?:<[^<]+?>)?([^<>]+)') # delete all html tags and match text
+            if scrapedrating:
+                infolabels['rating'] = scrapertoolsV2.decodeHtmlentities(scrapedrating)
+            if not scrapedtitle in blacklist:
+                itemlist.append(
+                    Item(channel=item.channel,
+                         action=action,
+                         contentType=item.contentType,
+                         title=longtitle,
+                         fulltitle=title,
+                         show=title,
+                         quality=scrapedquality,
+                         url=scrapedurl,
+                         infoLabels=infolabels,
+                         thumbnail=scrapedthumb
+                         )
+                )
 
-    if patronNext:
-        next_page = scrapertoolsV2.find_single_match(data, patronNext)
-        logger.info('NEXT ' + next_page)
+        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
-        if next_page != "":
-            itemlist.append(
-                Item(channel=item.channel,
-                     action="peliculas",
-                     contentType=item.contentType,
-                     title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
-                     url=next_page))
+        if patronNext:
+            next_page = scrapertoolsV2.find_single_match(data, patronNext)
+            logger.info('NEXT ' + next_page)
 
-    return block
+            if next_page != "":
+                itemlist.append(
+                    Item(channel=item.channel,
+                         action="peliculas",
+                         contentType=item.contentType,
+                         title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
+                         url=next_page))
+
+    return itemlist
 
 
 def dooplay_get_links(item, host):
@@ -201,16 +221,16 @@ def dooplay_get_links(item, host):
     return ret
 
 
-def dooplay_films(item, itemlist, blacklist=""):
+def dooplay_films(item, blacklist=""):
     patron = '<article id="post-[0-9]+" class="item movies">.*?<img src="([^"]+)".*?<span class="quality">([^<>]+).*?<a href="([^"]+)">([^<>]+)</a></h3> (?:<span>([0-9]{4})</span>)?.*?(?:<span>([0-9]+) min</span>)?.*?(?:<div class="texto">([^<>]+).*?)?(?:genres">(.*?)</div>)?'
     patronNext = '<a class="arrow_pag" href="([^"]+)"><i id="nextpagination"'
-    scrape(item, itemlist, patron, ['thumb', 'quality', 'url', 'title', 'year', 'duration', 'plot', 'genre'], blacklist=blacklist, patronNext=patronNext)
+    return scrape(item, patron, ['thumb', 'quality', 'url', 'title', 'year', 'duration', 'plot', 'genre'], blacklist=blacklist, patronNext=patronNext)
     
     
-def dooplay_search(item, itemlist, blacklist=""):
+def dooplay_search(item, blacklist=""):
     patron = '<div class="result-item">.*?<img src="([^"]+)".*?<span class="movies">([^<>]+).*?<a href="([^"]+)">([^<>]+)</a>.*?<span class="year">([0-9]{4}).*?<div class="contenido"><p>([^<>]+)'
     patronNext = '<a class="arrow_pag" href="([^"]+)"><i id="nextpagination"'
-    scrape(item, itemlist, patron, ['thumb', 'quality', 'url', 'title', 'year', 'plot'], blacklist=blacklist, patronNext=patronNext)
+    return scrape(item, patron, ['thumb', 'quality', 'url', 'title', 'year', 'plot'], blacklist=blacklist, patronNext=patronNext)
 
 
 def swzz_get_url(item):

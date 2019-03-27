@@ -84,21 +84,13 @@ def search(item, text):
     logger.info("[vedohd.py] " + item.url + " search " + text)
     item.url = item.url + "/?s=" + text
 
-    itemlist = []
-
-    support.dooplay_search(item, itemlist, blacklist)
-
-
-    return itemlist
+    return support.dooplay_search(item, blacklist)
 
 
 def peliculas(item):
     logger.info("[vedohd.py] video")
-    itemlist = []
 
-    support.dooplay_films(item, itemlist, blacklist)
-
-    return itemlist
+    return support.dooplay_films(item, blacklist)
 
 
 def findvideos(item):
@@ -130,17 +122,13 @@ def findvideos(item):
 
 
 def generos(item):
-    itemlist = []
     patron = '<a href="([^"#]+)">([a-zA-Z]+)'
-    support.scrape(item, itemlist, patron, ['url', 'title'], patron_block='<a href="#">Genere</a><ul class="sub-menu">.*?</ul>', action='peliculas', url_host=host)
-    return itemlist
+    return support.scrape(item, patron, ['url', 'title'], patron_block='<a href="#">Genere</a><ul class="sub-menu">.*?</ul>', action='peliculas', url_host=host)
 
 
 def year(item):
-    itemlist = []
     patron = '<a href="([^"#]+)">([a-zA-Z]+)'
-    support.scrape(item, itemlist, patron, ['url', 'title'], patron_block='<a href="#">Anno</a><ul class="sub-menu">.*?</ul>', action='peliculas', url_host=host)
-    return itemlist
+    return support.scrape(item, patron, ['url', 'title'], patron_block='<a href="#">Anno</a><ul class="sub-menu">.*?</ul>', action='peliculas', url_host=host)
 
 
 def play(item):
