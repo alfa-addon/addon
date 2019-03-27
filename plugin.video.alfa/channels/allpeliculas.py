@@ -33,7 +33,7 @@ SERVERS = {"26": "powvideo", "45": "okru", "75": "openload", "12": "netutv", "65
 list_servers = ['powvideo', 'okru', 'openload', 'netutv', 'thevideos', 'spruto', 'stormo', 'idowatch', 'nowvideo',
                 'fastplay', 'raptu', 'tusfiles']
 
-host = "http://allpeliculas.io/"
+host = "https://allpeliculas.io/"
 
 def mainlist(item):
     logger.info()
@@ -183,6 +183,7 @@ def lista(item):
         dict_param["genero"] = [item.extra1]
         params = jsontools.dump(dict_param)
     data = httptools.downloadpage(item.url, post=params).data
+    logger.info("Intel11 %s" %data)
     data = data.replace("<mark>","").replace("<\/mark>","")
     dict_data = jsontools.load(data)
     for it in dict_data["items"]:
