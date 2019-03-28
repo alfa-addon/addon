@@ -347,13 +347,14 @@ def thumb(itemlist=[]):
         import re
 
         icon_dict = {'channels_movie':['film'],
-                     'channels_tvshow':['serie','tv'],
+                     'channels_tvshow':['serie','tv','episodi','episodio'],
+                     'channels_documentary':['documentari','documentario'],
                      'news':['novità', "novita'"],
-                     'now_playing':['cinema'],
+                     'now_playing':['cinema', 'in sala'],
                      'channels_anime':['anime'],
                      'genres':['genere', 'generi', 'categorie', 'categoria']}
 
-        suffix_dict = {'_hd':['hd'],
+        suffix_dict = {'_hd':['hd','altadefinizione','alta definizione'],
                        '_4k':['4K'],
                        '_az':['lettera','lista','alfabetico','a-z'],
                        '_year':['anno'],

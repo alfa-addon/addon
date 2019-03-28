@@ -266,11 +266,22 @@ def swzz_get_url(item):
 
     return data
 
-def menu(itemlist, title='', action='', url='', contentType='movie'):
+def menu(itemlist, title='', action='', url='', contentType='movie'):    
     frame = inspect.stack()[1]
     filename = frame[0].f_code.co_filename
     filename = os.path.basename(filename).replace('.py','')
     logger.info('FILENAME= ' + filename)
+
+    if 'color' in title:
+        color = scrapertoolsV2.find_single_match(title,'color ([a-z]+)')
+        title = re.sub('.color.([a-z]+)','',title)
+        title = '[COLOR '+ color +']' + title + '[/COLOR]'
+    if 'bold' in title:
+        title = re.sub('.bold','',title)
+        title = '[B]' + title + '[/B]'
+    if 'italic' in title:
+        title = re.sub('.italic','',title)
+        title = '[I]' + title + '[/I]'  
 
     itemlist.append(Item(
         channel = filename,
@@ -280,5 +291,5 @@ def menu(itemlist, title='', action='', url='', contentType='movie'):
         contentType = contentType
     ))
     from channelselector import thumb
-    itemlist = thumb(itemlist)
-    return itemlist
+    thumb(itemlist)
+    return itemlist   
