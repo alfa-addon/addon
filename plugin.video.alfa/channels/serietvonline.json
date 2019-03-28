@@ -6,7 +6,7 @@
     "language": ["ita"],
     "thumbnail": "https:\/\/serietvonline.com\/wp-content\/uploads\/2016\/08\/logo2016-1.png",
     "bannermenu": "https:\/\/serietvonline.com\/wp-content\/uploads\/2016\/08\/logo2016-1.png",
-    "categories": ["anime","tvshow"],
+    "categories": ["anime","tvshow","movie"],
     "settings": [
         {
             "id": "include_in_global_search",

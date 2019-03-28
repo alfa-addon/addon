@@ -1,189 +1,224 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-# Ringraziamo Icarus crew
 # Canale per serietvonline
 # ----------------------------------------------------------
 import re
-import urlparse
 
-from core import httptools, scrapertools, servertools
+from core import httptools, scrapertoolsV2, servertools, tmdb
 from core.item import Item
-from core import tmdb
 from lib import unshortenit
 from platformcode import logger, config
-from channels import support
+from channels import autoplay
+from channels.support import menu
+from channelselector import thumb
 
 host = "https://serietvonline.co"
 headers = [['Referer', host]]
 
-PERPAGE = 14
+IDIOMAS = {'Italiano': 'IT'}
+list_language = IDIOMAS.values()
+list_servers = ['wstream', 'backin', 'akvideo', 'vidto', 'nowvideo']
+list_quality = ['default']
 
+PERPAGE = 30
 
 def mainlist(item):
-    logger.info("kod.serietvonline mainlist")
+    logger.info(item.channel + 'mainlist')
 
-    itemlist=[]
-    data = httptools.downloadpage(host, headers=headers).data
-    matches = scrapertools.find_multiple_matches(data, r'<li class="page_item.*?><a href="([^"]+)">(.*?)<\/a>')
-    blacklist = ['DMCA','Contatti','Attenzione NON FARTI OSCURARE']
-    for url, title in matches:
-        if not title in blacklist:
-            title = '[B]' + title.replace('Lista ','') + '[/B]'
-            support.menu(itemlist,title,'lista_serie',url)
-    support.menu(itemlist,"[COLOR blue]Cerca...[/COLOR]",'search')
+    itemlist = web_menu()
+    menu(itemlist, "Cerca Film... color blue", 'search', '', 'movie')
+    menu(itemlist, "Cerca Serie... color blue", 'search', '', 'episode')
 
+    autoplay.init(item.channel, list_servers, list_quality)
+    autoplay.show_option(item.channel, itemlist)
                 
     return itemlist
 
 
+def web_menu():
+    itemlist=[]
+
+    data = httptools.downloadpage(host, headers=headers).data
+    matches = scrapertoolsV2.find_multiple_matches(data, r'<li class="page_item.*?><a href="([^"]+)">(.*?)<\/a>')
+    blacklist = ['DMCA','Contatti','Attenzione NON FARTI OSCURARE']
+
+    for url, title in matches:
+        if not title in blacklist:
+            title = title.replace('Lista ','') + ' bold'
+            if 'film' in title.lower():
+                contentType = 'movie'
+            else:
+                contentType = 'episode'
+            menu(itemlist, title, 'peliculas', url,contentType=contentType)            
+
+    return itemlist
+
+
+
 def search(item, texto):
-    logger.info("kod.serietvonline search " + texto)
+    logger.info(item.channel + 'search' + texto)
+
+    item.url = host + "/?s= " + texto
+    
+    return search_peliculas(item)
+
+def search_peliculas(item):
+    logger.info(item.channel + 'search_peliculas')
+
+    logger.info('TYPE= ' + item.contentType)
+
+    if item.contentType == 'movie':
+        action = 'findvideos'
+    else:
+        action = 'episodios'
 
     itemlist = []
+    data = httptools.downloadpage(item.url, headers=headers).data
+    logger.info('DATA SEARCH= ' + data)
 
-    url = host + "/?s= " + texto
-
-    data = httptools.downloadpage(url, headers=headers).data
-
-    # Estrae i contenuti 
-    patron = '<a href="([^"]+)"><span[^>]+><[^>]+><\/a>[^h]+h2>(.*?)<'
+    patron = r'<a href="([^"]+)"><span[^>]+><[^>]+><\/a>[^h]+h2>(.*?)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedtitle in matches:
-        scrapedplot = ""
-        scrapedthumbnail = ""
-        scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
+    for url, title in matches:
+       
+        title = scrapertoolsV2.decodeHtmlentities(title)
         itemlist.append(
             Item(channel=item.channel,
-                 action="episodios",
-                 fulltitle=scrapedtitle,
-                 show=scrapedtitle,
-                 title=scrapedtitle,
-                 url=scrapedurl,
-                 thumbnail=scrapedthumbnail,
-                 plot=scrapedplot,
-                 extra=item.extra,
-                 folder=True))
-
-    # Paginazione
-    patronvideos = '<div class="siguiente"><a href="([^"]+)">'
-    matches = re.compile(patronvideos, re.DOTALL).findall(data)
-
-    if len(matches) > 0:
-        scrapedurl = urlparse.urljoin(item.url, matches[0])
+                 action=action,
+                 contentType=item.contentType,
+                 fulltitle=title,
+                 show=title,
+                 title=title,
+                 url=url))
+   
+    next_page = scrapertoolsV2.find_single_match(data, "<a rel='nofollow' class=previouspostslink href='([^']+)'")
+    
+    if next_page != "":
         itemlist.append(
             Item(channel=item.channel,
-                 action="serietv",
-                 title="[COLOR lightgreen]" + config.get_localized_string(30992) + "[/COLOR]",
-                 url=scrapedurl,
-                 thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
-                 extra=item.extra,
-                 folder=True))
+                 action="search_peliculas",
+                 contentType=item.contentType,
+                 title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
+                 url=next_page))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
-def lista_serie(item):
-    logger.info("kod.serietvonline novità")
+def peliculas(item):
+    logger.info(item.channel + 'peliculas')
     itemlist = []
 
-    p = 1
+    if item.contentType == 'movie':
+        action = 'findvideos'
+    else:
+        action = 'episodios'
+
+    page = 1
     if '{}' in item.url:
-        item.url, p = item.url.split('{}')
-        p = int(p)
+        item.url, page = item.url.split('{}')
+        page = int(page)
 
     data = httptools.downloadpage(item.url, headers=headers).data
+    block = scrapertoolsV2.find_single_match(data, r'id="lcp_instance_0">(.*?)<\/ul>')
+    matches = re.compile(r'<a\s*href="([^"]+)" title="([^<]+)">[^<]+</a>', re.DOTALL).findall(block)
 
-    blocco = scrapertools.find_single_match(data, 'id="lcp_instance_0">(.*?)</ul>')
-    patron='<a\s*href="([^"]+)" title="([^<]+)">[^<]+</a>'
-    matches = re.compile(patron, re.DOTALL).findall(blocco)
-    scrapertools.printMatches(matches)
+    for i, (url, title) in enumerate(matches):
+        if (page - 1) * PERPAGE > i: continue
+        if i >= page * PERPAGE: break
+        title = scrapertoolsV2.decodeHtmlentities(title)
+        itemlist.append(
+            Item(channel=item.channel,
+                 action=action,
+                 title=title,
+                 fulltitle=title,
+                 url=url,
+                 contentType=item.contentType,
+                 show=title))
 
-    for i, (scrapedurl, scrapedtitle) in enumerate(matches):
-        if (p - 1) * PERPAGE > i: continue
-        if i >= p * PERPAGE: break
-        scrapedtitle = scrapertools.decodeHtmlentities(scrapedtitle)
-        itemlist.append(Item(channel=item.channel,
-                                     action="episodios",
-                                     title=scrapedtitle,
-                                     fulltitle=scrapedtitle,
-                                     url=scrapedurl,
-                                     fanart=item.fanart if item.fanart != "" else item.scrapedthumbnail,
-                                     show=item.fulltitle,
-                                     folder=True))
-
-    if len(matches) >= p * PERPAGE:
-        scrapedurl = item.url + '{}' + str(p + 1)
+    if len(matches) >= page * PERPAGE:
+        url = item.url + '{}' + str(page + 1)
         itemlist.append(
             Item(channel=item.channel,
                  extra=item.extra,
-                 action="lista_serie",
-                 title="[COLOR lightgreen]" + config.get_localized_string(30992) + "[/COLOR]",
-                 url=scrapedurl,
-                 thumbnail="http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png",
-                 folder=True))
+                 action="peliculas",
+                 title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
+                 url=url,
+                 thumbnail=thumb(),
+                 contentType=item.contentType))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
 
 def episodios(item):
-    logger.info("kod.serietvonline episodios")
+    logger.info(item.channel + 'episodios')
     itemlist = []
 
     data = httptools.downloadpage(item.url, headers=headers).data
-    logger.info('DATA=' + data)
-    blocco = scrapertools.find_single_match(data, '<table>(.*?)<\/table>')
+    block= scrapertoolsV2.find_single_match(data, r'<table>(.*?)<\/table>')
 
-    patron = '<tr><td>(.*?)</td><tr>'
-    matches = re.compile(patron, re.DOTALL).findall(blocco)
-    scrapertools.printMatches(matches)
+    matches = re.compile(r'<tr><td>(.*?)</td><tr>', re.DOTALL).findall(block)
 
-    for puntata in matches:
-        puntata = "<td class=\"title\">" + puntata
-        # logger.debug(puntata)
-        scrapedtitle = scrapertools.find_single_match(puntata, '<td class="title">(.*?)</td>')
-        scrapedtitle = scrapedtitle.replace(item.title, "")
+    for episode in matches:
+        episode = "<td class=\"title\">" + episode
+        logger.info('EPISODE= ' + episode)
+        title = scrapertoolsV2.find_single_match(episode, '<td class="title">(.*?)</td>')
+        title = title.replace(item.title, "")
+        if scrapertoolsV2.find_single_match(title, '([0-9]+x[0-9]+)'):            
+            title = scrapertoolsV2.find_single_match(title, '([0-9]+x[0-9]+)') + ' - ' + re.sub('([0-9]+x[0-9]+)',' -',title)
+        elif scrapertoolsV2.find_single_match(title, ' ([0-9][0-9])') and not scrapertoolsV2.find_single_match(title, ' ([0-9][0-9][0-9])'):  
+            title = '1x' + scrapertoolsV2.find_single_match(title, ' ([0-9]+)') + ' - ' + re.sub(' ([0-9]+)',' -',title)
         itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
-                 fulltitle=scrapedtitle,
-                 show=scrapedtitle,
-                 title="[COLOR azure]" + scrapedtitle + "[/COLOR]",
-                 url=puntata,
-                 thumbnail=item.scrapedthumbnail,
-                 plot=item.scrapedplot,
+                 fulltitle=title,
+                 show=title,
+                 title=title,
+                 url=episode,
                  folder=True))
+
+    if config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(
+            Item(channel=item.channel, title='[COLOR blue][B]'+config.get_localized_string(30161)+'[/B][/COLOR]', url=item.url,
+                 action="add_serie_to_library", extra="episodios", show=item.show))
+
     return itemlist
 
 
 def findvideos(item):
-    logger.info("kod.serietvonline findvideos")
-    itemlist = []
+    logger.info(item.channel + 'findvideos')
+    itemlist=[]
+    logger.info('TYPE= ' + item.contentType)
+    if item.contentType == 'movie':
+        data = httptools.downloadpage(item.url, headers=headers).data
+        logger.info('DATA= ' + data)
+        item.url= scrapertoolsV2.find_single_match(data, r'<table>(.*?)<\/table>')
 
-    patron = "<a\s*href='([^']+)[^>]+>[^>]+>([^<]+)<\/a>"
-    matches = re.compile(patron, re.DOTALL).findall(item.url)
-
-    for scrapedurl, scrapedserver in matches:
+    urls = scrapertoolsV2.find_multiple_matches(item.url, r"<a href='([^']+)'.*?>.*?>.*?([a-zA-Z]+).*?<\/a>")
+    
+    for url, server in urls:
         itemlist.append(
             Item(channel=item.channel,
-                 action="play",
-                 fulltitle=item.scrapedtitle,
-                 show=item.scrapedtitle,
-                 title="[COLOR blue]" + item.title + "[/COLOR][COLOR orange]" + scrapedserver + "[/COLOR]",
-                 url=scrapedurl,
-                 thumbnail=item.scrapedthumbnail,
-                 plot=item.scrapedplot,
-                 folder=True))
+                 action='play',
+                 title=item.title + ' [COLOR blue][' + server + '][/COLOR]',
+                 server=server,
+                 url=url))
+
+    autoplay.start(itemlist, item)
+
+    if item.contentType != 'episode':
+        if config.get_videolibrary_support() and len(itemlist) > 0:
+            itemlist.append(
+                Item(channel=item.channel, title='[COLOR blue][B]'+config.get_localized_string(30161)+'[/B][/COLOR]', url=item.url,
+                     action="add_pelicula_to_library", extra="findvideos", contentTitle=item.fulltitle))
 
     return itemlist
 
 
 def play(item):
-    data = item.url
 
-    data, c = unshortenit.unshorten(data)
+    data, c = unshortenit.unshorten(item.url)
 
     itemlist = servertools.find_video_items(data=data)
 
@@ -197,10 +232,3 @@ def play(item):
     return itemlist
 
 
-thumbnail_fanart = "https://superrepo.org/static/images/fanart/original/script.artwork.downloader.jpg"
-ThumbnailHome = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Dynamic-blue-up.svg/580px-Dynamic-blue-up.svg.png"
-thumbnail_novita = "http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"
-thumbnail_lista = "http://www.ilmioprofessionista.it/wp-content/uploads/2015/04/TVSeries3.png"
-thumbnail_top = "http://orig03.deviantart.net/6889/f/2014/079/7/b/movies_and_popcorn_folder_icon_by_matheusgrilo-d7ay4tw.png"
-thumbnail_cerca = "http://dc467.4shared.com/img/fEbJqOum/s7/13feaf0c8c0/Search"
-thumbnail_successivo = "http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png"
