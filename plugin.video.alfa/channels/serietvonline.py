@@ -8,8 +8,7 @@ from core import httptools, scrapertoolsV2, servertools, tmdb
 from core.item import Item
 from lib import unshortenit
 from platformcode import logger, config
-from channels import autoplay
-from channels.support import menu
+from channels import autoplay, support
 from channelselector import thumb
 
 host = "https://serietvonline.co"
@@ -26,8 +25,8 @@ def mainlist(item):
     logger.info(item.channel + 'mainlist')
 
     itemlist = web_menu()
-    menu(itemlist, "Cerca Film... color blue", 'search', '', 'movie')
-    menu(itemlist, "Cerca Serie... color blue", 'search', '', 'episode')
+    support.menu(itemlist, "Cerca Film... color blue", 'search', '', 'movie')
+    support.menu(itemlist, "Cerca Serie... color blue", 'search', '', 'episode')
 
     autoplay.init(item.channel, list_servers, list_quality)
     autoplay.show_option(item.channel, itemlist)
@@ -49,7 +48,7 @@ def web_menu():
                 contentType = 'movie'
             else:
                 contentType = 'episode'
-            menu(itemlist, title, 'peliculas', url,contentType=contentType)            
+            support.menu(itemlist, title, 'peliculas', url,contentType=contentType)            
 
     return itemlist
 
@@ -88,7 +87,7 @@ def search_peliculas(item):
                  contentType=item.contentType,
                  fulltitle=title,
                  show=title,
-                 title=title,
+                 title=title,                 
                  url=url))
    
     next_page = scrapertoolsV2.find_single_match(data, "<a rel='nofollow' class=previouspostslink href='([^']+)'")
@@ -97,7 +96,7 @@ def search_peliculas(item):
         itemlist.append(
             Item(channel=item.channel,
                  action="search_peliculas",
-                 contentType=item.contentType,
+                 contentType=item.contentType,                 
                  title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
                  url=next_page))
 
@@ -131,6 +130,7 @@ def peliculas(item):
             Item(channel=item.channel,
                  action=action,
                  title=title,
+                 contentTitle=title,
                  fulltitle=title,
                  url=url,
                  contentType=item.contentType,
@@ -140,7 +140,6 @@ def peliculas(item):
         url = item.url + '{}' + str(page + 1)
         itemlist.append(
             Item(channel=item.channel,
-                 extra=item.extra,
                  action="peliculas",
                  title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
                  url=url,
@@ -175,13 +174,9 @@ def episodios(item):
                  fulltitle=title,
                  show=title,
                  title=title,
-                 url=episode,
-                 folder=True))
+                 url=episode))
 
-    if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(
-            Item(channel=item.channel, title='[COLOR blue][B]'+config.get_localized_string(30161)+'[/B][/COLOR]', url=item.url,
-                 action="add_serie_to_library", extra="episodios", show=item.show))
+    support.videolibrary(itemlist,item,'bold color blue')
 
     return itemlist
 
@@ -196,7 +191,7 @@ def findvideos(item):
         item.url= scrapertoolsV2.find_single_match(data, r'<table>(.*?)<\/table>')
 
     urls = scrapertoolsV2.find_multiple_matches(item.url, r"<a href='([^']+)'.*?>.*?>.*?([a-zA-Z]+).*?<\/a>")
-    
+    logger.info('EXTRA= ' + item.extra)
     for url, server in urls:
         itemlist.append(
             Item(channel=item.channel,
@@ -207,11 +202,7 @@ def findvideos(item):
 
     autoplay.start(itemlist, item)
 
-    if item.contentType != 'episode':
-        if config.get_videolibrary_support() and len(itemlist) > 0:
-            itemlist.append(
-                Item(channel=item.channel, title='[COLOR blue][B]'+config.get_localized_string(30161)+'[/B][/COLOR]', url=item.url,
-                     action="add_pelicula_to_library", extra="findvideos", contentTitle=item.fulltitle))
+    support.videolibrary(itemlist,item,'bold color blue')
 
     return itemlist
 
@@ -230,5 +221,7 @@ def play(item):
         videoitem.channel = item.channel
 
     return itemlist
+
+
 
 
