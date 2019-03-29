@@ -6,6 +6,7 @@ import urllib
 
 from lib import unshortenit
 from platformcode import logger, config
+from channelselector import thumb
 
 
 def hdpass_get_servers(item):
@@ -272,24 +273,109 @@ def menu(itemlist, title='', action='', url='', contentType='movie'):
     filename = os.path.basename(filename).replace('.py','')
     logger.info('FILENAME= ' + filename)
 
-    if 'color' in title:
-        color = scrapertoolsV2.find_single_match(title,'color ([a-z]+)')
-        title = re.sub('.color.([a-z]+)','',title)
-        title = '[COLOR '+ color +']' + title + '[/COLOR]'
-    if 'bold' in title:
-        title = re.sub('.bold','',title)
-        title = '[B]' + title + '[/B]'
-    if 'italic' in title:
-        title = re.sub('.italic','',title)
-        title = '[I]' + title + '[/I]'  
+    title = typo(title)
+
+    if contentType == 'movie': extra = 'movie'
+    else: extra = 'tvshow'
+    logger.info('EXTRA= ' + title + ' '+extra)
 
     itemlist.append(Item(
         channel = filename,
         title = title,
         action = action,
         url = url,
+        extra = extra,
         contentType = contentType
     ))
     from channelselector import thumb
     thumb(itemlist)
-    return itemlist   
+    return itemlist
+
+def typo(string):
+    if '[]' in string:
+        string = '[' + re.sub(r'\s\[\]','',string) + ']'
+    if '()' in string:
+        string = '(' + re.sub(r'\s\(\)','',string) + ')'
+    if '{}' in string:
+        string = '{' + re.sub(r'\s\{\}','',string) + '}'
+    if 'submenu' in string:
+        string = ' > ' + re.sub('\ssubmenu','',string)
+    if 'color' in string:
+        color = scrapertoolsV2.find_single_match(string,'color ([a-z]+)')
+        string = '[COLOR '+ color +']' + re.sub('\scolor\s([a-z]+)','',string) + '[/COLOR]'
+    if 'bold' in string:
+        string = '[B]' + re.sub('\sbold','',string) + '[/B]'
+    if 'italic' in string:
+        string = '[I]' + re.sub('\sitalic','',string) + '[/I]' 
+    if '_' in string:
+        string = ' ' + re.sub('\s_','',string)
+
+    return string
+
+def match(item, patron='', patron_block='', headers=''):
+    data = httptools.downloadpage(item.url, headers=headers).data.replace("'", '"')
+    data = re.sub('\n|\t', '', data)
+    log('DATA= ',data)
+    if patron_block:
+        block = scrapertoolsV2.find_single_match(data, patron_block)
+        log('BLOCK= ',block)
+    else:
+        data = block
+    matches = scrapertoolsV2.find_multiple_matches(block, patron)
+    log('MATCHES=',matches)
+    return matches
+
+def videolibrary(itemlist, item, typography=''):
+    if item.contentType != 'episode':
+        action = 'add_pelicula_to_library'
+        extra = 'findvideos'
+    else:
+        action = 'add_serie_to_library'
+        extra = 'episodios'
+
+    title = typo(config.get_localized_string(30161) + ' ' + typography)
+    if config.get_videolibrary_support() and len(itemlist) > 0:
+        itemlist.append(
+            Item(channel=item.channel,
+                 title=title,
+                 url=item.url,
+                 action=action,
+                 contentTitle=item.fulltitle))
+
+def nextPage(itemlist, item, data, patron):
+    next_page = scrapertoolsV2.find_single_match(data, patron)
+    logger.info('NEXT ' + next_page)
+
+    if next_page != "":
+        itemlist.append(
+            Item(channel=item.channel,
+                 action="peliculas",
+                 contentType=item.contentType,
+                 title=typo(config.get_localized_string(30992) + ' > color blue'),
+                 url=next_page,
+                 thumbnails=thumb()))
+
+    return itemlist
+
+def server(item, data='', headers=''):
+    
+    if not data:
+        data = httptools.downloadpage(item.url, headers=headers).data
+
+    itemlist = servertools.find_video_items(data=data)
+
+    for videoitem in itemlist:
+        videoitem.title = "".join([item.title, ' ', typo(videoitem.title + ' color blue []')])
+        videoitem.fulltitle = item.fulltitle
+        videoitem.show = item.show
+        videoitem.thumbnail = item.thumbnail
+        videoitem.channel = item.channel
+        videoitem.contentType = item.contentType
+
+    return itemlist
+
+def log(stringa1="", stringa2="", stringa3="", stringa4="", stringa5=""):
+    frame = inspect.stack()[1]
+    filename = frame[0].f_code.co_filename
+    filename = os.path.basename(filename)    
+    logger.info("[" + filename + "] - [" + inspect.stack()[1][3] + "] " + str(stringa1) + str(stringa2) + str(stringa3) + str(stringa4) + str(stringa5))
