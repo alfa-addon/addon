@@ -113,20 +113,26 @@ def scrape(item, patron = '', listGroups = [], headers="", blacklist="", data=""
 
     if not data:
         data = httptools.downloadpage(item.url, headers=headers).data.replace("'", '"')
-        data = re.sub('\n|\t', '', data)
+        data = re.sub('\n|\t', ' ', data)
         # replace all ' with " and eliminate newline, so we don't need to worry about
         logger.info('DATA ='+data)
+
+        block = data
 
         if patron_block:
             if type(patron_block) == str:
                 patron_block = [patron_block]
 
             for n, regex in enumerate(patron_block):
-                blocks = scrapertoolsV2.find_multiple_matches(data, regex)
-                data = str(blocks)
+                blocks = scrapertoolsV2.find_multiple_matches(block, regex)
+                block = ""
+                for b in blocks:
+                    block += "\n" + b
                 logger.info('BLOCK '+str(n)+'=' + data)
+    else:
+        block = data
     if patron and listGroups:
-        matches = scrapertoolsV2.find_multiple_matches(data, patron)
+        matches = scrapertoolsV2.find_multiple_matches(block, patron)
         logger.info('MATCHES ='+str(matches))
 
         for match in matches:
@@ -159,7 +165,8 @@ def scrape(item, patron = '', listGroups = [], headers="", blacklist="", data=""
             if scrapedduration:
                 infolabels['duration'] = scrapedduration
             if scrapedgenre:
-                infolabels['genre'] = scrapertoolsV2.find_multiple_matches(scrapedgenre, '(?:<[^<]+?>)?([^<>]+)') # delete all html tags and match text
+                genres = scrapertoolsV2.find_multiple_matches(scrapedgenre, '[A-Za-z]+')
+                infolabels['genre'] = ", ".join(genres)
             if scrapedrating:
                 infolabels['rating'] = scrapertoolsV2.decodeHtmlentities(scrapedrating)
             if not scrapedtitle in blacklist:
@@ -180,16 +187,7 @@ def scrape(item, patron = '', listGroups = [], headers="", blacklist="", data=""
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
         if patronNext:
-            next_page = scrapertoolsV2.find_single_match(data, patronNext)
-            logger.info('NEXT ' + next_page)
-
-            if next_page != "":
-                itemlist.append(
-                    Item(channel=item.channel,
-                         action="peliculas",
-                         contentType=item.contentType,
-                         title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
-                         url=next_page))
+            nextPage(itemlist, item, data, patronNext)
 
     return itemlist
 
@@ -267,6 +265,7 @@ def swzz_get_url(item):
 
     return data
 
+
 def menu(itemlist, title='', action='', url='', contentType='movie'):    
     frame = inspect.stack()[1]
     filename = frame[0].f_code.co_filename
@@ -291,6 +290,7 @@ def menu(itemlist, title='', action='', url='', contentType='movie'):
     thumb(itemlist)
     return itemlist
 
+
 def typo(string):
     if '[]' in string:
         string = '[' + re.sub(r'\s\[\]','',string) + ']'
@@ -312,6 +312,7 @@ def typo(string):
 
     return string
 
+
 def match(item, patron='', patron_block='', headers=''):
     data = httptools.downloadpage(item.url, headers=headers).data.replace("'", '"')
     data = re.sub('\n|\t', '', data)
@@ -324,6 +325,7 @@ def match(item, patron='', patron_block='', headers=''):
     matches = scrapertoolsV2.find_multiple_matches(block, patron)
     log('MATCHES=',matches)
     return matches
+
 
 def videolibrary(itemlist, item, typography=''):
     if item.contentType != 'episode':
@@ -341,6 +343,7 @@ def videolibrary(itemlist, item, typography=''):
                  url=item.url,
                  action=action,
                  contentTitle=item.fulltitle))
+
 
 def nextPage(itemlist, item, data, patron):
     next_page = scrapertoolsV2.find_single_match(data, patron)
