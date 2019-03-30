@@ -128,7 +128,7 @@ def scrape(item, patron = '', listGroups = [], headers="", blacklist="", data=""
                 block = ""
                 for b in blocks:
                     block += "\n" + b
-                logger.info('BLOCK '+str(n)+'=' + data)
+                logger.info('BLOCK '+str(n)+'=' + block)
     else:
         block = data
     if patron and listGroups:
@@ -157,18 +157,22 @@ def scrape(item, patron = '', listGroups = [], headers="", blacklist="", data=""
             else:
                 longtitle = '[B]' + title + '[/B]'
 
-            infolabels = {}
-            if scrapedyear:
-                infolabels['year'] = scrapedyear
-            if scrapedplot:
-                infolabels['plot'] = plot
-            if scrapedduration:
-                infolabels['duration'] = scrapedduration
-            if scrapedgenre:
-                genres = scrapertoolsV2.find_multiple_matches(scrapedgenre, '[A-Za-z]+')
-                infolabels['genre'] = ", ".join(genres)
-            if scrapedrating:
-                infolabels['rating'] = scrapertoolsV2.decodeHtmlentities(scrapedrating)
+            if item.infoLabels["title"] or item.fulltitle:  # if title is set, probably this is a list of episodes or video sources
+                infolabels = item.infoLabels
+            else:
+                infolabels = {}
+                if scrapedyear:
+                    infolabels['year'] = scrapedyear
+                if scrapedplot:
+                    infolabels['plot'] = plot
+                if scrapedduration:
+                    infolabels['duration'] = scrapedduration
+                if scrapedgenre:
+                    genres = scrapertoolsV2.find_multiple_matches(scrapedgenre, '[A-Za-z]+')
+                    infolabels['genre'] = ", ".join(genres)
+                if scrapedrating:
+                    infolabels['rating'] = scrapertoolsV2.decodeHtmlentities(scrapedrating)
+
             if not scrapedtitle in blacklist:
                 itemlist.append(
                     Item(channel=item.channel,
@@ -188,6 +192,10 @@ def scrape(item, patron = '', listGroups = [], headers="", blacklist="", data=""
 
         if patronNext:
             nextPage(itemlist, item, data, patronNext)
+
+        if item.infoLabels["title"] or item.fulltitle:
+            item.fulltitle = item.infoLabels["title"]
+            videolibrary(itemlist, item)
 
     return itemlist
 
@@ -266,7 +274,7 @@ def swzz_get_url(item):
     return data
 
 
-def menu(itemlist, title='', action='', url='', contentType='movie'):    
+def menu(itemlist, title='', action='', url='', contentType='movie', args=[]):
     frame = inspect.stack()[1]
     filename = frame[0].f_code.co_filename
     filename = os.path.basename(filename).replace('.py','')
@@ -284,6 +292,7 @@ def menu(itemlist, title='', action='', url='', contentType='movie'):
         action = action,
         url = url,
         extra = extra,
+        args = args,
         contentType = contentType
     ))
     from channelselector import thumb
@@ -359,6 +368,7 @@ def nextPage(itemlist, item, data, patron):
                  thumbnails=thumb()))
 
     return itemlist
+
 
 def server(item, data='', headers=''):
     
