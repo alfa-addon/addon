@@ -1870,8 +1870,8 @@ msgid "To report a problem on'http://alfa-addon.com' you need to:|the version yo
 msgstr "Per segnalare un problema su 'http://alfa-addon.com' è necessario:|la versione che si sta usando di Alpha.|La versione che si sta usando di kodi, mediaserver, ecc.|la versione e il nome del sistema operativo che si sta usando.|Il nome della skin (nel caso in cui si stia usando Kodi) e se l'utilizzo della skin predefinita ha risolto il problema.|La descrizione del problema e tutti i casi di test.Per attivare il log in modalità dettagliata, andare su:|Configurazione.|Preferenze.|Nella scheda Generale - Selezionare l'opzione: Genera log dettagliato Il file di log dettagliato si trova nel seguente percorso: \n\n%s"
 
 msgctxt "#60468"
-msgid "You can find our Telegram channel at @alfa_addon\nIf you have doubts you can write to us in the Forum: http://alfa-addon.com"
-msgstr "Scopri le novità, i suggerimenti o le opzioni che non conosci su Telegram: @alfa_addon.\nSi tienes problemas o dudas, puedes acudir al Foro: http://alfa-addon.com"
+msgid "You can find our Telegram channel at @alfa_addon\nIf you have doubts you can write to us in the Telegram group: https://t.me/alfa_addon"
+msgstr "Scopri le novità, i suggerimenti o le opzioni che non conosci su Telegram: @alfa_addon."
 
 msgctxt "#60469"
 msgid "Uploading new data"
@@ -3790,8 +3790,8 @@ msgid "Rename"
 msgstr "Rinomina"
 
 msgctxt "#70279"
-msgid "You can try downloading the 'libtorrent' module from Kodi or installing some addon like 'Quasar' or 'Torrenter', which will appear among the options in the pop-up when it appears when clicking on a torrent link. \n'Torrenter 'It's more complex but also more complete and it always works.'"
-msgstr "Puoi provare a scaricare il modulo 'libtorrent' da Kodi o installare alcuni addon come 'Quasar' o 'Torrenter', che appariranno tra le opzioni nel pop-up .Quando appare quando fai clic su un collegamento torrent. \n'Torrenter' È più complesso ma anche più completo e funziona sempre'".
+msgid "You can try downloading the 'libtorrent' module from Kodi or installing some addon like 'Quasar' or 'Torrenter', \nwhich will appear among the options in the pop-up \nwhen it appears when clicking on a torrent link. 'Torrenter 'It's more complex but also more complete \nand it always works.'"
+msgstr "Puoi provare a scaricare il modulo 'libtorrent' da Kodi o installare alcuni addon come 'Quasar' o 'Torrenter', che appariranno tra le opzioni nel pop-up .Quando appare quando fai clic su un collegamento torrent. 'Torrenter' È più complesso ma anche più completo e funziona sempre."
 
 msgctxt "#70280"
 msgid "    -  Torrent Links don't work."
@@ -4320,10 +4320,6 @@ msgid "Drama"
 msgstr "Drammatico"
 
 msgctxt "#70413"
-msgid ""
-msgstr ""
-
-msgctxt "#70413"
 msgid "2. Enter this code on the page and click Allow:  %s"
 msgstr "2. Inserisci questo codice nella pagina e premi Allow:  %s"
 
@@ -4756,12 +4752,8 @@ msgid "You can install the Trakt script below, \nonce installed and configured w
 msgstr "Puoi installare lo script Trakt qui sotto, \nuna volta installato e configurato ciò che \nvedrai verrà sincronizzato automaticamente con il tuo account. \nVuoi continuare?"
 
 msgctxt "#70522"
-msgid "No Filter"
-msgstr "Non Filtrare"
-
-msgctxt "#70523"
 msgid "No filter"
-msgstr "Non filtrare"
+msgstr "Non Filtrare"
 
 msgctxt "#70523"
 msgid "%s: The data was restarted"
