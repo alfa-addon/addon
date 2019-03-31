@@ -1,7 +1,7 @@
 {
     "id": "filmzstreaming",
     "name": "Filmzstreaming",
-    "active": true,
+    "active": false,
     "adult": false,
     "language": ["ita"],
     "thumbnail": "https:\/\/filmzstreaming.pw\/wp-content\/uploads\/2017\/10\/FilmZStreaming-2.png",

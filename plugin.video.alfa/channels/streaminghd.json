@@ -2,7 +2,7 @@
 	"id": "streaminghd",
 	"name": "Streaming HD*",
 	"language": ["ita"],
-	"active": true,
+	"active": false,
 	"adult": false,
 	"thumbnail": "https://www.visions.tn/wp-content/uploads/2015/11/large_news_HD-STREAMING.jpg",
 	"banner": "https://www.visions.tn/wp-content/uploads/2015/11/large_news_HD-STREAMING.jpg",

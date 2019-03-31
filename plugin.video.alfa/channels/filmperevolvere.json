@@ -1,7 +1,7 @@
 {
     "id": "filmperevolvere",
     "name": "FilmPerEvolvere",
-    "active": true,
+    "active": false,
     "adult": false,
     "language": ["ita"],
     "thumbnail": "https:\/\/filmperevolvere.it\/wp-content\/uploads\/2017\/06\/cropped-coversito.jpg",

@@ -14,7 +14,7 @@ from core import tmdb
 
 
 
-host = "https://filmzstreaming.is"
+host = "https://filmzstreaming.blue"
 
 IDIOMAS = {'Italiano': 'IT'}
 list_language = IDIOMAS.values()
@@ -66,11 +66,11 @@ def peliculas(item):
     logger.info("kod.filmzstreaming peliculas")
     itemlist = []
 
-    # Carica la pagina 
+    # Carica la pagina
     data = httptools.downloadpage(item.url, headers=headers).data
     blocco = scrapertools.find_single_match(data, '</h1>(.*?)<div class="sidebar scrolling">')
 
-    # Estrae i contenuti 
+    # Estrae i contenuti
     patron = r'<h3><a href="([^"]+)">(.*?)</a></h3>'
     matches = re.compile(patron, re.DOTALL).findall(blocco)
 

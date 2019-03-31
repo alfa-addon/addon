@@ -1,7 +1,7 @@
 {
     "id": "filmsenzalimiticc",
     "name": "Filmsenzalimiti CC",
-    "active": true,
+    "active": false,
     "adult": false,
     "language": ["ita"],
     "thumbnail": "filmsenzalimiticc.png",

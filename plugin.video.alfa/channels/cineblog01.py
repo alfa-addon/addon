@@ -7,11 +7,10 @@ import re
 import urlparse
 
 from channels import autoplay, filtertools, support
-from core import scrapertoolsV2, httptools, servertools, tmdb
+from core import scrapertoolsV2, httptools, servertools
 from core.item import Item
 from lib import unshortenit
 from platformcode import logger, config
-from channelselector import thumb
 
 #impostati dinamicamente da getUrl()
 host = ""
@@ -40,22 +39,19 @@ def mainlist(item):
 
     # Main options
     itemlist = []
-    support.menu(itemlist, '[B]Film[/B]', 'peliculas', host)
-    support.menu(itemlist, '[B] > HD [/B]', 'menu', host, args="Film HD Streaming")
-    support.menu(itemlist, '[B] > Per genere [/B]', 'menu', host, args="Film per Genere")
-    support.menu(itemlist, '[B] > Per anno [/B]', 'menu', host, args="Film per Anno")
-    support.menu(itemlist, '[COLOR blue] > Cerca [/COLOR]', 'search', host)
+    support.menu(itemlist, 'Film bold', 'peliculas', host)
+    support.menu(itemlist, 'HD submenu', 'menu', host, args="Film HD Streaming")
+    support.menu(itemlist, 'Per genere submenu', 'menu', host, args="Film per Genere")
+    support.menu(itemlist, 'Per anno submenu', 'menu', host, args="Film per Anno")
+    support.menu(itemlist, 'Cerca submenu color blue', 'search', host)
 
-    support.menu(itemlist, '[B]Serie TV[/B]', 'peliculas', host + '/serietv/', contentType='episode')
-    support.menu(itemlist, '[B] > Per lettera[/B]', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Lettera")
-    support.menu(itemlist, '[B] > Per genere[/B]', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Genere")
-    support.menu(itemlist, '[B] > Per Anno[/B]', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Anno")
-    support.menu(itemlist, '[COLOR blue] > Cerca [/COLOR]', 'search', host + '/serietv/', contentType='episode')
+    support.menu(itemlist, 'Serie TV bold', 'peliculas', host + '/serietv/', contentType='episode')
+    support.menu(itemlist, 'Per lettera submenu', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Lettera")
+    support.menu(itemlist, 'Per genere submenu', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Genere")
+    support.menu(itemlist, 'Per Anno submenu', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Anno")
+    support.menu(itemlist, 'Cerca submenu color blue', 'search', host + '/serietv/', contentType='episode')
     
     autoplay.show_option(item.channel, itemlist)
-
-    # auto thumb
-    itemlist = thumb(itemlist)
 
     return itemlist
 

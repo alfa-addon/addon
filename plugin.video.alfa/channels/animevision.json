@@ -1,7 +1,7 @@
 {
     "id": "animevision",
     "name": "Animevision",
-    "active": true,
+    "active": false,
     "adult": false,
     "language": ["ita"],
     "thumbnail": "http:\/\/animevision.it\/images\/logo.png",

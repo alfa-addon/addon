@@ -1,7 +1,7 @@
 {
     "id": "toonitalia",
     "name": "ToonItalia",
-    "active": true,
+    "active": false,
     "adult": false,
     "language": ["ita"],
     "thumbnail": "https://toonitalia.org/wp-content/themes/seos-video/images/header.png",

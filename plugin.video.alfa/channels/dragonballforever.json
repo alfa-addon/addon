@@ -2,7 +2,7 @@
 	"id": "dragonballforever",
 	"name": "Dragonball Forever",
 	"language": ["ita"],
-	"active": true,
+	"active": false,
 	"adult": false,
 	"thumbnail": "https://www.dragonballforever.it/wp-content/uploads/2017/02/header_dbf-1.jpg",
 	"banner": "https://www.dragonballforever.it/wp-content/uploads/2017/02/header_dbf-1.jpg",

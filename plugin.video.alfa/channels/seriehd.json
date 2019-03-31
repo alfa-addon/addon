@@ -1,7 +1,7 @@
 {
     "id": "seriehd",
     "name": "SerieHD",
-    "active": true,
+    "active": false,
     "adult": false,
     "language": ["ita"],
     "thumbnail": "https://raw.githubusercontent.com/Zanzibar82/images/master/posters/seriehd.png",

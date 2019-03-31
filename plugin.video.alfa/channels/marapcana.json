@@ -2,7 +2,7 @@
 	"id": "marapcana",
 	"name": "Marapcana",
 	"language": ["ita"],
-	"active": true,
+	"active": false,
 	"adult": false,
 	"thumbnail": "http://marapcana.site/maraplogo7.png",
 	"banner": "http://marapcana.site/maraplogo7.png",

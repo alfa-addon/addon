@@ -13,7 +13,7 @@ import re
 __channel__ = "streaminghd"
 listtools.__channel__ = __channel__
 
-host = "https://streaminghd.online"
+host = "https://streaminghd.blog"
 
 headers = [['User-Agent', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:58.0) Gecko/20100101 Firefox/58.0']] ## <-- user agent per poter accedere
 

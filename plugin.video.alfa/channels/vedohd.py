@@ -6,22 +6,20 @@
 import re
 import urlparse
 
-from channels import autoplay, filtertools, support
-from core import scrapertoolsV2, httptools, servertools, tmdb
+from channels import autoplay, support
+from core import scrapertoolsV2, httptools, servertools
 from core.item import Item
-from lib import unshortenit
-from platformcode import logger, config
+from platformcode import logger
 from channelselector import thumb
 
-#impostati dinamicamente da getUrl()
-host = ""
 headers = ""
 
 permUrl = httptools.downloadpage('https://www.cb01.uno/', follow_redirects=False).headers
 cb01Url = 'https://www.'+permUrl['location'].replace('https://www.google.it/search?q=site:', '')
 data = httptools.downloadpage(cb01Url).data
-host = scrapertoolsV2.get_match(data, r'<a class=mega-menu-link href=(https://vedohd[^/]+)')+'/'
-if host=="":  # in caso cb01 cambi, si spera di riuscire ad accedere da questo URL
+host = scrapertoolsV2.get_match(data, r'<a class="?mega-menu-link"? href=(https://vedohd[^/"]+)')+'/'
+
+if 'https' not in host:  # in caso cb01 cambi, si spera di riuscire ad accedere da questo URL
     host = "https://vedohd.pw/"
 headers = [['Referer', host]]
 
@@ -40,42 +38,15 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     # Main options
-    itemlist = [Item(channel=item.channel,
-                     action="peliculas",
-                     title="Film",
-                     url=host+"film-hd",
-                     contentType="movie"),
-                Item(channel=item.channel,
-                     action="peliculas",
-                     title="I più votati",
-                     url=host + "ratings/?get=movies",
-                     contentType="movie"),
-                Item(channel=item.channel,
-                     action="peliculas",
-                     title="I più popolari",
-                     url=host + "trending/?get=movies",
-                     contentType="movie"),
-                Item(channel=item.channel,
-                     action="generos",
-                     title="Generi",
-                     url=host,
-                     contentType="movie"),
-                Item(channel=item.channel,
-                     action="year",
-                     title="Anno",
-                     url=host,
-                     contentType="movie"),
-                Item(channel=item.channel,
-                     action="search",
-                     title="Cerca",
-                     url=host,
-                     contentType="movie")
-                ]
-    
-    autoplay.show_option(item.channel, itemlist)
+    itemlist = []
+    support.menu(itemlist, 'Film', "peliculas", host+"film-hd")
+    support.menu(itemlist, 'I più votati', "peliculas", host+"ratings/?get=movies")
+    support.menu(itemlist, 'I più popolari', "peliculas", host+"trending/?get=movies")
+    support.menu(itemlist, 'Generi', "generos", host)
+    support.menu(itemlist, 'Anno', "year", host)
+    support.menu(itemlist, 'Cerca', "search", host)
 
-    # auto thumb
-    itemlist=thumb(itemlist) 
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -133,21 +104,7 @@ def year(item):
 
 def play(item):
     logger.info("[vedohd.py] play")
-    itemlist = []
 
     data = support.swzz_get_url(item)
 
-    try:
-        itemlist = servertools.find_video_items(data=data)
-
-        for videoitem in itemlist:
-            videoitem.title = item.show
-            videoitem.fulltitle = item.fulltitle
-            videoitem.show = item.show
-            videoitem.thumbnail = item.thumbnail
-            videoitem.contentType = item.contentType
-            videoitem.channel = item.channel
-    except AttributeError:
-        logger.error("vcrypt data doesn't contain expected URL")
-
-    return itemlist
+    return support.server(item, data, headers)

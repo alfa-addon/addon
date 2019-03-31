@@ -253,11 +253,11 @@ def swzz_get_url(item):
                 from lib import jsunpack
 
                 try:
-                    data = scrapertoolsV2.get_match(data, r"(eval\s?\(function\(p,a,c,k,e,d.*?)</script>")
+                    data = scrapertoolsV2.get_match(data.replace('\n', ''), r"(eval\s?\(function\(p,a,c,k,e,d.*?)</script>")
                     data = jsunpack.unpack(data)
 
                     logger.debug("##### play /link/ unpack ##\n%s\n##" % data)
-                except IndexError:
+                except:
                     logger.debug("##### The content is yet unpacked ##\n%s\n##" % data)
 
                 data = scrapertoolsV2.find_single_match(data, r'var link(?:\s)?=(?:\s)?"([^"]+)";')
@@ -386,6 +386,7 @@ def server(item, data='', headers=''):
         videoitem.contentType = item.contentType
 
     return itemlist
+
 
 def log(stringa1="", stringa2="", stringa3="", stringa4="", stringa5=""):
     frame = inspect.stack()[1]

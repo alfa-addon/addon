@@ -2,7 +2,7 @@
 	"id": "mondolunatico_new",
 	"name": "Mondo Lunatico New",
 	"language": ["ita"],
-	"active": true,
+	"active": false,
 	"adult": false,
 	"thumbnail": "http://mondolunatico.org/stream/wp-content/uploads/2016/10/dooplay1-2.png",
 	"banner": "http://mondolunatico.org/stream/wp-content/uploads/2016/10/dooplay1-2.png",

@@ -1,7 +1,7 @@
 {
     "id": "umsfunsub",
     "name": "UMSFunSub",
-    "active": true,
+    "active": false,
     "adult": false,
     "language": ["ita"],
     "thumbnail": "http:\/\/www.hiumi.it\/public\/forum\/styles\/art_deluxe\/imageset\/logo.png",

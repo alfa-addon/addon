@@ -1,7 +1,7 @@
 {
     "id": "mmaiptv",
     "name": "MmaIptv",
-    "active": true,
+    "active": false,
     "adult": false,
     "language": ["ita"],
     "thumbnail": "https:\/\/imageshack.com\/a\/img924\/5981\/XN1yc1.png",

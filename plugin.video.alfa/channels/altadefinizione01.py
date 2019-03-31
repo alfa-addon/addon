@@ -42,13 +42,16 @@ def mainlist(item):
 
     return itemlist
 
+
 def categories(item):
     support.log(item)
     return support.scrape(item,'<li><a href="([^"]+)">(.*?)</a></li>',['url','title'],headers,'Altadefinizione01',patron_block='<ul class="kategori_list">(.*?)</ul>',action='peliculas',url_host=host)
 
+
 def AZlist(item):
     support.log()
     return support.scrape(item,r'<a title="([^"]+)" href="([^"]+)"',['title','url'],headers,patron_block=r'<div class="movies-letter">(.*?)<\/div>',action='peliculas_list',url_host=host)
+
 
 def newest(categoria):
     # import web_pdb; web_pdb.set_trace()
