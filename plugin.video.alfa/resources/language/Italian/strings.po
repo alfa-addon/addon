@@ -2627,7 +2627,7 @@ msgstr "Possibilità di includere altri canali, attraverso la configurazione"
 
 msgctxt "#60666"
 msgid "Color Profile"
-msgstr "Profilo di colore"
+msgstr "Profilo Colore"
 
 msgctxt "#60667"
 msgid "Cold"
@@ -4939,4 +4939,43 @@ msgstr "Tipo di contenuto:"
 msgctxt "#70568"
 msgid "Languages:"
 msgstr "Lingue"
+<<<<<<< HEAD
 >>>>>>> a2ca6152... Languages fix, and more efficent thumb function
+=======
+
+msgctxt "#70569"
+msgid "Update external addon Quasar:"
+msgstr "Aggiorna L'addon esterno Quasar:"
+
+msgctxt "#70570"
+msgid "Search with current selection"
+msgstr "Cerca con la selezione corrente"
+
+msgctxt "#70571"
+msgid "Modify current selection"
+msgstr "Modifica la selezione corrente"
+
+msgctxt "#70572"
+msgid "Modify from All"
+msgstr "Modifica partendo da Tutto"
+
+msgctxt "#70573"
+msgid "Modify starting from None"
+msgstr "Modifica partendo da Nessuno"
+
+msgctxt "#70574"
+msgid "Modify starting from Castellano"
+msgstr "Modifica partendo da Castellano"
+
+msgctxt "#70575"
+msgid "Modify starting from Latino"
+msgstr "Modifica partendo da Latino"
+
+msgctxt "#70576"
+msgid "Modify starting from Italian"
+msgstr "Modifica partendo da Italiano"
+
+msgctxt "#70577"
+msgid "Modify starting from "
+msgstr "Modifica partendo da "
+>>>>>>> 0e06f469... New Translation

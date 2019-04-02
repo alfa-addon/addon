@@ -319,7 +319,7 @@
     {
       "id": "verify_playcount",
       "type": "bool",
-      "label": "Verificación de los contadores de vídeos vistos/no vistos (desmarcar para verificar)",
+      "label": "@70526",
       "default": false
     }
   ]

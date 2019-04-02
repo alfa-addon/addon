@@ -225,7 +225,7 @@ def servers_favorites(item):
     if dict_values['favorites_servers'] == None:
         dict_values['favorites_servers'] = False
 
-    server_names = ['Ninguno']
+    server_names = [config.get_localized_string(59992)]
 
     for server in sorted(server_list.keys()):
         if config.get_setting("black_list", server=server):
@@ -299,9 +299,9 @@ def submenu_tools(item):
 
 
     itemlist.append(Item(channel=CHANNELNAME, action="check_quickfixes", folder=False,
-                         title="Comprobar actualizaciones urgentes", plot="Versión actual: %s" % config.get_addon_version() ))
+                         title=config.get_localized_string(30001), plot="Versión actual: %s" % config.get_addon_version() ))
     itemlist.append(Item(channel=CHANNELNAME, action="update_quasar", folder=False,
-                         title="Actualizar addon externo Quasar"))
+                         title=config.get_localized_string(70569)))
     itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,
                          thumbnail=get_thumb("setting_0.png")))
 

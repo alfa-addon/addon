@@ -32,7 +32,7 @@
     {
       "id": "perfil",
       "type": "list",
-      "label": "Perfil de color",
+      "label": "@60666",
       "default": 0,
       "enabled": true,
       "visible": true,

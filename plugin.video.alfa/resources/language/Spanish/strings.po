@@ -4954,3 +4954,39 @@ msgstr "Tipo de contenido:"
 msgctxt "#70568"
 msgid "Languages:"
 msgstr "Idiomas"
+
+msgctxt "#70569"
+msgid "Update external addon Quasar:"
+msgstr "Actualizar addon externo Quasar:"
+
+msgctxt "#70570"
+msgid "Search with current selection"
+msgstr "Buscar con la selección actual"
+
+msgctxt "#70571"
+msgid "Modify current selection"
+msgstr "Modificar selección actual"
+
+msgctxt "#70572"
+msgid "Modify from All"
+msgstr "Modificar partiendo de Todos"
+
+msgctxt "#70573"
+msgid "Modify starting from None"
+msgstr "Modificar partiendo de Ninguno"
+
+msgctxt "#70574"
+msgid "Modify starting from Castellano"
+msgstr "Modificar partiendo de Castellano"
+
+msgctxt "#70575"
+msgid "Modify starting from Latino"
+msgstr "Modificar partiendo de Latino"
+
+msgctxt "#70576"
+msgid "Modify starting from Italian"
+msgstr "Modificar partiendo de Italiano"
+
+msgctxt "#70577"
+msgid "Modify starting from "
+msgstr "Modificar partiendo de "

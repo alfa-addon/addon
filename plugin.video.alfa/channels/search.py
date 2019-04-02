@@ -176,19 +176,20 @@ def setting_channel_new(item):
     # Diálogo para pre-seleccionar
     # ----------------------------
     preselecciones = [
-        'Buscar con la selección actual', 
-        'Modificar selección actual', 
-        'Modificar partiendo de Todos', 
-        'Modificar partiendo de Ninguno', 
-        'Modificar partiendo de Castellano', 
-        'Modificar partiendo de Latino'
+        config.get_localized_string(70570), 
+        config.get_localized_string(70571), 
+        config.get_localized_string(70572), 
+        config.get_localized_string(70573), 
+        config.get_localized_string(70574), 
+        config.get_localized_string(70575),
+        config.get_localized_string(70576)
     ]
-    presel_values = ['skip', 'actual', 'all', 'none', 'cast', 'lat']
+    presel_values = ['skip', 'actual', 'all', 'none', 'cast', 'lat', 'ita']
 
     categs = ['movie', 'tvshow', 'documentary', 'anime', 'vos', 'direct', 'torrent']
     if config.get_setting('adult_mode') > 0: categs.append('adult')
     for c in categs:
-        preselecciones.append('Modificar partiendo de %s' % config.get_localized_category(c))
+        preselecciones.append(config.get_localized_string(70577) + config.get_localized_category(c))
         presel_values.append(c)
 
     if item.action == 'setting_channel': # Configuración de los canales incluídos en la búsqueda
@@ -202,6 +203,11 @@ def setting_channel_new(item):
     elif presel_values[ret] == 'none': preselect = []
     elif presel_values[ret] == 'all': preselect = range(len(ids))
     elif presel_values[ret] in ['cast', 'lat']:
+        preselect = []
+        for i, lg in enumerate(lista_lang):
+            if presel_values[ret] in lg or '*' in lg:
+                preselect.append(i)
+    elif presel_values[ret] in ['ita']:
         preselect = []
         for i, lg in enumerate(lista_lang):
             if presel_values[ret] in lg or '*' in lg:
