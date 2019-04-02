@@ -33,7 +33,7 @@ blacklist = ['BENVENUTI', 'Richieste Serie TV', 'CB01.UNO &#x25b6; TROVA L&#8217
 
 
 def mainlist(item):
-    logger.info("[cineblog01.py] mainlist")
+    support.log()
 
     autoplay.init(item.channel, list_servers, list_quality)
 
@@ -43,13 +43,13 @@ def mainlist(item):
     support.menu(itemlist, 'HD submenu', 'menu', host, args="Film HD Streaming")
     support.menu(itemlist, 'Per genere submenu', 'menu', host, args="Film per Genere")
     support.menu(itemlist, 'Per anno submenu', 'menu', host, args="Film per Anno")
-    support.menu(itemlist, 'Cerca submenu color blue', 'search', host)
+    support.menu(itemlist, 'Cerca Film... submenu color blue', 'search', host)
 
     support.menu(itemlist, 'Serie TV bold', 'peliculas', host + '/serietv/', contentType='episode')
     support.menu(itemlist, 'Per lettera submenu', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Lettera")
     support.menu(itemlist, 'Per genere submenu', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Genere")
     support.menu(itemlist, 'Per Anno submenu', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Anno")
-    support.menu(itemlist, 'Cerca submenu color blue', 'search', host + '/serietv/', contentType='episode')
+    support.menu(itemlist, 'Cerca Serie TV... submenu color blue', 'search', host + '/serietv/', contentType='episode')
     
     autoplay.show_option(item.channel, itemlist)
 
@@ -61,7 +61,7 @@ def menu(item):
     data = httptools.downloadpage(item.url, headers=headers).data
     data = re.sub('\n|\t', '', data)
     block = scrapertoolsV2.get_match(data, item.args + r'<span.*?><\/span>.*?<ul.*?>(.*?)<\/ul>')
-    logger.info('MENU BLOCK= '+block)
+    support.log('MENU BLOCK= ',block)
     patron = r'href="?([^">]+)"?>(.*?)<\/a>'
     matches = re.compile(patron, re.DOTALL).findall(block)
     for scrapedurl, scrapedtitle in matches:
@@ -78,7 +78,7 @@ def menu(item):
 
 
 def search(item, text):
-    logger.info("[cineblog01.py] " + item.url + " search " + text)
+    support.log(item.url, "search" ,text)
 
     try:
         item.url = item.url + "/?s=" + text
@@ -93,7 +93,7 @@ def search(item, text):
 
 
 def newest(categoria):
-    logger.info("[cineblog01.py] newest")
+    support.log()
     itemlist = []
     item = Item()
     item.url = host + '/lista-film-ultimi-100-film-aggiunti/'
@@ -103,13 +103,13 @@ def newest(categoria):
 
 
 def peliculas(item):
-    logger.info("[cineblog01.py] peliculas")
+    support.log()
     if item.contentType == 'movie' or '/serietv/' not in item.url:
         patron = r'<div class=card-image>.*?<img src=([^ ]+) alt.*?<a href=([^ >]+)\/>([^<[(]+)(?:\[([A-Za-z0-9/-]+)])? (?:\(([0-9]{4})\))?.*?<strong>([^<>]+)DURATA ([0-9]+).*?<br>([^<>]+)'
         listGroups = ['thumb', 'url', 'title', 'quality', 'year', 'genre', 'duration', 'plot']
         action = 'findvideos'
     else:
-        patron = r'div class="card-image">.*?<img src="([^ ]+)" alt.*?<a href="([^ >]+)">([^<[(]+)</a>.*?<strong><span style="[^"]+">([^<>0-9(]+)\(([0-9]{4}).*?</p>([^<>]+)'
+        patron = r'div class="card-image">.*?<img src="([^ ]+)" alt.*?<a href="([^ >]+)">([^<[(]+)<\/a>.*?<strong><span style="[^"]+">([^<>0-9(]+)\(([0-9]{4}).*?<\/(p|div)>([^<>]+)'
         listGroups = ['thumb', 'url', 'title', 'genre', 'year', 'plot']
         action = 'episodios'
 
@@ -120,7 +120,7 @@ def peliculas(item):
 
 
 def episodios(item):
-    logger.info("[cineblog01.py] episodios")
+    support.log()
     return support.scrape(item, patron_block=[r'<article class="sequex-post-content">(.*?)<\/article>',
                                               r'<div class="sp-head[a-z ]*?" title="Espandi">[^<>]*?</div>(.*?)<div class="spdiv">\[riduci\]</div>'],
                           patron='(?:<p>)?([0-9]+&#215;[0-9]+)(.*?)(?:</p>|<br)', listGroups=['title', 'url'])
@@ -132,8 +132,8 @@ def findvideos(item):
 
     def load_links(itemlist, re_txt, color, desc_txt, quality=""):
         streaming = scrapertoolsV2.find_single_match(data, re_txt).replace('"', '')
-        logger.info('STREAMING='+streaming)
-        patron = '<td><a[^h]href=(.*?) target[^>]+>([^<]+)<'
+        support.log('STREAMING=',streaming)
+        patron = '<td><a.*?href=(.*?) target[^>]+>([^<]+)<'
         matches = re.compile(patron, re.DOTALL).findall(streaming)
         for scrapedurl, scrapedtitle in matches:
             logger.debug("##### findvideos %s ## %s ## %s ##" % (desc_txt, scrapedurl, scrapedtitle))
@@ -151,13 +151,13 @@ def findvideos(item):
                      contentType=item.contentType,
                      folder=False))
 
-    logger.info("[cineblog01.py] findvid_film")
+    support.log()
 
     itemlist = []
 
     # Carica la pagina
     data = httptools.downloadpage(item.url).data
-    logger.info("DATA= "+data)
+    data = re.sub('\n|\t','',data)
 
     # Extract the quality format
     patronvideos = '>([^<]+)</strong></div>'
@@ -167,21 +167,21 @@ def findvideos(item):
         QualityStr = scrapertoolsV2.decodeHtmlentities(match.group(1))[6:]
 
     # Estrae i contenuti - Streaming
-    load_links(itemlist, '<strong>Streaming:</strong>(.*?)<table class=cbtable height=30>', "orange", "Streaming", "SD")
+    load_links(itemlist, '<strong>Streaming:</strong>(.*?)<tableclass=cbtable height=30>', "orange", "Streaming", "SD")
 
     # Estrae i contenuti - Streaming HD
-    load_links(itemlist, '<strong>Streaming HD[^<]+</strong>(.*?)<table class=cbtable height=30>', "yellow", "Streaming HD", "HD")
+    load_links(itemlist, '<strong>Streaming HD[^<]+</strong>(.*?)<tableclass=cbtable height=30>', "yellow", "Streaming HD", "HD")
 
     autoplay.start(itemlist, item)
 
     # Estrae i contenuti - Streaming 3D
-    load_links(itemlist, '<strong>Streaming 3D[^<]+</strong>(.*?)<table class=cbtable height=30>', "pink", "Streaming 3D")
+    load_links(itemlist, '<strong>Streaming 3D[^<]+</strong>(.*?)<tableclass=cbtable height=30>', "pink", "Streaming 3D")
 
     # Estrae i contenuti - Download
-    load_links(itemlist, '<strong>Download:</strong>(.*?)<table class=cbtable height=30>', "aqua", "Download")
+    load_links(itemlist, '<strong>Download:</strong>(.*?)<tableclass=cbtable height=30>', "aqua", "Download")
 
     # Estrae i contenuti - Download HD
-    load_links(itemlist, '<strong>Download HD[^<]+</strong>(.*?)<table class=cbtable width=100% height=20>', "azure",
+    load_links(itemlist, '<strong>Download HD[^<]+</strong>(.*?)<tableclass=cbtable width=100% height=20>', "azure",
                "Download HD")
 
     if len(itemlist) == 0:
@@ -225,7 +225,7 @@ def findvid_serie(item):
                      contentType=item.contentType,
                      folder=False))
 
-    logger.info("[cineblog01.py] findvid_serie")
+    support.log()
 
     itemlist = []
     lnkblk = []
@@ -266,12 +266,12 @@ def findvid_serie(item):
     return itemlist
 
 def play(item):
-    logger.info("[cineblog01.py] play")
+    support.log()
     itemlist = []
     ### Handling new cb01 wrapper
     if host[9:] + "/film/" in item.url:
         iurl = httptools.downloadpage(item.url, only_headers=True, follow_redirects=False).headers.get("location", "")
-        logger.info("/film/ wrapper: %s" % iurl)
+        support.log("/film/ wrapper: ", iurl)
         if iurl:
             item.url = iurl
 
