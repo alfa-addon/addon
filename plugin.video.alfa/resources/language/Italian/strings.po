@@ -4914,8 +4914,6 @@ msgstr "Autoplay (Abilita autoplay in tutti i canali)"
 msgctxt "#70563"
 msgid "Italian"
 msgstr "Italiano"
-<<<<<<< HEAD
-=======
 
 msgctxt "#70564"
 msgid "Enable Custom Theme"
@@ -4924,9 +4922,6 @@ msgstr "Abilita Tema Personalizzato"
 msgctxt "#70565"
 msgid "Custom Theme Path"
 msgstr "Percorso Tema Personalizzato"
-<<<<<<< HEAD
->>>>>>> e253911b... Add Custom Theme Setting and Auto Thumb (partial)
-=======
 
 msgctxt "#70566"
 msgid "VOSI (Original Subtitled Italian Version)"
@@ -4939,9 +4934,6 @@ msgstr "Tipo di contenuto:"
 msgctxt "#70568"
 msgid "Languages:"
 msgstr "Lingue"
-<<<<<<< HEAD
->>>>>>> a2ca6152... Languages fix, and more efficent thumb function
-=======
 
 msgctxt "#70569"
 msgid "Update external addon Quasar:"
@@ -4978,4 +4970,31 @@ msgstr "Modifica partendo da Italiano"
 msgctxt "#70577"
 msgid "Modify starting from "
 msgstr "Modifica partendo da "
->>>>>>> 0e06f469... New Translation
+
+msgctxt "#70578"
+msgid "To avoid waiting too long when a server does not respond:"
+msgstr "Per evitare di aspettare troppo a lungo quando un server non risponde:"
+
+msgctxt "#70579"
+msgid "Settings of urgent updates of Alfa modules (Quick Fixes):"
+msgstr "Impostazioni per gli aggiornamenti urgenti dei moduli di Alfa (Quick Fixes)"
+
+msgctxt "#70580"
+msgid "Timeout (maximum waiting time)"
+msgstr "Timeout (tempo massimo da aspettare)"
+
+msgctxt "#70581"
+msgid "Interval between automatic updates (hours)"
+msgstr "Intervallo tra gli aggiornamenti automatici (ore)"
+
+msgctxt "#70582"
+msgid "Do you want to see messages about the updates?"
+msgstr "Voi ricevere dei messaggi per quanto riguarda gli aggiornamenti?"
+
+msgctxt "#70583"
+msgid "Management of updates of other addons related to Alfa:"
+msgstr "Gestione degli aggiornamenti per gli altri addon relativi ad Alfa"
+
+msgctxt "#70584"
+msgid "Do you want to update Quasar to avoid errors?"
+msgstr "Vuoi aggiornare Quasar per evitare errori?"

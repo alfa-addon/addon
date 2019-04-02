@@ -124,19 +124,19 @@
         <setting id="tmdb_clean_db_cache" type="action" label="70163" action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAic2NyaXB0Ig0KfQ==)" />
 
         <setting type="sep"/>
-        <setting label="Para evitar esperar demasiado cuando un servidor no responde:" type="lsep"/>
-        <setting id="httptools_timeout" type="labelenum" values="0|5|10|15|20|25|30" label="Timeout (tiempo de espera máximo)" default="15"/>
+        <setting label="70578" type="lsep"/>
+        <setting id="httptools_timeout" type="labelenum" values="0|5|10|15|20|25|30" label="70580" default="15"/>
         
         <setting type="sep"/>
-        <setting label="Gestión de actualizaciones urgentes de módulos de Alfa (Quick Fixes):" type="lsep"/>
-        <setting id="addon_update_timer" type="labelenum" values="0|6|12|24" label="Intervalo entre actualizaciones automáticas (horas)" default="12"/>
-        <setting id="addon_update_message" type="bool" label="¿Quiere ver mensajes de las actualizaciones?" default="false"/>
+        <setting label="70579" type="lsep"/>
+        <setting id="addon_update_timer" type="labelenum" values="0|6|12|24" label="70581" default="12"/>
+        <setting id="addon_update_message" type="bool" label="70582" default="false"/>
 
         <setting label="Lista activa" type="text" id="lista_activa" default="alfavorites-default.json" visible="false"/>
         
         <setting type="sep"/>
-        <setting label="Gestión de actualizaciones de otros addon relacionados con Alfa:" type="lsep"/>
-        <setting id="addon_quasar_update" type="bool" label="¿Quiere actualizar Quasar para evitar errores?" default="false"/>
+        <setting label="70583" type="lsep"/>
+        <setting id="addon_quasar_update" type="bool" label="70584" default="false"/>
     </category>
 
 </settings>

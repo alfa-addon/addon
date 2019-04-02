@@ -4990,3 +4990,31 @@ msgstr "Modificar partiendo de Italiano"
 msgctxt "#70577"
 msgid "Modify starting from "
 msgstr "Modificar partiendo de "
+
+msgctxt "#70578"
+msgid "To avoid waiting too long when a server does not respond:"
+msgstr "Para evitar esperar demasiado cuando un servidor no responde:"
+
+msgctxt "#70579"
+msgid "Settings of urgent updates for Alfa modules (Quick Fixes):"
+msgstr "Gestión de actualizaciones urgentes de módulos de Alfa (Quick Fixes):"
+
+msgctxt "#70580"
+msgid "Timeout (maximum waiting time)"
+msgstr "Timeout (tiempo de espera máximo)"
+
+msgctxt "#70581"
+msgid "Interval between automatic updates (hours)"
+msgstr "Intervalo entre actualizaciones automáticas (horas)"
+
+msgctxt "#70582"
+msgid "Do you want to see messages about the updates?"
+msgstr "¿Quiere ver mensajes de las actualizaciones?"
+
+msgctxt "#70583"
+msgid "Management of updates of other addons related to Alfa:"
+msgstr "Gestión de actualizaciones de otros addon relacionados con Alfa:"
+
+msgctxt "#70584"
+msgid "Do you want to update Quasar to avoid errors?"
+msgstr "¿Quiere actualizar Quasar para evitar errores?"
