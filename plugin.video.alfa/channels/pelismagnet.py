@@ -135,7 +135,7 @@ def categorias(item):
         return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     data = scrapertools.find_single_match(data, patron)
-    patron = '<li><a href="genero/([^"]+)">(.*?)<'
+    patron = '<li><a href="\/?genero\/([^"]+)">(.*?)<\/a><\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     if not matches:
