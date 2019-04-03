@@ -41,7 +41,7 @@ def catalogo(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data1 = scrapertools.get_match(data,'>Most Popular Pornstars<(.*?)<i class=\'icon-menu-right\'></i></a>')
+    data1 = scrapertools.find_single_match(data,'>Most Popular Pornstars<(.*?)<i class=\'icon-menu-right\'></i></a>')
     patron = '<a href="([^"]+)".*?'
     patron += 'data-original="([^"]+)".*?'
     patron += '<span class="porn-star-name">([^"]+)</span>.*?'
@@ -66,9 +66,9 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     if item.title == "Canal":
-        data = scrapertools.get_match(data,'>All</div>(.*?)<i class=\'icon-menu-right\'></i></a>')
+        data = scrapertools.find_single_match(data,'>All</div>(.*?)<i class=\'icon-menu-right\'></i></a>')
     if item.title == "Categorias":
-        data = scrapertools.get_match(data,'<div class=\'row alphabetical\'.*?>(.*?)>Popular by Country</h2>')
+        data = scrapertools.find_single_match(data,'<div class=\'row alphabetical\'.*?>(.*?)>Popular by Country</h2>')
     patron = '<a href="([^"]+)".*?'
     patron += '<img src=(.*?)>.*?'
     patron += '>([^<]+) (?:Videos|videos)<'

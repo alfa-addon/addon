@@ -81,7 +81,7 @@ def play(item):
     # http://tubehentai.com/media/thumbs/5/2/3/9/c/5239cf74632cbTHLaBlueGirlep3%20%20Segment2000855.000001355.000.mp4
     # http://tubehentai.com/media/videos/5/2/3/9/c/5239cf74632cbTHLaBlueGirlep3%20%20Segment2000855.000001355.000.mp4?start=0
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.get_match(data, 's1.addParam\("flashvars","bufferlength=1&autostart=true&overlay=(.*?\.mp4)')
+    url = scrapertools.find_single_match(data, 's1.addParam\("flashvars","bufferlength=1&autostart=true&overlay=(.*?\.mp4)')
     url = url.replace("/thumbs", "/videos")
     # url = url+"?start=0"
     logger.info("url=" + url)

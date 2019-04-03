@@ -78,7 +78,7 @@ def videos(item):
                  folder=True, contentType="movie"))
 
     # Paginador
-    Actual = int(scrapertools.get_match(item.url, url_api + '/index/[^/]+/([0-9]+)/pc'))
+    Actual = int(scrapertools.find_single_match(item.url, url_api + '/index/[^/]+/([0-9]+)/pc'))
     if JSONData["pages"] - 1 > Actual:
         scrapedurl = item.url.replace("/" + str(Actual) + "/", "/" + str(Actual + 1) + "/")
         itemlist.append(

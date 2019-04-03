@@ -15,7 +15,7 @@ def mainlist(item):
     if item.url=="":
         item.url = "http://www.filmovix.net/videoscategory/porno/"
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'<h1 class="cat_head">XXX</h1>(.*?)<h3> Novo dodato </h3>')
+    data = scrapertools.find_single_match(data,'<h1 class="cat_head">XXX</h1>(.*?)<h3> Novo dodato </h3>')
     patron  = '<li class="clearfix">.*?'
     patron += 'src="([^"]+)".*?'
     patron += '<p class="title"><a href="([^"]+)" rel="bookmark" title="([^"]+)">'

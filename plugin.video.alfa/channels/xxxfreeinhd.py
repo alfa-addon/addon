@@ -82,7 +82,7 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data = scrapertools.get_match(data,'<div class="video-embed">(.*?)</div>')
+    data = scrapertools.find_single_match(data,'<div class="video-embed">(.*?)</div>')
     patron = '<noscript>.*?<iframe src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:
