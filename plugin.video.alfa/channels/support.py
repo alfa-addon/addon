@@ -45,7 +45,7 @@ def hdpass_get_servers(item):
                 for media_label, media_url in scrapertoolsV2.find_multiple_matches(data, patron_media):
                     itemlist.append(Item(channel=item.channel,
                                          action="play",
-                                         title=item.title+"["+color(server, 'orange')+"]"+" - "+color(res_video, 'green'),
+                                         title=item.title+" ["+color(server, 'orange')+"]"+" - "+color(res_video, 'limegreen'),
                                          fulltitle=item.fulltitle,
                                          quality=res_video,
                                          show=item.show,
@@ -191,7 +191,18 @@ def scrape(item, patron = '', listGroups = [], headers="", blacklist="", data=""
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
         if patronNext:
-            nextPage(itemlist, item, data, patronNext)
+            next_page = scrapertoolsV2.find_single_match(data, patronNext)
+            log('NEXT= ',next_page)
+
+            if next_page != "":
+                itemlist.append(
+                    Item(channel=item.channel,
+                        action=inspect.stack()[1][3],
+                        contentType=item.contentType,
+                        title=typo(config.get_localized_string(30992), 'color blue'),
+                        url=next_page,
+                        args=item.args,
+                        thumbnail=thumb()))
 
         if item.infoLabels["title"] or item.fulltitle:
             item.fulltitle = item.infoLabels["title"]
@@ -392,13 +403,13 @@ def nextPage(itemlist, item, data, patron):
     log('NEXT= ',next_page)
 
     if next_page != "":
-        thumbnails = thumb()
         itemlist.append(
             Item(channel=item.channel,
-                 action="peliculas",
+                 action=inspect.stack()[1][3],
                  contentType=item.contentType,
-                 title=typo(config.get_localized_string(30992), 'color blue'),
+                 title=typo(config.get_localized_string(30992), 'color blue bold'),
                  url=next_page,
+                 args=item.args,
                  thumbnail=thumb()))
 
     return itemlist
