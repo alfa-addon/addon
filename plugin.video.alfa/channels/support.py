@@ -53,7 +53,7 @@ def hdpass_get_servers(item):
                                          contentType=item.contentType,
                                          server=server,
                                          url=url_decode(media_url)))
-                    logger.info("video ->" + res_video)
+                    log("video -> ", res_video)
 
     return itemlist
 
@@ -115,7 +115,7 @@ def scrape(item, patron = '', listGroups = [], headers="", blacklist="", data=""
         data = httptools.downloadpage(item.url, headers=headers).data.replace("'", '"')
         data = re.sub('\n|\t', ' ', data)
         # replace all ' with " and eliminate newline, so we don't need to worry about
-        logger.info('DATA ='+data)
+        log('DATA =', data)
 
         block = data
 
@@ -128,12 +128,12 @@ def scrape(item, patron = '', listGroups = [], headers="", blacklist="", data=""
                 block = ""
                 for b in blocks:
                     block += "\n" + b
-                logger.info('BLOCK '+str(n)+'=' + block)
+                log('BLOCK ', n, '=', block)
     else:
         block = data
     if patron and listGroups:
         matches = scrapertoolsV2.find_multiple_matches(block, patron)
-        logger.info('MATCHES ='+str(matches))
+        log('MATCHES =', matches)
 
         for match in matches:
             if len(listGroups) > len(match):  # to fix a bug
@@ -275,16 +275,17 @@ def swzz_get_url(item):
 
 
 def menu(itemlist, title='', action='', url='', contentType='movie', args=[]):
+    # Function to simplify menu creation
+
     frame = inspect.stack()[1]
     filename = frame[0].f_code.co_filename
     filename = os.path.basename(filename).replace('.py','')
-    logger.info('FILENAME= ' + filename)
 
+    # Call typo function
     title = typo(title)
 
     if contentType == 'movie': extra = 'movie'
     else: extra = 'tvshow'
-    logger.info('EXTRA= ' + title + ' '+extra)
 
     itemlist.append(Item(
         channel = filename,
@@ -295,29 +296,57 @@ def menu(itemlist, title='', action='', url='', contentType='movie', args=[]):
         args = args,
         contentType = contentType
     ))
+
+    # Apply auto Thumbnails at the menus
     from channelselector import thumb
     thumb(itemlist)
+
     return itemlist
 
 
-def typo(string):
-    if '[]' in string:
-        string = '[' + re.sub(r'\s\[\]','',string) + ']'
-    if '()' in string:
-        string = '(' + re.sub(r'\s\(\)','',string) + ')'
-    if '{}' in string:
-        string = '{' + re.sub(r'\s\{\}','',string) + '}'
-    if 'submenu' in string:
-        string = ' > ' + re.sub('\ssubmenu','',string)
-    if 'color' in string:
-        color = scrapertoolsV2.find_single_match(string,'color ([a-z]+)')
-        string = '[COLOR '+ color +']' + re.sub('\scolor\s([a-z]+)','',string) + '[/COLOR]'
-    if 'bold' in string:
-        string = '[B]' + re.sub('\sbold','',string) + '[/B]'
-    if 'italic' in string:
-        string = '[I]' + re.sub('\sitalic','',string) + '[/I]' 
-    if '_' in string:
-        string = ' ' + re.sub('\s_','',string)
+def typo(string, typography=''):
+    
+
+    # Check if the typographic attributes are in the string or outside
+    if typography:
+        string = string + ' ' + typography
+    if config.get_localized_string(30992) in string:
+        string = string + ' >'
+
+    # If there are no attributes, it applies the default ones
+    attribute = ['[]','()','{}','submenu','color','bold','italic','_','[B]','[I]','[COLOR]']
+
+    movie_word_list = ['film', 'serie', 'tv', 'anime', 'cinema', 'sala']
+    search_word_list = ['cerca']
+    categories_word_list = ['genere', 'categoria', 'categorie', 'ordine', 'lettera', 'anno', 'alfabetico', 'a-z', 'menu']
+
+    if not any(word in string for word in attribute):
+        if any(word in string.lower() for word in search_word_list):
+            string = '[COLOR blue]' + string + '[/COLOR]'
+        elif any(word in string.lower() for word in categories_word_list):
+            string = ' > ' + string
+        elif any(word in string.lower() for word in movie_word_list):
+            string = '[B]' + string + '[/B]'
+
+    # Otherwise it uses the typographical attributes of the string
+    else:        
+        if '[]' in string:
+            string = '[' + re.sub(r'\s\[\]','',string) + ']'
+        if '()' in string:
+            string = '(' + re.sub(r'\s\(\)','',string) + ')'
+        if '{}' in string:
+            string = '{' + re.sub(r'\s\{\}','',string) + '}'
+        if 'submenu' in string:
+            string = ' > ' + re.sub(r'\ssubmenu','',string)
+        if 'color' in string:
+            color = scrapertoolsV2.find_single_match(string,'color ([a-z]+)')
+            string = '[COLOR '+ color +']' + re.sub(r'\scolor\s([a-z]+)','',string) + '[/COLOR]'
+        if 'bold' in string:
+            string = '[B]' + re.sub(r'\sbold','',string) + '[/B]'
+        if 'italic' in string:
+            string = '[I]' + re.sub(r'\sitalic','',string) + '[/I]' 
+        if '_' in string:
+            string = ' ' + re.sub(r'\s_','',string)
 
     return string
 
@@ -326,13 +355,16 @@ def match(item, patron='', patron_block='', headers=''):
     data = httptools.downloadpage(item.url, headers=headers).data.replace("'", '"')
     data = re.sub('\n|\t', '', data)
     log('DATA= ',data)
+
     if patron_block:
         block = scrapertoolsV2.find_single_match(data, patron_block)
         log('BLOCK= ',block)
     else:
         data = block
+
     matches = scrapertoolsV2.find_multiple_matches(block, patron)
-    log('MATCHES=',matches)
+    log('MATCHES= ',matches)
+
     return matches
 
 
@@ -351,21 +383,23 @@ def videolibrary(itemlist, item, typography=''):
                  title=title,
                  url=item.url,
                  action=action,
+                 extra=extra,
                  contentTitle=item.fulltitle))
 
 
 def nextPage(itemlist, item, data, patron):
     next_page = scrapertoolsV2.find_single_match(data, patron)
-    logger.info('NEXT ' + next_page)
+    log('NEXT= ',next_page)
 
     if next_page != "":
+        thumbnails = thumb()
         itemlist.append(
             Item(channel=item.channel,
                  action="peliculas",
                  contentType=item.contentType,
-                 title=typo(config.get_localized_string(30992) + ' > color blue'),
+                 title=typo(config.get_localized_string(30992), 'color blue'),
                  url=next_page,
-                 thumbnails=thumb()))
+                 thumbnail=thumb()))
 
     return itemlist
 
@@ -378,7 +412,7 @@ def server(item, data='', headers=''):
     itemlist = servertools.find_video_items(data=data)
 
     for videoitem in itemlist:
-        videoitem.title = "".join([item.title, ' ', typo(videoitem.title + ' color blue []')])
+        videoitem.title = "".join([item.title, ' ', typo(videoitem.title, 'color blue []')])
         videoitem.fulltitle = item.fulltitle
         videoitem.show = item.show
         videoitem.thumbnail = item.thumbnail
@@ -389,6 +423,9 @@ def server(item, data='', headers=''):
 
 
 def log(stringa1="", stringa2="", stringa3="", stringa4="", stringa5=""):
+    # Function to simplify the log
+    # Automatically returns File Name and Function Name
+
     frame = inspect.stack()[1]
     filename = frame[0].f_code.co_filename
     filename = os.path.basename(filename)    

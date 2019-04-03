@@ -43,13 +43,13 @@ def mainlist(item):
     support.menu(itemlist, 'HD submenu', 'menu', host, args="Film HD Streaming")
     support.menu(itemlist, 'Per genere submenu', 'menu', host, args="Film per Genere")
     support.menu(itemlist, 'Per anno submenu', 'menu', host, args="Film per Anno")
-    support.menu(itemlist, 'Cerca Film... submenu color blue', 'search', host)
+    support.menu(itemlist, 'Cerca... submenu color blue', 'search', host, args='film')
 
     support.menu(itemlist, 'Serie TV bold', 'peliculas', host + '/serietv/', contentType='episode')
-    support.menu(itemlist, 'Per lettera submenu', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Lettera")
-    support.menu(itemlist, 'Per genere submenu', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Genere")
-    support.menu(itemlist, 'Per Anno submenu', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Anno")
-    support.menu(itemlist, 'Cerca Serie TV... submenu color blue', 'search', host + '/serietv/', contentType='episode')
+    support.menu(itemlist, 'Per Lettera submenu', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Lettera")
+    support.menu(itemlist, 'Per Genere submenu', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Genere")
+    support.menu(itemlist, 'Per anno submenu', 'menu', host + '/serietv/', contentType='episode', args="Serie-Tv per Anno")
+    support.menu(itemlist, 'Cerca... submenu color blue', 'search', host + '/serietv/', contentType='episode', args='serie')
     
     autoplay.show_option(item.channel, itemlist)
 
@@ -74,7 +74,8 @@ def menu(item):
                 url=host + scrapedurl
             )
         )
-    return itemlist
+    
+    return support.thumb(itemlist)
 
 
 def search(item, text):
