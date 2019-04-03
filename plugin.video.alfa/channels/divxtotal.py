@@ -85,7 +85,7 @@ def submenu(item):
 
     if item.extra == "series":
 
-        item.url_plus = "serie/"
+        item.url_plus = "series-12/"
         itemlist.append(item.clone(title="Series completas", action="listado", url=item.url + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_series, extra="series"))
         itemlist.append(item.clone(title="Alfabético A-Z", action="alfabeto", url=item.url + item.url_plus + "?s=letra-%s", url_plus=item.url_plus, thumbnail=thumb_series, extra="series"))
 
@@ -141,7 +141,7 @@ def categorias(item):
     if not extra3:
         itemlist.append(item.clone(title="Todas las " + item.extra.upper(), action="listado"))
         itemlist.append(item.clone(title="Alfabético A-Z", action="alfabeto", url=item.url + "?s=letra-%s"))
-        itemlist.append(item.clone(title="Géneros", url=item.url))
+        #itemlist.append(item.clone(title="Géneros", url=item.url))
     
     for scrapedurl, scrapedtitle in matches:
         if item.url_plus not in scrapedurl:
