@@ -26,7 +26,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     url_redirect = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
     data = httptools.downloadpage(url_redirect).data
 
-    url = scrapertools.get_match(data, '{file:"([^"]+)"')
+    url = scrapertools.find_single_match(data, '{file:"([^"]+)"')
     video_url = "%s|Referer=%s" % (url, url_redirect)
     video_urls = [[scrapertools.get_filename_from_url(url)[-4:] + " [youwatch]", video_url]]
 

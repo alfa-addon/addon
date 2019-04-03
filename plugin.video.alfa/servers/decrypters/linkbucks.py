@@ -25,15 +25,15 @@ def get_long_url(short_url):
         for name, value in response_headers:
             if name == "set-cookie":
                 logger.info("Set-Cookie: " + value)
-                cookie_name = scrapertools.get_match(value, '(.*?)\=.*?\;')
-                cookie_value = scrapertools.get_match(value, '.*?\=(.*?)\;')
+                cookie_name = scrapertools.scrapertools.find_single_match(value, '(.*?)\=.*?\;')
+                cookie_value = scrapertools.scrapertools.find_single_match(value, '.*?\=(.*?)\;')
                 request_headers.append(["Cookie", cookie_name + "=" + cookie_value])
 
         body, response_headers = scrapertools.read_body_and_headers(url, headers=request_headers)
         logger.info("body=" + body)
 
         try:
-            location = scrapertools.get_match(body, '<textarea.*?class="caja_des">([^<]+)</textarea>')
+            location = scrapertools.scrapertools.find_single_match(body, '<textarea.*?class="caja_des">([^<]+)</textarea>')
             logger.info("location=" + location)
             break
         except:

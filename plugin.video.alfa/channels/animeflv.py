@@ -215,16 +215,18 @@ def findvideos(item):
     itemlist = []
     data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", httptools.downloadpage(item.url).data)
     videos = scrapertools.find_single_match(data, 'var videos = (.*?);')
+    
     videos_json = jsontools.load(videos)
     for video_lang in videos_json.items():
         language = video_lang[0]
-        matches = scrapertools.find_multiple_matches(str(video_lang[1]), 'src="([^"]+)"')
-        for source in matches:
-            new_data = httptools.downloadpage(source).data
-            if 'redirector' in source:
+        matches = scrapertools.find_multiple_matches(str(video_lang[1]), "code': '(.*?)'")
 
+        for source in matches:
+            url = source
+            if 'redirector' in source:
+                new_data = httptools.downloadpage(source).data
                 url = scrapertools.find_single_match(new_data, 'window.location.href = "([^"]+)"')
-            elif 'embed' in source:
+            elif 'animeflv.net/embed' in source:
                 source = source.replace('embed', 'check')
                 new_data = httptools.downloadpage(source).data
                 json_data = jsontools.load(new_data)

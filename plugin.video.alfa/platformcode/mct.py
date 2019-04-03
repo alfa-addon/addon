@@ -20,6 +20,7 @@ import xbmc
 import xbmcgui
 
 from platformcode import config
+from core import httptools
 from core import scrapertools
 from core import filetools
 
@@ -52,7 +53,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", item=None):
     # -- adfly: ------------------------------------
     if url.startswith("http://adf.ly/"):
         try:
-            data = scrapertools.downloadpage(url)
+            data = httptools.downloadpage(url).data
             url = decode_adfly(data)
         except:
             ddd = xbmcgui.Dialog()
@@ -80,7 +81,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", item=None):
         data = url_get(url)
         # -- El nombre del torrent será el que contiene en los --
         # -- datos.                                             -
-        re_name = urllib.unquote(scrapertools.get_match(data, ':name\d+:(.*?)\d+:'))
+        re_name = urllib.unquote(scrapertools.scrapertools.find_single_match(data, ':name\d+:(.*?)\d+:'))
         torrent_file = filetools.join(save_path_torrents, filetools.encode(re_name + '.torrent'))
 
         f = open(torrent_file, 'wb')
@@ -135,7 +136,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", item=None):
         try:
             import zlib
             btih = hex(zlib.crc32(
-                scrapertools.get_match(torrent_file, 'magnet:\?xt=urn:(?:[A-z0-9:]+|)([A-z0-9]{32})')) & 0xffffffff)
+                scrapertools.scrapertools.find_single_match(torrent_file, 'magnet:\?xt=urn:(?:[A-z0-9:]+|)([A-z0-9]{32})')) & 0xffffffff)
             files = [f for f in os.listdir(save_path_torrents) if os.path.isfile(os.path.join(save_path_torrents, f))]
             for file in files:
                 if btih in os.path.basename(file):

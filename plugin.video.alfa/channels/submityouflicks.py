@@ -37,7 +37,7 @@ def search(item, texto):
 def videos(item):
     logger.info()
     itemlist = []
-    data = scrapertools.downloadpageGzip(item.url)
+    data = httptools.downloadpage(item.url).data
     patron = '<div class="item-block item-normal col".*?'
     patron += '<a href="([^"]+)" title="([^"]+)">.*?'
     patron += 'data-src="([^"]+)".*?'

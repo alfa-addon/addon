@@ -19,7 +19,7 @@ list_servers = ['rapidvideo', 'streamango', 'fastplay', 'flashx', 'openload', 'v
 
 __channel__='allcalidad'
 
-host = "https://allcalidad.net/"
+host = "https://allcalidad.io/"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -29,6 +29,12 @@ except:
 
 def mainlist(item):
     logger.info()
+    import ast
+    from core import jsontools 
+    data = '{"country_code":"PE","country_name":"Peru","city":null,"postal":null,"latitude":-12.0433,"longitude":-77.0283,"IPv4":"190.41.210.15","state":null}'
+    data = data.replace("null",'"null"')
+    logger.info("Intel22 %s" %data)
+    user_loc = ast.literal_eval(data)
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host, thumbnail = get_thumb("newest", auto = True)))

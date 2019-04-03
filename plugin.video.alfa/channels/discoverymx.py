@@ -158,7 +158,7 @@ def findvideos(item):
 
     # Descarga la página
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data, "<div class='post-body entry-content'(.*?)<div class='post-footer'>")
+    data = scrapertools.find_single_match(data, "<div class='post-body entry-content'(.*?)<div class='post-footer'>")
 
     # Busca los enlaces a los videos
     listavideos = servertools.findvideos(data)
