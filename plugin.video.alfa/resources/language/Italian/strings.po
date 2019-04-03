@@ -5070,3 +5070,119 @@ msgstr "Aggiorna da Internet"
 msgctxt "#70602"
 msgid "The first season that is added always starts in \"0 \" episodes, the second season that is added starts in the total number of episodes of the first season, the third season will be the sum of the episodes of the previous seasons and so on.\n [COLOR blue] \nSerial example divided into several seasons: \n\nFairy Tail: \n - SEASON 1: EPISODE 48 -> [season 1, episode: 0] \n - SEASON 2: EPISODE 48 - -> [season 2, episode: 48] \n - SEASON 3: EPISODE 54 -> [season 3, episode: 96 ([48 = season2] + [48 = season1])] \n - SEASON 4: EPISODE 175 -> [season 4: episode: 150 ([54 = season3] + [48 = season2] + [48 = season3])] [/COLOR] \n [COLOR green] \nExample of a series that continues in the season of the original: \n \nFate / Zero 2nd Season: \n - SEASON 1: EPISODE 12 -> [season 1, episode: 13] [/COLOR] \n [COLOR blue] \nExample example which is the second Season of the original: \n \nFate / kaleid liner Prism☆Illya 2wei!: \n - SEASON 1: EPISODE 12 -> [season 2, episode: 0] [/COLOR] \n"
 msgstr "La prima stagione che viene aggiunta inizia sempre dagli episodi \"0 \", la seconda stagione che viene aggiunta inizia nel numero totale di episodi della prima stagione, la terza stagione sarà la somma degli episodi delle stagioni precedenti e a seguire. \n [COLOR blue] \nEsempio serie divisa in diverse stagioni: \n \nFairy Tail: \n - STAGIONE 1: EPISODIO 48 -> [stagione 1, episodio: 0] \n - STAGIONE 2: EPISODIO 48 - -> [stagione 2, episodio: 48] \n - STAGIONE 3: EPISODIO 54 -> [stagione 3, episodio: 96 ([48 = stagione2] + [48 = stagione1])] \n - STAGIONE 4: EPISODIO 175 -> [stagione 4: episodio: 150 ([54 = stagione3] + [48 = stagione2] + [48 = stagione3])] [/COLOR] \n [COLOR green] \nEsempio di serie che continua nella stagione dell'originale: \n \nFate/Zero 2a stagione: \n - STAGIONE 1: EPISODIO 12 -> [stagione 1, episodio: 13] [/COLOR] \n [COLOR blue] \nEsempio di esempio che è la seconda stagione dell'originale: \n \nFate/kaleid liner Prism☆Illya 2wei!: \n - STAGIONE 1: EPISODIO 12 -> [stagione 2, episodio: 0] [/COLOR] \n"
+
+msgctxt "#70603"
+msgid "Manage link lists"
+msgstr "Gestisci le liste dei link"
+
+msgctxt "#70604"
+msgid "Set as active list"
+msgstr "Imposta come lista attiva"
+
+msgctxt "#70605"
+msgid "Share on tinyupload"
+msgstr "Condividi con tinyupload"
+
+msgctxt "#70606"
+msgid "Delete list"
+msgstr "Elimina lista"
+
+msgctxt "#70607"
+msgid "List informations"
+msgstr "Informazioni lista"
+
+msgctxt "#70608"
+msgid "Liste dei link"
+msgstr "Listas de enlaces"
+
+msgctxt "#70609"
+msgid "File_id of tinyupload link"
+msgstr "File_id del link tinyupload"
+
+msgctxt "#70610"
+msgid "URL where download the list"
+msgstr "URL da dove scaricare la lista"
+
+msgctxt "#70611"
+msgid ""
+"- You can have different lists, but only one of them is active, the active list is the one shown in "My links" and where the links that are being added are stored.\n"
+"[CR] - You can change the active list and toggle between the ones you have. \ N"
+"[CR] - You can share a list through tinyupload and then pass the resulting code to your friends so they can download it. \ N"
+"[CR] - You can download a list if you pass a tinyupload code or a URL where it is hosted. \ N"
+"[CR] - If you want to do it manually, you can copy a list alfavorites - *. Json that have been passed to the userdata folder of the addon, and you can upload these json to some server and pass your urls to your friends to share them. n "
+"[CR] - To share lists from the addon, the service of tinyupload.com is used because it is free, private and relatively fast.The files are saved until 100 days pass without anyone downloading them, they are private because they require a code to access them, and the 50MB limitation is enough for the lists. \ n "
+msgstr ""
+"- Puedes tener diferentes listas, pero solamente una de ellas está activa. La lista activa es la que se muestra en "Mis enlaces" y dónde se guardan los enlaces que se vayan añadiendo.\n"
+"[CR]- Puedes ir cambiando la lista activa y alternar entre las que tengas.\n"
+"[CR]- Puedes compartir una lista a través de tinyupload y luego pasarle el código resultante a tus amistades para que se la puedan bajar.\n"
+"[CR]- Puedes descargar una lista si te pasan un código de tinyupload o una url dónde esté alojada.\n"
+"[CR]- Si lo quieres hacer manualmente, puedes copiar una lista alfavorites-*.json que te hayan pasado a la carpeta userdata del addon. Y puedes subir estos json a algún servidor y pasar sus urls a tus amigos para compartirlas.\n"
+"[CR]- Para compartir listas desde el addon se utiliza el servicio de tinyupload.com por ser gratuíto, privado y relativamente rápido. Los ficheros se guardan mientras no pasen 100 días sin que nadie lo descargue, son privados porque requieren un código para acceder a ellos, y la limitación de 50MB es suficiente para las listas.\n"
+
+msgctxt "#70612"
+msgid "Name of the list"
+msgstr "Nome della lista"
+
+msgctxt "#70613"
+msgid "Error, there is already a list with this name!"
+msgstr "Errore, esiste già una lista con quel nome!"
+
+msgctxt "#70614"
+msgid "Error, unable to save list"
+msgstr "Errore, impossibile salvare la lista!"
+
+msgctxt "#70615"
+msgid "Repeated link"
+msgstr "Link ripetuto"
+
+msgctxt "#70616"
+msgid "You already have this link in the folder"
+msgstr "Possiedi già questo link nella cartella"
+
+msgctxt "#70617"
+msgid "Modify link"
+msgstr "Modifica link"
+
+msgctxt "#70618"
+msgid "Delete folder"
+msgstr "Elimina cartella"
+
+msgctxt "#70619"
+msgid "Delete the folder and the links it contains?"
+msgstr "Elimina la cartella e tutti i link che contiene?"
+
+msgctxt "#70620"
+msgid "Change title"
+msgstr "Cambia titolo"
+
+msgctxt "#70621"
+msgid "Change color"
+msgstr "Cambia colore"
+
+msgctxt "#70622"
+msgid "Change thumbnail"
+msgstr "Cambia anteprima"
+
+msgctxt "#70623"
+msgid "Move to another folder"
+msgstr "Muovi verso un'altra cartella"
+
+msgctxt "#70624"
+msgid "Move to another list"
+msgstr "Muovi verso un'altra lista"
+
+msgctxt "#70625"
+msgid "Move up all"
+msgstr "Muovi tutte in su"
+
+msgctxt "#70626"
+msgid "Move up"
+msgstr "Muovi in su"
+
+msgctxt "#70627"
+msgid "Move down"
+msgstr "Muovi in già"
+
+msgctxt "#70628"
+msgid "Move down all"
+msgstr "Muovi tutte in giu"

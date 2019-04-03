@@ -100,9 +100,9 @@ class AlfavoritesData:
             self.info_lista = {}
             
             # Crear algunas carpetas por defecto
-            self.user_favorites.append({ 'title': 'Películas', 'items': [] })
-            self.user_favorites.append({ 'title': 'Series', 'items': [] })
-            self.user_favorites.append({ 'title': 'Otros', 'items': [] })
+            self.user_favorites.append({ 'title': config.get_localized_string(30122), 'items': [] })
+            self.user_favorites.append({ 'title': config.get_localized_string(30123), 'items': [] })
+            self.user_favorites.append({ 'title': config.get_localized_string(70149), 'items': [] })
 
             self.save()
 
@@ -115,7 +115,7 @@ class AlfavoritesData:
         jsondata['user_favorites'] = self.user_favorites
         jsondata['info_lista'] = self.info_lista
         if not filetools.write(self.user_favorites_file, jsontools.dump(jsondata)):
-            platformtools.dialog_ok('Alfa', 'Error, no se puede grabar la lista!', os.path.basename(self.user_favorites_file))
+            platformtools.dialog_ok('Alfa', config.get_localized_string(70614), os.path.basename(self.user_favorites_file))
 
 
 # ============================
@@ -138,7 +138,7 @@ def addFavourite(item):
         item.__dict__.pop('text_color')
 
     # Diálogo para escoger/crear carpeta
-    i_perfil = _selecciona_perfil(alfav, 'Guardar enlace en:')
+    i_perfil = _selecciona_perfil(alfav, config.get_localized_string(70546))
     if i_perfil == -1: return False
 
     # Detectar que el mismo enlace no exista ya en la carpeta
@@ -151,7 +151,7 @@ def addFavourite(item):
                 repe = False
                 break
         if repe:
-            platformtools.dialog_notification('Enlace repetido', 'Ya tienes este enlace en la carpeta')
+            platformtools.dialog_notification(config.get_localized_string(70615), config.get_localized_string(70616))
             return False
 
     # Si es una película/serie, completar información de tmdb si no se tiene activado tmdb_plus_info (para season/episodio no hace falta pq ya se habrá hecho la "segunda pasada")
@@ -166,7 +166,7 @@ def addFavourite(item):
     alfav.user_favorites[i_perfil]['items'].append(item.tourl())
     alfav.save()
 
-    platformtools.dialog_notification('Guardado enlace', 'Carpeta: %s' % alfav.user_favorites[i_perfil]['title'])
+    platformtools.dialog_notification(config.get_localized_string(70531), 'Carpeta: %s' % alfav.user_favorites[i_perfil]['title'])
     
     return True
 
@@ -186,28 +186,28 @@ def mainlist(item):
     for i_perfil, perfil in enumerate(alfav.user_favorites):
         context = []
 
-        context.append({'title': 'Cambiar nombre de la carpeta', 'channel': item.channel, 'action': 'editar_perfil_titulo',
+        context.append({'title': config.get_localized_string(70533), 'channel': item.channel, 'action': 'editar_perfil_titulo',
                         'i_perfil': i_perfil})
-        context.append({'title': 'Eliminar la carpeta', 'channel': item.channel, 'action': 'eliminar_perfil',
+        context.append({'title': config.get_localized_string(70534), 'channel': item.channel, 'action': 'eliminar_perfil',
                         'i_perfil': i_perfil})
 
         if i_perfil > 0:
-            context.append({'title': 'Mover arriba del todo', 'channel': item.channel, 'action': 'mover_perfil',
+            context.append({'title': config.get_localized_string(70535), 'channel': item.channel, 'action': 'mover_perfil',
                             'i_perfil': i_perfil, 'direccion': 'top'})
-            context.append({'title': 'Mover hacia arriba', 'channel': item.channel, 'action': 'mover_perfil',
+            context.append({'title': config.get_localized_string(70536), 'channel': item.channel, 'action': 'mover_perfil',
                             'i_perfil': i_perfil, 'direccion': 'arriba'})
         if i_perfil < last_i:
-            context.append({'title': 'Mover hacia abajo', 'channel': item.channel, 'action': 'mover_perfil',
+            context.append({'title': config.get_localized_string(70537), 'channel': item.channel, 'action': 'mover_perfil',
                             'i_perfil': i_perfil, 'direccion': 'abajo'})
-            context.append({'title': 'Mover abajo del todo', 'channel': item.channel, 'action': 'mover_perfil',
+            context.append({'title': config.get_localized_string(70538), 'channel': item.channel, 'action': 'mover_perfil',
                             'i_perfil': i_perfil, 'direccion': 'bottom'})
 
         plot = '%d enlaces en la carpeta' % len(perfil['items'])
         itemlist.append(Item(channel=item.channel, action='mostrar_perfil', title=perfil['title'], plot=plot, i_perfil=i_perfil, context=context))
 
-    itemlist.append(item.clone(action='crear_perfil', title='Crear nueva carpeta ...', folder=False)) 
+    itemlist.append(item.clone(action='crear_perfil', title=config.get_localized_string(70542), folder=False))
     
-    itemlist.append(item.clone(action='mainlist_listas', title='Gestionar listas de enlaces')) 
+    itemlist.append(item.clone(action='mainlist_listas', title=config.get_localized_string(70603)))
 
     return itemlist
 
@@ -227,7 +227,7 @@ def mostrar_perfil(item):
     for i_enlace, enlace in enumerate(alfav.user_favorites[i_perfil]['items']):
 
         it = Item().fromurl(enlace)
-        it.context = [ {'title': '[COLOR blue]Modificar enlace[/COLOR]', 'channel': item.channel, 'action': 'acciones_enlace',
+        it.context = [ {'title': '[COLOR blue]'+config.get_localized_string(70617)+'[/COLOR]', 'channel': item.channel, 'action': 'acciones_enlace',
                         'i_enlace': i_enlace, 'i_perfil': i_perfil} ]
 
         it.plot += '[CR][CR][COLOR blue]Canal:[/COLOR] ' + it.channel + ' [COLOR blue]Action:[/COLOR] ' + it.action
@@ -274,7 +274,7 @@ def _selecciona_perfil(alfav, titulo='Seleccionar carpeta', i_actual=-1):
 
 # Diálogo para crear una carpeta
 def _crea_perfil(alfav):
-    titulo = platformtools.dialog_input(default='', heading='Nombre de la carpeta')
+    titulo = platformtools.dialog_input(default='', heading=config.get_localized_string(70551))
     if titulo is None or titulo == '':
         return False
 
@@ -303,7 +303,7 @@ def editar_perfil_titulo(item):
 
     if not alfav.user_favorites[item.i_perfil]: return False
 
-    titulo = platformtools.dialog_input(default=alfav.user_favorites[item.i_perfil]['title'], heading='Nombre de la carpeta')
+    titulo = platformtools.dialog_input(default=alfav.user_favorites[item.i_perfil]['title'], heading=config.get_localized_string(70533))
     if titulo is None or titulo == '' or titulo == alfav.user_favorites[item.i_perfil]['title']:
         return False
 
@@ -321,7 +321,7 @@ def eliminar_perfil(item):
     if not alfav.user_favorites[item.i_perfil]: return False
 
     # Pedir confirmación
-    if not platformtools.dialog_yesno('Eliminar carpeta', '¿Borrar la carpeta y los enlaces que contiene?'): return False
+    if not platformtools.dialog_yesno(config.get_localized_string(70618), config.get_localized_string(70619)): return False
 
     del alfav.user_favorites[item.i_perfil]
     alfav.save()
@@ -333,8 +333,9 @@ def eliminar_perfil(item):
 def acciones_enlace(item):
     logger.info()
 
-    acciones = ['Cambiar título', 'Cambiar color', 'Cambiar thumbnail', 'Mover a otra carpeta', 'Mover a otra lista', 'Eliminar enlace',
-                'Mover arriba del todo', 'Mover hacia arriba', 'Mover hacia abajo', 'Mover abajo del todo'] 
+    acciones = [config.get_localized_string(70620), config.get_localized_string(70621), config.get_localized_string(70622), config.get_localized_string(70623),
+                config.get_localized_string(70624), config.get_localized_string(70548), config.get_localized_string(70625),
+                config.get_localized_string(70626), config.get_localized_string(70627), config.get_localized_string(70628)]
 
     ret = platformtools.dialog_select('Acción a ejecutar', acciones)
     if ret == -1: 
@@ -795,12 +796,12 @@ def compartir_lista(item):
 def acciones_nueva_lista(item):
     logger.info()
 
-    acciones = ['Crear una nueva lista', 
+    acciones = ['Crear una nueva lista',
                 'Descargar lista con código de tinyupload',
                 'Descargar lista de una url directa',
-                'Información sobre las listas'] 
+                'Información sobre las listas']
 
-    ret = platformtools.dialog_select('Listas de enlaces', acciones)
+    ret = platformtools.dialog_select(config.get_localized_string(70608), acciones)
 
     if ret == -1: 
         return False # pedido cancel
@@ -809,33 +810,27 @@ def acciones_nueva_lista(item):
         return crear_lista(item)
 
     elif ret == 1:
-        codigo = platformtools.dialog_input(default='', heading='Código de descarga de tinyupload') # 05370382084539519168
+        codigo = platformtools.dialog_input(default='', heading=config.get_localized_string(70609)) # 05370382084539519168
         if codigo is None or codigo == '':
             return False
         return descargar_lista(item, 'http://s000.tinyupload.com/?file_id=' + codigo)
 
     elif ret == 2:
-        url = platformtools.dialog_input(default='https://', heading='URL de dónde descargar la lista')
+        url = platformtools.dialog_input(default='https://', heading=config.get_localized_string(70610))
         if url is None or url == '':
             return False
         return descargar_lista(item, url)
 
     elif ret == 3:
-        txt = '- Puedes tener diferentes listas, pero solamente una de ellas está activa. La lista activa es la que se muestra en "Mis enlaces" y dónde se guardan los enlaces que se vayan añadiendo.'
-        txt += '[CR]- Puedes ir cambiando la lista activa y alternar entre las que tengas.'
-        txt += '[CR]- Puedes compartir una lista a través de tinyupload y luego pasarle el código resultante a tus amistades para que se la puedan bajar.'
-        txt += '[CR]- Puedes descargar una lista si te pasan un código de tinyupload o una url dónde esté alojada.'
-        txt += '[CR]- Si lo quieres hacer manualmente, puedes copiar una lista alfavorites-*.json que te hayan pasado a la carpeta userdata del addon. Y puedes subir estos json a algún servidor y pasar sus urls a tus amigos para compartirlas.'
-        txt += '[CR]- Para compartir listas desde el addon se utiliza el servicio de tinyupload.com por ser gratuíto, privado y relativamente rápido. Los ficheros se guardan mientras no pasen 100 días sin que nadie lo descargue, son privados porque requieren un código para acceder a ellos, y la limitación de 50MB es suficiente para las listas.'
-
-        platformtools.dialog_textviewer('Información sobre las listas', txt)
+        txt = config.get_localized_string(70611)
+        platformtools.dialog_textviewer(config.get_localized_string(70607), txt)
         return False
 
 
 def crear_lista(item):
     logger.info()
 
-    titulo = platformtools.dialog_input(default='', heading='Nombre de la lista')
+    titulo = platformtools.dialog_input(default='', heading=config.get_localized_string(70612))
     if titulo is None or titulo == '':
         return False
     titulo = text_clean(titulo, blank_char='_')
@@ -845,7 +840,7 @@ def crear_lista(item):
 
     # Comprobar que el fichero no exista ya
     if os.path.exists(fullfilename):
-        platformtools.dialog_ok('Alfa', 'Error, ya existe una lista con este nombre!', fullfilename)
+        platformtools.dialog_ok('Alfa', config.get_localized_string(70613), fullfilename)
         return False
 
     # Provocar que se guarde con las carpetas vacías por defecto

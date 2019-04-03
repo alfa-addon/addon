@@ -10087,3 +10087,7 @@ msgstr ""
 msgctxt "#70602"
 msgid "The first season that is added always starts in \"0 \" episodes, the second season that is added starts in the total number of episodes of the first season, the third season will be the sum of the episodes of the previous seasons and so on.\n [COLOR blue] \nSerial example divided into several seasons: \n\nFairy Tail: \n - SEASON 1: EPISODE 48 -> [season 1, episode: 0] \n - SEASON 2: EPISODE 48 - -> [season 2, episode: 48] \n - SEASON 3: EPISODE 54 -> [season 3, episode: 96 ([48 = season2] + [48 = season1])] \n - SEASON 4: EPISODE 175 -> [season 4: episode: 150 ([54 = season3] + [48 = season2] + [48 = season3])] [/COLOR] \n [COLOR green] \nExample of a series that continues in the season of the original: \n \nFate / Zero 2nd Season: \n - SEASON 1: EPISODE 12 -> [season 1, episode: 13] [/COLOR] \n [COLOR blue] \nExample example which is the second Season of the original: \n \nFate / kaleid liner Prism☆Illya 2wei!: \n - SEASON 1: EPISODE 12 -> [season 2, episode: 0] [/COLOR] \n"
 msgstr ""
+
+msgctxt "#70603"
+msgid "Manage link lists"
+msgstr ""
