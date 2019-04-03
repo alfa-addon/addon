@@ -24,9 +24,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     headers = [
         ['User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.8.1.14) Gecko/20080404 Firefox/2.0.0.14']]
     data = httptools.downloadpage(page_url, headers=headers).data
-    try:
-        media_url = scrapertools.find_single_match(data, 'file\: "([^"]+)"')
-    except:
+
+    media_url = scrapertools.find_single_match(data, 'file\: "([^"]+)"')
+
+    if len(media_url) == 0:
         post = ""
         matches = scrapertools.find_multiple_matches(data, '<input.*?name="([^"]+)".*?value="([^"]*)">')
         for inputname, inputvalue in matches:

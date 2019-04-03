@@ -81,7 +81,7 @@ def videos(item):
 def chicas(item):
     logger.info()
     itemlist = []
-    data = scrapertools.downloadpage(item.url)
+    data = httptools.downloadpage(item.url).data
     patron = '<div class="box-chica">.*?'
     patron += '<a href="([^"]+)" title="">.*?'
     patron += '<img class="img" src=\'([^"]+)\' width="175" height="150" border=\'0\' alt="[^"]+" />.*?'
@@ -110,7 +110,7 @@ def chicas(item):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = scrapertools.downloadpage(item.url)
+    data = httptools.downloadpage(item.url).data
     patron = '<div class="wrap-box-escena.*?'
     patron += 'href="([^"]+)"><img src="([^"]+)".*?'
     patron += '<h4.*?<a href="[^"]+">([^<]+)</a></h4>'

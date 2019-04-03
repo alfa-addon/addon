@@ -1050,7 +1050,7 @@ def download_all_episodes(item, channel, first_episode="", preferred_server="vid
     for episode_item in episode_itemlist:
         try:
             logger.info("episode=" + episode_item.title)
-            episode_title = scrapertools.get_match(episode_item.title, "(\d+x\d+)")
+            episode_title = scrapertools.find_single_match(episode_item.title, "(\d+x\d+)")
             logger.info("episode=" + episode_title)
         except:
             import traceback

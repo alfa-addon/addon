@@ -222,7 +222,7 @@ def findvideos(item):
                 calidad = re.sub(r'ts', 'ts-hq', calidad)
             url = host + "/goto/"
             url_post = urllib.urlencode({'id': id})
-            server_name = scrapertools.get_match(server, '(\w+)\.').replace("waaw","netutv")
+            server_name = scrapertools.find_single_match(server, '(\w+)\.').replace("waaw","netutv")
             server_parameters = servertools.get_server_parameters(server_name)
             icon_server = server_parameters.get("thumbnail", "")
             extra = "online"
@@ -250,7 +250,7 @@ def findvideos(item):
                 idioma = "[COLOR brown]" + idioma + "[/COLOR]"
             url = host + "/goto/"
             data_post = urllib.urlencode({'id': id})
-            server_name = scrapertools.get_match(server, '(.*?)\.').strip()
+            server_name = scrapertools.find_single_match(server, '(.*?)\.').strip()
             icon_server = os.path.join(config.get_runtime_path(), "resources", "images", "servers",
                                        "server_" + server_name + ".png")
             icon_server = icon_server.replace('streamin', 'streaminto')

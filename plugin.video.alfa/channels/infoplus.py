@@ -8,6 +8,7 @@ from threading import Thread
 
 import xbmc
 import xbmcgui
+from core import httptools
 from core import scrapertools
 from core import tmdb
 from core.item import Item
@@ -15,6 +16,7 @@ from core.scrapertools import decodeHtmlentities as dhe
 from platformcode import config, logger
 from platformcode import platformtools
 
+global mainWindow
 mainWindow = list()
 ActoresWindow = None
 TrailerWindow = None
@@ -43,7 +45,6 @@ if xinfoplus_set == config.get_localized_string(70130):
     set_animation = True
 
 def start(item, recomendaciones=[], from_window=False):
-    global mainWindow
     if from_window:
         global relatedWindow, ActorInfoWindow, ActoresWindow, BusquedaWindow, TrailerWindow, imagesWindow
         create = [relatedWindow, ActorInfoWindow, ActoresWindow, BusquedaWindow, TrailerWindow, imagesWindow]
@@ -192,13 +193,13 @@ class main(xbmcgui.WindowDialog):
                 titulo = re.sub("'", "", titulo)
                 url_tvthemes = "http://televisiontunes.com/search.php?q=%s" % titulo.replace(' ', '+')
 
-                data = scrapertools.downloadpage(url_tvthemes)
+                data = httptools.downloadpage(url_tvthemes).data
                 page_theme = scrapertools.find_single_match(data, '<!-- sond design -->.*?<li><a href="([^"]+)"')
 
                 if page_theme:
                     page_theme = "http://televisiontunes.com" + page_theme
-                    data = scrapertools.downloadpage(page_theme)
-                    song = scrapertools.get_match(data, '<form name="song_name_form">.*?type="hidden" value="(.*?)"')
+                    data = httptools.downloadpage(page_theme).data
+                    song = scrapertools.find_single_match(data, '<form name="song_name_form">.*?type="hidden" value="(.*?)"')
                     song = song.replace(" ", "%20")
                     pl = xbmc.PlayList(xbmc.PLAYLIST_MUSIC)
                     pl.clear()
@@ -1515,7 +1516,7 @@ class ActorInfo(xbmcgui.WindowDialog):
 
         actor_tmdb = tmdb.Tmdb(discover=search)
         if not actor_tmdb.result.get("biography") and actor_tmdb.result.get("imdb_id"):
-            data = scrapertools.downloadpage("http://www.imdb.com/name/%s/bio" % actor_tmdb.result["imdb_id"])
+            data = httptools.downloadpage("http://www.imdb.com/name/%s/bio" % actor_tmdb.result["imdb_id"]).data
             info = scrapertools.find_single_match(data, '<div class="soda odd">.*?<p>(.*?)</p>')
             if info:
                 bio = dhe(scrapertools.htmlclean(info.strip()))
@@ -2267,7 +2268,7 @@ def get_filmaf(item, infoLabels):
     year = str(infoLabels.get("year", ""))
     url = "http://www.filmaffinity.com/es/advsearch.php?stext={0}&stype%5B%5D=title&country=&genre=&fromyear={1}&toyear={1}".format(
         title, year)
-    data = scrapertools.downloadpage(url)
+    data = httptools.downloadpage(url).data
 
     tipo = "película"
     if item.contentType != "movie":
@@ -2275,7 +2276,7 @@ def get_filmaf(item, infoLabels):
     url_filmaf = scrapertools.find_single_match(data, '<div class="mc-poster">\s*<a title="[^"]*" href="([^"]+)"')
     if url_filmaf:
         url_filmaf = "http://www.filmaffinity.com%s" % url_filmaf
-        data = scrapertools.downloadpage(url_filmaf)
+        data = httptools.downloadpage(url_filmaf).data
 
         rating = scrapertools.find_single_match(data, 'itemprop="ratingValue" content="([^"]+)"')
         if not rating:
@@ -2318,7 +2319,7 @@ def fanartv(item, infoLabels, images={}):
                   % infoLabels['tmdb_id']
         else:
             url = "http://webservice.fanart.tv/v3/tv/%s?api_key=cab16e262d72fea6a6843d679aa10300" % id_search
-        data = jsontools.load(scrapertools.downloadpage(url, headers=headers))
+        data = jsontools.load(httptools.downloadpage(url, headers=headers).data)
         if data and not "error message" in data:
             for key, value in data.items():
                 if key not in ["name", "tmdb_id", "imdb_id", "thetvdb_id"]:

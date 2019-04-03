@@ -37,7 +37,7 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'<ul class="cf">(.*?)</ul>')
+    data = scrapertools.find_single_match(data,'<ul class="cf">(.*?)</ul>')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<li>.*?<a href="([^"]+)".*?'
     patron += '<img class="thumb" src="([^"]+)" alt="([^"]+)".*?'
@@ -57,7 +57,7 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'<ul class="cf">(.*?)<h2>Advertisement</h2>')
+    data = scrapertools.find_single_match(data,'<ul class="cf">(.*?)<h2>Advertisement</h2>')
     patron  = '<li>.*?<a href="([^"]+)".*?'
     patron += 'src="([^"]+)" alt="([^"]+)".*?'
     patron += '<span class="time">(.*?)</span>'
