@@ -5018,3 +5018,75 @@ msgstr "Gestión de actualizaciones de otros addon relacionados con Alfa:"
 msgctxt "#70584"
 msgid "Do you want to update Quasar to avoid errors?"
 msgstr "¿Quiere actualizar Quasar para evitar errores?"
+
+msgctxt "#70585"
+msgid "RENUMERAR"
+msgstr ""
+
+msgctxt "#70586"
+msgid "Set up series number..."
+msgstr "Configurar renumeración en series..."
+
+msgctxt "#70587"
+msgid "Set up"
+msgstr "Configurar"
+
+msgctxt "#70588"
+msgid "No series found, look for a series and click on contextual menu"
+msgstr "No se han encontrado series, busca una serie y pulsa en menú contextual"
+
+msgctxt "#70589"
+msgid "Something found:"
+msgstr "ha encontrado algo:"
+
+msgctxt "#70590"
+msgid "Are you sure you want to eliminate renumbering?"
+msgstr "¿Está seguro que desea eliminar renumeración?"
+
+msgctxt "#70591"
+msgid "Press 'Yes' to remove the renumbering of"
+msgstr "Pulse 'Si' para eliminar la renumeración de"
+
+msgctxt "#70592"
+msgid "press 'No' or close the window to do nothing."
+msgstr "pulse 'No' o cierre la ventana para no hacer nada."
+
+msgctxt "#70593"
+msgid "Error saving to disk"
+msgstr "Error al guardar en disco"
+
+msgctxt "#70594"
+msgid "Enter the season number"
+msgstr "Introduzca el número de la temporada"
+
+msgctxt "#70595"
+msgid "Season is not added"
+msgstr "No se añade la temporada"
+
+msgctxt "#70596"
+msgid "It already exists, edit the existing"
+msgstr "Ya existe, edíte la existente"
+
+msgctxt "#70597"
+msgid "Enter the number of episodes since the start of the season"
+msgstr "Introduzca el número de episodio desde que empieza la temporada"
+
+msgctxt "#70598"
+msgid "Episodes:"
+msgstr "Episodios:"
+
+msgctxt "#70599"
+msgid "Remove"
+msgstr "Eliminar"
+
+msgctxt "#70600"
+msgid "Add Season"
+msgstr "Añadir temporada"
+
+msgctxt "#70601"
+msgid "Update from the Internet:"
+msgstr "Actualización desde internet:"
+
+msgctxt "#70602"
+msgid "The first season that is added always starts in \"0 \" episodes, the second season that is added starts in the total number of episodes of the first season, the third season will be the sum of the episodes of the previous seasons and so on.\n [COLOR blue] \nSerial example divided into several seasons: \n\nFairy Tail: \n - SEASON 1: EPISODE 48 -> [season 1, episode: 0] \n - SEASON 2: EPISODE 48 - -> [season 2, episode: 48] \n - SEASON 3: EPISODE 54 -> [season 3, episode: 96 ([48 = season2] + [48 = season1])] \n - SEASON 4: EPISODE 175 -> [season 4: episode: 150 ([54 = season3] + [48 = season2] + [48 = season3])] [/COLOR] \n [COLOR green] \nExample of a series that continues in the season of the original: \n \nFate/Zero 2nd Season: \n - SEASON 1: EPISODE 12 -> [season 1, episode: 13] [/COLOR] \n [COLOR blue] \nExample example which is the second Season of the original: \n \nFate/kaleid liner Prism☆Illya 2wei!: \n - SEASON 1: EPISODE 12 -> [season 2, episode: 0] [/COLOR] \n"
+msgstr "La primera temporada que se añade siempre empieza en \"0\" episodios, la segunda temporada que se añade empieza en el número total de episodios de la primera temporada, la tercera temporada será la suma de los episodios de las temporadas previas y así sucesivamente.\n[COLOR blue]\nEjemplo de serie divida en varias temporadas:\n\nFairy Tail:\n  - SEASON 1: EPISODE 48 --> [season 1, episode: 0]\n  - SEASON 2: EPISODE 48 --> [season 2, episode: 48]\n  - SEASON 3: EPISODE 54 --> [season 3, episode: 96 ([48=season2] + [48=season1])]\n  - SEASON 4: EPISODE 175 --> [season 4: episode: 150 ([54=season3] + [48=season2] + [48=season3])][/COLOR]\n[COLOR green]\nEjemplo de serie que continua en la temporada de la original:\n\nFate/Zero 2nd Season:\n  - SEASON 1: EPISODE 12 --> [season 1, episode: 13][/COLOR]\n[COLOR blue]\nEjemplo de serie que es la segunda temporada de la original:\n\nFate/kaleid liner Prisma☆Illya 2wei!:\n  - SEASON 1: EPISODE 12 --> [season 2, episode: 0][/COLOR]\n"

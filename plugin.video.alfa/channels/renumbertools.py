@@ -52,7 +52,7 @@ def context(item):
         _context = []
 
     if access():
-        dict_data = {"title": "RENUMERAR", "action": "config_item", "channel": "renumbertools"}
+        dict_data = {"title": config.get_localized_string(70585), "action": "config_item", "channel": "renumbertools"}
         _context.append(dict_data)
 
     return _context
@@ -60,7 +60,7 @@ def context(item):
 
 def show_option(channel, itemlist):
     if access():
-        itemlist.append(Item(channel=__channel__, title="[COLOR yellow]Configurar renumeración en series...[/COLOR]",
+        itemlist.append(Item(channel=__channel__, title="[COLOR yellow]" + config.get_localized_string(70586)+ "[/COLOR]",
                              action="load", from_channel=channel))
 
     return itemlist
@@ -91,14 +91,13 @@ def mainlist(channel):
 
         idx += 1
         name = tvshow
-        title = "Configurar [COLOR %s][%s][/COLOR]" % (tag_color, name)
+        title = config.get_localized_string(70587)+" [COLOR %s][%s][/COLOR]" % (tag_color, name)
 
         itemlist.append(Item(channel=__channel__, action="config_item", title=title, show=name, from_channel=channel))
 
     if len(itemlist) == 0:
         itemlist.append(Item(channel=channel, action="mainlist",
-                             title="No se han encontrado series, busca una serie y pulsa en menú contextual "
-                                   "'RENUMERAR'"))
+                             title=config.get_localized_string(70588) + ' ' + config.get_localized_string(70585)))
 
     return itemlist
 
@@ -163,7 +162,7 @@ def numbered_for_tratk(channel, show, season, episode):
                 del dict_series[key]
 
         if show in dict_series:
-            logger.debug("ha encontrado algo: %s" % dict_series[show])
+            logger.debug(config.get_localized_string(70589) + " %s" % dict_series[show])
 
             if len(dict_series[show]['season_episode']) > 1:
                 for row in dict_series[show]['season_episode']:
@@ -188,9 +187,8 @@ def numbered_for_tratk(channel, show, season, episode):
 
 def borrar(channel, show):
     logger.info()
-    heading = "¿Está seguro que desea eliminar renumeración?"
-    line1 = "Pulse 'Si' para eliminar la renumeración de [COLOR blue]%s[/COLOR], pulse 'No' o cierre la ventana " \
-            "para no hacer nada." % show.strip()
+    heading = config.get_localized_string(70590)
+    line1 = config.get_localized_string(70591) + ' [COLOR blue]' + show.strip() + '[/COLOR], ' + config.get_localized_string(70592)
 
     if platformtools.dialog_yesno(heading, line1) == 1:
         dict_series = jsontools.get_node_from_file(channel, TAG_TVSHOW_RENUMERATE)
@@ -199,9 +197,9 @@ def borrar(channel, show):
         result, json_data = jsontools.update_node(dict_series, channel, TAG_TVSHOW_RENUMERATE)
 
         if result:
-            message = "FILTRO ELIMINADO"
+            message = config.get_localized_string(60444)
         else:
-            message = "Error al guardar en disco"
+            message = config.get_localized_string(70593)
 
         heading = show.strip()
         platformtools.dialog_notification(heading, message)
@@ -209,7 +207,7 @@ def borrar(channel, show):
 
 def add_season(data=None):
     logger.debug("data %s" % data)
-    heading = "Introduzca el número de la temporada"
+    heading = config.get_localized_string(70594)
     # default = 2
     # se reordena la lista
     list_season_episode = data
@@ -224,12 +222,12 @@ def add_season(data=None):
     season = platformtools.dialog_numeric(0, heading)  # , str(default))
     for element in list_season_episode:
         if int(season) == element[0]:
-            platformtools.dialog_notification("No se añade la temporada", "Ya existe, edíte la existente")
+            platformtools.dialog_notification(config.get_localized_string(70595), config.get_localized_string(70596))
             return
 
     # si hemos insertado un valor en la temporada
     if season != "" and int(season) > 0:
-        heading = "Introduzca el número de episodio desde que empieza la temporada"
+        heading = config.get_localized_string(70597)
         # default = 0
         # if list_season_episode:
         #     for e in list_season_episode:
@@ -269,11 +267,11 @@ def write_data(channel, show, data):
 
     if result:
         if data:
-            message = "FILTRO GUARDADO"
+            message = config.get_localized_string(60446)
         else:
-            message = "FILTRO BORRADO"
+            message = config.get_localized_string(60444)
     else:
-        message = "Error al guardar en disco"
+        message = config.get_localized_string(70593)
 
     heading = show.strip()
     platformtools.dialog_notification(heading, message)
@@ -364,7 +362,7 @@ if xbmcgui:
             self.scroll2_bg.setVisible(False)
 
             btn_add_season = xbmcgui.ControlButton(window_bg.getX() + 20, self.controls_bg.getY() +
-                                                   self.controls_bg.getHeight() + 14, 165, 30, 'Añadir Temporada',
+                                                   self.controls_bg.getHeight() + 14, 165, 30, config.get_localized_string(70600),
                                                    font=self.font, focusTexture=os.path.join(self.mediapath, 'Controls',
                                                                                              'KeyboardKey.png'),
                                                    noFocusTexture=os.path.join(self.mediapath, 'Controls',
@@ -372,7 +370,7 @@ if xbmcgui:
                                                    alignment=ALIGN_CENTER)
             self.addControl(btn_add_season)
 
-            self.btn_info = xbmcgui.ControlButton(window_bg.getX() + 210, btn_add_season.getY(), 120, 30, 'Información',
+            self.btn_info = xbmcgui.ControlButton(window_bg.getX() + 210, btn_add_season.getY(), 120, 30, config.get_localized_string(60348),
                                                   font=self.font, focusTexture=os.path.join(self.mediapath, 'Controls',
                                                                                             'KeyboardKey.png'),
                                                   noFocusTexture=os.path.join(self.mediapath, 'Controls',
@@ -385,13 +383,13 @@ if xbmcgui:
             if xbmcgui.__version__ in ["1.2", "2.0"]:
                 self.check_update_internet = xbmcgui.ControlRadioButton(
                     window_bg.getX() + window_bg.getWidth() - check_update_internet_w - 20, btn_add_season.getY() - 3,
-                    check_update_internet_w, 34, "Actualizar desde Internet:", font=self.font,
+                    check_update_internet_w, 34, config.get_localized_string(70601), font=self.font,
                     focusTexture=os.path.join(self.mediapath, 'Controls', 'MenuItemFO.png'),
                     noFocusTexture=os.path.join(self.mediapath, 'Controls', 'MenuItemNF.png'))
             else:
                 self.check_update_internet = xbmcgui.ControlRadioButton(
                     window_bg.getX() + window_bg.getWidth() - check_update_internet_w - 20, btn_add_season.getY() - 3,
-                    check_update_internet_w, 34, "Actualizar desde Internet:", font=self.font,
+                    check_update_internet_w, 34, config.get_localized_string(70601), font=self.font,
                     focusTexture=os.path.join(self.mediapath, 'Controls', 'MenuItemFO.png'),
                     noFocusTexture=os.path.join(self.mediapath, 'Controls', 'MenuItemNF.png'),
                     focusOnTexture=os.path.join(self.mediapath, 'Controls', 'radiobutton-focus.png'),
@@ -416,7 +414,7 @@ if xbmcgui:
                                                 alignment=ALIGN_CENTER)
             self.addControl(self.btn_ok)
 
-            self.btn_cancel = xbmcgui.ControlButton(self.btn_info.getX() + 30, self.btn_ok.getY(), 120, 30, 'Cancelar',
+            self.btn_cancel = xbmcgui.ControlButton(self.btn_info.getX() + 30, self.btn_ok.getY(), 120, 30, config.get_localized_string(70002),
                                                     font=self.font,
                                                     focusTexture=os.path.join(self.mediapath, 'Controls',
                                                                               'KeyboardKey.png'),
@@ -426,7 +424,7 @@ if xbmcgui:
             self.addControl(self.btn_cancel)
 
             self.btn_delete = xbmcgui.ControlButton(self.btn_cancel.getX() + self.btn_cancel.getWidth() + 50,
-                                                    self.btn_ok.getY(), 120, 30, 'Borrar', font=self.font,
+                                                    self.btn_ok.getY(), 120, 30, config.get_localized_string(60437), font=self.font,
                                                     focusTexture=os.path.join(self.mediapath, 'Controls',
                                                                               'KeyboardKey.png'),
                                                     noFocusTexture=os.path.join(self.mediapath, 'Controls',
@@ -466,7 +464,7 @@ if xbmcgui:
                     pos_x = self.controls_bg.getX() + 15
                     label_season_w = 100
                     label_season = xbmcgui.ControlLabel(pos_x, pos_y + 3, label_season_w, 34,
-                                                        "Temporada:", font=self.font, textColor="0xFF2E64FE")
+                                                        config.get_localized_string(60385), font=self.font, textColor="0xFF2E64FE")
                     self.addControl(label_season)
                     label_season.setVisible(False)
 
@@ -498,7 +496,7 @@ if xbmcgui:
 
                     label_episode_w = 90
                     pos_x += edit_season.getWidth() + 60
-                    label_episode = xbmcgui.ControlLabel(pos_x, pos_y + 3, label_episode_w, 34, "Episodios:",
+                    label_episode = xbmcgui.ControlLabel(pos_x, pos_y + 3, label_episode_w, 34, config.get_localized_string(70598),
                                                          font=self.font, textColor="0xFF2E64FE")
                     self.addControl(label_episode)
                     label_episode.setVisible(False)
@@ -521,7 +519,7 @@ if xbmcgui:
                     btn_delete_season_w = 120
                     btn_delete_season = xbmcgui.ControlButton(self.controls_bg.getX() + self.controls_bg.getWidth() -
                                                               btn_delete_season_w - 14, pos_y, btn_delete_season_w, 30,
-                                                              'Eliminar', font=self.font,
+                                                              config.get_localized_string(70599), font=self.font,
                                                               focusTexture=os.path.join(self.mediapath, 'Controls',
                                                                                         'KeyboardKey.png'),
                                                               noFocusTexture=os.path.join(self.mediapath, 'Controls',
@@ -866,24 +864,25 @@ if xbmcgui:
 
         @staticmethod
         def method_info():
-            title = "Información"
-            text = "La primera temporada que se añade siempre empieza en \"0\" episodios, la segunda temporada que se "
-            text += "añade empieza en el número total de episodios de la primera temporada, la tercera temporada será "
-            text += "la suma de los episodios de las temporadas previas y así sucesivamente.\n"
-            text += "[COLOR blue]\nEjemplo de serie divida en varias temporadas:\n"
-            text += "\nFairy Tail:\n"
-            text += "  - SEASON 1: EPISODE 48 --> [season 1, episode: 0]\n"
-            text += "  - SEASON 2: EPISODE 48 --> [season 2, episode: 48]\n"
-            text += "  - SEASON 3: EPISODE 54 --> [season 3, episode: 96 ([48=season2] + [48=season1])]\n"
-            text += "  - SEASON 4: EPISODE 175 --> [season 4: episode: 150 ([54=season3] + [48=season2] + [48=season3" \
-                    "])][/COLOR]\n"
-            text += "[COLOR green]\nEjemplo de serie que continua en la temporada de la original:\n"
-            text += "\nFate/Zero 2nd Season:\n"
-            text += "  - SEASON 1: EPISODE 12 --> [season 1, episode: 13][/COLOR]\n"
+            title = config.get_localized_string(60348)
+            # text = "La primera temporada que se añade siempre empieza en \"0\" episodios, la segunda temporada que se "
+            # text += "añade empieza en el número total de episodios de la primera temporada, la tercera temporada será "
+            # text += "la suma de los episodios de las temporadas previas y así sucesivamente.\n"
+            # text += "[COLOR blue]\nEjemplo de serie divida en varias temporadas:\n"
+            # text += "\nFairy Tail:\n"
+            # text += "  - SEASON 1: EPISODE 48 --> [season 1, episode: 0]\n"
+            # text += "  - SEASON 2: EPISODE 48 --> [season 2, episode: 48]\n"
+            # text += "  - SEASON 3: EPISODE 54 --> [season 3, episode: 96 ([48=season2] + [48=season1])]\n"
+            # text += "  - SEASON 4: EPISODE 175 --> [season 4: episode: 150 ([54=season3] + [48=season2] + [48=season3" \
+            #         "])][/COLOR]\n"
+            # text += "[COLOR green]\nEjemplo de serie que continua en la temporada de la original:\n"
+            # text += "\nFate/Zero 2nd Season:\n"
+            # text += "  - SEASON 1: EPISODE 12 --> [season 1, episode: 13][/COLOR]\n"
 
-            text += "[COLOR blue]\nEjemplo de serie que es la segunda temporada de la original:\n"
-            text += "\nFate/kaleid liner Prisma☆Illya 2wei!:\n"
-            text += "  - SEASON 1: EPISODE 12 --> [season 2, episode: 0][/COLOR]\n"
+            # text += "[COLOR blue]\nEjemplo de serie que es la segunda temporada de la original:\n"
+            # text += "\nFate/kaleid liner Prisma☆Illya 2wei!:\n"
+            # text += "  - SEASON 1: EPISODE 12 --> [season 2, episode: 0][/COLOR]\n"
+            text = config.get_localized_string(70602)
 
             return TextBox("DialogTextViewer.xml", os.getcwd(), "Default", title=title, text=text)
 
