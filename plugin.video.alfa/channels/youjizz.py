@@ -44,7 +44,7 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data, '<h4>Trending(.*?)</ul>')
+    data = scrapertools.find_single_match(data, '<h4>Trending(.*?)</ul>')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<li><a href="([^"]+)">([^"]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -97,7 +97,7 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data, 'var encodings(.*?)var')
+    data = scrapertools.find_single_match(data, 'var encodings(.*?)var')
     if '360' in data:
         patron = '"360".*?"filename"\:"(.*?)"'
     if '720' in data:

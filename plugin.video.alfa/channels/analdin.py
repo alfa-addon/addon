@@ -41,7 +41,7 @@ def catalogo(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'<strong class="popup-title">Canales</strong>(.*?)<strong>Models</strong>')
+    data = scrapertools.find_single_match(data,'<strong class="popup-title">Canales</strong>(.*?)<strong>Models</strong>')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<li><a class="item" href="([^"]+)" title="([^"]+)">'
     matches = re.compile(patron,re.DOTALL).findall(data)
