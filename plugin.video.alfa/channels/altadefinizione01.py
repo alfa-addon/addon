@@ -30,12 +30,12 @@ def mainlist(item):
 
     itemlist =[]
 
-    support.menu(itemlist, 'Al Cinema bold','peliculas',host+'/cinema/')
-    support.menu(itemlist, 'Ultimi Film Inseriti bold','peliculas',host)
+    support.menu(itemlist, 'Al Cinema','peliculas',host+'/cinema/')
+    support.menu(itemlist, 'Ultimi Film Inseriti','peliculas',host)
     support.menu(itemlist, 'Film Sub-ITA','peliculas',host+'/sub-ita/')
-    support.menu(itemlist, 'Film Ordine Alfabetico submenu','AZlist',host+'/catalog/')
-    support.menu(itemlist, 'Categorie Film submenu','categories',host)
-    support.menu(itemlist, 'Cerca... color blue','search')
+    support.menu(itemlist, 'Film Ordine Alfabetico ','AZlist',host+'/catalog/')
+    support.menu(itemlist, 'Categorie Film','categories',host)
+    support.menu(itemlist, 'Cerca...','search')
     
     autoplay.init(item.channel, list_servers, list_quality)
     autoplay.show_option(item.channel, itemlist)
@@ -45,8 +45,8 @@ def mainlist(item):
 
 def categories(item):
     support.log(item)
-    return support.scrape(item,'<li><a href="([^"]+)">(.*?)</a></li>',['url','title'],headers,'Altadefinizione01',patron_block='<ul class="kategori_list">(.*?)</ul>',action='peliculas',url_host=host)
-
+    itemlist = support.scrape(item,'<li><a href="([^"]+)">(.*?)</a></li>',['url','title'],headers,'Altadefinizione01',patron_block='<ul class="kategori_list">(.*?)</ul>',action='peliculas',url_host=host)
+    return support.thumb(itemlist)
 
 def AZlist(item):
     support.log()
