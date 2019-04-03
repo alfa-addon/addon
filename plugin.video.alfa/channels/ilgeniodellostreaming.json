@@ -1,7 +1,7 @@
 {
     "id": "ilgeniodellostreaming",
     "name": "IlGenioDelloStreaming",
-    "active": false,
+    "active": true,
     "adult": false,
     "language": ["ita"],
     "thumbnail": "https://i.imgur.com/Nsa81r0.png",
