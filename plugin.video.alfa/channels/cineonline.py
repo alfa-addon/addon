@@ -14,6 +14,7 @@ host = 'https://www.cine-online.eu'
 IDIOMAS = {'Español': 'ESP', 'Cast': 'ESP', 'Latino': 'LAT', 'Lat': 'LAT', 'Subtitulado': 'VOSE', 'Sub': 'VOSE'}
 list_language = IDIOMAS.values()
 list_servers = ['Streamango', 'Vidoza', 'Openload', 'Streamcherry', 'Netutv']
+# list_quality = ['Brscreener', 'HD', 'TS']
 list_quality = []
 __channel__='cineonline'
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', __channel__)
@@ -75,7 +76,7 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     if "Año" in item.title:
-        data = scrapertools.get_match(data,'<h3>Año de estreno(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'<h3>Año de estreno(.*?)</ul>')
         patron  = '<li><a href="([^"]+)">(\d+)</(\w)>'
     else:
         patron  = '<li class="cat-item cat-item-\d+"><a href="([^"]+)">([^"]+)</a> <span>(\d+)</span>'
@@ -89,6 +90,9 @@ def categorias(item):
     return itemlist
 
 
+
+    
+    
 def lista(item):
     logger.info()
     itemlist = []
@@ -200,11 +204,11 @@ def findvideos(item):
     itemlist = filtertools.get_links(itemlist, item, list_language)
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)
-    if not "/episodios/" in item.url:
-        if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra !='findvideos':
-            itemlist.append(Item(channel=item.channel, action="add_pelicula_to_library", 
-                                 title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
-                                 extra="findvideos", contentTitle=item.contentTitle)) 
+
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra !='findvideos' and not "/episodios/" in item.url :
+        itemlist.append(Item(channel=item.channel, action="add_pelicula_to_library", 
+                             title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
+                             extra="findvideos", contentTitle=item.contentTitle)) 
     return itemlist
 
 

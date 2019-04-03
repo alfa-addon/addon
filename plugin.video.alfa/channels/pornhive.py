@@ -41,9 +41,9 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     if item.title == "Categorias" :
-        data = scrapertools.get_match(data,'Categories(.*?)Channels')
+        data = scrapertools.find_single_match(data,'Categories(.*?)Channels')
     else:
-        data = scrapertools.get_match(data,'Channels(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'Channels(.*?)</ul>')
     patron  = '<li><a href="([^"]+)" title="[^"]+">(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     scrapertools.printMatches(matches)

@@ -51,7 +51,7 @@ def categorias(item):
         scrapedtitle = scrapedtitle + " (" + cantidad +")"
         scrapedurl = urlparse.urljoin(item.url,scrapedurl) + "/Submitted/59"
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
@@ -88,7 +88,7 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'Copy Embed Code(.*?)For Desktop')
+    data = scrapertools.find_single_match(data,'Copy Embed Code(.*?)For Desktop')
     patron  = '<div class="shareDownload_container__item__dropdown">.*?<a href="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:

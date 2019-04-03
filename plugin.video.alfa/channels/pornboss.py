@@ -42,9 +42,9 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     if "/category/movies/" in item.url:
-        data = scrapertools.get_match(data,'>Movies</a>(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'>Movies</a>(.*?)</ul>')
     else:
-        data = scrapertools.get_match(data,'>Clips</a>(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'>Clips</a>(.*?)</ul>')
     patron  = '<a href=([^"]+)>([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     scrapertools.printMatches(matches)

@@ -62,7 +62,7 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     if item.title=="PornStars" :
-        data = scrapertools.get_match(data,'</i> Hall Of Fame Pornstars</h1>(.*?)</section>')
+        data = scrapertools.find_single_match(data,'</i> Hall Of Fame Pornstars</h1>(.*?)</section>')
     patron  = '<a class="thumb" href="([^"]+)">.*?<img src="([^"]+)".*?<div class="vidcountSp">(.*?)</div>.*?<a class="categoryTitle".*?>([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,cantidad,scrapedtitle in matches:

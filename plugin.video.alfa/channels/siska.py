@@ -42,7 +42,7 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    data = scrapertools.get_match(data,'<div id="content">(.*?)<div class="maincat">')
+    data = scrapertools.find_single_match(data,'<div id="content">(.*?)<div class="maincat">')
     patron = '<a href="(.*?)".*?'
     patron += '<img src="(.*?)".*?alt="(.*?)"'
     matches = re.compile(patron,re.DOTALL).findall(data)

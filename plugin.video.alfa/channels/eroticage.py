@@ -37,7 +37,7 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'<h2>TAGS</h2>(.*?)<div class="sideitem"')
+    data = scrapertools.find_single_match(data,'<h2>TAGS</h2>(.*?)<div class="sideitem"')
     patron  = '<a href="(.*?)".*?>(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle in matches:

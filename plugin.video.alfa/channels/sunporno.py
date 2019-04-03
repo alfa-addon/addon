@@ -40,16 +40,17 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'<div class="category-item">(.*?)<div id="goupBlock"')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<a href="([^"]+)">\s*(.*?)\s*<'
+    patron = '<div class="thumb-container with-title moviec">.*?'
+    patron += '<a href="([^"]+)".*?'
+    patron += 'src="([^"]+)".*?'
+    patron += '<a title="([^"]+)".*?'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         scrapedplot = ""
-        scrapedthumbnail = ""
         scrapedurl = scrapedurl + "/most-recent/"
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
@@ -80,7 +81,7 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data = scrapertools.get_match(data,'class="thumbs-container">(.*?)<div class="clearfix">')
+    data = scrapertools.find_single_match(data,'class="thumbs-container">(.*?)<div class="clearfix">')
     patron  = '<p class="btime">([^"]+)</p>.*?'
     patron += '>(.*?)<img width=.*?'
     patron += '="([^"]+)" class="thumb.*?'
