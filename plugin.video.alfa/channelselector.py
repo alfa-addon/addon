@@ -261,7 +261,7 @@ def get_thumb(thumb_name, view="thumb_", auto=False):
     else:
         icon_pack_name = config.get_setting('icon_set', default="default")
         
-        if auto_filter() == 'ita' and icon_pack_name == "default":
+        if auto_filter(True) == 'ita' and icon_pack_name == "default":
             icon_pack_name = 'default_ita'
 
         resource_path = os.path.join(config.get_runtime_path(), "resources", "media", "themes")
@@ -319,7 +319,7 @@ def set_channel_info(parameters):
     return info
 
 
-def auto_filter():
+def auto_filter(auto_lang=False):
     import xbmc, xbmcaddon
 
     addon = xbmcaddon.Addon('metadata.themoviedb.org')
@@ -331,7 +331,7 @@ def auto_filter():
                  'cast':'eu-ES',
                  'lat':'es-MX'}
   
-    if config.get_setting("channel_language") == 'auto':
+    if config.get_setting("channel_language") == 'auto' or auto_lang == True:
         for langs, variant in lang_dict.items():
             if def_lang in variant:
                 lang = langs
@@ -365,8 +365,8 @@ def thumb(itemlist=[]):
                      'channels_crime':['gangster','poliziesco'],
                      'channels_grotesque':['grottesco'],
                      'channels_war':['guerra'],
-                     'channels_horror':['horror'],
-                     'channels_music':['musical'],
+                     'horror':['horror'],
+                     'channels_musical':['musical'],
                      'channels_noir':['noir', 'Mistero'],
                      'channels_thriller':['thriller'],
                      'channels_western':['western'],
