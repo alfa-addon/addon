@@ -351,7 +351,7 @@ def typo(string, typography=''):
 
 
 def match(item, patron='', patron_block='', headers=''):
-    
+
     data = httptools.downloadpage(item.url, headers=headers).data.replace("'", '"')
     data = re.sub('\n|\t', '', data)
     log('DATA= ', data)
@@ -387,7 +387,7 @@ def videolibrary(itemlist, item, typography=''):
                  contentTitle=item.fulltitle))
 
 
-def nextPage(itemlist, item, data, patron, function_level=0):
+def nextPage(itemlist, item, data, patron, function_level=1):
     # Function_level is useful if the function is called by another function.
     # If the call is direct, leave it blank
     
@@ -397,7 +397,7 @@ def nextPage(itemlist, item, data, patron, function_level=0):
     if next_page != "":
         itemlist.append(
             Item(channel=item.channel,
-                 action=inspect.stack()[function_level + 1][3],
+                 action=inspect.stack()[function_level][3],
                  contentType=item.contentType,
                  title=typo(config.get_localized_string(30992), 'color blue bold'),
                  url=next_page,
