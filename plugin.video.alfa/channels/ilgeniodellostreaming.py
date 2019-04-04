@@ -14,7 +14,7 @@ from core import tmdb
 
 __channel__ = "ilgeniodellostreaming"
 
-host = "https://ilgeniodellostreaming.red"
+host = "https://ilgeniodellostreaming.pw"
 
 IDIOMAS = {'Italiano': 'IT'}
 list_language = IDIOMAS.values()
