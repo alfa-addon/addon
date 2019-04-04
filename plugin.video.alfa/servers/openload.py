@@ -34,6 +34,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
     try:
         code = scrapertools.find_single_match(data, '<p style="" id="[^"]+">(.*?)</p>' )
+        if code == "":
+            code = scrapertools.find_single_match(data, '<p id="[^"]+" style="">(.*?)</p>' )
         _0x59ce16 = eval(scrapertools.find_single_match(data, '_0x59ce16=([^;]+)').replace('parseInt', 'int'))
         _1x4bfb36 = eval(scrapertools.find_single_match(data, '_1x4bfb36=([^;]+)').replace('parseInt', 'int'))
         parseInt  = eval(scrapertools.find_single_match(data, '_0x30725e,(\(parseInt.*?)\),').replace('parseInt', 'int'))
