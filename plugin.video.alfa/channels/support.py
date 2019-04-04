@@ -191,18 +191,7 @@ def scrape(item, patron = '', listGroups = [], headers="", blacklist="", data=""
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
         if patronNext:
-            next_page = scrapertoolsV2.find_single_match(data, patronNext)
-            log('NEXT= ',next_page)
-
-            if next_page != "":
-                itemlist.append(
-                    Item(channel=item.channel,
-                        action=inspect.stack()[1][3],
-                        contentType=item.contentType,
-                        title=typo(config.get_localized_string(30992), 'color blue'),
-                        url=next_page,
-                        args=item.args,
-                        thumbnail=thumb()))
+            nextPage(itemlist, item, data, patronNext, 2)
 
         if item.infoLabels["title"] or item.fulltitle:
             item.fulltitle = item.infoLabels["title"]
@@ -398,14 +387,17 @@ def videolibrary(itemlist, item, typography=''):
                  contentTitle=item.fulltitle))
 
 
-def nextPage(itemlist, item, data, patron):
+def nextPage(itemlist, item, data, patron, function_level=1):
+    # Function_level is useful if the function is called by another function.
+    # If the call is direct, leave it blank
+    
     next_page = scrapertoolsV2.find_single_match(data, patron)
     log('NEXT= ',next_page)
 
     if next_page != "":
         itemlist.append(
             Item(channel=item.channel,
-                 action=inspect.stack()[1][3],
+                 action=inspect.stack()[sub][3],
                  contentType=item.contentType,
                  title=typo(config.get_localized_string(30992), 'color blue bold'),
                  url=next_page,
@@ -436,7 +428,7 @@ def server(item, data='', headers=''):
 def log(stringa1="", stringa2="", stringa3="", stringa4="", stringa5=""):
     # Function to simplify the log
     # Automatically returns File Name and Function Name
-
+    
     frame = inspect.stack()[1]
     filename = frame[0].f_code.co_filename
     filename = os.path.basename(filename)    
