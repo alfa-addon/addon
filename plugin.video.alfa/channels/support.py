@@ -304,8 +304,7 @@ def menu(itemlist, title='', action='', url='', contentType='movie', args=[]):
     return itemlist
 
 
-def typo(string, typography=''):
-    
+def typo(string, typography=''):    
 
     # Check if the typographic attributes are in the string or outside
     if typography:
@@ -352,20 +351,21 @@ def typo(string, typography=''):
 
 
 def match(item, patron='', patron_block='', headers=''):
+    
     data = httptools.downloadpage(item.url, headers=headers).data.replace("'", '"')
     data = re.sub('\n|\t', '', data)
-    log('DATA= ',data)
+    log('DATA= ', data)
 
     if patron_block:
         block = scrapertoolsV2.find_single_match(data, patron_block)
         log('BLOCK= ',block)
     else:
-        data = block
+        block = data
 
     matches = scrapertoolsV2.find_multiple_matches(block, patron)
     log('MATCHES= ',matches)
 
-    return matches
+    return matches, data
 
 
 def videolibrary(itemlist, item, typography=''):
@@ -387,7 +387,7 @@ def videolibrary(itemlist, item, typography=''):
                  contentTitle=item.fulltitle))
 
 
-def nextPage(itemlist, item, data, patron, function_level=1):
+def nextPage(itemlist, item, data, patron, function_level=0):
     # Function_level is useful if the function is called by another function.
     # If the call is direct, leave it blank
     
@@ -397,7 +397,7 @@ def nextPage(itemlist, item, data, patron, function_level=1):
     if next_page != "":
         itemlist.append(
             Item(channel=item.channel,
-                 action=inspect.stack()[sub][3],
+                 action=inspect.stack()[function_level + 1][3],
                  contentType=item.contentType,
                  title=typo(config.get_localized_string(30992), 'color blue bold'),
                  url=next_page,
