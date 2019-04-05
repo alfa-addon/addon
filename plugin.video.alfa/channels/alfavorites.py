@@ -498,7 +498,7 @@ def editar_enlace_lista(item):
     opciones = []
     itemlist_listas = mainlist_listas(item)
     for it in itemlist_listas:
-        if it.lista != '' and '[lista activa]' not in it.title: # descarta item crear y lista activa
+        if it.lista != '' and '[<---]' not in it.title: # descarta item crear y lista activa
             opciones.append(it.lista)
 
     if len(opciones) == 0:
@@ -609,11 +609,11 @@ def mainlist_listas(item):
     for fichero in glob.glob(path):
         lista = os.path.basename(fichero)
         nombre = get_name_from_filename(lista)
-        titulo = nombre if lista != lista_activa else '[COLOR gold]%s[/COLOR] [lista activa]' % nombre
+        titulo = nombre if lista != lista_activa else '[COLOR gold]%s[/COLOR] [<---]' % nombre
         
         itemlist.append(item.clone(action='acciones_lista', lista=lista, title=titulo, folder=False))
 
-    itemlist.append(item.clone(action='acciones_nueva_lista', title='Crear/descargar lista / Info ...', folder=False)) 
+    itemlist.append(item.clone(action='acciones_nueva_lista', title=config.get_localized_string(70642), folder=False))
     
     return itemlist
 
@@ -621,8 +621,8 @@ def mainlist_listas(item):
 def acciones_lista(item):
     logger.info()
 
-    acciones = ['Establecer como lista activa', 'Cambiar nombre de la lista', 
-                'Compartir en tinyupload', 'Eliminar lista', 'Información de la lista'] 
+    acciones = [config.get_localized_string(70604), config.get_localized_string(70629),
+                config.get_localized_string(70605), config.get_localized_string(70606), config.get_localized_string(70607)]
 
     ret = platformtools.dialog_select(item.lista, acciones)
 
@@ -645,7 +645,7 @@ def activar_lista(item):
 
     fullfilename = os.path.join(config.get_data_path(), item.lista)
     if not os.path.exists(fullfilename):
-        platformtools.dialog_ok('Alfa', 'Error, no se encuentra la lista!', item.lista)
+        platformtools.dialog_ok('Alfa', config.get_localized_string(70630), item.lista)
         return False
 
     config.set_setting('lista_activa', item.lista)
@@ -663,11 +663,11 @@ def renombrar_lista(item):
 
     fullfilename_current = os.path.join(config.get_data_path(), item.lista)
     if not os.path.exists(fullfilename_current):
-        platformtools.dialog_ok('Alfa', 'Error, no se encuentra la lista!', fullfilename_current)
+        platformtools.dialog_ok('Alfa', config.get_localized_string(70630), fullfilename_current)
         return False
     
     nombre = get_name_from_filename(item.lista)
-    titulo = platformtools.dialog_input(default=nombre, heading='Nombre de la lista')
+    titulo = platformtools.dialog_input(default=nombre, heading=config.get_localized_string(70612))
     if titulo is None or titulo == '' or titulo == nombre:
         return False
     titulo = text_clean(titulo, blank_char='_')
@@ -677,12 +677,12 @@ def renombrar_lista(item):
 
     # Comprobar que el nuevo nombre no exista
     if os.path.exists(fullfilename):
-        platformtools.dialog_ok('Alfa', 'Error, ya existe una lista con este nombre!', fullfilename)
+        platformtools.dialog_ok('Alfa', config.get_localized_string(70613), fullfilename)
         return False
 
     # Rename del fichero
     if not filetools.rename(fullfilename_current, filename):
-        platformtools.dialog_ok('Alfa', 'Error, no se ha podido renombrar la lista!', fullfilename)
+        platformtools.dialog_ok('Alfa', config.get_localized_string(70631), fullfilename)
         return False
 
     # Update settings si es la lista activa
@@ -699,14 +699,14 @@ def eliminar_lista(item):
 
     fullfilename = os.path.join(config.get_data_path(), item.lista)
     if not os.path.exists(fullfilename):
-        platformtools.dialog_ok('Alfa', 'Error, no se encuentra la lista!', item.lista)
+        platformtools.dialog_ok('Alfa', config.get_localized_string(70630), item.lista)
         return False
 
     if item.lista == get_lista_activa():
-        platformtools.dialog_ok('Alfa', 'La lista activa no se puede eliminar', item.lista)
+        platformtools.dialog_ok('Alfa', config.get_localized_string(70632), item.lista)
         return False
 
-    if not platformtools.dialog_yesno('Eliminar lista', '¿Estás seguro de querer borrar la lista %s ?' % item.lista): return False
+    if not platformtools.dialog_yesno(config.get_localized_string(70606), config.get_localized_string(70633) + ' %s ?' % item.lista): return False
     filetools.remove(fullfilename)
 
     platformtools.itemlist_refresh()
@@ -718,25 +718,25 @@ def informacion_lista(item):
     
     fullfilename = os.path.join(config.get_data_path(), item.lista)
     if not os.path.exists(fullfilename):
-        platformtools.dialog_ok('Alfa', 'Error, no se encuentra la lista!', item.lista)
+        platformtools.dialog_ok('Alfa', config.get_localized_string(70630), item.lista)
         return False
 
     alfav = AlfavoritesData(item.lista)
     
     txt = 'Lista: [COLOR gold]%s[/COLOR]' % item.lista
-    txt += '[CR]Creada el %s y modificada el %s' % (alfav.info_lista['created'], alfav.info_lista['updated'])
+    txt += '[CR]' + config.get_localized_string(70634) + ' ' + alfav.info_lista['created'] + ' ' + config.get_localized_string(70635) + ' ' + alfav.info_lista['updated']
 
     if 'downloaded_date' in alfav.info_lista:
-        txt += '[CR]Descargada el %s desde [COLOR blue]%s[/COLOR]' % (alfav.info_lista['downloaded_date'], alfav.info_lista['downloaded_from'])
+        txt += '[CR]' + config.get_localized_string(70636) + ' ' + alfav.info_lista['downloaded_date'] + ' ' + alfav.info_lista['downloaded_from'] + ' ' + config.get_localized_string(70637)
 
     if 'tinyupload_date' in alfav.info_lista:
-        txt += '[CR]Compartida en tinyupload el %s con el código [COLOR blue]%s[/COLOR]' % (alfav.info_lista['tinyupload_date'], alfav.info_lista['tinyupload_code'])
+        txt += '[CR]' + config.get_localized_string(70638) + ' ' + alfav.info_lista['tinyupload_date'] + ' ' + config.get_localized_string(70639) + ' [COLOR blue]' + alfav.info_lista['tinyupload_code'] + '[/COLOR]'
     
-    txt += '[CR]Número de carpetas: %d' % len(alfav.user_favorites)
+    txt += '[CR]' + config.get_localized_string(70640) + ' ' + len(alfav.user_favorites)
     for perfil in alfav.user_favorites:
-        txt += '[CR]- %s (%d enlaces)' % (perfil['title'], len(perfil['items']))
+        txt += '[CR]- %s (%d %s)' % (perfil['title'], len(perfil['items']), config.get_localized_string(70641))
 
-    platformtools.dialog_textviewer('Información de la lista', txt)
+    platformtools.dialog_textviewer(config.get_localized_string(70607), txt)
     return True
 
 
@@ -745,11 +745,11 @@ def compartir_lista(item):
 
     fullfilename = os.path.join(config.get_data_path(), item.lista)
     if not os.path.exists(fullfilename):
-        platformtools.dialog_ok('Alfa', 'Error, no se encuentra la lista!', fullfilename)
+        platformtools.dialog_ok('Alfa', config.get_localized_string(70630), fullfilename)
         return False
 
     try:
-        progreso = platformtools.dialog_progress_bg('Compartir lista', 'Conectando con tinyupload ...')
+        progreso = platformtools.dialog_progress_bg(config.get_localized_string(70643), config.get_localized_string(70644))
         
         # Acceso a la página principal de tinyupload para obtener datos necesarios
         from core import httptools, scrapertools
@@ -757,7 +757,7 @@ def compartir_lista(item):
         upload_url = scrapertools.find_single_match(data, 'form action="([^"]+)')
         sessionid = scrapertools.find_single_match(upload_url, 'sid=(.+)')
         
-        progreso.update(10, 'Subiendo fichero', 'Espera unos segundos a que acabe de subirse tu fichero de lista a tinyupload')
+        progreso.update(10, config.get_localized_string(70645), config.get_localized_string(70646))
 
         # Envío del fichero a tinyupload mediante multipart/form-data 
         from lib import MultipartPostHandler
@@ -771,24 +771,24 @@ def compartir_lista(item):
 
         if not 'File was uploaded successfuly' in data:
             logger.debug(data)
-            platformtools.dialog_ok('Alfa', 'Error, no se ha podido subir el fichero a tinyupload.com!')
+            platformtools.dialog_ok('Alfa', config.get_localized_string(70647))
             return False
 
         codigo = scrapertools.find_single_match(data, 'href="index\.php\?file_id=([^"]+)')
 
     except:
-        platformtools.dialog_ok('Alfa', 'Error, al intentar subir el fichero a tinyupload.com!', item.lista)
+        platformtools.dialog_ok('Alfa', config.get_localized_string(70647), item.lista)
         return False
 
     # Apuntar código en fichero de log y dentro de la lista
-    save_log_lista_shared('Subido fichero %s a tinyupload.com. El código para descargarlo es: %s' % (item.lista, codigo))
+    save_log_lista_shared(config.get_localized_string(70648) + ' ' + item.lista + ' ' + codigo + ' ' + config.get_localized_string(70649))
     
     alfav = AlfavoritesData(item.lista)
     alfav.info_lista['tinyupload_date'] = fechahora_actual()
     alfav.info_lista['tinyupload_code'] = codigo
     alfav.save()
 
-    platformtools.dialog_ok('Alfa', 'Subida lista a tinyupload. Si quieres compartirla con alguien, pásale este código:', codigo)
+    platformtools.dialog_ok('Alfa', config.get_localized_string(70650), codigo)
     return True
         
 
@@ -796,10 +796,10 @@ def compartir_lista(item):
 def acciones_nueva_lista(item):
     logger.info()
 
-    acciones = ['Crear una nueva lista',
-                'Descargar lista con código de tinyupload',
-                'Descargar lista de una url directa',
-                'Información sobre las listas']
+    acciones = [config.get_localized_string(70651),
+                config.get_localized_string(70652),
+                config.get_localized_string(70653),
+                config.get_localized_string(70654)]
 
     ret = platformtools.dialog_select(config.get_localized_string(70608), acciones)
 
@@ -862,7 +862,7 @@ def descargar_lista(item, url):
             down_url, url_name = scrapertools.find_single_match(data, ' href="(download\.php[^"]*)"><b>([^<]*)')
             url_json = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(url)) + down_url
         except:
-            platformtools.dialog_ok('Alfa', 'Error, no se puede descargar la lista!', url)
+            platformtools.dialog_ok('Alfa', config.get_localized_string(70655), url)
             return False
 
     elif 'zippyshare.com/' in url:
@@ -870,7 +870,7 @@ def descargar_lista(item, url):
         video_urls, puedes, motivo = servertools.resolve_video_urls_for_playing('zippyshare', url)
         
         if not puedes:
-            platformtools.dialog_ok('Alfa', 'Error, no se puede descargar la lista!', motivo)
+            platformtools.dialog_ok('Alfa', config.get_localized_string(70655), motivo)
             return False
         url_json = video_urls[0][1] # https://www58.zippyshare.com/d/qPzzQ0UM/25460/alfavorites-testeanding.json
         url_name = url_json[url_json.rfind('/')+1:]
@@ -891,7 +891,7 @@ def descargar_lista(item, url):
     jsondata = jsontools.load(data)
     if 'user_favorites' not in jsondata or 'info_lista' not in jsondata:
         logger.debug(data)
-        platformtools.dialog_ok('Alfa', 'Error, el fichero descargado no tiene el formato esperado!')
+        platformtools.dialog_ok('Alfa', config.get_localized_string(70656))
         return False
 
     jsondata['info_lista']['downloaded_date'] = fechahora_actual()
@@ -900,7 +900,7 @@ def descargar_lista(item, url):
 
     # Pedir nombre para la lista descargada
     nombre = get_name_from_filename(url_name)
-    titulo = platformtools.dialog_input(default=nombre, heading='Nombre para guardar la lista')
+    titulo = platformtools.dialog_input(default=nombre, heading=config.get_localized_string(70657))
     if titulo is None or titulo == '':
         return False
     titulo = text_clean(titulo, blank_char='_')
@@ -910,12 +910,12 @@ def descargar_lista(item, url):
 
     # Si el nuevo nombre ya existe pedir confirmación para sobrescribir
     if os.path.exists(fullfilename):
-        if not platformtools.dialog_yesno('Alfa', 'Ya existe una lista con este nombre.', '¿ Sobrescribir el fichero ?', filename):
+        if not platformtools.dialog_yesno('Alfa', config.get_localized_string(70613), config.get_localized_string(70658), filename):
             return False
     
     if not filetools.write(fullfilename, data):
-        platformtools.dialog_ok('Alfa', 'Error, no se puede grabar la lista!', filename)
+        platformtools.dialog_ok('Alfa', config.get_localized_string(70659), filename)
 
-    platformtools.dialog_ok('Alfa', 'Ok, lista descargada correctamente', filename)
+    platformtools.dialog_ok('Alfa', config.get_localized_string(70660), filename)
     platformtools.itemlist_refresh()
     return True

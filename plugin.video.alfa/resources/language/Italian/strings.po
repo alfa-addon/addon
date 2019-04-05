@@ -5149,7 +5149,7 @@ msgstr "Elimina cartella"
 
 msgctxt "#70619"
 msgid "Delete the folder and the links it contains?"
-msgstr "Elimina la cartella e tutti i link che contiene?"
+msgstr "Eliminare la cartella e tutti i link che contiene?"
 
 msgctxt "#70620"
 msgid "Change title"
@@ -5186,3 +5186,131 @@ msgstr "Muovi in già"
 msgctxt "#70628"
 msgid "Move down all"
 msgstr "Muovi tutte in giu"
+
+msgctxt "#70629"
+msgid "Rename list"
+msgstr "Rinomina lista"
+
+msgctxt "#70630"
+msgid "Error, list not found!"
+msgstr "Errore, lista non trovata!"
+
+msgctxt "#70631"
+msgid "Error, list could not be renamed"
+msgstr "Errore, la lista non può essere rinominata!"
+
+msgctxt "#70632"
+msgid "The active list can not be deleted"
+msgstr "La lista attiva non può essere cancellata"
+
+msgctxt "#70633"
+msgid "You are sure do you want to delete the list"
+msgstr "Sei sicuro di voler eliminare la lista"
+
+msgctxt "#70634"
+msgid "Created at"
+msgstr "Creata il"
+
+msgctxt "#70635"
+msgid "and modified at"
+msgstr "e modificata il"
+
+msgctxt "#70636"
+msgid "Downloaded at"
+msgstr "Scaricata il"
+
+msgctxt "#70637"
+msgid "since"
+msgstr "da"
+
+msgctxt "#70638"
+msgid "Shared in tinyupload at"
+msgstr "Condiviso in tinyupload il"
+
+msgctxt "#70639"
+msgid "with the code"
+msgstr "con il codice"
+
+msgctxt "#70640"
+msgid "Number of folders:"
+msgstr "Numero di cartelle:"
+
+msgctxt "#70641"
+msgid "links"
+msgstr "link"
+
+msgctxt "#70642"
+msgid "Create/download list / Info ..."
+msgstr "Crea/scarica lista / Info ..."
+
+msgctxt "#70643"
+msgid "Share list"
+msgstr "Condividi lista"
+
+msgctxt "#70644"
+msgid "Connecting with tinyupload"
+msgstr "Connessione a tinyupload ..."
+
+msgctxt "#70645"
+msgid "Uploading file"
+msgstr "Caricando il file"
+
+msgctxt "#70646"
+msgid "Wait a few seconds to finish uploading your list file to tinyupload"
+msgstr "Aspetta qualche secondo che finisca il caricamento della tua lista su tinyupload"
+
+msgctxt "#70647"
+msgid "Error, it was not possible to upload the file to tinyupload.com!"
+msgstr "Errore, non è stato possibile caricare il file su tinyupload.com!"
+
+msgctxt "#70648"
+msgid "Upload file"
+msgstr "Caricato file"
+
+msgctxt "#70649"
+msgid "at tinyupload.com. The code to download it is:"
+msgstr "su tinyupload.com. Il codice per scaricarlo è:"
+
+msgctxt "#70650"
+msgid "List uploaded to tinyupload. If you want to share it with someone, pass it this code:"
+msgstr "Lista caricata su tinyupload. Se intendi condividerla con altri, passagli questo codice:"
+
+msgctxt "#70651"
+msgid "Create a new list"
+msgstr "Crea una nuova lista"
+
+msgctxt "#70652"
+msgid "Download list using tinyupload code"
+msgstr "Scarica la lista utilizzando il codice tinyupload"
+
+msgctxt "#70653"
+msgid "Download list using direct url"
+msgstr "Scarica la lista da un link diretto"
+
+msgctxt "#70654"
+msgid "Information about lists"
+msgstr "Informazioni sulle liste"
+
+msgctxt "#70655"
+msgid "Error, the list can not be downloaded!"
+msgstr "Errore, la lista non può essere scaricata!"
+
+msgctxt "#70656"
+msgid "Error, the downloaded file does not have the expected format!"
+msgstr "Errore, il file scaricato non ha il formato corretto!"
+
+msgctxt "#70657"
+msgid "Name to save the list"
+msgstr "Nome per salvare la lista"
+
+msgctxt "#70658"
+msgid "Overwrite file?"
+msgstr "Sostituire il file?"
+
+msgctxt "#70659"
+msgid "Error, the list can not be recorded!"
+msgstr "Errore, lista lista non può essere registrata!"
+
+msgctxt "#70660"
+msgid "Ok, list downloaded correctly"
+msgstr "Ok, lista scaricata correttamente"
