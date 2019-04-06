@@ -293,12 +293,12 @@ class Main(xbmcgui.WindowXMLDialog):
             if 'categoria actual' in menu_node:
                 category = menu_node['categoria actual']
             new_item = Item(channel='news', action="setting_channel", extra=category, menu=True)
-        elif control == 'Buscar':
+        elif control == config.get_localized_string(60423):
             new_item = Item(channel='search', action="search")
-        elif control == 'Buscar Actor':
+        elif control == config.get_localized_string(70036):
             new_item = Item(channel='tvmoviedb', title="Buscar actor/actriz", action="search_",
                             search={'url': 'search/person', 'language': 'es', 'page': 1}, star=True)
-        elif control == 'Donde Buscar':
+        elif control == config.get_localized_string(70010):
             new_item = Item(channel='search', action="setting_channel")
         elif control == '':
             self.close()

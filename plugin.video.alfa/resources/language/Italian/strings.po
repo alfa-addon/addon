@@ -1043,7 +1043,7 @@ msgstr "Informazioni complete"
 
 msgctxt "#60247"
 msgid "[%s]: Select the correct %s"
-msgstr "[%s]: Selecciona la %s correcta"
+msgstr "[%s]: Seleziona la %s corretta"
 
 msgctxt "#60248"
 msgid "Login to this page: %s"
