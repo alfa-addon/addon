@@ -6,7 +6,7 @@ from core.item import Item
 from core import jsontools
 from platformcode import config, logger
 from platformcode import launcher
-import xbmc, xbmcgui, xbmcplugin, xbmcaddon
+import xbmc, xbmcgui, xbmcplugin, xbmcaddon, channelselector
 
 media_path = os.path.join(config.get_runtime_path(), "resources/skins/Default/media/side_menu/")
 menu_settings_path = os.path.join(config.get_data_path(), "settings_channels", 'menu_settings_data.json')
@@ -112,7 +112,7 @@ class Main(xbmcgui.WindowXMLDialog):
         font = 'font25_title'
 
         if config.get_setting('start_page'):
-            label = 'Inicio'
+            label = config.get_localized_string(70663)
             self.button_start = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                        noFocusTexture='', focusTexture=media_path + selected,
                                                        textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
@@ -121,7 +121,7 @@ class Main(xbmcgui.WindowXMLDialog):
             self.buttons.append(self.button_start)
 
         posy += space * 2
-        label = 'Menú Clasico'
+        label = config.get_localized_string(70009)
         self.button_alfa = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                  noFocusTexture='', focusTexture=media_path+selected, 
                                                  textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
@@ -131,7 +131,7 @@ class Main(xbmcgui.WindowXMLDialog):
 
 
         posy += space
-        label = 'Configuracion'
+        label = config.get_localized_string(30100)
         self.button_config = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                    noFocusTexture='', focusTexture=media_path + selected,
                                                    textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
@@ -139,7 +139,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.addControl(self.button_config)
         self.buttons.append(self.button_config)
         posy += space*2
-        label = 'Peliculas'
+        label = config.get_localized_string(60681)
         self.button_peliculas = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                       alignment=0x00000000, noFocusTexture='',
                                                       focusTexture=media_path+selected, textColor=textcolor,
@@ -147,7 +147,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.addControl(self.button_peliculas)
         self.buttons.append(self.button_peliculas)
         posy += space
-        label = 'Series'
+        label = config.get_localized_string(60682)
         self.button_series = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                    alignment=0x00000000, noFocusTexture='',
                                                    focusTexture=media_path+selected, textColor=textcolor,
@@ -155,7 +155,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.addControl(self.button_series)
         self.buttons.append(self.button_series)
         posy += space
-        label = 'Anime'
+        label = config.get_localized_string(60683)
         self.button_anime = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                   noFocusTexture='', focusTexture=media_path+selected,
                                                   textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
@@ -163,7 +163,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.addControl(self.button_anime)
         self.buttons.append(self.button_anime)
         posy += space
-        label = 'Infantiles'
+        label = config.get_localized_string(70018)
         self.button_infantil = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                      alignment=0x00000000, noFocusTexture='',
                                                      focusTexture=media_path+selected, textColor=textcolor,
@@ -171,7 +171,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.addControl(self.button_infantil)
         self.buttons.append(self.button_infantil)
         posy += space
-        label = 'Documentales'
+        label = config.get_localized_string(70019)
         self.button_docu = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                      alignment=0x00000000, noFocusTexture='',
                                                      focusTexture=media_path + selected, textColor=textcolor,
@@ -180,7 +180,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.buttons.append(self.button_docu)
         posy += space
 
-        label = 'Terror'
+        label = config.get_localized_string(59978)
         self.button_terror = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                    alignment=0x00000000, noFocusTexture='',
                                                    focusTexture=media_path+selected, textColor=textcolor,
@@ -188,24 +188,25 @@ class Main(xbmcgui.WindowXMLDialog):
         self.addControl(self.button_terror)
         self.buttons.append(self.button_terror)
 
+        if channelselector.auto_filter() == 'esp':
+            posy += space
+            label = config.get_localized_string(59981)
+            self.button_lat = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
+                                                    noFocusTexture='', focusTexture=media_path+selected,
+                                                    textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
+                                                    textOffsetY=offsety)
+            self.addControl(self.button_lat)
+            self.buttons.append(self.button_lat)
+            posy += space
+            label = config.get_localized_string(70014)
+            self.button_cast = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
+                                                     noFocusTexture='', focusTexture=media_path + selected,
+                                                     textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
+                                                     textOffsetY=offsety)
+            self.addControl(self.button_cast)
+            self.buttons.append(self.button_cast)
         posy += space
-        label = 'Latino'
-        self.button_lat = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
-                                                noFocusTexture='', focusTexture=media_path+selected,
-                                                textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
-                                                textOffsetY=offsety)
-        self.addControl(self.button_lat)
-        self.buttons.append(self.button_lat)
-        posy += space
-        label = 'Castellano'
-        self.button_cast = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
-                                                 noFocusTexture='', focusTexture=media_path + selected,
-                                                 textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
-                                                 textOffsetY=offsety)
-        self.addControl(self.button_cast)
-        self.buttons.append(self.button_cast)
-        posy += space
-        label = 'Torrents'
+        label = config.get_localized_string(70015)
         self.button_torrent = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                     alignment=0x00000000, noFocusTexture='',
                                                     focusTexture=media_path+selected, textColor=textcolor,
@@ -214,9 +215,9 @@ class Main(xbmcgui.WindowXMLDialog):
         self.buttons.append(self.button_torrent)
 
         start_page_item = get_start_page()
-        if config.get_setting('start_page') and start_page_item.channel =='news':
+        if config.get_setting('start_page') and start_page_item.channel == 'news':
             posy += space
-            label = 'Canales Activos'
+            label = config.get_localized_string(70016)
             self.button_config = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                        alignment=0x00000000, noFocusTexture='',
                                                        focusTexture=media_path+selected, textColor=conditional_textcolor,
@@ -225,7 +226,7 @@ class Main(xbmcgui.WindowXMLDialog):
             self.buttons.append(self.button_config)
 
         posy += space*2
-        label = 'Buscar'
+        label = config.get_localized_string(60423)
         self.button_buscar = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                    noFocusTexture='', focusTexture=media_path + selected,
                                                    textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
@@ -233,7 +234,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.addControl(self.button_buscar)
         self.buttons.append(self.button_buscar)
         posy += space
-        label = 'Buscar Actor'
+        label = config.get_localized_string(70036)
         self.button_actor = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                    noFocusTexture='', focusTexture=media_path + selected,
                                                    textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
@@ -242,7 +243,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.buttons.append(self.button_actor)
 
         posy += space
-        label = 'Donde Buscar'
+        label = config.get_localized_string(70010)
         self.button_config_search = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                        alignment=0x00000000,
                                                    noFocusTexture='', focusTexture=media_path + selected,
@@ -263,31 +264,31 @@ class Main(xbmcgui.WindowXMLDialog):
 
         control = self.getControl(control).getLabel()
 
-        if control == 'Inicio':
+        if control == config.get_localized_string(70663):
             new_item = get_start_page()
-        elif control == u'Menú Clasico':
+        elif control == config.get_localized_string(70009):
             new_item = Item(channel='', action='getmainlist', title='Menú Alfa')
-        elif control == 'Configuracion':
+        elif control == config.get_localized_string(30100):
             new_item = Item(channel='setting', action="settings")
-        elif control == 'Peliculas':
+        elif control == config.get_localized_string(60681):
             new_item = Item(channel='news', action="novedades", extra="peliculas", mode='silent')
-        elif control == 'Series':
+        elif control == config.get_localized_string(60682):
             new_item = Item(channel='news', action="novedades", extra="series", mode='silent')
-        elif control == 'Anime':
+        elif control == config.get_localized_string(60683):
             new_item = Item(channel='news', action="novedades", extra="anime", mode='silent')
-        elif control == 'Infantiles':
+        elif control == config.get_localized_string(70018):
             new_item = Item(channel='news', action="novedades", extra="infantiles", mode='silent')
-        elif control == 'Documentales':
+        elif control == config.get_localized_string(70019):
             new_item = Item(channel='news', action="novedades", extra="documentales", mode='silent')
-        elif control == 'Terror':
+        elif control == config.get_localized_string(59978):
             new_item = Item(channel='news', action="novedades", extra="terror", mode='silent')
-        elif control == 'Castellano':
+        elif control == config.get_localized_string(59981):
             new_item = Item(channel='news', action="novedades", extra="castellano", mode='silent')
-        elif control == 'Latino':
+        elif control == config.get_localized_string(70014):
             new_item = Item(channel='news', action="novedades", extra="latino", mode='silent')
-        elif control == 'Torrents':
+        elif control == config.get_localized_string(70015):
             new_item = Item(channel='news', action="novedades", extra="torrent", mode='silent')
-        elif control == 'Canales Activos':
+        elif control == config.get_localized_string(70016):
             menu_node = jsontools.get_node_from_file('menu_settings_data.json', 'menu')
             if 'categoria actual' in menu_node:
                 category = menu_node['categoria actual']

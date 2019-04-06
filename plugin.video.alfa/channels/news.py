@@ -350,9 +350,7 @@ def novedades(item):
             return ret
     else:
         if mode != 'set_cache':
-            no_channels = platformtools.dialog_ok('Novedades - %s'%item.extra, 'No se ha definido ningun canal para la '
-                                                                               'busqueda.','Utilice el menu contextual '
-                                                                                           'para agregar al menos uno')
+            no_channels = platformtools.dialog_ok(config.get_localized_string(30130) + ' - ' + item.extra, config.get_localized_string(70661), config.get_localized_string(70662))
         return
 
 

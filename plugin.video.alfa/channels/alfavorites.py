@@ -166,7 +166,7 @@ def addFavourite(item):
     alfav.user_favorites[i_perfil]['items'].append(item.tourl())
     alfav.save()
 
-    platformtools.dialog_notification(config.get_localized_string(70531), 'Carpeta: %s' % alfav.user_favorites[i_perfil]['title'])
+    platformtools.dialog_notification(config.get_localized_string(70531), config.get_localized_string(70532) % alfav.user_favorites[i_perfil]['title'])
     
     return True
 

@@ -11,7 +11,7 @@
 		{
 		  "id": "include_in_global_search",
 		  "type": "bool",
-		  "label": "Incluir en busqueda global",
+		  "label": "Includi in Ricerca Globale",
 		  "default": true,
 		  "enabled": true,
 		  "visible": true
@@ -43,7 +43,7 @@
     {
       "id": "comprueba_enlaces_num",
       "type": "list",
-      "label": "Numero de link da verificare",
+      "label": "Numero di link da verificare",
       "default": 1,
       "enabled": true,
       "visible": "eq(-1,true)",
