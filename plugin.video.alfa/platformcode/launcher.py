@@ -43,7 +43,18 @@ def run(item=None):
             if config.get_setting("start_page"):
 
                 if not config.get_setting("custom_start"):
-                    category = config.get_setting("category").lower()
+                    dictCategory = {
+                        config.get_localized_string(70137): 'peliculas',
+                        config.get_localized_string(30123): 'series',
+                        config.get_localized_string(30124): 'anime',
+                        config.get_localized_string(70018): 'infantiles',
+                        config.get_localized_string(60513): 'documentales',
+                        config.get_localized_string(70013): 'terror',
+                        config.get_localized_string(30124): 'castellano',
+                        config.get_localized_string(59976): 'latino',
+                        config.get_localized_string(70171): 'torrent',
+                    }
+                    category = dictCategory[config.get_setting("category")]
                     item = Item(channel="news", action="novedades", extra=category, mode = 'silent')
                 else:
                     from channels import side_menu
