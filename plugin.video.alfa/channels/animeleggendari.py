@@ -178,7 +178,7 @@ def episodios(item):
                      contentType=item.contentType,
                      title="Episodio: %s" % scrapednumber,
                      text_color="azure",
-                     fulltitle="%s %s %s " % (support.color(item.title, "deepskyblue"), support.color("|", "azure"), color(scrapednumber, "orange")),
+                     fulltitle="%s %s %s " % (support.color(item.title, "deepskyblue"), support.color("|", "azure"), support.color(scrapednumber, "orange")),
                      url=scrapedurl,
                      thumbnail=item.thumbnail,
                      folder=True))
