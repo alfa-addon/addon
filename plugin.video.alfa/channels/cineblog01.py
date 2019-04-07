@@ -121,7 +121,7 @@ def peliculas(item):
 
 
 def episodios(item):
-    support.log()
+    item.contentType = 'episode'
     return support.scrape(item, patron_block=[r'<article class="sequex-post-content">(.*?)<\/article>',
                                               r'<div class="sp-head[a-z ]*?" title="Espandi">[^<>]*?</div>(.*?)<div class="spdiv">\[riduci\]</div>'],
                           patron='(?:<p>)?([0-9]+&#215;[0-9]+)(.*?)(?:</p>|<br)', listGroups=['title', 'url'])

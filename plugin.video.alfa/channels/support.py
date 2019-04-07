@@ -372,15 +372,19 @@ def videolibrary(itemlist, item, typography=''):
     if item.contentType != 'episode':
         action = 'add_pelicula_to_library'
         extra = 'findvideos'
+        contentType = 'movie'
     else:
         action = 'add_serie_to_library'
         extra = 'episodios'
+        contentType = 'tvshow'
 
     title = typo(config.get_localized_string(30161) + ' ' + typography)
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
             Item(channel=item.channel,
                  title=title,
+                 contentType=contentType,
+                 contentSerieName=item.fulltitle if contentType == 'tvshow' else '',
                  url=item.url,
                  action=action,
                  extra=extra,

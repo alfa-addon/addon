@@ -46,8 +46,8 @@ def check_user_home(item):
     else:
         item = Item(channel="channelselector", action="getmainlist", viewmode="movie")
         from platformcode import platformtools
-        undefined_start = platformtools.dialog_ok('Inicio Personalizado', 'No has definido ninguna seccion para mostrar '
-                                                         'en tu inicio', 'Utiliza el menu contextual para definir una')
+        undefined_start = platformtools.dialog_ok(config.get_localized_string(70664), config.get_localized_string(70665),
+                                                  config.get_localized_string(70666))
     return item
 
 def set_custom_start(item):

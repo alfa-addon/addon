@@ -1237,6 +1237,10 @@ msgctxt "#60297"
 msgid "Find %s possible matches"
 msgstr "Trovate %s possibili corrispondenze"
 
+msgctxt "#60298"
+msgid "[%s]: Select the correct TV series"
+msgstr "[%s]: Seleziona la serie TV corretta"
+
 msgctxt "#60299"
 msgid "Not found in the language '%s'"
 msgstr "Non trovato nella lingua '%s'"
@@ -5325,3 +5329,15 @@ msgstr "Usa il menu contestuale e aggiungine almeno uno"
 msgctxt "#70663"
 msgid "Home page"
 msgstr "Pagina iniziale"
+
+msgctxt "#70664"
+msgid "Custom Start"
+msgstr "Inizio personalizzato"
+
+msgctxt "#70665"
+msgid "You have not defined any section to show in home page"
+msgstr "Non hai selezionato nessuna sezione da mostrare nella pagina iniziale"
+
+msgctxt "#70666"
+msgid "Use the context menu to define one"
+msgstr "Usa il menù contestuale per aggiungerne una"
