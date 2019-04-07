@@ -3,7 +3,7 @@
     "name": "WatchSeries",
     "active": true,
     "adult": false,
-    "language": ["vo"],
+    "language": [],
     "thumbnail": "https://www2.watchmovie.io/img/icon/new-logo.png",
     "categories": [
     "movie",
