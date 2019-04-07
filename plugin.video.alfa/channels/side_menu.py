@@ -67,7 +67,19 @@ def set_custom_start(item):
 def get_start_page():
     logger.info()
 
-    category = config.get_setting('category').lower()
+    dictCategory = {
+        config.get_localized_string(70137): 'peliculas',
+        config.get_localized_string(30123): 'series',
+        config.get_localized_string(30124): 'anime',
+        config.get_localized_string(70018): 'infantiles',
+        config.get_localized_string(60513): 'documentales',
+        config.get_localized_string(70013): 'terror',
+        config.get_localized_string(30124): 'castellano',
+        config.get_localized_string(59976): 'latino',
+        config.get_localized_string(70171): 'torrent',
+    }
+    category = dictCategory[config.get_setting("category")]
+
     custom_start= config.get_setting("custom_start")
     #if category != 'definido':
     if custom_start == False:
@@ -139,7 +151,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.addControl(self.button_config)
         self.buttons.append(self.button_config)
         posy += space*2
-        label = config.get_localized_string(60681)
+        label = config.get_localized_string(30122)
         self.button_peliculas = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                       alignment=0x00000000, noFocusTexture='',
                                                       focusTexture=media_path+selected, textColor=textcolor,
@@ -147,7 +159,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.addControl(self.button_peliculas)
         self.buttons.append(self.button_peliculas)
         posy += space
-        label = config.get_localized_string(60682)
+        label = config.get_localized_string(70017)
         self.button_series = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                    alignment=0x00000000, noFocusTexture='',
                                                    focusTexture=media_path+selected, textColor=textcolor,
@@ -155,7 +167,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.addControl(self.button_series)
         self.buttons.append(self.button_series)
         posy += space
-        label = config.get_localized_string(60683)
+        label = config.get_localized_string(30124)
         self.button_anime = xbmcgui.ControlButton(posx, posy, width, height, label, font=font, alignment=0x00000000,
                                                   noFocusTexture='', focusTexture=media_path+selected,
                                                   textColor=textcolor, shadowColor=shadow, textOffsetX=offsetx,
@@ -180,7 +192,7 @@ class Main(xbmcgui.WindowXMLDialog):
         self.buttons.append(self.button_docu)
         posy += space
 
-        label = config.get_localized_string(59978)
+        label = config.get_localized_string(70013)
         self.button_terror = xbmcgui.ControlButton(posx, posy, width, height, label, font=font,
                                                    alignment=0x00000000, noFocusTexture='',
                                                    focusTexture=media_path+selected, textColor=textcolor,
@@ -270,17 +282,17 @@ class Main(xbmcgui.WindowXMLDialog):
             new_item = Item(channel='', action='getmainlist', title='Menú Alfa')
         elif control == config.get_localized_string(30100):
             new_item = Item(channel='setting', action="settings")
-        elif control == config.get_localized_string(60681):
+        elif control == config.get_localized_string(30122):
             new_item = Item(channel='news', action="novedades", extra="peliculas", mode='silent')
-        elif control == config.get_localized_string(60682):
+        elif control == config.get_localized_string(70017):
             new_item = Item(channel='news', action="novedades", extra="series", mode='silent')
-        elif control == config.get_localized_string(60683):
+        elif control == config.get_localized_string(30124):
             new_item = Item(channel='news', action="novedades", extra="anime", mode='silent')
         elif control == config.get_localized_string(70018):
             new_item = Item(channel='news', action="novedades", extra="infantiles", mode='silent')
         elif control == config.get_localized_string(70019):
             new_item = Item(channel='news', action="novedades", extra="documentales", mode='silent')
-        elif control == config.get_localized_string(59978):
+        elif control == config.get_localized_string(70013):
             new_item = Item(channel='news', action="novedades", extra="terror", mode='silent')
         elif control == config.get_localized_string(59981):
             new_item = Item(channel='news', action="novedades", extra="castellano", mode='silent')
