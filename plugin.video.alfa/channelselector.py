@@ -353,7 +353,7 @@ def thumb(itemlist=[]):
                      'now_playing':['cinema', 'in sala'],
                      'channels_anime':['anime'],
                      'genres':['genere', 'generi', 'categorie', 'categoria'],
-                     'channels_animation': ['animazione'],
+                     'channels_animation': ['animazione', 'cartoni'],
                      'channels_adventure': ['avventura'],
                      'channels_action':['azione'],
                      'channels_biographical':['biografico'],
@@ -367,13 +367,15 @@ def thumb(itemlist=[]):
                      'channels_war':['guerra'],
                      'horror':['horror'],
                      'channels_musical':['musical'],
-                     'channels_noir':['noir', 'Mistero'],
+                     'channels_mistery':['mistero', 'giallo'],
+                     'channels_noir':['noir'],
                      'channels_thriller':['thriller'],
                      'channels_western':['western'],
                      'channels_vos':['sub','sub-ita'],
                      'channels_romance':['romantico','sentimentale'],
                      'channels_family':['famiglia','famiglie'],
-                     'channels_historical':['storico']
+                     'channels_historical':['storico'],
+                     'autoplay':[config.get_localized_string(60071)]
                     }    
 
         suffix_dict = {'_hd':['hd','altadefinizione','alta definizione'],
