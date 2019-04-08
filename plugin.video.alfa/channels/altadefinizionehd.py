@@ -102,7 +102,7 @@ def newest(categoria):
     itemlist = []
     item = Item()
     try:
-        if categoria == "film":
+        if categoria == "peliculas":
             item.url = host
             item.action = "video"
             itemlist = video(item)

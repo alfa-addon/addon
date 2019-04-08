@@ -30,7 +30,7 @@ def mainlist(item):
     support.menu(itemlist, 'Per Genere submenu', 'menu', host, args='Film')
     support.menu(itemlist, 'Per Anno submenu', 'menu', host, args='Anno')
     support.menu(itemlist, 'Sub-IIA', 'peliculas', host + "/sub-ita/")
-    support.menu(itemlist, 'Cerca...', 'search', host, 'movie', 'search')    
+    support.menu(itemlist, 'Cerca...', 'search', host, 'movie')    
 
     autoplay.init(item.channel, list_servers, list_quality)
     autoplay.show_option(item.channel, itemlist)
@@ -41,6 +41,7 @@ def mainlist(item):
 def search(item, texto):
     support.log("search ", texto)
 
+    item.extra = 'search'
     item.url = host + "/?s=" + texto
 
     try:
@@ -53,6 +54,28 @@ def search(item, texto):
             logger.error("%s" % line)
         return []
 
+def newest(categoria):
+    support.log(categoria)
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == "peliculas":
+            item.url = host + "/nuove-uscite/"
+            item.action = "peliculas"
+            itemlist = peliculas(item)
+
+            if itemlist[-1].action == "peliculas":
+                itemlist.pop()
+
+    # Continua la ricerca in caso di errore 
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist
+
 
 def menu(item):
     support.log()
@@ -61,7 +84,7 @@ def menu(item):
 
 def peliculas(item):
     support.log()
-    if item.args == 'search':
+    if item.extra == 'search':
         itemlist = support.scrape(item, r'<a href="([^"]+)">\s*<div[^=]+=[^=]+=[^=]+=[^=]+=[^=]+="(.*?)"[^>]+>[^<]+<[^>]+>\s*<h[^=]+="titleFilm">(.*?)<', ['url', 'thumb', 'title'], headers, patronNext='<a class="next page-numbers" href="([^"]+)">')
     else:
         itemlist = support.scrape(item, r'<img width[^s]+src="([^"]+)[^>]+>[^>]+>[^>]+>[^>]+><a href="([^"]+)">([^<]+)<\/a>[^>]+>[^>]+>[^>]+>(?:[^>]+>|)[^I]+IMDB\:\s*([^<]+)<', ['thumb', 'url', 'title', 'rating'], headers, patronNext='<a class="next page-numbers" href="([^"]+)">')
