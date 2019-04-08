@@ -7,17 +7,14 @@ from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
 
-headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0"}
+headers = {"User-Agent":"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0"}
 
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    data = httptools.downloadpage(page_url)
-    if data.code==404:
-        data = httptools.downloadpage(page_url, headers=headers, add_referer=True)
-    data = data.data
+    data = httptools.downloadpage(page_url, headers=headers, cookies=False).data
 
-    if "File was deleted" in data or "Not Found" in data or "File was locked by administrator" in data:
+    if "File was deleted" in data or "<noscript>" not in data or "File was locked by administrator" in data:
         return False, "[Gamovideo] El archivo no existe o ha sido borrado"
     if "Video is processing now" in data:
         return False, "[Gamovideo] El video está procesándose en estos momentos. Inténtelo mas tarde."
@@ -28,10 +25,7 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
-    data = httptools.downloadpage(page_url)
-    if data.code==404:
-        data = httptools.downloadpage(page_url, headers=headers, add_referer=True)
-    data = data.data
+    data = httptools.downloadpage(page_url, headers=headers, cookies=False).data
     packer = scrapertools.find_single_match(data,
                                             "<script type='text/javascript'>(eval.function.p,a,c,k,e,d..*?)</script>")
     if packer != "":
