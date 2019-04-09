@@ -86,14 +86,14 @@ def check_addon_updates(verbose=False):
         if data == '': 
             logger.info('No se encuentran actualizaciones del addon')
             if verbose:
-                platformtools.dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
+                platformtools.dialog_notification(config.get_localized_string(70667), config.get_localized_string(70668))
             return False
 
         data = jsontools.load(data)
         if 'addon_version' not in data or 'fix_version' not in data: 
             logger.info('No hay actualizaciones del addon')
             if verbose:
-                platformtools.dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
+                platformtools.dialog_notification(config.get_localized_string(70667), config.get_localized_string(70668))
             return False
 
         # Comprobar versión que tiene instalada el usuario con versión de la actualización
@@ -102,16 +102,24 @@ def check_addon_updates(verbose=False):
         if current_version != data['addon_version']:
             logger.info('No hay actualizaciones para la versión %s del addon' % current_version)
             if verbose:
-                platformtools.dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
+                platformtools.dialog_notification(config.get_localized_string(70667), config.get_localized_string(70668))
             return False
 
         if os.path.exists(last_fix_json):
-            lastfix = jsontools.load(filetools.read(last_fix_json))
-            if lastfix['addon_version'] == data['addon_version'] and lastfix['fix_version'] == data['fix_version']:
-                logger.info('Ya está actualizado con los últimos cambios. Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
-                if verbose:
-                    platformtools.dialog_notification('Alfa ya está actualizado', 'Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
-                return False
+            try:
+                lastfix =  {} 
+                lastfix = jsontools.load(filetools.read(last_fix_json))
+                if lastfix['addon_version'] == data['addon_version'] and lastfix['fix_version'] == data['fix_version']:
+                    logger.info(config.get_localized_string(70669) % (data['addon_version'], data['fix_version']))
+                    if verbose:
+                        platformtools.dialog_notification(config.get_localized_string(70667), config.get_localized_string(70671) % (data['addon_version'], data['fix_version']))
+                    return False
+            except:
+                if lastfix:
+                    logger.error('last_fix.json: ERROR en: ' + str(lastfix))
+                else:
+                    logger.error('last_fix.json: ERROR desconocido')
+                lastfix =  {}
 
         # Descargar zip con las actualizaciones
         # -------------------------------------
@@ -139,14 +147,14 @@ def check_addon_updates(verbose=False):
         if 'files' in data: data.pop('files', None)
         filetools.write(last_fix_json, jsontools.dump(data))
         
-        logger.info('Addon actualizado correctamente a %s.fix%d' % (data['addon_version'], data['fix_version']))
+        logger.info(config.get_localized_string(70672) % (data['addon_version'], data['fix_version']))
         if verbose:
-            platformtools.dialog_notification('Alfa actualizado a', 'Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
+            platformtools.dialog_notification(config.get_localized_string(70673), config.get_localized_string(70671) % (data['addon_version'], data['fix_version']))
         return True
 
     except:
         logger.error('Error al comprobar actualizaciones del addon!')
         logger.error(traceback.format_exc())
         if verbose:
-            platformtools.dialog_notification('Alfa actualizaciones', 'Error al comprobar actualizaciones')
+            platformtools.dialog_notification(config.get_localized_string(70674), config.get_localized_string(70675))
         return False

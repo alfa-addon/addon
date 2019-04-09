@@ -5217,3 +5217,507 @@ msgstr "Per Gèneres"
 msgctxt "#70561"
 msgid "Search Similar"
 msgstr "Cerca similars"
+
+msgctxt "#70562"
+msgid "Autoplay (Enable autoplay on all supported channels)"
+msgstr "Autoplay (Habilitar autoplay en todos los canales soportados)"
+
+msgctxt "#70563"
+msgid "Italian"
+msgstr "Italiano"
+
+msgctxt "#70564"
+msgid "Enable Custom Theme"
+msgstr "Abilita Tema Personalizado"
+
+msgctxt "#70565"
+msgid "Custom Theme Path"
+msgstr "Percorso Tema Personalizado"
+
+msgctxt "#70566"
+msgid "VOSI (Original Subtitled Italian Version)"
+msgstr "VOSI (Versión Original Subtitulado Italiano)"
+
+msgctxt "#70567"
+msgid "Type of content:"
+msgstr "Tipo de contenido:"
+
+msgctxt "#70568"
+msgid "Languages:"
+msgstr "Idiomas"
+
+msgctxt "#70569"
+msgid "Update external addon Quasar:"
+msgstr "Actualizar addon externo Quasar:"
+
+msgctxt "#70570"
+msgid "Search with current selection"
+msgstr "Buscar con la selección actual"
+
+msgctxt "#70571"
+msgid "Modify current selection"
+msgstr "Modificar selección actual"
+
+msgctxt "#70572"
+msgid "Modify from All"
+msgstr "Modificar partiendo de Todos"
+
+msgctxt "#70573"
+msgid "Modify starting from None"
+msgstr "Modificar partiendo de Ninguno"
+
+msgctxt "#70574"
+msgid "Modify starting from Castellano"
+msgstr "Modificar partiendo de Castellano"
+
+msgctxt "#70575"
+msgid "Modify starting from Latino"
+msgstr "Modificar partiendo de Latino"
+
+msgctxt "#70576"
+msgid "Modify starting from Italian"
+msgstr "Modificar partiendo de Italiano"
+
+msgctxt "#70577"
+msgid "Modify starting from "
+msgstr "Modificar partiendo de "
+
+msgctxt "#70578"
+msgid "To avoid waiting too long when a server does not respond:"
+msgstr "Para evitar esperar demasiado cuando un servidor no responde:"
+
+msgctxt "#70579"
+msgid "Settings of urgent updates for Alfa modules (Quick Fixes):"
+msgstr "Gestión de actualizaciones urgentes de módulos de Alfa (Quick Fixes):"
+
+msgctxt "#70580"
+msgid "Timeout (maximum waiting time)"
+msgstr "Timeout (tiempo de espera máximo)"
+
+msgctxt "#70581"
+msgid "Interval between automatic updates (hours)"
+msgstr "Intervalo entre actualizaciones automáticas (horas)"
+
+msgctxt "#70582"
+msgid "Do you want to see messages about the updates?"
+msgstr "¿Quiere ver mensajes de las actualizaciones?"
+
+msgctxt "#70583"
+msgid "Management of updates of other addons related to Alfa:"
+msgstr "Gestión de actualizaciones de otros addon relacionados con Alfa:"
+
+msgctxt "#70584"
+msgid "Do you want to update Quasar to avoid errors?"
+msgstr "¿Quiere actualizar Quasar para evitar errores?"
+
+msgctxt "#70585"
+msgid "RENUMERAR"
+msgstr ""
+
+msgctxt "#70586"
+msgid "Set up series number..."
+msgstr "Configurar renumeración en series..."
+
+msgctxt "#70587"
+msgid "Set up"
+msgstr "Configurar"
+
+msgctxt "#70588"
+msgid "No series found, look for a series and click on contextual menu"
+msgstr "No se han encontrado series, busca una serie y pulsa en menú contextual"
+
+msgctxt "#70589"
+msgid "Something found:"
+msgstr "ha encontrado algo:"
+
+msgctxt "#70590"
+msgid "Are you sure you want to eliminate renumbering?"
+msgstr "¿Está seguro que desea eliminar renumeración?"
+
+msgctxt "#70591"
+msgid "Press 'Yes' to remove the renumbering of"
+msgstr "Pulse 'Si' para eliminar la renumeración de"
+
+msgctxt "#70592"
+msgid "press 'No' or close the window to do nothing."
+msgstr "pulse 'No' o cierre la ventana para no hacer nada."
+
+msgctxt "#70593"
+msgid "Error saving to disk"
+msgstr "Error al guardar en disco"
+
+msgctxt "#70594"
+msgid "Enter the season number"
+msgstr "Introduzca el número de la temporada"
+
+msgctxt "#70595"
+msgid "Season is not added"
+msgstr "No se añade la temporada"
+
+msgctxt "#70596"
+msgid "It already exists, edit the existing"
+msgstr "Ya existe, edíte la existente"
+
+msgctxt "#70597"
+msgid "Enter the number of episodes since the start of the season"
+msgstr "Introduzca el número de episodio desde que empieza la temporada"
+
+msgctxt "#70598"
+msgid "Episodes:"
+msgstr "Episodios:"
+
+msgctxt "#70599"
+msgid "Remove"
+msgstr "Eliminar"
+
+msgctxt "#70600"
+msgid "Add Season"
+msgstr "Añadir temporada"
+
+msgctxt "#70601"
+msgid "Update from the Internet:"
+msgstr "Actualización desde internet:"
+
+msgctxt "#70602"
+msgid "The first season that is added always starts in \"0 \" episodes, the second season that is added starts in the total number of episodes of the first season, the third season will be the sum of the episodes of the previous seasons and so on.\n [COLOR blue] \nSerial example divided into several seasons: \n\nFairy Tail: \n - SEASON 1: EPISODE 48 -> [season 1, episode: 0] \n - SEASON 2: EPISODE 48 - -> [season 2, episode: 48] \n - SEASON 3: EPISODE 54 -> [season 3, episode: 96 ([48 = season2] + [48 = season1])] \n - SEASON 4: EPISODE 175 -> [season 4: episode: 150 ([54 = season3] + [48 = season2] + [48 = season3])] [/COLOR] \n [COLOR green] \nExample of a series that continues in the season of the original: \n \nFate/Zero 2nd Season: \n - SEASON 1: EPISODE 12 -> [season 1, episode: 13] [/COLOR] \n [COLOR blue] \nExample example which is the second Season of the original: \n \nFate/kaleid liner Prism☆Illya 2wei!: \n - SEASON 1: EPISODE 12 -> [season 2, episode: 0] [/COLOR] \n"
+msgstr "La primera temporada que se añade siempre empieza en \"0\" episodios, la segunda temporada que se añade empieza en el número total de episodios de la primera temporada, la tercera temporada será la suma de los episodios de las temporadas previas y así sucesivamente.\n[COLOR blue]\nEjemplo de serie divida en varias temporadas:\n\nFairy Tail:\n  - SEASON 1: EPISODE 48 --> [season 1, episode: 0]\n  - SEASON 2: EPISODE 48 --> [season 2, episode: 48]\n  - SEASON 3: EPISODE 54 --> [season 3, episode: 96 ([48=season2] + [48=season1])]\n  - SEASON 4: EPISODE 175 --> [season 4: episode: 150 ([54=season3] + [48=season2] + [48=season3])][/COLOR]\n[COLOR green]\nEjemplo de serie que continua en la temporada de la original:\n\nFate/Zero 2nd Season:\n  - SEASON 1: EPISODE 12 --> [season 1, episode: 13][/COLOR]\n[COLOR blue]\nEjemplo de serie que es la segunda temporada de la original:\n\nFate/kaleid liner Prisma☆Illya 2wei!:\n  - SEASON 1: EPISODE 12 --> [season 2, episode: 0][/COLOR]\n"
+
+msgctxt "#70603"
+msgid "Manage link lists"
+msgstr "Gestionar listas de enlaces"
+
+msgctxt "#70604"
+msgid "Set as active list"
+msgstr "Establecer como lista activa"
+
+msgctxt "#70605"
+msgid "Share on tinyupload"
+msgstr "Compartir en tinyupload"
+
+msgctxt "#70606"
+msgid "Delete list"
+msgstr "Eliminar lista"
+
+msgctxt "#70607"
+msgid "List informations"
+msgstr "Información de la lista"
+
+msgctxt "#70608"
+msgid "Link lists"
+msgstr "Listas de enlaces"
+
+msgctxt "#70609"
+msgid "File_id of tinyupload link"
+msgstr "Código de descarga de tinyupload"
+
+msgctxt "#70610"
+msgid "URL where download the list"
+msgstr "URL de dónde descargar la lista"
+
+msgctxt "#70611"
+msgid ""
+"-You can have different lists but just one of them is active. The active list is the same shown on “my links” and the same where the added links are stored."
+"[CR]- You can change an active list and moving from a list to another."
+"[CR]- It’s possible to share a list through tinyupload and send his code to your friends for downloading it ."
+"[CR]- You can download a list if you have a tinyupload code or an url with the code."
+"[CR]- If you want doing it manually, you can copy a list alfavorites-*.json that you added on the addon’s userdata folder; and you can upload these json on some server and send their url to your friends for sharing."
+"[CR]- The tinyupload.com service is used for sharing addon lists because it is free, private and quite fast. The files stay saved for 100 days they are not downloaded. They are private so you need a code for the access. The service has a limitation of 50MB but this is enough for the lists."
+msgstr ""
+"- Puedes tener diferentes listas, pero solamente una de ellas está activa. La lista activa es la que se muestra en "Mis enlaces" y dónde se guardan los enlaces que se vayan añadiendo."
+"[CR]- Puedes ir cambiando la lista activa y alternar entre las que tengas."
+"[CR]- Puedes compartir una lista a través de tinyupload y luego pasarle el código resultante a tus amistades para que se la puedan bajar."
+"[CR]- Puedes descargar una lista si te pasan un código de tinyupload o una url dónde esté alojada."
+"[CR]- Si lo quieres hacer manualmente, puedes copiar una lista alfavorites-*.json que te hayan pasado a la carpeta userdata del addon. Y puedes subir estos json a algún servidor y pasar sus urls a tus amigos para compartirlas."
+"[CR]- Para compartir listas desde el addon se utiliza el servicio de tinyupload.com por ser gratuíto, privado y relativamente rápido. Los ficheros se guardan mientras no pasen 100 días sin que nadie lo descargue, son privados porque requieren un código para acceder a ellos, y la limitación de 50MB es suficiente para las listas."
+
+msgctxt "#70612"
+msgid "Name of the list"
+msgstr "Nombre de la lista"
+
+msgctxt "#70613"
+msgid "Error, there is already a list with this name!"
+msgstr "Error, ya existe una lista con este nombre!"
+
+msgctxt "#70614"
+msgid "Error, unable to save list"
+msgstr "Error, no se puede grabar la lista!"
+
+msgctxt "#70615"
+msgid "Repeated link"
+msgstr "Enlace repetido"
+
+msgctxt "#70616"
+msgid "You already have this link in the folder"
+msgstr "Ya tienes este enlace en la carpeta"
+
+msgctxt "#70617"
+msgid "Modify link"
+msgstr "Modificar enlace"
+
+msgctxt "#70618"
+msgid "Delete folder"
+msgstr "Eliminar carpeta"
+
+msgctxt "#70619"
+msgid "Delete the folder and the links it contains?"
+msgstr "¿Borrar la carpeta y los enlaces que contiene?"
+
+msgctxt "#70620"
+msgid "Change title"
+msgstr "Cambiar título"
+
+msgctxt "#70621"
+msgid "Change color"
+msgstr "Cambiar color"
+
+msgctxt "#70622"
+msgid "Change thumbnail"
+msgstr "Cambiar thumbnail"
+
+msgctxt "#70623"
+msgid "Move to another folder"
+msgstr "Mover a otra carpeta"
+
+msgctxt "#70624"
+msgid "Move to another list"
+msgstr "Mover a otra lista"
+
+msgctxt "#70625"
+msgid "Move up all"
+msgstr "Mover arriba del todo"
+
+msgctxt "#70626"
+msgid "Move up"
+msgstr "Mover hacia arriba"
+
+msgctxt "#70627"
+msgid "Move down"
+msgstr "Mover hacia abajo"
+
+msgctxt "#70628"
+msgid "Move down all"
+msgstr "Mover abajo del todo"
+
+msgctxt "#70629"
+msgid "Rename list"
+msgstr "Cambiar nombre de la lista"
+
+msgctxt "#70630"
+msgid "Error, list not found!"
+msgstr "Error, no se encuentra la lista!"
+
+msgctxt "#70631"
+msgid "Error, list could not be renamed"
+msgstr "Error, no se ha podido renombrar la lista"
+
+msgctxt "#70632"
+msgid "The active list can not be deleted"
+msgstr "La lista activa no se puede eliminar"
+
+msgctxt "#70633"
+msgid "You are sure do you want to delete the list"
+msgstr "Estás seguro de querer borrar la lista"
+
+msgctxt "#70634"
+msgid "Created at"
+msgstr "Creada el"
+
+msgctxt "#70635"
+msgid "and modified at"
+msgstr "y modificada en"
+
+msgctxt "#70636"
+msgid "Downloaded at"
+msgstr "Descargada el"
+
+msgctxt "#70637"
+msgid "since"
+msgstr "desde"
+
+msgctxt "#70638"
+msgid "Shared in tinyupload at"
+msgstr "Compartida en tinyupload el"
+
+msgctxt "#70639"
+msgid "with the code"
+msgstr "con el código"
+
+msgctxt "#70640"
+msgid "Number of folders:"
+msgstr "Número de carpetas:"
+
+msgctxt "#70641"
+msgid "links"
+msgstr "enlaces"
+
+msgctxt "#70642"
+msgid "Create/download list / Info ..."
+msgstr "Crear/descargar lista / Info ..."
+
+msgctxt "#70643"
+msgid "Share list"
+msgstr "Compartir lista"
+
+msgctxt "#70644"
+msgid "Connecting with tinyupload"
+msgstr "Conectando con tinyupload ..."
+
+msgctxt "#70645"
+msgid "Uploading file"
+msgstr "Subiendo fichero"
+
+msgctxt "#70646"
+msgid "Wait a few seconds to finish uploading your list file to tinyupload"
+msgstr "Espera unos segundos a que acabe de subirse tu fichero de lista a tinyupload"
+
+msgctxt "#70647"
+msgid "Error, it was not possible to upload the file to tinyupload.com!"
+msgstr "Error, no se ha podido subir el fichero a tinyupload.com!"
+
+msgctxt "#70648"
+msgid "Upload file"
+msgstr "Subido fichero"
+
+msgctxt "#70649"
+msgid "at tinyupload.com. The code to download it is:"
+msgstr "a tinyupload.com. El código para descargarlo es:"
+
+msgctxt "#70650"
+msgid "List uploaded to tinyupload. If you want to share it with someone, pass it this code:"
+msgstr "Subida lista a tinyupload. Si quieres compartirla con alguien, pásale este código:"
+
+msgctxt "#70651"
+msgid "Create a new list"
+msgstr "Crear una nueva lista"
+
+msgctxt "#70652"
+msgid "Download list using tinyupload code"
+msgstr "Descargar lista con código de tinyupload"
+
+msgctxt "#70653"
+msgid "Download list using direct url"
+msgstr "Descargar lista de una url directa"
+
+msgctxt "#70654"
+msgid "Information about lists"
+msgstr "Información sobre las listas"
+
+msgctxt "#70655"
+msgid "Error, the list can not be downloaded!"
+msgstr "Error, no se puede descargar la lista!"
+
+msgctxt "#70656"
+msgid "Error, the downloaded file does not have the expected format!"
+msgstr "Error, el fichero descargado no tiene el formato esperado!"
+
+msgctxt "#70657"
+msgid "Name to save the list"
+msgstr "Nombre para guardar la lista"
+
+msgctxt "#70658"
+msgid "Overwrite file?"
+msgstr "Sobrescribir el fichero?"
+
+msgctxt "#70659"
+msgid "Error, the list can not be recorded!"
+msgstr "Error, no se puede grabar la lista!"
+
+msgctxt "#70660"
+msgid "Ok, list downloaded correctly"
+msgstr "Ok, lista descargada correctamente"
+
+msgctxt "#70661"
+msgid "No channel has been defined for the search"
+msgstr "No se ha definido ningun canal para la busqueda."
+
+msgctxt "#70662"
+msgid "Use the context menu to add at least one"
+msgstr "Utilice el menu contextual para agregar al menos uno"
+
+msgctxt "#70663"
+msgid "Home page"
+msgstr "Inicio"
+
+msgctxt "#70664"
+msgid "Custom Start"
+msgstr "Inicio Personalizado"
+
+msgctxt "#70665"
+msgid "You have not defined any section to show in home page"
+msgstr "No has definido ninguna seccion para mostrar en tu inicio"
+
+msgctxt "#70666"
+msgid "Use the context menu to define one"
+msgstr "Utiliza el menu contextual para definir una"
+
+msgctxt "#70667"
+msgid "Alpha is already updated"
+msgstr "Alfa ya está actualizado"
+
+msgctxt "#70668"
+msgid "There is no urgent update"
+msgstr "No hay ninguna actualización urgente"
+
+msgctxt "#70669"
+msgid "No updates for version %s of the addon"
+msgstr "No hay actualizaciones para la versión %s del addon"
+
+msgctxt "#70670"
+msgid "It is already updated with the latest changes. Version %s.fix%d"
+msgstr "Ya está actualizado con los últimos cambios. Versión %s.fix%d"
+
+msgctxt "#70671"
+msgid "Version %s.fix%d"
+msgstr "Versión %s.fix%d"
+
+msgctxt "#70672"
+msgid "Addon successfully updated to %s.fix %d"
+msgstr "Addon actualizado correctamente a %s.fix%d"
+
+msgctxt "#70673"
+msgid "Alpha updated to"
+msgstr "Alfa actualizado a"
+
+msgctxt "#70674"
+msgid "Alfa updates"
+msgstr "Alfa actualizaciones"
+
+msgctxt "#70675"
+msgid "Error checking updates"
+msgstr "Error al comprobar actualizaciones"
+
+msgctxt "#70676"
+msgid "Add a channel"
+msgstr "Agregar un canal"
+
+msgctxt "#70677"
+msgid "Episode"
+msgstr "%sx%s - Episodio %s"
+
+msgctxt "#70678"
+msgid "From local file"
+msgstr "Desde archivo local"
+
+msgctxt "#70679"
+msgid "From URL"
+msgstr "Desde URL"
+
+msgctxt "#70680"
+msgid "Alfa - (Community)"
+msgstr "Alfa - (Comunidad)"
+
+msgctxt "#70681"
+msgid "Enter the channel URL"
+msgstr "Ingresa la URL del canal"
+
+msgctxt "#70682"
+msgid "It is not possible to add this type of channel"
+msgstr "No es posible agregar este tipo de canal"
+
+msgctxt "#70683"
+msgid "%s has been added"
+msgstr "%s se ha agregado"
+
+msgctxt "#70684"
+msgid "%s has been deleted"
+msgstr "%s ha sido eliminado"

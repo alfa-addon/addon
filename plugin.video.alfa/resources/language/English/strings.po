@@ -10353,3 +10353,79 @@ msgstr ""
 msgctxt "#70666"
 msgid "Use the context menu to define one"
 msgstr ""
+
+msgctxt "#70667"
+msgid "Alpha is already updated"
+msgstr ""
+
+msgctxt "#70668"
+msgid "There is no urgent update"
+msgstr ""
+
+msgctxt "#70669"
+msgid "No updates for version %s of the addon"
+msgstr ""
+
+msgctxt "#70670"
+msgid "It is already updated with the latest changes. Version %s.fix%d"
+msgstr ""
+
+msgctxt "#70671"
+msgid "Version %s.fix%d"
+msgstr "Versión %s.fix%d"
+
+msgctxt "#70672"
+msgid "Addon successfully updated to %s.fix %d"
+msgstr ""
+
+msgctxt "#70673"
+msgid "Alpha updated to"
+msgstr ""
+
+msgctxt "#70674"
+msgid "Alfa updates"
+msgstr ""
+
+msgctxt "#70675"
+msgid "Error checking updates"
+msgstr ""
+
+msgctxt "#70676"
+msgid "Add a channel"
+msgstr ""
+
+msgctxt "#70677"
+msgid "Episode"
+msgstr "%sx%s - Episodio %s"
+
+msgctxt "#70678"
+msgid "From local file"
+msgstr ""
+
+msgctxt "#70679"
+msgid "From URL"
+msgstr ""
+
+msgctxt "#70680"
+msgid "Alfa - (Community)"
+msgstr "Alfa - (Comunidad)"
+
+msgctxt "#70681"
+msgid "Enter the channel URL"
+msgstr ""
+
+msgctxt "#70682"
+msgid "It is not possible to add this type of channel"
+msgstr ""
+
+msgctxt "#70683"
+msgid "%s has been added"
+msgstr ""
+
+msgctxt "#70684"
+msgid "%s has been deleted"
+msgstr ""
+
+msgctxt "#70685"
+msgid "Community"
+msgstr ""

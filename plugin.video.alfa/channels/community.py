@@ -50,7 +50,7 @@ def show_channels(item):
     file = open(path, "r")
     json = jsontools.load(file.read())
 
-    itemlist.append(Item(channel=item.channel, title='Agregar un canal', action='add_channel', thumbnail=get_thumb('add.png')))
+    itemlist.append(Item(channel=item.channel, title=config.get_localized_string(70676), action='add_channel', thumbnail=get_thumb('add.png')))
 
     for key, channel in json['channels'].items():
 
@@ -142,7 +142,7 @@ def seasons(item):
     list_seasons = item.url
     for season in list_seasons:
         infoLabels['season'] = season['season']
-        title = 'Temporada %s' % season['season']
+        title = config.get_localized_string(60027) % season['season']
         itemlist.append(Item(channel=item.channel, title=title, url=season['link'], action='episodesxseason',
                              contentSeasonNumber=season['season'], infoLabels=infoLabels))
 
@@ -165,7 +165,7 @@ def episodesxseason(item):
         infoLabels['season'] = season_number
         infoLabels['episode'] = episode_number
 
-        title = '%sx%s - Episodio %s' % (season_number, episode_number, episode_number)
+        title = config.get_localized_string(70677) % (season_number, episode_number, episode_number)
 
         itemlist.append(Item(channel=item.channel, title=title, url=episode, action='findvideos',
                              contentEpisodeNumber=episode_number, infoLabels=infoLabels))
@@ -203,11 +203,11 @@ def add_channel(item):
     import xbmcgui
     channel_to_add = {}
     json_file = ''
-    result = platformtools.dialog_select('Agregar un canal', ['Desde archivo local', 'Desde URL'])
+    result = platformtools.dialog_select(config.get_localized_string(70676), [config.get_localized_string(70678), config.get_localized_string(70679)])
     if result == -1:
         return
     if result==0:
-        file_path = xbmcgui.Dialog().browseSingle(1, 'Alfa - (Comunidad)', 'files')
+        file_path = xbmcgui.Dialog().browseSingle(1, config.get_localized_string(70680), 'files')
         try:
             channel_to_add['path'] = file_path
             json_file = jsontools.load(open(file_path, "r").read())
@@ -216,7 +216,7 @@ def add_channel(item):
             pass
 
     elif result==1:
-        url = platformtools.dialog_input("", 'Ingresa la URL del canal', False)
+        url = platformtools.dialog_input("", config.get_localized_string(70681), False)
         try:
             channel_to_add['path'] = url
             json_file = jsontools.load(httptools.downloadpage(url).data)
@@ -226,7 +226,7 @@ def add_channel(item):
     if len(json_file) == 0:
         return
     if "episodes_list" in json_file:
-        platformtools.dialog_ok('Alfa', 'No es posible agregar este tipo de canal')
+        platformtools.dialog_ok(config.get_localized_string(20000), config.get_localized_string(70682))
         return
     channel_to_add['channel_name'] = json_file['channel_name']
     path = os.path.join(config.get_data_path(), 'community_channels.json')
@@ -240,7 +240,7 @@ def add_channel(item):
          file.write(jsontools.dump(community_json))
     file.close()
 
-    platformtools.dialog_notification('Alfa', '%s se ha agregado' % json_file['channel_name'])
+    platformtools.dialog_notification(config.get_localized_string(20000), config.get_localized_string(70683) % json_file['channel_name'])
     return
 
 def remove_channel(item):
@@ -259,7 +259,7 @@ def remove_channel(item):
          file.write(jsontools.dump(community_json))
     file.close()
 
-    platformtools.dialog_notification('Alfa', '%s ha sido eliminado' % to_delete)
+    platformtools.dialog_notification(config.get_localized_string(20000), config.get_localized_string(70684) % to_delete)
     platformtools.itemlist_refresh()
     return
 
