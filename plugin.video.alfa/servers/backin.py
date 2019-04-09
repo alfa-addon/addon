@@ -12,7 +12,7 @@ from core import scrapertools
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
-    data = scrapertools.cache_page(page_url)
+    data = scrapertools.downloadpage(page_url)
 
     # if '<meta property="og:title" content=""/>' in data:
     # return False,"The video has been cancelled from Backin.net"

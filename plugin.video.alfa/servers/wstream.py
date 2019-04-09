@@ -17,7 +17,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("[wstream.py] url=" + page_url)
     video_urls = []
 
-    data = scrapertools.cache_page(page_url, headers=headers).replace('https','http')
+    data = scrapertools.downloadpage(page_url, headers=headers).replace('https','http')
     # logger.info("[wstream.py] data=" + data)
     vid = scrapertools.find_multiple_matches(data,'download_video.*?>.*?<.*?<td>([^\,,\s]+)')
 
