@@ -179,7 +179,7 @@ def genres(item):
     logger.info()
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
+    data = scrapertools.downloadpage(item.url)
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
 
     patron = '<li class="myli"><a href="/([^"]+)">([^<]+)</a>'
@@ -221,12 +221,11 @@ def findvideos(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|#038;|\(.*?\)|\s{2}|&nbsp;", "", data)
-
-    patron = '(\w+)src\d+="([^"]+)"'
+    patron = '>([^<]+)</a></li><li><a class="src_tab" id="[^"]+" data-src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for lang, url in matches:
-
+        lang = re.sub(r"1|2|3|4", "", lang)
         server = servertools.get_server_from_url(url)
         if 'dropbox' in url:
             server = 'dropbox'
@@ -243,9 +242,9 @@ def findvideos(item):
             for key in matches:
                 url = 'https://www.dropbox.com/s/%s?dl=1' % (key)
                 server = 'dropbox'
-        languages = {'l': '[COLOR cornflowerblue](LAT)[/COLOR]',
-                     'e': '[COLOR green](CAST)[/COLOR]',
-                     's': '[COLOR red](VOS)[/COLOR]'}
+        languages = {'Latino': '[COLOR cornflowerblue](LAT)[/COLOR]',
+                     'Castellano': '[COLOR green](CAST)[/COLOR]',
+                     'Subtitulado': '[COLOR red](VOS)[/COLOR]'}
         if lang in languages:
             lang = languages[lang]
 

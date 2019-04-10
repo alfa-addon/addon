@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "((?:fembed|divload).com/(?:f|v)/[A-z0-9_-]+)",
-        "url": "https://www.\\1"
+        "pattern": "videobb.ru/v/([A-z0-9]+)",
+        "url": "https://videobb.ru/api/source/\\1"
       }
     ]
   },
   "free": true,
-  "id": "fembed",
-  "name": "Fembed",
+  "id": "videobb",
+  "name": "videobb",
   "settings": [
     {
       "default": false,
@@ -38,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://i.postimg.cc/prdPwBhT/fembed1.png",
-  "version": 1
+  "thumbnail": "https://www.cinetux.to/videobb/logo.jpg"
 }
