@@ -32,11 +32,23 @@ def mainlist(item):
     itemlist = list()
 
     itemlist.append(
-        Item(channel=item.channel, action="lista", title="Series", contentSerieName="Series", url=host, thumbnail=thumb_series, page=0))
-    #itemlist.append(
-    #    Item(channel=item.channel, action="lista", title="Live Action", contentSerieName="Live Action", url=host+"/liveaction", thumbnail=thumb_series, page=0))
-    #itemlist.append(
-    #    Item(channel=item.channel, action="peliculas", title="Películas", contentSerieName="Películas", url=host+"/peliculas", thumbnail=thumb_series, page=0))
+        Item(channel=item.channel, action="lista", title="Series Actuales", url=host+'/p/actuales',
+             thumbnail=thumb_series))
+
+    itemlist.append(
+        Item(channel=item.channel, action="lista", title="Series Clasicas", url=host+'/p/clasicas',
+             thumbnail=thumb_series))
+
+    itemlist.append(
+        Item(channel=item.channel, action="lista", title="Series Anime", url=host + '/p/anime',
+             thumbnail=thumb_series))
+
+    itemlist.append(
+        Item(channel=item.channel, action="lista", title="Series Live Action", url=host + '/p/live-action',
+             thumbnail=thumb_series))
+    itemlist.append(
+        Item(channel=item.channel, action="search", title="Buscar", thumbnail=''))
+
     itemlist = renumbertools.show_option(item.channel, itemlist)
     autoplay.show_option(item.channel, itemlist)
     return itemlist
@@ -47,29 +59,15 @@ def lista(item):
 
     itemlist = []
 
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron = '<a href="([^"]+)" '
-    if item.contentSerieName == "Series":
-        patron += 'class="link">.+?<img src="([^"]+)".*?'
-    else:
-        patron += 'class="link-la">.+?<img src="([^"]+)".*?'
-    patron += 'title="([^"]+)">'
-    if item.url==host or item.url==host+"/liveaction":
-        a=1
-    else:
-        num=(item.url).split('-')
-        a=int(num[1])
+    full_data = httptools.downloadpage(item.url).data
+    full_data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", full_data)
+    data = scrapertools.find_single_match(full_data, 'class="sl">(.*?)<div class="pag">')
+    patron = '<a href="([^"]+)".*?<img src="([^"]+)".*?title="([^"]+)">'
+
     matches = scrapertools.find_multiple_matches(data, patron)
 
-    # Paginacion
-    num_items_x_pagina = 30
-    min = item.page * num_items_x_pagina
-    min=min-item.page
-    max = min + num_items_x_pagina - 1
-    b=0
-    for link, img, name in matches[min:max]:
-        b=b+1
+
+    for link, img, name in matches:
         if " y " in name:
             title=name.replace(" y "," & ")
         else:
@@ -80,17 +78,15 @@ def lista(item):
         context2 = autoplay.context
         context.extend(context2)
         
-        itemlist.append(item.clone(title=title, url=url, action="episodios", thumbnail=scrapedthumbnail, show=title,contentSerieName=title,
-                                   context=context))
-    if b<29:
-        a=a+1
-        url=host+"/p/pag-"+str(a)
-        if b>10:
-            itemlist.append(
-                Item(channel=item.channel, contentSerieName=item.contentSerieName, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=url, action="lista", page=0))
-    else:    
-        itemlist.append(
-             Item(channel=item.channel, contentSerieName=item.contentSerieName, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=item.url, action="lista", page=item.page + 1))
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action="episodios", thumbnail=scrapedthumbnail,
+                                   contentSerieName=title, context=context))
+
+    # Paginacion
+
+    next_page = scrapertools.find_single_match(full_data, '<a class="sel">\d+</a><a href="([^"]+)">\d+</a>')
+    if next_page != '':
+        itemlist.append(Item(channel=item.channel, contentSerieName=item.contentSerieName,
+                             title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=host+next_page, action="lista"))
 
     tmdb.set_infoLabels(itemlist)
     return itemlist
@@ -210,6 +206,48 @@ def findvideos(item):
     autoplay.start(itemlist, item)
 
     return itemlist
+
+def search_results(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url, post=item.post).data
+    if len(data) > 0:
+        results = eval(data)
+    else:
+        return itemlist
+
+    for result in results:
+        try:
+            thumbnail = host + "/tb/%s.jpg" % result[0]
+            title = u'%s' % result[1]
+            logger.debug(title)
+            url = host + "/s/%s" % result[2]
+            itemlist.append(Item(channel=item.channel, thumbnail=thumbnail, title=title, url=url, contentSerieName=title,
+                                 action='episodios'))
+        except:
+            pass
+
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
+    return itemlist
+
+def search(item, texto):
+    logger.info()
+    import urllib
+
+    if texto != "":
+        texto = texto.replace(" ", "+")
+    item.url = host+"/b.php"
+    post = {'k':texto, "pe":"", "te":""}
+    item.post = urllib.urlencode(post)
+
+    try:
+        return search_results(item)
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("%s" % line)
+        return []
+
 
 def golink(ida,sl):
     a=ida

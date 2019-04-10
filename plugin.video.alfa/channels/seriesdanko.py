@@ -86,7 +86,7 @@ def mas_vistas(item):
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<Br>|<BR>|<br>|<br/>|<br />|-\s", "", data)
     data = re.sub(r"<!--.*?-->", "", data)
     patron = "<div class='widget HTML' id='HTML3'.+?<div class='widget-content'>(.*?)</div>"
-    data = scrapertools.get_match(data, patron)
+    data = scrapertools.find_single_match(data, patron)
     item.data = data
     item.first = 0
     return series_seccion(item)
@@ -99,7 +99,7 @@ def listado_completo(item):
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<Br>|<BR>|<br>|<br/>|<br />|-\s", "", data)
     data = re.sub(r"<!--.*?-->", "", data)
     patron = '<div class="widget HTML" id="HTML10".+?<div class="widget-content">(.*?)</div>'
-    data = scrapertools.get_match(data, patron)
+    data = scrapertools.find_single_match(data, patron)
     item.first = 0
     item.data = data
     return series_seccion(item)

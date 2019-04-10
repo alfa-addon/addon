@@ -33,7 +33,7 @@ SERVERS = {"26": "powvideo", "45": "okru", "75": "openload", "12": "netutv", "65
 list_servers = ['powvideo', 'okru', 'openload', 'netutv', 'thevideos', 'spruto', 'stormo', 'idowatch', 'nowvideo',
                 'fastplay', 'raptu', 'tusfiles']
 
-host = "http://allpeliculas.io/"
+host = "https://allpeliculas.io/"
 
 def mainlist(item):
     logger.info()

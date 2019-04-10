@@ -109,7 +109,7 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     video_url = scrapertools.find_single_match(data, 'var video_url = "([^"]*)"')
     video_url += scrapertools.find_single_match(data, 'video_url \+= "([^"]*)"')
     partes = video_url.split('||')

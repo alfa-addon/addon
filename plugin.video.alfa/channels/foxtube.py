@@ -80,7 +80,8 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    url = scrapertools.find_single_match(scrapertools.cachePage(item.url),'<iframe src="([^"]+)"')
+    data = httptools.downloadpage(item.url).data
+    url = scrapertools.find_single_match(data,'<iframe src="([^"]+)"')
     data = httptools.downloadpage(url).data
     patron  = 'html5player.setVideoHLS\\(\'([^\']+)\''
     matches = scrapertools.find_multiple_matches(data, patron)

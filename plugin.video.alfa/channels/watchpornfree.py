@@ -43,11 +43,11 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     if item.title == "Canal":
-        data = scrapertools.get_match(data,'>Studios</a>(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'>Studios</a>(.*?)</ul>')
     if item.title == "Año":
-        data = scrapertools.get_match(data,'>Years</a>(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'>Years</a>(.*?)</ul>')
     if item.title == "Categorias":
-        data = scrapertools.get_match(data,'>XXX Genres</div>(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'>XXX Genres</div>(.*?)</ul>')
     patron  = '<a href="([^"]+)".*?>([^"]+)</a>(.*?)</li>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,cantidad  in matches:

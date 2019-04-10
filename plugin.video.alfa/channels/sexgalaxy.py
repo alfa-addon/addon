@@ -39,7 +39,7 @@ def canales(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(host).data
-    data = scrapertools.get_match(data, 'Top Networks</a>(.*?)</ul>')
+    data = scrapertools.find_single_match(data, 'Top Networks</a>(.*?)</ul>')
     patron = '<li id=.*?<a href="(.*?)">(.*?)</a></li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle in matches:
@@ -56,7 +56,7 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data, 'More Categories</a>(.*?)</ul>')
+    data = scrapertools.find_single_match(data, 'More Categories</a>(.*?)</ul>')
     patron = '<li id=.*?<a href="(.*?)">(.*?)</a></li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle in matches:

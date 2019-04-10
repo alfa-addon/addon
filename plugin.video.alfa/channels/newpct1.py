@@ -82,6 +82,13 @@ __modo_grafico__ = config.get_setting('modo_grafico', channel_py)               
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel_py)      #Actualización sólo últ. Temporada?
 timeout = config.get_setting('clonenewpct1_timeout_downloadpage', channel_py)               #Timeout downloadpage
 if timeout == 0: timeout = None
+try:
+    from core import proxytools
+    if proxytools.channel_proxy_list(host):                                                 #Si usa un proxy, ...
+        timeout = timeout * 2                                                               #Duplicamos en timeout
+except:
+    pass
+
 fecha_rango = config.get_setting('clonenewpct1_rango_fechas_novedades', channel_py)         #Rango fechas para Novedades
 if fecha_rango == 0: fecha_rango = 'Hoy'
 elif fecha_rango == 1: fecha_rango = 'Ayer'
@@ -173,7 +180,7 @@ def submenu(item):
     except:
         pass
         
-    patron = '<li><a\s*class="[^"]+"\s*href="http.*:[^"]+"><i\s*class=.*><\/i>.*Inicio<\/a><\/li>(.+)<\/ul>\s*<\/nav>'
+    patron = '<li><a\s*class="[^"]+"\s*href="[^"]+"><i\s*class="[^"]+".*?><\/i>.*?Inicio.*?<\/a><\/li>(.+)<\/ul>\s*<\/nav>'
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not data or not scrapertools.find_single_match(data, patron):
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
@@ -183,9 +190,12 @@ def submenu(item):
                 itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
             return itemlist                                                     #Salimos
         
-        logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " + item.url + data)
+        try:
+            logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + data)
+        except:
+            logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: (probablemente bloqueada por antivirus)")
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
-        item, data = generictools.fail_over_newpct1(item, patron)
+        item, data = generictools.fail_over_newpct1(item, patron, timeout=timeout)
     
     if not data:    #Si no ha logrado encontrar nada, salimos
         itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.category + '[/COLOR]: Ningún canal NewPct1 activo'))    
@@ -203,9 +213,12 @@ def submenu(item):
     if "pelisyseries.com" in item.channel_host and item.extra == "varios":      #compatibilidad con mispelisy.series.com
         data = '<li><a href="' + item.channel_host + 'varios/" title="Documentales">Documentales</a></li>'
     else:
-        data_menu = scrapertools.get_match(data, patron)                        #Seleccionamos el trozo que nos interesa
+        data_menu = scrapertools.find_single_match(data, patron)                        #Seleccionamos el trozo que nos interesa
     if not data_menu:
-        logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
+        try:
+            logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
+        except:
+            logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: (probablemente bloqueada por antivirus)")
         itemlist.append(item.clone(action='', title=item.category + ': ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
@@ -302,7 +315,7 @@ def submenu_novedades(item):
         
         logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " + item.url + data)
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
-        item, data = generictools.fail_over_newpct1(item, patron)
+        item, data = generictools.fail_over_newpct1(item, patron, timeout=timeout)
     
     if not data:                                                                #Si no ha logrado encontrar nada, salimos
         itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.category + '[/COLOR]: Ningún canal NewPct1 activo'))    
@@ -315,7 +328,7 @@ def submenu_novedades(item):
         if item.url_alt: del item.url_alt
         del item.channel_alt
         
-    data = scrapertools.get_match(data, patron)                                 #Seleccionamos el trozo que nos interesa
+    data = scrapertools.find_single_match(data, patron)                                 #Seleccionamos el trozo que nos interesa
     data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
     data = data.replace("'", '"').replace('/series"', '/series/"')              #Compatibilidad con mispelisy.series.com
     
@@ -392,7 +405,7 @@ def alfabeto(item):
         
         logger.error("ERROR 01: ALFABETO: La Web no responde o ha cambiado de URL: " + item.url + data)
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
-        item, data = generictools.fail_over_newpct1(item, patron)
+        item, data = generictools.fail_over_newpct1(item, patron, timeout=timeout)
     
     if not data:    #Si no ha logrado encontrar nada, salimos
         itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.category + '[/COLOR]: Ningún canal NewPct1 activo'))    
@@ -405,7 +418,7 @@ def alfabeto(item):
         if item.url_alt: del item.url_alt
         del item.channel_alt
     
-    data = scrapertools.get_match(data, patron)
+    data = scrapertools.find_single_match(data, patron)
 
     patron = '<a href="([^"]+)"[^>]+>([^>]+)</a>'
 
@@ -454,7 +467,7 @@ def listado(item):
             
         logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + data)
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
-        item, data = generictools.fail_over_newpct1(item, patron)
+        item, data = generictools.fail_over_newpct1(item, patron, timeout=timeout)
     
     if not data:    #Si no ha logrado encontrar nada, salimos
         itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.channel.capitalize() + '[/COLOR]: Ningún canal NewPct1 activo'))    
@@ -479,7 +492,7 @@ def listado(item):
     #Selecciona el tramo de la página con el listado de contenidos
     patron = '<ul class="' + clase + '">(.*?)</ul>'
     if data:
-        fichas = scrapertools.get_match(data, patron)
+        fichas = scrapertools.find_single_match(data, patron)
         if not fichas and not '<h3><strong>( 0 ) Resultados encontrados </strong>' in data:         #error
             logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.category + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
@@ -659,7 +672,7 @@ def listado(item):
         
         title = title.replace("Ver online Serie", "").replace("Ver online ", "").replace("Descarga Serie HD ", "").replace("Descargar Serie HD ", "").replace("Descarga Serie ", "").replace("Descargar Serie ", "").replace("Ver en linea ", "").replace("Ver en linea", "").replace("en Full HD", "").replace("en hd ", "").replace("en HD ", "").replace("MicroHD", "").replace("HD ", "").replace("(Proper)", "").replace("HDTV", "").replace("RatDVD", "").replace("DVDRiP", "").replace("DVDRIP", "").replace("DVDRip", "").replace("DVDR", "").replace("DVD9", "").replace("DVD", "").replace("DVBRIP", "").replace("DVB", "").replace("LINE", "").replace("calidad", " ").replace("- ES ", "").replace("ES ", "").replace("COMPLETA", "").replace("Serie Animada", " ").replace("(", "-").replace(")", "-").replace(".", " ").strip()
         
-        title = title.replace("Descargar torrent ", "").replace("Descarga Gratis", "").replace("Descarga gratis", "").replace("Descargar Gratis", "").replace("Descargar gratis", "").replace("en gratis", "").replace("gratis gratis", "").replace("Gratisgratis", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Descargar ", "").replace("Decargar ", "").replace("Bajar ", "").replace("HDRIP ", "").replace("HDRiP ", "").replace("HDRip ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4K UHDrip", "").replace("BDremux", "").replace("FULL UHD4K", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("en BluRay", "").replace("BluRay en", "").replace("Bluray en", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").replace("++Sub", "").replace("+-+Sub", "").strip()
+        title = title.replace("Descargar torrent ", "").replace("Descarga Gratis", "").replace("Descarga gratis", "").replace("Descargar Gratis", "").replace("Descargar gratis", "").replace("en gratis", "").replace("gratis gratis", "").replace("Gratisgratis", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Descargar ", "").replace("Decargar ", "").replace("Bajar ", "").replace("HDRIP ", "").replace("HDRiP ", "").replace("HDRip ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4K UHDrip", "").replace("BDremux", "").replace("FULL UHD4K", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("en BluRay", "").replace("BluRay en", "").replace("Bluray en", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").replace("++Sub", "").replace("+-+Sub", "").replace("Directors Cut", "").strip()
         
         title = re.sub(r'\(\d{4}\)$', '', title)
         if re.sub(r'\d{4}$', '', title).strip():
@@ -815,7 +828,7 @@ def listado_busqueda(item):
             
             logger.error("ERROR 01: LISTADO_BUSQUEDA: La Web no responde o ha cambiado de URL: " + item.url + item.post + " / DATA: " + data)
             #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
-            item, data = generictools.fail_over_newpct1(item, pattern)
+            item, data = generictools.fail_over_newpct1(item, pattern, timeout=timeout_search)
         
         if not data:    #Si no ha logrado encontrar nada, salimos
             itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.channel.capitalize() + '[/COLOR]: Ningún canal NewPct1 activo'))    
@@ -855,7 +868,7 @@ def listado_busqueda(item):
         else:
             pattern = '<ul class="%s">(.*?)</ul>' % item.pattern
         data_alt = data
-        data = scrapertools.get_match(data, pattern)
+        data = scrapertools.find_single_match(data, pattern)
         if item.extra == "novedades":
             pattern = '<a href="(?P<scrapedurl>[^"]+)"\s?'                  #url
             pattern += 'title="(?P<scrapedtitle>[^"]+)"[^>]*>'              #título
@@ -997,7 +1010,7 @@ def listado_busqueda(item):
             if item_local.category == 'Mispelisyseries':            #Esta web no gestiona bien el cambio de episodio a Serie
                 pattern = 'class="btn-torrent">.*?window.location.href = "([^"]+)";'        #Patron para .torrent
                 #Como no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el cambio de episodio por serie
-                item_local, data_serie = generictools.fail_over_newpct1(item_local, pattern)
+                item_local, data_serie = generictools.fail_over_newpct1(item_local, pattern, timeout=timeout_search)
             else:
                 try:
                     data_serie = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item_local.url, timeout=timeout).data)
@@ -1008,7 +1021,7 @@ def listado_busqueda(item):
                 if not data_serie or (not scrapertools.find_single_match(data_serie, pattern) and not '<h3><strong>( 0 ) Resultados encontrados </strong>' in data and not '<ul class="noticias-series"></ul></form></div><!-- end .page-box -->' in data):
                     logger.error("ERROR 01: LISTADO_BUSQUEDA: La Web no responde o ha cambiado de URL: " + item_local.url + " / DATA: " + data_serie)
                     #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el cambio de episodio por serie
-                    item_local, data_serie = generictools.fail_over_newpct1(item_local, pattern)
+                    item_local, data_serie = generictools.fail_over_newpct1(item_local, pattern, timeout=timeout)
             
             if not data_serie:                                                  #Si no ha logrado encontrar nada, salimos
                 title_subs += ["ERR"]
@@ -1147,7 +1160,7 @@ def listado_busqueda(item):
         
         title = title.replace("Ver online Serie", "").replace("Ver online ", "").replace("Descarga Serie HD ", "").replace("Descargar Serie HD ", "").replace("Descarga Serie ", "").replace("Descargar Serie ", "").replace("Ver en linea ", "").replace("Ver en linea", "").replace("en Full HD", "").replace("en hd ", "").replace("en HD ", "").replace("MicroHD", "").replace("HD ", "").replace("(Proper)", "").replace("HDTV", "").replace("RatDVD", "").replace("DVDRiP", "").replace("DVDRIP", "").replace("DVDRip", "").replace("DVDR", "").replace("DVD9", "").replace("DVD", "").replace("DVBRIP", "").replace("DVB", "").replace("LINE", "").replace("calidad", " ").replace("- ES ", "").replace("ES ", "").replace("COMPLETA", "").replace("Serie Animada", " ").replace("(", "-").replace(")", "-").replace(".", " ").strip()
         
-        title = title.replace("Descargar torrent ", "").replace("Descarga Gratis", "").replace("Descarga gratis", "").replace("Descargar Gratis", "").replace("Descargar gratis", "").replace("en gratis", "").replace("gratis gratis", "").replace("Gratisgratis", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Descargar ", "").replace("Decargar ", "").replace("Bajar ", "").replace("HDRIP ", "").replace("HDRiP ", "").replace("HDRip ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4K UHDrip", "").replace("BDremux", "").replace("FULL UHD4K", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("en BluRay", "").replace("BluRay en", "").replace("Bluray en", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").replace("++Sub", "").replace("+-+Sub", "").strip()
+        title = title.replace("Descargar torrent ", "").replace("Descarga Gratis", "").replace("Descarga gratis", "").replace("Descargar Gratis", "").replace("Descargar gratis", "").replace("en gratis", "").replace("gratis gratis", "").replace("Gratisgratis", "").replace("Descargar Estreno ", "").replace("Descargar Estrenos ", "").replace("Pelicula en latino ", "").replace("Descargar Pelicula ", "").replace("Descargar pelicula ", "").replace("Descargar Peliculas ", "").replace("Descargar peliculas ", "").replace("Descargar Todas ", "").replace("Descargar Otras ", "").replace("Descargar ", "").replace("Descarga ", "").replace("Descargar ", "").replace("Decargar ", "").replace("Bajar ", "").replace("HDRIP ", "").replace("HDRiP ", "").replace("HDRip ", "").replace("RIP ", "").replace("Rip", "").replace("RiP", "").replace("XviD", "").replace("AC3 5.1", "").replace("AC3", "").replace("1080p ", "").replace("720p ", "").replace("DVD-Screener ", "").replace("TS-Screener ", "").replace("Screener ", "").replace("BdRemux ", "").replace("BR ", "").replace("4K UHDrip", "").replace("BDremux", "").replace("FULL UHD4K", "").replace("4KULTRA", "").replace("FULLBluRay", "").replace("FullBluRay", "").replace("en BluRay", "").replace("BluRay en", "").replace("Bluray en", "").replace("BluRay", "").replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "").replace("Latino", "").replace("argentina", "").replace("Argentina", "").replace("++Sub", "").replace("+-+Sub", "").replace("Directors Cut", "").strip()
         
         title = re.sub(r'\(\d{4}\)$', '', title)
         if re.sub(r'\d{4}$', '', title).strip():
@@ -1329,7 +1342,7 @@ def findvideos(item):
     item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
     
     verify_fo = True                                                #Verificamos si el clone a usar está activo
-    item, data = generictools.fail_over_newpct1(item, verify_fo)
+    item, data = generictools.fail_over_newpct1(item, verify_fo, timeout=timeout)
 
     # Cualquiera de las tres opciones son válidas
     # item.url = item.url.replace(".com/",".com/ver-online/")
@@ -1450,7 +1463,7 @@ def findvideos(item):
     except:                                                     #La web no responde.  Probemos las urls de emergencia
         pass
     
-    patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'           #Patron para .torrent
+    patron = 'class="btn-torrent">.*?window.location.href = (?:parseURL\()?"(.*?)"\)?;'     #Patron para .torrent
     patron_mult = 'torrent:check:status|' + patron + '|<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'
     if not scrapertools.find_single_match(data, patron):
         patron_alt = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'  #Patron para .torrent (planetatorrent)
@@ -1461,7 +1474,7 @@ def findvideos(item):
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
     
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not data or not scrapertools.find_single_match(data, patron) or not videolibrarytools.verify_url_torrent(url_torr):                                                                            # Si no hay datos o url, error
+    if not data or not scrapertools.find_single_match(data, patron) or not videolibrarytools.verify_url_torrent(url_torr, timeout=timeout):                                                           # Si no hay datos o url, error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
             item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
@@ -1479,7 +1492,7 @@ def findvideos(item):
             data = 'xyz123'                                                     #Para que no haga más preguntas
         else:
             #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el vídeo
-            item, data = generictools.fail_over_newpct1(item, patron_mult)
+            item, data = generictools.fail_over_newpct1(item, patron_mult, timeout=timeout)
 
     if not data:                                            #Si no ha logrado encontrar nada, verificamos si hay servidores
         cnt_servidores = 0
@@ -1500,7 +1513,7 @@ def findvideos(item):
                 cnt_servidores += 1
 
         if cnt_servidores == 0:
-            item, data_servidores = generictools.fail_over_newpct1(item, patron)    #intentamos recuperar servidores
+            item, data_servidores = generictools.fail_over_newpct1(item, patron, timeout=timeout)    #intentamos recuperar servidores
             
             #Miramos si ha servidores
             if not data_servidores:                                         #Si no ha logrado encontrar nada nos vamos
@@ -1518,7 +1531,7 @@ def findvideos(item):
     data = data.replace("$!", "#!").replace("'", "\"").replace("Ã±", "ñ").replace("//pictures", "/pictures")
 
     # patrón para la url torrent
-    patron = 'class="btn-torrent">.*?window.location.href = "(.*?)";'               #Patron para .torrent
+    patron = 'class="btn-torrent">.*?window.location.href = (?:parseURL\()?"(.*?)"\)?;'         #Patron para .torrent
     if not scrapertools.find_single_match(data, patron):
         patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'          #Patron para .torrent (planetatorrent)
     url_torr = scrapertools.find_single_match(data, patron)
@@ -1533,7 +1546,7 @@ def findvideos(item):
     if not size:
         size = scrapertools.find_single_match(item.quality, '\s?\[(\d+.?\d*?\s?\w\s?[b|B])\]')
     if not size and not item.armagedon and not item.videolibray_emergency_urls:
-        size = generictools.get_torrent_size(url_torr)                              #Buscamos el tamaño en el .torrent
+        size = generictools.get_torrent_size(url_torr, timeout=timeout)             #Buscamos el tamaño en el .torrent
     if size:
         item.title = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item.title)            #Quitamos size de título, si lo traía
         item.title = '%s [%s]' % (item.title, size)                                 #Agregamos size al final del título
@@ -1877,7 +1890,7 @@ def episodios(item):
     item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
     
     verify_fo = True                                                        #Verificamos si el clone a usar está activo
-    item, data = generictools.fail_over_newpct1(item, verify_fo)
+    item, data = generictools.fail_over_newpct1(item, verify_fo, timeout=timeout)
 
     #Limpiamos num. Temporada y Episodio que ha podido quedar por Novedades
     season_display = 0
@@ -1931,7 +1944,7 @@ def episodios(item):
             patron = '<ul class="%s">(.*?)</ul>' % "buscar-list"                # item.pattern
         
         data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, timeout=timeout).data)
-        if data: data_alt = scrapertools.get_match(data, patron)
+        if data: data_alt = scrapertools.find_single_match(data, patron)
     except:                                                                     #Algún error de proceso
         pass
 
@@ -1951,7 +1964,7 @@ def episodios(item):
         logger.error(pattern + data)
 
         #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el vídeo
-        item, data = generictools.fail_over_newpct1(item, patron, pattern)
+        item, data = generictools.fail_over_newpct1(item, patron, pattern, timeout=timeout)
 
     if not data:                                                    #No se ha encontrado ningún canal activo para este vídeo
         itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.channel.capitalize() + '[/COLOR]: Ningún canal NewPct1 activo'))    
@@ -1997,7 +2010,7 @@ def episodios(item):
             data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
             data = data.replace("chapters", "buscar-list")                      #Compatibilidad con mispelisy.series.com
             pattern = '<ul class="%s">(.*?)</ul>' % "buscar-list"               # item.pattern
-            data_sector = scrapertools.get_match(data, pattern)
+            data_sector = scrapertools.find_single_match(data, pattern)
             if not data_sector:
                 raise
             data = data_sector

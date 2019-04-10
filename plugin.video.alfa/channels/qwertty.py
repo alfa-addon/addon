@@ -54,7 +54,7 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'<div class="videos-list">(.*?)<div class="videos-list">')
+    data = scrapertools.find_single_match(data,'<div class="videos-list">(.*?)<div class="videos-list">')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<article id="post-\d+".*?'
     patron += '<a href="([^"]+)" title="([^"]+)">.*?'
@@ -82,7 +82,7 @@ def play(item):
     url = scrapertools.find_single_match(data,'<meta itemprop="embedURL" content="([^"]+)"')
     url = url.replace("pornhub.com/embed/", "pornhub.com/view_video.php?viewkey=")
     data = httptools.downloadpage(url).data
-    # data = scrapertools.cachePage(url)  https://www.spankwire.com/EmbedPlayer.aspx?ArticleId=14049072
+    # https://www.spankwire.com/EmbedPlayer.aspx?ArticleId=14049072
     if "xvideos" in url : 
         scrapedurl  = scrapertools.find_single_match(data,'setVideoHLS\(\'([^\']+)\'')
     if "pornhub" in url : 

@@ -53,7 +53,7 @@ def videos(item):
     data = httptools.downloadpage(item.url).data
     itemlist = []
 
-    data = scrapertools.get_match(data, '<article.+?>(.*?)</article>')
+    data = scrapertools.find_single_match(data, '<article.+?>(.*?)</article>')
 
     # Patron
     patron = '(?s)<div class="thumb-list__item.*?href="([^"]+)".*?src="([^"]+)".*?alt="([^"]+)">.*?'
@@ -87,7 +87,7 @@ def categorias(item):
 
     data = httptools.downloadpage(item.url).data
 
-    data = scrapertools.get_match(data, '(?s)<div class="all-categories">(.*?)</aside>')
+    data = scrapertools.find_single_match(data, '(?s)<div class="all-categories">(.*?)</aside>')
 
     patron = '(?s)<li>.*?<a href="([^"]+)".*?>([^<]+).*?</a></li>'
     matches = re.compile(patron, re.DOTALL).findall(data)

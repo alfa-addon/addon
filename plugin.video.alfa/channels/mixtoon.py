@@ -137,14 +137,16 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
+
     _sl = scrapertools.find_single_match(data, 'var _dt=([^;]+);')
     sl = eval(_sl)
     buttons = [0,1]
     for id in buttons:
         new_url = "https://videoeb.xyz/" + "eb/" + sl[0] + "/" + sl[1] + "/" + str(id) + "/" + sl[2]
-        data_new = httptools.downloadpage(new_url).data
-        valor1, valor2 = scrapertools.find_single_match(data_new, 'var x0x = \["[^"]*","([^"]+)","[^"]*","[^"]*","([^"]+)') 
+        data_new = httptools.downloadpage(new_url, headers={'Referer': item.url}).data
         try:
+            valor1, valor2 = scrapertools.find_single_match(data_new,
+                                                            'var x0x = \["[^"]*","([^"]+)","[^"]*","[^"]*","([^"]+)')
             url = base64.b64decode(gktools.transforma_gsv(valor2, base64.b64decode(valor1)))
             if 'download' in url:
                 url = url.replace('download', 'preview')

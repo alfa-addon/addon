@@ -20,7 +20,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("url=" + page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    logger.debug(data)
     patron = '<meta property="og:video" content="([^"]+)">'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:

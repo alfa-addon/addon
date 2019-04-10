@@ -38,7 +38,7 @@ def catalogo(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'PaySites(.*?)<li id="menu-item-28040"')
+    data = scrapertools.find_single_match(data,'PaySites(.*?)<li id="menu-item-28040"')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<li id="menu-item-\d+".*?<a href="([^"]+)">([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -55,7 +55,7 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'<a href="#">Categories</a>(.*?)</ul>')
+    data = scrapertools.find_single_match(data,'<a href="#">Categories</a>(.*?)</ul>')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<li id="menu-item-\d+".*?<a href="([^"]+)">([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)

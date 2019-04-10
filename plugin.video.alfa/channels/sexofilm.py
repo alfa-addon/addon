@@ -42,9 +42,9 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     if item.title == "Canal" :
-        data = scrapertools.get_match(data,'>Adult Porn Parodies</a></li>(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'>Adult Porn Parodies</a></li>(.*?)</ul>')
     else:
-        data = scrapertools.get_match(data,'<div class="nav-wrap">(.*?)<ul class="sub-menu">')
+        data = scrapertools.find_single_match(data,'<div class="nav-wrap">(.*?)<ul class="sub-menu">')
         itemlist.append( Item(channel=item.channel, action="lista", title="Big tit", url="https://sexofilm.com/?s=big+tits"))
     patron  = '<a href="([^<]+)">([^<]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)

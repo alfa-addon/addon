@@ -69,7 +69,7 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data = scrapertools.get_match(data,'<div class="cats-all categories-list">(.*?)</div>')
+    data = scrapertools.find_single_match(data,'<div class="cats-all categories-list">(.*?)</div>')
     patron  = '<a href="([^"]+)".*?>([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle in matches:
@@ -88,12 +88,14 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="video">.*?'
     patron += '<a href="([^"]+)".*?'
-    patron += '<span class="time">(.*?)</span>.*?'
+    patron += '<span class="time">(.*?)</span>(.*?)</span>.*?'
     patron += '<img src="([^"]+)" alt="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,time,scrapedthumbnail,scrapedtitle in matches:
+    for scrapedurl,time,calidad,scrapedthumbnail,scrapedtitle in matches:
         scrapedtitle = scrapedtitle.replace("&comma; ", " & ").replace("&lpar;", "(").replace("&rpar;", ")") 
         title = "[COLOR yellow]" + time + "  [/COLOR]" + scrapedtitle
+        if "hd-marker is-hd" in  calidad:
+            title = "[COLOR yellow]" + time + " [/COLOR]" + "[COLOR red]" + "HD" + "  [/COLOR]" + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play" , title=title , url=scrapedurl,

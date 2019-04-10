@@ -25,6 +25,7 @@ list_quality = []
 list_servers = ['torrent']
 
 host = 'http://estrenosby.net/' # 'http://estrenosli.org/'
+host_alt = 'http://estrenoske.net/'
 channel = "estrenosgo"
 
 color1, color2, color3 = ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']
@@ -320,7 +321,8 @@ def listado(item):
                     patron_serie = '<div id="where_i_am">.*?<a href="[^"]+">.*?<\/a>.*?<a href="([^"]+)">'
                     url = scrapertools.find_single_match(data_serie, patron_serie)      #buscamos la url de la serie completa
                     if url:
-                        url = host + url
+                        if host not in url and host_alt not in url:
+                            url = host + url
                         extra = 'series'                        #es una serie completa    
                         title_lista += [cat_sec]                #la añadimos a la lista de series completas procesadas    
                         title = cat_sec                         #salvamos el título de la serie completa
@@ -361,7 +363,10 @@ def listado(item):
                 quality_alt = cat_sec.lower().strip()
             item_local.extra = extra                                #guardamos el extra procesado    
             item_local.url = url                                    #guardamos la url final
-            item_local.thumbnail = host[:-1] + scrapedthumbnail     #guardamos el thumb
+            if host not in scrapedthumbnail and host_alt not in scrapedthumbnail:
+                item_local.thumbnail = host[:-1] + scrapedthumbnail #guardamos el thumb
+            else:
+                item_local.thumbnail = scrapedthumbnail             #guardamos el thumb sin Host
             item_local.context = "['buscar_trailer']"
             
             item_local.contentType = "movie"                        #por defecto, son películas
@@ -743,7 +748,7 @@ def findvideos(item):
     #Ahora tratamos los enlaces .torrent
     itemlist_alt = []                                                               #Usamos una lista intermedia para poder ordenar los episodios
     if matches_torrent:
-        for scrapedurl, scrapedquality, scrapedlang in matches_torrent:             #leemos los torrents con la diferentes calidades
+        for scrapedurl, scrapedquality, scrapedlang in matches_torrent:     #leemos los torrents con la diferentes calidades
             #Generamos una copia de Item para trabajar sobre ella
             item_local = item.clone()
             
@@ -772,7 +777,7 @@ def findvideos(item):
                 patron = '<div class="linksDescarga"><span class="titulo">Descargar Torrent: <\/span><br><a href="([^"]+)" class="TTlink">&raquo;\s?(.*?)\s?&laquo;<\/a>'
                 matches = re.compile(patron, re.DOTALL).findall(data)
             else:
-                matches = item.emergency_urls[2][0]                                 #Guardamos los matches de Directos, si los hay
+                matches = item.emergency_urls[2][0]                         #Guardamos los matches de Directos, si los hay
                 del item.emergency_urls[2][0]                                       #Una vez tratado lo limpiamos
                 data = 'xyz123'                                                     #iniciamos data para que no dé problemas
             
@@ -781,15 +786,20 @@ def findvideos(item):
             
             if not data or not matches:
                 logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron  + " / URL: " + item_local.url  + " / DATA: " + data)
-                continue                                                #si no hay más datos, algo no funciona, pasamos a Ver Online
+                continue                                    #si no hay más datos, algo no funciona, pasamos a Ver Online
             
             #logger.debug(patron)
             #logger.debug(matches)
             #logger.debug(data)
 
-            for scrapedtorrent, scrapedtitle in matches:
+            for scrapedtorrent_alt, scrapedtitle in matches:
+                if host not in scrapedtorrent_alt and host_alt not in scrapedtorrent_alt:
+                    scrapedtorrent = host + scrapedtorrent_alt
+                else:
+                    scrapedtorrent = scrapedtorrent_alt
+                    
                 if item.videolibray_emergency_urls:
-                    item.emergency_urls[0].append(host + scrapedtorrent)
+                    item.emergency_urls[0].append(scrapedtorrent)
                 else:
                     item_local = item_local.clone()
                     quality = item_local.quality
@@ -829,19 +839,19 @@ def findvideos(item):
                         quality = '[%s] %s' % (qualityscraped, item_local.quality)
 
                     #Ahora pintamos el link del Torrent
-                    item_local.url = host + scrapedtorrent
+                    item_local.url = scrapedtorrent
                     if item.emergency_urls and not item.videolibray_emergency_urls:
-                        item_local.torrent_alt = item.emergency_urls[0][0]                  #Guardamos la url del .Torrent ALTERNATIVA
+                        item_local.torrent_alt = item.emergency_urls[0][0]      #Guardamos la url del .Torrent ALTERNATIVA
                         if item.armagedon:
-                            item_local.url = item.emergency_urls[0][0]                      #... ponemos la emergencia como primaria
-                        del item.emergency_urls[0][0]                                       #Una vez tratado lo limpiamos
+                            item_local.url = item.emergency_urls[0][0]          #... ponemos la emergencia como primaria
+                        del item.emergency_urls[0][0]                           #Una vez tratado lo limpiamos
                     
                     size = ''
                     if not item.armagedon:
-                        size = generictools.get_torrent_size(item_local.url)                #Buscamos el tamaño en el .torrent
+                        size = generictools.get_torrent_size(item_local.url)    #Buscamos el tamaño en el .torrent
                     if size:
                         quality += ' [%s]' % size
-                    if item.armagedon:                                                      #Si es catastrófico, lo marcamos
+                    if item.armagedon:                                          #Si es catastrófico, lo marcamos
                         quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % quality
                     item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (quality, str(item_local.language))                                                  
                     
