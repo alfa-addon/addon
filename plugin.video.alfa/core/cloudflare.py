@@ -10,7 +10,6 @@ import urlparse
 
 from platformcode import logger
 from decimal import Decimal
-from js2py.internals import seval
 
 
 class Cloudflare:
@@ -47,25 +46,50 @@ class Cloudflare:
                 logger.debug("Metodo #2 (headers): NO disponible")
                 self.header_data = {}
 
-
     def solve_cf(self, body, domain):
-        k = re.compile('<div style="display:none;visibility:hidden;" id=".*?">(.*?)<\/div>', re.DOTALL).findall(body)
-        k1 = re.compile('function\(p\){var p = eval\(eval.*?atob.*?return \+\(p\)}\(\)', re.DOTALL).findall(body)
-        if k1:
-            body = body.replace(k1[0], k[0])
-        js = re.search(r"setTimeout\(function\(\){\s+(var "
-                    "s,t,o,p,b,r,e,a,k,i,n,g,f.+?\r?\n[\s\S]+?a\.value =.+?)\r?\n", body).group(1)
+        js = re.search(
+            r"setTimeout\(function\(\){\s+(var s,t,o,p,b,r,e,a,k,i,n,g,f.+?\r?\n[\s\S]+?a\.value =.+?)\r?\n",
+            body
+        ).group(1)
+
         js = re.sub(r"a\.value = ((.+).toFixed\(10\))?", r"\1", js)
+        js = re.sub(r'(e\s=\sfunction\(s\)\s{.*?};)', '', js, flags=re.DOTALL|re.MULTILINE)
         js = re.sub(r"\s{3,}[a-z](?: = |\.).+", "", js).replace("t.length", str(len(domain)))
         js = js.replace('; 121', '')
-        reemplazar = re.compile('(?is)function\(p\)\{return eval.*?\+p\+"\)"\)}', re.DOTALL).findall(js)
-        if reemplazar:
-            js = js.replace(reemplazar[0],'t.charCodeAt')
         js = re.sub(r"[\n\\']", "", js)
-        js = 'a = {{}}; t = "{}";{}'.format(domain, js)
-        result = seval.eval_js_vm(js)
+        jsEnv = """
+        var t = "{domain}";
+        var g = String.fromCharCode;
+        o = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+        e = function(s) {{
+            s += "==".slice(2 - (s.length & 3));
+            var bm, r = "", r1, r2, i = 0;
+            for (; i < s.length;) {{
+                bm = o.indexOf(s.charAt(i++)) << 18 | o.indexOf(s.charAt(i++)) << 12 | (r1 = o.indexOf(s.charAt(i++))) << 6 | (r2 = o.indexOf(s.charAt(i++)));
+                r += r1 === 64 ? g(bm >> 16 & 255) : r2 === 64 ? g(bm >> 16 & 255, bm >> 8 & 255) : g(bm >> 16 & 255, bm >> 8 & 255, bm & 255);
+            }}
+            return r;
+        }};
+        function italics (str) {{ return '<i>' + this + '</i>'; }};
+        var document = {{
+            getElementById: function () {{
+                return {{'innerHTML': '{innerHTML}'}};
+            }}
+        }};
+        {js}
+        """
+        innerHTML = re.search('<div(?: [^<>]*)? id="([^<>]*?)">([^<>]*?)<\/div>', body , re.MULTILINE | re.DOTALL)
+        innerHTML = innerHTML.group(2).replace("'", r"\'") if innerHTML else ""
+        import js2py
+        from jsc import jsunc
+        js = jsunc(jsEnv.format(domain=domain, innerHTML=innerHTML, js=js))
+        def atob(s):
+            return base64.b64decode('{}'.format(s)).decode('utf-8')
+        js2py.disable_pyimport()
+        context = js2py.EvalJs({'atob': atob})
+        result = context.eval(js)
         return float(result)
-        
+
 
     @property
     def wait_time(self):
