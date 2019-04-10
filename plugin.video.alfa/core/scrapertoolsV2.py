@@ -18,10 +18,6 @@ def printMatches(matches):
         i = i + 1
 
 
-def get_match(data, patron, index=0):
-    return find_single_match(data, patron, index=0)
-
-
 def find_single_match(data, patron, index=0):
     try:
         matches = re.findall(patron, data, flags=re.DOTALL)
