@@ -242,7 +242,7 @@ def findvideos(item):
         else:
             title = ''
         url = scrapertools.find_single_match(new_data, "src='([^']+)'")
-        url = get_url(url.replace('\\/', '/'))
+        url = get_url(url)
         if url:
             itemlist.append(item.clone(title ='%s'+title, url=url, action='play',
                                  language=IDIOMAS[language], text_color = ""))
@@ -255,7 +255,7 @@ def findvideos(item):
             title = ''
         new_data = httptools.downloadpage(hidden_url).data
         url = scrapertools.find_single_match(new_data, 'id="link" href="([^"]+)"')
-        url = get_url(url.replace('\\/', '/'))
+        url = get_url(url)
         if url:
             itemlist.append(Item(channel=item.channel, title='%s'+title, url=url, action='play', quality=quality,
                                  language=IDIOMAS[language], infoLabels=item.infoLabels, text_color = ""))
@@ -280,6 +280,7 @@ def findvideos(item):
 
 def get_url(url):
     logger.info()
+    url = url.replace('\\/', '/')
     if "cinetux.me" in url:
         d1 = httptools.downloadpage(url).data
         if "mail" in url or "drive" in url or "ok.cinetux" in url or "mp4/" in url:
@@ -288,6 +289,8 @@ def get_url(url):
             url = scrapertools.find_single_match(d1, '<iframe src="([^"]+)') + id
             if "drive" in url:
                 url += "/preview"
+            if "FFFFFF" in url:
+                url = scrapertools.find_single_match(d1, 'class="cta" href="([^"]+)"')
         else:
             url = scrapertools.find_single_match(d1, 'document.location.replace\("([^"]+)')
     url = url.replace("povwideo","powvideo")
