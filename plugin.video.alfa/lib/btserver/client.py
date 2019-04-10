@@ -205,9 +205,9 @@ class Client(object):
         """
         Función encargada de descargar un archivo .torrent
         """
-        from core import scrapertools
+        from core import httptools
 
-        data = scrapertools.downloadpage(url)
+        data = httptools.downloadpage(url).data
         return data
 
     def start_url(self, uri):

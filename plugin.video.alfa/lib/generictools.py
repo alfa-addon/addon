@@ -29,8 +29,8 @@ from lib import jsunpack
 
 channel_py = "newpct1"
 intervenido_judicial = 'Dominio intervenido por la Autoridad Judicial'
-intervenido_policia = '<!--CATEGORY:Judicial_Policia_Nacional'
-intervenido_guardia = '<!--CATEGORY:Judicial_Guardia_Civil'
+intervenido_policia = 'Judicial_Policia_Nacional'
+intervenido_guardia = 'Judicial_Guardia_Civil'
 intervenido_sucuri = 'Access Denied - Sucuri Website Firewall'
 
 
@@ -1222,7 +1222,7 @@ def post_tmdb_findvideos(item, itemlist):
     return (item, itemlist)
     
     
-def get_torrent_size(url, referer=None, post=None, data_torrent=False):
+def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5):
     logger.info()
     from core import videolibrarytools
     
@@ -1316,7 +1316,7 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False):
         #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
         #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
         
-        torrents_path, torrent_file = videolibrarytools.caching_torrents(url, referer=referer, post=post, timeout=2, lookup=True, data_torrent=True)
+        torrents_path, torrent_file = videolibrarytools.caching_torrents(url, referer=referer, post=post, timeout=timeout, lookup=True, data_torrent=True)
         if not torrent_file:
             if data_torrent:
                 return (size, torrent)

@@ -69,7 +69,7 @@ def agregadas(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    fichas = re.sub(r"\n|\s{2}","",scrapertools.get_match(data,'<div class="review-box-container">(.*?)wp-pagenavi'))
+    fichas = re.sub(r"\n|\s{2}","",scrapertools.find_single_match(data,'<div class="review-box-container">(.*?)wp-pagenavi'))
     patron = '<div class="post-thumbnail"><a href="([^"]+)".*?' # url
     patron+= 'title="([^"]+)".*?' # title
     patron+= 'src="([^"]+).*?'     # thumbnail

@@ -42,9 +42,9 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     if item.title == "Categorias":
-        data = scrapertools.get_match(data, '<a href="#">Genres</a>(.*?)</ul>')
+        data = scrapertools.find_single_match(data, '<a href="#">Genres</a>(.*?)</ul>')
     else:
-        data = scrapertools.get_match(data, '<a href="#">Studios</a>(.*?)</ul>')
+        data = scrapertools.find_single_match(data, '<a href="#">Studios</a>(.*?)</ul>')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a href="([^"]+)">([^<]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -72,7 +72,7 @@ def lista(item):
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
-                             plot=plot, contentTitle=title))
+                             fanart=thumbnail, plot=plot, contentTitle=title))
         # <li class='active'><a class=''>1</a></li><li><a rel='nofollow' class='page larger' href='https://pandamovies.pw/movies/page/2'>
     next_page = scrapertools.find_single_match(data, '<li class=\'active\'>.*?href=\'([^\']+)\'>')
     if next_page == "":

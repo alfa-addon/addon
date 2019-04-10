@@ -10,15 +10,6 @@ from core import httptools
 from platformcode import logger
 
 
-def cache_page(url, post=None, headers=None, modo_cache=None, timeout=None):
-    return cachePage(url, post, headers, modo_cache, timeout=timeout)
-
-
-def cachePage(url, post=None, headers=None, modoCache=None, timeout=None):
-    data = downloadpage(url, post=post, headers=headers, timeout=timeout)
-    return data
-
-
 def downloadpage(url, post=None, headers=None, follow_redirects=True, timeout=None, header_to_get=None):
     response = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=follow_redirects,
                                       timeout=timeout)

@@ -25,7 +25,8 @@ list_quality = []
 list_servers = ['torrent']
 
 channel = "mejortorrent1"
-host = config.get_setting('domain_name', channel)
+#host = config.get_setting('domain_name', channel)
+host = "https://mejortorrent1.net/"
 
 categoria = channel.capitalize()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
@@ -889,7 +890,6 @@ def findvideos(item):
                     torrent_data = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=False)
                 except:                                                         #error
                     pass
-
                     
     else:
         #Viene de SERIES y DOCUMENTALES. Generamos una copia de Item para trabajar sobre ella
@@ -901,7 +901,7 @@ def findvideos(item):
         except:
             pass
 
-    if not torrent_data and not ('location' in torrent_data.headers or 'zip' in torrent_data.headers['content-type']):
+    if not torrent_data and not ('location' in torrent_data.headers or 'zip' in torrent_data.headers):
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
             item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
@@ -1003,7 +1003,7 @@ def findvideos(item):
         if config.get_setting('filter_languages', channel) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
             thumb_separador = get_thumb("next.png")                                 #... pintamos todo con aviso
             itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
-        itemlist.extend(itemlist_t)                                                 #Pintar pantalla con todo si no hay filtrado
+        itemlist.extend(itemlist_t)                                     #Pintar pantalla con todo si no hay filtrado
 
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)                                                  #Lanzamos Autoplay

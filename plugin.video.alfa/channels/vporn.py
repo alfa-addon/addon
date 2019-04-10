@@ -56,7 +56,7 @@ def catalogo(item):
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
         scrapedurl = host + scrapedurl
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<a class="next" href="([^"]+)">')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
@@ -69,7 +69,7 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data = scrapertools.get_match(data,'<div class="cats-all categories-list">(.*?)</div>')
+    data = scrapertools.find_single_match(data,'<div class="cats-all categories-list">(.*?)</div>')
     patron  = '<a href="([^"]+)".*?>([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle in matches:
@@ -84,19 +84,22 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="video">.*?'
     patron += '<a href="([^"]+)".*?'
-    patron += '<span class="time">(.*?)</span>.*?'
+    patron += '<span class="time">(.*?)</span>(.*?)</span>.*?'
     patron += '<img src="([^"]+)" alt="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,time,scrapedthumbnail,scrapedtitle in matches:
+    for scrapedurl,time,calidad,scrapedthumbnail,scrapedtitle in matches:
+        scrapedtitle = scrapedtitle.replace("&comma; ", " & ").replace("&lpar;", "(").replace("&rpar;", ")") 
         title = "[COLOR yellow]" + time + "  [/COLOR]" + scrapedtitle
+        if "hd-marker is-hd" in  calidad:
+            title = "[COLOR yellow]" + time + " [/COLOR]" + "[COLOR red]" + "HD" + "  [/COLOR]" + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play" , title=title , url=scrapedurl,
-                              thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
+                              fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data,'<a class="next.*?title="Next Page" href="([^"]+)">')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
@@ -107,7 +110,7 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     patron  = '<source src="([^"]+)" type="video/mp4" label="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl,scrapedtitle  in matches:

@@ -6,6 +6,7 @@ import urlparse
 from core import scrapertools
 from core.item import Item
 from platformcode import logger
+from core import httptools
 
 
 def mainlist(item):
@@ -18,7 +19,7 @@ def mainlist(item):
     # ------------------------------------------------------
     # Descarga la página
     # ------------------------------------------------------
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     # logger.info(data)
 
     # ------------------------------------------------------
@@ -68,7 +69,7 @@ def play(item):
     logger.info()
     itemlist = []
     # Descarga la página
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     logger.info(data)
 
     # Extrae las películas

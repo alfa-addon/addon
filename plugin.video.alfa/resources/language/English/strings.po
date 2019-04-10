@@ -4723,10 +4723,6 @@ msgctxt "#70508"
 msgid "Search in Abandomoviez"
 msgstr ""
 
-msgctxt "#70509"
-msgid "Search in Jayhap (Youtube, Vimeo & Dailymotion)"
-msgstr ""
-
 msgctxt "#70510"
 msgid "Manual Search in Youtube"
 msgstr ""
@@ -4932,5 +4928,5 @@ msgid "Search Similar
 msgstr ""
 
 msgctxt "#70562"
-msgid "autoplay"
-msgstr "Enable autoplay in all channels"
+msgid "Autoplay (Enable autoplay on all supported channels)"
+msgstr "Autoplay (Enable autoplay on all supported channels)"

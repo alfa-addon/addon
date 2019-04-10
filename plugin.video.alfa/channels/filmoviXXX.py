@@ -8,14 +8,14 @@ from core.item import Item
 from platformcode import config, logger
 from core import httptools
 
-
+# BLOQUEO ESET INTERNET SECURITY
 def mainlist(item):
     logger.info()
     itemlist = []
     if item.url=="":
         item.url = "http://www.filmovix.net/videoscategory/porno/"
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'<h1 class="cat_head">XXX</h1>(.*?)<h3> Novo dodato </h3>')
+    data = scrapertools.find_single_match(data,'<h1 class="cat_head">XXX</h1>(.*?)<h3> Novo dodato </h3>')
     patron  = '<li class="clearfix">.*?'
     patron += 'src="([^"]+)".*?'
     patron += '<p class="title"><a href="([^"]+)" rel="bookmark" title="([^"]+)">'

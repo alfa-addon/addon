@@ -5,12 +5,26 @@
 
 import datetime, imp, math, threading, traceback
 
+
+
+from platformcode import config
+try:
+    import xbmc, os
+    librerias = xbmc.translatePath(os.path.join(config.get_runtime_path(), 'lib'))
+    sys.path.append(librerias)
+except:
+    import os
+    librerias = os.path.join(config.get_runtime_path(), 'lib')
+    sys.path.append(librerias)
+
+
+
+
 from core import channeltools, filetools, videolibrarytools
-from platformcode import config, logger
+from platformcode import logger
 from platformcode import platformtools
 from channels import videolibrary
 from lib import generictools
-
 
 
 def update(path, p_dialog, i, t, serie, overwrite):
@@ -332,11 +346,14 @@ if __name__ == "__main__":
     # Verificar quick-fixes al abrirse Kodi, y dejarlo corriendo como Thread
     from platformcode import updater
     updater.check_addon_init()
-    
+
     # Copia Custom code a las carpetas de Alfa desde la zona de Userdata
     from platformcode import custom_code
     custom_code.init()
-    
+
+    # Identifica la dirección Proxy y la lista de alternativas
+    from core import proxytools
+    proxytools.get_proxy_list()
     if not config.get_setting("update", "videolibrary") == 2:
         check_for_update(overwrite=False)
 

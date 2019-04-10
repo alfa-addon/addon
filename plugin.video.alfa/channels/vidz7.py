@@ -9,16 +9,16 @@ from core import servertools
 from core.item import Item
 from platformcode import logger
 
+host = 'http://www.vidz7.com'
+
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="lista", title="Útimos videos", url="http://www.vidz7.com/"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Útimos videos", url=host))
     itemlist.append(
-        Item(channel=item.channel, action="categorias", title="Categorias", url="http://www.vidz7.com/category/"))
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar",
-                         url="http://www.vidz7.com/?s="))
-
+        Item(channel=item.channel, action="categorias", title="Categorias", url=host + "/category/"))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", url="http://www.vidz7.com"))
     return itemlist
 
 
@@ -26,7 +26,7 @@ def search(item, texto):
     logger.info()
 
     texto = texto.replace(" ", "+")
-    item.url = "{0}{1}".format(item.url, texto)
+    item.url = host + "/?s=%s" % texto
     try:
         return lista(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -52,32 +52,27 @@ def categorias(item):
 
 def lista(item):
     logger.info()
-
     # Descarga la página
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}", "", data)
-
-    # Extrae las entradas de la pagina seleccionada
-    patron = "<a href='.*?.' class='thumb' style='background-image:url\(\"([^\"]+)\"\).*?.<h6><a class='hp' href='([^']+)'>(.*?)</a></h6>"
+    patron = "<a href='.*?.' class='thumb' style='background-image:url\(\"([^\"]+)\"\).*?"
+    patron += "<div class=\"hd\">(.*?)</div>.*?"
+    patron += "<div class=\"duration\">(.*?)</div>.*?"
+    patron += "<h6><a class='hp' href='([^']+)'>(.*?)</a></h6>"
     matches = re.compile(patron, re.DOTALL).findall(data)
     itemlist = []
-
-    for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
+    for scrapedthumbnail, scrapedhd, duration, scrapedurl, scrapedtitle in matches:
         thumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
         url = urlparse.urljoin(item.url, scrapedurl)
-        title = scrapedtitle.strip()
-
+        scrapedtitle = scrapedtitle.strip()
+        title = "[COLOR yellow]" + duration + "[/COLOR] " + "[COLOR red]" +scrapedhd+ "[/COLOR]  "+scrapedtitle
         # Añade al listado
         itemlist.append(Item(channel=item.channel, action="play", title=title, thumbnail=thumbnail, fanart=thumbnail,
                              fulltitle=title, url=url,
                              viewmode="movie", folder=True))
-
-    paginacion = scrapertools.find_single_match(data,
-                                                '<a class="active".*?.>\d+</a><a class="inactive" href ="([^"]+)">')
-
+    paginacion = scrapertools.find_single_match(data,'<a class="active".*?.>\d+</a><a class="inactive" href ="([^"]+)">')
     if paginacion:
         itemlist.append(Item(channel=item.channel, action="lista", title=">> Página Siguiente", url=paginacion))
-
     return itemlist
 
 
@@ -94,5 +89,5 @@ def play(item):
         videoitem.action = "play"
         videoitem.folder = False
         videoitem.title = item.title
-
     return itemlist
+

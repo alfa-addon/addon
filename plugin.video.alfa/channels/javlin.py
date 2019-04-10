@@ -10,6 +10,7 @@ from core import httptools
 
 host = 'http://javl.in'
 
+# BLOQUEO ANTIVIRUS
 
 def mainlist(item):
     logger.info()

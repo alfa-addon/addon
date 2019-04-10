@@ -16,6 +16,7 @@ def mainlist(item):
     itemlist = []
     itemlist.append( Item(channel=item.channel, title="Nuevas" , action="lista", url=host))
     itemlist.append( Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "/top-raped/"))
+    itemlist.append( Item(channel=item.channel, title="Modelos" , action="categorias", url=host + "/models/most-popular/"))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
@@ -39,25 +40,32 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<li class="thumb thumb-category">.*?'
+    patron  = '<li class="thumb thumb-\w+">.*?'
     patron += '<a href="([^"]+)">.*?'
-    patron += '<img class="lazy" data-original="([^"]+)">.*?'
-    patron += '<div class="name">([^"]+)</div>.*?'
-    patron += '<div class="count">(\d+)</div>'
+    patron += '<img class="lazy" data-original="([^"]+)".*?'
+    patron += '<div class="title">(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         scrapedplot = ""
-        scrapedtitle = scrapedtitle + "  (" + cantidad + ")"
+        title = scrapertools.find_single_match(scrapedtitle,'<div class="text">([^<]+)<')
+        if "/categories/" in item.url:
+            cantidad = scrapertools.find_single_match(scrapedtitle,'<div class="count">(\d+)</div>')
+            scrapedtitle = scrapertools.find_single_match(scrapedtitle,'<div class="name">([^<]+)</div>')
+            title = scrapedtitle + "  (" + cantidad + ")"
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail , plot=scrapedplot) )
+        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail,  plot=scrapedplot) )
+    next_page = scrapertools.find_single_match(data,'<li class="pagination-next"><a href="([^"]+)">')
+    if next_page!="":
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(item.clone(action="categorias", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 
 def lista(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<div class="thumb">.*?'
     patron += '<a href="([^"]+)".*?'
@@ -72,7 +80,7 @@ def lista(item):
         plot = ""
         year = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                               plot=plot, contentTitle = contentTitle))
+                              fanart=thumbnail, plot=plot, contentTitle = contentTitle))
     next_page = scrapertools.find_single_match(data,'<li class="pagination-next"><a href="([^"]+)">')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
@@ -83,7 +91,7 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     patron  = '<meta property="og:video" content="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:

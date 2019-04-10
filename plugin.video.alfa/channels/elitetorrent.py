@@ -24,7 +24,7 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['torrent']
 
-host = 'http://www.elitetorrent.biz'
+host = 'http://www.elitetorrent.io'
 channel = "elitetorrent"
 
 categoria = channel.capitalize()
@@ -85,9 +85,9 @@ def submenu(item):
         return itemlist                                                         #Algo no funciona, pintamos lo que tenemos
     
     patron = '<div class="cab_menu">.*?<\/div>'                                 #Menú principal
-    data1 = scrapertools.get_match(data, patron)
+    data1 = scrapertools.find_single_match(data, patron)
     patron = '<div id="menu_langen">.*?<\/div>'                                 #Menú de idiomas
-    data1 += scrapertools.get_match(data, patron)
+    data1 += scrapertools.find_single_match(data, patron)
     
     patron = '<a href="(.*?)".*?title="(.*?)"'                                  #Encontrar todos los apartados
     matches = re.compile(patron, re.DOTALL).findall(data1)
@@ -155,16 +155,16 @@ def listado(item):
     patron = '<div id="principal">.*?<\/nav><\/div><\/div>'
     data = scrapertools.find_single_match(data, patron)
     
-    patron = '<li>.*?<a href="(.*?)".*?'                    #url
-    patron += 'title="(.*?)".*?'                            #título
-    patron += 'src="(.*?)".*?'                              #thumb
-    patron += "title='(.*?)'.*?"                            #categoría, idioma
-    patron += '"><i>(.*?)<\/i><\/span.*?'                   #calidad
-    patron += '="dig1">(.*?)<.*?'                           #tamaño
-    patron += '="dig2">(.*?)<\/span><\/div>'                #tipo tamaño
+    patron = '<li>\s*<div\s*class="[^"]+">\s*<a href="([^"]+)"\s*'              #url
+    patron += 'title="([^"]+)"\s*(?:alt="[^"]+")?\s*>\s*'                       #título
+    patron += '<img (?:class="[^"]+")?\s*src="([^"]+)"\s*border="[^"]+"\s*'     #thumb
+    patron += 'title="([^"]+)".*?'                                              #categoría, idioma
+    patron += '<span class="[^"]+" style="[^"]+"\s*><i>(.*?)<\/i><\/span.*?'    #calidad
+    patron += '="dig1">(.*?)<.*?'                                               #tamaño
+    patron += '="dig2">(.*?)<\/span><\/div>'                                    #tipo tamaño
 
     matches = re.compile(patron, re.DOTALL).findall(data)
-    if not matches and not '<title>503 Backend fetch failed</title>' in data:   #error
+    if not matches and not '<title>503 Backend fetch failed</title>' in data and not 'No se han encontrado resultados' in data:                                                                           #error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
             item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error

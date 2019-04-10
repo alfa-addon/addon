@@ -2,6 +2,8 @@
 #------------------------------------------------------------
 import urlparse,urllib2,urllib,re
 import os, sys
+import base64
+
 from core import scrapertools
 from core import servertools
 from core.item import Item
@@ -9,6 +11,7 @@ from platformcode import config, logger
 from core import httptools
 
 host = 'http://www.pornhive.tv/en'
+
 
 def mainlist(item):
     logger.info()
@@ -38,9 +41,9 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     if item.title == "Categorias" :
-        data = scrapertools.get_match(data,'Categories(.*?)Channels')
+        data = scrapertools.find_single_match(data,'Categories(.*?)Channels')
     else:
-        data = scrapertools.get_match(data,'Channels(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'Channels(.*?)</ul>')
     patron  = '<li><a href="([^"]+)" title="[^"]+">(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     scrapertools.printMatches(matches)
@@ -66,22 +69,25 @@ def lista(item):
         title = scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title, url=scrapedurl, thumbnail=thumbnail,
-                              plot=plot, contentTitle=title))
+        itemlist.append( Item(channel=item.channel, action="findvideos" , title=title, url=scrapedurl, thumbnail=thumbnail,
+                              fanart=thumbnail, plot=plot, contentTitle=title))
     next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)" data-ci-pagination-page="\d+" rel="next">Next &rsaquo;')
     if next_page != "" :
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 
-def play(item):
+def findvideos(item):
     logger.info()
-    itemlist = servertools.find_video_items(data=item.url)
-    data = scrapertools.cachePage(item.url)
-    itemlist = servertools.find_video_items(data=data)
-    for videoitem in itemlist:
-        videoitem.title = item.title
-        videoitem.fulltitle = item.fulltitle
-        videoitem.thumbnail = item.thumbnail
-        videochannel=item.channel
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    patron  = ';extra_urls\[\d+\]=\'([^\']+)\''
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for scrapedurl in matches:
+        scrapedurl = base64.b64decode(scrapedurl)
+        itemlist.append(item.clone(action="play", title="%s", url=scrapedurl))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
+
+

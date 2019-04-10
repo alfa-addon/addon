@@ -44,11 +44,11 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     if item.title=="Canal":
-        data = scrapertools.get_match(data,'<div class="footer-banner">(.*?)<div id="footer-copyright">')
+        data = scrapertools.find_single_match(data,'<div class="footer-banner">(.*?)<div id="footer-copyright">')
     if item.title=="Productora" :
-       data = scrapertools.get_match(data,'<li id="menu-item-16"(.*?)</ul>')
+       data = scrapertools.find_single_match(data,'<li id="menu-item-16"(.*?)</ul>')
     if item.title=="Categorias" :
-       data = scrapertools.get_match(data,'<a>Categories</a>(.*?)</ul>')
+       data = scrapertools.find_single_match(data,'<a>Categories</a>(.*?)</ul>')
     patron  = '<a href="([^"]+)">([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle in matches:
@@ -64,7 +64,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<li class="border-radius-5 box-shadow">.*?'
     patron += 'src="([^"]+)".*?<a href="([^"]+)" title="([^"]+)">.*?'
@@ -91,11 +91,11 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = scrapertools.cachePage(item.url)
+    data = httptools.downloadpage(item.url).data
     variable = scrapertools.find_single_match(data,'<script type=\'text/javascript\'> str=\'([^\']+)\'')
     resuelta = re.sub("@[A-F0-9][A-F0-9]", lambda m: m.group()[1:].decode('hex'), variable)
     url = scrapertools.find_single_match(resuelta,'<iframe src="([^"]+)"')
-    data = scrapertools.cachePage(url)
+    data = httptools.downloadpage(item.url).data
     itemlist = servertools.find_video_items(data=data)
     for videoitem in itemlist:
         videoitem.title = item.title

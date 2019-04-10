@@ -38,18 +38,19 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data1 = scrapertools.get_match(data,'<h5>Popular Categories<br />(.*?)</aside>')
+    data1 = scrapertools.find_single_match(data,'<h5>Popular Categories<br />(.*?)</aside>')
     if item.title == "Canal" :
-        data1 = scrapertools.get_match(data,'>Top sites</a>(.*?)</ul>')
-        data1 += scrapertools.get_match(data,'Downloads</h2>(.*?)</ul>')
+        data1 = scrapertools.find_single_match(data,'>Top sites</a>(.*?)</ul>')
+        data1 += scrapertools.find_single_match(data,'Downloads</h2>(.*?)</ul>')
     patron  = '<a href="([^<]+)">([^<]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data1)
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail , plot=scrapedplot , folder=True) )
+                              thumbnail=scrapedthumbnail , plot=scrapedplot) )
     return itemlist
+
 
 def lista(item):
     logger.info()
@@ -67,38 +68,11 @@ def lista(item):
         elif '1080' in scrapedtitle : title= "[COLOR red]" + "1080p" + "[/COLOR] " + scrapedtitle
         else: title = scrapedtitle
         itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
-                              thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
+                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail,plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<a class="next page-numbers" href="([^"]+)">Next &rarr;</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista" , title="Next page >>", text_color="blue", url=next_page) )
     return itemlist
 
-
-def findvideos(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = scrapertools.get_match(data,'--more-->(.*?)/a>')
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<a href="([^"]+)".*?class="external">(.*?)<'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle in matches:
-        scrapedplot = ""
-        scrapedthumbnail = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, fulltitle=item.title,
-                              url=scrapedurl, thumbnail=scrapedthumbnail, plot=scrapedplot) )
-    return itemlist
-
-
-def play(item):
-    logger.info()
-    data = httptools.downloadpage(item.url).data
-    itemlist = servertools.find_video_items(data=data)
-    for videoitem in itemlist:
-        videoitem.title = item.title
-        videoitem.fulltitle = item.fulltitle
-        videoitem.thumbnail = item.thumbnail
-        videoitem.channel = item.channel
-    return itemlist
 

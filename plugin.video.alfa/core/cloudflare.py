@@ -10,6 +10,8 @@ import urlparse
 
 from platformcode import logger
 from decimal import Decimal
+from js2py.internals import seval
+
 
 class Cloudflare:
     def __init__(self, response):
@@ -18,26 +20,23 @@ class Cloudflare:
         self.protocol = urlparse.urlparse(response["url"])[0]
         self.js_data = {}
         self.header_data = {}
-
         if not "var s,t,o,p,b,r,e,a,k,i,n,g,f" in response["data"] or "chk_jschl" in response["url"]:
             return
-
         try:
+            self.js_data["data"] = response["data"]
             self.js_data["auth_url"] = \
-            re.compile('<form id="challenge-form" action="([^"]+)" method="get">').findall(response["data"])[0]
+                re.compile('<form id="challenge-form" action="([^"]+)" method="get">').findall(response["data"])[0]
             self.js_data["params"] = {}
             self.js_data["params"]["jschl_vc"] = \
-            re.compile('<input type="hidden" name="jschl_vc" value="([^"]+)"/>').findall(response["data"])[0]
+                re.compile('<input type="hidden" name="jschl_vc" value="([^"]+)"/>').findall(response["data"])[0]
             self.js_data["params"]["pass"] = \
-            re.compile('<input type="hidden" name="pass" value="([^"]+)"/>').findall(response["data"])[0]
-            var, self.js_data["value"] = \
-            re.compile('var s,t,o,p,b,r,e,a,k,i,n,g,f[^:]+"([^"]+)":([^\n]+)};', re.DOTALL).findall(response["data"])[0]
-            self.js_data["op"] = re.compile(var + "([\+|\-|\*|\/])=([^;]+)", re.MULTILINE).findall(response["data"])
+                re.compile('<input type="hidden" name="pass" value="([^"]+)"/>').findall(response["data"])[0]
             self.js_data["wait"] = int(re.compile("\}, ([\d]+)\);", re.MULTILINE).findall(response["data"])[0]) / 1000
+            self.js_data["params"]["s"] = \
+                re.compile('<input type="hidden" name="s" value="([^"]+)"').findall(response["data"])[0]
         except:
             logger.debug("Metodo #1 (javascript): NO disponible")
             self.js_data = {}
-
         if "refresh" in response["headers"]:
             try:
                 self.header_data["wait"] = int(response["headers"]["refresh"].split(";")[0])
@@ -47,6 +46,26 @@ class Cloudflare:
             except:
                 logger.debug("Metodo #2 (headers): NO disponible")
                 self.header_data = {}
+
+
+    def solve_cf(self, body, domain):
+        k = re.compile('<div style="display:none;visibility:hidden;" id=".*?">(.*?)<\/div>', re.DOTALL).findall(body)
+        k1 = re.compile('function\(p\){var p = eval\(eval.*?atob.*?return \+\(p\)}\(\)', re.DOTALL).findall(body)
+        if k1:
+            body = body.replace(k1[0], k[0])
+        js = re.search(r"setTimeout\(function\(\){\s+(var "
+                    "s,t,o,p,b,r,e,a,k,i,n,g,f.+?\r?\n[\s\S]+?a\.value =.+?)\r?\n", body).group(1)
+        js = re.sub(r"a\.value = ((.+).toFixed\(10\))?", r"\1", js)
+        js = re.sub(r"\s{3,}[a-z](?: = |\.).+", "", js).replace("t.length", str(len(domain)))
+        js = js.replace('; 121', '')
+        reemplazar = re.compile('(?is)function\(p\)\{return eval.*?\+p\+"\)"\)}', re.DOTALL).findall(js)
+        if reemplazar:
+            js = js.replace(reemplazar[0],'t.charCodeAt')
+        js = re.sub(r"[\n\\']", "", js)
+        js = 'a = {{}}; t = "{}";{}'.format(domain, js)
+        result = seval.eval_js_vm(js)
+        return float(result)
+        
 
     @property
     def wait_time(self):
@@ -62,53 +81,8 @@ class Cloudflare:
     def get_url(self):
         # Metodo #1 (javascript)
         if self.js_data.get("wait", 0):
-            jschl_answer = self.decode(self.js_data["value"])
-
-            for op, v in self.js_data["op"]:
-                if op == '+':
-                    jschl_answer = jschl_answer + self.decode(v)
-                elif op == '-':
-                    jschl_answer = jschl_answer - self.decode(v)
-                elif op == '*':
-                    jschl_answer = jschl_answer * self.decode(v)
-                elif op == '/':
-                    jschl_answer = jschl_answer / self.decode(v)
-
-            self.js_data["params"]["jschl_answer"] = round(jschl_answer, 10) + len(self.domain)
-
+            self.js_data["params"]["jschl_answer"] =  self.solve_cf(self.js_data["data"], self.domain)
             response = "%s://%s%s?%s" % (
-            self.protocol, self.domain, self.js_data["auth_url"], urllib.urlencode(self.js_data["params"]))
-
+                self.protocol, self.domain, self.js_data["auth_url"], urllib.urlencode(self.js_data["params"]))
             time.sleep(self.js_data["wait"])
-
             return response
-
-        # Metodo #2 (headers)
-        if self.header_data.get("wait", 0):
-            response = "%s://%s%s?%s" % (
-            self.protocol, self.domain, self.header_data["auth_url"], urllib.urlencode(self.header_data["params"]))
-
-            time.sleep(self.header_data["wait"])
-
-            return response
-
-    def decode(self, data):
-        data = re.sub("\!\+\[\]", "1", data)
-        data = re.sub("\!\!\[\]", "1", data)
-        data = re.sub("\[\]", "0", data)
-        
-        pos = data.find("/")
-        numerador = data[:pos]
-        denominador = data[pos+1:]
-        
-        aux = re.compile('\(([0-9\+]+)\)').findall(numerador)
-        num1 = ""
-        for n in aux:
-            num1 += str(eval(n))
-
-        aux = re.compile('\(([0-9\+]+)\)').findall(denominador)
-        num2 = ""
-        for n in aux:
-            num2 += str(eval(n))
-
-        return Decimal(Decimal(num1) / Decimal(num2)).quantize(Decimal('.0000000000000001'))

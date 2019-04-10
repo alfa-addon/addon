@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from core import httptools
 from core import scrapertools
 from platformcode import logger
 
 
 def test_video_exists(page_url):
     logger.info("page_url='%s')" % page_url)
-
-    data = scrapertools.cache_page(url=page_url)
+    data = httptools.downloadpage(url=page_url).data
     if "<h1>404 Not Found</h1>" in data:
         return False, "El archivo no existe<br/>en streamcloud o ha sido borrado."
     elif "<h1>File Not Found</h1>" in data:
@@ -20,52 +20,41 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
-
     # Lo pide una vez
     headers = [
         ['User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.8.1.14) Gecko/20080404 Firefox/2.0.0.14']]
-    data = scrapertools.cache_page(page_url, headers=headers)
+    data = httptools.downloadpage(page_url, headers=headers).data
 
-    try:
-        media_url = scrapertools.get_match(data, 'file\: "([^"]+)"')
-    except:
+    media_url = scrapertools.find_single_match(data, 'file\: "([^"]+)"')
+
+    if len(media_url) == 0:
         post = ""
         matches = scrapertools.find_multiple_matches(data, '<input.*?name="([^"]+)".*?value="([^"]*)">')
         for inputname, inputvalue in matches:
             post += inputname + "=" + inputvalue + "&"
         post = post.replace("op=download1", "op=download2")
-        data = scrapertools.cache_page(page_url, post=post)
-
+        data = httptools.downloadpage(page_url, post=post).data
         if 'id="justanotice"' in data:
             logger.info("data=" + data)
             logger.info("Ha saltado el detector de adblock")
             return []
-
         # Extrae la URL
-        media_url = scrapertools.get_match(data, 'file\: "([^"]+)"')
-
+        media_url = scrapertools.find_single_match(data, 'file\: "([^"]+)"')
     video_urls = []
     video_urls.append([scrapertools.get_filename_from_url(media_url)[-4:] + " [streamcloud]", media_url+"|Referer="+page_url])
-
-
     for video_url in video_urls:
         logger.info("%s - %s" % (video_url[0], video_url[1]))
-
     return video_urls
 
 
 if __name__ == "__main__":
     import getopt
     import sys
-
     options, arguments = getopt.getopt(sys.argv[1:], "", ["video_url=", "login=", "password="])
-
     video_url = ""
     login = ""
     password = ""
-
     logger.info("%s %s" % (str(options), str(arguments)))
-
     for option, argument in options:
         print option, argument
         if option == "--video_url":
@@ -76,15 +65,12 @@ if __name__ == "__main__":
             password = argument
         else:
             assert False, "Opcion desconocida"
-
     if video_url == "":
         print "ejemplo de invocacion"
         print "streamcloud --video_url http://xxx --login usuario --password secreto"
     else:
-
         if login != "":
             premium = True
         else:
             premium = False
-
         print get_video_url(video_url, premium, login, password)

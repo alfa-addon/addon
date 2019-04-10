@@ -16,6 +16,7 @@ from channelselector import get_thumb
 
 host = "https://hdfull.me"
 
+
 if config.get_setting('hdfulluser', 'hdfull'):
     account = True
 else:
@@ -128,10 +129,11 @@ def menuseries(item):
 def search(item, texto):
     logger.info()
     data = agrupa_datos(httptools.downloadpage(host).data)
-    sid = scrapertools.get_match(data, '.__csrf_magic. value="(sid:[^"]+)"')
+    sid = scrapertools.find_single_match(data, '.__csrf_magic. value="(sid:[^"]+)"')
     item.extra = urllib.urlencode({'__csrf_magic': sid}) + '&menu=search&query=' + texto
     item.title = "Buscar..."
     item.url = host + "/buscar"
+    item.texto = texto
     try:
         return fichas(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -160,8 +162,8 @@ def items_usuario(item):
     ## Fichas usuario
     url = item.url.split("?")[0]
     post = item.url.split("?")[1]
-    old_start = scrapertools.get_match(post, 'start=([^&]+)&')
-    limit = scrapertools.get_match(post, 'limit=(\d+)')
+    old_start = scrapertools.find_single_match(post, 'start=([^&]+)&')
+    limit = scrapertools.find_single_match(post, 'limit=(\d+)')
     start = "%s" % (int(old_start) + int(limit))
     post = post.replace("start=" + old_start, "start=" + start)
     next_page = url + "?" + post
@@ -241,12 +243,12 @@ def fichas(item):
 
     if item.title == "Buscar...":
         data = agrupa_datos(httptools.downloadpage(item.url, post=item.extra).data)
-        s_p = scrapertools.get_match(data, '<h3 class="section-title">(.*?)<div id="footer-wrapper">').split(
+        s_p = scrapertools.find_single_match(data, '<h3 class="section-title">(.*?)<div id="footer-wrapper">').split(
             '<h3 class="section-title">')
         if len(s_p) == 1:
             data = s_p[0]
             if 'Lo sentimos</h3>' in s_p[0]:
-                return [Item(channel=item.channel, title="[COLOR gold][B]HDFull:[/B][/COLOR] [COLOR blue]" + texto.replace('%20',
+                return [Item(channel=item.channel, title="[COLOR gold][B]HDFull:[/B][/COLOR] [COLOR blue]" + item.texto.replace('%20',
                                                                                        ' ') + "[/COLOR] sin resultados")]
         else:
             data = s_p[0] + s_p[1]
@@ -330,7 +332,7 @@ def episodios(item):
     data = agrupa_datos(httptools.downloadpage(item.url).data)
     if id == "0":
         ## Se saca el id de la serie de la página cuando viene de listado_series
-        id = scrapertools.get_match(data, "<script>var sid = '([^']+)';</script>")
+        id = scrapertools.find_single_match(data, "<script>var sid = '([^']+)';</script>")
         url_targets = url_targets.replace('###0', '###' + id)
     str = get_status(status, "shows", id)
     if str != "" and account and item.category != "Series" and "XBMC" not in item.title:
@@ -355,8 +357,8 @@ def episodios(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl in matches:
         data = agrupa_datos(httptools.downloadpage(scrapedurl).data)
-        sid = scrapertools.get_match(data, "<script>var sid = '(\d+)'")
-        ssid = scrapertools.get_match(scrapedurl, "temporada-(\d+)")
+        sid = scrapertools.find_single_match(data, "<script>var sid = '(\d+)'")
+        ssid = scrapertools.find_single_match(scrapedurl, "temporada-(\d+)")
         post = "action=season&start=0&limit=0&show=%s&season=%s" % (sid, ssid)
         url = host + "/a/episodes"
         data = httptools.downloadpage(url, post=post).data
@@ -411,7 +413,7 @@ def novedades_episodios(item):
     ## Episodios
     url = item.url.split("?")[0]
     post = item.url.split("?")[1]
-    old_start = scrapertools.get_match(post, 'start=([^&]+)&')
+    old_start = scrapertools.find_single_match(post, 'start=([^&]+)&')
     start = "%s" % (int(old_start) + 24)
     post = post.replace("start=" + old_start, "start=" + start)
     next_page = url + "?" + post
@@ -701,7 +703,7 @@ def jhexdecode(t):
         else:
             return ""
     r = re.sub(r'(?:\\|)x(\w{2})', to_hx, r).replace('var ', '')
-    f = eval(scrapertools.get_match(r, '\s*var_0\s*=\s*([^;]+);'))
+    f = eval(scrapertools.find_single_match(r, '\s*var_0\s*=\s*([^;]+);'))
     for i, v in enumerate(f):
         r = r.replace('[[var_0[%s]]' % i, "." + f[i])
         r = r.replace(':var_0[%s]' % i, ":\"" + f[i] + "\"")
