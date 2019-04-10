@@ -49,7 +49,8 @@ def lista(item):
     action = "play"
     if config.get_setting("menu_info", "javtasty"):
         action = "menu_info"
-    patron  = 'div class="video-item.*?href="([^"]+)".*?'
+    # PURGA los PRIVATE 
+    patron  = 'div class="video-item\s+".*?href="([^"]+)".*?'
     patron += 'data-original="([^"]+)" '
     patron += 'alt="([^"]+)"(.*?)fa fa-clock-o"></i>([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -89,12 +90,15 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    videourl = scrapertools.find_single_match(data, "video_url:\s*'([^']+)'")
+    videourl = scrapertools.find_single_match(data, "video_alt_url2:\s*'([^']+)'")
     if videourl:
-        itemlist.append(['.mp4 [directo]', videourl])
+        itemlist.append(['.mp4 HD [directo]', videourl])
     videourl = scrapertools.find_single_match(data, "video_alt_url:\s*'([^']+)'")
     if videourl:
         itemlist.append(['.mp4 HD [directo]', videourl])
+    videourl = scrapertools.find_single_match(data, "video_url:\s*'([^']+)'")
+    if videourl:
+        itemlist.append(['.mp4 [directo]', videourl])
     if item.extra == "play_menu":
         return itemlist, data
     return itemlist
