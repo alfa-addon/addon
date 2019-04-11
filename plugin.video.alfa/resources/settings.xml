@@ -132,6 +132,10 @@
         <setting type="sep"/>
         <setting label="Gestión de actualizaciones de otros addon relacionados con Alfa:" type="lsep"/>
         <setting id="addon_quasar_update" type="bool" label="¿Quiere actualizar Quasar para evitar errores?" default="false"/>
+        
+        <setting type="sep"/>
+        <setting label="Método alternativo de acceso a webs:" type="lsep"/>
+        <setting id="alternative_web_access" type="bool" label="¿Modo -en Demanda-: NO? ¿Modo -Forzado-: SÍ?" default="false"/>
     </category>
 
 </settings>

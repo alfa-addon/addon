@@ -49,8 +49,6 @@ if host_index == 0:                                                             
     for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
         if i <= j and active_clone == "1":
             clone_list_random += [clone_list[i]]                            #... añadimos el clone activo "bueno" a la lista
-        else:
-            break
         i += 1
     if clone_list_random:                                                           #Si hay clones en la lista aleatoria...
         clone_list = [random.choice(clone_list_random)]                             #Seleccionamos un clone aleatorio

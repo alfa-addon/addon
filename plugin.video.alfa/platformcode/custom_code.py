@@ -57,6 +57,9 @@ def init():
     """
     
     try:
+        #Verifica si Kodi tiene algún achivo de Base de Datos de Vídeo de versiones anteriores, entonces los borra
+        verify_Kodi_video_DB()
+        
         #QUASAR: Preguntamos si se hacen modificaciones a Quasar
         if not filetools.exists(os.path.join(config.get_data_path(), "quasar.json")) and not config.get_setting('addon_quasar_update', default=False):
             question_update_external_addon("quasar")
@@ -187,3 +190,40 @@ def update_external_addon(addon_name):
             logger.error('Alguna carpeta no existe: Alfa: %s o %s: %s' % (alfa_addon_updates, addon_name, addon_path))
     
     return False
+    
+    
+def verify_Kodi_video_DB():
+    logger.info()
+    import random
+    
+    platform = {}
+    path = ''
+    db_files = []
+    
+    try:
+        path = filetools.join(xbmc.translatePath("special://masterprofile/"), "Database")
+        if filetools.exists(path):
+            platform = config.get_platform(full_version=True)
+            if platform:
+                db_files = filetools.walk(path)
+                if filetools.exists(filetools.join(path, platform['video_db'])):
+                    for root, folders, files in db_files:
+                        for file in files:
+                            if file != platform['video_db']:
+                                if file.startswith('MyVideos'):
+                                    randnum = str(random.randrange(1, 999999))
+                                    filetools.rename(filetools.join(path, file), 'OLD_' + randnum +'_' + file)
+                                    logger.error('BD obsoleta: ' + file)
+                    
+                else:
+                    logger.error('Video_DB: ' + str(platform['video_db']) + ' para versión Kodi ' + str(platform['num_version']) + ' NO EXISTE. Analizar carpeta: ' + str(db_files))
+            else:
+                logger.error('Estructura de get_platform(full_version=True) incorrecta')
+        else:
+            logger.error('Path a Userdata/Database (' + path + ') no encontrado')
+        
+    except:
+        logger.error('Platform: ' + str(platform) + ' / Path: ' + str(path) + ' / Files: ' + str(db_files))
+        logger.error(traceback.format_exc())
+        
+    return
