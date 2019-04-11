@@ -7,6 +7,7 @@ from core import httptools
 from core import jsontools
 from core import scrapertools
 from core import servertools
+from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 from channels import renumbertools, autoplay
@@ -87,6 +88,7 @@ def search(item, texto):
                 Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail, plot=plot,
                      context=context, show=title, viewmode="movie_with_plot"))
 
+        tmdb.set_infoLabels(itemlist, seekTmdb=True)
         return itemlist
 
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -101,7 +103,7 @@ def novedades_series(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, '<section class="series">(.*?)</section>')
+    data = scrapertools.find_single_match(data, '<ol class="reciente tab" data-tab="2">(.*?)</section>')
     patronvideos = '(?s)<a href="([^"]+)">.*?tipo\d+">([^<]+)</span>.*?<strong>([^<]+)</strong>'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
     for url, tipo, title in matches:
@@ -112,25 +114,27 @@ def novedades_series(item):
         context.extend(context2)
         itemlist.append(Item(channel=item.channel, action="episodios", title=scrapedtitle, url=scrapedurl,
                              context=context, show=title, viewmode="movie_with_plot"))
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 
 
 def novedades_episodios(item):
     logger.info()
     data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
     data = scrapertools.find_single_match(data, '<section class="lastcap">(.*?)</section>')
-    patronvideos = '(?s)<a href="([^"]+)">[^<]+<header>([^<]+).*?src="([^"]+)"[\s\S]+?<p>(.+?)</p>'
+    patronvideos = '<article><a href="([^"]+)"><header>([^<]+).*?src="([^"]+)" class="cove'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
     itemlist = []
-    for url, title, thumbnail, plot in matches:
+    for url, title, thumbnail in matches:
         scrapedtitle = scrapertools.entityunescape(title)
         scrapedurl = urlparse.urljoin(item.url, url)
         scrapedthumbnail = thumbnail
-        scrapedplot = plot
         episodio = scrapertools.find_single_match(scrapedtitle, '\s+#(.*?)$')
         contentTitle = scrapedtitle.replace('#' + episodio, '')
         itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, plot=scrapedplot, contentSeason=1, contentTitle=contentTitle))
+                             thumbnail=scrapedthumbnail, show=contentTitle))
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -168,7 +172,6 @@ def letras(item):
 
     return itemlist
 
-
 def series(item):
     logger.info()
     itemlist = []
@@ -196,12 +199,14 @@ def series(item):
                              plot=""))
     except:
         pass
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 
 
 def episodios(item, final=True):
     logger.info()
     itemlist = []
+    infoLabels=item.infoLabels
     data = httptools.downloadpage(item.url).data
     data_id = scrapertools.find_single_match(data, 'data-id="([^"]+)')
     CHANNEL_HEADERS = [
@@ -219,15 +224,18 @@ def episodios(item, final=True):
         dict_data = jsontools.load(data)
         list = dict_data['list'][::-1]
         for dict in list:
-            season, episode = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, 1,
+            season, episode = renumbertools.numbered_for_tratk(item.channel, item.show, 1,
                                                                int(dict["numero"]))
             title = "%sx%s - %s" % (season, str(episode).zfill(2), dict["date"])
+            infoLabels['season'] = season
+            infoLabels['episode'] = episode
             itemlist.append(Item(action="findvideos",
                                  channel=item.channel,
                                  title=title,
                                  url=CHANNEL_HOST + dict['href'],
                                  thumbnail=item.thumbnail,
                                  show=item.show,
+                                 infoLabels=infoLabels,
                                  viewmode="movie_with_plot"
                                  ))
     if config.get_videolibrary_support():
@@ -238,6 +246,7 @@ def episodios(item, final=True):
             Item(channel=item.channel, title="[COLOR white]Descargar todos los episodios de la serie[/COLOR]",
                  url=item.url,
                  action="download_all_episodes", extra="episodios", show=item.show))
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 
 
