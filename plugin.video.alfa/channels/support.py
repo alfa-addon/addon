@@ -166,7 +166,10 @@ def scrape(item, patron = '', listGroups = [], headers="", blacklist="", data=""
                 if scrapedplot:
                     infolabels['plot'] = plot
                 if scrapedduration:
-                    infolabels['duration'] = scrapedduration
+                    matches = scrapertoolsV2.find_multiple_matches(scrapedduration, r'([0-9])\s*?(?:[hH]|:|\.|,|\\|\/|\||\s)\s*?([0-9]+)')
+                    for h, m in matches:
+                        scrapedduration = int(h) * 60 + int(m)
+                    infolabels['duration'] = int(scrapedduration) * 60
                 if scrapedgenre:
                     genres = scrapertoolsV2.find_multiple_matches(scrapedgenre, '[A-Za-z]+')
                     infolabels['genre'] = ", ".join(genres)
@@ -365,9 +368,10 @@ def match(item, patron='', patron_block='', headers=''):
         log('BLOCK= ',block)
     else:
         block = data
-
-    matches = scrapertoolsV2.find_multiple_matches(block, patron)
-    log('MATCHES= ',matches)
+        
+    if patron:
+        matches = scrapertoolsV2.find_multiple_matches(block, patron)
+        log('MATCHES= ',matches)
 
     return matches, data
 
