@@ -3,8 +3,8 @@
   "name": "AnimeJL",
   "active": true,
   "adult": false,
-  "language": ["esp", "lat", "cast"],
-  "thumbnail": "https://www.animejl.net/img/Logo.png",
+  "language": ["esp", "cast", "lat"],
+  "thumbnail": "https://i.imgur.com/S6foTE9.png",
   "banner": "",
   "categories": [
     "anime"

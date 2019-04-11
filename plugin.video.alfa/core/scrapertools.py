@@ -10,25 +10,6 @@ from core import httptools
 from platformcode import logger
 
 
-def downloadpage(url, post=None, headers=None, follow_redirects=True, timeout=None, header_to_get=None):
-    response = httptools.downloadpage(url, post=post, headers=headers, follow_redirects=follow_redirects,
-                                      timeout=timeout)
-    if header_to_get:
-        return response.headers.get(header_to_get)
-    else:
-        return response.data
-
-
-def downloadpageGzip(url):
-    response = httptools.downloadpage(url, add_referer=True)
-    return response.data
-
-
-def getLocationHeaderFromResponse(url):
-    response = httptools.downloadpage(url, only_headers=True)
-    return response.headers.get("location")
-
-
 def get_header_from_response(url, header_to_get="", post=None, headers=None):
     header_to_get = header_to_get.lower()
     response = httptools.downloadpage(url, post=post, headers=headers, only_headers=True)
@@ -46,11 +27,6 @@ def printMatches(matches):
     for match in matches:
         logger.info("%d %s" % (i, match))
         i = i + 1
-
-
-def get_match(data, patron, index=0):
-    matches = re.findall(patron, data, flags=re.DOTALL)
-    return matches[index]
 
 
 def find_single_match(data, patron, index=0):

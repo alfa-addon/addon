@@ -32,7 +32,6 @@ import urlparse
 from StringIO import StringIO
 from threading import Lock
 
-from core.cloudflare import Cloudflare
 from platformcode import config, logger
 from platformcode.logger import WebErrorException
 
@@ -76,21 +75,21 @@ def get_url_headers(url):
     return url + "|" + "&".join(["%s=%s" % (h, headers[h]) for h in headers])
 
 
-def load_cookies():
+def load_cookies(alfa_s=False):
     cookies_lock.acquire()
     if os.path.isfile(ficherocookies):
-        logger.info("Leyendo fichero cookies")
+        if not alfa_s: logger.info("Leyendo fichero cookies")
         try:
             cj.load(ficherocookies, ignore_discard=True)
         except:
-            logger.info("El fichero de cookies existe pero es ilegible, se borra")
+            if not alfa_s: logger.info("El fichero de cookies existe pero es ilegible, se borra")
             os.remove(ficherocookies)
     cookies_lock.release()
 
 
-def save_cookies():
+def save_cookies(alfa_s=False):
     cookies_lock.acquire()
-    logger.info("Guardando cookies...")
+    if not alfa_s: logger.info("Guardando cookies...")
     cj.save(ficherocookies, ignore_discard=True)
     cookies_lock.release()
 
@@ -99,7 +98,7 @@ load_cookies()
 
 
 def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=True, cookies=True, replace_headers=False,
-                 add_referer=False, only_headers=False, bypass_cloudflare=True, count_retries=0, count_retries_tot=5, random_headers=False, ignore_response_code=False, alfa_s=False, proxy=True, proxy_web=False, forced_proxy=None, proxy_retries=1):
+                 add_referer=False, only_headers=False, bypass_cloudflare=True, count_retries=0, count_retries_tot=5, random_headers=False, ignore_response_code=False, alfa_s=False, proxy=True, proxy_web=False, proxy_addr_forced=None,forced_proxy=None, proxy_retries=1):
     """
     Abre una url y retorna los datos obtenidos
 
@@ -174,19 +173,28 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
         proxy_CF_addr = ''
         proxy_web_name = ''
         proxy_log = ''
-        import proxytools
         
         try:
-            if (proxy or proxy_web) and (forced_proxy or proxytools.channel_proxy_list(url, forced_proxy=forced_proxy)):
+            if (proxy or proxy_web) and (forced_proxy or proxy_addr_forced or channel_proxy_list(url, forced_proxy=forced_proxy)):
+                import proxytools
                 proxy_addr, proxy_CF_addr, proxy_web_name, proxy_log = proxytools.get_proxy_addr(url, post=post, forced_proxy=forced_proxy)
+                if proxy_addr_forced and proxy_log:
+                    import scrapertools
+                    proxy_log = scrapertools.find_single_match(str(proxy_addr_forced), "{'http.*':\s*'(.*?)'}")
             
                 if proxy and proxy_addr:
+                    if proxy_addr_forced: proxy_addr = proxy_addr_forced
                     handlers.append(urllib2.ProxyHandler(proxy_addr))
                     proxy_stat = ', Proxy Direct ' + proxy_log
                 elif proxy and proxy_CF_addr:
+                    if proxy_addr_forced: proxy_CF_addr = proxy_addr_forced
                     handlers.append(urllib2.ProxyHandler(proxy_CF_addr))
                     proxy_stat = ', Proxy CF ' + proxy_log
-                elif proxy and not proxy_addr and not proxy_CF_addr:
+                elif proxy and proxy_addr_forced:
+                    proxy_addr = proxy_addr_forced
+                    handlers.append(urllib2.ProxyHandler(proxy_addr))
+                    proxy_stat = ', Proxy Direct ' + proxy_log
+                elif proxy and not proxy_addr and not proxy_CF_addr and not proxy_addr_forced:
                     proxy = False
                     if not proxy_web_name:
                         proxy_addr, proxy_CF_addr, proxy_web_name, proxy_log = proxytools.get_proxy_addr(url, forced_proxy='Total')
@@ -335,7 +343,7 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
                 raise WebErrorException(urlparse.urlparse(url)[1])
 
         if cookies:
-            save_cookies()
+            save_cookies(alfa_s=alfa_s)
 
         if not alfa_s:
             logger.info("Encoding: %s" % (response["headers"].get('content-encoding')))
@@ -362,6 +370,7 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
 
         # Anti Cloudflare
         if bypass_cloudflare and count_retries < count_retries_tot:
+            from core.cloudflare import Cloudflare
             cf = Cloudflare(response)
             if cf.is_cloudflare:
                 count_retries += 1
@@ -370,15 +379,15 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
                 auth_url = cf.get_url()
                 if not alfa_s:
                     logger.info("Autorizando... intento %d url: %s" % (count_retries, auth_url))
-                tt = downloadpage(auth_url, headers=request_headers, replace_headers=True, count_retries=count_retries, ignore_response_code=True, count_retries_tot=count_retries_tot, proxy=proxy, proxy_web=proxy_web)
+                tt = downloadpage(auth_url, headers=request_headers, replace_headers=True, count_retries=count_retries, ignore_response_code=True, count_retries_tot=count_retries_tot, proxy=proxy, proxy_web=proxy_web, forced_proxy=forced_proxy, proxy_addr_forced=proxy_addr_forced, alfa_s=alfa_s)
                 if tt.code == 403:
-                    tt = downloadpage(url, headers=request_headers, replace_headers=True, count_retries=count_retries, ignore_response_code=True, count_retries_tot=count_retries_tot, proxy=proxy, proxy_web=proxy_web)
+                    tt = downloadpage(url, headers=request_headers, replace_headers=True, count_retries=count_retries, ignore_response_code=True, count_retries_tot=count_retries_tot, proxy=proxy, proxy_web=proxy_web, forced_proxy=forced_proxy, proxy_addr_forced=proxy_addr_forced, alfa_s=alfa_s)
                 if tt.sucess:
                     if not alfa_s:
                         logger.info("Autorización correcta, descargando página")
                     resp = downloadpage(url=response["url"], post=post, headers=headers, timeout=timeout,
                                         follow_redirects=follow_redirects, count_retries=count_retries, 
-                                        cookies=cookies, replace_headers=replace_headers, add_referer=add_referer, proxy=proxy, proxy_web=proxy_web, count_retries_tot=count_retries_tot)
+                                        cookies=cookies, replace_headers=replace_headers, add_referer=add_referer, proxy=proxy, proxy_web=proxy_web, count_retries_tot=count_retries_tot, forced_proxy=forced_proxy, proxy_addr_forced=proxy_addr_forced, alfa_s=alfa_s)
                     response["sucess"] = resp.sucess
                     response["code"] = resp.code
                     response["error"] = resp.error
@@ -435,6 +444,30 @@ def random_useragent():
             return UserAgentIem
     
     return default_headers["User-Agent"]
+    
+    
+def channel_proxy_list(url, forced_proxy=None):
+    import base64
+    import ast
+    import scrapertools
+    
+    try:
+        proxy_channel_bloqued_str = base64.b64decode(config.get_setting('proxy_channel_bloqued')).decode('utf-8')
+        proxy_channel_bloqued = dict()
+        proxy_channel_bloqued = ast.literal_eval(proxy_channel_bloqued_str)
+    except:
+        logger.debug('Proxytools no inicializado correctamente')
+        return False
+
+    if not url.endswith('/'):
+        url += '/'
+    if scrapertools.find_single_match(url, '(?:http.*:\/\/)?([^\?|\/]+)(?:\?|\/)') in proxy_channel_bloqued:
+        if forced_proxy:
+            return True
+        if 'ON' in proxy_channel_bloqued[scrapertools.find_single_match(url, '(?:http.*:\/\/)?([^\?|\/]+)(?:\?|\/)')]:
+            return True
+    
+    return False
 
 
 class NoRedirectHandler(urllib2.HTTPRedirectHandler):

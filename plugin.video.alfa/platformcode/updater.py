@@ -26,47 +26,47 @@ def check_addon_init():
         
         # Obtiene el íntervalo entre actualizaciones y si se quieren mensajes
         try:
-            timer = int(config.get_setting('addon_update_timer'))               # Intervalo entre actualizaciones, en Ajustes de Alfa
+            timer = int(config.get_setting('addon_update_timer'))       # Intervalo entre actualizaciones, en Ajustes de Alfa
             if timer <= 0:
-                return                                                          # 0.  No se quieren actualizaciones
+                return                                                  # 0.  No se quieren actualizaciones
             verbose = config.get_setting('addon_update_message')
         except:
-            timer = 12                                                          # Por defecto cada 12 horas
-            verbose = False                                                     # Por defecto, sin mensajes
-        timer = timer * 3600                                                    # Lo pasamos a segundos
+            timer = 12                                                  # Por defecto cada 12 horas
+            verbose = False                                             # Por defecto, sin mensajes
+        timer = timer * 3600                                            # Lo pasamos a segundos
 
-        if config.get_platform(True)['num_version'] >= 14:                      # Si es Kodi, lanzamos el monitor
+        if config.get_platform(True)['num_version'] >= 14:              # Si es Kodi, lanzamos el monitor
             import xbmc
             monitor = xbmc.Monitor()
-        else:                                                                   # Lanzamos solo una actualización y salimos
-            check_addon_updates(verbose)                                        # Lanza la actualización
+        else:                                                           # Lanzamos solo una actualización y salimos
+            check_addon_updates(verbose)                                # Lanza la actualización
             return
             
-        while not monitor.abortRequested():                                     # Loop infinito hasta cancelar Kodi
+        while not monitor.abortRequested():                             # Loop infinito hasta cancelar Kodi
 
-            check_addon_updates(verbose)                                        # Lanza la actualización
+            check_addon_updates(verbose)                                # Lanza la actualización
             
-            if monitor.waitForAbort(timer):                                     # Espera el tiempo programado o hasta que cancele Kodi
-                break                                                           # Cancelación de Kodi, salimos
+            if monitor.waitForAbort(timer):                             # Espera el tiempo programado o hasta que cancele Kodi
+                break                                                   # Cancelación de Kodi, salimos
                 
         return
                 
     # Lanzamos en Servicio de actualización de FIXES
     try:
-        threading.Thread(target=check_addon_monitor).start()                    # Creamos un Thread independiente, hasta el fin de Kodi
-        time.sleep(5)                                                           # Dejamos terminar la primera verificación...
-    except:                                                                     # Si hay problemas de threading, se llama una sola vez
+        threading.Thread(target=check_addon_monitor).start()            # Creamos un Thread independiente, hasta el fin de Kodi
+        time.sleep(5)                                                   # Dejamos terminar la primera verificación...
+    except:                                                             # Si hay problemas de threading, se llama una sola vez
         try:
-            timer = int(config.get_setting('addon_update_timer'))               # Intervalo entre actualizaciones, en Ajustes de Alfa
+            timer = int(config.get_setting('addon_update_timer'))       # Intervalo entre actualizaciones, en Ajustes de Alfa
             if timer <= 0:
-                return                                                          # 0.  No se quieren actualizaciones
+                return                                                  # 0.  No se quieren actualizaciones
             verbose = config.get_setting('addon_update_message')
         except:
-            verbose = False                                                     # Por defecto, sin mensajes
+            verbose = False                                             # Por defecto, sin mensajes
             pass
-        check_addon_updates(verbose)                                            # Lanza la actualización, en Ajustes de Alfa
-        time.sleep(5)                                                           # Dejamos terminar la primera verificación...
-            
+        check_addon_updates(verbose)                                    # Lanza la actualización, en Ajustes de Alfa
+        time.sleep(5)                                                   # Dejamos terminar la primera verificación...
+              
     return
     
 
@@ -110,7 +110,7 @@ def check_addon_updates(verbose=False):
                 lastfix =  {} 
                 lastfix = jsontools.load(filetools.read(last_fix_json))
                 if lastfix['addon_version'] == data['addon_version'] and lastfix['fix_version'] == data['fix_version']:
-                    logger.info(config.get_localized_string(70669) % (data['addon_version'], data['fix_version']))
+                    logger.info(config.get_localized_string(70670) % (data['addon_version'], data['fix_version']))
                     if verbose:
                         platformtools.dialog_notification(config.get_localized_string(70667), config.get_localized_string(70671) % (data['addon_version'], data['fix_version']))
                     return False

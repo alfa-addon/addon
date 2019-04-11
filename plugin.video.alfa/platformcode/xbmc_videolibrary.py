@@ -342,6 +342,8 @@ def mark_content_as_watched_on_alfa(path):
     FOLDER_MOVIES = config.get_setting("folder_movies")
     FOLDER_TVSHOWS = config.get_setting("folder_tvshows")
     VIDEOLIBRARY_PATH = config.get_videolibrary_config_path()
+    if not VIDEOLIBRARY_PATH:
+        return
 
     # Solo podemos marcar el contenido como vista en la BBDD de Kodi si la BBDD es local,
     # en caso de compartir BBDD esta funcionalidad no funcionara

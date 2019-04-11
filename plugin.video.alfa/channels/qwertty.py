@@ -58,14 +58,17 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<article id="post-\d+".*?'
     patron += '<a href="([^"]+)" title="([^"]+)">.*?'
-    patron += '<img data-src="(.*?)".*?'
+    patron += '<div class="post-thumbnail(.*?)<span class="views">.*?'
     patron += '<span class="duration"><i class="fa fa-clock-o"></i>([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,duracion in matches:
         scrapedplot = ""
+        thumbnail = scrapertools.find_single_match(scrapedthumbnail, 'poster="([^"]+)"')
+        if thumbnail == "":
+            thumbnail = scrapertools.find_single_match(scrapedthumbnail, "data-thumbs='(.*?jpg)")
         title = "[COLOR yellow]" + duracion + "[/COLOR] " + scrapedtitle
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
-                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
+                              fanart=thumbnail, thumbnail=thumbnail, plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)">Next</a>')
     if next_page=="":
         next_page = scrapertools.find_single_match(data,'<li><a class="current">.*?<li><a href=\'([^\']+)\' class="inactive">')
@@ -82,7 +85,17 @@ def play(item):
     url = scrapertools.find_single_match(data,'<meta itemprop="embedURL" content="([^"]+)"')
     url = url.replace("pornhub.com/embed/", "pornhub.com/view_video.php?viewkey=")
     data = httptools.downloadpage(url).data
-    # https://www.spankwire.com/EmbedPlayer.aspx?ArticleId=14049072
+    if "spankwire" in url : 
+        data = httptools.downloadpage(item.url).data
+        data = scrapertools.get_match(data,'Copy Embed Code(.*?)For Desktop')
+        patron  = '<div class="shareDownload_container__item__dropdown">.*?<a href="([^"]+)"'
+        matches = scrapertools.find_multiple_matches(data, patron)
+        for scrapedurl  in matches:
+            url = scrapedurl
+            if url=="#":
+                scrapedurl = scrapertools.find_single_match(data,'playerData.cdnPath480         = \'([^\']+)\'')
+            itemlist.append(item.clone(action="play", title=scrapedurl, fulltitle = scrapedurl, url=scrapedurl))
+
     if "xvideos" in url : 
         scrapedurl  = scrapertools.find_single_match(data,'setVideoHLS\(\'([^\']+)\'')
     if "pornhub" in url : 
