@@ -16,9 +16,11 @@ from platformcode import logger, config
 host = ""
 headers = ""
 
-permUrl = httptools.downloadpage('https://www.cb01.uno/', follow_redirects=False).headers
-host = 'https://www.'+permUrl['location'].replace('https://www.google.it/search?q=site:', '')
-headers = [['Referer', host]]
+def findhost():
+    global host, headers
+    permUrl = httptools.downloadpage('https://www.cb01.uno/', follow_redirects=False).headers
+    host = 'https://www.'+permUrl['location'].replace('https://www.google.it/search?q=site:', '')
+    headers = [['Referer', host]]
 
 IDIOMAS = {'Italiano': 'IT'}
 list_language = IDIOMAS.values()
@@ -33,7 +35,7 @@ blacklist = ['BENVENUTI', 'Richieste Serie TV', 'CB01.UNO &#x25b6; TROVA L&#8217
 
 
 def mainlist(item):
-    support.log()
+    findhost()
 
     autoplay.init(item.channel, list_servers, list_quality)
 
@@ -94,7 +96,7 @@ def search(item, text):
 
 
 def newest(categoria):
-    support.log()
+    findhost()
     itemlist = []
     item = Item()
     item.url = host + '/lista-film-ultimi-100-film-aggiunti/'
@@ -128,6 +130,8 @@ def episodios(item):
 
 
 def findvideos(item):
+    findhost()
+
     if item.contentType == "episode":
         return findvid_serie(item)
 

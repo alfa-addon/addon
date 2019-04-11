@@ -13,15 +13,21 @@ from platformcode import logger
 from channelselector import thumb
 
 headers = ""
+host = ""
 
-permUrl = httptools.downloadpage('https://www.cb01.uno/', follow_redirects=False).headers
-cb01Url = 'https://www.'+permUrl['location'].replace('https://www.google.it/search?q=site:', '')
-data = httptools.downloadpage(cb01Url).data
-host = scrapertoolsV2.get_match(data, r'<a class="?mega-menu-link"? href=(https://vedohd[^/"]+)')+'/'
 
-if 'https' not in host:  # in caso cb01 cambi, si spera di riuscire ad accedere da questo URL
-    host = "https://vedohd.pw/"
-headers = [['Referer', host]]
+def findhost():
+    permUrl = httptools.downloadpage('https://www.cb01.uno/', follow_redirects=False).headers
+    cb01Url = 'https://www.'+permUrl['location'].replace('https://www.google.it/search?q=site:', '')
+    data = httptools.downloadpage(cb01Url).data
+    global host, headers
+
+    host = scrapertoolsV2.get_match(data, r'<a class="?mega-menu-link"? href=(https://vedohd[^/"]+)')+'/'
+
+    if 'https' not in host:  # in caso cb01 cambi, si spera di riuscire ad accedere da questo URL
+        host = "https://vedohd.pw/"
+    headers = [['Referer', host]]
+
 
 IDIOMAS = {'Italiano': 'IT'}
 list_language = IDIOMAS.values()
@@ -34,6 +40,7 @@ blacklist = ['CB01.UNO &#x25b6; TROVA L&#8217;INDIRIZZO UFFICIALE ', 'AVVISO IMP
 
 def mainlist(item):
     logger.info("[vedohd.py] mainlist")
+    findhost()
 
     autoplay.init(item.channel, list_servers, list_quality)
 
@@ -65,6 +72,7 @@ def peliculas(item):
 
 
 def findvideos(item):
+    findhost()
     itemlist = []
     for link in support.dooplay_get_links(item, host):
         if link['title'] != 'Trailer':
