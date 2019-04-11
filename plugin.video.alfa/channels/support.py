@@ -241,10 +241,14 @@ def dooplay_search(item, blacklist=""):
 
 
 def swzz_get_url(item):
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:59.0) Gecko/20100101 Firefox/59.0'}
+
     if "/link/" in item.url:
-        data = httptools.downloadpage(item.url).data
+        data = httptools.downloadpage(item.url, headers=headers).data
         if "link =" in data:
             data = scrapertoolsV2.get_match(data, 'link = "([^"]+)"')
+            if 'http' not in data:
+                data = 'https:' + data
         else:
             match = scrapertoolsV2.get_match(data, r'<meta name="og:url" content="([^"]+)"')
             match = scrapertoolsV2.get_match(data, r'URL=([^"]+)">') if not match else match
