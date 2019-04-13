@@ -36,6 +36,7 @@ class UnshortenIt(object):
     _shrink_service_regex = r'shrink-service\.it'
     _rapidcrypt_regex = r'rapidcrypt\.net'
     _cryptmango_regex = r'cryptmango'
+    _vcrypt_regex = r'vcrypt\.net'
 
     _maxretries = 5
 
@@ -75,6 +76,8 @@ class UnshortenIt(object):
             return self._unshorten_rapidcrypt(uri)
         if re.search(self._cryptmango_regex, uri, re.IGNORECASE):
             return self._unshorten_cryptmango(uri)
+        if re.search(self._vcrypt_regex, uri, re.IGNORECASE):
+            return self._unshorten_vcrypt(uri)
 
         return uri, 0
 
@@ -464,6 +467,33 @@ class UnshortenIt(object):
         except Exception as e:
             return uri, str(e)
 
+    def _unshorten_vcrypt(self, uri):
+        try:
+            req = httptools.downloadpage(uri, timeout=self._timeout, follow_redirects=False)
+            idata = req.data
+            from core import scrapertools
+
+            patron = r"document.cookie\s=\s.*?'(.*)'"
+            match_str = re.compile(patron, re.MULTILINE).findall(idata)[0]
+
+            patron = r';URL=([^\"]+)\">'
+            dest = scrapertools.find_single_match(idata, patron)
+            http_headers = {"Cookie": match_str}
+            r = httptools.downloadpage(dest, post=' ', headers=http_headers)
+            uri = r.url
+
+            if "4snip" in uri:
+                desturl = uri.replace("/out/", "/outlink/")
+                import os
+                par = os.path.basename(desturl)
+                post = 'url=' + par
+                r = httptools.downloadpage(desturl, post=post)
+                uri = r.url
+
+            return uri, r.code
+
+        except Exception, e:
+            return uri, str(e)
 
 def unwrap_30x_only(uri, timeout=10):
     unshortener = UnshortenIt()
