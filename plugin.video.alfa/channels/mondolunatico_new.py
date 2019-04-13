@@ -42,7 +42,7 @@ def categorias(item):
 
     # Carica la pagina 
     data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.get_match(data, '<h2>Film Per Genere</h2><ul class="genres scrolling">(.*?)</ul>')
+    bloque = scrapertools.find_single_match(data, '<h2>Film Per Genere</h2><ul class="genres scrolling">(.*?)</ul>')
 
     # Estrae i contenuti 
     patron = '<li[^>]+><a href="([^"]+)"[^>]+>([^<]+)<\/a>'

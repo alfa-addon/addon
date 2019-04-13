@@ -221,7 +221,7 @@ def dooplay_get_links(item, host):
             "type": type
         })
         dataAdmin = httptools.downloadpage(host + 'wp-admin/admin-ajax.php', post=postData,headers={'Referer': item.url}).data
-        link = scrapertoolsV2.get_match(dataAdmin, "<iframe.*src='([^']+)'")
+        link = scrapertoolsV2.find_single_match(dataAdmin, "<iframe.*src='([^']+)'")
         ret.append({
             'url': link,
             'title': title,
@@ -249,18 +249,18 @@ def swzz_get_url(item):
     if "/link/" in item.url:
         data = httptools.downloadpage(item.url, headers=headers).data
         if "link =" in data:
-            data = scrapertoolsV2.get_match(data, 'link = "([^"]+)"')
+            data = scrapertoolsV2.find_single_match(data, 'link = "([^"]+)"')
             if 'http' not in data:
                 data = 'https:' + data
         else:
-            match = scrapertoolsV2.get_match(data, r'<meta name="og:url" content="([^"]+)"')
-            match = scrapertoolsV2.get_match(data, r'URL=([^"]+)">') if not match else match
+            match = scrapertoolsV2.find_single_match(data, r'<meta name="og:url" content="([^"]+)"')
+            match = scrapertoolsV2.find_single_match(data, r'URL=([^"]+)">') if not match else match
 
             if not match:
                 from lib import jsunpack
 
                 try:
-                    data = scrapertoolsV2.get_match(data.replace('\n', ''), r"(eval\s?\(function\(p,a,c,k,e,d.*?)</script>")
+                    data = scrapertoolsV2.find_single_match(data.replace('\n', ''), r"(eval\s?\(function\(p,a,c,k,e,d.*?)</script>")
                     data = jsunpack.unpack(data)
 
                     logger.debug("##### play /link/ unpack ##\n%s\n##" % data)

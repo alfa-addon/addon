@@ -233,7 +233,7 @@ def peliculas(item):
 
     # Pagina successiva
     try:
-        pagina_siguiente = scrapertools.get_match(data, '<a class="next page-numbers" href="([^"]+)"')
+        pagina_siguiente = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)"')
         itemlist.append(
             Item(channel=item.channel,
                  action="peliculas",
@@ -309,7 +309,7 @@ def peliculas_tv(item):
 
     # Successivo
     try:
-        pagina_siguiente = scrapertools.get_match(data, '<a class="next page-numbers" href="([^"]+)"')
+        pagina_siguiente = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)"')
         itemlist.append(
             Item(channel=item.channel,
                  action="peliculas_tv",
@@ -354,7 +354,7 @@ def pel_tv(item):
 
     # Siguiente
     try:
-        pagina_siguiente = scrapertools.get_match(data, '<a class="next page-numbers" href="([^"]+)"')
+        pagina_siguiente = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)"')
         itemlist.append(
             Item(channel=item.channel,
                  action="pel_tv",

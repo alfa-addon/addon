@@ -90,7 +90,7 @@ def categorie(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    blocco = scrapertools.get_match(data, r'<ul>\s*<li class="drop">(.*?)</ul>')
+    blocco = scrapertools.find_single_match(data, r'<ul>\s*<li class="drop">(.*?)</ul>')
     patron = r'<li><a href="([^"]+)">([^"]+)</a></li>'
     matches = re.compile(patron, re.DOTALL).findall(blocco)
 
@@ -113,7 +113,7 @@ def filmperanno(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    blocco = scrapertools.get_match(data, r'<li class="drop"><a.*?class="link1"><b>Film per anno</b></a>(.*?)</ul>')
+    blocco = scrapertools.find_single_match(data, r'<li class="drop"><a.*?class="link1"><b>Film per anno</b></a>(.*?)</ul>')
     patron = r'<li><a href="([^"]+)">([^"]+)</a></li>'
     matches = re.compile(patron, re.DOTALL).findall(blocco)
 

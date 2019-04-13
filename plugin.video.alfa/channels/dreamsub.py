@@ -67,7 +67,7 @@ def serietv(item):
 
     # Carica la pagina 
     data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.get_match(data,
+    bloque = scrapertools.find_single_match(data,
                                     '<input type="submit" value="Vai!" class="blueButton">(.*?)<div class="footer">')
 
     # Estrae i contenuti 
@@ -117,7 +117,7 @@ def ultimiep(item):
 
     # Carica la pagina 
     data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.get_match(data, '<ul class="last" id="recentAddedEpisodesAnimeDDM">(.*?)</ul>')
+    bloque = scrapertools.find_single_match(data, '<ul class="last" id="recentAddedEpisodesAnimeDDM">(.*?)</ul>')
 
     # Estrae i contenuti 
     patron = '<li><a href="([^"]+)"[^>]+>([^<]+)<br>'
@@ -193,7 +193,7 @@ def episodios(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.get_match(data, '<div class="seasonEp">(.*?)<div class="footer">')
+    bloque = scrapertools.find_single_match(data, '<div class="seasonEp">(.*?)<div class="footer">')
 
     patron = '<li><a href="([^"]+)"[^<]+<b>(.*?)<\/b>[^>]+>([^<]+)<\/i>(.*?)<'
     matches = re.compile(patron, re.DOTALL).findall(bloque)

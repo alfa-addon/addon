@@ -237,7 +237,7 @@ def categorias(item):
     data = httptools.downloadpage(item.url, headers=headers).data
 
     # Narrow search by selecting only the combo
-    bloque = scrapertools.get_match(data, 'Categorie(.*?)</ul>')
+    bloque = scrapertools.find_single_match(data, 'Categorie(.*?)</ul>')
 
     # The categories are the options for the combo
     patron = '<a href="(.*?)">(.*?)</a></li>'
@@ -283,7 +283,7 @@ def episodios(item):
     # Carica la pagina 
     data = httptools.downloadpage(item.url).data
     data = scrapertools.decodeHtmlentities(data)
-    data = scrapertools.get_match(data, '<p>(?:<strong>|)(.*?)<div id="disqus_thread">')
+    data = scrapertools.find_single_match(data, '<p>(?:<strong>|)(.*?)<div id="disqus_thread">')
 
     lang_titles = []
     starts = []

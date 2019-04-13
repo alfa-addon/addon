@@ -52,7 +52,7 @@ def categorie(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url, headers=headers).data
-    bloque = scrapertools.get_match(data, '<section class="container directory">(.*?)<footer class="main">')
+    bloque = scrapertools.find_single_match(data, '<section class="container directory">(.*?)<footer class="main">')
     patron = '<a class="label label-white" href="(.*?)">\s*(.*?)</a>'
     matches = re.compile(patron, re.DOTALL).findall(bloque)
 

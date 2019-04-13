@@ -62,7 +62,7 @@ def menu(item):
     itemlist= []
     data = httptools.downloadpage(item.url, headers=headers).data
     data = re.sub('\n|\t', '', data)
-    block = scrapertoolsV2.get_match(data, item.args + r'<span.*?><\/span>.*?<ul.*?>(.*?)<\/ul>')
+    block = scrapertoolsV2.find_single_match(data, item.args + r'<span.*?><\/span>.*?<ul.*?>(.*?)<\/ul>')
     support.log('MENU BLOCK= ',block)
     patron = r'href="?([^">]+)"?>(.*?)<\/a>'
     matches = re.compile(patron, re.DOTALL).findall(block)
@@ -290,12 +290,12 @@ def play(item):
         data = httptools.downloadpage(item.url).data
         if "window.location.href" in data:
             try:
-                data = scrapertoolsV2.get_match(data, 'window.location.href = "([^"]+)";')
+                data = scrapertoolsV2.find_single_match(data, 'window.location.href = "([^"]+)";')
             except IndexError:
                 data = httptools.downloadpage(item.url, only_headers=True, follow_redirects=False).headers.get("location", "")
             data, c = unshortenit.unwrap_30x_only(data)
         else:
-            data = scrapertoolsV2.get_match(data, r'<a href="([^"]+)".*?class="btn-wrapper">.*?licca.*?</a>')
+            data = scrapertoolsV2.find_single_match(data, r'<a href="([^"]+)".*?class="btn-wrapper">.*?licca.*?</a>')
         
         logger.debug("##### play go.php data ##\n%s\n##" % data)
     else:

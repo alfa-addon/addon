@@ -22,7 +22,7 @@ def findhost():
     data = httptools.downloadpage(cb01Url).data
     global host, headers
 
-    host = scrapertoolsV2.get_match(data, r'<a class="?mega-menu-link"? href=(https://vedohd[^/"]+)')+'/'
+    host = scrapertoolsV2.find_single_match(data, r'<a class="?mega-menu-link"? href=(https://vedohd[^/"]+)')+'/'
 
     if 'https' not in host:  # in caso cb01 cambi, si spera di riuscire ad accedere da questo URL
         host = "https://vedohd.pw/"
@@ -77,7 +77,7 @@ def findvideos(item):
     for link in support.dooplay_get_links(item, host):
         if link['title'] != 'Trailer':
             logger.info(link['title'])
-            server, quality = scrapertoolsV2.get_match(link['title'], '([^ ]+) ?(HD|3D)?')
+            server, quality = scrapertoolsV2.find_single_match(link['title'], '([^ ]+) ?(HD|3D)?')
             if quality:
                 title = server + " [COLOR blue][" + quality + "][/COLOR]"
             else:
