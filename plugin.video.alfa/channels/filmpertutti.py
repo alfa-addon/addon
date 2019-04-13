@@ -117,7 +117,7 @@ def peliculas(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url, headers=headers).data
-    block = scrapertoolsV2.get_match(data, r'<ul class="posts">(.*)<\/ul>')
+    block = scrapertoolsV2.find_single_match(data, r'<ul class="posts">(.*)<\/ul>')
 
     patron = r'<li><a href="([^"]+)" data-thumbnail="([^"]+)">.*?<div class="title">([^<]+)<\/div>'    
     matches = scrapertoolsV2.find_multiple_matches(block, patron)
@@ -170,7 +170,7 @@ def episodios(item):
     
 
     if 'accordion-item' in data:
-        block = scrapertoolsV2.get_match(data, 'accordion-item.*?>(.*?)<div id="disqus_thread">')
+        block = scrapertoolsV2.find_single_match(data, 'accordion-item.*?>(.*?)<div id="disqus_thread">')
         patron = r'<img src="([^"]+)">.*?<li class="season-no">(.*?)<\/li>(.*?)<\/table>'
         matches = scrapertoolsV2.find_multiple_matches(block, patron)
 
@@ -193,7 +193,7 @@ def episodios(item):
         
 
     else:
-        block = scrapertoolsV2.get_match(data, '<div id="info" class="pad">(.*?)<div id="disqus_thread">').replace('</p>','<br />').replace('×','x')
+        block = scrapertoolsV2.find_single_match(data, '<div id="info" class="pad">(.*?)<div id="disqus_thread">').replace('</p>','<br />').replace('×','x')
         matches = scrapertoolsV2.find_multiple_matches(block, r'<strong>(.*?)<\/strong>.*?<p>(.*?)<span')
         for lang, seasons in matches:
             lang = re.sub('.*?Stagione[^a-zA-Z]+', '', lang)

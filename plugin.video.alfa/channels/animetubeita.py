@@ -128,7 +128,7 @@ def lista_genere(item):
 
     data = httptools.downloadpage(item.url).data
 
-    bloque = scrapertools.get_match(data,
+    bloque = scrapertools.find_single_match(data,
                                     '<div class="hentry page post-1 odd author-admin clear-block">(.*?)<div id="disqus_thread">')
 
     patron = '<li class="cat-item cat-item.*?"><a href="(.*?)" >(.*?)</a>'

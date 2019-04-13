@@ -87,7 +87,7 @@ def play(item):
     data = httptools.downloadpage(url).data
     if "spankwire" in url : 
         data = httptools.downloadpage(item.url).data
-        data = scrapertools.get_match(data,'Copy Embed Code(.*?)For Desktop')
+        data = scrapertools.find_single_match(data,'Copy Embed Code(.*?)For Desktop')
         patron  = '<div class="shareDownload_container__item__dropdown">.*?<a href="([^"]+)"'
         matches = scrapertools.find_multiple_matches(data, patron)
         for scrapedurl  in matches:

@@ -62,7 +62,7 @@ def categorias(item):
 
     # Carica la pagina 
     data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.get_match(data, 'Categorie</a></li>(.*?)</ul>')
+    bloque = scrapertools.find_single_match(data, 'Categorie</a></li>(.*?)</ul>')
 
     # Estrae i contenuti 
     patron = '<a href="([^"]+)">([^<]+)</a></li>'

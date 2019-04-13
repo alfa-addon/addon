@@ -97,7 +97,7 @@ def categorias(item):
 
     # Carica la pagina 
     data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.get_match(data, '<ul class="genres scrolling">(.*?)</ul>')
+    bloque = scrapertools.find_single_match(data, '<ul class="genres scrolling">(.*?)</ul>')
 
     # Estrae i contenuti 
     patron = '<li[^>]+><a href="(.*?)"[^>]+>(.*?)</a>'
@@ -226,7 +226,7 @@ def nuoviep(item):
 
     # Carica la pagina 
     data = httptools.downloadpage(item.url).data
-    #blocco = scrapertools.get_match(data,
+    #blocco = scrapertools.find_single_match(data,
                                   #  r'<div class="items" style="margin-bottom:0px!important">(.*?)<div class="items" style="margin-bottom:0px!important">')
 
     # Estrae i contenuti 

@@ -321,7 +321,7 @@ def findvideos(item):
     if item.extra:
         data = httptools.downloadpage(item.url, headers=headers).data
 
-        blocco = scrapertools.get_match(data, r'%s(.*?)</tr>' % item.extra)
+        blocco = scrapertools.find_single_match(data, r'%s(.*?)</tr>' % item.extra)
         url = scrapertools.find_single_match(blocco, r'<a href="([^"]+)"[^>]*>')
         if 'vvvvid' in url.lower():
             itemlist = [Item(title='I Video VVVVID Non sono supportati', text_color="red")]

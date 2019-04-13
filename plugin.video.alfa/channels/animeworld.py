@@ -60,7 +60,7 @@ def build_menu(item):
     data = re.sub(r'\n|\t','',data)
     data = re.sub(r'>\s*<','><',data)
  
-    block = scrapertoolsV2.get_match(data, r'<form class="filters.*?>(.*?)<\/form>')
+    block = scrapertoolsV2.find_single_match(data, r'<form class="filters.*?>(.*?)<\/form>')
     
     matches = re.compile(r'<button class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"> (.*?) <span.*?>(.*?)<\/ul>', re.DOTALL).findall(block)
 
@@ -152,7 +152,7 @@ def alfabetico(item):
     data = re.sub(r'\n|\t','',data)
     data = re.sub(r'>\s*<','><',data)
 
-    block = scrapertoolsV2.get_match(data, r'<span>.*?A alla Z.<\/span>.*?<ul>(.*?)<\/ul>')
+    block = scrapertoolsV2.find_single_match(data, r'<span>.*?A alla Z.<\/span>.*?<ul>(.*?)<\/ul>')
 
     matches = re.compile('<a href="([^"]+)" title="([^"]+)">', re.DOTALL).findall(block)
     scrapertoolsV2.printMatches(matches)

@@ -82,7 +82,7 @@ def build_itemlist(item, re_bloque, re_patron, iaction):
     data = httptools.downloadpage(item.url).data
 
     # Narrow search by selecting only the combo
-    bloque = scrapertools.get_match(data, re_bloque)
+    bloque = scrapertools.find_single_match(data, re_bloque)
 
     # The categories are the options for the combo
     matches = re.compile(re_patron, re.DOTALL).findall(bloque)
@@ -160,7 +160,7 @@ def list_titles(item):
 
     # Put the next page mark
     try:
-        next_page = scrapertools.get_match(data, "<link rel='next' href='([^']+)'")
+        next_page = scrapertools.find_single_match(data, "<link rel='next' href='([^']+)'")
         itemlist.append(
             Item(channel=item.channel,
                  action="list_titles",

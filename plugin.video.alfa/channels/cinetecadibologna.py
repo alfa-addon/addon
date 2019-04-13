@@ -90,7 +90,7 @@ def epoche(item):
     data = httptools.downloadpage(item.url, headers=headers).data
 
     # Narrow search by selecting only the combo
-    bloque = scrapertools.get_match(data, '<h1 class="pagetitle">Epoche</h1>(.*?)</ul>')
+    bloque = scrapertools.find_single_match(data, '<h1 class="pagetitle">Epoche</h1>(.*?)</ul>')
 
     # The categories are the options for the combo
     patron = '<a href="([^"]+)">(.*?)<'

@@ -283,7 +283,7 @@ def categorias(item):
     data = httptools.downloadpage(item.url, headers=headers).data
 
     # Narrow search by selecting only the combo
-    bloque = scrapertools.get_match(data, '<ul class="sub-menu">(.*?)</ul>')
+    bloque = scrapertools.find_single_match(data, '<ul class="sub-menu">(.*?)</ul>')
 
     # The categories are the options for the combo
     patron = '<a href="([^"]+)">(.*?)</a></li>'

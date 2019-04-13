@@ -240,7 +240,7 @@ def episodios(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url, headers=headers).data
-    blocco = scrapertools.get_match(data, '<table>(.*?)</table>')
+    blocco = scrapertools.find_single_match(data, '<table>(.*?)</table>')
 
     patron = "<tr><td><b>(.*?)(\d+)((?:x\d+| ))(.*?)<\/b>(.*?<tr>)"
     matches = scrapertoolsV2.find_multiple_matches(blocco, patron)
