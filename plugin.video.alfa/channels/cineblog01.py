@@ -59,6 +59,7 @@ def mainlist(item):
 
 
 def menu(item):
+    findhost()
     itemlist= []
     data = httptools.downloadpage(item.url, headers=headers).data
     data = re.sub('\n|\t', '', data)
