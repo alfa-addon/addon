@@ -109,7 +109,7 @@ def newest(categoria):
 def peliculas(item):
     support.log()
     if item.contentType == 'movie' or '/serietv/' not in item.url:
-        patron = r'<div class=card-image>.*?<img src=([^ ]+) alt.*?<a href=([^ >]+)\/>([^<[(]+)(?:\[([A-Za-z0-9/-]+)])? (?:\(([0-9]{4})\))?.*?<strong>([^<>]+)DURATA ([0-9]+).*?<br>([^<>]+)'
+        patron = r'<div class="?card-image"?>.*?<img src="?([^" ]+)"? alt.*?<a href="?([^" >]+)(?:\/|")>([^<[(]+)(?:\[([A-Za-z0-9/-]+)])? (?:\(([0-9]{4})\))?.*?<strong>([^<>&]+).*?DURATA ([0-9]+).*?<br(?: /)?>([^<>]+)'
         listGroups = ['thumb', 'url', 'title', 'quality', 'year', 'genre', 'duration', 'plot']
         action = 'findvideos'
     else:
