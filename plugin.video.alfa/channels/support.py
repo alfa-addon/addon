@@ -273,7 +273,8 @@ def swzz_get_url(item):
                 data = match
         if data.startswith('/'):
             data = urlparse.urljoin("http://swzz.xyz", data)
-            data = httptools.downloadpage(data).data
+            if not "vcrypt" in data:
+                data = httptools.downloadpage(data).data
         logger.debug("##### play /link/ data ##\n%s\n##" % data)
     else:
         data = item.url
