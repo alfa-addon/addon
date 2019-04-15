@@ -48,7 +48,7 @@ def progetti(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url, headers=headers).data
-    blocco = scrapertools.get_match(data, '<div id="pf_imageMenu1" class="imageMenu">(.*?)</div>')
+    blocco = scrapertools.find_single_match(data, '<div id="pf_imageMenu1" class="imageMenu">(.*?)</div>')
     patron = '<a href="[^=]+=([\w]+)">([^<]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(blocco)
 
@@ -142,7 +142,7 @@ def findvideos(item):
 
     data = httptools.downloadpage(item.url, headers=headers).data
     patronvideo = 'flashvars="file=([^&]+)&'
-    urlvideo = scrapertools.get_match(data, patronvideo)
+    urlvideo = scrapertools.find_single_match(data, patronvideo)
 
     estensionevideo = urlvideo.split(".")[-1]
 

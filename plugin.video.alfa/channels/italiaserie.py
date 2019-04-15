@@ -206,7 +206,7 @@ def episodios(item):
         item.url = re.sub('\-\d+[^\d]+$', '-links', item.url)
         data = httptools.downloadpage(item.url).data
         data = scrapertools.decodeHtmlentities(data)
-    data = scrapertools.get_match(data, '<div class="entry-content">(.*?)<div class="clear"></div>')
+    data = scrapertools.find_single_match(data, '<div class="entry-content">(.*?)<div class="clear"></div>')
 
     lang_titles = []
     starts = []

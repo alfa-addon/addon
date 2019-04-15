@@ -113,9 +113,10 @@ def lista(item):
     patron = 'class="anime"><a href="([^"]+)">'
     patron +='<div class="cover" style="background-image: url\((.*?)\)">.*?<h2>([^<]+)<\/h2>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    context = renumbertools.context(item)
-    context2 = autoplay.context
-    context.extend(context2)
+    if item.extra != "next":
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
         url = scrapedurl
         thumbnail = host + scrapedthumbnail
@@ -133,12 +134,12 @@ def lista(item):
                                                '<a href="([^"]+)" data-ci-pagination-page="\d+" rel="next"')
     next_page_url = scrapertools.decodeHtmlentities(next_page)
     if next_page_url != "":
-        itemlist.append(Item(channel=item.channel,
-                             action="lista",
-                             title=">> Página siguiente",
-                             url=next_page_url,
-                             thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'
-                             ))
+        itemlist.append(item.clone(action="lista",
+                                   title=">> Página siguiente",
+                                   url=next_page_url,
+                                   thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png',
+                                   extra="next"
+                                    ))
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 

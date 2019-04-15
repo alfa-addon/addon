@@ -113,7 +113,7 @@ def annoattuale(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    blocco = scrapertools.get_match(data, r'<div class="left-menu-main">(.*?)</div>')
+    blocco = scrapertools.find_single_match(data, r'<div class="left-menu-main">(.*?)</div>')
     patron = r'<a href="([^"]+)">Film\s*\d{4}</a>'
 
     item.url = urlparse.urljoin(host, scrapertools.find_single_match(blocco, patron))
@@ -127,7 +127,7 @@ def categorie(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    blocco = scrapertools.get_match(data, r'<div class="menu-janr-content">(.*?)</div>')
+    blocco = scrapertools.find_single_match(data, r'<div class="menu-janr-content">(.*?)</div>')
     patron = r'<a href="([^"]+)">([^<]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(blocco)
 
@@ -152,7 +152,7 @@ def peranno(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    blocco = scrapertools.get_match(data, r'<div class="sort-menu-title">\s*Anno di pubblicazione:\s*</div>(.*?)</div>')
+    blocco = scrapertools.find_single_match(data, r'<div class="sort-menu-title">\s*Anno di pubblicazione:\s*</div>(.*?)</div>')
     patron = r'<a href="([^"]+)">([^<]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(blocco)
 
@@ -176,7 +176,7 @@ def perpaese(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
-    blocco = scrapertools.get_match(data, r'<div class="sort-menu-title">\s*Paesi di produzione:\s*</div>(.*?)</div>')
+    blocco = scrapertools.find_single_match(data, r'<div class="sort-menu-title">\s*Paesi di produzione:\s*</div>(.*?)</div>')
     patron = r'<a href="([^"]+)">([^<]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(blocco)
 

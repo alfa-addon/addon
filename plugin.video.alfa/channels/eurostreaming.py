@@ -155,11 +155,11 @@ def episodios(item):
     data = scrapertools.decodeHtmlentities(data)
     link = False
 
-    if scrapertoolsV2.get_match(data, '<div class="nano_cp_container"><span.*?CLICCA QUI'):
+    if scrapertoolsV2.find_single_match(data, '<div class="nano_cp_container"><span.*?CLICCA QUI'):
         item.url = scrapertoolsV2.find_single_match(data, '<script type="text\/javascript">.*?var nano_ajax_object =.*?"go_to":"(.*?)"').replace('\\', '')
         link = True
     else:
-        match = scrapertoolsV2.get_match(data, '<h3 style="text-align: center;">.*?<a href="(.*?)">.{0,5}<span.*?CLICCA QUI.*?</a></h3>')
+        match = scrapertoolsV2.find_single_match(data, '<h3 style="text-align: center;">.*?<a href="(.*?)">.{0,5}<span.*?CLICCA QUI.*?</a></h3>')
         if match != '':
             item.url = match
             link = True
@@ -167,7 +167,7 @@ def episodios(item):
         data = httptools.downloadpage(item.url).data
         data = scrapertools.decodeHtmlentities(data)
 
-    data = scrapertoolsV2.get_match(data, '<div class="su-accordion">(.+?)<div class="clear">')
+    data = scrapertoolsV2.find_single_match(data, '<div class="su-accordion">(.+?)<div class="clear">')
 
     lang_titles = []
     starts = []

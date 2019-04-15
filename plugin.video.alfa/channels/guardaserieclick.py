@@ -100,7 +100,7 @@ def nuoveserie(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url, headers=headers).data
-    blocco = scrapertools.get_match(data, '<div\s*class="container container-title-serie-new container-scheda" meta-slug="new">(.*?)</div></div><div')
+    blocco = scrapertools.find_single_match(data, '<div\s*class="container container-title-serie-new container-scheda" meta-slug="new">(.*?)</div></div><div')
 
     patron = r'<a\s*href="([^"]+)".*?>\s*<img\s*.*?src="([^"]+)" />[^>]+>[^>]+>[^>]+>[^>]+>'
     patron += r'[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>([^<]+)</p>'
@@ -132,7 +132,7 @@ def serietvaggiornate(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url, headers=headers).data
-    blocco = scrapertools.get_match(data,
+    blocco = scrapertools.find_single_match(data,
                                     r'<div\s*class="container container-title-serie-lastep  container-scheda" meta-slug="lastep">(.*?)</div></div><div')
 
     patron = r'<a\s*rel="nofollow" href="([^"]+)"[^>]+> <img\s*.*?src="([^"]+)"[^>]+>[^>]+>'
@@ -168,7 +168,7 @@ def categorie(item):
     itemlist = []
 
     data = httptools.downloadpage(item.url, headers=headers).data
-    blocco = scrapertools.get_match(data, r'<ul\s*class="dropdown-menu category">(.*?)</ul>')
+    blocco = scrapertools.find_single_match(data, r'<ul\s*class="dropdown-menu category">(.*?)</ul>')
     patron = r'<li>\s*<a\s*href="([^"]+)"[^>]+>([^<]+)</a></li>'
     matches = re.compile(patron, re.DOTALL).findall(blocco)
 
@@ -196,7 +196,7 @@ def lista_serie(item):
     data = httptools.downloadpage(item.url, headers=headers).data
 
     patron = r'<a\s*href="([^"]+)".*?>\s*<img\s*.*?src="([^"]+)" />[^>]+>[^>]+>[^>]+>[^>]+>[^>]+>([^<]+)</p></div>'
-    blocco = scrapertools.get_match(data,
+    blocco = scrapertools.find_single_match(data,
                                     r'<div\s*class="col-xs-\d+ col-sm-\d+-\d+">(.*?)<div\s*class="container-fluid whitebg" style="">')
     matches = re.compile(patron, re.DOTALL).findall(blocco)
 

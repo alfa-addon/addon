@@ -40,7 +40,7 @@ def categorie(item):
 
     data = httptools.downloadpage(item.url).data
 
-    blocco = scrapertools.get_match(data, '<div class="menu-container">(.*?)</div>')
+    blocco = scrapertools.find_single_match(data, '<div class="menu-container">(.*?)</div>')
 
     patron = r'<li[^>]+><a title="[^"]+" href="([^"]+)">([^<]+)</a></li>'
     matches = re.compile(patron, re.DOTALL).findall(blocco)

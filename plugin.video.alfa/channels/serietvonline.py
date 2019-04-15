@@ -11,12 +11,12 @@ from platformcode import logger, config
 from channels import autoplay, support
 from channelselector import thumb
 
-host = "https://serietvonline.co"
+host = "https://serietvonline.live"
 headers = [['Referer', host]]
 
 IDIOMAS = {'Italiano': 'IT'}
 list_language = IDIOMAS.values()
-list_servers = ['wstream', 'backin', 'akvideo', 'vidto', 'nowvideo']
+list_servers = ['akvideo', 'wstream', 'backin', 'vidto', 'nowvideo']
 list_quality = ['default']
 
 PERPAGE = 30
@@ -53,13 +53,13 @@ def web_menu():
     return itemlist
 
 
-
 def search(item, texto):
     logger.info(item.channel + 'search' + texto)
 
     item.url = host + "/?s= " + texto
     
     return search_peliculas(item)
+
 
 def search_peliculas(item):
     logger.info(item.channel + 'search_peliculas')
@@ -71,37 +71,9 @@ def search_peliculas(item):
     else:
         action = 'episodios'
 
-    itemlist = []
-    data = httptools.downloadpage(item.url, headers=headers).data
-    logger.info('DATA SEARCH= ' + data)
-
-    patron = r'<a href="([^"]+)"><span[^>]+><[^>]+><\/a>[^h]+h2>(.*?)<'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for url, title in matches:
-       
-        title = scrapertoolsV2.decodeHtmlentities(title)
-        itemlist.append(
-            Item(channel=item.channel,
-                 action=action,
-                 contentType=item.contentType,
-                 fulltitle=title,
-                 show=title,
-                 title=title,                 
-                 url=url))
-   
-    next_page = scrapertoolsV2.find_single_match(data, "<a rel='nofollow' class=previouspostslink href='([^']+)'")
-    
-    if next_page != "":
-        itemlist.append(
-            Item(channel=item.channel,
-                 action="search_peliculas",
-                 contentType=item.contentType,                 
-                 title="[COLOR blue]" + config.get_localized_string(30992) + " >[/COLOR]",
-                 url=next_page))
-
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    return itemlist
+    return support.scrape(item, r'<a href="([^"]+)"><span[^>]+><[^>]+><\/a>[^h]+h2>(.*?)<',
+                          ["url", "title"], patronNext="<a rel='nofollow' class=previouspostslink href='([^']+)'",
+                          headers=headers, action=action)
 
 
 def peliculas(item):
@@ -172,6 +144,7 @@ def episodios(item):
             Item(channel=item.channel,
                  action="findvideos",
                  fulltitle=title,
+                 contentType="episode",
                  show=title,
                  title=title,
                  url=episode))
@@ -197,12 +170,11 @@ def findvideos(item):
             Item(channel=item.channel,
                  action='play',
                  title=item.title + ' [COLOR blue][' + server + '][/COLOR]',
+                 contentType="movie",
                  server=server,
                  url=url))
 
     autoplay.start(itemlist, item)
-
-    support.videolibrary(itemlist,item,'bold color blue')
 
     return itemlist
 

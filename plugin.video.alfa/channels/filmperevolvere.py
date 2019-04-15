@@ -97,7 +97,7 @@ def categorie(item):
 
     # Carica la pagina 
     data = httptools.downloadpage(item.url, headers=headers).data
-    bloque = scrapertools.get_match(data,
+    bloque = scrapertools.find_single_match(data,
                                     'GENERI<span class="mega-indicator">(.*?)<\/ul>')
 
     # Estrae i contenuti 

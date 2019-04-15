@@ -311,7 +311,7 @@ def findvideos(item):
 
     if item.extra:
         data = httptools.downloadpage(item.url, headers=headers).data
-        blocco = scrapertools.get_match(data, r'%s(.*?)</tr>' % item.extra)
+        blocco = scrapertools.find_single_match(data, r'%s(.*?)</tr>' % item.extra)
         item.url = scrapertools.find_single_match(blocco, r'<a href="([^"]+)"[^>]+>')
 
     patron = r'http:\/\/link[^a]+animesubita[^o]+org\/[^\/]+\/.*?(episodio\d*)[^p]+php(\?.*)'

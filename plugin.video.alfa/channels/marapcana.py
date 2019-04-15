@@ -98,7 +98,7 @@ def categorie(item):
         item.url = host
 
     data = httptools.downloadpage(item.url, headers=headers).data
-    bloque = scrapertools.get_match(data, 'Genere(.*?)</select>')
+    bloque = scrapertools.find_single_match(data, 'Genere(.*?)</select>')
     patron = '<option value="([^"]+)">(.*?)</option>'
     matches = re.compile(patron, re.DOTALL).findall(bloque)
 
@@ -128,7 +128,7 @@ def peliculas_tv(item):
         p = int(p)
 
     data = httptools.downloadpage(item.url, headers=headers).data
-    bloque = scrapertools.get_match(data, 'Lista Serie Tv</h2>(.*?)</section>')
+    bloque = scrapertools.find_single_match(data, 'Lista Serie Tv</h2>(.*?)</section>')
     patron = '<a href=\'(/serie/[^\']+)\'>([^<]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(bloque)
 

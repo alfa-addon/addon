@@ -83,7 +83,7 @@ def menu(item):
     logger.info("[altadefinizionehd.py] DATA"+data)
     patron = r'<li id="menu.*?><a href="#">FILM PER ' + item.extra + r'<\/a><ul class="sub-menu">(.*?)<\/ul>'
     logger.info("[altadefinizionehd.py] BLOCK"+patron)
-    block = scrapertools.get_match(data, patron)
+    block = scrapertools.find_single_match(data, patron)
     logger.info("[altadefinizionehd.py] BLOCK"+block)
     patron = r'<li id=[^>]+><a href="(.*?)">(.*?)<\/a><\/li>'
     matches = re.compile(patron, re.DOTALL).findall(block)

@@ -16,9 +16,11 @@ from platformcode import logger, config
 host = ""
 headers = ""
 
-permUrl = httptools.downloadpage('https://www.cb01.uno/', follow_redirects=False).headers
-host = 'https://www.'+permUrl['location'].replace('https://www.google.it/search?q=site:', '')
-headers = [['Referer', host]]
+def findhost():
+    global host, headers
+    permUrl = httptools.downloadpage('https://www.cb01.uno/', follow_redirects=False).headers
+    host = 'https://www.'+permUrl['location'].replace('https://www.google.it/search?q=site:', '')
+    headers = [['Referer', host]]
 
 IDIOMAS = {'Italiano': 'IT'}
 list_language = IDIOMAS.values()
@@ -33,7 +35,7 @@ blacklist = ['BENVENUTI', 'Richieste Serie TV', 'CB01.UNO &#x25b6; TROVA L&#8217
 
 
 def mainlist(item):
-    support.log()
+    findhost()
 
     autoplay.init(item.channel, list_servers, list_quality)
 
@@ -57,10 +59,11 @@ def mainlist(item):
 
 
 def menu(item):
+    findhost()
     itemlist= []
     data = httptools.downloadpage(item.url, headers=headers).data
     data = re.sub('\n|\t', '', data)
-    block = scrapertoolsV2.get_match(data, item.args + r'<span.*?><\/span>.*?<ul.*?>(.*?)<\/ul>')
+    block = scrapertoolsV2.find_single_match(data, item.args + r'<span.*?><\/span>.*?<ul.*?>(.*?)<\/ul>')
     support.log('MENU BLOCK= ',block)
     patron = r'href="?([^">]+)"?>(.*?)<\/a>'
     matches = re.compile(patron, re.DOTALL).findall(block)
@@ -94,7 +97,7 @@ def search(item, text):
 
 
 def newest(categoria):
-    support.log()
+    findhost()
     itemlist = []
     item = Item()
     item.url = host + '/lista-film-ultimi-100-film-aggiunti/'
@@ -106,7 +109,7 @@ def newest(categoria):
 def peliculas(item):
     support.log()
     if item.contentType == 'movie' or '/serietv/' not in item.url:
-        patron = r'<div class=card-image>.*?<img src=([^ ]+) alt.*?<a href=([^ >]+)\/>([^<[(]+)(?:\[([A-Za-z0-9/-]+)])? (?:\(([0-9]{4})\))?.*?<strong>([^<>]+)DURATA ([0-9]+).*?<br>([^<>]+)'
+        patron = r'<div class="?card-image"?>.*?<img src="?([^" ]+)"? alt.*?<a href="?([^" >]+)(?:\/|")>([^<[(]+)(?:\[([A-Za-z0-9/-]+)])? (?:\(([0-9]{4})\))?.*?<strong>([^<>&]+).*?DURATA ([0-9]+).*?<br(?: /)?>([^<>]+)'
         listGroups = ['thumb', 'url', 'title', 'quality', 'year', 'genre', 'duration', 'plot']
         action = 'findvideos'
     else:
@@ -128,6 +131,8 @@ def episodios(item):
 
 
 def findvideos(item):
+    findhost()
+
     if item.contentType == "episode":
         return findvid_serie(item)
 
@@ -286,12 +291,12 @@ def play(item):
         data = httptools.downloadpage(item.url).data
         if "window.location.href" in data:
             try:
-                data = scrapertoolsV2.get_match(data, 'window.location.href = "([^"]+)";')
+                data = scrapertoolsV2.find_single_match(data, 'window.location.href = "([^"]+)";')
             except IndexError:
                 data = httptools.downloadpage(item.url, only_headers=True, follow_redirects=False).headers.get("location", "")
             data, c = unshortenit.unwrap_30x_only(data)
         else:
-            data = scrapertoolsV2.get_match(data, r'<a href="([^"]+)".*?class="btn-wrapper">.*?licca.*?</a>')
+            data = scrapertoolsV2.find_single_match(data, r'<a href="([^"]+)".*?class="btn-wrapper">.*?licca.*?</a>')
         
         logger.debug("##### play go.php data ##\n%s\n##" % data)
     else:

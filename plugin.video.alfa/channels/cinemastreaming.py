@@ -39,7 +39,7 @@ def video(item):
 
     # Carica la pagina
     data = httptools.downloadpage(item.url, headers=headers).data
-    block = scrapertools.get_match(data, r'<main>(.*?)<\/main>')
+    block = scrapertools.find_single_match(data, r'<main>(.*?)<\/main>')
     block = re.sub('\t|\n', '', block)
 
     patron = r'<article.*?class="TPost C">.*?<a href="([^"]+)">.*?src="([^"]+)".*?>.*?<h3 class="Title">([^<]+)<\/h3>(.*?)<\/article>'

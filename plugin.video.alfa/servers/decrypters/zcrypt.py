@@ -32,9 +32,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                 logger.info("  url=" + url)
                 encontrados.add(url)
 
-                import requests
-                headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:59.0) Gecko/20100101 Firefox/59.0'}
-
                 if host == 'gestyy':
                     resp = httptools.downloadpage(
                         url,
@@ -45,44 +42,12 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
                         headers={'User-Agent': 'curl/7.59.0'})
                     data = resp.headers.get("location", "")
                 elif 'vcrypt.net' in url:
-                    # req = httptools.downloadpage(url)
-                    req = requests.get(url, headers=headers)
-                    idata = req.content
-                    print(idata)
-                    patron = r"document.cookie\s=\s.*?'(.*)'"
-                    # matches = re.compile(patron, re.IGNORECASE).findall(idata)
-                    matches = re.finditer(patron, idata, re.MULTILINE)
-                    mcookie = {}
-                    for matchNum, match in enumerate(matches, start=1):
-                        for c in match.group(1).split("; "):
-                            c, v = c.split('=')
-                            mcookie[c] = v
+                    from lib import unshortenit
+                    data, status = unshortenit.unshorten(url)
 
-                    try:
-                        patron = r';URL=([^\"]+)\">'
-                        dest = scrapertools.get_match(idata, patron)
-                        r = requests.post(dest, cookies=mcookie, headers=headers)
-                        url = r.url
-                    except:
-                        r = requests.get(req.url, headers=headers)
-                        if r.url == url:
-                            url = ""
-
-                    if "4snip" in url:
-                        desturl = url.replace("/out/", "/outlink/")
-                        import os
-                        par = os.path.basename(desturl)
-                        rdata = requests.post(desturl, data={'url': par})
-                        url = rdata.url
-
-                    if "wstream" in url:
-
-                        url = url.replace("/video/", "/")
-
-                    data = url
                 elif 'linkup' in url:
                     idata = httptools.downloadpage(url).data
-                    data = scrapertoolsV2.get_match(idata, "<iframe[^<>]*src=\\'([^'>]*)\\'[^<>]*>")
+                    data = scrapertoolsV2.find_single_match(idata, "<iframe[^<>]*src=\\'([^'>]*)\\'[^<>]*>")
                 else:
                     data = ""
                     while host in url:
