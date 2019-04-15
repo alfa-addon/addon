@@ -120,7 +120,7 @@ class Main(xbmcgui.WindowXMLDialog):
         conditional_textcolor = "0xffff3030"
         shadow = "0xFF000000"
         offsetx = 30
-        offsety = 0
+        offsety = 5
         font = 'font25_title'
 
         if config.get_setting('start_page'):
