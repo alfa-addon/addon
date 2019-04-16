@@ -3,6 +3,7 @@
 from core import httptools
 from core import scrapertools
 from core import servertools
+from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
@@ -68,6 +69,7 @@ def sub_search(item):
             if "ver-" not in scrapedurl:
                 continue
             year = scrapertools.find_single_match(scrapedtitle, "\d{4}")
+            contentTitle = scrapedtitle.replace(scrapertools.find_single_match('\[.+', scrapedtitle),"")
             contentTitle = scrapedtitle.replace("(%s)" %year,"").replace("Ver","").strip()
             itemlist.append(Item(action = "findvideos",
                                  channel = item.channel,
@@ -77,6 +79,7 @@ def sub_search(item):
                                  thumbnail = scrapedthumbnail,
                                  url = scrapedurl,
                                  ))
+    tmdb.set_infoLabels_itemlist(itemlist, True)
     return itemlist
 
 
@@ -89,11 +92,11 @@ def generos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for genero, scrapedurl in matches:
         title = scrapertools.htmlclean(genero)
-        url = item.url + scrapedurl
+        if not item.url.startswith("http"): scrapedurl = item.url + scrapedurl
         itemlist.append(Item(channel = item.channel,
                              action = 'peliculas',
                              title = title,
-                             url = url,
+                             url = scrapedurl,
                              viewmode = "movie",
                              first=0))
     itemlist = sorted(itemlist, key=lambda item: item.title)
@@ -124,19 +127,21 @@ def peliculas(item):
         title = scrapedtitle + " " + plot
         if not scrapedurl.startswith("http"):
             scrapedurl = item.url + scrapedurl
-        itemlist.append(Item(channel = item.channel,
-                             action = 'findvideos',
-                             title = title,
-                             url = scrapedurl,
-                             thumbnail = scrapedthumbnail,
-                             plot = plot,
+        year = scrapertools.find_single_match(scrapedurl, "\-(\d{4})\-")
+        contentTitle = scrapedtitle.replace(scrapertools.find_single_match('\[.+', scrapedtitle),"")
+        itemlist.append(Item(action = 'findvideos',
+                             channel = item.channel,
                              contentTitle = scrapedtitle,
-                             contentType = "movie",
+                             infoLabels = {"year":year},
                              language=language,
-                             quality=quality
+                             plot = plot,
+                             quality=quality,
+                             title = title,
+                             thumbnail = scrapedthumbnail,
+                             url = scrapedurl
                              ))
+    tmdb.set_infoLabels_itemlist(itemlist, True)
     #paginacion
-
     url_next_page = item.url
     first = last
     if next:
@@ -149,9 +154,9 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    item.plot = scrapertools.find_single_match(data, '<div class="entry">(.*?)<div class="iframes">')
-    item.plot = scrapertools.htmlclean(item.plot).strip()
-    item.contentPlot = item.plot
+    #item.plot = scrapertools.find_single_match(data, '<div class="entry">(.*?)<div class="iframes">')
+    #item.plot = scrapertools.htmlclean(item.plot).strip()
+    #item.contentPlot = item.plot
     patron = '<strong>Ver película online.*?>.*?>([^<]+)'
     scrapedopcion = scrapertools.find_single_match(data, patron)
     titulo_opcional = scrapertools.find_single_match(scrapedopcion, ".*?, (.*)").upper()
@@ -167,14 +172,12 @@ def findvideos(item):
         urls = scrapertools.find_multiple_matches(datos, '(?:src|href)="([^"]+)')
         titulo = "Ver en %s " + titulo_opcion
         for url in urls:
-            itemlist.append(Item(channel = item.channel,
-                                 action = "play",
-                                 contentThumbnail = item.thumbnail,
-                                 fulltitle = item.contentTitle,
+            itemlist.append(item.clone(action = "play",
                                  title = titulo,
                                  url = url
                                  ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    #tmdb.set_infoLabels_itemlist(itemlist, True)
     if itemlist:
         if config.get_videolibrary_support():
                 itemlist.append(Item(channel = item.channel, action = ""))
