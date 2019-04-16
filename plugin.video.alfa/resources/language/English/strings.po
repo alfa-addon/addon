@@ -10429,3 +10429,11 @@ msgstr ""
 msgctxt "#70685"
 msgid "Community"
 msgstr ""
+
+msgctxt "#70686"
+msgid "Enter the number of the starting season"
+msgstr ""
+
+msgctxt "#70687"
+msgid "Enter the number of the starting episode"
+msgstr ""

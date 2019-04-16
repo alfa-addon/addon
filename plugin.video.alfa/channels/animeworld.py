@@ -4,10 +4,10 @@
 # ----------------------------------------------------------
 import re, urlparse
 
-from core import httptools, scrapertoolsV2, servertools, tmdb
+from core import httptools, scrapertoolsV2, servertools, tmdb, tvdb
 from core.item import Item
 from platformcode import logger, config
-from channels import autoplay, filtertools, support
+from channels import autoplay, filtertools, support, autorenumber
 from channelselector import thumb
 
 
@@ -214,7 +214,8 @@ def lista_anime(item):
                      plot=scrapedplot,
                      folder=True))
 
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)    
+    autorenumber.renumber(itemlist)
 
     # Next page
     next_page = scrapertoolsV2.find_single_match(data, '<a class="page-link" href="([^"]+)" rel="next"')
@@ -223,10 +224,10 @@ def lista_anime(item):
         itemlist.append(
             Item(channel=item.channel,
                  action='lista_anime',
-                 title='[B]' + config.get_localized_string(30992) + ' &raquo;[/B]',
+                 title='[B]' + config.get_localized_string(30992) + ' >[/B]',
                  url=next_page,
                  contentType=item.contentType,
-                 thumbnail='http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png'))
+                 thumbnail=thumb()))
 
 
     return itemlist
@@ -310,9 +311,11 @@ def video(item):
                      url=scrapedurl,
                      fulltitle=title,
                      show=title,
-                     thumbnail=scrapedthumb))
+                     thumbnail=scrapedthumb,
+                     context = autoplay.context))
     
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    autorenumber.renumber(itemlist)
 
     # Next page
     next_page = scrapertoolsV2.find_single_match(data, '<a class="page-link" href=".*?page=([^"]+)" rel="next"')
@@ -321,17 +324,17 @@ def video(item):
         itemlist.append(
             Item(channel=item.channel,
                  action='video',
-                 title='[B]' + config.get_localized_string(30992) + ' &raquo;[/B]',
+                 title='[B]' + config.get_localized_string(30992) + ' >[/B]',
                  url=re.sub('&page=([^"]+)', '', item.url) + '&page=' + next_page,
                  contentType=item.contentType,
-                 thumbnail='http://2.bp.blogspot.com/-fE9tzwmjaeQ/UcM2apxDtjI/AAAAAAAAeeg/WKSGM2TADLM/s1600/pager+old.png'))
+                 thumbnail=thumb()))
 
     return itemlist
 
 
 def episodios(item):
     logger.info("[animeworld.py] episodios")
-    itemlist = []
+    itemlist = [] 
 
     data = httptools.downloadpage(item.url).data.replace('\n', '')
     data = re.sub(r'>\s*<', '><', data)
@@ -340,7 +343,7 @@ def episodios(item):
    
     patron = r'<li><a.*?href="([^"]+)".*?>(.*?)<\/a>'
     matches = re.compile(patron, re.DOTALL).findall(block)
-
+    
     for scrapedurl, scrapedtitle in matches:
         scrapedtitle = '[B] Episodio ' + scrapedtitle + '[/B]'
         itemlist.append(
@@ -355,7 +358,10 @@ def episodios(item):
                 plot=item.plot,
                 fanart=item.thumbnail,
                 thumbnail=item.thumbnail))
-
+    
+    autorenumber.renumber(itemlist, item,'bold')
+    
+    
     # Aggiungi a Libreria
     if config.get_videolibrary_support() and len(itemlist) != 0:
         itemlist.append(

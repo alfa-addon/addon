@@ -5417,3 +5417,11 @@ msgstr "%s è stato eliminato"
 msgctxt "#70685"
 msgid "Community"
 msgstr "Community"
+
+msgctxt "#70686"
+msgid "Enter the number of the starting season"
+msgstr "Inserisci il numero della stagione di partenza"
+
+msgctxt "#70687"
+msgid "Enter the number of the starting episode"
+msgstr "Inserisci il numero dell'episodio di partenza"

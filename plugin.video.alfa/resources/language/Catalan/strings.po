@@ -5311,8 +5311,8 @@ msgid "Do you want to update Quasar to avoid errors?"
 msgstr "¿Quiere actualizar Quasar para evitar errores?"
 
 msgctxt "#70585"
-msgid "RENUMERAR"
-msgstr ""
+msgid "RENUMBERING"
+msgstr "RENUMERAR"
 
 msgctxt "#70586"
 msgid "Set up series number..."
@@ -5721,3 +5721,15 @@ msgstr "%s se ha agregado"
 msgctxt "#70684"
 msgid "%s has been deleted"
 msgstr "%s ha sido eliminado"
+
+msgctxt "#70685"
+msgid "Community"
+msgstr "Comunidad"
+
+msgctxt "#70686"
+msgid "Enter the number of the starting season"
+msgstr "Ingrese el número de la temporada de inicio"
+
+msgctxt "#70687"
+msgid "Enter the number of the starting episode"
+msgstr "Ingrese el número del episodio inicial"
