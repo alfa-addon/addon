@@ -44,6 +44,9 @@ def config_item(item):
     tvdb.find_and_set_infoLabels(item)
     data = ''
     data = add_season(data)
+    if not item.infoLabels['tvdb_id']:
+        heading = 'TVDB ID'
+        item.infoLabels['tvdb_id'] = platformtools.dialog_numeric(0, heading)
     data.append(item.infoLabels['tvdb_id'])
     write_data(item.from_channel, item.show, data)
 
