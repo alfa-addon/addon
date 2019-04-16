@@ -96,8 +96,6 @@ def renumber(itemlist, item='', typography=''):
             E = SERIES[1]
             ID = SERIES[2]
 
-            logger.info(str(S) + '|' + str(E) + '|' + ID)
-
             page = 1
             epList = []
             exist = True
@@ -114,7 +112,7 @@ def renumber(itemlist, item='', typography=''):
                     page = page + 1
                 else:
                     exist = False
-            logger.info(str(epList))
+            
             ep = 0
             for item in itemlist:
                 item.title = typo(epList[ep] + ' - ', typography) + item.title
