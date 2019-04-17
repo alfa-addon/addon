@@ -1,4 +1,5 @@
 import urllib2
+import traceback
 
 class Cursor(object):
     def __init__(self, file):
@@ -21,10 +22,12 @@ class Cursor(object):
         req.headers['Range'] = 'bytes=%s-' % (offset)
         try:
             self.conn = urllib2.urlopen(req)
-            self.prepare_decoder(offset)
+            if self.conn.code == 403:
+                self.mega_request(offset, True)
+            else:
+                self.prepare_decoder(offset)
         except:
-            #La url del archivo expira transcurrido un tiempo, si da error 403, reintenta volviendo a solicitar la url mediante la API
-            self.mega_request(offset, True)
+            print traceback.format_exc()
 
     def read(self,n=None):
         if not self.conn:
@@ -34,7 +37,6 @@ class Cursor(object):
             res = self.decode(res)
             self.pos+=len(res)
         return res
-
 
     def seek(self,n):
         if n>self._file.size:
@@ -60,12 +62,13 @@ class Cursor(object):
     def prepare_decoder(self,offset):
         initial_value = self.initial_value + int(offset/16)
         try:
+            from Cryptodome.Cipher import AES
+            from Cryptodome.Util import Counter
+            self.decryptor = AES.new(self._file._client.a32_to_str(self.k), AES.MODE_CTR, counter = Counter.new(128, initial_value = initial_value))
+        except:
             from Crypto.Cipher import AES
             from Crypto.Util import Counter
             self.decryptor = AES.new(self._file._client.a32_to_str(self.k), AES.MODE_CTR, counter = Counter.new(128, initial_value = initial_value))
-        except:
-            from pyaes import aes
-            self.decryptor = aes.AESModeOfOperationCTR(f=self,key=self._client.a32_to_str(self.k),counter=aes.Counter(initial_value=initial_value))
 
         rest = offset - int(offset/16)*16
         if rest:
