@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------
-# Ringraziamo Icarus crew
 # Canale per Altadefinizione HD
 # ----------------------------------------------------------
 import re
