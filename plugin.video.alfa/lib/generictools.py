@@ -1841,7 +1841,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         item.category = channel_alt.capitalize()
         category = "'%s'" % channel_alt
     channel_py_alt = 'xyz123'
-    if channel in fail_over_list :                                          #Si es un clone de Newpct1, se actualiza el canal y la categoría
+    if channel in fail_over_list :                      #Si es un clone de Newpct1, se actualiza el canal y la categoría
         item.channel = channel_py
         channel_py_alt = "'%s'" % channel_py
         if item.channel_host:                                               #y se borran resto de pasadas anteriores
@@ -1948,15 +1948,20 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
 
     if lookup == True:
         overwrite = False                                                   #Solo avisamos si hay cambios
+    i = 0
     for activo, canal_org, canal_des, url_org, url_des, patron1, patron2, patron3, patron4, patron5, content_inc, content_exc, ow_force in intervencion_list:
+        i += 1
         opt = ''
         #Es esta nuestra entrada?
         if activo == '1' and (canal_org == channel_alt or canal_org == item.category.lower() or channel_alt == 'videolibrary' or ow_force == 'del' or ow_force == 'emerg'):     
             
-            if ow_force == 'del' or ow_force == 'emerg':                    #Si es un borrado de estructuras erroneas, hacemos un proceso aparte
-                canal_des_def = canal_des                                   #Si hay canal de sustitución para item.library_urls, lo usamos
+            if item.url:
+                logger.debug('INTERV. LIST: ' + str(intervencion_list[i-1]) + ' / CHANNEL: ' + str(channel_alt) + ' / URL: ' + str(item.url))
+            
+            if ow_force == 'del' or ow_force == 'emerg':    #Si es un borrado de estructuras erroneas, hacemos un proceso aparte
+                canal_des_def = canal_des                   #Si hay canal de sustitución para item.library_urls, lo usamos
                 if not canal_des_def and canal_org in item.library_urls and len(item.library_urls) == 1:    #Si no, lo extraemos de la url
-                    canal_des_def = scrapertools.find_single_match(item.library_urls[canal_org], 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()                                                        #salvamos la url actual de la estructura a borrar
+                    canal_des_def = scrapertools.find_single_match(item.library_urls[canal_org], 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()            #salvamos la url actual de la estructura a borrar
                 url_total = ''
                 if item.url:
                     url_total = item.url                                    #Si existe item.url, lo salvamos para futuro uso
@@ -1986,8 +1991,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                             if canal_vid_alt not in intervencion:           #... la sustituimos por la primera válida
                                 item.url = url_vid                          
                                 break
-                        if canal_vid_alt in fail_over_list:                 #Si es un clone de Newpct1, salvamos la nueva categoría
-                            item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()   #Salvamos categoría
+                        if canal_vid_alt in fail_over_list:         #Si es un clone de Newpct1, salvamos la nueva categoría
+                            item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()                                              #Salvamos categoría
                         else:
                             item.category = canal_vid.capitalize()          #si no, salvamos nueva categoría
                     logger.error('item.library_urls ACTUALIZADA: ' + str(item.library_urls))
@@ -2000,7 +2005,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
             else:
                 if channel_alt == 'videolibrary':                           #Viene de videolibrary.list_movies: IMPRESCINDIBLE
                     for canal_vid, url_vid in item.library_urls.items():
-                        if canal_org != canal_vid:                          #Miramos si canal_org de la regla está en item.library_urls
+                        if canal_org != canal_vid:              #Miramos si canal_org de la regla está en item.library_urls
                             continue
                         else:
                             channel_alt = canal_org                         #Sí, ponermos el nombre del canal de origen
@@ -2009,10 +2014,10 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                                 channel_alt = channel_py
                     if channel_alt == 'videolibrary':
                         continue
-                if item.contentType == "list":                              #Si viene de Videolibrary, le cambiamos ya el canal
+                if item.contentType == "list":                      #Si viene de Videolibrary, le cambiamos ya el canal
                     if item.channel != channel_py:
-                        item.channel = canal_des                            #Cambiamos el canal.  Si es clone, lo hace el canal
-                        continue                                            #Salimos sin hacer nada más. item está casi vacío
+                        item.channel = canal_des                    #Cambiamos el canal.  Si es clone, lo hace el canal
+                        continue                                    #Salimos sin hacer nada más. item está casi vacío
                 if item.contentType not in content_inc and "*" not in content_inc:  #Está el contenido el la lista de incluidos
                     continue
                 if item.contentType in content_exc:                         #Está el contenido excluido?
@@ -2030,7 +2035,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     continue                                                #... una intervención que afecte solo a una región
                 if ow_force == 'no' and it.library_urls:                    #Esta regla solo vale para findvideos...
                     continue                                                #... salidmos si estamos actualizando
-                if lookup == True:                                          #Queremos que el canal solo visualice sin migración?
+                if lookup == True:                                  #Queremos que el canal solo visualice sin migración?
                     if ow_force != 'no':
                         overwrite = True                                    #Avisamos que hay cambios
                     continue                                                #Salimos sin tocar archivos
@@ -2052,14 +2057,14 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 if patron5:                                                     #Hay más expresión regex?
                     url += scrapertools.find_single_match(url_total, patron5)   #La aplicamos a url
                 if url:
-                    url_total = url                                             #Guardamos la suma de los resultados intermedios
+                    url_total = url                                     #Guardamos la suma de los resultados intermedios
                 if item.channel == channel_py or channel in fail_over_list:     #Si es Newpct1...
                     if item.contentType == "tvshow":
                         url_total = re.sub(r'\/\d+\/?$', '', url_total)         #parece que con el título encuentra la serie, normalmente...
                 update_stat += 1                                                #Ya hemos actualizado algo
                 canal_org_des_list += [(canal_org, canal_des, url_total, opt, ow_force)]   #salvamos el resultado para su proceso
             
-    if update_stat > 0 or delete_stat > 0:                                      #Ha habido alguna actualización o borrado?  Entonces salvamos
+    if update_stat > 0 or delete_stat > 0:                  #Ha habido alguna actualización o borrado?  Entonces salvamos
         if (update_stat > 0 and path != False) or item.ow_force == '1':
             logger.error('** Lista de Actualizaciones a realizar: ' + str(canal_org_des_list))
         for canal_org_def, canal_des_def, url_total, opt_def, ow_force_def in canal_org_des_list:   #pasamos por todas las "parejas" cambiadas
@@ -2072,7 +2077,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     item.library_urls.update({canal_des_def: url_total})
                     it.library_urls = item.library_urls
                 if item.channel != channel_py and item.channel != 'videolibrary':
-                    item.channel = canal_des_def                                #Cambiamos el canal.  Si es clone, lo hace el canal
+                    item.channel = canal_des_def                    #Cambiamos el canal.  Si es clone, lo hace el canal
                     if channel_alt == item.category.lower():                    #Actualizamos la Categoría y si la tenía
                         item.category = item.channel.capitalize()
                 if ow_force_def == 'force' and item.contentType != 'movie':     #Queremos que el canal revise la serie entera?
@@ -2082,7 +2087,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
 
         if it.library_urls and path != False and ow_force_def != 'no':          #Continuamos si hay .nfo, path, y queremos actualizarlo
             item.update_next = '1'
-            del item.update_next                                                #Borramos estos campos para forzar la actualización ya
+            del item.update_next                                    #Borramos estos campos para forzar la actualización ya
             it.update_next = '1'
             del it.update_next
         
@@ -2091,7 +2096,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
             canal_org_des_list_ALT = []                                         #Creamos esta lista para salvar las parejas
             canal_org_des_list_ALT.extend(canal_org_des_list)                   #... y borrar de la original las web caidas
             for canal_org_def, canal_des_def, url_total, opt_def, ow_force_def in canal_org_des_list_ALT: #pasamos por las "parejas" a borrar
-                if "magnet:" in url_total or type(url_total) != str:            #Si la url es un Magnet, o es una lista, pasamos
+                if "magnet:" in url_total or type(url_total) != str:    #Si la url es un Magnet, o es una lista, pasamos
                     i += 1
                     continue
                 try:
@@ -2202,7 +2207,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                         else:
                             logger.error('Error en FINDVIDEOS: ' + archivo + ' / Regla: ' + canal_org_def + ', ' + opt_def + ', ' + ow_force_def)
 
-                    if ow_force_def == 'emerg' and opt_def == '2':              #Si era una operación para borrar urls de emergencia ...
+                    if ow_force_def == 'emerg' and opt_def == '2':  #Si era una operación para borrar urls de emergencia ...
                         if it.emergency_urls and not isinstance(it.emergency_urls, dict):
                             del it.emergency_urls
                         if it.emergency_urls and it.emergency_urls.get(item_movie.channel, False):
