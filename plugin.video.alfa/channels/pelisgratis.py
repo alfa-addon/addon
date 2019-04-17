@@ -73,12 +73,12 @@ def mainlist(item):
                                extra='generos'
                                ))
 
-    itemlist.append(item.clone(title="Alfabetico",
-                               action="seccion",
-                               url=host,
-                               thumbnail=get_thumb('alphabet', auto=True),
-                               extra='a-z'
-                               ))
+    # itemlist.append(item.clone(title="Alfabetico",
+    #                            action="seccion",
+    #                            url=host,
+    #                            thumbnail=get_thumb('alphabet', auto=True),
+    #                            extra='a-z'
+    #                            ))
 
     itemlist.append(item.clone(title="Mas Vistas",
                                action="lista",
@@ -115,11 +115,11 @@ def lista(item):
     logger.info()
     itemlist = []
     data = get_source(item.url)
-    patron = 'article id=post-\d+.*?href=([^>]+)>.*?src=(.*?)\s.*?"Title">([^<]+)<(.*?)</a>.*?<p>([^<]+)</p>'
+    patron = 'article id="post-\d+".*?href="([^"]+)".*?src="([^"]+)".*?"Title">([^<]+)<(.*?)</a>.*?<p>([^<]+)</p>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedthumbnail, scrapedtitle, year_data, scrapedplot in matches:
-        year = scrapertools.find_single_match(year_data, 'Year>(\d{4})<')
+        year = scrapertools.find_single_match(year_data, '"Year">(\d{4})<')
 
         url = scrapedurl
         thumbnail = scrapedthumbnail
@@ -158,9 +158,9 @@ def seccion(item):
     itemlist = []
     data = get_source(item.url)
     if item.extra == 'generos':
-        patron = 'menu-item-object-category.*?<a href=([^<]+)>([^<]+)</a>'
+        patron = 'menu-item-object-category.*?<a href="([^"]+)">([^<]+)</a>'
     elif item.extra == 'a-z':
-        patron = '<li><a href=([^<]+)>(\w|#)<\/a><\/li>'
+        patron = '<li><a href="([^"]+)">(\w|#)<\/a><\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:

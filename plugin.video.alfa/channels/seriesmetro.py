@@ -29,7 +29,6 @@ def get_source(url):
     logger.info()
     data = httptools.downloadpage(url).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    logger.debug(data)
     return data
 
 def mainlist(item):
@@ -60,7 +59,7 @@ def list_all(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<div class="post-thumbnail"><a href="([^"]+)".*?src="([^"]+)".*?title=".*?">([^<]+)'
+    patron = '<div class="post-thumbnail"><a href="([^"]+)".*?src="([^"]+)".*?title="Enlace permanente.*?">([^<]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:

@@ -71,7 +71,7 @@ def menu_movies(item):
 def get_source(url):
     logger.info()
     data = httptools.downloadpage(url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
 
@@ -94,11 +94,11 @@ def section(item):
     data = get_source(host)
 
     if 'Genero' in item.title:
-        patron = '<li class=cat-item cat-item-\d+><a href=(.*?) >(.*?)/i>'
+        patron = '<li class="cat-item cat-item-\d+"><a href="([^"]+)">(.*?)/i>'
     elif 'Año' in item.title:
-        patron = '<li><a href=(.*?release.*?)>(.*?)</a>'
+        patron = '<li><a href="(.*?release.*?)">(.*?)</a>'
     elif 'Calidad' in item.title:
-        patron = 'menu-item-object-dtquality menu-item-\d+><a href=(.*?)>(.*?)</a>'
+        patron = 'menu-item-object-dtquality menu-item-\d+"><a href="([^"]+)">(.*?)</a>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -125,10 +125,10 @@ def list_all(item):
     itemlist = []
 
     data = get_source(item.url)
-
     if item.type ==  'movies':
-        patron = '<article id=post-\d+ class=item movies><div class=poster><img src=(.*?) alt=(.*?)>.*?quality>(.*?)'
-        patron += '</span><\/div><a href=(.*?)>.*?<\/h3><span>(.*?)<\/span><\/div>.*?flags(.*?)metadata'
+        patron = '<article id="post-\d+" class="item movies"><div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'
+        patron += 'quality">([^<]+)</span> <\/div><a href="([^"]+)">.*?'
+        patron += '<\/h3><span>([^>]+)<\/span><\/div>.*?flags(.*?)metadata'
         matches = re.compile(patron, re.DOTALL).findall(data)
 
         for scrapedthumbnail, scrapedtitle, quality, scrapedurl, year, lang_data in matches:
@@ -150,8 +150,8 @@ def list_all(item):
                             infoLabels={'year':year}))
 
     elif item.type ==  'tvshows':
-        patron = '<article id=post-\d+ class=item tvshows><div class=poster><img src=(.*?) alt=(.*?)>.*?'
-        patron += '<a href=(.*?)>.*?<\/h3><span>(.*?)<\/span><\/div>'
+        patron = '<article id="post-\d+" class="item tvshows"><div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'
+        patron += '<a href="([^"]+)">.*?<\/h3><span>([^<]+)<\/span><\/div>'
         matches = re.compile(patron, re.DOTALL).findall(data)
 
         for scrapedthumbnail, scrapedtitle, scrapedurl, year in matches:
@@ -182,7 +182,7 @@ def seasons(item):
     itemlist=[]
 
     data=get_source(item.url)
-    patron='Temporada\d+'
+    patron='Temporada \d+'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     infoLabels = item.infoLabels
@@ -216,7 +216,7 @@ def episodesxseasons(item):
     itemlist = []
 
     data=get_source(item.url)
-    patron='class=numerando>%s - (\d+)</div><div class=episodiotitle><a href=(.*?)>(.*?)<' % item.infoLabels['season']
+    patron='class="numerando">%s - (\d+)</div><div class="episodiotitle"><a href="([^"]+)">(.*?)<' % item.infoLabels['season']
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     infoLabels = item.infoLabels
@@ -239,13 +239,13 @@ def findvideos(item):
 
     itemlist = []
     data = get_source(item.url)
-    selector_url = scrapertools.find_multiple_matches(data, 'class=metaframe rptss src=(.*?) frameborder=0 ')
+    selector_url = scrapertools.find_multiple_matches(data, 'class="metaframe rptss" src="([^"]+)"')
 
     for lang in selector_url:
         data = get_source('https:'+lang)
-        urls = scrapertools.find_multiple_matches(data, 'data-playerid=(.*?)>')
+        urls = scrapertools.find_multiple_matches(data, 'data-playerid="([^"]+)">')
         subs = ''
-        lang = scrapertools.find_single_match(lang, 'lang=([^+]+)')
+        lang = scrapertools.find_single_match(lang, 'lang=(.*)?')
         language = IDIOMAS[lang]
 
         if item.contentType == 'episode':
@@ -335,7 +335,7 @@ def search_results(item):
     itemlist=[]
 
     data=get_source(item.url)
-    patron = '<article>.*?<a href=(.*?)><img src=(.*?) alt=(.*?) />.*?meta.*?year>(.*?)<(.*?)<p>(.*?)</p>'
+    patron = '<article>.*?<a href="([^"]+)"><img src="([^"]+)" alt="([^"]+)" />.*?meta.*?year">([^<]+)<(.*?)<p>(.*?)</p>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumb, scrapedtitle, year, lang_data, scrapedplot in matches:
