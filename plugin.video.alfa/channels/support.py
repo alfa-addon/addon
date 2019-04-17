@@ -358,9 +358,9 @@ def typo(string, typography=''):
     return string
 
 
-def match(item, patron='', patron_block='', headers=''):
-
-    data = httptools.downloadpage(item.url, headers=headers).data.replace("'", '"')
+def match(item, patron='', patron_block='', headers='', url=''):
+    url = url if url else item.url
+    data = httptools.downloadpage(url, headers=headers).data.replace("'", '"')
     data = re.sub('\n|\t', '', data)
     log('DATA= ', data)
 
