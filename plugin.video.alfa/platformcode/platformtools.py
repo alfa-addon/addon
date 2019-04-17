@@ -259,7 +259,6 @@ def render_items(itemlist, parent_item):
                                     listitem=listitem, isFolder=item.folder,
                                     totalItems=item.totalItems)
 
-
     # Fijar los tipos de vistas...
     if config.get_setting("forceview"):
         # ...forzamos segun el viewcontent
@@ -350,16 +349,37 @@ def set_infolabels(listitem, item, player=False):
     Metodo para pasar la informacion al listitem (ver tmdb.set_InfoLabels() )
     item.infoLabels es un dicionario con los pares de clave/valor descritos en:
     http://mirrors.xbmc.org/docs/python-docs/14.x-helix/xbmcgui.html#ListItem-setInfo
+    https://kodi.wiki/view/InfoLabels
     @param listitem: objeto xbmcgui.ListItem
     @type listitem: xbmcgui.ListItem
     @param item: objeto Item que representa a una pelicula, serie o capitulo
     @type item: item
     """
+    
+    infoLabels_dict = {'aired': 'aired', 'album': 'album', 'artist': 'artist', 'cast': 'cast', 'castandrole': 'castandrole', 'tmdb_id': 'code', 'code': 'code', 'country': 'country', 'credits': 'credits', 'release_date': 'dateadded', 'dateadded': 'dateadded', 'dbid': 'dbid', 'director': 'director', 'duration': 'duration', 'episode': 'episode', 'episodio_sinopsis': 'episodeguide', 'episodio_air_date': 'None', 'episodio_imagen': 'None', 'episodio_titulo': 'title', 'episodio_vote_average': 'rating', 'episodio_vote_count': 'votes', 'fanart': 'None', 'genre': 'genre', 'homepage': 'None', 'imdb_id': 'imdbnumber', 'imdbnumber': 'imdbnumber', 'in_production': 'None', 'last_air_date': 'lastplayed', 'mediatype': 'mediatype', 'mpaa': 'mpaa', 'number_of_episodes': 'None', 'number_of_seasons': 'None', 'original_language': 'None', 'originaltitle': 'originaltitle', 'overlay': 'overlay', 'poster_path': 'path', 'popularity': 'None', 'playcount': 'playcount', 'plot': 'plot', 'plotoutline': 'plotoutline', 'premiered': 'premiered', 'quality': 'None', 'rating': 'rating', 'season': 'season', 'set': 'set', 'setid': 'setid', 'setoverview': 'setoverview', 'showlink': 'showlink', 'sortepisode': 'sortepisode', 'sortseason': 'sortseason', 'sorttitle': 'sorttitle', 'status': 'status', 'studio': 'studio', 'tag': 'tag', 'tagline': 'tagline', 'temporada_air_date': 'None', 'temporada_nombre': 'None', 'temporada_num_episodios': 'None', 'temporada_poster': 'None', 'title': 'title', 'top250': 'top250', 'tracknumber': 'tracknumber', 'trailer': 'trailer', 'thumbnail': 'None', 'tvdb_id': 'None', 'tvshowtitle': 'tvshowtitle', 'type': 'None', 'userrating': 'userrating', 'url_scraper': 'None', 'votes': 'votes', 'writer': 'writer', 'year': 'year'}
+    
+    infoLabels_kodi = {}
+    
     if item.infoLabels:
         if 'mediatype' not in item.infoLabels:
             item.infoLabels['mediatype'] = item.contentType
-        listitem.setInfo("video", item.infoLabels)
-
+        
+        try:
+            for label_tag, label_value in item.infoLabels.items():
+                try:
+                    #logger.debug(str(label_tag) + ': ' + str(infoLabels_dict[label_tag]))
+                    if infoLabels_dict[label_tag] != 'None':
+                        infoLabels_kodi.update({infoLabels_dict[label_tag]: item.infoLabels[label_tag]})
+                except:
+                    continue
+                    
+            listitem.setInfo("video", infoLabels_kodi)
+        
+        except:
+            listitem.setInfo("video", item.infoLabels)
+            logger.error(item.infoLabels)
+            logger.error(infoLabels_kodi)
+    
     if player and not item.contentTitle:
         if item.fulltitle:
             listitem.setInfo("video", {"Title": item.fulltitle})
@@ -572,7 +592,7 @@ def set_context_commands(item, parent_item):
 
         # Definir como Pagina de inicio
         if config.get_setting('start_page'):
-            if item.action not in ['findvideos', 'play']:
+            if item.action not in ['episodios', 'findvideos', 'play']:
                 context_commands.insert(0, (config.get_localized_string(60351),
                                             "XBMC.RunPlugin(%s?%s)" % (
                                                 sys.argv[0], Item(channel='side_menu',
