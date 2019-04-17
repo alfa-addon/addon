@@ -796,7 +796,6 @@ def report_send(item, description='', fatal=False):
     import random
     import urllib
     import urlparse
-    import ast
     import traceback
 
     try:
@@ -830,22 +829,22 @@ def report_send(item, description='', fatal=False):
     
     pastebin_list = {
     'hastebin': ('1', 'https://hastebin.com/', 'documents', 'random', '', '', 
-                'data', 'json', 'key', '', '0.29', '5', True, 'raw/', '', ''), 
+                'data', 'json', 'key', '', '0.29', '15', True, 'raw/', '', ''), 
     'dpaste': ('1', 'http://dpaste.com/', 'api/v2/', 'random', 'content=', '&syntax=text&title=%s&poster=alfa&expiry_days=7', 
-                'headers', '', '', 'location', '0.23', '7', True, '', '.txt', ''),
+                'headers', '', '', 'location', '0.23', '15', True, '', '.txt', ''),
     'ghostbin': ('1', 'https://ghostbin.com/', 'paste/new', 'random', 'lang=text&text=', '&expire=2d&password=&title=%s', 
-                'data', 'regex', '<title>(.*?)\s*-\s*Ghostbin<\/title>', '', '0.49', '5', False, 'paste/', '', ''),
+                'data', 'regex', '<title>(.*?)\s*-\s*Ghostbin<\/title>', '', '0.49', '15', False, 'paste/', '', ''),
     'write.as': ('1', 'https://write.as/', 'api/posts', 'random', 'body=', '&title=%s', 
-                'data', 'json', 'data', 'id', '0.019', '5', True, '', '', ''),
+                'data', 'json', 'data', 'id', '0.019', '15', True, '', '', ''),
     'oneclickpaste': ('1', 'http://oneclickpaste.com/', 'index.php', 'random', 'paste_data=', 
                 '&title=%s&format=text&paste_expire_date=1W&visibility=0&pass=&submit=Submit', 
                 'data', 'regex', '<a class="btn btn-primary" href="[^"]+\/(\d+\/)">\s*View\s*Paste\s*<\/a>', '', '0.2', '5', True, '', '', ''),
     'bpaste': ('1', 'https://bpaste.net/', '', 'random', 'code=', '&lexer=text&expiry=1week', 
-                'data', 'regex', 'View\s*<a\s*href="[^*]+/(.*?)">raw<\/a>', '', '0.79', '5', True, 'raw/', '', ''),
+                'data', 'regex', 'View\s*<a\s*href="[^*]+/(.*?)">raw<\/a>', '', '0.79', '15', True, 'raw/', '', ''),
     'dumpz': ('0', 'http://dumpz.org/', 'api/dump', 'random', 'code=', '&lexer=text&comment=%s&password=', 
-                'headers', '', '', 'location', '0.99', '5', False, '', '', ''),
-    'file.io': ('1', 'https://file.io/', '', 'random', '', '("expires", "1w"),', 
-                'requests', 'json', 'key', '', '99.0', '15', False, '', '', ''), 
+                'headers', '', '', 'location', '0.99', '15', False, '', '', ''),
+    'file.io': ('1', 'https://file.io/', '', 'random', '', 'expires=1w', 
+                'requests', 'json', 'key', '', '99.0', '30', False, '', '', ''), 
                  }
     pastebin_dir = []
     paste_file = {}
@@ -866,8 +865,9 @@ def report_send(item, description='', fatal=False):
     # Se lee el archivo de LOG
     log_path = filetools.join(xbmc.translatePath("special://logpath/"), "kodi.log")
     if filetools.exists(log_path):
-        log_size_bytes = float(filetools.getsize(log_path)) / (1024*1024)   # Tamaño del archivivo en Bytes
-        log_size = log_size_bytes / (1024*1024)                         # Tamaño del archivivo en MB
+        log_size_bytes = float(filetools.getsize(log_path))             # Tamaño del archivivo en Bytes
+        log_size = round(log_size_bytes / (1024*1024), 3)               # Tamaño del archivivo en MB
+        logger.info('TAMAÑO del LOG: ' + str(log_size) + ' MB')         # Registramos el tamaño com última entrada del log
         log_data = filetools.read(log_path)                             # Datos del archivo
         if not log_data:                                                # Algún error?
             platformtools.dialog_notification('No puede leer el log de Kodi', 'Comuniquelo directamente en el Foro de Alfa')
@@ -904,9 +904,9 @@ def report_send(item, description='', fatal=False):
         paste_resp = pastebin_list[paste_name][7]                       # Tipo de respuesta: JSON o datos con REGEX
         paste_resp_key = pastebin_list[paste_name][8]                   # Si es JSON, etiqueta `primaria con la CLAVE
         paste_url = pastebin_list[paste_name][9]                        # Etiqueta primaria para HEADER y sec. para JSON
-        paste_file_size = 0                                             # Capacidad en MB del servidor
-        if float(pastebin_list[paste_name][10]) > 0:
-            if log_size > float(pastebin_list[paste_name][10]):         # Verificación de capacidad y tamaño
+        paste_file_size = float(pastebin_list[paste_name][10])          # Capacidad en MB del servidor
+        if paste_file_size > 0:                                         # Si es 0, la capacidad es ilimitada
+            if log_size > paste_file_size:                              # Verificación de capacidad y tamaño
                 msg = 'Archivo de log demasiado grande.  Reinicie Kodi y reinténtelo'
                 continue
         paste_timeout = int(pastebin_list[paste_name][11])              # Timeout para el servidor
@@ -921,14 +921,14 @@ def report_send(item, description='', fatal=False):
             # Se crea el POST con las opciones del servidor "pastebin"
             # Se trata el formato de "requests"
             if paste_type == 'requests':
-                paste_file = {'file': (paste_title+'.txt', open(log_path, 'rb')), }
+                paste_file = {'file': (paste_title+'.txt', log_data)}
                 if paste_post1:
                     paste_file.update(paste_post1)
                 if paste_post2:
                     if '%s' in paste_post2:
-                        paste_params = ast.literal_eval(paste_post2 % log_size_bytes)
+                        paste_params = paste_post2 % log_size_bytes
                     else:
-                        paste_params = ast.literal_eval(paste_post2)
+                        paste_params = paste_post2
             
             #Se trata el formato de downloads
             else:
