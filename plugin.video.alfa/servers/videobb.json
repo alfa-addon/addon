@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "gamovideo.com/(?:embed-|)([a-z0-9]+)",
-        "url": "http://gamovideo.com/\\1"
+        "pattern": "videobb.ru/v/([A-z0-9]+)",
+        "url": "https://videobb.ru/api/source/\\1"
       }
     ]
   },
   "free": true,
-  "id": "gamovideo",
-  "name": "gamovideo",
+  "id": "videobb",
+  "name": "videobb",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_gamovideo.png"
+  "thumbnail": "https://www.cinetux.to/videobb/logo.jpg"
 }

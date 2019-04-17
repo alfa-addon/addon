@@ -14,7 +14,7 @@ from lib import jsunpack
 from platformcode import config, logger
 
 
-host = "http://www.asialiveaction.com"
+host = "https://asialiveaction.com"
 
 IDIOMAS = {'Japones': 'Japones'}
 list_language = IDIOMAS.values()
@@ -26,9 +26,9 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="lista", title="Peliculas",
-                             url=urlparse.urljoin(host, "/category/pelicula"), type='pl', pag=1))
+                             url=urlparse.urljoin(host, "/pelicula"), type='pl'))
     itemlist.append(Item(channel=item.channel, action="lista", title="Series",
-                         url=urlparse.urljoin(host, "/category/serie"), type='sr', pag=1))
+                         url=urlparse.urljoin(host, "/serie"), type='sr'))
     itemlist.append(Item(channel=item.channel, action="category", title="Géneros", url=host, cat='genre'))
     itemlist.append(Item(channel=item.channel, action="category", title="Calidad", url=host, cat='quality'))
     itemlist.append(Item(channel=item.channel, action="category", title="Orden Alfabético", url=host, cat='abc'))
@@ -58,7 +58,7 @@ def category(item):
     for scrapedurl,scrapedtitle  in matches:
         if scrapedtitle != 'Próximas Películas':
             if not scrapedurl.startswith("http"): scrapedurl = host + scrapedurl
-            itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, type='cat', pag=0))
+            itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, type='cat'))
     return itemlist
 
 
@@ -88,7 +88,6 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
-    item.pag = 0
     if texto != '':
         return lista(item)
 
@@ -119,12 +118,13 @@ def lista_a(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     patron  = '(?is)Num">.*?href="([^"]+)".*?'
-    patron += 'src="([^"]+)".*?>.*?'
+    patron += 'data-src="([^"]+)".*?>.*?'
     patron += '<strong>([^<]+)<.*?'
     patron += '<td>([^<]+)<.*?'
     patron += 'href.*?>([^"]+)<\/a>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedtype in matches:
+        if not scrapedthumbnail.startswith("http"): scrapedthumbnail = "https:" + scrapedthumbnail
         action = "findvideos"
         if "Serie" in scrapedtype: action = "episodios"
         itemlist.append(item.clone(action=action, title=scrapedtitle, contentTitle=scrapedtitle, contentSerieName=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
@@ -140,14 +140,14 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
         
-    patron = '<article .*?">'
-    patron += '<a href="([^"]+)"><.*?><figure.*?>' #scrapedurl
-    patron += '<img.*?src="([^"]+)".*?>.*?' #scrapedthumbnail
-    patron += '<h3 class=".*?">([^"]+)<\/h3>' #scrapedtitle
-    patron += '<span.*?>([^"]+)<\/span>.+?' #scrapedyear
-    patron += '<a.+?>([^"]+)<\/a>' #scrapedtype
+    patron  = '(?is)class="TPost C">.*?href="([^"]+)".*?' #scrapedurl
+    patron += 'lazy-src="([^"]+)".*?>.*?' #scrapedthumbnail
+    patron += 'title">([^<]+)<.*?' #scrapedtitle
+    patron += 'year">([^<]+)<.*?' #scrapedyear
+    patron += 'href.*?>([^"]+)<\/a>' #scrapedtype
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedtype in matches:
+        if not scrapedthumbnail.startswith("http"): scrapedthumbnail = "https:" + scrapedthumbnail
         title="%s - %s" % (scrapedtitle,scrapedyear)
 
         new_item = Item(channel=item.channel, title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
@@ -158,16 +158,12 @@ def lista(item):
         else:
             new_item.contentTitle = scrapedtitle
             new_item.action = 'findvideos'
-            
-        itemlist.append(new_item)
-
+            itemlist.append(new_item)
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-
     #pagination
-    pag = item.pag + 1
-    url_next_page = item.url+"/page/"+str(pag)+"/"
-    if len(itemlist)>19:
-        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='lista', pag=pag))
+    url_next_page = scrapertools.find_single_match(data, 'rel="next" href="([^"]+)"')
+    if len(itemlist)>0 and url_next_page:
+        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='lista'))
     return itemlist
 
 
@@ -189,14 +185,16 @@ def findvideos(item):
             data1 = httptools.downloadpage(url, headers={"Referer":url1}).data
             url = scrapertools.find_single_match(data1, 'src: "([^"]+)"')
         if "embed.php" not in url:
-            itemlist.append(item.clone(action = "play", title = "Ver en %s (" + language + ")", language = language, url = url))
+            if url:
+                itemlist.append(item.clone(action = "play", title = "Ver en %s (" + language + ")", language = language, url = url))
             continue
         data1 = httptools.downloadpage(url).data
         packed = scrapertools.find_single_match(data1, "(?is)eval\(function\(p,a,c,k,e.*?</script>")
         unpack = jsunpack.unpack(packed)
         urls = scrapertools.find_multiple_matches(unpack, '"file":"([^"]+).*?label":"([^"]+)')
         for url2, quality in urls:
-            itemlist.append(item.clone(action = "play", title = "Ver en %s (" + quality + ") (" + language + ")", language = language, url = url2))
+            if url2:
+                itemlist.append(item.clone(action = "play", title = "Ver en %s (" + quality + ") (" + language + ")", language = language, url = url2))
     # Segundo grupo de enlaces
     matches = scrapertools.find_multiple_matches(data, '<span><a rel="nofollow" target="_blank" href="([^"]+)"')
     for url in matches:
@@ -212,7 +210,8 @@ def findvideos(item):
                 language = "Sub. Español"
             matches2 = scrapertools.find_multiple_matches(ser, 'href="([^"]+)')
             for url2 in matches2:
-                itemlist.append(item.clone(action = "play", title = "Ver en %s (" + quality + ") (" + language + ")", language = language, url = url2))
+                if url2:
+                    itemlist.append(item.clone(action = "play", title = "Ver en %s (" + quality + ") (" + language + ")", language = language, url = url2))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
      # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)

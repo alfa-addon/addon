@@ -275,6 +275,7 @@ def quasard_thread(monitor):
                     except IOError:
                         time.sleep(1)  # nothing to read, sleep
 
+            log.info("quasard: proc.return code: %s" % str(proc.returncode))
             if proc.returncode == 0 or xbmc.abortRequested:
                 break
 
