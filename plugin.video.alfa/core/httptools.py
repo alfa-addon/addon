@@ -159,83 +159,18 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
 
     url = urllib.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
 
-    #Si la descarga requiere que se haga a través de un servicio Proxy o ProxyWeb, se prepara la url
+    #Se prepara para el uso de Proxies, si es necesario, permitiendo un número de reintentos
     proxy_retries_counter = 0
     url_save = url
     post_save = post
     while proxy_retries_counter <= proxy_retries:
+        proxy_retries_counter += 1
         # Handlers init
         handlers = [urllib2.HTTPHandler(debuglevel=False)]
         
-        proxy_retries_counter += 1
-        proxy_stat = ''
-        proxy_addr = ''
-        proxy_CF_addr = ''
-        proxy_web_name = ''
-        proxy_log = ''
-        
-        try:
-            if (proxy or proxy_web) and (forced_proxy or proxy_addr_forced or channel_proxy_list(url, forced_proxy=forced_proxy)):
-                import proxytools
-                proxy_addr, proxy_CF_addr, proxy_web_name, proxy_log = proxytools.get_proxy_addr(url, post=post, forced_proxy=forced_proxy)
-                if proxy_addr_forced and proxy_log:
-                    import scrapertools
-                    proxy_log = scrapertools.find_single_match(str(proxy_addr_forced), "{'http.*':\s*'(.*?)'}")
-            
-                if proxy and proxy_addr:
-                    if proxy_addr_forced: proxy_addr = proxy_addr_forced
-                    handlers.append(urllib2.ProxyHandler(proxy_addr))
-                    proxy_stat = ', Proxy Direct ' + proxy_log
-                elif proxy and proxy_CF_addr:
-                    if proxy_addr_forced: proxy_CF_addr = proxy_addr_forced
-                    handlers.append(urllib2.ProxyHandler(proxy_CF_addr))
-                    proxy_stat = ', Proxy CF ' + proxy_log
-                elif proxy and proxy_addr_forced:
-                    proxy_addr = proxy_addr_forced
-                    handlers.append(urllib2.ProxyHandler(proxy_addr))
-                    proxy_stat = ', Proxy Direct ' + proxy_log
-                elif proxy and not proxy_addr and not proxy_CF_addr and not proxy_addr_forced:
-                    proxy = False
-                    if not proxy_web_name:
-                        proxy_addr, proxy_CF_addr, proxy_web_name, proxy_log = proxytools.get_proxy_addr(url, forced_proxy='Total')
-                    if proxy_web_name:
-                        proxy_web = True
-                    else:
-                        proxy_web = False
-                        if proxy_addr:
-                            proxy = True
-                            handlers.append(urllib2.ProxyHandler(proxy_addr))
-                            proxy_stat = ', Proxy Direct ' + proxy_log
-
-                if proxy_web and proxy_web_name:
-                    if post: proxy_log = '(POST) ' + proxy_log
-                    url, post, headers_proxy, proxy_web_name = proxytools.set_proxy_web(url, proxy_web_name, post=post)
-                    if proxy_web_name:
-                        proxy_stat = ', Proxy Web ' + proxy_log
-                        if headers_proxy:
-                            request_headers.update(dict(headers_proxy))
-                if proxy_web and not proxy_web_name:
-                    proxy_web = False
-                    proxy_addr, proxy_CF_addr, proxy_web_name, proxy_log = proxytools.get_proxy_addr(url, forced_proxy='Total')
-                    if proxy_CF_addr:
-                        proxy = True
-                        handlers.append(urllib2.ProxyHandler(proxy_CF_addr))
-                        proxy_stat = ', Proxy CF ' + proxy_log
-                    elif proxy_addr:
-                        proxy = True
-                        handlers.append(urllib2.ProxyHandler(proxy_addr))
-                        proxy_stat = ', Proxy Direct ' + proxy_log
-        except:
-            import traceback
-            logger.error(traceback.format_exc())
-            proxy = ''
-            proxy_web = ''
-            proxy_stat = ''
-            proxy_addr = ''
-            proxy_CF_addr = ''
-            proxy_web_name = ''
-            proxy_log = ''
-            url = url_save
+        #Si la descarga requiere que se haga a través de un servicio Proxy o ProxyWeb, se prepara la url
+        url, post, handlers, proxy, proxy_web, proxy_addr, proxy_CF_addr, proxy_web_name, proxy_stat = check_proxy(url, 
+                 url_save, handlers, post, headers, timeout, follow_redirects, cookies, replace_headers, add_referer, only_headers, bypass_cloudflare, count_retries, count_retries_tot, random_headers, ignore_response_code, alfa_s, proxy, proxy_web, proxy_addr_forced,forced_proxy, proxy_retries)
             
         # Limitar tiempo de descarga si no se ha pasado timeout y hay un valor establecido en la variable global
         if timeout is None and HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT is not None: timeout = HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT
@@ -370,57 +305,13 @@ def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=Tr
 
         # Anti Cloudflare
         if bypass_cloudflare and count_retries < count_retries_tot:
-            from core.cloudflare import Cloudflare
-            cf = Cloudflare(response)
-            if cf.is_cloudflare:
-                count_retries += 1
-                if not alfa_s:
-                    logger.info("cloudflare detectado, esperando %s segundos..." % cf.wait_time)
-                auth_url = cf.get_url()
-                if not alfa_s:
-                    logger.info("Autorizando... intento %d url: %s" % (count_retries, auth_url))
-                tt = downloadpage(auth_url, headers=request_headers, replace_headers=True, count_retries=count_retries, ignore_response_code=True, count_retries_tot=count_retries_tot, proxy=proxy, proxy_web=proxy_web, forced_proxy=forced_proxy, proxy_addr_forced=proxy_addr_forced, alfa_s=alfa_s)
-                if tt.code == 403:
-                    tt = downloadpage(url, headers=request_headers, replace_headers=True, count_retries=count_retries, ignore_response_code=True, count_retries_tot=count_retries_tot, proxy=proxy, proxy_web=proxy_web, forced_proxy=forced_proxy, proxy_addr_forced=proxy_addr_forced, alfa_s=alfa_s)
-                if tt.sucess:
-                    if not alfa_s:
-                        logger.info("Autorización correcta, descargando página")
-                    resp = downloadpage(url=response["url"], post=post, headers=headers, timeout=timeout,
-                                        follow_redirects=follow_redirects, count_retries=count_retries, 
-                                        cookies=cookies, replace_headers=replace_headers, add_referer=add_referer, proxy=proxy, proxy_web=proxy_web, count_retries_tot=count_retries_tot, forced_proxy=forced_proxy, proxy_addr_forced=proxy_addr_forced, alfa_s=alfa_s)
-                    response["sucess"] = resp.sucess
-                    response["code"] = resp.code
-                    response["error"] = resp.error
-                    response["headers"] = resp.headers
-                    response["data"] = resp.data
-                    response["time"] = resp.time
-                    response["url"] = resp.url
-                else:
-                    if not alfa_s:
-                        logger.info("No se ha podido autorizar")
+            response, count_retries = anti_cloudflare(response, request_headers, url, post, headers, timeout, follow_redirects,
+                 cookies, replace_headers, add_referer, only_headers, bypass_cloudflare, count_retries, count_retries_tot, random_headers, ignore_response_code, alfa_s, proxy, proxy_web, proxy_addr_forced,forced_proxy, proxy_retries)
     
         # Si hay errores usando un Proxy, se refrescan el Proxy y se reintenta el número de veces indicado en proxy_retries
-        try:
-            if ', Proxy Web' in proxy_stat:
-                response["data"] = proxytools.restore_after_proxy_web(response["data"], proxy_web_name, url_save)
-                if response["data"] == 'ERROR':
-                    response['sucess'] = False
-            
-            if proxy_stat and response['sucess'] == False and proxy_retries_counter <= proxy_retries and count_retries_tot > 1:
-                if ', Proxy Direct' in proxy_stat:
-                    proxytools.get_proxy_list_method(proxy_init='ProxyDirect')
-                elif ', Proxy CF' in proxy_stat:
-                    proxytools.get_proxy_list_method(proxy_init='ProxyCF')
-                    url = url_save
-                elif ', Proxy Web' in proxy_stat:
-                    proxytools.get_proxy_list_method(proxy_init='ProxyWeb')
-                    url = url_save
-                    post = post_save
-            else:
-                break
-        except:
-            import traceback
-            logger.error(traceback.format_exc())
+        response["data"], response['sucess'], url, post, out_break, forced_proxy = proxy_post_processing(url, url_save, post, 
+                  post_save, proxy_stat, response, proxy, proxy_web, proxy_addr, proxy_CF_addr, proxy_web_name, proxy_retries_counter, proxy_retries, count_retries_tot, forced_proxy)
+        if out_break:
             break
 
     return type('HTTPResponse', (), response)
@@ -446,6 +337,156 @@ def random_useragent():
     return default_headers["User-Agent"]
     
     
+def anti_cloudflare(response, request_headers, url, post, headers, timeout, follow_redirects, cookies, replace_headers,
+                 add_referer, only_headers, bypass_cloudflare, count_retries, count_retries_tot, random_headers, ignore_response_code, alfa_s, proxy, proxy_web, proxy_addr_forced,forced_proxy, proxy_retries):
+    
+    from core.cloudflare import Cloudflare
+    
+    cf = Cloudflare(response)
+    if cf.is_cloudflare:
+        count_retries += 1
+        if not alfa_s:
+            logger.info("cloudflare detectado, esperando %s segundos..." % cf.wait_time)
+        auth_url = cf.get_url()
+        if not alfa_s:
+            logger.info("Autorizando... intento %d url: %s" % (count_retries, auth_url))
+        tt = downloadpage(auth_url, headers=request_headers, replace_headers=True, count_retries=count_retries, ignore_response_code=True, count_retries_tot=count_retries_tot, proxy=proxy, proxy_web=proxy_web, forced_proxy=forced_proxy, proxy_addr_forced=proxy_addr_forced, alfa_s=alfa_s)
+        if tt.code == 403:
+            tt = downloadpage(url, headers=request_headers, replace_headers=True, count_retries=count_retries, ignore_response_code=True, count_retries_tot=count_retries_tot, proxy=proxy, proxy_web=proxy_web, forced_proxy=forced_proxy, proxy_addr_forced=proxy_addr_forced, alfa_s=alfa_s)
+        if tt.sucess:
+            if not alfa_s:
+                logger.info("Autorización correcta, descargando página")
+            resp = downloadpage(url=response["url"], post=post, headers=headers, timeout=timeout,
+                                follow_redirects=follow_redirects, count_retries=count_retries, 
+                                cookies=cookies, replace_headers=replace_headers, add_referer=add_referer, proxy=proxy, proxy_web=proxy_web, count_retries_tot=count_retries_tot, forced_proxy=forced_proxy, proxy_addr_forced=proxy_addr_forced, alfa_s=alfa_s)
+            response["sucess"] = resp.sucess
+            response["code"] = resp.code
+            response["error"] = resp.error
+            response["headers"] = resp.headers
+            response["data"] = resp.data
+            response["time"] = resp.time
+            response["url"] = resp.url
+        else:
+            if not alfa_s:
+                logger.info("No se ha podido autorizar")
+                
+    return (response, count_retries)
+
+
+def check_proxy(url, url_save, handlers, post, headers, timeout, follow_redirects, cookies, replace_headers, 
+                  add_referer, only_headers, bypass_cloudflare, count_retries, count_retries_tot, random_headers, ignore_response_code, alfa_s, proxy, proxy_web, proxy_addr_forced,forced_proxy, proxy_retries=1):
+
+    proxy_stat = ''
+    proxy_addr = ''
+    proxy_CF_addr = ''
+    proxy_web_name = ''
+    proxy_log = ''
+    
+    try:
+        if (proxy or proxy_web) and (forced_proxy or proxy_addr_forced or channel_proxy_list(url, forced_proxy=forced_proxy)):
+            import proxytools
+            proxy_addr, proxy_CF_addr, proxy_web_name, proxy_log = proxytools.get_proxy_addr(url, post=post, forced_proxy=forced_proxy)
+            if proxy_addr_forced and proxy_log:
+                import scrapertools
+                proxy_log = scrapertools.find_single_match(str(proxy_addr_forced), "{'http.*':\s*'(.*?)'}")
+        
+            if proxy and proxy_addr:
+                if proxy_addr_forced: proxy_addr = proxy_addr_forced
+                handlers.append(urllib2.ProxyHandler(proxy_addr))
+                proxy_stat = ', Proxy Direct ' + proxy_log
+            elif proxy and proxy_CF_addr:
+                if proxy_addr_forced: proxy_CF_addr = proxy_addr_forced
+                handlers.append(urllib2.ProxyHandler(proxy_CF_addr))
+                proxy_stat = ', Proxy CF ' + proxy_log
+            elif proxy and proxy_addr_forced:
+                proxy_addr = proxy_addr_forced
+                handlers.append(urllib2.ProxyHandler(proxy_addr))
+                proxy_stat = ', Proxy Direct ' + proxy_log
+            elif proxy and not proxy_addr and not proxy_CF_addr and not proxy_addr_forced:
+                proxy = False
+                if not proxy_web_name:
+                    proxy_addr, proxy_CF_addr, proxy_web_name, proxy_log = proxytools.get_proxy_addr(url, forced_proxy='Total')
+                if proxy_web_name:
+                    proxy_web = True
+                else:
+                    proxy_web = False
+                    if proxy_addr:
+                        proxy = True
+                        handlers.append(urllib2.ProxyHandler(proxy_addr))
+                        proxy_stat = ', Proxy Direct ' + proxy_log
+
+            if proxy_web and proxy_web_name:
+                if post: proxy_log = '(POST) ' + proxy_log
+                url, post, headers_proxy, proxy_web_name = proxytools.set_proxy_web(url, proxy_web_name, post=post)
+                if proxy_web_name:
+                    proxy_stat = ', Proxy Web ' + proxy_log
+                    if headers_proxy:
+                        request_headers.update(dict(headers_proxy))
+            if proxy_web and not proxy_web_name:
+                proxy_web = False
+                proxy_addr, proxy_CF_addr, proxy_web_name, proxy_log = proxytools.get_proxy_addr(url, forced_proxy='Total')
+                if proxy_CF_addr:
+                    proxy = True
+                    handlers.append(urllib2.ProxyHandler(proxy_CF_addr))
+                    proxy_stat = ', Proxy CF ' + proxy_log
+                elif proxy_addr:
+                    proxy = True
+                    handlers.append(urllib2.ProxyHandler(proxy_addr))
+                    proxy_stat = ', Proxy Direct ' + proxy_log
+    except:
+        import traceback
+        logger.error(traceback.format_exc())
+        proxy = ''
+        proxy_web = ''
+        proxy_stat = ''
+        proxy_addr = ''
+        proxy_CF_addr = ''
+        proxy_web_name = ''
+        proxy_log = ''
+        url = url_save
+
+    return (url, post, handlers, proxy, proxy_web, proxy_addr, proxy_CF_addr, proxy_web_name, proxy_stat)
+
+
+def proxy_post_processing(url, url_save, post, post_save, proxy_stat, response, proxy, proxy_web, proxy_addr, 
+                  proxy_CF_addr, proxy_web_name, proxy_retries_counter, proxy_retries, count_retries_tot, forced_proxy):
+
+    out_break = False
+    try:
+        if ', Proxy Web' in proxy_stat:
+            import proxytools
+            response["data"] = proxytools.restore_after_proxy_web(response["data"], proxy_web_name, url_save)
+            if response["data"] == 'ERROR':
+                response['sucess'] = False
+            if response["code"] == 302:
+                proxy_stat = ', Proxy Direct'
+                forced_proxy = 'ProxyDirect'
+                url = url_save
+                post = post_save
+                response['sucess'] = False
+        
+        if proxy_stat and response['sucess'] == False and proxy_retries_counter <= proxy_retries and count_retries_tot > 1:
+            import proxytools
+            if ', Proxy Direct' in proxy_stat:
+                proxytools.get_proxy_list_method(proxy_init='ProxyDirect', error_skip=proxy_addr)
+            elif ', Proxy CF' in proxy_stat:
+                proxytools.get_proxy_list_method(proxy_init='ProxyCF', error_skip=proxy_CF_addr)
+                url = url_save
+            elif ', Proxy Web' in proxy_stat:
+                proxytools.get_proxy_list_method(proxy_init='ProxyWeb', error_skip=proxy_web_name)
+                url = url_save
+                post = post_save
+
+        else:
+            out_break = True
+    except:
+        import traceback
+        logger.error(traceback.format_exc())
+        out_break = True
+
+    return (response["data"], response['sucess'], url, post, out_break, forced_proxy)
+
+
 def channel_proxy_list(url, forced_proxy=None):
     import base64
     import ast
