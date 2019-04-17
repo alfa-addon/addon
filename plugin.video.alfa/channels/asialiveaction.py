@@ -158,7 +158,9 @@ def lista(item):
         else:
             new_item.contentTitle = scrapedtitle
             new_item.action = 'findvideos'
-            itemlist.append(new_item)
+            
+        itemlist.append(new_item)
+
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     #pagination
     url_next_page = scrapertools.find_single_match(data, 'rel="next" href="([^"]+)"')

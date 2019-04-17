@@ -1249,6 +1249,10 @@ msgctxt "#60297"
 msgid "Find %s possible matches"
 msgstr ""
 
+msgctxt "#60298"
+msgid "[%s]: Select the correct TV series"
+msgstr ""
+
 msgctxt "#60299"
 msgid "Not found in the language '%s'"
 msgstr ""
