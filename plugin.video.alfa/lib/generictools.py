@@ -1650,17 +1650,17 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
 
     
 def verify_channel(channel):
-    
+    return channel
     #Lista con los datos de los canales alternativos
     #Cargamos en .json del canal para ver las listas de valores en settings
-    clones = channeltools.get_channel_json(channel_py)
-    for settings in clones['settings']:                             #Se recorren todos los settings
-        if settings['id'] == "clonenewpct1_channels_list":          #Encontramos en setting
-            clones = settings['default']                            #Carga lista de clones
-            channel_alt = "'%s'" % channel
-            if channel_alt in clones:                               #Si es un clon se pone como canal newpct1, si no se deja
-                channel = channel_py
-            return channel
+    # clones = channeltools.get_channel_json(channel_py)
+    # for settings in clones['settings']:                             #Se recorren todos los settings
+    #     if settings['id'] == "clonenewpct1_channels_list":          #Encontramos en setting
+    #         clones = settings['default']                            #Carga lista de clones
+    #         channel_alt = "'%s'" % channel
+    #         if channel_alt in clones:                               #Si es un clon se pone como canal newpct1, si no se deja
+    #             channel = channel_py
+    #         return channel
     
     
 def web_intervenida(item, data, desactivar=True):
