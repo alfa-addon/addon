@@ -232,7 +232,7 @@ def dooplay_get_links(item, host):
 
 
 def dooplay_films(item, blacklist=""):
-    patron = '<article id="post-[0-9]+" class="item movies">.*?<img src="([^"]+)".*?<span class="quality">([^<>]+).*?<a href="([^"]+)">([^<>]+)</a></h3> (?:<span>([0-9]{4})</span>)?.*?(?:<span>([0-9]+) min</span>)?.*?(?:<div class="texto">([^<>]+).*?)?(?:genres">(.*?)</div>)?'
+    patron = '<article id="post-[0-9]+" class="item movies">.*?<img src="(?!data)([^"]+)".*?<span class="quality">([^<>]+).*?<a href="([^"]+)">([^<>]+)</a></h3>.*?(?:<span>([0-9]{4})</span>|</article>).*?(?:<span>([0-9]+) min</span>|</article>).*?(?:<div class="texto">([^<>]+)|</article>).*?(?:genres">(.*?)</div>|</article>)'
     patronNext = '<a class="arrow_pag" href="([^"]+)"><i id="nextpagination"'
     return scrape(item, patron, ['thumb', 'quality', 'url', 'title', 'year', 'duration', 'plot', 'genre'], blacklist=blacklist, patronNext=patronNext)
     
