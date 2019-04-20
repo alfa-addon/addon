@@ -144,7 +144,7 @@ def episodios(item):
             eptitle = re.sub(r"Episodio\s+\d+", "", scrapedtitle).strip()
             itemlist.append(
                 Item(channel=item.channel,
-                     action="episodios",
+                     action="findvideos",
                      contentType=item.contentType,
                      title="[B]" + fixedtitle + " " + eptitle + "[/B]",
                      fulltitle=fixedtitle + " " + eptitle,
