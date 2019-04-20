@@ -101,12 +101,14 @@ def findvideos(item):
 
 
 def generos(item):
+    findhost()
     patron = '<a href="([^"#]+)">([a-zA-Z]+)'
     return support.scrape(item, patron, ['url', 'title'], patron_block='<a href="#">Genere</a><ul class="sub-menu">.*?</ul>', action='peliculas', url_host=host)
 
 
 def year(item):
-    patron = '<a href="([^"#]+)">([a-zA-Z]+)'
+    findhost()
+    patron = r'<a href="([^"#]+)">(\d+)'
     return support.scrape(item, patron, ['url', 'title'], patron_block='<a href="#">Anno</a><ul class="sub-menu">.*?</ul>', action='peliculas', url_host=host)
 
 

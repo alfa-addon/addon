@@ -1,7 +1,7 @@
 {
     "id": "italiaserie",
     "name": "Italia Serie",
-    "active": false,
+    "active": true,
     "adult": false,
     "language": ["ita"],
     "thumbnail": "https:\/\/raw.githubusercontent.com\/Zanzibar82\/images\/master\/posters\/italiaserie.png",
