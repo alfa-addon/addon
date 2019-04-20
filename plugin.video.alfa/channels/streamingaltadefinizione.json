@@ -1,0 +1,19 @@
+{
+    "id": "streamingaltadefinizione",
+    "name": "Streaming Altadefinizione",
+    "language": ["ita"],
+    "active": true,
+    "adult": false,
+    "thumbnail": "https://www.streamingaltadefinizione.world/wp-content/uploads/2018/09/StreamingAltadefinizioneLogo.png",
+    "categories": ["movie","tvshow","anime"],
+    "settings": [
+        {
+            "id": "include_in_global_search",
+            "type": "bool",
+            "label": "Includi in Ricerca Globale",
+            "default": true,
+            "enabled": true,
+            "visible": true
+        }
+    ]
+}
