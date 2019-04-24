@@ -22,10 +22,10 @@ list_quality = []
 list_servers = ['yourupload', 'openload', 'sendvid']
 
 vars = {
-    'ef5ca18f089cf01316bbc967fa10f72950790c39ef5ca18f089cf01316bbc967fa10f72950790c39': 'http://tawnestdplsnetps.pw/',
+    'ef5ca18f089cf01316bbc967fa10f72950790c39ef5ca18f089cf01316bbc967fa10f72950790c39': 'http://tawnestdplsnetps.fun/',
     'b48699bb49d4550f27879deeb948d4f7d9c5949a8': 'embed',
     'JzewJkLlrvcFnLelj2ikbA': 'php?url=',
-    'p889c6853a117aca83ef9d6523335dc065213ae86': 'player',
+    'p889c6853a117aca83ef9d6523335dc065213ae86': 'castplayer',
     'e20fb341325556c0fc0145ce10d08a970538987': 'http://yourupload.com/embed/'
 }
 
@@ -107,11 +107,6 @@ def lista(item):
     patron += 'class=player>.*?class=year>(.*?)<\/span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    if item.extra == 'peliculas':
-        accion = 'findvideos'
-    else:
-        accion = 'temporadas'
-
     for scrapedthumbnail, scrapedtitle, scrapedurl, scrapedyear in matches:
 
         scrapedurl = scrapedurl.translate(None, '"')
@@ -120,11 +115,8 @@ def lista(item):
         thumbnail = scrapedthumbnail
         title = scrapedtitle
         year = scrapedyear
-        if item.extra == 'series':
-            contentSerieName = scrapedtitle
-
         itemlist.append(Item(channel=item.channel,
-                             action=accion,
+                             action="findvideos",
                              title=title,
                              url=url,
                              thumbnail=thumbnail,
@@ -182,107 +174,6 @@ def generos(item):
 
     return itemlist
 
-
-def temporadas(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '<li class="has-sub"><a href="([^"]+)"><span><b class="icon-bars"><\/b> ([^<]+)<\/span><\/a>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    temp = 1
-    infoLabels = item.infoLabels
-    for scrapedurl, scrapedtitle in matches:
-        url = scrapedurl
-        title = scrapedtitle.strip('')
-        contentSeasonNumber = temp
-        infoLabels['season'] = contentSeasonNumber
-        thumbnail = item.thumbnail
-        plot = scrapertools.find_single_match(data, '<p>([^<]+)<\/p>')
-        itemlist.append(Item(channel=item.channel,
-                             action="episodiosxtemp",
-                             title=title,
-                             fulltitle=item.title,
-                             url=url,
-                             thumbnail=thumbnail,
-                             contentSerieName=item.contentSerieName,
-                             contentSeasonNumber=contentSeasonNumber,
-                             plot=plot,
-                             infoLabels=infoLabels
-                             ))
-        temp = temp + 1
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=item.channel,
-                             title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
-                             url=item.url,
-                             action="add_serie_to_library",
-                             extra="episodios",
-                             contentSerieName=item.contentSerieName,
-                             extra1=item.extra1,
-                             temp=str(temp)
-                             ))
-
-    return itemlist
-
-
-def episodios(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    temp = 'temporada-' + str(item.contentSeasonNumber)
-    patron = '<li>.\s*<a href="(.*?)">.\s*<span.*?datex">([^<]+)<'
-
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedepisode in matches:
-        url = host + scrapedurl
-        title = item.contentSerieName + ' ' + scrapedepisode
-        thumbnail = item.thumbnail
-        fanart = ''
-        itemlist.append(Item(channel=item.channel,
-                             action="findvideos",
-                             title=title,
-                             fulltitle=item.fulltitle,
-                             url=url,
-                             thumbnail=item.thumbnail,
-                             plot=item.plot,
-                             extra=item.extra,
-                             contentSerieName=item.contentSerieName
-                             ))
-
-    return itemlist
-
-
-def episodiosxtemp(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    temp = 'temporada-' + str(item.contentSeasonNumber)
-    patron = '<li>.\s*<a href="(.*?-' + temp + '.*?)">.\s*<span.*?datex">([^<]+)<'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    infoLabels = item.infoLabels
-    for scrapedurl, scrapedepisode in matches:
-        url = host + scrapedurl
-        title = item.contentSerieName + ' ' + scrapedepisode
-        scrapedepisode = re.sub(r'.*?x', '', scrapedepisode)
-        infoLabels['episode'] = scrapedepisode
-        thumbnail = item.thumbnail
-        fanart = ''
-        itemlist.append(Item(channel=item.channel,
-                             action="findvideos",
-                             title=title,
-                             fulltitle=item.fulltitle,
-                             url=url,
-                             thumbnail=item.thumbnail,
-                             plot=item.plot,
-                             extra=item.extra,
-                             contentSerieName=item.contentSerieName,
-                             infoLabels=infoLabels
-                             ))
-
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    return itemlist
-
-
 def dec(encurl):
     logger.info()
     url = ''
@@ -310,7 +201,7 @@ def findvideos(item):
     for key, value in matches:
         langs[key] = value.strip()
 
-    patron = 'function (play\d).*?servidores.*?attr.*?src.*?\+([^;]+);'
+    patron = 'function (play\d).*?servidores.*?attr.*?src.*?\+(.*?);'
     matches = re.compile(patron, re.DOTALL).findall(data)
     title = item.title
     enlace = scrapertools.find_single_match(data,
@@ -324,10 +215,11 @@ def findvideos(item):
 
         else:
             url = dec(encurl)
+        logger.info("cojon: %s" % url)
         title = ''
         server = ''
         servers = {'/opl': 'openload', '/your': 'yourupload', '/sen': 'senvid', '/face': 'netutv', '/vk': 'vk',
-                   '/jk':'streamcherry'}
+                   '/jk':'streamcherry', '/vim':'gamovideo'}
         server_id = re.sub(r'.*?embed|\.php.*', '', url)
         if server_id and server_id in servers:
             server = servers[server_id]
@@ -336,7 +228,7 @@ def findvideos(item):
         if (scrapedlang in langs) and langs[scrapedlang] in list_language:
             language = IDIOMAS[langs[scrapedlang]]
         else:
-            language = 'Latino'
+            language = 'Castellano'
         #
         # if langs[scrapedlang] == 'Latino':
         #     idioma = '[COLOR limegreen]LATINO[/COLOR]'
@@ -409,7 +301,7 @@ def newest(categoria):
     item = Item()
     # categoria='peliculas'
     try:
-        if categoria in ['peliculas','latino']:
+        if categoria in ['peliculas','castellano']:
             item.url = host
         elif categoria == 'infantiles':
             item.url = host + 'search?q=animación'
