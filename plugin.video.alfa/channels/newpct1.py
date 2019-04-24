@@ -518,7 +518,7 @@ def listado(item):
     #logger.debug("patron: " + patron + " / fichas: " + fichas)
 
     # Identifico la página actual y el total de páginas para el pie de página
-    patron_last_page  = '<a href="[^"]+(\d+)">Last<\/a><\/li>'
+    patron_last_page  = '<a href="[^"]+\/(\d+)">Last<\/a><\/li>'
     total_pag  = scrapertools.find_single_match(data, patron_last_page)
 
     if not item.post_num:
