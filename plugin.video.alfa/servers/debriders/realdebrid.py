@@ -128,7 +128,7 @@ def authentication():
         # Se solicita el token de acceso y el de actualización para cuando el primero caduque
         post = urllib.urlencode({"client_id": debrid_id, "client_secret": secret, "code": device_code,
                                  "grant_type": "http://oauth.net/grant_type/device/1.0"})
-        data = htttools.downloadpage("https://api.real-debrid.com/oauth/v2/token", post=post,
+        data = httptools.downloadpage("https://api.real-debrid.com/oauth/v2/token", post=post,
                                          headers=headers.items()).data
         data = jsontools.load(data)
 
