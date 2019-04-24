@@ -760,16 +760,23 @@ def report_menu(item):
         paso += 1
     itemlist.append(Item(channel="channelselector", action="getmainlist", title="PASO %s: Reproduzca el problema y vuelva al PASO %s" % (str(paso), str(paso+1)), thumbnail=thumb_debug))
     paso += 1
-    itemlist.append(Item(channel=item.channel, action="report_send", title="PASO %s: Envíe el informe de FALLO a Alfa desde aquí" % str(paso), thumbnail=thumb_error))
+    itemlist.append(Item(channel=item.channel, action="report_send", title="PASO %s: Genere el informe de FALLO desde aquí" % str(paso), thumbnail=thumb_error))
     paso += 1
     itemlist.append(Item(channel=item.channel, action="activate_debug", extra=False, title="PASO %s: Desactive DEBUG aquí -opcional-" % str(paso), thumbnail=thumb_debug))
     paso += 1
-    itemlist.append(Item(channel=item.channel, action="", title=""))
-    itemlist.append(Item(channel=item.channel, action="", title="[COLOR limegreen]Si ha terminado de enviar el informe de fallo,[/COLOR]", thumbnail=thumb_next))
-    itemlist.append(Item(channel=item.channel, action="", title="[COLOR limegreen]Repórtelo en Foro de Alfa:[/COLOR]", thumbnail=thumb_next))
-    itemlist.append(Item(channel=item.channel, action="", title="[COLOR yellow]https://alfa-addon.com/foros/ayuda.12/[/COLOR]", thumbnail=thumb_next))
+    
     if item.url:
+        itemlist.append(Item(channel=item.channel, action="", title=""))
+    
+        itemlist.append(Item(channel=item.channel, action="", title="[COLOR limegreen]Ha terminado de generar el informe de fallo,[/COLOR]", thumbnail=thumb_next))
+        itemlist.append(Item(channel=item.channel, action="", title="[COLOR limegreen]Repórtelo en el Foro de Alfa:[/COLOR]", thumbnail=thumb_next))
+        itemlist.append(Item(channel=item.channel, action="", title="[COLOR yellow]https://alfa-addon.com/foros/ayuda.12/[/COLOR]", thumbnail=thumb_next))
+    
         itemlist.append(Item(channel=item.channel, action="", title="LOG: [COLOR gold]%s[/COLOR]" % item.url, thumbnail=thumb_next))
+        
+        if item.one_use:
+            itemlist.append(Item(channel=item.channel, action="", title="[COLOR orange]NO ACCEDA al INFORME: se BORRARÁ[/COLOR]", thumbnail=thumb_next))
+            itemlist.append(Item(channel=item.channel, action="", title="[COLOR orange]ya que es de un solo uso[/COLOR]", thumbnail=thumb_next))
     
     return itemlist
     
@@ -793,10 +800,15 @@ def activate_debug(item):
         
 def report_send(item, description='', fatal=False):
     import xbmc
+    import xbmcaddon
     import random
     import urllib
     import urlparse
     import traceback
+    import sys
+    import platform
+    import os
+    import re
 
     try:
         requests_status = True
@@ -806,6 +818,7 @@ def report_send(item, description='', fatal=False):
         logger.error(traceback.format_exc())
     
     from core import jsontools, httptools, scrapertools
+    from platformcode import envtal
     
     # Esta función realiza la operación de upload del LOG.  El tamaño del archivo es de gran importacia porque
     # los servicios de "pastebin" gratuitos tienen limitaciones, a veces muy bajas.
@@ -829,23 +842,27 @@ def report_send(item, description='', fatal=False):
     
     pastebin_list = {
     'hastebin': ('1', 'https://hastebin.com/', 'documents', 'random', '', '', 
-                'data', 'json', 'key', '', '0.29', '15', True, 'raw/', '', ''), 
+                'data', 'json', 'key', '', '0.29', '10', True, 'raw/', '', ''), 
     'dpaste': ('1', 'http://dpaste.com/', 'api/v2/', 'random', 'content=', '&syntax=text&title=%s&poster=alfa&expiry_days=7', 
                 'headers', '', '', 'location', '0.23', '15', True, '', '.txt', ''),
     'ghostbin': ('1', 'https://ghostbin.com/', 'paste/new', 'random', 'lang=text&text=', '&expire=2d&password=&title=%s', 
                 'data', 'regex', '<title>(.*?)\s*-\s*Ghostbin<\/title>', '', '0.49', '15', False, 'paste/', '', ''),
     'write.as': ('1', 'https://write.as/', 'api/posts', 'random', 'body=', '&title=%s', 
-                'data', 'json', 'data', 'id', '0.019', '15', True, '', '', ''),
+                'data', 'json', 'data', 'id', '0.018', '15', True, '', '', ''),
     'oneclickpaste': ('1', 'http://oneclickpaste.com/', 'index.php', 'random', 'paste_data=', 
                 '&title=%s&format=text&paste_expire_date=1W&visibility=0&pass=&submit=Submit', 
-                'data', 'regex', '<a class="btn btn-primary" href="[^"]+\/(\d+\/)">\s*View\s*Paste\s*<\/a>', '', '0.2', '5', True, '', '', ''),
+                'data', 'regex', '<a class="btn btn-primary" href="[^"]+\/(\d+\/)">\s*View\s*Paste\s*<\/a>', '', '0.060', '5', True, '', '', ''),
     'bpaste': ('1', 'https://bpaste.net/', '', 'random', 'code=', '&lexer=text&expiry=1week', 
                 'data', 'regex', 'View\s*<a\s*href="[^*]+/(.*?)">raw<\/a>', '', '0.79', '15', True, 'raw/', '', ''),
     'dumpz': ('0', 'http://dumpz.org/', 'api/dump', 'random', 'code=', '&lexer=text&comment=%s&password=', 
                 'headers', '', '', 'location', '0.99', '15', False, '', '', ''),
     'file.io': ('1', 'https://file.io/', '', 'random', '', 'expires=1w', 
-                'requests', 'json', 'key', '', '99.0', '30', False, '', '', ''), 
+                'requests', 'json', 'key', '', '99.0', '30', False, '', '.log', ''), 
+    'uploadfiles': ('1', 'https://up.uploadfiles.io/upload', '', 'random', '', '', 
+                'requests', 'json', 'url', '', '99.0', '30', False, None, '', '') 
                  }
+    pastebin_list_last = ['hastebin', 'ghostbin', 'file.io']            # Estos servicios los dejamos los últimos
+    pastebin_one_use = ['file.io']                                      # Servidores de un solo uso y se borra
     pastebin_dir = []
     paste_file = {}
     paste_params = ()
@@ -862,12 +879,14 @@ def report_send(item, description='', fatal=False):
     if description == 'OK':
         description = platformtools.dialog_input('', 'Introduzca una breve descripción del fallo')
 
+    # Escribimos en el log algunas variables de Kodi y Alfa que nos ayudarán en el diagnóstico del fallo
+    environment = envtal.list_env()
+    
     # Se lee el archivo de LOG
-    log_path = filetools.join(xbmc.translatePath("special://logpath/"), "kodi.log")
+    log_path = environment['log_path']
     if filetools.exists(log_path):
-        log_size_bytes = float(filetools.getsize(log_path))             # Tamaño del archivivo en Bytes
-        log_size = round(log_size_bytes / (1024*1024), 3)               # Tamaño del archivivo en MB
-        logger.info('TAMAÑO del LOG: ' + str(log_size) + ' MB')         # Registramos el tamaño com última entrada del log
+        log_size_bytes = int(environment['log_size_bytes'])             # Tamaño del archivivo en Bytes
+        log_size = float(environment['log_size'])                       # Tamaño del archivivo en MB
         log_data = filetools.read(log_path)                             # Datos del archivo
         if not log_data:                                                # Algún error?
             platformtools.dialog_notification('No puede leer el log de Kodi', 'Comuniquelo directamente en el Foro de Alfa')
@@ -883,8 +902,12 @@ def report_send(item, description='', fatal=False):
     
     # Se aleatorizan los nombre de los servidores "patebin"
     for label_a, value_a in pastebin_list.items():
-        pastebin_dir.append(label_a)
-        random.shuffle(pastebin_dir)
+        if label_a not in pastebin_list_last:
+            pastebin_dir.append(label_a)
+    random.shuffle(pastebin_dir)
+    pastebin_dir.extend(pastebin_list_last)                             # Estos servicios los dejamos los últimos
+    
+    #pastebin_dir = ['file.io']                                          # Para pruebas de un servicio
         
     # Se recorre la lista de servidores "pastebin" hasta localizar uno activo, con capacidad y disponibilidad
     for paste_name in pastebin_dir:
@@ -917,16 +940,22 @@ def report_send(item, description='', fatal=False):
         if pastebin_list[paste_name][15]:                               # Headers requeridas por el servidor
             paste_headers.update(jsontools.load((pastebin_list[paste_name][15])))
 
+        if paste_name in pastebin_one_use:
+            pastebin_one_use_msg = '[COLOR red]NO ACCEDA al INFORME: se BORRARÁ[/COLOR]'
+            item.one_use = True
+        else:
+            pastebin_one_use_msg = ''
+        
         try:
             # Se crea el POST con las opciones del servidor "pastebin"
             # Se trata el formato de "requests"
             if paste_type == 'requests':
-                paste_file = {'file': (paste_title+'.txt', log_data)}
+                paste_file = {'file': (paste_title+'.log', log_data)}
                 if paste_post1:
                     paste_file.update(paste_post1)
                 if paste_post2:
                     if '%s' in paste_post2:
-                        paste_params = paste_post2 % log_size_bytes
+                        paste_params = paste_post2 % (paste_title+'.log', log_size_bytes)
                     else:
                         paste_params = paste_post2
             
@@ -962,6 +991,11 @@ def report_send(item, description='', fatal=False):
 
         # Se analiza la respuesta del servidor y se localiza la clave del upload para formar la url a pasar al usuario
         if data:
+            paste_host_resp = paste_host
+            if paste_host_return == None:                               # Si devuelve la url completa, no se compone
+                paste_host_resp = ''
+                paste_host_return = ''
+            
             # Respuestas a peticiones REQUESTS
             if paste_type == 'requests':                                # Respuesta de petición tipo "requests"?
                 if paste_resp == 'json':                                                # Respuesta en formato JSON?
@@ -970,7 +1004,7 @@ def report_send(item, description='', fatal=False):
                             key = jsontools.load(data.text)[paste_resp_key]             # con una etiqueta
                         else:
                             key = jsontools.load(data.text)[paste_resp_key][paste_url]  # con dos etiquetas anidadas
-                        item.url = "%s%s%s" % (paste_host+paste_host_return, key, paste_host_return_tail)
+                        item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, paste_host_return_tail)
                     else:
                         logger.error('ERROR en formato de retorno de datos. data.text=' + str(data.text))
                         continue
@@ -982,21 +1016,21 @@ def report_send(item, description='', fatal=False):
                         key = jsontools.load(data)[paste_resp_key]      # con una etiqueta
                     else:
                         key = jsontools.load(data)[paste_resp_key][paste_url]   # con dos etiquetas anidadas
-                    item.url = "%s%s%s" % (paste_host+paste_host_return, key, paste_host_return_tail)
+                    item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, paste_host_return_tail)
                 else:
                     logger.error('ERROR en formato de retorno de datos. data=' + str(data))
                     continue
             elif paste_resp == 'regex':                                 # Respuesta en DATOS, a buscar con un REGEX?
                 key = scrapertools.find_single_match(data, paste_resp_key)
                 if key:
-                    item.url = "%s%s%s" % (paste_host+paste_host_return, key, paste_host_return_tail)
+                    item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, paste_host_return_tail)
                 else:
                     logger.error('ERROR en formato de retorno de datos. data=' + str(data))
                     continue
             elif paste_type == 'headers':                               # Respuesta en HEADERS, a buscar en "location"?
                 if paste_url in data:
                     item.url = data[paste_url]                          # Etiqueta de retorno de la clave
-                    item.url =  urlparse.urljoin(paste_host + paste_host_return, item.url + paste_host_return_tail)
+                    item.url =  urlparse.urljoin(paste_host_resp + paste_host_return, item.url + paste_host_return_tail)
                 else:
                     logger.error('ERROR en formato de retorno de datos. response.headers=' + str(data))
                     continue
@@ -1007,9 +1041,9 @@ def report_send(item, description='', fatal=False):
             status = True                                               # Operación de upload terminada con éxito
             logger.info('Informe de Fallo en Alfa CREADO: ' + str(item.url))    #Se guarda la URL del informe a usuario
             if fatal:                                                   # De uso futuro, para logger.crash
-                platformtools.dialog_ok('Informe de ERROR en Alfa CREADO', 'Repórtelo en el foro agregando ERROR FATAL y esta URL: ', item.url)
+                platformtools.dialog_ok('Informe de ERROR en Alfa CREADO', 'Repórtelo en el foro agregando ERROR FATAL y esta URL: ', '[COLOR gold]%s[/COLOR]' % item.url, pastebin_one_use_msg)
             else:                                                       # Se pasa la URL del informe a usuario
-                platformtools.dialog_ok('Informe de Fallo en Alfa CREADO', 'Repórtelo en el foro agregando una descripcion del fallo y esta URL: ', item.url)
+                platformtools.dialog_ok('Informe de Fallo en Alfa CREADO', 'Repórtelo en el foro agregando una descripcion del fallo y esta URL: ', '[COLOR gold]%s[/COLOR]' % item.url, pastebin_one_use_msg)
 
             break                                                       # Operación terminado, no seguimos buscando
     

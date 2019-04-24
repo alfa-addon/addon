@@ -354,8 +354,13 @@ if __name__ == "__main__":
     # Identifica la dirección Proxy y la lista de alternativas
     from core import proxytools
     proxytools.get_proxy_list()
+    
     if not config.get_setting("update", "videolibrary") == 2:
         check_for_update(overwrite=False)
+    
+    # Añade al LOG las variables de entorno necesarias para diagnóstico
+    from platformcode import envtal
+    envtal.list_env()
 
     # Se ejecuta ciclicamente
     if config.get_platform(True)['num_version'] >= 14:
