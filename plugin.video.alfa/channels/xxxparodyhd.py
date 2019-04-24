@@ -18,8 +18,8 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/movies/"))
     itemlist.append( Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "/genre/new-release/"))
     itemlist.append( Item(channel=item.channel, title="Parodias" , action="lista", url=host + "/genre/parodies/"))
-    itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host + "/categories"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
+    itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host))
+    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 

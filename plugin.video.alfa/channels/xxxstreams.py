@@ -67,12 +67,18 @@ def lista(item):
         elif 'FullHD' in scrapedtitle : title= "[COLOR red]" + "FullHD" + "[/COLOR] " + scrapedtitle
         elif '1080' in scrapedtitle : title= "[COLOR red]" + "1080p" + "[/COLOR] " + scrapedtitle
         else: title = scrapedtitle
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
                                fanart=scrapedthumbnail, thumbnail=scrapedthumbnail,plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<a class="next page-numbers" href="([^"]+)">Next &rarr;</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista" , title="Next page >>", text_color="blue", url=next_page) )
+    return itemlist
+
+
+def play(item):
+    logger.info(item)
+    itemlist = servertools.find_video_items(item.clone(url = item.url))
     return itemlist
 
 
