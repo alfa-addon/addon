@@ -484,8 +484,10 @@ def detalles(item):
     # Si viene de seccion imdb
     if not item.infoLabels["tmdb_id"]:
         headers = [['Accept-Language', langi]]
-        data = httptools.downloadpage("http://www.imdb.com/title/" + item.infoLabels['imdb_id'], headers=headers,
-                                      replace_headers=True).data
+        #data = httptools.downloadpage("http://www.imdb.com/title/" + item.infoLabels['imdb_id'], headers=headers,
+        #                                                           replace_headers=True).data
+        data = httptools.downloadpage("http://www.imdb.com/title/" + item.infoLabels['imdb_id'], headers=headers).data
+
         pics = scrapertools.find_single_match(data, 'showAllVidsAndPics.*?href=".*?(tt\d+)')
         # Imágenes imdb
         if pics:
@@ -896,10 +898,12 @@ def listado_imdb(item):
 
     headers = [['Accept-Language', langi]]
     if "www.imdb.com" in item.url:
-        data = httptools.downloadpage(item.url, headers=headers, replace_headers=True).data
+        #data = httptools.downloadpage(item.url, headers=headers, replace_headers=True).data
+        data = httptools.downloadpage(item.url, headers=headers).data
     else:
         url = 'http://www.imdb.com/search/title?' + item.url
-        data = httptools.downloadpage(url, headers=headers, replace_headers=True).data
+        #data = httptools.downloadpage(url, headers=headers, replace_headers=True).data
+        data = httptools.downloadpage(url, headers=headers).data
 
     data = re.sub(r"\n|\r|\t|&nbsp;", "", data)
     data = re.sub(r"\s{2}", " ", data)
@@ -2048,7 +2052,8 @@ def fanartv(item):
                   % item.infoLabels['tmdb_id']
         else:
             url = "http://webservice.fanart.tv/v3/tv/%s?api_key=cab16e262d72fea6a6843d679aa10300" % id_search
-        data = jsontools.load(httptools.downloadpage(url, headers=headers, replace_headers=True).data)
+        #data = jsontools.load(httptools.downloadpage(url, headers=headers, replace_headers=True).data)
+        data = jsontools.load(httptools.downloadpage(url, headers=headers).data)
         if data and not "error message" in data:
             item.images['fanart.tv'] = {}
             for key, value in data.items():
@@ -2127,12 +2132,14 @@ def acciones_trakt(item):
         post = jsontools.dump(item.post)
 
     url = "http://api-v2launch.trakt.tv/%s" % item.url
-    data = httptools.downloadpage(url, post, headers=headers, replace_headers=True)
+    #data = httptools.downloadpage(url, post, headers=headers, replace_headers=True)
+    data = httptools.downloadpage(url, post, headers=headers)
     if data.code == "401":
         trakt_tools.token_trakt(item.clone(extra="renew"))
         token_auth = config.get_setting("token_trakt", "trakt")
         headers[3][1] = "Bearer %s" % token_auth
-        data = httptools.downloadpage(url, post, headers=headers, replace_headers=True)
+        #data = httptools.downloadpage(url, post, headers=headers, replace_headers=True)
+        data = httptools.downloadpage(url, post, headers=headers)
 
     data = data.data
     if data and "sync" in item.url:
@@ -3279,7 +3286,8 @@ def addlist_mal(item):
     url = "https://myanimelist.net/ownlist/anime/add.json"
     if item.lista:
         url = "https://myanimelist.net/ownlist/anime/edit.json"
-    data = httptools.downloadpage(url, post=jsontools.dump(post), headers=headers_mal, replace_headers=True).data
+    #data = httptools.downloadpage(url, post=jsontools.dump(post), headers=headers_mal, replace_headers=True).data
+    data = httptools.downloadpage(url, post=jsontools.dump(post), headers=headers_mal).data
     item.title = "En tu lista"
     if config.is_xbmc():
         import xbmc
