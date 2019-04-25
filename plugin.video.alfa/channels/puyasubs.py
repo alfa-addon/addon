@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import urllib
 
 from core import httptools
 from core import jsontools
@@ -94,7 +95,6 @@ def listado(item):
                                  contentTitle=contenttitle, show=contenttitle, contentType=tipo,
                                  infoLabels={'filtro': filtro_tmdb}, text_color=color1))
     if ("cat=4" in item.url or item.extra == "busqueda") and not item.extra == "novedades":
-        from core import tmdb
         tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     next_page = scrapertools.find_single_match(data, "<span class='current'>.*?<a href='([^']+)'")
     if next_page:
@@ -110,6 +110,7 @@ def descargas(item):
     if not item.pagina:
         item.pagina = 0
     data = httptools.downloadpage(item.url).data
+    data = data.replace("/puya.se/", "/puya.si/")
     patron = '<li><a href="(http://puya.si/\?page_id=\d+|http://safelinking.net/[0-9A-z]+)">(.*?)</a>'
     if item.letra:
         bloque = scrapertools.find_single_match(data,
@@ -122,6 +123,11 @@ def descargas(item):
             .replace("[Puya+] ", "")
         contenttitle = re.sub(r'(\[[^\]]*\])', '', contenttitle).strip()
         filtro_tmdb = {"original_language": "ja"}.items()
+        season = scrapertools.find_single_match(contenttitle,' S(\d+)')
+        if season:
+            contenttitle = contenttitle.replace(" S" + season, "")
+        else:
+            season = ""
         tipo = "tvshow"
         if "page_id=25503" in item.url:
             tipo = "movie"
@@ -129,7 +135,7 @@ def descargas(item):
         if "safelinking" in url:
             action = "extract_safe"
         itemlist.append(Item(channel=item.channel, action=action, url=url, title=title, contentTitle=contenttitle,
-                             show=contenttitle, contentType=tipo, infoLabels={'filtro': filtro_tmdb},
+                             show=contenttitle, contentType=tipo, infoLabels={'season':season},
                              text_color=color1))
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     if len(matches) > item.pagina + 20:
@@ -167,7 +173,7 @@ def torrents(item):
             contentTitle = contentTitle.split("(")[0]
         size = size.strip()
         filtro_tmdb = {"original_language": "ja"}.items()
-        title += "  [COLOR %s][Semillas:%s[/COLOR]|[COLOR %s]Leech:%s[/COLOR]|%s]" % (
+        title += "  [COLOR %s][Seeds:%s[/COLOR]|[COLOR %s]Leech:%s[/COLOR]|%s]" % (
             color4, seeds, color5, leechers, size)
         url = "https://www.frozen-layer.com" + url
         itemlist.append(Item(channel=item.channel, action="play", url=url, title=title, contentTitle=contentTitle,
@@ -192,32 +198,68 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data2 = data.replace("\n","")
-    idiomas = scrapertools.find_single_match(data, 'Subtitulo:\s*(.*?)<br />')
-    calidades = ['1080p', '720p']
-    torrentes = scrapertools.find_multiple_matches(data, '<a href="((?:https://www.frozen-layer.com/descargas[^"]+|https://nyaa.si/view/[^"]+))"')
+    idiomas = scrapertools.find_single_match(data, 'Subtitulo:\s*(.*?) \[')
+    idiomas = idiomas.replace("Español Latino", "Latino").replace("Español España", "Castellano")
+    ty = scrapertools.find_single_match(data, '720p: <a href=(.*?)1080p: <a href="')
+    if ty:
+        calidades = ['720p', '1080p']
+    else:
+        calidades = ['1080p', '720p']
+    torrentes = scrapertools.find_multiple_matches(data, '<a href="((?:https://www.frozen-layer.com/descargas[^"]+|https://nyaa.si/view/[^"]+|https://anidex.info/torrent/[^"]+))"')
     if torrentes:
         for i, enlace in enumerate(torrentes):
-            title = "Ver por Torrent   %s" % idiomas
-            if ">720p" in data2 and ">1080p" in data2:
+            title = "Ver por Torrent %s" % idiomas
+            if "720p" in data and "1080p" in data2:
                 title = "[%s] %s" % (calidades[i], title)
-            if "nyaa" in enlace:
+            if "anidex.info" in enlace:
+                enlace = enlace.replace("/torrent/", "/dl/")
+                itemlist.append(item.clone(title=title, action="play", url=enlace, server="torrent"))
+            elif "nyaa" in enlace:
                 data1 = httptools.downloadpage(url=enlace).data
                 enlace = "https://nyaa.si" + scrapertools.find_single_match(data1, 'a href="(/do[^"]+)')
                 itemlist.append(item.clone(title=title, action="play", url=enlace, server="torrent"))
                 enlace = scrapertools.find_single_match(data1, '<a href="(magnet[^"]+)')
-                itemlist.append(item.clone(title=title, action="play", url=enlace, server="torrent"))
+                itemlist.append(item.clone(title=title+"(magnet]", action="play", url=enlace, server="torrent"))
             #itemlist.append(item.clone(title=title, action="play", url=enlace, server="torrent"))
     onefichier = scrapertools.find_multiple_matches(data, '<a href="(https://1fichier.com/[^"]+)"')
     if onefichier:
         for i, enlace in enumerate(onefichier):
             title = "Ver por 1fichier   %s" % idiomas
-            if ">720p" in data and ">1080p" in data2:
+            if "720p" in data and "1080p" in data2:
                 try:
                     title = "[%s] %s" % (calidades[i], title)
                 except:
                     pass
             itemlist.append(item.clone(title=title, action="play", url=enlace, server="onefichier"))
-    safelink = scrapertools.find_multiple_matches(data, '<a href="(http(?:s|)://safelinking.net/[^"]+)"')
+    puyaenc = scrapertools.find_multiple_matches(data, '<a href="(http(?:s|)://puya.si/enc/[^"]+)"')
+    if puyaenc:
+        import base64, os, jscrypto
+        action = "play"
+        for i, enlace in enumerate(puyaenc):
+            data_enc = httptools.downloadpage(enlace).data
+            jk, encryp = scrapertools.find_single_match(data_enc, " return '(\d+)'.*?crypted\" VALUE=\"(.*?)\"")
+            
+            iv = os.urandom(16)
+            jk = base64.b16decode(jk)
+            encryp = base64.b64decode(encryp)
+
+            crypto = jscrypto.new(jk, jscrypto.MODE_CBC, iv)
+            decryp = crypto.decrypt(encryp).rstrip('\0')
+            link = decryp.split('#')
+            link = decryp.replace(link[0], "https://mega.nz/")
+            
+            title = "Ver por Mega   %s" % idiomas
+            if "720p" in data and "1080p" in data2:
+                try:
+                    title = "[%s] %s" % (calidades[i], title)
+                except:
+                    pass
+            if "/#F!" in link:
+                action = "carpeta"
+            itemlist.append(item.clone(title=title, action=action, url=link, server="mega"))
+    safelink = scrapertools.find_multiple_matches(data, '<a href="(http(?:s|)://.*?safelinking.net/[^"]+)"')
+    domain = ""
+    server = ""
     if safelink:
         for i, safe in enumerate(safelink):
             headers = [['Content-Type', 'application/json;charset=utf-8']]
@@ -228,21 +270,29 @@ def findvideos(item):
 
             for link in data_sf.get("links"):
                 enlace = link["url"]
-                domain = link["domain"]
-                title = "Ver por %s" % domain
                 action = "play"
-                if "mega" in domain:
+                if "tinyurl" in enlace:
+                    header = httptools.downloadpage(enlace, follow_redirects=False).headers
+                    enlace = header['location']
+                elif "mega." in enlace:
                     server = "mega"
+                    domain = "Mega"
                     if "/#F!" in enlace:
                         action = "carpeta"
-
-                elif "1fichier" in domain:
+                elif "1fichier." in enlace:
                     server = "onefichier"
+                    domain = "1fichier"
                     if "/dir/" in enlace:
                         action = "carpeta"
-
-                title += "   %s" % idiomas
-                if ">720p" in data and ">1080p" in data:
+                elif "google." in enlace:
+                    server = "gvideo"
+                    domain = "Gdrive"
+                    if "/folders/" in enlace:
+                        action = "carpeta"
+                title = "Ver por %s" % domain
+                if idiomas:
+                    title += " [Subs: %s]" % idiomas
+                if "720p" in data and "1080p" in data2:
                     try:
                         title = "[%s]  %s" % (calidades[i], title)
                     except:
@@ -263,16 +313,45 @@ def carpeta(item):
             itemlist.append(Item(channel=item.channel, title=scrapedtitle, url=scrapedurl, action="play",
                                  server="onefichier", text_color=color1, thumbnail=item.thumbnail,
                                  infoLabels=item.infoLabels))
+    elif item.server == "gvideo":
+        response = httptools.downloadpage(item.url, cookies=False, headers={"Referer": item.url})
+        cookies = ""
+        cookie = response.headers["set-cookie"].split("HttpOnly, ")
+        for c in cookie:
+            cookies += c.split(";", 1)[0] + "; "
+        data = response.data
+        
+        
+        patron = "'_DRIVE_ivd'] = '(.*?)'"
+        matches = scrapertools.find_single_match(data, patron)
+        data = data.decode('unicode-escape')
+        data = urllib.unquote_plus(urllib.unquote_plus(data))
+        newpatron = ',\["(.*?)",\[".*?,"(.*?)","video'
+        newmatches = scrapertools.find_multiple_matches(data, newpatron)
+        
+        for url, scrapedtitle in newmatches:
+            url = "https://drive.google.com/open?id=%s" % url
+            
+            itemlist.append(Item(channel=item.channel, title=scrapedtitle, url=url, action="play",
+                                 server="gvideo", text_color=color1, thumbnail=item.thumbnail,
+                                 infoLabels=item.infoLabels))
     else:
-        c = Client(url=item.url)
-        files = c.get_files()
-        c.stop()
-        for enlace in files:
-            file_id = enlace["id"]
-            itemlist.append(
-                Item(channel=item.channel, title=enlace["name"], url=item.url + "|" + file_id, action="play",
-                     server="mega", text_color=color1, thumbnail=item.thumbnail,
-                     infoLabels=item.infoLabels))
+        from servers import mega
+        check, msg = mega.test_video_exists(item.url)
+        if check == False:
+            itemlist.append(Item(channel=item.channel, title=msg, url="",
+                                 text_color=color1, thumbnail=item.thumbnail,
+                                 infoLabels=item.infoLabels))
+        else:
+            c = Client(url=item.url)
+            files = c.get_files()
+            c.stop()
+            for enlace in files:
+                file_id = enlace["id"]
+                itemlist.append(
+                    Item(channel=item.channel, title=enlace["name"], url=item.url + "|" + file_id, action="play",
+                        server="mega", text_color=color1, thumbnail=item.thumbnail,
+                        infoLabels=item.infoLabels))
     itemlist.sort(key=lambda item: item.title)
     return itemlist
 

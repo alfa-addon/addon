@@ -24,7 +24,7 @@ def ultimas_series(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, 'Últimos capitulos agregados.*?/div><!-- .content-box -->')
+    data = scrapertools.find_single_match(data, 'Últimos Animes agregados</h3></div>.*?</div><!-- .content-box -->')
     patron  = '<a title="([^"]+).*?'
     patron += 'href="([^"]+)".*?'
     patron += 'src="([^"]+)'
@@ -93,14 +93,13 @@ def series(item):
     # Descarga la pagina
     data = httptools.downloadpage(item.url).data
     # Extrae las entradas
-    patron  = '(?is)let-post.*?src="([^"]+).*?'
-    patron += 'alt="([^"]+).*?'
-    patron += 'href="([^"]+).*?'
-    patron += '<p>([^\<]+).*?'
-    patron += 'eps-num">([^<]+)'
+    patron  = '<a title="([^"]+)" href="([^"]+)" rel="nofollow">.*?'
+    patron += 'src="([^"]+)".*?'
+    patron += 'eps-num">([^<]+)</span>.*?'
+    patron += '<p>([^\<]+)</p>'
     matches = scrapertools.find_multiple_matches(data, patron)
     itemlist = []
-    for scrapedthumbnail, scrapedtitle, scrapedurl, scrapedplot, scrapedepisode in matches:
+    for scrapedtitle, scrapedurl, scrapedthumbnail, scrapedepisode, scrapedplot in matches:
         title = scrapedtitle + " (" + scrapedepisode + ")"
         scrapedthumbnail = scrapedthumbnail.replace("thumbnail", "image")
         plot = scrapertools.htmlclean(scrapedplot)

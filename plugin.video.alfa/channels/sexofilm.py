@@ -42,7 +42,7 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     if item.title == "Canal" :
-        data = scrapertools.find_single_match(data,'>Adult Porn Parodies</a></li>(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'>Best Porn Studios</a>(.*?)</ul>')
     else:
         data = scrapertools.find_single_match(data,'<div class="nav-wrap">(.*?)<ul class="sub-menu">')
         itemlist.append( Item(channel=item.channel, action="lista", title="Big tit", url="https://sexofilm.com/?s=big+tits"))
@@ -70,14 +70,14 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = '<div class="post-thumbnail.*?<a href="([^"]+)".*?src="([^"]+)".*?title="([^"]+)"'
+    patron  = '<article id="post-\d+".*?<a href="([^"]+)".*?data-src="([^"]+)".*?<h2 class="post-title.*?title="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         plot = ""
         title = scrapedtitle.replace(" Porn DVD", "").replace("Permalink to ", "").replace(" Porn Movie", "")
         itemlist.append(item.clone(action="play", title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
                                    fanart=scrapedthumbnail, plot=plot) )
-    next_page = scrapertools.find_single_match(data,'<a class="nextpostslink" rel="next" href="([^"]+)">&raquo;</a>')
+    next_page = scrapertools.find_single_match(data,'<a class="nextpostslink" rel="next" href="([^"]+)">')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )

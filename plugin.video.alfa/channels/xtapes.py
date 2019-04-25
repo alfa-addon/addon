@@ -13,7 +13,7 @@ host = 'http://hd.xtapes.to'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/full-porn-movies/?display=tube&filtre=date"))
+    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/porn-movies/"))
     itemlist.append( Item(channel=item.channel, title="Productora" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?filtre=date&cat=0"))
     itemlist.append( Item(channel=item.channel, title="Mas Vistos" , action="lista", url=host + "/?display=tube&filtre=views"))
@@ -46,7 +46,7 @@ def categorias(item):
     if item.title=="Canal":
         data = scrapertools.find_single_match(data,'<div class="footer-banner">(.*?)<div id="footer-copyright">')
     if item.title=="Productora" :
-       data = scrapertools.find_single_match(data,'<li id="menu-item-16"(.*?)</ul>')
+       data = scrapertools.find_single_match(data,'>Full Movies</a>(.*?)</ul>')
     if item.title=="Categorias" :
        data = scrapertools.find_single_match(data,'<a>Categories</a>(.*?)</ul>')
     patron  = '<a href="([^"]+)">([^"]+)</a>'
@@ -95,7 +95,7 @@ def play(item):
     variable = scrapertools.find_single_match(data,'<script type=\'text/javascript\'> str=\'([^\']+)\'')
     resuelta = re.sub("@[A-F0-9][A-F0-9]", lambda m: m.group()[1:].decode('hex'), variable)
     url = scrapertools.find_single_match(resuelta,'<iframe src="([^"]+)"')
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(url).data
     itemlist = servertools.find_video_items(data=data)
     for videoitem in itemlist:
         videoitem.title = item.title
