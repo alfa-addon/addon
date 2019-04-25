@@ -4,6 +4,7 @@ import urllib
 
 from core import httptools
 from core import scrapertools
+from platformcode import logger
 
 id_server = "vidtodo"
 
@@ -12,16 +13,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    data = data.replace('"', "'")
-    page_url_post = find_single_match(data, "<Form method='POST' action='([^']+)'>")
-    imhuman = "&imhuman=" + find_single_match(data, "name='imhuman' value='([^']+)'").replace(" ", "+")
-    post = urllib.urlencode({k: v for k, v in find_multiple_matches(data, "name='([^']+)' value='([^']*)'")}) + imhuman
-    time.sleep(1)
-    data = httptools.downloadpage(page_url_post, post=post).data
-    sources = scrapertools.find_single_match(data, 'sources: \[([^\]]+)\]')
-    for media_url in find_multiple_matches(sources, '"([^"]+)"'):
+    matches = scrapertools.find_multiple_matches(data, 'file:"([^"]+)",label:"([^"]+)"')
+    for media_url, quality in matches:
         if media_url.endswith(".mp4"):
-            video_urls.append([".mp4 [%s]" % id_server, media_url])
+            video_urls.append([quality + " [%s]" % id_server, media_url])
         if media_url.endswith(".m3u8"):
             video_urls.append(["M3U8 [%s]" % id_server, media_url])
         if media_url.endswith(".smil"):
