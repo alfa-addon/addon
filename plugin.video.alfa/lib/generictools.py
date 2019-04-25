@@ -2485,6 +2485,61 @@ def regenerate_clones():
     return True
 
                             
+def call_chrome(url):
+    logger.info()
+    # Basado en el código de "Chrome Launcher 1.2.0" de Jani (@rasjani) Mikkonen
+    # Llama al browse Chrome y le pasa una url
+    import xbmc
+    import subprocess
+    
+    exePath = []
+    creationFlags = 0
+    
+    try:
+        if xbmc.getCondVisibility("system.platform.Android"):
+            xbmc.executebuiltin("StartAndroidActivity(com.android.chrome,,," + url + ")")
+            return True
+            
+        elif xbmc.getCondVisibility("system.platform.Windows"):
+            exePath = ['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+                        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe']
+            creationFlags = 0x00000008
+            
+        elif xbmc.getCondVisibility("system.platform.OSX"):
+            exePath = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",]
+            
+        elif xbmc.getCondVisibility("system.platform.Linux"):
+            exePath = ["/usr/bin/google-chrome", "/usr/bin/google-chrome-stable"]
+            
+        else:
+            return False
+        
+        for path in exePath:
+            if filetools.exists(path):
+                chrome_call = filetools.join(xbmc.translatePath(config.get_data_path()), 'chrome_call.html')
+                filetools.write(chrome_call, '<html><body style="background:black"><script>window.location.href = "%s";</script></body></html>' % url)
+                
+                params = [path, '--kiosk', '--start-maximized', '--disable-translate', '--disable-new-tab-first-run', '--no-default-browser-check', '--no-first-run', chrome_call]
+                
+                s = subprocess.Popen(params, shell=False, creationflags=creationFlags, close_fds = True)
+                s.communicate()
+
+                """
+                bringChromeToFront(s.pid)
+
+                xbmcplugin.endOfDirectory(pluginhandle)
+                xbmc.executebuiltin("ReplaceWindow(Programs,%s)" % ("plugin://"+addonID+"/"))
+                """
+                
+        else:
+            return False
+        
+    except:
+        logger.error(traceback.format_exc())
+    
+    return True
+
+
 def dejuice(data):
     logger.info()
     # Metodo para desobfuscar datos de JuicyCodes

@@ -65,7 +65,7 @@ def init():
             question_update_external_addon("quasar")
         
         #QUASAR: Hacemos las modificaciones a Quasar, si está permitido, y si está instalado
-        if config.get_setting('addon_quasar_update', default=False):
+        if config.get_setting('addon_quasar_update', default=False) or (filetools.exists(os.path.join(config.get_data_path(), "quasar.json")) and not xbmc.getCondVisibility('System.HasAddon("plugin.video.quasar")')):
             if not update_external_addon("quasar"):
                 platformtools.dialog_notification("Actualización Quasar", "Ha fallado. Consulte el log")
         
@@ -188,6 +188,12 @@ def update_external_addon(addon_name):
             return True
         else:
             logger.error('Alguna carpeta no existe: Alfa: %s o %s: %s' % (alfa_addon_updates, addon_name, addon_path))
+    # Se ha desinstalado Quasar, reseteamos la opción
+    else:
+        config.set_setting('addon_quasar_update', False)
+        if filetools.exists(filetools.join(config.get_data_path(), "%s.json" % addon_name)):
+            filetools.remove(filetools.join(config.get_data_path(), "%s.json" % addon_name))
+        return True
     
     return False
     
