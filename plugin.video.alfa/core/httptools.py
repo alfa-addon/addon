@@ -98,10 +98,8 @@ def save_cookies(alfa_s=False):
 load_cookies()
 
 
-def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=True, cookies=True,
-                 only_headers=False, bypass_cloudflare=True, count_retries=0, count_retries_tot=5,
-                 random_headers=False, ignore_response_code=False, alfa_s=False, proxy=True, proxy_web=False,
-                 proxy_addr_forced=None,forced_proxy=None, proxy_retries=1):
+def downloadpage(url, post=None, headers=None, timeout=None, follow_redirects=True, cookies=True, replace_headers=False,
+                 add_referer=False, only_headers=False, bypass_cloudflare=True, count_retries=0, count_retries_tot=5, random_headers=False, ignore_response_code=False, alfa_s=False, proxy=True, proxy_web=False, proxy_addr_forced=None,forced_proxy=None, proxy_retries=1):
     """
     Abre una url y retorna los datos obtenidos
 
