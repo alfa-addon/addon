@@ -215,7 +215,6 @@ def findvideos(item):
 
         else:
             url = dec(encurl)
-        logger.info("cojon: %s" % url)
         title = ''
         server = ''
         servers = {'/opl': 'openload', '/your': 'yourupload', '/sen': 'senvid', '/face': 'netutv', '/vk': 'vk',
