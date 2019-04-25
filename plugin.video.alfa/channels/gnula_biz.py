@@ -611,7 +611,6 @@ def get_source(url, referer=None):
         data = httptools.downloadpage(url, headers={'Referer':referer}).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
 
-    logger.debug(data)
     return data
 
 def findvideos(item):
