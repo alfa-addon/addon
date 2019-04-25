@@ -20,7 +20,7 @@ def test_video_exists(page_url):
     post = {'a': 'g', 'g': 1, 'p': f_id}
     isfolder = False
     if "/#F!" in page_url:
-        get = f_id
+        get = "&n=" + f_id
         post = {"a":"f","c":1,"r":0}
         isfolder = True
         types= "Carpeta"
@@ -30,7 +30,7 @@ def test_video_exists(page_url):
             return True, ""
             
     codes = {-1: 'Se ha producido un error interno en Mega.nz',
-             -2: 'El archivo que deseas descargar ya no está disponible',
+             -2: 'Error en la petición realizada, Cod -2',
              -3: 'Un atasco temporal o malfuncionamiento en el servidor de Mega impide que se proceso su link',
              -4: 'Ha excedido la cuota de transferencia permitida. Vuelva a intentarlo más tarde',
              -6: types + ' no encontrad' + gen + ', cuenta eliminada',
@@ -43,15 +43,18 @@ def test_video_exists(page_url):
              -17: 'La petición sobrepasa su cuota de transferiencia permitida',
              -18: types + ' temporalmente no disponible, intentelo de nuevo más tarde'
     }
-    api = 'https://g.api.mega.co.nz/cs?id=%d&n=%s' % (seqno, get)
+    api = 'https://g.api.mega.co.nz/cs?id=%d%s' % (seqno, get)
     req_api = httptools.downloadpage(api, json.dumps([post])).data
-    req_api = json.loads(req_api)
+    if isfolder:
+        req_api = json.loads(req_api)
+    else:
+        req_api = json.loads(req_api)[0]
     if isinstance(req_api, (int, long)):
         if req_api in codes:
             msg = codes[req_api]
         return False, msg
     else:
-        return True, req_api
+        return True, ""
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
