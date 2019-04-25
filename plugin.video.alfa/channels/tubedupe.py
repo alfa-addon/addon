@@ -19,7 +19,7 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Modelos" , action="categorias", url=host + "/models/?sort_by=model_viewed"))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host + "/channels/?sort_by=cs_viewed"))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/?sort_by=avg_videos_popularity"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    # itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
