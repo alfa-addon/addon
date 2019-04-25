@@ -769,10 +769,16 @@ def report_menu(item):
         itemlist.append(Item(channel=item.channel, action="", title=""))
     
         itemlist.append(Item(channel=item.channel, action="", title="[COLOR limegreen]Ha terminado de generar el informe de fallo,[/COLOR]", thumbnail=thumb_next))
-        itemlist.append(Item(channel=item.channel, action="", title="[COLOR limegreen]Repórtelo en el Foro de Alfa:[/COLOR]", thumbnail=thumb_next))
-        itemlist.append(Item(channel=item.channel, action="", title="[COLOR yellow]https://alfa-addon.com/foros/ayuda.12/[/COLOR]", thumbnail=thumb_next))
+        itemlist.append(Item(channel=item.channel, action="", title="[COLOR limegreen]Repórtelo en el Foro de Alfa: [/COLOR][COLOR yellow](pinche si Chrome)[/COLOR]", thumbnail=thumb_next))        
+        itemlist.append(Item(channel=item.channel, action="call_chrome", url='https://alfa-addon.com/foros/ayuda.12/', title="**- [COLOR yellow]https://alfa-addon.com/foros/ayuda.12/[/COLOR] -**", thumbnail=thumb_next, unify=False))
     
-        itemlist.append(Item(channel=item.channel, action="", title="LOG: [COLOR gold]%s[/COLOR]" % item.url, thumbnail=thumb_next))
+        if item.one_use:
+            action = ''
+            url = ''
+        else:
+            action = 'call_chrome'
+            url = item.url
+        itemlist.append(Item(channel=item.channel, action=action, title="**- LOG: [COLOR gold]%s[/COLOR] -**" % item.url, url=url, thumbnail=thumb_next, unify=False))
         
         if item.one_use:
             itemlist.append(Item(channel=item.channel, action="", title="[COLOR orange]NO ACCEDA al INFORME: se BORRARÁ[/COLOR]", thumbnail=thumb_next))
@@ -1054,3 +1060,10 @@ def report_send(item, description='', fatal=False):
     # Se devuelve control con item.url actualizado, así aparecerá en el menú la URL del informe
     return report_menu(item)
     
+    
+def call_chrome(item):
+    from lib import generictools
+
+    resultado = generictools.call_chrome(item.url)
+    
+    return resultado

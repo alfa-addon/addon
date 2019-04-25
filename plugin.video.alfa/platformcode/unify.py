@@ -285,7 +285,7 @@ def title_format(item):
         visto = True
 
     # Se elimina cualquier formato previo en el titulo
-    if item.action != '' and item.action !='mainlist':
+    if item.action != '' and item.action !='mainlist' and item.unify:
         item.title = remove_format(item.title)
 
     #logger.debug('visto? %s' % visto)
@@ -478,7 +478,7 @@ def title_format(item):
         item.title = '%s' % set_color(item.title, 'library')
     elif item.action == '' and item.title !='':
         item.title='**- %s -**'%item.title
-    else:
+    elif item.unify:
         item.title = '%s' % set_color(item.title, 'otro')
     #logger.debug('antes de salir %s' % item.title)
     if visto:
