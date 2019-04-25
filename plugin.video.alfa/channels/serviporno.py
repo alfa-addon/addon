@@ -45,7 +45,9 @@ def search(item, texto):
 def get_last_page(url):
     logger.info()
     data = httptools.downloadpage(url).data
-    last_page= int(scrapertools.find_single_match(data,'data-ajax-last-page="(\d+)"'))
+    last_page= scrapertools.find_single_match(data,'data-ajax-last-page="(\d+)"')
+    if last_page:
+        last_page= int(last_page)
     return last_page
 
 
@@ -112,15 +114,17 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     patron = '<div class="wrap-box-escena.*?'
-    patron += 'href="([^"]+)"><img src="([^"]+)".*?'
-    patron += '<h4.*?<a href="[^"]+">([^<]+)</a></h4>'
+    patron += '<img src="([^"]+)".*?'
+    patron += '<h4.*?<a href="([^"]+)">([^<]+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for url, thumbnail, title in matches:
+    for thumbnail, url, title in matches:
         last = urlparse.urljoin(item.url, url)
         url= last.replace("/videos-porno", "/ajax/show_category").replace("/sitio","/ajax/show_producer") + "?page=1"
         itemlist.append(Item(channel=item.channel, action='videos', title=title, url=url, last=last, thumbnail=thumbnail, plot=""))
     # Paginador   "Página Siguiente >>"
-    current_page = int(scrapertools.find_single_match(item.url, "/?page=(\d+)"))
+    current_page = scrapertools.find_single_match(item.url, "/?page=(\d+)")
+    if current_page:
+        current_page = int(current_page)
     if not item.last_page:
         last_page = get_last_page(item.last)
     else:

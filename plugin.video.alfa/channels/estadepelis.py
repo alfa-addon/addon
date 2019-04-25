@@ -22,7 +22,7 @@ list_quality = []
 list_servers = ['yourupload', 'openload', 'sendvid']
 
 vars = {
-    'ef5ca18f089cf01316bbc967fa10f72950790c39ef5ca18f089cf01316bbc967fa10f72950790c39': 'http://tawnestdplsnetps.pw/',
+    'ef5ca18f089cf01316bbc967fa10f72950790c39ef5ca18f089cf01316bbc967fa10f72950790c39': 'http://tawnestdplsnetps.fun/',
     'b48699bb49d4550f27879deeb948d4f7d9c5949a8': 'embed',
     'JzewJkLlrvcFnLelj2ikbA': 'php?url=',
     'p889c6853a117aca83ef9d6523335dc065213ae86': 'player',
@@ -144,21 +144,18 @@ def lista(item):
     patron += 'class=player>.*?class=year>(.*?)<\/span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    if item.extra == 'peliculas':
-        accion = 'findvideos'
-    else:
-        accion = 'temporadas'
-
     for scrapedthumbnail, scrapedtitle, scrapedurl, scrapedyear in matches:
-
+        
+        accion = "findvideos"
+        if 'serie-' in scrapedurl:
+            contentSerieName = scrapedtitle
+            accion = "temporadas"
         scrapedurl = scrapedurl.translate(None, '"')
         scrapedurl = scrapedurl.translate(None, "'")
         url = host + scrapedurl
         thumbnail = scrapedthumbnail
         title = scrapedtitle
         year = scrapedyear
-        if item.extra == 'series':
-            contentSerieName = scrapedtitle
 
         itemlist.append(Item(channel=item.channel,
                              action=accion,
@@ -194,7 +191,6 @@ def generos(item):
     itemlist = []
     norep = []
     data = httptools.downloadpage(item.url).data
-    logger.debug(data)
     patron = '<li class="cat-item cat-item-.*?"><a href="([^"]+)".*?>([^<]+)<\/a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -365,7 +361,7 @@ def findvideos(item):
         title = ''
         server = ''
         servers = {'/opl': 'openload', '/your': 'yourupload', '/sen': 'senvid', '/face': 'netutv', '/vk': 'vk',
-                   '/jk':'streamcherry'}
+                   '/jk':'streamcherry', '/vim':'gamovideo'}
         server_id = re.sub(r'.*?embed|\.php.*', '', url)
         if server_id and server_id in servers:
             server = servers[server_id]
