@@ -227,12 +227,13 @@ def check_for_update(overwrite=True):
                     update_last = hoy
                     update_next = hoy + datetime.timedelta(days=interval)
 
-                head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)                       #Vuelve a leer el.nfo, que ha sido modificado
+                head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)       #Vuelve a leer el.nfo, que ha sido modificado
                 if interval != int(serie.active) or update_next.strftime('%Y-%m-%d') != serie.update_next or update_last.strftime('%Y-%m-%d') != serie.update_last:
                     serie.update_last = update_last.strftime('%Y-%m-%d')
                     if update_next > hoy:
                         serie.update_next = update_next.strftime('%Y-%m-%d')
-                    serie.active = interval
+                    if serie.infoLabels["status"] != "Ended":
+                        serie.active = interval
                     serie.channel = "videolibrary"
                     serie.action = "get_seasons"
                     filetools.write(tvshow_file, head_nfo + serie.tojson())
@@ -246,8 +247,8 @@ def check_for_update(overwrite=True):
                     else:
                         update_when_finished = True
 
-            if estado_verify_playcount_series:                                                  #Si se ha cambiado algún playcount, ...
-                estado = config.set_setting("verify_playcount", True, "videolibrary")           #... actualizamos la opción de Videolibrary
+            if estado_verify_playcount_series:                                      #Si se ha cambiado algún playcount, ...
+                estado = config.set_setting("verify_playcount", True, "videolibrary")   #... actualizamos la opción de Videolibrary
             
             if config.get_setting("search_new_content", "videolibrary") == 1 and update_when_finished:
                 # Actualizamos la videoteca de Kodi: Buscar contenido en todas las series
