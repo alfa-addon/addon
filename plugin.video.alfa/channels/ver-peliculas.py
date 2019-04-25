@@ -21,7 +21,7 @@ __channel__ = "ver-peliculas"
 
 host = "https://ver-peliculas.co/"
 
-IDIOMAS = {'Latino':'Lat', 'Catellano':'Cast', 'Subtitulada':'VOSE'}
+IDIOMAS = {'Latino':'Lat', 'Castellano':'Cast', 'Subtitulada':'VOSE'}
 list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['directo', 'openload',  'streamango', 'rapidvideo']
@@ -141,7 +141,7 @@ def listado(item):
 
 def get_source(url):
     logger.info()
-    data = httptools.downloadpage(url, add_referer=True).data
+    data = httptools.downloadpage(url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     return data
 
