@@ -258,19 +258,20 @@ def annos(item):
 
 
 def findvideos(item):
+    logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     patron  = "video\[(\d)+\] = '([^']+)"
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedoption, scrapedurl in matches:
         tit = scrapertools.find_single_match(data, 'option%s">([^<]+)' %scrapedoption)
+        scrapedurl = scrapertools.find_single_match(scrapedurl, 'src="([^"]+)"')
         if "VIP" in tit: tit = "fembed"
         titulo = "Ver en %s" %tit.capitalize()
         itemlist.append(
-                 item.clone(channel = item.channel,
-                 action = "play",
+                 item.clone(action = "play",
                  title = titulo,
-                 url = host + "/embed/%s/" %scrapedurl
+                 url = scrapedurl
                  ))
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
     # Requerido para FilterTools
@@ -280,27 +281,27 @@ def findvideos(item):
 
     autoplay.start(itemlist, item)
 
-    if itemlist:
+    if itemlist and item.contentChannel != "videolibrary":
         itemlist.append(Item(channel = item.channel))
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
                                    text_color="magenta"))
-        # Opción "Añadir esta película a la biblioteca de KODI"
-        if item.extra != "library":
-            if config.get_videolibrary_support():
-                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
-                                     action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                     contentTitle = item.contentTitle
-                                     ))
+        # Opción "Añadir esta película a la videoteca de KODI"
+        if config.get_videolibrary_support():
+            itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                                 action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
+                                 contentTitle = item.contentTitle
+                                ))
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<iframe src="([^"]+)')
-    headers = {"Referer":item.url}
-    item.url = httptools.downloadpage(url, follow_redirects=False, only_headers=True, headers=headers).headers.get("location", "")
+    if "rexpelis.com" in item.url:
+        data = httptools.downloadpage(item.url).data
+        url = scrapertools.find_single_match(data, '<iframe src="([^"]+)')
+        headers = {"Referer":item.url}
+        item.url = httptools.downloadpage(url, follow_redirects=False, only_headers=True, headers=headers).headers.get("location", "")
     itemlist.append(item.clone())
     itemlist = servertools.get_servers_itemlist(itemlist)
     item.thumbnail = item.contentThumbnail
