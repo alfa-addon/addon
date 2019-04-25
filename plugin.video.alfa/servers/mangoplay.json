@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:powvideo|povw1deo).(?:net|xyz|com|cc)/(?:embed-|iframe-|preview-|)([a-z0-9]+)",
-        "url": "http://powvideo.net/iframe-\\1-1536x701.html"
+        "pattern": "(mangoplay.net(?://|/)embed.php\\?data=[A-z0-9_-]+)",
+        "url": "https://\\1"
       }
     ]
   },
   "free": true,
-  "id": "powvideo",
-  "name": "powvideo",
+  "id": "mangoplay",
+  "name": "mangoplay",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_powvideo.png"
+  "thumbnail": ""
 }
