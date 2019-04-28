@@ -345,6 +345,8 @@ def listado(item):
                 url = scrapertools.find_single_match(data_epi, '<tr><td>.*<a href="([^"]+)" style="text-decoration:none;"><h1 style=')
                 if not url:
                     url = scrapertools.find_single_match(data_epi, '<td><a href="(secciones.php\?sec\=descargas&ap=[^"]+)"')
+                if not url:
+                    url = scrapertools.find_single_match(data_epi, '<link rel="canonical" href="([^"]+)"')
                 #Probamos si es una temporada completa, aunque no tenga raiz
                 if not url and scrapertools.find_single_match(data_epi, "(<form (?:style='[^']+'\s)?name='episodios' action='[^']+' method='post'>.*?)<\/form>"):
                     url = item_local.url                    #Salvamos la url original
@@ -1038,7 +1040,8 @@ def episodios(item):
     # Prepara el patrón de búsqueda
     patron = "<form (?:style='[^']+'\s)?name='episodios' action='([^']+)'"
     url = scrapertools.find_single_match(data, patron)                          #Salvamos la url de descarga
-    url = url.replace('descargar_tv.php', 'descargar_post.php')                 #ESTA DESCARGARÍA EL TORRENT EN VEZ DEL ENLACE
+    # Para SERIES: ESTA DESCARGARÍA EL TORRENT EN VEZ DEL ENLACE. Se copia MANULAMENTE la url.php de DOCUMENTALES
+    url = url.replace('descargar_tv.php', 'post_dd.php')
     patron = "<form (?:style='[^']+'\s)?name='episodios' action='[^']+'.*?<input type='hidden' value='([^']+)' name='([^']+)'>"
     value2 = ''                                                                 #Patrón general para Documentales (1)
     name2 = ''

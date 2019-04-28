@@ -87,31 +87,51 @@ def peliculas(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a class=\'thumb no_ajax\' href=\'(.*?)\'.*?'
-    patron += 'data-original=\'(.*?)\' alt="([^"]+)"><div class=\'videoDuration\'>([^<]+)</div>'
+    patron += 'data-original=\'(.*?)\' alt="([^"]+)"><div class=\'videoDuration\'>([^<]+)</div>(.*?)<div class=\'watchedInfo'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,duracion  in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle,duracion,quality in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
         title = "[COLOR yellow]" + duracion + "[/COLOR] " + scrapedtitle
+        if quality:
+            quality= scrapertools.find_single_match(quality, '>(\d+p)<')
+            title = "[COLOR yellow]" + duracion + "[/COLOR] " + "[COLOR red]" + quality +  "[/COLOR] " + scrapedtitle
         contentTitle = title
         thumbnail = scrapedthumbnail
         plot = ""
-        year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, plot=plot, contentTitle = contentTitle, infoLabels={'year':year} ))
+        itemlist.append(Item(channel=item.channel, action="findvideos" , title=title , url=url, thumbnail=thumbnail,
+                             fanart=thumbnail, plot=plot, contentTitle = contentTitle))
     next_page_url = scrapertools.find_single_match(data,'<a class="llNav" href="([^"]+)">')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel , action="peliculas" , title="Página Siguiente >>" , text_color="blue", url=next_page_url , folder=True) )
+        itemlist.append(item.clone(action="peliculas", title="Página Siguiente >>", text_color="blue", url=next_page_url) )
     return itemlist
 
 
-def play(item):
+def ref(url):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron  = '<meta itemprop="contentUrl" content="([^"]+)" />'
+    data = httptools.downloadpage(url).data
+    VID = scrapertools.find_single_match(data,'id="VID" type="hidden" value="([^"]+)"')
+    vkey = scrapertools.find_single_match(data,'id="vkey" type="hidden" value="([^"]+)"')
+    thumb = scrapertools.find_single_match(data,'id="thumb" type="hidden" value="([^"]+)"')
+    nkey= scrapertools.find_single_match(data,'id="nkey" type="hidden" value="([^"]+)"')
+    url = "https://cdn-fck.tnaflix.com/tnaflix/%s.fid?key=%s&VID=%s&nomp4=1&catID=0&rollover=1&startThumb=%s" % (vkey, nkey, VID, thumb)
+    url += "&embed=0&utm_source=0&multiview=0&premium=1&country=0user=0&vip=1&cd=0&ref=0&alpha"
+    return url
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    url= ref(item.url)
+    headers = {'Referer': item.url}
+    data = httptools.downloadpage(url, headers=headers).data
+    patron = '<res>(.*?)</res>.*?'
+    patron += '<videoLink><([^<]+)></videoLink>'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for url  in matches:
-        itemlist.append(Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=url,
-                         thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
+    for title, url in matches:
+        url= url.replace("![CDATA[", "http:").replace("]]", "")
+        itemlist.append(item.clone(title=title, action="play", url=url))
     return itemlist
+
 

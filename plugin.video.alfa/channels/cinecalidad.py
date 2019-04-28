@@ -340,7 +340,7 @@ def findvideos(item):
         itemlist.append(new_item)
 
     for video_cod, server_id in matches:
-        if server_id not in ['Mega', 'MediaFire', 'Trailer', '']:
+        if server_id not in ['MediaFire', 'Trailer', '']:
             video_id = dec(video_cod, dec_value)
 
         if server_id in server_url:
