@@ -753,6 +753,14 @@ def stop_video():
 
 
 def get_seleccion(default_action, opciones, seleccion, video_urls):
+    fixpri = False
+    #para conocer en que prioridad se trabaja
+    priority = int(config.get_setting("resolve_priority"))
+    #se usara para comprobar si hay links premium o de debriders
+    check = []
+    #Comprueba si resolve stop esta desactivado
+    if config.get_setting("resolve_stop") == False:
+        fixpri = True
     # preguntar
     if default_action == 0:
         # "Elige una opción"
@@ -761,24 +769,42 @@ def get_seleccion(default_action, opciones, seleccion, video_urls):
     elif default_action == 1:
         resolutions = []
         for url in video_urls:
+            if "debrid]" in url[0] or "Premium)" in url[0]:
+                check.append(True)
             res = calcResolution(url[0])
             if res:
                 resolutions.append(res)
         if resolutions:
-            seleccion = resolutions.index(min(resolutions))
+            if (fixpri == True and
+                    check and
+                    priority == 2):
+                seleccion = 0
+            else:
+                seleccion = resolutions.index(min(resolutions))
         else:
             seleccion = 0
     # Ver en alta calidad
     elif default_action == 2:
         resolutions = []
         for url in video_urls:
+            if "debrid]" in url[0] or "Premium)" in url[0]:
+                check.append(True)
             res = calcResolution(url[0])
             if res:
                 resolutions.append(res)
+
         if resolutions:
-            seleccion = resolutions.index(max(resolutions))
+            if (fixpri == True and 
+                    check and
+                    priority == 2):
+                seleccion = 0
+            else:
+                seleccion = resolutions.index(max(resolutions))
         else:
-            seleccion = len(video_urls) - 1
+            if fixpri == True and check:
+                seleccion = 0
+            else:
+                seleccion = len(video_urls) - 1
     else:
         seleccion = 0
     return seleccion
