@@ -190,33 +190,36 @@ def get_environment():
         environment['torrentcli_dload_estrgy'] = ''
         environment['torrentcli_mem_size'] = ''
         environment['torrentcli_free'] = ''
-        if config.get_setting("torrent_client", server="torrent") == 3:
-            for client_torrent in ['quasar', 'elementum', 'torrenter']:
+        if config.get_setting("torrent_client", server="torrent") == 4:
+            __settings__ = xbmcaddon.Addon(id="plugin.video.torrenter")
+            environment['torrentcli_name'] = 'Torrenter'
+            environment['torrentcli_dload_path'] = str(xbmc.translatePath(__settings__.getSetting('storage')))
+            environment['torrentcli_buffer'] = str(__settings__.getSetting('pre_buffer_bytes'))
+        elif config.get_setting("torrent_client", server="torrent") == 3:
+            for client_torrent in ['quasar', 'elementum']:
                 if xbmc.getCondVisibility('System.HasAddon("plugin.video.%s" )' % client_torrent):
                     __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % client_torrent)
                     environment['torrentcli_name'] = str(client_torrent)
-                    if client_torrent == 'torrenter':
-                        environment['torrentcli_dload_path'] = str(xbmc.translatePath(__settings__.getSetting('storage')))
-                        environment['torrentcli_buffer'] = str(__settings__.getSetting('pre_buffer_bytes'))
-                    else:
-                        environment['torrentcli_dload_path'] = str(xbmc.translatePath(__settings__.getSetting('download_path')))
-                        environment['torrentcli_buffer'] = str(__settings__.getSetting('buffer_size'))
-                        environment['torrentcli_dload_estrgy'] = str(__settings__.getSetting('download_storage'))
-                        environment['torrentcli_mem_size'] = str(__settings__.getSetting('memory_size'))
-                    try:
-                        if environment['os_name'].lower() == 'windows':
-                            free_bytes = ctypes.c_ulonglong(0)
-                            ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(environment['torrentcli_dload_path']), 
+                    environment['torrentcli_dload_path'] = str(xbmc.translatePath(__settings__.getSetting('download_path')))
+                    environment['torrentcli_buffer'] = str(__settings__.getSetting('buffer_size'))
+                    environment['torrentcli_dload_estrgy'] = str(__settings__.getSetting('download_storage'))
+                    environment['torrentcli_mem_size'] = str(__settings__.getSetting('memory_size'))
+        
+        if environment['torrentcli_dload_path']:
+            try:
+                if environment['os_name'].lower() == 'windows':
+                    free_bytes = ctypes.c_ulonglong(0)
+                    ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(environment['torrentcli_dload_path']), 
                                 None, None, ctypes.pointer(free_bytes))
-                            environment['torrentcli_free'] = str(round(float(free_bytes.value) / \
+                    environment['torrentcli_free'] = str(round(float(free_bytes.value) / \
                                 (1024**3), 3))
-                        else:
-                            disk_space = os.statvfs(environment['torrentcli_dload_path'])
-                            if not disk_space.f_frsize: disk_space.f_frsize = disk_space.f_frsize.f_bsize
-                            environment['torrentcli_free'] = str(round((float(disk_space.f_bavail) / \
+                else:
+                    disk_space = os.statvfs(environment['torrentcli_dload_path'])
+                    if not disk_space.f_frsize: disk_space.f_frsize = disk_space.f_frsize.f_bsize
+                    environment['torrentcli_free'] = str(round((float(disk_space.f_bavail) / \
                                 (1024**3)) * float(disk_space.f_frsize), 3))
-                    except:
-                        environment['torrentcli_free'] = '?'
+            except:
+                environment['torrentcli_free'] = '?'
 
         environment['proxy_active'] = ''
         try:
