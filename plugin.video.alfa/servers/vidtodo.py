@@ -8,6 +8,13 @@ from platformcode import logger
 
 id_server = "vidtodo"
 
+def test_video_exists(page_url):
+    logger.info("(page_url='%s')" % page_url)
+    response = httptools.downloadpage(page_url)
+    if not response.sucess or "Not Found" in response.data:
+        return False, "[%s] El fichero no existe o ha sido borrado" %id_server
+    return True, ""
+
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)

@@ -27,6 +27,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     patron = "sources..([^\]]+)"
     matches = re.compile(patron, re.DOTALL).findall(unpacked)
     for url in matches:
-        url += "|Referer=%s" %page_url
+        #url += "|Referer=%s" %page_url
         video_urls.append(['mp4', url])
     return video_urls

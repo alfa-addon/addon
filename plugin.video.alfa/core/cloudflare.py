@@ -47,6 +47,7 @@ class Cloudflare:
                 self.header_data = {}
 
     def solve_cf(self, body, domain):
+        # Adaptado de:  https://github.com/VeNoMouS/cloudflare-scrape-js2py
         js = re.search(
             r"setTimeout\(function\(\){\s+(var s,t,o,p,b,r,e,a,k,i,n,g,f.+?\r?\n[\s\S]+?a\.value =.+?)\r?\n",
             body
