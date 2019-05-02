@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "vidtodo.com/([a-z0-9]+)",
+        "pattern": "vidtodo(?:o|).com/([a-z0-9]+)",
         "url": "http://vidtodo.com/\\1"
       }
     ]

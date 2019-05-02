@@ -15,7 +15,7 @@ def test_video_exists(page_url):
     data = httptools.downloadpage(page_url)
     if data.code == 404:
         return False, "[mystream] El archivo no existe o ha sido borrado"
-    if "<title>video is no longer available" in data.data:
+    if "<title>video is no longer available" in data.data or "<title>Video not found" in data.data:
         return False, "[mystream] El archivo no existe o ha sido borrado"
     return True, ""
 
