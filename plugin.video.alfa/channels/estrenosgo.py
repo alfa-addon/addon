@@ -24,8 +24,8 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['torrent']
 
-host = 'http://estrenosby.net/' # 'http://estrenosli.org/'
-host_alt = 'http://estrenoske.net/'
+host = 'http://estrenoske.net/'
+host_alt = 'http://estrenosby.net/' # 'http://estrenosli.org/'
 channel = "estrenosgo"
 
 color1, color2, color3 = ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']
@@ -644,6 +644,8 @@ def findvideos(item):
     if not item.language:
         item.language = ['CAST']                        #Castellano por defecto
     
+    item.url = item.url.replace(host_alt, host)         #Cambio de dominio (videoteca)
+    
     #logger.debug(item)
     
     IDIOMAS = {"banderita1": "CAST", "banderita2": "VOSE", "banderita3": "LAT"}
@@ -1082,6 +1084,8 @@ def episodios(item):
     itemlist = []
     
     #logger.debug(item)
+    
+    item.url = item.url.replace(host_alt, host)                                             #Cambio de dominio (videoteca)
     
     curr_page = 1                                                                           # Página inicial
     last_page = 99999                                                                       # Última página inicial
