@@ -39,24 +39,27 @@ def search(item, texto):
     cxv = scrapertools.find_single_match(data, 'cx" value="([^"]+)"')
     data = httptools.downloadpage("https://cse.google.es/cse.js?hpg=1&cx=%s" %cxv).data
     cse_token = scrapertools.find_single_match(data, 'cse_token": "([^"]+)"')
-    item.url = host_search %(texto, cse_token)
-    try:
-        return sub_search(item)
-    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
-    except:
-        import sys
-        for line in sys.exc_info():
-            logger.error("%s" % line)
-        return []
+    if cse_token:                                       #Evita un loop si error
+        item.url = host_search %(texto, cse_token)
+        try:
+            return sub_search(item)
+        # Se captura la excepción, para no interrumpir al buscador global si un canal falla
+        except:
+            import sys
+            for line in sys.exc_info():
+                logger.error("%s" % line)
+    return []
 
 
 def sub_search(item):
     logger.info()
     itemlist = []
     while True:
-        data = httptools.downloadpage(item.url).data
-        if len(data) < 500 :
+        response = httptools.downloadpage(item.url)
+        data = response.data
+        if len(data) < 500 or not response.sucess:      #Evita un loop si error
             break
+
         page = int(scrapertools.find_single_match(item.url, ".*?start=(\d+)")) + item_per_page
         item.url = scrapertools.find_single_match(item.url, "(.*?start=)") + str(page)
         patron =  '(?s)clicktrackUrl":\s*".*?q=(.*?)".*?'
