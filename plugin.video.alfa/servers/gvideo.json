@@ -28,6 +28,10 @@
   "free": true,
   "id": "gvideo",
   "name": "gvideo",
+  "premium": [
+    "realdebrid",
+    "alldebrid"
+  ],
   "settings": [
     {
       "default": false,

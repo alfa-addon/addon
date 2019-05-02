@@ -12,6 +12,9 @@
   "free": true,
   "id": "vidoza",
   "name": "vidoza",
+  "premium": [
+    "realdebrid"
+  ],
   "settings": [
     {
       "default": false,

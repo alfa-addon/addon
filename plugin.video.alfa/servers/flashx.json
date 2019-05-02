@@ -16,6 +16,9 @@
   "free": true,
   "id": "flashx",
   "name": "flashx",
+  "premium": [
+    "realdebrid"
+  ],
   "settings": [
     {
       "default": false,
