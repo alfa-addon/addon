@@ -741,6 +741,8 @@ def overwrite_tools(item):
 
         
 def report_menu(item):
+    logger.info('URL: ' + item.url)
+    
     from channelselector import get_thumb
     
     thumb_debug = get_thumb("update.png")
@@ -748,29 +750,47 @@ def report_menu(item):
     thumb_next = get_thumb("next.png")
     itemlist = []
     paso = 1
-    
+
     # Crea un menú de opciones para permitir al usuario reportar un fallo de Alfa a través de un servidor "pastebin"
     # Para que el informe sea completo el usuario debe tener la opción de DEBUG=ON
     # Los servidores "pastbin" gratuitos tienen limitación de capacidad, por lo que el tamaño del log es importante
     # Al final de la operación de upload, se pasa al usuario la dirección de log en el servidor para que los reporte
     
-    itemlist.append(Item(channel=item.channel, action="", title="[COLOR gold]SIGA los siguiente PASOS:[/COLOR]", thumbnail=thumb_next))
-    if not config.get_setting('debug'):
-        itemlist.append(Item(channel=item.channel, action="activate_debug", extra=True, title="PASO %s: Active DEBUG aquí antes de generar el log" % str(paso), thumbnail=thumb_debug))
-        paso += 1
-    itemlist.append(Item(channel="channelselector", action="getmainlist", title="PASO %s: Reproduzca el problema y vuelva al PASO %s" % (str(paso), str(paso+1)), thumbnail=thumb_debug))
+    itemlist.append(Item(channel=item.channel, action="", title="[COLOR gold]SIGA los siguiente PASOS:[/COLOR]", 
+                thumbnail=thumb_next, folder=False))
+    #if not config.get_setting('debug'):
+    itemlist.append(Item(channel=item.channel, action="activate_debug", extra=True, 
+                    title="PASO %s: Active DEBUG aquí antes de generar el log" % 
+                    str(paso), thumbnail=thumb_debug, folder=False))
     paso += 1
-    itemlist.append(Item(channel=item.channel, action="report_send", title="PASO %s: Genere el informe de FALLO desde aquí" % str(paso), thumbnail=thumb_error))
+    itemlist.append(Item(channel="channelselector", action="getmainlist", 
+                    title="PASO %s: Reproduzca el problema y vuelva al PASO %s" % 
+                    (str(paso), str(paso+1)), thumbnail=thumb_debug, folder=False))
     paso += 1
-    itemlist.append(Item(channel=item.channel, action="activate_debug", extra=False, title="PASO %s: Desactive DEBUG aquí -opcional-" % str(paso), thumbnail=thumb_debug))
+    itemlist.append(Item(channel=item.channel, action="report_send", 
+                    title="PASO %s: Genere el informe de FALLO desde aquí" % 
+                    str(paso), thumbnail=thumb_error))
+    paso += 1
+    #if config.get_setting('debug'):
+    itemlist.append(Item(channel=item.channel, action="activate_debug", extra=False, 
+                    title="PASO %s: Desactive DEBUG aquí -opcional-" % str(paso), 
+                    thumbnail=thumb_debug, folder=False))
     paso += 1
     
     if item.url:
-        itemlist.append(Item(channel=item.channel, action="", title=""))
+        itemlist.append(Item(channel=item.channel, action="", title="", folder=False))
     
-        itemlist.append(Item(channel=item.channel, action="", title="[COLOR limegreen]Ha terminado de generar el informe de fallo,[/COLOR]", thumbnail=thumb_next))
-        itemlist.append(Item(channel=item.channel, action="", title="[COLOR limegreen]Repórtelo en el Foro de Alfa: [/COLOR][COLOR yellow](pinche si Chrome)[/COLOR]", thumbnail=thumb_next))        
-        itemlist.append(Item(channel=item.channel, action="call_chrome", url='https://alfa-addon.com/foros/ayuda.12/', title="**- [COLOR yellow]https://alfa-addon.com/foros/ayuda.12/[/COLOR] -**", thumbnail=thumb_next, unify=False))
+        itemlist.append(Item(channel=item.channel, action="", 
+                    title="[COLOR limegreen]Ha terminado de generar el informe de fallo,[/COLOR]", 
+                    thumbnail=thumb_next, folder=False))
+        itemlist.append(Item(channel=item.channel, action="", 
+                    title="[COLOR limegreen]Repórtelo en el Foro de Alfa: [/COLOR][COLOR yellow](pinche si Chrome)[/COLOR]", 
+                    thumbnail=thumb_next, 
+                    folder=False))        
+        itemlist.append(Item(channel=item.channel, action="call_chrome", 
+                    url='https://alfa-addon.com/foros/ayuda.12/', 
+                    title="**- [COLOR yellow]https://alfa-addon.com/foros/ayuda.12/[/COLOR] -**", 
+                    thumbnail=thumb_next, unify=False, folder=False))
     
         if item.one_use:
             action = ''
@@ -778,30 +798,35 @@ def report_menu(item):
         else:
             action = 'call_chrome'
             url = item.url
-        itemlist.append(Item(channel=item.channel, action=action, title="**- LOG: [COLOR gold]%s[/COLOR] -**" % item.url, url=url, thumbnail=thumb_next, unify=False))
+        itemlist.append(Item(channel=item.channel, action=action, 
+                    title="**- LOG: [COLOR gold]%s[/COLOR] -**" % item.url, url=url, 
+                    thumbnail=thumb_next, unify=False, folder=False))
         
         if item.one_use:
-            itemlist.append(Item(channel=item.channel, action="", title="[COLOR orange]NO ACCEDA al INFORME: se BORRARÁ[/COLOR]", thumbnail=thumb_next))
-            itemlist.append(Item(channel=item.channel, action="", title="[COLOR orange]ya que es de un solo uso[/COLOR]", thumbnail=thumb_next))
+            itemlist.append(Item(channel=item.channel, action="", 
+                    title="[COLOR orange]NO ACCEDA al INFORME: se BORRARÁ[/COLOR]", 
+                    thumbnail=thumb_next, folder=False))
+            itemlist.append(Item(channel=item.channel, action="", 
+                    title="[COLOR orange]ya que es de un solo uso[/COLOR]", 
+                    thumbnail=thumb_next, folder=False))
     
     return itemlist
     
     
 def activate_debug(item):
+    logger.info(item.extra)
     from platformcode import platformtools
     
     # Activa/Desactiva la opción de DEBUB en settings.xml
     
     if isinstance(item.extra, str):
-        return
+        return report_menu(item)
     if item.extra:
         config.set_setting('debug', True)
         platformtools.dialog_notification('Modo DEBUG', 'Activado')
     else:
         config.set_setting('debug', False)
         platformtools.dialog_notification('Modo DEBUG', 'Desactivado')
-    
-    platformtools.itemlist_refresh()
         
         
 def report_send(item, description='', fatal=False):
@@ -849,17 +874,22 @@ def report_send(item, description='', fatal=False):
     pastebin_list = {
     'hastebin': ('1', 'https://hastebin.com/', 'documents', 'random', '', '', 
                 'data', 'json', 'key', '', '0.29', '10', True, 'raw/', '', ''), 
-    'dpaste': ('1', 'http://dpaste.com/', 'api/v2/', 'random', 'content=', '&syntax=text&title=%s&poster=alfa&expiry_days=7', 
+    'dpaste': ('1', 'http://dpaste.com/', 'api/v2/', 'random', 'content=', 
+                '&syntax=text&title=%s&poster=alfa&expiry_days=7', 
                 'headers', '', '', 'location', '0.23', '15', True, '', '.txt', ''),
-    'ghostbin': ('1', 'https://ghostbin.com/', 'paste/new', 'random', 'lang=text&text=', '&expire=2d&password=&title=%s', 
-                'data', 'regex', '<title>(.*?)\s*-\s*Ghostbin<\/title>', '', '0.49', '15', False, 'paste/', '', ''),
+    'ghostbin': ('1', 'https://ghostbin.com/', 'paste/new', 'random', 'lang=text&text=', 
+                '&expire=2d&password=&title=%s', 
+                'data', 'regex', '<title>(.*?)\s*-\s*Ghostbin<\/title>', '', 
+                '0.49', '15', False, 'paste/', '', ''),
     'write.as': ('1', 'https://write.as/', 'api/posts', 'random', 'body=', '&title=%s', 
                 'data', 'json', 'data', 'id', '0.018', '15', True, '', '', ''),
     'oneclickpaste': ('1', 'http://oneclickpaste.com/', 'index.php', 'random', 'paste_data=', 
                 '&title=%s&format=text&paste_expire_date=1W&visibility=0&pass=&submit=Submit', 
-                'data', 'regex', '<a class="btn btn-primary" href="[^"]+\/(\d+\/)">\s*View\s*Paste\s*<\/a>', '', '0.060', '5', True, '', '', ''),
+                'data', 'regex', '<a class="btn btn-primary" href="[^"]+\/(\d+\/)">\s*View\s*Paste\s*<\/a>', 
+                '', '0.060', '5', True, '', '', ''),
     'bpaste': ('1', 'https://bpaste.net/', '', 'random', 'code=', '&lexer=text&expiry=1week', 
-                'data', 'regex', 'View\s*<a\s*href="[^*]+/(.*?)">raw<\/a>', '', '0.79', '15', True, 'raw/', '', ''),
+                'data', 'regex', 'View\s*<a\s*href="[^*]+/(.*?)">raw<\/a>', '', 
+                '0.79', '15', True, 'raw/', '', ''),
     'dumpz': ('0', 'http://dumpz.org/', 'api/dump', 'random', 'code=', '&lexer=text&comment=%s&password=', 
                 'headers', '', '', 'location', '0.99', '15', False, '', '', ''),
     'file.io': ('1', 'https://file.io/', '', 'random', '', 'expires=1w', 
@@ -879,7 +909,7 @@ def report_send(item, description='', fatal=False):
     # Se verifica que el DEBUG=ON, si no está se rechaza y se pide al usuario que lo active y reproduzca el fallo
     if not config.get_setting('debug'):
         platformtools.dialog_notification('DEBUG debe estar ACTIVO', 'antes de generar el informe')
-        return
+        return report_menu(item)
     
     # De cada al futuro se permitira al usuario que introduzca una breve descripción del fallo que se añadirá al LOG
     if description == 'OK':
@@ -887,6 +917,10 @@ def report_send(item, description='', fatal=False):
 
     # Escribimos en el log algunas variables de Kodi y Alfa que nos ayudarán en el diagnóstico del fallo
     environment = envtal.list_env()
+    if not environment['log_path']:
+        environment['log_path'] = str(filetools.join(xbmc.translatePath("special://logpath/"), 'kodi.log'))
+        environment['log_size_bytes'] = str(filetools.getsize(environment['log_path']))
+        environment['log_size'] = str(round(float(environment['log_size_bytes']) / (1024*1024), 3))
     
     # Se lee el archivo de LOG
     log_path = environment['log_path']
@@ -896,10 +930,10 @@ def report_send(item, description='', fatal=False):
         log_data = filetools.read(log_path)                             # Datos del archivo
         if not log_data:                                                # Algún error?
             platformtools.dialog_notification('No puede leer el log de Kodi', 'Comuniquelo directamente en el Foro de Alfa')
-            return
+            return report_menu(item)
     else:                                                               # Log no existe o path erroneo?
         platformtools.dialog_notification('LOG de Kodi no encontrado', 'Comuniquelo directamente en el Foro de Alfa')
-        return
+        return report_menu(item)
 
     # Si se ha introducido la descripción del fallo, se inserta la principio de los datos del LOG
     log_title = '***** DESCRIPCIÓN DEL FALLO *****'
@@ -982,13 +1016,18 @@ def report_send(item, description='', fatal=False):
 
             # Se hace la petición en downloadpage con HEADERS o DATA, con los parámetros del servidor
             if paste_type == 'headers':
-                data = httptools.downloadpage(paste_host+paste_sufix, post=paste_post, timeout=paste_timeout, random_headers=paste_random_headers, headers=paste_headers).headers
+                data = httptools.downloadpage(paste_host+paste_sufix, post=paste_post, 
+                            timeout=paste_timeout, random_headers=paste_random_headers, 
+                            headers=paste_headers).headers
             elif paste_type == 'data':
-                data = httptools.downloadpage(paste_host+paste_sufix, post=paste_post, timeout=paste_timeout, random_headers=paste_random_headers, headers=paste_headers).data
+                data = httptools.downloadpage(paste_host+paste_sufix, post=paste_post, 
+                            timeout=paste_timeout, random_headers=paste_random_headers, 
+                            headers=paste_headers).data
             
             # Si la petición es con formato REQUESTS, se realiza aquí
             elif paste_type == 'requests':
-                data = requests.post(paste_host, params=paste_params, files=paste_file, timeout=paste_timeout)
+                data = requests.post(paste_host, params=paste_params, files=paste_file, 
+                            timeout=paste_timeout)
         except:
             msg = 'Inténtelo más tarde'
             logger.error('Fallo al guardar el informe. ' + msg)
@@ -1010,9 +1049,11 @@ def report_send(item, description='', fatal=False):
                             key = jsontools.load(data.text)[paste_resp_key]             # con una etiqueta
                         else:
                             key = jsontools.load(data.text)[paste_resp_key][paste_url]  # con dos etiquetas anidadas
-                        item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, paste_host_return_tail)
+                        item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, 
+                                    paste_host_return_tail)
                     else:
-                        logger.error('ERROR en formato de retorno de datos. data.text=' + str(data.text))
+                        logger.error('ERROR en formato de retorno de datos. data.text=' + 
+                                    str(data.text))
                         continue
             
             # Respuestas a peticiones DOWNLOADPAGE
@@ -1022,26 +1063,31 @@ def report_send(item, description='', fatal=False):
                         key = jsontools.load(data)[paste_resp_key]      # con una etiqueta
                     else:
                         key = jsontools.load(data)[paste_resp_key][paste_url]   # con dos etiquetas anidadas
-                    item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, paste_host_return_tail)
+                    item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, 
+                                    paste_host_return_tail)
                 else:
                     logger.error('ERROR en formato de retorno de datos. data=' + str(data))
                     continue
             elif paste_resp == 'regex':                                 # Respuesta en DATOS, a buscar con un REGEX?
                 key = scrapertools.find_single_match(data, paste_resp_key)
                 if key:
-                    item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, paste_host_return_tail)
+                    item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, 
+                                    paste_host_return_tail)
                 else:
                     logger.error('ERROR en formato de retorno de datos. data=' + str(data))
                     continue
             elif paste_type == 'headers':                               # Respuesta en HEADERS, a buscar en "location"?
                 if paste_url in data:
                     item.url = data[paste_url]                          # Etiqueta de retorno de la clave
-                    item.url =  urlparse.urljoin(paste_host_resp + paste_host_return, item.url + paste_host_return_tail)
+                    item.url =  urlparse.urljoin(paste_host_resp + paste_host_return, 
+                                    item.url + paste_host_return_tail)
                 else:
-                    logger.error('ERROR en formato de retorno de datos. response.headers=' + str(data))
+                    logger.error('ERROR en formato de retorno de datos. response.headers=' + 
+                                    str(data))
                     continue
             else:
-                logger.error('ERROR en formato de retorno de datos. paste_type=' + str(paste_type) + ' / DATA: ' + data)
+                logger.error('ERROR en formato de retorno de datos. paste_type=' + 
+                                    str(paste_type) + ' / DATA: ' + data)
                 continue
 
             status = True                                               # Operación de upload terminada con éxito
