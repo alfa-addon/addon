@@ -9,13 +9,13 @@ from core import scrapertools
 from platformcode import config, logger
 from platformcode import platformtools
 
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0'}
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:65.0) Gecko/20100101 Firefox/65.0'}
 
 
 # Returns an array of possible video url's from the page_url
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s' , video_password=%s)" % (page_url, video_password))
-
+    page_url = page_url.replace(".nz/embed", ".nz/")
     # Se comprueba si existe un token guardado y sino se ejecuta el proceso de autentificación
     token_auth = config.get_setting("token", server="realdebrid")
     if token_auth is None or token_auth == "":

@@ -24,7 +24,7 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['torrent']
 
-host = 'http://www.todo-peliculas.net/'
+host = 'https://www.todo-peliculas.net/'
 channel = "todopeliculas"
 
 categoria = channel.capitalize()
@@ -332,6 +332,8 @@ def findvideos(item):
     
     item.extra2 = 'xyz'
     del item.extra2
+    
+    item.url = item.url.replace('http:', 'https:')      #Por si viene de la videoteca
     
     #logger.debug(item)
 

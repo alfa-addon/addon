@@ -13,7 +13,8 @@
   "id": "openload",
   "name": "openload",
   "premium": [
-    "realdebrid"
+    "realdebrid",
+    "alldebrid"
   ],
   "settings": [
     {

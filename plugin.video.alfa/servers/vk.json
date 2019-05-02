@@ -16,6 +16,9 @@
   "free": true,
   "id": "vk",
   "name": "vk",
+  "premium": [
+    "realdebrid"
+  ],
   "settings": [
     {
       "id": "vkemail",

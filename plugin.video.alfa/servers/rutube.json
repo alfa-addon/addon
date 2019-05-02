@@ -12,6 +12,9 @@
   "free": true,
   "id": "rutube",
   "name": "rutube",
+  "premium": [
+    "alldebrid"
+  ],
   "settings": [
     {
       "default": false,

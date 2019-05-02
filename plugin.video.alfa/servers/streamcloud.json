@@ -26,6 +26,9 @@
   "free": true,
   "id": "streamcloud",
   "name": "streamcloud",
+  "premium": [
+    "alldebrid"
+  ],
   "settings": [
     {
       "default": false,
