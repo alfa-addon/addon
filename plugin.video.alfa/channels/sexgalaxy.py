@@ -91,6 +91,9 @@ def lista(item):
 def play(item):
     logger.info()
     data = httptools.downloadpage(item.url).data
+    url= scrapertools.find_single_match(data, '<a href="([^<]+.mp4)".*?>Streaming')
+    if "gounlimited" in url:
+        data = httptools.downloadpage(url).data
     itemlist = servertools.find_video_items(data=data)
     for videoitem in itemlist:
         videoitem.title = item.title

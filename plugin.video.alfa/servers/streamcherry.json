@@ -12,6 +12,9 @@
   "free": true,
   "id": "streamcherry",
   "name": "streamcherry",
+  "premium": [
+    "realdebrid"
+  ],
   "settings": [
     {
       "default": false,

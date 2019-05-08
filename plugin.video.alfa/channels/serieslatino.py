@@ -84,8 +84,7 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    # logger.debug(data)
-    # return
+   
     patron = '<div id=mt-1830 class=item><a href=(.*?)><div class=image><img src=(.*?) alt=(.*?) width=.*? ' \
              'height=.*?class=player>.*?class=ttx>(.*?)<div class=degradado>.*?class=year>(.*?)<\/span><\/div><\/div>'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -306,7 +305,7 @@ def search(item, texto):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url, add_referer=True).data
+    data = httptools.downloadpage(item.url).data
     if 'your' in item.url:
         item.url = 'http://www.yourupload.com/embed/' + scrapertools.find_single_match(data, 'src=".*?code=(.*?)"')
         itemlist.append(item)

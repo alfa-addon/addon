@@ -1,14 +1,15 @@
 {
-  "id": "pelisrex",
-  "name": "PelisRex",
+  "id": "mirapelisonline",
+  "name": "Mira Pelis Online",
   "active": true,
   "adult": false,
-  "language": ["lat"],
-  "thumbnail": "https://www.pelisrex.com/wp-content/uploads/2018/11/hjko.png",
+  "language": ["lat","cast"],
+  "thumbnail": "https://i.postimg.cc/BZpn5LCF/mirapelisonline.png",
   "banner": "",
   "version": 1,
   "categories": [
     "movie",
+    "direct",
     "vos"
   ],
   "settings": [
@@ -30,6 +31,7 @@
       "lvalues": [
         "No filtrar",
         "LAT",
+        "CAST",
         "VOSE"
       ]
     },
@@ -50,17 +52,17 @@
       "visible": true
     },
     {
-      "id": "include_in_newest_latino",
+      "id": "include_in_newest_terror",
       "type": "bool",
-      "label": "Incluir en Novedades - latino",
+      "label": "Incluir en Novedades - terror",
       "default": true,
       "enabled": true,
       "visible": true
     },
     {
-      "id": "include_in_newest_terror",
+      "id": "include_in_newest_latino",
       "type": "bool",
-      "label": "Incluir en Novedades - Terror",
+      "label": "Incluir en Novedades - Latino",
       "default": true,
       "enabled": true,
       "visible": true

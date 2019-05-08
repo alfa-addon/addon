@@ -212,6 +212,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
     full_data = get_source(item.url)
+
     patron = '<div id="([^"]+)" class="play-box-iframe.*?src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(full_data)
     for option, video_url in matches:
@@ -219,32 +220,34 @@ def findvideos(item):
         if 'sub' in language.lower():
             language = 'SUB'
         language = IDIOMAS[language]
-
-        data = httptools.downloadpage(video_url, follow_redirects=False, headers={'Referer': item.url}).data
-
-        if 'hideload' in video_url:
-            quality = ''
-            new_id = scrapertools.find_single_match(data, "var OLID = '([^']+)'")
-            new_url = 'https://www.ultrapeliculashd.com/hideload/?ir=%s' % new_id[::-1]
-            data = httptools.downloadpage(new_url, follow_redirects=False, headers={'Referer': video_url}).headers
-            url = data['location']+"|%s" % video_url
-        elif 'd.php' in video_url:
-            data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-            quality = '1080p'
-            packed = scrapertools.find_single_match(data, '<script>(eval\(.*?)eval')
-            unpacked = jsunpack.unpack(packed)
-            url = scrapertools.find_single_match(unpacked, '"file":("[^"]+)"')
-        elif 'drive' in video_url:
-            quality = '1080p'
-            data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-            url = scrapertools.find_single_match(data, 'src="([^"]+)"')
-
+        quality = ''
+        # if 'waaw.tv' in video_url:
+        #     continue
+        # data = httptools.downloadpage(video_url, follow_redirects=False, headers={'Referer': item.url}).data
+        #
+        # if 'hideload' in video_url:
+        #     quality = ''
+        #     new_id = scrapertools.find_single_match(data, "var OLID = '([^']+)'")
+        #     new_url = 'https://www.ultrapeliculashd.com/hideload/?ir=%s' % new_id[::-1]
+        #     data = httptools.downloadpage(new_url, follow_redirects=False, headers={'Referer': video_url}).headers
+        #     url = data['location']+"|%s" % video_url
+        # elif 'd.php' in video_url:
+        #     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+        #     quality = '1080p'
+        #     packed = scrapertools.find_single_match(data, '<script>(eval\(.*?)eval')
+        #     unpacked = jsunpack.unpack(packed)
+        #     url = scrapertools.find_single_match(unpacked, '"file":("[^"]+)"')
+        # elif 'drive' in video_url:
+        #     quality = '1080p'
+        #     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+        #     url = scrapertools.find_single_match(data, 'src="([^"]+)"')
+        #
         if not config.get_setting("unify"):
             title = ' [%s] [%s]' % (quality, language)
         else:
             title = ''
 
-        new_item = (Item(channel=item.channel, title='%s'+title, url=url, action='play', quality=quality,
+        new_item = (Item(channel=item.channel, title='%s'+title, url=video_url, action='play', quality=quality,
                          language=language,  infoLabels=item.infoLabels))
         itemlist.append(new_item)
 
@@ -253,7 +256,6 @@ def findvideos(item):
 
     if __comprueba_enlaces__:
         itemlist = servertools.check_list_links(itemlist, __comprueba_enlaces_num__)
-
     # Requerido para FilterTools
 
     itemlist = filtertools.get_links(itemlist, item, list_language)

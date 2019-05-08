@@ -360,6 +360,9 @@ def mark_content_as_watched_on_alfa(path):
     if "\\" in path:
         path = path.replace("/", "\\")
     head_nfo, item = videolibrarytools.read_nfo(path)                   #Leo el .nfo del contenido
+    if not item:
+        logger.error('.NFO no encontrado: ' + path)
+        return
 
     if FOLDER_TVSHOWS in path:                                          #Compruebo si es CINE o SERIE
         contentType = "episode_view"                                    #Marco la tabla de BBDD de Kodi Video

@@ -12,6 +12,9 @@
   "free": true,
   "id": "xvideos",
   "name": "xvideos",
+  "premium": [
+    "alldebrid"
+  ],
   "settings": [
     {
       "default": false,

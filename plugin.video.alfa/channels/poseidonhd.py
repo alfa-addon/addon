@@ -33,7 +33,7 @@ list_servers = [
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'poseidonhd')
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'poseidonhd')
 
-host = 'https://poseidonhd.com/'
+host = 'https://poseidonhd.co/'
 
 def mainlist(item):
     logger.info()
@@ -263,7 +263,7 @@ def findvideos(item):
                     file_id = scrapertools.find_single_match(url, 'file=(.*?)&')
                     post = {'link': file_id}
                     post = urllib.urlencode(post)
-                    hidden_url = 'https://streamango.poseidonhd.io/repro/plugins/gkpluginsphp.php'
+                    hidden_url = 'https://streamango.poseidonhd.co/repro/plugins/gkpluginsphp.php'
                     data_url = httptools.downloadpage(hidden_url, post=post).data
                     dict_vip_url = jsontools.load(data_url)
                     url = dict_vip_url['link']
@@ -276,16 +276,20 @@ def findvideos(item):
                         file_id = scrapertools.find_single_match(url, 'h=(\w+)')
                         post = {'h': file_id}
                         post = urllib.urlencode(post)
-                        hidden_url = 'https://streamango.poseidonhd.io/repro/openload/api.php'
+                        hidden_url = 'https://streamango.poseidonhd.co/repro/openload/api.php'
                         data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False).data
                         json_data = jsontools.load(data_url)
-                        url = json_data['url']
+                        url = scrapertools.find_single_match(data_url, "VALUES \('[^']+','([^']+)'")
+                        if not url:
+                            url = json_data['url']
+                        if not url:
+                            continue
                     else:
                         new_data = httptools.downloadpage('https:'+url).data
                         file_id = scrapertools.find_single_match(new_data, 'value="([^"]+)"')
                         post = {'url': file_id}
                         post = urllib.urlencode(post)
-                        hidden_url = 'https://streamango.poseidonhd.io/repro/r.php'
+                        hidden_url = 'https://streamango.poseidonhd.co/repro/r.php'
                         data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False)
                         url = data_url.headers['location']
                 except:

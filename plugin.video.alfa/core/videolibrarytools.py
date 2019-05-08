@@ -424,24 +424,24 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                     if overwrite:                                           #pero solo si se se sobrescriben los .json
                         json_epi = Item().fromjson(filetools.read(json_path))                   #Leemos el .json
                         if json_epi.emergency_urls:                         #si existen las urls de emergencia...
-                            e.emergency_urls = json_epi.emergency_urls                          #... las copiamos
-                        else:                                                                   #y si no...
-                            e = emergency_urls(e, channel, json_path)                           #... las generamos
+                            e.emergency_urls = json_epi.emergency_urls      #... las copiamos
+                        else:                                               #y si no...
+                            e = emergency_urls(e, channel, json_path)       #... las generamos
                 else:
                     e = emergency_urls(e, channel, json_path)               #Si el episodio no existe, generamos las urls
-                if e.emergency_urls:                                                            #Si ya tenemos urls...
+                if e.emergency_urls:                                        #Si ya tenemos urls...
                     emergency_urls_succ = True                              #... es un éxito y vamos a marcar el .nfo
-            elif emergency_urls_stat == 2 and e.contentType == 'episode':                       #Borramos urls de emergencia?
+            elif emergency_urls_stat == 2 and e.contentType == 'episode':   #Borramos urls de emergencia?
                 if e.emergency_urls: del e.emergency_urls
                 emergency_urls_succ = True                                  #... es un éxito y vamos a marcar el .nfo
             elif emergency_urls_stat == 3 and e.contentType == 'episode':   #Actualizamos urls de emergencia?
                 if not silent:
                     p_dialog.update(0, 'Cacheando enlaces y archivos .torrent...', e.title)     #progress dialog
-                e = emergency_urls(e, channel, json_path)                                       #generamos las urls
-                if e.emergency_urls:                                                            #Si ya tenemos urls...
+                e = emergency_urls(e, channel, json_path)                   #generamos las urls
+                if e.emergency_urls:                                        #Si ya tenemos urls...
                     emergency_urls_succ = True                              #... es un éxito y vamos a marcar el .nfo
             
-            if not e.infoLabels["tmdb_id"] or (serie.infoLabels["tmdb_id"] and e.infoLabels["tmdb_id"] != serie.infoLabels["tmdb_id"]):                         #en series multicanal, prevalece el infolabels...
+            if not e.infoLabels["tmdb_id"] or (serie.infoLabels["tmdb_id"] and e.infoLabels["tmdb_id"] != serie.infoLabels["tmdb_id"]):                                                    #en series multicanal, prevalece el infolabels...
                 e.infoLabels = serie.infoLabels                             #... del canal actual y no el del original
             e.contentSeason, e.contentEpisodeNumber = season_episode.split("x")
             new_episodelist.append(e)
@@ -469,6 +469,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         json_path = filetools.join(path, ("%s [%s].json" % (season_episode, e.channel)).lower())
 
         if season_episode in nostrm_episodelist:
+            logger.error('Error en la estructura de la Videoteca: Serie ' + serie.contentSerieName + ' ' + season_episode)
             continue
         strm_exists = strm_path in ficheros
         nfo_exists = nfo_path in ficheros
@@ -548,7 +549,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     if not silent:
         p_dialog.close()
 
-    if news_in_playcounts:
+    if news_in_playcounts or emergency_urls_succ or serie.infoLabels["status"] == "Ended":
         # Si hay nuevos episodios los marcamos como no vistos en tvshow.nfo ...
         tvshow_path = filetools.join(path, "tvshow.nfo")
         try:
@@ -570,6 +571,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                         
             if tvshow_item.active == 30:
                 tvshow_item.active = 1
+            if tvshow_item.infoLabels["status"] == "Ended" and insertados == 0 and sobreescritos == 0 and fallidos == 0:                                                                            # Si la serie ha terminado...
+                tvshow_item.active = 0                                                  # ... no la actualizaremos más
             update_last = datetime.date.today()
             tvshow_item.update_last = update_last.strftime('%Y-%m-%d')
             update_next = datetime.date.today() + datetime.timedelta(days=int(tvshow_item.active))

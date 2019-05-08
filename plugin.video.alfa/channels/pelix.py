@@ -119,9 +119,13 @@ def list_all(item):
     if item.page == 0:
         data = get_source(item.url+item.path)
     else:
+        prevurl = item.url
+        if item.path: prevurl = item.url+item.path
+        url_ajax = re.sub('/home/([a-z]+)', r'/home/\1Ajax', prevurl)
+        url_ajax = url_ajax + '/%s' % str(item.page)
         post = {'page': str(item.page)}
         post = urllib.urlencode(post)
-        data = httptools.downloadpage(host+'home/%sAjax/%s' % ('newest', str(item.page)), post=post).data
+        data = httptools.downloadpage(url_ajax + '/%s' % str(item.page), post=post).data
         data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
 
     patron = '<div class="base-used">.*?<a href="([^"]+)">.*?<img class="img-thumbnail" src="([^"]+)".*?'
@@ -134,7 +138,8 @@ def list_all(item):
         contentTitle = scrapedtitle
         thumbnail = scrapedthumbnail
         url = scrapedurl
-
+        if url.startswith('/'):
+            url = host + url[1:]
         new_item= Item(channel=item.channel,
                        title=title,
                        url=url,
