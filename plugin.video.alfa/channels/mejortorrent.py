@@ -770,20 +770,25 @@ def findvideos(item):
     itemlist_f = []                                     #Itemlist de enlaces filtrados
     if not item.language:
         item.language = ['CAST']                        #Castellano por defecto
-        matches = []
+    matches = []
+        
+    try:
+        tmdb.set_infoLabels(item, True)                 #TMDB actualizado
+    except:
+        pass
     
     #Si es un lookup para cargar las urls de emergencia en la Videoteca...
     if item.videolibray_emergency_urls:
         item.emergency_urls = []
-        item.emergency_urls.append([])                                              #Reservamos el espacio para los .torrents locales
+        item.emergency_urls.append([])                  #Reservamos el espacio para los .torrents locales
     
     #Bajamos los datos de la página
     data = ''
     try:
-        if item.post:   #Puede traer datos para una llamada "post".  De momento usado para documentales, pero podrían ser series
+        if item.post:   #Puede traer datos para una llamada "post".  De momento usado para documentales, podrían ser series
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, post=item.post).data)
             data = data.replace('"', "'")
-            patron = ">Pincha.*?<a href='((?:[^']+)?\/uploads\/torrents\/\w+\/.*?\.torrent)'"
+            patron = ">\s*Pincha.*?<a href='([^\']+\.torrent)'"
         else:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
             patron = "<a href='((?:[^']+)?secciones.php\?sec\=descargas&ap=contar&tabla=[^']+)'"
@@ -837,6 +842,7 @@ def findvideos(item):
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
         url = verificar_url(urlparse.urljoin(item.url, scrapedurl))
+        patron_torrent = ">\s*Pincha.*?<a href='([^\']+\.torrent)'"
         
         # Localiza el .torrent en el siguiente link
         if not item.post and not item.armagedon:                    # Si no es llamada con Post, hay que bajar un nivel más
@@ -845,21 +851,21 @@ def findvideos(item):
             except:                                                                     #error
                 pass
                 
-            if not torrent_data:
+            if not torrent_data or not scrapertools.find_single_match(torrent_data, patron_torrent):
                 logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / URL: " + url + " / DATA: " + data)
                 itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log'))
                 if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
                     if len(item.emergency_urls[0]):
                         item_local.url = item.emergency_urls[0][0]                      #Restauramos la primera url
-                    item.armagedon = True                                               #Marcamos la situación como catastrófica 
+                    item.armagedon = True                           #Marcamos la situación como catastrófica 
                 else:
-                    if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
+                    if item.videolibray_emergency_urls:             #Si es llamado desde creación de Videoteca...
                         return item                                                     #Devolvemos el Item de la llamada
                     else:
                         return itemlist                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
             
             if not item.armagedon:
-                item_local.url = scrapertools.find_single_match(torrent_data, ">Pincha.*?<a href='((?:[^']+)?\/uploads\/torrents\/\w+\/.*?\.torrent)'")
+                item_local.url = scrapertools.find_single_match(torrent_data, patron_torrent)
                 item_local.url = verificar_url(urlparse.urljoin(url, item_local.url))
         
         elif not item.armagedon:

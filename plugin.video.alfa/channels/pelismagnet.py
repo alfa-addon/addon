@@ -406,6 +406,11 @@ def findvideos(item):
     matches = []
     item.category = categoria
     
+    try:
+        tmdb.set_infoLabels(item, True)                                     #TMDB actualizado
+    except:
+        pass
+    
     item.extra2 = 'xyz'
     del item.extra2
     

@@ -377,6 +377,11 @@ def findvideos(item):
     subtitles = []
     item.category = categoria
     
+    try:
+        tmdb.set_infoLabels(item, True)                 #TMDB actualizado
+    except:
+        pass
+    
     #logger.debug(item)
 
     if item.extra != 'episodios':

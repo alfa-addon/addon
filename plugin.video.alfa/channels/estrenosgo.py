@@ -644,6 +644,11 @@ def findvideos(item):
     if not item.language:
         item.language = ['CAST']                        #Castellano por defecto
     
+    try:
+        tmdb.set_infoLabels(item, True)                 #TMDB actualizado
+    except:
+        pass
+    
     item.url = item.url.replace(host_alt, host)         #Cambio de dominio (videoteca)
     
     #logger.debug(item)
