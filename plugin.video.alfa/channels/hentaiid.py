@@ -114,18 +114,27 @@ def findvideos(item):
     logger.info()
 
     data = httptools.downloadpage(item.url).data
-
+    video_urls = []
+    down_urls = []
     patron = '<(?:iframe)?(?:IFRAME)?\s*(?:src)?(?:SRC)?="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for url in matches:
-        if 'goo.gl' in url:
+        if 'goo.gl' in url or 'tinyurl' in url:
             video = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers["location"]
-            matches.remove(url)
-            matches.append(video)
-
+            video_urls.append(video)
+        else:
+            video_urls.append(url)
+    paste = scrapertools.find_single_match(data, 'https://gpaste.us/([a-zA-Z0-9]+)')
+    if paste:
+        new_data = httptools.downloadpage('https://gpaste.us/'+paste).data
+        bloq = scrapertools.find_single_match(new_data, 'id="input_text">(.*?)</div>')
+        matches = bloq.split('<br>')
+        for url in matches:
+            down_urls.append(url)
+    video_urls.extend(down_urls)
     from core import servertools
-    itemlist = servertools.find_video_items(data=",".join(matches))
+    itemlist = servertools.find_video_items(data=",".join(video_urls))
     for videoitem in itemlist:
         videoitem.fulltitle = item.fulltitle
         videoitem.channel = item.channel

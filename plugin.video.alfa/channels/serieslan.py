@@ -214,7 +214,6 @@ def episodios(item):
     return itemlist
 
 def findvideos(item):
-    import base64
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -226,47 +225,28 @@ def findvideos(item):
     for id in buttons:
         new_url = golink(int(id), _sa, sl)
         data_new = httptools.downloadpage(new_url).data
-        logger.info(data_new)
-        valor = scrapertools.find_single_match(data_new, '\+ x92\((.*?)\)\+ ')
-        valores = valor.split("atob")
-        valor2 = valores[1].replace('(','').replace(')','')
-        valor1 = valores[0].split('+')
-        datos = []
-        logger.info("f4d5as6f")
-        logger.info(valor1)
-        stringTodo = ''
-        for val in valor1:
-            if '()' in val:
-                funcion = val.split('(')[0]
-                scrapedvalue = scrapertools.find_single_match(data_new, funcion+'.+?return (.+?);')
-                datos.append(scrapedvalue)
-            elif '.charAt' in val:
-                funcion = val.split('.charAt(')
-                stringTodo = funcion[0]
-                position = funcion[1].split(')')[0]
-        posiciones = []
-        logger.info(datos)
-        if datos:
-            for dato in datos:
-                logger.info(dato)
-                try:
-                    posiciones.append(int(dato))
-                except Exception as e:
-                    scrapedvalue = scrapertools.find_single_match(data_new, 'var %s = (.+?);'  % (dato))
-                    logger.info("scrapedvalue")
-                    logger.info(scrapedvalue)
-                    posiciones.append(int(scrapedvalue))
-        logger.info("positiones"+posiciones)
-        try:
-            logger.info(base64.b64decode(data1, data2))
-            url = x92(data1, data2)
-            if 'download' in url:
-                url = url.replace('download', 'preview')
-            title = '%s'
-            itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language='latino',
+        matches = scrapertools.find_multiple_matches(data_new, 'javascript">(.*?)</script>')
+        js = ""
+        for part in matches:
+            js += part
+        #logger.info("test before:" + js)
+        try: 
+            matches = scrapertools.find_multiple_matches(data_new, '" id="(.*?)" val="(.*?)"')
+            for zanga, val in matches:
+                js = js.replace('var %s = document.getElementById("%s");' % (zanga, zanga), "")
+                js = js.replace('%s.getAttribute("val")' % zanga, '"%s"' % val)
+            #logger.info("test1 after:" +js)
+        except:
+            pass
+        js = re.sub('(document\[.*?)=', 'prem=', js)
+        import js2py
+        js2py.disable_pyimport()
+        context = js2py.EvalJs({'atob': atob})
+        result = context.eval(js)
+        url = scrapertools.find_single_match(result, 'src="(.*?)"')
+        title = '%s'
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language='latino',
                          infoLabels=item.infoLabels))
-        except Exception as e:
-            logger.info(e)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
@@ -302,7 +282,7 @@ def link(ida,sl):
 
 def substr(st,a,b):
     return st[a:a+b]
-
+'''
 def x92(data1, data2):
     data3 = []
     data4 = 0
@@ -342,3 +322,7 @@ def _nEgqhkiRub():
 
 def _lTjZxWGNnE():
     return 57
+'''
+def atob(s):
+    import base64
+    return base64.b64decode(s.to_string().value)
