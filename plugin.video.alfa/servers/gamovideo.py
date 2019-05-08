@@ -1,22 +1,23 @@
 # -*- coding: utf-8 -*-
 
 import re
-
+import random
 from core import httptools
 from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
 
+ver = random.randint(55, 68)
+if ver == 62: ver = 70
 #headers = {"User-Agent":"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0"}
-USERAGENT = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0"
-
+USERAGENT = "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:%s.0) Gecko/20100101 Firefox/%s.0" % (ver, ver)
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     #data = httptools.downloadpage(page_url, headers=headers, cookies=False).data
     headers = {"User-Agent": USERAGENT,
                "Cookie": "gam=1",
-               "Referer": page_url.replace("-embed","")}
+               "Referer": page_url.replace("embed-","")}
     data = httptools.downloadpage(page_url, headers=headers).data
 
     if "File was deleted" in data or "Not Found" in data or "File was locked by administrator" in data:
@@ -33,10 +34,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     #data = httptools.downloadpage(page_url, headers=headers, cookies=False).data
     headers = {"User-Agent": USERAGENT,
                "Cookie": "gam=1",
-               "Referer": page_url.replace("-embed","")}
+               "Referer": page_url.replace("embed-","")}
     data = httptools.downloadpage(page_url, headers=headers).data
     packer = scrapertools.find_single_match(data,
                                             "<script type='text/javascript'>(eval.function.p,a,c,k,e,d..*?)</script>")
+    logger.info("(data='%s')" % data) 
     if packer != "":
         data = jsunpack.unpack(packer)
 
