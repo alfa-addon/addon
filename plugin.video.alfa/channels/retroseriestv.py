@@ -61,12 +61,13 @@ def list_all(item):
 
     data = get_source(item.url)
     patron = '<article id="post-\d+.*?<img src="([^"]+)" alt="([^"]+)">.*?'
-    patron += '<a href="([^"]+)">.*?</h3> <span></span> <span>(\d{4})<'
+    patron += '<a href="([^"]+)">.*?</h3> <span>(.*?)<'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedthumbnail, scrapedtitle, scrapedurl, year in matches:
+    for scrapedthumbnail, scrapedtitle, scrapedurl, year_data in matches:
 
+        year = scrapertools.find_single_match(year_data, '(d{4})')
         url = scrapedurl
         contentSerieName = scrapedtitle
         thumbnail = scrapedthumbnail
@@ -105,7 +106,7 @@ def seasons(item):
     logger.info()
 
     itemlist = []
-    data = get_source(item.url)
+    data = get_source(item.url).replace("'", '"')
     patron = '<span class="title">Temporada (\d+) <'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -138,11 +139,11 @@ def episodesxseason(item):
 
     itemlist = []
 
-    data = get_source(item.url)
+    data = get_source(item.url).replace("'", '"')
     infoLabels = item.infoLabels
     season = infoLabels['season']
-    patron = '<img src="([^>]+)"></a></div><div class="numerando">%s+ - (\d+|\d+\/\d+)</div>' % season
-    patron += '<div class="episodiotitle"><a href="([^"]+)">(.*?)</a><'
+    patron = '<img src="([^>]+)"></div><div class="numerando">%s+ - (\d+|\d+\/\d+)</div>' % season
+    patron += '<div class="episodiotitle"><a href="([^"]+)">(.*?)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedthumbnail, scrapedepi, scrapedurl, scrapedtitle in matches:
@@ -165,8 +166,8 @@ def findvideos(item):
     from lib import generictools
     import urllib
     itemlist = []
-    data = get_source(item.url)
-    patron = 'data-post="(\d+)" data-nume="(\d+)".*?img src=\'([^\']+)\''
+    data = get_source(item.url).replace("'", '"')
+    patron = 'data-post="(\d+)" data-nume="(\d+)".*?img src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for id, option, lang in matches:
         lang = scrapertools.find_single_match(lang, '.*?/flags/(.*?).png')
