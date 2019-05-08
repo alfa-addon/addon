@@ -54,7 +54,7 @@ def decode_video_url(url, data):
     net1 = alfaresolver.EstructuraInicial(net.data)
     data1 = ''.join(net1.data)
     match = re.compile("='(.*?);';eval", re.DOTALL).findall(data1)[0]
-    matches = re.compile('data\("([e0-9]+)",(\d+)\)', re.DOTALL).findall(match)
+    matches = re.compile('data\("([a-z0-9]+)",(\d+)\)', re.DOTALL).findall(match)
     pos = []
     for e, val in matches:
         matches2 = re.compile(r'data\("%s"\)&(\d+)\]=r' % e, re.DOTALL).findall(match)
