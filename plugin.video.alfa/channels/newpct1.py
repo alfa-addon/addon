@@ -179,6 +179,8 @@ def submenu(item):
         pass
         
     patron = '<li><a\s*class="[^"]+"\s*href="[^"]+"><i\s*class="[^"]+".*?><\/i>.*?Inicio.*?<\/a><\/li>(.+)<\/ul>\s*<\/nav>'
+    if not scrapertools.find_single_match(data, patron):
+        patron = '<div class="links-content">\s*<div class="one_fourth">\s*<h3>Categorias<\/h3>\s*<ul class="content-links">(.*?)<\/ul>\s*<\/div>'
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not data or not scrapertools.find_single_match(data, patron):
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
@@ -220,7 +222,7 @@ def submenu(item):
         itemlist.append(item.clone(action='', title=item.category + ': ERROR 02: SUBMENU: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
-    patron = '<li><a.*?href="([^"]+)"\s?.itle="[^"]+"\s?>([^>]+)<\/a><\/li>'
+    patron = '<li><a\s*href="([^"]+)"\s*.itle="[^"]+"\s*>(?:<i\s*class="[^"]+">\s*<\/i>)?([^>]+)<\/a><\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data_menu)
 
     if not matches:
@@ -249,7 +251,11 @@ def submenu(item):
             else:
                 item.extra2 = ""
             
-            itemlist.append(item.clone(action="listado", title=title, url=scrapedurl))
+            url = scrapedurl                                                #Arreglo para Desacargas2020
+            if scrapedurl == item.url:
+                url = scrapedurl + item.extra + '/'
+            
+            itemlist.append(item.clone(action="listado", title=title, url=url))
             
             if matches_hd and 'HD' in title:
                 for scrapedurlcat, scrapedtitlecat in matches_hd:           #Pintamos las categorías de peliculas en HD
@@ -257,7 +263,7 @@ def submenu(item):
                         continue
                     itemlist.append(item.clone(action="listado", title="   - Calidad: " + scrapedtitlecat, url=scrapedurlcat))
             
-            itemlist.append(item.clone(action="alfabeto", title=title + " [A-Z]", url=scrapedurl))
+            itemlist.append(item.clone(action="alfabeto", title=title + " [A-Z]", url=url))
             
     if item.extra == "varios" and len(itemlist) == 0:
         itemlist.append(item.clone(action="listado", title="Varios", url=item.channel_host + "varios/"))
@@ -343,7 +349,7 @@ def submenu_novedades(item):
     itemlist.append(
         Item(channel=item.channel, action="search", title="Buscar", url=item.channel_host + "buscar", thumbnail=thumb_buscar, category=item.category, channel_host=item.channel_host))
     
-    itemlist.append(item.clone(action='', title="[COLOR yellow]Lo Último en la Categoría:[/COLOR]"))
+    itemlist.append(item.clone(action='', title="[COLOR yellow]Lo Último en la Categoría de [B]%s[/B][/COLOR]" % fecha_rango))
     for value, title in matches:
         if value.isdigit():
             if title not in "Juegos, Software, Musica, Deportes":
@@ -1015,7 +1021,7 @@ def listado_busqueda(item):
                 except:
                     pass
 
-                pattern = '<div class="content">.*?<h1>.*?<a href="([^"]+)"'                #Patron para Serie completa
+                pattern = '<div\s*class="content.*?">.*?<h1.*?>.*?<a\s*href="([^"]+)"'      #Patron para Serie completa
                 if not data_serie or (not scrapertools.find_single_match(data_serie, pattern) and not '<h3><strong>( 0 ) Resultados encontrados </strong>' in data and not '<ul class="noticias-series"></ul></form></div><!-- end .page-box -->' in data):
                     logger.error("ERROR 01: LISTADO_BUSQUEDA: La Web no responde o ha cambiado de URL: " + item_local.url + " / DATA: " + data_serie)
                     #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el cambio de episodio por serie
@@ -1029,7 +1035,7 @@ def listado_busqueda(item):
                 title_subs += ["ALT"]
 
             try:
-                pattern = '<div class="content">.*?<h1>.*?<a href="([^"]+)"'                #Patron para Serie completa
+                pattern = '<div\s*class="content.*?">.*?<h1.*?>.*?<a\s*href="([^"]+)"'      #Patron para Serie completa
                 item_local.url = scrapertools.find_single_match(data_serie, pattern)
                 #Son series VO mal formadas?
                 if (item.post and '775' in item.post and 'vo/' not in item_local.url) or 'vo/' in url:      
@@ -1464,9 +1470,13 @@ def findvideos(item):
     patron = 'class="btn-torrent">.*?window.location.href = (?:parseURL\()?"(.*?)"\)?;'     #Patron para .torrent
     patron_mult = 'torrent:check:status|' + patron + '|<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'
     if not scrapertools.find_single_match(data, patron):
-        patron_alt = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'  #Patron para .torrent (planetatorrent)
-        if scrapertools.find_single_match(data, patron):
+        patron_alt = '<\s*script\s*type="text\/javascript"\s*>\s*var\s*dl\s*=\s*"([^"]+)"'  #Patron .torrent (descargas2020)
+        if scrapertools.find_single_match(data, patron_alt):
             patron = patron_alt
+        else:
+            patron_alt = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'          #Patron .torrent (planetatorrent)
+            if scrapertools.find_single_match(data, patron_alt):
+                patron = patron_alt
     url_torr = scrapertools.find_single_match(data, patron)
     if not url_torr.startswith("http"):                                         #Si le falta el http.: lo ponemos
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
@@ -1531,7 +1541,9 @@ def findvideos(item):
     # patrón para la url torrent
     patron = 'class="btn-torrent">.*?window.location.href = (?:parseURL\()?"(.*?)"\)?;'         #Patron para .torrent
     if not scrapertools.find_single_match(data, patron):
-        patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'          #Patron para .torrent (planetatorrent)
+        patron = '<\s*script\s*type="text\/javascript"\s*>\s*var\s*dl\s*=\s*"([^"]+)"'  #Patron .torrent (descargas2020)
+        if not scrapertools.find_single_match(data, patron):
+            patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'      #Patron para .torrent (planetatorrent)
     url_torr = scrapertools.find_single_match(data, patron)
     if not url_torr.startswith("http"):                                             #Si le falta el http.: lo ponemos
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
@@ -1632,7 +1644,7 @@ def findvideos(item):
     
     host_dom = host.replace("https://", "").replace("http://", "").replace("www.", "")
     data = data.replace("http://tumejorserie.com/descargar/url_encript.php?link=", "(")
-    data = re.sub(r'javascript:;" onClick="popup\("http:\/\/(?:www.)?' + host_dom + '\w{1,9}\/library\/include\/ajax\/get_modallinks.php\?links=', "", data)
+    data = re.sub(r'javascript:;" onClick="popup\("(?:http:)?\/\/(?:www.)?' + host_dom + '\w{1,9}\/library\/include\/ajax\/get_modallinks.php\?links=', "", data)
 
     # Nuevo sistema de scrapeo de servidores creado por Torrentlocula, compatible con otros clones de Newpct1
     patron = '<div class=\"box1\"[^<]+<img src=\"([^<]+)?" style[^<]+><\/div[^<]+<div class="box2">([^<]+)?<\/div[^<]+<div class="box3">([^<]+)?'

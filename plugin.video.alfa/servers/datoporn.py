@@ -11,7 +11,7 @@ def test_video_exists(page_url):
 
     data = httptools.downloadpage(page_url).data
 
-    if 'File Not Found' in data or '404 Not Found' in data:
+    if 'Not Found' in data or 'File is no longer available' in data:
         return False, "[Datoporn] El archivo no existe o ha sido borrado"
 
     return True, ""
