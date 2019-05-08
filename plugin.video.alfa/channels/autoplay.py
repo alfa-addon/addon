@@ -328,6 +328,9 @@ def start(itemlist, item):
                     try:
                         if platformtools.is_playing():
                             PLAYED = True
+                            old_frequency = channeltools.get_channel_setting("frequency", channel_id, 0)
+                            channeltools.set_channel_setting('frequency', old_frequency + 1, channel_id)
+                            logger.debug('autoplay sumar frecuencia')
                             break
                     except:
                         logger.debug(str(len(autoplay_list)))
