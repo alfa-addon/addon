@@ -25,6 +25,7 @@ def mainlist(item):
     itemlist.append(item.clone(action="categorias", title="Modelos",
                                url=host + "/models/?mode=async&function=get_block&block_id=list_models_models" \
                                           "_list&sort_by=total_videos"))
+    itemlist.append(item.clone(action="categorias", title="Canal", url=host + "/channels/"))
     itemlist.append(item.clone(action="playlists", title="Listas", url=host + "/playlists/"))
     itemlist.append(item.clone(action="tags", title="Tags", url=host + "/tags/"))
     itemlist.append(item.clone(title="Buscar...", action="search"))
@@ -117,21 +118,23 @@ def lista(item):
 def categorias(item):
     logger.info()
     itemlist = []
-
-    # Descarga la pagina    
-    data = get_data(item.url)
-
     # Extrae las entradas
-    patron = '<a class="item" href="([^"]+)" title="([^"]+)".*?src="([^"]+)".*?<div class="videos">([^<]+)<'
+    if "/channels/" in item.url:
+        patron = '<div class="video-item   ">.*?<a href="([^"]+)" title="([^"]+)".*?src="([^"]+)".*?<li>([^<]+)<'
+    else:
+        patron = '<a class="item" href="([^"]+)" title="([^"]+)".*?src="([^"]+)".*?<div class="videos">([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle, scrapedthumbnail, videos in matches:
         if "go.php?" in scrapedurl:
             scrapedurl = urllib.unquote(scrapedurl.split("/go.php?u=")[1].split("&")[0])
             scrapedthumbnail = urllib.unquote(scrapedthumbnail.split("/go.php?u=")[1].split("&")[0])
+            scrapedthumbnail += "|Referer=https://www.porntrex.com/"
         else:
             scrapedurl = urlparse.urljoin(host, scrapedurl)
             if not scrapedthumbnail.startswith("https"):
                 scrapedthumbnail = "https:%s" % scrapedthumbnail
+                scrapedthumbnail += "|Referer=https://www.porntrex.com/"
+                scrapedthumbnail = scrapedthumbnail.replace(" " , "%20")
         if videos:
             scrapedtitle = "%s  (%s)" % (scrapedtitle, videos)
         itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
@@ -168,6 +171,7 @@ def playlists(item):
             scrapedurl = urlparse.urljoin(host, scrapedurl)
             if not scrapedthumbnail.startswith("https"):
                 scrapedthumbnail = "https:%s" % scrapedthumbnail
+                scrapedthumbnail += "|Referer=https://www.porntrex.com/"
         if videos:
             scrapedtitle = "%s  [COLOR red](%s)[/COLOR]" % (scrapedtitle, videos)
         itemlist.append(item.clone(action="videos", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
@@ -254,7 +258,7 @@ def menu_info(item):
     for i, img in enumerate(matches):
         if i == 0:
             continue
-        img = "https:" + img
+        img = "https:" + img + "|Referer=https://www.porntrex.com/"
         title = "Imagen %s" % (str(i))
         itemlist.append(item.clone(action="", title=title, thumbnail=img, fanart=img))
     return itemlist
