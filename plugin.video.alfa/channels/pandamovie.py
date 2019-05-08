@@ -64,7 +64,7 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     patron = '<div data-movie-id="\d+".*?'
     patron += '<a href="([^"]+)".*?oldtitle="([^"]+)".*?'
-    patron += '<img src="([^"]+)".*?'
+    patron += '<img data-original="([^"]+)".*?'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
         url = urlparse.urljoin(item.url, scrapedurl)
