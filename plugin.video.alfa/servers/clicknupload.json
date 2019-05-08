@@ -13,7 +13,8 @@
   "id": "clicknupload",
   "name": "clicknupload",
   "premium": [
-    "realdebrid"
+    "realdebrid",
+    "alldebrid"
   ],
   "settings": [
     {

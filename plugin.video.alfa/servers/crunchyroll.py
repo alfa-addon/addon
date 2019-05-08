@@ -19,7 +19,7 @@ def test_video_exists(page_url):
     premium = config.get_setting("premium", server="crunchyroll")
     if premium:
         return login(page_url)
-    data = httptools.downloadpage(page_url, headers=GLOBAL_HEADER, replace_headers=True).data
+    data = httptools.downloadpage(page_url, headers=GLOBAL_HEADER).data
     if "Este es un clip de muestra" in data:
         disp = scrapertools.find_single_match(data, '<a href="/freetrial".*?</span>.*?<span>\s*(.*?)</span>')
         disp = disp.strip()
@@ -39,9 +39,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     url = "https://www.crunchyroll.com/xml/?req=RpcApiVideoPlayer_GetStandardConfig&media_id=%s" \
           "&video_format=0&video_quality=0&auto_play=0&aff=af-12299-plwa" % media_id
     post = "current_page=%s" % page_url
-    data = httptools.downloadpage(url, post, headers=GLOBAL_HEADER, replace_headers=True).data
+    data = httptools.downloadpage(url, post, headers=GLOBAL_HEADER).data
     if "<msg>Media not available</msg>" in data or "flash_block.png" in data:
-        data = httptools.downloadpage(proxy + url, post, headers=GLOBAL_HEADER, replace_headers=True,
+        data = httptools.downloadpage(proxy + url, post, headers=GLOBAL_HEADER,
                                       cookies=False).data
     media_url = scrapertools.find_single_match(data, '<file>(.*?)</file>').replace("&amp;", "&")
     if not media_url:
@@ -64,8 +64,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             link_sub = scrapertools.find_single_match(data, "link='([^']+)' title='\[Español \(España\)")
         if not link_sub:
             link_sub = scrapertools.find_single_match(data, "link='([^']+)' title='\[English")
-        data_sub = httptools.downloadpage(link_sub.replace("&amp;", "&"), headers=GLOBAL_HEADER,
-                                          replace_headers=True).data
+        data_sub = httptools.downloadpage(link_sub.replace("&amp;", "&"), headers=GLOBAL_HEADER).data
         id_sub = scrapertools.find_single_match(data_sub, "subtitle id='([^']+)'")
         iv = scrapertools.find_single_match(data_sub, '<iv>(.*?)</iv>')
         data_sub = scrapertools.find_single_match(data_sub, '<data>(.*?)</data>')
@@ -84,13 +83,13 @@ def login(page_url):
     login_page = "https://www.crunchyroll.com/login"
     user = config.get_setting("user", server="crunchyroll")
     password = config.get_setting("password", server="crunchyroll")
-    data = httptools.downloadpage(login_page, headers=GLOBAL_HEADER, replace_headers=True).data
+    data = httptools.downloadpage(login_page, headers=GLOBAL_HEADER).data
     if not "<title>Redirecting" in data:
         token = scrapertools.find_single_match(data, 'name="login_form\[_token\]" value="([^"]+)"')
         redirect_url = scrapertools.find_single_match(data, 'name="login_form\[redirect_url\]" value="([^"]+)"')
         post = "login_form%5Bname%5D=" + user + "&login_form%5Bpassword%5D=" + password + \
                "&login_form%5Bredirect_url%5D=" + redirect_url + "&login_form%5B_token%5D=" + token
-        data = httptools.downloadpage(login_page, post, headers=GLOBAL_HEADER, replace_headers=True).data
+        data = httptools.downloadpage(login_page, post, headers=GLOBAL_HEADER).data
         if "<title>Redirecting" in data:
             return True, ""
         else:

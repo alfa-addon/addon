@@ -1,16 +1,14 @@
 {
-  "id": "elreyx",
-  "name": "elreyx",
+  "id": "shameless",
+  "name": "Shameless",
   "active": true,
   "adult": true,
   "language": ["*"],
-  "thumbnail": "http://www.elreyx.com/template/images/logo.png",
+  "thumbnail": "https://www.shameless.com/favicon/apple-touch-icon.png",
   "banner": "",
   "categories": [
     "adult"
   ],
   "settings": [
-
   ]
 }
-

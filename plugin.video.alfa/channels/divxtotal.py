@@ -521,6 +521,11 @@ def findvideos(item):
     matches = []
     item.category = categoria
     
+    try:
+        tmdb.set_infoLabels(item, True)                                             #TMDB actualizado
+    except:
+        pass
+    
     #logger.debug(item)
 
     #Bajamos los datos de la página

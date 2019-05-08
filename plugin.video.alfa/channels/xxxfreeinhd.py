@@ -67,7 +67,7 @@ def lista(item):
         title = scrapedtitle
         thumbnail = scrapedthumbnail + "|https://watchxxxfreeinhd.com/" 
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
                               thumbnail=thumbnail, plot=plot, fanart=scrapedthumbnail, contentTitle = scrapedtitle))
     next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)"')
     if next_page:
@@ -77,7 +77,7 @@ def lista(item):
     return itemlist
 
 
-def findvideos(item):
+def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data

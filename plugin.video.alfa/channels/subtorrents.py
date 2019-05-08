@@ -24,8 +24,10 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://www.subtorrents.tv/'
-sufix = '.tv/'
+#host = 'https://www.subtorrents.tv/'
+#sufix = '.tv/'
+host = 'https://www.subtorrents1.com/'
+sufix = '.com/'
 channel = 'subtorrents'
 categoria = channel.capitalize()
 color1, color2, color3 = ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']
@@ -374,6 +376,11 @@ def findvideos(item):
     matches = []
     subtitles = []
     item.category = categoria
+    
+    try:
+        tmdb.set_infoLabels(item, True)                 #TMDB actualizado
+    except:
+        pass
     
     #logger.debug(item)
 

@@ -61,8 +61,7 @@ def login():
     headers = {"User-Agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/66.0.3163.100 Safari/537.36", "Referer": host, "X-Requested-With": "XMLHttpRequest","X-CSRF-TOKEN":
         token}
-    data = httptools.downloadpage(host+"/login", post=post, headers=headers,
-                                  replace_headers=False).data
+    data = httptools.downloadpage(host+"/login", post=post, headers=headers).data
     if "redirect" in data:
         return True
     else:
@@ -671,7 +670,7 @@ def checkseen(item):
         headers = {"User-Agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) "
                                  "Chrome/61.0.3163.100 Safari/537.36", "Referer": host + "/serie/",
                    "X-Requested-With": "XMLHttpRequest", "X-CSRF-TOKEN": item.token}
-    data = httptools.downloadpage(url_temp, post="id=" + item.idtemp, headers=headers, replace_headers=True).data
+    data = httptools.downloadpage(url_temp, post="id=" + item.idtemp, headers=headers).data
     return True
 
 
@@ -797,8 +796,7 @@ def megadede_check(item):
         headers = {"User-Agent":"Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) "
                                 "Chrome/61.0.3163.100 Safari/537.36","Referer": host + "/" + tipo_str, "X-Requested-With": "XMLHttpRequest",
                    "X-CSRF-TOKEN": item.token}
-        data = httptools.downloadpage(url_temp, post="id=" + item.idtemp, headers=headers,
-                                      replace_headers=True).data.strip()
+        data = httptools.downloadpage(url_temp, post="id=" + item.idtemp, headers=headers).data.strip()
         dialog = platformtools
         dialog.ok = platformtools.dialog_ok
         if data == "1":

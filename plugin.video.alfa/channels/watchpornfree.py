@@ -16,7 +16,7 @@ def mainlist(item):
     logger.info("")
     itemlist = []
     itemlist.append( Item(channel=item.channel, title="Videos" , action="lista", url=host + "/category/clips-scenes"))
-    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/movies"))
+    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host))
     itemlist.append( Item(channel=item.channel, title="Parodia" , action="lista", url=host + "/category/parodies-hd"))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Año" , action="categorias", url=host))
