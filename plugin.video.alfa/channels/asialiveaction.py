@@ -141,7 +141,7 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
         
     patron  = '(?is)class="TPost C">.*?href="([^"]+)".*?' #scrapedurl
-    patron += 'lazy-src="([^"]+)".*?>.*?' #scrapedthumbnail
+    patron += 'src="([^"]+)".*?>.*?' #scrapedthumbnail
     patron += 'title">([^<]+)<.*?' #scrapedtitle
     patron += 'year">([^<]+)<.*?' #scrapedyear
     patron += 'href.*?>([^"]+)<\/a>' #scrapedtype

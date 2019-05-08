@@ -727,13 +727,13 @@ def verify_playcount_series(item, path):
 
 def mark_content_as_watched2(item):
     logger.info()
-   # logger.debug("item:\n" + item.tostring('\n'))
+    # logger.debug("item:\n" + item.tostring('\n'))
 
     if filetools.exists(item.nfo):
         head_nfo, it = videolibrarytools.read_nfo(item.nfo) 
         #logger.debug(it) 
-
-        if item.contentType == 'movie':
+        name_file = ""
+        if item.contentType == 'movie' or item.contentType == 'tvshow':
             name_file = os.path.splitext(os.path.basename(item.nfo))[0]
             
             if name_file != 'tvshow' :
