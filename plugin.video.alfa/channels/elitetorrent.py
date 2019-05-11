@@ -313,6 +313,11 @@ def findvideos(item):
     itemlist_f = []                                                             #Itemlist de enlaces filtrados
     if not item.language:
         item.language = ['CAST']                                                #Castellano por defecto
+        
+    try:
+        tmdb.set_infoLabels(item, True)                                         #TMDB actualizado
+    except:
+        pass
 
     #Bajamos los datos de la página
     data = ''

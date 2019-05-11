@@ -15,11 +15,7 @@ import ctypes
 import traceback
 
 from core import filetools, scrapertools
-from platformcode import logger, config
-
-PLUGIN_NAME = "alfa"
-__settings__ = xbmcaddon.Addon(id="plugin.video." + PLUGIN_NAME)
-__language__ = __settings__.getLocalizedString
+from platformcode import logger, config, platformtools
 
 
 def get_environment():
@@ -184,22 +180,30 @@ def get_environment():
         except:
             environment['videolab_free'] = '?'
 
+        environment['torrentcli_option'] = ''
         environment['torrentcli_name'] = ''
         environment['torrentcli_dload_path'] = ''
         environment['torrentcli_buffer'] = ''
         environment['torrentcli_dload_estrgy'] = ''
         environment['torrentcli_mem_size'] = ''
         environment['torrentcli_free'] = ''
-        if config.get_setting("torrent_client", server="torrent") == 4:
-            __settings__ = xbmcaddon.Addon(id="plugin.video.torrenter")
-            environment['torrentcli_name'] = 'Torrenter'
-            environment['torrentcli_dload_path'] = str(xbmc.translatePath(__settings__.getSetting('storage')))
-            environment['torrentcli_buffer'] = str(__settings__.getSetting('pre_buffer_bytes'))
-        elif config.get_setting("torrent_client", server="torrent") == 3:
-            for client_torrent in ['quasar', 'elementum']:
-                if xbmc.getCondVisibility('System.HasAddon("plugin.video.%s" )' % client_torrent):
-                    __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % client_torrent)
-                    environment['torrentcli_name'] = str(client_torrent)
+        torrent_id = config.get_setting("torrent_client", server="torrent", default=0)
+        environment['torrentcli_option'] = str(torrent_id)
+        if torrent_id > 0:
+            torrent_id = torrent_id - 3
+            if torrent_id < 0:
+                logger.error('torrent_id: ' + str(torrent_id) + ' / torrent_options: ' 
+                            + str(platformtools.torrent_client_installed()))
+        torrent_options = platformtools.torrent_client_installed()
+        if torrent_options and torrent_id >= 0:
+            environment['torrentcli_name'] = torrent_options[torrent_id].replace('Plugin externo: ', '')
+            if xbmc.getCondVisibility('System.HasAddon("plugin.video.%s")' % environment['torrentcli_name']):
+                __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % environment['torrentcli_name'])
+                environment['torrentcli_name'] = environment['torrentcli_name'].capitalize()
+                if environment['torrentcli_name'] == 'Torrenter':
+                    environment['torrentcli_dload_path'] = str(xbmc.translatePath(__settings__.getSetting('storage')))
+                    environment['torrentcli_buffer'] = str(__settings__.getSetting('pre_buffer_bytes'))
+                else:
                     environment['torrentcli_dload_path'] = str(xbmc.translatePath(__settings__.getSetting('download_path')))
                     environment['torrentcli_buffer'] = str(__settings__.getSetting('buffer_size'))
                     environment['torrentcli_dload_estrgy'] = str(__settings__.getSetting('download_storage'))
@@ -297,6 +301,7 @@ def get_environment():
         environment['videolab_update'] = ''
         environment['debug'] = ''
         environment['addon_version'] = ''
+        environment['torrentcli_option'] = ''
         
     return environment
 
@@ -344,7 +349,8 @@ def list_env(environment={}):
         torrentcli_buffer = environment['torrentcli_buffer']
         if environment['torrentcli_mem_size']:
             torrentcli_buffer +=  ' MB / memoria: ' + environment['torrentcli_mem_size']
-        logger.info('%s buffer: ' % environment['torrentcli_name'] + 
+        logger.info('%s: ID: %s, buffer: ' % (environment['torrentcli_name'], 
+                    environment['torrentcli_option']) + 
                     torrentcli_buffer + ' MB / descargas: ' + 
                     environment['torrentcli_dload_path'] + ' - Free: ' + 
                     environment['torrentcli_free'] +  ' GB')
@@ -427,6 +433,7 @@ def paint_env(item, environment={}):
     torrent = """\
     Muestra los datos del [COLOR yellow]Cliente Torrent[/COLOR]:
         - Nombre del Cliente
+        - ID del cliente seleccionado
         - Tamaño de buffer inicial
         - Tamaño de buffer en Memoria 
                 (opt)
@@ -488,8 +495,8 @@ def paint_env(item, environment={}):
     torrentcli_buffer = environment['torrentcli_buffer']
     if environment['torrentcli_mem_size']:
         torrentcli_buffer +=  ' MB / memoria: ' + environment['torrentcli_mem_size']
-    itemlist.append(Item(channel=item.channel, title='[COLOR yellow]%s [/COLOR]buffer: ' % 
-                    environment['torrentcli_name'] + torrentcli_buffer + 
+    itemlist.append(Item(channel=item.channel, title='[COLOR yellow]%s: [/COLOR]ID: %s, buffer: ' % 
+                    (environment['torrentcli_name'], environment['torrentcli_option']) + torrentcli_buffer + 
                     ' MB / descargas: ' + environment['torrentcli_dload_path'] +  
                     ' - Free: ' + environment['torrentcli_free'] +  ' GB', action="", 
                     plot=torrent, thumbnail=thumb, folder=False))

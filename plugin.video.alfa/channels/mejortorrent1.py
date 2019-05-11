@@ -818,6 +818,11 @@ def findvideos(item):
         item.language = ['CAST']                                    #Castellano por defecto
     matches = []
     
+    try:
+        tmdb.set_infoLabels(item, True)                             #TMDB actualizado
+    except:
+        pass
+    
     #logger.debug(item)
 
     data = ''

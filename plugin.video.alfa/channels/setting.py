@@ -848,7 +848,7 @@ def report_send(item, description='', fatal=False):
         requests_status = False
         logger.error(traceback.format_exc())
     
-    from core import jsontools, httptools, scrapertools
+    from core import jsontools, httptools, proxytools, scrapertools
     from platformcode import envtal
     
     # Esta función realiza la operación de upload del LOG.  El tamaño del archivo es de gran importacia porque
@@ -916,6 +916,7 @@ def report_send(item, description='', fatal=False):
         description = platformtools.dialog_input('', 'Introduzca una breve descripción del fallo')
 
     # Escribimos en el log algunas variables de Kodi y Alfa que nos ayudarán en el diagnóstico del fallo
+    var = proxytools.logger_disp(debugging=True)
     environment = envtal.list_env()
     if not environment['log_path']:
         environment['log_path'] = str(filetools.join(xbmc.translatePath("special://logpath/"), 'kodi.log'))
