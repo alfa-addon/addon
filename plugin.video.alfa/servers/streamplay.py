@@ -47,18 +47,12 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 
 
 def decode_video_url(url, data):
-    from lib import js2py
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    js = scrapertools.find_single_match(data, '<script type="text/javascript">(fun.*?)</script>')
-    js = re.sub(r'(function getCal.*?)if\(isAdb\)', '', js)
-    js = re.sub(r'(\$\.cook.*?)\};', '', js)
-
     matches = re.compile("(var \w+=\[.*?\];\(function\(.*?)</script>").findall(data)
     from lib import alfaresolver
     net = alfaresolver.EstructuraInicial(matches[0])
     net1 = alfaresolver.EstructuraInicial(net.data)
     data1 = ''.join(net.data)
-    logger.info("data_zeb%s" % data1)
     match = re.compile("='(.*?);';eval", re.DOTALL).findall(data1)[0]
     matches = re.compile('data\("([a-z 0-9]+)",(\d+)\)', re.DOTALL).findall(match)
     pos = []
