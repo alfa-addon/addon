@@ -47,6 +47,13 @@
                  default="70137" visible="eq(-3,True)+eq(-1,True)+eq(-2,False)" enable="eq(-3,True)+eq(-1,True)+(-2,false)"/>
    </category>
     <category label="70126">
+        <setting label="Opciones para canales frecuentes" type="lsep"/>
+        <setting id="frequents" type="bool" label="Habilitar los canales frecuentes" default="false"/>
+        <setting id="max_frequents" type="labelenum" label="Maximo de canales a listar"
+                 values="5|10|15" default="5" visible="eq(-1,true)+eq(-1,true)"/>
+        <setting id="frequents_folder" type="bool" label="Habilitar categoria frecuentes" default="false"
+                 visible="eq(-2,true)+eq(-2,true)"/>
+        <setting label="" type="lsep"/>
         <setting id="icon_set" type="labelenum" label="70108" values="default|dark|angedam" default="default"/>
         <setting id="infoplus_set" type="labelenum" label="70128" lvalues="70129|70130" default="70129"/>
         <setting id="video_thumbnail_type" type="enum" label="70131" lvalues="70132|70133" default="0"/>

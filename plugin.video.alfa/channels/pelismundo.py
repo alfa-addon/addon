@@ -6,6 +6,7 @@
 # ------------------------------------------------------------
 
 from core import httptools
+from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
@@ -201,12 +202,30 @@ def findvideos(item):
         if "youtube" in scrapedurl:
             scrapedurl += "&"
         title = "Ver en: %s " + "(" + scrapedlanguage + ")"
-        itemlist.append(item.clone(action = "play",
-                                   title = title,
-                                   language = scrapedlanguage,
-                                   quality = item.quality,
-                                   url = scrapedurl
-                                   ))
+        if "pelisvips.com" in scrapedurl :
+            d1 = httptools.downloadpage(scrapedurl).data
+            bloque = scrapertools.find_single_match( d1, 'sources.*?script')
+            scrapedurl = scrapertools.find_single_match(bloque, "file': '([^']+)'")
+        if "pelisup.com" in scrapedurl:
+            id = scrapertools.find_single_match(scrapedurl, '.com/v/(\w+)')
+            post = "r=&d=www.pelisup.com"
+            d1 = httptools.downloadpage("https://www.pelisup.com/api/source/%s" %id, post=post).data
+            d1 = jsontools.load(d1)["data"]
+            for data in d1:
+                title = "Ver en: %s " + "(" + data["label"] + ") (" + scrapedlanguage + ")"
+                itemlist.append(item.clone(action = "play",
+                                           title = title,
+                                           language = scrapedlanguage,
+                                           quality = item.quality,
+                                           url = data["file"]
+                                           ))
+        else:
+            itemlist.append(item.clone(action = "play",
+                                       title = title,
+                                       language = scrapedlanguage,
+                                       quality = item.quality,
+                                       url = scrapedurl
+                                       ))
     tmdb.set_infoLabels(itemlist)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     if itemlist and item.contentChannel != "videolibrary":

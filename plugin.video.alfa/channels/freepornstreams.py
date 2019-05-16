@@ -93,11 +93,8 @@ def lista(item):
 def play(item):
     logger.info()
     data = httptools.downloadpage(item.url).data
-    itemlist = servertools.find_video_items(data=data)
-    for videoitem in itemlist:
-        videoitem.title = item.fulltitle
-        videoitem.fulltitle = item.fulltitle
-        videoitem.thumbnail = item.thumbnail
-        videochannel=item.channel
+    url = scrapertools.find_single_match(data, '<a href="([^"]+)" rel="nofollow"  class="external" target="_blank">Streaming')
+    logger.debug(url)
+    itemlist = servertools.find_video_items(item.clone(url = url))
     return itemlist
 

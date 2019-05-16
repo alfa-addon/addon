@@ -51,7 +51,7 @@ def lista(item):
     data = httptools.downloadpage(item.url, headers=header, cookies=False).data
 
     # Extrae las entradas
-    patron = '<div class="box-tumb related_vid">.*?href="([^"]+)" title="([^"]+)".*?src="([^"]+)"(.*?)<i class="time">([^<]+)<'
+    patron = '<div class="box-tumb related_vid.*?href="([^"]+)" title="([^"]+)".*?src="([^"]+)"(.*?)<i class="time">([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle, scrapedthumbnail, quality, duration in matches:
         scrapedurl = urlparse.urljoin(host, scrapedurl)
@@ -83,7 +83,7 @@ def categorias(item):
     for cat, b in bloques:
         cat = cat.replace("Straight", "Hetero")
         itemlist.append(item.clone(action="", title=cat, text_color="gold"))
-        matches = scrapertools.find_multiple_matches(b, '<li.*?href="([^"]+)">(.*?)</span>')
+        matches = scrapertools.find_multiple_matches(b, '<li>.*?href="([^"]+)" >(.*?)</span>')
         for scrapedurl, scrapedtitle in matches:
             scrapedtitle = "   " + scrapedtitle.replace("<span>", "")
             scrapedurl = urlparse.urljoin(host, scrapedurl)
