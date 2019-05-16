@@ -465,6 +465,10 @@ def title_format(item):
             if lang:
                 item.title = add_languages(item.title, simple_language)
             #logger.debug('item.title: %s' % item.title)
+            # Torrent_info
+            if item.server == 'torrent' and item.torrent_info != '':
+                item.title = '%s [%s]' % (item.title, item.torrent_info)
+
             # si hay verificacion de enlaces
             if item.alive != '':
                 if item.alive.lower() == 'no':
