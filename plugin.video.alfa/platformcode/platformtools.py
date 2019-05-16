@@ -745,7 +745,7 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
         # Reproduce
         xbmc_player.play(playlist, xlistitem)
     else:
-        set_player(item, xlistitem, mediaurl, view, strm)
+        set_player(item, xlistitem, mediaurl, view, strm, autoplay)
 
 
 def stop_video():
@@ -1074,10 +1074,10 @@ def get_video_seleccionado(item, seleccion, video_urls):
     return mediaurl, view, mpd
 
 
-def set_player(item, xlistitem, mediaurl, view, strm):
+def set_player(item, xlistitem, mediaurl, view, strm, autoplay):
     logger.info()
     logger.debug("item:\n" + item.tostring('\n'))
-
+    old_frequency = channeltools.get_channel_setting('frequency', item.channel.lower(), 0)
     # Movido del conector "torrent" aqui
     if item.server == "torrent":
         play_torrent(item, xlistitem, mediaurl)
@@ -1137,6 +1137,9 @@ def set_player(item, xlistitem, mediaurl, view, strm):
         from platformcode import xbmc_videolibrary
         xbmc_videolibrary.mark_auto_as_watched(item)
 
+    if not autoplay:
+        if is_playing() and not channeltools.is_adult(item.channel.lower()):
+            channeltools.set_channel_setting('frequency', old_frequency + 1, item.channel.lower())
 
 def torrent_client_installed(show_tuple=False):
     # Plugins externos se encuentra en servers/torrent.json nodo clients

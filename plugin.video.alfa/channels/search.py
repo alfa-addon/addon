@@ -157,6 +157,9 @@ def setting_channel_new(item):
     lista = []; ids = []; lista_lang = []; lista_ctgs = []
     channels_list = channelselector.filterchannels('all')
     for channel in channels_list:
+        if channel.action == '':
+            continue
+
         channel_parameters = channeltools.get_channel_parameters(channel.channel)
 
         # No incluir si en la configuracion del canal no existe "include_in_global_search"
@@ -177,13 +180,14 @@ def setting_channel_new(item):
     # ----------------------------
     preselecciones = [
         'Buscar con la selección actual', 
-        'Modificar selección actual', 
-        'Modificar partiendo de Todos', 
-        'Modificar partiendo de Ninguno', 
+        'Modificar selección actual',
+        'Modificar partiendo de Frecuentes',
+        'Modificar partiendo de Todos',
+        'Modificar partiendo de Ninguno',
         'Modificar partiendo de Castellano', 
         'Modificar partiendo de Latino'
     ]
-    presel_values = ['skip', 'actual', 'all', 'none', 'cast', 'lat']
+    presel_values = ['skip', 'actual', 'freq', 'all', 'none', 'cast', 'lat' ]
 
     categs = ['movie', 'tvshow', 'documentary', 'anime', 'vos', 'direct', 'torrent']
     if config.get_setting('adult_mode') > 0: categs.append('adult')
@@ -197,6 +201,7 @@ def setting_channel_new(item):
     #else: # Llamada desde "buscar en otros canales" (se puede saltar la selección e ir directo a la búsqueda)
     
     ret = platformtools.dialog_select(config.get_localized_string(59994), preselecciones)
+    logger.debug(presel_values[ret])
     if ret == -1: return False # pedido cancel
     if presel_values[ret] == 'skip': return True # continuar sin modificar
     elif presel_values[ret] == 'none': preselect = []
@@ -212,6 +217,15 @@ def setting_channel_new(item):
             channel_status = config.get_setting('include_in_global_search', canal)
             if channel_status:
                 preselect.append(i)
+    elif presel_values[ret]== 'freq':
+        preselect = []
+        for i, canal in enumerate(ids):
+            logger.debug('el canal: %s' % canal)
+            frequency = channeltools.get_channel_setting('frequency', canal, 0)
+            if frequency > 0:
+                logger.debug(ids)
+                preselect.append(i)
+                logger.debug(preselect)
     else:
         preselect = []
         for i, ctgs in enumerate(lista_ctgs):
