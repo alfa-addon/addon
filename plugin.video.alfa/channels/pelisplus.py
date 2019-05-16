@@ -234,7 +234,7 @@ def add_vip(item, video_url, language=None):
     for url, quality in matches:
         url = url.replace('\/', '/')
         itemlist.append(
-            Item(channel=item.channel, title='%s'+title, url=url, action='play', language=language,
+            Item(channel=item.channel, title='%s'+title + " " + quality, url=url, action='play', language=language,
                  quality=quality, infoLabels=item.infoLabels))
     return itemlist
 
@@ -277,7 +277,7 @@ def findvideos(item):
                         new_url = new_url.replace('unicorn', 'dragon')
                         new_url = new_url + '|referer:%s' % url
                         itemlist.append(
-                            Item(channel=item.channel, title='%s' + title, url=new_url, action='play',
+                            Item(channel=item.channel, title='%s' + title + " " + quality, url=new_url, action='play',
                                  language=IDIOMAS[language], quality=quality, infoLabels=item.infoLabels))
                 except:
                     pass
