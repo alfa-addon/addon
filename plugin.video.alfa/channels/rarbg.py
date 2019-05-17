@@ -381,7 +381,7 @@ def listado(item):
             #logger.debug(item_local)
 
     #Pasamos a TMDB la lista completa Itemlist
-    tmdb.set_infoLabels(itemlist, __modo_grafico__)
+    tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda='es,en')
     
     #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
     item, itemlist = generictools.post_tmdb_listado(item, itemlist)
@@ -407,12 +407,7 @@ def findvideos(item):
         item.language = ['VO']                                                      #VO por defecto
     matches = []
     item.category = categoria
-    
-    try:
-        tmdb.set_infoLabels(item, True)                                             #TMDB actualizado
-    except:
-        pass
-    
+
     #logger.debug(item)
 
     #Bajamos los datos de la página
@@ -427,7 +422,7 @@ def findvideos(item):
         
     if not data:
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log', folder=False))
         return itemlist                             #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     status, itemlist = check_blocked_IP(data, itemlist)                         #Comprobamos si la IP ha sido bloqueada
@@ -441,7 +436,7 @@ def findvideos(item):
             item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
         else:
             logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " + " / PATRON: " + patron + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log', folder=False))
             return itemlist                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     #logger.debug("PATRON: " + patron)
@@ -520,7 +515,7 @@ def findvideos(item):
     else:                                                                       
         if config.get_setting('filter_languages', channel) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
             thumb_separador = get_thumb("next.png")                             #... pintamos todo con aviso
-            itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
+            itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador, folder=False))
         itemlist.extend(itemlist_t)                                             #Pintar pantalla con todo si no hay filtrado
     
     # Requerido para AutoPlay
@@ -645,8 +640,10 @@ def episodios(item):
         season_display = item.from_num_season_colapse
 
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
-    if not item.infoLabels['tmdb_id']:
-        tmdb.set_infoLabels(item, True)
+    try:
+        tmdb.set_infoLabels(item, True, idioma_busqueda='es,en')
+    except:
+        pass
         
     modo_ultima_temp_alt = modo_ultima_temp
     if item.ow_force == "1":                                    #Si hay un traspaso de canal o url, se actualiza todo 
@@ -783,7 +780,7 @@ def episodios(item):
 
     if not item.season_colapse:                                                 #Si no es pantalla de Temporadas, pintamos todo
         # Pasada por TMDB y clasificación de lista por temporada y episodio
-        tmdb.set_infoLabels(itemlist, True)
+        tmdb.set_infoLabels(itemlist, True, idioma_busqueda='es,en')
 
         #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
         item, itemlist = generictools.post_tmdb_episodios(item, itemlist)

@@ -15,10 +15,7 @@ USERAGENT = "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:%s.0) Gecko/20100101 Firefo
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     #data = httptools.downloadpage(page_url, headers=headers, cookies=False).data
-    headers = {"User-Agent": USERAGENT,
-               "Cookie": "gam=1",
-               "Referer": page_url.replace("embed-","")}
-    data = httptools.downloadpage(page_url, headers=headers).data
+    data = httptools.downloadpage(page_url, headers={"User-Agent": USERAGENT}).data
 
     if "File was deleted" in data or "Not Found" in data or "File was locked by administrator" in data:
         return False, "[Gamovideo] El archivo no existe o ha sido borrado"
@@ -32,13 +29,13 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     #data = httptools.downloadpage(page_url, headers=headers, cookies=False).data
-    headers = {"User-Agent": USERAGENT,
-               "Cookie": "gam=1",
+    headers = {"Host": "gamovideo.com",
+               "User-Agent": USERAGENT,
+               "Cookie": "gyns=1; gail=1; sugamun=1; gam=1; gew=1; cpl=1; col=1; gqm=1; luw=1; popundr=1; rtn=1;",
                "Referer": page_url.replace("embed-","")}
     data = httptools.downloadpage(page_url, headers=headers).data
     packer = scrapertools.find_single_match(data,
                                             "<script type='text/javascript'>(eval.function.p,a,c,k,e,d..*?)</script>")
-    logger.info("(data='%s')" % data) 
     if packer != "":
         data = jsunpack.unpack(packer)
 
@@ -61,3 +58,4 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         logger.info("%s - %s" % (video_url[0], video_url[1]))
 
     return video_urls
+

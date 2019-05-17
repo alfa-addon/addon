@@ -313,11 +313,6 @@ def findvideos(item):
     itemlist_f = []                                                             #Itemlist de enlaces filtrados
     if not item.language:
         item.language = ['CAST']                                                #Castellano por defecto
-        
-    try:
-        tmdb.set_infoLabels(item, True)                                         #TMDB actualizado
-    except:
-        pass
 
     #Bajamos los datos de la página
     data = ''
@@ -328,7 +323,7 @@ def findvideos(item):
         
     if not data:
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url + " / DATA: " + data)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log', folder=False))
         if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
             link_torrent = item.emergency_urls[0][0]                            #Guardamos la url del .Torrent
             link_magnet = item.emergency_urls[1][0]                             #Guardamos la url del .Magnet
@@ -372,7 +367,7 @@ def findvideos(item):
             item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
         else:
             logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron_t + " / " + patron_m + " / DATA: " + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log'))
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log', folder=False))
         if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
             link_torrent = item.emergency_urls[0][0]                            #Guardamos la url del .Torrent
             link_magnet = item.emergency_urls[1][0]                             #Guardamos la url del .Magnet
@@ -430,7 +425,7 @@ def findvideos(item):
         else:                                                                       
             if config.get_setting('filter_languages', channel) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
                 thumb_separador = get_thumb("next.png")                             #... pintamos todo con aviso
-                itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
+                itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador, folder=False))
             itemlist.extend(itemlist_t)                                         #Pintar pantalla con todo si no hay filtrado
     
     #Ahora pintamos el link del Magnet, si lo hay
@@ -464,7 +459,7 @@ def findvideos(item):
         else:                                                                       
             if config.get_setting('filter_languages', channel) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
                 thumb_separador = get_thumb("next.png")                             #... pintamos todo con aviso
-                itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
+                itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador, folder=False))
             itemlist.extend(itemlist_t)                                         #Pintar pantalla con todo si no hay filtrado
     
     #logger.debug("TORRENT: " + link_torrent + "MAGNET: " + link_magnet + " / title gen/torr: " + item.title + " / " + item_local.title + " / calidad: " + item_local.quality + " / tamaño: " + size + " / content: " + item_local.contentTitle + " / " + item_local.contentSerieName)
@@ -509,7 +504,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria == 'peliculas':
-            item.url = host
+            item.url = host + '/estrenos-/'
             item.extra = "peliculas"
             item.category_new= 'newest'
 

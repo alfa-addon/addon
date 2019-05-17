@@ -348,7 +348,7 @@ def post_tmdb_listado(item, itemlist):
             logger.error(item_local)
             del item_local.infoLabels['tmdb_id']                #puede traer un TMDB-ID erroneo
             try:
-                tmdb.set_infoLabels(item_local, __modo_grafico__)       #pasamos otra vez por TMDB
+                tmdb.set_infoLabels(item_local, __modo_grafico__, idioma_busqueda='es,en')  #pasamos otra vez por TMDB
             except:
                 logger.error(traceback.format_exc())
             logger.error(item_local)
@@ -359,7 +359,7 @@ def post_tmdb_listado(item, itemlist):
                 year = item_local.infoLabels['year']            #salvamos el año por si no tiene éxito la nueva búsqueda
                 item_local.infoLabels['year'] = "-"             #reseteo el año
                 try:
-                    tmdb.set_infoLabels(item_local, __modo_grafico__)   #pasamos otra vez por TMDB
+                    tmdb.set_infoLabels(item_local, __modo_grafico__, idioma_busqueda='es,en')  #pasamos otra vez por TMDB
                 except:
                     logger.error(traceback.format_exc())
                 if not item_local.infoLabels['tmdb_id']:        #ha tenido éxito?
@@ -544,7 +544,7 @@ def post_tmdb_seasons(item, itemlist):
     # Primero creamos un título para TODAS las Temporadas
     # Pasada por TMDB a Serie, para datos adicionales
     try:
-        tmdb.set_infoLabels(item, True)                     #TMDB de cada Temp
+        tmdb.set_infoLabels(item, True, idioma_busqueda='es,en')    #TMDB de cada Temp
     except:
         logger.error(traceback.format_exc())
     
@@ -591,7 +591,7 @@ def post_tmdb_seasons(item, itemlist):
             
             # Pasada por TMDB a las Temporada
             try:
-                tmdb.set_infoLabels(item_local, True)               #TMDB de cada Temp
+                tmdb.set_infoLabels(item_local, True, idioma_busqueda='es,en')      #TMDB de cada Temp
             except:
                 logger.error(traceback.format_exc())
         
@@ -1052,7 +1052,7 @@ def post_tmdb_findvideos(item, itemlist):
     #elif (not item.infoLabels['tvdb_id'] and item.contentType == 'episode') or item.contentChannel == "videolibrary":
     #    tmdb.set_infoLabels(item, True)
     try:
-        tmdb.set_infoLabels(item, True)                         #TMDB de cada Temp
+        tmdb.set_infoLabels(item, True, idioma_busqueda='es,en')    #TMDB de cada Temp
     except:
         logger.error(traceback.format_exc())
     #Restauramos la información de max num. de episodios por temporada despues de TMDB
@@ -1072,7 +1072,7 @@ def post_tmdb_findvideos(item, itemlist):
             item.category = category
     
     if item.armagedon:                                          #Es una situación catastrófica?
-        itemlist.append(item.clone(action='', title=item.category + ': [COLOR hotpink]Usando enlaces de emergencia[/COLOR]'))
+        itemlist.append(item.clone(action='', title=item.category + ': [COLOR hotpink]Usando enlaces de emergencia[/COLOR]', folder=False))
     
     #Quitamos el la categoría o nombre del título, si lo tiene
     if item.contentTitle:
@@ -1191,11 +1191,11 @@ def post_tmdb_findvideos(item, itemlist):
     if item.intervencion:
         for clone_inter, autoridad in item.intervencion:
             thumb_intervenido = get_thumb(autoridad)
-            itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
+            itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido, folder=False))
         del item.intervencion
     
     #Pintamos el pseudo-título con toda la información disponible del vídeo
-    itemlist.append(item.clone(action="", server = "", title=title_gen))		#Título con todos los datos del vídeo
+    itemlist.append(item.clone(action="", server = "", title=title_gen, folder=False))  #Título con todos los datos del vídeo
     
     if item.action == 'show_result':                                            #Viene de una búsqueda global
         channel = item.channel.capitalize()
@@ -1222,7 +1222,7 @@ def post_tmdb_findvideos(item, itemlist):
     return (item, itemlist)
     
     
-def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5):
+def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5, file_list=False):
     logger.info()
     from core import videolibrarytools
     
@@ -1240,6 +1240,7 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
     Entrada: data_torrent:  Flag por si se quiere el contenido del .torretn de vuelta
     Salida: size:       str con el tamaño y tipo de medida ( MB, GB, etc)
     Salida: torrent:    dict() con el contenido del .torrent (opcional)
+    Salida: files:      dict() con los nombres de los archivos del torrent y su tamaño (opcional)
     
     """
     
@@ -1304,8 +1305,9 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
         
     
     #Móludo principal
-    size = ""
+    size = ''
     torrent = ''
+    files = {}
     try:
         #torrents_path = config.get_videolibrary_path() + '/torrents'            #path para dejar el .torrent
 
@@ -1318,6 +1320,10 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
         
         torrents_path, torrent_file = videolibrarytools.caching_torrents(url, referer=referer, post=post, timeout=timeout, lookup=True, data_torrent=True)
         if not torrent_file:
+            if file_list and data_torrent:
+                return (size, torrent, files)
+            if file_list:
+                return (size, files)
             if data_torrent:
                 return (size, torrent)
             return size                                         #Si hay un error, devolvemos el "size" y "torrent" vacíos
@@ -1328,6 +1334,8 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
         try:
             sizet = torrent["info"]['length']
             size = convert_size(sizet)
+            
+            files = torrent["info"]
         except:
             pass
             
@@ -1337,6 +1345,8 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
                 check_video = scrapertools.find_multiple_matches(str(torrent["info"]["files"]), "'length': (\d+).*?}")
                 sizet = sum([int(i) for i in check_video])
                 size = convert_size(sizet)
+                
+                files = torrent["info"]["files"]
             except:
                 pass
 
@@ -1352,6 +1362,10 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
     #logger.debug(str(url))
     logger.info(str(size))
     
+    if file_list and data_torrent:
+        return (size, torrent, files)
+    if file_list:
+        return (size, files)
     if data_torrent:
         return (size, torrent)
     return size

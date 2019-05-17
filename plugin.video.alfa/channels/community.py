@@ -212,6 +212,8 @@ def add_channel(item):
             channel_to_add['path'] = file_path
             json_file = jsontools.load(open(file_path, "r").read())
             channel_to_add['channel_name'] = json_file['channel_name']
+            if "poster" in json_file:
+                channel_to_add['poster'] = json_file['poster']
         except:
             pass
 
