@@ -19,7 +19,7 @@ def mainlist(item):
     # itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/?display=tube&filtre=views"))
     # itemlist.append( Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "/?display=tube&filtre=rate"))
 
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/p/categorias.html"))
+    itemlist.append( Item(channel=item.channel, title="Géneros" , action="generos", url=host + "/p/categorias.html"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -37,7 +37,7 @@ def search(item, texto):
         return []
 
 
-def categorias(item):
+def generos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
