@@ -13,6 +13,8 @@ def test_video_exists(page_url):
     response = httptools.downloadpage(page_url)
     if not response.sucess or "Not Found" in response.data:
         return False, "[%s] El fichero no existe o ha sido borrado" %id_server
+    if not response.sucess or "Video is processing now." in response.data:
+        return False, "[%s] El video se está procesando." %id_server
     return True, ""
 
 
