@@ -372,8 +372,10 @@ def listado(item):
                 url = scrapedurl
                 thumb = scrapedthumbnail
             
+            title_subs = []                                         #creamos una lista para guardar info importante
             # Si viene de Novedades o Populares, pasamos de Episodio a Serie
             if item.extra == 'series' and (item.extra3 == 'novedades' or item.extra3 == 'populares'):
+                title_subs += [scrapertools.find_single_match(url, '\/(\d+[x|X]\d+)\.htm.')]
                 url = re.sub(r'(\/\d+[x|X]\d+)\.htm.', '.html', url)
             
             title = scrapedtitle
@@ -411,7 +413,6 @@ def listado(item):
             item_local.text_color = True
             del item_local.text_color
                 
-            title_subs = []                                                 #creamos una lista para guardar info importante
             item_local.language = []                                                #creamos lista para los idiomas
             item_local.quality = scrapedquality                                     #iniciamos calidad
             if item_local.quality == 'ultra':
@@ -668,9 +669,16 @@ def findvideos(item):
         item_local = item.clone()
         title = scrapedtitle
 
+        #Añadimos los idiomas
+        item_local.language = []
+        if 'es' in scrapedlanguage:
+            item_local.language += ['CAST']
+        else:
+            item_local.language += ['VO']
+        
         #Analizamos los formatos de la películas y series
         if item_local.contentType == 'movie':
-            patron_title = '.*?(?:\([1|2][9|0]\d{2}\))\s*(?:\[|\:\s*)?(.*?)(?:-.*?)?$'
+            patron_title = '(?:\(?[1|2][9|0]\d{2}\)?)\s*(?:\[|\:\s*)?(.*?)(?:-\w+(?:\s*\[.*?\])?)?$'
         else:
             patron_title = '.*?[S|s]\d+[E|e]\d+.*?(?:\[|\:\s*)?(%s.*?)(?:-\w+(?:\s*\[.*?\])?)?$' % scrapedquality
             if not scrapertools.find_single_match(title, patron_title):
@@ -687,38 +695,35 @@ def findvideos(item):
         if not item_local.quality:
             item_local.quality = scrapedquality
         if scrapedquality not in item_local.quality:
-            item_local.quality = scrapedquality + ' ' + item_local.quality
+            item_local.quality = '%s %s' % (scrapedquality, item_local.quality)
         item_local.quality = re.sub(r'\[.*?\]', '', item_local.quality)
         item_local.quality = re.sub(r'\d+(?:.\d+)?\s*[G|M]B', '', item_local.quality)
-        item_local.quality += ' ' + scrapedaudio
+        item_local.quality += ' %s' % scrapedaudio
         item_local.quality = re.sub(
         r'(?i)proper|unrated|directors|cut|repack|internal|real|extended|masted|docu|super|duper|amzn|uncensored|hulu|movie|tvshows', 
                         '', item_local.quality).strip()
         
         #Buscamos si ya tiene tamaño, si no, los buscamos en el archivo .torrent
+        item_local.torrent_info = ''
         size = scrapedsize
         if size:
-            item_local.title = '%s [%s]' % (item_local.title, size)                 #Agregamos size al final del título
-            size = size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B')\
-                        .replace('Mb', 'M b')
-            item_local.quality = '%s [%s]' % (item_local.quality, size)             #Agregamos size al final de la calidad
-        
+            size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
+                        .replace('Mb', 'M·b').replace('.', ',')
+            item_local.torrent_info = '%s, ' % size                             #Agregamos size
+
         #Añadimos los seeds en calidad, como información adicional
         if scrapedseeds:
-            item_local.quality = '%s [Seeds: %s]' % (item_local.quality, scrapedseeds)  #Agregamos seeds a la calidad
-        
-        #Añadimos los idiomas
-        item_local.language = []
-        if 'es' in scrapedlanguage:
-            item_local.language += ['CAST']
-        else:
-            item_local.language += ['VO']
+            item_local.torrent_info += 'Seeds: %s' % scrapedseeds               #Agregamos seeds
+        item_local.torrent_info = item_local.torrent_info.strip().strip(',')
+        if not item.unify:
+            item_local.torrent_info = '[%s]' % item_local.torrent_info
 
         #Ahora pintamos el link del Torrent
         item_local.url = urlparse.urljoin(host, scrapedurl)
-        item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] ' \
-                        + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % \
-                        (item_local.quality, str(item_local.language))
+        item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
+                        + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] %s' % \
+                        (item_local.quality, str(item_local.language), \
+                        item_local.torrent_info)
         
         #Preparamos título y calidad, quitamos etiquetas vacías
         item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
@@ -726,9 +731,6 @@ def findvideos(item):
         item_local.title = item_local.title.replace("--", "").replace("[]", "")\
                         .replace("()", "").replace("(/)", "").replace("[/]", "")\
                         .replace("|", "").strip()
-        item_local.title = item_local.title.replace(".", ",").replace("GB", "G B")\
-                        .replace("Gb", "G b").replace("gb", "g b").replace("MB", "M B")\
-                        .replace("Mb", "M b").replace("mb", "m b")
         item_local.quality = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.quality)
         item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality)
         item_local.quality = item_local.quality.replace("--", "").replace("[]", "")\
