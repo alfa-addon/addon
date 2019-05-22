@@ -240,7 +240,7 @@ def save_tvshow(item, episodelist):
 
     # Si llegados a este punto no tenemos titulo o code, salimos
     if not (item.contentSerieName or item.infoLabels['code']) or not item.channel:
-        logger.debug("NO ENCONTRADO contentSerieName NI code")
+        logger.error("NO ENCONTRADO contentSerieName NI code: " + item.url)
         return 0, 0, -1, path  # Salimos sin guardar
 
     scraper_return = scraper.find_and_set_infoLabels(item)
@@ -251,10 +251,19 @@ def save_tvshow(item, episodelist):
     if not scraper_return or not item.infoLabels['code']:
         # TODO de momento si no hay resultado no añadimos nada,
         # aunq podriamos abrir un cuadro para introducir el identificador/nombre a mano
-        logger.debug("NO ENCONTRADO EN SCRAPER O NO TIENE code")
+        logger.error("NO ENCONTRADO EN SCRAPER O NO TIENE code: " + item.url)
         return 0, 0, -1, path
 
     _id = item.infoLabels['code'][0]
+    if not item.infoLabels['code'][0] or item.infoLabels['code'][0] == 'None': 
+        if item.infoLabels['code'][1] and item.infoLabels['code'][1] != 'None':
+            _id = item.infoLabels['code'][1]
+        elif item.infoLabels['code'][2] and item.infoLabels['code'][2] != 'None':
+            _id = item.infoLabels['code'][2]
+        else:
+            logger.error("NO ENCONTRADO EN SCRAPER O NO TIENE code: " + item.url 
+                        + ' / ' + item.infoLabels['code'])
+            return 0, 0, -1, path
 
     if config.get_setting("original_title_folder", "videolibrary") == 1 and item.infoLabels['originaltitle']:
         base_name = item.infoLabels['originaltitle']
@@ -273,7 +282,7 @@ def save_tvshow(item, episodelist):
     for raiz, subcarpetas, ficheros in filetools.walk(TVSHOWS_PATH):
         for c in subcarpetas:
             code = scrapertools.find_single_match(c, '\[(.*?)\]')
-            if code and code in item.infoLabels['code']:
+            if code and code != 'None' and code in item.infoLabels['code']:
                 path = filetools.join(raiz, c)
                 _id = code
                 break
@@ -444,6 +453,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             if not e.infoLabels["tmdb_id"] or (serie.infoLabels["tmdb_id"] and e.infoLabels["tmdb_id"] != serie.infoLabels["tmdb_id"]):                                                    #en series multicanal, prevalece el infolabels...
                 e.infoLabels = serie.infoLabels                             #... del canal actual y no el del original
             e.contentSeason, e.contentEpisodeNumber = season_episode.split("x")
+            if e.videolibray_emergency_urls:
+                del e.videolibray_emergency_urls
             new_episodelist.append(e)
         except:
             if e.contentType == 'episode':
@@ -459,10 +470,14 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     # fix float porque la division se hace mal en python 2.x
     t = float(100) / len(new_episodelist)
 
+    last_season_episode = ''
     for i, e in enumerate(scraper.sort_episode_list(new_episodelist)):
         if not silent:
             p_dialog.update(int(math.ceil((i + 1) * t)), config.get_localized_string(60064), e.title)
 
+        if e.infoLabels["number_of_seasons"] and e.infoLabels["temporada_num_episodios"]:
+            last_season_episode = "%sx%s" % (e.infoLabels["number_of_seasons"], \
+                            str(e.infoLabels["temporada_num_episodios"]).zfill(2))
         season_episode = "%sx%s" % (e.contentSeason, str(e.contentEpisodeNumber).zfill(2))
         strm_path = filetools.join(path, "%s.strm" % season_episode)
         nfo_path = filetools.join(path, "%s.nfo" % season_episode)
@@ -517,8 +532,10 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 if not item_nfo:
                     head_nfo, item_nfo = read_nfo(nfo_path)
 
-                if not e.infoLabels["tmdb_id"] or (item_nfo.infoLabels["tmdb_id"] and e.infoLabels["tmdb_id"] != item_nfo.infoLabels["tmdb_id"]):                         #en series multicanal, prevalece el infolabels...
-                    e.infoLabels = item_nfo.infoLabels          #... del canal actual y no el del original
+                # En series multicanal, prevalece el infolabels del canal actual y no el del original
+                if not e.infoLabels["tmdb_id"] or (item_nfo.infoLabels["tmdb_id"] \
+                            and e.infoLabels["tmdb_id"] != item_nfo.infoLabels["tmdb_id"]): 
+                    e.infoLabels = item_nfo.infoLabels
 
                 if filetools.write(json_path, e.tojson()):
                     if not json_exists:
@@ -561,7 +578,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             if emergency_urls_succ:
                 if tvshow_item.emergency_urls and not isinstance(tvshow_item.emergency_urls, dict):
                     del tvshow_item.emergency_urls
-                if emergency_urls_stat in [1, 3]:                                       #Operación de guardar/actualizar enlaces
+                if emergency_urls_stat in [1, 3]:                               #Operación de guardar/actualizar enlaces
                     if not tvshow_item.emergency_urls:
                         tvshow_item.emergency_urls = dict()
                     tvshow_item.emergency_urls.update({serie.channel: True})
@@ -571,8 +588,20 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                         
             if tvshow_item.active == 30:
                 tvshow_item.active = 1
-            if tvshow_item.infoLabels["status"] == "Ended" and insertados == 0 and sobreescritos == 0 and fallidos == 0:                                                                            # Si la serie ha terminado...
-                tvshow_item.active = 0                                                  # ... no la actualizaremos más
+            if tvshow_item.infoLabels["tmdb_id"] == serie.infoLabels["tmdb_id"]:
+                tvshow_item.infoLabels = serie.infoLabels
+                tvshow_item.infoLabels["title"] = tvshow_item.infoLabels["tvshowtitle"] 
+            last_epi = '99x99'
+            if tvshow_item.infoLabels["number_of_seasons"] and tvshow_item.infoLabels["temporada_num_episodios"]:
+                last_epi = '%sx%s' % (tvshow_item.infoLabels["number_of_seasons"], \
+                            tvshow_item.infoLabels["temporada_num_episodios"])
+            elif last_season_episode:
+                last_epi = last_season_episode
+            if tvshow_item.infoLabels["status"] == "Ended" and insertados == 0 \
+                            and fallidos == 0 and \
+                            last_epi in tvshow_item.library_playcounts:         # Si la serie ha terminado...
+                tvshow_item.active = 0                                          # ... no la actualizaremos más
+            
             update_last = datetime.date.today()
             tvshow_item.update_last = update_last.strftime('%Y-%m-%d')
             update_next = datetime.date.today() + datetime.timedelta(days=int(tvshow_item.active))
@@ -751,12 +780,16 @@ def emergency_urls(item, channel=None, path=None):
             item_res.channel = channel_save             #... restaura el canal original por si hay fail-over en Newpct1
             item_res.category = channel_save.capitalize()                   #... y la categoría
             del item_res.videolibray_emergency_urls                         #... y se borra la marca de lookup
+            if item.videolibray_emergency_urls:
+                del item.videolibray_emergency_urls                         #... y se borra la marca de lookup original
     except:
         logger.error('ERROR al procesar el título en Findvideos del Canal: ' + item.channel + ' / ' + item.title)
         logger.error(traceback.format_exc())
         item_res = item.clone()                         #Si ha habido un error, se devuelve el Item original
         if item_res.videolibray_emergency_urls:
             del item_res.videolibray_emergency_urls                         #... y se borra la marca de lookup
+        if item.videolibray_emergency_urls:
+            del item.videolibray_emergency_urls                             #... y se borra la marca de lookup original
     
     #Si el usuario ha activado la opción "emergency_urls_torrents", se descargarán los archivos .torrent de cada título
     else:                                                                   #Si se han cacheado con éxito los enlaces...

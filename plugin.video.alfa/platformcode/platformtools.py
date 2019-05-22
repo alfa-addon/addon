@@ -1184,21 +1184,22 @@ def play_torrent(item, xlistitem, mediaurl):
         else:
             seleccion = 0
 
-    # Plugins externos
-    if seleccion > 1:
+    # Descarga de torrents a local
+    if seleccion >= 0:
         
         #### Compatibilidad con Kodi 18: evita cuelgues/cancelaciones cuando el .torrent se lanza desde pantalla convencional
         #if xbmc.getCondVisibility('Window.IsMedia'):
         xbmcplugin.setResolvedUrl(int(sys.argv[1]), False, xlistitem)       #Preparamos el entorno para evitar error Kod1 18
         time.sleep(0.5)                                                     #Dejamos tiempo para que se ejecute
 
-        #Nuevo método de descarga previa del .torrent.  Si da error, miramos si hay alternatica local.  Si ya es local, lo usamos
+        #Nuevo método de descarga previa del .torrent.  Si da error, miramos si hay alternatica local.  
+        #Si ya es local, lo usamos
         url = ''
         url_stat = False
         torrents_path = ''
         referer = None
         post = None
-        videolibrary_path = config.get_videolibrary_path()                  #Calculamos el path absoluto a partir de la Videoteca
+        videolibrary_path = config.get_videolibrary_path()          #Calculamos el path absoluto a partir de la Videoteca
         if videolibrary_path.lower().startswith("smb://"):                  #Si es una conexión SMB, usamos userdata local
             videolibrary_path = config.get_data_path()                      #Calculamos el path absoluto a partir de Userdata
         if not filetools.exists(videolibrary_path):                         #Si no existe el path, pasamos al modo clásico
@@ -1221,7 +1222,7 @@ def play_torrent(item, xlistitem, mediaurl):
             if url:
                 url_stat = True
                 item.url = url
-                if "torrentin" in torrent_options[seleccion][1]:
+                if "torrentin" in torrent_options[seleccion][0]:
                     item.url = 'file://' + item.url
 
         if not url and item.torrent_alt:                                    #Si hay error, se busca un .torrent alternativo
@@ -1241,9 +1242,14 @@ def play_torrent(item, xlistitem, mediaurl):
             item.url = filetools.join(config.get_videolibrary_path(), folder, item.url)     #dirección del .torrent local en la Videoteca
             if filetools.copy(item.url, torrents_path, silent=True):        #se copia a la carpeta generíca para evitar problemas de encode
                 item.url = torrents_path
-            if "torrentin" in torrent_options[seleccion][1]:                #Si es Torrentin, hay que añadir un prefijo
+            if "torrentin" in torrent_options[seleccion][0]:                #Si es Torrentin, hay que añadir un prefijo
                 item.url = 'file://' + item.url
+        
+        mediaurl = item.url
 
+    # Plugins externos
+    if seleccion > 1:
+        
         mediaurl = urllib.quote_plus(item.url)
         #Llamada con más parámetros para completar el título
         if ("quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]) and item.infoLabels['tmdb_id']:
@@ -1291,7 +1297,8 @@ def play_torrent(item, xlistitem, mediaurl):
 
         # Iniciamos el cliente:
         c = Client(url=mediaurl, is_playing_fnc=xbmc_player.isPlaying, wait_time=None, timeout=10,
-                   temp_path=os.path.join(client_tmp_path, config.get_localized_string(70194)), print_status=debug)
+                   temp_path=config.get_setting("bt_download_path", server="torrent", 
+                   default=config.get_setting("downloadpath")), print_status=debug)
 
         # Mostramos el progreso
         progreso = dialog_progress(config.get_localized_string(70195), config.get_localized_string(70196))
