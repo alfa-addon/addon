@@ -33,7 +33,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     if "Please click on this button to open this video" in data:
         data = httptools.downloadpage(page_url, post=post).data
     patron = 'https://www.rapidvideo.com/e/[^"]+'
-    logger.info("Intel11 %s" %data)
     match = scrapertools.find_multiple_matches(data, patron)
     if match:
         for url1 in match:
