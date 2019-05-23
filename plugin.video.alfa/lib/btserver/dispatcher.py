@@ -2,12 +2,16 @@
 
 from monitor import Monitor
 
-try:
-    from python_libtorrent import get_libtorrent
+import traceback
 
-    lt = get_libtorrent()
+try:
+    try:
+        import libtorrent as lt
+    except:
+        from python_libtorrent import get_libtorrent
+        lt = get_libtorrent()
 except Exception, e:
-    import libtorrent as lt
+    log(traceback.format_exc())
 
 
 class Dispatcher(Monitor):

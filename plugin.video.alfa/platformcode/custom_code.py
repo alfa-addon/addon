@@ -55,10 +55,14 @@ def init():
         
     Tiempos:    Copiando 7 archivos de prueba, el proceso ha tardado una décima de segundo.
     """
-    
+
     try:
         #Verifica si Kodi tiene algún achivo de Base de Datos de Vídeo de versiones anteriores, entonces los borra
         verify_Kodi_video_DB()
+        
+        #LIBTORRENT: se descarga el binario de Bibtorrent cada vez que se actualiza Alfa
+        if not filetools.exists(os.path.join(config.get_runtime_path(), "custom_code.json")):
+            update_libtorrent()
         
         #QUASAR: Preguntamos si se hacen modificaciones a Quasar
         if not filetools.exists(os.path.join(config.get_data_path(), "quasar.json")) and not config.get_setting('addon_quasar_update', default=False):
@@ -160,7 +164,8 @@ def question_update_external_addon(addon_name):
         create_json(config.get_data_path(), "%s.json" % addon_name)
     
     return stat
-    
+
+
 def update_external_addon(addon_name):
     logger.info(addon_name)
     
@@ -198,6 +203,11 @@ def update_external_addon(addon_name):
     return False
     
     
+def update_libtorrent():
+    logger.info()
+    
+    from lib.python_libtorrent.python_libtorrent import get_libtorrent
+
 def verify_Kodi_video_DB():
     logger.info()
     import random

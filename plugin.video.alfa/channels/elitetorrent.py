@@ -358,7 +358,6 @@ def findvideos(item):
     size = scrapertools.find_single_match(item.quality, '\s\[(\d+,?\d*?\s\w\s*[b|B]s*)\]')
     if size:
         item.title = re.sub('\s\[\d+,?\d*?\s\w\s*[b|B]s*\]', '', item.title)    #Quitamos size de título, si lo traía
-        item.title = '%s [%s]' % (item.title, size)                             #Agregamos size al final del título
         item.quality = re.sub('\s\[\d+,?\d*?\s\w\s*[b|B]s*\]', '', item.quality)    #Quitamos size de calidad, si lo traía
     
     if not link_torrent and not link_magnet:                                    #error
@@ -384,23 +383,28 @@ def findvideos(item):
     if not size and not item.armagedon:
         size = generictools.get_torrent_size(link_torrent)                      #Buscamos el tamaño en el .torrent
     if size:
-        item.quality = '%s [%s]' % (item.quality, size)                         #Agregamos size al final de calidad
-        item.quality = item.quality.replace("GB", "G B").replace("MB", "M B").replace("Gb", "G B").replace("Mb", "M B")                                                                        #Se evita la palabra reservada en Unify
+        size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
+                        .replace('Mb', 'M·b').replace('.', ',')
+
     #Ahora pintamos el link del Torrent, si lo hay
     if link_torrent:		                                                    # Hay Torrent ?
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
-    
-        if item_local.quality:
-            item_local.quality += " "
-        item_local.quality += "[Torrent]"
+
+        item_local.torrent_info = "[Torrent] "
+        item_local.torrent_info += '%s' % size                                   #Agregamos size
+        if not item.unify:
+            item_local.torrent_info = '[%s]' % item_local.torrent_info.strip().strip(',')
         if item.armagedon:                                                      #Si es catastrófico, lo marcamos
             item_local.quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % item_local.quality
         item_local.url = link_torrent
         if item_local.url and item.emergency_urls and not item.armagedon:
             item_local.torrent_alt = item.emergency_urls[0][0]                  #Guardamos la url del .Torrent ALTERNATIVA
         
-        item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))        #Preparamos título de Torrent
+        item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
+                        + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] %s' % \
+                        (item_local.quality, str(item_local.language),  \
+                        item_local.torrent_info)                                #Preparamos título de Torrent
         
         #Preparamos título y calidad, quitamos etiquetas vacías
         item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
@@ -435,13 +439,19 @@ def findvideos(item):
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
         
-        if item_local.quality:
-            item_local.quality += " "
-        item_local.quality = item_local.quality.replace("[Torrent]", "") + "[Magnet]"
+        item_local.torrent_info = "[Magnet] "
+        item_local.torrent_info += '%s' % size                                  #Agregamos size
+        if not item.unify:
+            item_local.torrent_info = '[%s]' % item_local.torrent_info.strip().strip(',')
         if item.armagedon:                                                      #Si es catastrófico, lo marcamos
             item_local.quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % item_local.quality
         item_local.url = link_magnet
-        item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))        #Preparamos título de Magnet
+        
+        item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
+                        + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] %s' % \
+                        (item_local.quality, str(item_local.language),  \
+                        item_local.torrent_info)                                #Preparamos título de Magnet
+                        
         item_local.title = re.sub(r'\s\[COLOR \w+\]\[\[?\]?\]\[\/COLOR\]', '', item_local.title)    #Quitamos etiquetas vacías
         item_local.title = re.sub(r'\s\[COLOR \w+\]\[\/COLOR\]', '', item_local.title)          #Quitamos colores vacíos
         item_local.alive = "??"                                                 #Calidad del link sin verificar

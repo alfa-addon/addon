@@ -477,17 +477,23 @@ def findvideos(item):
         #Buscamos si ya tiene tamaño, si no, los buscamos en el archivo .torrent
         size = scrapedsize
         if size:
-            item_local.title = '%s [%s]' % (item_local.title, size)                 #Agregamos size al final del título
-            size = size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b')
-            item_local.quality = '%s [%s]' % (item_local.quality, size)             #Agregamos size al final de la calidad
-        
+            item_local.title = '%s [%s]' % (item_local.title, size)             #Agregamos size al final del título
+            size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
+                        .replace('Mb', 'M·b').replace('.', ',')
+            item_local.torrent_info = '%s, ' % size                             #Agregamos size
+
         #Añadimos los seeds en calidad, como información adicional
         if scrapedseeds:
-            item_local.quality = '%s [Seeds: %s]' % (item_local.quality, scrapedseeds)  #Agregamos seeds a la calidad
+            item_local.torrent_info += 'Seeds: %s' % scrapedseeds               #Agregamos seeds
+        if not item.unify:
+                item_local.torrent_info = '[%s]' % item_local.torrent_info.strip().strip(',')
 
         #Ahora pintamos el link del Torrent
         item_local.url = urlparse.urljoin(host, scrapedurl)
-        item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))
+        item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
+                        + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] %s' % \
+                        (item_local.quality, str(item_local.language),  \
+                        item_local.torrent_info)                                #Preparamos título de Torrent
         
         #Preparamos título y calidad, quitamos etiquetas vacías
         item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    

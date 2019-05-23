@@ -715,7 +715,7 @@ def findvideos(item):
         del item.extra3
         item_local = item.clone()
         
-        #Salvamos lo imprescindible y reinicialmos InfoLabels
+        #Salvamos lo imprescindible y reiniciamos InfoLabels
         tmdb_id = item.infoLabels['tmdb_id']
         item_local.infoLabels = {}
         item_local.unify = True
@@ -852,11 +852,15 @@ def findvideos(item):
                     if not item.armagedon:
                         size = generictools.get_torrent_size(item_local.url)    #Buscamos el tamaño en el .torrent
                     if size:
-                        quality += ' [%s]' % size
+                        item_local.torrent_info += '%s' % size                  #Agregamos size
+                        if not item.unify:
+                            item_local.torrent_info = '[%s]' % item_local.torrent_info.strip().strip(',')
                     if item.armagedon:                                          #Si es catastrófico, lo marcamos
                         quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % quality
-                    item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (quality, str(item_local.language))                                                  
-                    
+                    item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
+                        + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] %s' % \
+                        (quality, str(item_local.language),  item_local.torrent_info)   #Preparamos título de Torrent
+                        
                     #Preparamos título y calidad, quitamos etiquetas vacías
                     item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
                     item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)

@@ -235,14 +235,14 @@ def listado(item):
             item_local.text_color = True
             del item_local.text_color
                 
-            title_subs = []                                                         #creamos una lista para guardar info importante
-            item_local.language = []                                                #creamos lista para los idiomas
-            item_local.quality = scrapedquality                                     #iniciamos calidad                                     
+            title_subs = []                                             #creamos una lista para guardar info importante
+            item_local.language = []                                    #creamos lista para los idiomas
+            item_local.quality = scrapedquality                         #iniciamos calidad                                     
             item_local.thumbnail = ''
             item_local.url = url.replace('&#038;', '&').replace('.io/', sufix).replace('.com/', sufix)       #guardamos la url final
             item_local.context = "['buscar_trailer']"
 
-            item_local.contentType = "movie"                                        #por defecto, son películas
+            item_local.contentType = "movie"                            #por defecto, son películas
             item_local.action = "findvideos"
 
             #Analizamos el formato de series
@@ -250,7 +250,7 @@ def listado(item):
                 item_local.extra = 'series'
                 item_local.contentType = "tvshow"
                 item_local.action = "episodios"
-                item_local.season_colapse = True                                    #Muestra las series agrupadas por temporadas
+                item_local.season_colapse = True                        #Muestra las series agrupadas por temporadas
                 
             #Detectamos idiomas            
             if "1.png" in scrapedlanguage: item_local.language += ['CAST']
@@ -423,10 +423,11 @@ def findvideos(item):
             if quality: item.quality = quality
             if audio: item.quality += ' %s' % audio.strip()
             if not item.infoLabels['year'] and year: item.infoLabels['year'] = year
-            if size: item.quality += ' [%s]' % size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b').replace('.', ',').strip()
+            size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
+                        .replace('Mb', 'M·b').replace('.', ',').replace('G B', 'G·B').replace('M B', 'M·B')
+            if size: item.quality += ' [%s]' % size
             if size:
-                item.title = re.sub(r'\s*\[\d+,?\d*?\s\w\s*[b|B]\]', '', item.title)        #Quitamos size de título, si lo traía
-                item.title += ' [%s]' % size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b').replace('.', ',').strip()
+                item.title = re.sub(r'\s*\[\d+,?\d*?\s\w\s*[b|B]\]', '', item.title)    #Quitamos size de título, si lo traía
             
             language = []
             matches_lang = re.compile('(\d+.png)', re.DOTALL).findall(scrapedlanguage)
@@ -503,7 +504,7 @@ def findvideos(item):
     #Si es un lookup para cargar las urls de emergencia en la Videoteca...
     if item.videolibray_emergency_urls:
         item.emergency_urls = []                                                #Iniciamos emergency_urls
-        item.emergency_urls.append([])                                          #Reservamos el espacio para los .torrents locales
+        item.emergency_urls.append([])                              #Reservamos el espacio para los .torrents locales
         item.emergency_urls.append(matches)                                     #Salvamnos matches de los vídeos...  
         item.emergency_urls.append(subtitles)                                   #Salvamnos matches de los subtítulos
     
@@ -512,7 +513,7 @@ def findvideos(item):
         item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent
-    for scrapedurl in matches:                                                  #leemos los torrents con la diferentes calidades
+    for scrapedurl in matches:                                      #leemos los torrents con la diferentes calidades
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
 
@@ -531,16 +532,23 @@ def findvideos(item):
         if not size and not item.armagedon:
             size = generictools.get_torrent_size(scrapedurl)                    #Buscamos el tamaño en el .torrent
         if size:
-            size = size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b')
-            item_local.title = re.sub(r'\s*\[\d+,?\d*?\s\w\s*[b|B]\]', '', item_local.title)        #Quitamos size de título, si lo traía
-            item_local.title = '%s [%s]' % (item_local.title, size)                                 #Agregamos size al final del título
+            logger.error(size)
+            size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
+                        .replace('Mb', 'M·b').replace('.', ',').replace('G B', 'G·B').replace('M B', 'M·B')
+            item_local.title = re.sub(r'\s*\[\d+,?\d*?\s\w\s*[b|B]\]', '', item_local.title)    #Quitamos size de título, si lo traía
             item_local.quality = re.sub(r'\s*\[\d+,?\d*?\s\w\s*[b|B]\]', '', item_local.quality)    #Quitamos size de calidad, si lo traía
-            item_local.quality = '%s [%s]' % (item_local.quality, size)         #Agregamos size al final de la calidad
+            item_local.torrent_info += '%s' % size                              #Agregamos size
+            if not item.unify:
+                item_local.torrent_info = '[%s]' % item_local.torrent_info.strip().strip(',')
+            
         if item.armagedon:                                                      #Si es catastrófico, lo marcamos
             item_local.quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % item_local.quality
         
         #Ahora pintamos el link del Torrent
-        item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))
+        item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
+                        + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] %s' % \
+                        (item_local.quality, str(item_local.language),  \
+                        item_local.torrent_info)                                #Preparamos título de Torrent
         
         #Preparamos título y calidad, quitamos etiquetas vacías
         item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    

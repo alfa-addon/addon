@@ -27,8 +27,8 @@ list_servers = ['torrent']
 
 channel = "mejortorrent"
 
-host = 'http://www.mejortorrent.tv'
-host_sufix = '.tv'
+host = 'http://www.mejortorrentt.com/'
+host_sufix = '.com'
 #host = config.get_setting('domain_name', channel)
 
 categoria = channel.capitalize()
@@ -888,19 +888,25 @@ def findvideos(item):
             item_local.quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % item_local.quality
         
         # Extrae la dimensión del vídeo
+        item_local.torrent_info = ''
         size  = scrapertools.find_single_match(item_local.url, '(\d{1,3},\d{1,2}?\w+)\.torrent')
-        size = size.upper().replace(".", ",").replace("G", " G ").replace("M", " M ")   #sustituimos . por , porque Unify lo borra
+        size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
+                        .replace('Mb', 'M·b').replace('.', ',')
         if not size and not item.armagedon:
             size = generictools.get_torrent_size(item_local.url)                        #Buscamos el tamaño en el .torrent
         if size:
             item_local.title = re.sub('\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title) #Quitamos size de título, si lo traía
-            item_local.title = '%s [%s]' % (item_local.title, size)                     #Agregamos size al final del título
             item_local.quality = re.sub('\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.quality) #Quitamos size de calidad, si lo traía
-            item_local.quality = '%s [%s]' % (item.quality, size)                       #Agregamos size al final de calidad
+            item_local.torrent_info = '%s' % size                                               #Agregamos size
+            if not item.unify:
+                item_local.torrent_info = '[%s]' % item_local.torrent_info.strip().strip(',')
      
         #Ahora pintamos el link del Torrent, si lo hay
         if item_local.url:		                                                        # Hay Torrent ?
-            item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))                              #Preparamos título de Torrent
+            item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
+                        + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] %s' % \
+                        (item_local.quality, str(item_local.language),  \
+                        item_local.torrent_info)                                        #Preparamos título de Torrent
 
             #Preparamos título y calidad, quitamos etiquetas vacías
             item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
