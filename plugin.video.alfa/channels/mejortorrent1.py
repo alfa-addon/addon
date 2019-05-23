@@ -1049,7 +1049,7 @@ def episodios(item):
     patron = "<form (?:style='[^']+'\s)?name='episodios' action='([^']+)'"
     url = scrapertools.find_single_match(data, patron)                          #Salvamos la url de descarga
     # Para SERIES: ESTA DESCARGARÍA EL TORRENT EN VEZ DEL ENLACE. Se copia MANULAMENTE la url.php de DOCUMENTALES
-    url = url.replace('descargar_tv.php', 'post_dd.php')
+    #url = url.replace('descargar_tv.php', 'post_dd.php')
     patron = "<form (?:style='[^']+'\s)?name='episodios' action='[^']+'.*?<input type='hidden' value='([^']+)' name='([^']+)'>"
     value2 = ''                                                                 #Patrón general para Documentales (1)
     name2 = ''
@@ -1105,7 +1105,7 @@ def episodios(item):
             item_local.url = item.url                                       #Dejamos la url de la Temporada como Refer
             item_local.url_post = url                                       #Ponemos la url de Descarga (retocado)
             item_local.post = '%s=%s' % (name1, value1)                     #Ponemos la primera pareja de valores
-            if not name2 and not value2:                                    #Si no hay segunda pareja...
+            if not name2 and not value2 and item.extra != "series":         #Si no hay segunda pareja...
                 item_local.post = '%s=0&id_post=%s' % (name1, value1)       #... adaptamos el formato final
         if name2 and value2:                                                #Si hay segunda pareja, la añadimos
             if item_local.post:
