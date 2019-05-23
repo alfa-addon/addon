@@ -964,18 +964,23 @@ def findvideos(item):
         size = scrapertools.find_single_match(data, '<b>Tama.*?:<\/b>&\w+;\s?([^<]+B)<?')
     else:
         size  = scrapertools.find_single_match(item_local.url, '(\d{1,3},\d{1,2}?\w+)\.torrent')
-    size = size.upper().replace(".", ",").replace("G", " G ").replace("M", " M ") #sustituimos . por , porque Unify lo borra
+    size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
+                        .replace('Mb', 'M·b').replace('.', ',')
     if not size and not item.armagedon:
         size = generictools.get_torrent_size(item_local.url, referer_zip, post_zip) #Buscamos el tamaño en el .torrent
     if size:
         item_local.title = re.sub('\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title) #Quitamos size de título, si lo traía
-        item_local.title = '%s [%s]' % (item_local.title, size)                     #Agregamos size al final del título
         item_local.quality = re.sub('\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.quality) #Quitamos size de calidad, si lo traía
-        item_local.quality = '%s [%s]' % (item_local.quality, size)                 #Agregamos size al final de calidad
+        item_local.torrent_info = '%s' % size                                               #Agregamos size
+        if not item.unify:
+            item_local.torrent_info = '[%s]' % item_local.torrent_info.strip().strip(',')
  
     #Ahora pintamos el link del Torrent, si lo hay
     if item_local.url:		# Hay Torrent ?
-        item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))            #Preparamos título de Torrent
+        item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
+                        + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] %s' % \
+                        (item_local.quality, str(item_local.language),  \
+                        item_local.torrent_info)                                        #Preparamos título de Torrent
         
         #Preparamos título y calidad, quitamos etiquetas vacías
         item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
@@ -1044,7 +1049,7 @@ def episodios(item):
     patron = "<form (?:style='[^']+'\s)?name='episodios' action='([^']+)'"
     url = scrapertools.find_single_match(data, patron)                          #Salvamos la url de descarga
     # Para SERIES: ESTA DESCARGARÍA EL TORRENT EN VEZ DEL ENLACE. Se copia MANULAMENTE la url.php de DOCUMENTALES
-    url = url.replace('descargar_tv.php', 'post_dd.php')
+    #url = url.replace('descargar_tv.php', 'post_dd.php')
     patron = "<form (?:style='[^']+'\s)?name='episodios' action='[^']+'.*?<input type='hidden' value='([^']+)' name='([^']+)'>"
     value2 = ''                                                                 #Patrón general para Documentales (1)
     name2 = ''
@@ -1100,7 +1105,7 @@ def episodios(item):
             item_local.url = item.url                                       #Dejamos la url de la Temporada como Refer
             item_local.url_post = url                                       #Ponemos la url de Descarga (retocado)
             item_local.post = '%s=%s' % (name1, value1)                     #Ponemos la primera pareja de valores
-            if not name2 and not value2:                                    #Si no hay segunda pareja...
+            if not name2 and not value2 and item.extra != "series":         #Si no hay segunda pareja...
                 item_local.post = '%s=0&id_post=%s' % (name1, value1)       #... adaptamos el formato final
         if name2 and value2:                                                #Si hay segunda pareja, la añadimos
             if item_local.post:

@@ -554,7 +554,7 @@ def findvideos(item):
     #Si es un lookup para cargar las urls de emergencia en la Videoteca...
     if item.videolibray_emergency_urls:
         item.emergency_urls = []                                                #Iniciamos emergency_urls
-        item.emergency_urls.append([])                                          #Reservamos el espacio para los .torrents locales
+        item.emergency_urls.append([])                                  #Reservamos el espacio para los .torrents locales
         item.emergency_urls.append(matches)                                     #Salvamnos matches de los vídeos...  
     
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
@@ -562,11 +562,11 @@ def findvideos(item):
         item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent
-    for scrapedurl, scrapedserver, language, quality in matches:                #leemos los torrents con la diferentes calidades
+    for scrapedurl, scrapedserver, language, quality in matches:        #leemos los torrents con la diferentes calidades
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
 
-        if 'torrent' not in scrapedserver.lower():                              #Si es un servidor Directo, lo dejamos para luego
+        if 'torrent' not in scrapedserver.lower():                      #Si es un servidor Directo, lo dejamos para luego
             continue
             
         item_local.url = scrapedurl
@@ -607,13 +607,18 @@ def findvideos(item):
             size = generictools.get_torrent_size(item_local.url)                #Buscamos el tamaño en el .torrent
         if size:
             item_local.title = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title) #Quitamos size de título, si lo traía
-            item_local.title = '%s [%s]' % (item_local.title, size)             #Agregamos size al final del título
-            size = size.replace('GB', 'G B').replace('Gb', 'G b').replace('MB', 'M B').replace('Mb', 'M b')
+            size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
+                        .replace('Mb', 'M·b').replace('.', ',')
+            item_local.torrent_info = '%s' % size                               #Agregamos size
+            if not item.unify:
+                item_local.torrent_info = '[%s]' % item_local.torrent_info.strip().strip(',')
             item_local.quality = re.sub(r'\s\[\d+,?\d*?\s\w\s?[b|B]\]', '', item_local.quality)    #Quitamos size de calidad, si lo traía
-            item_local.quality = '%s [%s]' % (item_local.quality, size)         #Agregamos size al final de la calidad
         
         #Ahora pintamos el link del Torrent
-        item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (item_local.quality, str(item_local.language))
+        item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
+                        + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] %s' % \
+                        (item_local.quality, str(item_local.language),  \
+                        item_local.torrent_info)                                #Preparamos título de Torrent
         
         #Preparamos título y calidad, quitamos etiquetas vacías
         item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    

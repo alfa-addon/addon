@@ -7,13 +7,16 @@
 import base64
 import os.path
 import re
+import traceback
 
 try:
-    from python_libtorrent import get_libtorrent
-
-    lt = get_libtorrent()
+    try:
+        import libtorrent as lt
+    except:
+        from python_libtorrent import get_libtorrent
+        lt = get_libtorrent()
 except Exception, e:
-    import libtorrent as lt
+    log(traceback.format_exc())
 
 
 class Cache(object):

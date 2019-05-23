@@ -88,9 +88,16 @@ def setting_torrent(item):
     logger.info()
 
     default = config.get_setting("torrent_client", server="torrent", default=0)
+    BUFFER = config.get_setting("mct_buffer", server="torrent", default="50")
+    DOWNLOAD_PATH = config.get_setting("mct_download_path", server="torrent", default=config.get_setting("downloadpath"))
+    BACKGROUND = config.get_setting("mct_background_download", server="torrent", default=True)
+    RAR = config.get_setting("mct_rar_unpack", server="torrent", default=True)
 
     torrent_options = [config.get_localized_string(30006), config.get_localized_string(70254), config.get_localized_string(70255)]
+    logger.error(torrent_options)
+    logger.error(torrent_options[2])
     torrent_options.extend(platformtools.torrent_client_installed())
+    
 
     list_controls = [
         {
@@ -101,6 +108,54 @@ def setting_torrent(item):
             "enabled": True,
             "visible": True,
             "lvalues": torrent_options
+        },
+        {
+            "id": "mct_buffer",
+            "type": "text",
+            "label": "MCT - Tamaño del Buffer a descargar antes de la reproducción",
+            "default": BUFFER,
+            "enabled": True,
+            "visible": "eq(-1,%s)" % torrent_options[2]
+        },
+        {
+            "id": "mct_download_path",
+            "type": "text",
+            "label": "MCT - Ruta de la carpeta de descarga",
+            "default": DOWNLOAD_PATH,
+            "enabled": True,
+            "visible": "eq(-2,%s)" % torrent_options[2]
+        },
+        {
+            "id": "mct_background_download",
+            "type": "bool",
+            "label": "MCT - ¿Se procesa la descarga en segundo plano?",
+            "default": BACKGROUND,
+            "enabled": True,
+            "visible": "eq(-3,%s)" % torrent_options[2]
+        },
+        {
+            "id": "mct_rar_unpack",
+            "type": "bool",
+            "label": "MCT - ¿Quiere que se descompriman los archivos RAR y ZIP para su reproducción?",
+            "default": RAR,
+            "enabled": True,
+            "visible": "eq(-4,%s)" % torrent_options[2]
+        },
+        {
+            "id": "bt_buffer",
+            "type": "text",
+            "label": "BT - Tamaño del Buffer a descargar antes de la reproducción",
+            "default": BUFFER,
+            "enabled": True,
+            "visible": "eq(-5,%s)" % torrent_options[1]
+        },
+        {
+            "id": "bt_download_path",
+            "type": "text",
+            "label": "BT - Ruta de la carpeta de descarga",
+            "default": DOWNLOAD_PATH,
+            "enabled": True,
+            "visible": "eq(-6,%s)" % torrent_options[1]
         }
     ]
 
@@ -111,6 +166,14 @@ def setting_torrent(item):
 def save_setting_torrent(item, dict_data_saved):
     if dict_data_saved and "list_torrent" in dict_data_saved:
         config.set_setting("torrent_client", dict_data_saved["list_torrent"], server="torrent")
+    if dict_data_saved and "mct_buffer" in dict_data_saved:
+        config.set_setting("mct_buffer", dict_data_saved["mct_buffer"], server="torrent")
+    if dict_data_saved and "mct_download_path" in dict_data_saved:
+        config.set_setting("mct_download_path", dict_data_saved["mct_download_path"], server="torrent")
+    if dict_data_saved and "mct_background_download" in dict_data_saved:
+        config.set_setting("mct_background_download", dict_data_saved["mct_background_download"], server="torrent")
+    if dict_data_saved and "mct_rar_unpack" in dict_data_saved:
+        config.set_setting("mct_rar_unpack", dict_data_saved["mct_rar_unpack"], server="torrent")
 
 def menu_servers(item):
     logger.info()

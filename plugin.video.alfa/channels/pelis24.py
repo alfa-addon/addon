@@ -10,7 +10,7 @@ import urlparse
 
 from channels import autoplay
 from channels import filtertools
-from core import httptools
+from core import httptools, jsontools
 from core import scrapertools
 from core import servertools
 from core.item import Item
@@ -67,7 +67,7 @@ def mainlist(item):
                            text_blod=True, page=0, viewcontent='movies',
                            url=host + 'genre/estrenos/', viewmode="movie_with_plot"),
 
-                item.clone(title="Géneros", action="genresYears", thumbnail=get_thumb('genres', auto=True),
+                item.clone(title="A-Z", action="genresYears", thumbnail=get_thumb('alphabet', auto=True),
                            text_blod=True, page=0, viewcontent='movies',
                            url=host, viewmode="movie_with_plot"),
 
@@ -101,14 +101,13 @@ def sub_search(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data = scrapertools.find_single_match(data, 'Archivos (.*?)resppages')
-    patron = 'img alt="([^"]+)".*?'
-    patron += 'src="([^"]+)".*?'
+    data = scrapertools.find_single_match(data, '</h1>(.*?)</article></div></div>')
+    patron = '<img src="([^"]+)" alt="([^"]+)".*?'
     patron += 'href="([^"]+)".*?'
-    patron += 'fechaestreno">([^<]+)'
+    patron += 'year">(.*?)</span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedtitle, scrapedthumbnail, scrapedurl, year in matches:
+    for  scrapedthumbnail, scrapedtitle, scrapedurl, year in matches:
         if 'tvshows' not in scrapedurl:
             itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, contentTitle=scrapedtitle,
                                        action="findvideos", infoLabels={"year": year},
@@ -132,18 +131,18 @@ def peliculas(item):
 
     data = httptools.downloadpage(item.url).data
     data = scrapertools.decodeHtmlentities(data)
+    bloq = scrapertools.find_single_match(data, '</h1>(.*?)resppages')
     # logger.info(data)
 
     # img, title
-    patron = '(?is)movie-img img-box.*?alt="([^"]+)".*?'
-    patron += 'src="([^"]+)".*?'
+    patron = '<img src="([^"]+)" alt="([^"]+)".*?'
+    patron += 'quality">([^<]+)<.*?'
     patron += 'href="([^"]+)".*?'
-    patron += 'fechaestreno">([^<]+)<.*?'
-    patron += 'quality">([^<]+)<'
+    patron += 'span>(\d{4})<'
 
-    matches = scrapertools.find_multiple_matches(data, patron)
+    matches = scrapertools.find_multiple_matches(bloq, patron)
 
-    for scrapedtitle, scrapedthumbnail, scrapedurl, year, quality in matches[item.page:item.page + 30]:
+    for scrapedthumbnail, scrapedtitle, quality, scrapedurl, year in matches[item.page:item.page + 30]:
         title = '%s [COLOR yellowgreen](%s)[/COLOR]' % (scrapedtitle, quality)
 
         itemlist.append(Item(channel=__channel__, action="findvideos", text_color=color3,
@@ -170,25 +169,40 @@ def genresYears(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\(.*?\)|&nbsp;|<br>", "", data)
     data = scrapertools.decodeHtmlentities(data)
-
-    if item.title == "Estrenos":
-        patron_todas = 'ESTRENOS</a>(.*?)</i> Géneros'
-    else:
-        patron_todas = '(?is)data-label="CATEGORIAS">(.*?)show-bigmenu'
-        # logger.error(texto='***********uuuuuuu*****' + patron_todas)
-
-    data = scrapertools.find_single_match(data, patron_todas)
-    # logger.error(texto='***********uuuuuuu*****' + data)
-    patron = '<a href="([^"]+)".*?title="([^"]+)"'  # url, title
-    # patron = '<a href="([^"]+)">([^<]+)</a>' # url, title
-    matches = scrapertools.find_multiple_matches(data, patron)
+    
+    json_api, nonce = scrapertools.find_single_match(data, '"glossary":"([^"]+)","nonce":"([^"]+)"')
+    json_api = json_api.replace("\\", "")
+    patron_todas = '<ul class="glossary"(.*?)</li></ul></div>'
+    bloq = scrapertools.find_single_match(data, patron_todas)
+    patron = 'data-glossary="([^"]+)">([^<]+)</a>'  # url, title
+    matches = scrapertools.find_multiple_matches(bloq, patron)
 
     for scrapedurl, scrapedtitle in matches:
-        title = '%s' % (scrapedtitle)
-        title = title.replace("Peliculas de ", "").replace(" Online", "")
-        itemlist.append(item.clone(title=title, url=scrapedurl, action="peliculas"))
+        url = json_api+"?term=%s&nonce=%s&type=movies" % (scrapedurl, nonce)
+        itemlist.append(item.clone(title=scrapedtitle, url=url, action="api_peliculas"))
     return itemlist
 
+def api_peliculas(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    json_data = jsontools.load(data)
+    logger.debug(json_data)
+
+    for _id, val in json_data.items():
+        url = val['url']
+        title = val['title']
+        thumbnail = val['img']
+        try:
+            year = val['year']
+        except:
+            year = "-"
+        itemlist.append(Item(channel=__channel__, action="findvideos", text_color=color3,
+                             url=url, infoLabels={'year': year},
+                             contentTitle=title, thumbnail=thumbnail,
+                             title=title, context="buscar_trailer"))
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
+    return itemlist
 
 def year_release(item):
     logger.info()

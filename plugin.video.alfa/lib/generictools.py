@@ -314,7 +314,7 @@ def post_tmdb_listado(item, itemlist):
                 if "audio" in title_subs.lower():                               #se restaura info de Audio
                     title_add += scrapertools.find_single_match(title_subs, r'[a|A]udio (.*?)')
                     continue
-                if scrapertools.find_single_match(title_subs, r'(\d{4})'):      #Se restaura el año, s no lo ha dado TMDB
+                if scrapertools.find_single_match(title_subs, r'^(\d{4})$'):    #Se restaura el año, s no lo ha dado TMDB
                     if not item_local.infoLabels['year'] or item_local.infoLabels['year'] == "-":
                         item_local.infoLabels['year'] = scrapertools.find_single_match(title_subs, r'(\d{4})')
                     continue
@@ -1248,7 +1248,7 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
         import math
         if (size == 0):
             return '0B'
-        size_name = ("B", "KB", "M B", "G B", "TB", "PB", "EB", "ZB", "YB")
+        size_name = ("B", "KB", "M·B", "G·B", "TB", "PB", "EB", "ZB", "YB")
         i = int(math.floor(math.log(size, 1024)))
         p = math.pow(1024, i)
         s = round(size / p, 2)
