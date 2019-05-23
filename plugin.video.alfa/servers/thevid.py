@@ -9,7 +9,7 @@ from platformcode import logger, config
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
-    if "Video not found..." in data:
+    if "Video not found..." in data or "Video removed due to copyright" in data:
         return False, config.get_localized_string(70292) % "Thevid"
     if "Video removed for inactivity..." in data:
         return False, "[Thevid] El video ha sido removido por inactividad"
