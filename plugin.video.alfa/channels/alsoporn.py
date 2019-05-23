@@ -7,6 +7,7 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
+import base64
 
 host = 'http://www.alsoporn.com'
 
@@ -65,8 +66,9 @@ def lista(item):
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                              fanart=thumbnail, plot=plot, contentTitle = scrapedtitle))
+        if not "0:00" in scrapedtime:
+            itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
+                                  fanart=thumbnail, plot=plot, contentTitle = scrapedtitle))
 
     next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)" target="_self"><span class="alsoporn_page">NEXT</span></a>')
     if next_page!="":
@@ -80,11 +82,18 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     scrapedurl = scrapertools.find_single_match(data,'<iframe frameborder=0 scrolling="no"  src=\'([^\']+)\'')
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(scrapedurl).data
     scrapedurl1 = scrapertools.find_single_match(data,'<iframe src="(.*?)"')
-    scrapedurl1 = scrapedurl1.replace("//www.playercdn.com/ec/i2.php?", "https://www.trinitytube.xyz/ec/i2.php?")
-    data = httptools.downloadpage(item.url).data
-    scrapedurl2 = scrapertools.find_single_match(data,'<source src="(.*?)"')
+    scrapedurl1 = scrapedurl1.replace("//www.playercdn.com/ec/i2.php?url=", "")
+    scrapedurl1 = base64.b64decode(scrapedurl1 + "=")
+    logger.debug(scrapedurl1)
+    data = httptools.downloadpage(scrapedurl1).data
+    if "xvideos" in scrapedurl1:
+        scrapedurl2 = scrapertools.find_single_match(data, 'html5player.setVideoHLS\(\'([^\']+)\'\)')
+    if "xhamster" in scrapedurl1:
+        scrapedurl2 = scrapertools.find_single_match(data, '"[0-9]+p":"([^"]+)"').replace("\\", "")
+
+    logger.debug(scrapedurl2)
     itemlist.append(item.clone(action="play", title=item.title, fulltitle = item.title, url=scrapedurl2))
     return itemlist
 

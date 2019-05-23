@@ -60,7 +60,7 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="video-thumb"><a href="([^"]+)" class="title".*?>([^"]+)</a>.*?'
     patron += '<span class="time">([^<]+)</span>.*?'
-    patron += '<video poster="([^"]+)"'
+    patron += '<video muted poster="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,duracion,scrapedthumbnail  in matches:
         url = scrapedurl
