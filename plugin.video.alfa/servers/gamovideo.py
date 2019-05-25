@@ -7,11 +7,9 @@ from core import scrapertools
 from lib import jsunpack
 from platformcode import logger
 
-ver = random.randint(65, 72)
-headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:%s.0) Gecko/20100101 Firefox/%s.0" % (ver, ver)}
-
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
+    data = httptools.downloadpage(page_url, headers=headers).data
 
     page_url = page_url.replace("embed-","").replace(".html", "")
 
@@ -31,8 +29,7 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
-
-    data = DATA
+    data = httptools.downloadpage(page_url, headers=headers).data
 
     packer = scrapertools.find_single_match(data,
                                             "<script type='text/javascript'>(eval.function.p,a,c,k,e,d..*?)</script>")
