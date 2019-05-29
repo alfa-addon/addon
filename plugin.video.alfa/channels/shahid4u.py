@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# -*- Channel Shahi4u -*-
+# -*- Created for Alfa-addon -*-
+# -*- By the Alfa Develop Group -*-
 
 import re
 
@@ -112,10 +115,12 @@ def listall(item):
     if url_pagination:
         a = url_pagination
         n = int(a) + 1
-        url_n = item.url.replace("?page=%s" % a, "?page=%s" % n)
+        url_n = item.url+"?page=%s" % n
+        if "?page=" in item.url:
+            url_n = item.url.replace("?page=%s" % a, "?page=%s" % n)
         l = scrapertools.find_single_match(data, '<li><a href=.*?page=(\d+)" rel="next"')
         title = "<< الصفحة التالية (%s) من (%s)" % (n, l)
-        itemlist.append(Item(channel=item.channel, action="listall", title=title, url=url_pagination,
+        itemlist.append(Item(channel=item.channel, action="listall", title=title, url=url_n,
                              thumbnail=thumb_separador, plot="Next page >> %s of %s" % (n, l)))
     return itemlist
 
@@ -137,7 +142,7 @@ def episodes(item):
     add = ""
     url_pagination = scrapertools.find_single_match(data, '<li class="active"><a href=".*?">(\d+)</a></li>')
     head = data.split("</head>")[0]
-    season = scrapertools.find_single_match(head, ' S0(\d) ')
+    season = scrapertools.find_single_match(head, ' S0(\d)')
     title = item.title.split("الحلقة")[0]
     bloq = scrapertools.find_single_match(data, '> باقى الحلقات</h2>(.*?)</div>')
     matches = re.compile('<a href="([^"]+)" class=.*?><h3>الحلقة <span>', re.DOTALL).findall(bloq)
@@ -165,10 +170,12 @@ def episodes(item):
     if url_pagination:
         a = url_pagination
         n = int(a) + 1
-        url_n = item.url.replace("?page=%s" % a, "?page=%s" % n)
+        url_n = item.url+"?page=%s" % n
+        if "?page=" in item.url:
+            url_n = item.url.replace("?page=%s" % a, "?page=%s" % n)
         l = scrapertools.find_single_match(data, '<li><a href=.*?page=(\d+)" rel="next"')
         title = "<< الصفحة التالية (%s) من (%s)" % (n, l)
-        itemlist.append(Item(channel=item.channel, action="listall", title=title, url=url_pagination,
+        itemlist.append(Item(channel=item.channel, action="listall", title=title, url=url_n,
                              thumbnail=thumb_separador, plot="Next page >> %s of %s" % (n, l)))
     return itemlist
 
