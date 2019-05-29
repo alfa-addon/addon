@@ -6,7 +6,12 @@
       {
         "pattern": "(https://verystream.com/e/[A-z0-9_-]+)",
         "url": "\\1"
+      },
+      {
+        "pattern": "https://verystream.com/stream/([A-z0-9_-]+)",
+        "url": "https://verystream.com/e/\\1"
       }
+
     ]
   },
   "free": true,
