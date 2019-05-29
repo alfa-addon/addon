@@ -83,9 +83,9 @@
         "Tumejortorrent",
         "Torrentrapid",
         "Pctnew",
-        "Torrentlocura",
-        "Tvsinpagar",
         "Planetatorrent",
+        "Tvsinpagar",
+        "Torrentlocura",
         "Mispelisyseries"        
       ]
     },
@@ -93,7 +93,7 @@
       "id": "clonenewpct1_channels_list",
       "type": "text",
       "label": "Lista de clones de NewPct1 y orden de uso",
-      "default": "('0', 'descargas2020', 'https://descargas2020.site/', 'movie, tvshow, season, episode', ''), ('1', 'tumejortorrent', 'https://tumejortorrent.site/', 'movie, tvshow, season, episode', ''), ('1', 'torrentrapid', 'https://torrentrapid.site/', 'movie, tvshow, season, episode', 'serie_episodios'), ('1', 'pctnew', 'https://pctnew.site/', 'movie, tvshow, season, episode', ''), ('1', 'torrentlocura', 'http://torrentlocura.cc/', 'movie, tvshow, season, episode', ''), ('1', 'tvsinpagar', 'http://www.tvsinpagar.com/', 'tvshow, season, episode', ''), ('1', 'planetatorrent', 'http://planetatorrent.com/', 'movie, tvshow, season, episode', ''), ('1', 'mispelisyseries', 'http://mispelisyseries.com/', 'movie', 'search, listado_busqueda')",
+      "default": "('1', 'descargas2020', 'https://descargas2020.org/', 'movie, tvshow, season, episode', ''), ('1', 'tumejortorrent', 'https://tumejortorrent.site/', 'movie, tvshow, season, episode', ''), ('1', 'torrentrapid', 'https://torrentrapid.site/', 'movie, tvshow, season, episode', 'serie_episodios'), ('1', 'pctnew', 'https://pctnew.site/', 'movie, tvshow, season, episode', ''), ('1', 'planetatorrent', 'http://planetatorrent.com/', 'movie, tvshow, season, episode', ''), ('1', 'tvsinpagar', 'http://www.tvsinpagar.com/', 'tvshow, season, episode', ''), ('1', 'torrentlocura', 'http://torrentlocura.com/', 'movie, tvshow, season, episode', ''), ('1', 'mispelisyseries', 'http://mispelisyseries.com/', 'movie', 'search, listado_busqueda')",
       "enabled": true,
       "visible": false
     },
@@ -101,7 +101,7 @@
       "id": "intervenidos_channels_list",
       "type": "text",
       "label": "Lista de canales y clones de NewPct1 intervenidos y orden de sustitución de URLs",
-      "default": "('0', 'canal_org', 'canal_des', 'url_org', 'url_des', 'patron1', 'patron2', 'patron3', 'patron4', 'patron5', 'content_inc', 'content_exc', 'ow_force'), ('0', 'canal_org', 'canal_des', 'url_org', 'url_des', 'patron1', 'patron2', 'patron3', 'patron4', 'patron5', 'content_inc', 'content_exc', 'ow_force'), ('0', 'descargas2020', 'descargas2020', '//descargas2020.com', '//descargas2020.site', '', '', '', '', '', '*', '', 'no'), ('1', 'tumejortorrent', 'tumejortorrent', '//tumejortorrent.com', '//tumejortorrent.site', '', '', '', '', '', '*', '', 'no'), ('1', 'torrentrapid', 'torrentrapid', '//torrentrapid.com', '//torrentrapid.site', '', '', '', '', '', '*', '', 'no'), ('1', 'pctnew', 'pctnew', '//pctnew.com', '//pctnew.site', '', '', '', '', '', '*', '', 'no'), ('1', 'torrentlocura', 'torrentlocura', '//torrentlocura.com', '//torrentlocura.cc', '', '', '', '', '', '*', '', 'no')",
+      "default": "('0', 'canal_org', 'canal_des', 'url_org', 'url_des', 'patron1', 'patron2', 'patron3', 'patron4', 'patron5', 'content_inc', 'content_exc', 'ow_force'), ('0', 'canal_org', 'canal_des', 'url_org', 'url_des', 'patron1', 'patron2', 'patron3', 'patron4', 'patron5', 'content_inc', 'content_exc', 'ow_force'), ('1', 'descargas2020', 'descargas2020', 'descargas2020.com', 'https://descargas2020.org', '', '', '', '', '', '*', '', 'no'), ('1', 'tumejortorrent', 'tumejortorrent', 'tumejortorrent.com', 'https://tumejortorrent.site', '', '', '', '', '', '*', '', 'no'), ('1', 'torrentrapid', 'torrentrapid', 'torrentrapid.com', 'https://torrentrapid.site', '', '', '', '', '', '*', '', 'no'), ('1', 'pctnew', 'pctnew', 'pctnew.com', 'https://pctnew.site', '', '', '', '', '', '*', '', 'no'), ('1', 'seriespapaya', 'seriespapaya', 'seriespapaya.com', 'seriespapaya.net', '', '', '', '', '', '*', '', 'no')",
       "enabled": true,
       "visible": false
     },
