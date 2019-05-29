@@ -18,8 +18,8 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/category/movies/"))
     itemlist.append( Item(channel=item.channel, title="Videos" , action="lista", url=host + "/category/clips/"))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
+    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
-
 
 def search(item, texto):
     logger.info()
@@ -55,9 +55,9 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     patron = '<article id=item-\d+.*?'
-    patron += '<img class="center cover" src=([^"]+) alt="([^"]+)".*?'
+    patron += '<img class=.*?src=(.*?) alt="([^"]+)".*?'
     patron += 'Duration:</strong>(.*?) / <strong>.*?'
-    patron += '<a class=dlbtn href=([^"]+) target=_blank' 
+    patron += '>SHOW<.*?href=([^"]+) target=' 
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedthumbnail,scrapedtitle,duration,scrapedurl in matches:
         scrapedplot = ""
@@ -65,26 +65,28 @@ def lista(item):
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<li><a href=([^<]+)><i class=uk-icon-angle-double-right>')
+    next_page = next_page.replace('"', '')
     if next_page!="":
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
-
 def play(item):
     logger.info()
-    data = httptools.downloadpage(item.url).data
-    url=scrapertools.find_single_match(data,'<span class="bottext">Streamcloud.eu</span>.*?href="([^"]+)"')
-    url= "https://tolink.to" + url
-    data = httptools.downloadpage(url).data
-    patron = '<input type="hidden" name="id" value="([^"]+)">.*?'
-    patron += '<input type="hidden" name="fname" value="([^"]+)">'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for id, url in matches:
-        url= "http://streamcloud.eu/" + id + "/" + url
-    itemlist = servertools.find_video_items(data=url)
-    for item in itemlist:
-        item.channel = "url"
-        item.action = "play"
+    itemlist = []
+    if "streamcloud" in item.url:
+         itemlist.append(item.clone(action="play", url=item.url ))
+    else:
+        data = httptools.downloadpage(item.url).data
+        url=scrapertools.find_single_match(data,'<span class="bottext">Streamcloud.eu</span>.*?href="([^"]+)"')
+        url= "https://tolink.to" + url
+        data = httptools.downloadpage(url).data
+        patron = '<input type="hidden" name="id" value="([^"]+)">.*?'
+        patron += '<input type="hidden" name="fname" value="([^"]+)">'
+        matches = re.compile(patron,re.DOTALL).findall(data)
+        for id, url in matches:
+            url= "http://streamcloud.eu/" + id
+            itemlist.append(item.clone(action="play", url=url ))
+    itemlist = servertools.get_servers_itemlist(itemlist)
     return itemlist
 
 
