@@ -20,10 +20,8 @@ def get_video_url(page_url, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
     packed = scrapertools.find_multiple_matches(data, "(?s)<script>\s*eval(.*?)\s*</script>")
-    scrapertools.printMatches(packed)
     for pack in packed:
         unpacked = jsunpack.unpack(pack)
-        logger.info("Intel11 %s" %unpacked)
         if "ldaa" in unpacked:
             videos = scrapertools.find_multiple_matches(unpacked, '(?is)lda.="([^"]+)')
     video_urls = []
