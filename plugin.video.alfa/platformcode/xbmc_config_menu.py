@@ -244,6 +244,8 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
     def evaluate(self, index, cond):
         import re
 
+        ok = False
+
         # Si la condicion es True o False, no hay mas que evaluar, ese es el valor
         if type(cond) == bool:
             return cond
@@ -293,9 +295,9 @@ class SettingsWindow(xbmcgui.WindowXMLDialog):
                     pass
 
                 # valor bool
-                if value.lower() == "true":
+                if not isinstance(value, int) and value.lower() == "true":
                     value = True
-                elif value.lower() == "false":
+                elif not isinstance(value, int) and value.lower() == "false":
                     value = False
 
             # operacion "eq" "igual a"

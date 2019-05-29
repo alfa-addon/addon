@@ -82,6 +82,7 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data,'<iframe src="([^"]+)"')
+    url = url.replace("https://flashservice.xvideos.com/embedframe/", "https://www.xvideos.com/video") + "/"
     data = httptools.downloadpage(url).data
     patron  = 'html5player.setVideoHLS\\(\'([^\']+)\''
     matches = scrapertools.find_multiple_matches(data, patron)

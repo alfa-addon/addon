@@ -10,7 +10,7 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-IDIOMAS = {'Latino': 'Latino', 'Subtitulado': 'Subtitulado', 'Español': 'Español', 'SUB': 'SUB', '': 'Latino' }
+IDIOMAS = {'Latino': 'Latino', 'Subtitulado': 'Subtitulado', 'Español': 'Español', 'SUB': 'SUB', '': 'Latino', 'VO':'VO' }
 list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['rapidvideo', 'streamango', 'okru', 'vidoza', 'openload', 'powvideo', 'netutv','gvideo']
@@ -249,6 +249,8 @@ def findvideos(item):
     patron = "<a class='optn' href='([^']+)'.*?<img src='.*?>([^<]+)<.*?<img src='.*?>([^<]+)<"
     matches = scrapertools.find_multiple_matches(data, patron)
     for hidden_url, quality, language in matches:
+        if language == 'Inglés':
+            language = 'VO'
         if not config.get_setting('unify'):
             title = ' [%s][%s]' % (quality, IDIOMAS[language])
         else:

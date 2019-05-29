@@ -36,17 +36,18 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     match = scrapertools.find_multiple_matches(data, patron)
     if match:
         for url1 in match:
-           res = scrapertools.find_single_match(url1, '=(\w+)')
-           data = httptools.downloadpage(url1).data
-           if "Please click on this button to open this video" in data:
-               data = httptools.downloadpage(url1, post=post).data
-           url = scrapertools.find_single_match(data, 'source src="([^"]+)')
-           ext = scrapertools.get_filename_from_url(url)[-4:]
-           video_urls.append(['%s %s [rapidvideo]' % (ext, res), url])
+            res = scrapertools.find_single_match(url1, '=(\w+)')
+            data = httptools.downloadpage(url1).data
+            if "Please click on this button to open this video" in data:
+                data = httptools.downloadpage(url1, post=post).data
+            url = scrapertools.find_single_match(data, 'source src="([^"]+)')
+            ext = scrapertools.get_filename_from_url(url)[-4:]
+            video_urls.append(['%s %s [rapidvideo]' % (ext, res), url])
     else:
-        patron = 'data-setup.*?src="([^"]+)".*?'
-        patron += 'type="([^"]+)"'
+        patron = 'src="([^"]+)" type="video/([^"]+)" label="([^"]+)"'
         match = scrapertools.find_multiple_matches(data, patron)
-        for url, ext in match:
-            video_urls.append(['%s [rapidvideo]' % (ext), url])
+        if match:
+            for url, ext, res in match:
+                video_urls.append(['.%s %s [Rapidvideo]' % (ext, res), url])
+
     return video_urls
