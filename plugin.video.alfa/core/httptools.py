@@ -517,7 +517,7 @@ def proxy_post_processing(url, url_save, post, post_save, proxy_data, response,
             import proxytools
             if ', Proxy Direct' in proxy_data['stat']:
                 proxytools.get_proxy_list_method(proxy_init='ProxyDirect', 
-                        error_skip=proxy_data['addr'])
+                        error_skip=proxy_data['addr'], url_test=url)
             elif ', Proxy CF' in proxy_data['stat']:
                 proxytools.get_proxy_list_method(proxy_init='ProxyCF', 
                         error_skip=proxy_data['CF_addr'])
@@ -553,14 +553,14 @@ def channel_proxy_list(url, forced_proxy=None):
 
     if not url.endswith('/'):
         url += '/'
-    if scrapertools.find_single_match(url, '(?:http.*:\/\/)?([^\?|\/]+)(?:\?|\/)') \
-            in proxy_channel_bloqued:
+    if scrapertools.find_single_match(url, '(?:http.*\:)?\/\/(?:www\.)?([^\?|\/]+)(?:\?|\/)') \
+                in proxy_channel_bloqued:
         if forced_proxy:
             return True
         if 'ON' in proxy_channel_bloqued[scrapertools.find_single_match(url, 
-                '(?:http.*:\/\/)?([^\?|\/]+)(?:\?|\/)')]:
+                '(?:http.*\:)?\/\/(?:www\.)?([^\?|\/]+)(?:\?|\/)')]:
             return True
-    
+
     return False
 
 

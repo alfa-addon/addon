@@ -1,26 +1,36 @@
 # -*- coding: utf-8 -*-
 
-try:
-    from python_libtorrent import get_libtorrent, get_platform
-
-    lt = get_libtorrent()
-except Exception, e:
-    import libtorrent as lt
-
 import os
 import pickle
 import random
 import time
 import urllib
+import traceback
+
+try:
+    try:
+        import libtorrent as lt
+    except:
+        from python_libtorrent import get_libtorrent
+        lt = get_libtorrent()
+except Exception, e:
+    log(traceback.format_exc())
 
 from cache import Cache
 from dispatcher import Dispatcher
 from file import File
 from handler import Handler
 from monitor import Monitor
-from platformcode import logger
+from platformcode import logger, config
 from resume_data import ResumeData
 from server import Server
+
+try:
+    BUFFER = int(config.get_setting("bt_buffer", server="torrent", default="50"))
+except:
+    BUFFER = 50
+    config.set_setting("bt_buffer", "50", server="torrent")
+DOWNLOAD_PATH = config.get_setting("bt_download_path", server="torrent", default=config.get_setting("downloadpath"))
 
 
 class Client(object):
@@ -54,13 +64,13 @@ class Client(object):
         if temp_path:
             self.temp_path = temp_path
         else:
-            self.temp_path = os.path.join(os.path.dirname(__file__), "tmp")
+            self.temp_path = DOWNLOAD_PATH
         self.is_playing_fnc = is_playing_fnc
         self.timeout = timeout
         self.auto_delete = auto_delete
         self.wait_time = wait_time
         self.auto_shutdown = auto_shutdown
-        self.buffer_size = 15
+        self.buffer_size = BUFFER
         self.last_pieces_priorize = 5
         self.state_file = "state"
         self.torrent_paramss = {'save_path': self.temp_path, 'storage_mode': lt.storage_mode_t.storage_mode_sparse}

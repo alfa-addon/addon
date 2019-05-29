@@ -2,7 +2,6 @@
 
 import re
 import urlparse
-
 from channels import renumbertools
 from core import httptools
 from core import servertools
@@ -52,7 +51,8 @@ def search(item, texto):
     item.url = urlparse.urljoin(HOST, "search_suggest")
     texto = texto.replace(" ", "+")
     post = "value=%s" % texto
-    data = httptools.downloadpage(item.url, post=post).data
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
     try:
         dict_data = jsontools.load(data)
         for e in dict_data:
@@ -201,27 +201,42 @@ def episodios(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    _id = scrapertools.find_single_match(item.url, HOST + 'ver/([^/]+)/')
     data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.find_single_match(data, 'atrl(.*?)choose_quality')
-    matches = scrapertools.find_multiple_matches(bloque, '<option value="([^"]+)')
+    bloque = scrapertools.find_single_match(data, 'Server</span>(.*?)choose_quality')
+    matches = scrapertools.find_multiple_matches(bloque, '<option value="([^"]+)"')
     headers = {"Referer" : item.url}
+
     for url in matches:
-        post = "embed_id=%s" % _id
-        xserver = scrapertools.find_single_match(url, 's=(\w+)')
-        data = httptools.downloadpage(HOST + "get_video_info_v2?s=%s" %xserver, post=post).data
-        dict_data = jsontools.load(data)
-        data = httptools.downloadpage(dict_data["value"], headers=headers).data
-        matches = scrapertools.find_multiple_matches(data, '"file":"([^"]+)"')
-        for url in matches:
-            url = url.replace("\\","")
-            itemlist.append(item.clone(action="play", url=url, title='%s',
-                             fulltitle=item.title, language='VOSE'
-                             ))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
+        xserver = scrapertools.find_single_match(url, 's=([a-zA-Z0-9]+)')
+        source = HOST + "get_video_info_v2?s=%s" % xserver
+        link = get_link(source, item.url)
+        itemlist.append(item.clone(action="play", url=link, title=xserver.capitalize(),
+                        fulltitle=item.title, language='VOSE', server="directo"))
+    #~itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     # Requerido para AutoPlay
 
     autoplay.start(itemlist, item)
 
     return itemlist
+
+def get_link(url, referer):
+    _id = scrapertools.find_single_match(referer, 'ver/([^/]+)/')
+    #logger.info("play: %s" % item.url)
+    itemlist = []
+    post = "embed_id=%s" % _id
+    clen = len(post)
+    headers={"Referer" : referer}
+    data = httptools.downloadpage(url, post=post,  headers=headers).data
+    dict_data = jsontools.load(data)
+    frame_src = scrapertools.find_single_match(dict_data["value"], 'iframe src="([^"]+)"')
+    new_data = httptools.downloadpage(frame_src, headers={"Referer" : referer}).data
+    url = scrapertools.find_single_match(new_data, '"file":"([^"]+)"')
+    url = url.replace("\\","")
+    logger.info("tabon3 %s" % new_data)
+    ua = httptools.get_user_agent()
+    if "openstream" in url:
+        ua = httptools.get_user_agent()
+        url = "%s|User-Agent=%s" % (url, ua)
+    link = url
+    return link

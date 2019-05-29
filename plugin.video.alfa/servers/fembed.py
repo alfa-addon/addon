@@ -8,7 +8,7 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
-    if "Sorry 404 not found" in data:
+    if "Sorry 404 not found" in data or "This video is unavailable" in data:
         return False, "[fembed] El fichero ha sido borrado"
     return True, ""
 

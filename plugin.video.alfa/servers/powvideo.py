@@ -32,7 +32,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     referer = page_url.replace('iframe', 'preview')
 
     data = httptools.downloadpage(page_url, headers={'referer': referer}).data
-
+    logger.info("script: %s" % data)
     packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
     unpacked = jsunpack.unpack(packed)
     
@@ -49,8 +49,9 @@ def decode_video_url(url, data):
     net = alfaresolver.EstructuraInicial(matches[0])
     net1 = alfaresolver.EstructuraInicial(net.data)
     data1 = ''.join(net1.data)
+    logger.info("script: %s" % data1)
     match = re.compile("='(.*?);';eval", re.DOTALL).findall(data1)[0]
-    matches = re.compile('data\("([a-z0-9]+)",(\d+)\)', re.DOTALL).findall(match)
+    matches = re.compile('data\("([a-z 0-9]+)",(\d+)\)', re.DOTALL).findall(match)
     pos = []
     for e, val in matches:
         matches2 = re.compile(r'data\("%s"\)&(\d+)\]=r' % e, re.DOTALL).findall(match)
@@ -63,7 +64,7 @@ def decode_video_url(url, data):
             pos.append(num2)
     tria = re.compile('[0-9a-z]{40,}', re.IGNORECASE).findall(url)[0]
     gira = list(tria[::-1])
-    gira.pop(1)
+    gira.pop(3)
     
     x1 = gira[pos[0]]
     x2 = gira[pos[1]]
