@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import re, base64, urllib, time
-
 from core import httptools, scrapertools
 from lib import jsunpack
-from platformcode import logger, platformtools
+from platformcode import logger
 
 data = ""
 def test_video_exists(page_url):
@@ -20,7 +18,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     itemlist = []
 
     packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
-    logger.error(data)
     unpacked = jsunpack.unpack(packed)
     # ~ logger.info(unpacked)
 
