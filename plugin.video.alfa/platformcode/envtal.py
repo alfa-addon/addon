@@ -202,6 +202,8 @@ def get_environment():
                 environment['torrentcli_name'] = environment['torrentcli_name'].capitalize()
                 if environment['torrentcli_name'] == 'Torrenter':
                     environment['torrentcli_dload_path'] = str(xbmc.translatePath(__settings__.getSetting('storage')))
+                    if not environment['torrentcli_dload_path']:
+                        environment['torrentcli_dload_path'] = str(filetools.join(xbmc.translatePath("special://home/"), "cache", "xbmcup", "plugin.video.torrenter", "Torrenter"))
                     environment['torrentcli_buffer'] = str(__settings__.getSetting('pre_buffer_bytes'))
                 else:
                     environment['torrentcli_dload_path'] = str(xbmc.translatePath(__settings__.getSetting('download_path')))

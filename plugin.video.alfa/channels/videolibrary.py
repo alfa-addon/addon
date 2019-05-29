@@ -544,6 +544,8 @@ def findvideos(item):
             item_json.contentChannel = 'videolibrary'
             if hasattr(channel, 'findvideos'):
                 from core import servertools
+                if item_json.videolibray_emergency_urls:
+                    del item_json.videolibray_emergency_urls
                 list_servers = getattr(channel, 'findvideos')(item_json)
                 list_servers = servertools.filter_servers(list_servers)
             else:

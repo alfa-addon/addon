@@ -231,7 +231,7 @@ def findvideos(item):
     itemlist = []
 
     data = get_source(item.url)
-    if 'episode="0" season="0"' not in data and item.contentType != 'episode':
+    '''if 'episode="0" season="0"' not in data and item.contentType != 'episode':
         item.contentSerieName = item.contentTitle
         item.contentTitle = None
         item.contentType = None
@@ -245,13 +245,16 @@ def findvideos(item):
     else:
         season = '0'
         episode = '0'
-
-    patron = '<span class="movie-online-list" id_movies_types="(\d)".*?'
-    patron += 'episode="%s" season="%s" id_lang="([^"]+)".*?online-link="([^"]+)" link-id="\d+">' % (episode, season)
-
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for quality_value, lang_value, scrapedurl in matches:
-
+    '''
+    #patron = '<span class="movie-online-list" id_movies_types="(\d)".*?'
+    #patron += 'episode="%s" season="%s" id_lang="([^"]+)".*?online-link="([^"]+)" link-id="\d+">' % (episode, season)
+    bloq = scrapertools.find_single_match(data, 'Contraseña</th>(.*?)</table>')
+   
+    patron = '<a href="([^"]+)".*?<td>(.*?)</td><td class="hidden-xs">(.*?)</td>'
+    matches = re.compile(patron, re.DOTALL).findall(bloq)
+    #for quality_value, lang_value, scrapedurl in matches:
+    for scrapedurl, lang_value, quality_value in matches:
+        server = ""
         if lang_value not in IDIOMAS:
             lang_value = '6'
         if quality_value not in CALIDADES:
@@ -263,9 +266,16 @@ def findvideos(item):
             title = ' [%s] [%s]' % (quality, language)
         else:
             title = ''
+        if scrapedurl.startswith("magnet:"):
+            server = "torrent"
         itemlist.append(Item(channel=item.channel, url=scrapedurl, title='%s'+title, action='play',
-                             language=language, quality=quality, infoLabels=item.infoLabels))
-
+                             language=language, quality=quality, infoLabels=item.infoLabels, server=server))
+    embed = scrapertools.find_single_match(data, 'movie-online-iframe" src="([^"]+)"')
+    if embed:
+        fquality = itemlist[1].quality
+        flanguage = itemlist[1].language
+        title = ' [%s] [%s]' % (quality, language)
+        itemlist.append(item.clone(title="%s"+title, url=embed, language=flanguage, quality=fquality, infoLabels=item.infoLabels, action="play"))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 
     # Requerido para Filtrar enlaces

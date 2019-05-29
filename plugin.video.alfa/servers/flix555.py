@@ -9,7 +9,7 @@ from platformcode import logger, platformtools
 
 def test_video_exists(page_url):
     resp = httptools.downloadpage(page_url)
-    if resp.code == 404 or '<b>File Not Found</b>' in resp.data:
+    if resp.code == 404 or '<b>File Not Found</b>' in resp.data or "The video was deleted by" in resp.data:
         return False, "[flix555] El video no está disponible"
     return True, ""
 

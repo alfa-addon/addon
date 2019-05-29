@@ -74,9 +74,13 @@ def lista(item):
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
                               plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
+    if "#videos" in next_page:
+        next_page = scrapertools.find_single_match(data, 'data-parameters="sort_by:post_date;from:(\d+)">Next')
+        next = scrapertools.find_single_match(item.url, '(.*?/)\d+')
+        next_page = next + "%s/" % next_page
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="Página Siguiente >>" , text_color="blue", url=next_page ) )
+        itemlist.append(item.clone(action="lista", title= next_page, text_color="blue", url=next_page ) )
     return itemlist
 
 

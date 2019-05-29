@@ -643,12 +643,7 @@ def findvideos(item):
     itemlist_f = []                                     #Itemlist de enlaces filtrados
     if not item.language:
         item.language = ['CAST']                        #Castellano por defecto
-    
-    try:
-        tmdb.set_infoLabels(item, True)                 #TMDB actualizado
-    except:
-        pass
-    
+
     item.url = item.url.replace(host_alt, host)         #Cambio de dominio (videoteca)
     
     #logger.debug(item)
@@ -668,7 +663,7 @@ def findvideos(item):
         
     if not data_torrent and not data_directo:
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url)
-        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log'))
+        itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log', folder=False))
 
     patron = '<div class="content"><a href="([^"]+).*?'
     patron += '(?:<div class="content_medium">(.*?)<\/div>.*?)?'
@@ -687,7 +682,7 @@ def findvideos(item):
         else:
             if len(itemlist) == 0:
                 logger.error("ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web " + " / PATRON: " + patron)
-                itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log'))
+                itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log', folder=False))
                 if data_torrent:
                     logger.error(data_torrent)
                 if data_directo:
@@ -720,7 +715,7 @@ def findvideos(item):
         del item.extra3
         item_local = item.clone()
         
-        #Salvamos lo imprescindible y reinicialmos InfoLabels
+        #Salvamos lo imprescindible y reiniciamos InfoLabels
         tmdb_id = item.infoLabels['tmdb_id']
         item_local.infoLabels = {}
         item_local.unify = True
@@ -857,11 +852,15 @@ def findvideos(item):
                     if not item.armagedon:
                         size = generictools.get_torrent_size(item_local.url)    #Buscamos el tamaño en el .torrent
                     if size:
-                        quality += ' [%s]' % size
+                        item_local.torrent_info += '%s' % size                  #Agregamos size
+                        if not item.unify:
+                            item_local.torrent_info = '[%s]' % item_local.torrent_info.strip().strip(',')
                     if item.armagedon:                                          #Si es catastrófico, lo marcamos
                         quality = '[/COLOR][COLOR hotpink][E] [COLOR limegreen]%s' % quality
-                    item_local.title = '[COLOR yellow][?][/COLOR] [COLOR yellow][Torrent][/COLOR] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (quality, str(item_local.language))                                                  
-                    
+                    item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
+                        + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] %s' % \
+                        (quality, str(item_local.language),  item_local.torrent_info)   #Preparamos título de Torrent
+                        
                     #Preparamos título y calidad, quitamos etiquetas vacías
                     item_local.title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', item_local.title)    
                     item_local.title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.title)
@@ -890,7 +889,7 @@ def findvideos(item):
         else:                                                                       
             if config.get_setting('filter_languages', channel) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
                 thumb_separador = get_thumb("next.png")                             #... pintamos todo con aviso
-                itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
+                itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador, folder=False))
             itemlist_alt.extend(itemlist_t)                                                 #Pintar pantalla con todo si no hay filtrado
         
         #Si son múltiples episodios, ordenamos
@@ -942,7 +941,7 @@ def findvideos(item):
            
             if not data or not matches:
                 logger.error("ERROR 02: FINDVIDEOS: El enlace no existe o ha cambiado la estructura de la Web " + " / PATRON: " + patron  + " / DATA: " + data)
-                itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El enlace no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log'))
+                itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El enlace no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log', folder=False))
                 continue                                                #si no hay más datos, algo no funciona, salimos
             
             #logger.debug(patron)
@@ -1069,7 +1068,7 @@ def findvideos(item):
     else:                                                                       
         if config.get_setting('filter_languages', channel) > 0 and len(itemlist_t) > 0: #Si no hay entradas filtradas ...
             thumb_separador = get_thumb("next.png")                             #... pintamos todo con aviso
-            itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador))
+            itemlist.append(Item(channel=item.channel, url=host, title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", thumbnail=thumb_separador, folder=False))
         itemlist_alt.extend(itemlist_t)                                                 #Pintar pantalla con todo si no hay filtrado
     
     #Si son múltiples episodios, ordenamos
@@ -1124,8 +1123,11 @@ def episodios(item):
         season_display = item.from_num_season_colapse
 
     # Obtener la información actualizada de la Serie.  TMDB es imprescindible para Videoteca
-    if not item.infoLabels['tmdb_id']:
-        tmdb.set_infoLabels(item, True)
+    #if not item.infoLabels['tmdb_id']:
+    try:
+        tmdb.set_infoLabels(item, True)                             #TMDB de cada Temp
+    except:
+        pass
         
     modo_ultima_temp_alt = modo_ultima_temp
     if item.ow_force == "1":                                        #Si hay un traspaso de canal o url, se actualiza todo 

@@ -6,25 +6,46 @@ import urllib
 
 from core import httptools, scrapertools
 from lib import jsunpack
-from platformcode import config, logger
+from platformcode import config, logger, platformtools
 
+flashx_data = ""
+flashx_hash_f = ""
+flashx_post = ""
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-
-    data = httptools.downloadpage(page_url, cookies=False).data
-    if 'file was deleted' in data or 'File Not Found (Deleted or Abused)' in data:
+    global flashx_data
+    try:
+        flashx_data = httptools.downloadpage(page_url, cookies="xfsts=pfp5dj3e6go1l2o1").data
+    except:
+        try:
+            flashx_data = httptools.downloadpage(page_url).data
+        except:
+            return False,  config.get_localized_string(70296) % "FlashX"
+    bloque = scrapertools.find_single_match(flashx_data, '(?s)Form method="POST" action(.*?)span')
+    flashx_id = scrapertools.find_single_match(bloque, 'name="id" value="([^"]+)"')
+    fname = scrapertools.find_single_match(bloque, 'name="fname" value="([^"]+)"')
+    global flashx_hash_f
+    flashx_hash_f = scrapertools.find_single_match(bloque, 'name="hash" value="([^"]+)"')
+    imhuman = scrapertools.find_single_match(bloque, "value='([^']+)' name='imhuman'")
+    global flashx_post
+    flashx_post = 'op=download1&usr_login=&id=%s&fname=%s&referer=&hash=%s&imhuman=%s' % (
+        flashx_id, urllib.quote(fname), flashx_hash_f, imhuman)
+    if 'file was deleted' in flashx_data or 'File Not Found (Deleted or Abused)' in flashx_data:
         return False, config.get_localized_string(70292) % "FlashX"
-    elif 'Video is processing now' in data:
+    elif 'Video is processing now' in flashx_data:
         return False, config.get_localized_string(70293) % "FlashX"
+    elif 'Too many views per minute' in flashx_data:
+        return False, config.get_localized_string(70300) % "FlashX"
 
     return True, ""
+
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     pfxfx = ""
-    data = httptools.downloadpage(page_url, cookies=False).data
+    data = flashx_data
     data = data.replace("\n", "")
     cgi_counter = scrapertools.find_single_match(data,
                                                  """(?is)src=.(https://www.flashx.../counter.cgi.*?[^(?:'|")]+)""")
@@ -33,43 +54,40 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     # Para obtener el f y el fxfx
     js_fxfx = "https://www." + scrapertools.find_single_match(data.replace("//", "/"),
                                                               """(?is)(flashx.../js\w+/c\w+.*?[^(?:'|")]+)""")
-    data_fxfx = httptools.downloadpage(js_fxfx).data
-    mfxfx = scrapertools.find_single_match(data_fxfx, 'get.*?({.*?})').replace("'", "").replace(" ", "")
-    matches = scrapertools.find_multiple_matches(mfxfx, '(\w+):(\w+)')
-    for f, v in matches:
-        pfxfx += f + "=" + v + "&"
+    if len(js_fxfx) > 15:
+        data_fxfx = httptools.downloadpage(js_fxfx).data
+        mfxfx = scrapertools.find_single_match(data_fxfx, 'get.*?({.*?})').replace("'", "").replace(" ", "")
+        matches = scrapertools.find_multiple_matches(mfxfx, '(\w+):(\w+)')
+        for f, v in matches:
+            pfxfx += f + "=" + v + "&"
     logger.info("mfxfxfx1= %s" % js_fxfx)
     logger.info("mfxfxfx2= %s" % pfxfx)
     if pfxfx == "":
         pfxfx = "f=fail&fxfx=6"
     coding_url = 'https://www.flashx.co/flashx.php?%s' % pfxfx
-    # {f: 'y', fxfx: '6'}
-    bloque = scrapertools.find_single_match(data, '(?s)Form method="POST" action(.*?)span')
-    flashx_id = scrapertools.find_single_match(bloque, 'name="id" value="([^"]+)"')
-    fname = scrapertools.find_single_match(bloque, 'name="fname" value="([^"]+)"')
-    hash_f = scrapertools.find_single_match(bloque, 'name="hash" value="([^"]+)"')
-    imhuman = scrapertools.find_single_match(bloque, "value='([^']+)' name='imhuman'")
-    post = 'op=download1&usr_login=&id=%s&fname=%s&referer=&hash=%s&imhuman=%s' % (
-        flashx_id, urllib.quote(fname), hash_f, imhuman)
-    wait_time = scrapertools.find_single_match(data, "<span id='xxc2'>(\d+)")
-
+    
     # Obligatorio descargar estos 2 archivos, porque si no, muestra error
     httptools.downloadpage(coding_url, cookies=False)
     httptools.downloadpage(cgi_counter, cookies=False)
-
+    
+    ts = int(time.time())
+    flash_ts = scrapertools.find_single_match(flashx_hash_f, '-(\d{10})-')
+    wait_time = int(flash_ts) - ts
+    platformtools.dialog_notification('Cargando flashx', 'Espera de %s segundos requerida' % wait_time)
+    
     try:
-        time.sleep(int(wait_time) + 1)
+        time.sleep(wait_time)
     except:
         time.sleep(6)
 
-    data = httptools.downloadpage(playnow, post).data
+    data = httptools.downloadpage(playnow, flashx_post).data
     # Si salta aviso, se carga la pagina de comprobacion y luego la inicial
     # LICENSE GPL3, de alfa-addon: https://github.com/alfa-addon/ ES OBLIGATORIO AÑADIR ESTAS LÍNEAS
     if "You try to access this video with Kodi" in data:
         url_reload = scrapertools.find_single_match(data, 'try to reload the page.*?href="([^"]+)"')
         try:
-            data = httptools.downloadpage(url_reload, cookies=False).data
-            data = httptools.downloadpage(playnow, post, cookies=False).data
+            data = httptools.downloadpage(url_reload).data
+            data = httptools.downloadpage(playnow, flashx_post).data
         # LICENSE GPL3, de alfa-addon: https://github.com/alfa-addon/ ES OBLIGATORIO AÑADIR ESTAS LÍNEAS
         except:
             pass

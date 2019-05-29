@@ -106,11 +106,9 @@ def list_all(item):
 
     itemlist = []
     data = get_source(item.url)
-    patron = 'class=item.*?<a href=(.*?)><div class=image.*?<img src=(.*?) alt=(.*?) (?:\(\d{4}|width).*?'
-    patron += 'fixyear><h2>.*?<\/h2>.*?<span class=year>(.*?)<\/span><\/div>(.*?)<\/div>'
-
+    patron = 'class=item.*?<a href=(.*?)><div class=image.*?src=(.*?) alt=(.*?) (?:\(\d{4}|width).*?'
+    patron += 'fixyear><h2>(.*?)<\/h2>.*?calidad2>(.*?)</span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedquality in matches:
         url = scrapedurl
         action = 'findvideos'
@@ -119,9 +117,8 @@ def list_all(item):
         contentSerieName = ''
         contentTitle = scrapedtitle
         title = contentTitle
-        quality = 'Full HD'
+        quality = scrapedquality
         if scrapedquality != '':
-            quality = scrapertools.find_single_match(scrapedquality, 'calidad2>(.*?)<')
             title = contentTitle + ' (%s)' % quality
 
         year = scrapedyear
