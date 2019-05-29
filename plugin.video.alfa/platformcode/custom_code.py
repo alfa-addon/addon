@@ -61,8 +61,7 @@ def init():
         verify_Kodi_video_DB()
         
         #LIBTORRENT: se descarga el binario de Bibtorrent cada vez que se actualiza Alfa
-        if not filetools.exists(os.path.join(config.get_runtime_path(), "custom_code.json")):
-            update_libtorrent()
+        update_libtorrent()
         
         #QUASAR: Preguntamos si se hacen modificaciones a Quasar
         if not filetools.exists(os.path.join(config.get_data_path(), "quasar.json")) and not config.get_setting('addon_quasar_update', default=False):
@@ -205,6 +204,15 @@ def update_external_addon(addon_name):
     
 def update_libtorrent():
     logger.info()
+    
+    if filetools.exists(os.path.join(config.get_runtime_path(), "custom_code.json")):
+        return
+    
+    if filetools.exists(filetools.join(xbmc.translatePath('special://home'), 'lib', 'python_libtorrent')):
+        import time
+        filetools.rmdir(filetools.join(xbmc.translatePath('special://home'), 'lib', 'python_libtorrent'))
+        time.sleep(1)
+        filetools.rmdir(filetools.join(xbmc.translatePath('special://home'), 'lib'))
     
     from lib.python_libtorrent.python_libtorrent import get_libtorrent
 

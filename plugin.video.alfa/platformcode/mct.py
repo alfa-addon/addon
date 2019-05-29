@@ -13,20 +13,45 @@ import platform
 import sys
 import traceback
 
-try:
-    try:
-        import libtorrent as lt
-    except:
-        from python_libtorrent import get_libtorrent
-        lt = get_libtorrent()
-except Exception, e:
-    log(traceback.format_exc())
-
-
 import xbmc
 import xbmcgui
 
 from platformcode import config
+LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", default='')
+
+try:
+    e = ''
+    e1 = ''
+    e2 = ''
+    pathname = ''
+    try:
+        if not xbmc.getCondVisibility("system.platform.android"):
+            import libtorrent as lt
+            pathname = LIBTORRENT_PATH
+        else:
+            import imp
+            from ctypes import CDLL
+            dll_path = os.path.join(LIBTORRENT_PATH, 'liblibtorrent.so')
+            liblibtorrent = CDLL(dll_path)
+            path_list = [LIBTORRENT_PATH, xbmc.translatePath('special://xbmc')]
+            fp, pathname, description = imp.find_module('libtorrent', path_list)
+            try:
+                lt = imp.load_module('libtorrent', fp, pathname, description)
+            finally:
+                if fp: fp.close()
+        
+    except Exception, e1:
+        xbmc.log(traceback.format_exc(), xbmc.LOGERROR)
+        from lib.python_libtorrent.python_libtorrent import get_libtorrent
+        lt = get_libtorrent()
+
+except Exception, e2:
+    xbmc.log(traceback.format_exc(), xbmc.LOGERROR)
+    do = xbmcgui.Dialog()
+    e = e1 or e2
+    do.ok('ERROR en el cliente MCT Libtorrent', 'Módulo no encontrado o imcompatible con el dispositivo.', 
+                    'Reporte el fallo adjuntando un "log".', str(e))
+
 from platformcode import platformtools
 from core import scrapertools
 from core import filetools
@@ -108,7 +133,16 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
     # -----------------------------------------------------------
 
     # -- MCT - MiniClienteTorrent -------------------------------
-    ses = lt.session()
+    try:
+        log("XXX libtorrent pathname: %s" % str(pathname))
+        ses = lt.session()
+    except Exception, e:
+        do = xbmcgui.Dialog()
+        e = e1 or e2
+        do.ok('ERROR en el cliente MCT Libtorrent', 'Módulo no encontrado o imcompatible con el dispositivo.', 
+                    'Reporte el fallo adjuntando un "log".', str(e))
+        return
+        
     log("XXX libtorrent version: %s" % lt.version)
     log("##### Torrent file: %s ##" % torrent_file)
 
