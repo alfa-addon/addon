@@ -27,6 +27,7 @@ from functions import *
 import xbmc, xbmcaddon
 import sys
 import os
+import traceback                                                                ### Alfa
 
 #__settings__ = xbmcaddon.Addon(id='script.module.libtorrent')                  ### Alfa
 #__version__ = __settings__.getAddonInfo('version')                             ### Alfa
@@ -101,10 +102,12 @@ if platform['system'] not in ['windows']:
     log(log_text)
 
 try:
+    from platformcode import config
     if platform['system'] in ['linux_x86', 'windows', 'linux_armv6', 'linux_armv7',
                               'linux_x86_64', 'linux_mipsel_ucs2', 'linux_mipsel_ucs4',
                               'linux_aarch64_ucs2', 'linux_aarch64_ucs4']:
         import libtorrent
+        config.set_setting("libtorrent_path", dest_path, server="torrent")      ### Alfa
     elif platform['system'] in ['darwin', 'ios_arm']:
         import imp
         path_list = [dest_path]
@@ -126,19 +129,43 @@ try:
             log('CDLL = ' + str(liblibtorrent))
         except:
             # If no permission in dest_path we need to go deeper!
-            try:
-                dest_path=lm.android_workaround(new_dest_path='/data/data/org.xbmc.kodi/lib/')
+            try:                                                                ### Alfa START
+                from core import scrapertools
+                kodi_app = xbmc.translatePath('special://xbmc')
+                kodi_app = scrapertools.find_single_match(kodi_app, '\/\w+\/\w+\/.*?\/(.*?)\/')
+                try:
+                    dir_list = os.listdir('/data/app/').split()
+                except:
+                    import subprocess
+                    command = ['su', '-c', 'ls', '/data/app/']
+                    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    output_cmd, error_cmd = p.communicate()
+                    log('Comando ROOT: %s' % str(command))
+                    dir_list = output_cmd.split()
+                
+                for file in dir_list:
+                    if kodi_app in file:
+                        kodi_dir = file
+                        break
+
+                bits = sys.maxsize > 2 ** 32 and "64" or ""
+                dest_path = os.path.join('/data/app/', kodi_dir, 'lib', platform['arch'] + bits)
+
+                dest_path=lm.android_workaround(new_dest_path=dest_path)        ### Alfa END
                 dll_path=os.path.join(dest_path, 'liblibtorrent.so')
                 log('NEW CDLL path = ' + dll_path)
                 liblibtorrent=CDLL(dll_path)
                 log('CDLL = ' + str(liblibtorrent))
+                
             except:
+                log(traceback.format_exc())                                     ### Alfa
                 # http://i3.kym-cdn.com/photos/images/original/000/531/557/a88.jpg
                 dest_path=lm.android_workaround(new_dest_path=xbmc.translatePath('special://xbmc'))
                 dll_path=os.path.join(dest_path, 'liblibtorrent.so')
                 log('NEW CDLL path = ' + dll_path)
                 liblibtorrent=CDLL(dll_path)
                 log('CDLL = ' + str(liblibtorrent))
+                
         liblibtorrent=CDLL(dll_path)
         log('CDLL = ' + str(liblibtorrent))
         path_list = [dest_path]
@@ -151,11 +178,13 @@ try:
         finally:
             if fp: fp.close()
 
+    config.set_setting("libtorrent_path", dest_path, server="torrent")          ### Alfa
     log('Imported libtorrent v' + libtorrent.version + ' from "' + dest_path + '"')
 
 except Exception, e:
+    config.set_setting("libtorrent_path", '', server="torrent")                 ### Alfa
     log('Error importing libtorrent from "' + dest_path + '". Exception: ' + str(e))
-    pass
+
 
 def get_libtorrent():
     return libtorrent
