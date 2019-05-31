@@ -65,6 +65,8 @@ def menu_channels(item):
     from core import channeltools
     channel_list = channelselector.filterchannels("all")
     for channel in channel_list:
+        if not channel.channel:
+            continue
         channel_parameters = channeltools.get_channel_parameters(channel.channel)
         if channel_parameters["has_settings"]:
             itemlist.append(Item(channel=CHANNELNAME, title=".    " + config.get_localized_string(60547) % channel.title,
@@ -87,6 +89,7 @@ def channel_config(item):
 def setting_torrent(item):
     logger.info()
 
+    LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", default="")
     default = config.get_setting("torrent_client", server="torrent", default=0)
     BUFFER = config.get_setting("mct_buffer", server="torrent", default="50")
     DOWNLOAD_PATH = config.get_setting("mct_download_path", server="torrent", default=config.get_setting("downloadpath"))
@@ -94,12 +97,18 @@ def setting_torrent(item):
     RAR = config.get_setting("mct_rar_unpack", server="torrent", default=True)
 
     torrent_options = [config.get_localized_string(30006), config.get_localized_string(70254), config.get_localized_string(70255)]
-    logger.error(torrent_options)
-    logger.error(torrent_options[2])
     torrent_options.extend(platformtools.torrent_client_installed())
     
 
     list_controls = [
+        {
+            "id": "libtorrent_path",
+            "type": "text",
+            "label": "Libtorrent path",
+            "default": LIBTORRENT_PATH,
+            "enabled": True,
+            "visible": False
+        },
         {
             "id": "list_torrent",
             "type": "list",
@@ -362,7 +371,7 @@ def submenu_tools(item):
 
 
     itemlist.append(Item(channel=CHANNELNAME, action="check_quickfixes", folder=False,
-                         title="Comprobar actualizaciones urgentes", plot="Versión actual: %s" % config.get_addon_version() ))
+                         title="Comprobar actualizaciones urgentes (Actual: Alfa %s)" %config.get_addon_version(), plot="Versión actual: %s" % config.get_addon_version() ))
     itemlist.append(Item(channel=CHANNELNAME, action="update_quasar", folder=False,
                          title="Actualizar addon externo Quasar"))
     itemlist.append(Item(channel=CHANNELNAME, action="", title="", folder=False,

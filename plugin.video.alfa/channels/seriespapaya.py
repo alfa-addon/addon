@@ -16,7 +16,7 @@ from channels import autoplay
 from core.item import Item
 from platformcode import config, logger
 
-HOST = "http://www.seriespapaya.com"
+HOST = "http://www.seriespapaya.net/"
 
 IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán', 'sub': 'VOSE', 'Español Latino':'Latino',
            'Español Castellano':'es', 'Sub Español':'VOSE'}
@@ -184,7 +184,7 @@ def showmore(item):
     language = item.extra
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = r"location.href='(.*?)'.*?background-image: url\('(.*?)'.*?<strong>(\d+)</strong>x<strong>(\d+)</strong>.*?margin-top: 3px;>(.*?)</div>"
+    patron = r"location.href='(.*?)'.*?background-image: url\('*(.*?)'*\).*?<strong>(\d+)<\/strong>x<strong>(\d+)<\/strong>.*?margin-top: 3px;>(.*?)<\/div>"
     matches = re.compile(patron, re.DOTALL).findall(data)
     itemlist = []
     for url, img , ses, ep, title in matches:
@@ -237,7 +237,7 @@ def episodios(item):
     data = httptools.downloadpage(item.url).data
     if item.contentSeasonNumber and item.extra2 != 'library':
         prevtitle = item.extra1
-        data = scrapertools.find_single_match(data, r'<div style="cursor:pointer">&rarr; Temporada %s(.*?)</div>\n</div>\n</div>'  % item.contentSeasonNumber)
+        data = scrapertools.find_single_match(data, r'<div style="cursor:pointer">&rarr; Temporada %s(.*?)</div>\n</div>\n'  % item.contentSeasonNumber)
     else:
         prevtitle = item.title
     patron = 'visco.*?href="(?P<url>[^"]+).+?nbsp; (?P<title>.*?)</a>.+?ucapaudio.?>(?P<langs>.*?)</div>'
