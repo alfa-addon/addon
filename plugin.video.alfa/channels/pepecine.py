@@ -269,7 +269,7 @@ def findvideos(item):
 
     itemlist = []
     data = get_source(item.url)
-    json_data = jsontools.load(data)    
+    json_data = jsontools.load(data)
     if len(json_data) > 0:
         if item.contentType != 'episode':
             videos_info = json_data['title']['videos']        
@@ -285,9 +285,7 @@ def findvideos(item):
                 if lang.startswith('z'):
                     lang = lang.replace('z', '')
                 else:
-                    if 'sub' in lang:
-                        lang = 'sub'
-                    else:
+                    if not 'sub' in lang:                    
                         lang = 'en'
 
             if lang != '':
