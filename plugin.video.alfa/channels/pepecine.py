@@ -268,6 +268,8 @@ def findvideos(item):
     logger.info()
 
     itemlist = []
+    TMP_IDIOMAS = {'Latino': 'la', 'Castellano': 'es', 'Subtitulado': 'sub', 'VO': 'en', 'Ingles': 'en', 'zc': 'es', 'zl': 'la', 'zs': 'sub'}
+
     data = get_source(item.url)
     json_data = jsontools.load(data)
     if len(json_data) > 0:
@@ -277,16 +279,21 @@ def findvideos(item):
             videos_info = json_data['title']['season']['episodes'][item.ep_info]['videos']
 
         for elem in videos_info:                        
-            lang = scrapertools.find_single_match(elem['name'], '/(.*?).png')
+            full_language = ''
             quality = elem['quality']
             url = elem['url']
-
-            if len(lang) > 2:
-                if lang.startswith('z'):
-                    lang = lang.replace('z', '')
-                else:
-                    if not 'sub' in lang:                    
-                        lang = 'en'
+            
+            if ('<img' in elem['name']):
+                full_language = scrapertools.find_single_match(elem['name'], '-(.*?)<img').strip()
+            elif ('-' in elem['name']):
+                full_language = elem['name'].partition('-')[2].strip()
+            else:
+                full_language = elem['name'].strip()
+                
+            if full_language != '' and full_language in TMP_IDIOMAS:
+                lang = TMP_IDIOMAS[full_language]
+            else:
+                lang = 'en'
 
             if lang != '':
                 lang = IDIOMAS[lang]
