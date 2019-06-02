@@ -276,7 +276,6 @@ def findvideos(item):
         else:
             videos_info = json_data['title']['season']['episodes'][item.ep_info]['videos']
 
-        contador= 0
         for elem in videos_info:                        
             lang = scrapertools.find_single_match(elem['name'], '/(.*?).png')
             quality = elem['quality']
