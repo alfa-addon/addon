@@ -33,6 +33,7 @@ channel_py = 'newpct1'
 #Código para permitir usar un único canal para todas las webs clones de NewPct1
 #Cargamos en .json del canal para ver las listas de valores en settings
 clone_list = channeltools.get_channel_json(channel_py)
+
 for settings in clone_list['settings']:                                         #Se recorren todos los settings
     if settings['id'] == "clonenewpct1_channels_list":                          #Encontramos en setting
         clone_list = settings['default']                                        #Carga lista de clones
@@ -79,6 +80,7 @@ if item.channel != channel_py:
 __modo_grafico__ = config.get_setting('modo_grafico', channel_py)               #TMDB?
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel_py)  #Actualización sólo últ. Temporada?
 timeout = config.get_setting('clonenewpct1_timeout_downloadpage', channel_py)   #Timeout downloadpage
+timeout = timeout * 1.4                                                         # Incremento temporal del 40%
 if timeout == 0: timeout = None
 try:
     from core import proxytools
@@ -970,8 +972,17 @@ def listado_busqueda(item):
         
         cnt_next += 1
         #seleccionamos el bloque que nos interesa
+        pattern2 = None
         if item.extra == "novedades":
             pattern = '<div class="content">.*?<ul class="noticias(.*?)<\/div><!-- end .content -->'
+            if not scrapertools.find_single_match(data, pattern) and not \
+                            '<h3><strong>( 0 ) Resultados encontrados </strong>' in data:
+                pattern = '<div class="content">.*?<ul class="noticias(.*?)<\/li><\/ul><\/form><\/div>'
+                if not scrapertools.find_single_match(data, pattern) and not \
+                            '<h3><strong>( 0 ) Resultados encontrados </strong>' in data:
+                    pattern = 'patron|'
+                    pattern += '<div class="content">.*?<ul class="noticias(.*?)<\/div><!-- end .content -->|'
+                    pattern += '<div class="content">.*?<ul class="noticias(.*?)<\/li><\/ul><\/form><\/div>'
         else:
             pattern = '<ul class="%s">(.*?)</ul>' % item.pattern
         if not data or (not scrapertools.find_single_match(data, pattern) and not \
@@ -1029,7 +1040,9 @@ def listado_busqueda(item):
         # Preparamos un patron que pretence recoger todos los datos significativos del video
         #seleccionamos el bloque que nos interesa
         if item.extra == "novedades":
-            pattern = '<div class="content">.*?<ul class="noticias(.*?)<\/div><!-- end .content -->'  
+            pattern = '<div class="content">.*?<ul class="noticias(.*?)<\/li><\/ul><\/form><\/div>'
+            if not scrapertools.find_single_match(data, pattern):
+                pattern = '<div class="content">.*?<ul class="noticias(.*?)<\/div><!-- end .content -->'  
         else:
             pattern = '<ul class="%s">(.*?)</ul>' % item.pattern
         data_alt = data
@@ -1038,9 +1051,9 @@ def listado_busqueda(item):
             pattern = '<a href="(?P<scrapedurl>[^"]+)"\s?'                      #url
             pattern += 'title="(?P<scrapedtitle>[^"]+)"[^>]*>'                  #título
             pattern += '<img[^>]*src="(?P<scrapedthumbnail>[^"]+)"?.*?'         #thumb
-            pattern += '<\/h2><\/a><span.*?">(?P<calidad>.*?)?'                 #calidad
+            pattern += '<\/h2><\/a>\s*<span.*?">(?P<calidad>.*?)?'                 #calidad
             pattern += '<(?P<year>.*?)?'                                        #año
-            pattern += '>Tama.*?\s(?P<size>\d+[.|\s].*?[GB|MB])?\s?<\/strong>'   #tamaño (significativo para peliculas)
+            pattern += '>Tama.*?\s(?P<size>\d+[.|\s].*?[GB|MB])?\s?<\/strong>'  #tamaño (significativo para peliculas)
         else:
             pattern = '<li[^>]*><a href="(?P<scrapedurl>[^"]+).*?'              #url
             pattern += 'title="(?P<scrapedtitle>[^"]+).*?'                      #título
@@ -1601,9 +1614,9 @@ def findvideos(item):
     #logger.debug(item)
     
     #Renombramos el canal al nombre de clone elegido.  Actualizados URL
-    host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
+    host = scrapertools.find_single_match(item.url, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
     item.channel_host = host
-    item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+    item.category = scrapertools.find_single_match(item.url, 'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
     
     verify_fo = True                                                #Verificamos si el clone a usar está activo
     item, data = generictools.fail_over_newpct1(item, verify_fo, timeout=timeout)
@@ -2240,9 +2253,9 @@ def episodios(item):
     #logger.debug(item)
     
     #Renombramos el canal al nombre de clone elegido.  Actualizados URL
-    host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
+    host = scrapertools.find_single_match(item.url, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
     item.channel_host = host
-    item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+    item.category = scrapertools.find_single_match(item.url, 'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
     
     verify_fo = True                                                            #Verificamos si el clone a usar está activo
     item, data = generictools.fail_over_newpct1(item, verify_fo, timeout=timeout)
@@ -2379,9 +2392,9 @@ def episodios(item):
                     + " / PATRON: " + pattern + " / " + str(list_pages) + " / DATA: " + str(data))
             itemlist.append(item.clone(action='', title=item.category + 
                     ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  ' 
-                    + 'Reportar el error con el log'))
+                    + 'Reportar el error con el log', contentSeason=0, contentEpisodeNumber=1))
             logger.error(traceback.format_exc())
-            break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
+            continue                                    #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
         if "pelisyseries.com" in item.url:
             pattern = '<li[^>]*><div class.*?src="(?P<thumb>[^"]+)?".*?<a class.*?'
@@ -2395,8 +2408,8 @@ def episodios(item):
                     + " / PATRON: " + pattern + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.category + 
                     ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  ' 
-                    + 'Reportar el error con el log'))
-            break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
+                    + 'Reportar el error con el log', contentSeason=0, contentEpisodeNumber=1))
+            continue                                    #si no hay más datos, algo no funciona, pintamos lo que tenemos
         
         #logger.debug("patron: " + pattern)
         #logger.debug(matches)

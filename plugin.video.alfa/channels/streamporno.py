@@ -41,7 +41,7 @@ def categorias(item):
     patron  = '<li id="menu-item-.*?<a href="([^"]+)">([^"]+)</a>'
     if item.title == "Categorias":
         itemlist.append( Item(channel=item.channel, title="Big Tits" , action="lista", url=host + "/?s=big+tits"))
-        patron  = '<li class="cat-item.*?<a href="([^"]+)" >([^"]+)</a>'
+        patron  = '<li class="cat-item.*?<a href="([^"]+)">([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     scrapertools.printMatches(matches)
     for scrapedurl,scrapedtitle in matches:

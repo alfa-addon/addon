@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel CanalPelis -*-
+# -*- Channel Cine24h -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -17,6 +17,7 @@ from core import channeltools
 from core import tmdb
 from platformcode import config, logger
 from channelselector import get_thumb
+from lib import unshortenit
 
 __channel__ = "cine24h"
 
@@ -343,7 +344,7 @@ def findvideos(item):
         new_data = scrapertools.decodeHtmlentities(new_data)
         url2 = scrapertools.find_single_match(new_data, '<iframe width="560" height="315" src="([^"]+)"')
         url = url2 + '|%s' % url_1
-        if 'rapidvideo' in url2:
+        if 'rapidvideo' in url2 or "verystream" in url2:
             url = url2
 
         lang = lang.lower().strip()
@@ -362,6 +363,20 @@ def findvideos(item):
         itemlist.append(item.clone(action='play', url=url, title=title, language=lang, quality=quality,
                                    text_color=color3))
 
+    patron1 = 'href="([^>]+)" class="Button STPb">.*?<img src="([^>]+)".*?alt="Imagen (.*?)">.*?<span>(\d+)'  # option, server, lang - quality
+    matches1 = re.compile(patron1, re.DOTALL).findall(data)
+    for url, img, lang, quality in matches1:
+        if "cine24h" in url or "short." in url:
+            continue
+        else:    
+            url, c = unshortenit.unshorten_only(url)
+            if "short." in url:
+                continue
+            elif "google." in url:
+                for item in itemlist:
+                    if "google." in item.url:
+                        item.url = url
+                    #logger.error("url=%s" % item.url)
     itemlist = servertools.get_servers_itemlist(itemlist)
 
     itemlist.sort(key=lambda it: it.language, reverse=False)

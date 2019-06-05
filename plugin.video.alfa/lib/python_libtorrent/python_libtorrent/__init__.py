@@ -31,16 +31,17 @@ import os
 #__settings__ = xbmcaddon.Addon(id='script.module.libtorrent')                  ### Alfa
 #__version__ = __settings__.getAddonInfo('version')                             ### Alfa
 #__plugin__ = __settings__.getAddonInfo('name') + " v." + __version__           ### Alfa
-__settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                          ### Alfa
+#__settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                         ### Alfa
 __version__ = '1.1.17'                                                          ### Alfa
 __plugin__ = "python-libtorrent v.1.1.7"                                        ### Alfa
-__language__ = __settings__.getLocalizedString
+#__language__ = __settings__.getLocalizedString                                 ### Alfa
 __root__ = os.path.dirname(os.path.dirname(__file__))
 
 libtorrent=None
 platform = get_platform()
 #set_dirname=__settings__.getSetting('dirname')                                 ### Alfa
-set_dirname=os.path.join(__settings__.getAddonInfo('Path'),'lib', 'python_libtorrent')  ### Alfa
+#set_dirname=os.path.join(__settings__.getAddonInfo('Path'),'lib', 'python_libtorrent')  ### Alfa
+set_dirname=__root__                                                            ### Alfa
 if getSettingAsBool('custom_dirname') and set_dirname:
     log('set_dirname:' +str(set_dirname))
     dirname=set_dirname
