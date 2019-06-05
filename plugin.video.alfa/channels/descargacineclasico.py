@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+import urllib
 
 from channelselector import get_thumb
 from platformcode import logger, config
@@ -32,6 +33,7 @@ def porLetra(item):
     patron = 'noindex,nofollow" href="([^"]+)">(\w+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, titulo in matches:
+        if titulo == "0":  continue   # No hay pagina https://www.descargacineclasico.net/tag/0
         itemlist.append( Item(channel=item.channel , action="agregadas" , title=titulo, url=url, viewmode="movie_with_plot"))
     return itemlist
 
@@ -107,13 +109,15 @@ def findvideos(item):
     patron = '#div_\d_\D.+?<img id="([^"]+).*?<span>.*?</span>.*?<span>(.*?)</span>.*?imgdes.*?imgdes/([^\.]+).*?<a href=([^\s]+)'  #Añado calidad
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedidioma, scrapedcalidad, scrapedserver, scrapedurl in matches:
+        scrapedurl = scrapedurl.replace('"','')
         while True:
             loc = httptools.downloadpage(scrapedurl, follow_redirects=False).headers.get("location", "")
             if not loc or "/ad/locked" in loc:
                 break
             scrapedurl = loc
-        scrapedurl = scrapedurl.replace('"','')
         scrapedurl, c = unshortenit.unshorten_only(scrapedurl)
+        if "dest=" in scrapedurl or "dp_href=" in scrapedurl:
+            scrapedurl = scrapertools.find_single_match(urllib.unquote(scrapedurl), '(?:dest|dp_href)=(.*)')
         title = item.title + "_" + scrapedidioma + "_"+ scrapedserver + "_" + scrapedcalidad
         itemlist.append( item.clone(action="play",
                                     title=title,
@@ -125,12 +129,11 @@ def findvideos(item):
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
                                    text_color="magenta"))
         # Opción "Añadir esta película a la biblioteca de KODI"
-        if item.extra != "library":
-            if config.get_videolibrary_support():
-                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
-                                     action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                     contentTitle = item.contentTitle
-                                     ))
+        if item.contentChannel != "videolibrary" and config.get_videolibrary_support():
+            itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                                 action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
+                                 contentTitle = item.contentTitle
+                                 ))
     return itemlist
 
 
