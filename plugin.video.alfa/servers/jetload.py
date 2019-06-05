@@ -31,8 +31,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     except:
         pass
     if srv_id:
-        post = {"file_name":file_name+".mp4", "srv":srv_id}
-        data = httptools.downloadpage("https://jetload.net/api/download", post=post).data
+        post = jsontools.dump({"file_name":file_name+".mp4", "srv":srv_id})
+        data = httptools.downloadpage("https://jetload.net/api/download", post=post, headers={"Content-Type":"application/json;charset=UTF-8"}).data
         media_url = data
         video_urls.append([".mp4 [jetload]", media_url, 0, subtitles ])
     else:

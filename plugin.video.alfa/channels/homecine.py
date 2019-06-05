@@ -308,6 +308,8 @@ def findvideos(item):
         extra_info = scrapertools.find_single_match(data, '<a href="#tab%s">(.*?)<' % option)
         if '-' in extra_info:
             quality, language = scrapertools.find_single_match(extra_info, '(.*?) - (.*)')
+            if " / " in language:
+                language = language.split(" / ")[1]
         else:
             language = ''
             quality = extra_info
@@ -317,10 +319,14 @@ def findvideos(item):
         title = ''
         if not config.get_setting('unify'):
             if language != '':
-                title += ' [%s]' % IDIOMAS[language]
+                try:
+                    title += ' [%s]' % IDIOMAS[language]
+                except:
+                    pass
             if quality != '':
                 title += ' [%s]' % quality
-
+        new_data = get_source(url)
+        url = scrapertools.find_single_match(new_data, "source: '([^']+)',")
         new_item = Item(channel=item.channel,
                         url=url,
                         title= '%s'+ title,
@@ -344,7 +350,7 @@ def findvideos(item):
 
     autoplay.start(itemlist, item)
 
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos' and not "/episode/" in item.url:
         itemlist.append(
             Item(channel=item.channel,
                  title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',

@@ -23,7 +23,7 @@ if __perfil__ < 3:
 else:
     color1 = color2 = color3 = color4 = color5 = ""
 
-host = "http://puya.si"
+host = "https://puya.moe"
 
 
 def mainlist(item):
@@ -96,7 +96,8 @@ def listado(item):
                                  infoLabels={'filtro': filtro_tmdb}, text_color=color1))
     if ("cat=4" in item.url or item.extra == "busqueda") and not item.extra == "novedades":
         tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
-    next_page = scrapertools.find_single_match(data, "<span class='current'>.*?<a href='([^']+)'")
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    next_page = scrapertools.find_single_match(data, "<span class='current'>.*? href='([^']+)'")
     if next_page:
         next_page = next_page.replace("&#038;", "&")
         itemlist.append(Item(channel=item.channel, action="listado", url=next_page, title=">> Página Siguiente",
@@ -110,8 +111,8 @@ def descargas(item):
     if not item.pagina:
         item.pagina = 0
     data = httptools.downloadpage(item.url).data
-    data = data.replace("/puya.se/", "/puya.si/")
-    patron = '<li><a href="(http://puya.si/\?page_id=\d+|http://safelinking.net/[0-9A-z]+)">(.*?)</a>'
+    data = data.replace("/puya.se/", "/puya.si/").replace("/puya.si/", "/puya.moe/")
+    patron = '<li><a href="(%s/\?page_id=\d+|http://safelinking.net/[0-9A-z]+)">(.*?)</a>' % host
     if item.letra:
         bloque = scrapertools.find_single_match(data,
                                                 '<li>(?:<strong>|)' + item.letra + '(?:</strong>|)</li>(.*?)</ol>')
@@ -231,7 +232,7 @@ def findvideos(item):
                 except:
                     pass
             itemlist.append(item.clone(title=title, action="play", url=enlace, server="onefichier"))
-    puyaenc = scrapertools.find_multiple_matches(data, '<a href="(http(?:s|)://puya.si/enc/[^"]+)"')
+    puyaenc = scrapertools.find_multiple_matches(data, '<a href="(%s/enc/[^"]+)"' % host)
     if puyaenc:
         import base64, os, jscrypto
         action = "play"

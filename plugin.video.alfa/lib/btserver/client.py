@@ -5,16 +5,48 @@ import pickle
 import random
 import time
 import urllib
-import traceback
 
 try:
+    import xbmc, xbmcgui
+except:
+    pass
+from platformcode import config
+LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", default='')
+try:
+    e = ''
+    e1 = ''
+    e2 = ''
+    pathname = ''
     try:
         import libtorrent as lt
+        pathname = LIBTORRENT_PATH
+    except Exception, e:
+        try:
+            import imp
+            from ctypes import CDLL
+            dll_path = os.path.join(LIBTORRENT_PATH, 'liblibtorrent.so')
+            liblibtorrent = CDLL(dll_path)
+            path_list = [LIBTORRENT_PATH, xbmc.translatePath('special://xbmc')]
+            fp, pathname, description = imp.find_module('libtorrent', path_list)
+            try:
+                lt = imp.load_module('libtorrent', fp, pathname, description)
+            finally:
+                if fp: fp.close()
+        
+        except Exception, e1:
+            xbmc.log(traceback.format_exc(), xbmc.LOGERROR)
+            from lib.python_libtorrent.python_libtorrent import get_libtorrent
+            lt = get_libtorrent()
+
+except Exception, e2:
+    try:
+        xbmc.log(traceback.format_exc(), xbmc.LOGERROR)
+        do = xbmcgui.Dialog()
+        e = e1 or e2
+        do.ok('ERROR en el cliente BT Libtorrent', 'Módulo no encontrado o imcompatible con el dispositivo.', 
+                    'Reporte el fallo adjuntando un "log".', str(e))
     except:
-        from python_libtorrent import get_libtorrent
-        lt = get_libtorrent()
-except Exception, e:
-    log(traceback.format_exc())
+        pass
 
 from cache import Cache
 from dispatcher import Dispatcher
@@ -73,7 +105,17 @@ class Client(object):
         self.buffer_size = BUFFER
         self.last_pieces_priorize = 5
         self.state_file = "state"
-        self.torrent_paramss = {'save_path': self.temp_path, 'storage_mode': lt.storage_mode_t.storage_mode_sparse}
+        try:
+            self.torrent_paramss = {'save_path': self.temp_path, 'storage_mode': lt.storage_mode_t.storage_mode_sparse}
+        except Exception, e:
+            try:
+                do = xbmcgui.Dialog()
+                e = e1 or e2
+                do.ok('ERROR en el cliente BT Libtorrent', 'Módulo no encontrado o imcompatible con el dispositivo.', 
+                            'Reporte el fallo adjuntando un "log".', str(e))
+            except:
+                pass
+            return
 
         # State
         self.has_meta = False

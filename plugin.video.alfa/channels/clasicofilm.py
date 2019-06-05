@@ -101,7 +101,7 @@ def peliculas(item):
                 url = link["href"]
                 break
         thumbnail = "https:" + bb 
-        thumbnail = thumbnail.replace("s72-c/", "") #"" #entry["media$thumbnail"]["url"].replace("s72-c/", "")
+        thumbnail = thumbnail.replace("s72-c/", "")
         try:
             title_split = re.split(r"\s*\((\d)", title, 1)
             year = title_split[1] + scrapertools.find_single_match(title_split[2], '(\d{3})\)')
@@ -109,7 +109,7 @@ def peliculas(item):
         except:
             fulltitle = title
             year = ""
-        if not "DVD" in title and not "HDTV" in title and not "HD-" in title:
+        if not "DVD" in title and not "HDTV" in title and not "HD-" in title and not "HDtv" in title:
             continue
         infolabels = {'year': year}
         new_item = item.clone(action="findvideos", title=title, fulltitle=fulltitle,

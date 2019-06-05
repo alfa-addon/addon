@@ -111,21 +111,58 @@ class LibraryManager():
             xbmcvfs.copy(dest, dest_alfa)                                       ### Alfa
         return True
 
-    def android_workaround(self, new_dest_path):
+    def android_workaround(self, new_dest_path):                                ### Alfa (entera)
+        import subprocess
+        
         for libname in get_libname(self.platform):
             libpath=os.path.join(self.dest_path, libname)
             size=str(os.path.getsize(libpath))
             new_libpath=os.path.join(new_dest_path, libname)
 
+            if xbmcvfs.exists(new_libpath):
+                new_size=str(os.path.getsize(new_libpath))
+                if size!=new_size or size==new_size:
+                    xbmcvfs.delete(new_libpath)
+                    
+                    if xbmcvfs.exists(new_libpath):
+                        
+                        try:
+                            command = ['su', '-c', 'rm', '%s' % new_libpath]
+                            p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            output_cmd, error_cmd = p.communicate()
+                            log('Comando ROOT: %s' % str(command))
+                        except:
+                            log('Sin PERMISOS ROOT: %s' % str(command))
+                    
+                    if not xbmcvfs.exists(new_libpath):
+                        log('Deleted: (%s) %s -> (%s) %s' %(size, libpath, new_size, new_libpath))
+                    
             if not xbmcvfs.exists(new_libpath):
                 xbmcvfs.copy(libpath, new_libpath)
-                log('Copied %s -> %s' %(libpath, new_libpath))
+                log('Copying... %s -> %s' %(libpath, new_libpath))
+                
                 if not xbmcvfs.exists(new_libpath):
-                    log('Failed!')
-            else:
-                new_size=str(os.path.getsize(new_libpath))
-                if size!=new_size:
-                    xbmcvfs.delete(new_libpath)
-                    xbmcvfs.copy(libpath, new_libpath)
-                    log('Deleted and copied (%s) %s -> (%s) %s' %(size, libpath, new_size, new_libpath))
+
+                    try:
+                        command = ['su', '-c', 'cp', '%s' % libpath, '%s' % new_libpath]
+                        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        output_cmd, error_cmd = p.communicate()
+                        log('Comando ROOT: %s' % str(command))
+                        
+                        command = ['su', '-c', 'chmod', '775', '%s' % new_libpath]
+                        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        output_cmd, error_cmd = p.communicate()
+                        log('Comando ROOT: %s' % str(command))
+                    except:
+                        log('Sin PERMISOS ROOT: %s' % str(command))
+
+                    if not xbmcvfs.exists(new_libpath):
+                        log('Failed!')
+                
+                else:
+                    command = ['chmod', '775', '%s' % new_libpath]
+                    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    output_cmd, error_cmd = p.communicate()
+                    log('Comando: %s' % str(command))
+
         return new_dest_path

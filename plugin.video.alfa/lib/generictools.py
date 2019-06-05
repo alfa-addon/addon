@@ -1533,7 +1533,8 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         break
         
     if not channel_failed:
-        logger.error('Patrón: ' + str(patron) + ' / fail_over_list: ' + str(fail_over_list))
+        logger.error('NO CHANNEL FAILED: Patrón: ' + str(patron) + \
+                    ' / fail_over_list: ' + str(fail_over_list))
         logger.error(item)
         return (item, data)                                             #Algo no ha funcionado, no podemos hacer nada
 
@@ -1552,8 +1553,11 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         item.category = channel.capitalize()
         item.url_alt = channel_url_failed
         item.url = channel_url_failed
-        channel_host_bis = re.sub(r'(?i)http.*://', '', channel_host)
-        channel_host_failed_bis = re.sub(r'(?i)http.*://', '', channel_host_failed)
+        #channel_host_bis = re.sub(r'(?i)http.*://', '', channel_host)[:-1]
+        channel_host_bis = channel_host[:-1]
+        #channel_host_failed_bis = re.sub(r'(?i)http.*://', '', channel_host_failed)
+        channel_host_failed_bis = scrapertools.find_single_match(item.url, \
+                            '((?:http.*\:)?\/\/(?:www\.)?[^\?|\/]+)(?:\?|\/)')
         item.url = item.url.replace(channel_host_failed_bis, channel_host_bis)
         
         url_alt += [item.url]                               #salvamos la url para el bucle
@@ -1607,14 +1611,14 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                     data_alt = scrapertools.find_single_match(data, patron)
                     if not data_alt:
                         data_alt = scrapertools.find_single_match(data_comillas, patron)
-                        if data_alt and patron_alt:
+                        if not data_alt and patron_alt:
                             data_alt = scrapertools.find_single_match(data, patron_alt)
                             if not data_alt and patron_alt:
                                 data_alt = scrapertools.find_single_match(data_comillas, patron_alt)
                     if patron2 != None:
                         data_alt = scrapertools.find_single_match(data_alt, patron2)
                 if not data_alt:                            #no ha habido suerte, probamos con el siguiente canal
-                    logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " + url + " / Patron: " + patron + " / " +patron_alt)
+                    logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " + url + " / Patron: " + patron + " / " + patron_alt)
                     web_intervenida(item, data)
                     data = ''
                     continue
@@ -1632,7 +1636,8 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                     item.url = url                          #guardamos la url que funciona, sin verificar
                     break                                   #por fin !!!  Este canal parece que funciona
             else:
-                logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " + url + " / Patron: " + patron + " / " +patron_alt)
+                logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " 
+                            + url + " / Patron: " + patron + " / " +patron_alt)
                 web_intervenida(item, data)
                 data = ''
                 continue
@@ -1857,6 +1862,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     channel_py_alt = 'xyz123'
     if channel in fail_over_list :                      #Si es un clone de Newpct1, se actualiza el canal y la categoría
         item.channel = channel_py
+        item.category = scrapertools.find_single_match(item.url, 'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
         channel_py_alt = "'%s'" % channel_py
         if item.channel_host:                                               #y se borran resto de pasadas anteriores
             del item.channel_host
@@ -1970,7 +1976,9 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         if activo == '1' and (canal_org == channel_alt or canal_org == item.category.lower() or channel_alt == 'videolibrary' or ow_force == 'del' or ow_force == 'emerg'):     
             
             if item.url:
-                logger.debug('INTERV. LIST: ' + str(intervencion_list[i-1]) + ' / CHANNEL: ' + str(channel_alt) + ' / URL: ' + str(item.url))
+                logger.debug('INTERV. LIST: ' + str(intervencion_list[i-1]) + 
+                            ' / CHANNEL: ' + str(channel_alt) + ' / URL: ' + 
+                            str(item.url))
             
             if ow_force == 'del' or ow_force == 'emerg':    #Si es un borrado de estructuras erroneas, hacemos un proceso aparte
                 canal_des_def = canal_des                   #Si hay canal de sustitución para item.library_urls, lo usamos
@@ -2006,7 +2014,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                                 item.url = url_vid                          
                                 break
                         if canal_vid_alt in fail_over_list:         #Si es un clone de Newpct1, salvamos la nueva categoría
-                            item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()                                              #Salvamos categoría
+                            item.category = scrapertools.find_single_match(item.url, \
+                                    'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()   #Salvamos categoría
                         else:
                             item.category = canal_vid.capitalize()          #si no, salvamos nueva categoría
                     logger.error('item.library_urls ACTUALIZADA: ' + str(item.library_urls))
@@ -2047,8 +2056,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                         pass
                 if channel_enabled == 1 and canal_org != canal_des:         #Si el canal está activo, puede ser solo...
                     continue                                                #... una intervención que afecte solo a una región
-                if ow_force == 'no' and it.library_urls:                    #Esta regla solo vale para findvideos...
-                    continue                                                #... salidmos si estamos actualizando
+                #if ow_force == 'no' and it.library_urls:                    #Esta regla solo vale para findvideos...
+                #    continue                                                #... salidmos si estamos actualizando
                 if lookup == True:                                  #Queremos que el canal solo visualice sin migración?
                     if ow_force != 'no':
                         overwrite = True                                    #Avisamos que hay cambios
@@ -2058,7 +2067,21 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     url_total = item.url
                 elif not item.url and item.library_urls:
                     url_total = item.library_urls[canal_org]
-                url_total = url_total.replace(url_org, url_des)                 #reemplazamos una parte de url
+                
+                if item.channel == channel_py:                  #Si es un clone de Newpct1, salvamos la nueva categoría
+                    item.category = scrapertools.find_single_match(item.url, \
+                            'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()   #Salvamos categoría
+                else:
+                    item.category = canal_des.capitalize()                      #si no, salvamos nueva categoría
+                
+                if url_des.startswith('http'):
+                    if item.channel != channel_py or (item.channel == channel_py \
+                            and item.category.lower() == canal_org):
+                        url_total = scrapertools.find_single_match(url_total, \
+                            'http.*\:\/\/(?:www\.)?[^\?|\/]+(.*?$)')            #quitamos el http*:// inicial
+                        url_total = urlparse.urljoin(url_des, url_total)        #reemplazamos una parte de url
+                else:
+                    url_total = url_total.replace(url_org, url_des)             #reemplazamos una parte de url
                 url = ''
                 if patron1:                                                     #Hay expresión regex?
                     url += scrapertools.find_single_match(url_total, patron1)   #La aplicamos a url
@@ -2073,8 +2096,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 if url:
                     url_total = url                                     #Guardamos la suma de los resultados intermedios
                 if item.channel == channel_py or channel in fail_over_list:     #Si es Newpct1...
-                    if item.contentType == "tvshow":
-                        url_total = re.sub(r'\/\d+\/?$', '', url_total)         #parece que con el título encuentra la serie, normalmente...
+                    if item.contentType == "tvshow" and ow_force != 'no':       #parece que con el título encuentra..,
+                        url_total = re.sub(r'\/\d+\/?$', '', url_total)         #mejor la serie, a menos que sea una redir
                 update_stat += 1                                                #Ya hemos actualizado algo
                 canal_org_des_list += [(canal_org, canal_des, url_total, opt, ow_force)]   #salvamos el resultado para su proceso
             
@@ -2236,6 +2259,11 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         if it.emergency_urls:
             logger.error(it.emergency_urls)
         logger.error(item)
+    if update_stat > 0 and path == False:
+        if it.library_urls:
+            logger.debug('URL cambiada: '+ str(it.library_urls))
+        else:
+            logger.debug('URL cambiada: '+ str(item.url))
 
     return (item, it, overwrite)
     
