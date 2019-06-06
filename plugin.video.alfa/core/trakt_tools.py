@@ -63,14 +63,12 @@ def token_trakt(item):
             post = {'refresh_token': refresh, 'client_id': client_id, 'client_secret': client_secret,
                     'redirect_uri': 'urn:ietf:wg:oauth:2.0:oob', 'grant_type': 'refresh_token'}
             post = jsontools.dump(post)
-            #data = httptools.downloadpage(url, post, headers, replace_headers=True).data
-            data = httptools.downloadpage(url, post, headers).data
+            data = httptools.downloadpage(url, post=post, headers=headers).data
             data = jsontools.load(data)
         elif item.action == "token_trakt":
             url = "http://api-v2launch.trakt.tv/oauth/device/token"
             post = "code=%s&client_id=%s&client_secret=%s" % (item.device_code, client_id, client_secret)
-            #data = httptools.downloadpage(url, post, headers, replace_headers=True).data
-            data = httptools.downloadpage(url, post, headers).data
+            data = httptools.downloadpage(url, post=post, headers=headers).data
             data = jsontools.load(data)
         else:
             import time
@@ -91,8 +89,7 @@ def token_trakt(item):
                     url = "http://api-v2launch.trakt.tv/oauth/device/token"
                     post = {'code': item.device_code, 'client_id': client_id, 'client_secret': client_secret}
                     post = jsontools.dump(post)
-                    #data = httptools.downloadpage(url, post, headers, replace_headers=True).data
-                    data = httptools.downloadpage(url, post, headers).data
+                    data = httptools.downloadpage(url, post=post, headers=headers).data
                     data = jsontools.load(data)
                     if "access_token" in data:
                         # Código introducido, salimos del bucle
