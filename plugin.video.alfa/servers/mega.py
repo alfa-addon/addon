@@ -44,11 +44,15 @@ def test_video_exists(page_url):
              -18: types + ' temporalmente no disponible, intentelo de nuevo más tarde'
     }
     api = 'https://g.api.mega.co.nz/cs?id=%d%s' % (seqno, get)
-    req_api = httptools.downloadpage(api, json.dumps([post])).data
+    req_api = httptools.downloadpage(api, post=json.dumps([post])).data
     if isfolder:
         req_api = json.loads(req_api)
     else:
-        req_api = json.loads(req_api)[0]
+        try:
+            req_api = json.loads(req_api)[0]
+        except:
+            req_api = json.loads(req_api)
+    logger.error(req_api)
     if isinstance(req_api, (int, long)):
         if req_api in codes:
             msg = codes[req_api]
@@ -57,6 +61,7 @@ def test_video_exists(page_url):
         return True, ""
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
+    page_url = page_url.replace('/embed#', '/#')
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
 
