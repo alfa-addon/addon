@@ -23,13 +23,13 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     # ~ logger.info(unpacked)
     unpacked = re.sub(r'\n|\r|\t|\s{2,}', "", unpacked)
     subtitles =  scrapertools.find_single_match(unpacked, r'tracks:\s*\[\{\s*file\s*:\s*"([^"]*)"\s*,\s*label')
-    if "empty." in sutitles: subtitles = ""
+    if "empty." in subtitles: subtitles = ""
     matches = scrapertools.find_multiple_matches(unpacked, 'file\s*:\s*"([^"]*)"\s*,\s*label\s*:\s*"([^"]*)"')
     if matches:
         for url, lbl in matches:
             
             if url.endswith('.srt') or url.endswith('.vtt'):
-                subtitles += url
+                #subtitles += url
                 continue
             
             itemlist.append(['.mp4 (%s) [flix555]' % lbl, url, 0, subtitles])
