@@ -164,7 +164,7 @@ def torrents(item):
     if not item.pagina:
         item.pagina = 0
     post = "utf8=%E2%9C%93&busqueda=puyasubs&search=Buscar&tab=anime&con_seeds=con_seeds"
-    data = httptools.downloadpage(item.url, post).data
+    data = httptools.downloadpage(item.url, post=post).data
     patron = "<td>.*?href='([^']+)' title='descargar torrent'>.*?title='informacion de (.*?)'.*?<td class='fecha'>.*?<td>(.*?)</td>" \
              ".*?<span class=\"stats\d+\">(\d+)</span>.*?<span class=\"stats\d+\">(\d+)</span>"
     matches = scrapertools.find_multiple_matches(data, patron)
@@ -216,7 +216,7 @@ def findvideos(item):
                 enlace = enlace.replace("/torrent/", "/dl/")
                 itemlist.append(item.clone(title=title, action="play", url=enlace, server="torrent"))
             elif "nyaa" in enlace:
-                data1 = httptools.downloadpage(url=enlace).data
+                data1 = httptools.downloadpage(enlace).data
                 enlace = "https://nyaa.si" + scrapertools.find_single_match(data1, 'a href="(/do[^"]+)')
                 itemlist.append(item.clone(title=title, action="play", url=enlace, server="torrent"))
                 enlace = scrapertools.find_single_match(data1, '<a href="(magnet[^"]+)')
@@ -263,42 +263,44 @@ def findvideos(item):
     server = ""
     if safelink:
         for i, safe in enumerate(safelink):
-            headers = [['Content-Type', 'application/json;charset=utf-8']]
+            headers = {'Content-Type': 'application/json'}
             hash = safe.rsplit("/", 1)[1]
             post = jsontools.dump({"hash": hash})
-            data_sf = httptools.downloadpage("http://safelinking.net/v1/protected", post, headers).data
+            data_sf = httptools.downloadpage("http://safelinking.net/v1/protected", post=post, headers=headers).data
             data_sf = jsontools.load(data_sf)
-
-            for link in data_sf.get("links"):
-                enlace = link["url"]
-                action = "play"
-                if "tinyurl" in enlace:
-                    header = httptools.downloadpage(enlace, follow_redirects=False).headers
-                    enlace = header['location']
-                elif "mega." in enlace:
-                    server = "mega"
-                    domain = "Mega"
-                    if "/#F!" in enlace:
-                        action = "carpeta"
-                elif "1fichier." in enlace:
-                    server = "onefichier"
-                    domain = "1fichier"
-                    if "/dir/" in enlace:
-                        action = "carpeta"
-                elif "google." in enlace:
-                    server = "gvideo"
-                    domain = "Gdrive"
-                    if "/folders/" in enlace:
-                        action = "carpeta"
-                title = "Ver por %s" % domain
-                if idiomas:
-                    title += " [Subs: %s]" % idiomas
-                if "720p" in data and "1080p" in data2:
-                    try:
-                        title = "[%s]  %s" % (calidades[i], title)
-                    except:
-                        pass
-                itemlist.append(item.clone(title=title, action=action, url=enlace, server=server))
+            try:
+                for link in data_sf.get("links"):
+                    enlace = link["url"]
+                    action = "play"
+                    if "tinyurl" in enlace:
+                        header = httptools.downloadpage(enlace, follow_redirects=False).headers
+                        enlace = header['location']
+                    elif "mega." in enlace:
+                        server = "mega"
+                        domain = "Mega"
+                        if "/#F!" in enlace:
+                            action = "carpeta"
+                    elif "1fichier." in enlace:
+                        server = "onefichier"
+                        domain = "1fichier"
+                        if "/dir/" in enlace:
+                            action = "carpeta"
+                    elif "google." in enlace:
+                        server = "gvideo"
+                        domain = "Gdrive"
+                        if "/folders/" in enlace:
+                            action = "carpeta"
+                    title = "Ver por %s" % domain
+                    if idiomas:
+                        title += " [Subs: %s]" % idiomas
+                    if "720p" in data and "1080p" in data2:
+                        try:
+                            title = "[%s]  %s" % (calidades[i], title)
+                        except:
+                            pass
+                    itemlist.append(item.clone(title=title, action=action, url=enlace, server=server))
+            except:
+                pass
     return itemlist
 
 
@@ -365,7 +367,7 @@ def extract_safe(item):
     hash = item.url.rsplit("/", 1)[1]
     headers = [['Content-Type', 'application/json;charset=utf-8']]
     post = jsontools.dump({"hash": hash})
-    data = httptools.downloadpage("http://safelinking.net/v1/protected", post, headers).data
+    data = httptools.downloadpage("http://safelinking.net/v1/protected", post=post, headers=headers).data
     data = jsontools.load(data)
     for link in data.get("links"):
         enlace = link["url"]

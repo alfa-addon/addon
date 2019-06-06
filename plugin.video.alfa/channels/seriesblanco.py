@@ -31,9 +31,9 @@ def mainlist(item):
     itemlist = []
 
     itemlist.append(Item(channel=item.channel,
-                         title="Nuevos Capitulos",
-                         action="new_episodes",
-                         thumbnail=get_thumb('new_episodes', auto=True),
+                         title="Últimas series",
+                         action="new_series",
+                         thumbnail=get_thumb('last', auto=True),
                          url=host))
 
     itemlist.append(Item(channel=item.channel,
@@ -279,6 +279,31 @@ def new_episodes(item):
                              url=url,
                              thumbnail=thumbnail,
                              language=language,
+                              ))
+        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+
+    return itemlist
+
+def new_series(item):
+    logger.info()
+    itemlist = []
+
+    data = get_source(item.url)
+    data = scrapertools.find_single_match(data,
+                                          '>Series Online gratis más vistas</center>.*?</ul>')
+    patron = '<a href="([^"]+)"><img src="([^"]+)".*?alt="(.*?)"'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
+
+        url =scrapedurl
+        thumbnail = scrapedthumbnail
+        itemlist.append(Item(channel=item.channel,
+                             action='seasons',
+                             title=scrapedtitle,
+                             url=url,
+                             contentSerieName=scrapedtitle,
+                             thumbnail=thumbnail
                               ))
         tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 

@@ -170,7 +170,7 @@ def list_all(item):
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
     #  Paginación
 
-    url_next_page = scrapertools.find_single_match(data,"<a class='arrow_pag' href=([^>]+)><i id='nextpagination'")
+    url_next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
     if url_next_page:
         itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='list_all'))
 
