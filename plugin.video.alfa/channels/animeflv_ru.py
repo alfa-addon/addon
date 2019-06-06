@@ -51,7 +51,7 @@ def search(item, texto):
     item.url = urlparse.urljoin(HOST, "search_suggest")
     texto = texto.replace(" ", "+")
     post = "value=%s" % texto
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, post=post).data
     data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
     try:
         dict_data = jsontools.load(data)
