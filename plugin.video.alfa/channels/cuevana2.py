@@ -61,9 +61,16 @@ def load_data(url):
 
     return data
 
-def redirect_url(url, parameters=None):
+def redirect_url(url, parameters=None, scr=False):
+    url = url.replace("/irgo", "/go")
     data = httptools.downloadpage(url, post=parameters)
-    logger.info(data.url)
+    if scr:
+        host = 'https://' + data.url.split("/")[2]
+        link = ""
+        vid = scrapertools.find_single_match(data.url, "\?id=(\w+)")
+        if vid:
+            link = host+ '/hls/' + vid + '/' + vid + '.playlist.m3u8'
+        return link
     return data.url
 
 def put_movies(itemlist, item, data, pattern):
@@ -204,7 +211,7 @@ def GKPluginLink(hash):
         json = httptools.downloadpage('https://player4.cuevana2.com/plugins/gkpluginsphp.php', post=hashdata).data
     except:
         return None
-    logger.info(jsontools.load(json))
+    #logger.info(jsontools.load(json))
 
     data = jsontools.load(json) if json else False
     if data:
@@ -219,10 +226,10 @@ def RedirectLink(hash):
 def OpenloadLink(hash):
     hashdata = urllib.urlencode({r'h':hash})
     json = httptools.downloadpage('https://api.cuevana2.com/openload/api.php', post=hashdata).data
-    logger.info("CUEVANA OL JSON %s" % json)
+    #logger.info("CUEVANA OL JSON %s" % json)
     data = jsontools.load(json) if json else False
 
-    return data['url'] if data['status'] == 1 else None
+    return data['url'].replace('\\', '') if data['status'] == 1 else None
 
 #el pattern esta raro para eliminar los duplicados, de todas formas asi es un lenguaje de programacion verificando su sintaxis
 def getContentMovie(data, item):
@@ -254,37 +261,60 @@ def findvideos(item):
     else:
         getContentMovie(data, item)
     pattern = '<li data-playerid="([^"]+)'
-    subtitles = scrapertools.find_single_match(data, 'li data-playerid=".*?sub=([^"]+)"')
+    subtitles = scrapertools.find_single_match(data, '<li data-playerid=".*?sub=([^"]+)"')
 
     title = "[COLOR blue]Servidor [%s][/COLOR]"
     #itemlist.append(Item(channel = item.channel, title=item.url))
     for link in scrapertools.find_multiple_matches(data, pattern):
         #php.*?=(\w+)&
         #url=(.*?)&
+        server=""
+
         if 'player4' in link:
             # Por si acaso están los dos metodos, de todas maneras esto es corto circuito
             if r'ir.php' in link:
                 link = scrapertools.find_single_match(link, 'php\?url=(.*?)&').replace('%3A', ':').replace('%2F', '/')
-                logger.info("CUEVANA IR %s" % link)
+                #logger.info("CUEVANA IR %s" % link)
+                server = link.split("/")[2]
+                server = server.replace("www.", "")
+                server = server.split(".")[0]
+            # otros links convencionales (fembed, rapidvideo, etc)
             elif r'irgoto.php' in link:
                 link = scrapertools.find_single_match(link, 'php\?url=(.*?)&').replace('%3A', ':').replace('%2F', '/')
                 link = RedirectLink(link)
-                logger.info("CUEVANA IRGOTO %s" % link)
+
+                server = link.split("/")[2]
+                server = server.replace("www.", "")
+                server = server.split(".")[0]
+                #logger.info("CUEVANA IRGOTO %s" % link)
+            # vanlong (google drive)
+            elif r'irgotogd.php' in link:
+                link = redirect_url('https:'+link, "", True)
+                server = "directo"
+            #openloadpremium no les va en la web, se hace un fix aqui
+            elif r'irgotogp.php' in link:
+                link = scrapertools.find_single_match(data, r'irgotogd.php\?url=(\w+)')
+                #link = redirect_url('https:'+link, "", True)
+                link = GKPluginLink(link)
+                server = "directo"
             elif r'gdv.php' in link:
                 # google drive hace lento la busqueda de links, ademas no es tan buena opcion y es el primero que eliminan
                 continue
             else:
                 link = scrapertools.find_single_match(link, 'php.*?=(\w+)&')
                 link = GKPluginLink(link)
+                server = "directo"
             
         elif 'openload' in link:
-            link = scrapertools.find_single_match(link, '\?h=(\w+)&')
-            logger.info("CUEVANA OL HASH %s" % link)
+            link = scrapertools.find_single_match(link, '\?h=(\w+)')
+            #logger.info("CUEVANA OL HASH %s" % link)
             link = OpenloadLink(link) 
-            logger.info("CUEVANA OL %s" % link)
+            #logger.info("CUEVANA OL %s" % link)
+            server = "openload"
 
         elif 'youtube' in link:
             title = "[COLOR yellow]Ver Trailer (%s)[/COLOR]"
+            server = "youtube"
         else: # En caso de que exista otra cosa no implementada, reportar si no aparece pelicula
             continue
 
@@ -305,11 +335,11 @@ def findvideos(item):
         itemlist.append(
             item.clone(
                 channel = item.channel, 
-                title=title, 
+                title=title % server.capitalize(), 
                 url=link, action='play', 
-                subtitle=subtitles))
+                subtitle=subtitles,
+                server=server))
 
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     autoplay.start(itemlist, item)
 
     if config.get_videolibrary_support() and len(itemlist):
