@@ -184,7 +184,7 @@ def by(item, pattern):
     data = load_data(item.url)
 
     #patron para buscar en la pagina
-    pattern = '<li class="cat-item cat-item-\d+"><a href="([^"]+)" >&&</a>'.replace('&&', pattern)
+    pattern = '<li class="cat-item cat-item-\d+"><a href="([^"]+)">&&</a>'.replace('&&', pattern)
 
     matches = scrapertools.find_multiple_matches(data, pattern)
     for link, genre in matches:
@@ -253,8 +253,8 @@ def findvideos(item):
         getContentShow(data, item)
     else:
         getContentMovie(data, item)
-    pattern = '<iframe width="650" height="450" scrolling="no" src="([^"]+)'
-    subtitles = scrapertools.find_single_match(data, '<iframe width="650" height="450" scrolling="no" src=".*?sub=([^"]+)"')
+    pattern = '<li data-playerid="([^"]+)'
+    subtitles = scrapertools.find_single_match(data, 'li data-playerid=".*?sub=([^"]+)"')
 
     title = "[COLOR blue]Servidor [%s][/COLOR]"
     #itemlist.append(Item(channel = item.channel, title=item.url))
