@@ -26,7 +26,7 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
     itemlist.append(Item(channel=item.channel, action="genero", title="Generos", url=host, thumbnail = get_thumb("genres", auto = True)))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Novedades", url=host, thumbnail = get_thumb("newest", auto = True)))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Novedades", url=host, thumbnail = get_thumb("newest", auto = True), page=1))
     #itemlist.append(Item(channel=item.channel, action="proximas", title="Próximas Películas",
     #                     url=urlparse.urljoin(host, "proximamente")))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=urlparse.urljoin(host, "?s="), thumbnail = get_thumb("search", auto = True)))
@@ -44,7 +44,7 @@ def genero(item):
     for scrapedurl, scrapedtitle in matches:
         if 'Próximas Películas' in scrapedtitle:
             continue
-        itemlist.append(item.clone(action='lista', title=scrapedtitle, cat=scrapedurl))
+        itemlist.append(item.clone(action='lista', title=scrapedtitle, cat=scrapedurl, page=1))
     return itemlist
 
 
@@ -91,6 +91,7 @@ def lista(item):
     itemlist = []
     if not item.cat:
         data = httptools.downloadpage(item.url).data
+        url = item.url
     else:
         url = httptools.downloadpage("%s?cat=%s" %(host, item.cat), follow_redirects=False, only_headers=True).headers.get("location", "")
         data = httptools.downloadpage(url).data
@@ -119,12 +120,28 @@ def lista(item):
                        contentTitle=scrapedtitle, thumbnail=scrapedthumbnail, plot=scrapedplot, contentType="movie", context=["buscar_trailer"]))
     tmdb.set_infoLabels(itemlist)
     # Paginacion
-    patron = 'rel="next" href="([^"]+)'
-    next_page_url = scrapertools.find_single_match(data, patron)
-    if next_page_url != "":
-        item.url = next_page_url
-        itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=next_page_url,
-                             thumbnail='https://s32.postimg.cc/4zppxf5j9/siguiente.png'))
+    patron = "<li><a rel=nofollow class=previouspostslink' href=(.+?)>Ultima<\/a>"
+    last_page_url = scrapertools.find_single_match(data, patron)
+    max_pag = last_page_url.split("/")
+    if len(max_pag)<=1:
+        actual_pag = url.split("/")
+        category = actual_pag[3]
+        max_pag = int(item.page)+1
+    else:
+        category = max_pag[3]
+        if not item.cat:
+            max_pag = 1
+        else:
+            max_pag = int(max_pag[5])
+    logger.info(max_pag)
+    url = host + category + "/page/"
+    page = int(item.page)
+    if page < max_pag and item.cat:
+        next_page_url = url+str(page+1)
+        logger.info("IIIII"+next_page_url)
+        if len(itemlist)>10:
+            itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=next_page_url,
+                            page=page+1, thumbnail='https://s32.postimg.cc/4zppxf5j9/siguiente.png'))
     return itemlist
 
 
