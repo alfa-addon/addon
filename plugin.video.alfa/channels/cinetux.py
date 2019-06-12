@@ -136,16 +136,16 @@ def peliculas(item):
     itemlist = []
     item.text_color = color2
     data = httptools.downloadpage(item.url).data
-    patron = '(?s)class="(?:result-item|item movies)">.*?alt="([^"]+)'
-    patron += '.*?data-lazy-src="([^"]+)"'
+    patron = '(?s)class="(?:result-item|item movies)">.*?<img src="([^"]+)'
+    patron += '.*?alt="([^"]+)"'
     patron += '(.*?)'
     patron += 'href="([^"]+)"'
     patron += '.*?(?:<span>|<span class="year">)(.+?)<'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedtitle, scrapedthumbnail, quality, scrapedurl, scrapedyear in matches:
+    for scrapedthumbnail, scrapedtitle, quality, scrapedurl, scrapedyear in matches:
         quality = scrapertools.find_single_match(quality, '.*?quality">([^<]+)')
         try:
-            fulltitle = scrapertools.decodeHtmlentities(scrapedtitle).strip()
+            fulltitle = scrapedtitle
             year = scrapertools.find_single_match(scrapedyear,'\d{4}')
             if "/" in fulltitle:
                 fulltitle = fulltitle.split(" /", 1)[0]
