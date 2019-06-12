@@ -2,7 +2,7 @@
   "id": "pelisipad",
   "name": "PelisIpad",
   "language": ["cast"],
-  "active": true,
+  "active": false,
   "adult": false,
   "thumbnail": "http://i.imgur.com/FzLmGKK.png",
   "categories": [

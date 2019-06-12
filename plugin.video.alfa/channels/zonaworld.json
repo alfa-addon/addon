@@ -1,7 +1,7 @@
 {
   "id": "zonaworld",
   "name": "Zona World",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://i.postimg.cc/tR67dQzH/zona-world.png",
