@@ -7,6 +7,7 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 from core import httptools
+from channels import pornhub, xvideos,youporn
 
 host = 'http://qwertty.net'
 
@@ -54,7 +55,6 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data,'<div class="videos-list">(.*?)<div class="videos-list">')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<article id="post-\d+".*?'
     patron += '<a href="([^"]+)" title="([^"]+)">.*?'
@@ -71,7 +71,7 @@ def lista(item):
                               fanart=thumbnail, thumbnail=thumbnail, plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)">Next</a>')
     if next_page=="":
-        next_page = scrapertools.find_single_match(data,'<li><a class="current">.*?<li><a href=\'([^\']+)\' class="inactive">')
+        next_page = scrapertools.find_single_match(data,'<li><a class="current">.*?<li><a href="([^"]+)" class="inactive">')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
@@ -96,11 +96,15 @@ def play(item):
                 scrapedurl = scrapertools.find_single_match(data,'playerData.cdnPath480         = \'([^\']+)\'')
             itemlist.append(item.clone(action="play", title=scrapedurl, fulltitle = scrapedurl, url=scrapedurl))
 
-    if "xvideos" in url : 
-        scrapedurl  = scrapertools.find_single_match(data,'setVideoHLS\(\'([^\']+)\'')
+    elif "xvideos" in url : 
+        item1 = item.clone(url=url)
+        itemlist = xvideos.play(item1)
+        return itemlist
     if "pornhub" in url : 
-        scrapedurl  = scrapertools.find_single_match(data,'"defaultQuality":true,"format":"mp4","quality":"\d+","videoUrl":"(.*?)"')
-    if "txx" in url :
+        item1 = item.clone(url=url)
+        itemlist = pornhub.play(item1)
+        return itemlist
+    elif "txx" in url :
         video_url = scrapertools.find_single_match(data, 'var video_url="([^"]*)"')
         video_url += scrapertools.find_single_match(data, 'video_url\+="([^"]*)"')
         partes = video_url.split('||')
@@ -109,9 +113,14 @@ def play(item):
         video_url += '&' if '?' in video_url else '?'
         video_url += 'lip=' + partes[2] + '&lt=' + partes[3]
         scrapedurl = video_url
+    if "youporn" in url : 
+        item1 = item.clone(url=url)
+        itemlist = youporn.play(item1)
+        return itemlist
+        
     else:
-        scrapedurl  = scrapertools.find_single_match(data,'"quality":"\d+","videoUrl":"(.*?)"')
-    scrapedurl = scrapedurl.replace("\/", "/")
+        url  = scrapertools.find_single_match(data,'"quality":"\d+","videoUrl":"(.*?)"')
+    url = scrapedurl.replace("\/", "/")
     itemlist.append(Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=scrapedurl,
                          thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
     return itemlist
