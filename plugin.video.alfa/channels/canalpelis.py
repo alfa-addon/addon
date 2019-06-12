@@ -6,7 +6,7 @@
 import re
 import sys
 import urllib
-import urlparse
+import urlparse, base64
 
 from core import httptools
 from core import scrapertools
@@ -400,14 +400,11 @@ def findvideos(item):
         post = urllib.urlencode(post)
         test_url = '%swp-admin/admin-ajax.php' % host
         new_data = httptools.downloadpage(test_url, post=post, headers={'Referer': item.url}).data
-        hidden_url = scrapertools.find_single_match(new_data, "src='([^']+)'")
-        new_data = httptools.downloadpage(hidden_url, follow_redirects=False)
-
-        try:
-            b64_url = scrapertools.find_single_match(new_data.headers['location'], "y=(.*)")
+        url = scrapertools.find_single_match(new_data, "src='([^']+)'")
+        #new_data = httptools.downloadpage(hidden_url, follow_redirects=False)
+        b64_url = scrapertools.find_single_match(url, "y=(.*?)&")
+        if b64_url:
             url = base64.b64decode(b64_url)
-        except:
-            url = hidden_url
         if url != '':
             itemlist.append(
                 Item(channel=item.channel, action='play', language=lang, infoLabels=item.infoLabels,

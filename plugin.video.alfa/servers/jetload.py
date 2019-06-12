@@ -36,7 +36,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         media_url = data
         video_urls.append([".mp4 [jetload]", media_url, 0, subtitles ])
     else:
-        m3u8 = srv + "/v2/schema/%s/master.m3u8" %file_name
+        m3u8 = srv + "/v2/schema/archive/%s/master.m3u8" %file_name
         data = httptools.downloadpage(m3u8).data
         data = re.sub(r"\n|\r|\t|\s{2}", "", data)
         matches = scrapertools.find_multiple_matches(data, r'RESOLUTION=\d+x(\d+)(\w+).m3u8')

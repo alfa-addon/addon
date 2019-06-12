@@ -135,7 +135,7 @@ class Client(object):
     def api_req(self, req, get=""):
         seqno = random.randint(0, 0xFFFFFFFF)
         url = 'https://g.api.mega.co.nz/cs?id=%d%s' % (seqno, get)
-        page = httptools.downloadpage(url, json.dumps([req])).data
+        page = httptools.downloadpage(url, post=json.dumps([req])).data
         return json.loads(page)[0]
 
     def base64urldecode(self,data):

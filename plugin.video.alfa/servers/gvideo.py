@@ -28,6 +28,7 @@ def test_video_exists(page_url):
 
 
 def get_video_url(page_url, user="", password="", video_password=""):
+    logger.info()
     video_urls = []
     urls = []
     streams =[]
@@ -57,14 +58,19 @@ def get_video_url(page_url, user="", password="", video_password=""):
     else:
         response = httptools.downloadpage(page_url, cookies=False, headers={"Referer": page_url})
         cookies = ""
+        logger.error(response.headers)
         cookie = response.headers["set-cookie"].split("HttpOnly, ")
         for c in cookie:
             cookies += c.split(";", 1)[0] + "; "
-        data = response.data.decode('unicode-escape')
+        data = response.data
+        bloque= scrapertools.find_single_match(response.data, 'url_encoded_fmt_stream_map(.*)')
+        if bloque:
+            data = bloque
+        data = data.decode('unicode-escape', errors='replace')
         data = urllib.unquote_plus(urllib.unquote_plus(data))
+        logger.error(data)
         headers_string = "|Cookie=" + cookies
-        url_streams = scrapertools.find_single_match(data, 'url_encoded_fmt_stream_map=(.*)')
-        streams = scrapertools.find_multiple_matches(url_streams,
+        streams = scrapertools.find_multiple_matches(data,
                                                      'itag=(\d+)&url=(.*?)(?:;.*?quality=.*?(?:,|&)|&quality=.*?(?:,|&))')
 
     itags = {'18': '360p', '22': '720p', '34': '360p', '35': '480p', '37': '1080p', '43': '360p', '59': '480p'}
