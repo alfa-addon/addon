@@ -10,7 +10,8 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-IDIOMAS = {'Latino': 'Latino', 'Subtitulado': 'Subtitulado', 'Español': 'Español', 'SUB': 'SUB', '': 'Latino', 'VO':'VO' }
+servers = {'ul': 'uploaded', 'ok': 'okru', 'hqq': 'netu', 'waaw': 'netu', 'drive': 'gvideo', 'mp4': 'gvideo'}
+IDIOMAS = {'Latino': 'Latino', 'Subtitulado': 'Subtitulado', 'Español': 'Español', 'SUB': 'Subtitulado', '': 'Latino', 'VO':'VO' }
 list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['rapidvideo', 'streamango', 'okru', 'vidoza', 'openload', 'powvideo', 'netutv','gvideo']
@@ -222,47 +223,63 @@ def findvideos(item):
     import urllib
     logger.info()
     itemlist=[]
+    qual_fix = ''
     data = httptools.downloadpage(item.url).data
-    patron  = 'tooltipctx.*?data-type="([^"]+).*?'
-    patron += 'data-post="(\d+)".*?'
-    patron += 'data-nume="(\d+).*?'
-    patron += '</noscript> (.*?)</'
+    
+    patron = "<a class='optn' href='([^']+)'.*?<img alt='([^']+)'.*?<img src='.*?>([^<]+)<.*?<img src='.*?>([^<]+)<"
     matches = scrapertools.find_multiple_matches(data, patron)
-    for tp, pt, nm, language in matches:
-        language = language.strip()
-        post = {'action':'doo_player_ajax', 'post':pt, 'nume':nm, 'type':tp}
-        post = urllib.urlencode(post)
-        new_data = httptools.downloadpage(CHANNEL_HOST+'wp-admin/admin-ajax.php', post=post, headers={'Referer':item.url}).data
-        if not config.get_setting('unify'):
-            if item.quality == '':
-                quality = 'SD'
-            else:
-                quality = item.quality
-            title = ' [%s][%s]' % (quality, IDIOMAS[language])
-        else:
-            title = ''
-        url = scrapertools.find_single_match(new_data, "src='([^']+)'")
-        url = get_url(url)
-        if url:
-            itemlist.append(item.clone(title ='%s'+title, url=url, action='play',
-                                 language=IDIOMAS[language], text_color = ""))
-    patron = "<a class='optn' href='([^']+)'.*?<img src='.*?>([^<]+)<.*?<img src='.*?>([^<]+)<"
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for hidden_url, quality, language in matches:
+    for url, iserver, quality, language in matches:
+        
+        if not qual_fix:
+            qual_fix += quality
         if language == 'Inglés':
             language = 'VO'
         if not config.get_setting('unify'):
             title = ' [%s][%s]' % (quality, IDIOMAS[language])
         else:
             title = ''
-        new_data = httptools.downloadpage(hidden_url).data
-        url = scrapertools.find_single_match(new_data, 'id="link" href="([^"]+)"')
-        url = get_url(url)
-        if url:
-            itemlist.append(Item(channel=item.channel, title='%s'+title, url=url, action='play', quality=quality,
+        try:
+            iserver = iserver.split('.')[0]
+            iserver = servers.get(iserver, iserver)
+        except:
+            pass
+        iserver = iserver.capitalize()
+        itemlist.append(item.clone(channel=item.channel, title=iserver+title, url=url, action='play', quality=quality,
                                  language=IDIOMAS[language], infoLabels=item.infoLabels, text_color = ""))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    itemlist.sort(key=lambda it: (it.language, it.server, it.quality))
+
+    patron  = 'tooltipctx.*?data-type="([^"]+).*?'
+    patron += 'data-post="(\d+)".*?'
+    patron += 'data-nume="(\d+).*?'
+    patron += '</noscript> (.*?)</.*?'
+    patron += 'assets/img/(.*?)"/>'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for tp, pt, nm, language, iserver in matches:
+        language = language.strip()
+        post = {'action':'doo_player_ajax', 'post':pt, 'nume':nm, 'type':tp}
+        post = urllib.urlencode(post)
+        if not config.get_setting('unify'):
+            if item.quality == '':
+                quality = 'SD'
+                if qual_fix:
+                    quality = qual_fix
+            else:
+                quality = item.quality
+            title = ' [%s][%s]' % (quality, IDIOMAS[language])
+        else:
+            title = ''
+        try:
+            iserver = iserver.split('.')[0]
+            iserver = servers.get(iserver, iserver)
+
+        except:
+            pass
+        iserver = iserver.capitalize()
+
+        itemlist.append(item.clone(title =iserver+title, url="", action='play',
+                                 language=IDIOMAS[language], text_color = "",
+                                 spost=post, quality=quality))
+    #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    itemlist.sort(key=lambda it: (it.language, it.title, it.quality))
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
@@ -299,5 +316,17 @@ def get_url(url):
 
 
 def play(item):
-    item.thumbnail = item.contentThumbnail
-    return [item]
+    if not item.spost:
+        new_data = httptools.downloadpage(item.url).data
+        url = scrapertools.find_single_match(new_data, 'id="link" href="([^"]+)"')
+        item.url = get_url(url)
+    else:
+        post = item.spost
+        new_data = httptools.downloadpage(CHANNEL_HOST+'wp-admin/admin-ajax.php',
+                                           post=post, headers={'Referer':item.url}).data
+        url = scrapertools.find_single_match(new_data, "src='([^']+)'")
+        item.url = get_url(url)
+    item = servertools.get_servers_itemlist([item])
+    #item.thumbnail = item.contentThumbnail
+    #testear [item]
+    return item
