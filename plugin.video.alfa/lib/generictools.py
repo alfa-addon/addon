@@ -1211,18 +1211,26 @@ def post_tmdb_findvideos(item, itemlist):
         itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", action="actualizar_titulos", extra="peliculas", tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
         
     if item.contentType == 'movie' and item.contentChannel != "videolibrary":
-        itemlist.append(item.clone(title="**-[COLOR yellow] Añadir a la videoteca [/COLOR]-**", action="add_pelicula_to_library", extra="peliculas", from_action=item.action, from_title_tmdb=item.title))
+        itemlist.append(item.clone(title="**-[COLOR yellow] Añadir a la videoteca [/COLOR]-**", 
+                    action="add_pelicula_to_library", extra="peliculas", from_action=item.action, 
+                    from_title_tmdb=item.title))
     
     #Añadimos la opción de ver trailers
     if item.contentChannel != "videolibrary":
-        itemlist.append(item.clone(channel="trailertools", title="**-[COLOR magenta] Buscar Trailer [/COLOR]-**", action="buscartrailer", context=""))
+        itemlist.append(item.clone(channel="trailertools", title="**-[COLOR magenta] Buscar Trailer [/COLOR]-**", 
+                    action="buscartrailer", context=""))
+        
+    #Si tiene contraseña, la pintamos
+    if item.password:
+        itemlist.append(item.clone(action="", server = "", title="[COLOR magenta][B] Contraseña: [/B][/COLOR]'" 
+                    + item.password + "'", folder=False))
     
     #logger.debug(item)
     
     return (item, itemlist)
     
     
-def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5, file_list=False):
+def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torrent=False, timeout=5, file_list=False, lookup=True):
     logger.info()
     from core import videolibrarytools
     
@@ -1318,13 +1326,17 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
         #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
         #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
         
-        torrents_path, torrent_file = videolibrarytools.caching_torrents(url, referer=referer, post=post, timeout=timeout, lookup=True, data_torrent=True)
+        torrents_path, torrent_file = videolibrarytools.caching_torrents(url, \
+                        referer=referer, post=post, torrents_path=torrents_path, \
+                        timeout=timeout, lookup=lookup, data_torrent=True)
         if not torrent_file:
-            if file_list and data_torrent:
+            if not lookup:
+                return (size, torrents_path, torrent, files)
+            elif file_list and data_torrent:
                 return (size, torrent, files)
-            if file_list:
+            elif file_list:
                 return (size, files)
-            if data_torrent:
+            elif data_torrent:
                 return (size, torrent)
             return size                                         #Si hay un error, devolvemos el "size" y "torrent" vacíos
 
@@ -1347,6 +1359,7 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
                 size = convert_size(sizet)
                 
                 files = torrent["info"]["files"]
+                
             except:
                 pass
 
@@ -1358,17 +1371,22 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
     #    os.remove(torrents_path + "/generictools.torrent")                      #borramos el .torrent
     #except:
     #    pass
+
+    if '.rar' in str(files):
+        size = '[COLOR magenta][B]RAR-[/B][/COLOR]%s' % size
         
     #logger.debug(str(url))
     logger.info(str(size))
     
-    if file_list and data_torrent:
+    if not lookup:
+        return (size, torrents_path, torrent, files)
+    elif file_list and data_torrent:
         return (size, torrent, files)
-    if file_list:
+    elif file_list:
         return (size, files)
-    if data_torrent:
+    elif data_torrent:
         return (size, torrent)
-    return size
+    return size 
 
     
 def get_field_from_kodi_DB(item, from_fields='*', files='file'):
@@ -1813,10 +1831,12 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     """
     #logger.debug(item)
     #if it != None: logger.debug(it)
+    if not item and not it:
+        return (item, it, False)
     if not it:
         it = Item()
-    item_back = item.clone()
-    it_back = item.clone()
+    if item: item_back = item.clone()
+    it_back = it.clone()
     ow_force_param = True
     update_stat = 0
     delete_stat = 0
