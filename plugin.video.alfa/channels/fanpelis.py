@@ -16,7 +16,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import tmdb
 
-host = "https://fanpelis.com/"
+host = "https://fanpelis.net/"
 
 def mainlist(item):
     logger.info()
@@ -257,7 +257,7 @@ def findvideos(item):
     post = urllib.urlencode(post)
     data = httptools.downloadpage(host+'wp-admin/admin-ajax.php', post=post, headers={'Referer':item.url}).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = '<iframe src="([^"]+)"'
+    patron = 'data-url="([^"]+)"'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
