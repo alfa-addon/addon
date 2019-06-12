@@ -5,7 +5,7 @@
     "patterns": [
       {
         "pattern": "https://upvid.co/embed-([a-z0-9]+).html",
-        "url": "https://upvid.co/embed-\\1.html"
+        "url": "https://upvid.live/embed-\\1.html"
       }
     ]
   },
