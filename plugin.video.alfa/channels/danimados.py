@@ -136,7 +136,6 @@ def episodios(item):
     infoLabels = {}
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    logger.info(data)
     patron = '<divid=episodes (.+?)<\/div><\/div><\/div>'
     data_lista = scrapertools.find_single_match(data,patron)
     contentSerieName = item.title
