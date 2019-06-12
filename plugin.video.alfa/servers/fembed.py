@@ -10,6 +10,11 @@ def test_video_exists(page_url):
     data = httptools.downloadpage(page_url).data
     if "Sorry 404 not found" in data or "This video is unavailable" in data or "Sorry this video is unavailable:" in data:
         return False, "[fembed] El fichero ha sido borrado"
+    page_url = page_url.replace("/f/","/v/")
+    page_url = page_url.replace("/v/","/api/source/")
+    data = httptools.downloadpage(page_url, post={}).data
+    if "Video not found or" in data:
+        return False, "[fembed] El fichero ha sido borrado"
     return True, ""
 
 

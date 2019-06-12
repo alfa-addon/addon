@@ -21,9 +21,16 @@ def load_data(url):
 
     return data
 
-def redirect_url(url, parameters=None):
+def redirect_url(url, parameters=None, scr=False):
+    url = url.replace("/irgo", "/go")
     data = httptools.downloadpage(url, post=parameters)
-    logger.info(data.url)
+    if scr:
+        host = 'https://' + data.url.split("/")[2]
+        link = ""
+        vid = scrapertools.find_single_match(data.url, "\?id=(\w+)")
+        if vid:
+            link = host+ '/hls/' + vid + '/' + vid + '.playlist.m3u8'
+        return link
     return data.url
 
 def mainlist(item):
@@ -97,7 +104,7 @@ def byLetter(item):
     nonce = scrapertools.find_single_match(pageForNonce, '"nonce":"([^"]+)"')
     raw = httptools.downloadpage('http://cuevana2espanol.com/wp-json/dooplay/glossary/?term=%s&nonce=%s&type=all' % (letter, nonce)).data
     json = jsontools.load(raw)
-    logger.info(nonce)
+    #logger.info(nonce)
     if 'error' not in json:
         for movie in json.items():
             data = movie[1]
@@ -150,13 +157,17 @@ def search(item, text):
 
     return searchMovies(item)
 
+def RedirectLink(hash):
+    hashdata = urllib.urlencode({r'url':hash})
+    return redirect_url('https://player.cuevana2espanol.com/r.php', hashdata)
+
 def GKPluginLink(hash):
     hashdata = urllib.urlencode({r'link':hash})
     try:
-        json = httptools.downloadpage('https://player4.cuevana2.com/plugins/gkpluginsphp.php', post=hashdata).data
+        json = httptools.downloadpage('https://player.cuevana2espanol.com/plugins/gkpluginsphp.php', post=hashdata).data
     except:
         return None
-    logger.info(jsontools.load(json))
+    #logger.info(jsontools.load(json))
 
     data = jsontools.load(json) if json else False
     if data:
@@ -166,9 +177,8 @@ def GKPluginLink(hash):
 
 def OpenloadLink(hash):
     hashdata = urllib.urlencode({r'h':hash})
-    json = httptools.downloadpage('http://cuevana2espanol.com/openload/api.php', post=hashdata).data
+    json = httptools.downloadpage('https://cuevana2espanol.com/openload/api.php', post=hashdata).data
     data = jsontools.load(json) if json else False
-
     return data['url'] if data['status'] == 1 else None
 
 def getContent(item, data):
@@ -192,31 +202,51 @@ def findvideos(item):
     else:
         getContentMovie(data, item)
     """
-    pattern = '<iframe class="metaframe rptss" src="([^"]+)"'
+    pattern = '<div id="option-(\d)".*?<iframe class="metaframe rptss" src="([^"]+)"'
 
     #itemlist.append(Item(channel = item.channel, title=item.url))
-    for link in scrapertools.find_multiple_matches(data, pattern):
+    for option, link in scrapertools.find_multiple_matches(data, pattern):
         #php.*?=(\w+)&
         #url=(.*?)&
+        server = ""
+        sname = scrapertools.find_single_match(data, 'href="#option-%s"><b class="icon-play_arrow"></b> Servidor (\w+)' % option)
+        sname = sname.replace("Siempre", "SO")
+        title = "[COLOR blue]Servidor "+sname+" [%s][/COLOR]"
         if 'player' in link:
-            logger.info("CUEVANA LINK %s" % link)
-            if r'%2Fopenload%2F' in link:
-                link = scrapertools.find_single_match(link, 'h%3D(\w+)')
-                link = OpenloadLink(link)
-            elif r'ir.php' in link:
-                link = scrapertools.find_single_match(link, 'php.*?=(.*)').replace('%3A', ':').replace('%2F', '/')
-                logger.info("CUEVANA IR %s" % link)
+            #~logger.info("CUEVANA LINK %s" % link)
+            #fembed y rapidvideo
+            if r'irgoto.php' in link:
+                link = scrapertools.find_single_match(link, 'php\?url=(.*)').replace('%3A', ':').replace('%2F', '/')
+                link = RedirectLink(link)
+                server = link.split("/")[2]
+                server = server.replace("www.", "")
+                server = server.split(".")[0]
+            #vanlong
+            elif r'irgotogd' in link:
+                link = redirect_url('https:'+link, "", True)
+                server = "directo"
+            #openloadpremium no les va en la web, se hace un fix aqui
+            elif r'irgotogp' in link:
+                link = scrapertools.find_single_match(data, r'irgotogd.php\?url=(\w+)')
+                #link = redirect_url('https:'+link, "", True)
+                link = GKPluginLink(link)
+                server = "directo"
             elif r'gdv.php' in link:
                 # google drive hace lento la busqueda de links, ademas no es tan buena opcion y es el primero que eliminan
                 continue
+            #amazon y vidcache, casi nunca van
             else:
-                link = scrapertools.find_single_match(link, 'php.*?=(\w+)')
+                link = scrapertools.find_single_match(link, 'php.*?file=(\w+)')
                 link = GKPluginLink(link)
-                    
-            title = "[COLOR blue]Servidor [%s][/COLOR]"
+                server = "directo"
             
+        elif r'openload' in link:
+            link = scrapertools.find_single_match(link, '\?h=(\w+)')
+            link = OpenloadLink(link)
+            server = "openload"
         elif 'youtube' in link:
             title = "[COLOR yellow]Ver Trailer (%s)[/COLOR]"
+            server = "youtube"
         else: # En caso de que exista otra cosa no implementada, reportar si no aparece pelicula
             continue
 
@@ -226,17 +256,16 @@ def findvideos(item):
         # personalizadas para Directo, se agradece, por ahora solo devuelve el primero que encuentre
         if type(link) is list:
             link = link[0]['link']
-        if r'chomikuj.pl' in link:
+        #if r'chomikuj.pl' in link:
             # En algunas personas la opcion CH les da error 401
-            link += "|Referer=https://player4.cuevana2.com/plugins/gkpluginsphp.php" 
-
+            #link += "|Referer=https://player4.cuevana2.com/plugins/gkpluginsphp.php" 
         itemlist.append(
             item.clone(
                 channel = item.channel, 
-                title=title, 
+                title=title % server.capitalize(), server=server,
                 url=link, action='play'))
 
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     autoplay.start(itemlist, item)
 
     if config.get_videolibrary_support() and len(itemlist):

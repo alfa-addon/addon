@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 from core import httptools, scrapertools
 from lib import jsunpack
 from platformcode import logger
@@ -20,12 +21,18 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
     unpacked = jsunpack.unpack(packed)
     # ~ logger.info(unpacked)
-
+    unpacked = re.sub(r'\n|\r|\t|\s{2,}', "", unpacked)
+    subtitles =  scrapertools.find_single_match(unpacked, r'tracks:\s*\[\{\s*file\s*:\s*"([^"]*)"\s*,\s*label')
+    if "empty." in subtitles: subtitles = ""
     matches = scrapertools.find_multiple_matches(unpacked, 'file\s*:\s*"([^"]*)"\s*,\s*label\s*:\s*"([^"]*)"')
     if matches:
         for url, lbl in matches:
-            if not url.endswith('.srt'):
-                itemlist.append(['.mp4 (%s) [flix555]' % lbl, url])
+            
+            if url.endswith('.srt') or url.endswith('.vtt'):
+                #subtitles += url
+                continue
+            
+            itemlist.append(['.mp4 (%s) [flix555]' % lbl, url, 0, subtitles])
 
     return itemlist
 

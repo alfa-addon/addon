@@ -194,8 +194,8 @@ def findvideos(item):
             url = scrapertools.find_single_match(video_data, "'file':'([^']+)'")
         else:
             video_url = new_dom+'api/redirect.php?token=%s' % token
-            video_data = httptools.downloadpage(video_url, headers=headers, follow_redirects=False).headers
-            url = scrapertools.find_single_match(video_data['location'], '\d+@@@(.*?)@@@')
+            video_data = httptools.downloadpage(video_url, headers=headers, follow_redirects=False).data
+            url = scrapertools.find_single_match(video_data, "window.location.href = '([^']+)'")
 
 
 

@@ -13,7 +13,7 @@ from platformcode import config, logger
 
 
 IDIOMAS = {'VOSE': 'VOSE',
-           'VSOI': 'VOS',
+           'VOSI': 'VOS',
            'Español latino': 'Lat',
            'Iberian spanish': 'Cast'
         }
