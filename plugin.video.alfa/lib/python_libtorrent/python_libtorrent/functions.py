@@ -33,12 +33,12 @@ __libbaseurl__ = "https://github.com/DiMartinoXBMC/script.module.libtorrent/raw/
 #__plugin__ = __settings__.getAddonInfo('name') + " v." + __version__
 #__icon__=os.path.join(xbmc.translatePath('special://home'), 'addons',
 #                                   'script.module.libtorrent', 'icon.png')
-__settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                          ### Alfa
+#__settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                         ### Alfa
 __version__ = '1.1.17'                                                          ### Alfa
 __plugin__ = "python-libtorrent v.1.1.7"                                        ### Alfa
 __icon__=os.path.join(xbmc.translatePath('special://home'), 'addons',
                                    'plugin.video.alfa', 'icon.png')             ### Alfa
-__language__ = __settings__.getLocalizedString
+#__language__ = __settings__.getLocalizedString                                 ### Alfa
 
 #from python_libtorrent.platform_pulsar import get_platform, get_libname        ### Alfa
 from lib.python_libtorrent.python_libtorrent.platform_pulsar import get_platform, get_libname   ### Alfa
@@ -52,6 +52,7 @@ def log(msg):
         xbmc.log("### [%s]: %s" % (__plugin__,'ERROR LOG',), level=xbmc.LOGNOTICE )
 
 def getSettingAsBool(setting):
+    __settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                      ### Alfa
     return __settings__.getSetting(setting).lower() == "true"
 
 class LibraryManager():
@@ -86,6 +87,7 @@ class LibraryManager():
             self.download()
 
     def download(self):
+        __settings__ = xbmcaddon.Addon(id='plugin.video.alfa')                  ### Alfa
         xbmcvfs.mkdirs(self.dest_path)
         for libname in get_libname(self.platform):
             dest = os.path.join(self.dest_path, libname)

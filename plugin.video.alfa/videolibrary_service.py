@@ -42,6 +42,9 @@ def update(path, p_dialog, i, t, serie, overwrite):
         ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
         try:
             head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')         #Refresca el .nfo para recoger actualizaciones
+            if not it:
+                logger.error('.nfo erroneo en ' + str(path))
+                continue
             if it.emergency_urls:
                 serie.emergency_urls = it.emergency_urls
             serie.category = category
@@ -134,6 +137,9 @@ def check_for_update(overwrite=True):
 
             for i, tvshow_file in enumerate(show_list):
                 head_nfo, serie = videolibrarytools.read_nfo(tvshow_file)
+                if not serie:
+                    logger.error('.nfo erroneo en ' + str(tvshow_file))
+                    continue
                 path = filetools.dirname(tvshow_file)
                 
                 ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
