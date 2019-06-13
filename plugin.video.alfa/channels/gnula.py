@@ -63,12 +63,12 @@ def sub_search(item):
         page = int(scrapertools.find_single_match(item.url, ".*?start=(\d+)")) + item_per_page
         item.url = scrapertools.find_single_match(item.url, "(.*?start=)") + str(page)
         patron =  '(?s)clicktrackUrl":\s*".*?q=(.*?)".*?'
-        patron += 'title":\s*"([^"]+)".*?'
-        patron += '"src":\s*"([^"]+)"'
+        patron += 'titleNoFormatting":\s*"([^"]+)".*?'
+        patron += 'cseThumbnail.*?"src":\s*"([^"]+)"' # se usa el thumb de google
         matches = scrapertools.find_multiple_matches(data, patron)
         for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
             scrapedurl = scrapertools.find_single_match(scrapedurl, ".*?online/")
-            scrapedtitle = scrapedtitle.decode("unicode-escape").replace(" online", "").replace("<b>", "").replace("</b>", "")
+            scrapedtitle = scrapedtitle.replace(" online", "").replace("<b>", "").replace("</b>", "")
             if "ver-" not in scrapedurl:
                 continue
             year = scrapertools.find_single_match(scrapedtitle, "\d{4}")
