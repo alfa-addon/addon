@@ -1184,6 +1184,18 @@ def play_torrent(item, xlistitem, mediaurl):
         else:
             seleccion = 0
 
+    # Si Libtorrent ha dado error de inicialización, no se pueden usar los clientes internos
+    if seleccion < 2 and config.get_setting("libtorrent_error", server="torrent", default=''):
+        dialog_ok('Cliente Interno (LibTorrent):', 'Este cliente no está soportado en su dispositivo.',  \
+                  'Error: [COLOR yellow]%s[/COLOR]' % config.get_setting("libtorrent_error", server="torrent", default=''), \
+                  'Use otro cliente Torrent soportado')
+        if len(torrent_options) > 2:
+            seleccion = dialog_select(config.get_localized_string(70193), [opcion[0] for opcion in torrent_options])
+            if seleccion < 2:
+                return
+        else:
+            return
+    
     # Descarga de torrents a local
     if seleccion >= 0:
         
@@ -1249,15 +1261,10 @@ def play_torrent(item, xlistitem, mediaurl):
 
     # Plugins externos
     if seleccion > 0:
-        
+ 
         if seleccion == 1:
-            if config.get_setting("libtorrent_error", server="torrent", default=''):
-                dialog_ok('MCT cliente (LibTorrent):', 'Este cliente no está soportado en su dispositivo',  \
-                          'Use otro cliente Torrent soportado', config.get_setting("libtorrent_error", \
-                          server="torrent", default=''))
-            else:
-                from platformcode import mct
-                mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=item.password, item=item)
+            from platformcode import mct
+            mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=item.password, item=item)
         else:
             mediaurl = urllib.quote_plus(item.url)
             #Llamada con más parámetros para completar el título
