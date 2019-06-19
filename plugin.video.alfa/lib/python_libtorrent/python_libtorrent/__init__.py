@@ -108,6 +108,7 @@ try:
                               'linux_aarch64_ucs2', 'linux_aarch64_ucs4']:
         import libtorrent
         config.set_setting("libtorrent_path", dest_path, server="torrent")      ### Alfa
+        config.set_setting("libtorrent_error", "", server="torrent")            ### Alfa
     elif platform['system'] in ['darwin', 'ios_arm']:
         import imp
         path_list = [dest_path]
@@ -119,6 +120,8 @@ try:
             libtorrent = imp.load_module('libtorrent', fp, pathname, description)
         finally:
             if fp: fp.close()
+        config.set_setting("libtorrent_path", dest_path, server="torrent")      ### Alfa
+        config.set_setting("libtorrent_error", "", server="torrent")            ### Alfa
     elif platform['system'] in ['android_armv7', 'android_x86']:
         import imp
         from ctypes import CDLL
@@ -183,10 +186,13 @@ try:
             if fp: fp.close()
 
     config.set_setting("libtorrent_path", dest_path, server="torrent")          ### Alfa
+    config.set_setting("libtorrent_error", "", server="torrent")                ### Alfa
     log('Imported libtorrent v' + libtorrent.version + ' from "' + dest_path + '"')
 
 except Exception, e:
+    e = unicode(str(e), "utf8", errors="replace").encode("utf8")
     config.set_setting("libtorrent_path", '', server="torrent")                 ### Alfa
+    config.set_setting("libtorrent_error", str(e), server="torrent")            ### Alfa
     log('Error importing libtorrent from "' + dest_path + '". Exception: ' + str(e))
 
 
