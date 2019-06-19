@@ -89,6 +89,7 @@ def play(item):
     patron  = '<video src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url  in matches:
+        url += "|Referer=%s" % host
         itemlist.append(Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=url,
                          thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
     return itemlist

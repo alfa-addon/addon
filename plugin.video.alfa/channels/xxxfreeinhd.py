@@ -2,6 +2,7 @@
 #------------------------------------------------------------
 import urlparse,urllib2,urllib,re
 import os, sys
+import base64
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
@@ -67,8 +68,8 @@ def lista(item):
         title = scrapedtitle
         thumbnail = scrapedthumbnail + "|https://watchxxxfreeinhd.com/" 
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
-                              thumbnail=thumbnail, plot=plot, fanart=scrapedthumbnail, contentTitle = scrapedtitle))
+        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
+                              thumbnail=thumbnail, plot=plot, fanart=scrapedthumbnail ))
     next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)"')
     if next_page:
         next_page =  urlparse.urljoin(item.url,next_page)
@@ -77,17 +78,44 @@ def lista(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data = scrapertools.find_single_match(data,'<div class="video-embed">(.*?)</div>')
-    patron = '<noscript>.*?<iframe src="([^"]+)"'
+    data = scrapertools.find_single_match(data,'<div class="video-embed">(.*?)<div class="views-infos">')
+    patron = 'data-lazy-src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for url in matches:
-        itemlist.append(item.clone(action="play", title = "%s", url=url ))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    for title in matches:
+        if "strdef" in title:
+            url = decode_url(title)
+        if "hqq" in title:
+            url = title
+        itemlist.append(item.clone(action="play", title = url, url=url ))
     return itemlist
+
+
+def play(item):
+    itemlist = servertools.find_video_items(data=item.url)
+    for item in itemlist:
+        item.channel = "url"
+        item.action = "play"
+    return itemlist
+
+
+def decode_url(txt):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(txt).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    b64_url = scrapertools.find_single_match(data, '\(dhYas638H\("([^"]+)"\)')
+    b64_url = base64.b64decode(b64_url + "=")
+    b64_url = base64.b64decode(b64_url + "==")
+    b64_url = scrapertools.find_single_match(b64_url, '\(dhYas638H\("([^"]+)"\)')
+    b64_url = base64.b64decode(b64_url + "=")
+    b64_url = base64.b64decode(b64_url + "==")
+    url = scrapertools.find_single_match(b64_url, '<iframe src="([^"]+)"')
+    logger.debug (url)
+    return url
 
 

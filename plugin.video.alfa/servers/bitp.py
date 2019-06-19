@@ -23,7 +23,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    videourl = scrapertools.find_multiple_matches(data, '<source src="(http[^"]+).*?title="([^"]+)')
+    videourl = scrapertools.find_multiple_matches(data, '<source src="([^"]+)".*?label="([^"]+)"')
     scrapertools.printMatches(videourl)
     for scrapedurl, scrapedquality in videourl:
         if "loadthumb" in scrapedurl:
@@ -32,3 +32,4 @@ def get_video_url(page_url, user="", password="", video_password=""):
         video_urls.append([scrapedquality + " [bitp]", scrapedurl])
     video_urls.sort(key=lambda it: int(it[0].split("p ", 1)[0]))
     return video_urls
+

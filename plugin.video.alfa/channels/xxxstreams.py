@@ -85,12 +85,13 @@ def findvideos(item):
     patron = '<a href="([^"]+)".*?>([^"]+)</a>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url,server in matches:
-        itemlist.append(item.clone(action="play", title = server, url=url ))
+        itemlist.append( Item(channel=item.channel, action="play", title = server, url=url ))
     return itemlist
 
 
 def play(item):
-    logger.info(item)
+    logger.info()
+    itemlist = []
     itemlist = servertools.find_video_items(item.clone(url = item.url))
     return itemlist
 
