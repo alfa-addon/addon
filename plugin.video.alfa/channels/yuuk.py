@@ -74,3 +74,20 @@ def lista(item):
 
     return itemlist
 
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    data = scrapertools.find_single_match(data,'Streaming Server<(.*?)Screenshot<')
+    patron = '(?:src|SRC)="([^"]+)"'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url in matches:
+        if "http://stream.yuuk.net/embed.php" in url:
+            data = httptools.downloadpage(url).data
+            url = scrapertools.find_single_match(data,'"file": "([^"]+)e=download"')
+        itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist
+
