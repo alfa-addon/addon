@@ -4,7 +4,6 @@ import re
 import urlparse
 
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
@@ -484,9 +483,9 @@ def menu_info(item):
 
     id = scrapertools.find_single_match(item.url, '/(\d+)/')
 
-    data_trailer = httptools.downloadpage(host + "/media/trailer?idm=%s&mediaType=1" % id, ignore_response_code=True).data
+    data_trailer = httptools.downloadpage(host + "/media/trailer?idm=%s&mediaType=1" % id, ignore_response_code=True).json
     try:
-       trailer_url = jsontools.load(data_trailer)["video"]["url"]
+       trailer_url = data_trailer["video"]["url"]
        if trailer_url != "": item.infoLabels["trailer"] = trailer_url
     except:
        pass
@@ -535,9 +534,9 @@ def episodios(item):
     itemlist.reverse()
     if "episodios" not in item.extra and not item.path:
         id = scrapertools.find_single_match(item.url, '/(\d+)/')
-        data_trailer = httptools.downloadpage(host + "/media/trailer?idm=%s&mediaType=1" % id, ignore_response_code=True).data
+        data_trailer = httptools.downloadpage(host + "/media/trailer?idm=%s&mediaType=1" % id, ignore_response_code=True).json
         try:
-           trailer_url = jsontools.load(data_trailer)["video"]["url"]
+           trailer_url = data_trailer["video"]["url"]
            if trailer_url != "": item.infoLabels["trailer"] = trailer_url
         except:
            pass
@@ -652,9 +651,9 @@ def findvideos(item):
         itemlist.extend(get_enlaces(item, url, "de Descarga"))
 
         if extra == "media":
-            data_trailer = httptools.downloadpage(host + "/media/trailer?idm=%s&mediaType=1" % id, ignore_response_code=True).data
+            data_trailer = httptools.downloadpage(host + "/media/trailer?idm=%s&mediaType=1" % id, ignore_response_code=True).json
             try:
-               trailer_url = jsontools.load(data_trailer)["video"]["url"]
+               trailer_url = data_trailer["video"]["url"]
                if trailer_url != "": item.infoLabels["trailer"] = trailer_url
             except:
                pass

@@ -5,7 +5,6 @@ import re
 from core import httptools
 from core import scrapertools
 from core import servertools
-from core import jsontools
 from core import tmdb
 from core.item import Item
 from channels import filtertools, autoplay
@@ -188,8 +187,7 @@ def alpha(item):
     itemlist = []
 
     url = 'https://www.ultrapeliculashd.com/wp-json/dooplay/glossary/?term=%s&nonce=4e850b7d59&type=all' % item.id
-    data = httptools.downloadpage(url).data
-    dict_data = jsontools.load(data)
+    dict_data = httptools.downloadpage(url).json
     if 'error' not in dict_data:
         for elem in dict_data:
             elem = dict_data[elem]

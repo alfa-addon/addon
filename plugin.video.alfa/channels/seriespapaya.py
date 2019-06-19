@@ -8,7 +8,6 @@ import urlparse
 from channels import filtertools
 from channelselector import get_thumb
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
@@ -278,8 +277,7 @@ def search(item, texto):
     logger.info("texto: %s" % texto)
     itemlist = []
     infoLabels = ()
-    data = httptools.downloadpage(urlparse.urljoin(HOST, "/buscar.php?term=%s" % texto)).data
-    data_dict = jsontools.load(data)
+    data_dict = httptools.downloadpage(urlparse.urljoin(HOST, "/buscar.php?term=%s" % texto)).json
     try:
         tvshows = data_dict["myData"]
     except:

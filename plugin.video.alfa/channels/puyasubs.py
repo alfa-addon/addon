@@ -266,8 +266,7 @@ def findvideos(item):
             headers = {'Content-Type': 'application/json'}
             hash = safe.rsplit("/", 1)[1]
             post = jsontools.dump({"hash": hash})
-            data_sf = httptools.downloadpage("http://safelinking.net/v1/protected", post=post, headers=headers).data
-            data_sf = jsontools.load(data_sf)
+            data_sf = httptools.downloadpage("http://safelinking.net/v1/protected", post=post, headers=headers).json
             try:
                 for link in data_sf.get("links"):
                     enlace = link["url"]
@@ -363,8 +362,7 @@ def extract_safe(item):
     hash = item.url.rsplit("/", 1)[1]
     headers = [['Content-Type', 'application/json;charset=utf-8']]
     post = jsontools.dump({"hash": hash})
-    data = httptools.downloadpage("http://safelinking.net/v1/protected", post=post, headers=headers).data
-    data = jsontools.load(data)
+    data = httptools.downloadpage("http://safelinking.net/v1/protected", post=post, headers=headers).json
     for link in data.get("links"):
         enlace = link["url"]
         domain = link["domain"]

@@ -7,7 +7,6 @@ import re
 import urllib
 from platformcode import logger
 from platformcode import config
-from core import jsontools
 from core import scrapertools
 from core.item import Item
 from core import servertools
@@ -99,9 +98,9 @@ def sub_search(item):
     logger.info()
     itemlist =[]
     headers = {'Referer':host, 'X-Requested-With': 'XMLHttpRequest'}
-    data = httptools.downloadpage(item.url, headers=headers).data
-    dict_data = jsontools.load(data)
+    dict_data = httptools.downloadpage(item.url, headers=headers).json
     list =dict_data["data"] [item.type]
+
     if item.type == "m":
         action = "findvideos"
     else:
