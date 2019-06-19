@@ -119,6 +119,7 @@
 
         <setting type="sep"/>
         <setting label="70154" type="lsep"/>
+        <setting id="tmdb_lang" type="enum" lvalues="60436|70425|70422|70421|70420|70419" label="70418" default="0"/>
         <setting id="tmdb_threads" type="labelenum" values="5|10|15|20|25|30" label="70155" default="20"/>
         <setting id="tmdb_plus_info" type="bool" label="70156" default="false"/>
         <setting id="tmdb_cache" type="bool" label="70157" default="true"/>
