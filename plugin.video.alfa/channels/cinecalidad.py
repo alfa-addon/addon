@@ -393,15 +393,13 @@ def findvideos(item):
 
 
 def get_urls(item, link):
-    from core import jsontools
     logger.info()
     url = 'http://www.cinecalidad.to/ccstream/ccstream.php'
     headers = dict()
     headers["Referer"] = item.url
     post = 'link=%s' % link
 
-    data = httptools.downloadpage(url, post=post, headers=headers).data
-    dict_data = jsontools.load(data)
+    dict_data = httptools.downloadpage(url, post=post, headers=headers).json
     return dict_data['link']
 
 

@@ -5,7 +5,6 @@ import urlparse
 
 from core import httptools
 from core import scrapertools
-from core import jsontools
 from platformcode import logger
 
 host = 'http://www.eporner.com'
@@ -127,8 +126,7 @@ def play(item):
         int(hash[16:24], 16)) + int_to_base36(int(hash[24:32], 16))
 
     url = "https://www.eporner.com/xhr/video/%s?hash=%s" % (vid, hash)
-    data = httptools.downloadpage(url).data
-    jsondata = jsontools.load(data)
+    jsondata = httptools.downloadpage(url).json
 
     for source in jsondata["sources"]["mp4"]:
         url = jsondata["sources"]["mp4"][source]["src"]

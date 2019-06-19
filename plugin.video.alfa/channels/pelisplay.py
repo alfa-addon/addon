@@ -5,7 +5,6 @@
 
 import re
 import sys
-import urllib
 import urlparse
 
 from channels import autoplay
@@ -335,7 +334,6 @@ def episodios(item):
 def episodesxseason(item):
     logger.info()
     itemlist = []
-    from core import jsontools
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<br>", "", data)
     post_link = '%sentradas/abrir_temporada' % host
@@ -343,9 +341,7 @@ def episodesxseason(item):
     data_t = scrapertools.find_single_match(data, '<a data-s="[^"]+" data-t="([^"]+)"')
     data_s = scrapertools.find_single_match(data, '<a data-s="([^"]+)" data-t="[^"]+"')
     post = {'t': data_t, 's': data_s, '_token': token}
-    post = urllib.urlencode(post)
-    new_data = httptools.downloadpage(post_link, post=post).data
-    json_data = jsontools.load(new_data)
+    json_data = httptools.downloadpage(post_link, post=post).json
 
     for element in json_data['data']['episodios']:
         scrapedname = element['titulo']
@@ -384,8 +380,6 @@ def episodesxseason(item):
 
 def findvideos(item):
     logger.info()
-    from core import jsontools
-    import urllib
 
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -398,9 +392,7 @@ def findvideos(item):
         post_link = '%sentradas/procesar_player' % host
         token = scrapertools.find_single_match(data, 'data-token="([^"]+)">')
         post = {'data': data_player, 'tipo': 'videohost', '_token': token}
-        post = urllib.urlencode(post)
-        new_data = httptools.downloadpage(post_link, post=post).data
-        json_data = jsontools.load(new_data)
+        json_data = httptools.downloadpage(post_link, post=post).json
         url = json_data['data']
 
         if 'pelisplay.tv/embed/' in url:
@@ -412,7 +404,6 @@ def findvideos(item):
             link = scrapertools.find_single_match(url, '=(.*?)&fondo_requerido').partition('&')[0]
             post_link = '%sprivate/plugins/gkpluginsphp.php' % host
             post = {'link': link}
-            post = urllib.urlencode(post)
             new_data2 = httptools.downloadpage(post_link, post=post).data
             url = scrapertools.find_single_match(new_data2, '"link":"([^"]+)"').replace('\\', '')
 

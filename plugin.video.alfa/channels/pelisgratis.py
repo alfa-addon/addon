@@ -8,7 +8,6 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core import tmdb
-from core import jsontools
 from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
@@ -226,8 +225,7 @@ def server_itatroniks(urls_page):
     matches = scrapertools.find_multiple_matches(sub_data, 'button id="([^"]+)')
     headers1 = ({"X-Requested-With":"XMLHttpRequest"})
     for serv in matches:
-        data1 = httptools.downloadpage("https://itatroniks.com/get/%s/%s" %(id, serv), headers = headers1).data
-        data_json = jsontools.load(data1)
+        data_json = httptools.downloadpage("https://itatroniks.com/get/%s/%s" %(id, serv), headers=headers1).json
         urls_page = ""
         try:
             if "finished" == data_json["status"]: urls_page = "https://%s/embed/%s" %(data_json["server"], data_json["extid"])
@@ -246,8 +244,7 @@ def server_repros(urls_page):
     for idurl in urls_page1:
         #post = {"codigo":idurl}
         #post = urllib.urlencode(post)
-        dd1 = httptools.downloadpage("https://repros.live/player/ajaxdata", post = urllib.urlencode({"codigo":idurl}), headers = headers1).data
-        data_json = jsontools.load(dd1)
+        data_json = httptools.downloadpage("https://repros.live/player/ajaxdata", post = urllib.urlencode({"codigo":idurl}), headers = headers1).json
         new_data.append(data_json["url"])
 
 

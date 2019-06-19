@@ -10,7 +10,7 @@ import urlparse
 
 from channels import autoplay
 from channels import filtertools
-from core import httptools, jsontools
+from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item
@@ -185,9 +185,7 @@ def genresYears(item):
 def api_peliculas(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    json_data = jsontools.load(data)
-    logger.debug(json_data)
+    json_data = httptools.downloadpage(item.url).json
 
     for _id, val in json_data.items():
         url = val['url']
