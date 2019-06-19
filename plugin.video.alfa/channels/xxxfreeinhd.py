@@ -91,7 +91,11 @@ def findvideos(item):
             url = decode_url(title)
         if "hqq" in title:
             url = title
-        itemlist.append(item.clone(action="play", title = url, url=url ))
+        if "/vplayer" in url:
+            url = httptools.downloadpage(url).data
+        itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+
     return itemlist
 
 
