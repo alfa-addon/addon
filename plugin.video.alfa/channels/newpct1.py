@@ -46,7 +46,7 @@ clone_list_random = []                                                          
 
 if host_index == 0:                                                             #Si el clones es "Aleatorio"...
     i = 0
-    j = 3                                                                   #... marcamos el último de los clones "buenos"
+    j = 0                                                                   #... marcamos el último de los clones "buenos"
     for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
         if i <= j and active_clone == "1":
             clone_list_random += [clone_list[i]]                            #... añadimos el clone activo "bueno" a la lista
@@ -1606,10 +1606,10 @@ def findvideos(item):
     logger.info()
     from core import videolibrarytools
     itemlist = []
-    itemlist_t = []                                     #Itemlist total de enlaces
-    itemlist_f = []                                     #Itemlist de enlaces filtrados
+    itemlist_t = []                                                             #Itemlist total de enlaces
+    itemlist_f = []                                                             #Itemlist de enlaces filtrados
     if not item.language:
-        item.language = ['CAST']                        #Castellano por defecto
+        item.language = ['CAST']                                                #Castellano por defecto
 
     #logger.debug(item)
     
@@ -1620,27 +1620,30 @@ def findvideos(item):
     
     verify_fo = True                                                #Verificamos si el clone a usar está activo
     item, data = generictools.fail_over_newpct1(item, verify_fo, timeout=timeout)
+    
+    host = item.channel_host
 
     # Cualquiera de las tres opciones son válidas
     # item.url = item.url.replace(".com/",".com/ver-online/")
     # item.url = item.url.replace(".com/",".com/descarga-directa/")
-    item.url = item.url.replace(".com/", ".com/descarga-torrent/")
+    # item.url = item.url.replace(".com/", ".com/descarga-torrent/")
+    torrent_tag = host + 'descargar-torrent/'
     
     #Función para limitar la verificación de enlaces de Servidores para Ver online y Descargas
+    #Inicializamos las variables por si hay un error en medio del proceso
+    channel_exclude = []
+    ver_enlaces = []
+    ver_enlaces_veronline = -1                                      #Ver todos los enlaces Ver Online
+    verificar_enlaces_veronline = -1                                #Verificar todos los enlaces Ver Online
+    verificar_enlaces_veronline_validos = True                      #"¿Contar sólo enlaces 'verificados' en Ver Online?"
+    excluir_enlaces_veronline = []                                  #Lista vacía de servidores excluidos en Ver Online
+    ver_enlaces_descargas = 0                                       #Ver todos los enlaces Descargar
+    verificar_enlaces_descargas = -1                                #Verificar todos los enlaces Descargar
+    verificar_enlaces_descargas_validos = True                      #"¿Contar sólo enlaces 'verificados' en Descargar?"
+    excluir_enlaces_descargas = []                                  #Lista vacía de servidores excluidos en Descargar
+    
     if not item.videolibray_emergency_urls:                         #Si es un proceso nomal...
         try:
-            #Inicializamos las variables por si hay un error en medio del proceso
-            channel_exclude = []
-            ver_enlaces = []
-            ver_enlaces_veronline = -1                              #Ver todos los enlaces Ver Online
-            verificar_enlaces_veronline = -1                        #Verificar todos los enlaces Ver Online
-            verificar_enlaces_veronline_validos = True              #"¿Contar sólo enlaces 'verificados' en Ver Online?"
-            excluir_enlaces_veronline = []                          #Lista vacía de servidores excluidos en Ver Online
-            ver_enlaces_descargas = 0                               #Ver todos los enlaces Descargar
-            verificar_enlaces_descargas = -1                        #Verificar todos los enlaces Descargar
-            verificar_enlaces_descargas_validos = True              #"¿Contar sólo enlaces 'verificados' en Descargar?"
-            excluir_enlaces_descargas = []                          #Lista vacía de servidores excluidos en Descargar
-            
             #Leemos las opciones de permitir Servidores para Ver Online y Descargas
             #Cargamos en .json del canal para ver las listas de valores en  settings
             channel_exclude = channeltools.get_channel_json(item.channel)
@@ -1708,7 +1711,7 @@ def findvideos(item):
                     excluir_enlaces_descargas += [channel_exclude[valor]]   #Añadimos el nombre de servidor excluido a la lista
                 x += 1
 
-        except Exception, ex:                                               #En caso de error, lo mostramos y reseteamos todas las variables
+        except Exception, ex:                                   #En caso de error, lo mostramos y reseteamos todas las variables
             logger.error("Error en la lectura de parámentros del .json del canal: " 
                     + item.channel + " \n%s" % ex)
             #Mostrar los errores
@@ -1749,14 +1752,17 @@ def findvideos(item):
     patron_mult = 'torrent:check:status|' + patron + '|<a href="([^"]+)"\s?title='
     patron_mult += '"[^"]+"\s?class="btn-torrent"'
     if not scrapertools.find_single_match(data, patron):
-        patron_alt = '<\s*script\s*type="text\/javascript"\s*>\s*var\s*dl\s*=\s*"([^"]+)"'  #Patron .torrent (descargas2020)
+        patron_alt = '<\s*script\s*type="text\/javascript"\s*>\s*var\s*dl\s*=\s*"([^"]+)"'  #Patron .torrent descargas2020
+        if not scrapertools.find_single_match(data, patron):
+            patron_alt = '<\s*script\s*type="text\/javascript"\s*>\s*var\s*[lt\s*=\s*"[^"]*"'   #Patron .torrent
+            patron_alt += '(?:,\s*idlt\s*=\s*"[^"]*")?,\s*nalt\s*=\s*"([^"]+)"'                 #descargas2020
         if scrapertools.find_single_match(data, patron_alt):
             patron = patron_alt
         else:
             patron_alt = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'          #Patron .torrent (planetatorrent)
             if scrapertools.find_single_match(data, patron_alt):
                 patron = patron_alt
-    url_torr = scrapertools.find_single_match(data, patron)
+    url_torr = urlparse.urljoin(torrent_tag, scrapertools.find_single_match(data, patron))
     if not url_torr.startswith("http"):                                         #Si le falta el http.: lo ponemos
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
     
@@ -1831,12 +1837,20 @@ def findvideos(item):
     # patrón para la url torrent
     patron = 'class="btn-torrent">.*?window.location.href = (?:parseURL\()?"(.*?)"\)?;' #Patron para .torrent
     if not scrapertools.find_single_match(data, patron):
-        patron = '<\s*script\s*type="text\/javascript"\s*>\s*var\s*dl\s*=\s*"([^"]+)"'  #Patron .torrent (descargas2020)
+        patron = '<\s*script\s*type="text\/javascript"\s*>\s*var\s*dl\s*=\s*"([^"]+)"'  #Patron .torrent descargas2020
+        if not scrapertools.find_single_match(data, patron):
+            patron = '<\s*script\s*type="text\/javascript"\s*>\s*var\s*[lt\s*=\s*"[^"]*"'   #Patron .torrent
+            patron += '(?:,\s*idlt\s*=\s*"[^"]*")?,\s*nalt\s*=\s*"([^"]+)"'                 #descargas2020
         if not scrapertools.find_single_match(data, patron):
             patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'  #Patron para .torrent (planetatorrent)
-    url_torr = scrapertools.find_single_match(data, patron)
-    if url_torr and not url_torr.startswith("http"):                            #Si le falta el http.: lo ponemos
+    url_torr = urlparse.urljoin(torrent_tag, scrapertools.find_single_match(data, patron))
+    if not url_torr.startswith("http"):                                         #Si le falta el http.: lo ponemos
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
+        
+    # Si tiene contraseña, la guardamos
+    patron_pass = '<input\s*type="text"\s*id="txt_password"\s*name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"'
+    if scrapertools.find_single_match(data, patron_pass):
+        item.password = scrapertools.find_single_match(data, patron_pass)
     
     #buscamos el tamaño del .torrent
     size = ''
@@ -2291,6 +2305,7 @@ def episodios(item):
         modo_ultima_temp_alt = False
     
     max_temp = 1
+    max_temp_seen = False
     if item.infoLabels['number_of_seasons']:
         max_temp = item.infoLabels['number_of_seasons']
     else:
@@ -2576,12 +2591,14 @@ def episodios(item):
             if first:                                                           #Si es el primer episodio, comprobamos que ...
                 first = False
                 if item_local.contentSeason < max_temp:                         #... la temporada sea la última ...
-                    modo_ultima_temp_alt = False                                #... si no, por seguridad leeremos toda la serie
+                    modo_ultima_temp_alt = False                        #... si no, por seguridad leeremos toda la serie
             
             if modo_ultima_temp_alt and item.library_playcounts:    #Si solo se actualiza la última temporada de Videoteca
-                if item_local.contentSeason < max_temp and modo_ultima_temp_alt:
+                if item_local.contentSeason < max_temp and modo_ultima_temp_alt and max_temp_seen > 1:
                     list_pages = []                                             #Sale del bucle de leer páginas
-                    break                                                       #Sale del bucle actual del FOR de episodios por página
+                    break                                           #Sale del bucle actual del FOR de episodios por página
+                elif item_local.contentSeason < max_temp:                       #Si está desordenada ...
+                    modo_ultima_temp_alt = False                                #... por seguridad leeremos toda la serie
                 #if ('%sx%s' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))) in item.library_playcounts:
                 #    continue
               
@@ -2589,9 +2606,11 @@ def episodios(item):
                 if item_local.contentSeason > season_display or (not modo_ultima_temp_alt \
                             and item_local.contentSeason != season_display):
                     continue
-                elif item_local.contentSeason < season_display:
+                elif item_local.contentSeason < season_display and max_temp_seen > 1:
                     list_pages = []                                             #Sale del bucle de leer páginas
                     break
+                elif item_local.contentSeason < season_display:                 #Si no ha encontrado epis de la temp, sigue
+                    continue
             
             if item_local.active:
                 del item_local.active
@@ -2603,7 +2622,8 @@ def episodios(item):
             item_local.action = "findvideos"
             item_local.contentType = "episode"
             item_local.extra = "episodios"
-            
+            max_temp_seen += 1
+
             itemlist.append(item_local.clone())
             
             #logger.debug(item_local)

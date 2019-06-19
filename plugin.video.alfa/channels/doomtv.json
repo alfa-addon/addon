@@ -1,7 +1,7 @@
 {
   "id": "doomtv",
   "name": "doomtv",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://s2.postimg.cc/jivgi4ak9/doomtv.png",

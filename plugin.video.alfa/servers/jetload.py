@@ -25,6 +25,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     srv_id = scrapertools.find_single_match(data, 'id="srv_id" value="([^"]+)"')
     file_name = scrapertools.find_single_match(data, 'file_name" value="([^"]+)"')
     file_id = scrapertools.find_single_match(data, 'file_id" value="([^"]+)"')
+    archive = scrapertools.find_single_match(data, 'archive" value="([^"]+)"')
     try:
         data_sub = httptools.downloadpage("https://jetload.net/api/get/subtitles/%s" % file_id).data
         subtitles = "https://jetload.net/tmp/%s" % jsontools.load(data_sub)[0]["sub_file"]
@@ -36,7 +37,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         media_url = data
         video_urls.append([".mp4 [jetload]", media_url, 0, subtitles ])
     else:
-        m3u8 = srv + "/v2/schema/archive/%s/master.m3u8" %file_name
+        m3u8 = srv + "/v2/schema/%s/master.m3u8" %file_name
+        if archive == '1':
+            m3u8 = srv + "/v2/schema/archive/%s/master.m3u8" %file_name
         data = httptools.downloadpage(m3u8).data
         data = re.sub(r"\n|\r|\t|\s{2}", "", data)
         matches = scrapertools.find_multiple_matches(data, r'RESOLUTION=\d+x(\d+)(\w+).m3u8')

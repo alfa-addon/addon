@@ -1099,8 +1099,11 @@ def report_send(item, description='', fatal=False):
             
             # Si la petición es con formato REQUESTS, se realiza aquí
             elif paste_type == 'requests':
-                data = requests.post(paste_host, params=paste_params, files=paste_file, 
-                            timeout=paste_timeout)
+                #data = requests.post(paste_host, params=paste_params, files=paste_file, 
+                #            timeout=paste_timeout)
+                data = httptools.downloadpage(paste_host, params=paste_params, file=log_data, 
+                            file_name=paste_title+'.log', timeout=paste_timeout, 
+                            random_headers=paste_random_headers, headers=paste_headers)
         except:
             msg = 'Inténtelo más tarde'
             logger.error('Fallo al guardar el informe. ' + msg)
@@ -1116,17 +1119,18 @@ def report_send(item, description='', fatal=False):
             
             # Respuestas a peticiones REQUESTS
             if paste_type == 'requests':                                # Respuesta de petición tipo "requests"?
+                logger.error(data.data)
                 if paste_resp == 'json':                                                # Respuesta en formato JSON?
-                    if paste_resp_key in data.text:
+                    if paste_resp_key in data.data:
                         if not paste_url:
-                            key = jsontools.load(data.text)[paste_resp_key]             # con una etiqueta
+                            key = jsontools.load(data.data)[paste_resp_key]             # con una etiqueta
                         else:
-                            key = jsontools.load(data.text)[paste_resp_key][paste_url]  # con dos etiquetas anidadas
+                            key = jsontools.load(data.data)[paste_resp_key][paste_url]  # con dos etiquetas anidadas
                         item.url = "%s%s%s" % (paste_host_resp+paste_host_return, key, 
                                     paste_host_return_tail)
                     else:
-                        logger.error('ERROR en formato de retorno de datos. data.text=' + 
-                                    str(data.text))
+                        logger.error('ERROR en formato de retorno de datos. data.data=' + 
+                                    str(data.data))
                         continue
             
             # Respuestas a peticiones DOWNLOADPAGE
