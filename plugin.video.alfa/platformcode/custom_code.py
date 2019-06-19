@@ -8,6 +8,8 @@ import json
 import traceback
 import xbmc
 import xbmcaddon
+import threading
+import time
 
 from platformcode import config, logger, platformtools
 
@@ -61,7 +63,11 @@ def init():
         verify_Kodi_video_DB()
         
         #LIBTORRENT: se descarga el binario de Bibtorrent cada vez que se actualiza Alfa
-        update_libtorrent()
+        try:
+            threading.Thread(target=update_libtorrent).start()      # Creamos un Thread independiente, hasta el fin de Kodi
+            time.sleep(2)                                           # Dejamos terminar la inicialización...
+        except:                                                     # Si hay problemas de threading, nos vamos
+            logger.error(traceback.format_exc())
         
         #QUASAR: Preguntamos si se hacen modificaciones a Quasar
         if not filetools.exists(os.path.join(config.get_data_path(), "quasar.json")) and not config.get_setting('addon_quasar_update', default=False):
@@ -204,11 +210,27 @@ def update_external_addon(addon_name):
     
 def update_libtorrent():
     logger.info()
-    
+
     if filetools.exists(os.path.join(config.get_runtime_path(), "custom_code.json")):
         return
     
-    from lib.python_libtorrent.python_libtorrent import get_libtorrent
+    if xbmc.getCondVisibility("system.platform.android"):
+        LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", default='')
+        LIBTORRENT_MSG = config.get_setting("libtorrent_msg", server="torrent", default='')
+        if '/data/app/' not in LIBTORRENT_PATH and not LIBTORRENT_MSG:
+            platformtools.dialog_notification('ALFA: Instalando Cliente Torrent interno', \
+                        'Puede solicitarle permisos de Superusuario', time=15000)
+            xbmc.log('### ALFA: Notificación enviada: Instalando Cliente Torrent interno', \
+                        xbmc.LOGNOTICE)
+            config.set_setting("libtorrent_msg", 'OK', server="torrent")
+
+    try:
+        from lib.python_libtorrent.python_libtorrent import get_libtorrent
+    except:
+        logger.error(traceback.format_exc())
+    
+    return
+    
 
 def verify_Kodi_video_DB():
     logger.info()

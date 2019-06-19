@@ -133,6 +133,8 @@ try:
                 from core import scrapertools
                 kodi_app = xbmc.translatePath('special://xbmc')
                 kodi_app = scrapertools.find_single_match(kodi_app, '\/\w+\/\w+\/.*?\/(.*?)\/')
+                kodi_dir = '%s-1' % kodi_app
+                dir_list = ''
                 try:
                     dir_list = os.listdir('/data/app/').split()
                 except:
@@ -143,6 +145,9 @@ try:
                     log('Comando ROOT: %s' % str(command))
                     dir_list = output_cmd.split()
                 
+                if not dir_list:
+                    raise
+                
                 for file in dir_list:
                     if kodi_app in file:
                         kodi_dir = file
@@ -150,7 +155,6 @@ try:
 
                 bits = sys.maxsize > 2 ** 32 and "64" or ""
                 dest_path = os.path.join('/data/app/', kodi_dir, 'lib', platform['arch'] + bits)
-
                 dest_path=lm.android_workaround(new_dest_path=dest_path)        ### Alfa END
                 dll_path=os.path.join(dest_path, 'liblibtorrent.so')
                 log('NEW CDLL path = ' + dll_path)

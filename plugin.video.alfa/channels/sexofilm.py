@@ -70,7 +70,10 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = '<article id="post-\d+".*?<a href="([^"]+)".*?data-src="([^"]+)".*?<h2 class="post-title.*?title="([^"]+)"'
+    patron = '<article id="post-\d+".*?'
+    patron += '<a href="([^"]+)".*?'
+    patron += 'data-src="([^"]+)".*?'
+    patron += '<h2 class="post-title.*?title="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         plot = ""
@@ -86,12 +89,14 @@ def lista(item):
 
 def play(item):
     logger.info()
+    itemlist = []
     data = httptools.downloadpage(item.url).data
-    itemlist = servertools.find_video_items(data=data)
-    for videoitem in itemlist:
-        videoitem.title = item.title
-        videoitem.fulltitle = item.fulltitle
-        videoitem.thumbnail = item.thumbnail
-        videoitem.channel = item.channel
+    url = scrapertools.find_single_match(data,'<div class="entry-inner">.*?<source src="([^"]+)"')
+    if not url:
+        url = scrapertools.find_single_match(data,'<div class="entry-inner">.*?<source src=\'([^\']+)\'')
+    itemlist = servertools.find_video_items(item.clone(url = item.url))
+    if url:
+        itemlist.append(item.clone(action="play", title=url, url=url))
     return itemlist
+
 
