@@ -112,7 +112,7 @@ def findvideos(item):
         scrapedurl = scrapedurl.replace('"','')
         while True:
             loc = httptools.downloadpage(scrapedurl, follow_redirects=False).headers.get("location", "")
-            if not loc or "/ad/locked" in loc:
+            if not loc or "/ad/locked" in loc or not loc.startswith("http"):
                 break
             scrapedurl = loc
         scrapedurl, c = unshortenit.unshorten_only(scrapedurl)

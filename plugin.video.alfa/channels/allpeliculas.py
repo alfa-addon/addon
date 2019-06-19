@@ -181,15 +181,12 @@ def lista(item):
     if item.extra1 != 0:
         dict_param["genero"] = [item.extra1]
         params = jsontools.dump(dict_param)
-    data = httptools.downloadpage(item.url, post=params).data
-    data = data.replace("<mark>","").replace("<\/mark>","")
-    dict_data = jsontools.load(data)
+    dict_data = httptools.downloadpage(item.url, post=params).json
     for it in dict_data["items"]:
-        year = it["year"]
         url = host + "pelicula/" + it["slug"]
-        title = it["title"] + " (%s)" %year
+        title = it["title"] + " (%s)" %it["year"]
         thumb = host + it["image"]
-        item.infoLabels['year'] = year
+        item.infoLabels['year'] = it["year"]
         itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumb,
                                    context=["buscar_trailer"], contentTitle=it["title"], contentType="movie"))
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
