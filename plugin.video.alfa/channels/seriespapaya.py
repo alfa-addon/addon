@@ -138,6 +138,7 @@ def novedades(item):
         matches = re.compile(patron, re.DOTALL).findall(match)
 
         for title, url, img in matches:
+            url = url.strip()
             itemlist.append(item.clone(action="seasons", title=title, url=urlparse.urljoin(HOST, url), thumbnail=urlparse.urljoin(HOST, img), contentSerieName=title))
     else:
         data = httptools.downloadpage(item.url).data
@@ -212,8 +213,12 @@ def seasons(item):
     patron = '>&rarr; Temporada (\d+) '
 
     matches = re.compile(patron, re.DOTALL).findall(data)
+    logger.error(matches)
     if len(matches) == 1:
         return episodios(item)
+    elif len(matches) < 1:
+        itemlist.append(item.clone(title = '[COLOR=grey]No hay episodios disponibles para esta serie[/COLOR]', action='', url=''))
+        return itemlist
     infoLabels = item.infoLabels
     for scrapedseason in matches:
         contentSeasonNumber = scrapedseason
@@ -234,6 +239,7 @@ def seasons(item):
 
 def episodios(item):
     infoLabels = {}
+    itemlist = []
     data = httptools.downloadpage(item.url).data
     if item.contentSeasonNumber and item.extra2 != 'library':
         prevtitle = item.extra1
@@ -242,7 +248,6 @@ def episodios(item):
         prevtitle = item.title
     patron = 'visco.*?href="(?P<url>[^"]+).+?nbsp; (?P<title>.*?)</a>.+?ucapaudio.?>(?P<langs>.*?)</div>'
     episodes = re.findall(patron, data, re.MULTILINE | re.DOTALL)
-    itemlist = []
     for url, title, langs in episodes:
         s_e = scrapertools.get_season_and_episode(title)
         infoLabels = item.infoLabels

@@ -245,7 +245,7 @@ def findvideos(item):
     for surl, sserver, scal, slang, stype in matches:
         sname = sserver.split(".")[0]
         lang = IDIOMAS[slang]
-
+        scal = scal.replace("HD", "720")
         stitle = " [COLOR=green][%sp][/COLOR] [COLOR=yellow](%s)[/COLOR]" % (scal, lang)
         
         if 'torrent' in stype.lower():
@@ -254,6 +254,10 @@ def findvideos(item):
 
         elif sname == "mega":
             server=sname
+        #si hay mas excepciones, usar dict
+        elif sname == "ok":
+            server='okru'
+            sname == "okru"
         else:
             server="directo"
 
@@ -275,7 +279,42 @@ def findvideos(item):
                  quality= scal+'p',
                  infoLabels = item.infoLabels
                  ))
-    #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    #se produce cuando aún no han subido enlaces y solo hay embed(provisional)
+    if not matches:
+        lang = ""
+        stitle = ""
+        #en los embed no siempre sale el idioma, y si sale puede ser el mismo para varios videos
+        mlang = scrapertools.find_multiple_matches(data, '<strong>(.*?)</strong>')
+        patron = '<iframe src="([^"]+)"' #server
+        matches = scrapertools.find_multiple_matches(data, patron)
+        for i, surl in enumerate(matches):
+            if mlang:
+                try:
+                    slang = mlang[i]
+                except:
+                    slang = mlang[0]
+                if "original" in slang.lower():
+                    if "castellano" in slang.lower():
+                        lang = "VOSE"
+                    elif "ingl" in slang.lower():
+                        lang = "VOS"
+                    else: lang = "VOSE"
+                elif "castellano" in slang.lower():
+                    lang = "Cast"
+                else:
+                    lang = "Lat"
+            if lang:
+                stitle = " [COLOR=yellow](%s)[/COLOR]" % lang
+            itemlist.append(
+                 item.clone(channel = item.channel,
+                 action = "play",
+                 title = "%s" + stitle,
+                 url = surl,
+                 language= lang,
+                 infoLabels = item.infoLabels
+                 ))
+
+        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
 

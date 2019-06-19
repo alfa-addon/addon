@@ -13,7 +13,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import tmdb
 from channels import autoplay
-
+from lib import jsunpack
 
 
 IDIOMAS = {'default': 'default'}
@@ -32,12 +32,12 @@ thumb_buscar = get_thumb("search.png")
 def mainlist(item):
     logger.info()
     itemlist = []
-    try:
+    '''try:
         data = httptools.downloadpage(host_alt).data
         rurl, ryear = scrapertools.find_single_match(data, '<a href="'+host_alt+'/category/(.*?)">.*?(\d{4})</a>')
     except:
         logger.error("Cambio en estructura, pagina inicial")
-        pass
+        pass'''
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, url=host + "category/افلام-عربي/",text_color="0xFF5AC0E0", text_bold=True, title="Arab Movies",  action="listall", thumbnail="https://cdn.countryflags.com/thumbs/egypt/flag-button-square-250.png", plot="افلام عربي", extra="film"))
@@ -47,10 +47,10 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Indian Movies", text_color="0xFF5AC0E0", text_bold=True,action="listall", url=host + "category/افلام-هندي/", thumbnail="https://cdn.countryflags.com/thumbs/india/flag-button-square-250.png", extra="film", plot="افلام هندي"))
     
     itemlist.append(Item(channel=item.channel, title="", folder=False, thumbnail=thumb_separador))
-    try:
+    '''try:
         itemlist.append(Item(channel=item.channel, title="Ramadan Series %s" % ryear, text_color="gold", text_bold=True, action="listall", url=host + "category/%s" % rurl, thumbnail="https://image.shutterstock.com/mosaic_250/0/0/1076175437.jpg", extra="series", plot="مسلسلات رمضان %s" % ryear))
     except:
-        pass
+        pass'''
     itemlist.append(Item(channel=item.channel, text_color="yellow", text_bold=True, title="Arab Series", action="listall", url= host + "category/مسلسلات-عربي/", thumbnail="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSr9N_K93EFF4AqSjSVUbn1xbn83W7w3cyzwdOEeCTTO7MEP-Jk", extra="film", plot="مسلسلات عربي"))
     
     itemlist.append(Item(channel=item.channel, text_color="yellow", text_bold=True, title="Foreign Series", url=host + "category/مسلسلات-اجنبي/", action="listall", thumbnail="https://images.bwwstatic.com/tvnetworklogos/sm114F1999-A8C7-2B48-4F38FD8410D047F0.jpg", extra="film", plot="مسلسلات اجنبي"))
@@ -200,6 +200,8 @@ def findvideos(item):
     for source, thumbnail, server in matches:
         #server = server.lower()
         thumbnail = scrapertools.find_single_match(thumbnail, 'img src="([^"]+)"')
+        if "vidbom" in server.lower():
+            continue
         if not thumbnail:
             thumbnail = item.thumbnail
         title = server.capitalize().replace("</span>", "")
@@ -244,11 +246,15 @@ def play(item):
     logger.info("play: %s" % item.url)
     itemlist = []
     if "shahid4u" in item.url:
+        
         data = httptools.downloadpage(item.url, headers={"X-Requested-With": "XMLHttpRequest"}).data
         item.url = data
-        if "vidhd" in item.title.lower() or "vidbom" in item.title.lower():
+        if "vidhd" in item.title.lower():
             data = httptools.downloadpage(item.url).data
-            item.url = scrapertools.find_single_match(data, 'file:"([^"]+)",labe')
+            packed = scrapertools.find_single_match(data, "<script type=[\"']text/javascript[\"']>(eval.*?)</script>")
+            unpacked = jsunpack.unpack(packed)
+            logger.info(unpacked)
+            item.url = scrapertools.find_single_match(unpacked, 'file:"([^"]+)"')
             item.server = "directo"
         elif item.title.lower() == "ok":
             item.server="okru"

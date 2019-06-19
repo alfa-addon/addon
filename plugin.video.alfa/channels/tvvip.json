@@ -1,7 +1,7 @@
 {
   "id": "tvvip",
   "name": "TV-VIP",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast"],
   "thumbnail": "http://i.imgur.com/gNHVlI4.png",

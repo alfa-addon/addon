@@ -317,14 +317,7 @@ def carpeta(item):
                                  server="onefichier", text_color=color1, thumbnail=item.thumbnail,
                                  infoLabels=item.infoLabels))
     elif item.server == "gvideo":
-        response = httptools.downloadpage(item.url, cookies=False, headers={"Referer": item.url})
-        cookies = ""
-        cookie = response.headers["set-cookie"].split("HttpOnly, ")
-        for c in cookie:
-            cookies += c.split(";", 1)[0] + "; "
-        data = response.data
-        
-        
+        data = httptools.downloadpage(item.url, headers={"Referer": item.url}).data
         patron = "'_DRIVE_ivd'] = '(.*?)'"
         matches = scrapertools.find_single_match(data, patron)
         data = data.decode('unicode-escape')
@@ -350,7 +343,10 @@ def carpeta(item):
             files = c.get_files()
             c.stop()
             for enlace in files:
-                file_id = enlace["id"]
+                try:
+                    file_id = enlace["id"]
+                except:
+                    continue
                 itemlist.append(
                     Item(channel=item.channel, title=enlace["name"], url=item.url + "|" + file_id, action="play",
                         server="mega", text_color=color1, thumbnail=item.thumbnail,
