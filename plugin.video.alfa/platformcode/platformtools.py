@@ -611,7 +611,7 @@ def set_context_commands(item, parent_item):
                                          (sys.argv[0], item.clone(action="add_pelicula_to_library",
                                                                   from_action=item.action).tourl())))
 
-        if item.channel != "downloads":
+        if item.channel != "downloads" and item.server != 'torrent':
             # Descargar pelicula
             if item.contentType == "movie" and item.contentTitle:
                 context_commands.append((config.get_localized_string(60354), "XBMC.RunPlugin(%s?%s)" %
@@ -1248,17 +1248,26 @@ def play_torrent(item, xlistitem, mediaurl):
         mediaurl = item.url
 
     # Plugins externos
-    if seleccion > 1:
+    if seleccion > 0:
         
-        mediaurl = urllib.quote_plus(item.url)
-        #Llamada con más parámetros para completar el título
-        if ("quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]) and item.infoLabels['tmdb_id']:
-            if item.contentType == 'episode' and "elementum" not in torrent_options[seleccion][1]:
-                mediaurl += "&episode=%s&library=&season=%s&show=%s&tmdb=%s&type=episode" % (item.infoLabels['episode'], item.infoLabels['season'], item.infoLabels['tmdb_id'], item.infoLabels['tmdb_id'])
-            elif item.contentType == 'movie':
-                mediaurl += "&library=&tmdb=%s&type=movie" % (item.infoLabels['tmdb_id'])
+        if seleccion == 1:
+            if config.get_setting("libtorrent_error", server="torrent", default=''):
+                dialog_ok('MCT cliente (LibTorrent):', 'Este cliente no está soportado en su dispositivo',  \
+                          'Use otro cliente Torrent soportado', config.get_setting("libtorrent_error", \
+                          server="torrent", default=''))
+            else:
+                from platformcode import mct
+                mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=item.password, item=item)
+        else:
+            mediaurl = urllib.quote_plus(item.url)
+            #Llamada con más parámetros para completar el título
+            if ("quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]) and item.infoLabels['tmdb_id']:
+                if item.contentType == 'episode' and "elementum" not in torrent_options[seleccion][1]:
+                    mediaurl += "&episode=%s&library=&season=%s&show=%s&tmdb=%s&type=episode" % (item.infoLabels['episode'], item.infoLabels['season'], item.infoLabels['tmdb_id'], item.infoLabels['tmdb_id'])
+                elif item.contentType == 'movie':
+                    mediaurl += "&library=&tmdb=%s&type=movie" % (item.infoLabels['tmdb_id'])
 
-        xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
+            xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
 
         #Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos: asumimos que todos funcionan
         #if "quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]:   
@@ -1277,10 +1286,6 @@ def play_torrent(item, xlistitem, mediaurl):
             from platformcode import xbmc_videolibrary
             xbmc_videolibrary.mark_auto_as_watched(item)        #Marcamos como visto al terminar
             #logger.debug("Llamado el marcado")
-
-    if seleccion == 1:
-        from platformcode import mct
-        mct.play(mediaurl, xlistitem, subtitle=item.subtitle, item=item)
 
     # Reproductor propio (libtorrent)
     if seleccion == 0:
