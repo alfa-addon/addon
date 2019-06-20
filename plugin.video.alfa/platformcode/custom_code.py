@@ -210,6 +210,16 @@ def update_external_addon(addon_name):
     
 def update_libtorrent():
     logger.info()
+    
+    if not config.get_setting("mct_buffer", server="torrent", default=""):
+        default = config.get_setting("torrent_client", server="torrent", default=0)
+        config.set_setting("torrent_client", default, server="torrent")
+        BUFFER = config.set_setting("mct_buffer", "50", server="torrent")
+        DOWNLOAD_PATH = config.set_setting("mct_download_path", config.get_setting("downloadpath"), server="torrent")
+        BACKGROUND = config.set_setting("mct_background_download", True, server="torrent")
+        RAR = config.set_setting("mct_rar_unpack", True, server="torrent")
+        BUFFER_BT = config.set_setting("bt_buffer", "50", server="torrent")
+        DOWNLOAD_PATH_BT = config.set_setting("bt_download_path", config.get_setting("downloadpath"), server="torrent")
 
     if filetools.exists(os.path.join(config.get_runtime_path(), "custom_code.json")):
         return
