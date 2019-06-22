@@ -7,7 +7,6 @@ from channelselector import get_thumb
 from channels import autoplay
 from channels import filtertools
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
@@ -80,8 +79,8 @@ def sub_search(item):
     ]
     data = httptools.downloadpage(item.url).data
     token = scrapertools.find_single_match(data, 'csrf-token" content="([^"]+)')
-    data = httptools.downloadpage(item.url + "&_token=" + token, headers=headers).data
-    data_js = jsontools.load(data)["data"]["m"]
+    data_js = httptools.downloadpage(item.url + "&_token=" + token, headers=headers).json
+    data_js = data_js["data"]["m"]
     for js in data_js:
         js["title"] = quitano(js["title"])
         itemlist.append(Item(channel = item.channel,

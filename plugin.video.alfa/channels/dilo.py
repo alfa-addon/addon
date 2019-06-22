@@ -10,7 +10,6 @@ from channels import filtertools
 from core import httptools
 from core import scrapertools
 from core import servertools
-from core import jsontools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
@@ -164,7 +163,6 @@ def latest_shows(item):
 
 
 def seasons(item):
-    from core import jsontools
     import urllib
     logger.info()
 
@@ -176,7 +174,7 @@ def seasons(item):
     post = urllib.urlencode(post)
     seasons_url = '%sapi/web/seasons.php' % host
     headers = {'Referer':item.url}
-    data = jsontools.load(httptools.downloadpage(seasons_url, post=post, headers=headers).data)
+    data = httptools.downloadpage(seasons_url, post=post, headers=headers).json
     infoLabels = item.infoLabels
     for dict in data:
         season = dict['number']
@@ -199,7 +197,6 @@ def seasons(item):
 
 def episodesxseason(item):
     logger.info()
-    from core import jsontools
     import urllib
     logger.info()
 
@@ -210,7 +207,7 @@ def episodesxseason(item):
 
     seasons_url = '%sapi/web/episodes.php' % host
     headers = {'Referer': item.url}
-    data = jsontools.load(httptools.downloadpage(seasons_url, post=post, headers=headers).data)
+    data = httptools.downloadpage(seasons_url, post=post, headers=headers).json
     infoLabels = item.infoLabels
     for dict in data:
         episode = dict['number']

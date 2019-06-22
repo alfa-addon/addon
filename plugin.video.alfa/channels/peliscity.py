@@ -5,7 +5,6 @@ import urllib
 
 from channelselector import get_thumb
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
@@ -116,8 +115,7 @@ def findvideos(item):
         if "pelisup.com" in scrapedurl:
             scrapedurl = scrapedurl.replace("/v/","/api/source/")
             post = urllib.urlencode({"r":item.url,"d":"www.pelisup.com"})
-            data1 = httptools.downloadpage(scrapedurl, post=post).data
-            json_data = jsontools.load(data1)
+            json_data = httptools.downloadpage(scrapedurl, post=post).json
             for dataj in json_data["data"]:
                 itemlist.append(
                     item.clone(channel=item.channel, action="play", title=title + " - %s" %dataj["label"], fulltitle=item.title, url="https://www.pelisup.com" + dataj["file"],

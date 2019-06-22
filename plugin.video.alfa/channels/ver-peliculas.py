@@ -9,7 +9,6 @@ import urlparse
 
 from channelselector import get_thumb
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
 from core.item import Item
@@ -162,8 +161,7 @@ def findvideos(item):
         sub = scrapertools.find_single_match(data, 'id=imdb value=(.*?)>')
         sub = '%s/subtix/%s.srt' % (movie_host, sub)
         url_base = 'https://ver-peliculas.%s/core/api.php?id=%s&slug=%s' % (movie_host, movie_id, movie_name)
-        data = httptools.downloadpage(url_base).data
-        json_data = jsontools.load(data)
+        json_data = httptools.downloadpage(url_base).json
         video_list = json_data['lista']
         for videoitem in video_list:
             video_base_url = host.replace('.io', '.%s' % movie_host) + 'core/videofinal.php'
@@ -178,8 +176,7 @@ def findvideos(item):
                             video_id = video_lang[lang][0]["video"]
                             post = {"video": video_id, "sub": sub}
                             post = urllib.urlencode(post)
-                            data = httptools.downloadpage(video_base_url, post=post).data
-                            playlist = jsontools.load(data)
+                            playlist = httptools.downloadpage(video_base_url, post=post).json
                             sources = playlist[['playlist'][0]]
                             server = playlist['server']
                             for video_link in sources:

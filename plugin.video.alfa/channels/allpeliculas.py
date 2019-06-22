@@ -114,8 +114,7 @@ def listado_colecciones(item):
 def generos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    dict_data = jsontools.load(data)
+    dict_data = httptools.downloadpage(item.url).json
     for it in dict_data:
         itemlist.append(Item(
                              channel = item.channel,

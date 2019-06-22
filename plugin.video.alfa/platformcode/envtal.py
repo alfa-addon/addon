@@ -180,52 +180,73 @@ def get_environment():
         except:
             environment['videolab_free'] = '?'
 
+        environment['torrent_list'] = []
         environment['torrentcli_option'] = ''
-        environment['torrentcli_name'] = ''
-        environment['torrentcli_dload_path'] = ''
-        environment['torrentcli_buffer'] = ''
-        environment['torrentcli_dload_estrgy'] = ''
-        environment['torrentcli_mem_size'] = ''
-        environment['torrentcli_free'] = ''
+        environment['torrent_error'] = ''
+        environment['torrentcli_rar'] = config.get_setting("mct_rar_unpack", server="torrent", default=True)
+        environment['torrentcli_backgr'] = config.get_setting("mct_background_download", server="torrent", default=True)
+        environment['torrentcli_lib_path'] = config.get_setting("libtorrent_path", server="torrent", default="")
+        if environment['torrentcli_lib_path']:
+            lib_path = 'Activo'
+        else:
+            lib_path = 'Inactivo'
         torrent_id = config.get_setting("torrent_client", server="torrent", default=0)
         environment['torrentcli_option'] = str(torrent_id)
-        if torrent_id > 0:
-            torrent_id = torrent_id - 3
-            if torrent_id < 0:
-                logger.error('torrent_id: ' + str(torrent_id) + ' / torrent_options: ' 
-                            + str(platformtools.torrent_client_installed()))
         torrent_options = platformtools.torrent_client_installed()
-        if torrent_options and torrent_id >= 0:
-            environment['torrentcli_name'] = torrent_options[torrent_id].replace('Plugin externo: ', '')
-            if xbmc.getCondVisibility('System.HasAddon("plugin.video.%s")' % environment['torrentcli_name']):
-                __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % environment['torrentcli_name'])
-                environment['torrentcli_name'] = environment['torrentcli_name'].capitalize()
-                if environment['torrentcli_name'] == 'Torrenter':
-                    environment['torrentcli_dload_path'] = str(xbmc.translatePath(__settings__.getSetting('storage')))
-                    if not environment['torrentcli_dload_path']:
-                        environment['torrentcli_dload_path'] = str(filetools.join(xbmc.translatePath("special://home/"), "cache", "xbmcup", "plugin.video.torrenter", "Torrenter"))
-                    environment['torrentcli_buffer'] = str(__settings__.getSetting('pre_buffer_bytes'))
+        if lib_path == 'Activo':
+            torrent_options = ['MCT'] + torrent_options
+            torrent_options = ['BT'] + torrent_options
+        environment['torrent_list'].append({'Torrent_opt': str(torrent_id), 'Libtorrent': lib_path, \
+                                            'RAR_Auto': str(environment['torrentcli_rar']), \
+                                            'RAR_backgr': str(environment['torrentcli_backgr'])})
+        environment['torrent_error'] = config.get_setting("libtorrent_error", server="torrent", default="")
+        if environment['torrent_error']:
+            environment['torrent_list'].append({'Libtorrent_error': environment['torrent_error']})
+
+        for torrent_option in torrent_options:
+            cliente = dict()
+            cliente['D_load_Path'] = ''
+            cliente['Libre'] = '?'
+            cliente['Plug_in'] = torrent_option.replace('Plugin externo: ', '')
+            if cliente['Plug_in'] == 'BT':
+                cliente['D_load_Path'] = str(config.get_setting("bt_download_path", server="torrent", default=''))
+                if not cliente['D_load_Path']: continue
+                cliente['Buffer'] = str(config.get_setting("bt_buffer", server="torrent", default=50))
+            elif cliente['Plug_in'] == 'MCT':
+                cliente['D_load_Path'] = str(config.get_setting("mct_download_path", server="torrent", default=''))
+                if not cliente['D_load_Path']: continue
+                cliente['Buffer'] = str(config.get_setting("mct_buffer", server="torrent", default=50))
+            elif xbmc.getCondVisibility('System.HasAddon("plugin.video.%s")' % cliente['Plug_in']):
+                __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % cliente['Plug_in'])
+                cliente['Plug_in'] = cliente['Plug_in'].capitalize()
+                if cliente['Plug_in'] == 'Torrenter':
+                    cliente['D_load_Path'] = str(xbmc.translatePath(__settings__.getSetting('storage')))
+                    if not cliente['D_load_Path']:
+                        cliente['D_load_Path'] = str(filetools.join(xbmc.translatePath("special://home/"), \
+                                                     "cache", "xbmcup", "plugin.video.torrenter", "Torrenter"))
+                    cliente['Buffer'] = str(__settings__.getSetting('pre_buffer_bytes'))
                 else:
-                    environment['torrentcli_dload_path'] = str(xbmc.translatePath(__settings__.getSetting('download_path')))
-                    environment['torrentcli_buffer'] = str(__settings__.getSetting('buffer_size'))
-                    environment['torrentcli_dload_estrgy'] = str(__settings__.getSetting('download_storage'))
-                    environment['torrentcli_mem_size'] = str(__settings__.getSetting('memory_size'))
-        
-        if environment['torrentcli_dload_path']:
-            try:
-                if environment['os_name'].lower() == 'windows':
-                    free_bytes = ctypes.c_ulonglong(0)
-                    ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(environment['torrentcli_dload_path']), 
-                                None, None, ctypes.pointer(free_bytes))
-                    environment['torrentcli_free'] = str(round(float(free_bytes.value) / \
-                                (1024**3), 3))
-                else:
-                    disk_space = os.statvfs(environment['torrentcli_dload_path'])
-                    if not disk_space.f_frsize: disk_space.f_frsize = disk_space.f_frsize.f_bsize
-                    environment['torrentcli_free'] = str(round((float(disk_space.f_bavail) / \
-                                (1024**3)) * float(disk_space.f_frsize), 3))
-            except:
-                environment['torrentcli_free'] = '?'
+                    cliente['D_load_Path'] = str(xbmc.translatePath(__settings__.getSetting('download_path')))
+                    cliente['Buffer'] = str(__settings__.getSetting('buffer_size'))
+                    if __settings__.getSetting('download_storage') == '1' and __settings__.getSetting('memory_size'):
+                        cliente['Memoria'] = str(__settings__.getSetting('memory_size'))
+
+            if cliente['D_load_Path']:
+                try:
+                    if environment['os_name'].lower() == 'windows':
+                        free_bytes = ctypes.c_ulonglong(0)
+                        ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(cliente['D_load_Path']), 
+                                    None, None, ctypes.pointer(free_bytes))
+                        cliente['Libre'] = str(round(float(free_bytes.value) / \
+                                    (1024**3), 3)).replace('.', ',')
+                    else:
+                        disk_space = os.statvfs(cliente['D_load_Path'])
+                        if not disk_space.f_frsize: disk_space.f_frsize = disk_space.f_frsize.f_bsize
+                        cliente['Libre'] = str(round((float(disk_space.f_bavail) / \
+                                    (1024**3)) * float(disk_space.f_frsize), 3)).replace('.', ',')
+                except:
+                    pass
+            environment['torrent_list'].append(cliente)
 
         environment['proxy_active'] = ''
         try:
@@ -243,9 +264,9 @@ def get_environment():
         for root, folders, files in filetools.walk(xbmc.translatePath("special://logpath/")):
             for file in files:
                 if file.lower() in ['kodi.log', 'jarvis.log', 'spmc.log', 'cemc.log', \
-                                'mygica.log', 'wonderbox.log', 'leiapp,log', \
-                                'leianmc.log', 'kodiapp.log', 'anmc.log', \
-                                'latin-anmc.log']:
+                                    'mygica.log', 'wonderbox.log', 'leiapp,log', \
+                                    'leianmc.log', 'kodiapp.log', 'anmc.log', \
+                                    'latin-anmc.log']:
                     environment['log_path'] = str(filetools.join(root, file))
                     break
             else:
@@ -272,16 +293,11 @@ def get_environment():
         environment['log_path'] = ''
         environment['userdata_free'] = ''
         environment['mem_total'] = ''
-        environment['torrentcli_mem_size'] = ''
-        environment['torrentcli_dload_path'] = ''
-        environment['torrentcli_dload_estrgy'] = ''
         environment['machine'] = ''
         environment['platform'] = ''
-        environment['torrentcli_buffer'] = ''
         environment['videolab_path'] = ''
         environment['num_version'] = ''
         environment['os_name'] = ''
-        environment['torrentcli_free'] = ''
         environment['video_db'] = ''
         environment['userdata_path'] = ''
         environment['log_size_bytes'] = ''
@@ -293,7 +309,6 @@ def get_environment():
         environment['architecture'] = ''
         environment['os_release'] = ''
         environment['videolab_free'] = ''
-        environment['torrentcli_name'] = ''
         environment['kodi_buffer'] = ''
         environment['kodi_bmode'] = ''
         environment['kodi_rfactor'] = ''
@@ -303,7 +318,11 @@ def get_environment():
         environment['videolab_update'] = ''
         environment['debug'] = ''
         environment['addon_version'] = ''
+        environment['torrent_list'] = []
         environment['torrentcli_option'] = ''
+        environment['torrentcli_rar'] = ''
+        environment['torrentcli_lib_path'] = ''
+        environment['torrent_error'] = ''
         
     return environment
 
@@ -337,29 +356,38 @@ def list_env(environment={}):
                     environment['kodi_bmode']  + ' / Readfactor: ' + 
                     environment['kodi_rfactor'])
 
-    logger.info('Userdata: ' + environment['userdata_path'] + ' - Free: ' + 
-                environment['userdata_free'] +  ' GB')
+    logger.info('Userdata: ' + environment['userdata_path'] + ' - Libre: ' + 
+                environment['userdata_free'].replace('.', ',') +  ' GB')
     
     logger.info('Videoteca: Series/Epis: ' + environment['videolab_series'] + '/' + 
                     environment['videolab_episodios'] + ' - Pelis: ' + 
                     environment['videolab_pelis'] + ' - Upd: ' + 
                     environment['videolab_update'] + ' - Path: ' + 
-                    environment['videolab_path'] + ' - Free: ' + 
-                    environment['videolab_free'] +  ' GB')
+                    environment['videolab_path'] + ' - Libre: ' + 
+                    environment['videolab_free'].replace('.', ',') +  ' GB')
     
-    if environment['torrentcli_name']:
-        torrentcli_buffer = environment['torrentcli_buffer']
-        if environment['torrentcli_mem_size']:
-            torrentcli_buffer +=  ' MB / memoria: ' + environment['torrentcli_mem_size']
-        logger.info('%s: ID: %s, buffer: ' % (environment['torrentcli_name'], 
-                    environment['torrentcli_option']) + 
-                    torrentcli_buffer + ' MB / descargas: ' + 
-                    environment['torrentcli_dload_path'] + ' - Free: ' + 
-                    environment['torrentcli_free'] +  ' GB')
+    if environment['torrent_list']:
+        for x, cliente in enumerate(environment['torrent_list']):
+            if x == 0:
+                cliente_alt = cliente.copy()
+                del cliente_alt['Torrent_opt']
+                logger.info('Torrent: Opt: %s, %s' % (str(cliente['Torrent_opt']), \
+                            str(cliente_alt).replace('{', '').replace('}', '')\
+                            .replace("'", '').replace('_', ' ')))
+            elif x == 1 and environment['torrent_error']:
+                logger.info('- ' + str(cliente).replace('{', '').replace('}', '')\
+                            .replace("'", '').replace('_', ' '))
+            else:
+                cliente_alt = cliente.copy()
+                del cliente_alt['Plug_in']
+                cliente_alt['Libre'] = cliente_alt['Libre'].replace('.', ',') + ' GB'
+                logger.info('- %s: %s' % (str(cliente['Plug_in']), str(cliente_alt)\
+                            .replace('{', '').replace('}', '').replace("'", '')\
+                            .replace('\\\\', '\\')))
     
     logger.info('Proxy: ' + environment['proxy_active'])
     
-    logger.info('TAMAÑO del LOG: ' + environment['log_size'] + ' MB')
+    logger.info('TAMAÑO del LOG: ' + environment['log_size'].replace('.', ',') + ' MB')
     logger.info("----------------------------------------------")
     
     if environment['debug'] == 'False':
@@ -433,13 +461,22 @@ def paint_env(item, environment={}):
         - Espacio disponible
     """
     torrent = """\
-    Muestra los datos del [COLOR yellow]Cliente Torrent[/COLOR]:
-        - Nombre del Cliente
+    Muestra los datos generales del estado de [COLOR yellow]Torrent[/COLOR]:
         - ID del cliente seleccionado
+        - Descompresión automática de archivos RAR?
+        - Está activo Libtorrent?
+        - Se descomprimen los RARs en background? 
+    """
+    torrent_error = """\
+    Muestra los datos del error de importación de [COLOR yellow]Libtorrent[/COLOR]
+    """
+    torrent_cliente = """\
+    Muestra los datos de los [COLOR yellow]Clientes Torrent[/COLOR]:
+        - Nombre del Cliente
         - Tamaño de buffer inicial
-        - Tamaño de buffer en Memoria 
-                (opt)
         - Path de descargas
+        - Tamaño de buffer en Memoria 
+                (opt, si no disco)
         - Espacio disponible
     """
     proxy = """\
@@ -483,32 +520,44 @@ def paint_env(item, environment={}):
                     action="", plot=memoria, thumbnail=thumb, folder=False))
 
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Userdata: [/COLOR]' + 
-                    environment['userdata_path'] + ' - Free: ' + environment['userdata_free'] + 
+                    environment['userdata_path'] + ' - Free: ' + environment['userdata_free'].replace('.', ',') + 
                     ' GB', action="", plot=userdata, thumbnail=thumb, folder=False))
     
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Videoteca: [/COLOR]Series/Epis: ' + 
                     environment['videolab_series'] + '/' + environment['videolab_episodios'] + 
                     ' - Pelis: ' + environment['videolab_pelis'] + ' - Upd: ' + 
                     environment['videolab_update'] + ' - Path: ' + 
-                    environment['videolab_path'] + ' - Free: ' + environment['videolab_free'] +  
+                    environment['videolab_path'] + ' - Free: ' + environment['videolab_free'].replace('.', ',') +  
                     ' GB', action="", plot=videoteca, thumbnail=thumb, folder=False))
-    
-    if not environment['torrentcli_name']: environment['torrentcli_name'] = 'Torrent: None'
-    torrentcli_buffer = environment['torrentcli_buffer']
-    if environment['torrentcli_mem_size']:
-        torrentcli_buffer +=  ' MB / memoria: ' + environment['torrentcli_mem_size']
-    itemlist.append(Item(channel=item.channel, title='[COLOR yellow]%s: [/COLOR]ID: %s, buffer: ' % 
-                    (environment['torrentcli_name'], environment['torrentcli_option']) + torrentcli_buffer + 
-                    ' MB / descargas: ' + environment['torrentcli_dload_path'] +  
-                    ' - Free: ' + environment['torrentcli_free'] +  ' GB', action="", 
-                    plot=torrent, thumbnail=thumb, folder=False))
+
+    if environment['torrent_list']:
+        for x, cliente in enumerate(environment['torrent_list']):
+            if x == 0:
+                cliente_alt = cliente.copy()
+                del cliente_alt['Torrent_opt']
+                itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Torrent: [/COLOR]Opt: %s, %s' \
+                            % (str(cliente['Torrent_opt']), str(cliente_alt).replace('{', '').replace('}', '')\
+                            .replace("'", '').replace('_', ' ')), action="", plot=torrent, thumbnail=thumb, 
+                            folder=False))
+            elif x == 1 and environment['torrent_error']:
+                itemlist.append(Item(channel=item.channel, title='[COLOR magenta]- %s[/COLOR]' % str(cliente).replace('{', '').replace('}', '')\
+                            .replace("'", '').replace('_', ' '), action="", plot=torrent_error, thumbnail=thumb, 
+                            folder=False))
+            else:
+                cliente_alt = cliente.copy()
+                del cliente_alt['Plug_in']
+                cliente_alt['Libre'] = cliente_alt['Libre'].replace('.', ',') + ' GB'
+                itemlist.append(Item(channel=item.channel, title='[COLOR yellow]- %s: [/COLOR]: %s' % 
+                            (str(cliente['Plug_in']), str(cliente_alt).replace('{', '').replace('}', '')\
+                            .replace("'", '').replace('\\\\', '\\')), action="", plot=torrent_cliente, 
+                            thumbnail=thumb, folder=False))
     
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Proxy: [/COLOR]' + 
                     environment['proxy_active'], action="", plot=proxy, thumbnail=thumb, 
                     folder=False))
     
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]TAMAÑO del LOG: [/COLOR]' + 
-                    environment['log_size'] + ' MB', action="", plot=log, thumbnail=thumb, 
+                    environment['log_size'].replace('.', ',') + ' MB', action="", plot=log, thumbnail=thumb, 
                     folder=False))
                     
     itemlist.append(Item(title="[COLOR hotpink][B]==> Reportar un fallo[/B][/COLOR]", 

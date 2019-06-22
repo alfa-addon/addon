@@ -151,10 +151,10 @@ def search_results(item):
     full_data = get_source(item.url)
     data = scrapertools.find_single_match(full_data, '<div class="search-results">(.*?)<h4')
 
-    patron = '<a href="([^"]+)".*?<img src="([^"]+)".*?alt="([^"]+)"'
+    patron = '<a href="([^"]+)" title="([^"]+)"><img src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
+    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
 
         url = scrapedurl
         title = re.sub('online|Audio|Latino', '', scrapedtitle)

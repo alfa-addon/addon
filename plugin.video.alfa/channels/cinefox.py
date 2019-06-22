@@ -7,7 +7,6 @@ from channels import autoplay
 from channels import filtertools
 from channelselector import get_thumb
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
@@ -431,8 +430,8 @@ def menu_info(item):
         sinopsis = scrapertools.find_single_match(data, '<p id="media-plot".*?>.*?\.\.\.(.*?)Si te parece')
         item.infoLabels["plot"] = scrapertools.htmlclean(sinopsis)
     id = scrapertools.find_single_match(item.url, '/(\d+)/')
-    data_trailer = httptools.downloadpage(host + "/media/trailer?idm=%s&mediaType=1" % id).data
-    trailer_url = jsontools.load(data_trailer)["video"]["url"]
+    data_trailer = httptools.downloadpage(host + "/media/trailer?idm=%s&mediaType=1" % id).json
+    trailer_url = data_trailer["video"]["url"]
     if trailer_url != "":
         item.infoLabels["trailer"] = trailer_url
     title = "Ver enlaces %s - [" + item.contentTitle + "]"
@@ -471,8 +470,8 @@ def episodios(item):
     itemlist.reverse()
     if "episodios" not in item.extra and not item.path:
         id = scrapertools.find_single_match(item.url, '/(\d+)/')
-        data_trailer = httptools.downloadpage(host + "/media/trailer?idm=%s&mediaType=1" % id).data
-        item.infoLabels["trailer"] = jsontools.load(data_trailer)["video"]["url"]
+        data_trailer = httptools.downloadpage(host + "/media/trailer?idm=%s&mediaType=1" % id).json
+        item.infoLabels["trailer"] = data_trailer["video"]["url"]
         itemlist.append(item.clone(channel="trailertools", action="buscartrailer", title="Buscar Tráiler",
                                    text_color="magenta"))
         if config.get_videolibrary_support():
@@ -543,8 +542,8 @@ def findvideos(item):
         url = host + "/sources/list?id=%s&type=%s&order=%s" % (id, extra, "download")
         itemlist.extend(get_enlaces(item, url, "de Descarga"))
         if extra == "media":
-            data_trailer = httptools.downloadpage(host + "/media/trailer?idm=%s&mediaType=1" % id).data
-            trailer_url = jsontools.load(data_trailer)["video"]["url"]
+            data_trailer = httptools.downloadpage(host + "/media/trailer?idm=%s&mediaType=1" % id).json
+            trailer_url = data_trailer["video"]["url"]
             if trailer_url != "":
                 item.infoLabels["trailer"] = trailer_url
             title = "Ver enlaces %s - [" + item.contentTitle + "]"

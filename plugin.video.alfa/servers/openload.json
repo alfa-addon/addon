@@ -5,7 +5,7 @@
     "patterns": [
       {
         "pattern": "(?:openload|oload).*?/(?:embed|f)/([0-9a-zA-Z-_]+)",
-        "url": "https://openload.co/embed/\\1/"
+        "url": "https://oload.tv/embed/\\1/"
       }
     ]
   },
