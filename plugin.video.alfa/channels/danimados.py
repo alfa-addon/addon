@@ -183,7 +183,7 @@ def episodiosxtemporada(item):
         tempepi=scrapedtempepi.split(" - ")
         if tempepi[0]=='Pel':
             tempepi[0]=0
-        title="{0}x{1} - ({2})".format(tempepi[0], tempepi[1].zfill(2), scrapedtitle)
+        title="{0}x{1} - {2}".format(tempepi[0], tempepi[1].zfill(2), scrapedtitle)
         #item.infoLabels["season"] = tempepi[0]
         infoLabels["episode"] = tempepi[1]
         if int(infoLabels['season']) == int(tempepi[0]):
