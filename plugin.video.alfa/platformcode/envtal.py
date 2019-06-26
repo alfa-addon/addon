@@ -190,6 +190,11 @@ def get_environment():
             lib_path = 'Activo'
         else:
             lib_path = 'Inactivo'
+        environment['torrentcli_unrar'] = config.get_setting("unrar_path", server="torrent", default="")
+        if environment['torrentcli_unrar']:
+            unrar = 'Activo'
+        else:
+            unrar = 'Inactivo'
         torrent_id = config.get_setting("torrent_client", server="torrent", default=0)
         environment['torrentcli_option'] = str(torrent_id)
         torrent_options = platformtools.torrent_client_installed()
@@ -198,7 +203,8 @@ def get_environment():
             torrent_options = ['BT'] + torrent_options
         environment['torrent_list'].append({'Torrent_opt': str(torrent_id), 'Libtorrent': lib_path, \
                                             'RAR_Auto': str(environment['torrentcli_rar']), \
-                                            'RAR_backgr': str(environment['torrentcli_backgr'])})
+                                            'RAR_backgr': str(environment['torrentcli_backgr']), \
+                                            'UnRAR': unrar})
         environment['torrent_error'] = config.get_setting("libtorrent_error", server="torrent", default="")
         if environment['torrent_error']:
             environment['torrent_list'].append({'Libtorrent_error': environment['torrent_error']})
@@ -322,6 +328,7 @@ def get_environment():
         environment['torrentcli_option'] = ''
         environment['torrentcli_rar'] = ''
         environment['torrentcli_lib_path'] = ''
+        environment['torrentcli_unrar'] = ''
         environment['torrent_error'] = ''
         
     return environment
@@ -465,7 +472,8 @@ def paint_env(item, environment={}):
         - ID del cliente seleccionado
         - Descompresión automática de archivos RAR?
         - Está activo Libtorrent?
-        - Se descomprimen los RARs en background? 
+        - Se descomprimen los RARs en background?
+        - Está operativo el módulo UnRAR?
     """
     torrent_error = """\
     Muestra los datos del error de importación de [COLOR yellow]Libtorrent[/COLOR]

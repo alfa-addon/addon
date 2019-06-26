@@ -8,7 +8,6 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 from core import httptools
-from core import tmdb
 
 host = 'http://pornboss.org'
 

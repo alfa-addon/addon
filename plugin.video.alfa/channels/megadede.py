@@ -491,6 +491,13 @@ def findvideos(item, verTodos=False):
     logger.info()
     data = httptools.downloadpage(item.url).data
     data_model = scrapertools.find_single_match(data, 'data-model="([^"]+)"')
+    if not data_model:
+        try:
+            login()
+            data = httptools.downloadpage(item.url).data
+            data_model = scrapertools.find_single_match(data, 'data-model="([^"]+)"')
+        except:
+            pass
     data_id = scrapertools.find_single_match(data, 'data-id="([^"]+)"')
     trailer = "https://www.youtube.com/watch?v=" + scrapertools.find_single_match(data,
                                                                                   'data-youtube="([^"]+)" class="youtube-link')

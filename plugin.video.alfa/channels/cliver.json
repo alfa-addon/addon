@@ -1,15 +1,15 @@
 {
-  "id": "animespace",
-  "name": "AnimeSpace",
+  "id": "cliver",
+  "name": "Cliver",
   "active": true,
   "adult": false,
-  "language": [],
-  "thumbnail": "https://i.imgur.com/twDknhC.jpg",
+  "language": ["cast", "lat"],
+  "thumbnail": "https://www.cliver.to/img/logo.png",
   "banner": "",
+  "version": 1,
   "categories": [
-    "anime",
-    "vos"
-  ],
+    "movie",
+    "tvshow"  ],
   "settings": [
     {
       "id": "include_in_global_search",
@@ -28,25 +28,22 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
+        "ESP",
+        "LAT",
         "VOSE"
       ]
     },
     {
-      "id": "comprueba_enlaces_num",
+      "id": "default_content",
       "type": "list",
-      "label": "Número de enlaces a verificar",
-      "default": 1,
+      "label": "¿Qué tipo de contenido quieres ver?",
+      "default": 0,
       "enabled": true,
-      "visible": "eq(-1,true)",
-      "lvalues": [ "5", "10", "15", "20" ]
-    },
-    {
-      "id": "include_in_newest_anime",
-      "type": "bool",
-      "label": "Incluir en Novedades - Episodios de anime",
-      "default": true,
-      "enabled": true,
-      "visible": true
+      "visible": true,
+      "lvalues": [
+        "Películas",
+        "Series"
+      ]
     }
   ]
 }
