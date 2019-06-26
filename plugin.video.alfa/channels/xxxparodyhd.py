@@ -7,7 +7,6 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 from core import httptools
-from core import tmdb
 
 host = 'https://xxxparodyhd.net'
 
@@ -68,7 +67,6 @@ def lista(item):
         scrapedplot = ""
         itemlist.append( Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot, infoLabels={'year':scrapedyear}) )
-    tmdb.set_infoLabels(itemlist, True)
     next_page = scrapertools.find_single_match(data,'<li class=\'active\'>.*?href=\'([^\']+)\'>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
