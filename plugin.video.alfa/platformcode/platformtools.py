@@ -1215,6 +1215,7 @@ def play_torrent(item, xlistitem, mediaurl):
         referer = None
         post = None
         rar = False
+        size = ''
         videolibrary_path = config.get_videolibrary_path()          #Calculamos el path absoluto a partir de la Videoteca
         if videolibrary_path.lower().startswith("smb://"):                  #Si es una conexión SMB, usamos userdata local
             videolibrary_path = config.get_data_path()                      #Calculamos el path absoluto a partir de Userdata
