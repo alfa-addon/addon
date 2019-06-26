@@ -1114,7 +1114,6 @@ def set_player(item, xlistitem, mediaurl, view, strm, autoplay):
 
         # elif config.get_setting("player_mode") == 1 or item.isPlayable:
         elif config.get_setting("player_mode") == 1:
-            logger.info("mediaurl :" + mediaurl)
             logger.info("Tras setResolvedUrl")
             # si es un archivo de la videoteca enviar a marcar como visto
             if strm or item.strm_path:
