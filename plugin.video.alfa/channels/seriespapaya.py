@@ -212,7 +212,7 @@ def seasons(item):
     patron = '>&rarr; Temporada (\d+) '
 
     matches = re.compile(patron, re.DOTALL).findall(data)
-    logger.error(matches)
+
     if len(matches) == 1:
         return episodios(item)
     elif len(matches) < 1:
@@ -343,6 +343,11 @@ def findvideos(item):
 
 def play(item):
     logger.info("play: %s" % item.url)
+    itemlist = []
+    if not 'seriespapaya.' in item.url:
+        itemlist.append(item.clone())
+        item = servertools.get_servers_itemlist(itemlist)
+        return itemlist
     itemlist = []
     data = httptools.downloadpage(item.url).data
     if item.server not in ['openload', 'streamcherry', 'streamango']:
