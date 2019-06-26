@@ -183,7 +183,7 @@ def episodiosxtemporada(item):
         tempepi=scrapedtempepi.split(" - ")
         if tempepi[0]=='Pel':
             tempepi[0]=0
-        title="{0}x{1} - ({2})".format(tempepi[0], tempepi[1].zfill(2), scrapedtitle)
+        title="{0}x{1} - {2}".format(tempepi[0], tempepi[1].zfill(2), scrapedtitle)
         #item.infoLabels["season"] = tempepi[0]
         infoLabels["episode"] = tempepi[1]
         if int(infoLabels['season']) == int(tempepi[0]):
@@ -192,6 +192,7 @@ def episodiosxtemporada(item):
     #if config.get_videolibrary_support() and len(itemlist) > 0:
     #    itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir " + contentSerieName + " a la videoteca[/COLOR]", url=item.url,
     #                         action="add_serie_to_library", extra="episodiosxtemporada", contentSerieName=contentSerieName))
+    tmdb.set_infoLabels(itemlist, True)
     return itemlist
 
 

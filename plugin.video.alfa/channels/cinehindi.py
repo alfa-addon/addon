@@ -129,19 +129,21 @@ def lista(item):
         max_pag = int(item.page)+1
     else:
         category = max_pag[3]
-        if not item.cat:
-            max_pag = 1
+        if not item.max_pag:
+            if not item.cat:
+                max_pag = 1
+            else:
+                max_pag = int(max_pag[5])
         else:
-            max_pag = int(max_pag[5])
+            max_pag = item.max_pag
     logger.info(max_pag)
     url = host + category + "/page/"
     page = int(item.page)
-    if page < max_pag and item.cat:
+    if page < max_pag:
         next_page_url = url+str(page+1)
-        logger.info("IIIII"+next_page_url)
         if len(itemlist)>10:
             itemlist.append(Item(channel=item.channel, action="lista", title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=next_page_url,
-                            page=page+1, thumbnail='https://s32.postimg.cc/4zppxf5j9/siguiente.png'))
+                            page=page+1, thumbnail='https://s32.postimg.cc/4zppxf5j9/siguiente.png', max_pag = max_pag))
     return itemlist
 
 
