@@ -479,6 +479,7 @@ def findvideos(item):
     elif item.emergency_urls:                           #Si se llama desde la Videoteca con enlaces cacheados... 
         timeout_find = timeout / 2                      #reducimos el timeout antes de saltar a los enlaces cacheados
         follow_redirects=False
+    rar_search = True
         
     #Bajamos los datos de la página
     data = ''
@@ -502,7 +503,9 @@ def findvideos(item):
     data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     data = scrapertools.find_single_match(data, 'div id="Tokyo" [^>]+>(.*?)</div>')     #Seleccionamos la zona de links
     
-    patron = '\/icono_.*?png" title="(?P<lang>.*?)?" [^>]+><\/td><td>(?P<quality>.*?)?<?\/td>.*?<td>(?P<size>.*?)?<\/td><td><a class="link" href="(?P<url>.*?)?"'
+    patron = '\/icono_.*?png"\s*(?:title|alt)="(?P<lang>[^"]+)?"[^>]+><\/td><td>'
+    patron += '(?P<temp_epi>.*?)?<?\/td>.*?<td>(?P<quality>.*?)?<\/td><td><a\s*'
+    patron += 'class="link"\s*href="(?P<url>[^"]+)?"'
     if not item.armagedon:                                                      #Si es un proceso normal, seguimos
         matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                                             #error
@@ -536,14 +539,18 @@ def findvideos(item):
     for lang, quality, size, scrapedurl in matches:
         i += 1
         temp_epi = ''
-        if scrapertools.find_single_match(quality, '\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)'):
-            password = scrapertools.find_single_match(quality, '\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)')
-            quality = re.sub(r'\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)', '', quality)
+        if scrapertools.find_single_match(quality, '\([C|c]ontrase.*?<span\s*style="[^>]+>(.*?)<\/span>'):
+            password = scrapertools.find_single_match(quality, '\([C|c]ontrase.*?<span\s*style="[^>]+>(.*?)<\/span>')
+            quality = re.sub(r'\([C|c]ontrase.*?<span\s*style="[^>]+>(.*?)<\/span>', '', quality)
             quality += ' [Contraseña=%s]' % password
-        if scrapertools.find_single_match(size, '\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)'):
-            password = scrapertools.find_single_match(size, '\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)')
-            size = re.sub(r'\s?\(Contrase.+?: <font color="[^>]*>(.*?)<\/font>\)', '', size)
+            if item.password:
+                rar_search = False
+        if scrapertools.find_single_match(size, '\([C|c]ontrase.*?<span\s*style="[^>]+>(.*?)<\/span>'):
+            password = scrapertools.find_single_match(size, '\([C|c]ontrase.*?<span\s*style="[^>]+>(.*?)<\/span>')
+            size = re.sub(r'\([C|c]ontrase.*?<span\s*style="[^>]+>(.*?)<\/span>', '', size)
             size += ' [Contraseña=%s]' % password
+            if item.password:
+                rar_search = False
         if item.contentType == "episode":       #En Series los campos están en otro orden.  No hay size, en su lugar sxe
             temp_epi = quality
             quality = size
@@ -573,7 +580,7 @@ def findvideos(item):
             if (contentSeason != item.contentSeason or contentEpisodeNumber != item.contentEpisodeNumber) and item.contentEpisodeNumber != 0:
                 continue                        #si no son iguales, lo ignoramos
 
-        #Si es un looup desde episodios para cachear enlaces, lo salvamos en este momento
+        #Si es un lookup desde episodios para cachear enlaces, lo salvamos en este momento
         if item.videolibray_emergency_urls:
             emergency_torrents.append(scrapedurl)
             emergency_urls.append(matches[i])
@@ -607,14 +614,32 @@ def findvideos(item):
             item_local.quality = '%s [/COLOR][COLOR white][%s h]' % (item_local.quality, scrapertools.find_single_match(item.quality, '(\d+:\d+)'))
         
         #if size and item_local.contentType != "episode":
-        if not size and not item.armagedon:
-            size = generictools.get_torrent_size(scrapedurl)                            #Buscamos el tamaño en el .torrent
+        if not item.armagedon:
+            size = generictools.get_torrent_size(scrapedurl)                        #Buscamos el tamaño en el .torrent y si es RAR
         if size:
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                         .replace('Mb', 'M·b').replace('.', ',')
             item_local.torrent_info += '%s' % size                                       #Agregamos size
             if not item.unify:
                 item_local.torrent_info = '[%s]' % item_local.torrent_info.strip().strip(',')
+                
+        # Si tiene un archivo RAR, busca la contraseña
+        if ('RAR-' in item.torrent_info or 'RAR-' in item_local.torrent_info) and rar_search:
+            rar_search = False
+            if 'Contrase' in quality or 'Contrase' in size or 'Contrase' in temp_epi:
+                item.password = scrapertools.find_single_match(quality, '\[Contrase.*?=(.*?)\]')
+                if not item.password:
+                    item.password = scrapertools.find_single_match(size, '\[Contrase.*?=(.*?)\]')
+                    if not item.password:
+                        item.password = scrapertools.find_single_match(temp_epi, '\[Contrase.*?=(.*?)\]')
+                if item.password:
+                    item_local.password = item.password
+            if not item.password:
+                item_local = generictools.find_rar_password(item_local)
+            if item_local.password:
+                item.password = item_local.password
+                itemlist.append(item.clone(action="", title="[COLOR magenta][B] Contraseña: [/B][/COLOR]'" 
+                        + item.password + "'", folder=False))
 
         if item_local.action == 'show_result':                                          #Viene de una búsqueda global
             channel_alt = item_local.channel.capitalize()
@@ -887,7 +912,9 @@ def episodios(item):
         data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         data = scrapertools.find_single_match(data, 'div id="Tokyo" [^>]+>(.*?)</div>')     #Seleccionamos la zona de links
         
-        patron = '\/icono_.*?png" title="(?P<lang>.*?)?" [^>]+><\/td><td>(?P<temp_epi>.*?)?<?\/td>.*?<td>(?P<quality>.*?)?<\/td><td><a class="link" href="(?P<url>.*?)?"'
+        patron = '\/icono_.*?png"\s*(?:title|alt)="(?P<lang>[^"]+)?"[^>]+><\/td><td>'
+        patron += '(?P<temp_epi>.*?)?<?\/td>.*?<td>(?P<quality>.*?)?<\/td><td><a\s*'
+        patron += 'class="link"\s*href="(?P<url>[^"]+)?"'
         matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches:                             #error
             item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada

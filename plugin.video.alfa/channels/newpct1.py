@@ -1876,16 +1876,10 @@ def findvideos(item):
     patron_pass = '<input\s*type="text"\s*id="txt_password"\s*name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"'
     if scrapertools.find_single_match(data, patron_pass):
         item.password = scrapertools.find_single_match(data, patron_pass)
-    elif 'RAR-' in size:
-        clone = scrapertools.find_single_match(item.url, 'http.*\:\/\/(?:www.)?(\w+)\.\w+\/.*?$')
-        url_password = item.url.replace(clone, 'pctnew')
-        try:
-            data_password = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url_password, timeout=timeout).data)
-            data_password = data_password.replace("$!", "#!").replace("'", "\"").replace("Ã±", "ñ").replace("//pictures", "/pictures")
-        except:                                                     #La web no responde.  Probemos las urls de emergencia
-            logger.error(traceback.format_exc())
-        if scrapertools.find_single_match(data_password, patron_pass):
-            item.password = scrapertools.find_single_match(data_password, patron_pass)
+    
+    item.torrent_info = '%s' % size                                             #Agregamos size
+    if not item.unify:
+        item.torrent_info = '[%s]' % item.torrent_info.strip().strip(',')
     
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     if not item.videolibray_emergency_urls:
@@ -1893,10 +1887,7 @@ def findvideos(item):
 
     #Generamos una copia de Item para trabajar sobre ella
     item_local = item.clone()
-    item_local.torrent_info = '%s' % size                                       #Agregamos size
-    if not item.unify:
-        item_local.torrent_info = '[%s]' % item_local.torrent_info.strip().strip(',')
-    
+
     # Verificamos la url torrent o usamos la de emergencia
     if not item.armagedon:
         item_local.url = url_torr
@@ -1905,7 +1896,7 @@ def findvideos(item):
         item_local.url = item_local.url.replace(" ", "%20")                     #sustituimos espacios por %20, por si acaso
     
         if item_local.url and item.emergency_urls:                              #la url no está verificada
-            item_local.torrent_alt = item.emergency_urls[0][0]              #Guardamos la url del .Torrent ALTERNATIVA
+            item_local.torrent_alt = item.emergency_urls[0][0]                  #Guardamos la url del .Torrent ALTERNATIVA
         
     if not item_local.url:                                                      #error en url?
         logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha " + 
