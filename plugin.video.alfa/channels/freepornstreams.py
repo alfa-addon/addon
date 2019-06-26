@@ -8,7 +8,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import httptools
 
-host = 'http://freepornstreams.org'
+host = 'http://freepornstreams.org'    #es http://xxxstreams.org 
 
 
 def mainlist(item):
@@ -77,11 +77,14 @@ def lista(item):
     patron += '<img src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
-        calidad = scrapertools.find_single_match(scrapedtitle, '(\(.*?\))')
-        title = "[COLOR yellow]" + calidad + "[/COLOR] "  + scrapedtitle.replace( "%s" % calidad, "")
+        if '/HD' in scrapedtitle : title= "[COLOR red]" + "HD" + "[/COLOR] " + scrapedtitle
+        elif 'SD' in scrapedtitle : title= "[COLOR red]" + "SD" + "[/COLOR] " + scrapedtitle
+        elif 'FullHD' in scrapedtitle : title= "[COLOR red]" + "FullHD" + "[/COLOR] " + scrapedtitle
+        elif '1080' in scrapedtitle : title= "[COLOR red]" + "1080p" + "[/COLOR] " + scrapedtitle
+        else: title = scrapedtitle
         thumbnail = scrapedthumbnail.replace("jpg#", "jpg")
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl, thumbnail=thumbnail,
+        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, fulltitle=title) )
     next_page = scrapertools.find_single_match(data, '<div class="nav-previous"><a href="([^"]+)"')
     if next_page!="":
@@ -90,11 +93,30 @@ def lista(item):
     return itemlist
 
 
-def play(item):
-    logger.info()
+# <p>0:39:44 | 768&#215;432 | mp4 | 359Mb<br />
+# We recommend to visit <a href="https://severeporn.com/" target="_blank" class="external" rel="nofollow">severeporn.com</a><br />
+# <a href="https://gounlimited.to/6bcsm0borw4w/esthw46su_8.mp4" rel="nofollow" target="_blank" class="external">Streaming Gounlimited.to</a><br />
+# <a href="https://openload.co/f/iXK7muRlBGo/esthw46su_8.mp4" rel="nofollow" target="_blank" class="external">Streaming Openload.co</a><br />
+# <a href="https://vidoza.net/nm5jq9rfalbr.html" rel="nofollow" target="_blank" class="external">Streaming Vidoza.net</a><br />
+# <a href="https://ubiqfile.com/w00dixda1h2l/esthw46su_8.mp4.html" rel="nofollow" target="_blank" class="external">Download Ubiqfile.com</a></p>
+
+
+
+#gounlimited y download aparecen como directo
+def findvideos(item):
+    itemlist = []
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<a href="([^"]+)" rel="nofollow"  class="external" target="_blank">Streaming')
-    logger.debug(url)
-    itemlist = servertools.find_video_items(item.clone(url = url))
+    data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
+    patron = '<a href="([^"]+)" rel="nofollow".*?>(?:Streaming|Download)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url in matches:
+        url= url.replace("https:", "http:") #necesario para gounlimited, y funciona conresto server
+        itemlist.append(item.clone(action='play',title="%s", url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
+# titulo aparece servidor y vidoza no funciona y si lo encuentra el buscador en servidor
+def play(item):
+    logger.info(item)
+    itemlist = servertools.find_video_items(item.clone(url = item.url))
+    return itemlist

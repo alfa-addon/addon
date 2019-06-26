@@ -8,13 +8,13 @@ from core.item import Item
 from platformcode import config, logger
 from core import httptools
 
-host = 'http://xxxstreams.org'
+host = 'http://xxxstreams.org' #es hhttp://freepornstreams.org
 
 def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url= host + "/category/full-porn-movie-stream/"))
-    itemlist.append( Item(channel=item.channel, title="Clips" , action="lista", url=host))
+    itemlist.append( Item(channel=item.channel, title="Clips" , action="lista", url=host + "/category/new-porn-streaming/"))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
@@ -64,6 +64,7 @@ def lista(item):
     for scrapedthumbnail,scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         if '/HD' in scrapedtitle : title= "[COLOR red]" + "HD" + "[/COLOR] " + scrapedtitle
+        elif 'SD' in scrapedtitle : title= "[COLOR red]" + "SD" + "[/COLOR] " + scrapedtitle
         elif 'FullHD' in scrapedtitle : title= "[COLOR red]" + "FullHD" + "[/COLOR] " + scrapedtitle
         elif '1080' in scrapedtitle : title= "[COLOR red]" + "1080p" + "[/COLOR] " + scrapedtitle
         else: title = scrapedtitle
@@ -76,19 +77,29 @@ def lista(item):
     return itemlist
 
 
+
+
+# <p>0:39:44 | 768&#215;432 | mp4 | 359Mb<br />
+# We recommend to visit <a href="https://severeporn.com/" target="_blank" class="external" rel="nofollow">severeporn.com</a><br />
+# <a href="https://gounlimited.to/6bcsm0borw4w/esthw46su_8.mp4" rel="nofollow" target="_blank" class="external">Streaming Gounlimited.to</a><br />
+# <a href="https://openload.co/f/iXK7muRlBGo/esthw46su_8.mp4" rel="nofollow" target="_blank" class="external">Streaming Openload.co</a><br />
+# <a href="https://vidoza.net/nm5jq9rfalbr.html" rel="nofollow" target="_blank" class="external">Streaming Vidoza.net</a><br />
+# <a href="https://ubiqfile.com/w00dixda1h2l/esthw46su_8.mp4.html" rel="nofollow" target="_blank" class="external">Download Ubiqfile.com</a></p>
+
+
 def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data = scrapertools.find_single_match(data,'Mb<(.*?)<img src')
-    patron = '<a href="([^"]+)".*?>([^"]+)</a>'
+    patron = '<a href="([^"]+)" rel="nofollow".*?>(?:Streaming|Download) ([^"]+)</a>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url,server in matches:
+        url= url.replace("https:", "http:")
         itemlist.append( Item(channel=item.channel, action="play", title = server, url=url ))
     return itemlist
 
-
+# titulo aparece servidor y vidoza no funciona   https://vidoza.net/xnor7hls9mzu.html y si lo encuentra el buscador en servidor
 def play(item):
     logger.info()
     itemlist = []

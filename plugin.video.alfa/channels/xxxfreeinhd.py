@@ -68,11 +68,14 @@ def lista(item):
         title = scrapedtitle
         thumbnail = scrapedthumbnail + "|https://watchxxxfreeinhd.com/" 
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=scrapedurl,
                               thumbnail=thumbnail, plot=plot, fanart=scrapedthumbnail ))
     next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)"')
     if next_page:
         next_page =  urlparse.urljoin(item.url,next_page)
+        if "?filtre=date&cat=0" in item.url: next_page += "?filtre=date&cat=0"
+        elif "?display=tube&filtre=views" in item.url: next_page += "?display=tube&filtre=views"
+        elif "?display=tube&filtre=rate" in item.url: next_page += "?display=tube&filtre=rate"
         itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
                               url=next_page) )
     return itemlist
@@ -87,19 +90,22 @@ def findvideos(item):
     patron = 'data-lazy-src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for title in matches:
-        if "strdef" in title:
+        if "strdef" in title: 
+        #Aparece directo y es https://strdef.world/vplayer.php?id=351ec419-8f56-4f93-8f5e-8e945c6ad399 = verystream 
+                             # https://strdef.world/player.php?id=609f6664-e500-4377-96cd-9737b0a3d21c = oload
             url = decode_url(title)
+            if "strdef" in url:
+                url = httptools.downloadpage(url).data
         if "hqq" in title:
             url = title
-        if "/vplayer" in url:
-            url = httptools.downloadpage(url).data
-        itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url ))
+        itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url, fulltitle=item.fulltitle ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-
     return itemlist
 
 
+#Play el titulo es enlace encontrado en "XXXXXX" y  no el titulo
 def play(item):
+    itemlist = []
     itemlist = servertools.find_video_items(data=item.url)
     for item in itemlist:
         item.channel = "url"
@@ -107,6 +113,7 @@ def play(item):
     return itemlist
 
 
+#ESTO habria que simplificar
 def decode_url(txt):
     logger.info()
     itemlist = []
