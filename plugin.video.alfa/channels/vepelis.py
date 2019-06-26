@@ -147,6 +147,7 @@ def listado2(item):
 
     # Descarga la página
     data = get_source(item.url)
+    data = data.decode('iso-8859-1')
     patron = '<h2 class="titpeli.*?<a href="([^"]+)" title="([^"]+)">.*?peli_img_img">.*?'
     patron +='<img src="([^"]+)" alt.*?<p>([^<]+)</p>.*?Genero.*?:.*?(\d{4})<.*?png".*?\/>([^<]+)<.*?: (.*?)<'
 
