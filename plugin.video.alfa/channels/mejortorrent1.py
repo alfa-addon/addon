@@ -5,6 +5,7 @@ import sys
 import urllib
 import urlparse
 import time
+import traceback
 
 from channelselector import get_thumb
 from core import httptools
@@ -27,6 +28,7 @@ list_servers = ['torrent']
 channel = "mejortorrent1"
 #host = config.get_setting('domain_name', channel)
 host = "https://mejortorrent1.net/"
+domain = "mejortorrent1.net"
 
 categoria = channel.capitalize()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
@@ -147,6 +149,7 @@ def listado(item):
         data = ''
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
         data = re.sub('\r\n', '', data).decode('utf8').encode('utf8')
+        data = js2py_conversion(data, item.url)
         data = data.replace("'", '"')
     except:
         logger.error("ERROR 01: LISTADO: La Web no responde o ha cambiado de URL: " + item.url + " / DATA: " + data)
@@ -253,6 +256,7 @@ def listado(item):
         url_next_page = urlparse.urljoin(item.url, scrapertools.find_single_match(data, patron_next_page) + str(cnt_pag_num + 2))
         #url_last_page = re.sub(r"\d+$", "9999", url_next_page)
         #data_last = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url_last_page).data)
+        #data_last = js2py_conversion(data_last, url_last_page)
         #if "/documentales" in item.url:
             #patron_last_page = '<a href="[^"]+\/(\d+)\/" class="paginar" >\d+<\/a>&nbsp;<\/div>'
         patron_last_page = '<a class="paginar" href="[^"]+\/(\d+)\/">&\w+;<\/a>&\w+;<\/div>'
@@ -342,6 +346,7 @@ def listado(item):
                 
                 #Hay que buscar la raiz de la temporada
                 data_epi = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item_local.url, timeout=timeout).data)
+                data_epi = js2py_conversion(data_epi, item_local.url)
                 url = scrapertools.find_single_match(data_epi, '<tr><td>.*<a href="([^"]+)" style="text-decoration:none;"><h1 style=')
                 if not url:
                     url = scrapertools.find_single_match(data_epi, '<td><a href="(secciones.php\?sec\=descargas&ap=[^"]+)"')
@@ -505,7 +510,8 @@ def listado(item):
         if item_local.contentSeason and (item_local.contentType == "season" or item_local.contentType == "tvshow"):
             item_local.contentSeason_save = item_local.contentSeason
             del item_local.infoLabels['season']
-            
+
+
         #logger.debug(item_local)
         
         cnt += 1
@@ -566,6 +572,7 @@ def listado_busqueda(item):
         try:
             data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(url_next_page, post=item.post, timeout=timeout_search).data)
             data = re.sub('\r\n', '', data).decode('utf8').encode('utf8')
+            data = js2py_conversion(data, url_next_page, post=item.post)
             data = data.replace("'", '"')
         except:
             logger.error("ERROR 01: LISTADO_BUSQUEDA: La Web no responde o ha cambiado de URL: " + item.url + item.post + " / DATA: " + data)
@@ -606,7 +613,7 @@ def listado_busqueda(item):
                 i += 1
         cnt_title = len(matches)                                                    #número de títulos a pintar
         
-        if not matches_alt and not 'Se han encontrado<b>0</b> resultado(s).' in data and not "Introduce alguna palabra para buscar con al menos 3 letras" in data and status is False:  #error
+        if not matches_alt and not 'Se han encontrado<b>0</b> resultado(s).' in data and not "Introduce alguna palabra para buscar con al menos 3 letras" in data and status is False and not matches:                #error
             item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
             if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
                 item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error
@@ -779,7 +786,8 @@ def listado_busqueda(item):
         if item_local.contentSeason and (item_local.contentType == "season" or item_local.contentType == "tvshow"):
             item_local.contentSeason_save = item_local.contentSeason
             del item_local.infoLabels['season']
-        
+
+
         #Ahora se filtra por idioma, si procede, y se pinta lo que vale
         if config.get_setting('filter_languages', channel) > 0:     #Si hay idioma seleccionado, se filtra
             itemlist = filtertools.get_link(itemlist, item_local, list_language)
@@ -823,7 +831,7 @@ def findvideos(item):
     data = ''
     torrent_data = ''
     headers = {'Content-Type': 'application/x-www-form-urlencoded', 'Referer': item.url}    #Necesario para el Post del .Torrent
-    
+
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
     
@@ -833,15 +841,17 @@ def findvideos(item):
         item.emergency_urls.append([])                              #Reservamos el espacio para los .torrents locales
     
     #Bajamos los datos de la página de todo menos de Documentales y Varios
+    try:
+        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = js2py_conversion(data, item.url)
+        data = data.replace('"', "'")
+    except:
+        pass    
     if not item.post:
-        try:
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
-            data = data.replace('"', "'")
-            patron = "<form (?:.*?)?"
-            patron += "name='episodios'.+action='([^']+)' method='post'>.*?"
-            patron += "<input\s*type='[^']+'\s*name='([^']+)'\s*value='([^']+)'>\s*<input\s*type='[^']+'\s*value='([^']+)'\s*name='([^']+)'>(?:\s*<input\s*type='[^']+'\s*value='([^']+)'\s*name='([^']+)'\s*id='([^']+)'>)?"
-        except:
-            pass
+        patron = "<form (?:.*?)?"
+        patron += "name='episodios'.+action='([^']+)' method='post'>.*?"
+        patron += "<input\s*type='[^']+'\s*name='([^']+)'\s*value='([^']+)'>\s*<input\s*type='[^']+'\s*value='([^']+)'\s*name='([^']+)'>(?:\s*<input\s*type='[^']+'\s*value='([^']+)'\s*name='([^']+)'\s*id='([^']+)'>)?"
+
         if not data:
             logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url + " / DATA: " + data)
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. Si la Web está activa, reportar el error con el log', folder=False))
@@ -966,7 +976,7 @@ def findvideos(item):
         size  = scrapertools.find_single_match(item_local.url, '(\d{1,3},\d{1,2}?\w+)\.torrent')
     size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                         .replace('Mb', 'M·b').replace('.', ',')
-    if not size and not item.armagedon:
+    if not item.armagedon:
         size = generictools.get_torrent_size(item_local.url, referer_zip, post_zip) #Buscamos el tamaño en el .torrent
     if size:
         item_local.title = re.sub('\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title) #Quitamos size de título, si lo traía
@@ -975,6 +985,15 @@ def findvideos(item):
         if not item.unify:
             item_local.torrent_info = '[%s]' % item_local.torrent_info.strip().strip(',')
  
+    # Si tiene un archivo RAR, busca la contraseña
+    if 'RAR-' in item_local.torrent_info and not item_local.password:
+        if not item_local.password:
+            item_local = generictools.find_rar_password(item_local)
+        if item_local.password:
+            item.password = item_local.password
+            itemlist.append(item.clone(action="", title="[COLOR magenta][B] Contraseña: [/B][/COLOR]'" 
+                    + item_local.password + "'", folder=False))
+    
     #Ahora pintamos el link del Torrent, si lo hay
     if item_local.url:		# Hay Torrent ?
         item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
@@ -1031,10 +1050,13 @@ def episodios(item):
 
     # Carga la página
     data_ini = ''
+
     try:
         data_ini = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data_ini = js2py_conversion(data_ini, item.url)
         data_ini = data_ini.replace('"', "'")
-    except:                                                                         #Algún error de proceso, salimos
+    except:                                                                     #Algún error de proceso, salimos
+        logger.error(traceback.format_exc())
         pass
         
     if not data_ini:
@@ -1056,12 +1078,12 @@ def episodios(item):
     if scrapertools.find_single_match(data, patron):
         value2, name2 = scrapertools.find_single_match(data, patron)            #extraemos valores para el Post
     
-    patron = "<td bgcolor='[^>]+><a href='([^']+)'>[^<]+<\/a><\/td><td[^>]+><div[^>]+>[^<]+?<\/div><\/td>.*?<input type='\w+'\s?name='([^']+)'\s?value='([^']+)'>\s?<\/td><\/tr>"              #Patrón para series con Post
+    patron = "<td bgcolor='[^>]+><a href='([^']+)'>([^<]+)<\/a><\/td><td[^>]+><div[^>]+>[^<]+?<\/div><\/td>.*?<input type='\w+'\s?name='([^']+)'\s?value='([^']+)'>\s?<\/td><\/tr>"              #Patrón para series con Post
     if not scrapertools.find_single_match(data, patron):
-        patron = "<form name='episodios' action='([^']+)'.*?<input type='\w+' name='([^']+)' value='([^']+)'>"
+        patron = "<form name='episodios' action='([^']+)'(.*?)<input type='\w+' name='([^']+)' value='([^']+)'>"
         if not scrapertools.find_single_match(data, patron):                    #Patrón para documentales (2)
             #Si no han funcionado los anteriores, usamos el tradicional para series sin Post
-            patron = "<td bgcolor='[^>]+><a href='([^']+)'>[^<]+<\/a><\/td><td[^>]+><div([^>]+)>([^<]+)?<\/div><\/td>"
+            patron = "<td bgcolor='[^>]+><a href='([^']+)'>([^<]+)<\/a><\/td><td[^>]+><div([^>]+)>([^<]+)?<\/div><\/td>"
     
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                                             #error
@@ -1074,12 +1096,12 @@ def episodios(item):
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
-    #logger.debug("PATRON: " + patron)
-    #logger.debug(matches)
-    #logger.debug(data)
+    logger.debug("PATRON: " + patron)
+    logger.debug(matches)
+    logger.debug(data)
 
     # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
-    for scrapedurl, name1, value1 in matches:
+    for scrapedurl, title, name1, value1 in matches:
         item_local = item.clone()
         item_local.action = "findvideos"
         item_local.contentType = "episode"
@@ -1135,7 +1157,12 @@ def episodios(item):
             #item_local.infoLabels['episodio_titulo'] = 'al %s' % scrapedepi2
         else:
             item_local.title = '%sx%s -' % (str(item_local.contentSeason), str(item_local.contentEpisodeNumber).zfill(2))
-        
+            
+        # Buscamos si tiene contraseña y la guardamos:
+        passw = scrapertools.find_single_match(title, "(?:CONTRASE|contrase|Contrase)[^:]+:\s*(.*?)$")
+        if passw:
+            item_local.password = passw
+
         itemlist.append(item_local.clone())
         
     if len(itemlist) > 1:
@@ -1184,6 +1211,68 @@ def actualizar_titulos(item):
     #Volvemos a la siguiente acción en el canal
     return item
     
+
+def js2py_conversion(data, url, post=None, follow_redirects=True, headers={}):
+    logger.info()
+    import js2py
+    import base64
+    
+    if not 'Javascript is required' in data:
+        return data
+        
+    patron = ',\s*S="([^"]+)"'
+    data_new = scrapertools.find_single_match(data, patron)
+    if not data_new:
+        patron = ",\s*S='([^']+)'"
+        data_new = scrapertools.find_single_match(data, patron)
+    if not data_new:
+        logger.error('js2py_conversion: NO data_new')
+        return data
+        
+    try:
+        for x in range(10):                                          # Da hasta 10 pasadas o hasta que de error
+            data_end = base64.b64decode(data_new).decode('utf-8')
+            data_new = data_end
+    except:
+        js2py_code = data_new
+    else:
+        logger.error('js2py_conversion: base64 data_new NO Funciona: ' + str(data_new))
+        return data
+    if not js2py_code:
+        logger.error('js2py_conversion: NO js2py_code BASE64')
+        return data
+        
+    js2py_code = js2py_code.replace('document', 'window').replace(" location.reload();", "")
+    js2py.disable_pyimport()
+    context = js2py.EvalJs({'atob': atob})
+    new_cookie = context.eval(js2py_code)
+    
+    logger.info('new_cookie: ' + new_cookie)
+
+    dict_cookie = {'domain': domain,
+                }
+
+    if ';' in new_cookie:
+        new_cookie = new_cookie.split(';')[0].strip()
+        namec, valuec = new_cookie.split('=')
+        dict_cookie['name'] = namec.strip()
+        dict_cookie['value'] = valuec.strip()
+    zanga = httptools.set_cookies(dict_cookie)
+
+    data_new = ''
+    data_new = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url, \
+                timeout=timeout, headers=headers, post=post, follow_redirects=follow_redirects).data)
+    data_new = re.sub('\r\n', '', data_new).decode('utf8').encode('utf8')
+    if data_new:
+        data = data_new
+    
+    return data
+    
+    
+def atob(s):
+    import base64
+    return base64.b64decode(s.to_string().value)
+
 
 def search(item, texto):
     itemlist = []
