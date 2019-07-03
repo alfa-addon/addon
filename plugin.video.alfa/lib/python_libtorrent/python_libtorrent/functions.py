@@ -23,11 +23,14 @@
     WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
 
-import os
+import os, sys
 import xbmc, xbmcgui, xbmcvfs, xbmcaddon
 from net import HTTP
 
-__libbaseurl__ = "https://github.com/DiMartinoXBMC/script.module.libtorrent/raw/master/python_libtorrent"
+if xbmc.getCondVisibility("system.platform.windows") and (sys.maxsize > 2 ** 32 and "x64" or "x86") == 'x64':       ### Alfa
+    __libbaseurl__ = 'https://extra.alfa-addon.com/downloads/libtorrent'                                            ### Alfa
+else:                                                                                                               ### Alfa
+    __libbaseurl__ = "https://github.com/DiMartinoXBMC/script.module.libtorrent/raw/master/python_libtorrent"
 #__settings__ = xbmcaddon.Addon(id='script.module.libtorrent')
 #__version__ = __settings__.getAddonInfo('version')
 #__plugin__ = __settings__.getAddonInfo('name') + " v." + __version__
@@ -97,7 +100,7 @@ class LibraryManager():
                 try:
                     self.http = HTTP()
                     self.http.fetch(url, download=dest + ".zip", progress=True)
-                    log("%s -> %s" % (url, dest))
+                    if not 'alfa-addon' in url: log("%s -> %s" % (url, dest))
                     xbmc.executebuiltin('XBMC.Extract("%s.zip","%s")' % (dest, self.dest_path), True)
                     xbmcvfs.delete(dest + ".zip")
                 except:

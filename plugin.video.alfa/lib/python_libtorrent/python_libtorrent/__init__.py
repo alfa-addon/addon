@@ -51,9 +51,9 @@ else:
     #                       'python_libtorrent')
     dirname=set_dirname                                                         ### Alfa
 
-log('dirname:' +str(dirname))
+log('dirname: ' +str(dirname))
 
-versions = ['0.16.19', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.1.0', '1.1.1', '1.0.11', '1.1.6', '1.1.7']
+versions = ['0.16.19', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.1.0', '1.1.1', '1.0.11', '1.1.6', '1.1.7', '1.2.1']       ### Alfa
 default_path = versions[-1]
 #set_version = int(__settings__.getSetting('set_version'))                      ### Alfa
 set_version = 0                                                                 ### Alfa
@@ -70,7 +70,10 @@ if not os.path.exists(sizefile_path):
     sizefile_path = os.path.join(__root__, platform['system'], platform['version'])
     if not os.path.exists(sizefile_path):
         log('set_version: no default at %s searching for any version' % sizefile_path)
-        versions = os.listdir(os.path.join(__root__, platform['system']))
+        try:
+            versions = os.listdir(os.path.join(__root__, platform['system']))
+        except:
+            versions = []
         for ver in versions:
             if not os.path.isdir(os.path.join(__root__, platform['system'], ver)):
                 versions.remove(ver)
@@ -79,8 +82,9 @@ if not os.path.exists(sizefile_path):
             platform['version'] = versions[-1]
             log('set_version: chose %s out of %s' % (platform['version'], str(versions)))
         else:
-            log('die because the folder is empty')
-            exit()
+            e = 'die because the folder is empty'
+            log(e)
+            raise Exception(e)
 dest_path = os.path.join(dirname, platform['system'], platform['version'])
 sys.path.insert(0, dest_path)
 
@@ -95,7 +99,7 @@ if not lm.check_exist():
 #    lm.update()                                                                ### Alfa
 
 log('platform: ' + str(platform))
-if platform['system'] not in ['windows']:
+if platform['system'] not in ['windows', 'windows_x64']:                        ### Alfa
     log('os: '+str(os.uname()))
     log_text = 'ucs4' if sys.maxunicode > 65536 else 'ucs2'
     log_text += ' x64' if sys.maxint > 2147483647 else ' x86'
@@ -103,9 +107,9 @@ if platform['system'] not in ['windows']:
 
 try:
     from platformcode import config
-    if platform['system'] in ['linux_x86', 'windows', 'linux_armv6', 'linux_armv7',
+    if platform['system'] in ['linux_x86', 'windows', 'windows_x64', 'linux_armv6', 'linux_armv7',
                               'linux_x86_64', 'linux_mipsel_ucs2', 'linux_mipsel_ucs4',
-                              'linux_aarch64_ucs2', 'linux_aarch64_ucs4']:
+                              'linux_aarch64_ucs2', 'linux_aarch64_ucs4']:      ### Alfa
         import libtorrent
         config.set_setting("libtorrent_path", dest_path, server="torrent")      ### Alfa
         config.set_setting("libtorrent_error", "", server="torrent")            ### Alfa
@@ -191,7 +195,7 @@ try:
 
 except Exception, e:
     e = unicode(str(e), "utf8", errors="replace").encode("utf8")
-    config.set_setting("libtorrent_path", '', server="torrent")                 ### Alfa
+    config.set_setting("libtorrent_path", "", server="torrent")                 ### Alfa
     config.set_setting("libtorrent_error", str(e), server="torrent")            ### Alfa
     log('Error importing libtorrent from "' + dest_path + '". Exception: ' + str(e))
 
