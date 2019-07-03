@@ -1096,9 +1096,9 @@ def episodios(item):
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
         return itemlist                                 #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
-    logger.debug("PATRON: " + patron)
-    logger.debug(matches)
-    logger.debug(data)
+    #logger.debug("PATRON: " + patron)
+    #logger.debug(matches)
+    #logger.debug(data)
 
     # Recorremos todos los episodios generando un Item local por cada uno en Itemlist
     for scrapedurl, title, name1, value1 in matches:
