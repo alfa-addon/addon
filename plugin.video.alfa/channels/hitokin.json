@@ -1,15 +1,16 @@
 {
-  "id": "cliver",
-  "name": "Cliver",
+  "id": "hitokin",
+  "name": "Hitokin!",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
-  "thumbnail": "https://www.cliver.to/img/logo.png",
+  "language": [],
+  "thumbnail": "https://i.imgur.com/Wty85LB.png",
   "banner": "",
-  "version": 1,
+  "fanart": "https://i.imgur.com/xio03FI.jpg",
   "categories": [
-    "movie",
-    "tvshow"  ],
+    "anime",
+    "vos"
+  ],
   "settings": [
     {
       "id": "include_in_global_search",
@@ -28,23 +29,16 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "CAST",
-        "LAT",
-        "VOSE",
-        "VOS"
+        "VOSE"
       ]
     },
     {
-      "id": "default_content",
-      "type": "list",
-      "label": "¿Qué tipo de contenido quieres ver?",
-      "default": 0,
-      "enabled": true,
-      "visible": true,
-      "lvalues": [
-        "Películas",
-        "Series"
-      ]
+      "id": "include_in_newest_anime",
+      "type": "bool",
+      "label": "Incluir en Novedades - Episodios de anime",
+      "default": false,
+      "enabled": false,
+      "visible": true
     }
   ]
 }

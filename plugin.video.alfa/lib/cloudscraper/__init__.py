@@ -2,6 +2,7 @@ import logging
 import re
 import sys
 import ssl
+import requests
 
 from copy import deepcopy
 from time import sleep
@@ -12,6 +13,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.ssl_ import create_urllib3_context
 
 from .interpreters import JavaScriptInterpreter
+from .reCaptcha import reCaptcha
 from .user_agent import User_Agent
 
 try:
@@ -26,14 +28,12 @@ except ImportError:
 
 try:
     from urlparse import urlparse
-    from urlparse import urlunparse
 except ImportError:
     from urllib.parse import urlparse
-    from urllib.parse import urlunparse
 
-#### CloudScraper from: https://github.com/VeNoMouS/cloudscraper ################################################################################################
+##########################################################################################################################################################
 
-__version__ = '1.1.11'
+__version__ = '1.1.24'
 
 BUG_REPORT = 'Cloudflare may have changed their technique, or there may be a bug in the script.'
 
@@ -45,13 +45,10 @@ class CipherSuiteAdapter(HTTPAdapter):
     def __init__(self, cipherSuite=None, **kwargs):
         self.cipherSuite = cipherSuite
 
-        if hasattr(ssl, 'PROTOCOL_TLS'):
-            self.ssl_context = create_urllib3_context(
-                ssl_version=getattr(ssl, 'PROTOCOL_TLSv1_3', ssl.PROTOCOL_TLSv1_2),
-                ciphers=self.cipherSuite
-            )
-        else:
-            self.ssl_context = create_urllib3_context(ssl_version=ssl.PROTOCOL_TLSv1)
+        self.ssl_context = create_urllib3_context(
+            ssl_version=ssl.PROTOCOL_TLS,
+            ciphers=self.cipherSuite
+        )
 
         super(CipherSuiteAdapter, self).__init__(**kwargs)
 
@@ -72,10 +69,12 @@ class CipherSuiteAdapter(HTTPAdapter):
 
 class CloudScraper(Session):
     def __init__(self, *args, **kwargs):
+        self.allow_brotli = kwargs.pop('allow_brotli', True if 'brotli' in sys.modules.keys() else False)
         self.debug = kwargs.pop('debug', False)
         self.delay = kwargs.pop('delay', None)
         self.interpreter = kwargs.pop('interpreter', 'js2py')
-        self.allow_brotli = kwargs.pop('allow_brotli', True if 'brotli' in sys.modules.keys() else False)
+        self.recaptcha = kwargs.pop('recaptcha', {})
+
         self.cipherSuite = None
 
         super(CloudScraper, self).__init__(*args, **kwargs)
@@ -105,21 +104,30 @@ class CloudScraper(Session):
 
         if hasattr(ssl, 'PROTOCOL_TLS'):
             ciphers = [
-                'ECDHE-ECDSA-AES128-GCM-SHA256', 'ECDHE-RSA-AES128-GCM-SHA256', 'ECDHE-ECDSA-AES256-GCM-SHA384',
-                'ECDHE-RSA-AES256-GCM-SHA384', 'ECDHE-ECDSA-CHACHA20-POLY1305-SHA256', 'ECDHE-RSA-CHACHA20-POLY1305-SHA256',
-                'ECDHE-RSA-AES128-CBC-SHA', 'ECDHE-RSA-AES256-CBC-SHA', 'RSA-AES128-GCM-SHA256', 'RSA-AES256-GCM-SHA384',
-                'ECDHE-RSA-AES128-GCM-SHA256', 'RSA-AES256-SHA', '3DES-EDE-CBC'
+                'TLS13-AES-128-GCM-SHA256',
+                'TLS13-AES-256-GCM-SHA384',
+                'TLS13-CHACHA20-POLY1305-SHA256',
+                'ECDHE-ECDSA-CHACHA20-POLY1305',
+                'ECDHE-ECDSA-AES128-GCM-SHA256',
+                'ECDHE-ECDSA-AES128-SHA',
+                'ECDHE-ECDSA-AES128-SHA256',
+                'ECDHE-ECDSA-AES256-GCM-SHA384',
+                'ECDHE-ECDSA-AES256-SHA',
+                'ECDHE-ECDSA-AES256-SHA384',
+                # Slip in some additional intermediate compatibility ciphers, This should help out users for non Cloudflare based sites.
+                'ECDHE-RSA-AES128-SHA256',
+                'ECDHE-RSA-AES256-SHA384',
+                'ECDHE-RSA-AES256-GCM-SHA384',
+                'DHE-RSA-AES128-GCM-SHA256',
+                'DHE-RSA-AES256-GCM-SHA384'
             ]
 
-            if hasattr(ssl, 'PROTOCOL_TLSv1_3'):
-                ciphers.insert(0, ['GREASE_3A', 'GREASE_6A', 'AES128-GCM-SHA256', 'AES256-GCM-SHA256', 'AES256-GCM-SHA384', 'CHACHA20-POLY1305-SHA256'])
-
-            ctx = ssl.SSLContext(getattr(ssl, 'PROTOCOL_TLSv1_3', ssl.PROTOCOL_TLSv1_2))
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
 
             for cipher in ciphers:
                 try:
                     ctx.set_ciphers(cipher)
-                    self.cipherSuite = '{}:{}'.format(self.cipherSuite, cipher).rstrip(':')
+                    self.cipherSuite = '{}:{}'.format(self.cipherSuite, cipher).rstrip(':').lstrip(':')
                 except ssl.SSLError:
                     pass
 
@@ -131,7 +139,7 @@ class CloudScraper(Session):
         ourSuper = super(CloudScraper, self)
         resp = ourSuper.request(method, url, *args, **kwargs)
 
-        if resp.headers.get('Content-Encoding') == 'br':
+        if requests.packages.urllib3.__version__ < '1.25.1' and resp.headers.get('Content-Encoding') == 'br':
             if self.allow_brotli and resp._content:
                 resp._content = brotli.decompress(resp.content)
             else:
@@ -144,10 +152,11 @@ class CloudScraper(Session):
 
         # Check if Cloudflare anti-bot is on
         if self.isChallengeRequest(resp):
+            self.proxies = kwargs.get('proxies')
             if resp.request.method != 'GET':
                 # Work around if the initial request is not a GET,
                 # Supersede with a GET then re-request the original METHOD.
-                self.request('GET', resp.url)
+                self.request('GET', resp.url, proxies=self.proxies)
                 resp = ourSuper.request(method, url, *args, **kwargs)
             else:
                 # Solve Challenge
@@ -160,12 +169,13 @@ class CloudScraper(Session):
     @staticmethod
     def isChallengeRequest(resp):
         if resp.headers.get('Server', '').startswith('cloudflare'):
-            if b'why_captcha' in resp.content or b'/cdn-cgi/l/chk_captcha' in resp.content:
-                raise ValueError('Captcha')
-
             return (
-                resp.status_code in [429, 503]
-                and all(s in resp.content for s in [b'jschl_vc', b'jschl_answer'])
+                resp.status_code in [403, 429, 503]
+                and (
+                    all(s in resp.content for s in [b'jschl_vc', b'jschl_answer'])
+                    or
+                    all(s in resp.content for s in [b'why_captcha', b'/cdn-cgi/l/chk_captcha'])
+                )
             )
 
         return False
@@ -175,67 +185,56 @@ class CloudScraper(Session):
     def sendChallengeResponse(self, resp, **original_kwargs):
         body = resp.text
 
-        # Cloudflare requires a delay before solving the challenge
-        if not self.delay:
-            try:
-                delay = float(re.search(r'submit\(\);\r?\n\s*},\s*([0-9]+)', body).group(1)) / float(1000)
-                if isinstance(delay, (int, float)):
-                    self.delay = delay
-            except:  # noqa
-                pass
-
-        sleep(self.delay)
-
         parsed_url = urlparse(resp.url)
         domain = parsed_url.netloc
-        submit_url = '{}://{}/cdn-cgi/l/chk_jschl'.format(parsed_url.scheme, domain)
 
-        cloudflare_kwargs = deepcopy(original_kwargs)
+        params = OrderedDict()
 
-        try:
-            params = OrderedDict()
+        s = re.search(r'name="s"\svalue="(?P<s_value>[^"]+)', body)
+        if s:
+            params['s'] = s.group('s_value')
 
-            s = re.search(r'name="s"\svalue="(?P<s_value>[^"]+)', body)
-            if s:
-                params['s'] = s.group('s_value')
+        if b'/cdn-cgi/l/chk_captcha' in resp.content:
+            if not self.recaptcha or not isinstance(self.recaptcha, dict) or not self.recaptcha.get('provider'):
+                sys.tracebacklimit = 0
+                raise RuntimeError("Cloudflare reCaptcha detected, unfortunately you haven't loaded an anti reCaptcha provider correctly via the 'recaptcha' parameter.")
 
-            params.update(
-                [
-                    ('jschl_vc', re.search(r'name="jschl_vc" value="(\w+)"', body).group(1)),
-                    ('pass', re.search(r'name="pass" value="(.+?)"', body).group(1))
-                ]
-            )
+            submit_url = '{}://{}/cdn-cgi/l/chk_captcha'.format(parsed_url.scheme, domain)
+            self.recaptcha['proxies'] = self.proxies
+            params['g-recaptcha-response'] = reCaptcha.dynamicImport(self.recaptcha.get('provider').lower()).solveCaptcha(resp, self.recaptcha)
+        else:
+            # Cloudflare requires a delay before solving the challenge
+            if not self.delay:
+                try:
+                    delay = float(re.search(r'submit\(\);\r?\n\s*},\s*([0-9]+)', body).group(1)) / float(1000)
+                    if isinstance(delay, (int, float)):
+                        self.delay = delay
+                except:  # noqa
+                    pass
 
-            params = cloudflare_kwargs.setdefault('params', params)
-
-        except Exception as e:
-            raise ValueError('Unable to parse Cloudflare anti-bots page: {} {}'.format(e.message, BUG_REPORT))
-
-        # Solve the Javascript challenge
-        params['jschl_answer'] = JavaScriptInterpreter.dynamicImport(self.interpreter).solveChallenge(body, domain)
+            sleep(self.delay)
+            submit_url = '{}://{}/cdn-cgi/l/chk_jschl'.format(parsed_url.scheme, domain)
+            try:
+                params.update(
+                    [
+                        ('jschl_vc', re.search(r'name="jschl_vc" value="(\w+)"', body).group(1)),
+                        ('pass', re.search(r'name="pass" value="(.+?)"', body).group(1)),
+                        ('jschl_answer', JavaScriptInterpreter.dynamicImport(self.interpreter).solveChallenge(body, domain))
+                    ]
+                )
+            except Exception as e:
+                raise ValueError('Unable to parse Cloudflare anti-bots page: {} {}'.format(e.message, BUG_REPORT))
 
         # Requests transforms any request into a GET after a redirect,
         # so the redirect has to be handled manually here to allow for
         # performing other types of requests even as the first request.
 
+        cloudflare_kwargs = deepcopy(original_kwargs)
+        cloudflare_kwargs.setdefault('params', params)
         cloudflare_kwargs['allow_redirects'] = False
+        self.request(resp.request.method, submit_url, **cloudflare_kwargs)
 
-        redirect = self.request(resp.request.method, submit_url, **cloudflare_kwargs)
-        redirect_location = urlparse(redirect.headers['Location'])
-        if not redirect_location.netloc:
-            redirect_url = urlunparse(
-                (
-                    parsed_url.scheme,
-                    domain,
-                    redirect_location.path,
-                    redirect_location.params,
-                    redirect_location.query,
-                    redirect_location.fragment
-                )
-            )
-            return self.request(resp.request.method, redirect_url, **original_kwargs)
-
-        return self.request(resp.request.method, redirect.headers['Location'], **original_kwargs)
+        return self.request(resp.request.method, resp.url, **original_kwargs)
 
     ##########################################################################################################################################################
 
@@ -265,6 +264,7 @@ class CloudScraper(Session):
             delay=kwargs.pop('delay', None),
             interpreter=kwargs.pop('interpreter', 'js2py'),
             allow_brotli=kwargs.pop('allow_brotli', True),
+            recaptcha=kwargs.pop('recaptcha', {})
         )
 
         try:

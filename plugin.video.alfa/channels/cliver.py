@@ -15,7 +15,7 @@ from platformcode import config, logger, platformtools
 from channelselector import get_thumb
 
 direct_play = True
-IDIOMAS = {'es': 'ESP', 'lat': 'LAT', 'es_la': 'LAT', 'vose': 'SUB'}
+IDIOMAS = {'es': 'CAST', 'lat': 'LAT', 'es_la': 'LAT', 'vose': 'VOSE', 'ingles': 'VOS'}
 list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['openload', 'rapidvideo', 'directo']
@@ -97,9 +97,9 @@ def mainlist(item):
                     ))
     if type_content != 0:
         itemlist.append(item.clone(channel=item.channel,title="Por Canal",
-                        action="list_all",
+                        action="seccion",
                         thumbnail=get_thumb('tvshows', auto=True),
-                        url=xhr_list, page=0, tipo='networkSeries',
+                        url=host, page=0, tipo='networkSeries',
                         tmod=mod
                         ))
 
@@ -200,6 +200,7 @@ def list_all(item):
                             contentTitle = scrapedtitle,
                             content_id = content_id,
                             infoLabels = {'year': scrapedyear},
+                            language= list_langs
                             ))
 
     tmdb.set_infoLabels(itemlist, True)
@@ -215,12 +216,15 @@ def seccion(item):
     logger.info()
 
     itemlist = []
-    prefix = '<div class="generos">'
-    if "nero" not in item.title:
-        prefix = '<div class="anios">'
+    prefix = '<div class="anios">'
+    if "nero" in item.title:
+        prefix = '<div class="generos">'
+    elif "Canal" in item.title:
+        prefix = '<div class="networks">'
     data = get_source(item.url+item.tmod+'/', ctype=item.tmod)
     data = scrapertools.find_single_match(data, '%s(.*?)</div>' % prefix)
-    patron = '<li><a href="([^"]+)">(.*?)</a></li>'
+
+    patron = '<li><a href="([^"]+)".*?>(.*?)</a></li>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -262,6 +266,7 @@ def seasons(item):
                              title=title,
                              contentSeasonNumber=contentSeasonNumber,
                              infoLabels=infoLabels,
+                             context=filtertools.context(item, list_language)
                              ))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
