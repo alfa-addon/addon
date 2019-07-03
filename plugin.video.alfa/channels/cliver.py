@@ -223,7 +223,7 @@ def seccion(item):
         prefix = '<div class="networks">'
     data = get_source(item.url+item.tmod+'/', ctype=item.tmod)
     data = scrapertools.find_single_match(data, '%s(.*?)</div>' % prefix)
-    logger.error(data)
+
     patron = '<li><a href="([^"]+)".*?>(.*?)</a></li>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
