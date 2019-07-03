@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://gounlimited.to/embed-(.*?).html",
-        "url": "https://gounlimited.to/embed-\\1.html"
-      },
-      {
-        "pattern": "https://gounlimited.to/(\\w+)",
-        "url": "https://gounlimited.to/embed-\\1.html"
+        "pattern": "(https://www.tubst.net/embed/\\w+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "gounlimited",
-  "name": "gounlimited",
+  "id": "tubst",
+  "name": "tubst",
   "settings": [
     {
       "default": false,
@@ -42,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s31.postimg.cc/bsiaj2q2j/goo.png"
+  "thumbnail": ""
 }
