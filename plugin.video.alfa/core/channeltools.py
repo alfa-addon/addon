@@ -63,23 +63,6 @@ def get_channel_parameters(channel_name):
                 # Obtenemos si el canal tiene opciones de configuración
                 channel_parameters["has_settings"] = False
                 if 'settings' in channel_parameters:
-                    # if not isinstance(channel_parameters['settings'], list):
-                    #     channel_parameters['settings'] = [channel_parameters['settings']]
-
-                    # if "include_in_global_search" in channel_parameters['settings']:
-                    #     channel_parameters["include_in_global_search"] = channel_parameters['settings']
-                    #     ["include_in_global_search"].get('default', False)
-                    #
-                    # found = False
-                    # for el in channel_parameters['settings']:
-                    #     for key in el.items():
-                    #         if 'include_in' not in key:
-                    #             channel_parameters["has_settings"] = True
-                    #             found = True
-                    #             break
-                    #     if found:
-                    #         break
-
                     for s in channel_parameters['settings']:
                         if 'id' in s:
                             if s['id'] == "include_in_global_search":
@@ -91,20 +74,6 @@ def get_channel_parameters(channel_name):
                                 channel_parameters["has_settings"] = True
 
                     del channel_parameters['settings']
-
-                # Compatibilidad
-                if 'compatible' in channel_parameters:
-                    # compatible python
-                    python_compatible = True
-                    if 'python' in channel_parameters["compatible"]:
-                        import sys
-                        python_condition = channel_parameters["compatible"]['python']
-                        if sys.version_info < tuple(map(int, (python_condition.split(".")))):
-                            python_compatible = False
-
-                    channel_parameters["compatible"] = python_compatible
-                else:
-                    channel_parameters["compatible"] = True
 
                 dict_channels_parameters[channel_name] = channel_parameters
 
@@ -119,7 +88,6 @@ def get_channel_parameters(channel_name):
             channel_parameters["channel"] = ""
             channel_parameters["adult"] = False
             channel_parameters['active'] = False
-            channel_parameters["compatible"] = True
             channel_parameters["language"] = ""
             channel_parameters["update_url"] = DEFAULT_UPDATE_URL
             return channel_parameters
