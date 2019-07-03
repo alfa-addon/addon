@@ -58,7 +58,30 @@ def get_url_headers(url):
 
     return url + "|" + "&".join(["%s=%s" % (h, headers[h]) for h in headers])
 
+def set_cookies(dict_cookie, alfa_s=False):
+    """
+    Guarda una cookie especifica en cookies.dat
+    @param dict_cookie: diccionario de  donde se obtienen los parametros de la cookie
+        El dict debe contener:
+        name: nombre de la cookie
+        value: su valor/contenido
+        domain: dominio al que apunta la cookie
+    @type dict_cookie: dict
+    """
+    name = dict_cookie.get('name', '')
+    value = dict_cookie.get('value', '')
+    domain = dict_cookie.get('domain', '')
 
+    ck = cookielib.Cookie(version=0, name=name, value=value, port=None, 
+                    port_specified=False, domain=domain, 
+                    domain_specified=False, domain_initial_dot=False,
+                    path='/', path_specified=True, secure=False, 
+                    expires=None, discard=True, comment=None, comment_url=None, 
+                    rest={'HttpOnly': None}, rfc2109=False)
+    
+    cj.set_cookie(ck)
+    save_cookies()
+    
 def load_cookies(alfa_s=False):
     cookies_lock.acquire()
     if os.path.isfile(ficherocookies):
@@ -437,8 +460,9 @@ def downloadpage(url, **opt):
                             files = {'file': (opt.get('file_name', 'Default'), opt['file'])}
                             file_name = opt.get('file_name', 'Default') + ', Buffer de memoria'
                     
+                    info_dict = fill_fields_pre(url, opt, proxy_data, file_name)
                     if opt.get('only_headers', False):
-                    ### Makes the request with HEAD method
+                        ### Makes the request with HEAD method
                         req = session.head(url, allow_redirects=opt.get('follow_redirects', True),
                                           timeout=opt['timeout'])
                     else:
@@ -447,21 +471,27 @@ def downloadpage(url, **opt):
                                           files=files, timeout=opt['timeout'])
                 
                 elif opt.get('only_headers', False):
+                    info_dict = fill_fields_pre(url, opt, proxy_data, file_name)
                     ### Makes the request with HEAD method
                     req = session.head(url, allow_redirects=opt.get('follow_redirects', True),
                                       timeout=opt['timeout'])
                 else:
+                    info_dict = fill_fields_pre(url, opt, proxy_data, file_name)
                     ### Makes the request with GET method
                     req = session.get(url, allow_redirects=opt.get('follow_redirects', True),
                                       timeout=opt['timeout'])
 
             except Exception, e:
                 if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', ''):
-                    import traceback
-                    logger.error(traceback.format_exc(1))
+                    req = requests.Response()
                     response['data'] = ''
                     response['sucess'] = False
+                    info_dict.append(('Success', 'False'))
                     response['code'] = str(e)
+                    info_dict.append(('Response code', str(e)))
+                    info_dict.append(('Finalizado en', time.time() - inicio))
+                    if not opt.get('alfa_s', False):
+                        show_infobox(info_dict)
                     return type('HTTPResponse', (), response)
                 else:
                     req = requests.Response()
@@ -485,43 +515,12 @@ def downloadpage(url, **opt):
             response['json'] = dict()
         response['code'] = response_code
         response['headers'] = req.headers
-
-        info_dict.append(('Timeout', opt['timeout']))
-        info_dict.append(('URL', url))
-        info_dict.append(('Dominio', urlparse.urlparse(url)[1]))
-        info_dict.append(('Data Encoding', req.encoding))
-        if opt.get('post', None):
-            info_dict.append(('Peticion', 'POST' + proxy_data.get('stat', '')))
-        else:
-            info_dict.append(('Peticion', 'GET' + proxy_data.get('stat', '')))
-        info_dict.append(('Usar cookies', opt.get('cookies', True)))
-        info_dict.append(('Cookies', req.cookies))
-        info_dict.append(('Descargar Pagina', not opt.get('only_headers', False)))
-        if file_name: info_dict.append(('Fichero para Upload', file_name))
-        info_dict.append(('Fichero de cookies', ficherocookies))
-        info_dict.append(('Response code', response_code))
-
-        if response_code == 200:
-            info_dict.append(('Success', 'True'))
-            response['sucess'] = True
-        else:
-            info_dict.append(('Success', 'False'))
-            response['sucess'] = False
-
-        info_dict.append(('Response data length', len(response['data'])))
-
-        info_dict.append(('Request Headers', ''))
-        for header in req_headers:
-            info_dict.append(('- %s' % header, req_headers[header]))
-
-        info_dict.append(('Response Headers', ''))
-        for header in response['headers']:
-            info_dict.append(('- %s' % header, response['headers'][header]))
+        
+        info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
 
         if opt.get('cookies', True):
             save_cookies(alfa_s=opt.get('alfa_s', False))
 
-        info_dict.append(('Finalizado en', time.time() - inicio))
         is_channel = inspect.getmodule(inspect.currentframe().f_back)
         is_channel = scrapertools.find_single_match(str(is_channel), "<module '(channels).*?'")
         if is_channel and isinstance(response_code, int):
@@ -539,3 +538,54 @@ def downloadpage(url, **opt):
             break
 
     return type('HTTPResponse', (), response)
+
+def fill_fields_pre(url, opt, proxy_data, file_name):
+    info_dict = []
+    
+    try:
+        info_dict.append(('Timeout', opt['timeout']))
+        info_dict.append(('URL', url))
+        info_dict.append(('Dominio', urlparse.urlparse(url)[1]))
+        if opt.get('post', None):
+            info_dict.append(('Peticion', 'POST' + proxy_data.get('stat', '')))
+        else:
+            info_dict.append(('Peticion', 'GET' + proxy_data.get('stat', '')))
+        info_dict.append(('Descargar Pagina', not opt.get('only_headers', False)))
+        if file_name: info_dict.append(('Fichero para Upload', file_name))
+        info_dict.append(('Usar cookies', opt.get('cookies', True)))
+        info_dict.append(('Fichero de cookies', ficherocookies))
+    except:
+        import traceback
+        logger.error(traceback.format_exc(1))
+    
+    return info_dict
+    
+    
+def fill_fields_post(info_dict, req, response, req_headers, inicio):
+    try:
+        info_dict.append(('Cookies', req.cookies))
+        info_dict.append(('Data Encoding', req.encoding))
+        info_dict.append(('Response code', response['code']))
+
+        if response['code'] == 200:
+            info_dict.append(('Success', 'True'))
+            response['sucess'] = True
+        else:
+            info_dict.append(('Success', 'False'))
+            response['sucess'] = False
+
+        info_dict.append(('Response data length', len(response['data'])))
+
+        info_dict.append(('Request Headers', ''))
+        for header in req_headers:
+            info_dict.append(('- %s' % header, req_headers[header]))
+
+        info_dict.append(('Response Headers', ''))
+        for header in response['headers']:
+            info_dict.append(('- %s' % header, response['headers'][header]))
+        info_dict.append(('Finalizado en', time.time() - inicio))
+    except:
+        import traceback
+        logger.error(traceback.format_exc(1))
+    
+    return info_dict, response

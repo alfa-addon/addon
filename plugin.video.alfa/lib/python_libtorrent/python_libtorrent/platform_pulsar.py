@@ -54,7 +54,7 @@ def get_libname(platform):
                               'linux_armv7', 'linux_x86_64', 'ios_arm',
                               'linux_mipsel_ucs2', 'linux_mipsel_ucs4', 'linux_aarch64_ucs2', 'linux_aarch64_ucs4']:
         libname=['libtorrent.so']
-    elif platform['system'] == 'windows':
+    elif platform['system'] in ['windows', 'windows_x64']:                      ### Alfa
         libname=['libtorrent.pyd']
     elif platform['system'] in ['android_armv7', 'android_x86']:
         libname=['libtorrent.so', 'liblibtorrent.so']
@@ -162,10 +162,14 @@ def get_system(ret):
     ret["system"] = ''
     ret["message"] = ['', '']
 
-    if ret["os"] == 'windows':
+    if ret["os"] == 'windows' and ret["arch"] != "x64":                         ### Alfa
         ret["system"] = 'windows'
         ret["message"] = ['Windows has static compiled python-libtorrent included.',
                           'You should install "script.module.libtorrent" from "MyShows.me Kodi Repo"']
+    elif ret["os"] == 'windows' and ret["arch"] == "x64":                                                           ### Alfa
+        ret["system"] = 'windows_x64'                                                                               ### Alfa
+        ret["message"] = ['Windows x64 has static compiled python-libtorrent included.',                            ### Alfa
+                           'You should install "script.module.libtorrent" from "MyShows.me Kodi Repo"']             ### Alfa
     elif ret["os"] == "linux" and ret["arch"] == "x64":
         ret["system"] = 'linux_x86_64'
         ret["message"] = ['Linux x64 has not static compiled python-libtorrent included.',

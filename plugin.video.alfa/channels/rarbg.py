@@ -24,7 +24,7 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://rarbgmirror.xyz/'
+host = 'https://rarbgmirror.org/'
 channel = 'rarbg'
 categoria = channel.capitalize()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)

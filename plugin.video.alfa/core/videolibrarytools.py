@@ -186,9 +186,12 @@ def save_movie(item):
 
         # Si se ha marcado la opción de url de emergencia, se añade ésta a la película después de haber ejecutado Findvideos del canal
         try:
+            headers = {}
+            if item.headers:
+                headers = item.headers
             channel = generictools.verify_channel(item.channel)
             if config.get_setting("emergency_urls", channel) in [1, 3]:
-                item = emergency_urls(item, None, json_path)
+                item = emergency_urls(item, None, json_path, headers=headers)
                 if item_nfo.emergency_urls and not isinstance(item_nfo.emergency_urls, dict):
                     del item_nfo.emergency_urls
                 if not item_nfo.emergency_urls:
@@ -417,6 +420,9 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     if config.get_setting("enable_filter", "videolibrary"):
         tags = [x.strip() for x in config.get_setting("filters", "videolibrary").lower().split(",")]
     for e in episodelist:
+        headers = {}
+        if e.headers:
+            headers = e.headers
         if tags != [] and tags != None and any(tag in e.title.lower() for tag in tags):
             continue
         
@@ -435,9 +441,9 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                         if json_epi.emergency_urls:                         #si existen las urls de emergencia...
                             e.emergency_urls = json_epi.emergency_urls      #... las copiamos
                         else:                                               #y si no...
-                            e = emergency_urls(e, channel, json_path)       #... las generamos
+                            e = emergency_urls(e, channel, json_path, headers=headers)  #... las generamos
                 else:
-                    e = emergency_urls(e, channel, json_path)               #Si el episodio no existe, generamos las urls
+                    e = emergency_urls(e, channel, json_path, headers=headers)  #Si el episodio no existe, generamos las urls
                 if e.emergency_urls:                                        #Si ya tenemos urls...
                     emergency_urls_succ = True                              #... es un éxito y vamos a marcar el .nfo
             elif emergency_urls_stat == 2 and e.contentType == 'episode':   #Borramos urls de emergencia?
@@ -446,7 +452,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             elif emergency_urls_stat == 3 and e.contentType == 'episode':   #Actualizamos urls de emergencia?
                 if not silent:
                     p_dialog.update(0, 'Cacheando enlaces y archivos .torrent...', e.title)     #progress dialog
-                e = emergency_urls(e, channel, json_path)                   #generamos las urls
+                e = emergency_urls(e, channel, json_path, headers=headers)  #generamos las urls
                 if e.emergency_urls:                                        #Si ya tenemos urls...
                     emergency_urls_succ = True                              #... es un éxito y vamos a marcar el .nfo
             
@@ -759,7 +765,7 @@ def add_tvshow(item, channel=None):
                 xbmc_videolibrary.sync_trakt_addon(path)
 
 
-def emergency_urls(item, channel=None, path=None):
+def emergency_urls(item, channel=None, path=None, headers={}):
     logger.info()
     import re
     """ 
@@ -811,7 +817,7 @@ def emergency_urls(item, channel=None, path=None):
                 if item_res.post: post = item_res.post
                 for url in item_res.emergency_urls[0]:                      #Recorremos las urls de emergencia...
                     torrents_path = re.sub(r'(?:\.\w+$)', '_%s.torrent' % str(i).zfill(2), path)
-                    path_real = caching_torrents(url, referer, post, torrents_path=torrents_path)      #...  para descargar los .torrents
+                    path_real = caching_torrents(url, referer, post, torrents_path=torrents_path, headers=headers)  #...  para descargar los .torrents
                     if path_real:                                           #Si ha tenido éxito...
                         item_res.emergency_urls[0][i-1] = path_real.replace(videolibrary_path, '')  #se guarda el "path" relativo
                     i += 1
@@ -836,7 +842,7 @@ def emergency_urls(item, channel=None, path=None):
     return item_res                                             #Devolvemos el Item actualizado con los enlaces de emergencia
     
     
-def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=10, lookup=False, data_torrent=False):
+def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=10, lookup=False, data_torrent=False, headers={}):
     if torrents_path != None:
         logger.info("path = " + torrents_path)
     else:
@@ -847,7 +853,8 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
     import re
     from core import httptools
     torrent_file = ''
-    headers = {'Content-Type': 'application/x-www-form-urlencoded', 'Referer': referer} #Necesario para el Post del .Torrent
+    if referer:
+        headers.update({'Content-Type': 'application/x-www-form-urlencoded', 'Referer': referer})   #Necesario para el Post del .Torrent
     
     """
     Descarga en el path recibido el .torrent de la url recibida, y pasa el decode
@@ -875,10 +882,10 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
     
     try:
         #Descargamos el .torrent
-        if referer and post:                                            #Descarga con POST
+        if post:                                                        #Descarga con POST
             response = httptools.downloadpage(url, headers=headers, post=post, follow_redirects=False, timeout=timeout)
         else:                                                           #Descarga sin post
-            response = httptools.downloadpage(url, timeout=timeout)
+            response = httptools.downloadpage(url, headers=headers, timeout=timeout)
         if not response.sucess:
             logger.error('Archivo .torrent no encontrado: ' + url)
             torrents_path = ''
