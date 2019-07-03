@@ -1227,6 +1227,11 @@ def play_torrent(item, xlistitem, mediaurl):
                         'temp_torrents_Alfa')):                             #Si no existe la carpeta temporal, la creamos
             filetools.mkdir(filetools.join(videolibrary_path, 'temp_torrents_Alfa'))
 
+        # Si hay headers, se pasar a la petición de descarga del .torrent
+        headers = {}
+        if item.headers:
+            headers = item.headers
+        
         #identificamos si es una url o un path de archivo.  Los Magnets los tratamos de la forma clásica       
         if not item.url.startswith("\\") and not item.url.startswith("/") and not item.url.startswith("magnet:") and not url_stat:
             timeout = 10
@@ -1236,8 +1241,8 @@ def play_torrent(item, xlistitem, mediaurl):
             if item.referer: referer = item.referer
             if item.post: post = item.post
             #Descargamos el .torrent
-            size, url, torrent, rar_files = generictools.get_torrent_size(item.url, \
-                        referer, post, torrents_path=torrents_path, timeout=timeout, lookup=False)
+            size, url, torrent, rar_files = generictools.get_torrent_size(item.url, referer, post, \
+                        torrents_path=torrents_path, timeout=timeout, lookup=False, headers=headers)
             if url:
                 url_stat = True
                 item.url = url
@@ -1503,6 +1508,7 @@ def wait_for_download(rar_files, torr_client):
     for rar_name in rar_names:                                                  # Preparamos por si es un archivo multiparte
         cmd.append(['%s' % unrar_path, 'l', '%s' % filetools.join(save_path_videos, folder, rar_name)])
     
+    creationflags = ''
     if xbmc.getCondVisibility("system.platform.Windows"):
         creationflags = 0x08000000
     loop = 30                                                                   # Loop inicial de 5 minutos hasta crear archivo
@@ -1651,7 +1657,10 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None):
         # Analizamos si es necesaria una contraseña, que debería estar en item.password
         if archive.needs_password():
             if not password:
-                password = xbmcgui.Dialog().input(heading="Introduzca la contraseña")
+                pass_path = filetools.split(file_path)[0]
+                password = last_password_search(pass_path)
+            if not password :
+                password = dialog_input(heading="Introduce la contraseña (Mira en %s)" % pass_path)
                 if not password:
                     return rar_file, False, '', ''
             archive.setpassword(password)
@@ -1749,6 +1758,35 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None):
                     log("##### Archivo extraído: %s" % video_list[0])
                     dialog_notification("Archivo extraído...", video_list[0], time=10000)
                     return str(video_list[0]), True, save_path_videos, erase_file_path
+
+
+def last_password_search(pass_path):
+    logger.info()
+    import traceback
+    import re
+    from core import filetools, scrapertools, httptools
+    
+    # Busca en el Path de extracción si hay algún archivo que contenga la URL donde pueda estar la CONTRASEÑA
+    password = ''
+    patron_url = '(http.*\:\/\/(?:www.)?\w+\.\w+\/.*?[\n|\r|$])'
+    patron_pass = '<input\s*type="text"\s*id="txt_password"\s*name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"'
+    
+    try:
+        pass_path_list = filetools.listdir(pass_path)
+        for file in pass_path_list:
+            if 'contrase' in file.lower() and '.rar' not in file:
+                file_pass = filetools.read(filetools.join(pass_path, file))
+                url = scrapertools.find_single_match(file_pass, patron_url)
+                if url:
+                    data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url).data)
+                    password = scrapertools.find_single_match(data, patron_pass)
+            if password:
+                break
+    except:
+        log(traceback.format_exc(1))
+    
+    log("##### Contraseña extraída: %s" % password)
+    return password
 
 
 def log(texto):

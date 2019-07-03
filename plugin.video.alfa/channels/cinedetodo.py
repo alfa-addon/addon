@@ -129,11 +129,11 @@ def newest(categoria):
     item = Item()
     try:
         if categoria == 'peliculas':
-            item.url = host + 'movies/'
+            item.url = host + 'peliculas/'
         elif categoria == 'infantiles':
-            item.url = host + "genre/cine-animacion/"
+            item.url = host + "genero/animacion/"
         elif categoria == 'terror':
-            item.url = host + "genre/cine-terror/"
+            item.url = host + "genero/terror/"
         else:
             return []
 
@@ -163,9 +163,9 @@ def peliculas(item):
     except:
         pass
     patron = '<div class="poster">(.*?)<img src="([^"]+)" alt="([^"]+)">.*?'  # langs, img, title.strip() movies
-    patron += '<span class="icon-star2"></span> (.*?)</div>.*?' #rating
+    patron += '<span class="icon-star2"></span> ([^<]+)</div>.*?' #rating
     patron += '</div><a href="([^"]+)">.*?<span>(\d+)</span>.*?'  # url, year
-    patron += '<div class="texto">(.*?)</div>(.*?)</article>'  # plot, info
+    patron += '<div class="texto">([^<]+)</div>(.*?)</article>'  # plot, info
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for langs, scrapedthumbnail, scrapedtitle, rating, scrapedurl, year, plot, info in matches:

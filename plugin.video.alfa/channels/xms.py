@@ -2,6 +2,7 @@
 
 import re
 import urlparse
+import base64
 
 from core import channeltools
 from core import httptools
@@ -12,7 +13,7 @@ from platformcode import config, logger
 
 __channel__ = "xms"
 
-host = 'https://xtheatre.org'
+host = 'https://xtheatre.org/'
 host1 = 'https://www.cam4.com/'
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -149,10 +150,10 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = 'data-lazy-src="([^"]+)".*?'                            # img
-    patron += '</noscript><a href="([^"]+)".*?'                      # url
-    patron += '<span>([^<]+)</span></a>.*?'                          # title
-    patron += '<span class="nb_cat border-radius-5">([^<]+)</span>'  # num_vids
+    patron = 'data-lazy-src="([^"]+)".*?'
+    patron += '<a href="([^"]+)".*?'
+    patron += '<span>([^<]+)</span></a>.*?'
+    patron += '<span class="nb_cat border-radius-5">([^<]+)</span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedthumbnail, scrapedurl, scrapedtitle, vids in matches:
@@ -211,13 +212,33 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
-    patron = '<iframe src="[^"]+".*?<iframe src="([^"]+)" scrolling="no" frameborder="0"'
+    patron = 'src="([^"]+)" allowfullscreen="true">'
     matches = scrapertools.find_multiple_matches(data, patron)
-
     for url in matches:
-        server = servertools.get_server_from_url(url)
-        title = "Ver en: [COLOR yellow](%s)[/COLOR]" % server.title()
-
-        itemlist.append(item.clone(action='play', title=title, server=server, url=url))
-
+        if "strdef" in url: 
+            url = decode_url(url)
+            if "strdef" in url:
+                url = httptools.downloadpage(url).url
+    server = servertools.get_server_from_url(url)
+    title = "Ver en: [COLOR yellow](%s)[/COLOR]" % server.title()
+    itemlist.append(item.clone(action='play', title=title, server=server, url=url))
     return itemlist
+
+
+def decode_url(txt):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(txt).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    rep = True
+    while rep == True:
+        b64_data = scrapertools.find_single_match(data, '\(dhYas638H\("([^"]+)"\)')
+        if b64_data:
+            b64_url = base64.b64decode(b64_data + "=")
+            b64_url = base64.b64decode(b64_url + "==")
+            data = b64_url
+        else:
+            rep = False
+    url = scrapertools.find_single_match(b64_url, '<iframe src="([^"]+)"')
+    logger.debug (url)
+    return url

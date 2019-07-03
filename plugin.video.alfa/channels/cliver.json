@@ -28,9 +28,10 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "ESP",
+        "CAST",
         "LAT",
-        "VOSE"
+        "VOSE",
+        "VOS"
       ]
     },
     {

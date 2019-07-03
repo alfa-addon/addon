@@ -192,7 +192,14 @@ def get_environment():
             lib_path = 'Inactivo'
         environment['torrentcli_unrar'] = config.get_setting("unrar_path", server="torrent", default="")
         if environment['torrentcli_unrar']:
-            unrar = 'Activo'
+            if xbmc.getCondVisibility("system.platform.Android"):
+                unrar = 'Android'
+            else:
+                unrar, bin = filetools.split(environment['torrentcli_unrar'])
+                unrar = unrar.replace('\\', '/')
+                if not unrar.endswith('/'):
+                    unrar = unrar + '/'
+                unrar = scrapertools.find_single_match(unrar, '\/([^\/]+)\/$').capitalize()
         else:
             unrar = 'Inactivo'
         torrent_id = config.get_setting("torrent_client", server="torrent", default=0)
@@ -473,7 +480,7 @@ def paint_env(item, environment={}):
         - Descompresión automática de archivos RAR?
         - Está activo Libtorrent?
         - Se descomprimen los RARs en background?
-        - Está operativo el módulo UnRAR?
+        - Está operativo el módulo UnRAR? Qué plataforma?
     """
     torrent_error = """\
     Muestra los datos del error de importación de [COLOR yellow]Libtorrent[/COLOR]
