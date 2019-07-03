@@ -42,12 +42,8 @@ def categorias(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<a itemprop="url" href="/([^"]+)".*?'
     patron += 'title="([^"]+)">.*?'
-    if "/pornstars/" in item.url:
-        patron += '<img itemprop="image" src=([^"]+) alt=.*?'
-        patron += '</svg>([^<]+)<'
-    else:
-        patron += '<img itemprop="image" src="([^"]+)" alt=.*?'
-        patron += '</svg>([^<]+)<'
+    patron += 'data-src="([^"]+)" alt=.*?'
+    patron += '</svg>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
         scrapedplot = ""
@@ -74,13 +70,13 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a itemprop="url" href="([^"]+)" data-video-id="\d+" title="([^"]+)">.*?'
-    patron += '<img itemprop="thumbnailUrl" src="([^"]+)".*?'
+    patron += 'data-src="([^"]+)".*?'
     patron += '</svg>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad  in matches:
+    for scrapedurl,scrapedtitle,scrapedthumbnail,scrapedtime  in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
-        cantidad = re.compile("\s+", re.DOTALL).sub(" ", cantidad)
-        title = "[COLOR yellow]" + cantidad + "[/COLOR] " + scrapedtitle
+        scrapedtime = scrapedtime.strip()
+        title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         contentTitle = title
         thumbnail = scrapedthumbnail
         plot = ""
@@ -92,7 +88,7 @@ def lista(item):
     next_page = "?page=" + str(num)
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title=next_page, text_color="blue", url=next_page) )
+        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 def play(item):

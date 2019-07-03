@@ -59,7 +59,7 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<div class="icnt">.*?'
+    patron = '<div class="icnt.*?'
     patron += '<a href="([^"]+)".*?'
     patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
     patron += '<div class="bg"></div>([^<]+)</time>'
