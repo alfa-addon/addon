@@ -151,10 +151,10 @@ def search_results(item):
     full_data = get_source(item.url)
     data = scrapertools.find_single_match(full_data, '<div class="search-results">(.*?)<h4')
 
-    patron = '<a href="([^"]+)".*?<img src="([^"]+)".*?alt="([^"]+)"'
+    patron = '<a href="([^"]+)" title="([^"]+)"><img src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
+    for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
 
         url = scrapedurl
         title = re.sub('online|Audio|Latino', '', scrapedtitle)
@@ -256,14 +256,14 @@ def findvideos(item):
 
     data = get_source(item.url)
     #return
-    patron = 'video\[\d+\] = \'<iframe src="([^"]+)"'
+    patron = 'video\[\d+\] = \'<iframe.*?src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl in matches:
 
         if 'animeboom' in scrapedurl:
             new_data = get_source(scrapedurl)
-            scrapedurl = scrapertools.find_single_match(new_data, 'src:"([^,]+)",')
+            scrapedurl = scrapertools.find_single_match(new_data, "'file':'([^']+)")
 
         if scrapedurl != '':
             itemlist.append(Item(channel=item.channel, title='%s', url=scrapedurl, action='play', language = item.language,

@@ -4,12 +4,10 @@
 # -*- By the Alfa Develop Group -*-
 
 import re
-import urllib
 import base64
 
 from channelselector import get_thumb
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
@@ -127,7 +125,7 @@ def list_all(item):
     data = get_source(item.url)
 
     if item.type ==  'movie':
-        patron = '<article id="post-\d+" class="item movies"><div class="poster">\s?<img src="([^"]+)" alt="([^"]+)">.*?'
+        patron = '<article id="post-\d+" class="item movies"><div class="poster">.*?<img src="([^"]+)" alt="([^"]+)">.*?'
         patron += '"quality">([^<]+)</span><\/div>\s?<a href="([^"]+)">.*?</h3>.*?<span>([^<]+)</'
         matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -151,7 +149,7 @@ def list_all(item):
                                 infoLabels={'year':year}))
 
     elif item.type ==  'tv':
-        patron = '<article id="post-\d+" class="item tvshows"><div class="poster">\s?<img src="([^"]+)" '
+        patron = '<article id="post-\d+" class="item tvshows"><div class="poster">.*?<img src="([^"]+)" '
         patron += 'alt="([^"]+)">.*?<a href="([^"]+)">.*?</h3>.*?<span>([^<]+)</'
         matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -222,6 +220,7 @@ def episodesxseasons(item):
 
     data=get_source(item.url)
     data = data.replace('"','\'')
+
     patron="class='numerando'>%s - (\d+)</div><div class='episodiotitle'>.?<a href='([^']+)'>([^<]+)<" % item.infoLabels['season']
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -244,7 +243,6 @@ def episodesxseasons(item):
 def findvideos(item):
     logger.info()
     from lib import generictools
-    import urllib
     itemlist = []
     data = get_source(item.url)
     data = data.replace("'",'"')
@@ -261,7 +259,6 @@ def findvideos(item):
             title = ''
 
         post = {'action': 'doo_player_ajax', 'post': id, 'nume': option, 'type':type}
-        post = urllib.urlencode(post)
 
         test_url = '%swp-admin/admin-ajax.php' % host
         new_data = httptools.downloadpage(test_url, post=post, headers={'Referer':item.url}).data
@@ -294,10 +291,8 @@ def findvideos(item):
 
             for st, vt, tk in matches:
                 post = {'streaming':st, 'validtime':vt, 'token':tk}
-                post = urllib.urlencode(post)
                 new_url = '%sedge-data/' % 'https://peliculonhd.net/'
-                new_data = httptools.downloadpage(new_url, post, headers = {'Referer':test_url}).data
-                json_data = jsontools.load(new_data)
+                json_data = httptools.downloadpage(new_url, post=post, headers = {'Referer':test_url}).json
                 if 'peliculonhd' not in json_data['url']:
                     url = json_data['url']
                 else:

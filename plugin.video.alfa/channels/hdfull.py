@@ -158,7 +158,7 @@ def items_usuario(item):
     logger.info()
     itemlist = []
     ## Carga estados
-    status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
+    status = httptools.downloadpage(host + '/a/status/all').json
     ## Fichas usuario
     url = item.url.split("?")[0]
     post = item.url.split("?")[1]
@@ -168,8 +168,7 @@ def items_usuario(item):
     post = post.replace("start=" + old_start, "start=" + start)
     next_page = url + "?" + post
     ## Carga las fichas de usuario
-    data = httptools.downloadpage(url, post=post).data
-    fichas_usuario = jsontools.load(data)
+    fichas_usuario = httptools.downloadpage(url, post=post).json
     for ficha in fichas_usuario:
         try:
             title = ficha['title']['es'].strip()
@@ -239,7 +238,7 @@ def fichas(item):
     textoidiomas=''
     infoLabels=dict()
     ## Carga estados
-    status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
+    status = httptools.downloadpage(host + '/a/status/all').json
 
     if item.title == "Buscar...":
         data = agrupa_datos(httptools.downloadpage(item.url, post=item.extra).data)
@@ -322,7 +321,7 @@ def episodios(item):
     id = "0"
     itemlist = []
     ## Carga estados
-    status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
+    status = httptools.downloadpage(host + '/a/status/all').json
     url_targets = item.url
     if "###" in item.url:
         id = item.url.split("###")[1].split(";")[0]
@@ -361,8 +360,7 @@ def episodios(item):
         ssid = scrapertools.find_single_match(scrapedurl, "temporada-(\d+)")
         post = "action=season&start=0&limit=0&show=%s&season=%s" % (sid, ssid)
         url = host + "/a/episodes"
-        data = httptools.downloadpage(url, post=post).data
-        episodes = jsontools.load(data)
+        episodes = httptools.downloadpage(url, post=post).json
         for episode in episodes:
             thumbnail = host + "/thumbs/" + episode['thumbnail']
             language = episode['languages']
@@ -409,7 +407,7 @@ def novedades_episodios(item):
     logger.info()
     itemlist = []
     ## Carga estados
-    status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
+    status = httptools.downloadpage(host + '/a/status/all').json
     ## Episodios
     url = item.url.split("?")[0]
     post = item.url.split("?")[1]
@@ -417,8 +415,7 @@ def novedades_episodios(item):
     start = "%s" % (int(old_start) + 24)
     post = post.replace("start=" + old_start, "start=" + start)
     next_page = url + "?" + post
-    data = httptools.downloadpage(url, post=post).data
-    episodes = jsontools.load(data)
+    episodes = httptools.downloadpage(url, post=post).json
     for episode in episodes:
         thumbnail = host + "/thumbs/" + episode['thumbnail']
         temporada = episode['season']
@@ -505,7 +502,7 @@ def findvideos(item):
     it2 = []
 
     ## Carga estados
-    status = jsontools.load(httptools.downloadpage(host + '/a/status/all').data)
+    status = httptools.downloadpage(host + '/a/status/all').json
     url_targets = item.url
 
     ## Vídeos

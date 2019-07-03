@@ -3,11 +3,9 @@
 import re
 
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
-from core import jsontools
 from core.item import Item
 from platformcode import config, logger
 from channels import filtertools
@@ -187,8 +185,7 @@ def busqueda(item):
     itemlist = []
     headers = {'referer':host, 'X-Requested-With': 'XMLHttpRequest',
                'Accept': 'application/json, text/javascript, */*; q=0.01'}
-    data = httptools.downloadpage(item.url, headers=headers).data
-    dict_data = jsontools.load(data)
+    dict_data = httptools.downloadpage(item.url, headers=headers).json
     resultados = dict_data['data']['m']
 
     for resultado in resultados:

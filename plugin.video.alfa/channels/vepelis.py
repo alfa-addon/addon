@@ -7,7 +7,6 @@ import urllib
 from core import scrapertools
 from core import httptools
 from core import servertools
-from core import jsontools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
@@ -148,6 +147,7 @@ def listado2(item):
 
     # Descarga la página
     data = get_source(item.url)
+    data = data.decode('iso-8859-1')
     patron = '<h2 class="titpeli.*?<a href="([^"]+)" title="([^"]+)">.*?peli_img_img">.*?'
     patron +='<img src="([^"]+)" alt.*?<p>([^<]+)</p>.*?Genero.*?:.*?(\d{4})<.*?png".*?\/>([^<]+)<.*?: (.*?)<'
 
@@ -186,8 +186,7 @@ def findvideos(item):
     new_url = '%s%s' % (host, 'playeropstream/api.php')
     post = {'h': video_id}
     post = urllib.urlencode(post)
-    data = httptools.downloadpage(new_url, post=post).data
-    json_data = jsontools.load(data)
+    json_data = httptools.downloadpage(new_url, post=post).json
     url = json_data['url']
     server = servertools.get_server_from_url(url)
     title = '%s' % server

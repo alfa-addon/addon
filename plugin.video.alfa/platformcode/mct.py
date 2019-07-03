@@ -16,7 +16,7 @@ import traceback
 import xbmc
 import xbmcgui
 
-from platformcode import config
+from platformcode import config, platformtools
 LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", default='')
 
 try:
@@ -110,6 +110,14 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
     save_path_videos = os.path.join( DOWNLOAD_PATH , "MCT-torrent-videos" )
     save_path_torrents = os.path.join( DOWNLOAD_PATH , "MCT-torrents" )
     if not os.path.exists( save_path_torrents ): os.mkdir(save_path_torrents)
+    video_path = ''
+    if item:
+        if item.contentType == 'movie':
+            video_path = '%s-%s' % (item.contentTitle, item.infoLabels['tmdb_id'])
+        else:
+            video_path = '%s-%sx%s-%s' % (item.contentSerieName, item.contentSeason, \
+                            item.contentEpisodeNumber, item.infoLabels['tmdb_id'])
+        item.rar_path = video_path
 
     # -- Usar - archivo torrent desde web, magnet o HD ---------
     if not os.path.isfile(url) and not url.startswith("magnet"):
@@ -242,12 +250,17 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
     if len_files == 0:
         dp = xbmcgui.Dialog().ok("No se puede reproducir", "El torrent no contiene ningún archivo de vídeo")
 
-    if _index == -1:
-        _index = _index_file
+    if _index < 0:
+        log("##### rar_parts = %s #########" % str(video_file))
+        log("##### video_size = %s #########" % str(video_size))
+        log("##### _index = %s #########" % str(_index))
+        if _index == -1:
+            _index = _index_file
+            video_size = _size_file
         video_file = _video_file
-        video_size = _size_file
 
     _video_file_ext = os.path.splitext( _video_file )[1]
+    log("##### _video_file ## %s ##" % str(_video_file))
     log("##### _video_file_ext ## %s ##" % _video_file_ext)
 
     dp_cerrado = True
@@ -258,14 +271,16 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
         if "/" in filename:
             filename = filename.split("/")[1]
         if RAR:
-            platformtools.dialog_notification("Encontrado archivo rar... ",
-                                        "Tamaño: %.2f MB. Cancelar en menú Descargas" % (video_size / 1048576.0))
+            xbmcgui.Dialog().notification("Encontrado archivo .RAR de %.2f MB" % (video_size / 1048576.0),
+                                        "Puedes realizar otras tareas en Kodi mientrastanto. " + \
+                                        "Te informaremos...", time=10000)
             dialog = True
         else:
-            dialog = xbmcgui.Dialog().yesno("Encontrado archivo rar...", "Nombre: %s" % filename,
+            dialog = xbmcgui.Dialog().yesno("Encontrado archivo .RAR...", "Nombre: %s" % filename,
                                         "Tamaño: %.2f MB" % (video_size / 1048576.0),
                                         "¿Descargar en segundo plano? Cancelar en menú Descargas")
         if dialog:
+            #BUFFER = 10
             dp_cerrado = False
             dp = xbmcgui.DialogProgressBG()
             dp.create('Alfa-MCT')
@@ -319,7 +334,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
 
     ren_video_file = ""
     # -- Doble bucle anidado ------------------------------------
-    # -- Descarga - Primer bucle                                -
+    # -- Descarga - Primer bucle
     while not h.is_seed():
         s = h.status()
 
@@ -339,13 +354,13 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
         if s.state == 1: download = 1
 
         if (s.state == 5 or s.state == 4) and rar:
-            #config.set_setting("background_download", False, "mct")
-            #config.set_setting("mct_background_download", "false")
-            video_file, rar, play_file = extract_files(video_file, save_path_videos, password, dp)
+            video_file, rar, play_file = extract_files(video_file, save_path_videos, password, dp, item=item)
             dp.close()
             if not play_file:
-                remove_files( download, torrent_file, video_file, ses, h )
+                remove_files( download, torrent_file, erase_file_path, ses, h )
                 return
+            is_view = "Ok"
+            save_path_videos = play_file
 
         # -- Player - play --------------------------------------
         # -- Comprobar si se han completado las piezas para el  -
@@ -372,6 +387,11 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
             is_view = "Ok"
             dp.close()
 
+        if is_view == "Ok":
+            # -- Esperando a que termine otra reproducción --------------------------
+            while xbmc.Player().isPlaying():
+                xbmc.sleep(3000)
+                
             # -- Player - Ver el vídeo --------------------------
             playlist = xbmc.PlayList( xbmc.PLAYLIST_VIDEO )
             playlist.clear()
@@ -408,7 +428,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
 
             # -- Segundo bucle - Player - Control de eventos ----
             while player.isPlaying():
-                xbmc.sleep(100)
+                xbmc.sleep(500)
 
                 # -- Añadir subTítulos
                 if subtitle!="" and not _sub:
@@ -424,7 +444,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
                 # -- Control 'pause' automático                 -
                 continuous_pieces = count_completed_continuous_pieces(h, piece_set)
 
-                if xbmc.Player().isPlaying():
+                if xbmc.Player().isPlaying() and not rar:
 
                     # -- Porcentage del progreso del vídeo ------
                     # -- En kodi 18.x se debe controlar         -
@@ -462,7 +482,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
                     dp.close()
 
                 # -- Mostrar el diálogo de progreso -------------
-                if player.paused and dp_cerrado:
+                if player.paused and dp_cerrado and not rar:
                     # -- Crear diálogo si no existe -------------
                     if not player.statusDialogoProgress:
                         dp = xbmcgui.DialogProgress()
@@ -510,7 +530,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
         # -- Continuar | Terminar                               -
         if is_view == "Ok" and not xbmc.Player().isPlaying():
 
-            if info.num_files() == 1:
+            if info.num_files() == 1 or rar:
                 # -- Diálogo continuar o terminar ---------------
                 d = xbmcgui.Dialog()
                 ok = d.yesno('Alfa-MCT', 'XBMC-Kodi Cerró el vídeo.', '¿Continuar con la sesión?')
@@ -524,8 +544,9 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
                 # -- Comprobar si el vídeo pertenece a una ------
                 # -- lista de archivos                          -
                 _index, video_file, video_size, len_files = get_video_files_sizes( info )
-                if _index == -1 or len_files == 1:
+                if _index < 0 or len_files == 1:
                     # -- Diálogo eliminar archivos --------------
+                    video_file = _video_file
                     remove_files( download, torrent_file, video_file, ses, h, ren_video_file )
                     return
                 else:
@@ -547,8 +568,9 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
             # -- Comprobar si el vídeo pertenece a una lista de -
             # -- archivos                                       -
             _index, video_file, video_size, len_files = get_video_files_sizes( info )
-            if _index == -1 or len_files == 1:
+            if _index < 0 or len_files == 1:
                 # -- Diálogo eliminar archivos ------------------
+                video_file = _video_file
                 remove_files( download, torrent_file, video_file, ses, h, ren_video_file )
                 return
             else:
@@ -644,6 +666,10 @@ def get_video_files_sizes( info ):
     opciones = {}
     vfile_name = {}
     vfile_size = {}
+    rar_parts = 0
+    rar_size = 0
+    vid_parts = 0
+    vid_size = 0
 
     # -- Eliminar errores con tíldes -----------------------------
     for i, f in enumerate( info.files() ):
@@ -663,6 +689,13 @@ def get_video_files_sizes( info ):
         if "/" in _file_name: _file_name = _file_name.split('/')[1]
 
         _file_ext = os.path.splitext( _title )[1]
+        
+        if '.rar' in _file_ext or '.zip' in _file_ext:
+            rar_parts += 1
+            rar_size += _size
+        else:
+            vid_parts += 1
+            vid_size += _size
 
         if _file_ext in extensions_list:
             index = len(opciones)
@@ -677,14 +710,19 @@ def get_video_files_sizes( info ):
             opciones[i] = _caption
 
     if len(opciones) > 1:
-        d = xbmcgui.Dialog()
-        seleccion = d.select("Alfa-MCT: Lista de vídeos", opciones.values())
+        if rar_parts > 1:
+            seleccion = -1
+            index = -9
+            return index, rar_parts, rar_size, len(opciones)
+        else:
+            d = xbmcgui.Dialog()
+            seleccion = d.select("Alfa-MCT: Lista de vídeos", opciones.values())
     else: seleccion = 0
 
     index = opciones.keys()[seleccion]
     if seleccion == -1:
-        vfile_name[seleccion] = ""
-        vfile_size[seleccion] = 0
+        vfile_name[seleccion] = vid_parts
+        vfile_size[seleccion] = vid_size
         index = seleccion
 
     return index, vfile_name[seleccion], vfile_size[seleccion], len(opciones)
@@ -715,12 +753,22 @@ def remove_files( download, torrent_file, video_file, ses, h, ren_video_file="" 
             # -- Borrar carpeta/archivos y sesión - vídeo -------
             ses.remove_torrent( h, 1 )
             if extracted_rar:
-                video_name = ren_video_file
-                if "/" in video_name: video_name = video_name.split("/")[1]
-                d = xbmcgui.Dialog()
-                ok = d.yesno('Alfa-MCT', 'Borrar el archivo extraído', video_name)
-                if ok:
+                log("##### erase_file_path: %s" % erase_file_path)
+                video_name = erase_file_path
+                if os.path.isdir(video_name):
+                    shutil.rmtree(video_name, ignore_errors=True)
+                elif os.path.exists(ren_video_file) and os.path.isfile(ren_video_file): 
                     os.remove(ren_video_file)
+            else:
+                if os.path.exists(ren_video_file) and os.path.isfile(ren_video_file): 
+                    os.remove(ren_video_file)
+            """
+            if "/" in video_name: video_name = video_name.split("/")[1]
+            d = xbmcgui.Dialog()
+            ok = d.yesno('Alfa-MCT', 'Borrar el archivo extraído', video_name)
+            if ok:
+                os.remove(ren_video_file)
+            """
             log("### End session #########")
         else:
             # -- Borrar sesión ----------------------------------
@@ -735,103 +783,193 @@ def remove_files( download, torrent_file, video_file, ses, h, ren_video_file="" 
 
 
 # -- Preguntar si se desea extraer el rar descargado -----------------
-def extract_files(rar_file, save_path_videos, password, dp):
+def extract_files(rar_file, save_path_videos, password, dp, item=None):
+    if xbmc.getCondVisibility("system.platform.Android"):
+        return rar_file, True, False
     import rarfile
     import sys
     reload(sys)
     sys.setdefaultencoding('latin1')
 
     if sys.platform == "win32" or sys.platform == "cygwin":
-        rarfile.UNRAR_TOOL = os.path.join(config.get_runtime_path(), 'lib', 'UnRAR.exe')
+        rarfile.UNRAR_TOOL = os.path.join(config.get_runtime_path(), 'lib', 'rarfiles', 'windows', 'UnRAR.exe')
+    if xbmc.getCondVisibility("system.platform.Android"):
+        rarfile.UNRAR_TOOL = xbmc.executebuiltin("StartAndroidActivity(com.rarlab.rar)")
     rarfile.DEFAULT_CHARSET = 'latin1'
+    
+    if item.rar_path and '/' in rar_file:
+        folders = rar_file.split("/")
+        log("##### rar_file: %s" % rar_file)
+        if os.path.exists(os.path.join(save_path_videos, folders[0])):
+            src = os.path.join(save_path_videos, folders[0])
+            dst = os.path.join(save_path_videos, item.rar_path)
+            for x in range(5):
+                xbmc.sleep(1000)
+                try:
+                    os.rename(src, dst)
+                except:
+                    log("##### src: %s" % src)
+                    log("##### dst: %s" % dst)
+                    log(traceback.format_exc(1))
+                else:
+                    if os.path.exists(dst):
+                        rar_file = item.rar_path + '/' + folders[1]
+                        break
+    
     if "/" in rar_file:
         folders = rar_file.split("/")
+        global erase_file_path
+        erase_file_path = os.path.join(save_path_videos, folders[0])
         file_path = save_path_videos
         for f in folders:
             file_path = os.path.join(file_path, f)
     else:
         file_path = os.path.join(save_path_videos, rar_file)
+        global erase_file_path
+        erase_file_path = save_path_videos
 
-    try:
-        archive = rarfile.RarFile(file_path.decode("utf8"))
-    except:
-        import traceback
-        log("##### Archivo rar: %s" % rar_file)
-        log("##### Carpeta del rar: %s" % file_path)
-        log(traceback.format_exc())
-        xbmcgui.Dialog().notification("Error al abrir el rar", "Comprueba el log para más detalles")
-        return rar_file, True, False
-
-    if archive.needs_password():
-        if not password:
-            password = xbmcgui.Dialog().input(heading="Introduzca la contraseña")
-            if not password:
-                return rar_file, True, False
-        archive.setpassword(password)
-
-    files = archive.infolist()
-    info = []
-    for idx, i in enumerate(files):
-        if i.file_size == 0:
-            files.pop(idx)
-            continue
-        filename = i.filename
-        if "/" in filename:
-            filename = filename.rsplit("/", 1)[1]
-
-        info.append("%s - %.2f MB" % (filename, i.file_size / 1048576.0))
-    if info:
-        info.append("Extraer todo sin reproducir")
-    else:
-        xbmcgui.Dialog().notification("El rar está vacío", "O no contiene archivos válidos")
-        return rar_file, True, False
-
-    selection = xbmcgui.Dialog().select("Selecciona el fichero a extraer y reproducir", info)
-    if selection < 0:
-        return rar_file, True, False
-    else:
-        try:
-            log("##### INI #####")
-            if selection == len(info) - 1:
-                log("##### rar_file 1: %s" % rar_file)
-                log("##### save_path_videos 1: %s" % save_path_videos)
-                dp.update(99, "Extrayendo archivos...", "Espera unos segundos....")
-                archive.extractall(save_path_videos)
-                xbmcgui.Dialog().notification("Archivos extraídos en...", save_path_videos, time=10000)
-                return rar_file, True, False
+    log("##### file_path: %s" % file_path)
+    if "/" in rar_file:
+        folders = rar_file.split("/")
+        for f in folders:
+            if not '.rar' in f:
+                save_path_videos = os.path.join(save_path_videos, f)
             else:
-                log("##### rar_file 2: %s" % rar_file)
-                log("##### save_path_videos 2: %s" % save_path_videos)
-                dp.update(99, "Espera unos segundos....", "Extrayendo archivo... %s" % info[selection])
-                archive.extract(files[selection], save_path_videos)
-            log("##### END #####")
-        except (rarfile.RarWrongPassword, rarfile.RarCRCError):
-            xbmcgui.Dialog().notification("Error al extraer", "Contraseña incorrecta")
-            return rar_file, True, False
-        except rarfile.BadRarFile:
-            xbmcgui.Dialog().notification("Error al extraer", "Archivo rar con errores")
-            return rar_file, True, False
+                global erase_path_videos
+                erase_path_videos = save_path_videos
+    save_path_videos = os.path.join(save_path_videos, 'Extract')
+    if not os.path.exists(save_path_videos): os.mkdir(save_path_videos)
+    log("##### save_path_videos: %s" % save_path_videos)
+    xbmcgui.Dialog().notification("Empezando descompresión...", rar_file, time=5000)
+    
+    # Permite hasta 5 pasadas de descompresión de .RARs anidados
+    for x in range(5):
+        try:
+            archive = rarfile.RarFile(file_path.decode("utf8"))
         except:
-            import traceback
-            log("##### Archivo rar 2: %s" % rar_file)
-            log("##### Carpeta de destino 2: %s" % save_path_videos)
-            log(traceback.format_exc())
-            xbmcgui.Dialog().notification("Error al extraer", "Comprueba el log para más detalles")
+            log("##### Archivo rar: %s" % rar_file)
+            log("##### Carpeta del rar: %s" % file_path)
+            log(traceback.format_exc(1))
+            xbmcgui.Dialog().notification("Error al abrir el rar", "Comprueba el log para más detalles")
             return rar_file, True, False
 
-        extensions_list = ['.aaf', '.3gp', '.asf', '.avi', '.flv', '.mpeg',
-                           '.m1v', '.m2v', '.m4v', '.mkv', '.mov', '.mpg',
-                           '.mpe', '.mp4', '.ogg', '.wmv']
-        _file_ext = os.path.splitext(files[selection].filename)[1]
-        if _file_ext in extensions_list:
-            global extracted_rar
-            extracted_rar = True
-            return files[selection].filename, False, True
-        elif _file_ext == ".rar":
-            extract_files(files[selection].filename, save_path_videos, password, dp)
+        if archive.needs_password():
+            if not password:
+                password = xbmcgui.Dialog().input(heading="Introduzca la contraseña")
+                if not password:
+                    return rar_file, True, False
+            archive.setpassword(password)
+
+        files = archive.infolist()
+        info = []
+        for idx, i in enumerate(files):
+            if i.file_size == 0:
+                files.pop(idx)
+                continue
+            filename = i.filename
+            if "/" in filename:
+                filename = filename.rsplit("/", 1)[1]
+
+            info.append("%s - %.2f MB" % (filename, i.file_size / 1048576.0))
+        if info:
+            info.append("Extraer todo sin reproducir")
         else:
-            xbmcgui.Dialog().notification("No se puede reproducir", "El archivo no es de vídeo")
+            xbmcgui.Dialog().notification("El rar está vacío", "O no contiene archivos válidos")
             return rar_file, True, False
+
+        #selection = xbmcgui.Dialog().select("Selecciona el fichero a extraer y reproducir", info)
+        selection = len(info) - 1
+        if selection < 0:
+            return rar_file, True, False
+        else:
+            try:
+                log("##### INI #####")
+                if selection == len(info) - 1:
+                    log("##### rar_file 1: %s" % rar_file)
+                    log("##### save_path_videos 1: %s" % save_path_videos)
+                    dp.update(99, "Extrayendo archivos...", "Espera unos minutos....")
+                    archive.extractall(save_path_videos)
+                    #xbmcgui.Dialog().notification("Archivos extraídos en...", save_path_videos, time=10000)
+                    #return rar_file, True, False
+                else:
+                    log("##### rar_file 2: %s" % rar_file)
+                    log("##### save_path_videos 2: %s" % save_path_videos)
+                    dp.update(99, "Espera unos segundos....", "Extrayendo archivo... %s" % info[selection])
+                    archive.extract(files[selection], save_path_videos)
+                log("##### END #####")
+            except (rarfile.RarWrongPassword, rarfile.RarCRCError):
+                xbmcgui.Dialog().notification("Error al extraer", "Contraseña incorrecta")
+                return rar_file, True, False
+            except rarfile.BadRarFile:
+                xbmcgui.Dialog().notification("Error al extraer", "Archivo rar con errores")
+                return rar_file, True, False
+            except:
+                log("##### Archivo rar 2: %s" % rar_file)
+                log("##### Carpeta de destino 2: %s" % save_path_videos)
+                log(traceback.format_exc(1))
+                xbmcgui.Dialog().notification("Error al extraer", "Comprueba el log para más detalles")
+                return rar_file, True, False
+
+            extensions_list = ['.aaf', '.3gp', '.asf', '.avi', '.flv', '.mpeg',
+                               '.m1v', '.m2v', '.m4v', '.mkv', '.mov', '.mpg',
+                               '.mpe', '.mp4', '.ogg', '.wmv']
+            """   
+            _file_ext = os.path.splitext(files[selection].filename)[1]
+            if _file_ext in extensions_list:
+                global extracted_rar
+                extracted_rar = True
+                return files[selection].filename, False, True
+            elif _file_ext == ".rar":
+                extract_files(files[selection].filename, save_path_videos, password, dp)
+            else:
+                xbmcgui.Dialog().notification("No se puede reproducir", "El archivo no es de vídeo")
+                return rar_file, True, False
+
+            """
+            
+            folder = True
+            file_result = os.listdir(save_path_videos)
+            while folder:
+                for file_r in file_result:
+                    log("##### file_r: %s" % str(file_r))
+                    if os.path.isdir(os.path.join(save_path_videos, file_r)):
+                        file_result_alt = os.listdir(os.path.join(save_path_videos, file_r))
+                        if file_result_alt:
+                            file_result = file_result_alt
+                            save_path_videos = os.path.join(save_path_videos, file_r)
+
+                        else:
+                            folder = False
+                        break
+                else:
+                    folder = False
+
+            log("##### file_result: %s" % file_result)
+            if '.rar' in str(file_result):
+                for file_r in file_result:
+                    if '.rar' in file_r:
+                        rar_file = file_r
+                        file_path = str(os.path.join(save_path_videos, rar_file))
+                        log("##### file_path: %s" % file_path)
+                        save_path_videos = os.path.join(save_path_videos, 'Extract')
+                        if not os.path.exists(save_path_videos): os.mkdir(save_path_videos)
+                        log("##### save_path_videos: %s" % save_path_videos)
+                        xbmcgui.Dialog().notification("Siguiente descompresión...", rar_file, time=5000)
+                        
+            else:
+                video_list = []
+                for file_r in file_result:
+                    if os.path.splitext(file_r)[1] in extensions_list:
+                        video_list += [file_r]
+                if len(video_list) == 0:
+                    xbmcgui.Dialog().notification("El rar está vacío", "O no contiene archivos válidos")
+                    return rar_file, True, False
+                else:
+                    log("##### Archivo extraído: %s" % video_list[0])
+                    xbmcgui.Dialog().notification("Archivo extraído...", video_list[0], time=10000)
+                    global extracted_rar
+                    extracted_rar = True
+                    return str(video_list[0]), False, save_path_videos                                  
 
 
 # -- Descargar de la web los datos para crear el torrent --------
@@ -878,7 +1016,7 @@ def set_priority_pieces(h, _index, video_file, video_size,
                         porcent4first_pieces, porcent4last_pieces, allocate):
 
     for i, _set in enumerate(h.file_priorities()):
-        if i != _index:
+        if i != _index and _index != -9:
             h.file_priority(i,0)
         else:
             h.file_priority(i,0)

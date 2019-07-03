@@ -4,38 +4,20 @@
 # --------------------------------------------------------------------------------
 
 
-# Fix para error de validación del certificado del tipo:
-# [downloadpage] Response code: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:661)>
-# [downloadpage] Response error: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:661)
-# Fix desde la página: https://stackoverflow.com/questions/27835619/urllib-and-ssl-certificate-verify-failed-error
-#-----------------------------------------------------------------------
-import ssl
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    # Legacy Python that doesn't verify HTTPS certificates by default
-    pass
-else:
-    # Handle target environment that doesn't support HTTPS verification
-    ssl._create_default_https_context = _create_unverified_https_context
-#-----------------------------------------------------------------------
-
-
 import inspect
 import cookielib
-import gzip
 import os
 import time
 import urllib
-import urllib2
 import urlparse
-from StringIO import StringIO
 from threading import Lock
-
 import json
+from core.jsontools import to_utf8
 from platformcode import config, logger
 from platformcode.logger import WebErrorException
 import scrapertools
+import requests
+from lib import cloudscraper
 
 ## Obtiene la versión del addon
 __version = config.get_addon_version()
@@ -47,7 +29,7 @@ ficherocookies = os.path.join(config.get_data_path(), "cookies.dat")
 
 # Headers por defecto, si no se especifica nada
 default_headers = dict()
-default_headers["User-Agent"] = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3163.100 Safari/537.36"
+default_headers["User-Agent"] = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
 default_headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
 default_headers["Accept-Language"] = "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3"
 default_headers["Accept-Charset"] = "UTF-8"
@@ -333,8 +315,7 @@ def proxy_post_processing(url, proxy_data, response, opt):
 def downloadpage(url, **opt):
     logger.info()
 
-    import requests
-    from lib import cloudscraper
+
 
     """
         Abre una url y retorna los datos obtenidos
@@ -403,9 +384,9 @@ def downloadpage(url, **opt):
         files = {}
         file_name = ''
         opt['proxy_retries_counter'] += 1
-
-        #session = requests.Session()
+        
         session = cloudscraper.create_scraper()
+        session.verify = False
         if opt.get('cookies', True):
             session.cookies = cj
         session.headers.update(req_headers)
@@ -456,9 +437,19 @@ def downloadpage(url, **opt):
                             files = {'file': (opt.get('file_name', 'Default'), opt['file'])}
                             file_name = opt.get('file_name', 'Default') + ', Buffer de memoria'
                     
-                    ### Makes the request with POST method
-                    req = session.post(url, data=payload, allow_redirects=opt.get('follow_redirects', True),
-                                       files=files, timeout=opt['timeout'])
+                    if opt.get('only_headers', False):
+                    ### Makes the request with HEAD method
+                        req = session.head(url, allow_redirects=opt.get('follow_redirects', True),
+                                          timeout=opt['timeout'])
+                    else:
+                        ### Makes the request with POST method
+                        req = session.post(url, data=payload, allow_redirects=opt.get('follow_redirects', True),
+                                          files=files, timeout=opt['timeout'])
+                
+                elif opt.get('only_headers', False):
+                    ### Makes the request with HEAD method
+                    req = session.head(url, allow_redirects=opt.get('follow_redirects', True),
+                                      timeout=opt['timeout'])
                 else:
                     ### Makes the request with GET method
                     req = session.get(url, allow_redirects=opt.get('follow_redirects', True),
@@ -485,9 +476,11 @@ def downloadpage(url, **opt):
         response_code = req.status_code
 
         response['data'] = req.content
-        if not response['data']: response['data'] = ''
+        response['url'] = req.url
+        if not response['data']:
+            response['data'] = ''
         try:
-            response['json'] = req.json()
+            response['json'] = to_utf8(req.json())
         except:
             response['json'] = dict()
         response['code'] = response_code
@@ -517,21 +510,26 @@ def downloadpage(url, **opt):
 
         info_dict.append(('Response data length', len(response['data'])))
 
-        info_dict.append(('Headers', ''))
+        info_dict.append(('Request Headers', ''))
         for header in req_headers:
             info_dict.append(('- %s' % header, req_headers[header]))
+
+        info_dict.append(('Response Headers', ''))
+        for header in response['headers']:
+            info_dict.append(('- %s' % header, response['headers'][header]))
 
         if opt.get('cookies', True):
             save_cookies(alfa_s=opt.get('alfa_s', False))
 
+        info_dict.append(('Finalizado en', time.time() - inicio))
         is_channel = inspect.getmodule(inspect.currentframe().f_back)
         is_channel = scrapertools.find_single_match(str(is_channel), "<module '(channels).*?'")
         if is_channel and isinstance(response_code, int):
             if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', ''):
                 if response_code > 399:
+                    show_infobox(info_dict)
                     raise WebErrorException(urlparse.urlparse(url)[1])
 
-        info_dict.append(('Finalizado en', time.time() - inicio))
         if not 'api.themoviedb' in url and not opt.get('alfa_s', False):
             show_infobox(info_dict)
 

@@ -6,7 +6,11 @@ from distutils.core import setup
 import glob
 import py2exe
 
-setup(packages=['channels','servers','lib','platformcode','platformcode/controllers'],
+setup(
+      packages=['channels','servers','lib','platformcode','platformcode/controllers','lib/urllib3','lib/urllib3/packages','lib/urllib3/util',
+                'lib/requests',
+                'lib/cloudscraper','lib/cloudscraper/interpreters','lib/cloudscraper/user_agent'
+               ],
       data_files=[("channels",glob.glob("channels\\*.py")),
                   ("channels",glob.glob("channels\\*.json")),
                   ("servers",glob.glob("servers\\*.py")),

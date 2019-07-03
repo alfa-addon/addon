@@ -46,7 +46,7 @@ clone_list_random = []                                                          
 
 if host_index == 0:                                                             #Si el clones es "Aleatorio"...
     i = 0
-    j = 0                                                                   #... marcamos el último de los clones "buenos"
+    j = 1                                                                   #... marcamos el último de los clones "buenos"
     for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
         if i <= j and active_clone == "1":
             clone_list_random += [clone_list[i]]                            #... añadimos el clone activo "bueno" a la lista
@@ -495,7 +495,7 @@ def alfabeto(item):
     
     data = scrapertools.find_single_match(data, patron)
 
-    patron = '<a href="([^"]+)"[^>]+>([^>]+)</a>'
+    patron = '<a href="([^"]+)"[^>]*>([^>]*)</a>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:
@@ -589,10 +589,10 @@ def listado(item):
     page_extra = clase
 
     #Scrapea los datos de cada vídeo.  Título alternativo se mantiene, aunque no se usa de momento
-    patron = '<a href="([^"]+).*?'                                              # la url
-    patron += 'title="([^"]+).*?'                                               # el titulo
-    patron += '<img.*?src="([^"]+)"[^>]+>.*?'                                   # el thumbnail
-    patron += '<h2.*?>(.*?)?<\/h2>'                                     # titulo alternativo.  Se trunca en títulos largos
+    patron = '<a href="([^"]+)"\s*'                                             # la url
+    patron += 'title="([^"]+)"[^>]*>\s*'                                        # el titulo
+    patron += '<img.*?src="([^"]+)"[^>]*>\s*'                                   # el thumbnail
+    patron += '<h2.*?>(.*?)?<\/h2>\s*'                                          # titulo alternativo.  Se trunca en títulos largos
     patron += '<span>([^<].*?)?<'                                               # la calidad
     matches = re.compile(patron, re.DOTALL).findall(fichas)
     if not matches:                                                             #error
@@ -609,7 +609,10 @@ def listado(item):
 
     # Identifico la página actual y el total de páginas para el pie de página
     patron_last_page  = '<a href="[^"]+\/(\d+)">Last<\/a><\/li>'
-    total_pag  = scrapertools.find_single_match(data, patron_last_page)
+    if item.total_pag:
+        total_pag = item.total_pag
+    else:
+        total_pag  = scrapertools.find_single_match(data, patron_last_page)
 
     if not item.post_num:
         post_num = 1
@@ -618,7 +621,8 @@ def listado(item):
     if not total_pag:
         total_pag = 1
     #Calcula las páginas del canal por cada página de la web
-    total_pag = int(total_pag) * int((float(len(matches))/float(cnt_tot)) + 0.999999)
+    if not item.total_pag:
+        total_pag = int(total_pag) * int((float(len(matches))/float(cnt_tot)) + 0.999999)
     
     # Preparamos la paginación.
     if not item.cnt_pag:
@@ -668,6 +672,8 @@ def listado(item):
             del item_local.category
         if item_local.intervencion:
             del item_local.intervencion
+        if item_local.total_pag:
+            del item_local.total_pag
 
         item_local.title = ''
         item_local.context = "['buscar_trailer']"
@@ -906,7 +912,7 @@ def listado(item):
                     title="[COLOR gold][B]Pagina siguiente >> [/B][/COLOR]" + 
                     str(post_num) + " de " + str(total_pag), url=url_next_page, 
                     next_page=next_page, cnt_pag=cnt_pag, post_num=post_num, 
-                    pag=pag, modo=modo, extra=item.extra))
+                    total_pag=total_pag, pag=pag, modo=modo, extra=item.extra))
                 
     #logger.debug(url_next_page + " / " + next_page + " / " + str(matches_cnt) + 
     #                " / " + str(cnt_pag)+ " / " + str(total_pag)  + " / " + str(pag)  
@@ -1051,12 +1057,12 @@ def listado_busqueda(item):
             pattern = '<a href="(?P<scrapedurl>[^"]+)"\s?'                      #url
             pattern += 'title="(?P<scrapedtitle>[^"]+)"[^>]*>'                  #título
             pattern += '<img[^>]*src="(?P<scrapedthumbnail>[^"]+)"?.*?'         #thumb
-            pattern += '<\/h2><\/a>\s*<span.*?">(?P<calidad>.*?)?'                 #calidad
+            pattern += '<\/h2>\s*<\/a>\s*<span.*?">(?P<calidad>.*?)?'           #calidad
             pattern += '<(?P<year>.*?)?'                                        #año
             pattern += '>Tama.*?\s(?P<size>\d+[.|\s].*?[GB|MB])?\s?<\/strong>'  #tamaño (significativo para peliculas)
         else:
-            pattern = '<li[^>]*><a href="(?P<scrapedurl>[^"]+).*?'              #url
-            pattern += 'title="(?P<scrapedtitle>[^"]+).*?'                      #título
+            pattern = '<li[^>]*>\s*<a href="(?P<scrapedurl>[^"]+)"\s*'          #url
+            pattern += 'title="(?P<scrapedtitle>[^"]+)">\s*'                    #título
             pattern += '<img.*?src="(?P<scrapedthumbnail>[^"]+)?".*?'           #thumb
             pattern += '<h2.*?(?P<calidad>\[.*?)?<\/h2.*?'                      #calidad
             pattern += '<span.*?>\d+-\d+-(?P<year>\d{4})?<\/span>*.?'           #año
@@ -1767,8 +1773,9 @@ def findvideos(item):
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
     
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
-    if not data or not scrapertools.find_single_match(data, patron) or not \
-                videolibrarytools.verify_url_torrent(url_torr, timeout=timeout):    # Si no hay datos o url, error
+    size = ''
+    size = generictools.get_torrent_size(url_torr, timeout=timeout)             #Buscamos si hay .torrent y el tamaño
+    if not data or not scrapertools.find_single_match(data, patron) or not size:    # Si no hay datos o url, error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
             item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)  #Llamamos al método para el pintado del error
@@ -1846,15 +1853,10 @@ def findvideos(item):
     url_torr = urlparse.urljoin(torrent_tag, scrapertools.find_single_match(data, patron))
     if not url_torr.startswith("http"):                                         #Si le falta el http.: lo ponemos
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
-        
-    # Si tiene contraseña, la guardamos
-    patron_pass = '<input\s*type="text"\s*id="txt_password"\s*name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"'
-    if scrapertools.find_single_match(data, patron_pass):
-        item.password = scrapertools.find_single_match(data, patron_pass)
-    
+
     #buscamos el tamaño del .torrent
-    size = ''
-    size = scrapertools.find_single_match(data, '<div class="entry-left".*?><a href=' + \
+    if not size:
+        size = scrapertools.find_single_match(data, '<div class="entry-left".*?><a href=' + \
                     '".*?span class=.*?>Size:<\/strong>?\s(\d+?\.?\d*?\s\w[b|B])<\/span>')
     if not size:                                                                #Para planetatorrent
         size = scrapertools.find_single_match(data, '<div class="fichas-box"><div class=' + \
@@ -1870,16 +1872,22 @@ def findvideos(item):
                         .replace('Mb', 'M·b').replace('.', ',')
     item.quality = re.sub(r'\s\[\d+,?\d*?\s\w\s?[b|B]\]', '', item.quality)     #Quitamos size de calidad, si lo traía
     
+    # Si tiene contraseña, la guardamos
+    patron_pass = '<input\s*type="text"\s*id="txt_password"\s*name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"'
+    if scrapertools.find_single_match(data, patron_pass):
+        item.password = scrapertools.find_single_match(data, patron_pass)
+    
+    item.torrent_info = '%s' % size                                             #Agregamos size
+    if not item.unify:
+        item.torrent_info = '[%s]' % item.torrent_info.strip().strip(',')
+    
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     if not item.videolibray_emergency_urls:
         item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Generamos una copia de Item para trabajar sobre ella
     item_local = item.clone()
-    item_local.torrent_info = '%s' % size                                       #Agregamos size
-    if not item.unify:
-        item_local.torrent_info = '[%s]' % item_local.torrent_info.strip().strip(',')
-    
+
     # Verificamos la url torrent o usamos la de emergencia
     if not item.armagedon:
         item_local.url = url_torr
@@ -1888,7 +1896,7 @@ def findvideos(item):
         item_local.url = item_local.url.replace(" ", "%20")                     #sustituimos espacios por %20, por si acaso
     
         if item_local.url and item.emergency_urls:                              #la url no está verificada
-            item_local.torrent_alt = item.emergency_urls[0][0]              #Guardamos la url del .Torrent ALTERNATIVA
+            item_local.torrent_alt = item.emergency_urls[0][0]                  #Guardamos la url del .Torrent ALTERNATIVA
         
     if not item_local.url:                                                      #error en url?
         logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha " + 
@@ -2335,7 +2343,7 @@ def episodios(item):
         pattern = '<li[^>]*><div class.*?src="(?P<thumb>[^"]+)?".*?<a class.*?'
         pattern += 'href="(?P<url>[^"]+).*?<h3[^>]+>(?P<info>.*?)?<\/h3>.*?<\/li>'
     else:
-        pattern = '<li[^>]*><a href="(?P<url>[^"]+).*?<img.*?src="(?P<thumb>[^"]+)?"'
+        pattern = '<li[^>]*>\s*<a href="(?P<url>[^"]+)"\s*title="[^>]+>\s*<img.*?src="(?P<thumb>[^"]+)?"'
         pattern += '.*?<h2[^>]+>(?P<info>.*?)?<\/h2>'
             
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
@@ -2415,8 +2423,8 @@ def episodios(item):
             pattern = '<li[^>]*><div class.*?src="(?P<thumb>[^"]+)?".*?<a class.*?'
             pattern += 'href="(?P<url>[^"]+).*?<h3[^>]+>(?P<info>.*?)?<\/h3>.*?<\/li>'
         else:
-            pattern = '<li[^>]*><a href="(?P<url>[^"]+).*?<img.*?src="(?P<thumb>[^"]+)'
-            pattern += '?".*?<h2[^>]+>(?P<info>.*?)?<\/h2>'
+            pattern = '<li[^>]*>\s*<a href="(?P<url>[^"]+)"\s*title="[^>]+>\s*<img.*?src="(?P<thumb>[^"]+)?"'
+            pattern += '.*?<h2[^>]+>(?P<info>.*?)?<\/h2>'
         matches = re.compile(pattern, re.DOTALL).findall(data)
         if not matches:                                                         #error
             logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " 

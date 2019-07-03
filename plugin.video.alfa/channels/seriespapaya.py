@@ -8,7 +8,6 @@ import urlparse
 from channels import filtertools
 from channelselector import get_thumb
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
@@ -213,7 +212,7 @@ def seasons(item):
     patron = '>&rarr; Temporada (\d+) '
 
     matches = re.compile(patron, re.DOTALL).findall(data)
-    logger.error(matches)
+
     if len(matches) == 1:
         return episodios(item)
     elif len(matches) < 1:
@@ -278,8 +277,7 @@ def search(item, texto):
     logger.info("texto: %s" % texto)
     itemlist = []
     infoLabels = ()
-    data = httptools.downloadpage(urlparse.urljoin(HOST, "/buscar.php?term=%s" % texto)).data
-    data_dict = jsontools.load(data)
+    data_dict = httptools.downloadpage(urlparse.urljoin(HOST, "/buscar.php?term=%s" % texto)).json
     try:
         tvshows = data_dict["myData"]
     except:
@@ -345,6 +343,11 @@ def findvideos(item):
 
 def play(item):
     logger.info("play: %s" % item.url)
+    itemlist = []
+    if not 'seriespapaya.' in item.url:
+        itemlist.append(item.clone())
+        item = servertools.get_servers_itemlist(itemlist)
+        return itemlist
     itemlist = []
     data = httptools.downloadpage(item.url).data
     if item.server not in ['openload', 'streamcherry', 'streamango']:

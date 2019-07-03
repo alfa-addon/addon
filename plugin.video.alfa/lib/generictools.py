@@ -1195,7 +1195,7 @@ def post_tmdb_findvideos(item, itemlist):
         del item.intervencion
     
     #Pintamos el pseudo-título con toda la información disponible del vídeo
-    itemlist.append(item.clone(action="", server = "", title=title_gen, folder=False))  #Título con todos los datos del vídeo
+    itemlist.append(item.clone(action="", title=title_gen, folder=False))       #Título con todos los datos del vídeo
     
     if item.action == 'show_result':                                            #Viene de una búsqueda global
         channel = item.channel.capitalize()
@@ -1221,8 +1221,10 @@ def post_tmdb_findvideos(item, itemlist):
                     action="buscartrailer", context=""))
         
     #Si tiene contraseña, la pintamos
+    if 'RAR-' in item.torrent_info and not item.password:
+        item = find_rar_password(item)
     if item.password:
-        itemlist.append(item.clone(action="", server = "", title="[COLOR magenta][B] Contraseña: [/B][/COLOR]'" 
+        itemlist.append(item.clone(action="", title="[COLOR magenta][B] Contraseña: [/B][/COLOR]'" 
                     + item.password + "'", folder=False))
     
     #logger.debug(item)
@@ -1230,7 +1232,71 @@ def post_tmdb_findvideos(item, itemlist):
     return (item, itemlist)
     
     
-def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torrent=False, timeout=5, file_list=False, lookup=True):
+def find_rar_password(item):
+    logger.info()
+    
+    # Si no hay, buscamos en páginas alternativas
+    rar_search = [
+                 ['1', 'https://descargas2020.org/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
+                                ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
+                 ['1', 'https://pctnew.org/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
+                                ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
+                 ['1', 'http://www.tvsinpagar.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-0', 'capitulo-'], \
+                                ['capitulos-0', 'capitulos-']]], 
+                 ['2', 'https://grantorrent.net/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
+                                ['-temporada', '/temporada'], ['^((?!serie).)*$', 'None'], \
+                                ['.net\/', '.net/descargar/peliculas-castellano/'], ['\/$', '/blurayrip-ac3-5-1/']]]
+    ]
+    
+    url_host = scrapertools.find_single_match(item.url, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
+    url_host_act = url_host
+    url_password = item.url
+    
+    for y in ['2', '1']:
+        for active, clone_id, regex_list, regex_url_list in rar_search:
+            x = str(y)
+            if item.password: break
+            if active != x: continue
+            if x == '2' and clone_id not in url_host: continue
+            url_password = url_password.replace(url_host_act, clone_id)
+            url_host_act = scrapertools.find_single_match(url_password, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
+
+            for regex, regex_rep in regex_url_list:
+                if regex_rep == 'None':
+                    if scrapertools.find_single_match(url_password, regex):
+                        continue
+                    else:
+                        break
+                if regex:
+                    url_password = re.sub(regex, regex_rep, url_password)
+            if 'grantorrent' in url_password:
+                if item.contentType == 'episode':
+                    url_password = '%scapitulo-%s/' % (url_password, item.contentEpisodeNumber)
+            
+            if x != '1': continue
+            if url_host == clone_id: continue
+            try:
+                data_password = ''
+                data_password = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url_password).data)
+                data_password = data_password.replace("$!", "#!").replace("'", "\"").replace("Ã±", "ñ").replace("//pictures", "/pictures")
+            except:
+                logger.error(traceback.format_exc(1))
+            
+            for regex_alt in regex_list:
+                for regex in regex_alt:
+                    if scrapertools.find_single_match(data_password, regex):
+                        item.password = scrapertools.find_single_match(data_password, regex)
+                        break
+    
+    logger.info('Contraseña vídeo: %s' % item.password)
+    return item
+
+
+def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torrent=False, \
+                        timeout=5, file_list=False, lookup=True, local_torr=None):
     logger.info()
     from core import videolibrarytools
     
@@ -1315,6 +1381,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     #Móludo principal
     size = ''
     torrent = ''
+    torrent_file = ''
     files = {}
     try:
         #torrents_path = config.get_videolibrary_path() + '/torrents'            #path para dejar el .torrent
@@ -1326,10 +1393,11 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
         #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
         
-        torrents_path, torrent_file = videolibrarytools.caching_torrents(url, \
+        if url:
+            torrents_path, torrent_file = videolibrarytools.caching_torrents(url, \
                         referer=referer, post=post, torrents_path=torrents_path, \
                         timeout=timeout, lookup=lookup, data_torrent=True)
-        if not torrent_file:
+        if not torrent_file and not local_torr:
             if not lookup:
                 return (size, torrents_path, torrent, files)
             elif file_list and data_torrent:
@@ -1339,6 +1407,8 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
             elif data_torrent:
                 return (size, torrent)
             return size                                         #Si hay un error, devolvemos el "size" y "torrent" vacíos
+        elif local_torr:
+            torrent_file = filetools.read(local_torr)
 
         torrent = decode(torrent_file)                                          #decodificamos el .torrent
 
@@ -1359,6 +1429,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                 size = convert_size(sizet)
                 
                 files = torrent["info"]["files"]
+                files.append({"__name": torrent["info"]["name"], 'length': 0})
                 
             except:
                 pass
