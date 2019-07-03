@@ -29,7 +29,7 @@ from net import HTTP
 
 if xbmc.getCondVisibility("system.platform.windows") and (sys.maxsize > 2 ** 32 and "x64" or "x86") == 'x64':       ### Alfa
     #__libbaseurl__ = 'https://extra.alfa-addon.com/downloads/libtorrent'                                           ### Alfa
-    __libbaseurl__ = 'https://github.com/alfa-addon/alfa-repo/tree/master/downloads/libtorrent'                     ### Alfa
+    __libbaseurl__ = 'https://github.com/alfa-addon/alfa-repo/raw/master/downloads/libtorrent'                      ### Alfa
 else:                                                                                                               ### Alfa
     __libbaseurl__ = "https://github.com/DiMartinoXBMC/script.module.libtorrent/raw/master/python_libtorrent"
 #__settings__ = xbmcaddon.Addon(id='script.module.libtorrent')
@@ -103,7 +103,7 @@ class LibraryManager():
                     self.http.fetch(url, download=dest + ".zip", progress=True)
                     log("%s -> %s" % (url, dest))
                     xbmc.executebuiltin('XBMC.Extract("%s.zip","%s")' % (dest, self.dest_path), True)
-                    #xbmcvfs.delete(dest + ".zip")
+                    xbmcvfs.delete(dest + ".zip")
                 except:
                     text = 'Failed download %s!' % libname
                     xbmc.executebuiltin("XBMC.Notification(%s,%s,%s,%s)" % (__plugin__,text,750,__icon__))
