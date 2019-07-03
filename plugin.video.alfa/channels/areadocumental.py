@@ -8,7 +8,7 @@ from core import scrapertools
 from core.item import Item
 from platformcode import config, logger
 
-host = "http://www.area-documental.com"
+host = "https://www.area-documental.com"
 __perfil__ = int(config.get_setting('perfil', "areadocumental"))
 
 # Fijar perfil de color
@@ -18,22 +18,28 @@ perfil = [['', '', ''],
           ['0xFF58D3F7', '0xFF2E9AFE', '0xFF2E64FE']]
 color1, color2, color3 = perfil[__perfil__]
 
-
 def mainlist(item):
     logger.info()
     itemlist = []
     item.text_color = color1
     itemlist.append(item.clone(title="Novedades", action="entradas",
-                               url= host + "/resultados-reciente.php?buscar=&genero=",
-                               fanart="http://i.imgur.com/Q7fsFI6.png"))
-    itemlist.append(item.clone(title="Destacados", action="destacados",
-                               url= host + "/resultados-destacados.php?buscar=&genero=",
-                               fanart="http://i.imgur.com/Q7fsFI6.png"))
-    itemlist.append(item.clone(title="Categorías", action="cat", url= host + "/index.php",
-                               fanart="http://i.imgur.com/Q7fsFI6.png"))
-    itemlist.append(item.clone(title="Ordenados por...", action="indice", fanart="http://i.imgur.com/Q7fsFI6.png"))
+                               url= host + "/resultados-reciente.php?buscar=&genero="))
+    
+    itemlist.append(item.clone(title="Destacados", action="entradas",
+                               url= host + "/resultados.php?buscar=&genero="))
+    
+    itemlist.append(item.clone(title="Más Vistos", action="entradas",
+                               url= host + "/resultados-visto.php?buscar=&genero="))
+    
+    itemlist.append(item.clone(title="3D", action="entradas",
+                               url= host + "/3D.php"))
+    
+    itemlist.append(item.clone(title="Categorías", action="cat", url= host + "/index.php"))
+    
+    itemlist.append(item.clone(title="Ordenados por...", action="indice"))
 
     itemlist.append(item.clone(title="Buscar...", action="search"))
+    
     itemlist.append(item.clone(title="Configurar canal", action="configuracion", text_color="gold"))
 
     return itemlist
@@ -180,9 +186,16 @@ def entradas(item):
         scrapedurl = host + "/" + scrapedurl
         scrapedthumbnail = host +'/'+ scrapedthumbnail
         title = scrapedtitle
+        if "3D" in genero:
+            quality = "3D"
+        elif "HD" in genero:
+            quality ='HD'
+        else:
+            quality = 'SD'
         if not year.isspace() and year != "":
-            infolab['year'] = int(year)
-
+            infolab['year'] = year
+            title += '[COLOR %s] (%s)[/COLOR]' % (color1, year)
+        title += '[COLOR %s] [%s][/COLOR]' % (color3, quality)
         itemlist.append(item.clone(action="findvideos", title=title, fulltitle=title,
                                    url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels=infolab, contentTitle =
                                    title))
@@ -202,11 +215,11 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
 
     subs = scrapertools.find_multiple_matches(data, 'file: "(/webvtt[^"]+)".*?label: "([^"]+)"')
-    patron = 'file:\s*"(http://[^/]*/Videos/[^"]+)",\s*label:\s*"([^"]+)"'
+    patron = 'file:\s*"(https://[^/]*/Videos/[^"]+)",\s*label:\s*"([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, quality in matches:
         url += "|User-Agent=%s&Referer=%s" \
-               % ("Mozilla/5.0 (Windows NT 10.0; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0", item.url)
+               % ("Mozilla/5.0 (Windows NT 10.0; WOW64; rv:66.0) Gecko/20100101 Firefox/66.0", item.url)
         for url_sub, label in subs:
             url_sub = host + urllib.quote(url_sub)
             title = "Ver video en [[COLOR %s]%s[/COLOR]] Sub %s" % (color3, quality, label)

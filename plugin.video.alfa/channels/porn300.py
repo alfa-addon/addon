@@ -7,7 +7,6 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
-import base64
 
 host = 'https://www.porn300.com'
 

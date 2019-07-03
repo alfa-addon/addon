@@ -66,7 +66,9 @@ from platformcode import logger
 
 otmdb_global = None
 fname = filetools.join(config.get_data_path(), "alfa_db.sqlite")
-
+tmdb_langs = ['es', 'en', 'it', 'pt', 'fr', 'de']
+langs = config.get_setting('tmdb_lang', default=0)
+tmdb_lang = tmdb_langs[langs]
 
 def create_bd():
     conn = sqlite3.connect(fname)
@@ -184,7 +186,7 @@ def cache_response(fn):
     return wrapper
 
 
-def set_infoLabels(source, seekTmdb=True, idioma_busqueda='es'):
+def set_infoLabels(source, seekTmdb=True, idioma_busqueda=tmdb_lang):
     """
     Dependiendo del tipo de dato de source obtiene y fija (item.infoLabels) los datos extras de una o varias series,
     capitulos o peliculas.
@@ -210,7 +212,7 @@ def set_infoLabels(source, seekTmdb=True, idioma_busqueda='es'):
     return ret
 
 
-def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda='es'):
+def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang):
     """
     De manera concurrente, obtiene los datos de los items incluidos en la lista item_list.
 
@@ -264,7 +266,7 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda='es'):
     return [ii[2] for ii in r_list]
 
 
-def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es', lock=None):
+def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=None):
     """
     Obtiene y fija (item.infoLabels) los datos extras de una serie, capitulo o pelicula.
 

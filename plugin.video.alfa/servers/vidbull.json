@@ -4,18 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:openload|oload).*?/(?:embed|f)/([0-9a-zA-Z-_]+)",
-        "url": "https://oload.tv/embed/\\1/"
+        "pattern": "(https://(?:www|).vidbull.tv/embed/\\w+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "openload",
-  "name": "openload",
-  "premium": [
-    "realdebrid",
-    "alldebrid"
-  ],
+  "id": "vidbull",
+  "name": "vidbull",
   "settings": [
     {
       "default": false,
@@ -42,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_openload.png"
+  "thumbnail": ""
 }

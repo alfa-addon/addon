@@ -9,6 +9,7 @@ import traceback
 import xbmc
 import xbmcaddon
 import threading
+import subprocess
 import time
 
 from platformcode import config, logger, platformtools
@@ -74,7 +75,9 @@ def init():
             question_update_external_addon("quasar")
         
         #QUASAR: Hacemos las modificaciones a Quasar, si está permitido, y si está instalado
-        if config.get_setting('addon_quasar_update', default=False) or (filetools.exists(os.path.join(config.get_data_path(), "quasar.json")) and not xbmc.getCondVisibility('System.HasAddon("plugin.video.quasar")')):
+        if config.get_setting('addon_quasar_update', default=False) or \
+                        (filetools.exists(os.path.join(config.get_data_path(), \
+                        "quasar.json")) and not xbmc.getCondVisibility('System.HasAddon("plugin.video.quasar")')):
             if not update_external_addon("quasar"):
                 platformtools.dialog_notification("Actualización Quasar", "Ha fallado. Consulte el log")
         
@@ -117,6 +120,8 @@ def create_json(custom_code_json_path, json_name=json_data_file_name):
 
     #Guardamaos el json con la versión de Alfa vacía, para permitir hacer la primera copia
     json_data_file = filetools.join(custom_code_json_path, json_name)
+    if filetools.exists(json_data_file):
+        filetools.remove(json_data_file)
     json_file = open(json_data_file, "a+")
     json_file.write(json.dumps({"addon_version": ""}))
     json_file.close()
@@ -131,8 +136,14 @@ def verify_copy_folders(custom_code_dir, custom_code_json_path):
     json_data_file = filetools.join(custom_code_json_path, json_data_file_name)
     json_data = jsontools.load(filetools.read(json_data_file))
     current_version = config.get_addon_version(with_fix=False)
-    if current_version == json_data['addon_version']:
-        return
+    if not json_data or not 'addon_version' in json_data: 
+        create_json(custom_code_json_path)
+        json_data = jsontools.load(filetools.read(json_data_file))
+    try:
+        if current_version == json_data['addon_version']:
+            return
+    except:
+        logger.error(traceback.format_exc(1))
     
     #Ahora copiamos los archivos desde el área de Userdata, Custom_code, sobre las carpetas del add-on
     for root, folders, files in os.walk(custom_code_dir):
@@ -210,6 +221,43 @@ def update_external_addon(addon_name):
     
 def update_libtorrent():
     logger.info()
+    
+    if not config.get_setting("mct_buffer", server="torrent", default=""):
+        default = config.get_setting("torrent_client", server="torrent", default=0)
+        config.set_setting("torrent_client", default, server="torrent")
+        config.set_setting("mct_buffer", "50", server="torrent")
+        config.set_setting("mct_download_path", config.get_setting("downloadpath"), server="torrent")
+        config.set_setting("mct_background_download", True, server="torrent")
+        config.set_setting("mct_rar_unpack", True, server="torrent")
+        config.set_setting("bt_buffer", "50", server="torrent")
+        config.set_setting("bt_download_path", config.get_setting("downloadpath"), server="torrent")
+        
+    if xbmc.getCondVisibility("system.platform.Windows"):
+        creationflags = 0x08000000
+        unrar = os.path.join(config.get_runtime_path(), 'lib', 'rarfiles', 'windows', 'unrar.exe')
+        if not filetools.exists(unrar): unrar = ''
+    elif xbmc.getCondVisibility("system.platform.Linux") or xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
+        unrar = os.path.join(config.get_runtime_path(), 'lib', 'rarfiles', 'linux', 'unrar')
+        if not filetools.exists(unrar): unrar = ''
+        if unrar:
+            try:
+                command = ['chmod', '777', '%s' % unrar]
+                p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                output_cmd, error_cmd = p.communicate()
+            except:
+                logger.error(traceback.format_exc(1))
+
+    if unrar:
+        try:
+            p = subprocess.Popen(unrar, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=creationflags)
+            output_cmd, error_cmd = p.communicate()
+            if p.returncode != 0:
+                unrar = ''
+                logger.error('UnRAR returncode: %s' % str(p.returncode))
+        except:
+            unrar = ''
+            logger.error(traceback.format_exc(1))
+    config.set_setting("unrar_path", unrar, server="torrent")
 
     if filetools.exists(os.path.join(config.get_runtime_path(), "custom_code.json")):
         return
