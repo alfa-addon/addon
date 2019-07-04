@@ -1248,12 +1248,16 @@ def find_rar_password(item):
                                 ['capitulos-0', 'capitulos-']]], 
                  ['2', 'https://grantorrent.net/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
                                 ['-temporada', '/temporada'], ['^((?!serie).)*$', 'None'], \
-                                ['.net\/', '.net/descargar/peliculas-castellano/'], ['\/$', '/blurayrip-ac3-5-1/']]]
+                                ['.net\/', '.net/descargar/peliculas-castellano/'], ['\/$', '/blurayrip-ac3-5-1/']]], 
+                 ['2', 'https://mejortorrent1.net/', [[]], [['^((?!temporada).)*$', 'None'], \
+                                ['.net\/', '.net/descargar/peliculas-castellano/'], ['-microhd-1080p\/$', '']]]
     ]
     
     url_host = scrapertools.find_single_match(item.url, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
     url_host_act = url_host
     url_password = item.url
+    if item.referer:
+        url_password = item.referer
     
     for y in ['2', '1']:
         for active, clone_id, regex_list, regex_url_list in rar_search:
@@ -1296,7 +1300,7 @@ def find_rar_password(item):
 
 
 def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torrent=False, \
-                        timeout=5, file_list=False, lookup=True, local_torr=None):
+                        timeout=5, file_list=False, lookup=True, local_torr=None, headers={}):
     logger.info()
     from core import videolibrarytools
     
@@ -1396,7 +1400,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         if url:
             torrents_path, torrent_file = videolibrarytools.caching_torrents(url, \
                         referer=referer, post=post, torrents_path=torrents_path, \
-                        timeout=timeout, lookup=lookup, data_torrent=True)
+                        timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)
         if not torrent_file and not local_torr:
             if not lookup:
                 return (size, torrents_path, torrent, files)

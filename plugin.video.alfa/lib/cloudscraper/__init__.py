@@ -40,15 +40,29 @@ BUG_REPORT = 'Cloudflare may have changed their technique, or there may be a bug
 ##########################################################################################################################################################
 
 
+# class CipherSuiteAdapter(HTTPAdapter):
+#
+#     def __init__(self, cipherSuite=None, **kwargs):
+#         self.cipherSuite = cipherSuite
+#
+#         self.ssl_context = create_urllib3_context(
+#             ssl_version=ssl.PROTOCOL_TLS,
+#             ciphers=self.cipherSuite
+#         )
+#
+#         super(CipherSuiteAdapter, self).__init__(**kwargs)
 class CipherSuiteAdapter(HTTPAdapter):
 
     def __init__(self, cipherSuite=None, **kwargs):
         self.cipherSuite = cipherSuite
 
-        self.ssl_context = create_urllib3_context(
-            ssl_version=ssl.PROTOCOL_TLS,
-            ciphers=self.cipherSuite
-        )
+        if hasattr(ssl, 'PROTOCOL_TLS'):
+            self.ssl_context = create_urllib3_context(
+                ssl_version=getattr(ssl, 'PROTOCOL_TLSv1_3', ssl.PROTOCOL_TLSv1_2),
+                ciphers=self.cipherSuite
+            )
+        else:
+            self.ssl_context = create_urllib3_context(ssl_version=ssl.PROTOCOL_TLSv1)
 
         super(CipherSuiteAdapter, self).__init__(**kwargs)
 

@@ -749,7 +749,10 @@ def remove_files( download, torrent_file, video_file, ses, h, ren_video_file="" 
         if ok:
             # -- Borrar archivo - torrent -----------------------
             if torrent:
-                os.remove( torrent_file )
+                try:
+                    os.remove( torrent_file )
+                except:
+                    pass
             # -- Borrar carpeta/archivos y sesión - vídeo -------
             ses.remove_torrent( h, 1 )
             if extracted_rar:
@@ -1024,7 +1027,7 @@ def set_priority_pieces(h, _index, video_file, video_size,
 
     piece_set = []
     for i, _set in enumerate(h.piece_priorities()):
-        if _set == 1: piece_set.append(i)
+        if _set > 0: piece_set.append(i)
 
     if not allocate:
         for i in range(0,porcent4first_pieces):

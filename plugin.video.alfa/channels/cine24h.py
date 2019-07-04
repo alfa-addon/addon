@@ -232,7 +232,7 @@ def temporadas(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<div class="[^>]+>[^<]+<span>(.*?)</span> <i'  # numeros de temporadas
+    patron = '<div class="[^>]+>[^<]+<span>(\d+)</span> <i'  # numeros de temporadas
 
     matches = scrapertools.find_multiple_matches(data, patron)
     if len(matches) > 1:
@@ -253,7 +253,10 @@ def temporadas(item):
                 # Si la temporada tiene poster propio remplazar al de la serie
                 i.thumbnail = i.infoLabels['poster_path']
 
-        itemlist.sort(key=lambda it: int(it.infoLabels['season']))
+        itemlist.sort(key=lambda it: it.infoLabels['season'])
+    
+    else:
+        return episodios(item)
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=__channel__, title="Añadir esta serie a la videoteca", url=item.url,
@@ -261,8 +264,6 @@ def temporadas(item):
                              text_color=color1, thumbnail=thumbnail_host, fanart=fanart_host))
 
         return itemlist
-    else:
-        return episodios(item)
 
 
 def episodios(item):
