@@ -29,7 +29,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host + "/show/%s" % texto
+    item.url = host + "/show/%s?type=video" % texto
     try:
         return lista(item)
     except:

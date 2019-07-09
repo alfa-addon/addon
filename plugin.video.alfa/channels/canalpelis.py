@@ -50,17 +50,17 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Peliculas", action="peliculas", thumbnail=get_thumb('movies', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
-                               url=host + 'movies/', viewmode="movie_with_plot"))
+                               url=host + 'peliculas/', viewmode="movie_with_plot"))
 
     itemlist.append(item.clone(title="Géneros", action="generos", thumbnail=get_thumb('genres', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
-                               url=host + 'movies/', viewmode="movie_with_plot"))
+                               url=host + 'peliculas/', viewmode="movie_with_plot"))
 
     itemlist.append(item.clone(title="Año de Estreno", action="year_release", thumbnail=get_thumb('year', auto=True),
-                               text_blod=True, page=0, viewcontent='movies', url=host + 'movies/',
+                               text_blod=True, page=0, viewcontent='movies', url=host + 'peliculas/',
                                viewmode="movie_with_plot"))
 
-    itemlist.append(item.clone(title="Series", action="series", extra='serie', url=host + 'tvshows/',
+    itemlist.append(item.clone(title="Series", action="series", extra='serie', url=host + 'series/',
                                viewmode="movie_with_plot", text_blod=True, viewcontent='movies',
                                thumbnail=get_thumb('tvshows', auto=True), page=0))
     
@@ -177,7 +177,6 @@ def peliculas(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
-
     patron = 'movies"><div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'  # img, title.strip() movies
     patron += '<span class="icon-star2"></span> (.*?)</div>.*?'  # rating
     patron += '<span class="quality">([^<]+)</span>.*?'  # calidad

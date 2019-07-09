@@ -6,6 +6,10 @@
       {
         "pattern": "https://gounlimited.to/embed-(.*?).html",
         "url": "https://gounlimited.to/embed-\\1.html"
+      },
+      {
+        "pattern": "https://gounlimited.to/(\\w+)",
+        "url": "https://gounlimited.to/embed-\\1.html"
       }
     ]
   },

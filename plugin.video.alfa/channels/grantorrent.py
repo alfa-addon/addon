@@ -230,8 +230,8 @@ def listado(item):
 
         #Obtiene la dirección de la próxima página, si la hay
         try:
-            patron = '<div class="nav-links">.*?<a class="next page.*?href="(.*?)"'
-            next_page = scrapertools.find_single_match(data, patron)                        #url próxima página    
+            patron = '<div class="nav-links">.*?<a class="next page.*?href="([^"]+)"'
+            next_page = scrapertools.find_single_match(data, patron)                        #url próxima página        
             post = scrapertools.find_single_match(next_page, '\/page\/(\d+)\/')             #número próxima página
             if next_page:                                                                   #Hay próxima página?
                 patron = '<div class="nav-links">.*?'
@@ -249,6 +249,8 @@ def listado(item):
             else:
                 if "/categoria" in item.post:
                     item.post = re.sub(r"\/$", "/page/%s/" % post, item.post)
+                elif "/series-2" in item.post:
+                    item.post = re.sub(r"\/series-2\/", "/series-2/page/%s/" % post, item.post)
                 elif "/series" in item.post:
                     item.post = re.sub(r"\/series\/", "/series/page/%s/" % post, item.post)
                 else:
@@ -443,8 +445,8 @@ def listado(item):
     item, itemlist = generictools.post_tmdb_listado(item, itemlist)
 
     #Gestionamos el paginador
-    patron = '<div class="nav-links">.*?<a class="next page.*?href="(.*?)"'
-    next_page = scrapertools.find_single_match(data, patron)                        #url próxima página    
+    patron = '<div class="nav-links">.*?<a class="next page.*?href="([^"]+)"'
+    next_page = scrapertools.find_single_match(data, patron)                        #url próxima página  
     #next_page_num = scrapertools.find_single_match(next_page, '\/page\/(\d+)\/')    #número próxima página
     if next_page:                                                                   #Hay próxima página?
         patron = '<div class="nav-links">.*?'

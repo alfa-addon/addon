@@ -25,6 +25,7 @@ list_quality = []
 list_servers = ['torrent']
 
 host = 'https://www.divxtotal3.net/'
+domain = 'www.divxtotal3.net'
 channel = 'divxtotal'
 categoria = channel.capitalize()
 color1, color2, color3 = ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']
@@ -84,8 +85,17 @@ def submenu(item):
     thumb_series = get_thumb("channels_tvshow.png")
 
     if item.extra == "series":
+        data = ''
+        try:
+            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+            data = js2py_conversion(data, item.url)
+            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+        except:
+            pass
 
-        item.url_plus = "series-12/"
+        patron = '<ul class="nav navbar-nav">.*?<li><a href="[^"]+\/(series[^\/]+\/)">Series<\/a><\/li>'
+        item.url_plus = scrapertools.find_single_match(data, patron)
+        if not item.url_plus: item.url_plus = 'series-16/'
         itemlist.append(item.clone(title="Series completas", action="listado", url=item.url + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_series, extra="series"))
         itemlist.append(item.clone(title="Alfabético A-Z", action="alfabeto", url=item.url + item.url_plus + "?s=letra-%s", url_plus=item.url_plus, thumbnail=thumb_series, extra="series"))
 
@@ -106,6 +116,7 @@ def categorias(item):
     data = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = js2py_conversion(data, item.url)
         data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:
         pass
@@ -223,6 +234,7 @@ def listado(item):
         data = ''
         try:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(next_page_url, timeout=timeout_search).data)
+            data = js2py_conversion(data, next_page_url)
             data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
             pass
@@ -295,7 +307,8 @@ def listado(item):
                 data_serie = ''
                 try:
                     data_serie = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(scrapedurl, timeout=timeout).data)
-                    data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+                    data_serie = js2py_conversion(data_serie, scrapedurl)
+                    data_serie = unicode(data_serie, "utf-8", errors="replace").encode("utf-8")
                 except:
                     pass
                 
@@ -430,6 +443,7 @@ def listado(item):
             title = re.sub(r'[s|S]erie', '', title)
             title = re.sub(r'- $', '', title)
             title = re.sub(r'\d+[M|m|G|g][B|b]', '', title)
+            title = re.sub(r'\[.*?\]', '', title)
 
             #Limpiamos el título de la basura innecesaria
             title = title.replace("Dual", "").replace("dual", "").replace("Subtitulada", "").replace("subtitulada", "").replace("Subt", "").replace("subt", "").replace("Sub", "").replace("sub", "").replace("(Proper)", "").replace("(proper)", "").replace("Proper", "").replace("proper", "").replace("#", "").replace("(Latino)", "").replace("Latino", "").replace("LATINO", "").replace("Spanish", "").replace("Trailer", "").replace("Audio", "")
@@ -529,6 +543,7 @@ def findvideos(item):
     if item.contentType == 'movie':                                                 #Es una peli
         try:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+            data = js2py_conversion(data, item.url)
             data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
             pass
@@ -587,8 +602,8 @@ def findvideos(item):
 
         #Buscamos si ya tiene tamaño, si no, los buscamos en el archivo .torrent
         size = scrapertools.find_single_match(item_local.quality, '\s\[(\d+,?\d*?\s\w\s?[b|B])\]')
-        if not size and not item.armagedon:
-            size = generictools.get_torrent_size(scrapedurl)                        #Buscamos el tamaño en el .torrent
+        if not item.armagedon:
+            size = generictools.get_torrent_size(scrapedurl)                                #Buscamos el tamaño en el .torrent
         if size:
             item_local.title = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title)    #Quitamos size de título, si lo traía
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
@@ -701,6 +716,7 @@ def episodios(item):
     data = ''                                                                               #Inserto en num de página en la url
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = js2py_conversion(data, item.url)
         data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:                                                                                 #Algún error de proceso, salimos
         pass
@@ -845,6 +861,68 @@ def actualizar_titulos(item):
     return item
 
     
+def js2py_conversion(data, url, post=None, follow_redirects=True, headers={}):
+    logger.info()
+    import js2py
+    import base64
+    
+    if not 'Javascript is required' in data:
+        return data
+        
+    patron = ',\s*S="([^"]+)"'
+    data_new = scrapertools.find_single_match(data, patron)
+    if not data_new:
+        patron = ",\s*S='([^']+)'"
+        data_new = scrapertools.find_single_match(data, patron)
+    if not data_new:
+        logger.error('js2py_conversion: NO data_new')
+        return data
+        
+    try:
+        for x in range(10):                                          # Da hasta 10 pasadas o hasta que de error
+            data_end = base64.b64decode(data_new).decode('utf-8')
+            data_new = data_end
+    except:
+        js2py_code = data_new
+    else:
+        logger.error('js2py_conversion: base64 data_new NO Funciona: ' + str(data_new))
+        return data
+    if not js2py_code:
+        logger.error('js2py_conversion: NO js2py_code BASE64')
+        return data
+        
+    js2py_code = js2py_code.replace('document', 'window').replace(" location.reload();", "")
+    js2py.disable_pyimport()
+    context = js2py.EvalJs({'atob': atob})
+    new_cookie = context.eval(js2py_code)
+    
+    logger.info('new_cookie: ' + new_cookie)
+
+    dict_cookie = {'domain': domain,
+                }
+
+    if ';' in new_cookie:
+        new_cookie = new_cookie.split(';')[0].strip()
+        namec, valuec = new_cookie.split('=')
+        dict_cookie['name'] = namec.strip()
+        dict_cookie['value'] = valuec.strip()
+    zanga = httptools.set_cookies(dict_cookie)
+
+    data_new = ''
+    data_new = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url, \
+                timeout=timeout, headers=headers, post=post, follow_redirects=follow_redirects).data)
+    data_new = re.sub('\r\n', '', data_new).decode('utf8').encode('utf8')
+    if data_new:
+        data = data_new
+    
+    return data
+    
+    
+def atob(s):
+    import base64
+    return base64.b64decode(s.to_string().value)
+    
+
 def search(item, texto):
     logger.info()
     #texto = texto.replace(" ", "+")

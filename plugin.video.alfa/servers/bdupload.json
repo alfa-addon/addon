@@ -6,6 +6,10 @@
       {
         "pattern": "(https://bdupload.(?:info|asia)/[A-z0-9]+)",
         "url": "\\1"
+      },
+      {
+        "pattern": "https://dl.bdupload.(?:info|asia|in)/([A-z0-9]+)",
+        "url": "https://bdupload.asia/\\1"
       }
     ]
   },
