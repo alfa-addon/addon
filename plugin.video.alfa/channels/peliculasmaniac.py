@@ -49,21 +49,21 @@ def mainlist(item):
 
     itemlist.append(Item(channel=item.channel, title="Castellano",
                          action="list_all",
-                         url=host + 'canal/peliculas en español/',
+                         url=host + 'canal/Pel%C3%ADculas%20en%20espa%C3%B1ol/',
                          first=0,
                          thumbnail=get_thumb('cast', auto=True)
                          ))
 
     itemlist.append(Item(channel=item.channel, title="Subtituladas",
                          action="list_all",
-                         url=host + 'canal/peliculas en VO subtituladas/',
+                         url=host + 'canal/Películas%20VO%20subtitulada/',
                          first=0,
                          thumbnail=get_thumb('vose', auto=True)
                          ))
 
     itemlist.append(Item(channel=item.channel, title="VO",
                          action="list_all",
-                         url=host + 'canal/peliculas en VO/',
+                         url=host + 'canal/Películas%20en%20VO/',
                          first=0,
                          ))
 
@@ -218,9 +218,9 @@ def findvideos(item):
     pattern = '<a href="([^"]+)"><div class="boton_version">Idioma:.*?src="([^"]+)"> Subtitulos: ([^<]+)</div>'
     matches = re.compile(pattern, re.DOTALL).findall(data)
     title = ''
-    if matches:
+    '''if matches:
         for url, lang_data, sub_info in matches:
-            lang = languages_from_flags(lang_data, '/img/banderas/', 'jpg')
+            lang = name="keywords" content=
             title = set_lang(lang, sub_info)
             new_data = get_source(host+url)
             url_list = scrapertools.find_multiple_matches(new_data, 'label:\s?"([^"]+)",\s?file:\s?"([^"]+)"')
@@ -245,17 +245,19 @@ def findvideos(item):
         except:
             lang = 'VO'
             title = ' [%s]' % lang
+        '''
 
-
-
-        url_list = scrapertools.find_multiple_matches(data, 'label:\s?"([^"]+)",\s?file:\s?"([^"]+)"')
-        for quality, url in url_list:
-            quality += 'p'
-            itemlist.append(Item(channel=item.channel,
+    lang = lang_from_keywords(data)
+    url_list = scrapertools.find_multiple_matches(data, 'label:\s?"([^"]+)",\s?file:\s?"([^"]+)"')
+    for quality, url in url_list:
+        quality += 'p'
+        if not config.get_setting('unify'):
+            title = '[%s]' % lang
+        itemlist.append(Item(channel=item.channel,
                                  title='Directo %s [%s]' % (title, quality),
                                  url=url,
                                  action='play',
-                                 language=IDIOMAS.get(lang, 'VO'),
+                                 language=lang,
                                  quality=quality,
                                  server='directo',
                                  infoLabels=item.infoLabels
@@ -284,6 +286,15 @@ def findvideos(item):
 
     return itemlist
 
+def lang_from_keywords(data):
+    list_keywords = scrapertools.find_single_match(data, 'name="keywords" content="([^"]+)"')
+    if 'español' in list_keywords:
+        lang = 'CAST'
+    elif 'subtitul' in list_keywords:
+        lang = 'VOS'
+    else:
+        lang = 'VO'
+    return lang
 
 def languages_from_flags(lang_data, path, ext):
     logger.info()

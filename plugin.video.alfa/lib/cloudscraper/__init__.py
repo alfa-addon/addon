@@ -166,11 +166,10 @@ class CloudScraper(Session):
 
         # Check if Cloudflare anti-bot is on
         if self.isChallengeRequest(resp):
-            self.proxies = kwargs.get('proxies')
             if resp.request.method != 'GET':
                 # Work around if the initial request is not a GET,
                 # Supersede with a GET then re-request the original METHOD.
-                self.request('GET', resp.url, proxies=self.proxies)
+                self.request('GET', resp.url)
                 resp = ourSuper.request(method, url, *args, **kwargs)
             else:
                 # Solve Challenge
