@@ -19,14 +19,14 @@ def mainlist(item):
 
     #itemlist.append(
     #    Item(channel=item.channel, action="lista", title="Top Películas", url=urlparse.urljoin(host, "top")))
-    #itemlist.append(Item(channel=item.channel, action="lista", title="Novedades", url=host))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Novedades", url=host+'novedades/'))
     itemlist.append(Item(channel=item.channel, action="explorar", title="Género", url=urlparse.urljoin(host, "genero")))
     #itemlist.append(Item(channel=item.channel, action="explorar", title="Listado Alfabético",
     #                     url=urlparse.urljoin(host, "alfabetico")))
     itemlist.append(Item(channel=item.channel, action="explorar", title="Listado por Año", url=urlparse.urljoin(host, "genero")))
     #itemlist.append(Item(channel=item.channel, action="lista", title="Otras Películas (No Bollywood)",
     #                     url=urlparse.urljoin(host, "estrenos")))
-    #itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=urlparse.urljoin(host, "buscar-")))
+    itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=urlparse.urljoin(host, "buscar/")))
     return itemlist
 
 
@@ -38,7 +38,7 @@ def explorar(item):
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     if 'Género' in urltitle:
         patron = "var accion = '<div .+?>(.+?)<\/div>'"
-    #if 'Listado Alfabético' in urltitle:
+    # if 'Listado Alfabético' in urltitle:
     #    patron = '<\/li><\/ul>.+?<h3>Pel.+?tico<\/h3>(.+?)<\/h3>'
     if 'Año' in urltitle:
         patron = "var anho = '<div .+?>(.+?)<\/div>'"
@@ -46,20 +46,9 @@ def explorar(item):
     patron_explorar = '<li class=".+?"><a class=".+?" href="(.+?)">(.+?)<\/a><\/li>'
     matches = scrapertools.find_multiple_matches(data_explorar, patron_explorar)
     for scrapedurl, scrapedtitle in matches:
-        if 'Acci' in scrapedtitle:
-            scrapedtitle = 'Acción'
-        if 'Anima' in scrapedtitle:
-            scrapedtitle = 'Animación'
-        if 'Fanta' in scrapedtitle:
-            scrapedtitle = 'Fantasía'
-        if 'Hist' in scrapedtitle:
-            scrapedtitle = 'Histórico'
-        if 'lico Guerra' in scrapedtitle:
-            scrapedtitle = 'Bélico Guerra'
-        if 'Biogra' in scrapedtitle:
-            scrapedtitle = 'Biografía'
         if 'Ficcion' in scrapedtitle:
             scrapedtitle = 'Ciencia Ficción'
+
         itemlist.append(item.clone(action='lista', title=scrapedtitle, url=scrapedurl))
     return itemlist
 
@@ -80,23 +69,23 @@ def lista(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)  # Eliminamos tabuladores, dobles espacios saltos de linea, etc...
-    data_mov= scrapertools.find_single_match(data,'<div class="lista-anime">(.+?)<section class="paginacion">')
+    # data_mov= scrapertools.find_single_match(data,'<div class="lista-anime">(.+?)<section class="paginacion">')
     patron =  "<figure class='figure-peliculas'>" #generico
     patron += " <a href='(.+?)' .+?>.+?" #scrapedurl
     patron += "<img .+? src=(.+?) alt.+?> " #scrapedthumbnail
     patron += "<p>(.+?)<\/p>.+?" #scrapedplot
     patron += "<p class='.+?anho'>(.+?)" #scrapedyear
     patron += "<\/p>.+?<h2>(.+?)<\/h2>" #scrapedtitle
-    matches = scrapertools.find_multiple_matches(data_mov, patron)
+    matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedplot, scrapedyear, scrapedtitle in matches:
         if '"' in scrapedthumbnail:
             scrapedthumbnail=scrapedthumbnail.replace('"','')
-        itemlist.append(item.clone(title=scrapedtitle+' ['+scrapedyear+']', url=scrapedurl, plot=scrapedplot, thumbnail=scrapedthumbnail, action="opcion",
-                                   show=scrapedtitle))
+        itemlist.append(item.clone(title=scrapedtitle+' ['+scrapedyear+']', url=scrapedurl, plot=scrapedplot, 
+                                   thumbnail=scrapedthumbnail, action="play", contentTitle=scrapedtitle))
     # Paginacion
-    patron_pag = '<a href="([^"]+)" title="Siguiente .+?">'
+    patron_pag = '<a href="([^"]+)" aria-label="Next"> Siguiente'
     paginasig = scrapertools.find_single_match(data, patron_pag)
-    next_page_url = host + paginasig
+    next_page_url = paginasig
 
     if paginasig != "":
         item.url = next_page_url
@@ -104,18 +93,21 @@ def lista(item):
                              thumbnail='https://s32.postimg.cc/4zppxf5j9/siguiente.png'))
     return itemlist
 
-def opcion(item):
+def play(item):
     logger.info()
 
     itemlist = []
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    logger.info("inflos"+data)
     patron = '<\/div> <\/div> <a href="(.+?)" class="a-play-cartelera"'
     scrapedurl = scrapertools.find_single_match(data, patron)
+    data2 = httptools.downloadpage(host+scrapedurl).data
+    url = scrapertools.find_single_match(data2, '<a link="([^"]+)"')
+    item.url = url
+    item.server = servertools.get_server_from_url(url)
     #for scrapedurl in match:
-    itemlist.append(item.clone(url=host+scrapedurl, action="findvideos"))
+    itemlist.append(item.clone())
 
     return itemlist
 # #def findvideos(item):
