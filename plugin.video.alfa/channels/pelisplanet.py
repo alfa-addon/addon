@@ -238,44 +238,41 @@ def generos(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-
+    
     datas = httptools.downloadpage(item.url).data
     datas = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", datas)
     # logger.info(datas)
     patron = '<a id="[^"]+" style="cursor:pointer; cursor: hand" rel="([^"]+)".*?'
-    patron += '<span class="optxt"><span>([^<]+)</span>.*?'
+    patron += '<span class="optxt"><span>(.*?)</span>.*?'
     patron += '<span class="q">([^<]+)</span>'
 
     matches = re.compile(patron, re.DOTALL).findall(datas)
 
     for scrapedurl, lang, servidores in matches:
         servidores = servidores.lower().strip()
-        if 'streamvips' or 'mediastream' or 'ultrastream' in servidores:
+        url_list = []
+        lang = lang.replace('Español ', '')
+        #No funcionan:
+        if 'ultrastream' in servidores or '/meganz' in scrapedurl:
+            continue
+        if 'streamvips' in servidores:
+            server = 'directo'
             data = httptools.downloadpage(scrapedurl, headers=headers).data
-            patronr = "file:'([^']+)',label:'([^']+)',type"
+            data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
+            data = scrapertools.find_single_match(data, 'sources: \[(.+?)</body>')
+            patronr = "'file': '([^']+)','type': '([^']+)','label': '([^']+)'"
             matchesr = re.compile(patronr, re.DOTALL).findall(data)
-            for scrapedurl, label in matchesr:
-                title = 'Ver en: [COLOR yellowgreen][%s][/COLOR] [COLOR yellow][%s][/COLOR]' % (servidores.title(),
-                                                                                                item.contentQuality.upper())
+            for surl, _type, label in matchesr:
+                url_list.append([".%s (%s)" % (_type,label), surl])
 
-                itemlist.append(item.clone(action="play", title=title, url=scrapedurl, server='directo',
-                                           thumbnail=item.thumbnail, fanart=item.fanart, extra='directo',
-                                           quality=item.contentQuality, language=lang.replace('Español ', '')))
+        else:
+            server = servertools.get_server_from_url(scrapedurl)
+        title = "Ver en: [COLOR yellowgreen][{}][/COLOR] [COLOR yellow][{}][/COLOR]".format(
+                    servidores.capitalize(),lang)
 
-                itemlist.sort(key=lambda it: it.title, reverse=True)
-
-        if 'drive' not in servidores and 'streamvips' not in servidores and 'mediastream' not in servidores and 'megavips' not in servidores:
-            if 'ultrastream' not in servidores:
-                server = servertools.get_server_from_url(scrapedurl)
-                quality = scrapertools.find_single_match(
-                    datas, '<p class="hidden-xs hidden-sm">.*?class="magnet-download">([^<]+)p</a>')
-                title = "Ver en: [COLOR yellowgreen][{}][/COLOR] [COLOR yellow][{}][/COLOR]".format(
-                    servidores.capitalize(),
-                    quality.upper())
-
-                itemlist.append(item.clone(action='play', title=title, url=scrapedurl, quality=item.quality,
-                                           server=server, language=lang.replace('Español ', ''),
-                                           text_color=color3, thumbnail=item.thumbnail))
+        itemlist.append(item.clone(action='play', title=title, url=scrapedurl, quality=item.quality,
+                                  server=server, language=lang.replace('Español ', ''), password=url_list,
+                                  text_color=color3, thumbnail=item.thumbnail))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel,
