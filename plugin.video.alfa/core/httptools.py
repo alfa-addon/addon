@@ -58,7 +58,7 @@ def get_url_headers(url):
 
     return url + "|" + "&".join(["%s=%s" % (h, headers[h]) for h in headers])
 
-def set_cookies(dict_cookie, alfa_s=False):
+def set_cookies(dict_cookie, clear=True, alfa_s=False):
     """
     Guarda una cookie especifica en cookies.dat
     @param dict_cookie: diccionario de  donde se obtienen los parametros de la cookie
@@ -66,17 +66,36 @@ def set_cookies(dict_cookie, alfa_s=False):
         name: nombre de la cookie
         value: su valor/contenido
         domain: dominio al que apunta la cookie
+        opcional:
+        expires: tiempo de vida en segundos, si no se usa agregara 1 dia (86400s)
     @type dict_cookie: dict
+
+    @param clear: True = borra las cookies del dominio, antes de agregar la nueva (necesario para cloudproxy, cp)
+                  False = desactivado por defecto, solo actualiza la cookie
+    @type clear: bool
     """
+    
+    #Se le dara a la cookie un dia de vida por defecto
+    expires_plus = dict_cookie.get('expires', 86400)
+    ts = int(time.time())
+    expires = ts + expires_plus
+
     name = dict_cookie.get('name', '')
     value = dict_cookie.get('value', '')
     domain = dict_cookie.get('domain', '')
+
+    #Borramos las cookies ya existentes en dicho dominio (cp)
+    if clear:
+        try:
+            cj.clear(domain)
+        except:
+            pass
 
     ck = cookielib.Cookie(version=0, name=name, value=value, port=None, 
                     port_specified=False, domain=domain, 
                     domain_specified=False, domain_initial_dot=False,
                     path='/', path_specified=True, secure=False, 
-                    expires=None, discard=True, comment=None, comment_url=None, 
+                    expires=expires, discard=True, comment=None, comment_url=None, 
                     rest={'HttpOnly': None}, rfc2109=False)
     
     cj.set_cookie(ck)
