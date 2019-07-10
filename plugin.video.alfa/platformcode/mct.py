@@ -52,12 +52,12 @@ except Exception, e2:
     do.ok('ERROR en el cliente MCT Libtorrent', 'Módulo no encontrado o imcompatible con el dispositivo.', 
                     'Reporte el fallo adjuntando un "log".', str(e))
 
-from platformcode import platformtools
 from core import scrapertools
 from core import filetools
 from core import httptools
 
 extracted_rar = False
+erase_file_path = ''
 #try: config.set_setting("background_download", False, "mct")
 #except: config.set_setting("mct_background_download", "false")
 
@@ -69,6 +69,7 @@ except:
 DOWNLOAD_PATH = config.get_setting("mct_download_path", server="torrent", default=config.get_setting("downloadpath"))
 BACKGROUND = config.get_setting("mct_background_download", server="torrent", default=True)
 RAR = config.get_setting("mct_rar_unpack", server="torrent", default=True)
+msg_header = 'Alfa MCT Cliente Torrent'
 
 def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
     allocate = True
@@ -90,7 +91,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
             url = decode_adfly(data)
         except:
             ddd = xbmcgui.Dialog()
-            ddd.ok( "Alfa-MCT: Sin soporte adf.ly", "El script no tiene soporte para el acortador de urls adf.ly.", "", "url: " + url )
+            ddd.ok( msg_header + ": Sin soporte adf.ly", "El script no tiene soporte para el acortador de urls adf.ly.", "", "url: " + url )
             return
 
     """
@@ -210,7 +211,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
         }
         h = lt.add_magnet_uri(ses, torrent_file, params)
         dp = xbmcgui.DialogProgress()
-        dp.create('Alfa-MCT')
+        dp.create(msg_header)
         while not h.has_metadata():
             message, porcent, msg_file, s, download = getProgress(h, "Creando torrent desde magnet")
             dp.update(porcent, message, msg_file)
@@ -270,7 +271,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
         filename = video_file
         if "/" in filename:
             filename = filename.split("/")[1]
-        if RAR:
+        if RAR and BACKGROUND:
             xbmcgui.Dialog().notification("Encontrado archivo .RAR de %.2f MB" % (video_size / 1048576.0),
                                         "Puedes realizar otras tareas en Kodi mientrastanto. " + \
                                         "Te informaremos...", time=10000)
@@ -283,9 +284,9 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
             #BUFFER = 10
             dp_cerrado = False
             dp = xbmcgui.DialogProgressBG()
-            dp.create('Alfa-MCT')
+            dp.create(msg_header)
 
-    if (_video_file_ext == ".avi" or _video_file_ext == ".mp4") and allocate:
+    if (_video_file_ext == ".avi" or _video_file_ext == ".mp4" or _video_file_ext == ".mkv") and allocate:
         log("##### storage_mode_t.storage_mode_allocate ("+_video_file_ext+") #####")
         h = ses.add_torrent( { 'ti':info, 'save_path': save_path_videos, 'trackers':trackers, 'storage_mode':lt.storage_mode_t.storage_mode_allocate } )
     else:
@@ -328,7 +329,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
     if dp_cerrado:
         # -- Crear diálogo de progreso para el primer bucle ---------
         dp = xbmcgui.DialogProgress()
-        dp.create('Alfa-MCT')
+        dp.create(msg_header)
 
     _pieces_info = {}
 
@@ -343,7 +344,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
             dp.close()
             dp_cerrado = True
             dp = xbmcgui.DialogProgress()
-            dp.create('Alfa-MCT')
+            dp.create(msg_header)
     
         # -- Recuperar los datos del progreso -------------------
         message, porcent, msg_file, s, download = getProgress(h, video_file, _pf=_pieces_info)
@@ -354,19 +355,29 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
         if s.state == 1: download = 1
 
         if (s.state == 5 or s.state == 4) and rar:
-            video_file, rar, play_file = extract_files(video_file, save_path_videos, password, dp, item=item)
+            # -- Borrar sesión para que libere los archivos y se pueda renombrar la carpeta -------
+            ses.pause()
+            #video_file, rar, play_file = extract_files(video_file, save_path_videos, password, dp, item=item)
+            video_file, rar, play_file, erase_path = platformtools.extract_files(video_file, \
+                            save_path_videos, password, dp, item=item, torr_client='MCT')   # ... extraemos el vídeo del RAR
             dp.close()
+            global erase_file_path
+            erase_file_path = erase_path
+            global extracted_rar
+            extracted_rar = rar
+            
             if not play_file:
                 remove_files( download, torrent_file, erase_file_path, ses, h )
                 return
             is_view = "Ok"
             save_path_videos = play_file
+            xbmc.sleep(3000)
 
         # -- Player - play --------------------------------------
         # -- Comprobar si se han completado las piezas para el  -
         # -- inicio del vídeo                                   -
         first_pieces = True
-
+        #if not extracted_rar:
         _c = 0
         for i in range( piece_set[0], piece_set[porcent4first_pieces] ):
             first_pieces&= h.have_piece(i)
@@ -486,7 +497,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
                     # -- Crear diálogo si no existe -------------
                     if not player.statusDialogoProgress:
                         dp = xbmcgui.DialogProgress()
-                        dp.create('Alfa-MCT')
+                        dp.create(msg_header)
                         player.setDialogoProgress()
 
                     # -- Diálogos de estado en el visionado -----
@@ -530,11 +541,14 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
         # -- Continuar | Terminar                               -
         if is_view == "Ok" and not xbmc.Player().isPlaying():
 
+            """
             if info.num_files() == 1 or rar:
                 # -- Diálogo continuar o terminar ---------------
                 d = xbmcgui.Dialog()
-                ok = d.yesno('Alfa-MCT', 'XBMC-Kodi Cerró el vídeo.', '¿Continuar con la sesión?')
+                ok = d.yesno(msg_header, 'XBMC-Kodi Cerró el vídeo.', '¿Continuar con la sesión?')
             else: ok = False
+            """
+            ok = False
             # -- SI ---------------------------------------------
             if ok:
                 # -- Continuar: ---------------------------------
@@ -555,7 +569,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
                                                     porcent4first_pieces, porcent4last_pieces, allocate)
                     is_view=None
                     dp = xbmcgui.DialogProgress()
-                    dp.create('Alfa-MCT')
+                    dp.create(msg_header)
 
         # -- Mostar progeso antes del visionado -----------------
         if is_view != "Ok" :
@@ -579,7 +593,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
                                                 porcent4first_pieces, porcent4last_pieces, allocate)
                 is_view=None
                 dp = xbmcgui.DialogProgress()
-                dp.create('Alfa-MCT')
+                dp.create(msg_header)
 
     # -- Kodi - Error? - No debería llegar aquí -----------------
     if is_view == "Ok" and not xbmc.Player().isPlaying():
@@ -716,7 +730,7 @@ def get_video_files_sizes( info ):
             return index, rar_parts, rar_size, len(opciones)
         else:
             d = xbmcgui.Dialog()
-            seleccion = d.select("Alfa-MCT: Lista de vídeos", opciones.values())
+            seleccion = d.select(msg_header + ": Lista de vídeos", opciones.values())
     else: seleccion = 0
 
     index = opciones.keys()[seleccion]
@@ -743,7 +757,7 @@ def remove_files( download, torrent_file, video_file, ses, h, ren_video_file="" 
 
     if dialog_view:
         d = xbmcgui.Dialog()
-        ok = d.yesno('Alfa-MCT', 'Borrar las descargas del video', video_file)
+        ok = d.yesno(msg_header, 'Borrar las descargas del video', video_file)
 
         # -- SI -------------------------------------------------
         if ok:
@@ -754,32 +768,44 @@ def remove_files( download, torrent_file, video_file, ses, h, ren_video_file="" 
                 except:
                     pass
             # -- Borrar carpeta/archivos y sesión - vídeo -------
-            ses.remove_torrent( h, 1 )
-            if extracted_rar:
-                log("##### erase_file_path: %s" % erase_file_path)
-                video_name = erase_file_path
-                if os.path.isdir(video_name):
-                    shutil.rmtree(video_name, ignore_errors=True)
-                elif os.path.exists(ren_video_file) and os.path.isfile(ren_video_file): 
-                    os.remove(ren_video_file)
-            else:
-                if os.path.exists(ren_video_file) and os.path.isfile(ren_video_file): 
-                    os.remove(ren_video_file)
+            try:
+                ses.remove_torrent( h, 1 )
+            except:
+                pass
+            try:
+                if extracted_rar:
+                    log("##### erase_file_path: %s" % erase_file_path)
+                    video_name = erase_file_path
+                    if os.path.isdir(video_name):
+                        shutil.rmtree(video_name, ignore_errors=True)
+                    elif os.path.exists(ren_video_file) and os.path.isfile(ren_video_file): 
+                        os.remove(ren_video_file)
+                else:
+                    if os.path.exists(ren_video_file) and os.path.isfile(ren_video_file): 
+                        os.remove(ren_video_file)
+            except:
+                pass
             """
             if "/" in video_name: video_name = video_name.split("/")[1]
             d = xbmcgui.Dialog()
-            ok = d.yesno('Alfa-MCT', 'Borrar el archivo extraído', video_name)
+            ok = d.yesno(msg_header, 'Borrar el archivo extraído', video_name)
             if ok:
                 os.remove(ren_video_file)
             """
             log("### End session #########")
         else:
             # -- Borrar sesión ----------------------------------
-            ses.remove_torrent( h )
+            try:
+                ses.remove_torrent( h )
+            except:
+                pass
             log("### End session #########")
     else:
         # -- Borrar sesión --------------------------------------
-        ses.remove_torrent( h )
+        try:
+            ses.remove_torrent( h )
+        except:
+            pass
         log("### End session #########")
 
     return
