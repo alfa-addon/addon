@@ -555,6 +555,10 @@ def findvideos(item):
                     del item_json.videolibray_emergency_urls
                 list_servers = getattr(channel, 'findvideos')(item_json)
                 list_servers = servertools.filter_servers(list_servers)
+            elif item_json.action == 'play':
+                from platformcode import platformtools
+                platformtools.play_video(item_json)
+                return ''
             else:
                 from core import servertools
                 list_servers = servertools.find_video_items(item_json)

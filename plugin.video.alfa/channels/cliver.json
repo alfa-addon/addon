@@ -45,6 +45,14 @@
         "Películas",
         "Series"
       ]
+    },
+    {
+      "id": "direct_play",
+      "type": "bool",
+      "label": "Reproducción directa (Series)",
+      "default": true,
+      "enabled": true,
+      "visible": true
     }
   ]
 }

@@ -14,7 +14,7 @@ from core.item import Item
 from platformcode import config, logger, platformtools
 from channelselector import get_thumb
 
-direct_play = True
+direct_play = config.get_setting('direct_play', channel='cliver')
 IDIOMAS = {'es': 'CAST', 'lat': 'LAT', 'es_la': 'LAT', 'vose': 'VOSE', 'ingles': 'VOS'}
 list_language = IDIOMAS.values()
 list_quality = []
@@ -312,7 +312,7 @@ def episodesxseason(item):
             if direct_play:
                 scrapedurls = scrapertools.find_single_match(scrapedurls, 'data-url-%s="([^"]+)"' % scrapedlangs)
                 action = 'play'
-                server = 'openload'
+                server = servertools.get_server_from_url(scrapedurls)
                 if item.extra:
                     action = 'findvideos'
         else:
@@ -330,7 +330,7 @@ def episodesxseason(item):
             if direct_play:
                 scrapedurls = scrapertools.find_single_match(scrapedurls, 'data-url-%s="([^"]+)"' % prio)
                 action = 'play'
-                server = 'openload'
+                server = servertools.get_server_from_url(scrapedurls)
                 if item.extra:
                     action = 'findvideos'
         infoLabels['episode'] = scrapedep
@@ -426,7 +426,7 @@ def findvideos(item):
                 continue
             scrapedlang = scrapedlang.replace('-', '_')
             language = IDIOMAS.get(scrapedlang, scrapedlang)
-            server = 'openload'
+            server = servertools.get_server_from_url(scrapedurl)
             title = '%s[COLOR springgreen] (%s)[/COLOR]' % (server.capitalize(), language)
             itemlist.append(Item(channel=item.channel,
                         url=scrapedurl,

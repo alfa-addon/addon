@@ -20,7 +20,7 @@ list_language = IDIOMAS.values()
 list_quality = ['HD 720p', 'HD 1080p', '480p', '360p']
 list_servers = ['cinemaupload']
 
-host = 'https://homecine.net'
+host = 'https://homecine.tv'
 
 
 def mainlist(item):
@@ -320,13 +320,11 @@ def findvideos(item):
         if not config.get_setting('unify'):
             if language != '':
                 try:
-                    title += ' [%s]' % IDIOMAS[language]
+                    title += ' [%s]' % IDIOMAS[language.capitalize()]
                 except:
                     pass
             if quality != '':
                 title += ' [%s]' % quality
-        new_data = get_source(url)
-        url = scrapertools.find_single_match(new_data, "source: '([^']+)',")
         new_item = Item(channel=item.channel,
                         url=url,
                         title= '%s'+ title,
@@ -335,7 +333,7 @@ def findvideos(item):
                         infoLabels = item.infoLabels
                         )
         if language != '':
-            new_item.language = IDIOMAS[language]
+            new_item.language = IDIOMAS[language.capitalize()]
         if quality != '':
             new_item.quality = quality
 
