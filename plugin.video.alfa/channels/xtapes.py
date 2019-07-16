@@ -13,7 +13,7 @@ host = 'http://hd.xtapes.to'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/porn-movies/"))
+    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/hd-porn-movies/"))
     itemlist.append( Item(channel=item.channel, title="Productora" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?filtre=date&cat=0"))
     itemlist.append( Item(channel=item.channel, title="Mas Vistos" , action="lista", url=host + "/?display=tube&filtre=views"))

@@ -12,8 +12,6 @@ from core import httptools
 
 host = 'https://pandamovies.pw'
 
-# Falta el servidor mangovideo (aparece como directo)
-
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -95,6 +93,18 @@ def findvideos(item):
                 logger.debug (url)
                 url = base64.b64decode(url)
                 n -= 1
+        if "mangovideo" in url:  #Aparece como directo
+            data = httptools.downloadpage(url).data
+            patron = 'video_url: \'function/0/https://mangovideo.pw/get_file/(\d+)/\w+/(.*?)/\?embed=true\''
+            matches = scrapertools.find_multiple_matches(data, patron)
+            for scrapedtitle,url in matches:
+                if scrapedtitle =="1":  scrapedtitle= "https://www.mangovideo.pw/contents/videos/"
+                if scrapedtitle =="7":  scrapedtitle= "https://server9.mangovideo.pw/contents/videos/"
+                if scrapedtitle =="8":  scrapedtitle= "https://s10.mangovideo.pw/contents/videos/"
+                if scrapedtitle =="10": scrapedtitle= "https://server217.mangovideo.pw/contents/videos/"
+                if scrapedtitle =="11": scrapedtitle= "https://234.mangovideo.pw/contents/videos/"
+                url = scrapedtitle + url
         itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url, fulltitle=item.fulltitle ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
+

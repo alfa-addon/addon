@@ -12,7 +12,6 @@ import base64
 
 host = "https://watchfreexxx.net/"
 
-
 def mainlist(item):
     itemlist = []
 
@@ -76,12 +75,26 @@ def findvideos(item):
     patron = '- on ([^"]+)" href="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedtitle,url in matches:
-        if "openloads.tk" in url:
-            url= url.replace("https://openloads.tk/goto/", "").replace("=", "")
-            url= base64.b64decode(url + "==")
-        server = servertools.get_server_from_url(url)
-        title = "Ver en: [COLOR yellow](%s)[/COLOR]" % server.title()
-        itemlist.append(item.clone(action='play', title=title, server=server, url=url))
+        if "tk/goto/" in url:
+            n = 3
+            while n > 0:
+                url= url.replace("https://vshares.tk/goto/", "").replace("https://waaws.tk/goto/", "").replace("https://openloads.tk/goto/", "")
+                logger.debug (url)
+                url = base64.b64decode(url)
+                n -= 1
+        if "mangovideo" in url:  #Aparece como directo
+            data = httptools.downloadpage(url).data
+            patron = 'video_url: \'function/0/https://mangovideo.pw/get_file/(\d+)/\w+/(.*?)/\?embed=true\''
+            matches = scrapertools.find_multiple_matches(data, patron)
+            for scrapedtitle,url in matches:
+                if scrapedtitle =="1":  scrapedtitle= "https://www.mangovideo.pw/contents/videos/"
+                if scrapedtitle =="7":  scrapedtitle= "https://server9.mangovideo.pw/contents/videos/"
+                if scrapedtitle =="8":  scrapedtitle= "https://s10.mangovideo.pw/contents/videos/"
+                if scrapedtitle =="10": scrapedtitle= "https://server217.mangovideo.pw/contents/videos/"
+                if scrapedtitle =="11": scrapedtitle= "https://234.mangovideo.pw/contents/videos/"
+                url = scrapedtitle + url
+        itemlist.append(item.clone(action="play", title = "%s", url=url ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 

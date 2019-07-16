@@ -10,14 +10,14 @@ from core import httptools
 
 # https://playpornfree.org/    https://mangoporn.net/   https://watchfreexxx.net/   https://losporn.org/  https://xxxstreams.me/  https://speedporn.net/
 
-host = 'https://watchpornfree.ws'
+host = 'https://watchpornfree.info'
 
 def mainlist(item):
     logger.info("")
     itemlist = []
     itemlist.append( Item(channel=item.channel, title="Videos" , action="lista", url=host + "/category/clips-scenes"))
     itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host))
-    itemlist.append( Item(channel=item.channel, title="Parodia" , action="lista", url=host + "/category/parodies-hd"))
+    itemlist.append( Item(channel=item.channel, title="Parodia" , action="lista", url=host + "/category/parodies"))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Año" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
@@ -42,17 +42,18 @@ def categorias(item):
     logger.info("")
     itemlist = []
     data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     if item.title == "Canal":
-        data = scrapertools.find_single_match(data,'>Studios</a>(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'Scenes</a></li>(.*?)</ul>')
     if item.title == "Año":
-        data = scrapertools.find_single_match(data,'>Years</a>(.*?)</ul>')
+        data = scrapertools.find_single_match(data,'Year</a>(.*?)</ul>')
     if item.title == "Categorias":
-        data = scrapertools.find_single_match(data,'>XXX Genres</div>(.*?)</ul>')
-    patron  = '<a href="([^"]+)".*?>([^"]+)</a>(.*?)</li>'
+        data = scrapertools.find_single_match(data,'>Categories</div>(.*?)</ul>')
+    patron  = '<a href="([^"]+)".*?>([^"]+)</a></li>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,cantidad  in matches:
+    for scrapedurl,scrapedtitle  in matches:
         scrapedplot = ""
-        scrapedtitle = scrapedtitle + cantidad
+        scrapedtitle = scrapedtitle
         scrapedthumbnail = ""
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
