@@ -33,6 +33,8 @@ __modo_grafico__ = config.get_setting('modo_grafico', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)        #Actualización sólo últ. Temporada?
 timeout = config.get_setting('timeout_downloadpage', channel)
 
+headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3', 'Accept-Encoding': 'gzip, deflate, br', 'Accept-Language': 'es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36', 'Referer': 'https://www.divxtotal3.net/peliculas-15/'}
+
 
 def mainlist(item):
     logger.info()
@@ -47,9 +49,9 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
 
-    item.url_plus = "peliculas/"
+    item.url_plus = "peliculas-15/"
     itemlist.append(Item(channel=item.channel, title="Películas", action="categorias", url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_cartelera, extra="Películas"))
-    item.url_plus = "peliculas-hd/"
+    item.url_plus = "peliculas-hd-3/"
     itemlist.append(Item(channel=item.channel, title="Películas HD", action="categorias", url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, extra="Películas HD"))
     item.url_plus = "peliculas-dvdr/"
     itemlist.append(Item(channel=item.channel, title="Películas DVDR", action="categorias", url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, extra="Películas DVDR"))
@@ -87,7 +89,7 @@ def submenu(item):
     if item.extra == "series":
         data = ''
         try:
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout, headers=headers).data)
             data = js2py_conversion(data, item.url)
             data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
@@ -115,7 +117,7 @@ def categorias(item):
     
     data = ''
     try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout, headers=headers).data)
         data = js2py_conversion(data, item.url)
         data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:
@@ -233,7 +235,7 @@ def listado(item):
         # Descarga la página
         data = ''
         try:
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(next_page_url, timeout=timeout_search).data)
+            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(next_page_url, timeout=timeout_search, headers=headers).data)
             data = js2py_conversion(data, next_page_url)
             data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
@@ -253,14 +255,16 @@ def listado(item):
             patron = '<div class="[^"]+"><p class="[^"]+"><a href="([^"]+)".?title="([^"]+)"><img src="([^"]+)".*?<a href=\'[^\']+\'.?title="([^"]+)".*?<\/p><\/div>'
             
         matches = re.compile(patron, re.DOTALL).findall(data)
-        if not matches and not '<p>Lo sentimos, pero que esta buscando algo que no esta aqui. </p>' in data and not item.extra2 and not '<h2>Sin resultados</h2> in data':    #error
+        if not matches and not '<p>Lo sentimos, pero que esta buscando algo que no esta aqui. </p>' in data and not item.extra2 and not '<h2>Sin resultados</h2>' in data:                                          #error
             item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
             if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
                 item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
                 return itemlist                                                     #Salimos
             
-            logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-            itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
+            #logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
+            logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + str(matches))
+            itemlist.append(item.clone(action='', title=item.channel.capitalize() + \
+                        ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
         
         #logger.debug("PATRON: " + patron)
@@ -306,7 +310,7 @@ def listado(item):
                 # Descarga la página del episodio, buscando el enlace a la serie completa
                 data_serie = ''
                 try:
-                    data_serie = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(scrapedurl, timeout=timeout).data)
+                    data_serie = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(scrapedurl, timeout=timeout, headers=headers).data)
                     data_serie = js2py_conversion(data_serie, scrapedurl)
                     data_serie = unicode(data_serie, "utf-8", errors="replace").encode("utf-8")
                 except:
@@ -542,7 +546,7 @@ def findvideos(item):
     patron = '<a onclick="eventDownloadTorrent\(.*?\)".?class="linktorrent" href="([^"]+)"'
     if item.contentType == 'movie':                                                 #Es una peli
         try:
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout, headers=headers).data)
             data = js2py_conversion(data, item.url)
             data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
@@ -715,7 +719,7 @@ def episodios(item):
     # Descarga la página
     data = ''                                                                               #Inserto en num de página en la url
     try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(item.url, timeout=timeout, headers=headers).data)
         data = js2py_conversion(data, item.url)
         data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:                                                                                 #Algún error de proceso, salimos
@@ -861,7 +865,7 @@ def actualizar_titulos(item):
     return item
 
     
-def js2py_conversion(data, url, post=None, follow_redirects=True, headers={}):
+def js2py_conversion(data, url, post=None, follow_redirects=True):
     logger.info()
     import js2py
     import base64

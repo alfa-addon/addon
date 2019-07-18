@@ -1,0 +1,207 @@
+2019-07-12 12:34:39.549 T:36100  NOTICE: alfa init...
+2019-07-12 12:34:39.750 T:36100  NOTICE: alfa.core.jsontools Usando json incluido en el interprete
+2019-07-12 12:34:40.158 T:36100  NOTICE: alfa.core.httptools [load_cookies] Leyendo fichero cookies
+2019-07-12 12:34:40.367 T:36100  NOTICE: alfa.core.tmdb.cache_response
+2019-07-12 12:34:40.368 T:36100  NOTICE: alfa.platformcode.launcher.run
+2019-07-12 12:34:40.369 T:36100  NOTICE: alfa.platformcode.launcher [run] action= 'listado', category= 'Divxtotal', channel= 'divxtotal', extra= 'Películas', fanart= '', infoLabels= {}, text_color= '', thumbnail= 'C:\Users\lopez\AppData\Roaming\Kodi\addons\plugin.video.alfa\resources\media\themes\default\thumb_now_playing.png', title= 'Todas las PELíCULAS', totalItems= 0, url= 'https://www.divxtotal3.net/peliculas-15/', url_plus= 'peliculas-15/'
+2019-07-12 12:34:40.369 T:36100  NOTICE: alfa.platformcode.launcher [run] channel_file=C:\Users\lopez\AppData\Roaming\Kodi\addons\plugin.video.alfa\channels\divxtotal.py
+2019-07-12 12:34:40.381 T:36100  NOTICE: alfa.platformcode.launcher [run] Running channel channels.divxtotal | C:\Users\lopez\AppData\Roaming\Kodi\addons\plugin.video.alfa\channels\divxtotal.pyo
+2019-07-12 12:34:40.381 T:36100  NOTICE: alfa.platformcode.launcher [run] Executing channel 'listado' method
+2019-07-12 12:34:40.383 T:36100  NOTICE: alfa.channels.divxtotal.listado
+2019-07-12 12:34:40.383 T:36100  NOTICE: alfa.core.httptools.downloadpage
+2019-07-12 12:34:40.383 T:36100  NOTICE: alfa.core.httptools [load_cookies] Leyendo fichero cookies
+2019-07-12 12:34:40.572 T:36100   ERROR: C:\Users\lopez\AppData\Roaming\Kodi\addons\script.module.urllib3\lib\urllib3\connectionpool.py:851: InsecureRequestWarning: Unverified HTTPS request is being made. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings
+                                              InsecureRequestWarning)
+2019-07-12 12:34:40.613 T:36100  NOTICE: alfa.core.httptools [save_cookies] Guardando cookies...
+2019-07-12 12:34:40.615 T:36100  NOTICE: alfa.core.httptools.show_infobox
+2019-07-12 12:34:40.615 T:36100  NOTICE: alfa.core.httptools [show_infobox] ┌────────────────────────────────────────────────────────────┐
+2019-07-12 12:34:40.615 T:36100  NOTICE: alfa.core.httptools [show_infobox] │                     Alfa: 2.8.17.fix3                      │
+2019-07-12 12:34:40.616 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.616 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Timeout: 5                                                  │
+2019-07-12 12:34:40.616 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.616 T:36100  NOTICE: alfa.core.httptools [show_infobox] │URL: https://www.divxtotal3.net/peliculas-15/               │
+2019-07-12 12:34:40.616 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.616 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Dominio: www.divxtotal3.net                                 │
+2019-07-12 12:34:40.616 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.616 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Peticion: GET                                               │
+2019-07-12 12:34:40.616 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.616 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Descargar Pagina: True                                      │
+2019-07-12 12:34:40.616 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.617 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Usar cookies: True                                          │
+2019-07-12 12:34:40.617 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.617 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Fichero de cookies: C:\Users\lopez\AppData\Roaming\Kodi\user│
+2019-07-12 12:34:40.617 T:36100  NOTICE: alfa.core.httptools [show_infobox] │data\addon_data\plugin.video.alfa\cookies.dat               │
+2019-07-12 12:34:40.618 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.618 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Cookies: <RequestsCookieJar[]>                              │
+2019-07-12 12:34:40.618 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.618 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Data Encoding: UTF-8                                        │
+2019-07-12 12:34:40.618 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.618 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Response code: 200                                          │
+2019-07-12 12:34:40.618 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.618 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Success: True                                               │
+2019-07-12 12:34:40.618 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.618 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Response data length: 41529                                 │
+2019-07-12 12:34:40.618 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.619 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Request Headers:                                            │
+2019-07-12 12:34:40.619 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.619 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Accept-Language: es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7      │
+2019-07-12 12:34:40.619 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.619 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Accept-Encoding: gzip, deflate, br                        │
+2019-07-12 12:34:40.619 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.619 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Accept: text/html,application/xhtml+xml,application/xml;q=│
+2019-07-12 12:34:40.619 T:36100  NOTICE: alfa.core.httptools [show_infobox] │0.9,image/webp,image/apng,*/*;q=0.8,application/signed-     │
+2019-07-12 12:34:40.620 T:36100  NOTICE: alfa.core.httptools [show_infobox] │exchange;v=b3                                               │
+2019-07-12 12:34:40.620 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.620 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)     │
+2019-07-12 12:34:40.620 T:36100  NOTICE: alfa.core.httptools [show_infobox] │AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 │
+2019-07-12 12:34:40.620 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Safari/537.36                                               │
+2019-07-12 12:34:40.622 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.622 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Accept-Charset: UTF-8                                     │
+2019-07-12 12:34:40.622 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.622 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Referer: https://www.divxtotal3.net/peliculas-15/         │
+2019-07-12 12:34:40.622 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.623 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Response Headers:                                           │
+2019-07-12 12:34:40.623 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.623 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Server: Sucuri/Cloudproxy                                 │
+2019-07-12 12:34:40.623 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.623 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Date: Fri, 12 Jul 2019 10:34:41 GMT                       │
+2019-07-12 12:34:40.623 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.623 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Content-Type: text/html; charset=UTF-8                    │
+2019-07-12 12:34:40.624 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.624 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Transfer-Encoding: chunked                                │
+2019-07-12 12:34:40.624 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.624 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Connection: keep-alive                                    │
+2019-07-12 12:34:40.624 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.625 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-Sucuri-ID: 15006                                        │
+2019-07-12 12:34:40.625 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.625 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-XSS-Protection: 1; mode=block                           │
+2019-07-12 12:34:40.626 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.626 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-Frame-Options: SAMEORIGIN                               │
+2019-07-12 12:34:40.626 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.627 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-Content-Type-Options: nosniff                           │
+2019-07-12 12:34:40.627 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.627 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Content-Security-Policy: upgrade-insecure-requests;       │
+2019-07-12 12:34:40.627 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.628 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Link: <https://www.divxtotal3.net/wp-json/>;              │
+2019-07-12 12:34:40.628 T:36100  NOTICE: alfa.core.httptools [show_infobox] │rel="https://api.w.org/"                                    │
+2019-07-12 12:34:40.628 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.628 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Etag: "751856-1562775694;gz"                              │
+2019-07-12 12:34:40.628 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.628 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-LiteSpeed-Cache: hit                                    │
+2019-07-12 12:34:40.628 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.628 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Content-Encoding: gzip                                    │
+2019-07-12 12:34:40.628 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.629 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Vary: Accept-Encoding                                     │
+2019-07-12 12:34:40.629 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.629 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-Varnish: 838732821                                      │
+2019-07-12 12:34:40.629 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.629 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Age: 0                                                    │
+2019-07-12 12:34:40.629 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.629 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Via: 1.1 varnish (Varnish/5.2)                            │
+2019-07-12 12:34:40.629 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.629 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-Sucuri-Cache: HIT                                       │
+2019-07-12 12:34:40.629 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:40.629 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Finalizado en: 0.178999900818                               │
+2019-07-12 12:34:40.630 T:36100  NOTICE: alfa.core.httptools [show_infobox] └────────────────────────────────────────────────────────────┘
+2019-07-12 12:34:40.635 T:36100  NOTICE: alfa.channels.divxtotal.js2py_conversion
+2019-07-12 12:34:41.486 T:36100  NOTICE: alfa.core.httptools.downloadpage
+2019-07-12 12:34:41.487 T:36100  NOTICE: alfa.core.httptools [load_cookies] Leyendo fichero cookies
+2019-07-12 12:34:41.673 T:36100   ERROR: C:\Users\lopez\AppData\Roaming\Kodi\addons\script.module.urllib3\lib\urllib3\connectionpool.py:851: InsecureRequestWarning: Unverified HTTPS request is being made. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings
+                                              InsecureRequestWarning)
+2019-07-12 12:34:41.718 T:36100  NOTICE: alfa.core.httptools [save_cookies] Guardando cookies...
+2019-07-12 12:34:41.721 T:36100  NOTICE: alfa.core.httptools.show_infobox
+2019-07-12 12:34:41.722 T:36100  NOTICE: alfa.core.httptools [show_infobox] ┌────────────────────────────────────────────────────────────┐
+2019-07-12 12:34:41.722 T:36100  NOTICE: alfa.core.httptools [show_infobox] │                     Alfa: 2.8.17.fix3                      │
+2019-07-12 12:34:41.723 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.723 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Timeout: 5                                                  │
+2019-07-12 12:34:41.723 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.723 T:36100  NOTICE: alfa.core.httptools [show_infobox] │URL: https://www.divxtotal3.net/peliculas-15/page/2/        │
+2019-07-12 12:34:41.723 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.723 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Dominio: www.divxtotal3.net                                 │
+2019-07-12 12:34:41.724 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.724 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Peticion: GET                                               │
+2019-07-12 12:34:41.724 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.725 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Descargar Pagina: True                                      │
+2019-07-12 12:34:41.726 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.726 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Usar cookies: True                                          │
+2019-07-12 12:34:41.727 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.729 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Fichero de cookies: C:\Users\lopez\AppData\Roaming\Kodi\user│
+2019-07-12 12:34:41.729 T:36100  NOTICE: alfa.core.httptools [show_infobox] │data\addon_data\plugin.video.alfa\cookies.dat               │
+2019-07-12 12:34:41.730 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.730 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Cookies: <RequestsCookieJar[]>                              │
+2019-07-12 12:34:41.730 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.730 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Data Encoding: UTF-8                                        │
+2019-07-12 12:34:41.730 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.730 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Response code: 200                                          │
+2019-07-12 12:34:41.730 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.730 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Success: True                                               │
+2019-07-12 12:34:41.730 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.730 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Response data length: 7686                                  │
+2019-07-12 12:34:41.731 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.731 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Request Headers:                                            │
+2019-07-12 12:34:41.731 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.731 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Accept-Language: es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7      │
+2019-07-12 12:34:41.731 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.731 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Accept-Encoding: gzip, deflate, br                        │
+2019-07-12 12:34:41.731 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.731 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Accept: text/html,application/xhtml+xml,application/xml;q=│
+2019-07-12 12:34:41.731 T:36100  NOTICE: alfa.core.httptools [show_infobox] │0.9,image/webp,image/apng,*/*;q=0.8,application/signed-     │
+2019-07-12 12:34:41.732 T:36100  NOTICE: alfa.core.httptools [show_infobox] │exchange;v=b3                                               │
+2019-07-12 12:34:41.732 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.732 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)     │
+2019-07-12 12:34:41.732 T:36100  NOTICE: alfa.core.httptools [show_infobox] │AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 │
+2019-07-12 12:34:41.732 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Safari/537.36                                               │
+2019-07-12 12:34:41.732 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.732 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Accept-Charset: UTF-8                                     │
+2019-07-12 12:34:41.732 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.732 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Referer: https://www.divxtotal3.net/peliculas-15/         │
+2019-07-12 12:34:41.733 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.733 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Response Headers:                                           │
+2019-07-12 12:34:41.733 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.733 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Server: Sucuri/Cloudproxy                                 │
+2019-07-12 12:34:41.733 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.733 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Date: Fri, 12 Jul 2019 10:34:43 GMT                       │
+2019-07-12 12:34:41.733 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.733 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Content-Type: text/html; charset=UTF-8                    │
+2019-07-12 12:34:41.733 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.733 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Content-Length: 7686                                      │
+2019-07-12 12:34:41.733 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.733 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Connection: keep-alive                                    │
+2019-07-12 12:34:41.734 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.734 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-Sucuri-ID: 15006                                        │
+2019-07-12 12:34:41.734 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.734 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-XSS-Protection: 1; mode=block                           │
+2019-07-12 12:34:41.734 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.734 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-Frame-Options: SAMEORIGIN                               │
+2019-07-12 12:34:41.734 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.734 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-Content-Type-Options: nosniff                           │
+2019-07-12 12:34:41.734 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.734 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Content-Security-Policy: upgrade-insecure-requests;       │
+2019-07-12 12:34:41.734 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.735 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Link: <https://www.divxtotal3.net/wp-json/>;              │
+2019-07-12 12:34:41.735 T:36100  NOTICE: alfa.core.httptools [show_infobox] │rel="https://api.w.org/"                                    │
+2019-07-12 12:34:41.735 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.735 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Etag: "772325-1562777116;br"                              │
+2019-07-12 12:34:41.735 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.735 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-LiteSpeed-Cache: hit                                    │
+2019-07-12 12:34:41.735 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.735 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Content-Encoding: br                                      │
+2019-07-12 12:34:41.735 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.735 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Vary: Accept-Encoding                                     │
+2019-07-12 12:34:41.735 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.735 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-Varnish: 838571641                                      │
+2019-07-12 12:34:41.736 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.736 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Age: 0                                                    │
+2019-07-12 12:34:41.736 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.736 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Via: 1.1 varnish (Varnish/5.2)                            │
+2019-07-12 12:34:41.736 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.736 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- X-Sucuri-Cache: HIT                                       │
+2019-07-12 12:34:41.736 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.736 T:36100  NOTICE: alfa.core.httptools [show_infobox] │- Accept-Ranges: bytes                                      │
+2019-07-12 12:34:41.736 T:36100  NOTICE: alfa.core.httptools [show_infobox] ├────────────────────────────────────────────────────────────┤
+2019-07-12 12:34:41.736 T:36100  NOTICE: alfa.core.httptools [show_infobox] │Finalizado en: 0.184000015259                               │
+2019-07-12 12:34:41.736 T:36100  NOTICE: alfa.core.httptools [show_infobox] └────────────────────────────────────────────────────────────┘
+2019-07-12 12:34:41.739 T:36100  NOTICE: alfa.channels.divxtotal.js2py_conversion
+2019-07-12 12:34:41.742 T:36100  NOTICE: alfa.lib.generictools.web_intervenida
+2019-07-12 12:34:41.743 T:36100   ERROR: ######## ERROR #########
+2019-07-12 12:34:41.743 T:36100   ERROR:     [alfa.channels.divxtotal.listado] ERROR 02: LISTADO: Ha cambiado la estructura de la Web  / PATRON: <tr><td(?: class="[^"]+")?><a href="([^"]+)".?title="([^"]+)".*?<\/a><\/td><td(?: class="[^"]+")?>(?:<a href="[^"]+">)?(.*?)(?:<\/a>)?<\/td><td(?: class="[^"]+")?>.*?<\/td><td(?: class="[^"]+")?>(.*?)<\/td><\/tr> / DATA: []

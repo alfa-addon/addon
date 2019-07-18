@@ -480,7 +480,7 @@ def findvideos(item):
         timeout_find = timeout * 2
     elif item.emergency_urls:                           #Si se llama desde la Videoteca con enlaces cacheados... 
         timeout_find = timeout / 2                      #reducimos el timeout antes de saltar a los enlaces cacheados
-        follow_redirects=False
+        #follow_redirects=False
     rar_search = True
         
     #Bajamos los datos de la página
