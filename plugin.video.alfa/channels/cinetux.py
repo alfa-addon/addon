@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import urlparse, re
+
 from channels import autoplay
 from channels import filtertools
 from core import httptools
@@ -11,10 +13,10 @@ from platformcode import config, logger
 from channelselector import get_thumb
 
 servers = {'ul': 'uploaded', 'ok': 'okru', 'hqq': 'netu', 'waaw': 'netu', 'drive': 'gvideo', 'mp4': 'gvideo'}
-IDIOMAS = {'Latino': 'Latino', 'Subtitulado': 'Subtitulado', 'Español': 'Español', 'SUB': 'Subtitulado', '': 'Latino', 'VO':'VO' }
+IDIOMAS = {'Latino': 'LAT', 'Español': 'CAST', 'SUB': 'VOSE', 'Subtitulado': 'VOSE', 'Inglés':'VO' }
 list_language = IDIOMAS.values()
 list_quality = []
-list_servers = ['rapidvideo', 'streamango', 'okru', 'vidoza', 'openload', 'powvideo', 'netutv','gvideo']
+list_servers = ['directo', 'rapidvideo', 'streamango', 'okru', 'vidoza', 'openload', 'powvideo']
 
 
 CHANNEL_HOST = "http://www.cinetux.to/"
@@ -41,29 +43,49 @@ def mainlist(item):
     data = httptools.downloadpage(CHANNEL_HOST + "pelicula").data
     total = scrapertools.find_single_match(data, "Películas</h1><span>(.*?)</span>")
     titulo = "Peliculas (%s)" %total
-    itemlist.append(item.clone(title=titulo, text_color=color2, action="", text_bold=True))
-    itemlist.append(item.clone(action="peliculas", title="      Novedades", url=CHANNEL_HOST + "pelicula",
-                               thumbnail=get_thumb('newest', auto=True),
-                               text_color=color1))
-    itemlist.append(item.clone(action="destacadas", title="      Destacadas", url=CHANNEL_HOST + "mas-vistos/",
-                               thumbnail=get_thumb('hot', auto=True),
-                               text_color=color1))
-    itemlist.append(item.clone(action="idioma", title="      Por idioma", text_color=color1,
-                               thumbnail=get_thumb('language', auto=True)))
-    itemlist.append(item.clone(action="generos", title="      Por géneros", url=CHANNEL_HOST,
-                               thumbnail=get_thumb('genres', auto=True),
-                               text_color=color1))
-
-    itemlist.append(item.clone(title="Documentales", text_bold=True, text_color=color2, action=""))
-    itemlist.append(item.clone(action="peliculas", title="      Novedades", url=CHANNEL_HOST + "genero/documental/", text_color=color1,
-                               thumbnail=get_thumb('newest', auto=True)))
-    itemlist.append(item.clone(action="peliculas", title="      Por orden alfabético", text_color=color1, url=CHANNEL_HOST + "genero/documental/?orderby=title&order=asc&gdsr_order=asc",
-                               thumbnail=get_thumb('alphabet', auto=True)))
-    itemlist.append(item.clone(title="", action=""))
-    itemlist.append(item.clone(action="search", title="Buscar...", text_color=color3,
-                               thumbnail=get_thumb('search', auto=True)))
-    itemlist.append(item.clone(action="configuracion", title="Configurar canal...", text_color="gold", folder=False))
+    #titulo peliculas
+    itemlist.append(Item(channel=item.channel, title=titulo, text_color=color2, action="",
+                         text_bold=True, plot=item.plot, thumbnail=item.thumbnail, folder=False))
+    
+    itemlist.append(Item(channel=item.channel, action="peliculas", title="      Novedades",
+                         url=CHANNEL_HOST + "pelicula", thumbnail=get_thumb('newest', auto=True),
+                         text_color=color1, plot=item.plot))
+    
+    itemlist.append(Item(channel=item.channel, action="destacadas", title="      Destacadas",
+                         url=CHANNEL_HOST + "mas-vistos/", thumbnail=get_thumb('hot', auto=True),
+                         text_color=color1, plot=item.plot))
+    
+    itemlist.append(Item(channel=item.channel, action="idioma", title="      Por idioma",
+                         text_color=color1, thumbnail=get_thumb('language', auto=True),
+                         plot=item.plot))
+    
+    itemlist.append(Item(channel=item.channel, action="generos", title="      Por géneros",
+                         url=CHANNEL_HOST, thumbnail=get_thumb('genres', auto=True),
+                         text_color=color1, plot=item.plot))
+    #titulo documentales
+    itemlist.append(Item(channel=item.channel, title="Documentales", text_bold=True, folder=False, 
+                         text_color=color2, plot=item.plot, action="", thumbnail=item.thumbnail))
+    
+    itemlist.append(Item(channel=item.channel, action="peliculas", title="      Novedades",
+                         url=CHANNEL_HOST + "genero/documental/", text_color=color1,
+                         thumbnail=get_thumb('newest', auto=True), plot=item.plot))
+    
+    itemlist.append(Item(channel=item.channel, action="peliculas", title="      Por orden alfabético",
+                         url=CHANNEL_HOST + "genero/documental/?orderby=title&order=asc&gdsr_order=asc",
+                         text_color=color1, plot=item.plot, thumbnail=get_thumb('alphabet', auto=True)))
+    
+    itemlist.append(Item(channel=item.channel, title="", action="", folder=False,
+                         plot=item.plot, thumbnail=item.thumbnail))
+    
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar...", text_color=color3,
+                         thumbnail=get_thumb('search', auto=True), plot=item.plot))
+    
+    itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal...",
+                         text_color="gold", folder=False, plot=item.plot,
+                         thumbnail=get_thumb("setting_0.png")))
+    
     autoplay.show_option(item.channel, itemlist)
+    
     return itemlist
 
 
@@ -181,9 +203,10 @@ def destacadas(item):
     patron += 'src="([^"]+)'
     matches = scrapertools.find_multiple_matches(bloque, patron)
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
-        scrapedurl = CHANNEL_HOST + scrapedurl
+        #scrapedurl = CHANNEL_HOST + scrapedurl
+        url = urlparse.urljoin(CHANNEL_HOST, scrapedurl)
         itemlist.append(item.clone(action="findvideos", title=scrapedtitle, fulltitle=scrapedtitle,
-                              url=scrapedurl, thumbnail=scrapedthumbnail,
+                              url=url, thumbnail=scrapedthumbnail,
                               contentType="movie"
                               ))
     next_page_link = scrapertools.find_single_match(data, '<a href="([^"]+)"\s+><span [^>]+>&raquo;</span>')
@@ -198,15 +221,16 @@ def generos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     bloque = scrapertools.find_single_match(data, '(?s)dos_columnas">(.*?)</ul>')
-    patron = '<li><a.*?href="/([^"]+)">(.*?)</li>'
+    patron = '<li><a.*?href="([^"]+)">(.*?)</li>'
     matches = scrapertools.find_multiple_matches(bloque, patron)
     for scrapedurl, scrapedtitle in matches:
-        scrapedurl = CHANNEL_HOST + scrapedurl
+        #scrapedurl = CHANNEL_HOST + scrapedurl
+        url = urlparse.urljoin(CHANNEL_HOST, scrapedurl)
         scrapedtitle = scrapertools.htmlclean(scrapedtitle).strip()
         scrapedtitle = unicode(scrapedtitle, "utf8").capitalize().encode("utf8")
         if scrapedtitle == "Erotico" and config.get_setting("adult_mode") == 0:
             continue
-        itemlist.append(item.clone(action="peliculas", title=scrapedtitle, url=scrapedurl))
+        itemlist.append(item.clone(action="peliculas", title=scrapedtitle, url=url))
     return itemlist
 
 
@@ -232,20 +256,25 @@ def findvideos(item):
         
         if not qual_fix:
             qual_fix += quality
-        if language == 'Inglés':
-            language = 'VO'
+        
+        lang = IDIOMAS.get(language, language)
+        
         if not config.get_setting('unify'):
-            title = ' [%s][%s]' % (quality, IDIOMAS[language])
+            title = ' [%s][%s]' % (quality, lang)
         else:
             title = ''
         try:
-            iserver = iserver.split('.')[0]
+            iserver = iserver.split('.')[0].rstrip()
             iserver = servers.get(iserver, iserver)
         except:
             pass
-        iserver = iserver.capitalize()
-        itemlist.append(item.clone(channel=item.channel, title=iserver+title, url=url, action='play', quality=quality,
-                                 language=IDIOMAS[language], infoLabels=item.infoLabels, text_color = ""))
+
+        server = iserver.lower().replace('gvideo', 'directo')
+        
+        iserver = iserver.capitalize() + title
+        itemlist.append(Item(channel=item.channel, title=iserver, url=url,
+                            action='play', quality=quality, text_color="",
+                            language=lang, infoLabels=item.infoLabels, server=server))
 
     patron  = 'tooltipctx.*?data-type="([^"]+).*?'
     patron += 'data-post="(\d+)".*?'
@@ -255,8 +284,11 @@ def findvideos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for tp, pt, nm, language, iserver in matches:
         language = language.strip()
+        lang = IDIOMAS.get(language, language)
+
         post = {'action':'doo_player_ajax', 'post':pt, 'nume':nm, 'type':tp}
         post = urllib.urlencode(post)
+
         if not config.get_setting('unify'):
             if item.quality == '':
                 quality = 'SD'
@@ -264,19 +296,21 @@ def findvideos(item):
                     quality = qual_fix
             else:
                 quality = item.quality
-            title = ' [%s][%s]' % (quality, IDIOMAS[language])
+            title = ' [%s][%s]' % (quality, lang)
         else:
             title = ''
         try:
-            iserver = iserver.split('.')[0]
+            iserver = iserver.split('.')[0].rstrip()
             iserver = servers.get(iserver, iserver)
 
         except:
             pass
-        iserver = iserver.capitalize()
+        
+        server = iserver.lower().replace('gvideo', 'directo')
+        iserver = iserver.capitalize() + title
 
-        itemlist.append(item.clone(title =iserver+title, url="", action='play',
-                                 language=IDIOMAS[language], text_color = "",
+        itemlist.append(Item(channel=item.channel, title=iserver, url="", action='play',
+                             infoLabels=item.infoLabels, language=lang, text_color = "", server=server,
                                  spost=post, quality=quality))
     #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     itemlist.sort(key=lambda it: (it.language, it.title, it.quality))
@@ -311,6 +345,7 @@ def get_url(url):
                 url += "/preview"
             if "FFFFFF" in url:
                 url = scrapertools.find_single_match(d1, 'class="cta" href="([^"]+)"')
+    url = url.replace('&amp;f=frame', "")
     url = url.replace("povwideo","powvideo")
     return url
 
@@ -326,7 +361,7 @@ def play(item):
                                            post=post, headers={'Referer':item.url}).data
         url = scrapertools.find_single_match(new_data, "src='([^']+)'")
         item.url = get_url(url)
-    item = servertools.get_servers_itemlist([item])
+    #item.server = ""
+    #item = servertools.get_servers_itemlist([item])
     #item.thumbnail = item.contentThumbnail
-    #testear [item]
-    return item
+    return [item]

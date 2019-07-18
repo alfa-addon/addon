@@ -95,7 +95,7 @@ def list_all(item):
     logger.info()
 
     itemlist = []
-    logger.error(item.url)
+
     if item.ar_post and not item.not_post:
       data = get_source(item.url, post=item.ar_post)
     else:
@@ -201,7 +201,7 @@ def new_episodes(item):
     for scrapedurl, epi, scrapedthumbnail, scrapedtitle in matches:
         url = host+scrapedurl
         lang = 'VOSE'
-        title = '%s - %s' % (scrapedtitle, epi)
+        title = '%s: 1x%s' % (scrapedtitle, epi)
         itemlist.append(Item(channel=item.channel, title=title, url=url, thumbnail=scrapedthumbnail,
                              action='findvideos', contentSerieName=scrapedtitle, language=lang))
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
@@ -246,7 +246,7 @@ def findvideos(item):
     logger.info()
     servers_l = {'sm': 'streamango',
               'natsuki': 'directo',
-              'media': 'directo'}
+              'media': 'mediafire'}
     itemlist = []
     p_data = ""
 
@@ -302,8 +302,11 @@ def play(item):
             url = scrapertools.find_single_match(data, 'src="([^"]+)"')
             if not url.startswith('http'):
                 url = 'http:'+url
+            #parchear enlace mediafire
+            if 'mediafire' in url and not '/file/' in url:
+                url = re.sub('://(.*?)\.mediafire', "://www.mediafire", url)
+                url = re.sub('\.mediafire.*?/(\w+)/', ".mediafire.com/file/", url)
             item.url = url
-            #item.server = servertools.get_server_from_url(url)
         else:
             item.url = ''
             logger.error(mess)
