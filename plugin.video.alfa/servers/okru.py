@@ -11,7 +11,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
     data = httptools.downloadpage(page_url).data
-    if "copyrightsRestricted" in data or "COPYRIGHTS_RESTRICTED" in data:
+    if "copyrightsRestricted" in data or "COPYRIGHTS_RESTRICTED" in data or "LIMITED_ACCESS" in data:
         return False, "[Okru] El archivo ha sido eliminado por violación del copyright"
     elif "notFound" in data:
         return False, "[Okru] El archivo no existe o ha sido eliminado"
