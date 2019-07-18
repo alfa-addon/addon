@@ -8,6 +8,9 @@ from platformcode import logger, config
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
+    #Deshabilitamos el server hasta nueva orden
+    return False, "[Thevideo.me] Servidor deshabilitado"
+    
     page_url = httptools.downloadpage(page_url, follow_redirects=False, only_headers=True).headers.get("location", "")
     data = httptools.downloadpage(page_url).data
     if "File was deleted" in data or "Page Cannot Be Found" in data or "<title>Video not found" in data:

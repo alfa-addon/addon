@@ -267,6 +267,9 @@ def findvideos(item):
                     url = json_data['file']
                 except:
                     continue
+            #Parche por error tipografico en web(RV)
+            elif 'e/http' in source:
+                url = url.split('/e/')[1]
 
             itemlist.append(Item(channel=item.channel, url=url, title='%s'+lang, 
                                 action='play', infoLabels=item.infoLabels, language=language))

@@ -49,7 +49,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Latino", action="list_all", url=host + 'peliculas-latino',
                          thumbnail=get_thumb('audio', auto=True)))
     
-    itemlist.append(Item(channel=item.channel, title="VOSE", action="list_all", url=host + 'peliculas-subtitulado',
+    itemlist.append(Item(channel=item.channel, title="VOSE", action="list_all", url=host + 'peliculas-subtituladas',
                          thumbnail=get_thumb('audio', auto=True)))
     
     # itemlist.append(Item(channel=item.channel, title="Alfabetico", action="section", section='alpha',
