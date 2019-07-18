@@ -66,6 +66,7 @@ except:
 DOWNLOAD_PATH = config.get_setting("bt_download_path", server="torrent", default=config.get_setting("downloadpath"))
 BACKGROUND = config.get_setting("mct_background_download", server="torrent", default=True)
 RAR = config.get_setting("mct_rar_unpack", server="torrent", default=True)
+msg_header = 'Alfa BT Cliente Torrent'
 
 
 class Client(object):
@@ -107,6 +108,7 @@ class Client(object):
         self.wait_time = wait_time
         self.auto_shutdown = auto_shutdown
         self.buffer_size = BUFFER
+        self.first_pieces_priorize = BUFFER
         self.last_pieces_priorize = 5
         self.state_file = "state"
         try:
@@ -131,6 +133,8 @@ class Client(object):
         self.file = None
         self.files = None
         self._th = None
+        self.seleccion = 0
+        self.index = 0
 
         # Sesion
         self._cache = Cache(self.temp_path)
@@ -167,6 +171,15 @@ class Client(object):
         if url:
             self.start_url(url)
 
+    def set_speed_limits(self, download=0, upload=0):
+        """
+        Función encargada de poner límites a la velocidad de descarga o subida
+        """
+        if isinstance(download, int) and download > 0:
+            self._th.set_download_limit(download * 1024)
+        if isinstance(upload, int) and download > 0:
+            self._th.set_upload_limit(upload * 1024)
+    
     def get_play_list(self):
         """
         Función encargada de generar el playlist
@@ -224,6 +237,10 @@ class Client(object):
         # Seleccionamos el archivo que vamos a servir
         fmap = self.meta.map_file(f.index, 0, 1)
         self.file = File(f.path, self.temp_path, f.index, f.size, fmap, self.meta.piece_length(), self)
+        if self.seleccion < 0:                                                  ### ALFA
+            self.file.first_piece = 0                                           ### ALFA
+            self.file.last_piece = self.meta.num_pieces()                       ### ALFA
+            self.file.size = self.total_size                                    ### ALFA
         self.prioritize_file()
 
     def prioritize_piece(self, pc, idx):
@@ -250,7 +267,7 @@ class Client(object):
 
             # Piezas siguientes a la primera se activan
             for i in xrange(pc + 1, self.file.last_piece + 1):
-                self._th.piece_priority(i, 0)
+                #self._th.piece_priority(i, 0)
                 self._th.piece_priority(i, 1)
 
     def prioritize_file(self):
@@ -262,9 +279,19 @@ class Client(object):
             if i >= self.file.first_piece and i <= self.file.last_piece:
                 priorities.append(1)
             else:
-                #priorities.append(0)                                           ### ALFA
-                priorities.append(1)                                            ### ALFA
+                if self.index < 0:
+                    priorities.append(1)                                        ### ALFA
+                else:
+                    priorities.append(0)                                        ### ALFA
+
         self._th.prioritize_pieces(priorities)
+        
+        x = 0
+        for i, _set in enumerate(self._th.piece_priorities()):
+            if _set > 0: x += 1
+            #logger.info("***** Nº Pieza: %s: %s" % (i, str(_set)))
+        logger.info("***** Piezas %s : Activas: %s" % (str(i+1), str(x)))
+        logger.info("***** first_piece %s : last_piece: %s" % (str(self.file.first_piece), str(self.file.last_piece)))
 
     def download_torrent(self, url):
         """
@@ -394,15 +421,15 @@ class Client(object):
         if self._th:
             s = self._th.status()
             # Download Rate
-            s._download_rate = s.download_rate / 1000
+            s._download_rate = s.download_rate / 1024
 
             # Progreso del archivo
             if self.file:
-                #pieces = s.pieces[self.file.first_piece:self.file.last_piece]  ### ALFA
-                pieces = s.pieces                                               ### ALFA
+                pieces = s.pieces[self.file.first_piece:self.file.last_piece]  ### ALFA
                 progress = float(sum(pieces)) / len(pieces)
                 s.pieces_len = len(pieces)                                      ### ALFA
                 s.pieces_sum = sum(pieces)                                      ### ALFA
+                #logger.info('***** Estado piezas: %s' % pieces)
             else:
                 progress = 0
                 s.pieces_len = 0                                                ### ALFA
@@ -411,7 +438,12 @@ class Client(object):
             s.progress_file = progress * 100
 
             # Tamaño del archivo
+            s.file_name = ''                                                    ### ALFA
+            s.seleccion = ''                                                    ### ALFA
+
             if self.file:
+                s.seleccion = self.seleccion                                    ### ALFA
+                s.file_name = self.file.path                                    ### ALFA
                 s.file_size = self.file.size / 1048576.0
             else:
                 s.file_size = 0
@@ -431,14 +463,14 @@ class Client(object):
                 # El tamaño del buffer de inicio es el tamaño del buffer menos el tamaño del buffer del final
                 first_pieces_priorize = self.buffer_size - self.last_pieces_priorize
 
-                # Comprobamos que partes del buffer del inicio estan disponibles
+                # Comprobamos qué partes del buffer del inicio estan disponibles
                 for x in range(first_pieces_priorize):
                     if self._th.have_piece(self.file.first_piece + x):
                         bp.append(True)
                     else:
                         bp.append(False)
 
-                # Comprobamos que partes del buffer del final estan disponibles
+                # Comprobamos qué partes del buffer del final estan disponibles
                 for x in range(self.last_pieces_priorize):
                     if self._th.have_piece(self.file.last_piece - x):
                         bp.append(True)
@@ -580,10 +612,28 @@ class Client(object):
 
             # Guardamos la lista de archivos
             self.files = self._find_files(files)
+            
+            # Si hay varios vídeos (no RAR), se selecciona el vídeo o "todos"
+            lista = []
+            seleccion = 0
+            for file in self.files:
+                if '.rar' in str(file.path):
+                    seleccion = -9
+                lista += [os.path.split(str(file.path))[1]]
+            if len(lista) > 1 and seleccion >= 0:
+                d = xbmcgui.Dialog()
+                seleccion = d.select(msg_header + ": Selecciona el vídeo, o 'Cancelar' para todos", lista)
+
+            if seleccion < 0:
+                index = 0
+                self.index = seleccion
+            else:
+                index = seleccion
+                self.index = self.files[index].index
+            self.seleccion = seleccion
 
             # Marcamos el primer archivo como activo
-            self.set_file(self.files[0])
-            self.file.size = self.total_size                                    ### ALFA
+            self.set_file(self.files[index])
 
             # Damos por iniciada la descarga
             self.start_time = time.time()
@@ -620,11 +670,12 @@ class Client(object):
         '''
         Servicio encargado de mostrar en el log el estado de la descarga
         '''
-        s = self.status
-        if self.file:
-            archivo = self.file.index
+        s = self.status                                                    ### ALFA
+        if self.seleccion >= 0:
+            archivo = self.seleccion + 1
         else:
-            archivo = "N/D"
+            archivo = self.seleccion
+
         logger.info(
             '%.2f%% de %.1fMB %s | %.1f kB/s | #%s %d%% | AutoClose: %s | S: %d(%d) P: %d(%d)) | TRK: %d DHT: %d PEX: %d LSD %d | DHT:%s (%d) | Trakers: %d | Pieces: %d (%d)' % \
             (s.progress_file, s.file_size, s.str_state, s._download_rate, archivo, s.buffer, s.timeout, s.num_seeds, \

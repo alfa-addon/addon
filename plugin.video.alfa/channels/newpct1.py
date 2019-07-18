@@ -390,6 +390,10 @@ def submenu_novedades(item):
     patron = '<option value="([^"]+)".*?>(.*?)<\/option>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     
+    if not matches:
+        item.action = "listado_busqueda"
+        return listado_busqueda(item)
+    
     itemlist.append(item.clone(action='', title="[COLOR yellow]Ver lo Último de:[/COLOR]"))
     for value, title in matches:
         if not value.isdigit():
@@ -922,6 +926,8 @@ def listado(item):
 
 def listado_busqueda(item):
     logger.info()
+    
+    #logger.debug(item)
 
     #Renombramos el canal al nombre de clone elegido.  Actualizados URL
     host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
@@ -1102,8 +1108,8 @@ def listado_busqueda(item):
                 if scrapedurl_alt in title_lista_alt:                       # si ya se ha tratado, pasamos al siguiente item
                     continue                                                # solo guardamos la url para series y docus
 
-            if scrapedurl_alt in title_lista_alt or scrapedurl_alt in title_lista_alt_for or scrapedthumbnail in title_lista_alt or scrapedthumbnail in title_lista_alt_for:                                                            # si ya se ha tratado, pasamos al siguiente item
-                continue                                                # solo guardamos la url para series y docus
+            if scrapedurl_alt in title_lista_alt or scrapedurl_alt in title_lista_alt_for or scrapedthumbnail in title_lista_alt or scrapedthumbnail in title_lista_alt_for:                        # si ya se ha tratado, pasamos al siguiente item
+                continue                                                    # solo guardamos la url para series y docus
 
             if ".com/serie" in scrapedurl or "/serie" in scrapedurl or "-serie" \
                     in scrapedurl or "varios/" in scrapedurl:
@@ -1121,8 +1127,8 @@ def listado_busqueda(item):
             #Control de página
             if cnt_title > cnt_tot*0.65:            #si se acerca al máximo num. de lineas por pagina, tratamos lo que tenemos
                 cnt_next = 99                       #Casi completo, no sobrepasar con la siguiente página
-                if cnt_title > cnt_tot:
-                    cnt_title = 99                  #Sobrepasado el máximo.  Ignoro página actual
+                if cnt_title > cnt_tot or item.extra == 'novedades':
+                    if item.extra != 'novedades': cnt_title = 99                #Sobrepasado el máximo.  Ignoro página actual
                     item.post = post_actual         #Restauro puntero "next" a la página actual, para releearla en otra pasada
                     post_num -= 1                   #Restauro puntero a la página actual en el pie de página
                     break
@@ -2353,11 +2359,22 @@ def episodios(item):
             item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
             return itemlist                                                     #Salimos
         
-        logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea: " + item.url)
-        logger.error(pattern + data)
+        #Si a la url de la serie que se ha quitado el código final, en algunos canales puede dar error
+        if not scrapertools.find_single_match(item.url, '\/(\d{4,20})\/*$'):
+            patron_series = "var\s*parametros\s*=\s*\{(?:'rating'\s*\:[^']+)?(?:'ratingc'\s*\:[^']+)?"
+            patron_series += "(?:'n_votos'\s*\:[^']+)?(?:'id'\s*\:[^,]+,)?'cate'\s*\:\s*'([^']+)'"
+            url_serie_nocode = scrapertools.find_single_match(data, patron_series)
+            url_serie_nocode = '%s/%s' % (item.url, url_serie_nocode)
+            if url_serie_nocode:
+                data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(url_serie_nocode, timeout=timeout).data)
+                if data: data_alt = scrapertools.find_single_match(data, patron)
+        
+        if not data_alt or not scrapertools.find_single_match(data_alt, pattern):
+            logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea: " + item.url)
+            logger.error(pattern + data)
 
-        #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el vídeo
-        item, data = generictools.fail_over_newpct1(item, patron, pattern, timeout=timeout)
+            #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el vídeo
+            item, data = generictools.fail_over_newpct1(item, patron, pattern, timeout=timeout)
 
     if not data:                                                    #No se ha encontrado ningún canal activo para este vídeo
         itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.channel.capitalize() 
