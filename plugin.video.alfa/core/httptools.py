@@ -46,11 +46,12 @@ def get_user_agent():
     # Devuelve el user agent global para ser utilizado cuando es necesario para la url.
     return default_headers["User-Agent"]
 
-def get_url_headers(url):
+def get_url_headers(url, forced=False):
     domain_cookies = cj._cookies.get("." + urlparse.urlparse(url)[1], {}).get("/", {})
 
     if "|" in url or not "cf_clearance" in domain_cookies:
-        return url
+        if not forced:
+            return url
 
     headers = dict()
     headers["User-Agent"] = default_headers["User-Agent"]
