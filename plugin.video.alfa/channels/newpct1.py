@@ -927,7 +927,7 @@ def listado(item):
 def listado_busqueda(item):
     logger.info()
     
-    logger.debug(item)
+    #logger.debug(item)
 
     #Renombramos el canal al nombre de clone elegido.  Actualizados URL
     host = scrapertools.find_single_match(item.url, '(http.?\:\/\/(?:www.)?\w+\.\w+\/)')
