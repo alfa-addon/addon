@@ -39,6 +39,7 @@ def search(item, texto):
 def pornstars_list(item):
     logger.info()
     itemlist = []
+    itemlist.append(item.clone(title="Mas Populares", action="pornstars", url=host + "/girls/1/"))
     for letra in "abcdefghijklmnopqrstuvwxyz":
         itemlist.append(item.clone(title=letra.upper(), url=urlparse.urljoin(item.url, letra), action="pornstars"))
     return itemlist
@@ -48,9 +49,10 @@ def pornstars(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<a girl-url="[^"]+" class="[^"]+" href="([^"]+)" title="([^"]+)">[^<]+'
-    patron += '<img class="thumb" src="([^"]+)" [^<]+<h2[^<]+<span[^<]+</span[^<]+</h2[^<]+'
-    patron += '<span[^<]+<span[^<]+<span[^<]+</span>([^<]+)</span>'
+    patron = '<a girl-url=.*?'
+    patron += 'href="([^"]+)" title="([^"]+)">.*?'
+    patron += 'data-lazy="([^"]+)".*?'
+    patron += '<span class="ico-videos sprite"></span>([^<]+)</span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for url, title, thumbnail, count in matches:
         if "go.php?" in url:
@@ -68,7 +70,7 @@ def pornstars(item):
             url = urllib.unquote(matches[0].split("/go.php?u=")[1].split("&")[0])
         else:
             url = urlparse.urljoin(item.url, matches[0])
-        itemlist.append(item.clone(title="Pagina Siguiente", url=url))
+        itemlist.append(item.clone(title="Página Siguiente >>", url=url))
     return itemlist
 
 
@@ -77,7 +79,10 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron = '<a tag-url=.*?href="([^"]+)" title="([^"]+)".*?<img class="thumb" src="([^"]+)".*?<span class="cantidad">([^<]+)</span>'
+    patron = '<a tag-url=.*?'
+    patron += 'href="([^"]+)" title="([^"]+)".*?'
+    patron += 'data-lazy="([^"]+)".*?'
+    patron += '<span class="cantidad">([^<]+)</span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for url, title, thumbnail, count in matches:
         if "go.php?" in url:
@@ -96,7 +101,7 @@ def categorias(item):
             url = urllib.unquote(matches[0].split("/go.php?u=")[1].split("&")[0])
         else:
             url = urlparse.urljoin(item.url, matches[0])
-        itemlist.append(item.clone(title="Pagina Siguiente", url=url))
+        itemlist.append(item.clone(title="Página Siguiente >>", url=url))
     return itemlist
 
 
@@ -117,7 +122,7 @@ def series(item):
             url = urllib.unquote(matches[0].split("/go.php?u=")[1].split("&")[0])
         else:
             url = urlparse.urljoin(item.url, matches[0])
-        itemlist.append(item.clone(title="Pagina Siguiente", url=url))
+        itemlist.append(item.clone(title="Página Siguiente >>", url=url))
     return itemlist
 
 
@@ -126,11 +131,14 @@ def videos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     patron = '<a class="muestra-escena" href="([^"]+)" title="([^"]+)".*?'
-    patron += '<img class="thumb" src="([^"]+)".*?'
-    patron += '<span class="minutos"> <span class="ico-minutos sprite"></span>([^<]+)</span>'
+    patron += 'data-lazy="([^"]+)".*?'
+    patron += '<span class="ico-minutos sprite"></span>([^<]+)</span>(.*?)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for url, title, thumbnail, duration in matches:
-        title="[COLOR yellow] %s [/COLOR] %s" % (duration, title)
+    for url, title, thumbnail, duration,calidad in matches:
+        if "hd sprite" in calidad:
+            title="[COLOR yellow] %s [/COLOR][COLOR red] HD [/COLOR] %s" % (duration,  title)
+        else:
+            title="[COLOR yellow] %s [/COLOR] %s" % (duration, title)
         if "go.php?" in url:
             url = urllib.unquote(url.split("/go.php?u=")[1].split("&")[0])
             thumbnail = urllib.unquote(thumbnail.split("/go.php?u=")[1].split("&")[0])
@@ -151,7 +159,7 @@ def videos(item):
             url = urllib.unquote(matches[0].split("/go.php?u=")[1].split("&")[0])
         else:
             url = urlparse.urljoin(item.url, matches[0])
-        itemlist.append(item.clone(title="Pagina Siguiente", url=url))
+        itemlist.append(item.clone(title="Página Siguiente >>", url=url))
     return itemlist
 
 
