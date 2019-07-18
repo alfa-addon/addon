@@ -950,11 +950,11 @@ class Tmdb(object):
             if total_results > 0:
                 results = resultado["results"]
 
-            if self.busqueda_filtro and results:
+            if self.busqueda_filtro and total_results > 1:
                 # TODO documentar esta parte
                 for key, value in dict(self.busqueda_filtro).items():
                     for r in results[:]:
-                        if key not in r or r[key] != value:
+                        if key not in r or value not in r[key]:
                             results.remove(r)
                             total_results -= 1
 
