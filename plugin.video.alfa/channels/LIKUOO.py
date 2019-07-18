@@ -8,7 +8,7 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'http://www.likuoo.video'
+host = 'https://www.likuoo.video'
 
 
 def mainlist(item):
@@ -81,13 +81,20 @@ def lista(item):
 
 
 def play(item):
-    logger.info()
+    itemlist = []
     data = httptools.downloadpage(item.url).data
-    itemlist = servertools.find_video_items(data=data)
-    for videoitem in itemlist:
-        videoitem.title = item.fulltitle
-        videoitem.fulltitle = item.fulltitle
-        videoitem.thumbnail = item.thumbnail
-        videochannel=item.channel
+    data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
+    patron = 'url:\'([^\']+)\'.*?'
+    patron += 'data:\'([^\']+)\''
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl,post in matches:
+        post = post.replace("%3D", "=")
+        scrapedurl = host + scrapedurl
+        logger.debug( item.url +" , "+ scrapedurl +" , " +post )
+        datas = httptools.downloadpage(scrapedurl, post=post, headers={'Referer':item.url}).data
+        datas = datas.replace("\\", "")
+        url = scrapertools.find_single_match(datas, '<iframe src="([^"]+)"')
+        itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

@@ -46,7 +46,7 @@ def catalogo(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class=\'star\'>.*?'
-    patron += '<a href="([^"]+)">.*?'
+    patron += '<a href="([^"]+)".*?'
     patron += '<img src="([^"]+)" alt="([^"]+)".*?'
     patron += '<span> (\d+) Videos'
     matches = re.compile(patron,re.DOTALL).findall(data)
