@@ -231,6 +231,8 @@ def update_libtorrent():
         config.set_setting("mct_rar_unpack", True, server="torrent")
         config.set_setting("bt_buffer", "50", server="torrent")
         config.set_setting("bt_download_path", config.get_setting("downloadpath"), server="torrent")
+    if not config.get_setting("mct_download_limit", server="torrent", default=""):
+        config.set_setting("mct_download_limit", "", server="torrent")
         
     if not filetools.exists(os.path.join(config.get_runtime_path(), "custom_code.json")) or not \
                     config.get_setting("unrar_path", server="torrent", default=""):
@@ -245,6 +247,9 @@ def update_libtorrent():
             if 'windows' in device:
                 creationflags = 0x08000000
                 sufix = '.exe'
+            else:
+                creationflags = ''
+                sufix = ''
             unrar = os.path.join(path, device, 'unrar%s') % sufix
             if not filetools.exists(unrar): unrar = ''
             if unrar:
@@ -263,7 +268,10 @@ def update_libtorrent():
                         pass
 
                 try:
-                    p = subprocess.Popen(unrar, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=creationflags)
+                    if xbmc.getCondVisibility("system.platform.windows"):
+                        p = subprocess.Popen(unrar, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=creationflags)
+                    else:
+                        p = subprocess.Popen(unrar, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     output_cmd, error_cmd = p.communicate()
                     if p.returncode != 0:
                         unrar = ''

@@ -12,6 +12,7 @@ from core import httptools
 
 host = 'http://www.pornhive.tv/en'
 
+# Algunos link caidos
 
 def mainlist(item):
     logger.info()

@@ -127,11 +127,15 @@ def findvideos(item):
             video_urls.append(url)
     paste = scrapertools.find_single_match(data, 'https://gpaste.us/([a-zA-Z0-9]+)')
     if paste:
-        new_data = httptools.downloadpage('https://gpaste.us/'+paste).data
-        bloq = scrapertools.find_single_match(new_data, 'id="input_text">(.*?)</div>')
-        matches = bloq.split('<br>')
-        for url in matches:
-            down_urls.append(url)
+        try:
+            new_data = httptools.downloadpage('https://gpaste.us/'+paste).data
+
+            bloq = scrapertools.find_single_match(new_data, 'id="input_text">(.*?)</div>')
+            matches = bloq.split('<br>')
+            for url in matches:
+                down_urls.append(url)
+        except:
+            pass
     video_urls.extend(down_urls)
     from core import servertools
     itemlist = servertools.find_video_items(data=",".join(video_urls))

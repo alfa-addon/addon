@@ -31,7 +31,7 @@ def set_weblang():
     langs = ['deDE', 'ptPT', 'frFR', 'itIT', 'enUS', 'esLA', 'esES']
     lang = langs[config.get_setting("crunchyrollidioma", "crunchyroll")]
     
-    #creamos el dict_cookie y le asignamos 7 dias de vida
+    #creamos la cookie c_locale y le asignamos 7 dias de vida
     dict_cookie = {'domain': '.crunchyroll.com',
                     'name': 'c_locale',
                     'value': lang,
@@ -110,7 +110,7 @@ def mainlist(item):
         itemlist.append(item.clone(title="Usando proxy: %s" % item.proxy.capitalize(), 
                                     action="",  folder=False, text_color='darkgrey'))
     
-    itemlist.append(item.clone(title="Anime", action="", text_color=color2))
+    itemlist.append(item.clone(title="Anime", action="", folder=False, text_color=color2))
     item.contentType = "tvshow"
     itemlist.append(
         item.clone(title="     Novedades", action="lista", url=host + "/videos/anime/updated/ajax_page?pg=0", page=0))
@@ -179,6 +179,9 @@ def lista(item):
 def episodios(item):
     logger.info()
     itemlist = []
+    episodes_list = []
+    _season = 1
+
     data = get_source(item.url).data
     data = re.sub(r'\n|\t|\s{2,}', '', data)
     patron = '<li id="showview_videos.*?href="([^"]+)".*?(?:src|data-thumbnailUrl)="([^"]+)".*?media_id="([^"]+)"' \
@@ -186,11 +189,13 @@ def episodios(item):
              '\s*(.*?)</p>.*?description":"(.*?)"'
     if data.count('class="season-dropdown') > 1:
         bloques = scrapertools.find_multiple_matches(data, 'class="season-dropdown[^"]+".*?title="([^"]+)"(.*?)</ul>')
+        bloques.reverse()
         for season, b in bloques:
             matches = scrapertools.find_multiple_matches(b, patron)
+            matches.reverse()
             if matches:
                 itemlist.append(item.clone(action="", title=season, text_color=color3))
-            for url, thumb, media_id, visto, title, subt, plot in matches:
+            for url, thumb, media_id, visto, scrapedtitle, subt, plot in matches:
                 
                 if item.proxy:
                     url = urllib.unquote(url.replace("/browse.php?u=", "").replace("&amp;b=4", ""))
@@ -200,25 +205,42 @@ def episodios(item):
                 thumb = urllib.unquote(
                     thumb.replace("/browse.php?u=", "").replace("_wide.", "_full.").replace("&amp;b=4", ""))
                 
-                episode = scrapertools.find_single_match(title, '(\d+)')
+                episode = scrapertools.find_single_match(scrapedtitle, '(\d+)')
                 '''_season = scrapertools.find_single_match(season, '(\d+)$')
                 if not _season:
                     _season = '1'
                 '''
-                _season = '1'
+                title_s = scrapertools.find_single_match(season, '\((.*?)\)')
+
+                count_title = '%sx%s %s' % (_season, episode, title_s)
+                if count_title in episodes_list:
+                    _season += 1
+                    
                 title = '%sx%s' %  (_season, episode)
                 title = "     %s - %s" % (title, subt)
+
+                if not episode:
+                    title = "     %s" % (scrapedtitle)
+                    
+                count_title = '%sx%s %s' % (_season, episode, title_s)
+                episodes_list.append(count_title)
+                
                 if visto.strip() != "0":
                     title += " [COLOR %s][V][/COLOR]" % color5
                 plot = unicode(plot, 'unicode-escape', "ignore")
                 if not thumb.startswith('http'):
                     thumb = host+thumb
+
+                if config.get_setting('unify'):
+                    title += "[COLOR grey] [online][/COLOR]"
+            
                 itemlist.append(
                     Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumb, media_id=media_id,
                          server="crunchyroll", text_color=item.text_color, contentTitle=item.contentTitle,
-                         contentSerieName=item.contentSerieName, contentType="tvshow", plot=plot))
+                         contentSerieName=item.contentSerieName, plot=plot))
     else:
         matches = scrapertools.find_multiple_matches(data, patron)
+        matches.reverse()
         for url, thumb, media_id, visto, title, subt, plot in matches:
             if item.proxy:
                 url = urllib.unquote(url.replace("/browse.php?u=", "").replace("&amp;b=4", ""))
@@ -239,10 +261,14 @@ def episodios(item):
             
             if not thumb.startswith('http'):
                 thumb = host+thumb
+            
+            if config.get_setting('unify'):
+                title += "[COLOR grey] [online][/COLOR]"
+            
             itemlist.append(
                 Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumb, media_id=media_id,
                      server="crunchyroll", text_color=item.text_color, contentTitle=item.contentTitle,
-                     contentSerieName=item.contentSerieName, contentType="tvshow", plot=plot))
+                     contentSerieName=item.contentSerieName, plot=plot))
     
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", 
