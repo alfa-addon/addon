@@ -549,6 +549,9 @@ def get_tclient_data(folder, torr_client):
                 continue
             if "elementum" in torr_client:
                 torr_id = scrapertools.find_single_match(str(torr), 'torrents\/pause\/(.*?)\)')
+            break
+        else:
+            return '', local_host[torr_client], 0
     except:
         log(traceback.format_exc(1))
         return '', local_host[torr_client], 0
@@ -562,18 +565,20 @@ def get_tclient_data(folder, torr_client):
 
 def extract_files(rar_file, save_path_videos, password, dp, item=None, torr_client=None):
     logger.info()
-    import rarfile
     import sys
     reload(sys)
     sys.setdefaultencoding('latin1')
+    sys.path.insert(0, config.get_setting("unrar_path", server="torrent", default="").replace('/unrar', ''))
+    
+    import rarfile
 
     # Verificamos si hay path para UnRAR
     rarfile.UNRAR_TOOL = config.get_setting("unrar_path", server="torrent", default="")
     if not rarfile.UNRAR_TOOL:
+        if xbmc.getCondVisibility("system.platform.Android"):
+            rarfile.UNRAR_TOOL = xbmc.executebuiltin("StartAndroidActivity(com.rarlab.rar)")
         return rar_file, False, '', ''
     log("##### unrar_path: %s" % rarfile.UNRAR_TOOL)
-    if xbmc.getCondVisibility("system.platform.Android"):
-        rarfile.UNRAR_TOOL = xbmc.executebuiltin("StartAndroidActivity(com.rarlab.rar)")
     rarfile.DEFAULT_CHARSET = 'latin1'
     
     # Preparamos un path alternativo más corto para no sobrepasar la longitud máxima
@@ -622,7 +627,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, torr_clie
         except:
             log("##### ERROR en Archivo rar: %s" % rar_file)
             log("##### ERROR en Carpeta del rar: %s" % file_path)
-            log(traceback.format_exc(1))
+            log(traceback.format_exc())
             platformtools.dialog_notification("Error al abrir el RAR", "Comprueba el log para más detalles")
             return rar_file, False, '', ''
 
@@ -636,6 +641,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, torr_clie
                 if not password:
                     return rar_file, False, '', ''
             archive.setpassword(password)
+            log("##### Password rar: %s" % password)
 
         # Miramos el contenido del RAR a extraer
         files = archive.infolist()

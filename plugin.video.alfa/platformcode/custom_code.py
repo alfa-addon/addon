@@ -244,6 +244,8 @@ def update_libtorrent():
         for device in filetools.listdir(path):
             if xbmc.getCondVisibility("system.platform.android") and 'android' not in device: continue
             if xbmc.getCondVisibility("system.platform.windows") and 'windows' not in device: continue
+            if not xbmc.getCondVisibility("system.platform.windows") and not  xbmc.getCondVisibility("system.platform.android") \
+                        and ('android' in device or 'windows' in device): continue
             if 'windows' in device:
                 creationflags = 0x08000000
                 sufix = '.exe'
@@ -258,14 +260,22 @@ def update_libtorrent():
                         if xbmc.getCondVisibility("system.platform.android"):
                             # Para Android copiamos el binario a la partición del sistema
                             unrar_org = unrar
-                            unrar = os.path.join(xbmc.translatePath('special://xbmc'), 'unrar')
+                            unrar = os.path.join(xbmc.translatePath('special://xbmc/'), 'files').replace('/cache/apk/assets', '')
+                            if not filetools.exists(unrar):
+                                filetools.mkdir(unrar)
+                            unrar = os.path.join(unrar, 'unrar')
                             import xbmcvfs
                             xbmcvfs.copy(unrar_org, unrar)
                         command = ['chmod', '777', '%s' % unrar]
                         p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         output_cmd, error_cmd = p.communicate()
+                        command = ['ls', '-l', unrar]
+                        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        output_cmd, error_cmd = p.communicate()
+                        xbmc.log('######## UnRAR file: %s' % str(output_cmd), xbmc.LOGNOTICE)
                     except:
-                        pass
+                        xbmc.log('######## UnRAR ERROR in path: %s' % str(unrar), xbmc.LOGNOTICE)
+                        logger.error(traceback.format_exc(1))
 
                 try:
                     if xbmc.getCondVisibility("system.platform.windows"):
@@ -274,14 +284,15 @@ def update_libtorrent():
                         p = subprocess.Popen(unrar, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     output_cmd, error_cmd = p.communicate()
                     if p.returncode != 0:
+                        xbmc.log('######## UnRAR returncode in module %s: %s in %s' % (device, str(p.returncode), unrar), xbmc.LOGNOTICE)
                         unrar = ''
-                        xbmc.log('######## UnRAR returncode for %s: %s' % (device, str(p.returncode)), xbmc.LOGNOTICE)
                     else:
-                        xbmc.log('######## UnRAR OK en %s: %s' % (device, unrar), xbmc.LOGNOTICE)
+                        xbmc.log('######## UnRAR OK in %s: %s' % (device, unrar), xbmc.LOGNOTICE)
                         break
                 except:
+                    xbmc.log('######## UnRAR ERROR in module %s: %s' % (device, unrar), xbmc.LOGNOTICE)
+                    logger.error(traceback.format_exc(1))
                     unrar = ''
-                    xbmc.log('######## UnRAR error en %s' % device, xbmc.LOGNOTICE)
         
         if unrar: config.set_setting("unrar_path", unrar, server="torrent")
 
