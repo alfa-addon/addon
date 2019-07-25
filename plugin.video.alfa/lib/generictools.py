@@ -1981,13 +1981,14 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #Cuando en el .json se activa "Borrar", "emergency_urls = 2", se borran todos los enlaces existentes
     #Cuando en el .json se activa "Actualizar", "emergency_urls = 3", se actualizan todos los enlaces existentes
     
+    """
     try:
         item, it = borrar_jsons_dups(item, it, path, head_nfo)      #TEMPORAL: Reparación de Videoteca con Newpct1
     except:
         logger.error('Error en el proceso de borrar_jsons_dups')
         logger.error(traceback.format_exc())
     
-    """
+    
     status_migration = regenerate_clones()                          #TEMPORAL: Reparación de Videoteca con Newpct1
     
     verify_cached_torrents()                                        #TEMPORAL: verificamos si los .torrents son correctos
@@ -2190,7 +2191,10 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 else:
                     item.category = canal_des.capitalize()                      #si no, salvamos nueva categoría
                 
-                if url_des.startswith('http'):
+                if url_org == '*':                                              #Si se quiere cambiar desde cualquier url ...
+                    url_host = scrapertools.find_single_match(url_total, '(http.*\:\/\/(?:www.)?\w+\.\w+)\/|\?')
+                    url_total = url_total.replace(url_host, url_des)            #reemplazamos una parte de url
+                elif url_des.startswith('http'):
                     if item.channel != channel_py or (item.channel == channel_py \
                             and item.category.lower() == canal_org):
                         url_total = scrapertools.find_single_match(url_total, \
