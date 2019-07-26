@@ -938,8 +938,7 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
                     xbmc.executebuiltin('XBMC.Extract("%s", "%s")' % (torrents_path_zip_file, torrents_path_zip))
                     time.sleep(1)
                 
-                import os
-                for root, folders, files in os.walk(torrents_path_zip): #Recorremos la carpeta para leer el .torrent
+                for root, folders, files in filetools.walk(torrents_path_zip):      #Recorremos la carpeta para leer el .torrent
                     for file in files:
                         if file.endswith(".torrent"):
                             input_file = filetools.join(root, file)                 #nombre del .torrent
