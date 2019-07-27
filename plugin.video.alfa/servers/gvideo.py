@@ -15,7 +15,7 @@ def test_video_exists(page_url):
     global page
     page = response
 
-    if "no+existe" in response.data:
+    if "no+existe" in response.data or 'no existe.</p>' in response.data:
         return False, "[gvideo] El video no existe o ha sido borrado"
     if "Se+ha+excedido+el" in response.data:
         return False, "[gvideo] Se ha excedido el número de reproducciones permitidas"
@@ -40,7 +40,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
     if 'googleusercontent' in page_url:
 
         url = page_url
-        headers_string = httptools.get_url_headers(page_url, force=True)
+        headers_string = httptools.get_url_headers(page_url, forced=True)
 
         quality = scrapertools.find_single_match (url, '.itag=(\d+).')
         if not quality:
@@ -58,7 +58,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
         data = data.decode('unicode-escape', errors='replace')
         data = urllib.unquote_plus(urllib.unquote_plus(data))
 
-        headers_string = httptools.get_url_headers(page_url, force=True)
+        headers_string = httptools.get_url_headers(page_url, forced=True)
         streams = scrapertools.find_multiple_matches(data,
                                                      'itag=(\d+)&url=(.*?)(?:;.*?quality=.*?(?:,|&)|&quality=.*?(?:,|&))')
 
