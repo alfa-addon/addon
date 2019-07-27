@@ -1,7 +1,7 @@
 {
   "id": "gnula_biz",
   "name": "Gnula.Biz",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "gnula_biz.png",
@@ -16,7 +16,7 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },
