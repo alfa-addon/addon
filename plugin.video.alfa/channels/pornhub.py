@@ -3,6 +3,7 @@
 import re
 import urlparse
 from core import httptools
+from core import servertools
 from core import scrapertools
 from core.item import Item
 from platformcode import logger
@@ -86,14 +87,7 @@ def lista(item):
     return itemlist
 
 def play(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron  = '"defaultQuality":true,"format":"mp4","quality":"\d+","videoUrl":"(.*?)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl  in matches:
-        url = scrapedurl.replace("\/", "/")
-    itemlist.append(item.clone(action="play", title=item.title, server = "directo", url=url))
+    logger.info(item)
+    itemlist = servertools.find_video_items(item.clone(url = item.url, fulltitle = item.title))
     return itemlist
-
     

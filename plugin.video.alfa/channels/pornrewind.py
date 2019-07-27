@@ -10,6 +10,8 @@ from core import httptools
 
 host = 'https://www.pornrewind.com'
 
+# hacer funcionar conector Kt player
+
 def mainlist(item):
     logger.info()
     itemlist = []
