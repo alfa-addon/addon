@@ -212,8 +212,6 @@ def showmore(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     itemlist = []
     for url, img , ses, ep, title in matches[item.page:item.page + 30]:
-        if "Juego de Tronos" in title:
-            title = "Juego de Tronos"
         ftitle =  title + " %sx%s" % (ses, ep)
         title = re.sub(' \((.*?)\)$', '', title)
         itemlist.append(item.clone(action="findvideos", title=ftitle, url=urlparse.urljoin(HOST, url), thumbnail=urlparse.urljoin(HOST, img), language=language, contentSerieName=title))
@@ -243,7 +241,7 @@ def seasons(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     if len(matches) == 1:
-        return episodios(item)
+        return episodesxseasons(item)
     elif len(matches) < 1:
         itemlist.append(item.clone(title = '[COLOR=grey]No hay episodios disponibles para esta serie[/COLOR]', action='', url=''))
         return itemlist
@@ -253,7 +251,7 @@ def seasons(item):
         title = 'Temporada %s' % scrapedseason
         infoLabels['season'] = contentSeasonNumber
 
-        itemlist.append(Item(channel=item.channel, action='episodios', url=item.url, title=title,
+        itemlist.append(Item(channel=item.channel, action='episodesxseasons', url=item.url, title=title,
                              contentSeasonNumber=contentSeasonNumber, infoLabels=infoLabels, extra1=item.title))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
@@ -266,8 +264,18 @@ def seasons(item):
     return itemlist
 
 def episodios(item):
-    infoLabels = {}
+    logger.info()
     itemlist = []
+    templist = seasons(item)
+    for tempitem in templist:
+        itemlist += episodesxseasons(tempitem)
+
+    return itemlist
+
+def episodesxseasons(item):
+    itemlist = []
+
+    infoLabels = item.infoLabels
     data = httptools.downloadpage(item.url).data
     if item.contentSeasonNumber and item.extra2 != 'library':
         prevtitle = item.extra1
@@ -278,7 +286,6 @@ def episodios(item):
     episodes = re.findall(patron, data, re.MULTILINE | re.DOTALL)
     for url, title, langs in episodes:
         s_e = scrapertools.get_season_and_episode(title)
-        infoLabels = item.infoLabels
         if item.contentSeasonNumber:
             infoLabels["season"] = item.contentSeasonNumber
         else:
@@ -300,7 +307,9 @@ def episodios(item):
     # Opción "Añadir esta serie a la videoteca de KODI"
     if config.get_videolibrary_support() and len(itemlist) > 0 and not item.contentSeasonNumber:
         itemlist.append(
-            item.clone(title="Añadir esta serie a la videoteca", action="add_serie_to_library", extra="episodios", thumbnail=thumb_videolibrary))
+            Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
+                 action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
+                 thumbnail=thumb_videolibrary))
     return itemlist
 
 
@@ -314,7 +323,7 @@ def search(item, texto):
     except:
         return []
     for show in tvshows:
-        title = re.sub(' \((\d{4})\)$', '', show["titulo"])
+        title = re.sub(' \((.*?)\)$', '', show["titulo"])
         itemlist.append(item.clone(action="seasons",
                        context=filtertools.context(item, list_idiomas, list_quality),
                        contentSerieName=title,
@@ -329,6 +338,13 @@ def search(item, texto):
 def findvideos(item):
     logger.info("url: %s" % item.url)
     data = httptools.downloadpage(item.url).data
+    
+    #parche para series agregadas a videoteca con bug
+    casting = len(item.infoLabels.get('castandrole', ''))
+    if casting > 100 and item.contentChannel == 'videolibrary':
+        item.infoLabels['castandrole'] = []
+
+
     servers = {"Thevideo": "thevideome",
                 "1fichier": "onefichier",
                 "Uploaded": "uploadedto" }
@@ -378,9 +394,7 @@ def play(item):
     logger.info("play: %s" % item.url)
     itemlist = []
     if not 'seriespapaya.' in item.url:
-        itemlist.append(item.clone())
-        item = servertools.get_servers_itemlist(itemlist)
-        return itemlist
+        return [item]
 
     data = httptools.downloadpage(item.url).data
     

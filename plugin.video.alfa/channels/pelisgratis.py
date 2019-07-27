@@ -211,6 +211,8 @@ def findvideos(item):
         #parche
         elif "repro.live" in urls_page:
             server_repro(urls_page)
+        elif "itatroniks.com" in urls_page:
+            server_itatroniks(urls_page)
         for url in new_data:
             itemlist.append(item.clone(title='[%s][%s]',
                             url=url,

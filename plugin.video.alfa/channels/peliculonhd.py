@@ -108,8 +108,9 @@ def section(item):
     for scrapedurl, scrapedtitle in matches:
         title = scrapedtitle
         plot=''
-        title = scrapedtitle
-        url = host+scrapedurl
+        url = scrapedurl
+        if not scrapedurl.startswith('http'):
+            url = host+scrapedurl
         if title not in duplicados and title.lower() != 'proximamente':
             itemlist.append(Item(channel=item.channel, url=url, title=title, plot=plot, action='list_all',
                                  type=item.type))
@@ -121,7 +122,6 @@ def section(item):
 def list_all(item):
     logger.info()
     itemlist = []
-
     data = get_source(item.url)
 
     if item.type ==  'movie':
@@ -131,7 +131,7 @@ def list_all(item):
 
         for scrapedthumbnail, scrapedtitle, quality, scrapedurl, year in matches:
 
-
+            year = scrapertools.find_single_match(year,'(\d{4})')
             title = '%s [%s] [%s]' % (scrapedtitle, year, quality)
             contentTitle = scrapedtitle
             thumbnail = scrapedthumbnail
@@ -345,7 +345,8 @@ def search_results(item):
     itemlist=[]
 
     data=get_source(item.url)
-    patron = '<article>.*?<a href="([^"]+)">.?<img src="([^"]+)" alt="([^"]+)" />.?<span class="(tvshows|movies)".*?'
+
+    patron = '<article>.*?<a href="([^"]+)">.*?<img src="([^"]+)" alt="([^"]+)".*?<span class="(tvshows|movies)".*?'
     patron += '"meta".*?"year">([^<]+)<(.*?)<p>([^<]+)</p>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -353,7 +354,7 @@ def search_results(item):
 
         title = scrapedtitle
         url = scrapedurl
-        thumbnail = scrapedthumb
+        thumbnail = scrapedthumb.replace('-150x150', '')
         plot = scrapedplot
         language = get_language(lang_data)
         type = re.sub('shows|s', '', type)
