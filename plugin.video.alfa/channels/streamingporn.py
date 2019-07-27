@@ -88,21 +88,12 @@ def lista(item):
         contentTitle = title
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, 
+        itemlist.append( Item(channel=item.channel, action="findvideos" , title=title , url=url, thumbnail=thumbnail, 
                               fanart=scrapedthumbnail, plot=plot, contentTitle = contentTitle) )
     next_page_url = scrapertools.find_single_match(data,'<div class="loadMoreInfinite"><a href="(.*?)" >Load More')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
         itemlist.append( Item(channel=item.channel , action="lista" , title="Página Siguiente >>" , 
                         text_color="blue", url=next_page_url) )
-    return itemlist
-
-
-def play(item):
-    logger.info()
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<a href="([^"]+)" rel="nofollow"  class="external" target="_blank">Streaming')
-    logger.debug(url)
-    itemlist = servertools.find_video_items(item.clone(url = url))
     return itemlist
 

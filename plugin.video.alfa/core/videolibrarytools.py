@@ -461,6 +461,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             e.contentSeason, e.contentEpisodeNumber = season_episode.split("x")
             if e.videolibray_emergency_urls:
                 del e.videolibray_emergency_urls
+            if e.channel_redir:
+                del e.channel_redir                                         #... y se borran las marcas de redirecciones
             new_episodelist.append(e)
         except:
             if e.contentType == 'episode':
@@ -587,7 +589,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 if emergency_urls_stat in [1, 3]:                               #Operación de guardar/actualizar enlaces
                     if not tvshow_item.emergency_urls:
                         tvshow_item.emergency_urls = dict()
-                    tvshow_item.emergency_urls.update({serie.channel: True})
+                    if tvshow_item.library_urls.get(serie.channel, False):
+                        tvshow_item.emergency_urls.update({serie.channel: True})
                 elif emergency_urls_stat == 2:                                          #Operación de Borrar enlaces
                     if tvshow_item.emergency_urls and tvshow_item.emergency_urls.get(serie.channel, False):
                         tvshow_item.emergency_urls.pop(serie.channel, None)             #borramos la entrada del .nfo
@@ -782,15 +785,22 @@ def emergency_urls(item, channel=None, path=None, headers={}):
         if hasattr(channel, 'findvideos'):                                  #Si el canal tiene "findvideos"...
             item.videolibray_emergency_urls = True                          #... se marca como "lookup"
             channel_save = item.channel                 #... guarda el canal original por si hay fail-over en Newpct1
+            category_save = item.category               #... guarda la categoría original por si hay fail-over o redirección en Newpct1
+            if item.channel_redir:                      #... si hay un redir, se restaura temporamente el canal alternativo
+                item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
+                item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
             item_res = getattr(channel, 'findvideos')(item)                 #... se procesa Findvideos
             item_res.channel = channel_save             #... restaura el canal original por si hay fail-over en Newpct1
-            item_res.category = channel_save.capitalize()                   #... y la categoría
+            item_res.category = category_save           #... restaura la categoría original por si hay fail-over o redirección en Newpct1
+            item.category = category_save               #... restaura la categoría original por si hay fail-over o redirección en Newpct1
             del item_res.videolibray_emergency_urls                         #... y se borra la marca de lookup
             if item.videolibray_emergency_urls:
                 del item.videolibray_emergency_urls                         #... y se borra la marca de lookup original
     except:
         logger.error('ERROR al procesar el título en Findvideos del Canal: ' + item.channel + ' / ' + item.title)
         logger.error(traceback.format_exc())
+        item.channel = channel_save                     #... restaura el canal original por si hay fail-over o redirección en Newpct1
+        item.category = category_save                   #... restaura la categoría original por si hay fail-over o redirección en Newpct1
         item_res = item.clone()                         #Si ha habido un error, se devuelve el Item original
         if item_res.videolibray_emergency_urls:
             del item_res.videolibray_emergency_urls                         #... y se borra la marca de lookup

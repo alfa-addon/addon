@@ -15,11 +15,12 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append(Item(channel=item.channel, action="lista", title="Útimos videos",
-                         url= host + "/new-clips.html?&page=1"))
+                         url= host + "/newvideos.html?&page=1"))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Populares",
+                         url=host + "/topvideos.html?page=1"))
     itemlist.append(
         Item(channel=item.channel, action="categorias", title="Categorias", url=host + "/browse.html"))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Populares",
-                         url=host + "/topvideo.html?page=1"))
+
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar",
                          url=host + "/search.php?keywords="))
     return itemlist
@@ -56,7 +57,9 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}", "", data)
-    patron = '<li><div class=".*?<a href="([^"]+)".*?>.*?.img src="([^"]+)".*?alt="([^"]+)".*?>'
+    patron = '<li><div class=".*?'
+    patron += '<a href="([^"]+)".*?'
+    patron += '<img src="([^"]+)".*?alt="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
     itemlist = []
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
