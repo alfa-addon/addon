@@ -272,13 +272,18 @@ def findvideos(item):
                 if 'play.php' in test_url:
                     new_data = get_source(test_url)
                     enc_data = scrapertools.find_single_match(new_data, '(eval.*?)</script')
-
-                    dec_data = jsunpack.unpack(enc_data)
+                    try:
+                        dec_data = jsunpack.unpack(enc_data)
+                    except:
+                        pass
                     url = scrapertools.find_single_match(dec_data, 'src="([^"]+)"')
                 elif 'embedvip' in test_url:
                     from lib import generictools
                     new_data = get_source(test_url)
-                    dejuiced = generictools.dejuice(new_data)
+                    try:
+                        dejuiced = generictools.dejuice(new_data)
+                    except:
+                        pass
                     url = scrapertools.find_single_match(dejuiced, '"file":"([^"]+)"')
                 if url != '':
                     itemlist.append(
@@ -293,12 +298,15 @@ def findvideos(item):
                 post = {'streaming':st, 'validtime':vt, 'token':tk}
                 new_url = '%sedge-data/' % 'https://peliculonhd.net/'
                 json_data = httptools.downloadpage(new_url, post=post, headers = {'Referer':test_url}).json
-                if 'peliculonhd' not in json_data['url']:
-                    url = json_data['url']
-                else:
-                    new_data = get_source(json_data['url'], test_url)
-                    url = scrapertools.find_single_match(new_data, 'src: "([^"]+)"')
-                    url = url.replace('download', 'preview')
+                try:
+                    if 'peliculonhd' not in json_data['url']:
+                        url = json_data['url']
+                    else:
+                        new_data = get_source(json_data['url'], test_url)
+                        url = scrapertools.find_single_match(new_data, 'src: "([^"]+)"')
+                        url = url.replace('download', 'preview')
+                except:
+                    url = ''
                 if url != '':
                     itemlist.append(Item(channel=item.channel, url=url, title='%s'+title, action='play', quality=quality,
                                          language=IDIOMAS[lang], infoLabels=item.infoLabels))
