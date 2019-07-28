@@ -15,6 +15,7 @@ import urlparse
 import datetime
 import time
 import traceback
+import json
 
 from channelselector import get_thumb
 from core import httptools
@@ -785,7 +786,7 @@ def post_tmdb_episodios(item, itemlist):
 
         #Ajustamos el nombre de la categoría si es un clone de NewPct1
         if item_local.channel == channel_py:
-            if item.library_urls:                                           # Si videne de videoteca cambiamos el nombre de canal al clone
+            if item.library_urls or item.add_videolibrary:                      # Si videne de videoteca cambiamos el nombre de canal al clone
                 item_local.channel = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
             item_local.category = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
         #Restauramos valores para cada Episodio si ha habido fail-over de un clone de NewPct1
@@ -1824,8 +1825,6 @@ def web_intervenida(item, data, desactivar=True):
             return item
         
         #Cargamos en .json del canal para ver las listas de valores en settings.  Carga las claves desordenadas !!!
-        from core import filetools
-        import json
         json_data = channeltools.get_channel_json(item.channel)
         
         if item.channel == channel_py:                                  #Si es un clone de Newpct1, lo desactivamos
@@ -1981,14 +1980,13 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #Cuando en el .json se activa "Borrar", "emergency_urls = 2", se borran todos los enlaces existentes
     #Cuando en el .json se activa "Actualizar", "emergency_urls = 3", se actualizan todos los enlaces existentes
     
-    """
     try:
         item, it = borrar_jsons_dups(item, it, path, head_nfo)      #TEMPORAL: Reparación de Videoteca con Newpct1
     except:
         logger.error('Error en el proceso de borrar_jsons_dups')
         logger.error(traceback.format_exc())
     
-    
+    """    
     status_migration = regenerate_clones()                          #TEMPORAL: Reparación de Videoteca con Newpct1
     
     verify_cached_torrents()                                        #TEMPORAL: verificamos si los .torrents son correctos

@@ -871,7 +871,7 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
     Devuelve el path real del .torrent, o el path vacío si la operación no ha tenido éxito
     """
     
-    videolibrary_path = config.get_videolibrary_path()              #Calculamos el path absoluto a partir de la Videoteca
+    videolibrary_path = config.get_videolibrary_path()                  #Calculamos el path absoluto a partir de la Videoteca
     if torrents_path == None:
         if not videolibrary_path:
             torrents_path = ''
@@ -881,7 +881,8 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
         torrents_path = filetools.join(videolibrary_path, 'temp_torrents_Alfa', 'cliente_torrent_Alfa.torrent')    #path de descarga temporal
     if '.torrent' not in torrents_path:
         torrents_path += '.torrent'                                     #path para dejar el .torrent
-    torrents_path_encode = filetools.encode(torrents_path)              #encode utf-8 del path
+    #torrents_path_encode = filetools.encode(torrents_path)              #encode utf-8 del path
+    torrents_path_encode = torrents_path
     
     if url.endswith(".rar") or url.startswith("magnet:"):               #No es un archivo .torrent
         logger.error('No es un archivo Torrent: ' + url)

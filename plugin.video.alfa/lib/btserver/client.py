@@ -55,6 +55,7 @@ from file import File
 from handler import Handler
 from monitor import Monitor
 from platformcode import logger, config
+from core import filetools
 from resume_data import ResumeData
 from server import Server
 
@@ -141,9 +142,9 @@ class Client(object):
         self._ses = lt.session()
         self._ses.listen_on(0, 0)
         # Cargamos el archivo de estado (si existe)
-        if os.path.exists(os.path.join(self.temp_path, self.state_file)):
+        if filetools.exists(filetools.join(self.temp_path, self.state_file)):
             try:
-                f = open(os.path.join(self.temp_path, self.state_file), "rb")
+                f = filetools.file_open(filetools.join(self.temp_path, self.state_file), "rb")
                 state = pickle.load(f)
                 self._ses.load_state(state)
                 f.close()
@@ -327,7 +328,7 @@ class Client(object):
             if resume_data:
                 tp['resume_data'] = resume_data
 
-        elif os.path.isfile(uri):
+        elif filetools.isfile(uri):
             if os.access(uri, os.R_OK):
                 info = lt.torrent_info(uri)
                 tp = {'ti': info}
@@ -583,7 +584,7 @@ class Client(object):
         Servicio encargado de guardar el estado
         """
         state = self._ses.save_state()
-        f = open(os.path.join(self.temp_path, self.state_file), 'wb')
+        f = filetools.file_open(filetools.join(self.temp_path, self.state_file), 'wb')
         pickle.dump(state, f)
         f.close()
 
@@ -619,7 +620,7 @@ class Client(object):
             for file in self.files:
                 if '.rar' in str(file.path):
                     seleccion = -9
-                lista += [os.path.split(str(file.path))[1]]
+                lista += [filetools.split(str(file.path))[1]]
             if len(lista) > 1 and seleccion >= 0:
                 d = xbmcgui.Dialog()
                 seleccion = d.select(msg_header + ": Selecciona el vídeo, o 'Cancelar' para todos", lista)
