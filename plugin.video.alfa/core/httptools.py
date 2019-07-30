@@ -468,12 +468,11 @@ def downloadpage(url, **opt):
                             else:
                                 payload = opt['post']
 
-                    ### Verifies 'file' and 'file_name' options to upload a file o buffer
+                    ### Verifies 'file' and 'file_name' options to upload un buffer o file
                     if opt.get('file', None) is not None:
-                        from core import filetools
-                        if filetools.isfile(opt['file']):
+                        if os.path.isfile(opt['file']):
                             if opt.get('file_name', None) is None:
-                                path_file, opt['file_name'] = filetools.split(opt['file'])
+                                path_file, opt['file_name'] = os.path.split(opt['file'])
                             files = {'file': (opt['file_name'], open(opt['file'], 'rb'))}
                             file_name = opt['file']
                         else:

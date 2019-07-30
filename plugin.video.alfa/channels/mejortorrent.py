@@ -27,8 +27,8 @@ list_servers = ['torrent']
 
 channel = "mejortorrent"
 
-host = 'http://www.mejortorrentt.com/'
-host_sufix = '.com'
+host = 'http://www.mejortorrentt.org/'
+host_sufix = '.org'
 #host = config.get_setting('domain_name', channel)
 
 categoria = channel.capitalize()
@@ -54,28 +54,28 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     #itemlist.append(Item(channel=item.channel, title="Novedades", action="listado_busqueda", extra="novedades", tipo=False,
-    #                     url= host + "/secciones.php?sec=ultimos_torrents", thumbnail=thumb_buscar))
+    #                     url= host + "secciones.php?sec=ultimos_torrents", thumbnail=thumb_buscar))
     itemlist.append(Item(channel=item.channel, title="Peliculas", action="listado", extra="peliculas", tipo=False,
-                         url= host + "/torrents-de-peliculas.html", thumbnail=thumb_pelis))
+                         url= host + "torrents-de-peliculas.html", thumbnail=thumb_pelis))
     itemlist.append(Item(channel=item.channel, title="Peliculas HD", action="listado", extra="peliculas", tipo=False,
-                         url= host + "/torrents-de-peliculas-hd-alta-definicion.html",
+                         url= host + "torrents-de-peliculas-hd-alta-definicion.html",
                          thumbnail=thumb_pelis_hd))
     itemlist.append(Item(channel=item.channel, title="Películas Listado Alfabetico", action="alfabeto",
-                         url= host + "/peliculas-buscador.html" +
-                         "?campo=letra&valor=&valor2=Acci%%F3n&valor3=%s&valor4=3&submit=Buscar", extra="peliculas", 
+                         url= host + "peliculas-buscador.html" +
+                         "?campo=letra&valor=&valor2=Acci%C3%B3n&valor3=XXX&valor4=3&submit=Buscar", extra="peliculas", 
                          thumbnail=thumb_pelis))
     itemlist.append(Item(channel=item.channel, title="Series", action="listado", extra="series", tipo=False,
-                         url= host + "/torrents-de-series.html", thumbnail=thumb_series))
+                         url= host + "torrents-de-series.html", thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, title="Series Listado Alfabetico", action="alfabeto", extra="series",
-                         url= host + "/torrents-de-series.html", thumbnail=thumb_series_az))
+                         url= host + "torrents-de-series.html", thumbnail=thumb_series_az))
     itemlist.append(Item(channel=item.channel, title="Series HD", action="listado", extra="series", tipo=False,
-                         url= host + "/torrents-de-series-hd-alta-definicion.html",
+                         url= host + "torrents-de-series-hd-alta-definicion.html",
                          thumbnail=thumb_series_hd))
     itemlist.append(Item(channel=item.channel, title="Series HD Listado Alfabetico", action="alfabeto", extra="series-hd",
-                         url= host + "/torrents-de-series-hd-alta-definicion.html", thumbnail=thumb_series_az))
+                         url= host + "torrents-de-series-hd-alta-definicion.html", thumbnail=thumb_series_az))
     itemlist.append(Item(channel=item.channel, title="Documentales", action="listado", extra="documentales", tipo=False,
-                         url= host + "/torrents-de-documentales.html", thumbnail=thumb_docus))
-    itemlist.append(Item(channel=item.channel, title="Documentales Listado Alfabetico", action="alfabeto", extra="documentales", url= host + "/torrents-de-documentales.html", thumbnail=thumb_docus))
+                         url= host + "torrents-de-documentales.html", thumbnail=thumb_docus))
+    itemlist.append(Item(channel=item.channel, title="Documentales Listado Alfabetico", action="alfabeto", extra="documentales", url= host + "torrents-de-documentales.html", thumbnail=thumb_docus))
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", thumbnail=thumb_buscar, tipo=False))
 
     itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", folder=False, thumbnail=thumb_separador))
@@ -100,10 +100,10 @@ def alfabeto(item):
 
     if item.extra == "series-hd":
         itemlist.append(Item(channel=item.channel, action="listado", title="Todas",  extra="series", tipo=True, 
-                             url= host + "/secciones.php?sec=descargas&ap=series_hd&func=mostrar&letra=."))
+                             url= host + "secciones.php?sec=descargas&ap=series_hd&func=mostrar&letra=."))
         for letra in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
             itemlist.append(Item(channel=item.channel, action="listado", title=letra, extra="series", tipo=True,
-                             url= host + "/secciones.php?sec=descargas&ap=series_hd&func=mostrar&letra=" + letra))
+                             url= host + "secciones.php?sec=descargas&ap=series_hd&func=mostrar&letra=" + letra))
 
     elif item.extra == "series" or item.extra == "documentales":
         itemlist.append(Item(channel=item.channel, action="listado", title="Todas", extra=item.extra, tipo=True, url= host + "/" + item.extra + "-letra-..html"))
@@ -111,9 +111,9 @@ def alfabeto(item):
             itemlist.append(Item(channel=item.channel, action="listado", title=letra, extra=item.extra, tipo=True, url= host + "/" + item.extra + "-letra-" + letra.lower() + ".html"))
 
     elif item.extra == "peliculas":
-        itemlist.append(Item(channel=item.channel, action="listado", title="Todas", extra=item.extra, tipo=True, url=item.url % "."))
+        itemlist.append(Item(channel=item.channel, action="listado", title="Todas", extra=item.extra, tipo=True, url=item.url.replace('XXX', '.'), headers={'Referer': 'http://www.mejortorrentt.org/torrents-de-peliculas.html'}))
         for letra in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']:
-            itemlist.append(Item(channel=item.channel, action="listado", title=letra, extra=item.extra, tipo=True, url=item.url % letra))
+            itemlist.append(Item(channel=item.channel, action="listado", title=letra, extra=item.extra, tipo=True, url=item.url.replace('XXX', letra), headers={'Referer': 'http://www.mejortorrentt.org/torrents-de-peliculas.html'}))
 
     return itemlist
 
@@ -132,8 +132,10 @@ def listado(item):
         data = ''
         # La url de Películas por orden Alfabético tiene un formato distinto
         if item.extra == "peliculas" and item.tipo:
+            headers={}
+            if item.headers: headers=item.headers
             url = item.url.split("?")
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url[0], post=url[1]).data)
+            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url[0], post=url[1], headers=headers).data)
         else:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
     except:
@@ -161,8 +163,8 @@ def listado(item):
         patron_title = '<a href="(?:[^"]+)?/peli-descargar-torrent[^"]+">([^<]+)</a>(\s*<b>([^>]+)</b>)?'
         item.action = "findvideos"
         item.contentType = "movie"
-        pag = True                                          #Sí hay paginación
-        cnt_tot = 25            # Poner el num. máximo de items por página.  Parece que hay 50
+        pag = True                                  #Sí hay paginación
+        cnt_tot = 15            # Poner el num. máximo de items por página.  Parece que hay 50
     elif item.extra == "series" and item.tipo:
         patron = "<a href='((?:[^']+)?/serie-descargar-torrent[^']+)'>()"
         patron_enlace = "\/serie-descargar-torrent*.-\d+-?\d+-(.*?)\.html"
@@ -190,7 +192,7 @@ def listado(item):
         patron_title_ep = "\/doc-descargar-torrent*.-\d+-?\d+-(.*?)-\d+x\d+.*?\.html"
         patron_title_se = "\/doc-descargar-torrent*.-\d+-?\d+-(.*?)-\d+-Temp.*?\.html"
         item.action = "episodios"
-        item.contentType = "tvshow"
+        item.contentType = "movie"
         pag = False
     else:
         patron = '<a href="((?:[^"]+)?/doc-descargar-torrent[^"]+)">?'
@@ -200,7 +202,7 @@ def listado(item):
         patron_title_ep = "\/doc-descargar-torrent*.-\d+-?\d+-(.*?)-\d+x\d+.*?\.html"
         patron_title_se = "\/doc-descargar-torrent*.-\d+-?\d+-(.*?)-\d+-Temp.*?\.html"
         item.action = "episodios"
-        item.contentType = "tvshow"
+        item.contentType = "movie"
         pag = True
         item.next_page = 'b'
 
@@ -297,6 +299,8 @@ def listado(item):
             del item_local.last_page
         if item_local.cnt_pag_num:
             del item_local.cnt_pag_num
+        if item_local.headers:
+            del item_local.headers
             
         item_local.title = ''
         item_local.context = "['buscar_trailer']"
@@ -374,7 +378,7 @@ def listado(item):
         item_local = itemlist[cnt]  #Vinculamos item_local con la entrada de la lista itemlist (más fácil de leer)
         
         # Limpiamos títulos, Sacamos datos de calidad, audio y lenguaje
-        scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf8').strip()
+        #scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf8').strip()
         title = scrapedtitle
         title = title.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ï¿½", "ñ").replace("Ã±", "ñ")
 
@@ -415,7 +419,8 @@ def listado(item):
             title = "SIN TÍTULO"
         title = scrapertools.remove_htmltags(title)
             
-        info = scrapedinfo.decode('iso-8859-1').encode('utf8')
+        #info = scrapedinfo.decode('iso-8859-1').encode('utf8')
+        info = scrapedinfo
         info = info.replace("(", "").replace(")", "").replace(" ", "")
 
         # Ahora preparamos el título y la calidad tanto para series como para documentales y películas 
@@ -619,7 +624,7 @@ def listado_busqueda(item):
         item_local.infoLabels['year'] = '-'  # Al no saber el año, le ponemos "-" y TmDB lo calcula automáticamente
         
         # Limpiamos títulos, Sacamos datos de calidad, audio y lenguaje
-        scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf8').strip()
+        #scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf8').strip()
         title = scrapedtitle
         title = title.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ï¿½", "ñ").replace("Ã±", "ñ")
 
@@ -674,10 +679,11 @@ def listado_busqueda(item):
             item_local.action = "episodios"
             if "/serie-" in scrapedurl:
                 item_local.extra = "series"
+                item_local.contentType = "season"
             else:
                 item_local.extra = "documentales"
-            item_local.contentType = "season"
-            
+                item_local.contentType = "movie"
+
             title = re.sub(r'\[\d+.*?\]', '', title)    # Quitar la calidad del título
             item_local.contentSerieName = scrapertools.find_single_match(title, '(.*?) - \d.*?').strip()
             if not item_local.contentSerieName:
@@ -781,9 +787,15 @@ def findvideos(item):
     data = ''
     try:
         if item.post:   #Puede traer datos para una llamada "post".  De momento usado para documentales, podrían ser series
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, post=item.post).data)
+            headers = {}
+            if item.headers:
+                headers = item.headers
+            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, post=item.post, headers=headers).data)
             data = data.replace('"', "'")
-            patron = ">\s*Pincha.*?<a href='([^\']+\.torrent)'"
+            if 'documentales' in item.post:
+                patron = "(>\s*Pincha.*?<a\s*href='.*?'\s*onclick='post\('[^']+',\s*\{\s*table:\s*'[^']+',\s*name:\s*'[^']+'}\))"
+            else:
+                patron = ">\s*Pincha.*?<a href='([^\']+\.torrent)'"
         else:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
             patron = "<a href='((?:[^']+)?secciones.php\?sec\=descargas&ap=contar&tabla=[^']+)'"
@@ -837,7 +849,8 @@ def findvideos(item):
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
         url = verificar_url(urlparse.urljoin(item.url, scrapedurl))
-        patron_torrent = ">\s*Pincha.*?<a href='([^\']+\.torrent)'"
+        #patron_torrent = ">\s*Pincha.*?<a href='([^\']+\.torrent)'"
+        patron_torrent = ">\s*Pincha.*?<a\s*href='.*?'\s*onclick=.post\('([^']+)',\s*\{\s*table:\s*'([^']+)',\s*name:\s*'([^']+)'}\)"
         
         # Localiza el .torrent en el siguiente link
         if not item.post and not item.armagedon:                    # Si no es llamada con Post, hay que bajar un nivel más
@@ -847,7 +860,7 @@ def findvideos(item):
                 pass
                 
             if not torrent_data or not scrapertools.find_single_match(torrent_data, patron_torrent):
-                logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / URL: " + url + " / DATA: " + data)
+                logger.error("ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web " + " / URL: " + url + " / DATA: " + torrent_data)
                 itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: El archivo Torrent no existe o ha cambiado la estructura de la Web.  Verificar en la Web y reportar el error con el log, folder=False'))
                 if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
                     if len(item.emergency_urls[0]):
@@ -860,11 +873,19 @@ def findvideos(item):
                         return itemlist                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
             
             if not item.armagedon:
-                item_local.url = scrapertools.find_single_match(torrent_data, patron_torrent)
-                item_local.url = verificar_url(urlparse.urljoin(url, item_local.url))
+                url1, url2, url3 = scrapertools.find_single_match(torrent_data, patron_torrent)
+                item_local.url = urlparse.urljoin(host, url1)
+                item_local.url = '%s/%s/%s' % (item_local.url, url2, url3)
+                item_local.url = verificar_url(item_local.url)
+
         
         elif not item.armagedon:
             item_local.url = url                            # Ya teníamos el link desde el primer nivel (documentales)
+            if 'documentales' in item.post:                 # Si es un documental, se trata como una película
+                url1, url2, url3 = scrapertools.find_single_match(scrapedurl, patron_torrent)
+                item_local.url = urlparse.urljoin(host, url1)
+                item_local.url = '%s/%s/%s' % (item_local.url, url2, url3)
+                item_local.url = verificar_url(item_local.url)
         item_local.url = item_local.url.replace(" ", "%20")
         
         if item.armagedon and item.emergency_urls and not item.videolibray_emergency_urls:
@@ -977,10 +998,9 @@ def episodios(item):
     if '/serie' in item.url:
         patron = ".*?<td bgcolor[^>]+><a href='(.*?)'>?([^>]+)<\/a><\/td>.*?"
     else:
-        patron = "<form name='episodios' action='(.*?)' method='post'>.*?<td bgcolor[^>]+>(.*?)<\/td>.*?"
-    patron += "<td[^<]+<div[^>]+>Fecha: ([^<]+)<\/div><\/td>.*?"
-    patron += "<td[^<]+"
-    patron += "<input type='checkbox' name='([^']+)' value='([^']+)'"
+        patron = "<form\s*name='episodios'\s*action='([^']+)'\s*method='post'>.*?<td\s*bgcolor='[^>]+>(.*?)<\/td>.*?"
+    patron += "<td[^<]+<div[^>]+>Fecha: ([^<]+)<\/div><\/td>.*?<td[^<]+"
+    patron += "<input\s*type='checkbox'\s*name='([^']+)'\s*value='([^']+)'"
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                             #error
@@ -1021,7 +1041,7 @@ def episodios(item):
 
         item_local.url = verificar_url(urlparse.urljoin(host, scrapedurl))
         
-        scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf8').strip()
+        #scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf8').strip()
         if scrapedtitle.endswith('.'):
             scrapedtitle = scrapedtitle[:-1]
         if not scrapedtitle:
@@ -1043,11 +1063,12 @@ def episodios(item):
                 else:
                     item_local.contentEpisodeNumber = 1
         
-        else:       #Se prepara el Post para documentales
+        else:                                                               #Se prepara el Post para documentales
             item_local.contentSeason = 1
             item_local.contentEpisodeNumber = 1
-            item_local.url = verificar_url(host + "/secciones.php?sec=descargas&ap=contar_varios")
+            item_local.url = verificar_url(urlparse.urljoin(host, "secciones.php?sec=descargas&ap=contar_varios"))
             item_local.post = urllib.urlencode({name: value, "total_capis": total_capis, "tabla": tabla, "titulo": titulo_post})
+            item_local.headers = {'Referer': item.url}
         
         if year:
             item_local.infoLabels['year'] = scrapertools.find_single_match(year, r'(\d{4})')
@@ -1071,6 +1092,7 @@ def episodios(item):
 def verificar_url(url):
     if '.com' in url or '.net' in url or '.org' in url or '.tv' in url:
         url = url.replace('.com', host_sufix).replace('.net', host_sufix).replace('.org', host_sufix).replace('.tv', host_sufix)
+        url = url.replace('/nodo/torrent/', '/torrents/')
         url = url.replace('torrents/tmp/torrent.php?table=peliculas/&name=', 'torrents/peliculas/')
         url = url.replace('torrents/tmp/torrent.php?table=series/&name=', 'torrents/series/')
         url = url.replace('torrents/tmp/torrent.php?table=documentales/&name=', 'torrents/documentales/')
@@ -1094,7 +1116,7 @@ def search(item, texto):
     logger.info("search:" + texto)
     texto = texto.replace(" ", "+")
 
-    item.url = host + "/secciones.php?sec=buscador&valor=%s" % (texto)
+    item.url = host + "secciones.php?sec=buscador&valor=%s" % (texto)
     
     try:
         itemlist = listado_busqueda(item)
@@ -1113,7 +1135,7 @@ def newest(categoria):
     item = Item()
     try:
         if categoria == 'peliculas':
-            item.url = host + "/secciones.php?sec=ultimos_torrents"
+            item.url = host + "secciones.php?sec=ultimos_torrents"
             item.extra = "novedades"
             item.channel = "mejortorrent"
             item.tipo = False
@@ -1122,7 +1144,7 @@ def newest(categoria):
                 itemlist.pop()
 
         if categoria == 'documentales':
-            item.url = host + "/torrents-de-documentales.html"
+            item.url = host + "torrents-de-documentales.html"
             item.extra = "documentales"
             item.channel = "mejortorrent"
             item.tipo = False
