@@ -20,12 +20,12 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/?page=1"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
-
-
+# view-source:https://www.porn300.com/en_US/ajax/page/show_search?q=big+tit&page=1
+# https://www.porn300.com/en_US/ajax/page/show_search?page=2 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host + "/es/buscar/?q=%s" % texto
+    item.url = host + "/en_US/ajax/page/show_search?q=%s&?page=1" % texto
     try:
         return lista(item)
     except:
@@ -41,11 +41,11 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<a itemprop="url" href="/([^"]+)".*?'
-    patron += 'title="([^"]+)">.*?'
     patron += 'data-src="([^"]+)" alt=.*?'
+    patron += 'itemprop="name">([^<]+)</h3>.*?'
     patron += '</svg>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         cantidad = re.compile("\s+", re.DOTALL).sub(" ", cantidad)
         scrapedtitle = scrapedtitle + " (" + cantidad +")"
@@ -69,11 +69,12 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<a itemprop="url" href="([^"]+)" data-video-id="\d+" title="([^"]+)">.*?'
+    patron = '<a itemprop="url" href="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?'
+    patron += 'itemprop="name">([^<]+)<.*?'
     patron += '</svg>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,scrapedthumbnail,scrapedtime  in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle,scrapedtime  in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
         scrapedtime = scrapedtime.strip()
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
@@ -82,12 +83,15 @@ def lista(item):
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = contentTitle) )
-    next_page=item.url
-    num= int(scrapertools.find_single_match(item.url,".*?/?page=(\d+)"))
+    prev_page = scrapertools.find_single_match(item.url,"(.*?)page=\d+")
+    num= int(scrapertools.find_single_match(item.url,".*?page=(\d+)"))
     num += 1
-    next_page = "?page=" + str(num)
-    if next_page!="":
-        next_page = urlparse.urljoin(item.url,next_page)
+    num_page = "?page=" + str(num)
+    if num_page!="":
+        next_page = urlparse.urljoin(item.url,num_page)
+        if "show_search" in next_page:
+            next_page = prev_page + num_page
+            next_page = next_page.replace("&?", "&")
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 

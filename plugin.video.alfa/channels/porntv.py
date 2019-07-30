@@ -8,16 +8,19 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://www.shameless.com'
+host = 'https://www.porntv.com'
 
 
 def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/videos/1/"))
-    itemlist.append( Item(channel=item.channel, title="Mas popular" , action="lista", url=host + "/videos/popular/week/"))
-    itemlist.append( Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "/videos/rated/week/"))
+    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/videos/straight/all-recent.html"))
+    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/videos/straight/all-view.html"))
+    itemlist.append( Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "/videos/straight/all-rate.html"))
+    itemlist.append( Item(channel=item.channel, title="Mas popular" , action="lista", url=host + "/videos/straight/all-popular.html"))
+    itemlist.append( Item(channel=item.channel, title="Mas largos" , action="lista", url=host + "/videos/straight/all-length.html"))
+    
 
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
@@ -26,8 +29,8 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = host + "/search/?q=%s" % texto
+    texto = texto.replace(" ", "")
+    item.url = host + "/videos/straight/%s-recent.html" % texto
     try:
         return lista(item)
     except:
@@ -42,15 +45,17 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<a href="(https://www.shameless.com/categories/[^"]+)".*?'
-    patron += '<span itemprop="name">(.*?)</span> <sup>(.*?)</sup>.*?'
-    patron += 'src="([^"]+)"'
+    data = scrapertools.find_single_match(data, '<h1>Popular Categories</h1>(.*?)<h1>Community</h1>')
+    patron = '<h2><a href="([^"]+)">([^<]+)</a>.*?'
+    patron += 'src="([^"]+)".*?'
+    patron += '<span class="contentquantity">([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,cantidad,scrapedthumbnail in matches:
+    for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
         scrapedplot = ""
+        scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         title = scrapedtitle + " " + cantidad
         itemlist.append( Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
-                              thumbnail=scrapedthumbnail , plot=scrapedplot) )
+                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail , plot=scrapedplot) )
     return itemlist
 
 
@@ -59,18 +64,24 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<div class="icnt.*?'
+    patron = '<div class="item" style="width: 320px">.*?'
     patron += '<a href="([^"]+)".*?'
-    patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
-    patron += '<div class="bg"></div>([^<]+)</time>'
+    patron += '<img src="([^"]+)".*?'
+    patron += '>(.*?)<div class="trailer".*?'
+    patron += 'title="([^"]+)".*?'
+    patron += 'clock"></use></svg>([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,scrapedtime in matches:
+    for scrapedurl,scrapedthumbnail,quality,scrapedtitle,scrapedtime in matches:
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
-        thumbnail = scrapedthumbnail + "|Referer=https://www.shameless.com/"
+        if "flag-hd" in quality:
+            title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + "[COLOR red]" + "HD" + "[/COLOR] " + scrapedtitle
+        scrapedurl = urlparse.urljoin(item.url,scrapedurl)
+        thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = scrapedtitle))
-    next_page = scrapertools.find_single_match(data, 'class="active">.*?<a href="([^"]+)"')
+                              
+    next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="next"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
@@ -83,12 +94,10 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
-    patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for url, quality in matches:
-        headers = {'Referer': item.url}
-        url = httptools.downloadpage(url, headers=headers , follow_redirects=False, only_headers=True).headers.get("location", "")
+    data = scrapertools.find_single_match(data, 'sources: \[(.*?)\]')
+    patron = 'file: "([^"]+)",.*?label: "([^"]+)",'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for url,quality in matches:
         itemlist.append(["%s %s [directo]" % (quality, url), url])
     return itemlist
 
