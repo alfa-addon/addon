@@ -30,7 +30,7 @@ def mainlist(item):
                          thumbnail=get_thumb('newest', auto=True)))
 	itemlist.append(Item(channel = item.channel, title = "     Estrenos", action = "peliculas", url = host + "/genero/estrenos/",
                          thumbnail=get_thumb('premieres', auto=True)))
-	itemlist.append(Item(channel = item.channel, title = "     Por género", action = "genero", url = host + "/genero/",
+	itemlist.append(Item(channel = item.channel, title = "     Por género", action = "genero", url = host,
                          thumbnail=get_thumb('genres', auto=True) ))
 	item.thumbnail = get_thumb('tvshows', auto=True)
 	itemlist.append(item.clone(title="Series:", folder=False, text_color="0xFFD4AF37", text_bold=True))

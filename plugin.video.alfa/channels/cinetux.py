@@ -12,7 +12,8 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-servers = {'ul': 'uploaded', 'ok': 'okru', 'hqq': 'netu', 'waaw': 'netu', 'drive': 'gvideo', 'mp4': 'gvideo'}
+servers = {'ul': 'uploaded', 'ok': 'okru', 'hqq': 'netu', 'waaw': 'netu',
+          'drive': 'gvideo', 'mp4': 'gvideo', 'api': 'gvideo'}
 IDIOMAS = {'Latino': 'LAT', 'Español': 'CAST', 'SUB': 'VOSE', 'Subtitulado': 'VOSE', 'Inglés':'VO' }
 list_language = IDIOMAS.values()
 list_quality = []
@@ -289,13 +290,14 @@ def findvideos(item):
         post = {'action':'doo_player_ajax', 'post':pt, 'nume':nm, 'type':tp}
         post = urllib.urlencode(post)
 
+        if item.quality == '':
+            quality = 'SD'
+            if qual_fix:
+                quality = qual_fix
+        else:
+            quality = item.quality
+
         if not config.get_setting('unify'):
-            if item.quality == '':
-                quality = 'SD'
-                if qual_fix:
-                    quality = qual_fix
-            else:
-                quality = item.quality
             title = ' [%s][%s]' % (quality, lang)
         else:
             title = ''
@@ -361,7 +363,7 @@ def play(item):
                                            post=post, headers={'Referer':item.url}).data
         url = scrapertools.find_single_match(new_data, "src='([^']+)'")
         item.url = get_url(url)
-    #item.server = ""
-    #item = servertools.get_servers_itemlist([item])
+    item.server = ""
+    item = servertools.get_servers_itemlist([item])
     #item.thumbnail = item.contentThumbnail
-    return [item]
+    return item

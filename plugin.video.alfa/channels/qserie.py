@@ -334,8 +334,8 @@ def findvideos(item):
     itemlist = []
     new_url = get_link(get_source(item.url))
     new_url = get_link(get_source(new_url))
-    video_id = scrapertools.find_single_match(new_url, 'http.*?h=(\w+)')
-    new_url = '%s%s' % (host, 'playeropstream/api.php')
+    _api, video_id = scrapertools.find_single_match(new_url, 'http.*?/(\w+)/.*?h=(\w+)')
+    new_url = '%s%s' % (host, '%s/api.php' % _api)
     post = {'h': video_id}
     post = urllib.urlencode(post)
     json_data = httptools.downloadpage(new_url, post=post).json
