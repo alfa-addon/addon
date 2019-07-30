@@ -159,6 +159,8 @@ def peliculas(item):
 def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
+    bloque = scrapertools.find_single_match(data, 'var data = {([^\}]+)}')
+    action, dataurl = scrapertools.find_single_match(bloque, "(?is)action : '([^']+)'.*?postID, .*?(\w+) : dataurl")
     if not item.infoLabels["year"]:
         item.infoLabels["year"] = scrapertools.find_single_match(data, 'dateCreated.*?(\d{4})')
         if "orig_title" in data:
@@ -167,9 +169,9 @@ def findvideos(item):
                 item.contentTitle = contentTitle
     bloque = scrapertools.find_single_match(data, '(?s)<div class="bottomPlayer">(.*?)<script>')
     match = scrapertools.find_multiple_matches(bloque, '(?is)data-Url="([^"]+).*?data-postId="([^"]*)')
-    for dataurl, datapostid in match:
+    for d_u, datapostid in match:
         page_url = host + "/wp-admin/admin-ajax.php"
-        post = "action=get_more_top_news&postID=%s&dataurl=%s" %(datapostid, dataurl)
+        post = "action=%s&postID=%s&%s=%s" %(action, datapostid, dataurl, d_u)
         data = httptools.downloadpage(page_url, post=post).data
         url = scrapertools.find_single_match(data, '(?i)src="([^"]+)')
         titulo = "Ver en: %s"
