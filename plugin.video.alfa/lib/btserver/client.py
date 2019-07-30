@@ -45,7 +45,7 @@ except Exception, e2:
         do = xbmcgui.Dialog()
         e = e1 or e2
         do.ok('ERROR en el cliente BT Libtorrent', 'Módulo no encontrado o imcompatible con el dispositivo.', 
-                    'Reporte el fallo adjuntando un "log".', str(e))
+                    'Reporte el fallo adjuntando un "log"', str(e))
     except:
         pass
 
@@ -55,7 +55,6 @@ from file import File
 from handler import Handler
 from monitor import Monitor
 from platformcode import logger, config
-from core import filetools
 from resume_data import ResumeData
 from server import Server
 
@@ -142,9 +141,9 @@ class Client(object):
         self._ses = lt.session()
         self._ses.listen_on(0, 0)
         # Cargamos el archivo de estado (si existe)
-        if filetools.exists(filetools.join(self.temp_path, self.state_file)):
+        if os.path.exists(os.path.join(self.temp_path, self.state_file)):
             try:
-                f = filetools.file_open(filetools.join(self.temp_path, self.state_file), "rb")
+                f = open(os.path.join(self.temp_path, self.state_file), "rb")
                 state = pickle.load(f)
                 self._ses.load_state(state)
                 f.close()
@@ -328,7 +327,7 @@ class Client(object):
             if resume_data:
                 tp['resume_data'] = resume_data
 
-        elif filetools.isfile(uri):
+        elif os.path.isfile(uri):
             if os.access(uri, os.R_OK):
                 info = lt.torrent_info(uri)
                 tp = {'ti': info}
@@ -584,7 +583,7 @@ class Client(object):
         Servicio encargado de guardar el estado
         """
         state = self._ses.save_state()
-        f = filetools.file_open(filetools.join(self.temp_path, self.state_file), 'wb')
+        f = open(os.path.join(self.temp_path, self.state_file), 'wb')
         pickle.dump(state, f)
         f.close()
 
@@ -620,7 +619,7 @@ class Client(object):
             for file in self.files:
                 if '.rar' in str(file.path):
                     seleccion = -9
-                lista += [filetools.split(str(file.path))[1]]
+                lista += [os.path.split(str(file.path))[1]]
             if len(lista) > 1 and seleccion >= 0:
                 d = xbmcgui.Dialog()
                 seleccion = d.select(msg_header + ": Selecciona el vídeo, o 'Cancelar' para todos", lista)

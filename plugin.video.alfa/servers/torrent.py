@@ -746,6 +746,7 @@ def rename_rar_dir(rar_file, save_path_videos, video_path, torr_client):
     if filetools.exists(filetools.join(save_path_videos, folders[0])):
         src = filetools.join(save_path_videos, folders[0]).decode("utf8")
         dst = filetools.join(save_path_videos, video_path).decode("utf8")
+        dst_file = video_path.decode("utf8")
         
         # Se para la actividad para que libere los archivos descargados
         if torr_client in ['quasar', 'elementum']:
@@ -754,15 +755,14 @@ def rename_rar_dir(rar_file, save_path_videos, video_path, torr_client):
             if torr_data and deamon_url:
                 data = httptools.downloadpage('%spause/%s' % (deamon_url, index), timeout=5, alfa_s=True).data
             
-        for x in range(60):
+        for x in range(10):
             if xbmc.abortRequested:
                 return rename_status, rar_file
-            xbmc.sleep(5000)
+            xbmc.sleep(1000)
             try:
                 if filetools.exists(src):
-                    filetools.rename(src, dst)
+                    filetools.rename(src, dst_file)
                 else:
-                    log("##### Folder DELETED: SRC: %s" % src)
                     break
             except:
                 log("##### Rename ERROR: SRC: %s" % src)
