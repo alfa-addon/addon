@@ -215,7 +215,7 @@ def render_items(itemlist, parent_item):
         if item.fanart:
             fanart = item.fanart
         else:
-            fanart = os.path.join(config.get_runtime_path(), "fanart1.jpg")
+            fanart = os.path.join(config.get_runtime_path(), "fanart-2019.jpg")
 
         # Creamos el listitem
         #listitem = xbmcgui.ListItem(item.title)
@@ -1160,7 +1160,7 @@ def torrent_client_installed(show_tuple=False):
 def play_torrent(item, xlistitem, mediaurl):
     logger.info()
     import time
-    import shutil
+    
     from core import filetools
     from core import httptools
     from lib import generictools
@@ -1233,14 +1233,14 @@ def play_torrent(item, xlistitem, mediaurl):
             password=item.password
             
         videolibrary_path = config.get_videolibrary_path()          #Calculamos el path absoluto a partir de la Videoteca
-        if videolibrary_path.lower().startswith("smb://"):                  #Si es una conexión SMB, usamos userdata local
+        if scrapertoolsV2.find_single_match(videolibrary_path, '(^\w+:\/\/)'):  #Si es una conexión REMOTA, usamos userdata local
             videolibrary_path = config.get_data_path()                      #Calculamos el path absoluto a partir de Userdata
         if not filetools.exists(videolibrary_path):                         #Si no existe el path, pasamos al modo clásico
             videolibrary_path = False
         else:
             torrents_path = filetools.join(videolibrary_path, 'temp_torrents_Alfa', \
                         'cliente_torrent_Alfa.torrent')                     #path descarga temporal
-        if videolibrary_path and not filetools.exists(filetools.join(videolibrary_path, \
+        if not videolibrary_path or not filetools.exists(filetools.join(videolibrary_path, \
                         'temp_torrents_Alfa')):                             #Si no existe la carpeta temporal, la creamos
             filetools.mkdir(filetools.join(videolibrary_path, 'temp_torrents_Alfa'))
 
@@ -1282,7 +1282,7 @@ def play_torrent(item, xlistitem, mediaurl):
             else:
                 folder = series                                             #o series
             item.url = filetools.join(config.get_videolibrary_path(), folder, item.url)     #dirección del .torrent local en la Videoteca
-            if filetools.copy(item.url, torrents_path, silent=True):    #se copia a la carpeta generíca para evitar problemas de encode
+            if filetools.copy(item.url, torrents_path, silent=True):        #se copia a la carpeta generíca para evitar problemas de encode
                 item.url = torrents_path
             if "torrentin" in torrent_options[seleccion][0]:                #Si es Torrentin, hay que añadir un prefijo
                 item.url = 'file://' + item.url
@@ -1353,7 +1353,7 @@ def play_torrent(item, xlistitem, mediaurl):
                             data = httptools.downloadpage('%sdelete/%s' % (deamon_url, index), timeout=5, alfa_s=True).data
                         time.sleep(1)
                         if filetools.isdir(erase_file_path):
-                            shutil.rmtree(erase_file_path, ignore_errors=True)
+                            filetools.rmdirtree(erase_file_path)
                         elif filetools.exists(erase_file_path) and filetools.isfile(erase_file_path):
                             filetools.remove(erase_file_path)
                     except:
