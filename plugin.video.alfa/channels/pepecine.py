@@ -128,16 +128,20 @@ def list_news(item):
             url = '%ssecure/titles/%s?titleId=%s&seasonNumber=%s' % (host, id, id, se_ep[0])
 
         if url not in listed:
-            new_item= Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels=infoLabels)
+            new_item= Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumb, infoLabels=infoLabels)
 
             if item.news_type == 'movies':
                 new_item.contentTitle = title
                 new_item.action = 'findvideos'
                 listed.append(url)
             else:
+                ep = int(se_ep[1])
                 new_item.contentSerieName = contentSerieName
-                new_item.action = 'episodesxseason'
-                infoLabels['season'] = se_ep[0]
+                new_item.url += '&episodeNumber=%s' % ep
+                new_item.ep_info = ep -1
+                #new_item.infoLabels['season'] = se_ep[0]
+                new_item.infoLabels['episode'] = ep
+                listed.append(url)
 
             itemlist.append(new_item)
 
@@ -257,6 +261,8 @@ def episodesxseason(item):
             ep_info = int(elem['episode_number']) -1
             url = '%s&episodeNumber=%s' % (item.url, elem['episode_number'])
             title = '%s' % elem['name']
+            if not config.get_setting('unify'):
+                title = '%sx%s %s' % (item.infoLabels['season'], infoLabels['episode'], elem['name'])
             itemlist.append(Item(channel=item.channel, action='findvideos', title=title, ep_info=ep_info, url=url,
                                  infoLabels=infoLabels))
     tmdb.set_infoLabels(itemlist, True)
@@ -287,14 +293,13 @@ def findvideos(item):
             #    lang = 'en'
 
             url = elem['url']
+            
+            lang = IDIOMAS.get(lang, 'VO')
+            
             if not config.get_setting('unify'):
                 title = ' [%s]' % lang
             else:
                 title = ''
-            if lang != '':
-                lang = IDIOMAS[lang]
-            else:
-                lang = 'VO'
             itemlist.append(Item(channel=item.channel, title='%s' + title, action='play', url=url,
                                  language=lang, infoLabels=item.infoLabels))
 

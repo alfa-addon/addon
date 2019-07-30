@@ -2,7 +2,7 @@
   "id": "pedropolis",
   "name": "PedroPolis",
   "active": true,
-  "adult": true,
+  "adult": false,
   "language": ["cast", "lat"],
   "fanart": "https://s33.postimg.cc/d3ioghaof/image.png",
   "thumbnail": "https://s33.postimg.cc/aft86728f/image.jpg",
@@ -29,7 +29,7 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },

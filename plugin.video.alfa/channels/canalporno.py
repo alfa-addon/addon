@@ -66,7 +66,7 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<img src="([^"]+)".*?alt="([^"]+)".*?<h2><a href="([^"]+)">.*?' \
+    patron = 'data-src="([^"]+)" alt="([^"]+)".*?<h2><a href="([^"]+)">.*?' \
              '<div class="duracion"><span class="ico-duracion sprite"></span> ([^"]+) min</div>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedthumbnail, scrapedtitle, scrapedurl, duration in matches:

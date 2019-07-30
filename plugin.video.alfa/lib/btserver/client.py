@@ -45,7 +45,7 @@ except Exception, e2:
         do = xbmcgui.Dialog()
         e = e1 or e2
         do.ok('ERROR en el cliente BT Libtorrent', 'Módulo no encontrado o imcompatible con el dispositivo.', 
-                    'Reporte el fallo adjuntando un "log".', str(e))
+                    'Reporte el fallo adjuntando un "log"', str(e))
     except:
         pass
 

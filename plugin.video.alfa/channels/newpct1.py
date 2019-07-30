@@ -1638,7 +1638,7 @@ def findvideos(item):
     # Cualquiera de las tres opciones son válidas
     # item.url = item.url.replace(".com/",".com/ver-online/")
     # item.url = item.url.replace(".com/",".com/descarga-directa/")
-    # item.url = item.url.replace(".com/", ".com/descarga-torrent/")
+    item.url = item.url.replace("/descarga-torrent/descargar", "/descargar")
     torrent_tag = host + 'descargar-torrent/'
     
     #Función para limitar la verificación de enlaces de Servidores para Ver online y Descargas

@@ -7,7 +7,7 @@ from core.item import Item
 from core import httptools
 from core import jsontools
 from core import scrapertools
-from core import servertools
+from core import servertools, tmdb
 from platformcode import config, logger
 from channels import autoplay
 
@@ -22,16 +22,28 @@ def load_data(url):
     return data
 
 def redirect_url(url, parameters=None, scr=False):
-    url = url.replace("/irgo", "/go")
-    data = httptools.downloadpage(url, post=parameters)
+
+    try:
+        url = url.replace("/irgo", "/go").replace('gotoolp', 'm3u8player')
+        data = httptools.downloadpage(url, post=parameters, timeout=4.0)
+    except:
+        return
+
+   
+    if not data.data:
+        return
+    
+    link = data.url
+    data = data.data
+    
     if scr:
-        host = 'https://' + data.url.split("/")[2]
-        link = ""
-        vid = scrapertools.find_single_match(data.url, "\?id=(\w+)")
+        host = 'https://' + link.split("/")[2]
+        vid = scrapertools.find_single_match(link, "\?id=(\w+)")
         if vid:
             link = host+ '/hls/' + vid + '/' + vid + '.playlist.m3u8'
-        return link
-    return data.url
+    elif 'm3u8' in link:
+        link = scrapertools.find_single_match(data, '"file": "([^"]+)"')
+    return link
 
 def mainlist(item):
     itemlist = []
@@ -57,7 +69,7 @@ def mainlist(item):
 
 def movies(item):
     itemlist = []
-
+    infoLabels = ''
     data = load_data(item.url)
     pattern = 'class="poster"><img src="([^"]+)" alt="([^"]+)".*?'
     pattern += '</span> (.*?)</div>.*?'
@@ -68,12 +80,14 @@ def movies(item):
     for img, title, ranking, link, age in matches:
         itemTitle = "%s [COLOR yellow](%s)[/COLOR] [COLOR blue](%s)[/COLOR]" % (title, ranking, age)
         itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=title, thumbnail=img, 
-            url=link, action="findvideos"))
+            url=link, action="findvideos", language="LAT", infoLabels={'year':age}))
 
     next_page = scrapertools.find_single_match(data, 'href="([^"]+)" ><span class="icon-chevron-right">')
     if next_page:
         itemlist.append(Item(channel = item.channel, title="Siguiente Pagina", 
             url=next_page, action="movies"))
+
+    tmdb.set_infoLabels(itemlist, True)
 
     return itemlist
 
@@ -88,12 +102,14 @@ def moviesIMDB(item):
 
     matches = scrapertools.find_multiple_matches(data, pattern)
     for link, img, rank, rating, title in matches:
-        itemTitle = "%s [COLOR blue](#%s)[/COLOR] [COLOR yellow](%s)[/COLOR]" % (title, rank, rating)
+        itemTitle = "[COLOR blue](#%s)[/COLOR] %s [COLOR yellow](%s)[/COLOR]" % (rank, title, rating)
         img = img.replace('-90x135', '')
 
         itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=title, thumbnail=img, 
-            url=link, action="findvideos"))
+            url=link, action="findvideos", language="LAT", infoLabels={'year': '-'}))
 
+    tmdb.set_infoLabels(itemlist, True)
+    
     return itemlist
 
 def byLetter(item):
@@ -109,13 +125,17 @@ def byLetter(item):
         for movie in json.items():
             data = movie[1]
             itemTitle = data['title']
+            year = data.get('year', '-')
             if 'year' in data:
-                itemTitle += " [COLOR blue](%s)[/COLOR]" % data['year'] 
+                itemTitle += " [COLOR blue](%s)[/COLOR]" % year
             if data['imdb']:
                 itemTitle += " [COLOR yellow](%s)[/COLOR]" % data['imdb']
 
             itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=data['title'], url=data['url'], 
-                thumbnail=data['img'].replace('-90x135', ''), action="findvideos"))
+                                 thumbnail=data['img'].replace('-90x135', ''), action="findvideos",
+                                 language="LAT", infoLabels={'year': year}))
+
+    tmdb.set_infoLabels(itemlist, True)
 
     return itemlist
 
@@ -141,13 +161,16 @@ def searchMovies(item):
     for link, img, title, year, plot in matches:
         itemTitle = "%s [COLOR blue](%s)[/COLOR]" % (title, year)
         fullimg = img.replace('-150x150', '')
-        itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=title, thumbnail=fullimg,
-            url=link, plot=plot, action="findvideos"))
+        itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=title,
+                             thumbnail=fullimg, url=link, plot=plot, action="findvideos",
+                             language="LAT", infoLabels={'year': year}))
 
     next_page = scrapertools.find_single_match(data, 'href="([^"]+)" ><span class="icon-chevron-right">')
     if next_page:
         itemlist.append(Item(channel = item.channel, title="Siguiente Pagina", 
             url=next_page, action="searchMovies"))
+
+    tmdb.set_infoLabels(itemlist, True)
 
     return itemlist
 
@@ -159,7 +182,7 @@ def search(item, text):
 
 def RedirectLink(hash):
     hashdata = urllib.urlencode({r'url':hash})
-    return redirect_url('https://player.cuevana2espanol.com/r.php', hashdata)
+    return redirect_url('https://player.cuevana2espanol.com/r.php', parameters=hashdata)
 
 def GKPluginLink(hash):
     hashdata = urllib.urlencode({r'link':hash})
@@ -218,13 +241,22 @@ def findvideos(item):
             if r'irgoto.php' in link:
                 link = scrapertools.find_single_match(link, 'php\?url=(.*)').replace('%3A', ':').replace('%2F', '/')
                 link = RedirectLink(link)
-                server = link.split("/")[2]
-                server = server.replace("www.", "")
-                server = server.split(".")[0]
+                if not link:
+                    continue
+                server = servertools.get_server_from_url(link)
+                
             #vanlong
             elif r'irgotogd' in link:
-                link = redirect_url('https:'+link, "", True)
+                link = redirect_url('https:'+link, scr=True)
                 server = "directo"
+
+            #openloadpremium m3u8
+            elif r'irgotoolp' in link:
+                #deshabilitar por ahora
+                continue
+                link = redirect_url('https:'+link)
+                server = "directo"
+            
             #openloadpremium no les va en la web, se hace un fix aqui
             elif r'irgotogp' in link:
                 link = scrapertools.find_single_match(data, r'irgotogd.php\?url=(\w+)')
@@ -260,16 +292,14 @@ def findvideos(item):
             # En algunas personas la opcion CH les da error 401
             #link += "|Referer=https://player4.cuevana2.com/plugins/gkpluginsphp.php" 
         itemlist.append(
-            item.clone(
-                channel = item.channel, 
-                title=title % server.capitalize(), server=server,
-                url=link, action='play'))
+            item.clone(title=title % server.capitalize(), server=server,
+                       url=link, action='play'))
 
     #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     autoplay.start(itemlist, item)
 
     if config.get_videolibrary_support() and len(itemlist):
-                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
+                itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="yellow",
                                      action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
                                      fulltitle = item.fulltitle
                                      ))

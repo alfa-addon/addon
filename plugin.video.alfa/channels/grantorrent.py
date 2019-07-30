@@ -83,6 +83,7 @@ def submenu(item):
     data = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = data.decode('utf8').encode('utf8')
     except:
         pass
         
@@ -92,7 +93,7 @@ def submenu(item):
         return itemlist                                                     #Algo no funciona, pintamos lo que tenemos
     
     if item.extra == "peliculas":
-        patron = '<li class="navigation-top">.*?<a href="(.*?)".*?class="nav"> (.*?)\s?<\/a><\/li>'     
+        patron = '<li\s*class="navigation-top">\s*<a href="([^"]+)"\s*class="nav">([^<]+)<\/a><\/li>'
         matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches:
             item = generictools.web_intervenida(item, data)                 #Verificamos que no haya sido clausurada
@@ -107,7 +108,7 @@ def submenu(item):
         itemlist.append(item.clone(action="generos", title="Películas **Géneros**", url=host))         #Lista de Géneros
     
         for scrapedurl, scrapedtitle in matches:
-            title = re.sub('\r\n', '', scrapedtitle).decode('utf8').encode('utf8').strip()
+            title = scrapedtitle.strip()
         
             if not "películas" in scrapedtitle.lower():                     #Evita la entrada de ayudas y demás
                 continue
@@ -115,7 +116,7 @@ def submenu(item):
             itemlist.append(item.clone(action="listado", title=title, url=scrapedurl))              #Menú películas
 
     else:                                                                   #Tratamos Series
-        patron = '<li class="navigation-top-dcha">.*?<a href="(.*?)".*?class="series"> (.*?)\s?<\/a><\/li>'
+        patron = '<li\s*class="navigation-top-dcha">\s*<a href="([^"]+)"\s*class="series">([^<]+)<\/a><\/li>'
         matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches:
             item = generictools.web_intervenida(item, data)                 #Verificamos que no haya sido clausurada
@@ -126,7 +127,7 @@ def submenu(item):
                 return itemlist                                             #Salimos
 
         for scrapedurl, scrapedtitle in matches:
-            title = re.sub('\r\n', '', scrapedtitle).decode('utf8').encode('utf8').strip()
+            title = scrapedtitle.strip()
 
             itemlist.append(item.clone(action="listado", title=title, url=scrapedurl))              #Menú series
             

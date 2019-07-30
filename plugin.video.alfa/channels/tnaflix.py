@@ -98,7 +98,7 @@ def peliculas(item):
         contentTitle = title
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(Item(channel=item.channel, action="findvideos" , title=title , url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail,
                              fanart=thumbnail, plot=plot, contentTitle = contentTitle))
     next_page_url = scrapertools.find_single_match(data,'<a class="llNav" href="([^"]+)">')
     if next_page_url!="":
@@ -120,7 +120,7 @@ def ref(url):
     return url
 
 
-def findvideos(item):
+def play(item):
     logger.info()
     itemlist = []
     url= ref(item.url)
@@ -131,7 +131,8 @@ def findvideos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for title, url in matches:
         url= url.replace("![CDATA[", "http:").replace("]]", "")
-        itemlist.append(item.clone(title=title, action="play", url=url))
+        itemlist.append(["%s %s [directo]" % (title, url), url])
+    itemlist.reverse()
     return itemlist
 
 

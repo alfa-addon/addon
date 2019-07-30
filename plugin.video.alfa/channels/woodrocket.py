@@ -61,12 +61,8 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    scrapedurl  = scrapertools.find_single_match(data,'<iframe src="(.*?)"')
-    scrapedurl = scrapedurl.replace("pornhub.com/embed/", "pornhub.com/view_video.php?viewkey=")
-    data = httptools.downloadpage(scrapedurl).data
-    scrapedurl = scrapertools.find_single_match(data,'"defaultQuality":true,"format":"mp4","quality":"\d+","videoUrl":"([^"]+)"')
-    scrapedurl = scrapedurl.replace("\/", "/")
-    itemlist.append(item.clone(action="play", title=scrapedurl, fulltitle = item.title, url=scrapedurl))
+    url  = scrapertools.find_single_match(data,'<iframe src="([^"]+)"')
+    itemlist.append(item.clone(action="play", title= "%s", url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
-
 

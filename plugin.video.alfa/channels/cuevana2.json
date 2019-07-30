@@ -3,7 +3,7 @@
     "name": "Cuevana2",
     "active": true,
     "adult": false,
-    "language": ["en"],
+    "language": [],
     "thumbnail": "cuevana2.png",
     "categories": [
         "movie",
@@ -23,7 +23,7 @@
         "id": "include_in_global_search",
         "type": "bool",
         "label": "Incluir en busqueda global",
-        "default": true,
+        "default": false,
         "enabled": true,
         "visible": true
         }
