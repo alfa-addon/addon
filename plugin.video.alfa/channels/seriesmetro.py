@@ -183,7 +183,7 @@ def findvideos(item):
 
     itemlist = []
     data = get_source(item.url)
-    patron = 'iframe-container"><iframe .*?src="([^"]+)"'
+    patron = 'iframe-container">.*?<iframe .*?src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
     
     for link in matches:
