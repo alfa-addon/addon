@@ -429,10 +429,13 @@ def post_tmdb_listado(item, itemlist):
                 else:
                     title = '%s -Temporada !!!' % (title)
 
-            elif item.action == "search" or item.extra == "search":
+            elif (item.action == "search" or item.extra == "search") and not \
+                        (item_local.extra == "varios" or item_local.extra == "documentales"):
                 title += " -Serie-"
         
-        if (item_local.extra == "varios" or item_local.extra == "documentales") and (item.action == "search" or item.extra == "search" or item.action == "listado_busqueda"):
+        if (item_local.extra == "varios" or item_local.extra == "documentales") \
+                        and (item.action == "search" or item.extra == "search" or \
+                        item.action == "listado_busqueda"):
             title += " -Varios-"
             item_local.contentTitle += " -Varios-"
         
@@ -492,7 +495,7 @@ def post_tmdb_listado(item, itemlist):
     return (item, itemlist)
 
 
-def post_tmdb_seasons(item, itemlist):
+def post_tmdb_seasons(item, itemlist, url='serie'):
     logger.info()
     
     """
@@ -582,6 +585,8 @@ def post_tmdb_seasons(item, itemlist):
             item_season = item.clone()
             item_season.contentSeason = item_local.contentSeason    #Se pone el núm de Temporada para obtener mejores datos de TMDB
             item_season.title = 'Temporada %s' % item_season.contentSeason
+            if url != 'series':
+                item_season.url = item_local.url
             itemlist_temporadas.append(item_season.clone(from_title_season_colapse=item.title))
             
     #Si hay más de una temporada se sigue, o se ha forzado a listar por temporadas, si no se devuelve el Itemlist original
@@ -1300,7 +1305,7 @@ def find_rar_password(item):
 
 
 def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torrent=False, \
-                        timeout=5, file_list=False, lookup=True, local_torr=None, headers={}):
+                        timeout=5, file_list=False, lookup=True, local_torr=None, headers={}, short_pad=False):
     logger.info()
     from core import videolibrarytools
     
@@ -1397,11 +1402,13 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
         #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
         
-        if url:
+        if url and not local_torr:
             torrents_path, torrent_file = videolibrarytools.caching_torrents(url, \
                         referer=referer, post=post, torrents_path=torrents_path, \
                         timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)
-        if not torrent_file and not local_torr:
+        elif local_torr:
+            torrent_file = filetools.read(local_torr)
+        if not torrent_file:
             if not lookup:
                 return (size, torrents_path, torrent, files)
             elif file_list and data_torrent:
@@ -1411,8 +1418,6 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
             elif data_torrent:
                 return (size, torrent)
             return size                                         #Si hay un error, devolvemos el "size" y "torrent" vacíos
-        elif local_torr:
-            torrent_file = filetools.read(local_torr)
 
         torrent = decode(torrent_file)                                          #decodificamos el .torrent
 
@@ -1980,13 +1985,13 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #Cuando en el .json se activa "Borrar", "emergency_urls = 2", se borran todos los enlaces existentes
     #Cuando en el .json se activa "Actualizar", "emergency_urls = 3", se actualizan todos los enlaces existentes
     
+    """ 
     try:
         item, it = borrar_jsons_dups(item, it, path, head_nfo)      #TEMPORAL: Reparación de Videoteca con Newpct1
     except:
         logger.error('Error en el proceso de borrar_jsons_dups')
         logger.error(traceback.format_exc())
-    
-    """    
+       
     status_migration = regenerate_clones()                          #TEMPORAL: Reparación de Videoteca con Newpct1
     
     verify_cached_torrents()                                        #TEMPORAL: verificamos si los .torrents son correctos

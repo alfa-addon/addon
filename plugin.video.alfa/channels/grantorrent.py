@@ -5,6 +5,7 @@ import sys
 import urllib
 import urlparse
 import time
+import traceback
 
 from channelselector import get_thumb
 from core import httptools
@@ -24,8 +25,10 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['torrent']
 
-host = "https://grantorrent.net/"
+host = "https://grantorrent1.com/"
 channel = "grantorrent"
+domain = 'grantorrent1.com'
+domain_files = 'files.grantorrent1.com'
 
 dict_url_seasons = dict()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
@@ -83,6 +86,7 @@ def submenu(item):
     data = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = js2py_conversion(data, item.url)
         data = data.decode('utf8').encode('utf8')
     except:
         pass
@@ -145,6 +149,7 @@ def generos(item):
     data = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = js2py_conversion(data, item.url)
     except:
         pass
         
@@ -214,6 +219,7 @@ def listado(item):
                 item.post = item.url
             video_section = ''
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.post, timeout=timeout_search).data)
+            data = js2py_conversion(data, item.post, timeout=timeout_search)
             video_section = scrapertools.find_single_match(data, '<div class="contenedor-home">(?:\s*<div class="titulo-inicial">\s*Últi.*?Añadi...\s*<\/div>)?\s*<div class="contenedor-imagen">\s*(<div class="imagen-post">.*?<\/div><\/div>)<\/div>')
         except:
             pass
@@ -488,6 +494,7 @@ def findvideos(item):
     data = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, timeout=timeout_find, follow_redirects=follow_redirects).data)
+        data = js2py_conversion(data, item.url, timeout=timeout_find, follow_redirects=follow_redirects)
     except:
         pass
         
@@ -616,6 +623,16 @@ def findvideos(item):
         if scrapertools.find_single_match(item.quality, '(\[\d+:\d+)') and not scrapertools.find_single_match(item_local.quality, '(\[\d+:\d+)'):
             item_local.quality = '%s [/COLOR][COLOR white][%s h]' % (item_local.quality, scrapertools.find_single_match(item.quality, '(\d+:\d+)'))
         
+        # Comprobamos si es necesario renovar la cookie del domino de Torrents
+        if config.get_setting("cookie_ren", channel=channel, default=True):
+            data_tor = ''
+            try:
+                data_tor = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(scrapedurl, timeout=timeout).data)
+                data_tor = js2py_conversion(data_tor, scrapedurl, domain_name=domain_files, timeout=timeout)
+                config.set_setting("cookie_ren", False, channel=channel)            #Cookie renovada
+            except:
+                logger.error(traceback.format_exc())
+        
         #if size and item_local.contentType != "episode":
         if not item.armagedon:
             size = generictools.get_torrent_size(scrapedurl)                        #Buscamos el tamaño en el .torrent y si es RAR
@@ -727,6 +744,7 @@ def episodios(item):
     data = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, timeout=timeout).data)    #Cargamos los datos de la página
+        data = js2py_conversion(data, item.url, timeout=timeout)
 
         patron_actual = '<link rel="canonical" href="(.*?)"'                            #Patrón de url temporada actual
         patron_actual_num = 'temporadas?-(\d+)'                                         #Patrón de núm. de temporada actual
@@ -813,6 +831,7 @@ def episodios(item):
         if not data:                                    #si no hay datos, descargamos. Si los hay de loop anterior, los usamos
             try:
                 data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(temp_actual, timeout=timeout).data)
+                data = js2py_conversion(data, temp_actual, timeout=timeout)
                 
                 #Controla que no haya un bucle en la cadena de links entre temporadas
                 if scrapertools.find_single_match(temp_actual, patron_actual_num) in temp_lista:
@@ -1100,6 +1119,70 @@ def actualizar_titulos(item):
     return item
     
     
+def js2py_conversion(data, url, post=None, domain_name=domain, headers={}, timeout=timeout, follow_redirects=True):
+    logger.info()
+    import js2py
+    import base64
+    
+    if not 'Javascript is required' in data:
+        return data
+        
+    patron = ',\s*S="([^"]+)"'
+    data_new = scrapertools.find_single_match(data, patron)
+    if not data_new:
+        patron = ",\s*S='([^']+)'"
+        data_new = scrapertools.find_single_match(data, patron)
+    if not data_new:
+        logger.error('js2py_conversion: NO data_new')
+        return data
+        
+    try:
+        for x in range(10):                                          # Da hasta 10 pasadas o hasta que de error
+            data_end = base64.b64decode(data_new).decode('utf-8')
+            data_new = data_end
+    except:
+        js2py_code = data_new
+    else:
+        logger.error('js2py_conversion: base64 data_new NO Funciona: ' + str(data_new))
+        return data
+    if not js2py_code:
+        logger.error('js2py_conversion: NO js2py_code BASE64')
+        return data
+        
+    js2py_code = js2py_code.replace('document', 'window').replace(" location.reload();", "")
+    js2py.disable_pyimport()
+    context = js2py.EvalJs({'atob': atob})
+    new_cookie = context.eval(js2py_code)
+    new_cookie = context.eval(js2py_code)
+    
+    logger.info('new_cookie: ' + new_cookie)
+
+    dict_cookie = {'domain': domain_name,
+                }
+
+    if ';' in new_cookie:
+        new_cookie = new_cookie.split(';')[0].strip()
+        namec, valuec = new_cookie.split('=')
+        dict_cookie['name'] = namec.strip()
+        dict_cookie['value'] = valuec.strip()
+    zanga = httptools.set_cookies(dict_cookie)
+    config.set_setting("cookie_ren", True, channel=channel)
+
+    data_new = ''
+    data_new = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url, \
+                timeout=timeout, headers=headers, post=post, follow_redirects=follow_redirects).data)
+    #data_new = re.sub('\r\n', '', data_new).decode('utf8').encode('utf8')
+    if data_new:
+        data = data_new
+    
+    return data
+    
+    
+def atob(s):
+    import base64
+    return base64.b64decode(s.to_string().value)
+    
+
 def search(item, texto):
     logger.info("texto:" + texto)
     texto = texto.replace(" ", "+")
