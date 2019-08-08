@@ -192,7 +192,9 @@ def findvideos(item):
     new_data = []
     data = get_source(item.url)
     data = data.replace("&lt;","<").replace("&quot;",'"').replace("&gt;",">").replace("&amp;","&").replace('\"',"")
+    
     patron = '<div class=TPlayerTb.*?id=(.*?)>.*?src=(.*?) frameborder'
+
     matches = scrapertools.find_multiple_matches(data, patron)
     for opt, urls_page in matches:
         language = scrapertools.find_single_match (data,'TPlayerNv>.*?tplayernv=%s><span>Opción.*?<span>(.*?)</span>' % opt)
@@ -206,6 +208,11 @@ def findvideos(item):
                 server_repros(urls_page)
             if "itatroniks.com" in urls_page:
                 server_itatroniks(urls_page)
+        #parche
+        elif "repro.live" in urls_page:
+            server_repro(urls_page)
+        elif "itatroniks.com" in urls_page:
+            server_itatroniks(urls_page)
         for url in new_data:
             itemlist.append(item.clone(title='[%s][%s]',
                             url=url,

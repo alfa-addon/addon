@@ -11,14 +11,13 @@ from core import scrapertools
 from platformcode import config, logger
 
 GLOBAL_HEADER = {'User-Agent': 'Mozilla/5.0', 'Accept-Language': '*'}
-proxy = "http://anonymouse.org/cgi-bin/anon-www.cgi/"
+proxy_i = "https://www.usa-proxy.org/index.php"
+proxy = "https://www.usa-proxy.org/"
 
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
-    premium = config.get_setting("premium", server="crunchyroll")
-    if premium:
-        return login(page_url)
+    
     data = httptools.downloadpage(page_url, headers=GLOBAL_HEADER).data
     if "Este es un clip de muestra" in data:
         disp = scrapertools.find_single_match(data, '<a href="/freetrial".*?</span>.*?<span>\s*(.*?)</span>')
@@ -30,6 +29,7 @@ def test_video_exists(page_url):
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
+    #page_url='https://www.crunchyroll.com/es-es/one-piece/episode-891-climbing-up-a-waterfall-a-great-journey-through-the-land-of-wanos-sea-zone-786643'
     logger.info("url=" + page_url)
     video_urls = []
     if "crunchyroll.com" in page_url:
@@ -39,10 +39,14 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     url = "https://www.crunchyroll.com/xml/?req=RpcApiVideoPlayer_GetStandardConfig&media_id=%s" \
           "&video_format=0&video_quality=0&auto_play=0&aff=af-12299-plwa" % media_id
     post = "current_page=%s" % page_url
-    data = httptools.downloadpage(url, post, headers=GLOBAL_HEADER).data
+    data = httptools.downloadpage(url, post=post, headers=GLOBAL_HEADER).data
+
     if "<msg>Media not available</msg>" in data or "flash_block.png" in data:
-        data = httptools.downloadpage(proxy + url, post, headers=GLOBAL_HEADER,
-                                      cookies=False).data
+        httptools.downloadpage(proxy_i)
+        import urllib
+        url = urllib.quote(url)
+        get = '%sbrowse.php?u=%s&b=4' % (proxy, url)
+        data = httptools.downloadpage(get, post=post, headers=GLOBAL_HEADER).data
     media_url = scrapertools.find_single_match(data, '<file>(.*?)</file>').replace("&amp;", "&")
     if not media_url:
         return video_urls
@@ -54,13 +58,15 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         filename = scrapertools.get_filename_from_url(media_url)[-4:]
     quality = scrapertools.find_single_match(data, '<height>(.*?)</height>')
     try:
-        idiomas = ['Español \(España\)', 'Español\]', 'English', 'Italiano', 'Français', 'Português', 'Deutsch']
-        index_sub = int(config.get_setting("sub", server="crunchyroll"))
+        #idiomas = ['Español \(España\)', 'Español\]', 'English', 'Italiano', 'Français', 'Português', 'Deutsch']
+        idiomas = ['Deutsch', 'Português', 'Français', 'Italiano', 'English', 'Español\]', 'Español \(España\)']
+        index_sub = int(config.get_setting("crunchyrollsub", "crunchyroll"))
         idioma_sub = idiomas[index_sub]
+
         link_sub = scrapertools.find_single_match(data, "link='([^']+)' title='\[%s" % idioma_sub)
-        if not link_sub and index_sub == 0:
+        if not link_sub and index_sub == 6:
             link_sub = scrapertools.find_single_match(data, "link='([^']+)' title='\[Español\]")
-        elif not link_sub and index_sub == 1:
+        elif not link_sub and index_sub == 5:
             link_sub = scrapertools.find_single_match(data, "link='([^']+)' title='\[Español \(España\)")
         if not link_sub:
             link_sub = scrapertools.find_single_match(data, "link='([^']+)' title='\[English")
@@ -89,7 +95,7 @@ def login(page_url):
         redirect_url = scrapertools.find_single_match(data, 'name="login_form\[redirect_url\]" value="([^"]+)"')
         post = "login_form%5Bname%5D=" + user + "&login_form%5Bpassword%5D=" + password + \
                "&login_form%5Bredirect_url%5D=" + redirect_url + "&login_form%5B_token%5D=" + token
-        data = httptools.downloadpage(login_page, post, headers=GLOBAL_HEADER).data
+        data = httptools.downloadpage(login_page, post=post, headers=GLOBAL_HEADER).data
         if "<title>Redirecting" in data:
             return True, ""
         else:

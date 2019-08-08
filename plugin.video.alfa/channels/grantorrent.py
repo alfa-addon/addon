@@ -83,6 +83,7 @@ def submenu(item):
     data = ''
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = data.decode('utf8').encode('utf8')
     except:
         pass
         
@@ -92,7 +93,7 @@ def submenu(item):
         return itemlist                                                     #Algo no funciona, pintamos lo que tenemos
     
     if item.extra == "peliculas":
-        patron = '<li class="navigation-top">.*?<a href="(.*?)".*?class="nav"> (.*?)\s?<\/a><\/li>'     
+        patron = '<li\s*class="navigation-top">\s*<a href="([^"]+)"\s*class="nav">([^<]+)<\/a><\/li>'
         matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches:
             item = generictools.web_intervenida(item, data)                 #Verificamos que no haya sido clausurada
@@ -107,7 +108,7 @@ def submenu(item):
         itemlist.append(item.clone(action="generos", title="Películas **Géneros**", url=host))         #Lista de Géneros
     
         for scrapedurl, scrapedtitle in matches:
-            title = re.sub('\r\n', '', scrapedtitle).decode('utf8').encode('utf8').strip()
+            title = scrapedtitle.strip()
         
             if not "películas" in scrapedtitle.lower():                     #Evita la entrada de ayudas y demás
                 continue
@@ -115,7 +116,7 @@ def submenu(item):
             itemlist.append(item.clone(action="listado", title=title, url=scrapedurl))              #Menú películas
 
     else:                                                                   #Tratamos Series
-        patron = '<li class="navigation-top-dcha">.*?<a href="(.*?)".*?class="series"> (.*?)\s?<\/a><\/li>'
+        patron = '<li\s*class="navigation-top-dcha">\s*<a href="([^"]+)"\s*class="series">([^<]+)<\/a><\/li>'
         matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches:
             item = generictools.web_intervenida(item, data)                 #Verificamos que no haya sido clausurada
@@ -126,7 +127,7 @@ def submenu(item):
                 return itemlist                                             #Salimos
 
         for scrapedurl, scrapedtitle in matches:
-            title = re.sub('\r\n', '', scrapedtitle).decode('utf8').encode('utf8').strip()
+            title = scrapedtitle.strip()
 
             itemlist.append(item.clone(action="listado", title=title, url=scrapedurl))              #Menú series
             
@@ -230,8 +231,8 @@ def listado(item):
 
         #Obtiene la dirección de la próxima página, si la hay
         try:
-            patron = '<div class="nav-links">.*?<a class="next page.*?href="(.*?)"'
-            next_page = scrapertools.find_single_match(data, patron)                        #url próxima página    
+            patron = '<div class="nav-links">.*?<a class="next page.*?href="([^"]+)"'
+            next_page = scrapertools.find_single_match(data, patron)                        #url próxima página        
             post = scrapertools.find_single_match(next_page, '\/page\/(\d+)\/')             #número próxima página
             if next_page:                                                                   #Hay próxima página?
                 patron = '<div class="nav-links">.*?'
@@ -249,6 +250,8 @@ def listado(item):
             else:
                 if "/categoria" in item.post:
                     item.post = re.sub(r"\/$", "/page/%s/" % post, item.post)
+                elif "/series-2" in item.post:
+                    item.post = re.sub(r"\/series-2\/", "/series-2/page/%s/" % post, item.post)
                 elif "/series" in item.post:
                     item.post = re.sub(r"\/series\/", "/series/page/%s/" % post, item.post)
                 else:
@@ -443,8 +446,8 @@ def listado(item):
     item, itemlist = generictools.post_tmdb_listado(item, itemlist)
 
     #Gestionamos el paginador
-    patron = '<div class="nav-links">.*?<a class="next page.*?href="(.*?)"'
-    next_page = scrapertools.find_single_match(data, patron)                        #url próxima página    
+    patron = '<div class="nav-links">.*?<a class="next page.*?href="([^"]+)"'
+    next_page = scrapertools.find_single_match(data, patron)                        #url próxima página  
     #next_page_num = scrapertools.find_single_match(next_page, '\/page\/(\d+)\/')    #número próxima página
     if next_page:                                                                   #Hay próxima página?
         patron = '<div class="nav-links">.*?'
@@ -478,7 +481,7 @@ def findvideos(item):
         timeout_find = timeout * 2
     elif item.emergency_urls:                           #Si se llama desde la Videoteca con enlaces cacheados... 
         timeout_find = timeout / 2                      #reducimos el timeout antes de saltar a los enlaces cacheados
-        follow_redirects=False
+        #follow_redirects=False
     rar_search = True
         
     #Bajamos los datos de la página

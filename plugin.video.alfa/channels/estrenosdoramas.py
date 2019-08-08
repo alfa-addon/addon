@@ -99,11 +99,12 @@ def list_all(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
-        new_item = Item(channel=item.channel, title=scrapedtitle, url=scrapedurl,
+        title = re.sub('^Pelicula ', '', scrapedtitle)
+        new_item = Item(channel=item.channel, title=title, url=scrapedurl,
                         thumbnail=scrapedthumbnail)
         if scrapedtitle.startswith("Pelicula") or item.type == "movie":
             new_item.action = 'findvideos'
-            new_item.contentTitle = scrapedtitle
+            new_item.contentTitle = title
         else:
             new_item.contentSerieName=scrapedtitle
             new_item.action = 'episodios'
@@ -184,7 +185,7 @@ def findvideos(item):
             continue
         
         scrapedurl = scrapedurl.replace('"','').replace('&#038;','&')
-        logger.info(scrapedurl)
+
         try:
             data_video = get_source(scrapedurl)
         except Exception as e:
@@ -208,8 +209,8 @@ def findvideos(item):
             source_matches = re.compile(source_regex, re.DOTALL).findall(source_data)
             for source_page, source_acc, source_id, source_tk in source_matches:
                 source_url = scrapedurl[0:scrapedurl.find("pi76823.php")] + source_page
-                source_result = httptools.downloadpage(source_url, 'acc=' + source_acc + '&id=' + 
-                                                       source_id + '&tk=' + source_tk, source_headers)
+                source_result = httptools.downloadpage(source_url, post='acc=' + source_acc + '&id=' + 
+                                                       source_id + '&tk=' + source_tk, headers=source_headers)
                 if source_result.code == 200:
                     source_json = jsontools.load(source_result.data)
                     itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play', language=IDIOMA))
@@ -220,8 +221,8 @@ def findvideos(item):
             source_matches = re.compile(source_regex, re.DOTALL).findall(source_data)
             for source_page, source_acc, source_id, source_tk in source_matches:
                 source_url = scrapedurl[0:scrapedurl.find("pi7.php")] + source_page
-                source_result = httptools.downloadpage(source_url, 'acc=' + source_acc + '&id=' + 
-                                                       source_id + '&tk=' + source_tk, source_headers)
+                source_result = httptools.downloadpage(source_url, post='acc=' + source_acc + '&id=' + 
+                                                       source_id + '&tk=' + source_tk, headers=source_headers)
                 if source_result.code == 200:
                     source_json = jsontools.load(source_result.data)
                     itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play', language=IDIOMA))
@@ -236,8 +237,8 @@ def findvideos(item):
             source_matches = re.compile(source_regex, re.DOTALL).findall(source_data)
             for source_page, source_acc in source_matches:
                 source_url = scrapedurl[0:scrapedurl.find("reproducir120.php")] + source_page
-                source_result = httptools.downloadpage(source_url, 'acc=' + source_acc + '&id=' + 
-                                                       videoidn + '&tk=' + tokensn, source_headers)
+                source_result = httptools.downloadpage(source_url, post='acc=' + source_acc + '&id=' + 
+                                                       videoidn + '&tk=' + tokensn, headers=source_headers)
                 if source_result.code == 200:
                     source_json = jsontools.load(source_result.data)
                     urlremoto_regex = "file:'(.*?)'"
@@ -257,8 +258,8 @@ def findvideos(item):
             source_matches = re.compile(source_regex, re.DOTALL).findall(source_data)
             for source_page, source_acc in source_matches:
                 source_url = scrapedurl[0:scrapedurl.find("reproducir14.php")] + source_page
-                source_result = httptools.downloadpage(source_url, 'acc=' + source_acc + '&id=' + 
-                                                       videoidn + '&tk=' + tokensn, source_headers)
+                source_result = httptools.downloadpage(source_url, post='acc=' + source_acc + '&id=' + 
+                                                       videoidn + '&tk=' + tokensn, headers=source_headers)
                 if source_result.code == 200:
                     source_json = jsontools.load(source_result.data)
                     itemlist.append(Item(channel=item.channel, title=option, url=source_json['urlremoto'], action='play', language=IDIOMA))

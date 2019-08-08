@@ -348,7 +348,7 @@ def start(itemlist, item):
 
                     # Si no quedan elementos en la lista se informa
                     if autoplay_elem == autoplay_list[-1]:
-                         platformtools.dialog_notification('AutoPlay', config.get_localized_string(60072))
+                         platformtools.dialog_notification('AutoPlay', config.get_localized_string(60072) % videoitem.server.upper())
 
         else:
             platformtools.dialog_notification(config.get_localized_string(60074), config.get_localized_string(60075))

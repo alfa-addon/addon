@@ -1,7 +1,7 @@
 {
   "id": "czechvideo",
   "name": "Czechvideo",
-  "active": true,
+  "active": false,
   "adult": true,
   "language": ["*"],
   "thumbnail": "http://czechvideo.org/templates/Default/images/black75.png",

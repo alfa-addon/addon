@@ -19,7 +19,7 @@ from channelselector import get_thumb
 
 __channel__ = "canalpelis"
 
-host = "https://www.canalpelis.com/"
+host = "https://canalpelis.com/"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -177,7 +177,6 @@ def peliculas(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
-
     patron = 'movies"><div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'  # img, title.strip() movies
     patron += '<span class="icon-star2"></span> (.*?)</div>.*?'  # rating
     patron += '<span class="quality">([^<]+)</span>.*?'  # calidad

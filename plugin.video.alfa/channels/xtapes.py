@@ -10,10 +10,12 @@ from core import httptools
 
 host = 'http://hd.xtapes.to'
 
+# Links NetuTV
+
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/porn-movies/"))
+    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/hd-porn-movies/"))
     itemlist.append( Item(channel=item.channel, title="Productora" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?filtre=date&cat=0"))
     itemlist.append( Item(channel=item.channel, title="Mas Vistos" , action="lista", url=host + "/?display=tube&filtre=views"))
@@ -77,7 +79,7 @@ def lista(item):
         contentTitle = title
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail,
+        itemlist.append( Item(channel=item.channel, action="findvideos" , title=title , url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, fulltitle = title,  contentTitle = contentTitle))
     next_page = scrapertools.find_single_match(data,'<a class="next page-numbers" href="([^"]+)">Next video')
     if next_page!="":
@@ -87,20 +89,4 @@ def lista(item):
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
-
-def play(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    variable = scrapertools.find_single_match(data,'<script type=\'text/javascript\'> str=\'([^\']+)\'')
-    resuelta = re.sub("@[A-F0-9][A-F0-9]", lambda m: m.group()[1:].decode('hex'), variable)
-    url = scrapertools.find_single_match(resuelta,'<iframe src="([^"]+)"')
-    data = httptools.downloadpage(url).data
-    itemlist = servertools.find_video_items(data=data)
-    for videoitem in itemlist:
-        videoitem.title = item.title
-        videoitem.fulltitle = item.fulltitle
-        videoitem.thumbnail = item.thumbnail
-        videoitem.channel = item.channel
-    return itemlist
 

@@ -30,7 +30,11 @@
         <script type="text/javascript" src="/media/js/socket.js"></script>
         <script type="text/javascript" src="/media/js/utils.js"></script>
         <script type="text/javascript">
-            websocket_host = 'ws://' + window.location.host
+            let wsSchema = "ws";
+            if (window.location.protocol == "https:") {
+                wsSchema = "wss";
+            }
+            websocket_host = wsSchema + '://' + window.location.host;
         </script>
     </head>
 

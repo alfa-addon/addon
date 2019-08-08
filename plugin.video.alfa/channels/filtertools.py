@@ -301,7 +301,7 @@ def get_links(list_item, item, list_language, list_quality=None, global_filter_l
                 list_item_all.append(i.tourl())
 
             _context = [{"title": "FILTRO: Borrar '%s'" % _filter.language, "action": "delete_from_context",
-                         "channel": "filtertools", "to_channel": "seriesdanko"}]
+                         "channel": "filtertools", "to_channel": item.channel}]
 
             if _filter.quality_allowed:
                 msg_quality_allowed = " y calidad %s" % _filter.quality_allowed

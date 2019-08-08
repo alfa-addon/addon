@@ -46,9 +46,8 @@ parameters = channeltools.get_channel_parameters(__channel__)
 fanart_host = parameters['fanart']
 thumbnail_host = parameters['thumbnail']
 
-IDIOMAS = {'Latino': 'LAT', 'Castellano': 'CAST'}
-list_language = IDIOMAS.values()
-list_quality = []
+
+list_quality = ['HD 1080p', 'HDRip', 'TS-Screener']
 list_servers = ['rapidvideo', 'streamango', 'openload', 'streamcherry']
 
 
@@ -352,6 +351,7 @@ def episodios(item):
 def findvideos(item):
     logger.info()
     itemlist = []
+    list_language = []
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|#038;|\(.*?\)|\s{2}|&nbsp;", "", data)
@@ -370,18 +370,22 @@ def findvideos(item):
         languages = {'latino': '[COLOR cornflowerblue](LAT)[/COLOR]',
                      'castellano': '[COLOR green](CAST)[/COLOR]',
                      'español': '[COLOR green](CAST)[/COLOR]',
-                     'subespañol': '[COLOR red](VOS)[/COLOR]',
-                     'sub': '[COLOR red](VOS)[/COLOR]',
+                     'sub español': '[COLOR grey](VOSE)[/COLOR]',
+                     'sup espaÑol': '[COLOR grey](VOSE)[/COLOR]',
+                     'sub': '[COLOR grey](VOSE)[/COLOR]',
                      'ingles': '[COLOR red](VOS)[/COLOR]'}
         if lang in languages:
             lang = languages[lang]
-
+        #tratando con los idiomas
+        language = scrapertools.find_single_match(lang, '\((\w+)\)')
+        list_language.append(language)
+        
         server = servertools.get_server_from_url(url)
         title = "»» [COLOR yellow](%s)[/COLOR] [COLOR goldenrod](%s)[/COLOR] %s ««" % (
             server.title(), item.quality, lang)
         # if 'google' not in url and 'directo' not in server:
 
-        itemlist.append(item.clone(action='play', url=url, title=title, language=lang, text_color=color3))
+        itemlist.append(item.clone(action='play', url=url, title=title, language=language, text_color=color3))
 
     itemlist = servertools.get_servers_itemlist(itemlist)
     itemlist.sort(key=lambda it: it.language, reverse=False)

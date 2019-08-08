@@ -295,7 +295,7 @@ def entradas(item):
     else:
         # Extrae las entradas
         if item.extra == "Novedades":
-            data2 = data.split("<h2>Últimas Películas Agregadas y Actualizadas</h2>", 1)[1]
+            data2 = data.split(">Últimas Películas Agregadas y Actualizadas<", 1)[1]
             entradas = scrapertools.find_multiple_matches(data2, '<div class="col-mt-5 postsh">(.*?)</div></div></div>')
         else:
             entradas = scrapertools.find_multiple_matches(data, '<div class="col-mt-5 postsh">(.*?)</div></div></div>')
@@ -410,6 +410,7 @@ def findvideos(item):
         if server == "Ul":
             server = "Uploaded"
         title = "%s  [%s][%s]" % (server, idioma, calidad)
+
         itemlist.append(Item(channel=item.channel, action="play", title=title, url=url, language=idioma,
                              quality=calidad, server=server, infoLabels=item.infoLabels))
 
@@ -419,8 +420,20 @@ def findvideos(item):
         title = scrapertools.find_single_match(url, "(?:http://|https://|//)(.*?)(?:embed.|videoembed|)/")
         if re.search(r"(?i)inkapelis|goo.gl", title):
             title = "Directo"
+            try:
+                server = "directo"
+                old_url = url
+                new_data = httptools.downloadpage(url, headers={'referer':item.url}).data
+                hidden_url = scrapertools.find_single_match(new_data, 'sources: \[\{ file: "([^"]+)"')
+                url = httptools.downloadpage(hidden_url, headers={'referer':old_url},
+                                             follow_redirects=False).headers['location']
+                url = url.replace(' ', '%20')
+            except:
+                pass
         idioma = scrapertools.find_single_match(data, 'href="#%s".*?>([^<]+)<' % id_embed)
         title = "%s  [%s][%s]" % (title.capitalize(), idioma, calidad)
+
+        title = re.sub(r"www.|.com", "", title.lower()).capitalize()
         itemlist.append(Item(channel=item.channel, action="play", title=title, url=url, language=idioma,
                              quality=calidad, server=server))
     # Requerido para FilterTools
@@ -447,16 +460,19 @@ def findvideos(item):
 def play(item):
     logger.info()
     itemlist = []
-    if "drive.php?v=" in item.url or "//goo.gl/" in item.url:
-        data = httptools.downloadpage(item.url).data.replace("\\", "")
-        matches = scrapertools.find_multiple_matches(data, '"label":(.*?),.*?type":".*?/([^"]+)".*?file":"([^"]+)"')
-        for calidad, ext, url in matches:
-            title = ".%s %s [directo]" % (ext, calidad)
-            itemlist.insert(0, [title, url])
+    if item.server != 'directo':
+        if "drive.php?v=" in item.url or "//goo.gl/" in item.url:
+            data = httptools.downloadpage(item.url).data.replace("\\", "")
+            matches = scrapertools.find_multiple_matches(data, '"label":(.*?),.*?type":".*?/([^"]+)".*?file":"([^"]+)"')
+            for calidad, ext, url in matches:
+                title = ".%s %s [directo]" % (ext, calidad)
+                itemlist.insert(0, [title, url])
+        else:
+            itemlist = servertools.find_video_items(data=item.url)
+
+        for videoitem in itemlist:
+            videoitem.infoLabels=item.infoLabels
+
     else:
-        itemlist = servertools.find_video_items(data=item.url)
-
-    for videoitem in itemlist:
-        videoitem.infoLabels=item.infoLabels
-
+        itemlist.append(item)
     return itemlist

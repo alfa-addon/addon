@@ -19,8 +19,8 @@ except:
 
 
 
-
-from core import channeltools, filetools, videolibrarytools
+from core import filetools
+from core import channeltools, videolibrarytools
 from platformcode import logger
 from platformcode import platformtools
 from channels import videolibrary
@@ -91,12 +91,14 @@ def update(path, p_dialog, i, t, serie, overwrite):
                     template = "An exception of type %s occured. Arguments:\n%r"
                     message = template % (type(ex).__name__, ex.args)
                     logger.error(message)
+                    logger.error(traceback.format_exc())
 
             except Exception, ex:
                 logger.error("Error al obtener los episodios de: %s" % serie.show)
                 template = "An exception of type %s occured. Arguments:\n%r"
                 message = template % (type(ex).__name__, ex.args)
                 logger.error(message)
+                logger.error(traceback.format_exc())
 
         else:
             logger.debug("Canal %s no activo no se actualiza" % serie.channel)

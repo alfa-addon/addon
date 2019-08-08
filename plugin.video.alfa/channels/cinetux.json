@@ -21,9 +21,9 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "Latino",
-        "Subtitulado",
-        "Español",
+        "CAST",
+        "LAT",
+        "VOSE",
         "VO"
       ]
     },
@@ -118,19 +118,6 @@
       ]
     },
     {
-      "id": "filterlanguages",
-      "type": "list",
-      "label": "Mostrar enlaces del canal en idioma...",
-      "default": 3,
-      "enabled": true,
-      "visible": true,
-      "lvalues": [
-        "VOSE",
-        "Latino",
-        "Español",
-        "No filtrar"
-      ]
-    },    {
       "id": "viewmode",
       "type": "list",
       "label": "Elegir vista por defecto (Confluence)...",

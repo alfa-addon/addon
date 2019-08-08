@@ -215,7 +215,7 @@ def render_items(itemlist, parent_item):
         if item.fanart:
             fanart = item.fanart
         else:
-            fanart = os.path.join(config.get_runtime_path(), "fanart1.jpg")
+            fanart = os.path.join(config.get_runtime_path(), "fanart-2019.jpg")
 
         # Creamos el listitem
         #listitem = xbmcgui.ListItem(item.title)
@@ -1160,11 +1160,11 @@ def torrent_client_installed(show_tuple=False):
 def play_torrent(item, xlistitem, mediaurl):
     logger.info()
     import time
-    import threading
-    import shutil
+    
     from core import filetools
     from core import httptools
     from lib import generictools
+    from servers import torrent
     
     # Opciones disponibles para Reproducir torrents
     torrent_options = list()
@@ -1187,7 +1187,13 @@ def play_torrent(item, xlistitem, mediaurl):
             seleccion = 0
 
     # Si Libtorrent ha dado error de inicialización, no se pueden usar los clientes internos
-    if seleccion < 2 and config.get_setting("libtorrent_error", server="torrent", default=''):
+    UNRAR = config.get_setting("unrar_path", server="torrent", default="")
+    LIBTORRENT = config.get_setting("libtorrent_path", server="torrent", default='')
+    size_rar = 2
+    rar_files = []
+    if item.password:
+        size_rar = 3
+    if seleccion < 2 and not LIBTORRENT:
         dialog_ok('Cliente Interno (LibTorrent):', 'Este cliente no está soportado en su dispositivo.',  \
                   'Error: [COLOR yellow]%s[/COLOR]' % config.get_setting("libtorrent_error", server="torrent", default=''), \
                   'Use otro cliente Torrent soportado')
@@ -1197,7 +1203,14 @@ def play_torrent(item, xlistitem, mediaurl):
                 return
         else:
             return
-    
+    elif seleccion > 1 and LIBTORRENT and UNRAR and 'RAR-' in item.torrent_info and ("torrenter" in torrent_options[seleccion][0] \
+                        or ("elementum" in torrent_options[seleccion][0] and xbmcaddon.Addon(id="plugin.video.%s" \
+                        % torrent_options[seleccion][0].replace('Plugin externo: ', '')).getSetting('download_storage') == '1')):
+        if dialog_yesno(torrent_options[seleccion][0], 'Este plugin externo no soporta extraer on-line archivos RAR',  \
+                        '[COLOR yellow]¿Quiere que usemos esta vez el Cliente interno MCT?[/COLOR]', \
+                        'Esta operación ocupará en disco [COLOR yellow][B]%s+[/B][/COLOR] veces el tamaño del vídeo' % size_rar):
+                        seleccion = 1
+        
     # Descarga de torrents a local
     if seleccion >= 0:
         
@@ -1215,18 +1228,27 @@ def play_torrent(item, xlistitem, mediaurl):
         post = None
         rar = False
         size = ''
+        password = ''
+        if item.password:
+            password=item.password
+            
         videolibrary_path = config.get_videolibrary_path()          #Calculamos el path absoluto a partir de la Videoteca
-        if videolibrary_path.lower().startswith("smb://"):                  #Si es una conexión SMB, usamos userdata local
+        if scrapertoolsV2.find_single_match(videolibrary_path, '(^\w+:\/\/)'):  #Si es una conexión REMOTA, usamos userdata local
             videolibrary_path = config.get_data_path()                      #Calculamos el path absoluto a partir de Userdata
         if not filetools.exists(videolibrary_path):                         #Si no existe el path, pasamos al modo clásico
             videolibrary_path = False
         else:
             torrents_path = filetools.join(videolibrary_path, 'temp_torrents_Alfa', \
                         'cliente_torrent_Alfa.torrent')                     #path descarga temporal
-        if videolibrary_path and not filetools.exists(filetools.join(videolibrary_path, \
+        if not videolibrary_path or not filetools.exists(filetools.join(videolibrary_path, \
                         'temp_torrents_Alfa')):                             #Si no existe la carpeta temporal, la creamos
             filetools.mkdir(filetools.join(videolibrary_path, 'temp_torrents_Alfa'))
 
+        # Si hay headers, se pasar a la petición de descarga del .torrent
+        headers = {}
+        if item.headers:
+            headers = item.headers
+        
         #identificamos si es una url o un path de archivo.  Los Magnets los tratamos de la forma clásica       
         if not item.url.startswith("\\") and not item.url.startswith("/") and not item.url.startswith("magnet:") and not url_stat:
             timeout = 10
@@ -1236,8 +1258,8 @@ def play_torrent(item, xlistitem, mediaurl):
             if item.referer: referer = item.referer
             if item.post: post = item.post
             #Descargamos el .torrent
-            size, url, torrent, rar_files = generictools.get_torrent_size(item.url, \
-                        referer, post, torrents_path=torrents_path, timeout=timeout, lookup=False)
+            size, url, torrent_f, rar_files = generictools.get_torrent_size(item.url, referer, post, \
+                        torrents_path=torrents_path, timeout=timeout, lookup=False, headers=headers)
             if url:
                 url_stat = True
                 item.url = url
@@ -1260,7 +1282,7 @@ def play_torrent(item, xlistitem, mediaurl):
             else:
                 folder = series                                             #o series
             item.url = filetools.join(config.get_videolibrary_path(), folder, item.url)     #dirección del .torrent local en la Videoteca
-            if filetools.copy(item.url, torrents_path, silent=True):    #se copia a la carpeta generíca para evitar problemas de encode
+            if filetools.copy(item.url, torrents_path, silent=True):        #se copia a la carpeta generíca para evitar problemas de encode
                 item.url = torrents_path
             if "torrentin" in torrent_options[seleccion][0]:                #Si es Torrentin, hay que añadir un prefijo
                 item.url = 'file://' + item.url
@@ -1268,12 +1290,18 @@ def play_torrent(item, xlistitem, mediaurl):
         
         mediaurl = item.url
 
-    # Plugins externos
-    if seleccion > 0:
- 
-        if seleccion == 1:
+    if seleccion >= 0:
+        
+        # Reproductor propio BT (libtorrent)
+        if seleccion == 0:
+            torrent.bt_client(mediaurl, xlistitem, rar_files, subtitle=item.subtitle, password=password, item=item)
+        
+        # Reproductor propio MCT (libtorrent)
+        elif seleccion == 1:
             from platformcode import mct
-            mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=item.password, item=item)
+            mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=password, item=item)
+        
+        # Plugins externos
         else:
             mediaurl = urllib.quote_plus(item.url)
             #Llamada con más parámetros para completar el título
@@ -1289,12 +1317,12 @@ def play_torrent(item, xlistitem, mediaurl):
             # Si es un archivo RAR, monitorizamos el cliente Torrent hasta que haya descargado el archivo,
             # y después lo extraemos, incluso con RAR's anidados y con contraseña
             torr_client = torrent_options[seleccion][0].replace('Plugin externo: ', '')
-            if 'RAR-' in size and torr_client in ['quasar', 'elementum']:
-                rar_file, save_path_videos = wait_for_download(rar_files, torr_client)  # Esperamos mientras se descarga el RAR
+            if 'RAR-' in size and torr_client in ['quasar', 'elementum'] and UNRAR:
+                rar_file, save_path_videos, folder_torr = torrent.wait_for_download(rar_files, torr_client)  # Esperamos mientras se descarga el RAR
                 if rar_file and save_path_videos:                                       # Si se ha descargado el RAR...
                     dp = dialog_progress_bg('Alfa %s' % torr_client)
-                    video_file, rar, video_path, erase_file_path = extract_files(rar_file, \
-                                    save_path_videos, item.password, dp, item=item)     # ... extraemos el vídeo del RAR
+                    video_file, rar, video_path, erase_file_path = torrent.extract_files(rar_file, \
+                                    save_path_videos, password, dp, item, torr_client)  # ... extraemos el vídeo del RAR
                     dp.close()
                     
                     # Reproducimos el vídeo extraido, si no hay nada en reproducción
@@ -1309,448 +1337,28 @@ def play_torrent(item, xlistitem, mediaurl):
                         playlist.add(video_play, xlistitem)
                         xbmc_player.play(playlist)
 
-        #Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos: asumimos que todos funcionan
-        #if "quasar" in torrent_options[seleccion][1] or "elementum" in torrent_options[seleccion][1]:   
-
-        time_limit = time.time() + 150                                      #Marcamos el timepo máx. de buffering
-        while not is_playing() and time.time() < time_limit:                #Esperamos mientra buffera    
-            time.sleep(5)                                                   #Repetimos cada intervalo
-            #logger.debug(str(time_limit))
-        if item.subtitle != '':
-            time.sleep(5)
-            xbmc_player.setSubtitles(item.subtitle)
-            #subt = xbmcgui.ListItem(path=item.url, thumbnailImage=item.thumbnail)
-            #subt.setSubtitles([item.subtitle])
-
-        if item.strm_path and is_playing():                                 #Sólo si es de Videoteca
-            from platformcode import xbmc_videolibrary
-            xbmc_videolibrary.mark_auto_as_watched(item)                    #Marcamos como visto al terminar
-            #logger.debug("Llamado el marcado")
-            
-        # Si se ha extraido un RAR, se pregunta para borrar los archivos después de reproducir el vídeo
-        while is_playing() and rar and not xbmc.abortRequested:
-            time.sleep(3)                                                   #Repetimos cada intervalo
-        if rar and not xbmc.abortRequested:
-            if dialog_yesno('Alfa %s' % torr_client, '¿Borrar las descargas del RAR y Vídeo?'):
-                log("##### erase_file_path: %s" % erase_file_path)
-                try:
-                    shutil.rmtree(erase_file_path, ignore_errors=True)
-                except:
-                    logger.error(traceback.format_exc(1))
-
-    # Reproductor propio (libtorrent)
-    if seleccion == 0:
-        import time
-        played = False
-        debug = (config.get_setting("debug") == True)
-
-        # Importamos el cliente
-        from btserver import Client
-
-        client_tmp_path = config.get_setting("downloadpath")
-        if not client_tmp_path:
-            client_tmp_path = config.get_data_path()
-
-        # Iniciamos el cliente:
-        c = Client(url=mediaurl, is_playing_fnc=xbmc_player.isPlaying, wait_time=None, timeout=10,
-                   temp_path=config.get_setting("bt_download_path", server="torrent", 
-                   default=config.get_setting("downloadpath")), print_status=debug)
-
-        # Mostramos el progreso
-        progreso = dialog_progress(config.get_localized_string(70195), config.get_localized_string(70196))
-
-        # Mientras el progreso no sea cancelado ni el cliente cerrado
-        while not c.closed:
-            try:
-                # Obtenemos el estado del torrent
-                s = c.status
-                if debug:
-                    # Montamos las tres lineas con la info del torrent
-                    txt = '%.2f%% de %.1fMB %s | %.1f kB/s' % \
-                          (s.progress_file, s.file_size, s.str_state, s._download_rate)
-                    txt2 = 'S: %d(%d) P: %d(%d) | DHT:%s (%d) | Trakers: %d' % \
-                           (s.num_seeds, s.num_complete, s.num_peers, s.num_incomplete, s.dht_state, s.dht_nodes,
-                            s.trackers)
-                    txt3 = 'Origen Peers TRK: %d DHT: %d PEX: %d LSD %d ' % \
-                           (s.trk_peers, s.dht_peers, s.pex_peers, s.lsd_peers)
-                else:
-                    txt = '%.2f%% de %.1fMB %s | %.1f kB/s' % \
-                          (s.progress_file, s.file_size, s.str_state, s._download_rate)
-                    txt2 = 'S: %d(%d) P: %d(%d)' % (s.num_seeds, s.num_complete, s.num_peers, s.num_incomplete)
-                    try:
-                        txt3 = config.get_localized_string(70197) % (int(s.timeout))
-                    except:
-                        txt3 = ''
-
-                progreso.update(s.buffer, txt, txt2, txt3)
-                time.sleep(0.5)
-
-                if progreso.iscanceled():
-                    progreso.close()
-                    if s.buffer == 100:
-                        if dialog_yesno(config.get_localized_string(70195), config.get_localized_string(70198)):
-                            played = False
-                            progreso = dialog_progress(config.get_localized_string(70195), "")
-                            progreso.update(s.buffer, txt, txt2, txt3)
-                        else:
-                            progreso = dialog_progress(config.get_localized_string(70195), "")
-                            break
-
-                    else:
-                        if dialog_yesno(config.get_localized_string(70195), config.get_localized_string(70199)):
-                            progreso = dialog_progress(config.get_localized_string(70195), "")
-                            break
-
-                        else:
-                            progreso = dialog_progress(config.get_localized_string(70195), "")
-                            progreso.update(s.buffer, txt, txt2, txt3)
-
-                # Si el buffer se ha llenado y la reproduccion no ha sido iniciada, se inicia
-                if s.buffer == 100 and not played:
-                    # Cerramos el progreso
-                    progreso.close()
-
-                    # Obtenemos el playlist del torrent
-                    videourl = c.get_play_list()
-
-                    # Iniciamos el reproductor
-                    playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-                    playlist.clear()
-                    playlist.add(videourl, xlistitem)
-                    # xbmc_player = xbmc_player
-                    xbmc_player.play(playlist)
-
-                    # Marcamos como reproducido para que no se vuelva a iniciar
-                    played = True
-
-                    # si es un archivo de la videoteca enviar a marcar como visto
-                    if item.strm_path:
-                        from platformcode import xbmc_videolibrary
-                        xbmc_videolibrary.mark_auto_as_watched(item)
-
-                    # Y esperamos a que el reproductor se cierre
-                    while xbmc_player.isPlaying():
-                        time.sleep(1)
-
-                    # Cuando este cerrado,  Volvemos a mostrar el dialogo
-                    progreso = dialog_progress(config.get_localized_string(70195), "")
-                    progreso.update(s.buffer, txt, txt2, txt3)
-
-            except:
-                import traceback
-                logger.error(traceback.format_exc())
-                break
-
-        progreso.update(100, config.get_localized_string(70200), " ", " ")
-
-        # Detenemos el cliente
-        if not c.closed:
-            c.stop()
-
-        # Y cerramos el progreso
-        progreso.close()
-
-
-def wait_for_download(rar_files, torr_client):
-    logger.info()
-    import time
-    import traceback
-    from subprocess import Popen, PIPE, STDOUT
-    from core import filetools
-    
-    unrar_path = config.get_setting("unrar_path", server="torrent", default="")
-    if not unrar_path:                                                          # Si Unrar no está instalado...
-        return ('', '')                                                         # ... no podemos hacer nada
-        
-    # Localizamos el path de descarga del .torrent
-    save_path_videos = ''
-    __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)          # Apunta settings del cliente torrent
-    if torr_client == 'torrenter':
-        save_path_videos = str(xbmc.translatePath(__settings__.getSetting('storage')))
-        if not save_path_videos:
-            save_path_videos = str(filetools.join(xbmc.translatePath("special://home/"), \
-                                   "cache", "xbmcup", "plugin.video.torrenter", "Torrenter"))
-    else:
-        save_path_videos = str(xbmc.translatePath(__settings__.getSetting('download_path')))
-        if __settings__.getSetting('download_storage') == '1':                  # Descarga en memoria?
-            return ('', '')                                                     # volvemos
-    if not save_path_videos:                                                    # No hay path de descarga?
-        return ('', '')                                                         # Volvemos
-    log("##### save_path_videos: %s" % save_path_videos)
-
-    # Analizamos los archivos dentro del .torrent
-    rar = False
-    rar_names = []
-    rar_names_abs = []
-    for entry in rar_files:
-        for file, path in entry.items():
-            if file == 'path' and '.rar' in str(path):
-                for file_r in path:
-                    rar_names += [file_r]
-                    rar = True
-            elif file == '__name':
-                folder = path
-    if not rar_names:
-        return ('', '')
-    rar_file = '%s/%s' % (folder, rar_names[0])
-    log("##### rar_file: %s" % rar_file)
-    if len(rar_names) > 1:
-        log("##### rar_names: %s" % str(rar_names))
-
-    # Esperamos mientras el .torrent se descarga.  Verificamos si el .RAR está descargado al completo
-    dialog_notification("Automatizando la extracción", "Acepta descargar el archivo RAR y te iremos guiando...", time=10000)
-    cmd = []
-    for rar_name in rar_names:                                                  # Preparamos por si es un archivo multiparte
-        cmd.append(['%s' % unrar_path, 'l', '%s' % filetools.join(save_path_videos, folder, rar_name)])
-    
-    if xbmc.getCondVisibility("system.platform.Windows"):
-        creationflags = 0x08000000
-    loop = 30                                                                   # Loop inicial de 5 minutos hasta crear archivo
-    wait_time = 10
-    loop_change = 0
-    fast = False
-    while rar and not xbmc.abortRequested:
-        for x in range(loop):                                                   # Loop corto (5 min.) o largo (10 h.)
-            if not rar or loop_change > 0:
-                loop = loop_change                                              # Paso de loop corto a largo
-                loop_change = 0
-                break
-            try:
-                responses = []
-                for z, command in enumerate(cmd):                               # Se prueba por cada parte
-                    data_rar = Popen(command, bufsize=0, stdout=PIPE, stdin=PIPE, \
-                                     stderr=STDOUT, creationflags=creationflags)
-                    out_, error_ = data_rar.communicate()
-                    responses.append([z, str(data_rar.returncode), out_, error_])   # Se guarda la respuesta de cada parte
-            except:
-                logger.error(traceback.format_exc(1))                           # Error de incompatibilidad de UnRAR
-                rar = False
-                break
-            else:
-                y = 0
-                for z, returncode, out__, error__ in responses:                 # Analizamos las respuestas
-                    if returncode == '0':                                       # Ya se ha descargado...
-                        del cmd[z]                                              # ... dejamos de comprobar esa parte
-                        fast = True
-                        if len(cmd) == 0:                                       # ... o todo
-                            rar = False
-                        break                                                   # ... o sólo una parte
-                    elif returncode == '10':                                    # archivo no existe
-                        if loop != 30:                                          # Si el archivo es borrado durante el proceso ...
-                            rar = False
-                        break                                                   #... abortamos
-                    elif returncode == '6':                                     # En proceso de descarga
-                        y += 1
-                        if loop == 30 and y == len(responses):                  # Si es la primera vez en proceso ...
-                            if torr_client in ['quasar']:
-                                dialog_notification("Descarga en curso", "Puedes realizar otras tareas en Kodi mientrastanto. " + \
-                                        "Te informaremos...", time=10000)
-                            loop_change = 3600                                  # ... pasamos a un loop de 10 horas
-                        break
-                    else:                                                       # No entendemos el error
-                        rar = False
-                        break                                                   #... abortamos
+        if seleccion > 1:
+            #Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos: asumimos que todos funcionan
+            torrent.mark_auto_as_watched(item)
                 
-                log("##### Torrent descargando: %s" % str(returncode))
-                if not rar or fast:
-                    fast = False
-                    break
-                time.sleep(wait_time)                                           # Esperamos un poco y volvemos a empezar
-        else:
-            rar = False
-            break
-
-    if str(returncode) == '0':
-        log("##### Torrent FINALIZADO: %s" % str(returncode))
-    else:
-        rar_file = ''
-        logger.error('##### Torrent NO DESCARGADO: %s, %s' % (str(out__), str(returncode)))
-    
-    return (rar_file, save_path_videos)
-
-
-def extract_files(rar_file, save_path_videos, password, dp, item=None):
-    import rarfile
-    import sys
-    reload(sys)
-    sys.setdefaultencoding('latin1')
-    import traceback
-    from core import filetools
-
-    # Verificamos si hay path para UnRAR
-    rarfile.UNRAR_TOOL = config.get_setting("unrar_path", server="torrent", default="")
-    if not rarfile.UNRAR_TOOL:
-        return rar_file, False, '', ''
-    log("##### unrar_path: %s" % rarfile.UNRAR_TOOL)
-    if xbmc.getCondVisibility("system.platform.Android"):
-        rarfile.UNRAR_TOOL = xbmc.executebuiltin("StartAndroidActivity(com.rarlab.rar)")
-    rarfile.DEFAULT_CHARSET = 'latin1'
-    
-    # Preparamos un path alternativo más corto para no sobrepasar la longitud máxima
-    video_path = ''
-    if item:
-        if item.contentType == 'movie':
-            video_path = '%s-%s' % (item.contentTitle, item.infoLabels['tmdb_id'])
-        else:
-            video_path = '%s-%sx%s-%s' % (item.contentSerieName, item.contentSeason, \
-                            item.contentEpisodeNumber, item.infoLabels['tmdb_id'])
-    
-    # Renombramos el path dejado en la descarga a uno más corto
-    if video_path and '/' in rar_file:
-        folders = rar_file.split("/")
-        log("##### rar_file: %s" % rar_file)
-        if filetools.exists(filetools.join(save_path_videos, folders[0])):
-            src = filetools.join(save_path_videos, folders[0])
-            dst = filetools.join(save_path_videos, video_path)
-            for x in range(5):
-                xbmc.sleep(1000)
-                try:
-                    filetools.rename(src, dst)
-                except:
-                    log("##### Rename: SRC: %s" % src)
-                    log("##### TO: DST: %s" % dst)
-                    log(traceback.format_exc(1))
-                else:
-                    if filetools.exists(dst):
-                        rar_file = video_path + '/' + folders[1]
-                        break
-    
-    # Calculamos el path para del RAR
-    if "/" in rar_file:
-        folders = rar_file.split("/")
-        erase_file_path = filetools.join(save_path_videos, folders[0])
-        file_path = save_path_videos
-        for f in folders:
-            file_path = filetools.join(file_path, f)
-    else:
-        file_path = save_path_videos
-        erase_file_path = save_path_videos
-
-    # Calculamos el path para la extracción
-    if "/" in rar_file:
-        folders = rar_file.split("/")
-        for f in folders:
-            if not '.rar' in f:
-                save_path_videos = filetools.join(save_path_videos, f)
-    save_path_videos = filetools.join(save_path_videos, 'Extracted')
-    if not filetools.exists(save_path_videos): filetools.mkdir(save_path_videos)
-    log("##### save_path_videos: %s" % save_path_videos)
-
-    # Permite hasta 5 pasadas de extracción de .RARs anidados
-    dialog_notification("Empezando extracción...", rar_file, time=5000)
-    for x in range(5):
-        try:
-            archive = rarfile.RarFile(file_path.decode("utf8"))
-        except:
-            log("##### Archivo rar: %s" % rar_file)
-            log("##### Carpeta del rar: %s" % file_path)
-            log(traceback.format_exc(1))
-            dialog_notification("Error al abrir el RAR", "Comprueba el log para más detalles")
-            return rar_file, False, '', ''
-
-        # Analizamos si es necesaria una contraseña, que debería estar en item.password
-        if archive.needs_password():
-            if not password:
-                password = xbmcgui.Dialog().input(heading="Introduzca la contraseña")
-                if not password:
-                    return rar_file, False, '', ''
-            archive.setpassword(password)
-
-        # Miramos el contenido del RAR a extraer
-        files = archive.infolist()
-        info = []
-        for idx, i in enumerate(files):
-            if i.file_size == 0:
-                files.pop(idx)
-                continue
-            filename = i.filename
-            if "/" in filename:
-                filename = filename.rsplit("/", 1)[1]
-
-            info.append("%s - %.2f MB" % (filename, i.file_size / 1048576.0))
-        if info:
-            info.append("Extraer todo sin reproducir")
-        else:
-            dialog_notification("El RAR está vacío", "O no contiene archivos válidos")
-            return rar_file, False, '', erase_file_path
-
-        # Seleccionamos extraer TODOS los archivos del RAR
-        #selection = xbmcgui.Dialog().select("Selecciona el fichero a extraer y reproducir", info)
-        selection = len(info) - 1
-        if selection < 0:
-            return rar_file, False, '', erase_file_path
-        else:
-            try:
-                log("##### RAR Extract INI #####")
-                if selection == len(info) - 1:
-                    log("##### rar_file 1: %s" % file_path)
-                    log("##### save_path_videos 1: %s" % save_path_videos)
-                    dp.update(99, "Extrayendo archivos...", "Espera unos minutos....")
-                    archive.extractall(save_path_videos)
-                else:
-                    log("##### rar_file 2: %s" % file_path)
-                    log("##### save_path_videos 2: %s" % save_path_videos)
-                    dp.update(99, "Espera unos minutos....", "Extrayendo archivo... %s" % info[selection])
-                    archive.extract(files[selection], save_path_videos)
-                log("##### RAR Extract END #####")
-            except (rarfile.RarWrongPassword, rarfile.RarCRCError):
-                dialog_notification("Error al extraer", "Contraseña incorrecta")
-                log(traceback.format_exc(1))
-                return rar_file, False, '', erase_file_path
-            except rarfile.BadRarFile:
-                dialog_notification("Error al extraer", "Archivo rar con errores")
-                log(traceback.format_exc(1))
-                return rar_file, False, '', erase_file_path
-            except:
-                dialog_notification("Error al extraer", "Comprueba el log para más detalles")
-                log(traceback.format_exc(1))
-                return rar_file, False, '', erase_file_path
-
-            extensions_list = ['.aaf', '.3gp', '.asf', '.avi', '.flv', '.mpeg',
-                               '.m1v', '.m2v', '.m4v', '.mkv', '.mov', '.mpg',
-                               '.mpe', '.mp4', '.ogg', '.wmv']
-            
-            # Localizamos el path donde se ha dejado la extracción
-            folder = True
-            file_result = filetools.listdir(save_path_videos)
-            while folder:
-                for file_r in file_result:
-                    if filetools.isdir(filetools.join(save_path_videos, file_r)):
-                        file_result_alt = filetools.listdir(filetools.join(save_path_videos, file_r))
-                        if file_result_alt:
-                            file_result = file_result_alt
-                            save_path_videos = filetools.join(save_path_videos, file_r)
-                        else:
-                            folder = False
-                        break
-                else:
-                    folder = False
-
-            # Si hay RARs anidados, ajustamos los paths para la siguiente pasada
-            if '.rar' in str(file_result):
-                for file_r in file_result:
-                    if '.rar' in file_r:
-                        rar_file = file_r
-                        file_path = str(filetools.join(save_path_videos, rar_file))
-                        save_path_videos = filetools.join(save_path_videos, 'Extracted')
-                        if not filetools.exists(save_path_videos): filetools.mkdir(save_path_videos)
-                        dialog_notification("Siguiente extracción...", rar_file, time=5000)
-            
-            # Si ya se ha extraido todo, preparamos el retorno            
-            else:
-                video_list = []
-                for file_r in file_result:
-                    if os.path.splitext(file_r)[1] in extensions_list:
-                        video_list += [file_r]
-                if len(video_list) == 0:
-                    dialog_notification("El rar está vacío", "O no contiene archivos válidos")
-                    return rar_file, False, '', erase_file_path
-                else:
-                    log("##### Archivo extraído: %s" % video_list[0])
-                    dialog_notification("Archivo extraído...", video_list[0], time=10000)
-                    return str(video_list[0]), True, save_path_videos, erase_file_path
+            # Si se ha extraido un RAR, se pregunta para borrar los archivos después de reproducir el vídeo (plugins externos)
+            while is_playing() and rar and not xbmc.abortRequested:
+                time.sleep(3)                                               #Repetimos cada intervalo
+            if rar and not xbmc.abortRequested:
+                if dialog_yesno('Alfa %s' % torr_client, '¿Borrar las descargas del RAR y Vídeo?'):
+                    log("##### erase_file_path: %s" % erase_file_path)
+                    try:
+                        torr_data, deamon_url, index = torrent.get_tclient_data(folder_torr, torr_client)
+                        if torr_data and deamon_url:
+                            data = httptools.downloadpage('%sdelete/%s' % (deamon_url, index), timeout=5, alfa_s=True).data
+                        time.sleep(1)
+                        if filetools.isdir(erase_file_path):
+                            filetools.rmdirtree(erase_file_path)
+                        elif filetools.exists(erase_file_path) and filetools.isfile(erase_file_path):
+                            filetools.remove(erase_file_path)
+                    except:
+                        logger.error(traceback.format_exc(1))
 
 
 def log(texto):
     xbmc.log(texto, xbmc.LOGNOTICE)
-    

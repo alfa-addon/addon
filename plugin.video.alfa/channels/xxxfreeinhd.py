@@ -91,11 +91,9 @@ def findvideos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for title in matches:
         if "strdef" in title: 
-        #Aparece directo y es https://strdef.world/vplayer.php?id=351ec419-8f56-4f93-8f5e-8e945c6ad399 = verystream 
-                             # https://strdef.world/player.php?id=609f6664-e500-4377-96cd-9737b0a3d21c = oload
             url = decode_url(title)
             if "strdef" in url:
-                url = httptools.downloadpage(url).data
+                url = httptools.downloadpage(url).url
         if "hqq" in title:
             url = title
         itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url, fulltitle=item.fulltitle ))
@@ -103,28 +101,20 @@ def findvideos(item):
     return itemlist
 
 
-#Play el titulo es enlace encontrado en "XXXXXX" y  no el titulo
-def play(item):
-    itemlist = []
-    itemlist = servertools.find_video_items(data=item.url)
-    for item in itemlist:
-        item.channel = "url"
-        item.action = "play"
-    return itemlist
-
-
-#ESTO habria que simplificar
 def decode_url(txt):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(txt).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    b64_url = scrapertools.find_single_match(data, '\(dhYas638H\("([^"]+)"\)')
-    b64_url = base64.b64decode(b64_url + "=")
-    b64_url = base64.b64decode(b64_url + "==")
-    b64_url = scrapertools.find_single_match(b64_url, '\(dhYas638H\("([^"]+)"\)')
-    b64_url = base64.b64decode(b64_url + "=")
-    b64_url = base64.b64decode(b64_url + "==")
+    rep = True
+    while rep == True:
+        b64_data = scrapertools.find_single_match(data, '\(dhYas638H\("([^"]+)"\)')
+        if b64_data:
+            b64_url = base64.b64decode(b64_data + "=")
+            b64_url = base64.b64decode(b64_url + "==")
+            data = b64_url
+        else:
+            rep = False
     url = scrapertools.find_single_match(b64_url, '<iframe src="([^"]+)"')
     logger.debug (url)
     return url

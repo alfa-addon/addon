@@ -231,35 +231,73 @@ def update_libtorrent():
         config.set_setting("mct_rar_unpack", True, server="torrent")
         config.set_setting("bt_buffer", "50", server="torrent")
         config.set_setting("bt_download_path", config.get_setting("downloadpath"), server="torrent")
+    if not config.get_setting("mct_download_limit", server="torrent", default=""):
+        config.set_setting("mct_download_limit", "", server="torrent")
         
-    if xbmc.getCondVisibility("system.platform.Windows"):
-        creationflags = 0x08000000
-        unrar = os.path.join(config.get_runtime_path(), 'lib', 'rarfiles', 'windows', 'unrar.exe')
-        if not filetools.exists(unrar): unrar = ''
-    elif xbmc.getCondVisibility("system.platform.Linux") or xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
-        unrar = os.path.join(config.get_runtime_path(), 'lib', 'rarfiles', 'linux', 'unrar')
-        if not filetools.exists(unrar): unrar = ''
-        if unrar:
-            try:
-                command = ['chmod', '777', '%s' % unrar]
-                p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                output_cmd, error_cmd = p.communicate()
-            except:
-                logger.error(traceback.format_exc(1))
+    if not filetools.exists(os.path.join(config.get_runtime_path(), "custom_code.json")) or not \
+                    config.get_setting("unrar_path", server="torrent", default=""):
+    
+        path = os.path.join(config.get_runtime_path(), 'lib', 'rarfiles')
+        creationflags = ''
+        sufix = ''
+        unrar = ''
+        for device in filetools.listdir(path):
+            if xbmc.getCondVisibility("system.platform.android") and 'android' not in device: continue
+            if xbmc.getCondVisibility("system.platform.windows") and 'windows' not in device: continue
+            if not xbmc.getCondVisibility("system.platform.windows") and not  xbmc.getCondVisibility("system.platform.android") \
+                        and ('android' in device or 'windows' in device): continue
+            if 'windows' in device:
+                creationflags = 0x08000000
+                sufix = '.exe'
+            else:
+                creationflags = ''
+                sufix = ''
+            unrar = os.path.join(path, device, 'unrar%s') % sufix
+            if not filetools.exists(unrar): unrar = ''
+            if unrar:
+                if not xbmc.getCondVisibility("system.platform.windows"):
+                    try:
+                        if xbmc.getCondVisibility("system.platform.android"):
+                            # Para Android copiamos el binario a la partición del sistema
+                            unrar_org = unrar
+                            unrar = os.path.join(xbmc.translatePath('special://xbmc/'), 'files').replace('/cache/apk/assets', '')
+                            if not filetools.exists(unrar):
+                                filetools.mkdir(unrar)
+                            unrar = os.path.join(unrar, 'unrar')
+                            import xbmcvfs
+                            xbmcvfs.copy(unrar_org, unrar)
+                        command = ['chmod', '777', '%s' % unrar]
+                        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        output_cmd, error_cmd = p.communicate()
+                        command = ['ls', '-l', unrar]
+                        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        output_cmd, error_cmd = p.communicate()
+                        xbmc.log('######## UnRAR file: %s' % str(output_cmd), xbmc.LOGNOTICE)
+                    except:
+                        xbmc.log('######## UnRAR ERROR in path: %s' % str(unrar), xbmc.LOGNOTICE)
+                        logger.error(traceback.format_exc(1))
 
-    if unrar:
-        try:
-            p = subprocess.Popen(unrar, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=creationflags)
-            output_cmd, error_cmd = p.communicate()
-            if p.returncode != 0:
-                unrar = ''
-                logger.error('UnRAR returncode: %s' % str(p.returncode))
-        except:
-            unrar = ''
-            logger.error(traceback.format_exc(1))
-    config.set_setting("unrar_path", unrar, server="torrent")
+                try:
+                    if xbmc.getCondVisibility("system.platform.windows"):
+                        p = subprocess.Popen(unrar, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=creationflags)
+                    else:
+                        p = subprocess.Popen(unrar, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    output_cmd, error_cmd = p.communicate()
+                    if p.returncode != 0:
+                        xbmc.log('######## UnRAR returncode in module %s: %s in %s' % (device, str(p.returncode), unrar), xbmc.LOGNOTICE)
+                        unrar = ''
+                    else:
+                        xbmc.log('######## UnRAR OK in %s: %s' % (device, unrar), xbmc.LOGNOTICE)
+                        break
+                except:
+                    xbmc.log('######## UnRAR ERROR in module %s: %s' % (device, unrar), xbmc.LOGNOTICE)
+                    logger.error(traceback.format_exc(1))
+                    unrar = ''
+        
+        if unrar: config.set_setting("unrar_path", unrar, server="torrent")
 
-    if filetools.exists(os.path.join(config.get_runtime_path(), "custom_code.json")):
+    if filetools.exists(os.path.join(config.get_runtime_path(), "custom_code.json")) and \
+                    config.get_setting("libtorrent_path", server="torrent", default="") :
         return
     
     if xbmc.getCondVisibility("system.platform.android"):
@@ -274,8 +312,12 @@ def update_libtorrent():
 
     try:
         from lib.python_libtorrent.python_libtorrent import get_libtorrent
-    except:
-        logger.error(traceback.format_exc())
+    except Exception, e:
+        logger.error(traceback.format_exc(1))
+        e = unicode(str(e), "utf8", errors="replace").encode("utf8")
+        config.set_setting("libtorrent_path", "", server="torrent")
+        if not config.get_setting("libtorrent_error", server="torrent", default=''):
+            config.set_setting("libtorrent_error", str(e), server="torrent")
     
     return
     
