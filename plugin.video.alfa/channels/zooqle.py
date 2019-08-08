@@ -813,7 +813,7 @@ def play(item):                                 #Permite preparar la descarga de
             item.subtitle = urlparse.urljoin(host, subt)
     
     if item.subtitle:                                                   #Si hay urls de sub-títulos, se descargan
-        import os
+        from core import filetools
         from core import downloadtools
         from core import ziptools
     
@@ -821,20 +821,19 @@ def play(item):                                 #Permite preparar la descarga de
         videolibrary_path = config.get_videolibrary_path()              #Calculamos el path absoluto a partir de la Videoteca
         if videolibrary_path.lower().startswith("smb://"):              #Si es una conexión SMB, usamos userdata local
             videolibrary_path = config.get_data_path()                  #Calculamos el path absoluto a partir de Userdata
-        videolibrary_path = os.path.join(videolibrary_path, "subtitles")
+        videolibrary_path = filetools.join(videolibrary_path, "subtitles")
         #Primero se borra la carpeta de subtitulos para limpiar y luego se crea
-        if os.path.exists(videolibrary_path):   
-            import shutil
-            shutil.rmtree(videolibrary_path, ignore_errors=True)
+        if filetools.exists(videolibrary_path):   
+            filetools.rmtree(videolibrary_path, ignore_errors=True)
             time.sleep(1)
-        if not os.path.exists(videolibrary_path):   
-            os.mkdir(videolibrary_path)
+        if not filetools.exists(videolibrary_path):   
+            filetools.mkdir(videolibrary_path)
         subtitle_name = 'Rarbg-ES_SUBT.zip'                                     #Nombre del archivo de sub-títulos
-        subtitle_folder_path = os.path.join(videolibrary_path, subtitle_name)   #Path de descarga
+        subtitle_folder_path = filetools.join(videolibrary_path, subtitle_name)   #Path de descarga
         ret = downloadtools.downloadfile(item.subtitle, subtitle_folder_path, 
                         headers=headers, continuar=True, silent=True)
 
-        if os.path.exists(subtitle_folder_path):
+        if filetools.exists(subtitle_folder_path):
             # Descomprimir zip dentro del addon
             # ---------------------------------
             try:
@@ -847,10 +846,10 @@ def play(item):                                 #Permite preparar la descarga de
             
             # Borrar el zip descargado
             # ------------------------
-            os.remove(subtitle_folder_path)
+            filetools.remove(subtitle_folder_path)
             
             #Tomo el primer archivo de subtítulos como valor por defecto
-            for raiz, subcarpetas, ficheros in os.walk(videolibrary_path):
+            for raiz, subcarpetas, ficheros in filetools.walk(videolibrary_path):
                 for f in ficheros:
                     if f.endswith(".srt"):
                         #f_es = 'rarbg_subtitle.spa.srt'
@@ -859,8 +858,8 @@ def play(item):                                 #Permite preparar la descarga de
                         if not f_es:
                             f_es = item.infoLabels['originaltitle'] + '.spa.srt'
                             f_es = f_es.replace(':', '').lower()
-                        os.rename(os.path.join(videolibrary_path, f), os.path.join(videolibrary_path, f_es))
-                        item.subtitle = os.path.join(videolibrary_path, f_es)   #Archivo de subtitulos
+                        filetools.rename(filetools.join(videolibrary_path, f), filetools.join(videolibrary_path, f_es))
+                        item.subtitle = filetools.join(videolibrary_path, f_es)   #Archivo de subtitulos
                         break
                 break
         
