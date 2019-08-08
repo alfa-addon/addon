@@ -28,9 +28,10 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "ESP",
+        "CAST",
         "LAT",
-        "VOSE"
+        "VOSE",
+        "VOS"
       ]
     },
     {
@@ -44,6 +45,14 @@
         "Películas",
         "Series"
       ]
+    },
+    {
+      "id": "direct_play",
+      "type": "bool",
+      "label": "Reproducción directa (Series)",
+      "default": true,
+      "enabled": true,
+      "visible": true
     }
   ]
 }

@@ -310,7 +310,11 @@ def findvideos(item):
                   'BitTorrent': '',
                   'Mega': 'https://mega.nz/#!',
                   'MediaFire': '',
-                  'Fembed': 'https://www.fembed.com/v/'}
+                  'Fembed': 'https://www.fembed.com/v/',
+                  'Verystream': 'https://verystream.com/e/',
+                  'Gounlimited': 'https://gounlimited.to/embed-',
+                  'Clipwatching': 'https://clipwatching.com/embed-',
+                  'Vidcloud': 'https://vidcloud.co/embed/'}
     dec_value = scrapertools.find_single_match(data, 'String\.fromCharCode\(parseInt\(str\[i\]\)-(\d+)\)')
     torrent_link = scrapertools.find_single_match(data, '<a href=".*?/protect/v\.php\?i=([^"]+)"')
     subs = scrapertools.find_single_match(data, '<a id=subsforlink href=(.*?) ')
@@ -341,14 +345,14 @@ def findvideos(item):
         itemlist.append(new_item)
 
     for video_cod, server_id in matches:
+        thumbnail = item.thumbnail
         if server_id not in ['MediaFire', 'TVM'] or server.lower() not in duplicados:
             video_id = dec(video_cod, dec_value)
 
         if server_id in server_url:
             server = server_id.lower()
-            thumbnail = item.thumbnail
-            if server_id == 'TVM':
-                server = 'thevideome'
+            
+            if server_id in ['Gounlimited', 'Clipwatching']:
                 url = server_url[server_id] + video_id + '.html'
             else:
                 url = server_url[server_id] + video_id

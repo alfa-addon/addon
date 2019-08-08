@@ -96,6 +96,7 @@ def setting_torrent(item):
     DOWNLOAD_PATH = config.get_setting("mct_download_path", server="torrent", default=config.get_setting("downloadpath"))
     BACKGROUND = config.get_setting("mct_background_download", server="torrent", default=True)
     RAR = config.get_setting("mct_rar_unpack", server="torrent", default=True)
+    DOWNLOAD_LIMIT = config.get_setting("mct_download_limit", server="torrent", default="")
     BUFFER_BT = config.get_setting("bt_buffer", server="torrent", default="50")
     DOWNLOAD_PATH_BT = config.get_setting("bt_download_path", server="torrent", default=config.get_setting("downloadpath"))
 
@@ -162,6 +163,14 @@ def setting_torrent(item):
             "visible": "eq(-4,%s)" % torrent_options[1]
         },
         {
+            "id": "mct_download_limit",
+            "type": "text",
+            "label": "Límite (en Kb's) de la velocidad de descarga en segundo plano (NO afecta a RAR)",
+            "default": DOWNLOAD_LIMIT,
+            "enabled": True,
+            "visible": "eq(-5,%s) | eq(-5,%s)" % (torrent_options[1], torrent_options[2])
+        },
+        {
             "id": "mct_rar_unpack",
             "type": "bool",
             "label": "¿Quiere que se descompriman los archivos RAR y ZIP para su reproducción?",
@@ -194,6 +203,8 @@ def save_setting_torrent(item, dict_data_saved):
         config.set_setting("mct_background_download", dict_data_saved["mct_background_download"], server="torrent")
     if dict_data_saved and "mct_rar_unpack" in dict_data_saved:
         config.set_setting("mct_rar_unpack", dict_data_saved["mct_rar_unpack"], server="torrent")
+    if dict_data_saved and "mct_download_limit" in dict_data_saved:
+        config.set_setting("mct_download_limit", dict_data_saved["mct_download_limit"], server="torrent")
     if dict_data_saved and "bt_buffer" in dict_data_saved:
         config.set_setting("bt_buffer", dict_data_saved["bt_buffer"], server="torrent")
     if dict_data_saved and "bt_download_path" in dict_data_saved:

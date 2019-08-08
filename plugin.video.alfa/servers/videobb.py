@@ -5,7 +5,6 @@
 
 from core import httptools
 from core import scrapertools
-from core import jsontools
 from platformcode import logger
 
 
@@ -22,9 +21,9 @@ def get_video_url(page_url, user="", password="", video_password=""):
     video_urls = []
     id = scrapertools.find_single_match("v/(\w+)", page_url)
     post = "r=&d=videobb.ru"
-    data = httptools.downloadpage(page_url, post=post).data
-    data = jsontools.load(data)["data"]
-    for url in data:
+    headers = {"x-requested-with":"XMLHttpRequest"}
+    data = httptools.downloadpage(page_url, post=post, headers=headers).json
+    for url in data["data"]:
         video_urls.append([url["label"] + "p [videobb]", url["file"]])
     logger.info("Intel11 %s" %data)
 

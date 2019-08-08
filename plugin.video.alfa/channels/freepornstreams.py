@@ -93,30 +93,15 @@ def lista(item):
     return itemlist
 
 
-# <p>0:39:44 | 768&#215;432 | mp4 | 359Mb<br />
-# We recommend to visit <a href="https://severeporn.com/" target="_blank" class="external" rel="nofollow">severeporn.com</a><br />
-# <a href="https://gounlimited.to/6bcsm0borw4w/esthw46su_8.mp4" rel="nofollow" target="_blank" class="external">Streaming Gounlimited.to</a><br />
-# <a href="https://openload.co/f/iXK7muRlBGo/esthw46su_8.mp4" rel="nofollow" target="_blank" class="external">Streaming Openload.co</a><br />
-# <a href="https://vidoza.net/nm5jq9rfalbr.html" rel="nofollow" target="_blank" class="external">Streaming Vidoza.net</a><br />
-# <a href="https://ubiqfile.com/w00dixda1h2l/esthw46su_8.mp4.html" rel="nofollow" target="_blank" class="external">Download Ubiqfile.com</a></p>
-
-
-
-#gounlimited y download aparecen como directo
 def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
-    patron = '<a href="([^"]+)" rel="nofollow".*?>(?:Streaming|Download)'
+    patron = '<a href="([^"]+)" rel="nofollow"[^<]+>Streaming'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:
-        url= url.replace("https:", "http:") #necesario para gounlimited, y funciona conresto server
         itemlist.append(item.clone(action='play',title="%s", url=url))
+        logger.debug (url)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
-
-# titulo aparece servidor y vidoza no funciona y si lo encuentra el buscador en servidor
-def play(item):
-    logger.info(item)
-    itemlist = servertools.find_video_items(item.clone(url = item.url))
-    return itemlist
+  

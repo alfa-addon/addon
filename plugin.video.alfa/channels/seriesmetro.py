@@ -183,12 +183,12 @@ def findvideos(item):
 
     itemlist = []
     data = get_source(item.url)
-    patron = 'iframe src="([^&]+)&'
+    patron = 'iframe-container"><iframe .*?src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
-
+    
     for link in matches:
 
-        id_letter = scrapertools.find_single_match(link, '?(\w)d')
+        '''id_letter = scrapertools.find_single_match(link, '?(\w)d')
 
         id_type = '%sd' % id_letter
         ir_type = '%sr' % id_letter
@@ -200,10 +200,11 @@ def findvideos(item):
         referer = base_link+'%s=%s&/' % (id_type, ir)
         video_data = httptools.downloadpage('%s%s=%s' % (base_link, ir_type, ir), headers={'Referer':referer},
                                             follow_redirects=False)
-        url = video_data.headers['location']
+        logger.error(video_data.data)
+        url = video_data.headers['location']'''
         title = '%s'
 
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='play',
+        itemlist.append(Item(channel=item.channel, title=title, url=link, action='play',
                              language='', infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
@@ -220,5 +221,5 @@ def findvideos(item):
 
 
 
-
-
+def play(item):
+    return [item]

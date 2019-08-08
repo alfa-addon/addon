@@ -59,7 +59,7 @@ def videos(item):
     patron += '<div class="box-escena">.*?'
     patron += '<a\s*href="([^"]+)".*?'
     patron += 'data-stats-video-name="([^"]+)".*?'
-    patron += '<img\s*src="([^"]+)".*?'
+    patron += 'data-src="([^"]+)".*?'
     patron += '<div class="duracion">([^"]+) min</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url, title, thumbnail,duration in matches:

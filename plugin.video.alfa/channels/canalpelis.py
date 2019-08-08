@@ -19,7 +19,7 @@ from channelselector import get_thumb
 
 __channel__ = "canalpelis"
 
-host = "https://www.canalpelis.com/"
+host = "https://canalpelis.com/"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -50,17 +50,17 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Peliculas", action="peliculas", thumbnail=get_thumb('movies', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
-                               url=host + 'peliculas/', viewmode="movie_with_plot"))
+                               url=host + 'movies/', viewmode="movie_with_plot"))
 
     itemlist.append(item.clone(title="Géneros", action="generos", thumbnail=get_thumb('genres', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
-                               url=host + 'peliculas/', viewmode="movie_with_plot"))
+                               url=host + 'movies/', viewmode="movie_with_plot"))
 
     itemlist.append(item.clone(title="Año de Estreno", action="year_release", thumbnail=get_thumb('year', auto=True),
-                               text_blod=True, page=0, viewcontent='movies', url=host + 'peliculas/',
+                               text_blod=True, page=0, viewcontent='movies', url=host + 'movies/',
                                viewmode="movie_with_plot"))
 
-    itemlist.append(item.clone(title="Series", action="series", extra='serie', url=host + 'series/',
+    itemlist.append(item.clone(title="Series", action="series", extra='serie', url=host + 'tvshows/',
                                viewmode="movie_with_plot", text_blod=True, viewcontent='movies',
                                thumbnail=get_thumb('tvshows', auto=True), page=0))
     

@@ -152,16 +152,19 @@ def temporadas(item):
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
-                 action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
+                 action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName, seasons = matches,
                  extra1='library'))
 
     return itemlist
+    
 def episodios(item):
     logger.info()
     itemlist = []
-    templist = seasons(item)
-    for tempitem in templist:
-        itemlist += episodesxseason(tempitem)
+    templist = item.seasons
+    infoLabels = item.infoLabels
+    for contentSeasonNumber in templist:
+        infoLabels['season'] = contentSeasonNumber
+        itemlist += episodiosxtemporada(item)
     return itemlist
 
 def episodiosxtemporada(item):

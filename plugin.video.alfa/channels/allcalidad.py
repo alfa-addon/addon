@@ -19,7 +19,7 @@ list_servers = ['rapidvideo', 'streamango', 'fastplay', 'flashx', 'openload', 'v
 
 __channel__='allcalidad'
 
-host = "https://allcalidad.net/"
+host = "https://allcalidad.net"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -36,7 +36,7 @@ def mainlist(item):
     itemlist.append(Item(channel = item.channel, title = "Por año", action = "generos_years", url = host, extra = ">Año<", thumbnail = get_thumb("year", auto = True)))
     itemlist.append(Item(channel = item.channel, title = "Favoritas", action = "favorites", url = host + "/favorites", thumbnail = get_thumb("favorites", auto = True) ))
     itemlist.append(Item(channel = item.channel, title = ""))
-    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "?s=", thumbnail = get_thumb("search", auto = True)))
+    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "/?s=", thumbnail = get_thumb("search", auto = True)))
     autoplay.show_option(item.channel, itemlist)
     return itemlist
 
@@ -76,9 +76,9 @@ def newest(categoria):
         if categoria in ['peliculas','latino']:
             item.url = host
         elif categoria == 'infantiles':
-            item.url = host + 'category/animacion/'
+            item.url = host + '/category/animacion/'
         elif categoria == 'terror':
-            item.url = host + 'category/torror/'
+            item.url = host + '/category/torror/'
         itemlist = peliculas(item)
         if "Pagina" in itemlist[-1].title:
             itemlist.pop()
@@ -112,6 +112,7 @@ def generos_years(item):
     patron += '">([^<]+)'
     matches = scrapertools.find_multiple_matches(bloque, patron)
     for url, titulo in matches:
+        if not url.startswith("http"): url = host + url
         itemlist.append(Item(channel = item.channel,
                              action = "peliculas",
                              title = titulo,
@@ -131,7 +132,7 @@ def peliculas(item):
         datapostid = scrapertools.find_single_match(datos, 'data-postid="([^"]+)')
         thumbnail = scrapertools.find_single_match(datos, 'img w.*?src="([^"]+)')
         post = 'action=get_movie_details&postID=%s' %datapostid
-        data1 = httptools.downloadpage(host + "wp-admin/admin-ajax.php", post=post).data
+        data1 = httptools.downloadpage(host + "/wp-admin/admin-ajax.php", post=post).data
         idioma = "Latino"
         mtitulo = titulo + " (" + idioma + ")"
         year = scrapertools.find_single_match(data1, "Año:.*?(\d{4})")
@@ -158,6 +159,8 @@ def peliculas(item):
 def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
+    bloque = scrapertools.find_single_match(data, 'var data = {([^\}]+)}')
+    action, dataurl = scrapertools.find_single_match(bloque, "(?is)action : '([^']+)'.*?postID, .*?(\w+) : dataurl")
     if not item.infoLabels["year"]:
         item.infoLabels["year"] = scrapertools.find_single_match(data, 'dateCreated.*?(\d{4})')
         if "orig_title" in data:
@@ -166,9 +169,9 @@ def findvideos(item):
                 item.contentTitle = contentTitle
     bloque = scrapertools.find_single_match(data, '(?s)<div class="bottomPlayer">(.*?)<script>')
     match = scrapertools.find_multiple_matches(bloque, '(?is)data-Url="([^"]+).*?data-postId="([^"]*)')
-    for dataurl, datapostid in match:
-        page_url = host + "wp-admin/admin-ajax.php"
-        post = "action=get_more_top_news&postID=%s&dataurl=%s" %(datapostid, dataurl)
+    for d_u, datapostid in match:
+        page_url = host + "/wp-admin/admin-ajax.php"
+        post = "action=%s&postID=%s&%s=%s" %(action, datapostid, dataurl, d_u)
         data = httptools.downloadpage(page_url, post=post).data
         url = scrapertools.find_single_match(data, '(?i)src="([^"]+)')
         titulo = "Ver en: %s"

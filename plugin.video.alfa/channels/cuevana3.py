@@ -49,7 +49,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Latino", action="list_all", url=host + 'peliculas-latino',
                          thumbnail=get_thumb('audio', auto=True)))
     
-    itemlist.append(Item(channel=item.channel, title="VOSE", action="list_all", url=host + 'peliculas-subtitulado',
+    itemlist.append(Item(channel=item.channel, title="VOSE", action="list_all", url=host + 'peliculas-subtituladas',
                          thumbnail=get_thumb('audio', auto=True)))
     
     # itemlist.append(Item(channel=item.channel, title="Alfabetico", action="section", section='alpha',
@@ -151,8 +151,11 @@ def findvideos(item):
     for option, url_data, language, quality in matches:
         if 'domain' in url_data:
             url = scrapertools.find_single_match(url_data, 'domain=([^"]+)"')
-        else:
+        elif '1' in option:
             url = scrapertools.find_single_match(data, 'id="Opt%s">.*?file=([^"]+)"' % option)
+        else:
+            url = scrapertools.find_single_match(data, 'id="Opt%s">.*?h=([^"]+)"' % option)
+
         
         if url != '' and 'youtube' not in url:
                 itemlist.append(item.clone(channel=item.channel, title='%s', url=url, language=IDIOMAS[language],
@@ -160,7 +163,7 @@ def findvideos(item):
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % '%s [%s] [%s]'%(i.server.capitalize(),
                                                                                               i.language, i.quality))
-    tmdb.set_infoLabels_itemlist(itemlist, True)
+    
     try:
         itemlist.append(trailer)
     except:
@@ -226,6 +229,7 @@ def play(item):
             itags = {'18': '360p', '22': '720p', '34': '360p', '35': '480p', '37': '1080p', '43': '360p', '59': '480p'}
             for link in matches:
                 item.url = link.replace('\\', '').strip()
+
                 #tratar con multilinks/multicalidad de gvideo
                 tag = scrapertools.find_single_match(link,'&itag=(\d+)&')
                 ext = scrapertools.find_single_match(link,'&mime=.*?/(\w+)&')

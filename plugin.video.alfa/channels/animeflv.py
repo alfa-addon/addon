@@ -8,6 +8,7 @@ from core import httptools
 from core import jsontools
 from core import servertools
 from core import scrapertools
+from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 from channels import autoplay
@@ -22,32 +23,45 @@ list_quality = ['default']
 
 HOST = "https://animeflv.net/"
 
-
 def mainlist(item):
     logger.info()
 
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist = list()
-    itemlist.append(Item(channel=item.channel, action="novedades_episodios", title="Últimos episodios", url=HOST))
-    itemlist.append(Item(channel=item.channel, action="novedades_anime", title="Últimos animes", url=HOST))
-    itemlist.append(Item(channel=item.channel, action="listado", title="Animes", url=HOST + "browse?order=title"))
-    itemlist.append(Item(channel=item.channel, title="Buscar por:"))
-    itemlist.append(Item(channel=item.channel, action="search", title="    Título"))
-    itemlist.append(Item(channel=item.channel, action="search_section", title="    Género", url=HOST + "browse",
+    itemlist.append(Item(channel=item.channel, action="novedades_episodios", title="Últimos episodios",
+                         url=HOST, thumbnail="https://i.imgur.com/w941jbR.png"))
+    
+    itemlist.append(Item(channel=item.channel, action="novedades_anime", title="Últimos animes",
+                         url=HOST, thumbnail="https://i.imgur.com/hMu5RR7.png"))
+    
+    itemlist.append(Item(channel=item.channel, action="listado", title="Animes",
+                         url=HOST + "browse?order=title", thumbnail='https://i.imgur.com/50lMcjW.png'))
+    
+    itemlist.append(Item(channel=item.channel, action="search_section", title="    Género",
+                         url=HOST + "browse", thumbnail='https://i.imgur.com/Xj49Wa7.png',
                          extra="genre"))
-    itemlist.append(Item(channel=item.channel, action="search_section", title="    Tipo", url=HOST + "browse",
+    
+    itemlist.append(Item(channel=item.channel, action="search_section", title="    Tipo",
+                         url=HOST + "browse", thumbnail='https://i.imgur.com/0O5U8Y0.png',
                          extra="type"))
-    itemlist.append(Item(channel=item.channel, action="search_section", title="    Año", url=HOST + "browse",
+    
+    itemlist.append(Item(channel=item.channel, action="search_section", title="    Año",
+                         url=HOST + "browse", thumbnail='https://i.imgur.com/XzPIQBj.png',
                          extra="year"))
-    itemlist.append(Item(channel=item.channel, action="search_section", title="    Estado", url=HOST + "browse",
+    
+    itemlist.append(Item(channel=item.channel, action="search_section", title="    Estado",
+                         url=HOST + "browse", thumbnail='https://i.imgur.com/7LKKjSN.png',
                          extra="status"))
+    
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar...",
+                         thumbnail='https://i.imgur.com/4jH5gpT.png'))
+    
     itemlist = renumbertools.show_option(item.channel, itemlist)
 
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
-
 
 def search(item, texto):
     logger.info()
@@ -83,6 +97,7 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -132,6 +147,7 @@ def novedades_episodios(item):
         new_item = Item(channel=item.channel, action="findvideos", title=title, url=url, show=show, thumbnail=thumbnail,
                         fulltitle=title)
         itemlist.append(new_item)
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -155,6 +171,7 @@ def novedades_anime(item):
             new_item.contentType = "movie"
             new_item.contentTitle = title
         itemlist.append(new_item)
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 
 
@@ -174,7 +191,7 @@ def listado(item):
         new_item = Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
                         fulltitle=title, plot=plot)
         if _type == "Anime":
-            new_item.show = title
+            new_item.contentSerieName = title
             new_item.context = renumbertools.context(item)
         else:
             new_item.contentType = "movie"
@@ -184,28 +201,44 @@ def listado(item):
         url = urlparse.urljoin(HOST, url_pagination)
         title = ">> Pagina Siguiente"
         itemlist.append(Item(channel=item.channel, action="listado", title=title, url=url))
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 
 
 def episodios(item):
     logger.info()
     itemlist = []
+    
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
+    
     info = scrapertools.find_single_match(data, "anime_info = \[(.*?)\];")
     info = eval(info)
+    
     episodes = eval(scrapertools.find_single_match(data, "var episodes = (.*?);"))
+    
+    infoLabels = item.infoLabels
+
     for episode in episodes:
         url = '%s/ver/%s/%s-%s' % (HOST, episode[1], info[2], episode[0])
         season = 1
         season, episodeRenumber = renumbertools.numbered_for_tratk(item.channel, item.contentSerieName, season, int(episode[0]))
         #title = '1x%s Episodio %s' % (episode[0], episode[0])
+        infoLabels['season'] = season
+        infoLabels['episode'] = episodeRenumber
         title = '%sx%s Episodio %s' % (season, str(episodeRenumber).zfill(2), episodeRenumber)
-        itemlist.append(item.clone(title=title, url=url, action='findvideos', contentSerieName=item.contentSerieName))
+        
+        itemlist.append(item.clone(title=title, url=url, action='findvideos', 
+                                    contentSerieName=item.contentSerieName, infoLabels=infoLabels))
+    
     itemlist = itemlist[::-1]
+    
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=item.url,
                              action="add_serie_to_library", extra="episodios", show=item.contentSerieName))
+    
+    tmdb.set_infoLabels(itemlist, seekTmdb=True)
+    
     return itemlist
 
 
@@ -220,7 +253,7 @@ def findvideos(item):
     for video_lang in videos_json.items():
         language = video_lang[0]
         matches = scrapertools.find_multiple_matches(str(video_lang[1]), "code': '(.*?)'")
-
+        lang = " [COLOR=grey](%s)[/COLOR]" % language
         for source in matches:
             url = source
             if 'redirector' in source:
@@ -234,10 +267,14 @@ def findvideos(item):
                     url = json_data['file']
                 except:
                     continue
+            #Parche por error tipografico en web(RV)
+            elif 'e/http' in source:
+                url = url.split('/e/')[1]
 
-            itemlist.append(Item(channel=item.channel, url=url, title='%s', action='play', language=language))
+            itemlist.append(Item(channel=item.channel, url=url, title='%s'+lang, 
+                                action='play', infoLabels=item.infoLabels, language=language))
 
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server)
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 
     # Requerido para FilterTools
 

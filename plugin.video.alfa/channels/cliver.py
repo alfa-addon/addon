@@ -14,8 +14,8 @@ from core.item import Item
 from platformcode import config, logger, platformtools
 from channelselector import get_thumb
 
-direct_play = True
-IDIOMAS = {'es': 'ESP', 'lat': 'LAT', 'es_la': 'LAT', 'vose': 'SUB'}
+direct_play = config.get_setting('direct_play', channel='cliver')
+IDIOMAS = {'es': 'CAST', 'lat': 'LAT', 'es_la': 'LAT', 'vose': 'VOSE', 'ingles': 'VOS'}
 list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['openload', 'rapidvideo', 'directo']
@@ -47,72 +47,73 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     #Titulo principal series/peliculas
-    itemlist.append(item.clone(channel=item.channel,title="[COLOR springgreen][B]%s[/B][/COLOR]" % mod.upper(),
-                    action="",
+    itemlist.append(Item(channel=item.channel,title="[COLOR springgreen][B]%s[/B][/COLOR]" % mod.upper(),
+                    action="", plot=item.plot,
                     url='', folder=False,
                     thumbnail=get_thumb(thumbm, auto=True)
                     ))
 
     if type_content == 0:
-        itemlist.append(item.clone(channel=item.channel, title="Estrenos",
+        itemlist.append(Item(channel=item.channel, title="Estrenos",
                             action="list_all",
                             thumbnail=get_thumb('premieres', auto=True),
                             url=xhr_list, page=0, tipo='estrenos',
-                            tmod=mod
+                            tmod=mod, plot=item.plot
                             ))
 
-    itemlist.append(item.clone(channel=item.channel,title="Más Vistas",
+    itemlist.append(Item(channel=item.channel,title="Más Vistas",
                     action="list_all",
                     thumbnail=get_thumb('more_watched', auto=True),
                     url=xhr_list, page=0, tipo=listpar[1][type_content],
-                    tmod=mod
+                    tmod=mod, plot=item.plot
                     ))
     if type_content == 0:
-        itemlist.append(item.clone(channel=item.channel,title="Tendencias",
+        itemlist.append(Item(channel=item.channel,title="Tendencias",
                         action="list_all",
                         thumbnail=get_thumb('more_voted', auto=True),
                         url=xhr_list, page=0, tipo='peliculas-tendencias',
-                        tmod=mod
+                        tmod=mod, plot=item.plot
                         ))
     if type_content != 0:
-        itemlist.append(item.clone(channel=item.channel,title="Nuevos Capitulos",
+        itemlist.append(Item(channel=item.channel,title="Nuevos Capitulos",
                         action="list_all",
                         thumbnail=get_thumb('new episodes', auto=True),
                         url=xhr_list, page=0, tipo='nuevos-capitulos',
-                        tmod=mod
+                        tmod=mod, plot=item.plot
                         ))
 
-    itemlist.append(item.clone(channel=item.channel, title="Por Género",
+    itemlist.append(Item(channel=item.channel, title="Por Género",
                          action="seccion",
                          thumbnail=get_thumb('genres', auto=True),
                          url=host, page=0, tipo=listpar[2][type_content],
-                         tmod=mod
+                         tmod=mod, plot=item.plot
                         ))
 
-    itemlist.append(item.clone(channel=item.channel,title="Por Año",
+    itemlist.append(Item(channel=item.channel,title="Por Año",
                     action="seccion",
                     thumbnail=get_thumb('year', auto=True),
                     url=host, page=0, tipo=listpar[0][type_content],
-                    tmod=mod
+                    tmod=mod, plot=item.plot
                     ))
     if type_content != 0:
-        itemlist.append(item.clone(channel=item.channel,title="Por Canal",
-                        action="list_all",
+        itemlist.append(Item(channel=item.channel,title="Por Canal",
+                        action="seccion",
                         thumbnail=get_thumb('tvshows', auto=True),
-                        url=xhr_list, page=0, tipo='networkSeries',
-                        tmod=mod
+                        url=host, page=0, tipo='networkSeries',
+                        tmod=mod, plot=item.plot
                         ))
 
-    itemlist.append(item.clone(channel=item.channel,title="Buscar",
+    itemlist.append(Item(channel=item.channel,title="Buscar",
                     action="search", page=0, tmod=mod,
                     url=host+'buscar/?txt=', tipo=listpar[3][type_content],
-                    thumbnail=get_thumb('search', auto=True),
+                    thumbnail=get_thumb('search', auto=True), plot=item.plot
                     ))
 
     autoplay.show_option(item.channel, itemlist)
 
-    itemlist.append(item.clone(channel=item.channel,title="[COLOR grey]Cambiar a Modo %s[/COLOR]" % alt_mod,
-                    action="switchmod",
+
+    itemlist.append(Item(channel=item.channel,title="[COLOR grey]Cambiar a Modo %s[/COLOR]" % alt_mod,
+                    action="switchmod", plot=item.plot,
                     url='', tcont=type_content,
                     thumbnail=get_thumb('update.png', "thumb_")
                     ))
@@ -200,6 +201,7 @@ def list_all(item):
                             contentTitle = scrapedtitle,
                             content_id = content_id,
                             infoLabels = {'year': scrapedyear},
+                            language= list_langs
                             ))
 
     tmdb.set_infoLabels(itemlist, True)
@@ -215,12 +217,15 @@ def seccion(item):
     logger.info()
 
     itemlist = []
-    prefix = '<div class="generos">'
-    if "nero" not in item.title:
-        prefix = '<div class="anios">'
+    prefix = '<div class="anios">'
+    if "nero" in item.title:
+        prefix = '<div class="generos">'
+    elif "Canal" in item.title:
+        prefix = '<div class="networks">'
     data = get_source(item.url+item.tmod+'/', ctype=item.tmod)
     data = scrapertools.find_single_match(data, '%s(.*?)</div>' % prefix)
-    patron = '<li><a href="([^"]+)">(.*?)</a></li>'
+
+    patron = '<li><a href="([^"]+)".*?>(.*?)</a></li>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -262,6 +267,7 @@ def seasons(item):
                              title=title,
                              contentSeasonNumber=contentSeasonNumber,
                              infoLabels=infoLabels,
+                             context=filtertools.context(item, list_language)
                              ))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
@@ -305,9 +311,11 @@ def episodesxseason(item):
         if not ',' in scrapedlangs:
             language = " (%s)" % IDIOMAS.get(scrapedlangs, scrapedlangs)
             if direct_play:
+                if config.get_setting('unify'):
+                    title += "[COLOR grey] (Autoplay)[/COLOR]"
                 scrapedurls = scrapertools.find_single_match(scrapedurls, 'data-url-%s="([^"]+)"' % scrapedlangs)
                 action = 'play'
-                server = 'openload'
+                server = servertools.get_server_from_url(scrapedurls)
                 if item.extra:
                     action = 'findvideos'
         else:
@@ -325,7 +333,9 @@ def episodesxseason(item):
             if direct_play:
                 scrapedurls = scrapertools.find_single_match(scrapedurls, 'data-url-%s="([^"]+)"' % prio)
                 action = 'play'
-                server = 'openload'
+                if config.get_setting('unify'):
+                    title += "[COLOR grey] (Autoplay)[/COLOR]"
+                server = servertools.get_server_from_url(scrapedurls)
                 if item.extra:
                     action = 'findvideos'
         infoLabels['episode'] = scrapedep
@@ -421,7 +431,7 @@ def findvideos(item):
                 continue
             scrapedlang = scrapedlang.replace('-', '_')
             language = IDIOMAS.get(scrapedlang, scrapedlang)
-            server = 'openload'
+            server = servertools.get_server_from_url(scrapedurl)
             title = '%s[COLOR springgreen] (%s)[/COLOR]' % (server.capitalize(), language)
             itemlist.append(Item(channel=item.channel,
                         url=scrapedurl,

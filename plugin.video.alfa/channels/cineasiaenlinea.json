@@ -23,7 +23,7 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en búsqueda global",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },

@@ -70,14 +70,6 @@
       "enabled": "!eq(+1,true)"
     },
     {
-      "id": "proxy_spain",
-      "type": "bool",
-      "label": "Usar proxy para ver el catálogo de España",
-      "default": false,
-      "visible": true,
-      "enabled": "!eq(-1,true)"
-    },
-    {
       "id": "perfil",
       "type": "list",
       "label": "Perfil de color",

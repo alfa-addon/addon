@@ -37,7 +37,7 @@ def load(*args, **kwargs):
     try:
         value = json.loads(*args, **kwargs)
     except:
-        logger.error("**NO** se ha podido cargar el JSON")
+        logger.error("**NO** se ha podido cargar el JSON: %s" % args)
         logger.error(traceback.format_exc())
         value = {}
 
@@ -46,12 +46,12 @@ def load(*args, **kwargs):
 
 def dump(*args, **kwargs):
     if not kwargs:
-        kwargs = {"indent": 4, "skipkeys": True, "sort_keys": True, "ensure_ascii": False}
+        kwargs = {"indent": 4, "skipkeys": True, "sort_keys": True, "ensure_ascii": True}
 
     try:
         value = json.dumps(*args, **kwargs)
     except:
-        logger.error("**NO** se ha podido cargar el JSON")
+        logger.error("**NO** se ha podido guardar el JSON: %s" % args)
         logger.error(traceback.format_exc())
         value = ""
     return value

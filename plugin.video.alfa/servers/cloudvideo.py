@@ -11,8 +11,8 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url)
-    if data.code == 404:
-        return False, "[Cloud] El archivo no existe o  ha sido borrado"
+    if data.code == 404 or '<div id="television">' in data.data:
+        return False, "[Cloud] El archivo no existe o ha sido borrado"
     return True, ""
 
 

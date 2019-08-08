@@ -5,7 +5,7 @@
   "banner":"",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["lat"],
   "version": 1,
   "categories": [
     "movie",

@@ -8,9 +8,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import httptools
 
-
 host ='http://www.coomelonitas.com'
-
 
 def mainlist(item):
     logger.info()

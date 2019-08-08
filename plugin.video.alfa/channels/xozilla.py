@@ -59,6 +59,8 @@ def categorias(item):
             scrapedtitle += " (" + cantidad + ")"
         itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                              thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot))
+    if "Categorias" in item.title:
+        itemlist.sort(key=lambda x: x.title)
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
     if next_page != "#videos":
         next_page = urlparse.urljoin(item.url, next_page)
