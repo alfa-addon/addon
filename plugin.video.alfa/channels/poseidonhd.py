@@ -253,10 +253,13 @@ def findvideos(item):
             quality = item.quality
 
         for url in urls:
-            final_url = httptools.downloadpage('https:'+url).data
+            #final_url = httptools.downloadpage('https:'+url).data
             if language == 'VOSE':
-                sub = scrapertools.find_single_match(url, 'sub=(.*?)&')
-                subs = 'https:%s' % sub
+                sub = scrapertools.find_single_match(url, 'sub=(.*)')
+                try:
+                    subs = urllib.unquote(sub)
+                except:
+                    subs = sub
             if 'index' in url:
                 try:
                     file_id = scrapertools.find_single_match(url, 'file=(.*?)&')
@@ -265,8 +268,11 @@ def findvideos(item):
                     hidden_url = 'https://streamango.poseidonhd.co/repro/plugins/gkpluginsphp.php'
                     dict_vip_url = httptools.downloadpage(hidden_url, post=post).json
                     url = dict_vip_url['link']
+                    if 'hls1.openloadpremium' in url:
+                        continue
+
                 except:
-                    pass
+                    continue
             else:
                 try:
 
@@ -276,11 +282,18 @@ def findvideos(item):
                         post = urllib.urlencode(post)
                         hidden_url = 'https://streamango.poseidonhd.co/repro/openload/api.php'
                         json_data = httptools.downloadpage(hidden_url, post=post, follow_redirects=False).json
-                        url = scrapertools.find_single_match(data_url, "VALUES \('[^']+','([^']+)'")
-                        if not url:
-                            url = json_data['url']
+                        url = json_data.get('url', '')
+                        #url = scrapertools.find_single_match(data_url, "VALUES \('[^']+','([^']+)'")
                         if not url:
                             continue
+                    elif 'goto.php' in url:
+                        file_id = scrapertools.find_single_match(url, 'url=(\w+)')
+                        post = {'url': file_id}
+                        post = urllib.urlencode(post)
+                        hidden_url = 'https://streamango.poseidonhd.co/repro/r.php'
+                        data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False)
+                        url = data_url.headers['location']
+                    
                     else:
                         new_data = httptools.downloadpage('https:'+url).data
                         file_id = scrapertools.find_single_match(new_data, 'value="([^"]+)"')
@@ -290,7 +303,7 @@ def findvideos(item):
                         data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False)
                         url = data_url.headers['location']
                 except:
-                    pass
+                    continue
             url = url.replace(" ", "%20")
             itemlist.append(item.clone(title = '[%s] [%s]', url=url, action='play', subtitle=subs,
                             language=language, quality=quality, infoLabels=item.infoLabels))

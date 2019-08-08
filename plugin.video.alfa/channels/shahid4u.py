@@ -21,7 +21,7 @@ list_language = IDIOMAS.values()
 list_quality = ['1080p', '720p', '360p']
 list_servers = ['uptobox', '1fichier', 'openload']
 
-host = 'https://shahd4u.tv/'
+host = 'https://ww.shahid4u.net/'
 host_alt = 'https://on.shahid4u.net'
 channel = "shahid4u"
 
@@ -386,7 +386,7 @@ def play(item):
     itemlist = []
     
     
-    if host in item.url:
+    if 'shah' in item.url:
         
         data = httptools.downloadpage(item.url, headers=headers).data
         item.url = data

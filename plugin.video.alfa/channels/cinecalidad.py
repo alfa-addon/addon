@@ -13,25 +13,20 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-IDIOMAS = {'latino': 'Latino', 'castellano': 'Español', 'portugues': 'Portugues'}
+IDIOMAS = {'latino': 'Latino', 'castellano': 'Castellano', 'portugues': 'Portugues'}
 list_language = IDIOMAS.values()
 
-list_quality = ['1080p', '720p', '480p', '360p', '240p', 'default']
+list_quality = ['1080p']
 list_servers = [
-    'yourupload',
-    'thevideos',
-    'filescdn',
-    'uptobox',
-    'okru',
-    'fembed',
-    'userscloud',
-    'pcloud',
-    'usersfiles',
-    'vidbull',
-    'openload',
+    
+    'gounlimited',
+    'verystream',
+    'mega',
+    'vidcloud',
+    'torrent',
     'rapidvideo',
     'streamango',
-    'directo',
+    'openload',
     'torrent'
 ]
 
@@ -52,14 +47,14 @@ def mainlist(item):
     itemlist.append(
         item.clone(title="CineCalidad Latino",
                    action="submenu",
-                   host="http://cinecalidad.to/",
+                   host="http://www.cinecalidad.to/",
                    thumbnail=thumbmx,
                    extra="peliculas",
                    ))
 
     itemlist.append(item.clone(title="CineCalidad Castellano",
                                action="submenu",
-                               host="http://cinecalidad.to/espana/",
+                               host="http://www.cinecalidad.to/espana/",
                                thumbnail=thumbes,
                                extra="peliculas",
                                ))
@@ -217,6 +212,9 @@ def peliculas(item):
         thumbnail = scrapedthumbnail
         plot = scrapedplot
         year = scrapedyear
+        language = current_lang.capitalize()
+        if item.gb_search:
+            title += " (%s)" % language
         itemlist.append(
             Item(channel=item.channel,
                  action="findvideos",
@@ -227,7 +225,7 @@ def peliculas(item):
                  fanart='https://s31.postimg.cc/puxmvsi7v/cinecalidad.png',
                  contentTitle=contentTitle,
                  infoLabels={'year': year},
-                 language=current_lang,
+                 language=language,
                  context=autoplay.context
                  ))
 
@@ -329,7 +327,7 @@ def findvideos(item):
         server = 'torrent'
 
         title = item.contentTitle + ' (%s)' % server
-        quality = 'default'
+        quality = '1080p'
         language = IDIOMAS[lang]
 
         new_item = Item(channel=item.channel,
@@ -358,7 +356,7 @@ def findvideos(item):
                 url = server_url[server_id] + video_id
         
         title = item.contentTitle + ' (%s)' % server
-        quality = 'default'
+        quality = '1080p'
 
         if server_id not in ['MediaFire', 'TVM']:
 
@@ -456,13 +454,19 @@ def newest(categoria):
 def search(item, texto):
     logger.info()
     itemlist = []
+
     texto = texto.replace(" ", "-")
+    
     if item.host != '':
         host_list = [item.host]
+    
     else:
-        host_list = ['http://www.cinecalidad.to', 'http://cinecalidad.to/espana/']
+        item.gb_search = True
+        host_list = ['http://www.cinecalidad.to/espana/', 'http://www.cinecalidad.to/']
+    
     for host_name in host_list:
         item.url = host_name + '?s=' + texto
         if texto != '':
             itemlist.extend(peliculas(item))
+    
     return itemlist
