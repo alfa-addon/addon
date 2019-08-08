@@ -330,7 +330,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
         log("##### erase_file_path: %s" % erase_file_path)
         for x in range(10):
             if filetools.isdir(erase_file_path):
-                filetools.rmdirtree(erase_file_path, ignore_errors=True)
+                filetools.rmdirtree(erase_file_path)
             else:
                 filetools.remove(erase_file_path)
             time.sleep(5)

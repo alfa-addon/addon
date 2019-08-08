@@ -10,12 +10,13 @@ import traceback
 from core import scrapertools
 from platformcode import platformtools, logger
 
-try:
-    import xbmcvfs
-    xbmc_vfs = True
-except:
-    xbmc_vfs = False
-#xbmc_vfs = False                                           # Des-comentar para desactivar XbmcVFS
+xbmc_vfs = True                                                 # False para desactivar XbmcVFS, True para activar
+if xbmc_vfs:
+    try:
+        import xbmcvfs
+        xbmc_vfs = True
+    except:
+        xbmc_vfs = False
 
 samba = None
 if not xbmc_vfs:
@@ -31,9 +32,6 @@ if os.name == "nt":
 else:
     fs_encoding = "utf8"
 
-# Gestión de errores en archivos remotos
-global STRICT
-STRICT = False
 
 
 def validate_path(path):
@@ -105,7 +103,7 @@ def decode(path):
     return path
 
 
-def read(path, linea_inicio=0, total_lineas=None, whence=0, silent=False):
+def read(path, linea_inicio=0, total_lineas=None, whence=0, silent=False, vfs=True):
     """
     Lee el contenido de un archivo y devuelve los datos
     @param path: ruta del fichero
@@ -120,15 +118,15 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, silent=False):
     """
     path = encode(path)
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
             if not exists(path): return False
             f = xbmcvfs.File(path, "rb")
             if linea_inicio > 0:
                 f.seek(linea_inicio, whence)
+                logger.debug('POSICIÓN de comienzo de lectura, tell(): %s' % f.seek(0, 1))
             if total_lineas == None:
                 total_lineas = 0
             data = f.read(total_lineas)
-            #logger.error(f.seek(0, 1))
             return "".join(data)
         elif path.lower().startswith("smb://"):
             f = samba.smb_open(path, "rb")
@@ -151,7 +149,7 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, silent=False):
         return "".join(data)
 
 
-def write(path, data, silent=False):
+def write(path, data, silent=False, vfs=True):
     """
     Guarda los datos en un archivo
     @param path: ruta del archivo a guardar
@@ -163,7 +161,7 @@ def write(path, data, silent=False):
     """
     path = encode(path)
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
             f = xbmcvfs.File(path, "wb")
         elif path.lower().startswith("smb://"):
             f = samba.smb_open(path, "wb")
@@ -181,7 +179,7 @@ def write(path, data, silent=False):
         return True
 
 
-def file_open(path, mode="r", silent=False):
+def file_open(path, mode="r", silent=False, vfs=True):
     """
     Abre un archivo
     @param path: ruta
@@ -191,22 +189,27 @@ def file_open(path, mode="r", silent=False):
     """
     path = encode(path)
     try:
-        if xbmc_vfs:
-            if not exists(path): return False
+        if xbmc_vfs and vfs:
+            if 'r' in mode and '+' in mode:
+                mode = mode.replace('r', 'w').replace('+', '')
+                logger.debug('Open MODE cambiado a: %s' % mode)
+            if 'a' in mode:
+                mode = mode.replace('a', 'w').replace('+', '')
+                logger.debug('Open MODE cambiado a: %s' % mode)
             return xbmcvfs.File(path, mode)
         elif path.lower().startswith("smb://"):
             return samba.smb_open(path, mode)
         else:
             return open(path, mode)
     except:
-        logger.error("ERROR al abrir el archivo: %s" % path)
+        logger.error("ERROR al abrir el archivo: %s, %s" % (path, mode))
         if not silent:
             logger.error(traceback.format_exc())
             platformtools.dialog_notification("Error al abrir", path)
         return False
     
 
-def file_stat(path, silent=False):
+def file_stat(path, silent=False, vfs=True):
     """
     Stat de un archivo
     @param path: ruta
@@ -216,19 +219,18 @@ def file_stat(path, silent=False):
     """
     path = encode(path)
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
             if not exists(path): return False
             return xbmcvfs.Stat(path)
         raise
     except:
-        logger.error("ERROR al abrir el archivo: %s" % path)
+        logger.error("File_Stat no soportado: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
-            platformtools.dialog_notification("Error al abrir", path)
         return False
 
 
-def rename(path, new_name, silent=False):
+def rename(path, new_name, silent=False, strict=False, vfs=True):
     """
     Renombra un archivo o carpeta
     @param path: ruta del fichero o carpeta a renombrar
@@ -240,10 +242,13 @@ def rename(path, new_name, silent=False):
     """
     path = encode(path)
     try:
-        if xbmc_vfs:
-            dest = encode(join(dirname(path), new_name))
+        if xbmc_vfs and vfs:
+            path_end = path
+            if path_end.endswith('/') or path_end.endswith('\\'):
+                path_end = path_end[:-1]
+            dest = encode(join(dirname(path_end), new_name))
             result = xbmcvfs.rename(path, dest)
-            if not result and not STRICT:
+            if not result and not strict:
                 logger.error("ERROR al RENOMBRAR el archivo: %s.  Copiando y borrando" % path)
                 if not silent:
                     dialogo = platformtools.dialog_progress("Copiando archivo", "")
@@ -268,7 +273,7 @@ def rename(path, new_name, silent=False):
         return True
 
 
-def move(path, dest, silent=False):
+def move(path, dest, silent=False, strict=False, vfs=True):
     """
     Mueve un archivo
     @param path: ruta del fichero a mover
@@ -279,12 +284,12 @@ def move(path, dest, silent=False):
     @return: devuelve False en caso de error
     """
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
             if not exists(path): return False
             path = encode(path)
             dest = encode(dest)
             result = xbmcvfs.rename(path, dest)
-            if not result and not STRICT:
+            if not result and not strict:
                 logger.error("ERROR al MOVER el archivo: %s.  Copiando y borrando" % path)
                 if not silent:
                     dialogo = platformtools.dialog_progress("Copiando archivo", "")
@@ -318,7 +323,7 @@ def move(path, dest, silent=False):
         return True
 
 
-def copy(path, dest, silent=False):
+def copy(path, dest, silent=False, vfs=True):
     """
     Copia un archivo
     @param path: ruta del fichero a copiar
@@ -331,7 +336,7 @@ def copy(path, dest, silent=False):
     @return: devuelve False en caso de error
     """
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
             path = encode(path)
             dest = encode(dest)
             if not silent:
@@ -367,7 +372,7 @@ def copy(path, dest, silent=False):
         return True
 
 
-def exists(path, silent=False):
+def exists(path, silent=False, vfs=True):
     """
     Comprueba si existe una carpeta o fichero
     @param path: ruta
@@ -377,7 +382,7 @@ def exists(path, silent=False):
     """
     path = encode(path)
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
             result = bool(xbmcvfs.exists(path))
             if not result and not path.endswith('/') and not path.endswith('\\'):
                 result = bool(xbmcvfs.exists(join(path, ' ').rstrip()))
@@ -393,7 +398,7 @@ def exists(path, silent=False):
         return False
 
 
-def isfile(path, silent=False):
+def isfile(path, silent=False, vfs=True):
     """
     Comprueba si la ruta es un fichero
     @param path: ruta
@@ -403,7 +408,9 @@ def isfile(path, silent=False):
     """
     path = encode(path)
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
+            if not scrapertools.find_single_match(path, '(^\w+:\/\/)'):
+                return os.path.isfile(path)
             if path.endswith('/') or path.endswith('\\'):
                 path = path[:-1]
             dirs, files = xbmcvfs.listdir(dirname(path))
@@ -423,7 +430,7 @@ def isfile(path, silent=False):
         return False
 
 
-def isdir(path, silent=False):
+def isdir(path, silent=False, vfs=True):
     """
     Comprueba si la ruta es un directorio
     @param path: ruta
@@ -433,7 +440,9 @@ def isdir(path, silent=False):
     """
     path = encode(path)
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
+            if not scrapertools.find_single_match(path, '(^\w+:\/\/)'):
+                return os.path.isdir(path)
             if path.endswith('/') or path.endswith('\\'):
                 path = path[:-1]
             dirs, files = xbmcvfs.listdir(dirname(path))
@@ -453,7 +462,7 @@ def isdir(path, silent=False):
         return False
 
 
-def getsize(path, silent=False):
+def getsize(path, silent=False, vfs=True):
     """
     Obtiene el tamaño de un archivo
     @param path: ruta del fichero
@@ -463,7 +472,7 @@ def getsize(path, silent=False):
     """
     path = encode(path)
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
             if not exists(path): return 0L
             f = xbmcvfs.File(path)
             s = f.size()
@@ -480,7 +489,7 @@ def getsize(path, silent=False):
         return 0L
 
 
-def remove(path, silent=False):
+def remove(path, silent=False, vfs=True):
     """
     Elimina un archivo
     @param path: ruta del fichero a eliminar
@@ -490,7 +499,7 @@ def remove(path, silent=False):
     """
     path = encode(path)
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
             return bool(xbmcvfs.delete(path))
         elif path.lower().startswith("smb://"):
             samba.remove(path)
@@ -506,7 +515,7 @@ def remove(path, silent=False):
         return True
 
 
-def rmdirtree(path, silent=False):
+def rmdirtree(path, silent=False, vfs=True):
     """
     Elimina un directorio y su contenido
     @param path: ruta a eliminar
@@ -516,7 +525,7 @@ def rmdirtree(path, silent=False):
     """
     path = encode(path)
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
             if not exists(path): return True
             if not path.endswith('/') and not path.endswith('\\'):
                 path = join(path, ' ').rstrip()
@@ -546,7 +555,7 @@ def rmdirtree(path, silent=False):
         return not exists(path)
 
 
-def rmdir(path, silent=False):
+def rmdir(path, silent=False, vfs=True):
     """
     Elimina un directorio
     @param path: ruta a eliminar
@@ -556,7 +565,7 @@ def rmdir(path, silent=False):
     """
     path = encode(path)
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
             if not path.endswith('/') and not path.endswith('\\'):
                 path = join(path, ' ').rstrip()
             return bool(xbmcvfs.rmdir(path))
@@ -574,7 +583,7 @@ def rmdir(path, silent=False):
         return True
 
 
-def mkdir(path, silent=False):
+def mkdir(path, silent=False, vfs=True):
     """
     Crea un directorio
     @param path: ruta a crear
@@ -584,7 +593,7 @@ def mkdir(path, silent=False):
     """
     path = encode(path)
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
             if not path.endswith('/') and not path.endswith('\\'):
                 path = join(path, ' ').rstrip()
             result = bool(xbmcvfs.mkdirs(path))
@@ -607,7 +616,7 @@ def mkdir(path, silent=False):
         return True
 
 
-def walk(top, topdown=True, onerror=None):
+def walk(top, topdown=True, onerror=None, vfs=True):
     """
     Lista un directorio de manera recursiva
     @param top: Directorio a listar, debe ser un str "UTF-8"
@@ -619,7 +628,7 @@ def walk(top, topdown=True, onerror=None):
     ***El parametro followlinks que por defecto es True, no se usa aqui, ya que en samba no discrimina los links
     """
     top = encode(top)
-    if xbmc_vfs:
+    if xbmc_vfs and vfs:
         for a, b, c in walk_vfs(top, topdown, onerror):
             # list(b) es para que haga una copia del listado de directorios
             # si no da error cuando tiene que entrar recursivamente en directorios con caracteres especiales
@@ -655,7 +664,7 @@ def walk_vfs(top, topdown=True, onerror=None):
         yield top, dirs, nondirs
 
 
-def listdir(path, silent=False):
+def listdir(path, silent=False, vfs=True):
     """
     Lista un directorio
     @param path: Directorio a listar, debe ser un str "UTF-8"
@@ -666,7 +675,7 @@ def listdir(path, silent=False):
 
     path = encode(path)
     try:
-        if xbmc_vfs:
+        if xbmc_vfs and vfs:
             dirs, files = xbmcvfs.listdir(path)
             return dirs + files
         elif path.lower().startswith("smb://"):
@@ -695,6 +704,8 @@ def join(*paths):
         if path:
             if xbmc_vfs and scrapertools.find_single_match(paths[0], '(^\w+:\/\/)'):
                 path = encode(path, True)
+            elif xbmc_vfs:
+                path = encode(path)
             list_path += path.replace("\\", "/").strip("/").split("/")
 
     if scrapertools.find_single_match(paths[0], '(^\w+:\/\/)'):
@@ -703,7 +714,7 @@ def join(*paths):
         return os.sep.join(list_path)
 
 
-def split(path):
+def split(path, vfs=True):
     """
     Devuelve una tupla formada por el directorio y el nombre del fichero de una ruta
     @param path: ruta
@@ -720,7 +731,7 @@ def split(path):
         return os.path.split(path)
 
 
-def basename(path):
+def basename(path, vfs=True):
     """
     Devuelve el nombre del fichero de una ruta
     @param path: ruta
@@ -731,7 +742,7 @@ def basename(path):
     return split(path)[1]
 
 
-def dirname(path):
+def dirname(path, vfs=True):
     """
     Devuelve el directorio de una ruta
     @param path: ruta
