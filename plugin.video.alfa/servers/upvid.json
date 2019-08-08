@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://upvid.co/embed-([a-z0-9]+).html",
+        "pattern": "https://upvid.(?:co|live)/(?:embed-|)([a-z0-9]+)",
         "url": "https://upvid.live/embed-\\1.html"
       }
     ]

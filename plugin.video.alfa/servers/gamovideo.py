@@ -19,6 +19,11 @@ def test_video_exists(page_url):
     
 
     data = alfaresolver.get_data(page_url, False)
+    if not "|mp4|" in data:
+        dict_cookie = {'domain': '.gamovideo.com', 'expires': 0}
+        httptools.set_cookies(dict_cookie)
+        data = alfaresolver.get_data(page_url, False)
+    
     global DATA
     DATA = data
 
