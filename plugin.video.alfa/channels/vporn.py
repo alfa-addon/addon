@@ -22,7 +22,7 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Mas Votada" , action="lista", url=host + "/votes/month/"))
     itemlist.append( Item(channel=item.channel, title="Longitud" , action="lista", url=host + "/longest/month/"))
     itemlist.append( Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "/pornstars/"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
+    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -68,13 +68,16 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data = scrapertools.find_single_match(data,'<div class="cats-all categories-list">(.*?)</div>')
-    patron  = '<a href="([^"]+)".*?>([^"]+)</a>'
+    patron  = '"name":"([^"]+)".*?'
+    patron  += '"image":"([^"]+)".*?'
+    patron  += '"url":"([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle in matches:
+    for scrapedtitle,scrapedthumbnail,scrapedurl in matches:
         scrapedplot = ""
-        scrapedthumbnail = ""
+        scrapedthumbnail = "https://th-us2.vporn.com" + scrapedthumbnail
+        scrapedthumbnail= scrapedthumbnail.replace("\/", "/")
         scrapedurl = host + scrapedurl
+        scrapedurl = scrapedurl.replace("\/", "/")
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist

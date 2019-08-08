@@ -35,7 +35,7 @@ langi = langs[config.get_setting('imdb', "tvmoviedb")]
 adult_mal = config.get_setting('adult_mal', "tvmoviedb")
 mal_ck = "MzE1MDQ2cGQ5N2llYTY4Z2xwbGVzZjFzbTY="
 images_predef = "https://raw.githubusercontent.com/master-1970/resources/master/images/genres/"
-default_fan = filetools.join(config.get_runtime_path(), "fanart1.jpg")
+default_fan = filetools.join(config.get_runtime_path(), "fanart-2019.jpg")
 
 
 def mainlist(item):

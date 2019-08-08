@@ -167,12 +167,12 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<source src="([^"]+)" type=\'video/([^\']+)\' label=\'[^\']+\' res=\'([^\']+)\' />'
+    patron = '<source src="([^"]+)" type=\'video/([^\']+)\' label=\'[^\']+\' res=\'([^\']+)\''
     url, type, res = re.compile(patron, re.DOTALL).findall(data)[0]
     if "go.php?" in url:
         url = urllib.unquote(url.split("/go.php?u=")[1].split("&")[0])
     elif not url.startswith("http"):
-        url = "http:" + url.replace("&amp;", "&")
+        url = "https:" + url.replace("&amp;", "&")
     itemlist.append(
         Item(channel='cumlouder', action="play", title='Video' + res, fulltitle=type.upper() + ' ' + res, url=url,
              server="directo", folder=False))

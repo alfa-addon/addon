@@ -99,7 +99,7 @@ def peliculas(item):
     for scrapedthumbnail, scrapedurl, scrapedtitle, plot in matches:
         plot = scrapertools.decodeHtmlentities(plot)
 
-        itemlist.append(item.clone(channel=__channel__, action="findvideos", title=scrapedtitle.capitalize(),
+        itemlist.append(item.clone(channel=__channel__, action="play", title=scrapedtitle.capitalize(),
                                    url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels={"plot": plot},
                                    fanart=scrapedthumbnail,viewmode="movie_with_plot",
                                    folder=True, contentTitle=scrapedtitle))
@@ -196,7 +196,7 @@ def sub_search(item):
 
     for scrapedthumbnail, scrapedtitle, scrapedurl, plot in matches:
         itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, plot=plot, fanart=scrapedthumbnail,
-                                   action="findvideos", thumbnail=scrapedthumbnail))
+                                   action="play", thumbnail=scrapedthumbnail))
 
     paginacion = scrapertools.find_single_match(
         data, "<a href='([^']+)' class=\"inactive\">\d+</a>")
@@ -208,20 +208,22 @@ def sub_search(item):
     return itemlist
 
 
-def findvideos(item):
+def play(item):
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
-    patron = 'src="([^"]+)" allowfullscreen="true">'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for url in matches:
-        if "strdef" in url: 
-            url = decode_url(url)
-            if "strdef" in url:
-                url = httptools.downloadpage(url).url
-    server = servertools.get_server_from_url(url)
-    title = "Ver en: [COLOR yellow](%s)[/COLOR]" % server.title()
-    itemlist.append(item.clone(action='play', title=title, server=server, url=url))
+    if "playlist.m3u8" in item.url:
+        url = item.url
+    else:
+        data = httptools.downloadpage(item.url).data
+        data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
+        patron = 'src="([^"]+)" allowfullscreen="true">'
+        matches = scrapertools.find_multiple_matches(data, patron)
+        for url in matches:
+            if "strdef" in url: 
+                url = decode_url(url)
+                if "strdef" in url:
+                    url = httptools.downloadpage(url).url
+    itemlist.append(item.clone(action="play", title= "%s", url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 

@@ -71,6 +71,7 @@ import sys
 import os
 import errno
 import struct
+import traceback
 
 from struct import pack, unpack, Struct
 from binascii import crc32, hexlify
@@ -80,6 +81,7 @@ from io import RawIOBase
 from hashlib import sha1, sha256
 from hmac import HMAC
 from datetime import datetime, timedelta, tzinfo
+from platformcode import logger, config
 
 # fixed offset timezone, for UTC
 try:
@@ -187,7 +189,7 @@ DEFAULT_CHARSET = "windows-1252"
 TRY_ENCODINGS = ('utf8', 'utf-16le')
 
 #: 'unrar', 'rar' or full path to either one
-UNRAR_TOOL = "unrar"
+UNRAR_TOOL = config.get_setting("unrar_path", server="torrent", default="")
 
 #: Command line args to use for opening file for reading.
 OPEN_ARGS = ('p', '-inul')
@@ -1052,7 +1054,22 @@ class CommonParser(object):
 
             # go to next header
             if h.add_size > 0:
-                fd.seek(h.data_offset + h.add_size, 0)
+                try:
+                    fd.seek(h.data_offset + h.add_size, 0)
+                except:
+                    # If error in Seek, we use the alternative to read the entire file
+                    logger.error(traceback.format_exc(1))
+                    cnt = h.add_size
+                    while cnt > 0:
+                        if cnt > 8192:
+                            buf = fd.read(8192)
+                        else:
+                            buf = fd.read(cnt)
+                        if not buf:
+                            break
+                        cnt -= len(buf)
+                    logger.debug('tell: %s' % (self._fd.tell()))
+                    logger.debug('seek: %s, 0' % (h.data_offset + h.add_size))
 
     def process_entry(self, fd, item):
         """Examine item, add into lookup cache."""
@@ -2411,6 +2428,8 @@ class XFile(object):
 
     def seek(self, ofs, whence=0):
         """Move file pos."""
+        #logger.debug('tell: %s' % (self._fd.tell()))
+        #logger.debug('seek: %s, %s' % (ofs, whence))
         return self._fd.seek(ofs, whence)
 
     def readinto(self, dst):
@@ -2810,11 +2829,15 @@ def custom_popen(cmd):
 
     # run command
     try:
-        p = Popen(cmd, bufsize=0, stdout=PIPE, stdin=PIPE, stderr=STDOUT,
-                  creationflags=creationflags)
+        if sys.platform == 'win32':
+            p = Popen(cmd, bufsize=0, stdout=PIPE, stdin=PIPE, stderr=STDOUT,
+                      creationflags=creationflags)
+        else:
+            p = Popen(cmd, bufsize=0, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
     except OSError as ex:
         if ex.errno == errno.ENOENT:
             raise RarCannotExec("Unrar not installed? (rarfile.UNRAR_TOOL=%r)" % UNRAR_TOOL)
+        logger.error('CMD error: %s' % cmd)
         raise
     return p
 

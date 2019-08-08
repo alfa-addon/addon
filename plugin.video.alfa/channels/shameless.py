@@ -68,7 +68,7 @@ def lista(item):
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail + "|Referer=https://www.shameless.com/"
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = scrapedtitle))
     next_page = scrapertools.find_single_match(data, 'class="active">.*?<a href="([^"]+)"')
     if next_page:
@@ -78,7 +78,7 @@ def lista(item):
     return itemlist
 
 
-def findvideos(item):
+def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -89,7 +89,7 @@ def findvideos(item):
     for url, quality in matches:
         headers = {'Referer': item.url}
         url = httptools.downloadpage(url, headers=headers , follow_redirects=False, only_headers=True).headers.get("location", "")
-        itemlist.append(item.clone(action="play", title = quality, url=url ))
+        itemlist.append(["%s %s [directo]" % (quality, url), url])
     return itemlist
 
 
