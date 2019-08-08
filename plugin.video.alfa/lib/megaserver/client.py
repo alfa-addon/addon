@@ -84,13 +84,27 @@ class Client(object):
 
     def get_files(self):
         files = []
+        enc_url = None
         if self.files:
             for file in self.files:
                 n = file.name.encode("utf8")
                 u = "http://" + self.ip + ":" + str(self.port) + "/" + urllib.quote(n)
                 s = file.size
                 file_id = file.file_id
+                enc_url = file.url
                 files.append({"name":n,"url":u,"size":s, "id": file_id})
+        if len(self.files) == 1:
+            try:
+                code = httptools.downloadpage(enc_url, only_headers=True).code
+                if code > 300:
+                    return code
+                else:
+                    return files
+
+            except:
+                print traceback.format_exc()
+                pass
+
         return files
 
     def add_url(self, url):
