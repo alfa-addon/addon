@@ -46,7 +46,6 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     JSONData = json.load(data)
-    logger.debug(data)
     for Video in JSONData["data"]:
         duration = Video["duration"]
         title = Video["videoTitle"]
@@ -58,7 +57,6 @@ def lista(item):
         url= url.get('480', domain)
         url = url.replace("/\n/", "/")
         plot = ""
-        logger.debug(url)
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot,))
     Actual = int(scrapertools.find_single_match(item.url, '&page=([0-9]+)'))
@@ -67,9 +65,7 @@ def lista(item):
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=scrapedurl))
     return itemlist
 
-def play(item):
-    logger.info()
-    itemlist = []
-    itemlist.append(item.clone(action="play", title= item.title, server = "directo", url=item.url))
-    return itemlist
+
+def findvideos(item):
+    return
 
