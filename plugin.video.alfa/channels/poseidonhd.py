@@ -243,9 +243,15 @@ def findvideos(item):
     for lang in selector_url:
         data = get_source('https:'+lang)
         urls = scrapertools.find_multiple_matches(data, 'data-playerid="([^"]+)">')
-        subs = ''
         lang = scrapertools.find_single_match(lang, 'lang=(.*)?')
         language = IDIOMAS[lang]
+
+        if language == 'VOSE':
+            sub = scrapertools.find_single_match(str(urls), "sub=([^']+)")
+            try:
+                subs = urllib.unquote(sub)
+            except:
+                subs = sub
 
         if item.contentType == 'episode':
             quality = 'SD'
@@ -253,13 +259,7 @@ def findvideos(item):
             quality = item.quality
 
         for url in urls:
-            #final_url = httptools.downloadpage('https:'+url).data
-            if language == 'VOSE':
-                sub = scrapertools.find_single_match(url, 'sub=(.*)')
-                try:
-                    subs = urllib.unquote(sub)
-                except:
-                    subs = sub
+
             if 'index' in url:
                 try:
                     file_id = scrapertools.find_single_match(url, 'file=(.*?)&')
@@ -305,8 +305,8 @@ def findvideos(item):
                 except:
                     continue
             url = url.replace(" ", "%20")
-            itemlist.append(item.clone(title = '[%s] [%s]', url=url, action='play', subtitle=subs,
-                            language=language, quality=quality, infoLabels=item.infoLabels))
+            itemlist.append(item.clone(title = '[%s] [%s]', url=url, action='play',
+                            language=language, quality=quality, subtitle=subs))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % (x.server.capitalize(), x.language))
 
