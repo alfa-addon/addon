@@ -18,9 +18,12 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
-    #packed = scrapertools.find_single_match(data, "text/javascript'>(.*?)\s*</script>")
-    #unpacked = jsunpack.unpack(packed)
     media_urls = scrapertools.find_multiple_matches(data, 'file:"([^"]+)"')
+    if not media_urls:
+        packed = scrapertools.find_single_match(data, "text/javascript'>(.*?)\s*</script>")
+        unpacked = jsunpack.unpack(packed)
+        media_urls = scrapertools.find_multiple_matches(unpacked, 'file:"([^"]+)"')
+        
     for media_url in media_urls:
         media_url += "|Referer=%s" %page_url
         if ".png" in media_url:
