@@ -10,8 +10,8 @@
     ]
   },
   "free": true,
-  "id": "xstream",
-  "name": "xstream",
+  "id": "xstreamcdn",
+  "name": "xstreamcdn",
   "settings": [
     {
       "default": false,

@@ -1049,11 +1049,13 @@ def get_video_seleccionado(item, seleccion, video_urls):
         mediaurl = video_urls[seleccion][1]
         if len(video_urls[seleccion]) > 4:
             wait_time = video_urls[seleccion][2]
-            item.subtitle = video_urls[seleccion][3]
+            if not item.subtitle:
+                item.subtitle = video_urls[seleccion][3]
             mpd = True
         elif len(video_urls[seleccion]) > 3:
             wait_time = video_urls[seleccion][2]
-            item.subtitle = video_urls[seleccion][3]
+            if not item.subtitle:
+                item.subtitle = video_urls[seleccion][3]
         elif len(video_urls[seleccion]) > 2:
             wait_time = video_urls[seleccion][2]
         view = True
