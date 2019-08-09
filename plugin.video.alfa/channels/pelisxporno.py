@@ -56,7 +56,7 @@ def lista(item):
     for scrapedurl, scrapedtitle, scrapedthumbnail, duration in matches:
         if duration:
             scrapedtitle = "[COLOR yellow]" + duration + "[/COLOR] " + scrapedtitle
-        itemlist.append(item.clone(action="play", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
+        itemlist.append(item.clone(action="findvideos", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
                                    fanart=scrapedthumbnail))
     next_page = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)"')
     if next_page:
@@ -64,20 +64,22 @@ def lista(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, '<div class="video_code">(.*?)<h3')
     patron = '(?:src|SRC)="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl in matches:
-        if 'mixdrop' in scrapedurl:  #el base64 es netu.tv
+        if not 'mixdrop' in scrapedurl:  #el base64 es netu.tv
+            url = "https://hqq.tv/player/embed_player.php?vid=RODE5Z2Hx3hO&autoplay=none"
+        else:
             url = "https:" + scrapedurl
             headers = {'Referer': item.url}
             data = httptools.downloadpage(url, headers=headers).data
             url = scrapertools.find_single_match(data, 'vsrc = "([^"]+)"')
             url= "https:" + url
-            itemlist.append(item.clone(action="play", title = "%s", url=url ))
+        itemlist.append(item.clone(action="play", title = "%s", url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

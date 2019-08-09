@@ -37,7 +37,7 @@ def load(*args, **kwargs):
     try:
         value = json.loads(*args, **kwargs)
     except:
-        logger.error("**NO** se ha podido cargar el JSON: %s" % args)
+        logger.error("**NO** se ha podido cargar el JSON")
         logger.error(traceback.format_exc())
         value = {}
 
@@ -51,7 +51,7 @@ def dump(*args, **kwargs):
     try:
         value = json.dumps(*args, **kwargs)
     except:
-        logger.error("**NO** se ha podido guardar el JSON: %s" % args)
+        logger.error("**NO** se ha podido guardar el JSON")
         logger.error(traceback.format_exc())
         value = ""
     return value

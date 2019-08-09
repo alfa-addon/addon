@@ -14,7 +14,7 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url= host + "/category/full-porn-movie-stream/"))
-    itemlist.append( Item(channel=item.channel, title="Clips" , action="lista", url=host + "/category/new-porn-streaming/"))
+    itemlist.append( Item(channel=item.channel, title="Videos" , action="lista", url=host + "/category/new-porn-streaming/"))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
@@ -38,7 +38,10 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data1 = scrapertools.find_single_match(data,'<h5>Popular Categories<br />(.*?)</aside>')
+    if item.title == "Categorias" :
+        data1 = scrapertools.find_single_match(data,'>Top Tags</a>(.*?)</ul>')
+        data1 += scrapertools.find_single_match(data,'>Ethnic</a>(.*?)</ul>')
+        data1 += scrapertools.find_single_match(data,'>Kinky</a>(.*?)</ul>')
     if item.title == "Canal" :
         data1 = scrapertools.find_single_match(data,'>Top sites</a>(.*?)</ul>')
         data1 += scrapertools.find_single_match(data,'Downloads</h2>(.*?)</ul>')
@@ -81,10 +84,10 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
-    patron = '<a href="([^"]+)" rel="nofollow"[^<]+>Streaming'
+    patron = '<a href="([^"]+)" rel="nofollow"[^<]+>(?:Streaming|Download)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:
-        itemlist.append(item.clone(action='play',title="%s", url=url))
-        logger.debug (url)
+        if not "ubiqfile" in url:
+            itemlist.append(item.clone(action='play',title="%s", url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

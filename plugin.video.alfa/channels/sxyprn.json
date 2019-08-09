@@ -1,15 +1,15 @@
 {
-  "id": "beeg",
-  "name": "Beeg",
+  "id": "sxyprn",
+  "name": "sxyprn",
   "active": true,
   "adult": true,
   "language": ["*"],
-  "thumbnail": "beeg.png",
-  "banner": "beeg.png",
+  "thumbnail": "https://www.sxyprn.com/favicon.ico",
+  "banner": "",
   "categories": [
     "adult"
   ],
   "settings": [
-    }
   ]
 }
+
