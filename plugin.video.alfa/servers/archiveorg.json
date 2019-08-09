@@ -10,8 +10,8 @@
     ]
   },
   "free": true,
-  "id": "ArchiveOrg",
-  "name": "archiveorg",
+  "id": "archiveorg",
+  "name": "ArchiveOrg",
   "settings": [
     {
       "default": false,
