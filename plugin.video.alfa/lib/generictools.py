@@ -585,7 +585,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
             item_season = item.clone()
             item_season.contentSeason = item_local.contentSeason    #Se pone el núm de Temporada para obtener mejores datos de TMDB
             item_season.title = 'Temporada %s' % item_season.contentSeason
-            if url != 'series':
+            if url != 'serie':
                 item_season.url = item_local.url
             itemlist_temporadas.append(item_season.clone(from_title_season_colapse=item.title))
             
@@ -1647,7 +1647,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         data_alt = ''
         if channel == channel_failed or active == '0' or item.action in action_excluded or item.extra2 in action_excluded:  #es válido el nuevo canal?
             continue
-        if (item.action == 'episodios' or item.action == "update_tvshow" or item.action == "get_seasons" or item.action == 'findvideos') and item.contentType not in contentType:          #soporta el contenido?
+        if (item.action == 'episodios' or item.action == "update_tvshow" or item.action == "get_seasons" or item.action == 'findvideos') and item.contentType not in contentType:                           #soporta el contenido?
             continue
         
         #Hacemos el cambio de nombre de canal y url, conservando las anteriores como ALT
@@ -1664,7 +1664,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                             '((?:http.*\:)?\/\/(?:www\.)?[^\?|\/]+)(?:\?|\/)')
         item.url = item.url.replace(channel_host_failed_bis, channel_host_bis)
         
-        url_alt += [item.url]                               #salvamos la url para el bucle
+        url_alt += [item.url]                                           #salvamos la url para el bucle
         item.channel_host = channel_host
         #logger.debug(str(url_alt))
         
@@ -1678,7 +1678,11 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
             try:
                 #quitamos el 0 a la izquierda del episodio.  Algunos clones no lo aceptan
                 inter1, inter2, inter3 = scrapertools.find_single_match(item.url, '(http.*?\/temporada-\d+.*?\/capitulo.?-)(\d+)(.*?\/)')
-                inter2 = re.sub(r'^0', '', inter2)
+                if inter2.startswith('0'):
+                    inter2 = re.sub(r'^0', '', inter2)
+                else:
+                    if len(inter2) == 1:
+                        inter2 = '0%s' % inter2
                 if inter1 + inter2 + inter3 not in url_alt:
                     url_alt += [inter1 + inter2 + inter3]
                 
@@ -1690,8 +1694,8 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                 logger.error(traceback.format_exc())
             logger.debug('URLs convertidas: ' + str(url_alt))
 
-        if patron == True:                                  #solo nos han pedido verificar el clone
-            return (item, data)                             #nos vamos, con un nuevo clone
+        if patron == True:                                              #solo nos han pedido verificar el clone
+            return (item, data)                                         #nos vamos, con un nuevo clone
         
         #Leemos la nueva url.. Puede haber varias alternativas a la url original
         for url in url_alt:
@@ -1704,7 +1708,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
             except:
                 data = ''
                 logger.error(traceback.format_exc())
-            if not data:                                    #no ha habido suerte, probamos con la siguiente url
+            if not data:                                                #no ha habido suerte, probamos con la siguiente url
                 logger.error("ERROR 01: " + item.action + ": La Web no responde o la URL es erronea: " + url)
                 continue
         
@@ -1721,7 +1725,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                                 data_alt = scrapertools.find_single_match(data_comillas, patron_alt)
                     if patron2 != None:
                         data_alt = scrapertools.find_single_match(data_alt, patron2)
-                if not data_alt:                            #no ha habido suerte, probamos con el siguiente canal
+                if not data_alt:                                        #no ha habido suerte, probamos con el siguiente canal
                     logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " + url + " / Patron: " + patron + " / " + patron_alt)
                     web_intervenida(item, data)
                     data = ''
@@ -1734,11 +1738,11 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                             data_alt = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + data_alt
                         if videolibrarytools.verify_url_torrent(data_alt):      #verificamos si el .torrent existe
                             item.url = url                                      #guardamos la url que funciona
-                            break                           #nos vamos, con la nueva url del .torrent verificada
+                            break                                       #nos vamos, con la nueva url del .torrent verificada
                         data = ''
                         continue                                                #no vale el .torrent, continuamos
-                    item.url = url                          #guardamos la url que funciona, sin verificar
-                    break                                   #por fin !!!  Este canal parece que funciona
+                    item.url = url                                      #guardamos la url que funciona, sin verificar
+                    break                                               #por fin !!!  Este canal parece que funciona
             else:
                 logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " 
                             + url + " / Patron: " + patron + " / " +patron_alt)
@@ -1746,14 +1750,14 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                 data = ''
                 continue
                 
-        if not data:                                        #no ha habido suerte, probamos con el siguiente clone
+        if not data:                                                    #no ha habido suerte, probamos con el siguiente clone
             url_alt = []
             continue
         else:
             break
     
-    del item.extra2                                         #Borramos acción temporal excluyente
-    if not data:                                            #Si no ha logrado encontrar nada, salimos limpiando variables
+    del item.extra2                                                     #Borramos acción temporal excluyente
+    if not data:                                                        #Si no ha logrado encontrar nada, salimos limpiando variables
         if item.channel == channel_py:
             if item.channel_alt:
                 item.category = item.channel_alt.capitalize()
@@ -1777,11 +1781,11 @@ def verify_channel(channel):
     #Lista con los datos de los canales alternativos
     #Cargamos en .json del canal para ver las listas de valores en settings
     clones = channeltools.get_channel_json(channel_py)
-    for settings in clones['settings']:                             #Se recorren todos los settings
-        if settings['id'] == "clonenewpct1_channels_list":          #Encontramos en setting
-            clones = settings['default']                            #Carga lista de clones
+    for settings in clones['settings']:                                 #Se recorren todos los settings
+        if settings['id'] == "clonenewpct1_channels_list":              #Encontramos en setting
+            clones = settings['default']                                #Carga lista de clones
             channel_alt = "'%s'" % channel
-            if channel_alt in clones:                               #Si es un clon se pone como canal newpct1, si no se deja
+            if channel_alt in clones:                                   #Si es un clon se pone como canal newpct1, si no se deja
                 channel = channel_py
             return channel
     
