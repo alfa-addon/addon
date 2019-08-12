@@ -1049,11 +1049,13 @@ def get_video_seleccionado(item, seleccion, video_urls):
         mediaurl = video_urls[seleccion][1]
         if len(video_urls[seleccion]) > 4:
             wait_time = video_urls[seleccion][2]
-            item.subtitle = video_urls[seleccion][3]
+            if not item.subtitle:
+                item.subtitle = video_urls[seleccion][3]
             mpd = True
         elif len(video_urls[seleccion]) > 3:
             wait_time = video_urls[seleccion][2]
-            item.subtitle = video_urls[seleccion][3]
+            if not item.subtitle:
+                item.subtitle = video_urls[seleccion][3]
         elif len(video_urls[seleccion]) > 2:
             wait_time = video_urls[seleccion][2]
         view = True
@@ -1259,7 +1261,7 @@ def play_torrent(item, xlistitem, mediaurl):
             if item.post: post = item.post
             #Descargamos el .torrent
             size, url, torrent_f, rar_files = generictools.get_torrent_size(item.url, referer, post, \
-                        torrents_path=torrents_path, timeout=timeout, lookup=False, headers=headers)
+                        torrents_path=torrents_path, timeout=timeout, lookup=False, headers=headers, short_pad=True)
             if url:
                 url_stat = True
                 item.url = url
@@ -1286,7 +1288,7 @@ def play_torrent(item, xlistitem, mediaurl):
                 item.url = torrents_path
             if "torrentin" in torrent_options[seleccion][0]:                #Si es Torrentin, hay que añadir un prefijo
                 item.url = 'file://' + item.url
-            size, rar_files = generictools.get_torrent_size('', file_list=True, local_torr=torrents_path)
+            size, rar_files = generictools.get_torrent_size('', file_list=True, local_torr=torrents_path, short_pad=True)
         
         mediaurl = item.url
 

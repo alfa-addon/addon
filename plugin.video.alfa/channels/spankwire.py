@@ -29,7 +29,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host + "/search/?q=%s" % texto
+    item.url = host + "/api/video/search.json?segment=Straight&limit=33&query=%s&page=1" % texto
     try:
         return lista(item)
     except:

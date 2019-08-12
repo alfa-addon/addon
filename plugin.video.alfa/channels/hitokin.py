@@ -246,6 +246,7 @@ def findvideos(item):
     logger.info()
     servers_l = {'sm': 'streamango',
               'natsuki': 'directo',
+              'izanagui': 'directo',
               'media': 'mediafire'}
     itemlist = []
     p_data = ""

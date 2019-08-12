@@ -37,6 +37,8 @@ def mainlist(item):
         title = scrapedtitle + " (" + duration + ")"
         url = scrapedurl
         thumbnail = scrapedthumbnail
+        #mejora imagen
+        thumbnail = re.sub('/(\d+)_th.jpg', '/f\\1.jpg', thumbnail)
         plot = scrapedplot.strip()
 
         logger.debug("title=[" + title + "], url=[" + url + "], thumbnail=[" + thumbnail + "]")
