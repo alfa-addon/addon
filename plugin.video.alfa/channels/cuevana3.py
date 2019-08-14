@@ -224,6 +224,7 @@ def play(item):
         ext = 'diri'
         post = urllib.urlencode({'link': item.url})
         new_data = httptools.downloadpage("https://api.cuevana3.com/stream/plugins/gkpluginsphp.php", post=post).data
+        logger.error(new_data)
         if new_data and not "error" in new_data:
             matches = re.compile('"link":"([^"]+)"', re.DOTALL).findall(new_data)
             itags = {'18': '360p', '22': '720p', '34': '360p', '35': '480p', '37': '1080p', '43': '360p', '59': '480p'}
@@ -238,5 +239,15 @@ def play(item):
                     url_list.append([".%s (%s)" % (ext,res), item.url])
             if len(matches) > 1 and url_list:
                 item.password = url_list
+        else:
+            url = 'https://api.cuevana3.com/rr/gotogd.php?h=%s' % item.url
+            link = httptools.downloadpage(url).url
+            shost = 'https://' + link.split("/")[2]
+            vid = scrapertools.find_single_match(link, "\?id=(\w+)")
+            if vid:
+                item.url = shost+ '/hls/' + vid + '/' + vid + '.playlist.m3u8'
+            else:
+                item.url = ''
+
     return [item]
 
