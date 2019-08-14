@@ -62,9 +62,11 @@ class ziptools:
                                 filetools.mkdir(backup)
                             filetools.copy(outfilename, filetools.join(backup, filetools.basename(outfilename)))
 
-                    outfile = filetools.open(outfilename, 'wb')
+                    outfile = filetools.file_open(outfilename, 'wb')
                     outfile.write(zf.read(nameo))
                 except:
+                    import traceback
+                    logger.error(traceback.format_exc())
                     logger.error("Error en fichero " + nameo)
 
     def _createstructure(self, file, dir):
