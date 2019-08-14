@@ -221,10 +221,10 @@ def play(item):
     if not item.url.startswith('http'):
         url_list = []
         res = ''
-        ext = 'diri'
+        ext = 'mp4'
         post = urllib.urlencode({'link': item.url})
         new_data = httptools.downloadpage("https://api.cuevana3.com/stream/plugins/gkpluginsphp.php", post=post).data
-        logger.error(new_data)
+
         if new_data and not "error" in new_data:
             matches = re.compile('"link":"([^"]+)"', re.DOTALL).findall(new_data)
             itags = {'18': '360p', '22': '720p', '34': '360p', '35': '480p', '37': '1080p', '43': '360p', '59': '480p'}
