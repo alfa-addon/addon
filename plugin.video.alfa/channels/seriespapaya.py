@@ -105,12 +105,13 @@ def series_por_letra_y_grupo(item):
     data = httptools.downloadpage(url, post=urllib.urlencode(post_request)).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     
-    patron = '<div class=list_imagen><img src=(.*?) \/>.*?<div class=list_titulo><a href=(.*?) style=.*?inherit;>(.*?)'
-    patron +='<.*?justify>(.*?)<.*?Año:<\/b>.*?(\d{4})<'
+    patron = r'<div class=list_imagen><img src=(.*?) \/>.*?'
+    patron += '<div class=list_titulo><a href=(.*?) style=.*?inherit;>(.*?)'
+    patron +=r'<.*?justify>(.*?)<.*?Año:<\/b>.*?(\d{4})<'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for img, url, name, plot, year in matches:
-        title = re.sub(' \((.*?)\)$', '', name)
+        title = re.sub(r'\s*\((.*?)\)$', '', name)
         new_item= Item(
             channel = item.channel,
             action="seasons",
@@ -146,8 +147,9 @@ def novedades(item):
                 title = title.split(" (")[0]
             ses, ep = scrapertools.find_single_match(info, '(\d+), Episodio (\d+)')
             ftitle =  title + " %sx%s" % (ses, ep)
-            title = re.sub(' \((.*?)\)$', '', title)
-            itemlist.append(item.clone(action="findvideos", title=ftitle, url=urlparse.urljoin(HOST, url), thumbnail=urlparse.urljoin(HOST, img), contentSerieName=title))
+            title = re.sub(r'\s*\((.*?)\)$', '', title)
+            itemlist.append(item.clone(action="findvideos", title=ftitle, url=urlparse.urljoin(HOST, url),
+                                      thumbnail=urlparse.urljoin(HOST, img), contentSerieName=title))
     
     elif item.extra == "nuevas":
         data = httptools.downloadpage(HOST).data
@@ -159,62 +161,40 @@ def novedades(item):
 
         for title, url, img in matches:
             url = url.strip()
-            stitle = re.sub(' \((.*?)\)$', '', title)
-            itemlist.append(item.clone(action="seasons", title=title, url=urlparse.urljoin(HOST, url), thumbnail=urlparse.urljoin(HOST, img), contentSerieName=title))
+            stitle = re.sub(r'\s*\((.*?)\)$', '', title)
+            itemlist.append(item.clone(action="seasons", title=title, url=urlparse.urljoin(HOST, url),
+                                       thumbnail=urlparse.urljoin(HOST, img), contentSerieName=stitle))
     else:
         data = httptools.downloadpage(item.url).data
         data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
         patron0 = '<h2>Lista De Series - Mas Vistas</h2>(.*?)Vistas de la Semana</h3>'
         match = scrapertools.find_single_match(data, patron0)
-        patron = ' src=(.*?) />.*?href=(.*?) .*?>(.*?)</a>'
+        patron = 'class=esimagen>.*? src=(.*?) />.*?href=(.*?) .*?>(.*?)</a>'
         matches = re.compile(patron, re.DOTALL).findall(match)
         for img, url, title in matches:
-            stitle = re.sub(' \((.*?)\)$', '', title)
-            itemlist.append(item.clone(action="seasons", title=title, url=urlparse.urljoin(HOST, url), thumbnail=urlparse.urljoin(HOST, img), contentSerieName=stitle))
+            stitle = re.sub(r'\s*\((.*?)\)', '', title)
+            itemlist.append(item.clone(action="seasons", title=title, url=urlparse.urljoin(HOST, url),
+                                       thumbnail=urlparse.urljoin(HOST, img), contentSerieName=stitle))
     
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     
     return itemlist
 
-'''def estrenos(item):
-    logger.info()
-    data = httptools.downloadpage(HOST).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    if item.extra == "cast":
-        patron0 = '<h3>Estreno Español</h3>(.*?)<div class=clearfix></div>'
-        language = 'Español'
-        site = "estreno-serie-castellano/"
-    elif item.extra == "latino":
-        patron0 = '<h3>Estreno Español Latino</h3>(.*?)<div class=clearfix></div>'
-        language = 'Latino'
-        site = "estreno-serie-espanol-latino/"
-    else:
-        patron0 = '<h3>Estreno Subtitulado</h3>(.*?)<div class=clearfix></div>'
-        language = 'VOSE'
-        site = "estreno-serie-sub-espanol/"
-    patron = 'sidebarestdiv><a title=(.*?\d+X\d+) .*? href=(.*?)>.*?src=(.*?)>'
-    match = scrapertools.find_single_match(data, patron0)
-    matches = re.compile(patron, re.DOTALL).findall(match)
-    itemlist = []
-    for title, url, img in matches:
-        show =  scrapertools.find_single_match(title, '(.*?) \d+X\d+')
-        itemlist.append(item.clone(action="findvideos", title=title, url=urlparse.urljoin(HOST, url), thumbnail=urlparse.urljoin(HOST, img), language=language, contentSerieName=show))
-    itemlist.append(item.clone(action="showmore", title="[COLOR blue]>>   Mostrar más  <<[/COLOR]", url=urlparse.urljoin(HOST, site), thumbnail="", extra=language))
-    tmdb.set_infoLabels(itemlist)
-    return itemlist
-'''
+
 def showmore(item):
     logger.info()
     language = item.extra_lang
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = r"location.href='(.*?)'.*?background-image: url\('(.*?)'\).*?<strong>(\d+)<\/strong>x<strong>(\d+)<\/strong>.*?margin-top: 3px;>(.*?)<\/div>"
+    patron = r"location.href='(.*?)'.*?background-image: url\('(.*?)'\).*?"
+    patron += r"<strong>(\d+)<\/strong>x<strong>(\d+)<\/strong>.*?margin-top: 3px;>(.*?)<\/div>"
     matches = re.compile(patron, re.DOTALL).findall(data)
     itemlist = []
     for url, img , ses, ep, title in matches[item.page:item.page + 30]:
         ftitle =  title + " %sx%s" % (ses, ep)
-        title = re.sub(' \((.*?)\)$', '', title)
-        itemlist.append(item.clone(action="findvideos", title=ftitle, url=urlparse.urljoin(HOST, url), thumbnail=urlparse.urljoin(HOST, img), language=language, contentSerieName=title))
+        title = re.sub(r'\s*\((.*?)\)$', '', title)
+        itemlist.append(item.clone(action="findvideos", title=ftitle, url=urlparse.urljoin(HOST, url), 
+                        thumbnail=urlparse.urljoin(HOST, img), language=language, contentSerieName=title))
     
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     
@@ -323,7 +303,7 @@ def search(item, texto):
     except:
         return []
     for show in tvshows:
-        title = re.sub(' \((.*?)\)$', '', show["titulo"])
+        title = re.sub('\s*\((.*?)\)$', '', show["titulo"])
         itemlist.append(item.clone(action="seasons",
                        context=filtertools.context(item, list_idiomas, list_quality),
                        contentSerieName=title,

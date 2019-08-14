@@ -7,6 +7,7 @@ import os
 import zipfile
 
 from platformcode import config, logger
+from core import filetools
 
 
 class ziptools:
@@ -14,8 +15,8 @@ class ziptools:
         logger.info("file=%s" % file)
         logger.info("dir=%s" % dir)
 
-        if not dir.endswith(':') and not os.path.exists(dir):
-            os.mkdir(dir)
+        if not dir.endswith(':') and not filetools.exists(dir):
+            filetools.mkdir(dir)
 
         zf = zipfile.ZipFile(file)
         if not folder_to_extract:
@@ -28,43 +29,44 @@ class ziptools:
             if not name.endswith('/'):
                 logger.info("no es un directorio")
                 try:
-                    (path, filename) = os.path.split(os.path.join(dir, name))
+                    (path, filename) = filetools.split(filetools.join(dir, name))
                     logger.info("path=%s" % path)
                     logger.info("name=%s" % name)
                     if folder_to_extract:
-                        if path != os.path.join(dir, folder_to_extract):
+                        if path != filetools.join(dir, folder_to_extract):
                             break
                     else:
-                        os.makedirs(path)
+                        filetools.mkdir(path)
                 except:
                     pass
                 if folder_to_extract:
-                    outfilename = os.path.join(dir, filename)
+                    outfilename = filetools.join(dir, filename)
 
                 else:
-                    outfilename = os.path.join(dir, name)
+                    outfilename = filetools.join(dir, name)
                 logger.info("outfilename=%s" % outfilename)
                 try:
-                    if os.path.exists(outfilename) and overwrite_question:
+                    if filetools.exists(outfilename) and overwrite_question:
                         from platformcode import platformtools
                         dyesno = platformtools.dialog_yesno("El archivo ya existe",
                                                             "El archivo %s a descomprimir ya existe" \
                                                             ", ¿desea sobrescribirlo?" \
-                                                            % os.path.basename(outfilename))
+                                                            % filetools.basename(outfilename))
                         if not dyesno:
                             break
                         if backup:
                             import time
-                            import shutil
                             hora_folder = "Copia seguridad [%s]" % time.strftime("%d-%m_%H-%M", time.localtime())
-                            backup = os.path.join(config.get_data_path(), 'backups', hora_folder, folder_to_extract)
-                            if not os.path.exists(backup):
-                                os.makedirs(backup)
-                            shutil.copy2(outfilename, os.path.join(backup, os.path.basename(outfilename)))
+                            backup = filetools.join(config.get_data_path(), 'backups', hora_folder, folder_to_extract)
+                            if not filetools.exists(backup):
+                                filetools.mkdir(backup)
+                            filetools.copy(outfilename, filetools.join(backup, filetools.basename(outfilename)))
 
-                    outfile = open(outfilename, 'wb')
+                    outfile = filetools.file_open(outfilename, 'wb')
                     outfile.write(zf.read(nameo))
                 except:
+                    import traceback
+                    logger.error(traceback.format_exc())
                     logger.error("Error en fichero " + nameo)
 
     def _createstructure(self, file, dir):
@@ -72,16 +74,16 @@ class ziptools:
 
     def create_necessary_paths(filename):
         try:
-            (path, name) = os.path.split(filename)
-            os.makedirs(path)
+            (path, name) = filetools.split(filename)
+            filetools.mkdir(path)
         except:
             pass
 
     def _makedirs(self, directories, basedir):
         for dir in directories:
-            curdir = os.path.join(basedir, dir)
-            if not os.path.exists(curdir):
-                os.mkdir(curdir)
+            curdir = filetools.join(basedir, dir)
+            if not filetools.exists(curdir):
+                filetools.mkdir(curdir)
 
     def _listdirs(self, file):
         zf = zipfile.ZipFile(file)

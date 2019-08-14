@@ -138,7 +138,10 @@ class Downloader:
             if self._seekable:
                 # Guardamos la info al final del archivo
                 self.file.seek(0, 2)
-                offset = self.file.tell()
+                try:
+                    offset = self.file.tell()
+                except:
+                    offset = self.file.seek(0, 1)
                 self.file.write(str(self._download_info))
                 self.file.write("%0.16d" % offset)
 
@@ -224,19 +227,26 @@ class Downloader:
 
         # Abrimos en modo "a+" para que cree el archivo si no existe, luego en modo "r+b" para poder hacer seek()
         self.file = filetools.file_open(filetools.join(self._path, self._filename), "a+")
+        if self.file: self.file.close() 
         self.file = filetools.file_open(filetools.join(self._path, self._filename), "r+b")
+        if not self.file:
+            return
 
         if self._file_size >= 2 ** 31 or not self._file_size:
             try:
-                self.file.seek(2 ** 31)
+                self.file.seek(2 ** 31, 0)
             except OverflowError:
                 self._seekable = False
                 logger.info("No se puede hacer seek() ni tell() en ficheros mayores de 2GB")
 
         self.__get_download_info__()
 
-        logger.info("Descarga inicializada: Partes: %s | Ruta: %s | Archivo: %s | Tamaño: %s" % (
-        len(self._download_info["parts"]), self._path, self._filename, self._download_info["size"]))
+        try:
+            logger.info("Descarga inicializada: Partes: %s | Ruta: %s | Archivo: %s | Tamaño: %s" % \
+                    (str(len(self._download_info["parts"])), self._pathencode('utf-8'), \
+                    self._filenameencode('utf-8'), str(self._download_info["size"])))
+        except:
+            pass
 
     def __url_to_headers__(self, url):
         # Separamos la url de los headers adicionales
@@ -334,13 +344,16 @@ class Downloader:
                 raise Exception()
             self.file.seek(-16, 2)
             offset = int(self.file.read())
-            self.file.seek(offset)
+            self.file.seek(offset, 0)
             data = self.file.read()[:-16]
             self._download_info = eval(data)
             if not self._download_info["size"] == self._file_size:
                 raise Exception()
-            self.file.seek(offset)
-            self.file.truncate()
+            self.file.seek(offset, 0)
+            try:
+                self.file.truncate()
+            except:
+                pass
 
             if not self._seekable:
                 for part in self._download_info["parts"]:
@@ -376,8 +389,11 @@ class Downloader:
             self.save_parts = set()
             self.download_parts = set()
 
-            self.file.seek(0)
-            self.file.truncate()
+            self.file.seek(0, 0)
+            try:
+                self.file.truncate()
+            except:
+                pass
 
     def __open_connection__(self, start, end):
         headers = self._headers.copy()
@@ -411,7 +427,7 @@ class Downloader:
                 continue
 
             if self._seekable or self._download_info["parts"][save_id]["start"] < 2 ** 31:
-                self.file.seek(self._download_info["parts"][save_id]["start"])
+                self.file.seek(self._download_info["parts"][save_id]["start"], 0)
 
             try:
                 # file = open(os.path.join(self.tmp_path, self._filename + ".part%s" % save_id), "rb")
@@ -476,9 +492,12 @@ class Downloader:
             self.pending_parts.add(id)
 
     def __open_part_file__(self, id):
-        file = open(os.path.join(self.tmp_path, self._filename + ".part%s" % id), "a+")
-        file = open(os.path.join(self.tmp_path, self._filename + ".part%s" % id), "r+b")
-        file.seek(self._download_info["parts"][id]["current"] - self._download_info["parts"][id]["start"])
+        #file = open(os.path.join(self.tmp_path, self._filename + ".part%s" % id), "a+")
+        #file = open(os.path.join(self.tmp_path, self._filename + ".part%s" % id), "r+b")
+        self.file = filetools.file_open(filetools.join(self.tmp_path, self._filename + ".part%s" % id), "a+")
+        self.file.close()
+        self.file = filetools.file_open(filetools.join(self.tmp_path, self._filename + ".part%s" % id), "r+b")
+        file.seek(self._download_info["parts"][id]["current"] - self._download_info["parts"][id]["start"], 0)
         return file
 
     def __start_part__(self):

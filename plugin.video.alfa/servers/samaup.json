@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:streamplay|streamp1ay).(?:to|me)/(?:embed-|player-|)([a-z0-9]+)(?:.html|)",
-        "url": "http://streamplay.me/player-\\1.html"
+        "pattern": "samaup.co/(?:embed-|)([A-z0-9]+)",
+        "url": "https://www.samaup.co/embed-\\1.html"
       }
     ]
   },
   "free": true,
-  "id": "streamplay",
-  "name": "streamplay",
+  "id": "samaup",
+  "name": "samaup",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s1.postimg.cc/912d5vxmv3/streamplay1.png"
+  "thumbnail": "https://www.samaup.co/samaup_style/images/logo.png"
 }

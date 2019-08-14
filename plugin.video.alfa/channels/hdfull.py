@@ -72,6 +72,7 @@ def settingCanal(item):
     return
     
 def logout(item):
+    logger.info()
     dict_cookie = {"domain": "hdfull.me", 'expires': 0}
     #borramos cookies de hdfullme
     httptools.set_cookies(dict_cookie)
@@ -564,11 +565,10 @@ def episodesxseason(item):
         if len(episodio) == 1: episodio = '0' + episodio
         
         #Idiomas
+        texto_idiomas, langs = extrae_idiomas(language, list_language=True)
+        
         if language != "[]" and show_langs and not unify:
-            idiomas = "[COLOR darkgrey]"
-            for idioma in episode['languages']:
-                idiomas += '['+ IDIOMAS.get(idioma.lower(), idioma) + "] "
-            idiomas += "[/COLOR]"
+            idiomas = "[COLOR darkgrey]%s[/COLOR]" % texto_idiomas
         
         else:
             idiomas = ""
@@ -582,8 +582,7 @@ def episodesxseason(item):
         
         serie = item.contentSerieName
         
-        title = '%s %sx%s: [COLOR greenyellow]%s[/COLOR] %s' % (serie,
-                 temporada, episodio, title, idiomas)
+        title = '%sx%s: [COLOR greenyellow]%s[/COLOR] %s' % (temporada, episodio, title, idiomas)
         if account:
             str = get_status(status, 'episodes', episode['id'])
             if str != "": title += str
@@ -591,7 +590,7 @@ def episodesxseason(item):
         url = urlparse.urljoin(host, '/serie/' + episode[
             'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + episode['id'] + ";3"
         itemlist.append(item.clone(action="findvideos", title=title, url=url,
-                             contentType="episode", language=language, text_bold=True,
+                             contentType="episode", language=langs, text_bold=True,
                              infoLabels=infoLabels))
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -624,15 +623,17 @@ def novedades_episodios(item):
         temporada = episode['season']
         episodio = episode['episode']
         #if len(episodio) == 1: episodio = '0' + episodio
+        
+        #Idiomas
         language = episode.get('languages', '[]')
+        texto_idiomas, langs = extrae_idiomas(language, list_language=True)
+        
         if language != "[]" and show_langs and not unify:
-            idiomas = "[COLOR darkgrey]"
-            for idioma in episode['languages']:
-                idiomas += '['+ IDIOMAS.get(idioma.lower(), idioma) + "] "
-            idiomas += "[/COLOR]"
-            
+            idiomas = "[COLOR darkgrey]%s[/COLOR]" % texto_idiomas
+        
         else:
             idiomas = ""
+
         #Titulo serie en español, si no hay, en inglés
         cont_en = episode['show']['title'].get('en', '').strip()
         contentSerieName = episode['show'].get('es', cont_en).strip()
@@ -657,7 +658,7 @@ def novedades_episodios(item):
         itemlist.append(
             Item(channel=item.channel, action="findvideos", title=title,
                  contentSerieName=contentSerieName, url=url, thumbnail=thumbnail,
-                 contentType="episode", language=language, text_bold=True))
+                 contentType="episode", language=langs, text_bold=True))
     
     if len(itemlist) == 24:
         itemlist.append(
@@ -839,19 +840,24 @@ def agrupa_datos(url, post=None):
     return data
 
 
-def extrae_idiomas(bloqueidiomas):
+def extrae_idiomas(bloqueidiomas, list_language=False):
     logger.info()
     language=[]
     textoidiomas = ''
-    patronidiomas = '([a-z0-9]+).png"'
-    idiomas = re.compile(patronidiomas, re.DOTALL).findall(bloqueidiomas)
-    idiomas.sort()
-    for idioma in idiomas:
-        idioma = IDIOMAS.get(idioma, idioma)
-        # TODO quitar esto
+    orden_idiomas = {'CAST': 0, 'LAT': 1, 'VOSE': 2, 'VOS': 3, 'VO': 4}
+    if not list_language:
+        patronidiomas = '([a-z0-9]+).png"'
+        idiomas = re.compile(patronidiomas, re.DOTALL).findall(bloqueidiomas)
+    else:
+        idiomas = bloqueidiomas
+    #Orden y diccionario
+    for w in idiomas:
+        i = IDIOMAS.get(w.lower(), w)
+        language.insert(orden_idiomas.get(i, i), i)
+    
+    for idioma in language:
         textoidiomas += "[%s] " % idioma
-        # TODO y dejar esto
-        language.append(idioma)
+    
     return textoidiomas, language
 
 ## --------------------------------------------------------------------------------
@@ -903,7 +909,7 @@ def get_status(status, type, id):
     try:
         if id in status['status'][type]:
             str2 = state[status['status'][type][id]]
-            if str2 != "": str2 = "[COLOR steelblue](" + state[status['status'][type][id]] + ")[/COLOR]"
+            if str2 != "": str2 = "[COLOR blue](" + state[status['status'][type][id]] + ")[/COLOR]"
     except:
         str2 = ""
     if str1 != "" or str2 != "":

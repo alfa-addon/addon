@@ -24,7 +24,7 @@ def get_video_url(page_url, user="", password="", video_password=""):
     headers = {"x-requested-with":"XMLHttpRequest"}
     data = httptools.downloadpage(page_url, post=post, headers=headers).json
     for url in data["data"]:
-        video_urls.append([url["label"] + "p [videobb]", url["file"]])
-    logger.info("Intel11 %s" %data)
+        video_urls.append([url["label"] + " [videobb]", url["file"]])
+    #logger.info("Intel11 %s" %data)
 
     return video_urls

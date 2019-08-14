@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:openload|oload).*?/(?:embed|f)/([0-9a-zA-Z-_]+)",
+        "pattern": "(?:openload|oload)\\..*?/(?:embed|f)/([0-9a-zA-Z-_]+)",
         "url": "https://oload.tv/embed/\\1/"
       }
     ]

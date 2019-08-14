@@ -3,7 +3,7 @@
   "name": "SeriesMetro",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast"],
+  "language": ["lat"],
   "thumbnail": "https://i.postimg.cc/Kzh6DCqD/seriesmetro.png",
   "banner": "",
   "categories": [
