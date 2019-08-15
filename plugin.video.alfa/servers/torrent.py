@@ -49,7 +49,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     from btserver import Client
 
     played = False
-    debug = (config.get_setting("debug") == True)
+    debug = False
 
     save_path_videos = filetools.join(config.get_setting("bt_download_path", server="torrent", 
                default=config.get_setting("downloadpath")), 'BT-torrents')
@@ -145,12 +145,10 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
         else:
             txt = '%.2f%% de %.1fMB %s | %.1f kB/s' % \
                   (s.progress_file, s.file_size, s.str_state, s._download_rate)
-            txt2 = 'S: %d(%d) P: %d(%d)| Pi: %d(%d)' % (s.num_seeds, s.num_complete, \
-                   s.num_peers, s.num_incomplete, s.pieces_sum, s.pieces_len)
-            try:
-                txt3 = config.get_localized_string(70197) % (int(s.timeout))
-            except:
-                txt3 = ''
+            txt2 = 'S: %d(%d) P: %d(%d) | DHT:%s (%d) | Trakers: %d | Pi: %d(%d)' % \
+                   (s.num_seeds, s.num_complete, s.num_peers, s.num_incomplete, s.dht_state, s.dht_nodes,
+                    s.trackers, s.pieces_sum, s.pieces_len)
+            txt3 = video_file[:99]
 
         if rar and RAR and BACKGROUND or bkg_user:
             progreso.update(s.buffer, txt, txt2)
@@ -264,9 +262,11 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
                 if xbmc.getCondVisibility('Player.Paused') and not rar_res:
                     if not c.closed: s = c.status
                     txt = '%.2f%% de %.1fMB %s | %.1f kB/s' % \
-                                (s.progress_file, s.file_size, s.str_state, s._download_rate)
-                    txt2 = 'S: %d(%d) P: %d(%d)| Pi: %d(%d)' % (s.num_seeds, s.num_complete, \
-                                s.num_peers, s.num_incomplete, s.pieces_sum, s.pieces_len)
+                          (s.progress_file, s.file_size, s.str_state, s._download_rate)
+                    txt2 = 'S: %d(%d) P: %d(%d) | DHT:%s (%d) | Trakers: %d | Pi: %d(%d)' % \
+                           (s.num_seeds, s.num_complete, s.num_peers, s.num_incomplete, s.dht_state, s.dht_nodes,
+                            s.trackers, s.pieces_sum, s.pieces_len)
+                    txt3 = video_file[:99]
                     if dp_cerrado:
                         dp_cerrado = False
                         progreso = xbmcgui.DialogProgressBG()
@@ -566,8 +566,9 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, torr_clie
     logger.info()
     import sys
     reload(sys)
-    sys.setdefaultencoding('latin1')
-    sys.path.insert(0, config.get_setting("unrar_path", server="torrent", default="").replace('/unrar', ''))
+    sys.setdefaultencoding('utf-8')
+    sys.path.insert(0, config.get_setting("unrar_path", server="torrent", default="")\
+                    .replace('/unrar', '').replace('\\unrar,exe', ''))
     
     import rarfile
 
@@ -578,7 +579,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, torr_clie
             rarfile.UNRAR_TOOL = xbmc.executebuiltin("StartAndroidActivity(com.rarlab.rar)")
         return rar_file, False, '', ''
     log("##### unrar_path: %s" % rarfile.UNRAR_TOOL)
-    rarfile.DEFAULT_CHARSET = 'latin1'
+    rarfile.DEFAULT_CHARSET = 'utf-8'
     
     # Preparamos un path alternativo más corto para no sobrepasar la longitud máxima
     video_path = ''
@@ -804,5 +805,8 @@ def last_password_search(pass_path):
 
 
 def log(texto):
-    xbmc.log(texto, xbmc.LOGNOTICE)
+    try:
+        xbmc.log(texto, xbmc.LOGNOTICE)
+    except:
+        pass
     
