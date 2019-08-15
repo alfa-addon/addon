@@ -68,7 +68,7 @@ def lista(item):
         title = scrapedtitle
         thumbnail = scrapedthumbnail + "|https://watchxxxfreeinhd.com/" 
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
                               thumbnail=thumbnail, plot=plot, fanart=scrapedthumbnail ))
     next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)"')
     if next_page:
@@ -96,7 +96,7 @@ def findvideos(item):
                 url = httptools.downloadpage(url).url
         if "hqq" in title:
             url = title
-        itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url, fulltitle=item.fulltitle ))
+        itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

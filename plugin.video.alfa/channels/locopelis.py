@@ -236,7 +236,7 @@ def generos(item):
         itemlist.append(Item(channel=item.channel,
                              action="todas",
                              title=title.lower(),
-                             fulltitle=item.fulltitle,
+                             contentTitle=item.contentTitle,
                              url=url,
                              thumbnail=thumbnail,
                              plot=plot,
@@ -396,7 +396,7 @@ def play(item):
         videoitem.title = item.title
         videoitem.folder = False
         videoitem.thumbnail = item.extra
-        videoitem.fulltitle = item.fulltitle
+        videoitem.contentTitle = item.contentTitle
         videoitem.infoLabels = item.infoLabels
     return itemlist
 

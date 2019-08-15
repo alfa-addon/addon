@@ -104,7 +104,7 @@ def findvideos(item):
                 if scrapedtitle =="10": scrapedtitle= "https://server217.mangovideo.pw/contents/videos/"
                 if scrapedtitle =="11": scrapedtitle= "https://234.mangovideo.pw/contents/videos/"
                 url = scrapedtitle + url
-        itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url, fulltitle=item.fulltitle ))
+        itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

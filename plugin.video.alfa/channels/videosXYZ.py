@@ -62,7 +62,6 @@ def play(item):
     itemlist = servertools.find_video_items(data=data)
     for videoitem in itemlist:
         videoitem.title = item.title
-        videoitem.fulltitle = item.fulltitle
         videoitem.thumbnail = item.thumbnail
         videoitem.channel = item.channel
     return itemlist

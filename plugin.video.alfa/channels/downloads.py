@@ -751,7 +751,7 @@ def write_json(item):
     if not item.contentThumbnail:
         item.contentThumbnail = item.thumbnail
 
-    for name in ["text_bold", "text_color", "text_italic", "context", "totalItems", "viewmode", "title", "fulltitle",
+    for name in ["text_bold", "text_color", "text_italic", "context", "totalItems", "viewmode", "title", "contentTitle",
                  "thumbnail"]:
         if item.__dict__.has_key(name):
             item.__dict__.pop(name)
@@ -865,7 +865,7 @@ def save_download_tvshow(item):
 
 def set_movie_title(item):
     if not item.contentTitle:
-        item.contentTitle = re.sub("\[[^\]]+\]|\([^\)]+\)", "", item.fulltitle).strip()
+        item.contentTitle = re.sub("\[[^\]]+\]|\([^\)]+\)", "", item.contentTitle).strip()
 
     if not item.contentTitle:
         item.contentTitle = re.sub("\[[^\]]+\]|\([^\)]+\)", "", item.title).strip()

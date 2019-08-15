@@ -121,8 +121,8 @@ def lista(item):
         fanart = ''
 
 
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=item.title, url=url,
-                             thumbnail=thumbnail, fanart=fanart, contentTitle=contentTitle, infoLabels={'year': year}))
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=item.title, url=url,
+                             thumbnail=thumbnail, fanart=fanart, infoLabels={'year': year}))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     # Paginacion
 
@@ -151,7 +151,7 @@ def generos(item):
         if scrapedtitle not in ['PRÓXIMAMENTE', 'EN CINE']:
             itemlist.append(Item(channel=item.channel, action="lista",
                                  title=title,
-                                 fulltitle=item.title,
+                                 contentTitle=item.title,
                                  url=url,
                                  thumbnail=thumbnail,
                                  fanart=fanart
@@ -177,7 +177,7 @@ def seccion(item):
         id = scrapedid
 
         itemlist.append(
-            Item(channel=item.channel, action="alpha", title=title, fulltitle=item.title, thumbnail=thumbnail,
+            Item(channel=item.channel, action="alpha", title=title, contentTitle=item.title, thumbnail=thumbnail,
                  fanart=fanart, id = id))
     return itemlist
 

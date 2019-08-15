@@ -106,6 +106,6 @@ def play(item):
         patron = '"1080".*?"filename"\:"(.*?)"'
     media_url = scrapertools.find_single_match(data, patron)
     media_url = "https:" + media_url.replace("\\", "")
-    itemlist.append(Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=media_url,
+    itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=media_url,
                          thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
     return itemlist

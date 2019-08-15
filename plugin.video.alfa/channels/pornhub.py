@@ -88,6 +88,6 @@ def lista(item):
 
 def play(item):
     logger.info(item)
-    itemlist = servertools.find_video_items(item.clone(url = item.url, fulltitle = item.title))
+    itemlist = servertools.find_video_items(item.clone(url = item.url))
     return itemlist
     

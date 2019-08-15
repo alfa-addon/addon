@@ -140,7 +140,7 @@ def scraper(item):
             idiomas = scrapertools.find_multiple_matches(check_idioma, '<div class="id (.*?)">')
             title = title
         itemlist.append(
-            Item(channel=item.channel, title=title, fulltitle=title, url=host + url, action=action, thumbnail=thumb,
+            Item(channel=item.channel, title=title, contentTitle=title, url=host + url, action=action, thumbnail=thumb,
                  fanart="http://imgur.com/nqmJozd.jpg", extra=title_fan + "|" + title_item + "|" + year, show=title,
                  contentType=item.contentType, folder=True, language = idiomas, infoLabels={"year":year}))
     ## Paginación
@@ -267,8 +267,8 @@ def findvideos(item):
         if config.get_videolibrary_support() and len(itemlist) > 0:
             itemlist.append(Item(channel=item.channel, title="Añadir película a la videoteca",
                                  action="add_pelicula_to_library", url=item.url, text_color="green",
-                                 infoLabels={'title': item.fulltitle}, thumbnail="http://imgur.com/xjrGmVM.png",
-                                 fulltitle=item.fulltitle,
+                                 infoLabels={'title': item.contentTitle}, thumbnail="http://imgur.com/xjrGmVM.png",
+                                 contentTitle=item.contentTitle,
                                  extra=extra))
     if item.extra != "dd" and item.extra != "descarga" and item.extra != "online":
         bloque_dd = scrapertools.find_single_match(data, '<\/i>Descargar(.*?)<div class="enlaces">')

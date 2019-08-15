@@ -353,7 +353,7 @@ def episodesxseason(item):
             continue
         title = "%sx%s: %s" % (season, episode.zfill(2), scrapertools.unescape(scrapedname))
         new_item = item.clone(title=title, url=scrapedurl, action="findvideos", text_color=color3,
-                              fulltitle=title, contentType="episode", extra='serie')
+                              contentTitle=title, contentType="episode", extra='serie')
         if 'infoLabels' not in new_item:
             new_item.infoLabels = {}
         new_item.infoLabels['season'] = season

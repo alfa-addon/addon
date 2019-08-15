@@ -154,7 +154,7 @@ def listado2(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedplot, year, language, quality in matches:
         language = language.strip()
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, fulltitle=scrapedtitle,
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, contentTitle=scrapedtitle,
                              url=scrapedurl, thumbnail=scrapedthumbnail, plot=scrapedplot, language=language,
                              quality=quality, infoLabels={'year': year}))
 
@@ -166,7 +166,7 @@ def listado2(item):
         scrapedurl = extra + "?page=" + str(nu)
         scrapedtitle = "!Pagina Siguiente ->"
         scrapedthumbnail = ""
-        itemlist.append(Item(channel=item.channel, action="listado2", title=scrapedtitle, fulltitle=scrapedtitle,
+        itemlist.append(Item(channel=item.channel, action="listado2", title=scrapedtitle, contentTitle=scrapedtitle,
                              url=scrapedurl, thumbnail=scrapedthumbnail, extra=extra, folder=True))
 
     return itemlist
@@ -199,7 +199,7 @@ def findvideos(item):
                              url=item.url,
                              action="add_pelicula_to_library",
                              extra="findvideos",
-                             contentTitle = item.fulltitle
+                             contentTitle = item.contentTitle
                              ))
 
     return itemlist

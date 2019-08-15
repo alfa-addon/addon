@@ -99,7 +99,7 @@ def play(item):
     if scrapedurl == "" :
         scrapedurl = scrapertools.find_single_match(data, 'video_url: \'([^\']+)\'')
 
-    itemlist.append(Item(channel=item.channel, action="play", title=scrapedurl, fulltitle=item.title, url=scrapedurl,
+    itemlist.append(Item(channel=item.channel, action="play", title=scrapedurl, url=scrapedurl,
                         thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
     return itemlist
 

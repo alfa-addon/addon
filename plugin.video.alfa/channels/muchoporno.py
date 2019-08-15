@@ -107,6 +107,6 @@ def play(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:
         title = scrapedurl
-    itemlist.append(item.clone(action="play", title=title, fulltitle = item.title, url=scrapedurl))
+    itemlist.append(item.clone(action="play", title=title, url=scrapedurl))
     return itemlist
 

@@ -144,7 +144,7 @@ def capitulosxpagina(item,url):
                         Item(channel=item.channel,
                         action="findvideos",
                         title=title,
-                        fulltitle=item.title,
+                        contentTitle=item.title,
                         url=url,
                         thumbnail=thumbnail,
                         plot=plot, fanart=fanart,
