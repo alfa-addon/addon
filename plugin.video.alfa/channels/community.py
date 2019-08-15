@@ -90,10 +90,11 @@ def show_menu(item):
 
     if "movies_list" in json_data:
         item.media_type='movies_list'
+        item.first = 0
 
     elif "tvshows_list" in json_data:
         item.media_type = 'tvshows_list'
-
+        item.first = 0
     elif "episodes_list" in json_data:
         item.media_type = 'episodes_list'
 
@@ -106,9 +107,18 @@ def list_all(item):
     logger.info()
 
     itemlist = []
+    next = False
     media_type = item.media_type
     json_data = load_json(item)
-    for media in json_data[media_type]:
+
+    first = item.first
+    last = first + 19
+    if last > len(json_data[media_type]):
+        last = len(json_data[media_type])
+    else:
+        next = True
+
+    for media in json_data[media_type][first:last]:
 
         quality, language, plot, poster = set_extra_values(media)
 
@@ -133,6 +143,14 @@ def list_all(item):
         itemlist.append(new_item)
 
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
+
+    # Pagination
+
+    if next:
+        first = last
+    itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=item.url, action='list_all',
+                         media_type=item.media_type, first=first))
+
     return itemlist
 
 def seasons(item):
