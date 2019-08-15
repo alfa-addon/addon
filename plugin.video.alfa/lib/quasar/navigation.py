@@ -11,10 +11,7 @@ from quasar.config import QUASARD_HOST
 from quasar.addon import ADDON, ADDON_ID, ADDON_PATH
 from quasar.util import notify, getLocalizedString, getLocalizedLabel, system_information
 
-try:
-    import simplejson as json
-except ImportError:
-    import json
+import json
 
 
 HANDLE = int(sys.argv[1])
