@@ -145,7 +145,7 @@ def seccion(item):
                 Item(channel=item.channel,
                      action="lista",
                      title=title,
-                     fulltitle=item.title,
+                     contentTitle=item.title,
                      url=url,
                      thumbnail=thumbnail,
                      fanart=fanart
@@ -159,7 +159,7 @@ def seccion(item):
             itemlist.append(Item(channel=item.channel,
                                  action="lista",
                                  title=title,
-                                 fulltitle=item.title,
+                                 contentTitle=item.title,
                                  url=url,
                                  thumbnail=scrapedthumbnail,
                                  fanart=fanart,

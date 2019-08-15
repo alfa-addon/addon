@@ -56,7 +56,7 @@ def lista(item):
         url = scrapertools.find_single_match(match,'<a href="([^"]+)"')
         plot = scrapertools.find_single_match(match,'<p class="summary">(.*?)</p>')
         thumbnail = scrapertools.find_single_match(match,'<img src="([^"]+)"')
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url,
+        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot, viewmode="movie") )
     next_page = scrapertools.find_single_match(data,'<a href="([^"]+)" class="siguiente">')
     if next_page!="":

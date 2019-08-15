@@ -117,7 +117,7 @@ def play(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:
         scrapedurl = scrapedurl.replace("\/", "/")
-        itemlist.append(Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=scrapedurl,
                             thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
     return itemlist
 

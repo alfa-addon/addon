@@ -168,12 +168,12 @@ def episodiosxtemp(item):
         infoLabels = item.infoLabels
         if item.extra1 == 'library':
             itemlist.append(
-                Item(channel=item.channel, action="findvideos", title=title, fulltitle=item.fulltitle, url=url,
+                Item(channel=item.channel, action="findvideos", title=title, contentTitle=item.contentTitle, url=url,
                      thumbnail=item.thumbnail, plot=plot, contentSerieName=item.contentSerieName,
                      contentSeasonNumber=item.contentSeasonNumber, infoLabels=infoLabels))
         elif temp == item.contentSeasonNumber:
             itemlist.append(
-                Item(channel=item.channel, action="findvideos", title=title, fulltitle=item.fulltitle, url=url,
+                Item(channel=item.channel, action="findvideos", title=title, contentTitle=item.contentTitle, url=url,
                      thumbnail=item.thumbnail, plot=plot, contentSerieName=item.contentSerieName,
                      contentSeasonNumber=item.contentSeasonNumber, infoLabels=infoLabels))
 

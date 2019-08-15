@@ -80,7 +80,7 @@ def lista(item):
         if calidad:
             scrapedtitle = "[COLOR red]" + calidad + "[/COLOR] " + scrapedtitle
         itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
-                             fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, fulltitle=scrapedtitle, plot=scrapedplot))
+                             fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot))
     next_page = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)"')
     if next_page != "":
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page))

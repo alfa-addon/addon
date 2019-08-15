@@ -174,7 +174,7 @@ def play(item):
     elif not url.startswith("http"):
         url = "https:" + url.replace("&amp;", "&")
     itemlist.append(
-        Item(channel='cumlouder', action="play", title='Video' + res, fulltitle=type.upper() + ' ' + res, url=url,
+        Item(channel='cumlouder', action="play", title='Video' + res, contentTitle=type.upper() + ' ' + res, url=url,
              server="directo", folder=False))
     return itemlist
 

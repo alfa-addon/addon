@@ -329,7 +329,7 @@ def episodios(item):
             continue
 
         title = "%sx%s: %s" % (season, episode.zfill(2), scrapedname)
-        new_item = item.clone(title=title, url=scrapedurl, action="findvideos", text_color=color3, fulltitle=title,
+        new_item = item.clone(title=title, url=scrapedurl, action="findvideos", text_color=color3, contentTitle=title,
                               contentType="episode", extra='episodios')
         if 'infoLabels' not in new_item:
             new_item.infoLabels = {}

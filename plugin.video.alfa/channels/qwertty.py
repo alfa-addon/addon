@@ -92,7 +92,7 @@ def play(item):
             url = scrapedurl
             if url=="#":
                 url = scrapertools.find_single_match(data,'playerData.cdnPath480         = \'([^\']+)\'')
-            itemlist.append(item.clone(action="play", title=url, fulltitle = url, url=url))
+            itemlist.append(item.clone(action="play", title=url, contentTitle = url, url=url))
     elif "xvideos1" in url1: 
         item1 = item.clone(url=url1)
         itemlist = xvideos.play(item1)
@@ -110,7 +110,7 @@ def play(item):
         url  = scrapertools.find_single_match(data,'"quality":"\d+","videoUrl":"([^"]+)"')
     url = url.replace("\/", "/")
 
-    itemlist.append(item.clone(action="play", title= "%s  " + url1, fulltitle = item.title, url=url))
+    itemlist.append(item.clone(action="play", title= "%s  " + url1, contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     return itemlist
 

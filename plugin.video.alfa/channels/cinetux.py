@@ -168,16 +168,16 @@ def peliculas(item):
     for scrapedthumbnail, scrapedtitle, quality, scrapedurl, scrapedyear in matches:
         quality = scrapertools.find_single_match(quality, '.*?quality">([^<]+)')
         try:
-            fulltitle = scrapedtitle
+            contentTitle = scrapedtitle
             year = scrapertools.find_single_match(scrapedyear,'\d{4}')
-            if "/" in fulltitle:
-                fulltitle = fulltitle.split(" /", 1)[0]
-            scrapedtitle = "%s (%s)" % (fulltitle, year)
+            if "/" in contentTitle:
+                contentTitle = contentTitle.split(" /", 1)[0]
+            scrapedtitle = "%s (%s)" % (contentTitle, year)
         except:
-            fulltitle = scrapedtitle
+            contentTitle = scrapedtitle
         if quality:
             scrapedtitle += "  [%s]" % quality
-        new_item = item.clone(action="findvideos", title=scrapedtitle, fulltitle=fulltitle,
+        new_item = item.clone(action="findvideos", title=scrapedtitle, contentTitle=contentTitle,
                               url=scrapedurl, thumbnail=scrapedthumbnail,
                               contentType="movie", quality=quality)
         if year:
@@ -206,7 +206,7 @@ def destacadas(item):
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
         #scrapedurl = CHANNEL_HOST + scrapedurl
         url = urlparse.urljoin(CHANNEL_HOST, scrapedurl)
-        itemlist.append(item.clone(action="findvideos", title=scrapedtitle, fulltitle=scrapedtitle,
+        itemlist.append(item.clone(action="findvideos", title=scrapedtitle, contentTitle=scrapedtitle,
                               url=url, thumbnail=scrapedthumbnail,
                               contentType="movie"
                               ))

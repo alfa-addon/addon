@@ -202,7 +202,7 @@ def findvideos(item):
     itemlist.extend(aux_url)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     for videoitem in itemlist:
-        videoitem.fulltitle = item.fulltitle
+        videoitem.contentTitle = item.contentTitle
         videoitem.channel = item.channel
         videoitem.thumbnail = item.thumbnail
     return itemlist

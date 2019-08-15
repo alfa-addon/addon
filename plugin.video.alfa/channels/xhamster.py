@@ -62,9 +62,9 @@ def videos(item):
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, duration in matches:
         # logger.debug("title=["+scrapedtitle+"], url=["+scrapedurl+"], thumbnail=["+scrapedthumbnail+"]")
-        fullTitle = scrapedtitle.strip() + " [" + duration + "]"
+        contentTitle = scrapedtitle.strip() + " [" + duration + "]"
         itemlist.append(
-            Item(channel=item.channel, action="play", title=fullTitle, url=scrapedurl, thumbnail=scrapedthumbnail,
+            Item(channel=item.channel, action="play", title=contentTitle, url=scrapedurl, thumbnail=scrapedthumbnail,
                  folder=True))
 
     # Paginador
@@ -92,8 +92,8 @@ def categorias(item):
     patron = '(?s)<li>.*?<a href="([^"]+)".*?>([^<]+).*?</a></li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle in matches:
-        fullTitle = scrapedtitle.strip()
-        itemlist.append(Item(channel=item.channel, action="videos", title=fullTitle, url=scrapedurl))
+        contentTitle = scrapedtitle.strip()
+        itemlist.append(Item(channel=item.channel, action="videos", title=contentTitle, url=scrapedurl))
 
     return itemlist
 
