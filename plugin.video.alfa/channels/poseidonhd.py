@@ -235,8 +235,9 @@ def episodesxseasons(item):
 
 def findvideos(item):
     logger.info()
-
+    subs = ''
     itemlist = []
+    
     data = get_source(item.url)
     selector_url = scrapertools.find_multiple_matches(data, 'class="metaframe rptss" src="([^"]+)"')
 
