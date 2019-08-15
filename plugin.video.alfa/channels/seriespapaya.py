@@ -374,7 +374,10 @@ def play(item):
     logger.info("play: %s" % item.url)
     itemlist = []
     if not 'seriespapaya.' in item.url:
-        return [item]
+        itemlist.append(item.clone())
+        itemlist = servertools.get_servers_itemlist(itemlist)
+
+        return itemlist
 
     data = httptools.downloadpage(item.url).data
     
