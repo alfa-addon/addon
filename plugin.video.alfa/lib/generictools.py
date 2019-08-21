@@ -1307,7 +1307,7 @@ def find_rar_password(item):
 def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torrent=False, \
                         timeout=5, file_list=False, lookup=True, local_torr=None, headers={}, short_pad=False):
     logger.info()
-    from core import videolibrarytools
+    from servers import torrent
     
     """
     
@@ -1322,7 +1322,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     Entrada: post:      contenido del post en caso de llamada con post
     Entrada: data_torrent:  Flag por si se quiere el contenido del .torretn de vuelta
     Salida: size:       str con el tamaño y tipo de medida ( MB, GB, etc)
-    Salida: torrent:    dict() con el contenido del .torrent (opcional)
+    Salida: torrent_f:  dict() con el contenido del .torrent (opcional)
     Salida: files:      dict() con los nombres de los archivos del torrent y su tamaño (opcional)
     
     """
@@ -1389,7 +1389,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     
     #Móludo principal
     size = ''
-    torrent = ''
+    torrent_f = ''
     torrent_file = ''
     files = {}
     try:
@@ -1401,50 +1401,50 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         #urllib.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'
         #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
         #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
-        
-        if url and not local_torr:
-            torrents_path, torrent_file = videolibrarytools.caching_torrents(url, \
+
+        if (url and not local_torr) or url.startswith('magnet'):
+            torrents_path, torrent_file = torrent.caching_torrents(url, \
                         referer=referer, post=post, torrents_path=torrents_path, \
                         timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)
         elif local_torr:
             torrent_file = filetools.read(local_torr)
         if not torrent_file:
             if not lookup:
-                return (size, torrents_path, torrent, files)
+                return (size, torrents_path, torrent_f, files)
             elif file_list and data_torrent:
-                return (size, torrent, files)
+                return (size, torrent_f, files)
             elif file_list:
                 return (size, files)
             elif data_torrent:
-                return (size, torrent)
+                return (size, torrent_f)
             return size                                         #Si hay un error, devolvemos el "size" y "torrent" vacíos
 
-        torrent = decode(torrent_file)                                          #decodificamos el .torrent
+        torrent_f = decode(torrent_file)                                          #decodificamos el .torrent
 
         #si sólo tiene un archivo, tomamos la longitud y la convertimos a una unidad legible, si no dará error
         try:
-            sizet = torrent["info"]['length']
+            sizet = torrent_f["info"]['length']
             size = convert_size(sizet)
             
-            files = torrent["info"].copy()
+            files = torrent_f["info"].copy()
             if 'path' not in files: files.update({'path': ['']})
             if 'piece length' in files: del files['piece length']
             if 'pieces' in files: del files['pieces']
             if 'name' in files: del files['name']
             files = [files]
-            files.append({"__name": torrent["info"]["name"], 'length': 0})
+            files.append({"__name": torrent_f["info"]["name"], 'length': 0})
         except:
             pass
             
         #si tiene múltiples archivos sumamos la longitud de todos
         if not size:
             try:
-                check_video = scrapertools.find_multiple_matches(str(torrent["info"]["files"]), "'length': (\d+).*?}")
+                check_video = scrapertools.find_multiple_matches(str(torrent_f["info"]["files"]), "'length': (\d+).*?}")
                 sizet = sum([int(i) for i in check_video])
                 size = convert_size(sizet)
                 
-                files = torrent["info"]["files"][:]
-                files.append({"__name": torrent["info"]["name"], 'length': 0})
+                files = torrent_f["info"]["files"][:]
+                files.append({"__name": torrent_f["info"]["name"], 'length': 0})
                 
             except:
                 pass
@@ -1465,13 +1465,13 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     logger.info(str(size))
     
     if not lookup:
-        return (size, torrents_path, torrent, files)
+        return (size, torrents_path, torrent_f, files)
     elif file_list and data_torrent:
-        return (size, torrent, files)
+        return (size, torrent_f, files)
     elif file_list:
         return (size, files)
     elif data_torrent:
-        return (size, torrent)
+        return (size, torrent_f)
     return size 
 
     
@@ -1733,10 +1733,10 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                 else:
                     #Función especial para encontrar en otro clone un .torrent válido
                     if verify_torrent == 'torrent:check:status':
-                        from core import videolibrarytools
+                        from servers import torrent
                         if not data_alt.startswith("http"):                     #Si le falta el http.: lo ponemos
                             data_alt = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + data_alt
-                        if videolibrarytools.verify_url_torrent(data_alt):      #verificamos si el .torrent existe
+                        if torrent.verify_url_torrent(data_alt):        #verificamos si el .torrent existe
                             item.url = url                                      #guardamos la url que funciona
                             break                                       #nos vamos, con la nueva url del .torrent verificada
                         data = ''
