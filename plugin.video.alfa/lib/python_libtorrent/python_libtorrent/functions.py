@@ -24,8 +24,9 @@
 '''
 
 import os, sys
-import xbmc, xbmcgui, xbmcvfs, xbmcaddon
+import xbmc, xbmcgui, xbmcaddon
 from net import HTTP
+from core import filetools as xbmcvfs                                                                               ### Alfa
 
 if xbmc.getCondVisibility("system.platform.windows") and (sys.maxsize > 2 ** 32 and "x64" or "x86") == 'x64':       ### Alfa
     #__libbaseurl__ = 'https://extra.alfa-addon.com/downloads/libtorrent'                                           ### Alfa
@@ -100,7 +101,7 @@ class LibraryManager():
             if libname!='liblibtorrent.so':
                 try:
                     self.http = HTTP()
-                    self.http.fetch(url, download=dest + ".zip", progress=True)
+                    self.http.fetch(url, download=dest + ".zip", progress=False)    ### Alfa
                     log("%s -> %s" % (url, dest))
                     xbmc.executebuiltin('XBMC.Extract("%s.zip","%s")' % (dest, self.dest_path), True)
                     xbmcvfs.delete(dest + ".zip")
@@ -108,13 +109,13 @@ class LibraryManager():
                     text = 'Failed download %s!' % libname
                     xbmc.executebuiltin("XBMC.Notification(%s,%s,%s,%s)" % (__plugin__,text,750,__icon__))
             else:
-                xbmcvfs.copy(os.path.join(self.dest_path, 'libtorrent.so'), dest)
+                xbmcvfs.copy(os.path.join(self.dest_path, 'libtorrent.so'), dest, silent=True)      ### Alfa
             dest_alfa = os.path.join(xbmc.translatePath(__settings__.getAddonInfo('Path')), \
                             'lib', libname)                                     ### Alfa
-            xbmcvfs.copy(dest, dest_alfa)                                       ### Alfa
+            xbmcvfs.copy(dest, dest_alfa, silent=True)                          ### Alfa
             dest_alfa = os.path.join(xbmc.translatePath(__settings__.getAddonInfo('Profile')), \
                             'custom_code', 'lib', libname)                      ### Alfa
-            xbmcvfs.copy(dest, dest_alfa)                                       ### Alfa
+            xbmcvfs.copy(dest, dest_alfa, silent=True)                          ### Alfa
         return True
 
     def android_workaround(self, new_dest_path):                                ### Alfa (entera)
@@ -127,11 +128,9 @@ class LibraryManager():
 
             if xbmcvfs.exists(new_libpath):
                 new_size=str(os.path.getsize(new_libpath))
-                if size!=new_size or size==new_size:
+                if size != new_size:
                     xbmcvfs.delete(new_libpath)
-                    
                     if xbmcvfs.exists(new_libpath):
-                        
                         try:
                             command = ['su', '-c', 'rm', '%s' % new_libpath]
                             p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -144,11 +143,10 @@ class LibraryManager():
                         log('Deleted: (%s) %s -> (%s) %s' %(size, libpath, new_size, new_libpath))
                     
             if not xbmcvfs.exists(new_libpath):
-                xbmcvfs.copy(libpath, new_libpath)
+                xbmcvfs.copy(libpath, new_libpath, silent=True)                 ### ALFA
                 log('Copying... %s -> %s' %(libpath, new_libpath))
                 
                 if not xbmcvfs.exists(new_libpath):
-
                     try:
                         command = ['su', '-c', 'cp', '%s' % libpath, '%s' % new_libpath]
                         p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -163,12 +161,14 @@ class LibraryManager():
                         log('Sin PERMISOS ROOT: %s' % str(command))
 
                     if not xbmcvfs.exists(new_libpath):
-                        log('Failed!')
+                        log('ROOT Copy Failed!')
                 
                 else:
                     command = ['chmod', '775', '%s' % new_libpath]
                     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     output_cmd, error_cmd = p.communicate()
                     log('Comando: %s' % str(command))
+            else:
+                log('Module exists.  Not copied... %s' % new_libpath)           ### ALFA
 
         return new_dest_path
