@@ -478,6 +478,7 @@ def update(folder_content=config.get_setting("folder_tvshows"), folder=""):
     }
 
     if folder:
+        folder = str(folder)
         videolibrarypath = config.get_videolibrary_config_path()
 
         if folder.endswith('/') or folder.endswith('\\'):
@@ -490,7 +491,8 @@ def update(folder_content=config.get_setting("folder_tvshows"), folder=""):
                 videolibrarypath = videolibrarypath[:-1]
             update_path = videolibrarypath + "/" + folder_content + "/" + folder + "/"
         else:
-            update_path = filetools.join(videolibrarypath, folder_content, folder) + "/"
+            #update_path = filetools.join(videolibrarypath, folder_content, folder) + "/"   # Problemas de encode en "folder"
+            update_path = filetools.join(videolibrarypath, folder_content, ' ').rstrip()
 
         if not scrapertools.find_single_match(update_path, '(^\w+:\/\/)'):
             payload["params"] = {"directory": update_path}
