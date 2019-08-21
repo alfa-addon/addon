@@ -184,7 +184,7 @@ def generos(item):
         url =  host + "/" + tipo + "?genre_id=" + id_genere
         itemlist.append(
             Item(channel=item.channel, action="peliculas", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                 fulltitle=title))
+                 contentTitle=title))
     return itemlist
 
 
@@ -241,7 +241,7 @@ def parse_mixed_results(item, data):
         title += scrapertools.htmlclean(scrapedtitle)
         if scrapedyear != '':
             title += " (" + scrapedyear + ")"
-        fulltitle = title
+        contentTitle = scrapedtitle
         if scrapedvalue != '':
             title += " (" + scrapedvalue + ")"
         thumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
@@ -257,15 +257,15 @@ def parse_mixed_results(item, data):
             url = urlparse.urljoin(item.url, scrapedurl)
             if item.tipo != "series":
                 itemlist.append(Item(channel=item.channel, action="findvideos", title=title, extra=referer, url=url,
-                                     thumbnail=thumbnail, plot=plot, fulltitle=fulltitle, fanart=fanart,
-                                     contentTitle=scrapedtitle, contentType="movie", context=["buscar_trailer"]))
+                                     thumbnail=thumbnail, plot=plot, contentTitle=contentTitle, fanart=fanart,
+                                     contentType="movie", context=["buscar_trailer"]))
         else:
             referer = item.url
             url = urlparse.urljoin(item.url, scrapedurl)
             if item.tipo != "pelis":
                 itemlist.append(Item(channel=item.channel, action="episodios", title=title, extra=referer, url=url,
-                                     thumbnail=thumbnail, plot=plot, fulltitle=fulltitle, show=title, fanart=fanart,
-                                     contentTitle=scrapedtitle, contentType="tvshow", context=["buscar_trailer"]))
+                                     thumbnail=thumbnail, plot=plot, contentTitle=contentTitle, show=title, fanart=fanart,
+                                     contentType="tvshow", context=["buscar_trailer"]))
     next_page = scrapertools.find_single_match(data,
                                                '<div class="onclick load-more-icon no-json" data-action="replace" data-url="([^"]+)">')
     if next_page != "":
@@ -309,7 +309,7 @@ def siguientes(item):  # No utilizada
         url = referer
         itemlist.append(
             Item(channel=item.channel, action="episodio", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                 fulltitle=title, show=title, fanart=fanart, extra=session + "|" + episode))
+                 contentTitle=title, show=title, fanart=fanart, extra=session + "|" + episode))
     return itemlist
 
 
@@ -337,7 +337,7 @@ def episodio(item):
             url = host + "/links/viewepisode/id/" + epid
             itemlist.append(
                 Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                     fulltitle=title, fanart=item.fanart, show=item.show))
+                     contentTitle=title, fanart=item.fanart, show=item.show))
     itemlist2 = []
     for capitulo in itemlist:
         itemlist2 = findvideos(capitulo)
@@ -390,7 +390,7 @@ def episodios(item):
             url = host + scrapedurl
             itemlist.append(
                 Item(channel=item.channel, action="findvideos", nom_serie=item.title, tipo="5", title=title, url=url,
-                     thumbnail=thumbnail, plot=plot, fulltitle=title, fanart=fanart, show=item.show))
+                     thumbnail=thumbnail, plot=plot, contentTitle=title, fanart=fanart, show=item.show))
 
 
     if config.get_videolibrary_support():
@@ -578,12 +578,12 @@ def findvideos(item, verTodos=False):
             itemsort.append(
                 {'action': "play", 'title': title, 'data_id': data_id, 'token': token, 'tipo': data_model, 'url': url,
                  'thumbnail': thumbnail, 'fanart': item.fanart, 'plot': plot, 'extra': item.url,
-                 'fulltitle': item.fulltitle, 'orden1': (jdown == ''), 'orden2': orden})
+                 'contentTitle': item.contentTitle, 'orden1': (jdown == ''), 'orden2': orden})
         else:
             itemlist.append(
                 Item(channel=item.channel, action="play", data_id=data_id, token=token, tipo=data_model, title=title,
                      url=url, thumbnail=thumbnail, fanart=item.fanart, plot=plot, extra=item.url,
-                     fulltitle=item.fulltitle))
+                     contentTitle=item.contentTitle))
 
     if sortlinks > 0:
         numberlinks = config.get_setting("megadedenumberlinks", item.channel)  # 0:todos, > 0:n*5 (5,10,15,20,...)
@@ -605,7 +605,7 @@ def findvideos(item, verTodos=False):
                 Item(channel=item.channel, action=subitem['action'], title=subitem['title'], data_id=subitem['data_id'],
                      token=subitem['token'], tipo=subitem['tipo'], url=subitem['url'], thumbnail=subitem['thumbnail'],
                      fanart=subitem['fanart'], plot=subitem['plot'], extra=subitem['extra'],
-                     fulltitle=subitem['fulltitle']))
+                     contentTitle=subitem['contentTitle']))
     if data_model == "4":
         itemlist.append(
             Item(channel=item.channel, action="megadede_check", tipo="4", token=token, title="Marcar como Pendiente",
@@ -635,7 +635,7 @@ def play(item):
         itemlist = servertools.find_video_items(data=url)
         for videoitem in itemlist:
             videoitem.title = item.title
-            videoitem.fulltitle = item.fulltitle
+            videoitem.contentTitle = item.contentTitle
             videoitem.thumbnail = item.thumbnail
             videoitem.channel = item.channel
         return itemlist
@@ -652,7 +652,7 @@ def play(item):
         itemlist = servertools.find_video_items(data=media_url)
         for videoitem in itemlist:
             videoitem.title = item.title
-            videoitem.fulltitle = item.fulltitle
+            videoitem.contentTitle = item.contentTitle
             videoitem.thumbnail = item.thumbnail
             videoitem.channel = item.channel
         try:
