@@ -82,7 +82,7 @@ def busqueda(item, texto):
         if 'playListChilds' not in child:
             infolabels['plot'] = child['description']
             type = "repo"
-            fulltitle = child['name']
+            contentTitle = child['name']
             title = child['name']
             infolabels['duration'] = child['duration']
             if child['height'] < 720:
@@ -103,7 +103,7 @@ def busqueda(item, texto):
         else:
             type = "playlist"
             infolabels['plot'] = "Contiene:\n" + "\n".join(child['playListChilds']) + "\n".join(child['repoChilds'])
-            fulltitle = child['id']
+            contentTitle = child['id']
             title = "[COLOR red][LISTA][/COLOR] " + child['id'].replace('-', ' ').capitalize() + " ([COLOR gold]" + \
                     str(child['number']) + "[/COLOR])"
         # En caso de búsqueda global se filtran los resultados
@@ -123,11 +123,11 @@ def busqueda(item, texto):
             thumbnail = fanart
         if type == 'playlist':
             itemlist.insert(0, Item(channel=item.channel, action="entradasconlistas", title=title,
-                                    url=url, thumbnail=thumbnail, fanart=fanart, fulltitle=fulltitle,
+                                    url=url, thumbnail=thumbnail, fanart=fanart, contentTitle=contentTitle,
                                     infoLabels=infolabels, viewmode="movie_with_plot", folder=True))
         else:
             itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url,
-                                thumbnail=thumbnail, fanart=fanart, fulltitle=fulltitle, contentTitle=fulltitle,
+                                thumbnail=thumbnail, fanart=fanart, contentTitle=contentTitle, contentTitle=contentTitle,
                                 context="05", infoLabels=infolabels, viewmode="movie_with_plot", folder=True))
     return itemlist
 
@@ -218,14 +218,14 @@ def entradas(item):
             quality = "[B]  [1080p][/B]"
         elif child['height'] >= 2160:
             quality = "[B]  [4k][/B]"
-        fulltitle = child['name']
+        contentTitle = child['name']
         title = child['name']
         if child['year']:
             title += " (" + child['year'] + ")"
         title += quality
         itemlist.append(Item(channel=item.channel, action="findvideos", server="", title=title, url=url,
-                             thumbnail=thumbnail, fulltitle=fulltitle, infoLabels=infolabels,
-                             contentTitle=fulltitle, context=context))
+                             thumbnail=thumbnail, contentTitle=contentTitle, infoLabels=infolabels,
+                             contentTitle=contentTitle, context=context))
     tmdb.set_infoLabels(itemlist)
     return itemlist
 
@@ -258,7 +258,7 @@ def entradasconlistas(item):
             else:
                 fanart = host + "/json/playlist/%s/thumbnail.jpg" % child["id"]
             itemlist.append(Item(channel=item.channel, action="entradasconlistas", title=title,
-                                 url=url, thumbnail=thumbnail, fanart=fanart, fulltitle=child['id'],
+                                 url=url, thumbnail=thumbnail, fanart=fanart, contentTitle=child['id'],
                                  infoLabels=infolabels, viewmode="movie_with_plot"))
     else:
         contentList = True
@@ -296,7 +296,7 @@ def entradasconlistas(item):
             quality = "[B]  [1080p][/B]"
         elif child['height'] >= 2160:
             quality = "[B]  [4k][/B]"
-        fulltitle = child['name']
+        contentTitle = child['name']
         if child['name'] == "":
             title = child['id'].rsplit(".", 1)[0]
         else:
@@ -305,8 +305,8 @@ def entradasconlistas(item):
             title += " (" + child['year'] + ")"
         title += quality
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url,
-                             thumbnail=thumbnail, fanart=fanart, fulltitle=fulltitle, infoLabels=infolabels,
-                             contentTitle=fulltitle, context="05", viewmode="movie_with_plot", folder=True))
+                             thumbnail=thumbnail, fanart=fanart, contentTitle=contentTitle, infoLabels=infolabels,
+                             contentTitle=contentTitle, context="05", viewmode="movie_with_plot", folder=True))
     # Se añade item para añadir la lista de vídeos a la videoteca
     if data['sortedRepoChilds'] and len(itemlist) > 0 and contentList:
         if config.get_videolibrary_support():
@@ -315,7 +315,7 @@ def entradasconlistas(item):
     elif contentSerie:
         if config.get_videolibrary_support():
             itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", url=item.url,
-                                 action="series_library", fulltitle=data['name'], show=data['name'],
+                                 action="series_library", contentTitle=data['name'], show=data['name'],
                                  text_color="green"))
 
     return itemlist
@@ -352,25 +352,25 @@ def series(item):
                 thumbnail = fanart
             if item.extra1 == "Series":
                 if child['name'] != "":
-                    fulltitle = child['name']
-                    fulltitle = fulltitle.replace('-', '')
+                    contentTitle = child['name']
+                    contentTitle = contentTitle.replace('-', '')
                     title = child['name'] + " (" + child['year'] + ")"
                 else:
-                    title = fulltitle = child['id'].capitalize()
+                    title = contentTitle = child['id'].capitalize()
                 if "Temporada" not in title:
                     title += "     [Temporadas: [COLOR gold]" + str(child['numberOfSeasons']) + "[/COLOR]]"
                 elif item.title == "Más Vistas":
                     title = title.replace("- Temporada", "--- Temporada")
             else:
                 if data['name'] != "":
-                    fulltitle = data['name']
+                    contentTitle = data['name']
                     if child['seasonNumber']:
                         title = data['name'] + " --- Temporada " + child['seasonNumber'] + \
                                "  [COLOR gold](" + str(child['number']) + ")[/COLOR]"
                     else:
                         title = child['name'] + "  [COLOR gold](" + str(child['number']) + ")[/COLOR]"
                 else:
-                    fulltitle = data['id']
+                    contentTitle = data['id']
                     if child['seasonNumber']:
                         title = data['id'].capitalize() + " --- Temporada " + child['seasonNumber'] + \
                               "  [COLOR gold](" + str(child['number']) + ")[/COLOR]"
@@ -382,8 +382,8 @@ def series(item):
             else:
                 action = "series"
             itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, server="",
-                                 thumbnail=thumbnail, fanart=fanart, fulltitle=fulltitle, infoLabels=infolabels,
-                                 contentSerieName=fulltitle, context="25", viewmode="movie_with_plot", folder=True))
+                                 thumbnail=thumbnail, fanart=fanart, contentTitle=contentTitle, infoLabels=infolabels,
+                                 contentSerieName=contentTitle, context="25", viewmode="movie_with_plot", folder=True))
             if len(itemlist) == len(data["sortedPlaylistChilds"]) and item.extra1 != "Series":
                 itemlist.sort(key=lambda item: item.title, reverse=True)
                 if config.get_videolibrary_support():
@@ -391,7 +391,7 @@ def series(item):
                                          action="add_serie_to_library", show=data['name'],
                                          text_color="green", extra="series_library"))
     if item.title == "Últimas Series": return itemlist
-    if item.title == "Lista de Series A-Z": itemlist.sort(key=lambda item: item.fulltitle)
+    if item.title == "Lista de Series A-Z": itemlist.sort(key=lambda item: item.contentTitle)
     if data["sortedRepoChilds"] and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="**VÍDEOS RELACIONADOS/MISMA TEMÁTICA**", text_color="blue",
                              text_blod=True, action="", folder=False))
@@ -428,7 +428,7 @@ def series(item):
             quality = "[B]  [1080p][/B]"
         elif child['height'] >= 2160:
             quality = "[B]  [1080p][/B]"
-        fulltitle = child['name']
+        contentTitle = child['name']
         if child['name'] == "":
             title = child['id'].rsplit(".", 1)[0]
         else:
@@ -437,8 +437,8 @@ def series(item):
             title += " (" + child['year'] + ")"
         title += quality
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url,
-                             server="", thumbnail=thumbnail, fanart=fanart, fulltitle=fulltitle, infoLabels=infolabels,
-                             contentSerieName=fulltitle, context="25", viewmode="movie_with_plot", folder=True))
+                             server="", thumbnail=thumbnail, fanart=fanart, contentTitle=contentTitle, infoLabels=infolabels,
+                             contentSerieName=contentTitle, context="25", viewmode="movie_with_plot", folder=True))
     if item.extra == "new":
         itemlist.sort(key=lambda item: item.title, reverse=True)
     return itemlist
@@ -461,7 +461,7 @@ def episodios(item):
                 item.infoLabels['season'] = str(data['seasonNumber'])
                 item.infoLabels['episode'] = str(child['episode'])
                 item.infoLabels['mediatype'] = "episode"
-            #contentTitle = item.fulltitle + "|" + str(data['seasonNumber']) + "|" + str(child['episode'])
+            #contentTitle = item.contentTitle + "|" + str(data['seasonNumber']) + "|" + str(child['episode'])
             # En caso de venir del apartado nuevos capítulos se redirige a la función series para mostrar los demás
             if item.title == "Nuevos Capítulos":
                 url = host + "/json/playlist/%s/index.json" % child["season"]
@@ -476,12 +476,12 @@ def episodios(item):
             else:
                 thumbnail = host + "/json/repo/%s/thumbnail.jpg" % child["id"]
             try:
-                title = fulltitle = child['name'].rsplit(" ", 1)[0] + " - " + child['name'].rsplit(" ", 1)[1]
+                title = contentTitle = child['name'].rsplit(" ", 1)[0] + " - " + child['name'].rsplit(" ", 1)[1]
             except:
-                title = fulltitle = child['id']
+                title = contentTitle = child['id']
             itemlist.append(item.clone(action=action, server="", title=title, url=url, thumbnail=thumbnail,
-                                       fanart=item.fanart, fulltitle=fulltitle, contentSerieName=fulltitle, context="35",
-                                       viewmode="movie", extra=extra, show=item.fulltitle, folder=True))
+                                       fanart=item.fanart, contentTitle=contentTitle, contentSerieName=contentTitle, context="35",
+                                       viewmode="movie", extra=extra, show=item.contentTitle, folder=True))
     else:
         for child in data["repoChilds"]:
             url = host + "/json/repo/%s/index.json" % child
@@ -489,10 +489,10 @@ def episodios(item):
                 thumbnail = host + "/json/repo/%s/poster.jpg" % child
             else:
                 thumbnail = host + "/json/repo/%s/thumbnail.jpg" % child
-            title = fulltitle = child.capitalize().replace('_', ' ')
+            title = contentTitle = child.capitalize().replace('_', ' ')
             itemlist.append(item.clone(action="findvideos", server="", title=title, url=url, thumbnail=thumbnail,
-                                       fanart=item.fanart, fulltitle=fulltitle, contentSerieName=item.fulltitle,
-                                       context="25", show=item.fulltitle, folder=True))
+                                       fanart=item.fanart, contentTitle=contentTitle, contentSerieName=item.contentTitle,
+                                       context="25", show=item.contentTitle, folder=True))
     # Opción de añadir a la videoteca en casos de series de una única temporada
     if len(itemlist) > 0 and not "---" in item.title and item.title != "Nuevos Capítulos":
         if config.get_videolibrary_support() and item.show == "":
@@ -521,49 +521,49 @@ def series_library(item):
             if data["sortedRepoChilds"]:
                 for child in data["sortedRepoChilds"]:
                     url = host + "/json/repo/%s/index.json" % child["id"]
-                    fulltitle = child['name'].rsplit(" ", 1)[0] + " - " + child['name'].rsplit(" ", 1)[1]
+                    contentTitle = child['name'].rsplit(" ", 1)[0] + " - " + child['name'].rsplit(" ", 1)[1]
                     try:
-                        check_filename = scrapertools.get_season_and_episode(fulltitle)
+                        check_filename = scrapertools.get_season_and_episode(contentTitle)
                     except:
-                        fulltitle += " " + str(data['seasonNumber']) + "x00"
+                        contentTitle += " " + str(data['seasonNumber']) + "x00"
                     lista_episodios.append(Item(channel=item.channel, action="findvideos", server="",
-                                                title=fulltitle, extra=url, url=item.url, fulltitle=fulltitle,
-                                                contentTitle=fulltitle, show=show))
+                                                title=contentTitle, extra=url, url=item.url, contentTitle=contentTitle,
+                                                contentTitle=contentTitle, show=show))
             else:
                 for child in data["repoChilds"]:
                     url = host + "/json/repo/%s/index.json" % child
-                    fulltitle = child.capitalize().replace('_', ' ')
+                    contentTitle = child.capitalize().replace('_', ' ')
                     try:
-                        check_filename = scrapertools.get_season_and_episode(fulltitle)
+                        check_filename = scrapertools.get_season_and_episode(contentTitle)
                     except:
-                        fulltitle += " " + str(data['seasonNumber']) + "x00"
+                        contentTitle += " " + str(data['seasonNumber']) + "x00"
                     lista_episodios.append(Item(channel=item.channel, action="findvideos", server="",
-                                                title=fulltitle, extra=url, url=item.url, contentTitle=fulltitle, 
-                                                fulltitle=fulltitle, show=show))
+                                                title=contentTitle, extra=url, url=item.url, contentTitle=contentTitle, 
+                                                contentTitle=contentTitle, show=show))
     # Para series directas de una sola temporada
     else:
         data = data_serie
         if data["sortedRepoChilds"]:
             for child in data["sortedRepoChilds"]:
                 url = host + "/json/repo/%s/index.json" % child["id"]
-                fulltitle = child['name'].rsplit(" ", 1)[0] + " - " + child['name'].rsplit(" ", 1)[1]
+                contentTitle = child['name'].rsplit(" ", 1)[0] + " - " + child['name'].rsplit(" ", 1)[1]
                 try:
-                    check_filename = scrapertools.get_season_and_episode(fulltitle)
+                    check_filename = scrapertools.get_season_and_episode(contentTitle)
                 except:
-                    fulltitle += " 1x00"
-                lista_episodios.append(Item(channel=item.channel, action="findvideos", server="", title=fulltitle,
-                                            contentTitle=fulltitle, url=item.url, extra=url, fulltitle=fulltitle,
+                    contentTitle += " 1x00"
+                lista_episodios.append(Item(channel=item.channel, action="findvideos", server="", title=contentTitle,
+                                            contentTitle=contentTitle, url=item.url, extra=url, contentTitle=contentTitle,
                                             show=show))
         else:
             for child in data["repoChilds"]:
                 url = host + "/json/repo/%s/index.json" % child
-                fulltitle = child.capitalize().replace('_', ' ')
+                contentTitle = child.capitalize().replace('_', ' ')
                 try:
-                    check_filename = scrapertools.get_season_and_episode(fulltitle)
+                    check_filename = scrapertools.get_season_and_episode(contentTitle)
                 except:
-                    fulltitle += " 1x00"
-                lista_episodios.append(Item(channel=item.channel, action="findvideos", server="", title=fulltitle,
-                                            contentTitle=fulltitle, url=item.url, extra=url, fulltitle=fulltitle,
+                    contentTitle += " 1x00"
+                lista_episodios.append(Item(channel=item.channel, action="findvideos", server="", title=contentTitle,
+                                            contentTitle=contentTitle, url=item.url, extra=url, contentTitle=contentTitle,
                                             show=show))
     return lista_episodios
 
@@ -600,7 +600,7 @@ def findvideos(item):
         if config.get_videolibrary_support():
             itemlist.append(Item(channel=item.channel, title="Añadir enlaces a la videoteca", text_color="green",
                                       url=item.url, action="add_pelicula_to_library",
-                                      infoLabels={'title':item.fulltitle}, extra="findvideos", fulltitle=item.fulltitle))
+                                      infoLabels={'title':item.contentTitle}, extra="findvideos", contentTitle=item.contentTitle))
     return itemlist
 
 
@@ -657,7 +657,7 @@ def listas(item):
         infolabels['title'] = title
         try:
             from core import videolibrarytools
-            new_item = item.clone(title=title, url=url, fulltitle=title, fanart=fanart, extra="findvideos",
+            new_item = item.clone(title=title, url=url, contentTitle=title, fanart=fanart, extra="findvideos",
                                   thumbnail=thumbnail, infoLabels=infolabels, category="Cine")
             videolibrarytools.library.add_movie(new_item)
             error = False

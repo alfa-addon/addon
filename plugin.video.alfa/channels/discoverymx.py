@@ -169,6 +169,6 @@ def findvideos(item):
         server = video[2]
         # xbmctools.addnewvideo( item.channel , "play" , category , server ,  , url , thumbnail , plot )
         itemlist.append(Item(channel=item.channel, action="play", server=server, title=videotitle, url=url,
-                             thumbnail=item.thumbnail, plot=item.plot, fulltitle=item.title, folder=False))
+                             thumbnail=item.thumbnail, plot=item.plot, contentTitle=item.title, folder=False))
 
     return itemlist

@@ -233,7 +233,7 @@ def findvideos(item):
                                    text_color="magenta"))
         if config.get_videolibrary_support():
             itemlist.append(item.clone(title="Añadir a la videoteca", text_color="green",
-                                 action="add_pelicula_to_library", url=item.url, fulltitle = item.contentTitle
+                                 action="add_pelicula_to_library", url=item.url, contentTitle = item.contentTitle
                                  ))
     return itemlist
 

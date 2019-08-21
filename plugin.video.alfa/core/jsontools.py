@@ -11,21 +11,6 @@ try:
     import json
 except:
     logger.info("json incluido en el interprete **NO** disponible")
-
-    try:
-        import simplejson as json
-    except:
-        logger.info("simplejson incluido en el interprete **NO** disponible")
-        try:
-            from lib import simplejson as json
-        except:
-            logger.info("simplejson en el directorio lib **NO** disponible")
-            logger.error("No se ha encontrado un parser de JSON valido")
-            json = None
-        else:
-            logger.info("Usando simplejson en el directorio lib")
-    else:
-        logger.info("Usando simplejson incluido en el interprete")
 else:
     logger.info("Usando json incluido en el interprete")
 

@@ -115,7 +115,7 @@ def temporadas(item):
             infoLabels['season'] = contentSeasonNumber
             fanart = scrapertools.find_single_match(data, '<img src="([^"]+)"/>.*?</a>')
             itemlist.append(
-                Item(channel=item.channel, action="episodiosxtemp", title=title, fulltitle=item.title, url=url,
+                Item(channel=item.channel, action="episodiosxtemp", title=title, contentTitle=item.title, url=url,
                      thumbnail=thumbnail, plot=plot, fanart=fanart, contentSeasonNumber=contentSeasonNumber,
                      contentSerieName=item.contentSerieName, infoLabels=infoLabels))
             temp = temp + 1
@@ -172,7 +172,7 @@ def episodiosxtemp(item):
         thumbnail = item.thumbnail
         plot = item.plot
         fanart = item.fanart
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, fulltitle=item.fulltitle, url=url,
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=item.contentTitle, url=url,
                              thumbnail=item.thumbnail, plot=plot, extra=item.extra, extra1=item.extra1,
                              extra2=item.extra2, infoLabels=infoLabels))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -226,7 +226,7 @@ def generos(item):
             fanart = ''
         plot = ''
         itemlist.append(
-            Item(channel=item.channel, action="todas", title=title, fulltitle=item.fulltitle, url=url,
+            Item(channel=item.channel, action="todas", title=title, contentTitle=item.contentTitle, url=url,
                  thumbnail=thumbnail, plot=plot, fanart=fanart))
 
     return itemlist

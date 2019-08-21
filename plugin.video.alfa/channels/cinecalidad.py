@@ -333,7 +333,7 @@ def findvideos(item):
         new_item = Item(channel=item.channel,
                         action='play',
                         title=title,
-                        fulltitle=item.contentTitle,
+                        contentTitle=item.contentTitle,
                         url=url,
                         language=language,
                         thumbnail=item.thumbnail,
@@ -365,7 +365,7 @@ def findvideos(item):
                 new_item = Item(channel=item.channel,
                                 action='play',
                                 title=title,
-                                fulltitle=item.contentTitle,
+                                contentTitle=item.contentTitle,
                                 url=url,
                                 language= language,
                                 thumbnail=thumbnail,
@@ -416,8 +416,8 @@ def play(item):
         itemlist = servertools.find_video_items(data=item.url)
 
         for videoitem in itemlist:
-            videoitem.title = item.fulltitle
-            videoitem.fulltitle = item.fulltitle
+            videoitem.title = item.contentTitle
+            videoitem.contentTitle = item.contentTitle
             videoitem.thumbnail = item.thumbnail
             videoitem.channel = item.channel
             videoitem.subtitle = item.subtitle

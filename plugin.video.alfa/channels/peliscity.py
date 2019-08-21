@@ -63,7 +63,7 @@ def listaBuscar(item):
     patron += 'text-list">([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, thumbnail, title, sinopsis in matches:
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title + " ", fulltitle=title, url=url,
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title + " ", contentTitle=title, url=url,
                              thumbnail=thumbnail, show=title, plot=sinopsis))
     return itemlist
 
@@ -85,7 +85,6 @@ def agregadas(item):
         itemlist.append(Item(channel = item.channel,
                              action = 'findvideos',
                              contentTitle = scrapedtitle,
-                             fulltitle = scrapedtitle,
                              infoLabels = {'year':scrapedyear},
                              quality = scrapedquality,
                              thumbnail = scrapedthumbnail,
@@ -118,12 +117,12 @@ def findvideos(item):
             json_data = httptools.downloadpage(scrapedurl, post=post).json
             for dataj in json_data["data"]:
                 itemlist.append(
-                    item.clone(channel=item.channel, action="play", title=title + " - %s" %dataj["label"], fulltitle=item.title, url="https://www.pelisup.com" + dataj["file"],
+                    item.clone(channel=item.channel, action="play", title=title + " - %s" %dataj["label"], contentTitle=item.title, url="https://www.pelisup.com" + dataj["file"],
                          quality= quality, language=language, extra = item.thumbnail))
             scrapedurl = "omina.farlante1"  # para ya no agregar al itemlist
         if not ("omina.farlante1" in scrapedurl or "404" in scrapedurl):
             itemlist.append(
-                item.clone(channel=item.channel, action="play", title=title, fulltitle=item.title, url=scrapedurl,
+                item.clone(channel=item.channel, action="play", title=title, contentTitle=item.title, url=scrapedurl,
                      quality= quality, language=language, extra = item.thumbnail))
     tmdb.set_infoLabels(itemlist, True)
     itemlist=servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
@@ -132,7 +131,7 @@ def findvideos(item):
         if config.get_videolibrary_support():
             itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
                                  action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                 fulltitle=item.title
+                                 contentTitle=item.title
                                  ))
     return itemlist
 

@@ -403,8 +403,8 @@ def get_title(item):
 
     elif item.contentTitle:  # Si es una pelicula con el canal adaptado
         title = item.contentTitle
-    elif item.fulltitle:  # Si el canal no esta adaptado
-        title = item.fulltitle
+    elif item.contentTitle:  # Si el canal no esta adaptado
+        title = item.contentTitle
     else:  # Como ultimo recurso
         title = item.title
 

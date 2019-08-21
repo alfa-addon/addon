@@ -159,7 +159,7 @@ def destacados(item):
         if not year.isspace() and year != "":
             infolab['year'] = int(year)
 
-        itemlist.append(item.clone(action="findvideos", title=title, fulltitle=title,
+        itemlist.append(item.clone(action="findvideos", title=title, contentTitle=title,
                                    url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels=infolab, contentTitle =
                                    title, quality = quality))
 
@@ -196,7 +196,7 @@ def entradas(item):
             infolab['year'] = year
             title += '[COLOR %s] (%s)[/COLOR]' % (color1, year)
         title += '[COLOR %s] [%s][/COLOR]' % (color3, quality)
-        itemlist.append(item.clone(action="findvideos", title=title, fulltitle=title,
+        itemlist.append(item.clone(action="findvideos", title=title, contentTitle=title,
                                    url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels=infolab, contentTitle =
                                    title))
 

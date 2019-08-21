@@ -116,6 +116,6 @@ def play(item):
     patron  = '<source src="([^"]+)" type="video/mp4" label="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl,scrapedtitle  in matches:
-        itemlist.append(item.clone(action="play", title=scrapedtitle, fulltitle = item.title, url=scrapedurl))
+        itemlist.append(item.clone(action="play", title=scrapedtitle, url=scrapedurl))
     return itemlist
 

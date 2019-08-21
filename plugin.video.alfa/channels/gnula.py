@@ -186,7 +186,7 @@ def findvideos(item):
                 itemlist.append(Item(channel = item.channel, action = ""))
                 itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
                                      action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                     fulltitle = item.contentTitle
+                                     contentTitle = item.contentTitle
                                      ))
     return itemlist
 

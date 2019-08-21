@@ -176,14 +176,14 @@ def readbookmark(filepath):
     except:
         plot = lines[4].strip()
 
-    # Campos fulltitle y canal añadidos
+    # Campos contentTitle y canal añadidos
     if len(lines) >= 6:
         try:
-            fulltitle = urllib.unquote_plus(lines[5].strip())
+            contentTitle = urllib.unquote_plus(lines[5].strip())
         except:
-            fulltitle = lines[5].strip()
+            contentTitle = lines[5].strip()
     else:
-        fulltitle = titulo
+        contentTitle = titulo
 
     if len(lines) >= 7:
         try:
@@ -195,7 +195,7 @@ def readbookmark(filepath):
 
     bookmarkfile.close()
 
-    return canal, titulo, thumbnail, plot, server, url, fulltitle
+    return canal, titulo, thumbnail, plot, server, url, contentTitle
 
 
 def check_bookmark(readpath):
@@ -213,11 +213,11 @@ def check_bookmark(readpath):
             time.sleep(0.1)
 
             # Obtenemos el item desde el .txt
-            canal, titulo, thumbnail, plot, server, url, fulltitle = readbookmark(filetools.join(readpath, fichero))
+            canal, titulo, thumbnail, plot, server, url, contentTitle = readbookmark(filetools.join(readpath, fichero))
             if canal == "":
                 canal = "favorites"
-            item = Item(channel=canal, action="play", url=url, server=server, title=fulltitle, thumbnail=thumbnail,
-                        plot=plot, fanart=thumbnail, fulltitle=fulltitle, folder=False)
+            item = Item(channel=canal, action="play", url=url, server=server, title=contentTitle, thumbnail=thumbnail,
+                        plot=plot, fanart=thumbnail, contentTitle=contentTitle, folder=False)
 
             filetools.rename(filetools.join(readpath, fichero), fichero[:-4] + ".old")
             itemlist.append(item)

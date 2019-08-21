@@ -471,6 +471,6 @@ def findvideos(item):
     if config.get_videolibrary_support() and len(itemlist) and not item.contentSerieName:
                 itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",
                                      action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                     fulltitle = item.fulltitle
+                                     contentTitle = item.contentTitle
                                      ))
     return itemlist
