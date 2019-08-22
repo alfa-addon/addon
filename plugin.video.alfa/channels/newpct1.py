@@ -83,12 +83,8 @@ modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', chann
 timeout = config.get_setting('clonenewpct1_timeout_downloadpage', channel_py)   #Timeout downloadpage
 timeout = timeout * 1.4                                                         # Incremento temporal del 40%
 if timeout == 0: timeout = None
-try:
-    from core import proxytools
-    if proxytools.channel_proxy_list(host):                                     #Si usa un proxy, ...
-        timeout = timeout * 2                                                   #Duplicamos en timeout
-except:
-    logger.error(traceback.format_exc())
+if httptools.channel_proxy_list(host):                                          #Si usa un proxy, ...
+    timeout = timeout * 2                                                       #Duplicamos en timeout
 
 fecha_rango = config.get_setting('clonenewpct1_rango_fechas_novedades', channel_py) #Rango fechas para Novedades
 if fecha_rango == 0: fecha_rango = 'Hoy'

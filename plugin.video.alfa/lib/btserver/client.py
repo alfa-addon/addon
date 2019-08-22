@@ -93,7 +93,7 @@ class Client(object):
                         'udp://coppersurfer.tk:6969/announce',
                         'http://www.spanishtracker.com:2710/announce',
                         'http://www.todotorrents.com:2710/announce'
-                       ]
+                       ]                                                        ### Added some trackers from MCT
 
     VIDEO_EXTS = {'.avi': 'video/x-msvideo', '.mp4': 'video/mp4', '.mkv': 'video/x-matroska',
                   '.m4v': 'video/mp4', '.mov': 'video/quicktime', '.mpg': 'video/mpeg', '.ogv': 'video/ogg',
@@ -156,7 +156,10 @@ class Client(object):
         # Sesion
         self._cache = Cache(self.temp_path)
         self._ses = lt.session()
-        self._ses.listen_on(0, 0)
+        self._ses.add_dht_router("router.bittorrent.com",6881)                  ### from MCT
+        self._ses.add_dht_router("router.utorrent.com",6881)                    ### from MCT
+        self._ses.add_dht_router("dht.transmissionbt.com",6881)                 ### from MCT
+        #self._ses.listen_on(0, 0)                                              ### ALFA: it blocks repro of some .torrents
         # Cargamos el archivo de estado (si existe)
         if os.path.exists(os.path.join(self.temp_path, self.state_file)):
             try:
