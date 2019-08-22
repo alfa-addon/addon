@@ -83,12 +83,8 @@ modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', chann
 timeout = config.get_setting('clonenewpct1_timeout_downloadpage', channel_py)   #Timeout downloadpage
 timeout = timeout * 1.4                                                         # Incremento temporal del 40%
 if timeout == 0: timeout = None
-try:
-    from core import proxytools
-    if proxytools.channel_proxy_list(host):                                     #Si usa un proxy, ...
-        timeout = timeout * 2                                                   #Duplicamos en timeout
-except:
-    logger.error(traceback.format_exc())
+if httptools.channel_proxy_list(host):                                          #Si usa un proxy, ...
+    timeout = timeout * 2                                                       #Duplicamos en timeout
 
 fecha_rango = config.get_setting('clonenewpct1_rango_fechas_novedades', channel_py) #Rango fechas para Novedades
 if fecha_rango == 0: fecha_rango = 'Hoy'
@@ -1842,6 +1838,7 @@ def findvideos(item):
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
+    local_torr = ''
     size = ''
     size = generictools.get_torrent_size(url_torr, timeout=timeout)             #Buscamos si hay .torrent y el tamaño
     if not data or not scrapertools.find_single_match(data, patron) or not size:    # Si no hay datos o url, error
@@ -1856,9 +1853,16 @@ def findvideos(item):
             itemlist.append(item.clone(action='', title=item.category + 
                 ': ERROR 01: FINDVIDEOS:.  La Web no responde o la URL es erronea. ' 
                 + 'Si la Web está activa, reportar el error con el log', folder=False))
-            item.url = item.emergency_urls[0][0]                                #Guardamos la url del .Torrent
+            item.url = item.emergency_urls[0][0]                                #Restauramos la url del .Torrent
+            if item.url.startswith("\\") or item.url.startswith("/"):
+                from core import filetools
+                if item.contentType == 'movie':
+                    FOLDER = config.get_setting("folder_movies")
+                else:
+                    FOLDER = config.get_setting("folder_tvshows")
+                local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item.url)
             try:
-                enlaces_ver = item.emergency_urls[1]            #Guardamos los datos iniciales de los Servidores Directos
+                enlaces_ver = item.emergency_urls[1]            #Restauramos los datos iniciales de los Servidores Directos
             except:
                 logger.error(traceback.format_exc())
             item.armagedon = True                                               #Marcamos la situación como catastrófica 
@@ -1935,7 +1939,7 @@ def findvideos(item):
     if not size:
         size = scrapertools.find_single_match(item.quality, '\s?\[(\d+.?\d*?\s?\w\s?[b|B])\]')
     if not size and not item.armagedon and not item.videolibray_emergency_urls and url_torr:
-        size = generictools.get_torrent_size(url_torr, timeout=timeout)         #Buscamos el tamaño en el .torrent
+        size = generictools.get_torrent_size(url_torr, local_torr=local_torr)   #Buscamos el tamaño en el .torrent
     if size:
         size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                         .replace('Mb', 'M·b').replace('.', ',')

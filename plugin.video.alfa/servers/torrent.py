@@ -5,6 +5,7 @@ import threading
 import os
 import traceback
 import re
+import urllib
 
 try:
     import xbmc
@@ -41,7 +42,170 @@ class XBMCPlayer(xbmc.Player):
 xbmc_player = XBMCPlayer()
 
 
-# Reproductor propio (libtorrent)
+def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=10, lookup=False, data_torrent=False, headers={}):
+    if torrents_path != None:
+        logger.info("path = " + torrents_path)
+    else:
+        logger.info()
+    if referer and post:
+        logger.info('REFERER: ' + referer)
+
+    torrent_file = ''
+    if referer:
+        headers.update({'Content-Type': 'application/x-www-form-urlencoded', 'Referer': referer})   #Necesario para el Post del .Torrent
+    
+    """
+    Descarga en el path recibido el .torrent de la url recibida, y pasa el decode
+    Devuelve el path real del .torrent, o el path vacío si la operación no ha tenido éxito
+    """
+    
+    videolibrary_path = config.get_videolibrary_path()                  #Calculamos el path absoluto a partir de la Videoteca
+    if torrents_path == None:
+        if not videolibrary_path:
+            torrents_path = ''
+            if data_torrent:
+                return (torrents_path, torrent_file)
+            return torrents_path                                        #Si hay un error, devolvemos el "path" vacío
+        torrents_path = filetools.join(videolibrary_path, 'temp_torrents_Alfa', 'cliente_torrent_Alfa.torrent')    #path de descarga temporal
+    if '.torrent' not in torrents_path:
+        torrents_path += '.torrent'                                     #path para dejar el .torrent
+    #torrents_path_encode = filetools.encode(torrents_path)              #encode utf-8 del path
+    torrents_path_encode = torrents_path
+    
+    #if url.endswith(".rar") or url.startswith("magnet:"):               #No es un archivo .torrent
+    if url.endswith(".rar"):                                            #No es un archivo .torrent
+        logger.error('No es un archivo Torrent: ' + url)
+        torrents_path = ''
+        if data_torrent:
+            return (torrents_path, torrent_file)
+        return torrents_path                                            #Si hay un error, devolvemos el "path" vacío
+    
+    try:
+        #Descargamos el .torrent
+        if url.startswith("magnet:"):
+            torrent_file = magnet2torrent(url, headers=headers)         #Convierte el Magnet en un archivo Torrent
+            if not torrent_file:
+                logger.error('No es un archivo Magnet: ' + url)
+                torrents_path = ''
+                if data_torrent:
+                    return (torrents_path, torrent_file)
+                return torrents_path                                    #Si hay un error, devolvemos el "path" vacío
+        else:
+            if post:                                                    #Descarga con POST
+                response = httptools.downloadpage(url, headers=headers, post=post, follow_redirects=False, timeout=timeout)
+            else:                                                       #Descarga sin post
+                response = httptools.downloadpage(url, headers=headers, timeout=timeout)
+            if not response.sucess:
+                logger.error('Archivo .torrent no encontrado: ' + url)
+                torrents_path = ''
+                if data_torrent:
+                    return (torrents_path, torrent_file)
+                return torrents_path                                    #Si hay un error, devolvemos el "path" vacío
+            torrent_file = response.data
+
+        #Si es un archivo .ZIP tratamos de extraer el contenido
+        if torrent_file.startswith("PK"):
+            logger.info('Es un archivo .ZIP: ' + url)
+            
+            torrents_path_zip = filetools.join(videolibrary_path, 'temp_torrents_zip')  #Carpeta de trabajo
+            torrents_path_zip = filetools.encode(torrents_path_zip)
+            torrents_path_zip_file = filetools.join(torrents_path_zip, 'temp_torrents_zip.zip')     #Nombre del .zip
+            
+            import time
+            filetools.rmdirtree(torrents_path_zip)                      #Borramos la carpeta temporal
+            time.sleep(1)                                               #Hay que esperar, porque si no da error
+            filetools.mkdir(torrents_path_zip)                          #La creamos de nuevo
+            
+            if filetools.write(torrents_path_zip_file, torrent_file):   #Salvamos el .zip
+                torrent_file = ''                                       #Borramos el contenido en memoria
+                try:                                                    #Extraemos el .zip
+                    from core import ziptools
+                    unzipper = ziptools.ziptools()
+                    unzipper.extract(torrents_path_zip_file, torrents_path_zip)
+                except:
+                    import xbmc
+                    xbmc.executebuiltin('XBMC.Extract("%s", "%s")' % (torrents_path_zip_file, torrents_path_zip))
+                    time.sleep(1)
+                
+                for root, folders, files in filetools.walk(torrents_path_zip):      #Recorremos la carpeta para leer el .torrent
+                    for file in files:
+                        if file.endswith(".torrent"):
+                            input_file = filetools.join(root, file)                 #nombre del .torrent
+                            torrent_file = filetools.read(input_file)               #leemos el .torrent
+
+            filetools.rmdirtree(torrents_path_zip)                                  #Borramos la carpeta temporal
+
+        #Si no es un archivo .torrent (RAR, HTML,..., vacío) damos error
+        if not scrapertools.find_single_match(torrent_file, '^d\d+:.*?\d+:'):
+            logger.error('No es un archivo Torrent: ' + url)
+            torrents_path = ''
+            if data_torrent:
+                return (torrents_path, torrent_file)
+            return torrents_path                                            #Si hay un error, devolvemos el "path" vacío
+        
+        #Salvamos el .torrent
+        if not lookup:
+            if not filetools.write(torrents_path_encode, torrent_file):
+                logger.error('ERROR: Archivo .torrent no escrito: ' + torrents_path_encode)
+                torrents_path = ''                                          #Si hay un error, devolvemos el "path" vacío
+                torrent_file = ''                                           #... y el buffer del .torrent
+                if data_torrent:
+                    return (torrents_path, torrent_file)
+                return torrents_path
+    except:
+        torrents_path = ''                                                  #Si hay un error, devolvemos el "path" vacío
+        torrent_file = ''                                                   #... y el buffer del .torrent
+        logger.error('Error en el proceso de descarga del .torrent: ' + url + ' / ' + torrents_path_encode)
+        logger.error(traceback.format_exc())
+    
+    #logger.debug(torrents_path)
+    if data_torrent:
+        return (torrents_path, torrent_file)
+    return torrents_path
+    
+
+def magnet2torrent(magnet, headers={}):
+    logger.info()
+    torrent_file = ''
+    post = ''
+
+    if magnet.startswith('magnet'):
+        url_list = [
+                    ('https://itorrents.org/torrent/', 6, '', '.torrent')
+                   ]
+        for url, timeout, id, sufix in url_list:
+            if id:
+                post = '%s=%s' % (id, magnet)
+            else:
+                url = '%s%s%s' % (url, scrapertools.find_single_match(magnet, 'urn:btih:([\w\d]+)\&').upper(), sufix)
+            response = httptools.downloadpage(url, timeout=timeout, headers=headers, post=post)
+            if not response.sucess:
+                continue
+            if not scrapertools.find_single_match(response.data, '^d\d+:.*?\d+:') and not response.data.startswith("PK"):
+                continue
+            torrent_file = response.data
+            break
+
+    return torrent_file    
+
+
+def verify_url_torrent(url, timeout=5):
+    """
+    Verifica si el archivo .torrent al que apunta la url está disponible, descargándolo en un area temporal
+    Entrada:    url
+    Salida:     True o False dependiendo del resultado de la operación
+    """
+
+    if not url or url == 'javascript:;':                                            #Si la url viene vacía...
+        return False                                                                #... volvemos con error
+    torrents_path = caching_torrents(url, timeout=timeout, lookup=True)             #Descargamos el .torrent
+    if torrents_path:                                                               #Si ha tenido éxito...
+        return True
+    else:
+        return False
+
+
+# Reproductor Cliente Torrent propio (libtorrent)
 def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item=None):
     logger.info()
     
@@ -106,6 +270,9 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     erase_file_path = filetools.join(save_path_videos, video_path)
     video_path = erase_file_path
     if video_names: video_file = video_names[0]
+    if not video_file and mediaurl.startswith('magnet'):
+        video_file = urllib.unquote_plus(scrapertools.find_single_match(mediaurl, '(?:\&|&amp;)dn=([^\&]+)\&'))
+        erase_file_path = filetools.join(save_path_videos, video_file)
     
     if rar and RAR and not UNRAR:
         if not platformtools.dialog_yesno(msg_header, 'Se ha detectado un archivo .RAR en la descarga', \
@@ -148,7 +315,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
             txt2 = 'S: %d(%d) P: %d(%d) | DHT:%s (%d) | Trakers: %d | Pi: %d(%d)' % \
                    (s.num_seeds, s.num_complete, s.num_peers, s.num_incomplete, s.dht_state, s.dht_nodes,
                     s.trackers, s.pieces_sum, s.pieces_len)
-            txt3 = video_file[:99]
+            txt3 = video_file
 
         if rar and RAR and BACKGROUND or bkg_user:
             progreso.update(s.buffer, txt, txt2)
@@ -330,7 +497,10 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
         log("##### erase_file_path: %s" % erase_file_path)
         for x in range(10):
             if filetools.isdir(erase_file_path):
-                filetools.rmdirtree(erase_file_path)
+                if erase_file_path != save_path_videos:
+                    filetools.rmdirtree(erase_file_path)
+                else:
+                    break
             else:
                 filetools.remove(erase_file_path)
             time.sleep(5)
@@ -565,8 +735,8 @@ def get_tclient_data(folder, torr_client):
 def extract_files(rar_file, save_path_videos, password, dp, item=None, torr_client=None):
     logger.info()
     import sys
-    reload(sys)
-    sys.setdefaultencoding('utf-8')
+    #reload(sys)
+    #sys.setdefaultencoding('utf-8')
     sys.path.insert(0, config.get_setting("unrar_path", server="torrent", default="")\
                     .replace('/unrar', '').replace('\\unrar,exe', ''))
     

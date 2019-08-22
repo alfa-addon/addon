@@ -53,7 +53,7 @@ else:
 
 log('dirname: ' +str(dirname))
 
-versions = ['0.16.19', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.1.0', '1.1.1', '1.0.11', '1.1.6', '1.1.7', '1.2.1']       ### Alfa
+versions = ['0.16.19', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.0.11', '1.1.0', '1.1.1', '1.1.6', '1.1.7', '1.2.1']       ### Alfa
 default_path = versions[-1]
 #set_version = int(__settings__.getSetting('set_version'))                      ### Alfa
 set_version = 0                                                                 ### Alfa
@@ -71,7 +71,7 @@ if not os.path.exists(sizefile_path):
     if not os.path.exists(sizefile_path):
         log('set_version: no default at %s searching for any version' % sizefile_path)
         try:
-            versions = os.listdir(os.path.join(__root__, platform['system']))
+            versions = sorted(os.listdir(os.path.join(__root__, platform['system'])))
         except:
             versions = []
         for ver in versions:
@@ -169,6 +169,7 @@ try:
                 log('CDLL = ' + str(liblibtorrent))
                 
             except:
+                log('ERROR Comando ROOT: %s, %s' % (str(command), str(dest_path)))
                 log(traceback.format_exc())                                     ### Alfa
                 # http://i3.kym-cdn.com/photos/images/original/000/531/557/a88.jpg
                 dest_path=lm.android_workaround(new_dest_path=xbmc.translatePath('special://xbmc'))
