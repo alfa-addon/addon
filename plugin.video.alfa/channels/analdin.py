@@ -108,6 +108,6 @@ def play(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl  in matches:
         url = scrapedurl
-    itemlist.append(item.clone(action="play", title=url, fulltitle = item.title, url=url))
+    itemlist.append(item.clone(action="play", title=url, url=url))
     return itemlist
 

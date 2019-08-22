@@ -108,7 +108,7 @@ def sub_search(item):
     for dict in list:
         itemlist.append(item.clone(channel = item.channel,
                              action = action,
-                             fulltitle = dict["title"],
+                             contentTitle = dict["title"],
                              show = dict["title"],
                              infoLabels={"year":dict["release_year"]},
                              thumbnail = "http://static.pelisfox.tv/static/movie/" + dict["cover"],
@@ -252,7 +252,7 @@ def seccion(item):
         itemlist.append(
             Item(action="list_all",
                  channel=item.channel,
-                 fulltitle=item.title,
+                 contentTitle=item.title,
                  page = "1",
                  slug = slug,
                  title=title,

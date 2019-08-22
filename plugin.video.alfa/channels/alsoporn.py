@@ -94,6 +94,6 @@ def play(item):
         scrapedurl2 = scrapertools.find_single_match(data, '"[0-9]+p":"([^"]+)"').replace("\\", "")
 
     logger.debug(scrapedurl2)
-    itemlist.append(item.clone(action="play", title=item.title, fulltitle = item.title, url=scrapedurl2))
+    itemlist.append(item.clone(action="play", title=item.title, url=scrapedurl2))
     return itemlist
 

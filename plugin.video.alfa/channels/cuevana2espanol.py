@@ -79,7 +79,7 @@ def movies(item):
     matches = scrapertools.find_multiple_matches(data, pattern)
     for img, title, ranking, link, age in matches:
         itemTitle = "%s [COLOR yellow](%s)[/COLOR] [COLOR blue](%s)[/COLOR]" % (title, ranking, age)
-        itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=title, thumbnail=img, 
+        itemlist.append(Item(channel = item.channel, title=itemTitle, contentTitle=title, thumbnail=img, 
             url=link, action="findvideos", language="LAT", infoLabels={'year':age}))
 
     next_page = scrapertools.find_single_match(data, 'href="([^"]+)" ><span class="icon-chevron-right">')
@@ -105,7 +105,7 @@ def moviesIMDB(item):
         itemTitle = "[COLOR blue](#%s)[/COLOR] %s [COLOR yellow](%s)[/COLOR]" % (rank, title, rating)
         img = img.replace('-90x135', '')
 
-        itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=title, thumbnail=img, 
+        itemlist.append(Item(channel = item.channel, title=itemTitle, contentTitle=title, thumbnail=img, 
             url=link, action="findvideos", language="LAT", infoLabels={'year': '-'}))
 
     tmdb.set_infoLabels(itemlist, True)
@@ -131,7 +131,7 @@ def byLetter(item):
             if data['imdb']:
                 itemTitle += " [COLOR yellow](%s)[/COLOR]" % data['imdb']
 
-            itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=data['title'], url=data['url'], 
+            itemlist.append(Item(channel = item.channel, title=itemTitle, contentTitle=data['title'], url=data['url'], 
                                  thumbnail=data['img'].replace('-90x135', ''), action="findvideos",
                                  language="LAT", infoLabels={'year': year}))
 
@@ -161,7 +161,7 @@ def searchMovies(item):
     for link, img, title, year, plot in matches:
         itemTitle = "%s [COLOR blue](%s)[/COLOR]" % (title, year)
         fullimg = img.replace('-150x150', '')
-        itemlist.append(Item(channel = item.channel, title=itemTitle, fulltitle=title,
+        itemlist.append(Item(channel = item.channel, title=itemTitle, contentTitle=title,
                              thumbnail=fullimg, url=link, plot=plot, action="findvideos",
                              language="LAT", infoLabels={'year': year}))
 
@@ -301,6 +301,6 @@ def findvideos(item):
     if config.get_videolibrary_support() and len(itemlist):
                 itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="yellow",
                                      action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                     fulltitle = item.fulltitle
+                                     contentTitle = item.contentTitle
                                      ))
     return itemlist

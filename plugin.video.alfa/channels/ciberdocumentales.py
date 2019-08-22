@@ -88,7 +88,7 @@ def generos(item):
         url = host + scrapedurl
 
         itemlist.append(
-            Item(channel=item.channel, action="lista", title=title, fulltitle=item.title, url=url, thumbnail=thumbnail,
+            Item(channel=item.channel, action="lista", title=title, contentTitle=item.title, url=url, thumbnail=thumbnail,
                  fanart=fanart))
     return itemlist
 

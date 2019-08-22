@@ -67,6 +67,6 @@ def play(item):
     scrapedurl = scrapertools.find_single_match(data, '<source src="([^"]+)"')
     scrapedurl = scrapedurl.replace("X20", "-")
     itemlist.append(
-        Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=scrapedurl,
+        Item(channel=item.channel, action="play", title=item.title, url=scrapedurl,
              thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
     return itemlist

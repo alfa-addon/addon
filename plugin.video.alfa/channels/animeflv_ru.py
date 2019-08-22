@@ -135,7 +135,7 @@ def novedades_episodios(item):
         url = urlparse.urljoin(HOST, url)
         thumbnail = urlparse.urljoin(HOST, thumbnail)
         new_item = Item(channel=item.channel, action="findvideos", title=title, url=url, contentSerieName=show, thumbnail=thumbnail,
-                        fulltitle=title)
+                        contentTitle=title)
         itemlist.append(new_item)
     
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
@@ -159,7 +159,7 @@ def novedades_anime(item):
         title = clean_title(title)
         
         new_item = Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
-                        fulltitle=title)
+                        contentTitle=title)
         new_item.contentSerieName = title
         new_item.context = renumbertools.context(item)
         
@@ -189,7 +189,7 @@ def listado(item):
         url = urlparse.urljoin(HOST, url)
         thumbnail = urlparse.urljoin(HOST, thumbnail)
         new_item = Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
-                        fulltitle=title, plot=plot, )
+                        contentTitle=title, plot=plot, )
         if "Pelicula Anime" in genres:
             new_item.contentType = "movie"
             new_item.contentTitle = title
@@ -239,7 +239,7 @@ def episodios(item):
         title = "%s: %sx%s" % (item.title, season, str(episode).zfill(2))
         
         itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumbnail,
-                                   fulltitle=title, fanart=thumbnail, contentType="episode",
+                                   contentTitle=title, fanart=thumbnail, contentType="episode",
                                    infoLabels=infoLabels, contentSerieName=item.contentSerieName,))
     
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
@@ -264,7 +264,7 @@ def findvideos(item):
         if link:
             itemlist.append(Item(channel=item.channel, action="play", url=link, 
                             title=xserver.capitalize(),plot=item.plot, thumbnail=item.thumbnail,
-                            fulltitle=item.title, language='VOSE', server="directo"))
+                            contentTitle=item.title, language='VOSE', server="directo"))
     #~itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     # Requerido para AutoPlay

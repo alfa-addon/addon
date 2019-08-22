@@ -33,11 +33,19 @@
       "default": false,
       "enabled": true,
       "visible": true
+    },   
+    {
+      "id": "modo_grafico",
+      "type": "bool",
+      "label": "Buscar información extra (TMDB)",
+      "default": true,
+      "enabled": true,
+      "visible": true
     },
     {
       "id": "show_langs",
       "type": "bool",
-      "label": "Mostar idiomas en titulos",
+      "label": "Mostrar idiomas en titulos",
       "default": true,
       "enabled": true,
       "visible": true

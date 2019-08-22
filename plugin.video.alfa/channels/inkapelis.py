@@ -288,7 +288,7 @@ def entradas(item):
                 calidad = calidad.strip()
 
                 itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl, thumbnail=thumbnail,
-                                           contentTitle=scrapedtitle, fulltitle=scrapedtitle,
+                                           contentTitle=scrapedtitle, contentTitle=scrapedtitle,
                                            context=["buscar_trailer"],
                                            contentType="movie"))
 
@@ -330,7 +330,7 @@ def entradas(item):
                 filtro_list = filtro_list.items()
 
                 itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, contentTitle=scrapedtitle,
-                                           fulltitle=scrapedtitle, thumbnail=thumbnail, context=["buscar_trailer"],
+                                           contentTitle=scrapedtitle, thumbnail=thumbnail, context=["buscar_trailer"],
                                            contentType="movie", infoLabels={'filtro': filtro_list}))
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
@@ -451,8 +451,8 @@ def findvideos(item):
         if item.extra != "library":
             if config.get_videolibrary_support():
                 itemlist.append(Item(channel=item.channel, title="Añadir película a la videoteca",
-                                     action="add_pelicula_to_library", url=item.url, fulltitle=item.fulltitle,
-                                     infoLabels={'title': item.fulltitle}, text_color="green", extra="library"))
+                                     action="add_pelicula_to_library", url=item.url, contentTitle=item.contentTitle,
+                                     infoLabels={'title': item.contentTitle}, text_color="green", extra="library"))
 
     return itemlist
 

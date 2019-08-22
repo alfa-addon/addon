@@ -6,6 +6,7 @@
 
 import os
 import traceback
+import sys
 
 from core import scrapertools
 from platformcode import platformtools, logger
@@ -14,6 +15,8 @@ xbmc_vfs = True                                                 # False para des
 if xbmc_vfs:
     try:
         import xbmcvfs
+        reload(sys)                                             ### Workoround.  Revisar en la migración a Python 3
+        sys.setdefaultencoding('utf-8')                         # xbmcvfs degrada el valor de defaultencoding.  Se reestablece
         xbmc_vfs = True
     except:
         xbmc_vfs = False

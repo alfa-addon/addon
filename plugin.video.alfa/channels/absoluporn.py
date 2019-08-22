@@ -89,7 +89,7 @@ def play(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for servervideo,path,filee  in matches:
         scrapedurl = servervideo + path + "56ea912c4df934c216c352fa8d623af3" + filee
-        itemlist.append(Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=scrapedurl,
                             thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
     return itemlist
 

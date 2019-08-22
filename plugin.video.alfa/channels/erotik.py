@@ -67,7 +67,7 @@ def lista(item):
         thumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
         title = scrapedtitle.strip()
         itemlist.append(Item(channel=item.channel, action="play", thumbnail=thumbnail, fanart=thumbnail, title=title,
-                             fulltitle=title, url=url,
+                             url=url,
                              viewmode="movie", folder=True))
     paginacion = scrapertools.find_single_match(data,
                                                 '<li class="active">.*?</li>.*?<a href="([^"]+)">')

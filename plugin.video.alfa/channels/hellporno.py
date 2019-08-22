@@ -84,6 +84,6 @@ def play(item):
     scrapedurl = scrapertools.find_single_match(data,'<source data-fluid-hd src="([^"]+)/?br=\d+"')
     if scrapedurl=="":
         scrapedurl = scrapertools.find_single_match(data,'<source src="([^"]+)/?br=\d+"')
-    itemlist.append(item.clone(action="play", title=scrapedurl, fulltitle = item.title, url=scrapedurl))
+    itemlist.append(item.clone(action="play", title=scrapedurl, url=scrapedurl))
     return itemlist
 

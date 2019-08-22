@@ -69,7 +69,7 @@ def lista(item):
         title = "[COLOR yellow]" + duration + "[/COLOR] " + "[COLOR red]" +scrapedhd+ "[/COLOR]  "+scrapedtitle
         # Añade al listado
         itemlist.append(Item(channel=item.channel, action="play", title=title, thumbnail=thumbnail, fanart=thumbnail,
-                             fulltitle=title, url=url,
+                             contentTitle=title, url=url,
                              viewmode="movie", folder=True))
     paginacion = scrapertools.find_single_match(data,'<a class="active".*?.>\d+</a><a class="inactive" href ="([^"]+)">')
     if paginacion:

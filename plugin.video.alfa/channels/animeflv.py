@@ -145,7 +145,7 @@ def novedades_episodios(item):
         thumbnail = urlparse.urljoin(HOST, thumbnail)
 
         new_item = Item(channel=item.channel, action="findvideos", title=title, url=url, show=show, thumbnail=thumbnail,
-                        fulltitle=title)
+                        contentTitle=title)
         itemlist.append(new_item)
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
@@ -163,7 +163,7 @@ def novedades_anime(item):
         url = urlparse.urljoin(HOST, url)
         thumbnail = urlparse.urljoin(HOST, thumbnail)
         new_item = Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
-                        fulltitle=title, plot=plot)
+                        contentTitle=title, plot=plot)
         if _type != "Película":
             new_item.show = title
             new_item.context = renumbertools.context(item)
@@ -189,7 +189,7 @@ def listado(item):
         url = urlparse.urljoin(HOST, url)
         thumbnail = urlparse.urljoin(HOST, thumbnail)
         new_item = Item(channel=item.channel, action="episodios", title=title, url=url, thumbnail=thumbnail,
-                        fulltitle=title, plot=plot)
+                        contentTitle=title, plot=plot)
         if _type == "Anime":
             new_item.contentSerieName = title
             new_item.context = renumbertools.context(item)
