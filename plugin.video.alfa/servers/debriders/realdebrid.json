@@ -11,6 +11,14 @@
       "label": "Activar cuenta premium",
       "type": "bool",
       "visible": true
+    },
+    {
+      "default": "",
+      "enabled": "eq(-1,true)",
+      "id": "token",
+      "label": "Token (autentificación alternativa)",
+      "type": "text",
+      "visible": true
     }
   ]
 }

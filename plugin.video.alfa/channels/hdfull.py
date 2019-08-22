@@ -743,7 +743,7 @@ def findvideos(item):
         if "Favorito" in item.title:
             title = " [COLOR darkgrey][B]( Quitar de Favoritos )[/B][/COLOR]"
 
-        it1.append(Item(channel=item.channel, action="set_status", title=title, contentTitle=title, url=url_targets,
+        it1.append(Item(channel=item.channel, action="set_status", title=title, url=url_targets,
                         thumbnail=item.thumbnail, contentTitle=item.contentTitle, language=item.language, folder=True))
 
     data_js = httptools.downloadpage("%s/templates/hdfull/js/jquery.hdfull.view.min.js" % host).data
