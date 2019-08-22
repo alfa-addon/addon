@@ -3,9 +3,6 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
-import re
-import urllib
-import urlparse
 from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from core import httptools
@@ -18,10 +15,11 @@ from core import tmdb
 
 host = "https://www.tupelihd.com/"
 
-IDIOMAS = {'español': 'CAST', 'latino': 'LAT'}
+IDIOMAS = {'español': 'CAST', 'latino': 'LAT', 'vose': 'VOSE'}
 list_language = IDIOMAS.values()
 list_quality = []
-list_servers = ['directo', 'openload',  'streamango', 'rapidvideo']
+list_servers = ['openload',  'streamango', 'uploadmp4', 'vidoza']
+
 
 def mainlist(item):
     logger.info()
@@ -52,17 +50,10 @@ def mainlist(item):
              mode='search',
              thumbnail=get_thumb('search', auto=True)))
 
-    # itemlist.append(
-    #     Item(channel=item.channel,
-    #          title="Generos",
-    #          action="categories",
-    #          url=host,
-    #          thumbnail=get_thumb('genres', auto=True)
-    #          ))
-
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
+
 
 def sub_menu(item):
     logger.info()
@@ -131,12 +122,13 @@ def list_all(item):
             new_item.contentTitle = cleantitle
             new_item.mode = 'movies'
 
-        if item.mode == new_item.mode or item.mode =='search':
+        if item.mode == new_item.mode or item.mode == 'search':
             itemlist.append(new_item)
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
-    ## pagination
+    # Pagination
+
     try:
         next_page = soup.find("a", class_="next page-numbers")["href"]
         itemlist.append(Item(channel=item.channel, title='Siguiente >>', url=next_page, action='list_all'))
@@ -220,13 +212,14 @@ def episodesxseasons(item):
             epi_num = epi.find(class_="Num").text
             epi_title = epi_info.a.text
             title = '%sx%s - %s' % (season, epi_num, epi_title)
-            infoLabels['episode'] =epi_num
+            infoLabels['episode'] = epi_num
             itemlist.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
                                  infoLabels=infoLabels))
 
         tmdb.set_infoLabels_itemlist(itemlist, True)
 
     return itemlist
+
 
 def findvideos(item):
     logger.info()
@@ -240,7 +233,7 @@ def findvideos(item):
 
     for elem in soup.find_all("li", class_="STPb"):
 
-        extra_info = (elem.find_all("span")[1].text).split(' - ')
+        extra_info = elem.find_all("span")[1].text.split(' - ')
 
         if 'trailer' in extra_info[0].lower():
             continue
@@ -269,7 +262,7 @@ def findvideos(item):
         title = add_lang(lang)
 
         new_item = Item(channel=item.channel, title='%s' + title, url=url, action='play', infoLabels=item.infoLabels,
-                 language=lang)
+                        language=lang)
         if host in url:
             new_item.server = 'torrent'
 
@@ -287,7 +280,9 @@ def findvideos(item):
 
 def add_lang(lang):
 
-    if 'espa' in lang.lower():
+    if '.' in lang.lower():
+        lang = 'vose'
+    elif 'espa' in lang.lower():
         lang = 'español'
 
     title = ''

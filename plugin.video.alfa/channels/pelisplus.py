@@ -258,10 +258,11 @@ def findvideos(item):
         if 'pelisplus.net' in video_url:
             itemlist += add_vip(item, video_url, IDIOMAS[language])
 
-        elif not 'vidoza' in video_url and not 'pelishd' in video_url:
-            url_data = get_source(video_url)
-            url = scrapertools.find_single_match(url_data, '<iframe src="([^"]+)"')
 
+        # elif not 'vidoza' in video_url and not 'pelishd' in video_url:
+        #     url_data = get_source(video_url)
+        #     url = scrapertools.find_single_match(url_data, '<iframe src="([^"]+)"')
+        #
         else:
             url = video_url
 
