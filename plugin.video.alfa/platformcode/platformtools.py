@@ -215,7 +215,7 @@ def render_items(itemlist, parent_item):
         if item.fanart:
             fanart = item.fanart
         else:
-            fanart = os.path.join(config.get_runtime_path(), "fanart-2019.jpg")
+            fanart = os.path.join(config.get_runtime_path(), "fanart1.jpg")
 
         # Creamos el listitem
         #listitem = xbmcgui.ListItem(item.title)
@@ -1195,6 +1195,8 @@ def play_torrent(item, xlistitem, mediaurl):
     rar_files = []
     if item.password:
         size_rar = 3
+    
+    # Si es Libtorrent y no está soportado, se ofrecen alternativas, si las hay...
     if seleccion < 2 and not LIBTORRENT:
         dialog_ok('Cliente Interno (LibTorrent):', 'Este cliente no está soportado en su dispositivo.',  \
                   'Error: [COLOR yellow]%s[/COLOR]' % config.get_setting("libtorrent_error", server="torrent", default=''), \
@@ -1205,13 +1207,31 @@ def play_torrent(item, xlistitem, mediaurl):
                 return
         else:
             return
+    # Si es Torrenter o Elementum con opción de Memoria, se ofrece la posibilidad ee usar Libtorrent temporalemente
     elif seleccion > 1 and LIBTORRENT and UNRAR and 'RAR-' in item.torrent_info and ("torrenter" in torrent_options[seleccion][0] \
                         or ("elementum" in torrent_options[seleccion][0] and xbmcaddon.Addon(id="plugin.video.%s" \
                         % torrent_options[seleccion][0].replace('Plugin externo: ', '')).getSetting('download_storage') == '1')):
         if dialog_yesno(torrent_options[seleccion][0], 'Este plugin externo no soporta extraer on-line archivos RAR',  \
                         '[COLOR yellow]¿Quiere que usemos esta vez el Cliente interno MCT?[/COLOR]', \
                         'Esta operación ocupará en disco [COLOR yellow][B]%s+[/B][/COLOR] veces el tamaño del vídeo' % size_rar):
-                        seleccion = 1
+            seleccion = 1
+        else:
+            return
+    # Si es Elementum pero con opción de Memoria, se muestras los Ajustes de Elementum y se pide al usuario que cambie a "Usar Archivos"
+    elif seleccion > 1 and not LIBTORRENT and UNRAR and 'RAR-' in item.torrent_info and "elementum" in torrent_options[seleccion][0] \
+                        and xbmcaddon.Addon(id="plugin.video.%s" % torrent_options[seleccion][0].replace('Plugin externo: ', ''))\
+                        .getSetting('download_storage') == '1':
+        if dialog_yesno(torrent_options[seleccion][0], 'Elementum con descarga en [COLOR yellow]Memoria[/COLOR] no soporta ' + \
+                        'extraer on-line archivos RAR (ocupación en disco [COLOR yellow][B]%s+[/B][/COLOR] veces)' % size_rar,  \
+                        '[COLOR yellow]¿Quiere llamar a los Ajustes de Elementum para cambiar [B]temporalmente[/B] ' + \
+                        'a [COLOR hotpink]"Usar Archivos"[/COLOR] y [B]reintentarlo[/B]?[/COLOR]'):
+            __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torrent_options[seleccion][0].replace('Plugin externo: ', ''))
+            __settings__.openSettings()                                     # Se visulizan los Ajustes de Elementum
+            elementum_dl =  xbmcaddon.Addon(id="plugin.video.%s" % torrent_options[seleccion][0].replace('Plugin externo: ', ''))\
+                        .getSetting('download_storage')
+            if elementum_dl != '1':
+                config.set_setting("elementum_dl", "1", server="torrent")   # Salvamos el cambio para restaurarlo luego
+        return                                                              # Se sale, porque habrá refresco y cancelaría Kodi si no
         
     # Descarga de torrents a local
     if seleccion >= 0:
@@ -1251,8 +1271,8 @@ def play_torrent(item, xlistitem, mediaurl):
         if item.headers:
             headers = item.headers
         
-        #identificamos si es una url o un path de archivo.  Los Magnets los tratamos de la forma clásica       
-        if not item.url.startswith("\\") and not item.url.startswith("/") and not item.url.startswith("magnet:") and not url_stat:
+        #identificamos si es una url o un path de archivo  
+        if not item.url.startswith("\\") and not item.url.startswith("/") and not url_stat:
             timeout = 10
             if item.torrent_alt:
                 timeout = 5
@@ -1271,7 +1291,7 @@ def play_torrent(item, xlistitem, mediaurl):
         if not url and item.torrent_alt:                                    #Si hay error, se busca un .torrent alternativo
             if (item.torrent_alt.startswith("\\") or item.torrent_alt.startswith("/")) and videolibrary_path:
                 item.url = item.torrent_alt                                 #El .torrent alternativo puede estar en una url o en local
-            elif not item.url.startswith("\\") and not item.url.startswith("/") and not item.url.startswith("magnet:"):
+            elif not item.url.startswith("\\") and not item.url.startswith("/"):
                 item.url = item.torrent_alt
         
         #Si es un archivo .torrent local, actualizamos el path relativo a path absoluto
@@ -1360,6 +1380,11 @@ def play_torrent(item, xlistitem, mediaurl):
                             filetools.remove(erase_file_path)
                     except:
                         logger.error(traceback.format_exc(1))
+            elementum_dl = config.get_setting("elementum_dl", server="torrent", default='')     # Si salvamos el cambio de Elementum
+            if elementum_dl:
+                config.set_setting("elementum_dl", "", server="torrent")        # lo reseteamos en Alfa
+                xbmcaddon.Addon(id="plugin.video.%s" % torrent_options[seleccion][0].replace('Plugin externo: ', ''))\
+                        .setSetting('download_storage', elementum_dl)           # y lo reseteamos en Elementum
 
 
 def log(texto):

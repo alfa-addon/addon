@@ -181,13 +181,13 @@ def episodios(item):
     # obtener el numero total de episodios
     total_episode = 0
 
-    patron_caps = '<li><span>Capitulo (\d+).*?</span><a href="(.*?)">(.*?)</a></li>'
+    patron_caps = '<li><span><strong>Capitulo <\/strong>(\d+).*? -<\/span>(.+?)<\/li><\/a><a href="(.*?)">'
     matches = scrapertools.find_multiple_matches(data, patron_caps)
     patron_info = '<img src="([^"]+)">.+?</span>(.*?)</p>.*?<h2>Reseña:</h2><p>(.*?)</p>'
     scrapedthumbnail, show, scrapedplot = scrapertools.find_single_match(data, patron_info)
     scrapedthumbnail = host + scrapedthumbnail
     
-    for cap, link, name in matches:
+    for cap, name, link in matches:
 
         title = ""
         pat = "/"

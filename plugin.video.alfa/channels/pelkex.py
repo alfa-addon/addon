@@ -34,7 +34,7 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host + '?s=', pages=2,
+    itemlist.append(Item(channel=item.channel, title="Todas", action="list_all", url=host,
                          thumbnail=get_thumb('all', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Generos", action="section",
@@ -55,45 +55,34 @@ def list_all(item):
     logger.info()
 
     itemlist = []
-    i = 1
-    while i <= item.pages:
-        try:
-            data = get_source(item.url)
-        except:
-            break
-        patron = '<div class="card-image"><a href="([^"]+)"><img src="([^"]+)" alt="([^"]+)" />.*?'
-        patron += '</h3><p>([^<]+)</p>.*?</i>(\d{4})</li>'
+    data = get_source(item.url)
+    patron = '<a class="ah-imagge" href="([^"]+)">.*?src="([^"]+).*?title="([^"]+)".*?Calificacion(.*?)ratebox'
 
-        matches = re.compile(patron, re.DOTALL).findall(data)
+    matches = re.compile(patron, re.DOTALL).findall(data)
 
-        for scrapedurl, scrapedthumbnail, scrapedtitle, plot, year in matches:
-            url = scrapedurl
-            scrapedtitle = scrapedtitle
-            thumbnail = scrapedthumbnail
-            new_item = Item(channel=item.channel, title=scrapedtitle, url=url, action='findvideos',
-                            thumbnail=thumbnail, plot=plot, infoLabels={'year':year})
+    for scrapedurl, scrapedthumbnail, scrapedtitle, year_data in matches:
+        url = scrapedurl
+        year = scrapertools.find_single_match(year_data, '>Año<.*?>(\d{4})')
+        if not year:
+            year = '-'
+        scrapedtitle = scrapedtitle
+        thumbnail = scrapedthumbnail
+        new_item = Item(channel=item.channel, title=scrapedtitle, url=url, action='findvideos',
+                        thumbnail=thumbnail, infoLabels={'year':year})
 
-            new_item.contentTitle=scrapedtitle
-            itemlist.append(new_item)
+        new_item.contentTitle=scrapedtitle
+        itemlist.append(new_item)
 
-        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
-        # Paginacion
+    # Paginacion
 
-        if itemlist != []:
 
-            next_page = scrapertools.find_single_match(data, "href='#'>\d+</a></li><li class='page-item'>"
-                                                             "<a class='page-link' href='([^']+)'>")
-            if next_page != '' and i == item.pages:
-                itemlist.append(Item(channel=item.channel, action="list_all", title='Siguiente >>>', url=next_page,
-                                     pages=item.pages))
-            else:
-                item.url=next_page
-        i += 1
+    next_page = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)">')
+    if next_page:
+        itemlist.append(Item(channel=item.channel, action="list_all", title='Siguiente >>>', url=next_page))
 
     return itemlist
-
-
 
 def section(item):
     logger.info()
@@ -101,9 +90,9 @@ def section(item):
     itemlist = []
     data=get_source(host)
     if item.title == 'Generos':
-        data = scrapertools.find_single_match(data, 'tabindex="0">Generos<.*?</ul>')
+        data = scrapertools.find_single_match(data, '<a href="#">Genero</a>(.*?)</ul>')
     elif 'Años' in item.title:
-        data = scrapertools.find_single_match(data, 'tabindex="0">Año<.*?</ul>')
+        data = scrapertools.find_single_match(data, '<a href="#">Año</a>(.*?)</ul>')
 
     patron = 'href="([^"]+)">([^<]+)</a>'
 
@@ -111,7 +100,7 @@ def section(item):
 
     for url, title in matches:
 
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='list_all', pages=3))
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action='list_all'))
 
     return itemlist
 
@@ -121,17 +110,27 @@ def findvideos(item):
 
     itemlist = []
     data = get_source(item.url)
-    patron = '<div id="[^"]+" class="tab.*?"><(?:iframe|IFRAME).*?(?:src|SRC)="([^"]+)"'
+    patron = 'data-url="([^"]+)" data-postId="\d+">([^<]+)<'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for scrapedurl, server in matches:
+        url = scrapedurl
+        if server.lower() != 'trailer':
+            itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language=IDIOMAS['Latino'],
+                                 infoLabels=item.infoLabels))
+
+    patron = '<a href="([^"]+)" class="download-link"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl in matches:
-        if 'http' not in scrapedurl:
-            url = 'http:'+scrapedurl
-        else:
-            url = scrapedurl
+        url = scrapedurl
+        server = ''
+        if 'magnet' in url:
+            server = 'torrent'
+        if url not in itemlist:
+            itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language=IDIOMAS['Latino'],
+                                 infoLabels=item.infoLabels, server=server))
 
-        itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language=IDIOMAS['Latino'],
-                             infoLabels=item.infoLabels))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 

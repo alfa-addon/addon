@@ -241,7 +241,7 @@ def parse_mixed_results(item, data):
         title += scrapertools.htmlclean(scrapedtitle)
         if scrapedyear != '':
             title += " (" + scrapedyear + ")"
-        contentTitle = title
+        contentTitle = scrapedtitle
         if scrapedvalue != '':
             title += " (" + scrapedvalue + ")"
         thumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
@@ -258,14 +258,14 @@ def parse_mixed_results(item, data):
             if item.tipo != "series":
                 itemlist.append(Item(channel=item.channel, action="findvideos", title=title, extra=referer, url=url,
                                      thumbnail=thumbnail, plot=plot, contentTitle=contentTitle, fanart=fanart,
-                                     contentTitle=scrapedtitle, contentType="movie", context=["buscar_trailer"]))
+                                     contentType="movie", context=["buscar_trailer"]))
         else:
             referer = item.url
             url = urlparse.urljoin(item.url, scrapedurl)
             if item.tipo != "pelis":
                 itemlist.append(Item(channel=item.channel, action="episodios", title=title, extra=referer, url=url,
                                      thumbnail=thumbnail, plot=plot, contentTitle=contentTitle, show=title, fanart=fanart,
-                                     contentTitle=scrapedtitle, contentType="tvshow", context=["buscar_trailer"]))
+                                     contentType="tvshow", context=["buscar_trailer"]))
     next_page = scrapertools.find_single_match(data,
                                                '<div class="onclick load-more-icon no-json" data-action="replace" data-url="([^"]+)">')
     if next_page != "":

@@ -1,7 +1,7 @@
 {
   "id": "divxtotal",
   "name": "Divxtotal",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast"],
   "thumbnail": "http://imgur.com/Madj03A.jpg",

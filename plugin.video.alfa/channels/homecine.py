@@ -15,7 +15,7 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-IDIOMAS = {'Latino': 'LAT', 'Castellano': 'CAST', 'Subtitulado': 'VOSE'}
+IDIOMAS = {'Latino': 'LAT', 'Castellano': 'CAST', 'Subtitulado': 'VOSE', 'Ingles': 'VO'}
 list_language = IDIOMAS.values()
 list_quality = ['HD 720p', 'HD 1080p', '480p', '360p']
 list_servers = ['cinemaupload']
@@ -320,7 +320,7 @@ def findvideos(item):
         if not config.get_setting('unify'):
             if language != '':
                 try:
-                    title += ' [%s]' % IDIOMAS[language.capitalize()]
+                    title += ' [%s]' % IDIOMAS.get(language.capitalize(), 'Latino')
                 except:
                     pass
             if quality != '':
@@ -333,7 +333,7 @@ def findvideos(item):
                         infoLabels = item.infoLabels
                         )
         if language != '':
-            new_item.language = IDIOMAS[language.capitalize()]
+            new_item.language = IDIOMAS.get(language.capitalize(), 'Latino')
         if quality != '':
             new_item.quality = quality
 

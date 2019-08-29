@@ -1,7 +1,7 @@
 {
   "id": "reyanime",
   "name": "Rey Anime",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://i.imgur.com/XaX2Bpw.png",

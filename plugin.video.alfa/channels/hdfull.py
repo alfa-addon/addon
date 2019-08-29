@@ -17,9 +17,11 @@ from platformcode import platformtools
 from channelselector import get_thumb
 
 host = "https://hdfull.me"
+
 _silence = config.get_setting('silence_mode', 'hdfull')
 show_langs = config.get_setting('show_langs', 'hdfull')
 unify = config.get_setting('unify')
+__modo_grafico__ = config.get_setting('modo_grafico', 'hdfull')
 
 IDIOMAS = {'lat': 'LAT', 'spa': 'CAST', 'esp': 'CAST', 'sub': 'VOSE', 'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO'}
 list_language = IDIOMAS.values()
@@ -29,9 +31,13 @@ list_servers = ['flix555', 'clipwatching', 'verystream', 'gamovideo', 'powvideo'
 
 def login():
     logger.info()
+    logged = config.get_setting("logged", channel="hdfull")
+    if logged:
+        return True
     data = httptools.downloadpage(host).data
     _logged = '<a href="%s/logout"' % host
     if _logged in data:
+        config.set_setting("logged", True, channel="hdfull")
         return True
     else:
         patron = "<input type='hidden' name='__csrf_magic' value=\"([^\"]+)\" />"
@@ -43,20 +49,24 @@ def login():
             if not _silence:
                 platformtools.dialog_notification("Falta la contraseña", 
                                               "Revise sus datos en la configuración del canal",
-                                              sound=False,)
+                                              sound=False)
+            config.set_setting("logged", False, channel="hdfull")
             return False
         post = '__csrf_magic=%s&username=%s&password=%s&action=login' % (sid, user_, pass_)
         new_data = httptools.downloadpage(host, post=post).data
         if _logged in new_data:
+            config.set_setting("logged", True, channel="hdfull")
             return True
         
         elif _silence:
+            config.set_setting("logged", False, channel="hdfull")
             return False
         
         else:
             platformtools.dialog_notification("No se pudo realizar el login",
                                              "Revise sus datos en la configuración del canal",
-                                             sound=False,)
+                                             sound=False)
+            config.set_setting("logged", False, channel="hdfull")
             return False
 
 
@@ -80,6 +90,7 @@ def logout(item):
     #borramos el login
     config.set_setting("hdfulluser", "", channel="hdfull")
     config.set_setting("hdfullpassword", "", channel="hdfull")
+    config.set_setting("logged", False, channel="hdfull")
     
     #avisamos, si nos dejan
     if not _silence:
@@ -328,19 +339,24 @@ def items_usuario(item):
                         'iso-8859-1')
                 url = urlparse.urljoin(host, '/serie/' + ficha[
                     'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + ficha['id'] + ";3"
+                if str != "": title += str
+            itemlist.append(
+                    Item(channel=item.channel, action=action, title=title,
+                        url=url, thumbnail=thumbnail,
+                        contentSerieName=show, text_bold=True))
         except:
             url = urlparse.urljoin(host, '/pelicula/' + ficha['perma']) + "###" + ficha['id'] + ";2"
-            action = "findvideos"
             str = get_status(status, 'movies', ficha['id'])
-        if str != "": title += str
-        itemlist.append(
-            Item(channel=item.channel, action=action, title=title, contentTitle=title, url=url, thumbnail=thumbnail,
-                 contentSerieName=show, folder=True))
+            if str != "": title += str
+            itemlist.append(
+                Item(channel=item.channel, action="findvideos", title=title, 
+                     contentTitle=show, url=url, thumbnail=thumbnail,
+                    text_bold=True, infoLabels={'year': '-'}))
     if len(itemlist) == int(limit):
         itemlist.append(
             Item(channel=item.channel, action="items_usuario", title=">> Página siguiente", url=next_page, text_bold=True))
 
-    #tmdb.set_infoLabels_itemlist(itemlist, True)
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     
     return itemlist
 
@@ -452,15 +468,15 @@ def fichas(item):
         else:
             itemlist.append(
                 Item(channel=item.channel, action=action, title=title, url=url,
-                     text_bold=True, contentType=contentType, contentTitle=show,
-                     language=language, infoLabels=infoLabels, thumbnail=thumbnail))
+                     text_bold=True, contentTitle=show, language=language, 
+                     infoLabels=infoLabels, thumbnail=thumbnail))
     ## Paginación
     next_page_url = scrapertools.find_single_match(data, '<a href="([^"]+)">.raquo;</a>')
     if next_page_url != "":
         itemlist.append(Item(channel=item.channel, action="fichas", title=">> Página siguiente",
                              url=urlparse.urljoin(item.url, next_page_url), text_bold=True))
     
-    tmdb.set_infoLabels_itemlist(itemlist, True)
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     
     return itemlist
 
@@ -513,7 +529,7 @@ def seasons(item):
         
         itemlist.append(
                 Item(channel=item.channel, action="episodesxseason", title=scrapedtitle,
-                     url=item.url, thumbnail=thumbnail, sid=sid,
+                     url=item.url, thumbnail=thumbnail, sid=sid, text_bold=True,
                      contentSerieName=item.contentSerieName,
                      contentSeasonNumber=ssid, infoLabels=infoLabels))
 
@@ -522,8 +538,6 @@ def seasons(item):
                              action="add_serie_to_library", url=item.url, text_bold=True, extra="episodios",
                              contentSerieName=item.contentSerieName,
                              ))
-
-    tmdb.set_infoLabels_itemlist(itemlist, True)
 
     return itemlist
 
@@ -566,7 +580,7 @@ def episodesxseason(item):
         
         #Idiomas
         texto_idiomas, langs = extrae_idiomas(language, list_language=True)
-        
+
         if language != "[]" and show_langs and not unify:
             idiomas = "[COLOR darkgrey]%s[/COLOR]" % texto_idiomas
         
@@ -593,7 +607,7 @@ def episodesxseason(item):
                              contentType="episode", language=langs, text_bold=True,
                              infoLabels=infoLabels))
 
-    tmdb.set_infoLabels_itemlist(itemlist, True)
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
     return itemlist
 
@@ -665,7 +679,7 @@ def novedades_episodios(item):
             Item(channel=item.channel, action="novedades_episodios", title=">> Página siguiente", 
                 url=next_page, text_bold=True))
 
-    tmdb.set_infoLabels_itemlist(itemlist, True)
+    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     
     return itemlist
 
@@ -729,7 +743,7 @@ def findvideos(item):
         if "Favorito" in item.title:
             title = " [COLOR darkgrey][B]( Quitar de Favoritos )[/B][/COLOR]"
 
-        it1.append(Item(channel=item.channel, action="set_status", title=title, contentTitle=title, url=url_targets,
+        it1.append(Item(channel=item.channel, action="set_status", title=title, url=url_targets,
                         thumbnail=item.thumbnail, contentTitle=item.contentTitle, language=item.language, folder=True))
 
     data_js = httptools.downloadpage("%s/templates/hdfull/js/jquery.hdfull.view.min.js" % host).data
@@ -771,15 +785,17 @@ def findvideos(item):
         idioma = IDIOMAS.get(idioma.lower(), idioma)
         calidad = unicode(calidad, "utf8").upper().encode("utf8")
         title = option + ": %s [COLOR greenyellow](" + calidad + ")[/COLOR] [COLOR darkgrey](" + idioma + ")[/COLOR]"
-        thumbnail = item.thumbnail
-        plot = item.title + "\n\n" + scrapertools.find_single_match(data,
-                                                                    '<meta property="og:description" content="([^"]+)"')
-        plot = scrapertools.htmlclean(plot)
+        plot = item.plot
+        if not item.plot:
+            plot = scrapertools.find_single_match(data,
+                                            '<meta property="og:description" content="([^"]+)"')
+            plot = scrapertools.htmlclean(plot)
+            plot = re.sub('^.*?y latino', '', plot)
         fanart = scrapertools.find_single_match(data, '<div style="background-image.url. ([^\s]+)')
         if account:
             url += "###" + id + ";" + type
         it2.append(
-            Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
+            Item(channel=item.channel, action="play", title=title, url=url,
                  plot=plot, fanart=fanart, contentSerieName=item.contentSerieName, 
                  infoLabels=item.infoLabels, language=idioma,
                  contentType=item.contentType, tipo=option, tipo1=option1,
@@ -853,7 +869,7 @@ def extrae_idiomas(bloqueidiomas, list_language=False):
     #Orden y diccionario
     for w in idiomas:
         i = IDIOMAS.get(w.lower(), w)
-        language.insert(orden_idiomas.get(i, i), i)
+        language.insert(orden_idiomas.get(i, 0), i)
     
     for idioma in language:
         textoidiomas += "[%s] " % idioma

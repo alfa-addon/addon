@@ -24,6 +24,7 @@ list_language = ['LAT', 'CAST', 'VO', 'VOSE']
 list_servers = ['directo']
 list_quality = ['SD', '720', '1080', '4k']
 
+
 def mainlist(item):
     logger.info()
 
@@ -45,7 +46,6 @@ def show_channels(item):
                  "action": "remove_channel",
                  "channel": "community"}]
 
-
     path = os.path.join(config.get_data_path(), 'community_channels.json')
     file = open(path, "r")
     json = jsontools.load(file.read())
@@ -63,6 +63,7 @@ def show_channels(item):
                              thumbnail=poster, action='show_menu', channel_id = key, context=context))
     return itemlist
 
+
 def load_json(item):
     logger.info()
 
@@ -75,25 +76,34 @@ def load_json(item):
 
     return json_data
 
+
 def show_menu(item):
     global list_data
     logger.info()
     itemlist = []
 
-    json_data = load_json(item)
+    if not item.results:
+        json_data = load_json(item)
+    else:
+        json_data = item.results
 
     if "menu" in json_data:
         for option in json_data['menu']:
-            itemlist.append(Item(channel=item.channel, title=option['title'], action='show_menu', url=option['link']))
+            if 'buscar' in option['title'].lower():
+                action = 'finder'
+            else:
+                action = 'show_menu'
+            itemlist.append(Item(channel=item.channel, title=option['title'], action=action, url=option['link']))
         autoplay.show_option(item.channel, itemlist)
         return itemlist
 
     if "movies_list" in json_data:
         item.media_type='movies_list'
+        item.first = 0
 
     elif "tvshows_list" in json_data:
         item.media_type = 'tvshows_list'
-
+        item.first = 0
     elif "episodes_list" in json_data:
         item.media_type = 'episodes_list'
 
@@ -102,13 +112,27 @@ def show_menu(item):
 
     return itemlist
 
+
 def list_all(item):
     logger.info()
 
     itemlist = []
+    next = False
     media_type = item.media_type
-    json_data = load_json(item)
-    for media in json_data[media_type]:
+
+    if not item.results:
+        json_data = load_json(item)
+    else:
+        json_data = item.results
+
+    first = item.first
+    last = first + 19
+    if last > len(json_data[media_type]):
+        last = len(json_data[media_type])
+    else:
+        next = True
+
+    for media in json_data[media_type][first:last]:
 
         quality, language, plot, poster = set_extra_values(media)
 
@@ -133,7 +157,16 @@ def list_all(item):
         itemlist.append(new_item)
 
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
+
+    # Pagination
+
+    if next:
+        first = last
+        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=item.url, action='list_all',
+                         media_type=item.media_type, results=item.results, first=first))
+
     return itemlist
+
 
 def seasons(item):
     logger.info()
@@ -197,6 +230,7 @@ def findvideos(item):
 
     return itemlist
 
+
 def add_channel(item):
     logger.info()
     import xbmc
@@ -243,7 +277,9 @@ def add_channel(item):
     file.close()
 
     platformtools.dialog_notification('Alfa', '%s se ha agregado' % json_file['channel_name'])
+    platformtools.itemlist_refresh()
     return
+
 
 def remove_channel(item):
     logger.info()
@@ -284,6 +320,7 @@ def set_extra_values(dict):
 
     return quality, language, plot, poster
 
+
 def set_title(title, language, quality):
     logger.info()
 
@@ -299,3 +336,30 @@ def set_title(title, language, quality):
                     title += '[%s]' % lang.upper()
 
     return title.capitalize()
+
+
+def finder(item):
+    logger.info()
+
+    keywords = platformtools.dialog_input()
+    results = dict()
+    json_data = load_json(item)
+
+    if 'movies_list' in json_data:
+        json_data = json_data['movies_list']
+        item.media_type = 'movies_list'
+    elif 'tvshows_list' in json_data:
+        json_data = json_data['tvshows_list']
+        item.media_type = 'tvshows_list'
+    else:
+        return
+    
+    string_list = list()
+
+    for s in keywords.split(' '):
+        if len(s) > 3:
+            string_list.append(s)
+
+    results[item.media_type] = [c for s in string_list for c in json_data if s.lower() in c['title'].lower()]
+    item.results = results
+    return show_menu(item)
