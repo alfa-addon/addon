@@ -19,6 +19,7 @@ from platformcode import logger
 
 thumb_dict = {"movies": "https://s10.postimg.cc/fxtqzdog9/peliculas.png",
     "tvshows": "https://s10.postimg.cc/kxvslawe1/series.png",
+    "on air":"https://i.postimg.cc/HLLJWMcr/en-emision.png",
     "all": "https://s10.postimg.cc/h1igpgw0p/todas.png",
     "genres": "https://s10.postimg.cc/6c4rx3x1l/generos.png",
     "search": "https://s10.postimg.cc/v985e2izd/buscar.png",
