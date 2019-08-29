@@ -18,10 +18,11 @@ from channelselector import get_thumb
 
 host = "https://hdfull.me"
 
-_silence = config.get_setting('silence_mode', 'hdfull')
-show_langs = config.get_setting('show_langs', 'hdfull')
+_silence = config.get_setting('silence_mode', channel='hdfull')
+show_langs = config.get_setting('show_langs', channel='hdfull')
 unify = config.get_setting('unify')
-__modo_grafico__ = config.get_setting('modo_grafico', 'hdfull')
+__modo_grafico__ = config.get_setting('modo_grafico', channel='hdfull')
+account = config.get_setting("logged", channel="hdfull")
 
 IDIOMAS = {'lat': 'LAT', 'spa': 'CAST', 'esp': 'CAST', 'sub': 'VOSE', 'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO'}
 list_language = IDIOMAS.values()
@@ -31,9 +32,6 @@ list_servers = ['flix555', 'clipwatching', 'verystream', 'gamovideo', 'powvideo'
 
 def login():
     logger.info()
-    logged = config.get_setting("logged", channel="hdfull")
-    if logged:
-        return True
     data = httptools.downloadpage(host).data
     _logged = '<a href="%s/logout"' % host
     if _logged in data:
@@ -43,8 +41,8 @@ def login():
         patron = "<input type='hidden' name='__csrf_magic' value=\"([^\"]+)\" />"
     
         sid = urllib.quote(scrapertools.find_single_match(data, patron))
-        user_ = config.get_setting('hdfulluser', 'hdfull')
-        pass_ = config.get_setting('hdfullpassword', 'hdfull')
+        user_ = config.get_setting('hdfulluser', channel='hdfull')
+        pass_ = config.get_setting('hdfullpassword', channel='hdfull')
         if not pass_:
             if not _silence:
                 platformtools.dialog_notification("Falta la contraseña", 
@@ -68,12 +66,6 @@ def login():
                                              sound=False)
             config.set_setting("logged", False, channel="hdfull")
             return False
-
-
-if config.get_setting('hdfulluser', 'hdfull'):
-    account = login()
-else:
-    account = False
 
 
 def settingCanal(item):
@@ -103,6 +95,11 @@ def logout(item):
 def mainlist(item):
     logger.info()
     itemlist = []
+    if config.get_setting('hdfulluser', channel='hdfull'):
+        account = login()
+    else:
+        account = False
+
 
     autoplay.init(item.channel, list_servers, list_quality)
     

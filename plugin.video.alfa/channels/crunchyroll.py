@@ -127,8 +127,8 @@ def mainlist(item):
                                url=host + "/videos/drama/alpha"))
     itemlist.append(item.clone(title="Buscar...", action="search",
                                url=host + "/search?q=%s&o=m", text_color=color2))
-    if item.proxy != "usa":
-        itemlist.append(item.clone(action="calendario", title="Calendario de Estrenos Anime", text_color=color4,
+    
+    itemlist.append(item.clone(action="calendario", title="Calendario de Estrenos Anime", text_color=color4,
                                    url=host + "/simulcastcalendar"))
     itemlist.append(item.clone(title="Configuración del canal", action="configuracion", text_color="gold"))
     return itemlist
@@ -324,17 +324,18 @@ def indices(item):
     if not item.url:
         itemlist.append(item.clone(title="Alfabético", url=host + "/videos/anime/alpha"))
         itemlist.append(item.clone(title="Géneros", url=host + "/videos/anime"))
-        itemlist.append(item.clone(title="Temporadas", url=host + "/videos/anime"))
+        if not item.proxy:
+            itemlist.append(item.clone(title="Temporadas", url=host + "/videos/anime/seasons"))
     else:
         data = get_source(item.url).data
         if "Alfabético" in item.title:
-            bloque = scrapertools.find_single_match(data, '<div class="content-menu cf ">(.*?)</div>')
+            bloque = scrapertools.find_single_match(data, '<div class="content-menu cf">(.*?)</div>')
             matches = scrapertools.find_multiple_matches(bloque, '<a href="([^"]+)".*?>([^<]+)<')
             for url, title in matches:
                 if "todo" in title:
                     continue
                 if item.proxy:
-                    url = proxy % host + url
+                    url = proxy_i + url.replace("&amp;b=4/", "")
                 else:
                     url = host + url
                 itemlist.append(item.clone(action="alpha", title=title, url=url, page=0))
@@ -344,8 +345,8 @@ def indices(item):
             matches = scrapertools.find_multiple_matches(bloque, 'href="#([^"]+)".*?title="([^"]+)"')
             for url, title in matches:
                 url += "/ajax_page?pg=0"
-                if item.proxy == "usa":
-                    url = proxy % host + url
+                if item.proxy:
+                    url = proxy_i + url.replace("&amp;b=4/", "")
                 else:
                     url = host + url
                 itemlist.append(item.clone(action="lista", title=title, url=url, page=0))
