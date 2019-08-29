@@ -321,7 +321,8 @@ def submenu_novedades(item):
     item.extra2 = ''
     thumb_buscar = get_thumb("search.png")
     
-    item, host_alt = verify_host(item, host, force=True, category='descargas2020')  # Actualizamos el clone, preferible descargas2020
+    #item, host_alt = verify_host(item, host, force=True, category='descargas2020')  # Actualizamos el clone, preferible descargas2020
+    item, host_alt = verify_host(item, host, force=True)                        # Actualizamos el clone
     
     data = ''
     timeout_search=timeout * 2                                                  #Más tiempo para Novedades, que es una búsqueda
