@@ -80,12 +80,12 @@ def agregadas(item):
     for url, title, thumbnail, plot in matches:
         title = title.replace("Descargar y ver Online","").strip()
         year = scrapertools.find_single_match(title, '\(([0-9]{4})')
-        contentTitle = title.replace("(%s)" %year,"").strip()
+        fulltitle = title.replace("(%s)" %year,"").strip()
         itemlist.append( Item(action="findvideos",
                               channel=item.channel,
                               contentSerieName="",
                               title=title+" ",
-                              contentTitle=contentTitle ,
+                              fulltitle=fulltitle ,
                               infoLabels={'year':year},
                               url=url ,
                               thumbnail=thumbnail,
@@ -111,7 +111,7 @@ def findvideos(item):
     for scrapedidioma, scrapedcalidad, scrapedserver, scrapedurl in matches:
         scrapedurl = scrapedurl.replace('"','')
         while True:
-            loc = httptools.downloadpage(scrapedurl, follow_redirects=False).headers.get("location", "")
+            loc = httptools.downloadpage(scrapedurl, follow_redirects=False, ignore_response_code = True).headers.get("location", "")
             if not loc or "/ad/locked" in loc or not loc.startswith("http"):
                 break
             scrapedurl = loc
