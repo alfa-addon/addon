@@ -287,10 +287,10 @@ def entradas(item):
                 title = scrapedtitle
                 calidad = calidad.strip()
 
-                itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl, thumbnail=thumbnail,
-                                           contentTitle=scrapedtitle, contentTitle=scrapedtitle,
-                                           context=["buscar_trailer"],
-                                           contentType="movie"))
+                itemlist.append(Item(channel=item.channel, action="findvideos", title=title, 
+                                     url=scrapedurl, thumbnail=thumbnail, contentType="movie",
+                                     contentTitle=scrapedtitle, context=["buscar_trailer"],
+                                    ))
 
     else:
         # Extrae las entradas
@@ -330,7 +330,7 @@ def entradas(item):
                 filtro_list = filtro_list.items()
 
                 itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, contentTitle=scrapedtitle,
-                                           contentTitle=scrapedtitle, thumbnail=thumbnail, context=["buscar_trailer"],
+                                           thumbnail=thumbnail, context=["buscar_trailer"],
                                            contentType="movie", infoLabels={'filtro': filtro_list}))
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)

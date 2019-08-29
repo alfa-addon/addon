@@ -142,7 +142,7 @@ def list_all(item):
     logger.info()
     itemlist = []
     
-    post = "tipo=%s&pagina=%d" % (item.tipo, item.page)
+    post = "tipo=%s&pagina=%s" % (item.tipo, item.page)
     if item.adicional:
         post+= '&adicional=%s' % item.adicional
 

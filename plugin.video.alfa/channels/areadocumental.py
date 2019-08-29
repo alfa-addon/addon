@@ -160,8 +160,8 @@ def destacados(item):
             infolab['year'] = int(year)
 
         itemlist.append(item.clone(action="findvideos", title=title, contentTitle=title,
-                                   url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels=infolab, contentTitle =
-                                   title, quality = quality))
+                                   url=scrapedurl, thumbnail=scrapedthumbnail, 
+                                   infoLabels=infolab, quality = quality))
 
     next_page = scrapertools.find_single_match(data2, '<a href="([^"]+)"> ></a>')
     if next_page:
@@ -197,8 +197,7 @@ def entradas(item):
             title += '[COLOR %s] (%s)[/COLOR]' % (color1, year)
         title += '[COLOR %s] [%s][/COLOR]' % (color3, quality)
         itemlist.append(item.clone(action="findvideos", title=title, contentTitle=title,
-                                   url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels=infolab, contentTitle =
-                                   title))
+                                   url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels=infolab))
 
     next_page = scrapertools.find_single_match(data, '<a class=last>.*?</a></li><li><a href=(.*?)>.*?</a>')
     next_page = scrapertools.htmlclean(next_page)
