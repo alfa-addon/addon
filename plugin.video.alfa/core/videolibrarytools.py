@@ -419,6 +419,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     tags = []
     if config.get_setting("enable_filter", "videolibrary"):
         tags = [x.strip() for x in config.get_setting("filters", "videolibrary").lower().split(",")]
+
     for e in episodelist:
         headers = {}
         if e.headers:
@@ -476,7 +477,10 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         return 0, 0, 0
 
     # fix float porque la division se hace mal en python 2.x
-    t = float(100) / len(new_episodelist)
+    try:
+        t = float(100) / len(new_episodelist)
+    except:
+        t = 0
 
     last_season_episode = ''
     for i, e in enumerate(scraper.sort_episode_list(new_episodelist)):
@@ -574,7 +578,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
     if not silent:
         p_dialog.close()
 
-    if news_in_playcounts or emergency_urls_succ or serie.infoLabels["status"] == "Ended":
+    if news_in_playcounts or emergency_urls_succ or serie.infoLabels["status"] == "Ended" or serie.infoLabels["status"] == "Canceled":
         # Si hay nuevos episodios los marcamos como no vistos en tvshow.nfo ...
         tvshow_path = filetools.join(path, "tvshow.nfo")
         try:
@@ -591,9 +595,9 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                         tvshow_item.emergency_urls = dict()
                     if tvshow_item.library_urls.get(serie.channel, False):
                         tvshow_item.emergency_urls.update({serie.channel: True})
-                elif emergency_urls_stat == 2:                                          #Operación de Borrar enlaces
+                elif emergency_urls_stat == 2:                                  #Operación de Borrar enlaces
                     if tvshow_item.emergency_urls and tvshow_item.emergency_urls.get(serie.channel, False):
-                        tvshow_item.emergency_urls.pop(serie.channel, None)             #borramos la entrada del .nfo
+                        tvshow_item.emergency_urls.pop(serie.channel, None)     #borramos la entrada del .nfo
                         
             if tvshow_item.active == 30:
                 tvshow_item.active = 1
@@ -606,10 +610,12 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                             tvshow_item.infoLabels["temporada_num_episodios"])
             elif last_season_episode:
                 last_epi = last_season_episode
-            if tvshow_item.infoLabels["status"] == "Ended" and insertados == 0 \
-                            and fallidos == 0 and \
-                            last_epi in tvshow_item.library_playcounts:         # Si la serie ha terminado...
+            if (tvshow_item.infoLabels["status"] == "Ended" or tvshow_item.infoLabels["status"] == "Canceled") \
+                            and insertados == 0 and fallidos == 0 \
+                            and last_epi in tvshow_item.library_playcounts:     # Si la serie ha terminado...
                 tvshow_item.active = 0                                          # ... no la actualizaremos más
+                logger.debug("%s [%s]: serie 'Terminada' o 'Cancelada'.  Se desactiva la actualización periódica" %
+                 (serie.contentSerieName, serie.channel))
             
             update_last = datetime.date.today()
             tvshow_item.update_last = update_last.strftime('%Y-%m-%d')

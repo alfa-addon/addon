@@ -635,7 +635,8 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
     
     #Es un canal estándar, sólo una linea de Añadir a Videoteca
     title = ''
-    if item.infoLabels['status'] and item.infoLabels['status'].lower() == "ended":
+    if item.infoLabels['status'] and (item.infoLabels['status'].lower() == "ended" \
+                        or item.infoLabels['status'].lower() == "canceled"):
         title += ' [TERMINADA]'
     itemlist_temporadas.append(item_season.clone(title="[COLOR yellow]Añadir esta serie a videoteca-[/COLOR]" + title, action="add_serie_to_library", extra="episodios", add_menu=True))
 
@@ -1167,7 +1168,8 @@ def post_tmdb_findvideos(item, itemlist):
         
     if item.contentType == "episode" or item.contentType == "season":                   #Series o Temporadas
         title_gen += '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] [%s]' % (item.contentSerieName, item.infoLabels['year'], rating, item.quality, str(item.language), scrapertools.find_single_match(item.title, '\s\[(\d+,?\d*?\s\w[b|B])\]'))                                      #Rating, Calidad, Idioma, Tamaño
-        if item.infoLabels['status'] and item.infoLabels['status'].lower() == "ended":
+        if item.infoLabels['status'] and (item.infoLabels['status'].lower() == "ended" \
+                        or item.infoLabels['status'].lower() == "canceled"):
             title_gen = '[TERM.] %s' % title_gen        #Marca cuando la Serie está terminada y no va a haber más producción
         item.title = title_gen
 
