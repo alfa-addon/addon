@@ -106,13 +106,16 @@ if platform['system'] not in ['windows', 'windows_x64']:                        
     log(log_text)
 
 try:
+    fp = ''
+    pathname = ''
+    description = ''
+    libtorrent = ''
     from platformcode import config
     if platform['system'] in ['linux_x86', 'windows', 'windows_x64', 'linux_armv6', 'linux_armv7',
                               'linux_x86_64', 'linux_mipsel_ucs2', 'linux_mipsel_ucs4',
                               'linux_aarch64_ucs2', 'linux_aarch64_ucs4']:      ### Alfa
         import libtorrent
-        config.set_setting("libtorrent_path", dest_path, server="torrent")      ### Alfa
-        config.set_setting("libtorrent_error", "", server="torrent")            ### Alfa
+    
     elif platform['system'] in ['darwin', 'ios_arm']:
         import imp
         path_list = [dest_path]
@@ -120,33 +123,72 @@ try:
         fp, pathname, description = imp.find_module('libtorrent', path_list)
         log('fp = ' + str(fp))
         log('pathname = ' + str(pathname))
+        log('description = ' + str(description))
         try:
             libtorrent = imp.load_module('libtorrent', fp, pathname, description)
         finally:
             if fp: fp.close()
-        config.set_setting("libtorrent_path", dest_path, server="torrent")      ### Alfa
-        config.set_setting("libtorrent_error", "", server="torrent")            ### Alfa
+    
     elif platform['system'] in ['android_armv7', 'android_x86']:
         import imp
         from ctypes import CDLL
         try:
+            dest_path=lm.android_workaround(os.path.join(xbmc.translatePath('special://xbmc/'), 'files').replace('/cache/apk/assets', ''))
             dll_path=os.path.join(dest_path, 'liblibtorrent.so')
             log('CDLL path = ' + dll_path)
             liblibtorrent=CDLL(dll_path)
             log('CDLL = ' + str(liblibtorrent))
-        except:
-            # If no permission in dest_path we need to go deeper!
+            path_list = [dest_path]
+            log('path_list = ' + str(path_list))
+            fp, pathname, description = imp.find_module('libtorrent', path_list)
+            #if fp: fp.close()
+            #from core import filetools
+            #fp = filetools.file_open(pathname, 'rb')                                # Alfa: Usa XbmcVFS
+            #fp = open(pathname, 'rt')
+            log('fp = ' + str(fp))
+            log('pathname = ' + str(pathname))
+            log('description = ' + str(description))
+            try:
+                libtorrent = imp.load_module('libtorrent', fp, pathname, description)
+            finally:
+                if fp: fp.close()
+        except Exception, e:
+            e = unicode(str(e), "utf8", errors="replace").encode("utf8")
+            config.set_setting("libtorrent_path", "", server="torrent")         ### Alfa
+            config.set_setting("libtorrent_error", str(e), server="torrent")    ### Alfa
+            log(traceback.format_exc(1))
+            log('fp = ' + str(fp))
+            log('pathname = ' + str(pathname))
+            log('description = ' + str(description))
+            log('Error importing libtorrent from "' + dest_path + '". Exception: ' + str(e))
+            if fp: fp.close()
+
+            # If no permission in dest_path we need to go deeper on root!
             try:                                                                ### Alfa START
+                sys_path = '/data/app/'
+                fp = ''
+                pathname = sys_path
+                dest_path = sys_path
+                description = ''
+                libtorrent = ''
+                LIBTORRENT_MSG = config.get_setting("libtorrent_msg", server="torrent", default='')
+                if not LIBTORRENT_MSG:
+                    dialog = xbmcgui.Dialog()
+                    dialog.notification('ALFA: Instalando Cliente Torrent interno', \
+                                'Puede solicitarle permisos de Superusuario', time=15000)
+                    log('### ALFA: Notificación enviada: Instalando Cliente Torrent interno')
+                    config.set_setting("libtorrent_msg", 'OK', server="torrent")
+                
                 from core import scrapertools
                 kodi_app = xbmc.translatePath('special://xbmc')
                 kodi_app = scrapertools.find_single_match(kodi_app, '\/\w+\/\w+\/.*?\/(.*?)\/')
                 kodi_dir = '%s-1' % kodi_app
                 dir_list = ''
                 try:
-                    dir_list = os.listdir('/data/app/').split()
+                    dir_list = os.listdir(sys_path).split()
                 except:
                     import subprocess
-                    command = ['su', '-c', 'ls', '/data/app/']
+                    command = ['su', '-c', 'ls', sys_path]
                     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     output_cmd, error_cmd = p.communicate()
                     log('Comando ROOT: %s' % str(command))
@@ -161,44 +203,41 @@ try:
                         break
 
                 bits = sys.maxsize > 2 ** 32 and "64" or ""
-                dest_path = os.path.join('/data/app/', kodi_dir, 'lib', platform['arch'] + bits)
-                dest_path=lm.android_workaround(new_dest_path=dest_path)        ### Alfa END
+                dest_path = os.path.join(sys_path, kodi_dir, 'lib', platform['arch'] + bits)
+                dest_path=lm.android_workaround(new_dest_path=dest_path)
                 dll_path=os.path.join(dest_path, 'liblibtorrent.so')
                 log('NEW CDLL path = ' + dll_path)
                 liblibtorrent=CDLL(dll_path)
                 log('CDLL = ' + str(liblibtorrent))
+                path_list = [dest_path]
+                log('path_list = ' + str(path_list))
+                fp, pathname, description = imp.find_module('libtorrent', path_list)
+                try:
+                    libtorrent = imp.load_module('libtorrent', fp, pathname, description)
+                finally:
+                    if fp: fp.close()
                 
-            except:
+            except Exception, e:
                 log('ERROR Comando ROOT: %s, %s' % (str(command), str(dest_path)))
-                log(traceback.format_exc())                                     ### Alfa
-                # http://i3.kym-cdn.com/photos/images/original/000/531/557/a88.jpg
-                dest_path=lm.android_workaround(new_dest_path=xbmc.translatePath('special://xbmc'))
-                dll_path=os.path.join(dest_path, 'liblibtorrent.so')
-                log('NEW CDLL path = ' + dll_path)
-                liblibtorrent=CDLL(dll_path)
-                log('CDLL = ' + str(liblibtorrent))
-                
-        liblibtorrent=CDLL(dll_path)
-        log('CDLL = ' + str(liblibtorrent))
-        path_list = [dest_path]
-        log('path_list = ' + str(path_list))
-        fp, pathname, description = imp.find_module('libtorrent', path_list)
-        log('fp = ' + str(fp))
-        log('pathname = ' + str(pathname))
-        try:
-            libtorrent = imp.load_module('libtorrent', fp, pathname, description)
-        finally:
-            if fp: fp.close()
+                e = unicode(str(e), "utf8", errors="replace").encode("utf8")
+                log(traceback.format_exc(1))                                    ### Alfa
+                log('fp = ' + str(fp))
+                log('pathname = ' + str(pathname))
+                log('description = ' + str(description))
+                log('Error importing libtorrent from "' + dest_path + '". Exception: ' + str(e))
+                if fp: fp.close()
 
-    config.set_setting("libtorrent_path", dest_path, server="torrent")          ### Alfa
-    config.set_setting("libtorrent_error", "", server="torrent")                ### Alfa
-    log('Imported libtorrent v' + libtorrent.version + ' from "' + dest_path + '"')
+    if libtorrent:
+        config.set_setting("libtorrent_path", dest_path, server="torrent")      ### Alfa
+        config.set_setting("libtorrent_error", "", server="torrent")            ### Alfa
+        log('Imported libtorrent v' + libtorrent.version + ' from "' + dest_path + '"')
 
 except Exception, e:
     e = unicode(str(e), "utf8", errors="replace").encode("utf8")
     config.set_setting("libtorrent_path", "", server="torrent")                 ### Alfa
     config.set_setting("libtorrent_error", str(e), server="torrent")            ### Alfa
     log('Error importing libtorrent from "' + dest_path + '". Exception: ' + str(e))
+    if fp: fp.close()
 
 
 def get_libtorrent():
