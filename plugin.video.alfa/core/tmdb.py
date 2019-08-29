@@ -955,6 +955,8 @@ class Tmdb(object):
                 # TODO documentar esta parte
                 for key, value in dict(self.busqueda_filtro).items():
                     for r in results[:]:
+                        if not r[key]:
+                            r[key] = str(r[key])
                         if key not in r or value not in r[key]:
                             results.remove(r)
                             total_results -= 1
