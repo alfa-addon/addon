@@ -29,7 +29,7 @@ channel = "todopeliculas"
 
 categoria = channel.capitalize()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
-timeout = config.get_setting('timeout_downloadpage', channel)
+timeout = config.get_setting('timeout_downloadpage', channel) * 1.6
 
 
 def mainlist(item):
@@ -237,9 +237,12 @@ def listado(item):
             item_local.action = "findvideos"
 
             #Ajustamos los idiomas
-            if ("-latino-" in url.lower() or "(latino)" in title.lower()) and "LAT" not in item_local.language:
+            if ("-latino-" in url.lower() or "(latino)" in title.lower() or "latino" in quality.lower()) \
+                            and "LAT" not in item_local.language:
                 item_local.language += ['LAT']
-            elif ('-vos-' in url.lower() or '-vose-' in url.lower() or '(vos)' in title.lower() or '(vose)' in title.lower()) and "VOSE" not in item_local.language:
+            elif ('-vos-' in url.lower() or '-vose-' in url.lower() or '(vos)' in title.lower() \
+                            or '(vose)' in title.lower() or "vose" in quality.lower()) \
+                            and "VOSE" not in item_local.language:
                 item_local.language += ['VOSE']
             elif ('-vo-' in url.lower() or '(vo)' in title.lower()) and "VO" not in item_local.language:
                 item_local.language += ['VO']
@@ -274,12 +277,13 @@ def listado(item):
             
             #Limpiamos el título de la basura innecesaria
             title = re.sub(r'- $', '', title)
-            title = re.sub(r'(?i)TV|Online|Spanish|Torrent|en Espa\xc3\xb1ol|Español|Latino|Subtitulado|Blurayrip|Bluray rip|\[.*?\]|R2 Pal|\xe3\x80\x90 Descargar Torrent \xe3\x80\x91|Completa|Temporada|Descargar|Torren', '', title)
+            title = re.sub(r'(?i)TV|Online|Spanish|Torrent|en Espa\xc3\xb1ol|Español|Latino|Subtitulado|Blurayrip|Bluray rip|\[.*?\]|R2 Pal|\xe3\x80\x90 Descargar Torrent \xe3\x80\x91|Completa|Temporada|Descargar|Torren|vose', '', title)
 
-            #Terminamos de limpiar el título
+            #Terminamos de limpiar el título y quality
             title = re.sub(r'\??\s?\d*?\&.*', '', title)
             title = re.sub(r'[\(|\[]\s+[\)|\]]', '', title)
             title = title.replace('()', '').replace('[]', '').strip().lower().title()
+            item_local.quality = re.sub(r'(?i)latino|vose|\[\]|\(\)', '', item_local.quality).strip()
             
             item_local.from_title = title.strip().lower().title()   #Guardamos esta etiqueta para posible desambiguación de título
 
@@ -424,17 +428,25 @@ def findvideos(item):
         if item.videolibray_emergency_urls:
             item.emergency_urls[0].append(item_local.url)                       #guardamos la url y pasamos a la siguiente
             continue
+        local_torr = ''
         if item.emergency_urls and not item.videolibray_emergency_urls:
             item_local.torrent_alt = item.emergency_urls[0][0]                  #Guardamos la url del .Torrent ALTERNATIVA
             if item.armagedon:
                 item_local.url = item.emergency_urls[0][0]                      #Restauramos la url
+                if item_local.url.startswith("\\") or item_local.url.startswith("/"):
+                    from core import filetools
+                    if item.contentType == 'movie':
+                        FOLDER = config.get_setting("folder_movies")
+                    else:
+                        FOLDER = config.get_setting("folder_tvshows")
+                    local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
             if len(item.emergency_urls[0]) > 1:
                 del item.emergency_urls[0][0]
         
         #Buscamos si ya tiene tamaño, si no, los buscamos en el archivo .torrent
         size = scrapertools.find_single_match(item_local.quality, '\s?\[(\d+,?\d*?\s\w\s?[b|B])\]')
-        if not size and not item.armagedon:
-            size = generictools.get_torrent_size(item_local.url)                #Buscamos el tamaño en el .torrent
+        if not size and not item.videolibray_emergency_urls:
+            size = generictools.get_torrent_size(item_local.url, local_torr=local_torr)     #Buscamos el tamaño en el .torrent
         if size:
             item_local.title = re.sub(r'\s?\[\d+,?\d*?\s\w\s?[b|B]\]', '', item_local.title) #Quitamos size de título, si lo traía
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\

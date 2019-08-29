@@ -358,6 +358,7 @@ def listado(item):                                                              
     if item.title_lista:                                    # Si viene de una pasada anterior, la lista ya estará guardada
         title_lista.extend(item.title_lista)                                    # Se usa la lista de páginas anteriores en Item
         del item.title_lista                                                    # ... limpiamos
+    matches = []
         
     if not item.extra2:                                                         # Si viene de Catálogo o de Alfabeto
         item.extra2 = ''
@@ -385,7 +386,10 @@ def listado(item):                                                              
                 itemlist.append(item.clone(action='', title=item.channel.capitalize() + 
                             ': ERROR 01: LISTADO:.  La Web no responde o ha cambiado de URL. ' 
                             + 'Si la Web está activa, reportar el error con el log'))
-                break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
+                if len(itemlist) > 1:                                           # Si hay algo que pintar lo pintamos
+                    last_page = 0
+                    break
+                return itemlist                                                 # Si no hay nada más, salimos directamente
 
         #Patrón para búsquedas, pelis y series
         if item.extra == 'search':                                              # Búsquedas...
@@ -428,6 +432,7 @@ def listado(item):                                                              
                         ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  ' 
                         + 'Reportar el error con el log'))
             break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
+        
         if not matches and item.extra == 'search':                              #búsqueda vacía
             if len(itemlist) > 0:                                               # Si hay algo que pintar lo pintamos
                 last_page = 0
@@ -744,10 +749,18 @@ def findvideos(item):
         item_local.url = urlparse.urljoin(host, scrapedurl)
 
         # Restauramos urls de emergencia si es necesario
+        local_torr = ''
         if item.emergency_urls and not item.videolibray_emergency_urls:
             item_local.torrent_alt = item.emergency_urls[0][0]                  #Guardamos la url del .Torrent ALTERNATIVA
             if item.armagedon:
                 item_local.url = item.emergency_urls[0][0]                      #Restauramos la url
+                if item_local.url.startswith("\\") or item_local.url.startswith("/"):
+                    from core import filetools
+                    if item.contentType == 'movie':
+                        FOLDER = config.get_setting("folder_movies")
+                    else:
+                        FOLDER = config.get_setting("folder_tvshows")
+                    local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
             if len(item.emergency_urls[0]) > 1:
                 del item.emergency_urls[0][0]
         
@@ -758,15 +771,7 @@ def findvideos(item):
             size = ''
         if not size and not item.videolibray_emergency_urls:
             if not item.armagedon:
-                size = generictools.get_torrent_size(item_local.url, timeout=timeout)   #Buscamos el tamaño en el .torrent desde la web
-            else:                                                                       #... si  no, desde el .torrent cacheado
-                if item_local.contentType == 'movie':
-                    tipo = config.get_setting("folder_movies")
-                else:
-                    tipo = config.get_setting("folder_tvshows")
-                from core import filetools
-                local_torr = filetools.join(config.get_videolibrary_path(), tipo, item_local.url)
-                size = generictools.get_torrent_size('', local_torr=local_torr)         #Buscamos el tamaño en el .torrent local
+                size = generictools.get_torrent_size(item_local.url, local_torr=local_torr) #Buscamos el tamaño en el .torrent desde la web
         if size:
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                         .replace('Mb', 'M·b').replace('.', ',')

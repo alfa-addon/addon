@@ -582,7 +582,7 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
                 # Preguntamos si el usuario quiere pasar a backgroung
                 ok = xbmcgui.Dialog().yesno(msg_header, "¿Borramos los archivo descargados? (incompletos)",  
                                     "Selecciona NO para seguir descargando en segundo plano")
-            else: ok = False
+            else: ok = True
             # -- NO ---------------------------------------------
             if not ok:
                 is_view=None
@@ -817,12 +817,18 @@ def remove_files( download, torrent_file, video_file, ses, h, ren_video_file="" 
         dialog_view = True
     if bkg_user and not extracted_rar:
         dialog_view = False
-
+    
+    if erase_file_path and erase_file_path != \
+                            os.path.join( DOWNLOAD_PATH , "MCT-torrent-videos" ):
+        ren_video_file = erase_file_path
     if filetools.isfile(ren_video_file) and filetools.split(ren_video_file)[0] != \
                             os.path.join( DOWNLOAD_PATH , "MCT-torrent-videos" ):
         ren_video_file = filetools.split(ren_video_file)[0]
+    elif filetools.isdir(ren_video_file) and ren_video_file == \
+                            os.path.join( DOWNLOAD_PATH , "MCT-torrent-videos" ):
+        ren_video_file = ''
 
-    if dialog_view:
+    if dialog_view and ren_video_file:
         if h.status().num_pieces >= tot_piece_set:
             d = xbmcgui.Dialog()
             ok = d.yesno(msg_header, '¿Borrarmos los archivos descargados? (completos)', video_file)

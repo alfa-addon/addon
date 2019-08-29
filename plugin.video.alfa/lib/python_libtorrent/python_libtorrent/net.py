@@ -35,7 +35,7 @@ import itertools
 
 import xbmc
 import xbmcgui
-import xbmcvfs
+#import xbmcvfs                                                                 ### Alfa
 
 RE = {
     'content-disposition': re.compile('attachment;\sfilename="*([^"\s]+)"|\s')

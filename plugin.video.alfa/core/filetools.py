@@ -121,10 +121,27 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, silent=False, vfs=Tr
     """
     path = encode(path)
     try:
+        if type(linea_inicio) != int:
+            try:
+                linea_inicio = int(linea_inicio)
+            except:
+                logger.error('Read: ERROR de linea_inicio: %s' % str(linea_inicio))
+                linea_inicio = 0
+        if total_lineas != None and type(total_lineas) != int:
+            try:
+                total_lineas = int(total_lineas)
+            except:
+                logger.error('Read: ERROR de total_lineas: %s' % str(total_lineas))
+                total_lineas = None
         if xbmc_vfs and vfs:
             if not exists(path): return False
             f = xbmcvfs.File(path, "rb")
             if linea_inicio > 0:
+                if type(whence) != int:
+                    try:
+                        whence = int(whence)
+                    except:
+                        return False
                 f.seek(linea_inicio, whence)
                 logger.debug('POSICIÓN de comienzo de lectura, tell(): %s' % f.seek(0, 1))
             if total_lineas == None:
@@ -211,6 +228,12 @@ def file_open(path, mode="r", silent=False, vfs=True):
             platformtools.dialog_notification("Error al abrir", path)
         return False
     
+
+def open(path, mode="r", silent=False, vfs=True):
+    """
+    ALIAS de file_open por compatibilidad
+    """
+    return file_open(path, mode, silent, vfs)
 
 def file_stat(path, silent=False, vfs=True):
     """
@@ -516,6 +539,13 @@ def remove(path, silent=False, vfs=True):
         return False
     else:
         return True
+        
+        
+def delete(path, silent=False, vfs=True):
+    """
+    ALIAS de remove por compatibilidad
+    """
+    return remove(path, silent, vfs)
 
 
 def rmdirtree(path, silent=False, vfs=True):
@@ -619,6 +649,13 @@ def mkdir(path, silent=False, vfs=True):
         return True
 
 
+def mkdirs(path, silent=False, vfs=True):
+    """
+    ALIAS de mkdirs por compatibilidad
+    """
+    return mkdir(path, silent, vfs)
+
+
 def walk(top, topdown=True, onerror=None, vfs=True):
     """
     Lista un directorio de manera recursiva
@@ -712,9 +749,9 @@ def join(*paths):
             list_path += path.replace("\\", "/").strip("/").split("/")
 
     if scrapertools.find_single_match(paths[0], '(^\w+:\/\/)'):
-        return "/".join(list_path)
+        return str("/".join(list_path))
     else:
-        return os.sep.join(list_path)
+        return str(os.sep.join(list_path))
 
 
 def split(path, vfs=True):
