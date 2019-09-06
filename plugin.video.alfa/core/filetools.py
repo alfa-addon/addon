@@ -227,13 +227,7 @@ def file_open(path, mode="r", silent=False, vfs=True):
             logger.error(traceback.format_exc())
             platformtools.dialog_notification("Error al abrir", path)
         return False
-    
 
-def open(path, mode="r", silent=False, vfs=True):
-    """
-    ALIAS de file_open por compatibilidad
-    """
-    return file_open(path, mode, silent, vfs)
 
 def file_stat(path, silent=False, vfs=True):
     """
@@ -539,13 +533,6 @@ def remove(path, silent=False, vfs=True):
         return False
     else:
         return True
-        
-        
-def delete(path, silent=False, vfs=True):
-    """
-    ALIAS de remove por compatibilidad
-    """
-    return remove(path, silent, vfs)
 
 
 def rmdirtree(path, silent=False, vfs=True):
@@ -647,13 +634,6 @@ def mkdir(path, silent=False, vfs=True):
         return False
     else:
         return True
-
-
-def mkdirs(path, silent=False, vfs=True):
-    """
-    ALIAS de mkdirs por compatibilidad
-    """
-    return mkdir(path, silent, vfs)
 
 
 def walk(top, topdown=True, onerror=None, vfs=True):

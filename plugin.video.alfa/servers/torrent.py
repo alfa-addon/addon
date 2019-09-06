@@ -266,6 +266,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
                         video_names += [file_r]
             elif file == '__name':
                 video_path = path
+                video_file = path
     if rar: rar_file = '%s/%s' % (video_path, rar_names[0])
     erase_file_path = filetools.join(save_path_videos, video_path)
     video_path = erase_file_path
@@ -297,182 +298,186 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     dp_cerrado = False
 
     # Mientras el progreso no sea cancelado ni el cliente cerrado
-    while not c.closed and not xbmc.abortRequested:
-        # Obtenemos el estado del torrent
-        s = c.status
-        if debug:
-            # Montamos las tres lineas con la info del torrent
-            txt = '%.2f%% de %.1fMB %s | %.1f kB/s' % \
-                  (s.progress_file, s.file_size, s.str_state, s._download_rate)
-            txt2 = 'S: %d(%d) P: %d(%d) | DHT:%s (%d) | Trakers: %d | Pi: %d(%d)' % \
-                   (s.num_seeds, s.num_complete, s.num_peers, s.num_incomplete, s.dht_state, s.dht_nodes,
-                    s.trackers, s.pieces_sum, s.pieces_len)
-            txt3 = 'Origen Peers TRK: %d DHT: %d PEX: %d LSD %d ' % \
-                   (s.trk_peers, s.dht_peers, s.pex_peers, s.lsd_peers)
-        else:
-            txt = '%.2f%% de %.1fMB %s | %.1f kB/s' % \
-                  (s.progress_file, s.file_size, s.str_state, s._download_rate)
-            txt2 = 'S: %d(%d) P: %d(%d) | DHT:%s (%d) | Trakers: %d | Pi: %d(%d)' % \
-                   (s.num_seeds, s.num_complete, s.num_peers, s.num_incomplete, s.dht_state, s.dht_nodes,
-                    s.trackers, s.pieces_sum, s.pieces_len)
-            txt3 = video_file
-
-        if rar and RAR and BACKGROUND or bkg_user:
-            progreso.update(s.buffer, txt, txt2)
-        else:
-            progreso.update(s.buffer, txt, txt2, txt3)
-        time.sleep(1)
-
-        if (not bkg_user and progreso.iscanceled()) and (not (rar and RAR and BACKGROUND) and progreso.iscanceled()):
-            
-            if not dp_cerrado:
-                progreso.close()
-                dp_cerrado = True
-            if 'Finalizado' in s.str_state or 'Seeding' in s.str_state:
-                """
-                if not rar and platformtools.dialog_yesno(msg_header, config.get_localized_string(70198)):
-                    played = False
-                    dp_cerrado = False
-                    progreso = platformtools.dialog_progress(msg_header, '')
-                    progreso.update(s.buffer, txt, txt2, txt3)
-                else:
-                """
-                dp_cerrado = False
-                progreso = platformtools.dialog_progress(msg_header, '')
-                break
-
+    try:
+        while not c.closed and not xbmc.abortRequested:
+            # Obtenemos el estado del torrent
+            s = c.status
+            if debug:
+                # Montamos las tres lineas con la info del torrent
+                txt = '%.2f%% de %.1fMB %s | %.1f kB/s' % \
+                      (s.progress_file, s.file_size, s.str_state, s._download_rate)
+                txt2 = 'S: %d(%d) P: %d(%d) | DHT:%s (%d) | Trakers: %d | Pi: %d(%d)' % \
+                       (s.num_seeds, s.num_complete, s.num_peers, s.num_incomplete, s.dht_state, s.dht_nodes,
+                        s.trackers, s.pieces_sum, s.pieces_len)
+                txt3 = 'Origen Peers TRK: %d DHT: %d PEX: %d LSD %d ' % \
+                       (s.trk_peers, s.dht_peers, s.pex_peers, s.lsd_peers)
             else:
-                if platformtools.dialog_yesno(msg_header, "¿Borramos los archivo descargados? (incompletos)",  
-                                "Selecciona NO para seguir descargando en segundo plano"):
+                txt = '%.2f%% de %.1fMB %s | %.1f kB/s' % \
+                      (s.progress_file, s.file_size, s.str_state, s._download_rate)
+                txt2 = 'S: %d(%d) P: %d(%d) | DHT:%s (%d) | Trakers: %d | Pi: %d(%d)' % \
+                       (s.num_seeds, s.num_complete, s.num_peers, s.num_incomplete, s.dht_state, s.dht_nodes,
+                        s.trackers, s.pieces_sum, s.pieces_len)
+                txt3 = video_file
+
+            if rar and RAR and BACKGROUND or bkg_user:
+                progreso.update(s.buffer, txt, txt2)
+            else:
+                progreso.update(s.buffer, txt, txt2, txt3)
+            time.sleep(1)
+
+            if (not bkg_user and progreso.iscanceled()) and (not (rar and RAR and BACKGROUND) and progreso.iscanceled()):
+                
+                if not dp_cerrado:
+                    progreso.close()
+                    dp_cerrado = True
+                if 'Finalizado' in s.str_state or 'Seeding' in s.str_state:
+                    """
+                    if not rar and platformtools.dialog_yesno(msg_header, config.get_localized_string(70198)):
+                        played = False
+                        dp_cerrado = False
+                        progreso = platformtools.dialog_progress(msg_header, '')
+                        progreso.update(s.buffer, txt, txt2, txt3)
+                    else:
+                    """
                     dp_cerrado = False
                     progreso = platformtools.dialog_progress(msg_header, '')
                     break
 
+                else:
+                    if platformtools.dialog_yesno(msg_header, "¿Borramos los archivo descargados? (incompletos)",  
+                                    "Selecciona NO para seguir descargando en segundo plano"):
+                        dp_cerrado = False
+                        progreso = platformtools.dialog_progress(msg_header, '')
+                        break
+
+                    else:
+                        bkg_user = True
+                        if not dp_cerrado: progreso.close()
+                        dp_cerrado = False
+                        progreso = platformtools.dialog_progress_bg(msg_header)
+                        progreso.update(s.buffer, txt, txt2)
+                        if not c.closed:
+                            c.set_speed_limits(DOWNLOAD_LIMIT, UPLOAD_LIMIT)        # Bajamos la velocidad en background
+
+            # Si el buffer se ha llenado y la reproduccion no ha sido iniciada, se inicia
+            if ((s.pieces_sum >= BUFFER  or 'Finalizado' in s.str_state or 'Seeding' in s.str_state) and not rar and not bkg_user) or \
+                        (s.pieces_sum >= s.pieces_len - 3 and s.pieces_len > 0 and ('Finalizado' in s.str_state or 'Seeding' \
+                        in s.str_state) and (rar or bkg_user)) and not played:
+                
+                if rar and RAR and UNRAR:
+                    c.stop()
+                    activo = False
+                    finalizado = True
+                    bkg_user = False
+                    dp_cerrado = False
+                    video_file, rar_res, video_path, erase_file_path = extract_files(rar_file, \
+                                    save_path_videos, password, progreso, item, torr_client)  # ... extraemos el vídeo del RAR
+                    if rar_res and not xbmc.abortRequested:
+                        time.sleep(1)
+                    else:
+                        break
+                elif (rar and not UNRAR) or (rar and not RAR):
+                    break
+                elif bkg_user:
+                    finalizado = True
+                    break
+                
+                # Cerramos el progreso
+                if not dp_cerrado:
+                    progreso.close()
+                    dp_cerrado = True
+
+                # Reproducimos el vídeo extraido, si no hay nada en reproducción
+                if not c.closed:
+                    c.set_speed_limits(DOWNLOAD_LIMIT, UPLOAD_LIMIT)        # Bajamos la velocidad en background
+                bkg_auto = True
+                while xbmc_player.isPlaying() and not xbmc.abortRequested:
+                    time.sleep(3)      
+                
+                # Obtenemos el playlist del torrent
+                #videourl = c.get_play_list()
+                if not rar_res:                                             # Es un Magnet ?
+                    video_file = filetools.join(save_path_videos, s.file_name)
+                    if erase_file_path == save_path_videos:
+                        erase_file_path = video_file
+                    videourl = video_file
+                else:
+                    videourl = filetools.join(video_path, video_file)
+
+                # Iniciamos el reproductor
+                playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+                playlist.clear()
+                playlist.add(videourl, xlistitem)
+                # xbmc_player = xbmc_player
+                log("##### videourl: %s" % videourl)
+                xbmc_player.play(playlist)
+
+                # Marcamos como reproducido para que no se vuelva a iniciar
+                played = True
+                
+                mark_auto_as_watched(item)
+                
+                # Y esperamos a que el reproductor se cierre
+                bkg_auto = True
+                dp_cerrado = True
+                while xbmc_player.isPlaying() and not xbmc.abortRequested:
+                    time.sleep(1)
+                    
+                    if xbmc.getCondVisibility('Player.Playing'):
+                        if not dp_cerrado:
+                            dp_cerrado = True
+                            progreso.close()
+                    
+                    if xbmc.getCondVisibility('Player.Paused') and not rar_res:
+                        if not c.closed: s = c.status
+                        txt = '%.2f%% de %.1fMB %s | %.1f kB/s' % \
+                              (s.progress_file, s.file_size, s.str_state, s._download_rate)
+                        txt2 = 'S: %d(%d) P: %d(%d) | DHT:%s (%d) | Trakers: %d | Pi: %d(%d)' % \
+                               (s.num_seeds, s.num_complete, s.num_peers, s.num_incomplete, s.dht_state, s.dht_nodes,
+                                s.trackers, s.pieces_sum, s.pieces_len)
+                        txt3 = video_file[:99]
+                        if dp_cerrado:
+                            dp_cerrado = False
+                            progreso = xbmcgui.DialogProgressBG()
+                            progreso.create(msg_header)
+                        progreso.update(s.buffer, msg_header, '[CR][CR]' + txt + '[CR]' + txt2)
+                
+                if not dp_cerrado:
+                    dp_cerrado = True
+                    progreso.close()
+                
+                # Miramos si se ha completado la descarga para borrar o no los archivos
+                if activo:
+                    s = c.status
+                if s.pieces_sum == s.pieces_len:
+                    finalizado = True
+                    break
+
+                if platformtools.dialog_yesno(msg_header, "¿Borramos los archivo descargados? (incompletos)",  
+                                    "Selecciona NO para seguir descargando en segundo plano"):
+                    progreso = platformtools.dialog_progress(msg_header, '')
+                    dp_cerrado = False
+                    break
                 else:
                     bkg_user = True
+                    played = False
                     if not dp_cerrado: progreso.close()
-                    dp_cerrado = False
                     progreso = platformtools.dialog_progress_bg(msg_header)
                     progreso.update(s.buffer, txt, txt2)
-                    if not c.closed:
-                        c.set_speed_limits(DOWNLOAD_LIMIT, UPLOAD_LIMIT)        # Bajamos la velocidad en background
-
-        # Si el buffer se ha llenado y la reproduccion no ha sido iniciada, se inicia
-        if ((s.pieces_sum >= BUFFER  or 'Finalizado' in s.str_state or 'Seeding' in s.str_state) and not rar and not bkg_user) or \
-                    (s.pieces_sum >= s.pieces_len - 3 and s.pieces_len > 0 and ('Finalizado' in s.str_state or 'Seeding' \
-                    in s.str_state) and (rar or bkg_user)) and not played:
-            
-            if rar and RAR and UNRAR:
-                c.stop()
-                activo = False
-                finalizado = True
-                bkg_user = False
-                dp_cerrado = False
-                video_file, rar_res, video_path, erase_file_path = extract_files(rar_file, \
-                                save_path_videos, password, progreso, item, torr_client)  # ... extraemos el vídeo del RAR
-                if rar_res and not xbmc.abortRequested:
-                    time.sleep(1)
-                else:
-                    break
-            elif (rar and not UNRAR) or (rar and not RAR):
-                break
-            elif bkg_user:
-                finalizado = True
-                break
-            
-            # Cerramos el progreso
-            if not dp_cerrado:
-                progreso.close()
-                dp_cerrado = True
-
-            # Reproducimos el vídeo extraido, si no hay nada en reproducción
-            if not c.closed:
-                c.set_speed_limits(DOWNLOAD_LIMIT, UPLOAD_LIMIT)        # Bajamos la velocidad en background
-            bkg_auto = True
-            while xbmc_player.isPlaying() and not xbmc.abortRequested:
-                time.sleep(3)      
-            
-            # Obtenemos el playlist del torrent
-            #videourl = c.get_play_list()
-            if not rar_res:                                             # Es un Magnet ?
-                video_file = filetools.join(save_path_videos, s.file_name)
-                if erase_file_path == save_path_videos:
-                    erase_file_path = video_file
-                videourl = video_file
-            else:
-                videourl = filetools.join(video_path, video_file)
-
-            # Iniciamos el reproductor
-            playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-            playlist.clear()
-            playlist.add(videourl, xlistitem)
-            # xbmc_player = xbmc_player
-            log("##### videourl: %s" % videourl)
-            xbmc_player.play(playlist)
-
-            # Marcamos como reproducido para que no se vuelva a iniciar
-            played = True
-            
-            mark_auto_as_watched(item)
-            
-            # Y esperamos a que el reproductor se cierre
-            bkg_auto = True
-            dp_cerrado = True
-            while xbmc_player.isPlaying() and not xbmc.abortRequested:
-                time.sleep(1)
+                    dp_cerrado = False
+                    continue
                 
-                if xbmc.getCondVisibility('Player.Playing'):
-                    if not dp_cerrado:
-                        dp_cerrado = True
-                        progreso.close()
-                
-                if xbmc.getCondVisibility('Player.Paused') and not rar_res:
-                    if not c.closed: s = c.status
-                    txt = '%.2f%% de %.1fMB %s | %.1f kB/s' % \
-                          (s.progress_file, s.file_size, s.str_state, s._download_rate)
-                    txt2 = 'S: %d(%d) P: %d(%d) | DHT:%s (%d) | Trakers: %d | Pi: %d(%d)' % \
-                           (s.num_seeds, s.num_complete, s.num_peers, s.num_incomplete, s.dht_state, s.dht_nodes,
-                            s.trackers, s.pieces_sum, s.pieces_len)
-                    txt3 = video_file[:99]
-                    if dp_cerrado:
-                        dp_cerrado = False
-                        progreso = xbmcgui.DialogProgressBG()
-                        progreso.create(msg_header)
-                    progreso.update(s.buffer, msg_header, '[CR][CR]' + txt + '[CR]' + txt2)
-            
-            if not dp_cerrado:
-                dp_cerrado = True
-                progreso.close()
-            
-            # Miramos si se ha completado la descarga para borrar o no los archivos
-            if activo:
-                s = c.status
-            if s.pieces_sum == s.pieces_len:
-                finalizado = True
+                # Cuando este cerrado,  Volvemos a mostrar el dialogo
+                if not (rar and bkg_user):
+                    progreso = platformtools.dialog_progress(msg_header, '')
+                    progreso.update(s.buffer, txt, txt2, txt3)
+                    dp_cerrado = False
+                    
                 break
-
-            if platformtools.dialog_yesno(msg_header, "¿Borramos los archivo descargados? (incompletos)",  
-                                "Selecciona NO para seguir descargando en segundo plano"):
-                progreso = platformtools.dialog_progress(msg_header, '')
-                dp_cerrado = False
-                break
-            else:
-                bkg_user = True
-                played = False
-                if not dp_cerrado: progreso.close()
-                progreso = platformtools.dialog_progress_bg(msg_header)
-                progreso.update(s.buffer, txt, txt2)
-                dp_cerrado = False
-                continue
-            
-            # Cuando este cerrado,  Volvemos a mostrar el dialogo
-            if not (rar and bkg_user):
-                progreso = platformtools.dialog_progress(msg_header, '')
-                progreso.update(s.buffer, txt, txt2, txt3)
-                dp_cerrado = False
-                
-            break
-
+    except:
+        logger.error(traceback.format_exc(1))
+        return
+    
     if not dp_cerrado:
         if rar or bkg_user:
             progreso.update(100, config.get_localized_string(70200), " ")
@@ -972,6 +977,65 @@ def last_password_search(pass_path):
     
     log("##### Contraseña extraída: %s" % password)
     return password
+
+
+def import_libtorrent(LIBTORRENT_PATH):
+    logger.info(LIBTORRENT_PATH)
+
+    try:
+        e = ''
+        e1 = ''
+        e2 = ''
+        fp = ''
+        pathname = ''
+        description = ''
+        lt = ''
+        if LIBTORRENT_PATH:
+            try:
+                if not xbmc.getCondVisibility("system.platform.android"):
+                    import libtorrent as lt
+                    pathname = LIBTORRENT_PATH
+                else:
+                    import imp
+                    from ctypes import CDLL
+                    dll_path = os.path.join(LIBTORRENT_PATH, 'liblibtorrent.so')
+                    liblibtorrent = CDLL(dll_path)
+                    
+                    path_list = [LIBTORRENT_PATH, xbmc.translatePath('special://xbmc')]
+                    fp, pathname, description = imp.find_module('libtorrent', path_list)
+                    
+                    # Esta parte no funciona en Android.  Por algún motivo da el error "dlopen failed: library "liblibtorrent.so" not found"
+                    # Hay que encontrar un hack para rodear el problema.  Lo siguiente ha sido probado sin éxito:
+                    #if fp: fp.close()
+                    #fp = filetools.file_open(filetools.join(LIBTORRENT_PATH, 'libtorrent.so'), mode='rb')  # Usa XbmcVFS
+                    #fp = open(os.path.join(LIBTORRENT_PATH, 'libtorrent.so'), 'rb')
+                    
+                    try:
+                        lt = imp.load_module('libtorrent', fp, pathname, description)
+                    finally:
+                        if fp: fp.close()
+                
+            except Exception, e1:
+                logger.error(traceback.format_exc(1))
+                log('fp = ' + str(fp))
+                log('pathname = ' + str(pathname))
+                log('description = ' + str(description))
+                if fp: fp.close()
+                from lib.python_libtorrent.python_libtorrent import get_libtorrent
+                lt = get_libtorrent()
+
+    except Exception, e2:
+        try:
+            logger.error(traceback.format_exc())
+            if fp: fp.close()
+            e = e1 or e2
+            ok = platformtools.dialog_ok('ERROR en el cliente MCT Libtorrent', \
+                        'Módulo no encontrado o imcompatible con el dispositivo.', \
+                        'Reporte el fallo adjuntando un "log".', str(e))
+        except:
+            pass
+    
+    return lt, e, e1, e2
 
 
 def log(texto):

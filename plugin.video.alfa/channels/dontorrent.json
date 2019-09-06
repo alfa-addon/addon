@@ -3,12 +3,13 @@
   "name": "Dontorrent",
   "active": true,
   "adult": false,
-  "language": [],
+  "language": ["cast"],
   "thumbnail": "https://dontorrent.com/images/imagen_logo.png",
   "categories": [
     "torrent",
     "movie",
-    "tvshow"
+    "tvshow",
+    "vos"
   ],
   "settings": [
     {
