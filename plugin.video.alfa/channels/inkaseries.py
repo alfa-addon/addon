@@ -36,7 +36,7 @@ def mainlist(item):
 
     itemlist.append(Item(channel= item.channel, title="Todas", action="list_all", url=host + 'ultimas-series-agregadas/',
                          thumbnail=get_thumb('all', auto=True)))
-    itemlist.append(Item(channel= item.channel, title="Generos", action="genres", url=host + 'ultimas-series-agregadas/',
+    itemlist.append(Item(channel= item.channel, title="Generos", action="genres", url=host,
                          thumbnail=get_thumb('genres', auto=True)))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host+'?s=',
                          thumbnail=get_thumb('search', auto=True)))
@@ -118,9 +118,9 @@ def episodesxseason(item):
     data = get_source(item.url)
 
     if item.extra1 != 'library':
-        patron = '<tr><td>.*?<a href="([^"]+)" title="Temporada %s, Episodio (\d+.*?)>' % item.contentSeasonNumber
+        patron = '<tr><td>.*?<a href="([^"]+)" title="Temporada %s, Episodio (\d+.*?)">' % item.contentSeasonNumber
     else:
-        patron = '<tr><td>.*?<a href="([^"]+)" title=Temporada \d+, Episodio (\d+.*?)>'
+        patron = '<tr><td>.*?<a href="([^"]+)" title=Temporada \d+, Episodio (\d+.*?)">'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
@@ -148,13 +148,14 @@ def genres(item):
     itemlist = []
     norep = []
     data = get_source(item.url)
-    patron = '<a href="([^"]+)"><span.*?<i>([^<])</i>.*?>(.*?)</b>'
+    logger.error(data)
+    patron = '<a href="([^"]+)">.*?<i>([^<]+)</i> <b>(\d+)</b>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle, cantidad in matches:
 
         url = scrapedurl
-        title = "%s - %s" % (scrapedtitle.capitalize(), cantidad)
+        title = "%s (%s)" % (scrapedtitle.capitalize(), cantidad)
         itemactual = Item(channel=item.channel, action='list_all', title=title, url=url)
 
         if title not in norep:

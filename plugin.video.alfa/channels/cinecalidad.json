@@ -21,14 +21,14 @@
       "visible": true
     },
     {
-      "id": "filter_languages",
+      "id": "filter_site",
       "type": "list",
-      "label": "Mostrar enlaces en idioma...",
+      "label": "Mostrar Cinecalidad...",
       "default": 0,
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "No filtrar",
+        "Por Defecto",
         "Latino",
         "Castellano",
         "Portugues"
