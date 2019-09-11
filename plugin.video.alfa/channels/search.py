@@ -779,5 +779,6 @@ def get_links (item):
     logger.info()
     results =[]
     channel = __import__('channels.%s' % item.from_channel, None, None, ["channels.%s" % item.from_channel])
+    item.channel = item.from_channel
     if len(link_list) <= max_links:
         link_list.extend(getattr(channel, item.from_action)(item))
