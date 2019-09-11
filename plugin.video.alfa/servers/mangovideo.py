@@ -7,7 +7,12 @@ from core import httptools
 from core import scrapertools
 from platformcode import logger
 
-from lib.kt_player import decode
+server = {'1': 'https://www.mangovideo.pw/contents/videos/', '7' : 'https://server9.mangovideo.pw/contents/videos/',
+          '8' : 'https://s10.mangovideo.pw/contents/videos/', '9' : 'https://server2.mangovideo.pw/contents/videos/',
+          '10' : 'https://server217.mangovideo.pw/contents/videos/', '11' : 'https://234.mangovideo.pw/contents/videos/',
+          '12' : 'https://98.mangovideo.pw/contents/videos/'
+         }
+
 
 def test_video_exists(page_url):
 
@@ -18,13 +23,18 @@ def test_video_exists(page_url):
        or "File was deleted" in response.data \
        or "is no longer available" in response.data:
         return False, "[mangovideo] El fichero no existe o ha sido borrado"
-
-    global video_url, license_code
-    video_url = scrapertools.find_single_match(response.data, "video_url: '([^']+)'")
-    license_code = scrapertools.find_single_match(response.data, "license_code: '([^']+)'")
-
     return True, ""
+
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info()
-    return [["[mangovideo]", decode(video_url, license_code)]]
+    video_urls = []
+    if "embed" in page_url:
+        data = httptools.downloadpage(page_url)
+        page_url= scrapertools.find_single_match(data, '/(https://mangovideo.pw/get_file/.*?.mp4)/')
+    scrapedurl= scrapertools.find_single_match(page_url, 'https://mangovideo.pw/get_file/\d+/.*?/([^"]+)')
+    scrapedserver = scrapertools.find_single_match(page_url, 'https://mangovideo.pw/get_file/(\d+)')
+    scrapedserver = server.get(scrapedserver, scrapedserver)
+    url = scrapedserver + scrapedurl
+    video_urls.append(["[mangovideo]", url])
+    return video_urls

@@ -94,7 +94,7 @@ def play(item):
         datas = httptools.downloadpage(scrapedurl, post=post, headers={'Referer':item.url}).data
         datas = datas.replace("\\", "")
         url = scrapertools.find_single_match(datas, '<iframe src="([^"]+)"')
-        itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url ))
+        itemlist.append( Item(channel=item.channel, action="play", title="%s",fulltitle = item.title, url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

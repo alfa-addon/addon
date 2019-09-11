@@ -75,7 +75,7 @@ def lista(item):
         thumbnail = "https:" + scrapedthumbnail
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = scrapedtitle))
                               # 
     next_page = scrapertools.find_single_match(data, "<div class='ctrl_el ctrl_sel'>.*?<a href='([^']+)'")
@@ -84,16 +84,16 @@ def lista(item):
         itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
                               url=next_page) )
     return itemlist
-
-
-def findvideos(item):
+# https://www.sxyprn.com/cdn8/c8/nj1q9l31z6131t13zh562cze1e3x0/ERLyduuQGjVMXyrG_TKbMw/1568218449/bs5cby9d136r7id4ao7b883y7nb/3x5idy7x7yfgec9l7va5112z7gb.vid    
+# https://www.sxyprn.com/cdn8/c8/bt1c9i38zj1b191hzl5g23zi1h3w0/fMvCX5Hmm0M7H0994MAD-Q/1568218381/5g5jb79n1e6s7tdwa07l8b3f7gb/nv5ud97b7vf9e69z7faq18287rb.vid
+# https://c8.trafficdeposit.com/vidi/c1i963czt1c101rz4592szk1l350s/buNE54kwnno2po_2QOMk_w/1568218228/5b9167da7837b/5d77fe97a127b.vid
+def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
     url = scrapertools.find_single_match(data, 'data-vnfo=.*?":"([^"]+)"')
-    url = url.replace("\/", "/").replace("/cdn/", "/cdn7/")
+    url = url.replace("\/", "/").replace("/cdn/", "/cdn8/")
     url = urlparse.urljoin(item.url,url)
-    itemlist.append( Item(channel=item.channel, action="play", title = "%s " + url, url=url))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    itemlist.append( Item(channel=item.channel, action="play", title = item.title, url=url))
     return itemlist
 

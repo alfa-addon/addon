@@ -53,15 +53,32 @@ def search(item, texto):
             logger.error("%s" % line)
         return []
 
+
 def videos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     JSONData = json.load(data)
     for Video in JSONData["videos"]:
-        thumbnail = "http://img.beeg.com/236x177/" + str(Video["id"]) + ".jpg"
-        url= '%s/video/%s?v=2&s=%s&e=%s' % (url_api, Video['svid'], Video['start'], Video['end'])
+        segundos = Video["duration"]
+        horas=int(segundos/3600)
+        segundos-=horas*3600
+        minutos=int(segundos/60)
+        segundos-=minutos*60
+        if segundos < 10:
+            segundos = "0%s" %segundos
+        if minutos < 10:
+            minutos = "0%s" %minutos
+        if horas == 00:
+            duration = "%s:%s" % (minutos,segundos)
+        else:
+            duration = "%s:%s:%s" % (horas,minutos,segundos)
+        th2= Video['thumbs']
+        image= scrapertools.find_single_match(str(th2),"'image': '([^']+)'")
+        thumbnail = "http://img.beeg.com/264x198/4x3/%s" %image
+        url = '%s/video/%s?v=2&s=%s&e=%s' % (url_api, Video['svid'], Video['start'], Video['end'])
         title = Video["title"]
+        title = "[COLOR yellow]" + duration + "[/COLOR] " + title
         itemlist.append(
             Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot="", show="",
                  folder=True, contentType="movie"))

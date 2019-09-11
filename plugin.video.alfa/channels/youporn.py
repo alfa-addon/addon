@@ -122,8 +122,8 @@ def play(item):
     patron  = 'page_params.video.mediaDefinition =.*?"videoUrl":"([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:
-        scrapedurl =  scrapedurl.replace("\/", "/")
-    itemlist.append(item.clone(action="play", title=scrapedurl, url=scrapedurl))
+        scrapedurl =  scrapedurl.replace("\/", "/").replace("\\u0026", "&")
+    itemlist.append(item.clone(action="play", title=scrapedurl, fulltitle = item.title, url=scrapedurl))
     return itemlist
 
 

@@ -4,7 +4,11 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://mangovideo.pw/embed/\\w+)",
+        "pattern": "function/0/(https://mangovideo.pw/get_file/.*?.mp4)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://mangovideo.pw/embed/\\d+)",
         "url": "\\1"
       }
     ]
