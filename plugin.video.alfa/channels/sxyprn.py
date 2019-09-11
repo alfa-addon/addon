@@ -84,9 +84,8 @@ def lista(item):
         itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
                               url=next_page) )
     return itemlist
-# https://www.sxyprn.com/cdn8/c8/nj1q9l31z6131t13zh562cze1e3x0/ERLyduuQGjVMXyrG_TKbMw/1568218449/bs5cby9d136r7id4ao7b883y7nb/3x5idy7x7yfgec9l7va5112z7gb.vid    
-# https://www.sxyprn.com/cdn8/c8/bt1c9i38zj1b191hzl5g23zi1h3w0/fMvCX5Hmm0M7H0994MAD-Q/1568218381/5g5jb79n1e6s7tdwa07l8b3f7gb/nv5ud97b7vf9e69z7faq18287rb.vid
-# https://c8.trafficdeposit.com/vidi/c1i963czt1c101rz4592szk1l350s/buNE54kwnno2po_2QOMk_w/1568218228/5b9167da7837b/5d77fe97a127b.vid
+
+
 def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
