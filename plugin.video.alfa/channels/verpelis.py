@@ -101,7 +101,7 @@ def scraper(item):
 
         if item.extra != "search":
             item.i += 1
-        itemlist.append(item.clone(action="findvideos", title=titulo, url=url, thumbnail=thumb, contentTitle=title,
+        itemlist.append(item.clone(action="findvideos", title=titulo, url=url, thumbnail=thumb,
                                    contentTitle=title, contentType="movie", library=True))
 
     ## Paginación

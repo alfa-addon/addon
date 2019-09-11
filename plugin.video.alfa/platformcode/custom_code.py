@@ -298,16 +298,6 @@ def update_libtorrent():
     if filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json")) and \
                     config.get_setting("libtorrent_path", server="torrent", default="") :
         return
-    
-    if xbmc.getCondVisibility("system.platform.android"):
-        LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", default='')
-        LIBTORRENT_MSG = config.get_setting("libtorrent_msg", server="torrent", default='')
-        if '/data/app/' not in LIBTORRENT_PATH and not LIBTORRENT_MSG:
-            platformtools.dialog_notification('ALFA: Instalando Cliente Torrent interno', \
-                        'Puede solicitarle permisos de Superusuario', time=15000)
-            xbmc.log('### ALFA: Notificación enviada: Instalando Cliente Torrent interno', \
-                        xbmc.LOGNOTICE)
-            config.set_setting("libtorrent_msg", 'OK', server="torrent")
 
     try:
         from lib.python_libtorrent.python_libtorrent import get_libtorrent

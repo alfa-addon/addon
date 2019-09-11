@@ -16,8 +16,7 @@ from core.jsontools import to_utf8
 from platformcode import config, logger
 from platformcode.logger import WebErrorException
 import scrapertools
-import requests
-from lib import cloudscraper
+
 
 ## Obtiene la versión del addon
 __version = config.get_addon_version()
@@ -47,7 +46,11 @@ def get_user_agent():
     return default_headers["User-Agent"]
 
 def get_url_headers(url, forced=False):
-    domain_cookies = cj._cookies.get("." + urlparse.urlparse(url)[1], {}).get("/", {})
+    domain = urlparse.urlparse(url)[1]
+    sub_dom = scrapertools.find_single_match(domain, '\.(.*?\.\w+)')
+    if sub_dom:
+        domain = sub_dom
+    domain_cookies = cj._cookies.get("." + domain, {}).get("/", {})
 
     if "|" in url or not "cf_clearance" in domain_cookies:
         if not forced:
@@ -401,6 +404,8 @@ def downloadpage(url, **opt):
 
         """
     load_cookies()
+    import requests
+    from lib import cloudscraper
 
     # Headers por defecto, si no se especifica nada
     req_headers = default_headers.copy()
@@ -534,6 +539,7 @@ def downloadpage(url, **opt):
             response['json'] = dict()
         response['code'] = response_code
         response['headers'] = req.headers
+        response['cookies'] = req.cookies
         
         info_dict, response = fill_fields_post(info_dict, req, response, req_headers, inicio)
 

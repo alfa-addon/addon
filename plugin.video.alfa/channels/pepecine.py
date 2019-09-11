@@ -92,12 +92,12 @@ def get_language(lang_data):
 
 def list_news(item):
     logger.info()
-
     itemlist = []
     listed = []
     next = False
 
     data = get_source(item.url)
+
     patron = '<td><a href=([^ ]+) target="_parent"><img src=([^ ]+) class="s8" alt="([^"]+)"'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -126,14 +126,16 @@ def list_news(item):
                 title = '%s - %s' % (se_ep, contentSerieName)
             se_ep = se_ep.split('x')
             url = '%ssecure/titles/%s?titleId=%s&seasonNumber=%s' % (host, id, id, se_ep[0])
-
+        
+        thumb = re.sub("p/(.*?)/", "p/original/", thumb)
+        
         if url not in listed:
             new_item= Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumb, infoLabels=infoLabels)
 
             if item.news_type == 'movies':
                 new_item.contentTitle = title
                 new_item.action = 'findvideos'
-                listed.append(url)
+
             else:
                 ep = int(se_ep[1])
                 new_item.contentSerieName = contentSerieName
@@ -141,7 +143,8 @@ def list_news(item):
                 new_item.ep_info = ep -1
                 #new_item.infoLabels['season'] = se_ep[0]
                 new_item.infoLabels['episode'] = ep
-                listed.append(url)
+            
+            listed.append(url)
 
             itemlist.append(new_item)
 
@@ -162,8 +165,7 @@ def list_all(item):
 
     itemlist = []
 
-    data = get_source(item.url)
-    json_data = jsontools.load(data)
+    json_data = httptools.downloadpage(item.url).json
     if len(json_data) > 0:
         for elem in json_data['pagination']['data']:
             year = elem['year']
@@ -179,6 +181,8 @@ def list_all(item):
             if 'movie' in item.url:
                 new_item.contentTitle = elem['name']
                 new_item.action = 'findvideos'
+                if not config.get_setting('unify') and year != '-':
+                    new_item.title += ' [COLOR khaki](%s)[/COLOR]' % year
             else:
                 new_item.contentSerieName = elem['name']
                 new_item.action = 'seasons'
@@ -216,9 +220,10 @@ def seasons(item):
     logger.info()
 
     itemlist = []
-    data = get_source(item.url)
-    json_data = jsontools.load(data)
     infoLabels = item.infoLabels
+
+    json_data = httptools.downloadpage(item.url).json
+    
     if len(json_data) > 0:
         for elem in json_data['title']['seasons']:
             infoLabels['season'] = elem['number']
@@ -250,10 +255,10 @@ def episodesxseason(item):
     logger.info()
 
     itemlist = []
-
-    data = get_source(item.url)
-    json_data = jsontools.load(data)
     infoLabels = item.infoLabels
+    
+    json_data = httptools.downloadpage(item.url).json
+    
     if len(json_data) > 0:
         for elem in json_data['title']['season']['episodes']:
 
@@ -273,8 +278,9 @@ def findvideos(item):
     logger.info()
 
     itemlist = []
-    data = get_source(item.url)
-    json_data = jsontools.load(data)
+    
+    json_data = httptools.downloadpage(item.url).json
+    
     if len(json_data) > 0:
         videos_info = json_data['title']['videos']
 
@@ -327,8 +333,9 @@ def search_results(item):
     itemlist=[]
     series_list = []
     movies_list = []
-    data=get_source(item.url)
-    json_data = jsontools.load(data)
+    
+    json_data = httptools.downloadpage(item.url).json
+    
     if json_data['results']:
         for elem in json_data['results']:
             url = '%ssecure/titles/%s?titleId=%s' % (host, elem['id'], elem['id'])
@@ -343,12 +350,22 @@ def search_results(item):
                     year = elem['popular_credits'][0]['year']
                 except:
                     year = '-'
-                    
+            
+            title = name
+
             if is_series:
-                series_list.append(Item(channel=item.channel, title=name, url=url, action='seasons',
+                
+                if not config.get_setting('unify') and not item.search_type:
+                    title += ' [COLOR khaki](Serie)[/COLOR]'
+                
+                series_list.append(Item(channel=item.channel, title=title, url=url, action='seasons',
                                         contentSerieName=name))
             else:
-                movies_list.append(Item(channel=item.channel, title=name, url=url, action='findvideos',
+                
+                if not config.get_setting('unify') and year != '-':
+                    title += ' [COLOR khaki](%s)[/COLOR]' % year
+                
+                movies_list.append(Item(channel=item.channel, title=title, url=url, action='findvideos',
                                         contentTitle=name, infoLabels={'year':year}))
 
         if item.search_type == 'series':
@@ -364,8 +381,11 @@ def search_results(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
+    if not item.url:
+        item.url = host+'secure/search/'
+        
     item.url = '%s%s?type=&limit=30' % (item.url, texto)
-    logger.info()
+
     if texto != '':
         return search_results(item)
     else:

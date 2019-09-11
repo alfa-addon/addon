@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import re
-import sys
-import urllib
 import urlparse
 import time
-import random
+import traceback
 
 from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
-from core import servertools
 from core.item import Item
 from platformcode import config, logger
 from core import tmdb
@@ -1105,7 +1102,6 @@ def search(item, texto):
             return listado(item)
     except:
         import sys
-        import traceback
         for line in sys.exc_info():
             logger.error("{0}".format(line))
         logger.error(traceback.format_exc())
