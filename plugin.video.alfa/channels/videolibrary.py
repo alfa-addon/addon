@@ -574,7 +574,7 @@ def findvideos(item):
         for server in list_servers:
             #if not server.action:  # Ignorar/PERMITIR las etiquetas
             #    continue
-
+            logger.error(server.channel)
             server.contentChannel = server.channel
             server.channel = "videolibrary"
             server.nfo = item.nfo
@@ -633,6 +633,7 @@ def play(item):
                     v.title = config.get_localized_string(60036) % item.contentEpisodeNumber
             v.thumbnail = item.thumbnail
             v.contentThumbnail = item.thumbnail
+            v.contentChannel = item.contentChannel
 
     return itemlist
 
