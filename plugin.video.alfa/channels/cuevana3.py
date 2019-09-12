@@ -79,7 +79,7 @@ def list_all(item):
         #   patron = '<span class="Num">\d+.*?<a href="([^"]+)" class.*?'
         #   patron += 'src="([^"]+)" class.*?<strong>([^<]+)</strong>.*?<td>(\d{4})</td>'
         # else:
-        patron = '<article class="TPost C post-\d+.*?<a href="([^"]+)">.*?'
+        patron = 'class="TPost C post-\d+.*?<a href="([^"]+)">.*?'
         patron +='"Year">(\d{4})<.*?data-src="([^"]+)".*?"Title">([^"]+)</h2>'
         data = get_source(item.url)
         matches = re.compile(patron, re.DOTALL).findall(data)

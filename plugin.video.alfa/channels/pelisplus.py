@@ -233,6 +233,8 @@ def add_vip(item, video_url, language=None):
 
     for url, quality in matches:
         url = url.replace('\/', '/')
+        if 'fvs.io/redirector' in url:
+            url = httptools.downloadpage(url, headers={'Referer':item.url}, only_headers=True).url
         itemlist.append(
             Item(channel=item.channel, title='%s'+title + " " + quality, url=url, action='play', language=language,
                  quality=quality, infoLabels=item.infoLabels))

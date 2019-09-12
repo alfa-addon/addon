@@ -22,7 +22,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     if not media_urls:
         packed = scrapertools.find_single_match(data, "text/javascript'>(.*?)\s*</script>")
         unpacked = jsunpack.unpack(packed)
-        media_urls = scrapertools.find_multiple_matches(unpacked, 'file:"([^"]+)"')
+        media_urls = scrapertools.find_multiple_matches(unpacked, 'file:\s*"([^"]+)"')
         
     for media_url in media_urls:
         media_url += "|Referer=%s" %page_url

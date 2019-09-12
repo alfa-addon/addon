@@ -4,8 +4,6 @@ import re
 import urlparse
 from channels import renumbertools
 from core import httptools
-from core import servertools
-from core import jsontools
 from core import scrapertools
 from core import tmdb
 from core.item import Item
@@ -64,10 +62,9 @@ def search(item, texto):
     item.url = urlparse.urljoin(HOST, "search_suggest")
     texto = texto.replace(" ", "+")
     post = "value=%s" % texto
-    data = httptools.downloadpage(item.url, post=post).data
-    data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
+
     try:
-        dict_data = jsontools.load(data)
+        dict_data = httptools.downloadpage(item.url, post=post).json
         for e in dict_data:
             title = clean_title(scrapertools.htmlclean(e["name"]))
             url = e["url"]
@@ -241,6 +238,7 @@ def episodios(item):
         itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumbnail,
                                    contentTitle=title, fanart=thumbnail, contentType="episode",
                                    infoLabels=infoLabels, contentSerieName=item.contentSerieName,))
+    itemlist.reverse()
     
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
 
