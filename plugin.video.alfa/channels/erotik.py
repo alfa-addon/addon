@@ -83,7 +83,7 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, '<div id="video-wrapper">.*?<iframe.*?src="([^"]+)"')
-    itemlist.append(item.clone(action="play", title=url, url=url ))
+    itemlist.append(item.clone(action="play", title=item.title, url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist)
     return itemlist
 
