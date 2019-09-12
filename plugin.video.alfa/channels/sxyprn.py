@@ -84,6 +84,28 @@ def lista(item):
         itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
                               url=next_page) )
     return itemlist
+                                                                                                      130
+           https://www.sxyprn.com/cdn8/c9/e1y9b3mzc1o101lzg5q2cze1j390h/kK-CN4l73_EeBhkoYNYA2A/1568228307/65xbtac5i3dbd568c4r9z4575at/g5fd37a74djew1zev21dm176g86.vid
+data-vnfo='{"5d77de1e2d168":"\/cdn\/c9\/e1y9b3mzc1o101lzg5q2cze1j390h\/kK-CN4l73_EeBhkoYNYA2A\/1568228437\/65xbtac5i3dbd568c4r9z4575at\/g5fd37a74djew1zev21dm176g86.vid
+                                                                                                     -114
+data-vnfo='{"5d77de1e2d168":"\/cdn\/c9\/m1v963ez51m1u11za5u2xz41e3806\/BQFIcJlTMr0-Z1gVUTxgaQ\/1568228604\/je54bwaz5r3xbn5a864k91487sa\/o5sd17r7xdaea1be32xd41b6b8z.vid
+           https://www.sxyprn.com/cdn8/c9/m1v963ez51m1u11za5u2xz41e3806/BQFIcJlTMr0-Z1gVUTxgaQ/1568228490/je54bwaz5r3xbn5a864k91487sa/o5sd17r7xdaea1be32xd41b6b8z.vid
+                                                                                                     -137
+data-vnfo='{"5d77de1e2d168":"\/cdn\/c9\/5v1n993kzs1n1f1ozc5b20zg1o350\/NCnvDdBfOQmJOivEflNSww\/1568229437\/05pbja75c39br5m8q41974z7haf\/v85edl7b76diej12eb2wd7136v8.vid
+           https://www.sxyprn.com/cdn8/c9/5v1n993kzs1n1f1ozc5b20zg1o350/NCnvDdBfOQmJOivEflNSww/1568229300/05pbja75c39br5m8q41974z7haf/v85edl7b76diej12eb2wd7136v8.vid
+
+                                                                                                     -106
+data-vnfo='{"5d77de1e2d168":"\/cdn\/c9\/41v9b3nzc1q1615zr5n2szw153905\/9LeO2lux-GrgOaEPfMONcA\/1568230473\/1d52b3aa5s36bt5d8o4a9m427pa\/zh5sdc7k7ndee11qe42sdz1h6j8.vid
+           https://www.sxyprn.com/cdn8/c9/41v9b3nzc1q1615zr5n2szw153905/9LeO2lux-GrgOaEPfMONcA/1568230367/1d52b3aa5s36bt5d8o4a9m427pa/zh5sdc7k7ndee11qe42sdz1h6j8.vid
+
+https://c9.trafficdeposit.com/vidi/m1v963ez51m1u11za5u2xz41e3806/BQFIcJlTMr0-Z1gVUTxgaQ/1568228490/5ba53b584947a/5d77de1e2d168.vid
+https://c9.trafficdeposit.com/vidi/e1y9b3mzc1o101lzg5q2cze1j390h/kK-CN4l73_EeBhkoYNYA2A/1568228307/5ba53b584947a/5d77de1e2d168.vid
+                                    + + +   + + +   + +   + + +
+                                    193111152130
+                                     + + +   + + +   + +   + + +
+https://c9.trafficdeposit.com/vidi/5v1n993kzs1n1f1ozc5b20zg1o350/NCnvDdBfOQmJOivEflNSww/1568229300/5ba53b584947a/5d77de1e2d168.vid
+
+https://c9.trafficdeposit.com/vidi/m1v963ez51m1u11za5u2xz41e3806/NCnvDdBfOQmJOivEflNSww/1568229300/5ba53b584947a/5d77de1e2d168.vid
 
 
 def play(item):
@@ -93,6 +115,7 @@ def play(item):
     url = scrapertools.find_single_match(data, 'data-vnfo=.*?":"([^"]+)"')
     url = url.replace("\/", "/").replace("/cdn/", "/cdn8/")
     url = urlparse.urljoin(item.url,url)
-    itemlist.append( Item(channel=item.channel, action="play", title = item.title, url=url))
+    itemlist = servertools.find_video_items(item.clone(url = url, fulltitle = item.title))
+    # itemlist.append( Item(channel=item.channel, action="play",server=directo, title = item.title, url=url))
     return itemlist
 

@@ -10,7 +10,6 @@ from core import httptools
 
 host = 'https://www.pornrewind.com'
 
-# hacer funcionar conector Kt player
 
 def mainlist(item):
     logger.info()
@@ -64,11 +63,28 @@ def lista(item):
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<li class="direction"><a href="([^"]+)" data-ajax="pagination">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page ) )
+    return itemlist
+
+
+def play(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    scrapedurl = scrapertools.find_single_match(data, 'video_alt_url3: \'([^\']+)\'')
+    if scrapedurl == "" :
+        scrapedurl = scrapertools.find_single_match(data, 'video_alt_url2: \'([^\']+)\'')
+    if scrapedurl == "" :
+        scrapedurl = scrapertools.find_single_match(data, 'video_alt_url: \'([^\']+)\'')
+    if scrapedurl == "" :
+        scrapedurl = scrapertools.find_single_match(data, 'video_url: \'([^\']+)\'')
+
+    itemlist.append(Item(channel=item.channel, action="play", title=scrapedurl, fulltitle=item.title, url=scrapedurl,
+                        thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
     return itemlist
 
