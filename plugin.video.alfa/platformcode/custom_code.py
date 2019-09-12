@@ -229,8 +229,8 @@ def update_libtorrent():
         config.set_setting("mct_rar_unpack", True, server="torrent")
         config.set_setting("bt_buffer", "50", server="torrent")
         config.set_setting("bt_download_path", config.get_setting("downloadpath"), server="torrent")
-    if not config.get_setting("mct_download_limit", server="torrent", default=""):
         config.set_setting("mct_download_limit", "", server="torrent")
+        config.set_setting("magnet2torrent", False, server="torrent")
         
     if not filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json")) or not \
                     config.get_setting("unrar_path", server="torrent", default=""):
@@ -323,7 +323,7 @@ def verify_Kodi_video_DB():
         path = filetools.join(xbmc.translatePath("special://masterprofile/"), "Database")
         if filetools.exists(path):
             platform = config.get_platform(full_version=True)
-            if platform:
+            if platform and platform['num_version'] < 19:
                 db_files = filetools.walk(path)
                 if filetools.exists(filetools.join(path, platform['video_db'])):
                     for root, folders, files in db_files:

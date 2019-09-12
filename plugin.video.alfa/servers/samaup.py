@@ -21,10 +21,11 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
+    ext = 'mp4'
 
     packed = scrapertools.find_single_match(data, "text/javascript'>(eval.*?)\s*</script>")
     unpacked = jsunpack.unpack(packed)
-    
+    logger.error(unpacked)
     media_url = scrapertools.find_single_match(unpacked, 'file:"([^"]+)"')
     #media_url += "|Referer=%s" %page_url
     if "m3u8" in media_url:

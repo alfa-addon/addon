@@ -8,7 +8,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import httptools
 
-host = 'http://www.txxx.com'
+host = 'https://txxx.com'
 
 
 def mainlist(item):
@@ -83,16 +83,16 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = 'data-video-id="\d+">.*?<a href="([^"]+)".*?'
-    patron += '<img src="([^"]+)" alt="([^"]+)".*?'
-    patron += '</div>(.*?)</div>'
+    patron = 'class="thumb__aspect">.*?\'(.*?)\'.*?'
+    patron += '</a>(.*?)</div>.*?href="([^"]+)">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,scrapedtime in matches:
+    for scrapedthumbnail, scrapedtime, scrapedurl, scrapedtitle in matches:
+        
         contentTitle = scrapedtitle
         scrapedhd = scrapertools.find_single_match(scrapedtime, '<span class="thumb__hd">(.*?)</span>')
         duration = scrapertools.find_single_match(scrapedtime, '<span class="thumb__duration">(.*?)</span>')
         if scrapedhd != '':
-            title = "[COLOR yellow]" +duration+ "[/COLOR] " + "[COLOR red]" +scrapedhd+ "[/COLOR]  "+scrapedtitle
+            title = "[COLOR yellow]" +duration+ "[/COLOR] " + "[COLOR tomato][" +scrapedhd+ "][/COLOR] "+scrapedtitle
         else:
             title = "[COLOR yellow]" + duration + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
@@ -107,9 +107,24 @@ def lista(item):
 
 
 def play(item):
-    logger.info()
-    itemlist = []
+    headers = {'Referer': item.url}
+    post_url = host+'/sn4diyux.php'
+    
     data = httptools.downloadpage(item.url).data
+    
+    patron = "pC3:'([^']+)',video_id: (\d+),"
+    info_b, info_a = scrapertools.find_single_match(data, patron)
+    post = 'param=%s,%s' % (info_a, info_b)
+    
+    new_data = httptools.downloadpage(post_url, post=post, headers=headers).data
+    
+    texto = scrapertools.find_single_match(new_data, 'video_url":"([^"]+)"')
+
+    url = dec_url(texto)
+    item.url = httptools.downloadpage(url, only_headers=True).url
+    
+    return [item]
+    '''data = httptools.downloadpage(item.url).data
     video_url = scrapertools.find_single_match(data, 'var video_url = "([^"]*)"')
     video_url += scrapertools.find_single_match(data, 'video_url \+= "([^"]*)"')
     partes = video_url.split('||')
@@ -118,7 +133,7 @@ def play(item):
     video_url += '&' if '?' in video_url else '?'
     video_url += 'lip=' + partes[2] + '&lt=' + partes[3]
     itemlist.append(item.clone(action="play", title=item.title, url=video_url))
-    return itemlist
+    return itemlist'''
 
 
 def decode_url(txt):
@@ -146,4 +161,15 @@ def decode_url(txt):
         if d != 64: reto += chr(e)
 
     return urllib.unquote(reto)
+
+def dec_url(txt):
+    #truco del mendrugo
+    txt = txt.decode('unicode-escape').encode('utf8')
+
+    txt = txt.replace('А', 'A').replace('В', 'B').replace('С', 'C').replace('Е', 'E').replace('М', 'M').replace('~', '=')    
+    import base64
+    url = base64.b64decode(txt)
+
+
+    return url
 

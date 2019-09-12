@@ -45,7 +45,7 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    data = scrapertools.find_single_match(data, '<h1>Popular Categories</h1>(.*?)<h1>Community</h1>')
+    data = scrapertools.find_single_match(data, '<h1>(.*?)<h1>Community</h1>')
     patron = '<h2><a href="([^"]+)">([^<]+)</a>.*?'
     patron += 'src="([^"]+)".*?'
     patron += '<span class="contentquantity">([^<]+)</span>'
@@ -66,7 +66,7 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div class="item" style="width: 320px">.*?'
     patron += '<a href="([^"]+)".*?'
-    patron += '<img src="([^"]+)".*?'
+    patron += '<img.*?src="([^"]+)".*?'
     patron += '>(.*?)<div class="trailer".*?'
     patron += 'title="([^"]+)".*?'
     patron += 'clock"></use></svg>([^<]+)</span>'
@@ -79,7 +79,7 @@ def lista(item):
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
-                              fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = scrapedtitle))
+                              fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = title))
                               
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="next"')
     if next_page:

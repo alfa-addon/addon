@@ -20,7 +20,7 @@ from channels import autoplay
 from platformcode import config, logger
 
 
-IDIOMAS = {'latino': 'LAT', 'subtitulado':'VOSE'}
+IDIOMAS = {'latino': 'LAT', 'audio latino': 'LAT', 'sub español':'VOSE', 'subtitulado':'VOSE'}
 list_language = IDIOMAS.values()
 
 list_quality = []
@@ -173,7 +173,9 @@ def episodesxseasons(item):
         url = scrapedurl
         title = '%sx%s - Episodio %s' % (season, episode, episode)
 
-        itemlist.append(Item(channel=item.channel, title= title, url=url, action='findvideos', infoLabels=infoLabels))
+        itemlist.append(Item(channel=item.channel, title= title, url=url,
+                             action='findvideos', infoLabels=infoLabels))
+    
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     return itemlist[::-1]
@@ -189,35 +191,53 @@ def new_episodes(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumb, scrapedtitle in matches:
-        itemlist.append(Item(channel=item.channel, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumb,
-                             action='findvideos'))
+        
+        pat = r'^(.*?)\s*Episodio\s*(\d+)\s*(.*)'
+        ctitle, ep, lang = scrapertools.find_single_match(scrapedtitle, pat)
+        if len(ep) == 1:
+            ep = '0'+ep
+        title = '%s: 1x%s' % (ctitle, ep)
+        language = IDIOMAS.get(lang.lower(), 'VOSE')
+
+        if not config.get_setting('unify'):
+            title += '[COLOR khaki] (%s)[/COLOR]' % language
+        
+        itemlist.append(Item(channel=item.channel, title=title, url=scrapedurl,
+                             thumbnail=scrapedthumb, contentSerieName=ctitle,
+                             language=language, action='findvideos'))
+
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    
     return itemlist
 
 def findvideos(item):
     logger.info()
     itemlist = []
     data = get_source(item.url)
-    patron = 'video\[\d+\] = .*?src="([^"]+)".*?;'
+    patron = 'video\[(\d+)\] = .*?src="([^"]+)".*?;'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    option = 1
-    for scrapedurl in matches:
+    
+    for option, scrapedurl in matches:
         lang = scrapertools.find_single_match(data, '"#option%s">([^<]+)<' % str(option)).strip()
-        lang = lang.lower()
-        if lang not in IDIOMAS:
-            lang = 'subtitulado'
+        language = IDIOMAS.get(lang.lower(), 'VOSE')
+        
         quality = ''
-        title = '%s %s'
+        title = '%s (%s)'
 
-        if 'redirector' in scrapedurl:
+        if 'redirect' in scrapedurl:
             url_data = httptools.downloadpage(scrapedurl).data
-            url = scrapertools.find_single_match(url_data,'window.location.href = "([^"]+)";')
+            url = scrapertools.find_single_match(url_data,'var redir = "([^"]+)";')
+            if not url:
+                url = scrapertools.find_single_match(url_data,'window.location.href = "([^"]+)";')
+                
         else:
             url = scrapedurl
+        
         if url != '':
             itemlist.append(
                 Item(channel=item.channel, url=url, title=title, action='play', quality=quality,
-                     language=IDIOMAS[lang], infoLabels=item.infoLabels))
-            option += 1
+                     language=language, infoLabels=item.infoLabels))
+
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % (x.server.capitalize(), x.language))
 
     # Requerido para Filtrar enlaces

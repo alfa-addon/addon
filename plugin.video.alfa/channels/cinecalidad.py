@@ -15,7 +15,6 @@ from channelselector import get_thumb
 
 IDIOMAS = {'latino': 'Latino', 'castellano': 'Castellano', 'portugues': 'Portugues'}
 list_language = IDIOMAS.values()
-
 list_quality = ['1080p']
 list_servers = [
     
@@ -36,10 +35,21 @@ thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'
 thumbbr = 'http://flags.fmcdn.net/data/flags/normal/br.png'
 current_lang = ''
 
+site_list = ['', 'cinecalidad.to/', 'cinecalidad.to/espana/', 'cinemaqualidade.to/']
+site = config.get_setting('filter_site', channel='cinecalidad')
+site_lang = 'http://www.%s' % site_list[site]
+
 def mainlist(item):
-    global host
-    idioma2 = "destacadas"
     logger.info()
+    
+    itemlist = []
+    idioma2 = "destacadas"
+    
+    if site > 0:
+        item.action = 'submenu'
+        item.host = site_lang
+        return submenu(item)
+
 
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
@@ -48,24 +58,18 @@ def mainlist(item):
         item.clone(title="CineCalidad Latino",
                    action="submenu",
                    host="http://www.cinecalidad.to/",
-                   thumbnail=thumbmx,
-                   extra="peliculas",
-                   ))
+                   thumbnail=thumbmx))
 
     itemlist.append(item.clone(title="CineCalidad Castellano",
                                action="submenu",
                                host="http://www.cinecalidad.to/espana/",
-                               thumbnail=thumbes,
-                               extra="peliculas",
-                               ))
+                               thumbnail=thumbes))
 
     itemlist.append(
         item.clone(title="CineCalidad Portugues",
                    action="submenu",
                    host="http://www.cinemaqualidade.to/",
-                   thumbnail=thumbbr,
-                   extra="filmes",
-                   ))
+                   thumbnail=thumbbr))
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -81,6 +85,7 @@ def submenu(item):
         idioma2 = "destacado"
     logger.info()
     itemlist = []
+
     itemlist.append(Item(channel=item.channel,
                          title=idioma.capitalize(),
                          action="peliculas",
@@ -117,9 +122,27 @@ def submenu(item):
                          fanart='https://s30.postimg.cc/pei7txpa9/buscar.png',
                          host=item.host,
                          ))
+    if site > 0:
+        autoplay.init(item.channel, list_servers, list_quality)
+        
+        itemlist.append(Item(channel=item.channel,
+                         title="Configurar Canal...",
+                         text_color="turquoise",
+                         action="settingCanal",
+                         thumbnail=get_thumb('setting_0.png'),
+                         url='',
+                         fanart=get_thumb('setting_0.png')
+                         ))
+        
+        autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
+def settingCanal(item):
+    from platformcode import platformtools
+    platformtools.show_channel_settings()
+    platformtools.itemlist_refresh()
+    return
 
 def anyos(item):
     logger.info()
@@ -360,7 +383,7 @@ def findvideos(item):
 
         if server_id not in ['MediaFire', 'TVM']:
 
-            language = [IDIOMAS[lang], 'vose']
+            language = [IDIOMAS[lang], 'VOSE']
             if server not in duplicados:
                 new_item = Item(channel=item.channel,
                                 action='play',

@@ -48,13 +48,16 @@ def pornstars_list(item):
 def pornstars(item):
     logger.info()
     itemlist = []
+    
     data = httptools.downloadpage(item.url).data
-    patron = '<a girl-url=.*?'
-    patron += 'href="([^"]+)" title="([^"]+)">.*?'
-    patron += 'data-lazy="([^"]+)".*?'
+    
+    patron = '<a girl-url=.*?href="([^"]+)".*?'
+    patron += 'data-lazy="([^"]+)".*?alt="([^"]+)".*?'
     patron += '<span class="ico-videos sprite"></span>([^<]+)</span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for url, title, thumbnail, count in matches:
+    
+    for url, thumbnail, title, count in matches:
+        
         if "go.php?" in url:
             url = urllib.unquote(url.split("/go.php?u=")[1].split("&")[0])
             thumbnail = urllib.unquote(thumbnail.split("/go.php?u=")[1].split("&")[0])
@@ -62,7 +65,9 @@ def pornstars(item):
             url = urlparse.urljoin(item.url, url)
             if not thumbnail.startswith("https"):
                 thumbnail = "https:%s" % thumbnail
-        itemlist.append(item.clone(title="%s (%s)" % (title, count), url=url, action="videos", fanart=thumbnail, thumbnail=thumbnail))
+        
+        itemlist.append(item.clone(title="%s (%s)" % (title, count.strip()), url=url, 
+                        action="videos", fanart=thumbnail, thumbnail=thumbnail))
     # Paginador
     matches = re.compile('<li[^<]+<a href="([^"]+)" rel="nofollow">Next[^<]+</a[^<]+</li>', re.DOTALL).findall(data)
     if matches:
@@ -80,11 +85,11 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     patron = '<a tag-url=.*?'
-    patron += 'href="([^"]+)" title="([^"]+)".*?'
-    patron += 'data-lazy="([^"]+)".*?'
+    patron += 'href="([^"]+)".*?'
+    patron += 'data-lazy="([^"]+)".*?alt="([^"]+)".*?'
     patron += '<span class="cantidad">([^<]+)</span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for url, title, thumbnail, count in matches:
+    for url, thumbnail, title, count in matches:
         if "go.php?" in url:
             url = urllib.unquote(url.split("/go.php?u=")[1].split("&")[0])
             thumbnail = urllib.unquote(thumbnail.split("/go.php?u=")[1].split("&")[0])
@@ -93,7 +98,8 @@ def categorias(item):
             if not thumbnail.startswith("https"):
                 thumbnail = "https:%s" % thumbnail
         itemlist.append(
-            item.clone(title="%s (%s videos)" % (title, count), url=url, action="videos", fanart=thumbnail, thumbnail=thumbnail))
+            item.clone(title="%s (%s videos)" % (title, count.strip()), url=url,
+                       action="videos", fanart=thumbnail, thumbnail=thumbnail))
     # Paginador
     matches = re.compile('<li[^<]+<a href="([^"]+)" rel="nofollow">Next[^<]+</a[^<]+</li>', re.DOTALL).findall(data)
     if matches:
@@ -110,7 +116,7 @@ def series(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron = '<a onclick=.*?href="([^"]+)".*?\<img src="([^"]+)".*?h2 itemprop="name">([^<]+).*?p>([^<]+)</p>'
+    patron = '<a onclick=.*?href="([^"]+)".*?data-lazy="([^"]+)".*?h2 itemprop="name">([^<]+).*?p>([^<]+)</p>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for url, thumbnail, title, count in matches:
         itemlist.append(
@@ -130,15 +136,16 @@ def videos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<a class="muestra-escena" href="([^"]+)" title="([^"]+)".*?'
-    patron += 'data-lazy="([^"]+)".*?'
-    patron += '<span class="ico-minutos sprite"></span>([^<]+)</span>(.*?)</a>'
+    patron = '<a class="muestra-escena" href="([^"]+)".*?'
+    patron += 'data-lazy="([^"]+)".*?alt="([^"]+)".*?'
+    patron += '"ico-minutos sprite"></span>([^<]+)</span>(.*?)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for url, title, thumbnail, duration,calidad in matches:
+    for url, thumbnail, title, duration,calidad in matches:
+
         if "hd sprite" in calidad:
-            title="[COLOR yellow] %s [/COLOR][COLOR red] HD [/COLOR] %s" % (duration,  title)
+            title="[COLOR yellow][%s][/COLOR][COLOR red] [HD][/COLOR] %s" % (duration.strip(),  title)
         else:
-            title="[COLOR yellow] %s [/COLOR] %s" % (duration, title)
+            title="[COLOR yellow][%s][/COLOR] %s" % (duration.strip(), title)
         if "go.php?" in url:
             url = urllib.unquote(url.split("/go.php?u=")[1].split("&")[0])
             thumbnail = urllib.unquote(thumbnail.split("/go.php?u=")[1].split("&")[0])

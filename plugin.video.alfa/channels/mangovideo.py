@@ -9,9 +9,10 @@ from core import servertools
 from core import httptools
 
 
-server = {'1': 'https://www.mangovideo.pw/contents/videos', '7' : 'https://server9.mangovideo.pw/contents/videos/',
+server = {'1': 'https://www.mangovideo.pw/contents/videos/', '7' : 'https://server9.mangovideo.pw/contents/videos/',
           '8' : 'https://s10.mangovideo.pw/contents/videos/', '9' : 'https://server2.mangovideo.pw/contents/videos/',
-          '10' : 'https://server217.mangovideo.pw/contents/videos/', '11' : 'https://234.mangovideo.pw/contents/videos/'
+          '10' : 'https://server217.mangovideo.pw/contents/videos/', '11' : 'https://234.mangovideo.pw/contents/videos/',
+          '12' : 'https://98.mangovideo.pw/contents/videos/', '13' : 'https://68.mangovideo.pw/contents/videos/'
          }
 
 host = 'http://mangovideo.pw'
@@ -81,7 +82,7 @@ def lista(item):
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
-                              thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = scrapedtitle))
+                              thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
@@ -94,16 +95,11 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
-    scrapedtitle = ""
-    patron = 'video_url: \'function/0/https://mangovideo.pw/get_file/(\d+)/\w+/(.*?)/\''
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedtitle,url in matches:
-        scrapedtitle = server.get(scrapedtitle, scrapedtitle)
-        url = scrapedtitle + url
-    if not scrapedtitle:
+    url = ""
+    url = scrapertools.find_single_match(data, 'src="(https://mangovideo.pw/embed/\d+)"')
+    if not url:
         url = scrapertools.find_single_match(data, '<div class="embed-wrap".*?<iframe src="([^"]+)\?ref=')
     itemlist.append(item.clone(action="play", title="%s", url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
-    
     return itemlist
 

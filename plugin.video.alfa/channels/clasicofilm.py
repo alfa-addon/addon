@@ -114,7 +114,7 @@ def peliculas(item):
         infolabels = {'year': year}
         new_item = item.clone(action="findvideos", title=title, contentTitle=contentTitle,
                               url=url, thumbnail=thumbnail, infoLabels=infolabels,
-                              contentTitle=contentTitle, contentType="movie")
+                              contentType="movie")
         itemlist.append(new_item)
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
     actualpage = int(scrapertools.find_single_match(item.url, 'start-index=(\d+)'))

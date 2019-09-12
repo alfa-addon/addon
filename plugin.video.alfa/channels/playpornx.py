@@ -10,6 +10,13 @@ from core.item import Item
 from platformcode import logger
 import base64
 
+server = {'1': 'https://www.mangovideo.pw/contents/videos/', '7' : 'https://server9.mangovideo.pw/contents/videos/',
+          '8' : 'https://s10.mangovideo.pw/contents/videos/', '9' : 'https://server2.mangovideo.pw/contents/videos/',
+          '10' : 'https://server217.mangovideo.pw/contents/videos/', '11' : 'https://234.mangovideo.pw/contents/videos/',
+          '12' : 'https://98.mangovideo.pw/contents/videos/'
+         }
+
+
 host = "https://watchfreexxx.net/"
 
 def mainlist(item):
@@ -79,21 +86,9 @@ def findvideos(item):
             n = 3
             while n > 0:
                 url= url.replace("https://vshares.tk/goto/", "").replace("https://waaws.tk/goto/", "").replace("https://openloads.tk/goto/", "")
-                logger.debug (url)
                 url = base64.b64decode(url)
                 n -= 1
-        if "mangovideo" in url:  #Aparece como directo
-            data = httptools.downloadpage(url).data
-            patron = 'video_url: \'function/0/https://mangovideo.pw/get_file/(\d+)/\w+/(.*?)/\?embed=true\''
-            matches = scrapertools.find_multiple_matches(data, patron)
-            for scrapedtitle,url in matches:
-                if scrapedtitle =="1":  scrapedtitle= "https://www.mangovideo.pw/contents/videos/"
-                if scrapedtitle =="7":  scrapedtitle= "https://server9.mangovideo.pw/contents/videos/"
-                if scrapedtitle =="8":  scrapedtitle= "https://s10.mangovideo.pw/contents/videos/"
-                if scrapedtitle =="10": scrapedtitle= "https://server217.mangovideo.pw/contents/videos/"
-                if scrapedtitle =="11": scrapedtitle= "https://234.mangovideo.pw/contents/videos/"
-                url = scrapedtitle + url
-        itemlist.append(item.clone(action="play", title = "%s", url=url ))
+        itemlist.append(item.clone(action="play", title ="%s", fulltitle=item.title, url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

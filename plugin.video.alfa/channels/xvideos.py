@@ -99,7 +99,7 @@ def lista(item):
             title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + "[COLOR red]" + quality + "[/COLOR] " + scrapedtitle
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
-                              thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = scrapedtitle))
+                              thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)" class="no-page next-page">Siguiente')
     if "profile" in item.url:
         next_page = scrapertools.find_single_match(data, '<li><a class="active" href="">(\d+)</a></li><li><a href="#')
@@ -113,9 +113,7 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    url = scrapertools.find_single_match(data, 'html5player.setVideoHLS\(\'([^\']+)\'\)')
-    itemlist.append(item.clone(action="play", title=url, url=url ))
+    itemlist.append(item.clone(action="play", title= "%s", fulltitle = item.title, url=item.url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
