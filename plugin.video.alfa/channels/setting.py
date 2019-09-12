@@ -99,6 +99,7 @@ def setting_torrent(item):
     DOWNLOAD_LIMIT = config.get_setting("mct_download_limit", server="torrent", default="")
     BUFFER_BT = config.get_setting("bt_buffer", server="torrent", default="50")
     DOWNLOAD_PATH_BT = config.get_setting("bt_download_path", server="torrent", default=config.get_setting("downloadpath"))
+    MAGNET2TORRENT = config.get_setting("magnet2torrent", server="torrent", default=False)
 
     torrent_options = [config.get_localized_string(30006), config.get_localized_string(70254), config.get_localized_string(70255)]
     torrent_options.extend(platformtools.torrent_client_installed())
@@ -185,6 +186,14 @@ def setting_torrent(item):
             "default": BACKGROUND,
             "enabled": True,
             "visible": True
+        },
+        {
+            "id": "magnet2torrent",
+            "type": "bool",
+            "label": "¿Quiere convertir los Magnets a Torrents para ver tamaños y almacenarlos?",
+            "default": MAGNET2TORRENT,
+            "enabled": True,
+            "visible": True
         }
     ]
 
@@ -209,6 +218,8 @@ def save_setting_torrent(item, dict_data_saved):
         config.set_setting("bt_buffer", dict_data_saved["bt_buffer"], server="torrent")
     if dict_data_saved and "bt_download_path" in dict_data_saved:
         config.set_setting("bt_download_path", dict_data_saved["bt_download_path"], server="torrent")
+    if dict_data_saved and "magnet2torrent" in dict_data_saved:
+        config.set_setting("magnet2torrent", dict_data_saved["magnet2torrent"], server="torrent")
 
 def menu_servers(item):
     logger.info()

@@ -2513,7 +2513,7 @@ def episodios(item):
         
         #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
         if not data or not scrapertools.find_single_match(data, pattern) or '>( 0 ) Capitulos encontrados <' in data:
-            if len(itemlist) > 0:                                                   # Si ya hay datos, puede ser la última página
+            if len(itemlist) > 0 or '>( 0 ) Capitulos encontrados <' in data:       # Si ya hay datos, puede ser la última página
                 break
             item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
             if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
@@ -2525,10 +2525,12 @@ def episodios(item):
                 patron_series = "var\s*parametros\s*=\s*\{(?:'rating'\s*\:[^']+)?(?:'ratingc'\s*\:[^']+)?"
                 patron_series += "(?:'n_votos'\s*\:[^']+)?(?:'id'\s*\:[^,]+,)?'cate'\s*\:\s*'([^']+)'"
                 url_serie_nocode = scrapertools.find_single_match(data, patron_series)
-                url_serie_nocode = '%s/%s' % (item.url, url_serie_nocode)
                 if url_serie_nocode:
+                    url_serie_nocode = '%s/%s/pg/1' % (item.url, url_serie_nocode)
                     data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage\
                                 (url_serie_nocode, timeout=timeout, ignore_response_code=True).data)
+                else:
+                    data = ''
 
             if not data or not scrapertools.find_single_match(data, pattern):
                 logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea: " + item.url)
