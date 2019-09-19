@@ -15,7 +15,8 @@ from platformcode import config, logger
 IDIOMAS = {'VOSE': 'VOSE',
            'VOSI': 'VOS',
            'Español latino': 'Lat',
-           'Iberian spanish': 'Cast'
+           'Iberian spanish': 'Cast',
+           'VO': 'VO'
         }
 list_language = IDIOMAS.values()
 list_quality = ['720p', '480p']
@@ -39,27 +40,58 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
-    itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host+"movies/", thumbnail = get_thumb("newest", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Más Vistas", action = "peliculas", url = host+'tendencias/', thumbnail = get_thumb("more watched", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Mejor Valoradas", action = "peliculas", url = host+'calificaciones/', thumbnail = get_thumb("more voted", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Ranking IMDb", action = "ranking", url = host+'raking-imdb/', thumbnail = get_thumb("recomended", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Por género", action = "generos_years", url = host, minfo = "Géneros", thumbnail = get_thumb("genres", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Por año", action = "generos_years", url = host, minfo = "year", thumbnail = get_thumb("year", auto = True)))
-    itemlist.append(Item(channel = item.channel, title = "Buscar", action = "search", url = host + "?s=", thumbnail = get_thumb("search", auto = True)))
+    
+    itemlist.append(
+        Item(channel=item.channel, title="Novedades", action="peliculas",
+             url=host+"movies/", thumbnail=get_thumb("newest", auto=True)))
+    
+    itemlist.append(
+        Item(channel= item.channel, title="Más Vistas", action="peliculas",
+             url=host+'tendencias/', thumbnail=get_thumb("more watched", auto=True)))
+    
+    itemlist.append(
+        Item(channel=item.channel, title="Mejor Valoradas", action="peliculas",
+             url=host+'calificaciones/', thumbnail =get_thumb("more voted", auto=True)))
+    
+    itemlist.append(
+        Item(channel=item.channel, title="Ranking IMDb", action="ranking",
+             url=host+'raking-imdb/', thumbnail=get_thumb("recomended", auto=True)))
+    
+    itemlist.append(
+        Item(channel=item.channel, title="Por género", action="generos_years",
+             url=host, minfo="Géneros", thumbnail=get_thumb("genres", auto=True)))
+    
+    itemlist.append(
+        Item(channel=item.channel, title="Por año", action="generos_years",
+             url=host, minfo="year", thumbnail=get_thumb("year", auto=True)))
+    
+    itemlist.append(
+        Item(channel=item.channel, title="Buscar...", action="search", url=host + "?s=",
+             thumbnail=get_thumb("search", auto=True)))
+
+    itemlist.append(
+        Item(channel=item.channel, title="Configurar Canal...", action="Config", url="",
+             thumbnail=get_thumb("setting_0.png"), text_color='aquamarine'))
+    
+    
     autoplay.show_option(item.channel, itemlist)
+    
     return itemlist
+
+def Config(item):
+    from platformcode import platformtools
+    ret = platformtools.show_channel_settings()
+    platformtools.itemlist_refresh()
+    return ret
+
 
 def newest(categoria):
     logger.info()
     itemlist = []
     item = Item()
     try:
-        if categoria in ['peliculas','latino']:
+        if categoria in ['peliculas']:
             item.url = host
-        elif categoria == 'infantiles':
-            item.url = host + 'genre/animacion/'
-        elif categoria == 'terror':
-            item.url = host + 'genre/terror/'
         itemlist = peliculas(item)
         if "Pagina" in itemlist[-1].title:
             itemlist.pop()
@@ -119,15 +151,9 @@ def ranking(item):
         pos += + 1
         pre = "[COLOR=yellow][B]%s[/COLOR] %s [/B]" % (pos, punt)
         mtitle = pre + title
-        if '&#8211;' in title:
-            title0 = title.split(" &#8211; ")
-            title = title0[0]
-            toriginal = title0[1]
+        title = re.sub(r'\s&#8211;\s|\s/\s', ' (', title)
+        title = re.sub(r' \((.*)$', '', title)
 
-        elif ' / ' in title:
-            title0 = title.split(" / ")
-            title = title0[0]
-            toriginal = title0[1]
         if full_title == False:
             mtitle = pre + title
 
@@ -188,15 +214,8 @@ def peliculas(item):
         
         mtitle = title
         plot = info
-        if '&#8211;' in title:
-            title0 = title.split(" &#8211; ")
-            title = title0[0]
-            toriginal = title0[1]
-
-        elif ' / ' in title:
-            title0 = title.split(" / ")
-            title = title0[0]
-            toriginal = title0[1]
+        title = re.sub(r'\s&#8211;\s|\s/\s', ' (', title)
+        title = re.sub(r' \((.*)$', '', title)
         if full_title == False:
             mtitle = title
         mtitle += " (" + year + ")"+tlang+punt
@@ -244,7 +263,7 @@ def findvideos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for surl, sserver, scal, slang, stype in matches:
         sname = sserver.split(".")[0]
-        lang = IDIOMAS[slang]
+        lang = IDIOMAS.get(slang, slang)
         scal = scal.replace("HD", "720")
         stitle = " [COLOR=green][%sp][/COLOR] [COLOR=yellow](%s)[/COLOR]" % (scal, lang)
         

@@ -40,20 +40,29 @@ def mainlist(item):
                                thumbnail=get_thumb('newest', auto=True), text_color=color1,))
     itemlist.append(item.clone(action="peliculas", title="Estrenos", url=host + "archivos/estrenos",
                                thumbnail=get_thumb('premieres', auto=True), text_color=color1))
-    itemlist.append(item.clone(action="indices", title="Por géneros", url=host,
+    itemlist.append(item.clone(action="indices", title="Por Géneros", url=host,
                                thumbnail=get_thumb('genres', auto=True), text_color=color1))
-    itemlist.append(item.clone(action="indices", title="Por país", url=host, text_color=color1,
+    itemlist.append(item.clone(action="indices", title="Por País", url=host, text_color=color1,
                                thumbnail=get_thumb('country', auto=True)))
-    itemlist.append(item.clone(action="indices", title="Por año", url=host, text_color=color1,
+    itemlist.append(item.clone(action="indices", title="Por Año", url=host, text_color=color1,
                                thumbnail=get_thumb('year', auto=True)))
 
-    itemlist.append(item.clone(title="", action=""))
+    itemlist.append(item.clone(title="", action="", folder=False))
     itemlist.append(item.clone(action="search", title="Buscar...", text_color=color3,
                                thumbnail=get_thumb('search', auto=True)))
     itemlist.append(item.clone(action="configuracion", title="Configurar canal...", text_color="gold", folder=False))
 
     return itemlist
 
+def get_source(url, patron=None):
+
+    data = httptools.downloadpage(url).data
+    data = re.sub(r"\n|\r|\t|\s{2}|<br />", "", data)
+    
+    if patron:
+        data = scrapertools.find_single_match(data, patron)
+
+    return data
 
 def configuracion(item):
     from platformcode import platformtools
@@ -108,15 +117,17 @@ def peliculas(item):
     item.text_color = color2
 
     # Descarga la página
-    data = httptools.downloadpage(item.url).data
+    data = get_source(item.url)
 
-    patron = '<h3><a href="([^"]+)">([^<]+)<.*?src="([^"]+)".*?<a rel="tag">([^<]+)<' \
-             '.*?<a rel="tag">([^<]+)<'
+    patron = '<h3><a href="([^"]+)">([^<]+)<.*?src="([^"]+)".*?<a rel="tag">(.*?)<' \
+             '.*?<a rel="tag">(.*?)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle, scrapedthumbnail, year, calidad in matches:
-        title = re.sub(r' \((\d+)\)', '', scrapedtitle)
-        scrapedtitle += "  [%s]" % calidad
-        infolab = {'year': year}
+        title = re.sub(r' \((\d{4})\)$', '', scrapedtitle)
+        if calidad:
+            scrapedtitle += "  [%s]" % calidad
+
+        infolab = {'year': year or '-'}
         itemlist.append(item.clone(action="findvideos", title=scrapedtitle, url=scrapedurl,
                                    thumbnail=scrapedthumbnail, infoLabels=infolab,
                                    contentTitle=title, contentType="movie", quality=calidad))
@@ -134,8 +145,8 @@ def indices(item):
     itemlist = []
 
     # Descarga la página
-    data = httptools.downloadpage(item.url).data
-    logger.info(data)
+    data = get_source(item.url)
+
     if "géneros" in item.title:
         bloque = scrapertools.find_single_match(data, '(?i)<h4>Peliculas por genero</h4>(.*?)</ul>')
         matches = scrapertools.find_multiple_matches(bloque, '<a href="([^"]+)".*?>([^<]+)<')
@@ -157,21 +168,31 @@ def indices(item):
 
 def findvideos(item):
     logger.info()
-    data = httptools.downloadpage(item.url).data
-    item.infoLabels["plot"] = scrapertools.find_single_match(data, '(?i)<h2>SINOPSIS.*?<p>(.*?)</p>')
-    item.infoLabels["trailer"] = scrapertools.find_single_match(data, 'src="(http://www.youtube.com/embed/[^"]+)"')
+    data = get_source(item.url)
+    if not item.infoLabels["plot"]:
+        plot = scrapertools.find_single_match(data, '(?i)<h2>SINOPSIS.*?<p>(.*?)</p>')
+        item.infoLabels["plot"] = scrapertools.decodeHtmlentities(plot)
+    #item.infoLabels["trailer"] = scrapertools.find_single_match(data, 'src="(http://www.youtube.com/embed/[^"]+)"')
 
     itemlist = servertools.find_video_items(item=item, data=data)
     for it in itemlist:
+
+        it.title = it.server.capitalize()
+        if item.quality:
+            it.title += ' [%s]' % item.quality
+        if it.server == 'youtube':
+            it.title = 'Ver Trailer'
         it.thumbnail = item.thumbnail
         it.text_color = color2
-
-    itemlist.append(item.clone(action="add_pelicula_to_library", title="Añadir película a la videoteca"))
-    if item.infoLabels["trailer"]:
+    
+    '''if item.infoLabels["trailer"]:
         folder = True
         if config.is_xbmc():
             folder = False
         itemlist.append(item.clone(channel="trailertools", action="buscartrailer", title="Ver Trailer", folder=folder,
-                                   contextual=not folder))
+                                   contextual=not folder))'''
+
+    if len(itemlist) and config.get_videolibrary_support():
+        itemlist.append(item.clone(action="add_pelicula_to_library", title="Añadir película a la videoteca"))
 
     return itemlist

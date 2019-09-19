@@ -71,6 +71,15 @@ def mainlist(item):
                    host="http://www.cinemaqualidade.to/",
                    thumbnail=thumbbr))
 
+    itemlist.append(Item(channel=item.channel,
+                         title="Configurar Canal...",
+                         text_color="turquoise",
+                         action="settingCanal",
+                         thumbnail=get_thumb('setting_0.png'),
+                         url='',
+                         fanart=get_thumb('setting_0.png')
+                         ))
+
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
@@ -103,7 +112,7 @@ def submenu(item):
     itemlist.append(Item(channel=item.channel,
                          title="Generos",
                          action="generos",
-                         url=host + "/genero-" + idioma,
+                         url=host,
                          thumbnail=get_thumb('genres', auto=True),
                          fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png',
                          ))
@@ -115,7 +124,7 @@ def submenu(item):
                          fanart='https://s8.postimg.cc/7eoedwfg5/pora_o.png',
                          ))
     itemlist.append(Item(channel=item.channel,
-                         title="Buscar",
+                         title="Buscar...",
                          action="search",
                          thumbnail=get_thumb('search', auto=True),
                          url=host + '/?s=',

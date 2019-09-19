@@ -41,8 +41,8 @@ def login():
         patron = "<input type='hidden' name='__csrf_magic' value=\"([^\"]+)\" />"
     
         sid = urllib.quote(scrapertools.find_single_match(data, patron))
-        user_ = config.get_setting('hdfulluser', channel='hdfull')
-        pass_ = config.get_setting('hdfullpassword', channel='hdfull')
+        user_ = urllib.quote(config.get_setting('hdfulluser', channel='hdfull'))
+        pass_ = urllib.quote(config.get_setting('hdfullpassword', channel='hdfull'))
         if not pass_:
             if not _silence:
                 platformtools.dialog_notification("Falta la contraseña", 

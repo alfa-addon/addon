@@ -574,7 +574,6 @@ def findvideos(item):
         for server in list_servers:
             #if not server.action:  # Ignorar/PERMITIR las etiquetas
             #    continue
-            logger.error(server.channel)
             server.contentChannel = server.channel
             server.channel = "videolibrary"
             server.nfo = item.nfo
