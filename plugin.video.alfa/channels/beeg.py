@@ -18,7 +18,7 @@ def get_api_url():
     global url_api
     data = httptools.downloadpage(Host).data
     version = re.compile('var beeg_version = ([\d]+)').findall(data)[0]
-    url_api = Host + "/api/v6/" + version
+    url_api = Host + "/api/v6/" + version    # https://beeg.com/api/v6/1568386822920/
 
 
 get_api_url()
@@ -76,7 +76,7 @@ def videos(item):
         th2= Video['thumbs']
         image= scrapertools.find_single_match(str(th2),"'image': '([^']+)'")
         thumbnail = "http://img.beeg.com/264x198/4x3/%s" %image
-        url = '%s/video/%s?v=2&s=%s&e=%s' % (url_api, Video['svid'], Video['start'], Video['end'])
+        url = '%s/video/%s?v=2' % (url_api, Video['svid'])
         title = Video["title"]
         title = "[COLOR yellow]" + duration + "[/COLOR] " + title
         itemlist.append(
@@ -110,6 +110,7 @@ def canal(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     JSONData = json.load(data)
     for Tag in JSONData["channels"]:
         url = url_api + "/index/channel/0/pc?channel=" + Tag["channel"]

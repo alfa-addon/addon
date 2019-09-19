@@ -67,8 +67,8 @@ def lista(item):
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         thumbnail = "http:" + scrapedthumbnail + "|Referer=%s" % item.url
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                              contentTitle = scrapedtitle, fanart=thumbnail))
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
+                              fanart=thumbnail, plot=plot))
     if item.extra:
        next_page = scrapertools.find_single_match(data, '<li class="next">.*?from_videos\+from_albums:(\d+)')
        if next_page:
@@ -108,7 +108,7 @@ def play(item):
         scrapedurl = scrapertools.find_single_match(data, 'video_url: \'([^\']+)\'')
 
     itemlist.append(Item(channel=item.channel, action="play", title=scrapedurl, url=scrapedurl,
-                        thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo"))
+                        thumbnail=item.thumbnail, plot=item.plot, contentTitle = item.title, server="directo"))
     return itemlist
 
 

@@ -91,6 +91,7 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
+    
     scrapedurl = scrapertools.find_single_match(data, 'video_alt_url3: \'([^\']+)\'')
     if scrapedurl == "" :
         scrapedurl = scrapertools.find_single_match(data, 'video_alt_url2: \'([^\']+)\'')
@@ -98,9 +99,8 @@ def play(item):
         scrapedurl = scrapertools.find_single_match(data, 'video_alt_url: \'([^\']+)\'')
     if scrapedurl == "" :
         scrapedurl = scrapertools.find_single_match(data, 'video_url: \'([^\']+)\'')
-
-    itemlist.append(Item(channel=item.channel, action="play", title=scrapedurl, url=scrapedurl,
-                        thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
+    itemlist.append(item.clone(action="play", title=scrapedurl, contentTitle=item.title, url=scrapedurl,
+                               server="directo", folder=False))
     return itemlist
 
 

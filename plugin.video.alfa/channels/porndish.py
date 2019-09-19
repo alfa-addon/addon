@@ -81,8 +81,17 @@ def play(item):
     patron = '<iframe src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:
-        url = url.replace("/woof.tube/", "/verystream.com/")
-        itemlist.append(item.clone(action="play", title= "%s" , fulltitle=item.title, url=url)) 
+        itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
-    return itemlist
+    a = len (itemlist)
+    for i in itemlist:
+        
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue
 

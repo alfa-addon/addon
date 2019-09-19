@@ -75,7 +75,7 @@ def categorias(item):
         title = scrapedtitle + "[COLOR yellow]  " + num + "[/COLOR]"
         itemlist.append( Item(channel=item.channel, action="lista", title=title , url=url , 
                         thumbnail=scrapedthumbnail, plot=scrapedplot) )
-    return itemlist
+    return  sorted(itemlist, key=lambda i: i.title)
 
 
 def lista(item):

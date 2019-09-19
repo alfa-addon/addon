@@ -53,7 +53,7 @@ def categorias(item):
         thumbnail = urlparse.urljoin(item.url,scrapedthumbnail)
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=url,
                               thumbnail=thumbnail , plot=scrapedplot) )
-    return itemlist
+    return sorted(itemlist, key=lambda i: i.title)
 
 
 def lista(item):
@@ -76,7 +76,7 @@ def lista(item):
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         thumbnail = urlparse.urljoin(item.url,scrapedthumbnail)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail, plot=plot,
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
                               contentTitle = scrapedtitle))
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)"><span>Next')
     if next_page == "":
@@ -87,3 +87,17 @@ def lista(item):
                               url=next_page) )
     return itemlist
 
+
+def play(item):
+    itemlist = []
+    itemlist = servertools.find_video_items(item)
+    a = len (itemlist)
+    for i in itemlist:
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue

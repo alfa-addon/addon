@@ -80,7 +80,7 @@ def lista(item):
         next_page = next + "%s/" % next_page
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page ) )
+        itemlist.append(item.clone(action="lista", title= next_page, text_color="blue", url=next_page ) )
     return itemlist
 
 
@@ -96,7 +96,7 @@ def play(item):
     if scrapedurl == "" :
         scrapedurl = scrapertools.find_single_match(data, 'video_url: \'([^\']+)\'')
 
-    itemlist.append(Item(channel=item.channel, action="play", title=scrapedurl, fulltitle=item.title, url=scrapedurl,
+    itemlist.append(Item(channel=item.channel, action="play", title=scrapedurl, contentTitle=item.title, url=scrapedurl,
                         thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
     return itemlist
 

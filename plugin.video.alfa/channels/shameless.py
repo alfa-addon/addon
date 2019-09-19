@@ -69,7 +69,7 @@ def lista(item):
         thumbnail = scrapedthumbnail + "|Referer=https://www.shameless.com/"
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
-                              fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = scrapedtitle))
+                              fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, 'class="active">.*?<a href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)

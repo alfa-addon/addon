@@ -67,7 +67,7 @@ def lista(item):
         contentTitle = title
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos" , title=title , url=url,
+        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = contentTitle))
     next_page = scrapertools.find_single_match(data,'<a class="nextpostslink" rel="next" href="([^"]+)">&raquo;</a>')
     if next_page!="":
@@ -75,3 +75,17 @@ def lista(item):
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
+
+def play(item):
+    itemlist = []
+    itemlist = servertools.find_video_items(item)
+    a = len (itemlist)
+    for i in itemlist:
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue
