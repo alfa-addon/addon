@@ -86,7 +86,7 @@ def getchanneltypes(view="thumb_"):
                          category=title, channel_type="all", thumbnail=get_thumb("channels_all.png", view),
                          viewmode="thumbnails"))
 
-    if config.get_setting('frequents') and config.get_setting('frequents_folder'):
+    if config.get_setting('frequents_folder'):
         itemlist.append(Item(title='Frecuentes', channel="channelselector", action="filterchannels", view=view,
                              category='all', channel_type="freq", thumbnail=get_thumb("channels_frequents.png", view),
                              viewmode="thumbnails"))
@@ -215,7 +215,11 @@ def filterchannels(category, view="thumb_"):
         frequent_list = sorted(frequent_list, key=lambda item: item.frequency, reverse=True)
 
         if freq:
-            return frequent_list
+            max_ff = config.get_setting("max_frequents_folder")
+            if max_ff > 0:
+                return frequent_list[0:max_ff]
+            else:
+                return frequent_list
 
         max_freq = config.get_setting("max_frequents")
         if frequent_list:
@@ -227,6 +231,20 @@ def filterchannels(category, view="thumb_"):
             frequent_list.insert(0, Item(title='- Canales frecuentes -', action=''))
 
             frequent_list.append(Item(title='- Todos los canales -', action=''))
+
+    elif freq:
+        for ch in channelslist:
+            if int(ch.frequency) != 0:
+                frequent_list.append(ch)
+
+        frequent_list = sorted(frequent_list, key=lambda item: item.frequency, reverse=True)
+
+        max_ff = config.get_setting("max_frequents_folder")
+        if max_ff > 0:
+            return frequent_list[0:max_ff]
+        else:
+            return frequent_list
+
 
     channelslist.sort(key=lambda item: item.title.lower().strip())
 

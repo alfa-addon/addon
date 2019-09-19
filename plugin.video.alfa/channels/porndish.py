@@ -64,7 +64,7 @@ def lista(item):
     for scrapedthumbnail,scrapedtitle,scrapedurl in matches:
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = scrapedtitle))
     next_page = scrapertools.find_single_match(data, '<a class="g1-delta g1-delta-1st next" href="([^"]+)">Next</a>')
     if next_page:
@@ -73,6 +73,16 @@ def lista(item):
                               url=next_page) )
     return itemlist
 
-
-
+def play(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    patron = '<iframe src="([^"]+)"'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url in matches:
+        url = url.replace("/woof.tube/", "/verystream.com/")
+        itemlist.append(item.clone(action="play", title= "%s" , fulltitle=item.title, url=url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
+    return itemlist
 

@@ -59,7 +59,11 @@ def sub_menu(item):
 
     itemlist=[]
 
-    itemlist.append(Item(channel=item.channel, title='Estrenos', url=host + item.type, action='list_all',
+    url_estreno = host + item.type
+    if item.type == 'peliculas':
+        url_estreno = host + item.type + '/estrenos'
+
+    itemlist.append(Item(channel=item.channel, title='Estrenos', url=url_estreno, action='list_all',
                          thumbnail=get_thumb('all', auto=True), type=item.type))
     #25/05 Estas funciones no responden apropiadamente en la web
     '''itemlist.append(Item(channel=item.channel, title='Genero', action='section',
@@ -127,11 +131,13 @@ def list_all(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
 
         title = scrapedtitle
+        scrapedtitle = re.sub(' \((.*?)\)$', '', scrapedtitle)
         thumbnail = scrapedthumbnail.strip()
         url = scrapedurl
         filter_thumb = thumbnail.replace("https://image.tmdb.org/t/p/w154", "")
         filter_list = {"poster_path": filter_thumb}
         filter_list = filter_list.items()
+        thumbnail = re.sub('p/w\d+', 'p/original', thumbnail)
         new_item = Item(channel=item.channel,
                         title=title,
                         url=url,
@@ -168,6 +174,7 @@ def list_collections(item):
 
     for url, thumb, title, cant in matches:
         plot = 'Contiene %s elementos' % cant
+        thumb = re.sub('p/w\d+', 'p/original', thumb)
         itemlist.append(Item(channel=item.channel, action='list_all', title=title, url=url, thumbnail=thumb, plot=plot))
 
     url_next_page = scrapertools.find_single_match(data, 'class="PageActiva">\d+</a><a href="([^"]+)"')

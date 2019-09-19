@@ -53,7 +53,7 @@ else:
 
 log('dirname: ' +str(dirname))
 
-versions = ['0.16.19', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.0.11', '1.1.0', '1.1.1', '1.1.6', '1.1.7', '1.2.1']       ### Alfa
+versions = ['0.16.19', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.0.11', '1.1.0', '1.1.1', '1.1.6', '1.1.7', '1.2.1', '1.2.2']  ### Alfa
 default_path = versions[-1]
 #set_version = int(__settings__.getSetting('set_version'))                      ### Alfa
 set_version = 0                                                                 ### Alfa
@@ -141,10 +141,6 @@ try:
             path_list = [dest_path]
             log('path_list = ' + str(path_list))
             fp, pathname, description = imp.find_module('libtorrent', path_list)
-            #if fp: fp.close()
-            #from core import filetools
-            #fp = filetools.file_open(pathname, 'rb')                                # Alfa: Usa XbmcVFS
-            #fp = open(pathname, 'rt')
             log('fp = ' + str(fp))
             log('pathname = ' + str(pathname))
             log('description = ' + str(description))

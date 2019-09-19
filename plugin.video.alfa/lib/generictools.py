@@ -249,6 +249,14 @@ def refresh_screen(item):
 def post_tmdb_listado(item, itemlist):
     logger.info()
     itemlist_fo = []
+    try:
+        from channels import test
+        if test.TEST_ACTIVE:
+            test_active = True
+        else:
+            test_active = False
+    except:
+        test_active = False
     
     """
         
@@ -344,10 +352,12 @@ def post_tmdb_listado(item, itemlist):
             item_local.infoLabels['aired'] = ''
             
         #Si traía el TMDB-ID, pero no ha funcionado, lo reseteamos e intentamos de nuevo
+        if item_local.infoLabels['tmdb_id'] and test_active:            # Si se están pasando tests,
+            del item_local.infoLabels['tmdb_id']                        # ignorar el TMDB
         if item_local.infoLabels['tmdb_id'] and not item_local.infoLabels['originaltitle']:
             logger.error("*** TMDB-ID erroneo, reseteamos y reintentamos ***")
             logger.error(item_local)
-            del item_local.infoLabels['tmdb_id']                #puede traer un TMDB-ID erroneo
+            del item_local.infoLabels['tmdb_id']                        #puede traer un TMDB-ID erroneo
             try:
                 tmdb.set_infoLabels(item_local, __modo_grafico__, idioma_busqueda='es,en')  #pasamos otra vez por TMDB
             except:
@@ -1310,6 +1320,14 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                         timeout=5, file_list=False, lookup=True, local_torr=None, headers={}, short_pad=False):
     logger.info()
     from servers import torrent
+    try:
+        from channels import test
+        if test.TEST_ACTIVE:
+            test_active = True
+        else:
+            test_active = False
+    except:
+        test_active = False
     
     """
     
@@ -1404,7 +1422,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
         #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
 
-        if (url and not local_torr) or url.startswith('magnet'):
+        if ((url and not local_torr) or url.startswith('magnet')) and not test_active:
             torrents_path, torrent_file = torrent.caching_torrents(url, \
                         referer=referer, post=post, torrents_path=torrents_path, \
                         timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)

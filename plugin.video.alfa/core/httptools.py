@@ -48,7 +48,7 @@ def get_user_agent():
 def get_url_headers(url, forced=False):
     domain = urlparse.urlparse(url)[1]
     sub_dom = scrapertools.find_single_match(domain, '\.(.*?\.\w+)')
-    if sub_dom:
+    if sub_dom and not 'google' in url:
         domain = sub_dom
     domain_cookies = cj._cookies.get("." + domain, {}).get("/", {})
 

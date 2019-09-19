@@ -276,12 +276,14 @@ def search(item, texto):
 def series_abc(item):
     logger.info()
     itemlist = []
+    page = config.get_setting('pagination_abc', channel='hdfull')
+    page = 0 if page else ''
     az = "#ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     for l in az:
         itemlist.append(
             Item(channel=item.channel, action='fichas', title=l, 
-                 url=host + "%s/series/abc/%s" % (host, l.replace('#', '9')),
-                 thumbnail=item.thumbnail))
+                 url= "%s/series/abc/%s" % (host, l.replace('#', '9')),
+                 thumbnail=item.thumbnail, page=page, text_bold=True))
     return itemlist
 
 
@@ -348,7 +350,7 @@ def items_usuario(item):
             itemlist.append(
                 Item(channel=item.channel, action="findvideos", title=title, 
                      contentTitle=show, url=url, thumbnail=thumbnail,
-                    text_bold=True, infoLabels={'year': '-'}))
+                     text_bold=True, infoLabels={'year': '-'}))
     if len(itemlist) == int(limit):
         itemlist.append(
             Item(channel=item.channel, action="items_usuario", title=">> Página siguiente", url=next_page, text_bold=True))
@@ -375,6 +377,7 @@ def items_usuario(item):
 def fichas(item):
     logger.info()
     itemlist = []
+    or_matches = ""
     textoidiomas=''
     infoLabels=dict()
     ## Carga estados
@@ -408,6 +411,11 @@ def fichas(item):
     )
     patron = "'url':'([^']+)';'image':'([^']+)';'langs':'([^']+)';'rating':'([^']+)';'title':([^;]+);'id':'([^']+)';"
     matches = re.compile(patron, re.DOTALL).findall(data)
+    
+    if item.page != '':
+        or_matches = matches
+        matches = matches[item.page:item.page + 40]
+    
     for scrapedurl, scrapedthumbnail, scrapedlangs, scrapedrating, scrapedtitle, scrapedid in matches:
 
         thumbnail = scrapedthumbnail.replace('tthumb/130x190', 'thumbs')
@@ -472,6 +480,11 @@ def fichas(item):
     if next_page_url != "":
         itemlist.append(Item(channel=item.channel, action="fichas", title=">> Página siguiente",
                              url=urlparse.urljoin(item.url, next_page_url), text_bold=True))
+
+    elif item.page != '':
+        if item.page + 40 < len(or_matches):
+            itemlist.append(item.clone(page=item.page + 40, title=">> Página siguiente",
+                                       text_bold=True, text_color="blue"))
     
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
     
