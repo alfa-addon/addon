@@ -6,6 +6,7 @@ import os
 import traceback
 import re
 import urllib
+import sys
 
 try:
     import xbmc
@@ -20,6 +21,28 @@ from core import scrapertools
 from platformcode import logger
 from platformcode import config
 from platformcode import platformtools
+
+trackers = [
+        "udp://tracker.openbittorrent.com:80/announce",
+        "http://tracker.torrentbay.to:6969/announce",
+        "http://tracker.pow7.com/announce",
+        "udp://tracker.ccc.de:80/announce",
+        "udp://open.demonii.com:1337",
+
+        "http://9.rarbg.com:2710/announce",
+        "http://bt.careland.com.cn:6969/announce",
+        "http://explodie.org:6969/announce",
+        "http://mgtracker.org:2710/announce",
+        "http://tracker.best-torrents.net:6969/announce",
+        "http://tracker.tfile.me/announce",
+        "http://tracker1.wasabii.com.tw:6969/announce",
+        "udp://9.rarbg.com:2710/announce",
+        "udp://9.rarbg.me:2710/announce",
+        "udp://coppersurfer.tk:6969/announce",
+
+        "http://www.spanishtracker.com:2710/announce",
+        "http://www.todotorrents.com:2710/announce",
+           ]
 
 
 # Returns an array of possible video url's from the page_url
@@ -166,18 +189,26 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
 
 def magnet2torrent(magnet, headers={}):
     logger.info()
+    
     torrent_file = ''
+    info = ''
     post = ''
+    LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", default="")
+    LIBTORRENT_MAGNET_PATH = filetools.join(config.get_setting("downloadpath"), 'magnet')
+    MAGNET2TORRENT = config.get_setting("magnet2torrent", server="torrent", default=False)
+    btih = scrapertools.find_single_match(magnet, 'urn:btih:([\w\d]+)\&').upper()
 
-    if magnet.startswith('magnet'):
+    if magnet.startswith('magnet') and MAGNET2TORRENT:
+
+        # Tratamos de convertir el magnet on-line (opción más rápida, pero no se puede convertir más de un magnet a la vez)
         url_list = [
                     ('https://itorrents.org/torrent/', 6, '', '.torrent')
-                   ]
+                   ]                                                            # Lista de servicios on-line testeados
         for url, timeout, id, sufix in url_list:
             if id:
                 post = '%s=%s' % (id, magnet)
             else:
-                url = '%s%s%s' % (url, scrapertools.find_single_match(magnet, 'urn:btih:([\w\d]+)\&').upper(), sufix)
+                url = '%s%s%s' % (url, btih, sufix)
             response = httptools.downloadpage(url, timeout=timeout, headers=headers, post=post)
             if not response.sucess:
                 continue
@@ -186,6 +217,39 @@ def magnet2torrent(magnet, headers={}):
             torrent_file = response.data
             break
 
+        #Usamos Libtorrent para la conversión del magnet como alternativa (es lento)
+        if not torrent_file:
+            lt, e, e1, e2 = import_libtorrent(LIBTORRENT_PATH)                  # Importamos Libtorrent
+            if lt:
+                ses = lt.session()                                              # Si se ha importado bien, activamos Libtorrent
+                ses.add_dht_router("router.bittorrent.com",6881)
+                ses.add_dht_router("router.utorrent.com",6881)
+                ses.add_dht_router("dht.transmissionbt.com",6881)
+                if ses:
+                    filetools.mkdir(LIBTORRENT_MAGNET_PATH)                     # Creamos la carpeta temporal
+                    params = {
+                              'save_path': LIBTORRENT_MAGNET_PATH,
+                              'trackers': trackers,
+                              'storage_mode': lt.storage_mode_t.storage_mode_allocate
+                             }                                                  # Creamos los parámetros de la sesión
+                    
+                    h = lt.add_magnet_uri(ses, magnet, params)                  # Abrimos la sesión
+                    i = 0
+                    while not h.has_metadata() and not xbmc.abortRequested:     # Esperamos mientras Libtorrent abre la sesión
+                        h.force_dht_announce()
+                        time.sleep(1)
+                        i += 1
+                        logger.error(i)
+                        if i > 5:
+                            LIBTORRENT_PATH = ''                                # No puede convertir el magnet
+                            break
+                    
+                    if LIBTORRENT_PATH:
+                        info = h.get_torrent_info()                             # Obtiene la información del .torrent
+                        torrent_file = lt.bencode(lt.create_torrent(info).generate())   # Obtiene los datos del .torrent
+                    ses.remove_torrent(h)                                       # Desactiva Libtorrent
+                    filetools.rmdirtree(LIBTORRENT_MAGNET_PATH)                 # Elimina la carpeta temporal
+    
     return torrent_file    
 
 
@@ -739,7 +803,7 @@ def get_tclient_data(folder, torr_client):
 
 def extract_files(rar_file, save_path_videos, password, dp, item=None, torr_client=None):
     logger.info()
-    import sys
+    
     #reload(sys)
     #sys.setdefaultencoding('utf-8')
     sys.path.insert(0, config.get_setting("unrar_path", server="torrent", default="")\
@@ -983,6 +1047,7 @@ def import_libtorrent(LIBTORRENT_PATH):
     logger.info(LIBTORRENT_PATH)
 
     try:
+        sys.path.insert(0, LIBTORRENT_PATH)
         e = ''
         e1 = ''
         e2 = ''

@@ -99,10 +99,10 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<iframe src="([^"]+)"'
+    patron = '<div class="videosection">.*?<iframe src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:
-        itemlist.append(item.clone(action="play", title= "%s", url=url))
+        itemlist.append(item.clone(action="play", title= "%s", fulltitle=item.title, url=url))
         itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
