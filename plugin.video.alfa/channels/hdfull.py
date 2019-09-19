@@ -760,7 +760,7 @@ def findvideos(item):
     key = scrapertools.find_single_match(data_js, 'JSON.parse\(atob.*?substrings\((.*?)\)')
 
     data_js = httptools.downloadpage("%s/js/providers.js" % host).data
-    decoded = jhexdecode(data_js)
+    decoded = jhexdecode(data_js).replace("'", '"')
     providers_pattern = 'p\[(\d+)\]= {"t":"([^"]+)","d":".*?","e":.function.*?,"l":.function.*?return "([^"]+)".*?};'
     providers = scrapertools.find_multiple_matches (decoded, providers_pattern)
     provs = {}
