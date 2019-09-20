@@ -147,7 +147,7 @@ def novedades_episodios(item):
     data = get_source(item.url, patron=patr)
     
     patron = '<li><a href="([^"]+)".*?<img src="([^"]+)".*?"Capi">(.*?)</span>'
-    patron += '<strong class="Title">(.*?)</strong>'
+    patron += r'\s*<strong class="Title">(.*?)</strong>'
     
     matches = re.compile(patron, re.DOTALL).findall(data)
     
