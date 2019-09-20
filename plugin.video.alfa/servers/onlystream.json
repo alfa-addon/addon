@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://gounlimited.to/(?:embed-|)(\\w+)(?:\\.html|/|)",
-        "url": "https://gounlimited.to/embed-\\1.html"
+        "pattern": "https://onlystream.tv/(?:embed-|e/|)([A-z0-9]+)",
+        "url": "https://onlystream.tv/e/\\1"
       }
     ]
   },
   "free": true,
-  "id": "gounlimited",
-  "name": "gounlimited",
+  "id": "onlystream",
+  "name": "onlystream",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s31.postimg.cc/bsiaj2q2j/goo.png"
+  "thumbnail": "https://onlystream.tv/assets/img/logo.png"
 }
