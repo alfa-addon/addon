@@ -15,8 +15,11 @@ headers = [['User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:53.0) Gecko/2
 def test_video_exists(page_url):
     referer = page_url.replace('iframe', 'preview')
 
+    httptools.downloadpage(referer)
+    
     global data
     data = httptools.downloadpage(page_url, headers={'referer': referer}).data
+
     if data == "File was deleted" or data == '':
         return False, "[powvideo] El video ha sido borrado"
     if 'function(p,a,c,k,e,' not in data:
