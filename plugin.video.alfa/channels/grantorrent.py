@@ -549,15 +549,18 @@ def findvideos(item):
     for lang, quality, size, scrapedurl in matches:
         i += 1
         temp_epi = ''
-        if scrapertools.find_single_match(quality, '\([C|c]ontrase.*?<span\s*style="[^>]+>(.*?)<\/span>'):
-            password = scrapertools.find_single_match(quality, '\([C|c]ontrase.*?<span\s*style="[^>]+>(.*?)<\/span>')
-            quality = re.sub(r'\([C|c]ontrase.*?<span\s*style="[^>]+>(.*?)<\/span>', '', quality)
-            quality += ' [Contraseña=%s]' % password
+        if scrapertools.find_single_match(quality, '\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.'):
+            password = scrapertools.find_single_match(quality, '\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.')
+            quality = re.sub(r'\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.', '', quality)
+            if item.contentType == "episode":
+                size += ' [Contraseña=%s]' % password
+            else:
+                quality += ' [Contraseña=%s]' % password
             if item.password:
                 rar_search = False
-        if scrapertools.find_single_match(size, '\([C|c]ontrase.*?<span\s*style="[^>]+>(.*?)<\/span>'):
-            password = scrapertools.find_single_match(size, '\([C|c]ontrase.*?<span\s*style="[^>]+>(.*?)<\/span>')
-            size = re.sub(r'\([C|c]ontrase.*?<span\s*style="[^>]+>(.*?)<\/span>', '', size)
+        if scrapertools.find_single_match(size, '\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.'):
+            password = scrapertools.find_single_match(size, '\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.')
+            size = re.sub(r'\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.', '', size)
             size += ' [Contraseña=%s]' % password
             if item.password:
                 rar_search = False

@@ -487,9 +487,18 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         if not silent:
             p_dialog.update(int(math.ceil((i + 1) * t)), config.get_localized_string(60064), e.title)
 
-        if e.infoLabels["number_of_seasons"] and e.infoLabels["temporada_num_episodios"]:
-            last_season_episode = "%sx%s" % (e.infoLabels["number_of_seasons"], \
-                            str(e.infoLabels["temporada_num_episodios"]).zfill(2))
+        high_sea = e.contentSeason
+        high_epi = e.contentEpisodeNumber
+        if scrapertools.find_single_match(e.title, '[a|A][l|L]\s*(\d+)'):
+            high_epi = int(scrapertools.find_single_match(e.title, 'al\s*(\d+)'))
+        max_sea = e.infoLabels["number_of_seasons"]
+        max_epi = 0
+        if e.infoLabels["number_of_seasons"] and (e.infoLabels["temporada_num_episodios"] or e.infoLabels["number_of_seasons"] == 1):
+            if e.infoLabels["number_of_seasons"] == 1 and e.infoLabels["number_of_episodes"]:
+                max_epi = e.infoLabels["number_of_episodes"]
+            else:
+                max_epi = e.infoLabels["temporada_num_episodios"]
+
         season_episode = "%sx%s" % (e.contentSeason, str(e.contentEpisodeNumber).zfill(2))
         strm_path = filetools.join(path, "%s.strm" % season_episode)
         nfo_path = filetools.join(path, "%s.nfo" % season_episode)
@@ -575,6 +584,8 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         if not silent and p_dialog.iscanceled():
             break
 
+    #logger.debug('high_sea x high_epi: %sx%s' % (str(high_sea), str(high_epi)))
+    #logger.debug('max_sea x max_epi: %sx%s' % (str(max_sea), str(max_epi)))
     if not silent:
         p_dialog.close()
 
@@ -604,18 +615,12 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             if tvshow_item.infoLabels["tmdb_id"] == serie.infoLabels["tmdb_id"]:
                 tvshow_item.infoLabels = serie.infoLabels
                 tvshow_item.infoLabels["title"] = tvshow_item.infoLabels["tvshowtitle"] 
-            last_epi = '99x99'
-            if tvshow_item.infoLabels["number_of_seasons"] and tvshow_item.infoLabels["temporada_num_episodios"]:
-                last_epi = '%sx%s' % (tvshow_item.infoLabels["number_of_seasons"], \
-                            tvshow_item.infoLabels["temporada_num_episodios"])
-            elif last_season_episode:
-                last_epi = last_season_episode
-            if (tvshow_item.infoLabels["status"] == "Ended" or tvshow_item.infoLabels["status"] == "Canceled") \
-                            and insertados == 0 and fallidos == 0 \
-                            and last_epi in tvshow_item.library_playcounts:     # Si la serie ha terminado...
+
+            if max_sea == high_sea and max_epi == high_epi and (tvshow_item.infoLabels["status"] == "Ended" 
+                            or tvshow_item.infoLabels["status"] == "Canceled") and insertados == 0 and fallidos == 0:
                 tvshow_item.active = 0                                          # ... no la actualizaremos más
-                logger.debug("%s [%s]: serie 'Terminada' o 'Cancelada'.  Se desactiva la actualización periódica" %
-                 (serie.contentSerieName, serie.channel))
+                logger.debug("%s [%s]: serie 'Terminada' o 'Cancelada'.  Se desactiva la actualización periódica" % \
+                            (serie.contentSerieName, serie.channel))
             
             update_last = datetime.date.today()
             tvshow_item.update_last = update_last.strftime('%Y-%m-%d')
