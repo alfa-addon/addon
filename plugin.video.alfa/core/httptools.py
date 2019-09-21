@@ -60,7 +60,7 @@ def get_url_headers(url, forced=False):
     headers["User-Agent"] = default_headers["User-Agent"]
     headers["Cookie"] = "; ".join(["%s=%s" % (c.name, c.value) for c in domain_cookies.values()])
 
-    return url + "|" + "&".join(["%s=%s" % (h, headers[h]) for h in headers])
+    return url + "|" + "&".join(["%s=%s" % (h, urllib.quote(headers[h])) for h in headers])
 
 def set_cookies(dict_cookie, clear=True, alfa_s=False):
     """

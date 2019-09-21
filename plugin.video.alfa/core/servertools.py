@@ -136,6 +136,10 @@ def findvideos(data, skip=False):
     skip = int(skip)
     servers_list = get_servers_list().keys()
 
+    #Eliminamos los inactivos
+    if servers_list:
+        servers_list = filter(lambda i: not i or is_server_enabled(i), servers_list)
+
     # Ordenar segun favoriteslist si es necesario
     servers_list = sort_servers(servers_list)
     is_filter_servers = False
@@ -672,6 +676,7 @@ def sort_servers(servers_list):
         else:
             servers_list = sorted(servers_list,
                                   key=lambda x: config.get_setting("favorites_servers_list", server=x) or 100)
+
     return servers_list
 
 
@@ -699,6 +704,9 @@ def filter_servers(servers_list):
                                                                  config.get_localized_string(60010),
                                                                  config.get_localized_string(70281)):
             servers_list = servers_list_filter
+    
+    if config.get_setting("favorites_servers") == True:
+        servers_list = sort_servers(servers_list)
     
     return servers_list
 

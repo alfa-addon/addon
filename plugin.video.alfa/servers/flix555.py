@@ -34,5 +34,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
             
             itemlist.append(['.mp4 (%s) [flix555]' % lbl, url, 0, subtitles])
 
+    url = scrapertools.find_single_match(unpacked, 'file\s*:\s*"([^"]*)"\s*')
+    if url:            
+        if not url.endswith('.srt') or not url.endswith('.vtt'):
+            itemlist.append(['.m3u8 [flix555]', url, 0, subtitles])
+
     return itemlist
 

@@ -41,8 +41,8 @@ def login():
         patron = "<input type='hidden' name='__csrf_magic' value=\"([^\"]+)\" />"
     
         sid = urllib.quote(scrapertools.find_single_match(data, patron))
-        user_ = config.get_setting('hdfulluser', channel='hdfull')
-        pass_ = config.get_setting('hdfullpassword', channel='hdfull')
+        user_ = urllib.quote(config.get_setting('hdfulluser', channel='hdfull'))
+        pass_ = urllib.quote(config.get_setting('hdfullpassword', channel='hdfull'))
         if not pass_:
             if not _silence:
                 platformtools.dialog_notification("Falta la contraseña", 
@@ -760,7 +760,7 @@ def findvideos(item):
     key = scrapertools.find_single_match(data_js, 'JSON.parse\(atob.*?substrings\((.*?)\)')
 
     data_js = httptools.downloadpage("%s/js/providers.js" % host).data
-    decoded = jhexdecode(data_js)
+    decoded = jhexdecode(data_js).replace("'", '"')
     providers_pattern = 'p\[(\d+)\]= {"t":"([^"]+)","d":".*?","e":.function.*?,"l":.function.*?return "([^"]+)".*?};'
     providers = scrapertools.find_multiple_matches (decoded, providers_pattern)
     provs = {}
