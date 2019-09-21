@@ -15,9 +15,9 @@ def mainlist(item):
     itemlist.append(item.clone(title="Últimos videos", action="videos", url=host + "/0/"))
     itemlist.append(item.clone(title="Más visto", action="videos", url=host + "/most-viewed/"))
     itemlist.append(item.clone(title="Mejor valorado", action="videos", url=host + "/top-rated/"))
-    itemlist.append(item.clone(title="Categorias", action="categorias", url=host + "/categories/"))
     itemlist.append(item.clone(title="Pornstars", action="pornstars", url=host + "/pornstars/"))
     itemlist.append(item.clone(title="      Alfabetico", action="pornstars_list", url=host + "/pornstars/"))
+    itemlist.append(item.clone(title="Categorias", action="categorias", url=host + "/categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 

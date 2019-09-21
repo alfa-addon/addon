@@ -73,8 +73,8 @@ def lista(item):
         else: title = scrapedtitle
         thumbnail = scrapedthumbnail.replace("jpg#", "jpg")
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl, thumbnail=thumbnail,
-                              fanart=thumbnail, plot=plot, contentTitle=title) )
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl, thumbnail=thumbnail,
+                              fanart=thumbnail, plot=plot) )
     next_page = scrapertools.find_single_match(data, '<div class="nav-previous"><a href="([^"]+)"')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
@@ -82,7 +82,7 @@ def lista(item):
     return itemlist
 
 
-def findvideos(item):
+def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
@@ -90,6 +90,16 @@ def findvideos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:
         if not "ubiqfile" in url:
-            itemlist.append(item.clone(action='play',title="%s", url=url))
+            itemlist.append(item.clone(action='play',title="%s", contentTitle=item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    return itemlist
+    a = len (itemlist)
+    for i in itemlist:
+        
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue

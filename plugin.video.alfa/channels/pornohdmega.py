@@ -102,7 +102,7 @@ def play(item):
     patron = '<div class="videosection">.*?<iframe src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:
-        itemlist.append(item.clone(action="play", title= "%s", fulltitle=item.title, url=url))
+        itemlist.append(item.clone(action="play", title= "%s", contentTitle=item.title, url=url))
         itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

@@ -90,11 +90,13 @@ def play(item):
     for scrapedurl,post in matches:
         post = post.replace("%3D", "=")
         scrapedurl = host + scrapedurl
-        logger.debug( item.url +" , "+ scrapedurl +" , " +post )
+        # logger.debug( item.url +" , "+ scrapedurl +" , " +post )
         datas = httptools.downloadpage(scrapedurl, post=post, headers={'Referer':item.url}).data
         datas = datas.replace("\\", "")
         url = scrapertools.find_single_match(datas, '<iframe src="([^"]+)"')
-        itemlist.append( Item(channel=item.channel, action="play", title="%s",fulltitle = item.title, url=url ))
+        if not url.startswith("https"):
+            url = "https:%s" % url
+        itemlist.append( Item(channel=item.channel, action="play", title="%s",contentTitle = item.title, url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
