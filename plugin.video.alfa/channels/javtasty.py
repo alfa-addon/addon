@@ -90,15 +90,11 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    scrapedurl = scrapertools.find_single_match(data, 'video_alt_url3: \'([^\']+)\'')
-    if scrapedurl == "" :
-        scrapedurl = scrapertools.find_single_match(data, 'video_alt_url2: \'([^\']+)\'')
-    if scrapedurl == "" :
-        scrapedurl = scrapertools.find_single_match(data, 'video_alt_url: \'([^\']+)\'')
-    if scrapedurl == "" :
-        scrapedurl = scrapertools.find_single_match(data, 'video_url: \'([^\']+)\'')
-    itemlist.append(item.clone(action="play", title=scrapedurl, contentTitle=item.title, url=scrapedurl,
-                               server="directo", folder=False))
+    patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
+    patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url,quality in matches:
+        itemlist.append(['.mp4 %s' %quality, url])
     if item.extra == "play_menu":
         return itemlist, data
     return itemlist
