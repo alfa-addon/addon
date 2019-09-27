@@ -4,8 +4,8 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "flix555.com/([A-z0-9]+)",
-        "url": "https://flix555.com/\\1"
+        "pattern": "flix555.com/(?:embed-|)([A-z0-9]+)",
+        "url": "https://flix555.com/embed-\\1.html"
       }
     ]
   },

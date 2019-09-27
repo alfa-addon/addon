@@ -8,13 +8,13 @@ from core.item import Item
 from platformcode import config, logger
 from core import httptools
 
-host = 'http://xxxstreams.org'
+host = 'http://xxxstreams.org' #es http://freepornstreams.org
 
 def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url= host + "/category/full-porn-movie-stream/"))
-    itemlist.append( Item(channel=item.channel, title="Clips" , action="lista", url=host))
+    itemlist.append( Item(channel=item.channel, title="Videos" , action="lista", url=host + "/category/new-porn-streaming/"))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
@@ -38,7 +38,10 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data1 = scrapertools.find_single_match(data,'<h5>Popular Categories<br />(.*?)</aside>')
+    if item.title == "Categorias" :
+        data1 = scrapertools.find_single_match(data,'>Top Tags</a>(.*?)</ul>')
+        data1 += scrapertools.find_single_match(data,'>Ethnic</a>(.*?)</ul>')
+        data1 += scrapertools.find_single_match(data,'>Kinky</a>(.*?)</ul>')
     if item.title == "Canal" :
         data1 = scrapertools.find_single_match(data,'>Top sites</a>(.*?)</ul>')
         data1 += scrapertools.find_single_match(data,'Downloads</h2>(.*?)</ul>')
@@ -64,6 +67,7 @@ def lista(item):
     for scrapedthumbnail,scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         if '/HD' in scrapedtitle : title= "[COLOR red]" + "HD" + "[/COLOR] " + scrapedtitle
+        elif 'SD' in scrapedtitle : title= "[COLOR red]" + "SD" + "[/COLOR] " + scrapedtitle
         elif 'FullHD' in scrapedtitle : title= "[COLOR red]" + "FullHD" + "[/COLOR] " + scrapedtitle
         elif '1080' in scrapedtitle : title= "[COLOR red]" + "1080p" + "[/COLOR] " + scrapedtitle
         else: title = scrapedtitle
@@ -76,9 +80,39 @@ def lista(item):
     return itemlist
 
 
-def play(item):
-    logger.info(item)
-    itemlist = servertools.find_video_items(item.clone(url = item.url))
+def findvideos(item):
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
+    patron = '<a href="([^"]+)"[^<]+>(?:Streaming|Download)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url in matches:
+        if not "ubiqfile" in url:
+            itemlist.append(item.clone(action='play',title="%s", contentTitle=item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
+def play(item):
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
+    patron = '<a href="([^"]+)" rel="nofollow"[^<]+>(?:Streaming|Download)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url in matches:
+        if not "ubiqfile" in url:
+            itemlist.append(item.clone(action='play',title="%s", contentTitle=item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    a = len (itemlist)
+    for i in itemlist:
+        
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue
+            
+            

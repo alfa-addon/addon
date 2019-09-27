@@ -7,7 +7,6 @@ import re
 import urllib
 from channelselector import get_thumb
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
@@ -170,7 +169,7 @@ def list_all(item):
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
     #  Paginación
 
-    url_next_page = scrapertools.find_single_match(data,"<a class='arrow_pag' href=([^>]+)><i id='nextpagination'")
+    url_next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
     if url_next_page:
         itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='list_all'))
 
@@ -236,17 +235,24 @@ def episodesxseasons(item):
 
 def findvideos(item):
     logger.info()
-
+    subs = ''
     itemlist = []
+    
     data = get_source(item.url)
     selector_url = scrapertools.find_multiple_matches(data, 'class="metaframe rptss" src="([^"]+)"')
 
     for lang in selector_url:
         data = get_source('https:'+lang)
         urls = scrapertools.find_multiple_matches(data, 'data-playerid="([^"]+)">')
-        subs = ''
         lang = scrapertools.find_single_match(lang, 'lang=(.*)?')
         language = IDIOMAS[lang]
+
+        if language == 'VOSE':
+            sub = scrapertools.find_single_match(str(urls), "sub=([^']+)")
+            try:
+                subs = urllib.unquote(sub)
+            except:
+                subs = sub
 
         if item.contentType == 'episode':
             quality = 'SD'
@@ -254,21 +260,20 @@ def findvideos(item):
             quality = item.quality
 
         for url in urls:
-            final_url = httptools.downloadpage('https:'+url).data
-            if language == 'VOSE':
-                sub = scrapertools.find_single_match(url, 'sub=(.*?)&')
-                subs = 'https:%s' % sub
+
             if 'index' in url:
                 try:
                     file_id = scrapertools.find_single_match(url, 'file=(.*?)&')
                     post = {'link': file_id}
                     post = urllib.urlencode(post)
                     hidden_url = 'https://streamango.poseidonhd.co/repro/plugins/gkpluginsphp.php'
-                    data_url = httptools.downloadpage(hidden_url, post=post).data
-                    dict_vip_url = jsontools.load(data_url)
+                    dict_vip_url = httptools.downloadpage(hidden_url, post=post).json
                     url = dict_vip_url['link']
+                    if 'hls1.openloadpremium' in url:
+                        continue
+
                 except:
-                    pass
+                    continue
             else:
                 try:
 
@@ -277,13 +282,19 @@ def findvideos(item):
                         post = {'h': file_id}
                         post = urllib.urlencode(post)
                         hidden_url = 'https://streamango.poseidonhd.co/repro/openload/api.php'
-                        data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False).data
-                        json_data = jsontools.load(data_url)
-                        url = scrapertools.find_single_match(data_url, "VALUES \('[^']+','([^']+)'")
-                        if not url:
-                            url = json_data['url']
+                        json_data = httptools.downloadpage(hidden_url, post=post, follow_redirects=False).json
+                        url = json_data.get('url', '')
+                        #url = scrapertools.find_single_match(data_url, "VALUES \('[^']+','([^']+)'")
                         if not url:
                             continue
+                    elif 'goto.php' in url:
+                        file_id = scrapertools.find_single_match(url, 'url=(\w+)')
+                        post = {'url': file_id}
+                        post = urllib.urlencode(post)
+                        hidden_url = 'https://streamango.poseidonhd.co/repro/r.php'
+                        data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False)
+                        url = data_url.headers['location']
+                    
                     else:
                         new_data = httptools.downloadpage('https:'+url).data
                         file_id = scrapertools.find_single_match(new_data, 'value="([^"]+)"')
@@ -293,10 +304,10 @@ def findvideos(item):
                         data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False)
                         url = data_url.headers['location']
                 except:
-                    pass
+                    continue
             url = url.replace(" ", "%20")
-            itemlist.append(item.clone(title = '[%s] [%s]', url=url, action='play', subtitle=subs,
-                            language=language, quality=quality, infoLabels=item.infoLabels))
+            itemlist.append(item.clone(title = '[%s] [%s]', url=url, action='play',
+                            language=language, quality=quality, subtitle=subs))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % (x.server.capitalize(), x.language))
 

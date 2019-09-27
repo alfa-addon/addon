@@ -15,12 +15,12 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-IDIOMAS = {'Latino': 'LAT', 'Castellano': 'CAST', 'Subtitulado': 'VOSE'}
+IDIOMAS = {'Latino': 'LAT', 'Castellano': 'CAST', 'Subtitulado': 'VOSE', 'Ingles': 'VO'}
 list_language = IDIOMAS.values()
 list_quality = ['HD 720p', 'HD 1080p', '480p', '360p']
 list_servers = ['cinemaupload']
 
-host = 'https://homecine.net'
+host = 'https://homecine.tv'
 
 
 def mainlist(item):
@@ -117,8 +117,8 @@ def list_all(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     first = item.first
-    last = first + 19
-    if last > len(matches):
+    last = first + 20
+    if last >= len(matches):
         last = len(matches)
         next = True
 
@@ -155,7 +155,7 @@ def list_all(item):
         url_next_page = host+url_next_page
         first = 0
 
-    if url_next_page:
+    if url_next_page and len(matches) > 20:
         itemlist.append(Item(channel=item.channel,title="Siguiente >>", url=url_next_page, action='list_all',
                              first=first))
 
@@ -191,10 +191,10 @@ def seccion(item):
 def seasons(item):
     logger.info()
     itemlist = []
-
+    
     data = get_source(item.url)
 
-    patron = '<strong>Season (\d+)</strong>'
+    patron = r'<strong>(?:Season|Temporada) (\d+)</strong>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
@@ -236,11 +236,15 @@ def episodesxseason(item):
     logger.info()
     itemlist = []
     season = item.contentSeasonNumber
-    data = get_source(item.url)
-    data = scrapertools.find_single_match(data, '<strong>Season %s</strong>.*?class="les-content"(.*?)</div>' % season)
-    patron = '<a href="([^"]+)">Episode (\d+)'
-    matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
+    
+    data = get_source(item.url)
+    pat = '<strong>(?:Season|Temporada) %s</strong>.*?class="les-content"(.*?)</div>' % season
+    data = scrapertools.find_single_match(data, pat)
+    
+    patron = '<a href="([^"]+)">(?:Episode|Capitulo) (\d+)'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    
     for scrapedurl, dataep in matches:
         url = host+scrapedurl
         contentEpisodeNumber = dataep
@@ -308,6 +312,8 @@ def findvideos(item):
         extra_info = scrapertools.find_single_match(data, '<a href="#tab%s">(.*?)<' % option)
         if '-' in extra_info:
             quality, language = scrapertools.find_single_match(extra_info, '(.*?) - (.*)')
+            if " / " in language:
+                language = language.split(" / ")[1]
         else:
             language = ''
             quality = extra_info
@@ -317,10 +323,12 @@ def findvideos(item):
         title = ''
         if not config.get_setting('unify'):
             if language != '':
-                title += ' [%s]' % IDIOMAS[language]
+                try:
+                    title += ' [%s]' % IDIOMAS.get(language.capitalize(), 'Latino')
+                except:
+                    pass
             if quality != '':
                 title += ' [%s]' % quality
-
         new_item = Item(channel=item.channel,
                         url=url,
                         title= '%s'+ title,
@@ -329,7 +337,7 @@ def findvideos(item):
                         infoLabels = item.infoLabels
                         )
         if language != '':
-            new_item.language = IDIOMAS[language]
+            new_item.language = IDIOMAS.get(language.capitalize(), 'Latino')
         if quality != '':
             new_item.quality = quality
 
@@ -344,7 +352,7 @@ def findvideos(item):
 
     autoplay.start(itemlist, item)
 
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos' and not "/episode/" in item.url:
         itemlist.append(
             Item(channel=item.channel,
                  title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',

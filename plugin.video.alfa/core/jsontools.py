@@ -11,21 +11,6 @@ try:
     import json
 except:
     logger.info("json incluido en el interprete **NO** disponible")
-
-    try:
-        import simplejson as json
-    except:
-        logger.info("simplejson incluido en el interprete **NO** disponible")
-        try:
-            from lib import simplejson as json
-        except:
-            logger.info("simplejson en el directorio lib **NO** disponible")
-            logger.error("No se ha encontrado un parser de JSON valido")
-            json = None
-        else:
-            logger.info("Usando simplejson en el directorio lib")
-    else:
-        logger.info("Usando simplejson incluido en el interprete")
 else:
     logger.info("Usando json incluido en el interprete")
 
@@ -46,12 +31,12 @@ def load(*args, **kwargs):
 
 def dump(*args, **kwargs):
     if not kwargs:
-        kwargs = {"indent": 4, "skipkeys": True, "sort_keys": True, "ensure_ascii": False}
+        kwargs = {"indent": 4, "skipkeys": True, "sort_keys": True, "ensure_ascii": True}
 
     try:
         value = json.dumps(*args, **kwargs)
     except:
-        logger.error("**NO** se ha podido cargar el JSON")
+        logger.error("**NO** se ha podido guardar el JSON")
         logger.error(traceback.format_exc())
         value = ""
     return value

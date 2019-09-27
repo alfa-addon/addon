@@ -5,11 +5,13 @@ import urllib
 from core import httptools
 from core import scrapertools
 from platformcode import logger
+from lib import jsunpack
 
 id_server = "vidtodo"
-
+response = ""
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
+    global response
     response = httptools.downloadpage(page_url)
     if not response.sucess or "Not Found" in response.data:
         return False, "[%s] El fichero no existe o ha sido borrado" %id_server
@@ -21,8 +23,10 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    data = httptools.downloadpage(page_url).data
-    matches = scrapertools.find_multiple_matches(data, 'file:"([^"]+)",label:"([^"]+)"')
+    data = response.data
+    packed_data = scrapertools.find_single_match(data, "javascript'>(eval.*?)</script>")
+    unpacked = jsunpack.unpack(packed_data)
+    matches = scrapertools.find_multiple_matches(unpacked, 'src:"([^"]+)".*?,label:"([^"]+)"')
     for media_url, quality in matches:
         if media_url.endswith(".mp4"):
             video_urls.append([quality + " [%s]" % id_server, media_url])

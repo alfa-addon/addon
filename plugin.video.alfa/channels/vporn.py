@@ -8,7 +8,6 @@ from core import servertools
 from core.item import Item
 from platformcode import config, logger
 from core import httptools
-from core import tmdb
 
 host = 'https://www.vporn.com'
 
@@ -23,7 +22,7 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Mas Votada" , action="lista", url=host + "/votes/month/"))
     itemlist.append( Item(channel=item.channel, title="Longitud" , action="lista", url=host + "/longest/month/"))
     itemlist.append( Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "/pornstars/"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
+    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -47,7 +46,7 @@ def catalogo(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class=\'star\'>.*?'
-    patron += '<a href="([^"]+)">.*?'
+    patron += '<a href="([^"]+)".*?'
     patron += '<img src="([^"]+)" alt="([^"]+)".*?'
     patron += '<span> (\d+) Videos'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -69,13 +68,16 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data = scrapertools.find_single_match(data,'<div class="cats-all categories-list">(.*?)</div>')
-    patron  = '<a href="([^"]+)".*?>([^"]+)</a>'
+    patron  = '"name":"([^"]+)".*?'
+    patron  += '"image":"([^"]+)".*?'
+    patron  += '"url":"([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle in matches:
+    for scrapedtitle,scrapedthumbnail,scrapedurl in matches:
         scrapedplot = ""
-        scrapedthumbnail = ""
+        scrapedthumbnail = "https://th-us2.vporn.com" + scrapedthumbnail
+        scrapedthumbnail= scrapedthumbnail.replace("\/", "/")
         scrapedurl = host + scrapedurl
+        scrapedurl = scrapedurl.replace("\/", "/")
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
@@ -114,6 +116,6 @@ def play(item):
     patron  = '<source src="([^"]+)" type="video/mp4" label="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl,scrapedtitle  in matches:
-        itemlist.append(item.clone(action="play", title=scrapedtitle, fulltitle = item.title, url=scrapedurl))
+        itemlist.append(item.clone(action="play", title=scrapedtitle, url=scrapedurl))
     return itemlist
 

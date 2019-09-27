@@ -276,6 +276,10 @@ def temporadas(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     if len(matches) > 1:
         for scrapedseason in matches:
+            no_disp = scrapertools.find_single_match(data,
+                                               '<span>%s</span> <i(.*?)</table' % scrapedseason)
+            if "no disponibles</td>" in no_disp:
+                continue
             new_item = item.clone(action="episodios", season=scrapedseason, extra='temporadas')
             new_item.infoLabels['season'] = scrapedseason
             new_item.extra = ""
@@ -325,7 +329,7 @@ def episodios(item):
             continue
 
         title = "%sx%s: %s" % (season, episode.zfill(2), scrapedname)
-        new_item = item.clone(title=title, url=scrapedurl, action="findvideos", text_color=color3, fulltitle=title,
+        new_item = item.clone(title=title, url=scrapedurl, action="findvideos", text_color=color3, contentTitle=title,
                               contentType="episode", extra='episodios')
         if 'infoLabels' not in new_item:
             new_item.infoLabels = {}
@@ -392,24 +396,17 @@ def findvideos(item):
         match1 = re.compile(patron1, re.DOTALL).findall(new_data)
 
         urls = scrapertools.find_single_match(new_data, '<iframe width="560" height="315" src="([^"]+)"')
-        servername = servertools.get_server_from_url(urls)
-        if 'stream.pelishd24.net' in urls:
-            vip_data = httptools.downloadpage(urls).data
-            dejuiced = generictools.dejuice(vip_data)
-            patron = '"file":"([^"]+)"'
-            match = re.compile(patron, re.DOTALL).findall(dejuiced)
-            for scrapedurl in match:
-                urls = scrapedurl
-                servername = 'gvideo'
+        
         if 'pelishd24.com/?trhide' in urls:
-            data = httptools.downloadpage(urls).data
-            # logger.error(texto='****hex'+data)
-            patron = '"file":"([^"]+)"'
-            match = re.compile(patron, re.DOTALL).findall(data)
-            for scrapedurl in match:
-                urls = scrapedurl
-                servername = 'gvideo'
-
+            urls = urls.split("tid=")[1].strip()
+            urls = urls[::-1].replace('&', '')
+            try:
+                urls = urls.decode('hex')
+            except:
+                continue
+        elif 'stream.pelishd24' in urls:
+            continue
+        servername = servertools.get_server_from_url(urls)
         title = "Ver en: [COLOR yellowgreen](%s)[/COLOR] [COLOR yellow](%s)[/COLOR] %s" % (
             servername.title(), quality, lang)
         if 'embed.pelishd24.com' not in urls and 'embed.pelishd24.net' not in urls:
@@ -425,23 +422,19 @@ def findvideos(item):
             for url in match1:
                 url = url.replace('\\', '')
                 servername = servertools.get_server_from_url(url)
-                if 'pelishd24.net' in url or 'stream.pelishd24.com' in url:
-                    url = url.strip()
-                    vip_data = httptools.downloadpage(url).data
-                    if 'Archivo ELiminado' in vip_data:
-                        continue
-                    dejuiced = generictools.dejuice(vip_data)
-                    patron = '"file":"([^"]+)"'
-                    match = re.compile(patron, re.DOTALL).findall(dejuiced)
-                    for scrapedurl in match:
-                        url = scrapedurl
+                if 'pelishd24.net' in url:
+                    url = url.strip().replace("/api.", "/stream2.")
+                    url_vip = url.replace("index.php", "hide.php")
+                    if "/embed.php?" in url:
+                        url_vip = url.replace("stream2.pelishd24.net/d/embed.php", "ww3.pelishd24.com/2/4/hide.php")
+                    header_data = httptools.downloadpage(url_vip, headers={"Referer": url}, follow_redirects=False).headers
+                    try:
+                        url = header_data['location']
                         servername = 'gvideo'
-
-                if 'ww3.pelishd24.com' in url:
-                    data1 = httptools.downloadpage(url).data
-                    url = scrapertools.find_single_match(data1, '"file": "([^"]+)"')
-                    servername = 'gvideo'
-
+                    except:
+                        continue
+                elif 'stream.pelishd24.com' in url:
+                    continue
                 title = "Ver en: [COLOR yellowgreen](%s)[/COLOR] [COLOR yellow](%s)[/COLOR] %s" % (
                     servername.title(), quality, lang)
 

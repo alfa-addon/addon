@@ -19,6 +19,7 @@ from platformcode import logger
 
 thumb_dict = {"movies": "https://s10.postimg.cc/fxtqzdog9/peliculas.png",
     "tvshows": "https://s10.postimg.cc/kxvslawe1/series.png",
+    "on air":"https://i.postimg.cc/HLLJWMcr/en-emision.png",
     "all": "https://s10.postimg.cc/h1igpgw0p/todas.png",
     "genres": "https://s10.postimg.cc/6c4rx3x1l/generos.png",
     "search": "https://s10.postimg.cc/v985e2izd/buscar.png",
@@ -276,6 +277,19 @@ def title_format(item):
     # Actions excluidos, (se define canal y action) los titulos que contengan ambos valores no se procesaran en unify
     excluded_actions = [('videolibrary','get_episodes')]
 
+    # Verifica el item sea valido para ser formateado por unify
+
+    if item.channel == 'trailertools' or (item.channel.lower(), item.action.lower()) in excluded_actions or \
+            item.action == '':
+        valid = False
+    else:
+        for word in excluded_words:
+            if word in item.title.lower():
+                valid = False
+                break
+        if not valid:
+            return item
+
     # Verifica si hay marca de visto de trakt
 
     visto = False
@@ -300,16 +314,7 @@ def title_format(item):
     if hasattr(item,'text_color'):
         item.text_color=''
 
-    #Verifica el item sea valido para ser formateado por unify
 
-    if item.channel == 'trailertools' or (item.channel.lower(), item.action.lower()) in excluded_actions or \
-            item.action=='':
-        valid = False
-    else:
-        for word in excluded_words:
-            if word in item.title.lower():
-                valid = False
-                break
 
     if valid and item.unify!=False:
 

@@ -8,7 +8,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import httptools
 
-host = 'http://www.txxx.com'
+host = 'https://txxx.com'
 
 
 def mainlist(item):
@@ -75,7 +75,7 @@ def categorias(item):
         title = scrapedtitle + "[COLOR yellow]  " + num + "[/COLOR]"
         itemlist.append( Item(channel=item.channel, action="lista", title=title , url=url , 
                         thumbnail=scrapedthumbnail, plot=scrapedplot) )
-    return itemlist
+    return  sorted(itemlist, key=lambda i: i.title)
 
 
 def lista(item):
@@ -83,16 +83,16 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = 'data-video-id="\d+">.*?<a href="([^"]+)".*?'
-    patron += '<img src="([^"]+)" alt="([^"]+)".*?'
-    patron += '</div>(.*?)</div>'
+    patron = 'class="thumb__aspect">.*?\'(.*?)\'.*?'
+    patron += '</a>(.*?)</div>.*?href="([^"]+)">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,scrapedtime in matches:
+    for scrapedthumbnail, scrapedtime, scrapedurl, scrapedtitle in matches:
+        
         contentTitle = scrapedtitle
         scrapedhd = scrapertools.find_single_match(scrapedtime, '<span class="thumb__hd">(.*?)</span>')
         duration = scrapertools.find_single_match(scrapedtime, '<span class="thumb__duration">(.*?)</span>')
         if scrapedhd != '':
-            title = "[COLOR yellow]" +duration+ "[/COLOR] " + "[COLOR red]" +scrapedhd+ "[/COLOR]  "+scrapedtitle
+            title = "[COLOR yellow]" +duration+ "[/COLOR] " + "[COLOR tomato][" +scrapedhd+ "][/COLOR] "+scrapedtitle
         else:
             title = "[COLOR yellow]" + duration + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
@@ -107,43 +107,27 @@ def lista(item):
 
 
 def play(item):
-    logger.info()
-    itemlist = []
+    headers = {'Referer': item.url}
+    post_url = host+'/sn4diyux.php'
+    
     data = httptools.downloadpage(item.url).data
-    video_url = scrapertools.find_single_match(data, 'var video_url = "([^"]*)"')
-    video_url += scrapertools.find_single_match(data, 'video_url \+= "([^"]*)"')
-    partes = video_url.split('||')
-    video_url = decode_url(partes[0])
-    video_url = re.sub('/get_file/\d+/[0-9a-z]{32}/', partes[1], video_url)
-    video_url += '&' if '?' in video_url else '?'
-    video_url += 'lip=' + partes[2] + '&lt=' + partes[3]
-    itemlist.append(item.clone(action="play", title=item.title, url=video_url))
-    return itemlist
+    patron = "pC3:'([^']+)',video_id: (\d+),"
+    info_b, info_a = scrapertools.find_single_match(data, patron)
+    post = 'param=%s,%s' % (info_a, info_b)
+    new_data = httptools.downloadpage(post_url, post=post, headers=headers).data
+    texto = scrapertools.find_single_match(new_data, 'video_url":"([^"]+)"')
+
+    url = dec_url(texto)
+    item.url = httptools.downloadpage(url, only_headers=True).url
+    
+    return [item]
 
 
-def decode_url(txt):
-    _0x52f6x15 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,~'
-    reto = ''; n = 0
-    # En las dos siguientes líneas, ABCEM ocupan 2 bytes cada letra! El replace lo deja en 1 byte. !!!!: АВСЕМ (10 bytes) ABCEM (5 bytes)
-    txt = re.sub('[^АВСЕМA-Za-z0-9\.\,\~]', '', txt)
-    txt = txt.replace('А', 'A').replace('В', 'B').replace('С', 'C').replace('Е', 'E').replace('М', 'M')
-
-    while n < len(txt):
-        a = _0x52f6x15.index(txt[n])
-        n += 1
-        b = _0x52f6x15.index(txt[n])
-        n += 1
-        c = _0x52f6x15.index(txt[n])
-        n += 1
-        d = _0x52f6x15.index(txt[n])
-        n += 1
-
-        a = a << 2 | b >> 4
-        b = (b & 15) << 4 | c >> 2
-        e = (c & 3) << 6 | d
-        reto += chr(a)
-        if c != 64: reto += chr(b)
-        if d != 64: reto += chr(e)
-
-    return urllib.unquote(reto)
+def dec_url(txt):
+    #truco del mendrugo
+    txt = txt.decode('unicode-escape').encode('utf8')
+    txt = txt.replace('А', 'A').replace('В', 'B').replace('С', 'C').replace('Е', 'E').replace('М', 'M').replace('~', '=').replace(',','/')
+    import base64
+    url = base64.b64decode(txt)
+    return url
 

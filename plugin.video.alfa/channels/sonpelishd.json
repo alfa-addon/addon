@@ -4,7 +4,7 @@
   "active": true,
   "adult": false,
   "language": ["lat"],
-  "thumbnail": "https://sonpelishd.com/wp-content/uploads/2017/02/logo-web-sphd-4.png",
+  "thumbnail": "https://sonpelishd.net/wp-content/uploads/2017/02/logo-web-sphd-4.png",
   "banner": "",
   "categories": [
     "movie"
@@ -14,7 +14,7 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },

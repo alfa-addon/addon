@@ -68,11 +68,11 @@ def series(item):
         action = "episodios"
 
     for url, thumbnail, title in matches:
-        fulltitle = title
+        contentTitle = title
         show = title
         # logger.debug("title=[{0}], url=[{1}], thumbnail=[{2}]".format(title, url, thumbnail))
         itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
-                             show=show, fulltitle=fulltitle, fanart=thumbnail, folder=True))
+                             show=show, fanart=thumbnail, folder=True))
 
     if pagination:
         page = scrapertools.find_single_match(pagination, '>(?:Page|Página)\s*(\d+)\s*(?:of|de)\s*\d+<')
@@ -104,7 +104,7 @@ def episodios(item):
 
         # logger.debug("title=[{0}], url=[{1}], thumbnail=[{2}]".format(title, url, thumbnail))
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url,
-                             thumbnail=thumbnail, plot=plot, show=item.show, fulltitle="%s %s" % (item.show, title),
+                             thumbnail=thumbnail, plot=plot,
                              fanart=thumbnail))
 
     return itemlist
@@ -127,16 +127,20 @@ def findvideos(item):
             video_urls.append(url)
     paste = scrapertools.find_single_match(data, 'https://gpaste.us/([a-zA-Z0-9]+)')
     if paste:
-        new_data = httptools.downloadpage('https://gpaste.us/'+paste).data
-        bloq = scrapertools.find_single_match(new_data, 'id="input_text">(.*?)</div>')
-        matches = bloq.split('<br>')
-        for url in matches:
-            down_urls.append(url)
+        try:
+            new_data = httptools.downloadpage('https://gpaste.us/'+paste).data
+
+            bloq = scrapertools.find_single_match(new_data, 'id="input_text">(.*?)</div>')
+            matches = bloq.split('<br>')
+            for url in matches:
+                down_urls.append(url)
+        except:
+            pass
     video_urls.extend(down_urls)
     from core import servertools
     itemlist = servertools.find_video_items(data=",".join(video_urls))
     for videoitem in itemlist:
-        videoitem.fulltitle = item.fulltitle
+        videoitem.contentTitle = item.contentTitle
         videoitem.channel = item.channel
         videoitem.thumbnail = item.thumbnail
 

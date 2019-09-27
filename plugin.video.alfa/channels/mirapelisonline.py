@@ -9,7 +9,6 @@ import urlparse
 
 from channelselector import get_thumb
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
 from core.item import Item
@@ -200,8 +199,7 @@ def findvideos(item):
                     post = {'link': file_id}
                     post = urllib.urlencode(post)
                     hidden_url = 'https://player.mirapelisonline.com/repro/plugins/gkpluginsphp.php'
-                    data_url = httptools.downloadpage(hidden_url, post=post).data
-                    dict_vip_url = jsontools.load(data_url)
+                    dict_vip_url = httptools.downloadpage(hidden_url, post=post).json
                     url = dict_vip_url['link']
                 except:
                     pass
@@ -214,8 +212,7 @@ def findvideos(item):
                         post = urllib.urlencode(post)
 
                         hidden_url = 'https://player.mirapelisonline.com/repro/openload/api.php'
-                        data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False).data
-                        json_data = jsontools.load(data_url)
+                        json_data = httptools.downloadpage(hidden_url, post=post, follow_redirects=False).json
                         url = scrapertools.find_single_match(data_url, "VALUES \('[^']+','([^']+)'")
                         if not url:
                             url = json_data['url']

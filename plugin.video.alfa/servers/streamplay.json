@@ -4,8 +4,8 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "streamplay.(?:to|me)/(?:embed-|player-|)([a-z0-9]+)(?:.html|)",
-        "url": "http://streamplay.to/player-\\1.html"
+        "pattern": "(?:streamplay|streamp1ay).(?:to|me)/(?:embed-|player-|)([a-z0-9]+)(?:.html|)",
+        "url": "https://streamp1ay.me/player-\\1.html"
       }
     ]
   },

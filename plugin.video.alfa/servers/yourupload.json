@@ -2,11 +2,11 @@
   "active": true,
   "find_videos": {
     "ignore_urls": [
-      "http://www.yourupload.com/embed/embed"
+      "yourupload.com/embed/embed"
     ],
     "patterns": [
       {
-        "pattern": "yourupload.com/embed/([A-z0-9]+)",
+        "pattern": "yourupload.com/(?:embed|watch)/([A-z0-9]+)",
         "url": "http://www.yourupload.com/embed/\\1"
       },
       {

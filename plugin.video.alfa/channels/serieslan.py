@@ -35,6 +35,7 @@ def mainlist(item):
         Item(channel=item.channel, action="lista", title="Series", contentSerieName="Series", url=host, thumbnail=thumb_series, page=0))
     itemlist.append(
         Item(channel=item.channel, action="lista", title="Live Action", contentSerieName="Live Action", url=host+"/liveaction", thumbnail=thumb_series, page=0))
+    #TODO buscar solucion para reproducion peliculas (findvideos+js2py)
     #itemlist.append(
     #    Item(channel=item.channel, action="peliculas", title="Películas", contentSerieName="Películas", url=host+"/peliculas", thumbnail=thumb_series, page=0))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar",
@@ -57,18 +58,29 @@ def sub_search(item):
     logger.info()
     itemlist = []
     post = "k=" + item.texto
-    results = httptools.downloadpage(item.url, post=post).data
-    results = eval(results)
+    results = httptools.downloadpage(item.url, post=post).json
+    if not results:
+        return itemlist
     for result in results:
         scrapedthumbnail = host + "/tb/" + result[0] + ".jpg"
-        scrapedtitle = result[1].decode('unicode_escape')
+        scrapedtitle = result[1]
         scrapedurl = host + "/" + result[2]
-        #scrapedyear = result[3]
+
+        context = renumbertools.context(item)
+        context2 = autoplay.context
+        context.extend(context2)
+        try:
+            scrapedyear = result[3]
+        except:
+            scrapedyear = ''
+        filtro_tmdb = {"first_air_date": scrapedyear}.items()
         itemlist.append(item.clone(action = "episodios",
                                    title = scrapedtitle,
                                    thumbnail = scrapedthumbnail,
                                    url = scrapedurl,
-                                   contentSerieName = scrapedtitle
+                                   context=context,
+                                   contentSerieName = scrapedtitle,
+                                   infoLabels={'filtro':filtro_tmdb}
                         ))
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
@@ -145,16 +157,18 @@ def peliculas(item):
         b=b+1
         url = host + scrapedurl
         thumbnail = host +scrapedthumbnail
-        context = renumbertools.context(item)
-        context2 = autoplay.context
-        context.extend(context2)
-        itemlist.append(item.clone(title=scrapedtitle+"-"+scrapedyear, url=url, action="findvideos", thumbnail=thumbnail, plot=scrapedplot,
-                show=scrapedtitle,contentSerieName=scrapedtitle,context=context))
+        #context = renumbertools.context(item)
+        context = autoplay.context
+        #context.extend(context2)
+        title = "%s [COLOR darkgrey](%s)[/COLOR]" % (scrapedtitle, scrapedyear)
+        
+        itemlist.append(item.clone(title=title, url=url, action="findvideos", thumbnail=thumbnail, plot=scrapedplot,
+                                   contentTitle=scrapedtitle, context=context, infoLabels={'year': scrapedyear}))
     if b<29:
         pass
     else:    
         itemlist.append(
-             Item(channel=item.channel, contentSerieName=item.contentSerieName, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=item.url, action="peliculas", page=item.page + 1))
+             Item(channel=item.channel, contentTitle=item.contentTitle, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=item.url, action="peliculas", page=item.page + 1))
 
     tmdb.set_infoLabels(itemlist)
     return itemlist
@@ -167,13 +181,13 @@ def episodios(item):
     # obtener el numero total de episodios
     total_episode = 0
 
-    patron_caps = '<li><span>Capitulo (\d+).*?</span><a href="(.*?)">(.*?)</a></li>'
+    patron_caps = '<li><span><strong>Capitulo <\/strong>(\d+).*? -<\/span>(.+?)<\/li><\/a><a href="(.*?)">'
     matches = scrapertools.find_multiple_matches(data, patron_caps)
     patron_info = '<img src="([^"]+)">.+?</span>(.*?)</p>.*?<h2>Reseña:</h2><p>(.*?)</p>'
     scrapedthumbnail, show, scrapedplot = scrapertools.find_single_match(data, patron_info)
     scrapedthumbnail = host + scrapedthumbnail
-
-    for cap, link, name in matches:
+    
+    for cap, name, link in matches:
 
         title = ""
         pat = "/"
@@ -199,13 +213,13 @@ def episodios(item):
             title += "%sx%s " % (season, str(episode).zfill(2))
 
         url = host + "/" + link
+        
         if "disponible" in link:
             title += "No Disponible aún"
         else:
             title += name
             itemlist.append(
-                Item(channel=item.channel, action="findvideos", title=title, url=url, show=show, plot=scrapedplot,
-                     thumbnail=scrapedthumbnail))
+                item.clone(action="findvideos", title=title, url=url, plot=scrapedplot))
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=item.channel, title="[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]", url=item.url,
@@ -220,9 +234,11 @@ def findvideos(item):
     _sa = scrapertools.find_single_match(data, 'var _sa = (true|false);')
     _sl = scrapertools.find_single_match(data, 'var _sl = ([^;]+);')
     sl = eval(_sl)
-    #buttons = scrapertools.find_multiple_matches(data, '<button href="" class="selop" sl="([^"]+)">')
-    buttons = [0,1,2]
+    buttons = scrapertools.find_multiple_matches(data, '<button.*?class="selop" sl="([^"]+)">')
+    if not buttons:
+        buttons = [0,1,2]
     for id in buttons:
+        title = '%s'
         new_url = golink(int(id), _sa, sl)
         data_new = httptools.downloadpage(new_url).data
         matches = scrapertools.find_multiple_matches(data_new, 'javascript">(.*?)</script>')
@@ -230,6 +246,7 @@ def findvideos(item):
         for part in matches:
             js += part
         #logger.info("test before:" + js)
+
         try: 
             matches = scrapertools.find_multiple_matches(data_new, '" id="(.*?)" val="(.*?)"')
             for zanga, val in matches:
@@ -238,13 +255,29 @@ def findvideos(item):
             #logger.info("test1 after:" +js)
         except:
             pass
+        
+        #v1
         js = re.sub('(document\[.*?)=', 'prem=', js)
+        
+        #Parcheando a lo bruto v2
+        video = scrapertools.find_single_match(js, "sources: \[\{src:(.*?), type")
+        js = re.sub(' videojs\((.*?)\);', video+";", js)
+        
         import js2py
         js2py.disable_pyimport()
         context = js2py.EvalJs({'atob': atob})
-        result = context.eval(js)
+        
+        try:
+            result = context.eval(js)
+        except:
+            logger.error("Js2Py no puede desofuscar el codigo, ¿cambió?")
+            continue
+
         url = scrapertools.find_single_match(result, 'src="(.*?)"')
-        title = '%s'
+        #v2
+        if not url:
+            url = result.strip()
+        
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language='latino',
                          infoLabels=item.infoLabels))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())

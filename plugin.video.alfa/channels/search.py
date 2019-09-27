@@ -635,7 +635,7 @@ def do_search(item, categories=None):
                 for i in element["itemlist"]:
                     if i.action:
                         title = "    " + i.title
-                        if "infoPlus" in categories:            #Se manrca vi viene de una ventana de InfoPlus
+                        if "infoPlus" in categories:            #Se marca si viene de una ventana de InfoPlus
                             i.infoPlus = True
                         itemlist.append(i.clone(title=title, from_action=i.action, from_channel=i.channel,
                                                 channel="search", action="show_result", adult=element["adult"]))
@@ -779,5 +779,6 @@ def get_links (item):
     logger.info()
     results =[]
     channel = __import__('channels.%s' % item.from_channel, None, None, ["channels.%s" % item.from_channel])
+    item.channel = item.from_channel
     if len(link_list) <= max_links:
         link_list.extend(getattr(channel, item.from_action)(item))

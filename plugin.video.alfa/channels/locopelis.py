@@ -9,7 +9,6 @@ from channels import filtertools
 from core import httptools
 from core import scrapertools
 from core import servertools
-from core import jsontools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
@@ -237,7 +236,7 @@ def generos(item):
         itemlist.append(Item(channel=item.channel,
                              action="todas",
                              title=title.lower(),
-                             fulltitle=item.fulltitle,
+                             contentTitle=item.contentTitle,
                              url=url,
                              thumbnail=thumbnail,
                              plot=plot,
@@ -358,8 +357,7 @@ def findvideos(item):
         new_url = '%s%s' % (host.replace('.com','.tv'), 'playeropstream/api.php')
         post = {'h': video_id}
         post = urllib.urlencode(post)
-        data = httptools.downloadpage(new_url, post=post).data
-        json_data = jsontools.load(data)
+        json_data = httptools.downloadpage(new_url, post=post).json
         url = json_data['url']
         server = servertools.get_server_from_url(url)
         title = '%s [%s]' % (server, item.language)
@@ -398,7 +396,7 @@ def play(item):
         videoitem.title = item.title
         videoitem.folder = False
         videoitem.thumbnail = item.extra
-        videoitem.fulltitle = item.fulltitle
+        videoitem.contentTitle = item.contentTitle
         videoitem.infoLabels = item.infoLabels
     return itemlist
 

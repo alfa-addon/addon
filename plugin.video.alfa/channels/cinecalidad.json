@@ -3,13 +3,12 @@
   "name": "CineCalidad",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat", "por"],
+  "language": ["cast", "lat"],
   "thumbnail": "https://s9.postimg.cc/58xyblsvj/cinecalidad.png",
   "banner": "https://s32.postimg.cc/kihkdpx1x/banner_cinecalidad.png",
   "categories": [
     "movie",
     "direct",
-    "vos",
     "torrent"
   ],
   "settings": [
@@ -22,16 +21,16 @@
       "visible": true
     },
     {
-      "id": "filter_languages",
+      "id": "filter_site",
       "type": "list",
-      "label": "Mostrar enlaces en idioma...",
+      "label": "Mostrar Cinecalidad...",
       "default": 0,
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "No filtrar",
+        "Por Defecto",
         "Latino",
-        "Español",
+        "Castellano",
         "Portugues"
       ]
     },

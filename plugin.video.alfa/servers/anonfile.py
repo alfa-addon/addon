@@ -20,15 +20,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    patron = 'id="download-quality-(\w+).*?href="([^"]+)"'
+    patron = 'download-url.*?href="([^"]+)"'
     match = scrapertools.find_multiple_matches(data, patron)
-    for calidad, media_url in match:
-        title = "%s [anonfile]" % (calidad)
-        video_urls.append([title, media_url, int(calidad.replace("p", ""))])
-
-    video_urls.sort(key=lambda x: x[2])
-    for video_url in video_urls:
-        video_url[2] = 0
-        logger.info("%s - %s" % (video_url[0], video_url[1]))
-
+    for media_url in match:
+        media_url += "|Referer=%s" %page_url
+        title = "mp4 [anonfile]"
+        video_urls.append([title, media_url])
     return video_urls

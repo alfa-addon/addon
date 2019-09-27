@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import re
+import re, urllib
 
 from core import httptools
 from core import scrapertools
@@ -9,8 +9,11 @@ from core.item import Item
 from platformcode import config, logger
 
 __modo_grafico__ = config.get_setting('modo_grafico', "ver-pelis")
-host = "http://ver-pelis.me"
-
+host = "http://ver-pelis.tv"
+lang_title = {"latino": "[COLOR red][B] [LAT][/B][/COLOR]",
+            "spanish": "[COLOR crimson][B] [ESP][/B][/COLOR]",
+            "subtitulos": "[COLOR orangered][B] [VOS][/B][/COLOR]",
+            "subtitulosp": "[COLOR indianred][B] [VOSE][/B][/COLOR]"}
 
 def mainlist(item):
     logger.info()
@@ -21,17 +24,17 @@ def mainlist(item):
         item.clone(title="[COLOR oldlace]Películas[/COLOR]", action="scraper", url=host + "/ver/",
                    thumbnail="http://imgur.com/36xALWc.png", fanart="http://imgur.com/53dhEU4.jpg",
                    contentType="movie"))
-    itemlist.append(item.clone(title="[COLOR oldlace]Películas por año[/COLOR]", action="categoria_anno",
-                               url=host, thumbnail="http://imgur.com/36xALWc.png", extra="Por año",
-                               fanart="http://imgur.com/53dhEU4.jpg", contentType="movie"))
-    itemlist.append(item.clone(title="[COLOR oldlace]Películas en Latino[/COLOR]", action="scraper",
+    itemlist.append(item.clone(title="[COLOR oldlace]Latino[/COLOR]", action="scraper",
                                url=host + "/ver/latino/", thumbnail="http://imgur.com/36xALWc.png",
                                fanart="http://imgur.com/53dhEU4.jpg", contentType="movie"))
-    itemlist.append(item.clone(title="[COLOR oldlace]Películas en Español[/COLOR]", action="scraper",
+    itemlist.append(item.clone(title="[COLOR oldlace]Español[/COLOR]", action="scraper",
+                               url=host + "/ver/espanol/", thumbnail="http://imgur.com/36xALWc.png",
+                               fanart="http://imgur.com/53dhEU4.jpg", contentType="movie"))
+    itemlist.append(item.clone(title="[COLOR oldlace]Subtituladas[/COLOR]", action="scraper",
                                url=host + "/ver/subtituladas/", thumbnail="http://imgur.com/36xALWc.png",
                                fanart="http://imgur.com/53dhEU4.jpg", contentType="movie"))
-    itemlist.append(item.clone(title="[COLOR oldlace]Películas Subtituladas[/COLOR]", action="scraper",
-                               url=host + "/ver/espanol/", thumbnail="http://imgur.com/36xALWc.png",
+    itemlist.append(item.clone(title="[COLOR oldlace]Por Año[/COLOR]", action="categoria_anno",
+                               url=host, thumbnail="http://imgur.com/36xALWc.png", extra="Por año",
                                fanart="http://imgur.com/53dhEU4.jpg", contentType="movie"))
     itemlist.append(item.clone(title="[COLOR oldlace]Por Género[/COLOR]", action="categoria_anno",
                                url=host, thumbnail="http://imgur.com/36xALWc.png", extra="Categorias",
@@ -98,7 +101,7 @@ def scraper(item):
 
         if item.extra != "search":
             item.i += 1
-        itemlist.append(item.clone(action="findvideos", title=titulo, url=url, thumbnail=thumb, fulltitle=title,
+        itemlist.append(item.clone(action="findvideos", title=titulo, url=url, thumbnail=thumb,
                                    contentTitle=title, contentType="movie", library=True))
 
     ## Paginación
@@ -111,57 +114,50 @@ def scraper(item):
 def findvideos(item):
     logger.info()
     itemlist = []
+    duplicated = []
     data = httptools.downloadpage(item.url).data
-    data_post = scrapertools.find_single_match(data, "type: 'POST'.*?id: (.*?),slug: '(.*?)'")
+    data_post = scrapertools.find_single_match(data, "var dataid=\{id:(.*?),slug:'([^']+)',imdb:'([^']+)'")
     if data_post:
-        post = 'id=' + data_post[0] + '&slug=' + data_post[1]
-        data_info = httptools.downloadpage(host + '/ajax/cargar_video.php', post=post).data
-        patron = """</i> ([^<]+)"""
-        patron += """.*?<a onclick=\"load_player\('([^']+)"""
-        patron += """','([^']+)', ([^']+),.*?REPRODUCIR\">([^']+)</a>"""
-        enlaces = scrapertools.find_multiple_matches(data_info, patron)
-        for server, id_enlace, name, number, idioma_calidad in enlaces:
-            server = server.strip()
-            if "SUBTITULOS" in idioma_calidad and not "P" in idioma_calidad:
-                idioma_calidad = idioma_calidad.replace("SUBTITULOS", "VO")
-                idioma_calidad = idioma_calidad.replace("VO", "[COLOR orangered] VO[/COLOR]")
-            elif "SUBTITULOS" in idioma_calidad and "P" in idioma_calidad:
-                idioma_calidad = "[COLOR indianred] " + idioma_calidad + "[/COLOR]"
+        get = '?id=%s&slug=%s&imdb=%s' % (data_post[0], data_post[1], data_post[2])
+        
+        #sub = '%s/subti/%s.srt' % (host, data_post[2])
+        json_data = httptools.downloadpage(host + '/core/api.php%s' % get).json
+        video_list = json_data['lista']
+        for videoitem in video_list:
+            video_base_url = host + '/ajax/verpelis1.php'
+            if video_list[videoitem] != None:
+                video_lang = video_list[videoitem]
+                logger.error(video_lang)
+                languages = ['latino', 'spanish', 'subtitulos', 'subtitulosp']
+                for lang in languages:
+                    if lang not in video_lang:
+                        continue
+                    if video_lang[lang] != None:
+                        if not isinstance(video_lang[lang], int):
+                            video_id = video_lang[lang][0]["video"]
+                            server = video_lang[lang][0]["servidortxt"].lower()
+                            if not "ultra" in server:
+                                servert = "[COLOR cyan][B]" + server.capitalize() + " [/B][/COLOR]"
+                                extra = ""
+                            else:
+                                servert = "[COLOR yellow][B]Gvideo [/B][/COLOR]"
+                                extra = "yes"
+                            quality = video_lang[lang][0]["calidad"]
+                            get = "?imdb=%s&video=%s&version=%s" % (data_post[2], video_id, lang)
+                            embed = httptools.downloadpage(video_base_url + get).data
+                            url = scrapertools.find_single_match(embed, 'window.location="([^"]+)"')
 
-            elif "LATINO" in idioma_calidad:
-                idioma_calidad = idioma_calidad.replace("LATINO", "[COLOR red]LATINO[/COLOR]")
-            elif "Español" in idioma_calidad:
-                idioma_calidad = idioma_calidad.replace("Español", "[COLOR crimson]ESPAÑOL[/COLOR]")
-            if "HD" in idioma_calidad:
-                idioma_calidad = idioma_calidad.replace("HD", "[COLOR crimson] HD[/COLOR]")
-            elif "720" in idioma_calidad:
-                idioma_calidad = idioma_calidad.replace("720", "[COLOR firebrick] 720[/COLOR]")
-            elif "TS" in idioma_calidad:
-                idioma_calidad = idioma_calidad.replace("TS", "[COLOR brown] TS[/COLOR]")
-
-            elif "CAM" in idioma_calidad:
-                idioma_calidad = idioma_calidad.replace("CAM", "[COLOR darkkakhi] CAM[/COLOR]")
-
-            url = host + "/ajax/video.php?id=" + id_enlace + "&slug=" + name + "&quality=" + number
-
-            if not "Ultra" in server:
-                server = "[COLOR cyan][B]" + server + " [/B][/COLOR]"
-                extra = ""
-            else:
-                server = "[COLOR yellow][B]Gvideo [/B][/COLOR]"
-                extra = "yes"
-            title = server.strip() + "  " + idioma_calidad
-            itemlist.append(Item(
-                channel=item.channel,
-                action="play",
-                title=title,
-                url=url,
-                fanart=item.fanart,
-                thumbnail=item.thumbnail,
-                fulltitle=item.fulltitle,
-                extra=extra,
-                folder=True
-            ))
+                            title = servert + lang_title.get(lang, lang)
+                            itemlist.append(Item(
+                                channel=item.channel,
+                                action="play",
+                                title=title,
+                                url=url,
+                                server=server,
+                                fanart=item.fanart,
+                                thumbnail=item.thumbnail,
+                                contentTitle=item.contentTitle
+                                ))
         if item.library and config.get_videolibrary_support() and len(itemlist) > 0:
             infoLabels = {'tmdb_id': item.infoLabels['tmdb_id'],
                           'title': item.infoLabels['title']}
@@ -175,29 +171,6 @@ def findvideos(item):
                  thumbnail=item.thumbnail))
     return itemlist
 
-
-def play(item):
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r'\\', '', data)
-    item.url = scrapertools.find_single_match(data, 'src="([^"]+)"')
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, 'window.location="([^"]+)"')
-    if item.extra == "yes":
-        data = httptools.downloadpage(url).data
-        url = scrapertools.find_single_match(data, '(?is)iframe src="([^"]+)"')
-    videolist = servertools.find_video_items(data=url)
-    for video in videolist:
-        itemlist.append(Item(
-            channel=item.channel,
-            url=video.url,
-            server=video.server,
-            fulltitle=item.fulltitle,
-            thumbnail=item.thumbnail,
-            action="play"
-        ))
-
-    return itemlist
 
 def newest(categoria):
     logger.info()

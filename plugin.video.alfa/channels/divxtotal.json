@@ -1,7 +1,7 @@
 {
   "id": "divxtotal",
   "name": "Divxtotal",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast"],
   "thumbnail": "http://imgur.com/Madj03A.jpg",
@@ -12,7 +12,7 @@
   ],
   "settings": [
     {
-      "default": true, 
+      "default": false, 
       "enabled": true, 
       "id": "include_in_global_search", 
       "label": "Incluir en busqueda global", 

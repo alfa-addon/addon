@@ -292,7 +292,7 @@ def parse_videos(item, tipo, data):
 
         itemlist.append(Item(channel=item.channel, title=title, url=urlparse.urljoin(HOST, link), action="play",
                              show=item.show, language=IDIOMAS.get(language, "OVOS"), quality=quality,
-                             fulltitle=item.title, server=server))
+                             contentTitle=item.title, server=server))
 
     return itemlist
 
@@ -307,7 +307,7 @@ def play(item):
     url = scrapertools.find_single_match(data, patron)
 
     itemlist = servertools.find_video_items(data=url)
-    titulo = scrapertools.find_single_match(item.fulltitle, "^(.*?)\s\[.+?$")
+    titulo = scrapertools.find_single_match(item.contentTitle, "^(.*?)\s\[.+?$")
     if titulo:
         titulo += " [%s]" % item.language
 

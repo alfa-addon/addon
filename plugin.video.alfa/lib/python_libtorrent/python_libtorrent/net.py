@@ -35,7 +35,7 @@ import itertools
 
 import xbmc
 import xbmcgui
-import xbmcvfs
+#import xbmcvfs                                                                 ### Alfa
 
 RE = {
     'content-disposition': re.compile('attachment;\sfilename="*([^"\s]+)"|\s')
@@ -51,11 +51,11 @@ class HTTP:
     def __init__(self):
         #self._dirname = xbmc.translatePath('special://temp')                   ### Alfa
         #for subdir in ('xbmcup', 'script.module.libtorrent'):                  ### Alfa
-        self._dirname = xbmc.translatePath('special://home')                    ### Alfa
-        for subdir in ('lib', 'python_libtorrent'):                             ### Alfa
-            self._dirname = os.path.join(self._dirname, subdir)
-            if not xbmcvfs.exists(self._dirname):
-                xbmcvfs.mkdir(self._dirname)
+        self._dirname = os.path.dirname(os.path.dirname(__file__))              ### Alfa
+        #for subdir in ('lib', 'python_libtorrent'):                            ### Alfa
+        #    self._dirname = os.path.join(self._dirname, subdir)                ### Alfa
+        #    if not xbmcvfs.exists(self._dirname):                              ### Alfa
+        #        xbmcvfs.mkdir(self._dirname)                                   ### Alfa
 
     def fetch(self, request, **kwargs):
         self.con, self.fd, self.progress, self.cookies, self.request = None, None, None, None, request

@@ -7,7 +7,7 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-__perfil__ = int(config.get_setting('perfil', 'pelisultra'))
+__perfil__ = int(config.get_setting('perfil', 'pelismedia'))
 
 # Fijar perfil de color
 perfil = [['0xFFFFE6CC', '0xFFFFCE9C', '0xFF994D00'],
@@ -30,7 +30,7 @@ def mainlist(item):
                          thumbnail=get_thumb('newest', auto=True)))
 	itemlist.append(Item(channel = item.channel, title = "     Estrenos", action = "peliculas", url = host + "/genero/estrenos/",
                          thumbnail=get_thumb('premieres', auto=True)))
-	itemlist.append(Item(channel = item.channel, title = "     Por género", action = "genero", url = host + "/genero/",
+	itemlist.append(Item(channel = item.channel, title = "     Por género", action = "genero", url = host,
                          thumbnail=get_thumb('genres', auto=True) ))
 	item.thumbnail = get_thumb('tvshows', auto=True)
 	itemlist.append(item.clone(title="Series:", folder=False, text_color="0xFFD4AF37", text_bold=True))
@@ -76,8 +76,8 @@ def newest(categoria):
 	return itemlist
 
 def peliculas(item):
-	#logger.info()
-	logger.info(item)
+	logger.info()
+	
 	itemlist = []
 	data = httptools.downloadpage(item.url).data
 
@@ -146,7 +146,7 @@ def series(item):
 	matches = scrapertools.find_multiple_matches(data, patron)
 
 	#if config.get_setting('temporada_o_todos', 'pelisultra') == 0:
-	if config.get_setting('temporada_o_todos', 'pelisultra'):
+	if config.get_setting('temporada_o_todos', item.channel):
 		accion="temporadas"
 	else:
 		accion="episodios"
@@ -223,7 +223,7 @@ def episodios(item):
 		# episodios_por_pagina=20
 		# config.set_setting('episodios_x_pag', '20', 'pelisultra')
 
-	episodios_por_pagina= int(config.get_setting('episodios_x_pag', 'pelisultra')) * 5 + 10
+	episodios_por_pagina= int(config.get_setting('episodios_x_pag', item.channel)) * 5 + 10
 
 	if not item.page:
 		item.page = 0

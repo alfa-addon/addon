@@ -17,15 +17,13 @@ def test_video_exists(page_url):
 
 
 def get_video_url(page_url, user="", password="", video_password=""):
-    logger.info("(page_url='%s')" % page_url)
+    logger.error("(page_url='%s')" % page_url)
+    videos = []
     data = httptools.downloadpage(page_url).data
-    packed = scrapertools.find_multiple_matches(data, "(?s)<script>\s*eval(.*?)\s*</script>")
-    scrapertools.printMatches(packed)
-    for pack in packed:
-        unpacked = jsunpack.unpack(pack)
-        logger.info("Intel11 %s" %unpacked)
-        if "ldaa" in unpacked:
-            videos = scrapertools.find_multiple_matches(unpacked, '(?is)lda.="([^"]+)')
+    packed = scrapertools.find_single_match(data, "</script>\s*<script>\s*(eval.*?)\s*</script>")
+    unpacked = jsunpack.unpack(packed)
+    logger.error(unpacked)
+    videos = scrapertools.find_multiple_matches(unpacked, 'vldAb="([^"]+)')
     video_urls = []
     for video in videos:
         if not video.startswith("//"):

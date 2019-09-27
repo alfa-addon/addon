@@ -10,7 +10,6 @@ from channels import filtertools
 from core import httptools
 from core import scrapertools
 from core import servertools
-from core import jsontools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
@@ -36,7 +35,7 @@ def mainlist(item):
     itemlist = []
 
     itemlist.append(Item(channel=item.channel, title="Nuevos capitulos", action="latest_episodes", url=host,
-                         thumbnail=get_thumb('new episodes', auto=True)))
+                         page=0, thumbnail=get_thumb('new episodes', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Ultimas", action="latest_shows", url=host,
                          thumbnail=get_thumb('last', auto=True)))
@@ -110,8 +109,9 @@ def section(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for id, name in matches:
-        url = '%s?%s=%s' % (item.url, name, id)
         title = id.capitalize()
+        id = id.replace('-','+')
+        url = '%s?%s=%s' % (item.url, name, id)
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='list_all'))
 
     return itemlist
@@ -124,14 +124,22 @@ def latest_episodes(item):
     patron = '<a class="media" href="([^"]+)" title="([^"]+)".*?src="([^"]+)".*?'
     patron += 'width: 97%">([^<]+)</div><div>(\d+x\d+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedcontent, scrapedep in matches:
-        title = '%s)' % (scrapedtitle.replace(' Online ', ' ('))
+    logger.info("page=%s" % item.page)
+    for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedcontent, scrapedep in matches[item.page:item.page + 30]:
+        title = '%s' % (scrapedtitle.replace(' Online sub español', ''))
         contentSerieName = scrapedcontent
         itemlist.append(Item(channel=item.channel, action='findvideos', url=scrapedurl, thumbnail=scrapedthumbnail,
                              title=title, contentSerieName=contentSerieName, type='episode'))
 
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    if item.page + 30 < len(matches):
+        itemlist.append(item.clone(page=item.page + 30,
+                                   title="» Siguiente »", text_color="yellow"))
+    else:
+        next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
+        if next_page:
+            itemlist.append(item.clone(url=next_page, page=0, title="» Siguiente »", text_color="0xFF994D00"))
+
 
     return itemlist
 
@@ -155,7 +163,6 @@ def latest_shows(item):
 
 
 def seasons(item):
-    from core import jsontools
     import urllib
     logger.info()
 
@@ -167,7 +174,7 @@ def seasons(item):
     post = urllib.urlencode(post)
     seasons_url = '%sapi/web/seasons.php' % host
     headers = {'Referer':item.url}
-    data = jsontools.load(httptools.downloadpage(seasons_url, post=post, headers=headers).data)
+    data = httptools.downloadpage(seasons_url, post=post, headers=headers).json
     infoLabels = item.infoLabels
     for dict in data:
         season = dict['number']
@@ -190,7 +197,6 @@ def seasons(item):
 
 def episodesxseason(item):
     logger.info()
-    from core import jsontools
     import urllib
     logger.info()
 
@@ -201,7 +207,7 @@ def episodesxseason(item):
 
     seasons_url = '%sapi/web/episodes.php' % host
     headers = {'Referer': item.url}
-    data = jsontools.load(httptools.downloadpage(seasons_url, post=post, headers=headers).data)
+    data = httptools.downloadpage(seasons_url, post=post, headers=headers).json
     infoLabels = item.infoLabels
     for dict in data:
         episode = dict['number']
@@ -261,6 +267,7 @@ def decode_link(enc_url):
     try:
         new_data = get_source(enc_url)
         new_enc_url = scrapertools.find_single_match(new_data, 'src="([^"]+)"')
+        if "gamovideo" in new_enc_url: return new_enc_url
         try:
             url = httptools.downloadpage(new_enc_url, follow_redirects=False).headers['location']
         except:
@@ -274,13 +281,14 @@ def decode_link(enc_url):
 
 def play(item):
     logger.info()
-
+    itemlist = []
+    if item.server not in ['openload', 'streamcherry', 'streamango']:
+        item.server = ''
     item.url = decode_link(item.url)
-
-    itemlist = [item]
+    itemlist.append(item.clone())
+    itemlist = servertools.get_servers_itemlist(itemlist)
 
     return itemlist
-
 
 def search(item, texto):
     logger.info()

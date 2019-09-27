@@ -19,11 +19,12 @@ def mainlist(item):
                          url=host + "/ajax/most_viewed/?page=1", last= host + "/mas-vistos/"))
     itemlist.append(Item(channel=item.channel, action="videos", title="Más votados",
                          url=host + "/ajax/best_rated/?page=1", last= host + "/mas-votados/"))
+    itemlist.append(Item(channel=item.channel, action="chicas", title="Chicas",
+                         url=host + "/ajax/list_pornstars/?page=1", last= host + "/pornstars/"))
     itemlist.append(Item(channel=item.channel, action="categorias", title="Canal",
                          url=host + "/ajax/list_producers/?page=1", last= host + "/sitios/"))
     itemlist.append(Item(channel=item.channel, action="categorias", title="Categorias", url= host + "/categorias/"))
-    itemlist.append(Item(channel=item.channel, action="chicas", title="Chicas",
-                         url=host + "/ajax/list_pornstars/?page=1", last= host + "/pornstars/"))
+
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar", last=""))
     return itemlist
 
@@ -59,7 +60,7 @@ def videos(item):
     patron += '<div class="box-escena">.*?'
     patron += '<a\s*href="([^"]+)".*?'
     patron += 'data-stats-video-name="([^"]+)".*?'
-    patron += '<img\s*src="([^"]+)".*?'
+    patron += 'data-src="([^"]+)".*?'
     patron += '<div class="duracion">([^"]+) min</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url, title, thumbnail,duration in matches:

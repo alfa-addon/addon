@@ -109,7 +109,8 @@ def list_all(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle, year, type in matches:
         type = type.strip().lower()
         url = scrapedurl
-        thumbnail = scrapedthumbnail
+        #Ajuste resolución de la imagen
+        thumbnail = scrapedthumbnail.replace("200/", "800/").replace("280/", "1120/")
         lang = 'VOSE'
         title = scrapedtitle
         context = renumbertools.context(item)
@@ -168,7 +169,7 @@ def new_episodes(item):
 
     full_data = get_source(item.url)
     data = scrapertools.find_single_match(full_data, '<section class="caps">.*?</section>')
-    patron = '<article.*?<a href="([^"]+)">.*?src="([^"]+)".*?'
+    patron = '<article.*?<a href="([^"]+)">.*?data-src="([^"]+)".*?'
     patron += '<span class="episode">.*?</i>([^<]+)</span>.*?<h2 class="Title">([^<]+)</h2>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -176,6 +177,8 @@ def new_episodes(item):
         url = scrapedurl
         lang = 'VOSE'
         title = '%s - %s' % (scrapedtitle, epi)
+        #se puede cambiar la imagen a la resolucion deseada
+        scrapedthumbnail = scrapedthumbnail.replace("290/", "840/").replace("165/", "480/")
         itemlist.append(Item(channel=item.channel, title=title, url=url, thumbnail=scrapedthumbnail,
                              action='findvideos', language=lang))
 

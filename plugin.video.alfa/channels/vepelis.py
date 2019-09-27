@@ -7,7 +7,6 @@ import urllib
 from core import scrapertools
 from core import httptools
 from core import servertools
-from core import jsontools
 from core import tmdb
 from core.item import Item
 from platformcode import config, logger
@@ -148,13 +147,14 @@ def listado2(item):
 
     # Descarga la página
     data = get_source(item.url)
+    data = data.decode('iso-8859-1')
     patron = '<h2 class="titpeli.*?<a href="([^"]+)" title="([^"]+)">.*?peli_img_img">.*?'
     patron +='<img src="([^"]+)" alt.*?<p>([^<]+)</p>.*?Genero.*?:.*?(\d{4})<.*?png".*?\/>([^<]+)<.*?: (.*?)<'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedplot, year, language, quality in matches:
         language = language.strip()
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, fulltitle=scrapedtitle,
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, contentTitle=scrapedtitle,
                              url=scrapedurl, thumbnail=scrapedthumbnail, plot=scrapedplot, language=language,
                              quality=quality, infoLabels={'year': year}))
 
@@ -166,7 +166,7 @@ def listado2(item):
         scrapedurl = extra + "?page=" + str(nu)
         scrapedtitle = "!Pagina Siguiente ->"
         scrapedthumbnail = ""
-        itemlist.append(Item(channel=item.channel, action="listado2", title=scrapedtitle, fulltitle=scrapedtitle,
+        itemlist.append(Item(channel=item.channel, action="listado2", title=scrapedtitle, contentTitle=scrapedtitle,
                              url=scrapedurl, thumbnail=scrapedthumbnail, extra=extra, folder=True))
 
     return itemlist
@@ -186,8 +186,7 @@ def findvideos(item):
     new_url = '%s%s' % (host, 'playeropstream/api.php')
     post = {'h': video_id}
     post = urllib.urlencode(post)
-    data = httptools.downloadpage(new_url, post=post).data
-    json_data = jsontools.load(data)
+    json_data = httptools.downloadpage(new_url, post=post).json
     url = json_data['url']
     server = servertools.get_server_from_url(url)
     title = '%s' % server
@@ -200,7 +199,7 @@ def findvideos(item):
                              url=item.url,
                              action="add_pelicula_to_library",
                              extra="findvideos",
-                             contentTitle = item.fulltitle
+                             contentTitle = item.contentTitle
                              ))
 
     return itemlist

@@ -3,7 +3,7 @@
   "name": "Rexpelis",
   "active": true,
   "adult": false,
-  "language": ["lat","cast"],
+  "language": ["lat"],
   "thumbnail": "https://i.postimg.cc/MMJ5g9Y1/rexpelis1.png",
   "banner": "https://i.postimg.cc/XrXs5GJB/rexpelis2.png",
   "categories": [
@@ -18,10 +18,7 @@
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "No filtrar",
-        "LAT",
-        "ESP",
-        "VO"
+        "No filtrar"
       ]
     },
      {
@@ -44,7 +41,7 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },

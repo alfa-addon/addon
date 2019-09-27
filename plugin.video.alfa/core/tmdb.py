@@ -3,7 +3,7 @@
 import copy
 import re
 import sqlite3
-import time
+import time, urllib
 
 from core import filetools
 from core import httptools
@@ -66,7 +66,9 @@ from platformcode import logger
 
 otmdb_global = None
 fname = filetools.join(config.get_data_path(), "alfa_db.sqlite")
-
+tmdb_langs = ['es', 'en', 'it', 'pt', 'fr', 'de']
+langs = config.get_setting('tmdb_lang', default=0)
+tmdb_lang = tmdb_langs[langs]
 
 def create_bd():
     conn = sqlite3.connect(fname)
@@ -184,7 +186,7 @@ def cache_response(fn):
     return wrapper
 
 
-def set_infoLabels(source, seekTmdb=True, idioma_busqueda='es'):
+def set_infoLabels(source, seekTmdb=True, idioma_busqueda=tmdb_lang):
     """
     Dependiendo del tipo de dato de source obtiene y fija (item.infoLabels) los datos extras de una o varias series,
     capitulos o peliculas.
@@ -210,7 +212,7 @@ def set_infoLabels(source, seekTmdb=True, idioma_busqueda='es'):
     return ret
 
 
-def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda='es'):
+def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang):
     """
     De manera concurrente, obtiene los datos de los items incluidos en la lista item_list.
 
@@ -264,7 +266,7 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda='es'):
     return [ii[2] for ii in r_list]
 
 
-def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es', lock=None):
+def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=None):
     """
     Obtiene y fija (item.infoLabels) los datos extras de una serie, capitulo o pelicula.
 
@@ -924,6 +926,7 @@ class Tmdb(object):
     def __search(self, index_results=0, page=1):
         self.result = ResultDictDefault()
         results = []
+        text_quote = urllib.quote(self.busqueda_texto)
         total_results = 0
         total_pages = 0
         buscando = ""
@@ -932,7 +935,7 @@ class Tmdb(object):
             # http://api.themoviedb.org/3/search/movie?api_key=a1ab8b8669da03637a4b98fa39c39228&query=superman&language=es
             # &include_adult=false&page=1
             url = ('http://api.themoviedb.org/3/search/%s?api_key=a1ab8b8669da03637a4b98fa39c39228&query=%s&language=%s'
-                   '&include_adult=%s&page=%s' % (self.busqueda_tipo, self.busqueda_texto.replace(' ', '%20'),
+                   '&include_adult=%s&page=%s' % (self.busqueda_tipo, text_quote,
                                                   self.busqueda_idioma, self.busqueda_include_adult, page))
 
             if self.busqueda_year:
@@ -948,11 +951,13 @@ class Tmdb(object):
             if total_results > 0:
                 results = resultado["results"]
 
-            if self.busqueda_filtro and results:
+            if self.busqueda_filtro and total_results > 1:
                 # TODO documentar esta parte
                 for key, value in dict(self.busqueda_filtro).items():
                     for r in results[:]:
-                        if key not in r or r[key] != value:
+                        if not r[key]:
+                            r[key] = str(r[key])
+                        if key not in r or value not in r[key]:
                             results.remove(r)
                             total_results -= 1
 

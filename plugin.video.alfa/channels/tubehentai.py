@@ -38,15 +38,13 @@ def search(item, texto):
 def lista(item):
     logger.info()
     itemlist = []
-    # Descarga la página
     data = httptools.downloadpage(item.url).data
-    patron = '<a href="(http://tubehentai.com/video/[^"]+)" title="([^"]+)".*?'
+    patron = '<a href="((?:http|https)://tubehentai.com/video/[^"]+)" title="([^"]+)".*?'
     patron += '<span class="icon -time">.*?<span class="item__stat-label">([^<]+)</span>.*?'
     patron += '<img src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,duration,scrapedthumbnail in matches:
         title = "[COLOR yellow]" + duration + "[/COLOR] " + scrapedtitle
-        # logger.debug("title=[" + scrapedtitle + "], url=[" + scrapedurl + "], thumbnail=[" + scrapedthumbnail + "]")
         itemlist.append(Item(channel=item.channel, action="play", title=title, url=scrapedurl, 
                         fanart=scrapedthumbnail, thumbnail=scrapedthumbnail))
     next_page = scrapertools.find_single_match(data,'<a rel=\'next\' title=\'Next\' href=\'([^\']+)\'')

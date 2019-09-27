@@ -22,12 +22,12 @@ class Cursor(object):
         req.headers['Range'] = 'bytes=%s-' % (offset)
         try:
             self.conn = urllib2.urlopen(req)
-            if self.conn.code == 403:
-                self.mega_request(offset, True)
-            else:
+            try:
                 self.prepare_decoder(offset)
+            except:
+                print traceback.format_exc()
         except:
-            print traceback.format_exc()
+            self.mega_request(offset, True)
 
     def read(self,n=None):
         if not self.conn:

@@ -17,7 +17,7 @@ def mainlist(item):
     itemlist = []
     itemlist.append(Item(channel=item.channel, action="lista", title="Útimos videos", url=host))
     itemlist.append(
-        Item(channel=item.channel, action="categorias", title="Categorias", url=host + "/category/"))
+        Item(channel=item.channel, action="categorias", title="Canal", url=host + "/category/"))
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar", url="http://www.vidz7.com"))
     return itemlist
 
@@ -42,10 +42,11 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}", "", data)
-    patron = '<li><a href="([^"]+)">(.*?)</a>'
+    patron = '<li><a href="([^"]+)">([^<]+)</a><span>(\d+) </'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for url, actriz in matches:
-        itemlist.append(Item(channel=item.channel, action="lista", title=actriz, url=url))
+    for url, title, cantidad in matches:
+        title = title + " (" + cantidad + ")"
+        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url))
 
     return itemlist
 
@@ -68,7 +69,7 @@ def lista(item):
         title = "[COLOR yellow]" + duration + "[/COLOR] " + "[COLOR red]" +scrapedhd+ "[/COLOR]  "+scrapedtitle
         # Añade al listado
         itemlist.append(Item(channel=item.channel, action="play", title=title, thumbnail=thumbnail, fanart=thumbnail,
-                             fulltitle=title, url=url,
+                             contentTitle=title, url=url,
                              viewmode="movie", folder=True))
     paginacion = scrapertools.find_single_match(data,'<a class="active".*?.>\d+</a><a class="inactive" href ="([^"]+)">')
     if paginacion:

@@ -417,6 +417,7 @@ def findvideos(item):
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 02: FINDVIDEOS: No hay enlaces o ha cambiado la estructura de la Web.  Verificar en la Web esto último y reportar el error con el log', folder=False))
         
         if item.emergency_urls and not item.videolibray_emergency_urls:     #Hay urls de emergencia?
+            item.url = item.emergency_urls[0][0]                            #Guardamos la url del .Torrent
             matches = item.emergency_urls[1]                                #Restauramos matches
             item.armagedon = True                                           #Marcamos la situación como catastrófica 
         else:

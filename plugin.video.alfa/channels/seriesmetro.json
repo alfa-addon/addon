@@ -4,7 +4,7 @@
   "active": true,
   "adult": false,
   "language": ["lat", "cast"],
-  "thumbnail": "https://i.postimg.cc/Kzh6DCqD/seriesmetro.png",
+  "thumbnail": "https://i.imgur.com/OFVtBfJ.png",
   "banner": "",
   "categories": [
     "tvshow",
@@ -27,17 +27,20 @@
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "No filtrar"
+        "No filtrar",
+        "LAT",
+        "CAST",
+        "VOSE",
+        "VOS"
       ]
     },
     {
-      "id": "comprueba_enlaces_num",
-      "type": "list",
-      "label": "Número de enlaces a verificar",
-      "default": 1,
+      "id": "full_title",
+      "type": "bool",
+      "label": "Mostrar titulo detallado (num temporadas, episodios)",
+      "default": false,
       "enabled": true,
-      "visible": "eq(-1,true)",
-      "lvalues": [ "5", "10", "15", "20" ]
+      "visible": true
     }
   ]
 }

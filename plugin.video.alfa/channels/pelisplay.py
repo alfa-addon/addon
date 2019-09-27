@@ -5,7 +5,6 @@
 
 import re
 import sys
-import urllib
 import urlparse
 
 from channels import autoplay
@@ -76,15 +75,15 @@ def mainlist(item):
 def menumovies(item):
     logger.info()
     itemlist = [item.clone(title="Estrenos", action="peliculas", text_blod=True,
-                           viewcontent='movie', url=host + 'peliculas/estrenos', viewmode="movie_with_plot"),
+                           viewcontent='movie', url=host + 'peliculas-online?filtro=a%C3%B1o', viewmode="movie_with_plot"),
                 item.clone(title="Más Populares", action="peliculas", text_blod=True,
-                           viewcontent='movie', url=host + 'peliculas?filtro=visitas', viewmode="movie_with_plot"),
+                           viewcontent='movie', url=host + 'peliculas-online?filtro=visitas', viewmode="movie_with_plot"),
                 item.clone(title="Recíen Agregadas", action="peliculas", text_blod=True,
-                           viewcontent='movie', url=host + 'peliculas?filtro=fecha_creacion', viewmode="movie_with_plot"),
+                           viewcontent='movie', url=host + 'peliculas-online?filtro=fecha_creacion', viewmode="movie_with_plot"),
                 item.clone(title="Géneros", action="p_portipo", text_blod=True, extra='movie',
-                           viewcontent='movie', url=host + 'peliculas', viewmode="movie_with_plot"),
+                           viewcontent='movie', url=host + 'peliculas-online', viewmode="movie_with_plot"),
                 item.clone(title="Buscar", action="search", text_blod=True, extra='buscarp',
-                           thumbnail=get_thumb('search.png'), url=host + 'peliculas')]
+                           thumbnail=get_thumb('search.png'), url=host + 'peliculas-online')]
     return itemlist
 
 
@@ -123,14 +122,17 @@ def flixmenu(item):
 
 def flixmovies(item):
     logger.info()
-    itemlist = [item.clone(title="Novedades", action="peliculas", text_blod=True, url=host + 'peliculas/netflix?filtro=fecha_actualizacion',
-                           viewcontent='movie', viewmode="movie_with_plot"),
+    itemlist = [item.clone(title="Novedades", action="peliculas", text_blod=True,
+                           url=host + 'peliculas-online/netflix?filtro=fecha_actualizacion', viewcontent='movie',
+                           viewmode="movie_with_plot"),
                 item.clone(title="Más Vistas", action="peliculas", text_blod=True,
-                           viewcontent='movie', url=host + 'peliculas/netflix?filtro=visitas', viewmode="movie_with_plot"),
+                           viewcontent='movie', url=host + 'peliculas-online/netflix?filtro=visitas',
+                           viewmode="movie_with_plot"),
                 item.clone(title="Recíen Agregadas", action="peliculas", text_blod=True,
-                           viewcontent='movie', url=host + 'peliculas/netflix?filtro=fecha_creacion', viewmode="movie_with_plot"),
+                           viewcontent='movie', url=host + 'peliculas-online/netflix?filtro=fecha_creacion',
+                           viewmode="movie_with_plot"),
                 item.clone(title="Buscar", action="search", text_blod=True, extra="buscarp",
-                           thumbnail=get_thumb('search.png'), url=host + 'peliculas/netflix')]
+                           thumbnail=get_thumb('search.png'), url=host + 'peliculas-online/netflix')]
     return itemlist
 
 
@@ -335,7 +337,6 @@ def episodios(item):
 def episodesxseason(item):
     logger.info()
     itemlist = []
-    from core import jsontools
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;|<br>", "", data)
     post_link = '%sentradas/abrir_temporada' % host
@@ -343,9 +344,7 @@ def episodesxseason(item):
     data_t = scrapertools.find_single_match(data, '<a data-s="[^"]+" data-t="([^"]+)"')
     data_s = scrapertools.find_single_match(data, '<a data-s="([^"]+)" data-t="[^"]+"')
     post = {'t': data_t, 's': data_s, '_token': token}
-    post = urllib.urlencode(post)
-    new_data = httptools.downloadpage(post_link, post=post).data
-    json_data = jsontools.load(new_data)
+    json_data = httptools.downloadpage(post_link, post=post).json
 
     for element in json_data['data']['episodios']:
         scrapedname = element['titulo']
@@ -357,7 +356,7 @@ def episodesxseason(item):
             continue
         title = "%sx%s: %s" % (season, episode.zfill(2), scrapertools.unescape(scrapedname))
         new_item = item.clone(title=title, url=scrapedurl, action="findvideos", text_color=color3,
-                              fulltitle=title, contentType="episode", extra='serie')
+                              contentTitle=title, contentType="episode", extra='serie')
         if 'infoLabels' not in new_item:
             new_item.infoLabels = {}
         new_item.infoLabels['season'] = season
@@ -384,8 +383,6 @@ def episodesxseason(item):
 
 def findvideos(item):
     logger.info()
-    from core import jsontools
-    import urllib
 
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -398,9 +395,7 @@ def findvideos(item):
         post_link = '%sentradas/procesar_player' % host
         token = scrapertools.find_single_match(data, 'data-token="([^"]+)">')
         post = {'data': data_player, 'tipo': 'videohost', '_token': token}
-        post = urllib.urlencode(post)
-        new_data = httptools.downloadpage(post_link, post=post).data
-        json_data = jsontools.load(new_data)
+        json_data = httptools.downloadpage(post_link, post=post).json
         url = json_data['data']
 
         if 'pelisplay.tv/embed/' in url:
@@ -412,7 +407,6 @@ def findvideos(item):
             link = scrapertools.find_single_match(url, '=(.*?)&fondo_requerido').partition('&')[0]
             post_link = '%sprivate/plugins/gkpluginsphp.php' % host
             post = {'link': link}
-            post = urllib.urlencode(post)
             new_data2 = httptools.downloadpage(post_link, post=post).data
             url = scrapertools.find_single_match(new_data2, '"link":"([^"]+)"').replace('\\', '')
 

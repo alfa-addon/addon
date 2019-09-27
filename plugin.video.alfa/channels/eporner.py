@@ -5,7 +5,6 @@ import urlparse
 
 from core import httptools
 from core import scrapertools
-from core import jsontools
 from platformcode import logger
 
 host = 'http://www.eporner.com'
@@ -16,9 +15,9 @@ def mainlist(item):
     itemlist.append(item.clone(title="Últimos videos", action="videos", url=host + "/0/"))
     itemlist.append(item.clone(title="Más visto", action="videos", url=host + "/most-viewed/"))
     itemlist.append(item.clone(title="Mejor valorado", action="videos", url=host + "/top-rated/"))
-    itemlist.append(item.clone(title="Categorias", action="categorias", url=host + "/categories/"))
     itemlist.append(item.clone(title="Pornstars", action="pornstars", url=host + "/pornstars/"))
     itemlist.append(item.clone(title="      Alfabetico", action="pornstars_list", url=host + "/pornstars/"))
+    itemlist.append(item.clone(title="Categorias", action="categorias", url=host + "/categories/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -48,16 +47,17 @@ def pornstars(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<div class="mbtit" itemprop="name"><a href="([^"]+)" title="([^"]+)">[^<]+</a></div> '
-    patron += '<a href="[^"]+" title="[^"]+"> <img src="([^"]+)" alt="[^"]+" style="width:190px;height:152px;" /> </a> '
+    patron = '<div class="mbprofile">.*?'
+    patron += '<a href="([^"]+)" title="([^"]+)">.*?'
+    patron += '<img src="([^"]+)".*?'
     patron += '<div class="mbtim"><span>Videos: </span>([^<]+)</div>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for url, title, thumbnail, count in matches:
         itemlist.append(
             item.clone(title="%s (%s videos)" % (title, count), url=urlparse.urljoin(item.url, url), action="videos",
                        thumbnail=thumbnail))
-    # Paginador
-    next_page = scrapertools.find_single_match(data,"<a href='([^']+)' title='Next page'>")
+    # Paginador           
+    next_page = scrapertools.find_single_match(data,"<a href='([^']+)' class='nmnext' title='Next page'>")
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="pornstars", title="Página Siguiente >>", text_color="blue", url=next_page) )
@@ -68,14 +68,17 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<div class="categoriesbox" id="[^"]+"> <div class="ctbinner"> '
-    patron += '<a href="([^"]+)" title="[^"]+"> '
-    patron += '<img src="([^"]+)" alt="[^"]+"> '
-    patron += '<h2>([^"]+)</h2> </a> </div> </div>'
+    patron = '<span class="addrem-cat">.*?'
+    patron += '<a href="([^"]+)" title="([^"]+)">.*?'
+    patron +='<div class="cllnumber">([^<]+)</div>'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for url, thumbnail, title in matches:
-        itemlist.append(
-            item.clone(title=title, url=urlparse.urljoin(item.url, url), action="videos", thumbnail=thumbnail))
+    for url, title, cantidad in matches:
+        url = urlparse.urljoin(item.url, url)
+        title = title + " " + cantidad
+        thumbnail = ""
+        if not thumbnail:
+            thumbnail = scrapertools.find_single_match(data,'<img src="([^"]+)" alt="%s"> % title')
+        itemlist.append(item.clone(title=title, url=url, action="videos", thumbnail=thumbnail))
     return sorted(itemlist, key=lambda i: i.title)
 
 
@@ -94,7 +97,7 @@ def videos(item):
                                    action="play", thumbnail=thumbnail, contentThumbnail=thumbnail,
                                    contentType="movie", contentTitle=title))
     # Paginador
-    next_page = scrapertools.find_single_match(data,"<a href='([^']+)' title='Next page'>")
+    next_page = scrapertools.find_single_match(data,"<a href='([^']+)' class='nmnext' title='Next page'>")
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="videos", title="Página Siguiente >>", text_color="blue", url=next_page) )
@@ -127,8 +130,7 @@ def play(item):
         int(hash[16:24], 16)) + int_to_base36(int(hash[24:32], 16))
 
     url = "https://www.eporner.com/xhr/video/%s?hash=%s" % (vid, hash)
-    data = httptools.downloadpage(url).data
-    jsondata = jsontools.load(data)
+    jsondata = httptools.downloadpage(url).json
 
     for source in jsondata["sources"]["mp4"]:
         url = jsondata["sources"]["mp4"][source]["src"]

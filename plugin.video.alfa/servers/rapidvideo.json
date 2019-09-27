@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "rapidvideo.(?:org|com)/(?:\\?v=|e/|embed/|v/|)([A-z0-9]+)",
+        "pattern": "(?:rapidvideo|rapidvid).(?:org|com|to|is)/(?:\\?v=|e/|embed/|v/|d/)([A-z0-9]+)",
         "url": "https://www.rapidvideo.com/e/\\1"
       }
     ]

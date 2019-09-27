@@ -8,6 +8,7 @@ from platformcode import logger
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
+    global data
     data = httptools.downloadpage(page_url).data
     if "Not Found" in data or "File was deleted" in data:
         return False, "[Watchvideo] El fichero no existe o ha sido borrado"
@@ -17,10 +18,12 @@ def test_video_exists(page_url):
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("url=" + page_url)
     video_urls = []
-    data = httptools.downloadpage(page_url).data
-    packed = scrapertools.find_single_match(data, "text/javascript'>(.*?)\s*</script>")
-    unpacked = jsunpack.unpack(packed)
-    media_urls = scrapertools.find_multiple_matches(unpacked, 'file:"([^"]+)"')
+    media_urls = scrapertools.find_multiple_matches(data, 'file:"([^"]+)"')
+    if not media_urls:
+        packed = scrapertools.find_single_match(data, "text/javascript'>(.*?)\s*</script>")
+        unpacked = jsunpack.unpack(packed)
+        media_urls = scrapertools.find_multiple_matches(unpacked, 'file:\s*"([^"]+)"')
+        
     for media_url in media_urls:
         media_url += "|Referer=%s" %page_url
         if ".png" in media_url:

@@ -5,23 +5,23 @@ import pickle
 import random
 import time
 import urllib
-import traceback
 
 try:
-    try:
-        import libtorrent as lt
-    except:
-        from python_libtorrent import get_libtorrent
-        lt = get_libtorrent()
-except Exception, e:
-    log(traceback.format_exc())
+    import xbmc, xbmcgui
+except:
+    pass
+
+from platformcode import config, logger
+LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", default='')
+
+from servers import torrent as torr
+lt, e, e1, e2 = torr.import_libtorrent(LIBTORRENT_PATH)
 
 from cache import Cache
 from dispatcher import Dispatcher
 from file import File
 from handler import Handler
 from monitor import Monitor
-from platformcode import logger, config
 from resume_data import ResumeData
 from server import Server
 
@@ -31,6 +31,9 @@ except:
     BUFFER = 50
     config.set_setting("bt_buffer", "50", server="torrent")
 DOWNLOAD_PATH = config.get_setting("bt_download_path", server="torrent", default=config.get_setting("downloadpath"))
+BACKGROUND = config.get_setting("mct_background_download", server="torrent", default=True)
+RAR = config.get_setting("mct_rar_unpack", server="torrent", default=True)
+msg_header = 'Alfa BT Cliente Torrent'
 
 
 class Client(object):
@@ -40,11 +43,29 @@ class Client(object):
                         'udp://tracker.coppersurfer.tk:80',
                         'udp://tracker.leechers-paradise.org:6969',
                         'udp://exodus.desync.com:6969',
-                        'udp://tracker.publicbt.com:80']
+                        'udp://tracker.publicbt.com:80',
+                        'http://tracker.torrentbay.to:6969/announce',
+                        'http://tracker.pow7.com/announce',
+                        'udp://tracker.ccc.de:80/announce',
+                        'udp://open.demonii.com:1337',
+                        'http://9.rarbg.com:2710/announce',
+                        'http://bt.careland.com.cn:6969/announce',
+                        'http://explodie.org:6969/announce',
+                        'http://mgtracker.org:2710/announce',
+                        'http://tracker.best-torrents.net:6969/announce',
+                        'http://tracker.tfile.me/announce',
+                        'http://tracker1.wasabii.com.tw:6969/announce',
+                        'udp://9.rarbg.com:2710/announce',
+                        'udp://9.rarbg.me:2710/announce',
+                        'udp://coppersurfer.tk:6969/announce',
+                        'http://www.spanishtracker.com:2710/announce',
+                        'http://www.todotorrents.com:2710/announce'
+                       ]                                                        ### Added some trackers from MCT
 
     VIDEO_EXTS = {'.avi': 'video/x-msvideo', '.mp4': 'video/mp4', '.mkv': 'video/x-matroska',
                   '.m4v': 'video/mp4', '.mov': 'video/quicktime', '.mpg': 'video/mpeg', '.ogv': 'video/ogg',
-                  '.ogg': 'video/ogg', '.webm': 'video/webm', '.ts': 'video/mp2t', '.3gp': 'video/3gpp'}
+                  '.ogg': 'video/ogg', '.webm': 'video/webm', '.ts': 'video/mp2t', '.3gp': 'video/3gpp', 
+                  '.rar': 'video/unrar'}
 
     def __init__(self, url=None, port=None, ip=None, auto_shutdown=True, wait_time=20, timeout=5, auto_delete=True,
                  temp_path=None, is_playing_fnc=None, print_status=False):
@@ -71,9 +92,20 @@ class Client(object):
         self.wait_time = wait_time
         self.auto_shutdown = auto_shutdown
         self.buffer_size = BUFFER
+        self.first_pieces_priorize = BUFFER
         self.last_pieces_priorize = 5
         self.state_file = "state"
-        self.torrent_paramss = {'save_path': self.temp_path, 'storage_mode': lt.storage_mode_t.storage_mode_sparse}
+        try:
+            self.torrent_paramss = {'save_path': self.temp_path, 'storage_mode': lt.storage_mode_t.storage_mode_allocate}
+        except Exception, e:
+            try:
+                do = xbmcgui.Dialog()
+                e = e1 or e2
+                do.ok('ERROR en el cliente BT Libtorrent', 'Módulo no encontrado o imcompatible con el dispositivo.', 
+                            'Reporte el fallo adjuntando un "log".', str(e))
+            except:
+                pass
+            return
 
         # State
         self.has_meta = False
@@ -85,12 +117,15 @@ class Client(object):
         self.file = None
         self.files = None
         self._th = None
+        self.seleccion = 0
+        self.index = 0
 
         # Sesion
         self._cache = Cache(self.temp_path)
         self._ses = lt.session()
-        self._ses.listen_on(0, 0)
-        # Cargamos el archivo de estado (si esxiste)
+        #self._ses.listen_on(0, 0)                                              ### ALFA: it blocks repro of some .torrents
+        # Cargamos el archivo de estado (si existe)
+        """                                                                     ### ALFA: it blocks repro of some .torrents
         if os.path.exists(os.path.join(self.temp_path, self.state_file)):
             try:
                 f = open(os.path.join(self.temp_path, self.state_file), "rb")
@@ -99,6 +134,7 @@ class Client(object):
                 f.close()
             except:
                 pass
+        """
 
         self._start_services()
 
@@ -121,6 +157,15 @@ class Client(object):
         if url:
             self.start_url(url)
 
+    def set_speed_limits(self, download=0, upload=0):
+        """
+        Función encargada de poner límites a la velocidad de descarga o subida
+        """
+        if isinstance(download, int) and download > 0:
+            self._th.set_download_limit(download * 1024)
+        if isinstance(upload, int) and download > 0:
+            self._th.set_upload_limit(upload * 1024)
+    
     def get_play_list(self):
         """
         Función encargada de generar el playlist
@@ -160,12 +205,14 @@ class Client(object):
         """
         Función encargada de buscar los archivos reproducibles del torrent
         """
+        self.total_size = 0
         # Obtenemos los archivos que la extension este en la lista
         videos = filter(lambda f: self.VIDEO_EXTS.has_key(os.path.splitext(f.path)[1]), files)
 
         if not videos:
             raise Exception('No video files in torrent')
         for v in videos:
+            self.total_size += v.size                                           ### ALFA
             videos[videos.index(v)].index = files.index(v)
         return videos
 
@@ -176,6 +223,10 @@ class Client(object):
         # Seleccionamos el archivo que vamos a servir
         fmap = self.meta.map_file(f.index, 0, 1)
         self.file = File(f.path, self.temp_path, f.index, f.size, fmap, self.meta.piece_length(), self)
+        if self.seleccion < 0:                                                  ### ALFA
+            self.file.first_piece = 0                                           ### ALFA
+            self.file.last_piece = self.meta.num_pieces()                       ### ALFA
+            self.file.size = self.total_size                                    ### ALFA
         self.prioritize_file()
 
     def prioritize_piece(self, pc, idx):
@@ -185,7 +236,12 @@ class Client(object):
         piece_duration = 1000
         min_deadline = 2000
         dl = idx * piece_duration + min_deadline
-        self._th.set_piece_deadline(pc, dl, lt.deadline_flags.alert_when_available)
+        """                                                                     ### ALFA
+        try:
+            self._th.set_piece_deadline(pc, dl, lt.deadline_flags.alert_when_available)
+        except:
+            pass
+        """
 
         if idx == 0:
             tail_pieces = 9
@@ -197,6 +253,7 @@ class Client(object):
 
             # Piezas siguientes a la primera se activan
             for i in xrange(pc + 1, self.file.last_piece + 1):
+                #self._th.piece_priority(i, 0)
                 self._th.piece_priority(i, 1)
 
     def prioritize_file(self):
@@ -208,8 +265,19 @@ class Client(object):
             if i >= self.file.first_piece and i <= self.file.last_piece:
                 priorities.append(1)
             else:
-                priorities.append(0)
+                if self.index < 0:
+                    priorities.append(1)                                        ### ALFA
+                else:
+                    priorities.append(0)                                        ### ALFA
+
         self._th.prioritize_pieces(priorities)
+        
+        x = 0
+        for i, _set in enumerate(self._th.piece_priorities()):
+            if _set > 0: x += 1
+            #logger.info("***** Nº Pieza: %s: %s" % (i, str(_set)))
+        logger.info("***** Piezas %s : Activas: %s" % (str(i+1), str(x)))
+        logger.info("***** first_piece %s : last_piece: %s" % (str(self.file.first_piece), str(self.file.last_piece)))
 
     def download_torrent(self, url):
         """
@@ -289,6 +357,12 @@ class Client(object):
         self._ses.remove_torrent(self._th, self.auto_delete)
         del self._ses
         self.closed = True
+        
+    def pause(self):
+        """
+        Función encargada de de pausar el torrent
+        """
+        self._ses.pause()
 
     def _start_services(self):
         """
@@ -297,6 +371,7 @@ class Client(object):
         self._ses.add_dht_router("router.bittorrent.com", 6881)
         self._ses.add_dht_router("router.bitcomet.com", 554)
         self._ses.add_dht_router("router.utorrent.com", 6881)
+        self._ses.add_dht_router("dht.transmissionbt.com",6881)                 ### from MCT
         self._ses.start_dht()
         self._ses.start_lsd()
         self._ses.start_upnp()
@@ -333,19 +408,29 @@ class Client(object):
         if self._th:
             s = self._th.status()
             # Download Rate
-            s._download_rate = s.download_rate / 1000
+            s._download_rate = s.download_rate / 1024
 
             # Progreso del archivo
             if self.file:
-                pieces = s.pieces[self.file.first_piece:self.file.last_piece]
+                pieces = s.pieces[self.file.first_piece:self.file.last_piece]  ### ALFA
                 progress = float(sum(pieces)) / len(pieces)
+                s.pieces_len = len(pieces)                                      ### ALFA
+                s.pieces_sum = sum(pieces)                                      ### ALFA
+                #logger.info('***** Estado piezas: %s' % pieces)
             else:
                 progress = 0
+                s.pieces_len = 0                                                ### ALFA
+                s.pieces_sum = 0                                                ### ALFA
 
             s.progress_file = progress * 100
 
             # Tamaño del archivo
+            s.file_name = ''                                                    ### ALFA
+            s.seleccion = ''                                                    ### ALFA
+
             if self.file:
+                s.seleccion = self.seleccion                                    ### ALFA
+                s.file_name = self.file.path                                    ### ALFA
                 s.file_size = self.file.size / 1048576.0
             else:
                 s.file_size = 0
@@ -365,14 +450,14 @@ class Client(object):
                 # El tamaño del buffer de inicio es el tamaño del buffer menos el tamaño del buffer del final
                 first_pieces_priorize = self.buffer_size - self.last_pieces_priorize
 
-                # Comprobamos que partes del buffer del inicio estan disponibles
+                # Comprobamos qué partes del buffer del inicio estan disponibles
                 for x in range(first_pieces_priorize):
                     if self._th.have_piece(self.file.first_piece + x):
                         bp.append(True)
                     else:
                         bp.append(False)
 
-                # Comprobamos que partes del buffer del final estan disponibles
+                # Comprobamos qué partes del buffer del final estan disponibles
                 for x in range(self.last_pieces_priorize):
                     if self._th.have_piece(self.file.last_piece - x):
                         bp.append(True)
@@ -514,14 +599,33 @@ class Client(object):
 
             # Guardamos la lista de archivos
             self.files = self._find_files(files)
+            
+            # Si hay varios vídeos (no RAR), se selecciona el vídeo o "todos"
+            lista = []
+            seleccion = 0
+            for file in self.files:
+                if '.rar' in str(file.path):
+                    seleccion = -9
+                lista += [os.path.split(str(file.path))[1]]
+            if len(lista) > 1 and seleccion >= 0:
+                d = xbmcgui.Dialog()
+                seleccion = d.select(msg_header + ": Selecciona el vídeo, o 'Cancelar' para todos", lista)
+
+            if seleccion < 0:
+                index = 0
+                self.index = seleccion
+            else:
+                index = seleccion
+                self.index = self.files[index].index
+            self.seleccion = seleccion
 
             # Marcamos el primer archivo como activo
-            self.set_file(self.files[0])
+            self.set_file(self.files[index])
 
             # Damos por iniciada la descarga
             self.start_time = time.time()
 
-            # Guardamos el .torrent en el cahce
+            # Guardamos el .torrent en el cache
             self._cache.file_complete(self._th.get_torrent_info())
 
             self.has_meta = True
@@ -532,7 +636,7 @@ class Client(object):
         '''
         if self.file and not self.file.cursor:
             num_start_pieces = self.buffer_size - self.last_pieces_priorize  # Cantidad de piezas a priorizar al inicio
-            num_end_pieces = self.last_pieces_priorize  # Canridad de piezas a priorizar al final
+            num_end_pieces = self.last_pieces_priorize  # Cantidad de piezas a priorizar al final
 
             pieces_count = 0
             # Priorizamos las ultimas piezas
@@ -553,13 +657,14 @@ class Client(object):
         '''
         Servicio encargado de mostrar en el log el estado de la descarga
         '''
-        s = self.status
-        if self.file:
-            archivo = self.file.index
+        s = self.status                                                    ### ALFA
+        if self.seleccion >= 0:
+            archivo = self.seleccion + 1
         else:
-            archivo = "N/D"
+            archivo = self.seleccion
+
         logger.info(
-            '%.2f%% de %.1fMB %s | %.1f kB/s | #%s %d%% | AutoClose: %s | S: %d(%d) P: %d(%d)) | TRK: %d DHT: %d PEX: %d LSD %d | DHT:%s (%d) | Trakers: %d' % \
+            '%.2f%% de %.1fMB %s | %.1f kB/s | #%s %d%% | AutoClose: %s | S: %d(%d) P: %d(%d)) | TRK: %d DHT: %d PEX: %d LSD %d | DHT:%s (%d) | Trakers: %d | Pieces: %d (%d)' % \
             (s.progress_file, s.file_size, s.str_state, s._download_rate, archivo, s.buffer, s.timeout, s.num_seeds, \
              s.num_complete, s.num_peers, s.num_incomplete, s.trk_peers, s.dht_peers, s.pex_peers, s.lsd_peers,
-             s.dht_state, s.dht_nodes, s.trackers))
+             s.dht_state, s.dht_nodes, s.trackers, s.pieces_sum, s.pieces_len)) ### ALFA

@@ -86,7 +86,7 @@ def getchanneltypes(view="thumb_"):
                          category=title, channel_type="all", thumbnail=get_thumb("channels_all.png", view),
                          viewmode="thumbnails"))
 
-    if config.get_setting('frequents') and config.get_setting('frequents_folder'):
+    if config.get_setting('frequents_folder'):
         itemlist.append(Item(title='Frecuentes', channel="channelselector", action="filterchannels", view=view,
                              category='all', channel_type="freq", thumbnail=get_thumb("channels_frequents.png", view),
                              viewmode="thumbnails"))
@@ -113,6 +113,7 @@ def filterchannels(category, view="thumb_"):
         freq = True
         category = 'all'
     # Si category = "allchannelstatus" es que estamos activando/desactivando canales
+    # Si category = "all-channels" viene del canal test
     appenddisabledchannels = False
     if category == "allchannelstatus":
         category = "all"
@@ -137,10 +138,6 @@ def filterchannels(category, view="thumb_"):
             channel_parameters = channeltools.get_channel_parameters(channel)
 
             if channel_parameters["channel"] == 'community':
-                continue
-
-            # si el canal no es compatible, no se muestra
-            if not channel_parameters["compatible"]:
                 continue
 
             # Si no es un canal lo saltamos
@@ -173,7 +170,8 @@ def filterchannels(category, view="thumb_"):
 
             # Se salta el canal para adultos si el modo adultos está desactivado
             if channel_parameters["adult"] and config.get_setting("adult_mode") == 0:
-                continue
+                if category <> "all_channels":
+                    continue
 
             # Se salta el canal si está en un idioma filtrado
             # Se muestran todos los canales si se elige "all" en el filtrado de idioma
@@ -181,11 +179,13 @@ def filterchannels(category, view="thumb_"):
             # Los canales de adultos se mostrarán siempre que estén activos
             if channel_language != "all" and channel_language not in channel_parameters["language"] \
                     and "*" not in channel_parameters["language"]:
-                continue
+                if category <> "all_channels":
+                    continue
 
             # Se salta el canal si está en una categoria filtrado
             if category != "all" and category not in channel_parameters["categories"]:
-                continue
+                if category <> "all_channels":
+                    continue
 
             # Si tiene configuración añadimos un item en el contexto
             context = []
@@ -215,7 +215,11 @@ def filterchannels(category, view="thumb_"):
         frequent_list = sorted(frequent_list, key=lambda item: item.frequency, reverse=True)
 
         if freq:
-            return frequent_list
+            max_ff = config.get_setting("max_frequents_folder")
+            if max_ff > 0:
+                return frequent_list[0:max_ff]
+            else:
+                return frequent_list
 
         max_freq = config.get_setting("max_frequents")
         if frequent_list:
@@ -227,6 +231,20 @@ def filterchannels(category, view="thumb_"):
             frequent_list.insert(0, Item(title='- Canales frecuentes -', action=''))
 
             frequent_list.append(Item(title='- Todos los canales -', action=''))
+
+    elif freq:
+        for ch in channelslist:
+            if int(ch.frequency) != 0:
+                frequent_list.append(ch)
+
+        frequent_list = sorted(frequent_list, key=lambda item: item.frequency, reverse=True)
+
+        max_ff = config.get_setting("max_frequents_folder")
+        if max_ff > 0:
+            return frequent_list[0:max_ff]
+        else:
+            return frequent_list
+
 
     channelslist.sort(key=lambda item: item.title.lower().strip())
 

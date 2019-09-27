@@ -74,7 +74,7 @@ def peliculas(item):
 
         # Añade al listado
         itemlist.append(
-            Item(channel=item.channel, action="findvideos", title=title, fulltitle=title, url=url, thumbnail=thumbnail,
+            Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url, thumbnail=thumbnail,
                  plot=plot, folder=True))
 
     # Extrae la marca de siguiente página
@@ -180,7 +180,7 @@ def findvideos(item):
         title = "Enlace encontrado en %s" % (server)
         if idioma == 'Ingles Subtitulado':
             idioma = 'vose'
-        itemlist.append(Item(channel=item.channel, action="play", title=title, fulltitle=item.fulltitle, url=url,
+        itemlist.append(Item(channel=item.channel, action="play", title=title, contentTitle=item.contentTitle, url=url,
                              thumbnail=scrapedthumbnail, language=idioma, quality=calidad, server=server))
     if itemlist:
         itemlist.append(Item(channel=item.channel))
@@ -190,7 +190,7 @@ def findvideos(item):
         if config.get_videolibrary_support():
             itemlist.append(Item(channel=item.channel, title="Añadir pelicula a la videoteca", text_color="green",
                                  action="add_pelicula_to_library", url=item.url, thumbnail=item.thumbnail,
-                                 fulltitle=item.fulltitle))
+                                 contentTitle=item.contentTitle))
     return itemlist
 
 
@@ -213,7 +213,7 @@ def play(item):
         thumbnail = servertools.guess_server_thumbnail(videoUrl)
         # Añade al listado de XBMC
         itemlist.append(
-            Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=enlaces[0][1],
+            Item(channel=item.channel, action="play", title=item.title, contentTitle=item.contentTitle, url=enlaces[0][1],
                  server=enlaces[0][2], thumbnail=thumbnail, folder=False))
 
     return itemlist

@@ -89,7 +89,7 @@ def play(item):
         scrapedurl = "http:" + scrapertools.find_single_match(data,'<iframe src="([^"]+)"')
         data = httptools.downloadpage(scrapedurl).data
         scrapedurl = scrapertools.find_single_match(data,'file: "([^"]+)"')
-    itemlist.append(Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=scrapedurl,
+    itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=scrapedurl,
                     thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
     return itemlist
 

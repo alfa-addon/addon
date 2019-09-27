@@ -64,8 +64,8 @@ def lista(item):
     for scrapedurl,scrapedtitle,scrapedthumbnail,calidad in matches:
         scrapedplot = ""
         calidad = calidad.replace(" Full HD JAV", "")
-        scrapedtitle = "[COLOR red]" + calidad + "[/COLOR] " + scrapedtitle
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
+        title = "[COLOR red]" + calidad + "[/COLOR] " + scrapedtitle
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<li class=\'current\'>.*?<a rel=\'nofollow\' href=\'([^\']+)\' class=\'inactive\'>')
     if next_page!="":
@@ -73,4 +73,48 @@ def lista(item):
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
 
     return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    data = scrapertools.find_single_match(data,'Streaming Server<(.*?)Screenshot<')
+    patron = '(?:src|SRC)="([^"]+)"'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url in matches:
+        if "http://stream.yuuk.net/embeds.php" in url:
+            data = httptools.downloadpage(url).data
+            url = scrapertools.find_single_match(data,'"file": "([^"]+)"')
+        itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist
+
+
+def play(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    data = scrapertools.find_single_match(data,'Streaming Server<(.*?)Screenshot<')
+    patron = '(?:src|SRC)="([^"]+)"'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url in matches:
+        if "http://stream.yuuk.net/embeds.php" in url:
+            data = httptools.downloadpage(url).data
+            url = scrapertools.find_single_match(data,'"file": "([^"]+)"')
+        itemlist.append( Item(channel=item.channel, action="play", title = "%s", contentTitle=item.title, url=url ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+
+    a = len (itemlist)
+    for i in itemlist:
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue
 

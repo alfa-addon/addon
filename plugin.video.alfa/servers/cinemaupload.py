@@ -21,8 +21,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = []
     data = httptools.downloadpage(page_url).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = "source: '([^']+)',"
+    patron = 'file: "([^"]+)",'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:
+        url += "|Referer=%s" %page_url
         video_urls.append(['.m3u8 [CinemaUpload]', url])
     return video_urls

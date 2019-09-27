@@ -48,7 +48,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
 def get_data(url_orig, req_post=""):
     try:
         if not excption:
-            response = httptools.downloadpage(url_orig, req_post)
+            response = httptools.downloadpage(url_orig, post=req_post)
             if not response.data or "urlopen error [Errno 1]" in str(response.code):
                 global excption
                 excption = True

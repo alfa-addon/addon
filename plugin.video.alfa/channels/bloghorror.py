@@ -6,14 +6,11 @@
 import os
 import re
 
-from channels import autoplay
-from channels import filtertools
 from core import httptools
 from core import scrapertools
-from core import servertools
 from core import tmdb
 from core.item import Item
-from platformcode import config, logger
+from platformcode import config, logger, subtitletools
 from channelselector import get_thumb
 
 host = 'http://bloghorror.com/'
@@ -115,14 +112,14 @@ def findvideos(item):
 
     patron_sub = 'href="(http://www.subdivx.com/bajar.php[^"]+)"'
     sub_url = scrapertools.find_single_match(full_data, patron_sub)
-    sub_num = scrapertools.find_single_match(sub_url, 'u=(\d+)')
+    #sub_num = scrapertools.find_single_match(sub_url, 'u=(\d+)')
 
     if sub_url == '':
         sub = ''
         lang = 'VO'
     else:
         try:
-            sub = get_sub_from_subdivx(sub_url, sub_num)
+            sub = subtitletools.get_from_subdivx(sub_url)
         except:
             sub = ''
         lang = 'VOSE'
@@ -195,40 +192,3 @@ def newest(categoria):
         return []
 
     return itemlist
-
-
-def get_sub_from_subdivx(sub_url, sub_num):
-    logger.info()
-
-    import xbmc
-    from time import sleep
-    import urlparse
-    sub_dir = os.path.join(config.get_data_path(), 'temp_subs')
-
-    if os.path.exists(sub_dir):
-        for sub_file in os.listdir(sub_dir):
-            old_sub = os.path.join(sub_dir, sub_file)
-            os.remove(old_sub)
-
-    sub_data = httptools.downloadpage(sub_url, follow_redirects=False)
-
-    if 'x-frame-options' not in sub_data.headers:
-        sub_url = 'http://subdivx.com/sub%s/%s' % (sub_num, sub_data.headers['location'])
-        sub_url = sub_url.replace('http:///', '')
-        sub_data = httptools.downloadpage(sub_url).data
-
-        fichero_rar = os.path.join(config.get_data_path(), "subtitle.rar")
-        outfile = open(fichero_rar, 'wb')
-        outfile.write(sub_data)
-        outfile.close()
-        xbmc.executebuiltin("XBMC.Extract(%s, %s/temp_subs)" % (fichero_rar, config.get_data_path()))
-        sleep(1)
-        if len(os.listdir(sub_dir)) > 0:
-            sub = os.path.join(sub_dir, os.listdir(sub_dir)[0])
-        else:
-            sub = ''
-    else:
-        logger.info('sub no valido')
-        sub = ''
-    return sub
-

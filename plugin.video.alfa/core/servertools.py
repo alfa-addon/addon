@@ -102,18 +102,18 @@ def get_servers_itemlist(itemlist, fnc=None, sort=False):
                             item.url = url
 
     # Eliminamos los servidores desactivados
-    itemlist = filter(lambda i: not i.server or is_server_enabled(i.server), itemlist)
+    #itemlist = filter(lambda i: not i.server or is_server_enabled(i.server), itemlist)
+    # Filtrar si es necesario
+    itemlist = filter_servers(itemlist)
 
     for item in itemlist:
-        # Asignamos "directo" en caso de que el server no se encuentre en pelisalcarta
+        # Asignamos "directo" en caso de que el server no se encuentre en Alfa
         if not item.server and item.url:
             item.server = "directo"
 
         if fnc:
             item.title = fnc(item)
 
-    # Filtrar si es necesario
-    itemlist = filter_servers(itemlist)
 
     # Ordenar segun favoriteslist si es necesario
     if sort:
@@ -136,14 +136,18 @@ def findvideos(data, skip=False):
     skip = int(skip)
     servers_list = get_servers_list().keys()
 
+    #Eliminamos los inactivos
+    if servers_list:
+        servers_list = filter(lambda i: not i or is_server_enabled(i), servers_list)
+
     # Ordenar segun favoriteslist si es necesario
     servers_list = sort_servers(servers_list)
     is_filter_servers = False
 
     # Ejecuta el findvideos en cada servidor activo
     for serverid in servers_list:
-        if not is_server_enabled(serverid):
-            continue
+        '''if not is_server_enabled(serverid):
+            continue'''
         if config.get_setting("filter_servers") == True and config.get_setting("black_list", server=serverid):
             is_filter_servers = True
             continue
@@ -226,6 +230,8 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
 
     # Si el vídeo es "directo" o "local", no hay que buscar más
     if server == "directo" or server == "local":
+        if isinstance(video_password, list):
+            return video_password, len(video_password) > 0, "<br/>".join(error_messages)
         logger.info("Server: %s, la url es la buena" % server)
         video_urls.append(["%s [%s]" % (urlparse.urlparse(url)[2][-4:], server), url])
 
@@ -632,8 +638,7 @@ def get_servers_list():
     for server in os.listdir(os.path.join(config.get_runtime_path(), "servers")):
         if server.endswith(".json") and not server == "version.json":
             server_parameters = get_server_parameters(server)
-            if server_parameters["active"] == True:
-                server_list[server.split(".")[0]] = server_parameters
+            server_list[server.split(".")[0]] = server_parameters
 
     return server_list
 
@@ -671,6 +676,7 @@ def sort_servers(servers_list):
         else:
             servers_list = sorted(servers_list,
                                   key=lambda x: config.get_setting("favorites_servers_list", server=x) or 100)
+
     return servers_list
 
 
@@ -682,6 +688,11 @@ def filter_servers(servers_list):
     u objetos Item. En cuyo caso es necesario q tengan un atributo item.server del tipo str.
     :return: Lista del mismo tipo de objetos que servers_list filtrada en funcion de la Lista Negra.
     """
+    #Eliminamos los inactivos
+    if servers_list:
+        servers_list = filter(lambda i: not i.server or is_server_enabled(i.server), servers_list)
+
+    
     if servers_list and config.get_setting('filter_servers'):
         if isinstance(servers_list[0], Item):
             servers_list_filter = filter(lambda x: not config.get_setting("black_list", server=x.server), servers_list)
@@ -693,7 +704,10 @@ def filter_servers(servers_list):
                                                                  config.get_localized_string(60010),
                                                                  config.get_localized_string(70281)):
             servers_list = servers_list_filter
-
+    
+    if config.get_setting("favorites_servers") == True:
+        servers_list = sort_servers(servers_list)
+    
     return servers_list
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

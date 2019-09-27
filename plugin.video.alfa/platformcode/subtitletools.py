@@ -5,6 +5,10 @@ import re
 import string
 import urllib
 from unicodedata import normalize
+from core import filetools
+from core import httptools
+from core import jsontools
+from core import scrapertools
 
 import xbmc
 import xbmcgui
@@ -73,7 +77,7 @@ def set_Subtitle():
     logger.info()
 
     exts = [".srt", ".sub", ".txt", ".smi", ".ssa", ".ass"]
-    subtitle_folder_path = os.path.join(config.get_data_path(), "subtitles")
+    subtitle_folder_path = filetools.join(config.get_data_path(), "subtitles")
 
     subtitle_type = config.get_setting("subtitle_type")
 
@@ -105,13 +109,13 @@ def set_Subtitle():
         tvshow_title, season, episode = regex_tvshow(False, subtitle_name)
         try:
             if episode != "":
-                Subnames = glob.glob(os.path.join(subtitle_path, "Tvshows", tvshow_title,
+                Subnames = glob.glob(filetools.join(subtitle_path, "Tvshows", tvshow_title,
                                                   "%s %sx%s" % (tvshow_title, season, episode) + "*.??.???"))
             else:
-                Subnames = glob.glob(os.path.join(subtitle_path, "Movies", subtitle_name + "*.??.???"))
+                Subnames = glob.glob(filetools.join(subtitle_path, "Movies", subtitle_name + "*.??.???"))
             for Subname in Subnames:
                 if os.path.splitext(Subname)[1] in exts:
-                    logger.info("Con subtitulo : " + os.path.split(Subname)[1])
+                    logger.info("Con subtitulo : " + filetools.split(Subname)[1])
                     xbmc.Player().setSubtitles((Subname))
         except:
             logger.error("error al cargar subtitulos")
@@ -146,13 +150,13 @@ def searchSubtitle(item):
     if config.get_setting("subtitle_type") == 0:
         subtitlepath = config.get_setting("subtitlepath_folder")
         if subtitlepath == "":
-            subtitlepath = os.path.join(config.get_data_path(), "subtitles")
+            subtitlepath = filetools.join(config.get_data_path(), "subtitles")
             config.set_setting("subtitlepath_folder", subtitlepath)
 
     elif config.get_setting("subtitle_type") == 1:
         subtitlepath = config.get_setting("subtitlepath_keyboard")
         if subtitlepath == "":
-            subtitlepath = os.path.join(config.get_data_path(), "subtitles")
+            subtitlepath = filetools.join(config.get_data_path(), "subtitles")
             config.set_setting("subtitlepathkeyboard", subtitlepath)
         elif subtitlepath.startswith("http"):
             subtitlepath = config.get_setting("subtitlepath_folder")
@@ -160,27 +164,27 @@ def searchSubtitle(item):
     else:
         subtitlepath = config.get_setting("subtitlepath_folder")
     if subtitlepath == "":
-        subtitlepath = os.path.join(config.get_data_path(), "subtitles")
+        subtitlepath = filetools.join(config.get_data_path(), "subtitles")
         config.set_setting("subtitlepath_folder", subtitlepath)
-    if not os.path.exists(subtitlepath):
+    if not filetools.exists(subtitlepath):
         try:
-            os.mkdir(subtitlepath)
+            filetools.mkdir(subtitlepath)
         except:
             logger.error("error no se pudo crear path subtitulos")
             return
 
-    path_movie_subt = xbmc.translatePath(os.path.join(subtitlepath, "Movies"))
-    if not os.path.exists(path_movie_subt):
+    path_movie_subt = xbmc.translatePath(filetools.join(subtitlepath, "Movies"))
+    if not filetools.exists(path_movie_subt):
         try:
-            os.mkdir(path_movie_subt)
+            filetools.mkdir(path_movie_subt)
         except:
             logger.error("error no se pudo crear el path Movies")
             return
     full_path_tvshow = ""
-    path_tvshow_subt = xbmc.translatePath(os.path.join(subtitlepath, "Tvshows"))
-    if not os.path.exists(path_tvshow_subt):
+    path_tvshow_subt = xbmc.translatePath(filetools.join(subtitlepath, "Tvshows"))
+    if not filetools.exists(path_tvshow_subt):
         try:
-            os.mkdir(path_tvshow_subt)
+            filetools.mkdir(path_tvshow_subt)
         except:
             logger.error("error no pudo crear el path Tvshows")
             return
@@ -188,20 +192,20 @@ def searchSubtitle(item):
         title_new = title = urllib.unquote_plus(item.title)
     else:
         title_new = title = urllib.unquote_plus(item.show + " - " + item.title)
-    path_video_temp = xbmc.translatePath(os.path.join(config.get_runtime_path(), "resources", "subtitle.mp4"))
-    if not os.path.exists(path_video_temp):
+    path_video_temp = xbmc.translatePath(filetools.join(config.get_runtime_path(), "resources", "subtitle.mp4"))
+    if not filetools.exists(path_video_temp):
         logger.error("error : no existe el video temporal de subtitulos")
         return
-    # path_video_temp = xbmc.translatePath(os.path.join( ,video_temp + ".mp4" ))
+    # path_video_temp = xbmc.translatePath(filetools.join( ,video_temp + ".mp4" ))
 
     title_new = _normalize(title_new)
     tvshow_title, season, episode = regex_tvshow(False, title_new)
     if episode != "":
-        full_path_tvshow = xbmc.translatePath(os.path.join(path_tvshow_subt, tvshow_title))
-        if not os.path.exists(full_path_tvshow):
-            os.mkdir(full_path_tvshow)  # title_new + ".mp4"
+        full_path_tvshow = xbmc.translatePath(filetools.join(path_tvshow_subt, tvshow_title))
+        if not filetools.exists(full_path_tvshow):
+            filetools.mkdir(full_path_tvshow)  # title_new + ".mp4"
         full_path_video_new = xbmc.translatePath(
-            os.path.join(full_path_tvshow, "%s %sx%s.mp4" % (tvshow_title, season, episode)))
+            filetools.join(full_path_tvshow, "%s %sx%s.mp4" % (tvshow_title, season, episode)))
         logger.info(full_path_video_new)
         listitem = xbmcgui.ListItem(title_new, iconImage="DefaultVideo.png", thumbnailImage="")
         listitem.setInfo("video",
@@ -209,14 +213,14 @@ def searchSubtitle(item):
                           "tvshowtitle": tvshow_title})
 
     else:
-        full_path_video_new = xbmc.translatePath(os.path.join(path_movie_subt, title_new + ".mp4"))
+        full_path_video_new = xbmc.translatePath(filetools.join(path_movie_subt, title_new + ".mp4"))
         listitem = xbmcgui.ListItem(title, iconImage="DefaultVideo.png", thumbnailImage="")
         listitem.setInfo("video", {"Title": title_new, "Genre": "Movies"})
 
-    import shutil, time
+    import time
 
     try:
-        shutil.copy(path_video_temp, full_path_video_new)
+        filetools.copy(path_video_temp, full_path_video_new)
         copy = True
         logger.info("nuevo path =" + full_path_video_new)
         time.sleep(2)
@@ -241,10 +245,10 @@ def searchSubtitle(item):
                 continue
 
         time.sleep(1)
-        os.remove(full_path_video_new)
+        filetools.remove(full_path_video_new)
         try:
             if full_path_tvshow != "":
-                os.rmdir(full_path_tvshow)
+                filetools.rmdir(full_path_tvshow)
         except OSError:
             pass
 
@@ -266,3 +270,70 @@ def saveSubtitleName(item):
     else:
         config.set_setting("subtitle_name", title)
     return
+
+
+def get_from_subdivx(sub_url):
+
+    """
+    :param sub_url: Url de descarga del subtitulo alojado en suvdivx.com
+           Por Ejemplo: http://www.subdivx.com/bajar.php?id=573942&u=8
+
+    :return: La ruta al subtitulo descomprimido
+    """
+
+    logger.info()
+
+    sub = ''
+    sub_dir = os.path.join(config.get_data_path(), 'temp_subs')
+
+    if os.path.exists(sub_dir):
+        for sub_file in os.listdir(sub_dir):
+            old_sub = os.path.join(sub_dir, sub_file)
+            os.remove(old_sub)
+    else:
+        os.mkdir(sub_dir)
+
+    sub_url = sub_url.replace("&amp;", "&")
+    sub_data = httptools.downloadpage(sub_url, follow_redirects=False)
+    if 'x-frame-options' not in sub_data.headers:
+        sub_url = '%s' % sub_data.headers['location']
+        ext = sub_url[-4::]
+        file_id = "subtitle%s" % ext
+        filename = os.path.join(sub_dir, file_id)
+        try:
+            data_dl = httptools.downloadpage(sub_url).data
+            filetools.write(filename, data_dl)
+            sub = extract_file_online(sub_dir, filename)
+        except:
+           logger.info('sub no valido')
+    else:
+       logger.info('sub no valido')
+    return sub
+
+
+def extract_file_online(path, filename):
+
+    """
+    :param path: Ruta donde se encuentra el archivo comprimido
+
+    :param filename: Nombre del archivo comprimido
+
+    :return: Devuelve la ruta al subtitulo descomprimido
+    """
+
+    logger.info()
+
+    url = "http://online.b1.org/rest/online/upload"
+
+    data = httptools.downloadpage(url, file=filename).data
+
+    result = jsontools.load(scrapertools.find_single_match(data, "result.listing = ([^;]+);"))
+    compressed = result["name"]
+    extracted = result["children"][0]["name"]
+
+    dl_url = "http://online.b1.org/rest/online/download/%s/%s" % (compressed, extracted)
+    extracted_path = os.path.join(path, extracted)
+    data_dl = httptools.downloadpage(dl_url).data
+    filetools.write(extracted_path, data_dl)
+
+    return extracted_path

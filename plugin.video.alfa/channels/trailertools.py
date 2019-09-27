@@ -46,15 +46,15 @@ def buscartrailer(item, trailers=[]):
         if item.contentTitle != "":
             item.contentTitle = item.contentTitle.strip()
         elif keyboard:
-            fulltitle = re.sub('\[\/*(B|I|COLOR)\s*[^\]]*\]', '', item.fulltitle.strip())
-            item.contentTitle = platformtools.dialog_input(default=fulltitle, heading=config.get_localized_string(70505))
+            contentTitle = re.sub('\[\/*(B|I|COLOR)\s*[^\]]*\]', '', item.contentTitle.strip())
+            item.contentTitle = platformtools.dialog_input(default=contentTitle, heading=config.get_localized_string(70505))
             if item.contentTitle is None:
-                item.contentTitle = fulltitle
+                item.contentTitle = contentTitle
             else:
                 item.contentTitle = item.contentTitle.strip()
         else:
-            fulltitle = re.sub('\[\/*(B|I|COLOR)\s*[^\]]*\]', '', item.fulltitle.strip())
-            item.contentTitle = fulltitle
+            contentTitle = re.sub('\[\/*(B|I|COLOR)\s*[^\]]*\]', '', item.contentTitle.strip())
+            item.contentTitle = contentTitle
 
         item.year = item.infoLabels['year']
 
@@ -144,7 +144,6 @@ def tmdb_trailers(item, tipo="movie"):
 def youtube_search(item):
     logger.info()
     itemlist = []
-
     titulo = item.contentTitle
     if item.extra != "youtube":
         titulo += " trailer"
@@ -155,11 +154,10 @@ def youtube_search(item):
         titulo = urllib.quote(titulo)
         titulo = titulo.replace("%20", "+")
         data = httptools.downloadpage("https://www.youtube.com/results?sp=EgIQAQ%253D%253D&q=" + titulo).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-    patron  = """"thumbnails":\[\{"url":"(https://i.ytimg.com/vi[^"]+).*?"""
-    patron += """simpleText":"([^"]+).*?"""
-    patron += """simpleText":"[^"]+.*?simpleText":"([^"]+).*?"""
-    patron += """url":"([^"]+)"""
+    patron  = 'thumbnails":\[\{"url":"(https://i.ytimg.com/vi[^"]+).*?'
+    patron += 'text":"([^"]+).*?'
+    patron += 'simpleText":"[^"]+.*?simpleText":"([^"]+).*?'
+    patron += 'url":"([^"]+)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedthumbnail, scrapedtitle, scrapedduration, scrapedurl in matches:
         scrapedtitle = scrapedtitle.decode('utf8').encode('utf8')
@@ -169,18 +167,15 @@ def youtube_search(item):
         url = urlparse.urljoin('https://www.youtube.com/', scrapedurl)
         itemlist.append(item.clone(title=scrapedtitle, action="play", server="youtube", url=url,
                                    thumbnail=scrapedthumbnail, text_color="white"))
-
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)"[^>]+><span class="yt-uix-button-content">'
                                                      'Siguiente')
     if next_page != "":
         next_page = urlparse.urljoin("https://www.youtube.com", next_page)
         itemlist.append(item.clone(title=config.get_localized_string(70502), action="youtube_search", extra="youtube", page=next_page,
                                    thumbnail="", text_color=""))
-
     if not itemlist:
         itemlist.append(item.clone(title=config.get_localized_string(70501) % titulo,
                                    action="", thumbnail="", text_color=""))
-
     if keyboard:
         if item.contextual:
             title = "[COLOR green]%s[/COLOR]"
@@ -188,7 +183,6 @@ def youtube_search(item):
             title = "%s"
         itemlist.append(item.clone(title=title % config.get_localized_string(70510), action="manual_search",
                                    text_color="green", thumbnail="", extra="youtube"))
-
     return itemlist
 
 
@@ -202,11 +196,11 @@ def abandomoviez_search(item):
         titulo = item.contentTitle.decode('utf-8').encode('iso-8859-1')
         post = urllib.urlencode({'query': titulo, 'searchby': '1', 'posicion': '1', 'orden': '1',
                                  'anioin': item.year, 'anioout': item.year, 'orderby': '1'})
-        url = "http://www.abandomoviez.net/db/busca_titulo_advance.php"
+        url = "http://www.abandomoviez.net/db/busca_titulo.php?busco2=%s" %item.contentTitle
         item.prefix = "db/"
         data = httptools.downloadpage(url, post=post).data
         if "No hemos encontrado ninguna" in data:
-            url = "http://www.abandomoviez.net/indie/busca_titulo_advance.php"
+            url = "http://www.abandomoviez.net/indie/busca_titulo.php?busco2=%s" %item.contentTitle
             item.prefix = "indie/"
             data = httptools.downloadpage(url, post=post).data.decode("iso-8859-1").encode('utf-8')
 
@@ -249,7 +243,6 @@ def abandomoviez_search(item):
 
 def search_links_abando(item):
     logger.info()
-
     data = httptools.downloadpage(item.url).data
     itemlist = []
     if "Lo sentimos, no tenemos trailer" in data:
@@ -284,7 +277,6 @@ def search_links_abando(item):
                     message += ".."
                     progreso.update(10 + (90 * i / len(matches)), message)
                     scrapedtitle = "[COLOR white]%s[/COLOR]" % scrapedtitle
-
                 data_trailer = httptools.downloadpage(scrapedurl).data
                 trailer_url = scrapertools.find_single_match(data_trailer, 'iframe.*?src="([^"]+)"')
                 trailer_url = trailer_url.replace("embed/", "watch?v=")
@@ -292,10 +284,8 @@ def search_links_abando(item):
                 thumbnail = "https://img.youtube.com/vi/%s/0.jpg" % code
                 itemlist.append(item.clone(title=scrapedtitle, url=trailer_url, server="youtube", action="play",
                                            thumbnail=thumbnail, text_color="white"))
-
         if item.contextual:
             progreso.close()
-
     if keyboard:
         if item.contextual:
             title = "[COLOR green]%s[/COLOR]"
@@ -409,15 +399,12 @@ def search_links_filmaff(item):
 try:
     import xbmcgui
     import xbmc
-
-
     class Select(xbmcgui.WindowXMLDialog):
         def __init__(self, *args, **kwargs):
             self.item = kwargs.get('item')
             self.itemlist = kwargs.get('itemlist')
             self.caption = kwargs.get('caption')
             self.result = None
-
         def onInit(self):
             try:
                 self.control_list = self.getControl(6)
@@ -443,7 +430,6 @@ try:
             self.control_list.reset()
             self.control_list.addItems(self.items)
             self.setFocus(self.control_list)
-
         def onClick(self, id):
             # Boton Cancelar y [X]
             if id == 5:
@@ -457,7 +443,6 @@ try:
                         del window_select
                 else:
                     window_select[-1].doModal()
-
         def onAction(self, action):
             global window_select, result
             if action == 92 or action == 110:
@@ -470,7 +455,6 @@ try:
                         del window_select
                 else:
                     window_select[-1].doModal()
-
             try:
                 if (action == 7 or action == 100) and self.getFocusId() == 6:
                     selectitem = self.control_list.getSelectedItem()
@@ -485,7 +469,6 @@ try:
                         else:
                             result = None
                             self.result = None
-
                     elif item.action == "play" and not self.item.windowed:
                         for window in window_select:
                             window.close()

@@ -47,16 +47,22 @@ def todas(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = '<div class=shortstory-in><div class=shortstory radius-3><div class=short-images radius-3><a href=(.*?) title=(.*?) class=.*?><img src=(.*?) alt.*?><\/a><\/div>'
+    logger.info("dasdsad"+data)
+    patron = '<div class=shorrt-conte5nt><h4 class=short5-link7>'
+    patron += '<a href=(.*?)class=.*?>'
+    patron += '(.*?)<\/a>.+?'
+    patron += '<img src=(.*?) alt.*?><\/a><\/div>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     # Paginacion
     num_items_x_pagina = 30
     min = item.page * num_items_x_pagina
     min=int(min)-int(item.page)
-    max = min + num_items_x_pagina - 1
+    max = min + num_items_x_pagina - 1 #- 1 #ultimo item del regex sobra
     
     for scrapedurl, scrapedtitle, scrapedthumbnail,  in matches[min:max]:
+        if " " in scrapedurl:
+            scrapedurl = scrapedurl.replace(" ","")
         url = host + scrapedurl
         title = scrapedtitle.decode('utf-8')
         thumbnail = scrapedthumbnail
@@ -138,7 +144,7 @@ def capitulosxpagina(item,url):
                         Item(channel=item.channel,
                         action="findvideos",
                         title=title,
-                        fulltitle=item.title,
+                        contentTitle=item.title,
                         url=url,
                         thumbnail=thumbnail,
                         plot=plot, fanart=fanart,

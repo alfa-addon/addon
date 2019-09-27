@@ -29,7 +29,8 @@ def get_video_url(page_url, user="", password="", video_password=""):
     data1 = httptools.downloadpage(page_url, post = post, headers = headers).data
     patron = "window.open\('([^']+)"
     file = scrapertools.find_single_match(data1, patron).replace(" ","%20")
-    file += "|User-Agent=" + headers['User-Agent']
+    file += "|User-Agent=" + httptools.get_user_agent()
+    file += "&Host=fs30.indifiles.com:182"
     video_urls = []
     videourl = file
     video_urls.append([".MP4 [bdupload]", videourl])

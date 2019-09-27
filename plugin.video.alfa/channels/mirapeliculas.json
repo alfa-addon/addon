@@ -3,7 +3,7 @@
   "name": "MiraPeliculas",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["lat"],
   "thumbnail": "http://mirapeliculas.net/favicon.ico",
   "banner": "",
   "categories": [
@@ -36,7 +36,7 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },

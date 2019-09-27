@@ -5,7 +5,7 @@
   "adult": false,
   "language": ["cast", "lat", "vose"],
   "fanart": "https://raw.githubusercontent.com/Inter95/tvguia/master/thumbnails/canalpelisbg.jpg",
-  "thumbnail": "http://www.canalpelis.com/wp-content/uploads/2016/11/logo_web.gif",
+  "thumbnail": "https://cinexin.net/wp-content/uploads/2019/08/logo_cinexin-1.png",
   "banner": "",
   "categories": [
     "movie",
@@ -22,22 +22,6 @@
       "visible": true
     },
     {
-      "id": "perfil",
-      "type": "list",
-      "label": "Perfil de color",
-      "default": 3,
-      "enabled": true,
-      "visible": true,
-      "lvalues": [
-        "Sin color",
-        "Perfil 5",
-        "Perfil 4",
-        "Perfil 3",
-        "Perfil 2",
-        "Perfil 1"
-      ]
-    },
-    {
       "id": "orden_episodios",
       "type": "bool",
       "label": "Mostrar los episodios de las series en orden descendente",
@@ -49,7 +33,7 @@
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": true,
+      "default": false,
       "enabled": true,
       "visible": true
     },

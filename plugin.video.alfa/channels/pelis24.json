@@ -3,14 +3,14 @@
   "name": "Pelis24",
   "active": true,
   "adult": false,
-  "language": ["lat", "cast", "vose"],
+  "language": ["cast", "lat"],
   "fanart": "https://i.postimg.cc/WpqD2n77/cine24bg.jpg",
   "thumbnail": "https://www.pelis24.in/wp-content/uploads/2018/05/44.png",
   "banner": "",
   "categories": [
     "movie",
     "tvshow",
-    "vose"
+    "vos"
   ],
   "settings": [
     {
@@ -22,9 +22,10 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "Latino",
-        "Castellano",
-        "English"
+        "LAT",
+        "CAST",
+        "VOSE",
+        "VOS"
       ]
     },
     {

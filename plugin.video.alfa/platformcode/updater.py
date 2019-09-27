@@ -82,7 +82,7 @@ def check_addon_updates(verbose=False):
 
         # Descargar json con las posibles actualizaciones
         # -----------------------------------------------
-        data = httptools.downloadpage(ADDON_UPDATES_JSON, timeout=2).data
+        data = httptools.downloadpage(ADDON_UPDATES_JSON, timeout=5).data
         if data == '': 
             logger.info('No se encuentran actualizaciones del addon')
             if verbose:

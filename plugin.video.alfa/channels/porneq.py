@@ -21,7 +21,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Ultimos", action="lista", url=host + "/videos/browse/"))
     itemlist.append(Item(channel=item.channel, title="Mas Vistos", action="lista", url=host + "/videos/most-viewed/"))
     itemlist.append(Item(channel=item.channel, title="Mas Votado", action="lista", url=host + "/videos/most-liked/"))
-    itemlist.append(Item(channel=item.channel, title="Big Tits", action="lista", url=host + "/show/big+tits&sort=w"))
+    itemlist.append(Item(channel=item.channel, title="Big Tits", action="lista", url=host + "/show/big+tit"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -50,6 +50,7 @@ def lista(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedtitle, scrapedurl, scrapedthumbnail, scrapedtime in matches:
         scrapedplot = ""
+        scrapedthumbnail = scrapedthumbnail.replace("https:", "http:")
         scrapedtitle = "[COLOR yellow]" + (scrapedtime) + "[/COLOR] " + scrapedtitle
         itemlist.append(Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl,
                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot))
@@ -64,7 +65,8 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     scrapedurl = scrapertools.find_single_match(data, '<source src="([^"]+)"')
+    scrapedurl = scrapedurl.replace("X20", "-")
     itemlist.append(
-        Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=scrapedurl,
+        Item(channel=item.channel, action="play", title=item.title, url=scrapedurl,
              thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
     return itemlist

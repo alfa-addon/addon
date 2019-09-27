@@ -575,7 +575,7 @@ def detalles(item):
             post = "u=%s&proxy_formdata_server=nl&allowCookies=1&encodeURL=1&encodePage=0&stripObjects=0&stripJS=0&go=" % urllib.quote(
                 post_url)
             while True:
-                response = httptools.downloadpage(url, post, follow_redirects=False)
+                response = httptools.downloadpage(url, post=post, follow_redirects=False)
                 if response.headers.get("location"):
                     url = response.headers["location"]
                     post = ""
@@ -1166,7 +1166,7 @@ def listado_fa(item):
     if item.extra == "top":
         if item.page_fa:
             post = "from=%s" % item.page_fa
-            data = httptools.downloadpage(item.url, post).data
+            data = httptools.downloadpage(item.url, post=post).data
             if item.total > item.page_fa:
                 item.page_fa += 30
             else:
@@ -1533,7 +1533,7 @@ def detalles_fa(item):
             post = "u=%s&proxy_formdata_server=nl&allowCookies=1&encodeURL=1&encodePage=0&stripObjects=0&stripJS=0&go=" % urllib.quote(
                 post_url)
             while True:
-                response = httptools.downloadpage(url, post, follow_redirects=False)
+                response = httptools.downloadpage(url, post=post, follow_redirects=False)
                 if response.headers.get("location"):
                     url = response.headers["location"]
                     post = ""
@@ -1720,7 +1720,7 @@ def login_fa():
             return True, ""
 
         post = "postback=1&rp=&username=%s&password=%s&rememberme=on" % (user, password)
-        data = httptools.downloadpage("https://m.filmaffinity.com/%s/account.ajax.php?action=login" % langf, post).data
+        data = httptools.downloadpage("https://m.filmaffinity.com/%s/account.ajax.php?action=login" % langf, post=post).data
 
         if "Invalid username" in data:
             logger.error("Error en el login")
@@ -1728,7 +1728,7 @@ def login_fa():
         else:
             post = "name=user-menu&url=http://m.filmaffinity.com/%s/main.php" % langf
             data = httptools.downloadpage("http://m.filmaffinity.com/%s/tpl.ajax.php?action=getTemplate" % langf,
-                                          post).data
+                                          post=post).data
             userid = scrapertools.find_single_match(data, 'id-user=(\d+)')
             if userid:
                 config.set_setting("userid", userid, "tvmoviedb")
@@ -1841,7 +1841,7 @@ def acciones_fa(item):
         url = "http://filmaffinity.com/%s/movieslist.ajax.php" % langf
         movieid = item.url.rsplit("=", 1)[1]
         post = "action=%s&listId=%s&movieId=%s&itk=%s" % (item.accion, item.listid, movieid, item.itk)
-        data = jsontools.load(httptools.downloadpage(url, post).data)
+        data = jsontools.load(httptools.downloadpage(url, post=post).data)
         if not item.folder:
             import xbmc
             return xbmc.executebuiltin("Container.Refresh")
@@ -1883,7 +1883,7 @@ def callback_voto(item, values):
     item.action = "acciones_fa"
     movieid = item.url.rsplit("=", 1)[1]
     post = "id=%s&rating=%s&itk=%s&action=rate" % (movieid, item.voto, item.itk)
-    data = jsontools.load(httptools.downloadpage("http://filmaffinity.com/%s/ratingajax.php" % langf, post).data)
+    data = jsontools.load(httptools.downloadpage("http://filmaffinity.com/%s/ratingajax.php" % langf, post=post).data)
 
     if not item.folder:
         import xbmc
@@ -2133,13 +2133,13 @@ def acciones_trakt(item):
 
     url = "http://api-v2launch.trakt.tv/%s" % item.url
     #data = httptools.downloadpage(url, post, headers=headers, replace_headers=True)
-    data = httptools.downloadpage(url, post, headers=headers)
+    data = httptools.downloadpage(url, post=post, headers=headers)
     if data.code == "401":
         trakt_tools.token_trakt(item.clone(extra="renew"))
         token_auth = config.get_setting("token_trakt", "trakt")
         headers[3][1] = "Bearer %s" % token_auth
         #data = httptools.downloadpage(url, post, headers=headers, replace_headers=True)
-        data = httptools.downloadpage(url, post, headers=headers)
+        data = httptools.downloadpage(url, post=post, headers=headers)
 
     data = data.data
     if data and "sync" in item.url:
@@ -2479,7 +2479,7 @@ def detalles_mal(item):
     try:
         title_search = re.sub(r'[^0-9A-z]+', ' ', title_mal)
         post = "busqueda=%s&button=Search" % urllib.quote(title_search)
-        data_music = httptools.downloadpage("http://www.freeanimemusic.org/song_search.php", post).data
+        data_music = httptools.downloadpage("http://www.freeanimemusic.org/song_search.php", post=post).data
         if not "NO MATCHES IN YOUR SEARCH" in data_music:
             itemlist.append(
                 item.clone(action="musica_anime", title=config.get_localized_string(70317), text_color=color5,

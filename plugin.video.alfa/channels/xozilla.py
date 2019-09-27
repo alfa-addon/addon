@@ -59,6 +59,8 @@ def categorias(item):
             scrapedtitle += " (" + cantidad + ")"
         itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                              thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot))
+    if "Categorias" in item.title:
+        itemlist.sort(key=lambda x: x.title)
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
     if next_page != "#videos":
         next_page = urlparse.urljoin(item.url, next_page)
@@ -104,9 +106,9 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    media_url = scrapertools.find_single_match(data, 'video_alt_url: \'([^\']+)/\'')
-    if media_url == "":
-        media_url = scrapertools.find_single_match(data, 'video_url: \'([^\']+)/\'')
-    itemlist.append(Item(channel=item.channel, action="play", title=item.title, fulltitle=item.fulltitle, url=media_url,
-                         thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
+    patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
+    patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for url,quality in matches:
+        itemlist.append(['.mp4 %s' %quality, url])
     return itemlist

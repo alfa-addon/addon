@@ -100,9 +100,20 @@ def lista(item):
 
 def play(item):
     logger.info()
+    itemlist = []
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<a href="([^"]+)" rel="nofollow"  class="external" target="_blank">Streaming')
-    logger.debug(url)
-    itemlist = servertools.find_video_items(item.clone(url = url))
-    return itemlist
-
+    patron = '<a href="([^"]+)" [^<]+>Streaming'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for scrapedurl in matches:
+        itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=scrapedurl))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    a = len (itemlist)
+    for i in itemlist:
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue

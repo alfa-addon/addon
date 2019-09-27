@@ -80,14 +80,14 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     except:
         time.sleep(6)
 
-    data = httptools.downloadpage(playnow, flashx_post).data
+    data = httptools.downloadpage(playnow, post = flashx_post).data
     # Si salta aviso, se carga la pagina de comprobacion y luego la inicial
     # LICENSE GPL3, de alfa-addon: https://github.com/alfa-addon/ ES OBLIGATORIO AÑADIR ESTAS LÍNEAS
     if "You try to access this video with Kodi" in data:
         url_reload = scrapertools.find_single_match(data, 'try to reload the page.*?href="([^"]+)"')
         try:
             data = httptools.downloadpage(url_reload).data
-            data = httptools.downloadpage(playnow, flashx_post).data
+            data = httptools.downloadpage(playnow, post = flashx_post).data
         # LICENSE GPL3, de alfa-addon: https://github.com/alfa-addon/ ES OBLIGATORIO AÑADIR ESTAS LÍNEAS
         except:
             pass

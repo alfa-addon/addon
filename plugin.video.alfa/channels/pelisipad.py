@@ -158,7 +158,7 @@ def entradas(item):
             quality = "720p"
         elif child['height'] >= 1080:
             quality = "1080p"
-        fulltitle = unicodedata.normalize('NFD', unicode(child['name'], 'utf-8')).encode('ASCII', 'ignore') \
+        contentTitle = unicodedata.normalize('NFD', unicode(child['name'], 'utf-8')).encode('ASCII', 'ignore') \
             .decode("utf-8")
         if child['name'] == "":
             title = child['id'].rsplit(".", 1)[0]
@@ -175,8 +175,8 @@ def entradas(item):
                                    vid["height"]])
 
         itemlist.append(Item(channel=item.channel, action="findvideos", server="", title=title, url=url,
-                             thumbnail=thumbnail, fanart=fanart, fulltitle=fulltitle, infoLabels=infolabels,
-                             contentTitle=fulltitle, video_urls=video_urls, text_color=color3, quality=quality))
+                             thumbnail=thumbnail, fanart=fanart, contentTitle=contentTitle, infoLabels=infolabels,
+                             contentTitle=contentTitle, video_urls=video_urls, text_color=color3, quality=quality))
 
     return itemlist
 
@@ -219,23 +219,23 @@ def entradasconlistas(item):
 
             url = host % "list/%s" % child["id"] + ext
             title = re.sub(r"(\w)-(\w)", '\g<1> \g<2>', child['name'])
-            fulltitle = re.sub(r"(\w)-(\w)", '\g<1> \g<2>', child['name'])
+            contentTitle = re.sub(r"(\w)-(\w)", '\g<1> \g<2>', child['name'])
             if not title:
                 title = re.sub(r"(\w)-(\w)", '\g<1> \g<2>', child['id'])
-                fulltitle = re.sub(r"(\w)-(\w)", '\g<1> \g<2>', child['id'])
+                contentTitle = re.sub(r"(\w)-(\w)", '\g<1> \g<2>', child['id'])
             title = unicode(title, "utf-8").capitalize().encode("utf-8")
-            fulltitle = unicode(fulltitle, "utf-8").capitalize().encode("utf-8")
+            contentTitle = unicode(contentTitle, "utf-8").capitalize().encode("utf-8")
             show = ""
             if contentSerie:
                 title += " (Serie TV)"
-                show = fulltitle
+                show = contentTitle
             thumbnail = host % "list/%s/thumbnail_167x250.jpg" % child["id"]
             fanart = host % "list/%s/background_1080.jpg" % child["id"]
 
             thumbnail += "|User-Agent=%s" % httptools.get_user_agent
             itemlist.append(Item(channel=item.channel, action=action, title=title,
-                                 url=url, thumbnail=thumbnail, fanart=fanart, fulltitle=fulltitle, show=show,
-                                 infoLabels=infolabels, contentTitle=fulltitle, viewmode="movie_with_plot",
+                                 url=url, thumbnail=thumbnail, fanart=fanart, contentTitle=contentTitle, show=show,
+                                 infoLabels=infolabels, viewmode="movie_with_plot",
                                  text_color=color3))
     else:
         contentList = True
@@ -281,7 +281,7 @@ def entradasconlistas(item):
             quality = "[B]  [720p][/B]"
         elif child['height'] >= 1080:
             quality = "[B]  [1080p][/B]"
-        fulltitle = unicodedata.normalize('NFD', unicode(child['name'], 'utf-8')).encode('ASCII', 'ignore') \
+        contentTitle = unicodedata.normalize('NFD', unicode(child['name'], 'utf-8')).encode('ASCII', 'ignore') \
             .decode("utf-8")
         if not child['name']:
             title = child['id'].rsplit(".", 1)[0]
@@ -298,8 +298,8 @@ def entradasconlistas(item):
                                    vid["height"]])
         thumbnail += "|User-Agent=%s" % httptools.get_user_agent
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, video_urls=video_urls,
-                             thumbnail=thumbnail, fanart=fanart, fulltitle=fulltitle, infoLabels=infolabels,
-                             contentTitle=fulltitle, viewmode="movie_with_plot", text_color=color3))
+                             thumbnail=thumbnail, fanart=fanart, contentTitle=contentTitle, infoLabels=infolabels,
+                             contentTitle=contentTitle, viewmode="movie_with_plot", text_color=color3))
 
     # Se añade item para añadir la lista de vídeos a la videoteca
     if data.get('a') and itemlist and contentList and config.get_videolibrary_support():
@@ -308,7 +308,7 @@ def entradasconlistas(item):
     elif contentSerie and config.get_videolibrary_support():
         itemlist.append(Item(channel=item.channel, title="Añadir esta serie a la videoteca", text_color=color5,
                              url=item.url, action="add_serie_to_library", show=item.show,
-                             fulltitle=item.fulltitle, extra="episodios"))
+                             contentTitle=item.contentTitle, extra="episodios"))
 
     return itemlist
 
@@ -343,15 +343,15 @@ def series(item):
         fanart = host % "list/%s/background_1080.jpg" % child["id"]
         # Thumbnail
         thumbnail = host % "list/%s/thumbnail_167x250.jpg" % child["id"]
-        fulltitle = child['name']
-        title = fulltitle + " [%s]" % child['year']
+        contentTitle = child['name']
+        title = contentTitle + " [%s]" % child['year']
         if child.get("numberOfSeasons") and "- Temporada" not in title:
             title += "  (Temps:%s)" % child['numberOfSeasons']
 
         thumbnail += "|User-Agent=%s" % httptools.get_user_agent
         itemlist.append(Item(channel=item.channel, action="episodios", title=title, url=url, text_color=color3,
-                             thumbnail=thumbnail, fanart=fanart, fulltitle=fulltitle, infoLabels=infolabels,
-                             contentTitle=fulltitle, viewmode="movie_with_plot", show=fulltitle))
+                             thumbnail=thumbnail, fanart=fanart, contentTitle=contentTitle, infoLabels=infolabels,
+                             viewmode="movie_with_plot", show=contentTitle))
 
     if "A-Z" in item.title:
         itemlist.sort(key=lambda it: it.title)
@@ -413,12 +413,12 @@ def episodios(item):
                                    vid["height"]])
 
         try:
-            title = fulltitle = child['name'].rsplit(" ", 1)[0] + " - " + child['name'].rsplit(" ", 1)[1]
+            title = contentTitle = child['name'].rsplit(" ", 1)[0] + " - " + child['name'].rsplit(" ", 1)[1]
         except:
-            title = fulltitle = child['id'].replace("-", " ")
+            title = contentTitle = child['id'].replace("-", " ")
         thumbnail += "|User-Agent=%s" % httptools.get_user_agent
         itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
-                             fanart=fanart, fulltitle=fulltitle, contentTitle=fulltitle, viewmode="movie",
+                             fanart=fanart, contentTitle=contentTitle, viewmode="movie",
                              show=item.show, infoLabels=infoLabels, video_urls=video_urls, extra="episodios",
                              text_color=color3))
 
@@ -490,14 +490,14 @@ def nuevos_cap(item):
                                    vid["height"]])
 
         if "Nuevos" in item.title:
-            title = fulltitle = child['name'].rsplit(" ", 1)[0] + " - " + child['name'].rsplit(" ", 1)[1]
+            title = contentTitle = child['name'].rsplit(" ", 1)[0] + " - " + child['name'].rsplit(" ", 1)[1]
         else:
-            title = fulltitle = child['name']
+            title = contentTitle = child['name']
 
         thumbnail += "|User-Agent=%s" % httptools.get_user_agent
         itemlist.append(Item(channel=item.channel, action=action, title=title, url=url, thumbnail=thumbnail,
-                             fanart=fanart, fulltitle=fulltitle, contentTitle=fulltitle, viewmode="movie",
-                             show=item.fulltitle, infoLabels=infoLabels, video_urls=video_urls, extra="nuevos",
+                             fanart=fanart, contentTitle=contentTitle, viewmode="movie",
+                             show=item.contentTitle, infoLabels=infoLabels, video_urls=video_urls, extra="nuevos",
                              text_color=color3))
 
     return itemlist
@@ -534,9 +534,9 @@ def findvideos(item):
                 actual_quality = quality
 
             if i % 2 == 0:
-                title += " [COLOR purple]Mirror %s[/COLOR] - %s" % (str(i + 1), item.fulltitle)
+                title += " [COLOR purple]Mirror %s[/COLOR] - %s" % (str(i + 1), item.contentTitle)
             else:
-                title += " [COLOR green]Mirror %s[/COLOR] - %s" % (str(i + 1), item.fulltitle)
+                title += " [COLOR green]Mirror %s[/COLOR] - %s" % (str(i + 1), item.contentTitle)
             url = vid % "%s" % base64.b64decode("dHQ9MTQ4MDE5MDQ1MSZtbT1NRzZkclhFand6QmVzbmxSMHNZYXhBJmJiPUUwb1dVVVgx"
                                                 "WTBCQTdhWENpeU9paUE=")
             url += '|User-Agent=%s' % httptools.get_user_agent
@@ -545,8 +545,8 @@ def findvideos(item):
 
         if itemlist and item.extra == "" and config.get_videolibrary_support():
             itemlist.append(Item(channel=item.channel, title="Añadir enlaces a la videoteca", text_color=color5,
-                                 contentTitle=item.fulltitle, url=item.url, action="add_pelicula_to_library",
-                                 infoLabels={'title': item.fulltitle}, extra="findvideos", fulltitle=item.fulltitle
+                                 contentTitle=item.contentTitle, url=item.url, action="add_pelicula_to_library",
+                                 infoLabels={'title': item.contentTitle}, extra="findvideos"
                                  ))
     itemlist = servertools.get_servers_itemlist(itemlist)
     return itemlist
@@ -576,7 +576,7 @@ def listas(item):
         try:
             from core import videolibrarytools
             thumbnail += "|User-Agent=%s" % httptools.get_user_agent
-            new_item = item.clone(title=title, url=url, fulltitle=title, fanart=fanart, extra="findvideos",
+            new_item = item.clone(title=title, url=url, contentTitle=title, fanart=fanart, extra="findvideos",
                                   thumbnail=thumbnail, infoLabels=infolabels, category="Cine")
             videolibrarytools.add_movie(new_item)
             error = False

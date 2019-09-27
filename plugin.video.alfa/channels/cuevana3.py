@@ -9,7 +9,7 @@ from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
 from core import servertools
-from core import tmdb
+from core import tmdb, jsontools
 from core.item import Item
 from platformcode import config, logger
 from channels import autoplay
@@ -43,17 +43,17 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Generos", action="section", section='genre',
                          thumbnail=get_thumb('genres', auto=True)))
 
-    # itemlist.append(Item(channel=item.channel, title="Castellano", action="list_all", url= host+'espanol',
-    #                      thumbnail=get_thumb('audio', auto=True)))
-    #
-    # itemlist.append(Item(channel=item.channel, title="Latino", action="list_all", url=host + 'latino',
-    #                      thumbnail=get_thumb('audio', auto=True)))
-    #
-    # itemlist.append(Item(channel=item.channel, title="VOSE", action="list_all", url=host + 'subtitulado',
-    #                      thumbnail=get_thumb('audio', auto=True)))
-    #
+    itemlist.append(Item(channel=item.channel, title="Castellano", action="list_all", url= host+'peliculas-espanol',
+                         thumbnail=get_thumb('audio', auto=True)))
+    
+    itemlist.append(Item(channel=item.channel, title="Latino", action="list_all", url=host + 'peliculas-latino',
+                         thumbnail=get_thumb('audio', auto=True)))
+    
+    itemlist.append(Item(channel=item.channel, title="VOSE", action="list_all", url=host + 'peliculas-subtituladas',
+                         thumbnail=get_thumb('audio', auto=True)))
+    
     # itemlist.append(Item(channel=item.channel, title="Alfabetico", action="section", section='alpha',
-    #                      thumbnail=get_thumb('alphabet', auto=True)))
+    #                     thumbnail=get_thumb('alphabet', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host+'?s=',
                          thumbnail=get_thumb('search', auto=True)))
@@ -79,8 +79,8 @@ def list_all(item):
         #   patron = '<span class="Num">\d+.*?<a href="([^"]+)" class.*?'
         #   patron += 'src="([^"]+)" class.*?<strong>([^<]+)</strong>.*?<td>(\d{4})</td>'
         # else:
-        patron = '<article class="TPost C post-\d+.*?<a href="([^"]+)">.*?'
-        patron +='"Year">(\d{4})<.*?src="([^"]+)".*?"Title">([^"]+)</h2>'
+        patron = 'class="TPost C post-\d+.*?<a href="([^"]+)">.*?'
+        patron +='"Year">(\d{4})<.*?data-src="([^"]+)".*?"Title">([^"]+)</h2>'
         data = get_source(item.url)
         matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -96,11 +96,11 @@ def list_all(item):
             contentTitle = re.sub('\(.*?\)','', contentTitle)
 
             title = '%s [%s]'%(contentTitle, year)
-            thumbnail = 'http:'+scrapedthumbnail
+            #thumbnail = 'https:'+scrapedthumbnail
             itemlist.append(Item(channel=item.channel, action='findvideos',
                                        title=title,
                                        url=url,
-                                       thumbnail=thumbnail,
+                                       thumbnail=scrapedthumbnail,
                                        contentTitle=contentTitle,
                                        infoLabels={'year':year}
                                        ))
@@ -151,16 +151,19 @@ def findvideos(item):
     for option, url_data, language, quality in matches:
         if 'domain' in url_data:
             url = scrapertools.find_single_match(url_data, 'domain=([^"]+)"')
-        else:
+        elif '1' in option:
             url = scrapertools.find_single_match(data, 'id="Opt%s">.*?file=([^"]+)"' % option)
+        else:
+            url = scrapertools.find_single_match(data, 'id="Opt%s">.*?h=([^"]+)"' % option)
 
+        
         if url != '' and 'youtube' not in url:
-                itemlist.append(Item(channel=item.channel, title='%s', url=url, language=IDIOMAS[language],
+                itemlist.append(item.clone(channel=item.channel, title='%s', url=url, language=IDIOMAS[language],
                                      quality=quality, action='play'))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % '%s [%s] [%s]'%(i.server.capitalize(),
                                                                                               i.language, i.quality))
-    tmdb.set_infoLabels_itemlist(itemlist, True)
+    
     try:
         itemlist.append(trailer)
     except:
@@ -180,7 +183,6 @@ def findvideos(item):
 
 
     return itemlist
-
 
 def search(item, texto):
     logger.info()
@@ -214,3 +216,38 @@ def newest(categoria):
         return []
 
     return itemlist
+
+def play(item):
+    if not item.url.startswith('http'):
+        url_list = []
+        res = ''
+        ext = 'mp4'
+        post = urllib.urlencode({'link': item.url})
+        new_data = httptools.downloadpage("https://api.cuevana3.com/stream/plugins/gkpluginsphp.php", post=post).data
+
+        if new_data and not "error" in new_data:
+            matches = re.compile('"link":"([^"]+)"', re.DOTALL).findall(new_data)
+            itags = {'18': '360p', '22': '720p', '34': '360p', '35': '480p', '37': '1080p', '43': '360p', '59': '480p'}
+            for link in matches:
+                item.url = link.replace('\\', '').strip()
+
+                #tratar con multilinks/multicalidad de gvideo
+                tag = scrapertools.find_single_match(link,'&itag=(\d+)&')
+                ext = scrapertools.find_single_match(link,'&mime=.*?/(\w+)&')
+                if tag:
+                    res = itags[tag]
+                    url_list.append([".%s (%s)" % (ext,res), item.url])
+            if len(matches) > 1 and url_list:
+                item.password = url_list
+        else:
+            url = 'https://api.cuevana3.com/rr/gotogd.php?h=%s' % item.url
+            link = httptools.downloadpage(url).url
+            shost = 'https://' + link.split("/")[2]
+            vid = scrapertools.find_single_match(link, "\?id=(\w+)")
+            if vid:
+                item.url = shost+ '/hls/' + vid + '/' + vid + '.playlist.m3u8'
+            else:
+                item.url = ''
+
+    return [item]
+

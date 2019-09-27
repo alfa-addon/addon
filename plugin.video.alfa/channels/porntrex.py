@@ -118,6 +118,8 @@ def lista(item):
 def categorias(item):
     logger.info()
     itemlist = []
+    data = get_data(item.url)
+
     # Extrae las entradas
     if "/channels/" in item.url:
         patron = '<div class="video-item   ">.*?<a href="([^"]+)" title="([^"]+)".*?src="([^"]+)".*?<li>([^<]+)<'
@@ -172,6 +174,7 @@ def playlists(item):
             if not scrapedthumbnail.startswith("https"):
                 scrapedthumbnail = "https:%s" % scrapedthumbnail
                 scrapedthumbnail += "|Referer=https://www.porntrex.com/"
+                scrapedthumbnail = scrapedthumbnail.replace(" " , "%20")
         if videos:
             scrapedtitle = "%s  [COLOR red](%s)[/COLOR]" % (scrapedtitle, videos)
         itemlist.append(item.clone(action="videos", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
@@ -218,6 +221,8 @@ def videos(item):
             scrapedurl = urlparse.urljoin(host, scrapedurl)
             if not scrapedthumbnail.startswith("https"):
                 scrapedthumbnail = "https:%s" % scrapedthumbnail
+                scrapedthumbnail += "|Referer=https://www.porntrex.com/"
+                scrapedthumbnail = scrapedthumbnail.replace(" " , "%20")
         if 'k4"' in quality:
             quality = "4K"
             scrapedtitle = "%s - [COLOR yellow]%s[/COLOR] %s" % (duration, quality, scrapedtitle)

@@ -95,7 +95,6 @@ def play(item):
     patron  = '<meta property="og:video" content="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:
-        title = scrapedurl
-    itemlist.append(item.clone(action="play", title=title, fulltitle = scrapedurl, url=scrapedurl))
+        itemlist.append(item.clone(action="play", title=item.title, url=scrapedurl))
     return itemlist
 

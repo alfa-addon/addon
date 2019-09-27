@@ -53,6 +53,7 @@ def list_movies(item, silent=False):
                 head_nfo, new_item = videolibrarytools.read_nfo(nfo_path)
 
                 if not new_item:                        #Si no ha leído bien el .nfo, pasamos a la siguiente
+                    logger.error('.nfo erroneo en ' + str(nfo_path))
                     continue
                 
                 if len(new_item.library_urls) > 1:
@@ -180,6 +181,10 @@ def list_tvshows(item):
                     logger.error(traceback.format_exc())
                 
                 head_nfo, item_tvshow = videolibrarytools.read_nfo(tvshow_path)
+                
+                if not item_tvshow:                        #Si no ha leído bien el .nfo, pasamos a la siguiente
+                    logger.error('.nfo erroneo en ' + str(tvshow_path))
+                    continue
 
                 if len(item_tvshow.library_urls) > 1:
                     multicanal = True
@@ -447,11 +452,11 @@ def findvideos(item):
 
     if item.contentType == 'movie':
         item.strm_path = filetools.join(videolibrarytools.MOVIES_PATH, item.strm_path)
-        path_dir = os.path.dirname(item.strm_path)
-        item.nfo = filetools.join(path_dir, os.path.basename(path_dir) + ".nfo")
+        path_dir = filetools.dirname(item.strm_path)
+        item.nfo = filetools.join(path_dir, filetools.basename(path_dir) + ".nfo")
     else:
         item.strm_path = filetools.join(videolibrarytools.TVSHOWS_PATH, item.strm_path)
-        path_dir = os.path.dirname(item.strm_path)
+        path_dir = filetools.dirname(item.strm_path)
         item.nfo = filetools.join(path_dir, 'tvshow.nfo')
 
     for fd in filetools.listdir(path_dir):
@@ -468,7 +473,8 @@ def findvideos(item):
         item_json = Item().fromjson(filetools.read(json_path))
         ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
         try:
-            item_json, it, overwrite = generictools.redirect_clone_newpct1(item_json)
+            if item_json:
+                item_json, it, overwrite = generictools.redirect_clone_newpct1(item_json)
         except:
             logger.error(traceback.format_exc())
         item_json.contentChannel = "local"
@@ -527,7 +533,8 @@ def findvideos(item):
         item_json = Item().fromjson(filetools.read(json_path))
         ###### Redirección al canal NewPct1.py si es un clone, o a otro canal y url si ha intervención judicial
         try:
-            item_json, it, overwrite = generictools.redirect_clone_newpct1(item_json)
+            if item_json:
+                item_json, it, overwrite = generictools.redirect_clone_newpct1(item_json)
         except:
             logger.error(traceback.format_exc())
         list_servers = []
@@ -548,6 +555,10 @@ def findvideos(item):
                     del item_json.videolibray_emergency_urls
                 list_servers = getattr(channel, 'findvideos')(item_json)
                 list_servers = servertools.filter_servers(list_servers)
+            elif item_json.action == 'play':
+                from platformcode import platformtools
+                platformtools.play_video(item_json)
+                return ''
             else:
                 from core import servertools
                 list_servers = servertools.find_video_items(item_json)
@@ -563,7 +574,6 @@ def findvideos(item):
         for server in list_servers:
             #if not server.action:  # Ignorar/PERMITIR las etiquetas
             #    continue
-
             server.contentChannel = server.channel
             server.channel = "videolibrary"
             server.nfo = item.nfo
@@ -622,6 +632,7 @@ def play(item):
                     v.title = config.get_localized_string(60036) % item.contentEpisodeNumber
             v.thumbnail = item.thumbnail
             v.contentThumbnail = item.thumbnail
+            v.contentChannel = item.contentChannel
 
     return itemlist
 
@@ -736,14 +747,14 @@ def mark_content_as_watched2(item):
         #logger.debug(it) 
         name_file = ""
         if item.contentType == 'movie' or item.contentType == 'tvshow':
-            name_file = os.path.splitext(os.path.basename(item.nfo))[0]
+            name_file = os.path.splitext(filetools.basename(item.nfo))[0]
             
             if name_file != 'tvshow' :
                 it.library_playcounts.update({name_file: item.playcount}) 
 
         if item.contentType == 'episode' or item.contentType == 'list' or name_file == 'tvshow':
        # elif item.contentType == 'episode':
-            name_file = os.path.splitext(os.path.basename(item.strm_path))[0]
+            name_file = os.path.splitext(filetools.basename(item.strm_path))[0]
             num_season = name_file [0]
             item.__setattr__('contentType', 'episode') 
             item.__setattr__('contentSeason', num_season) 
@@ -788,7 +799,7 @@ def mark_content_as_watched(item):
         head_nfo, it = videolibrarytools.read_nfo(item.nfo)
 
         if item.contentType == 'movie':
-            name_file = os.path.splitext(os.path.basename(item.nfo))[0]
+            name_file = os.path.splitext(filetools.basename(item.nfo))[0]
         elif item.contentType == 'episode':
             name_file = "%sx%s" % (item.contentSeason, str(item.contentEpisodeNumber).zfill(2))
         else:
@@ -842,7 +853,7 @@ def mark_season_as_watched(item):
             season, episode = season_episode.split("x")
 
             if int(item.contentSeason) == -1 or int(season) == int(item.contentSeason):
-                name_file = os.path.splitext(os.path.basename(i))[0]
+                name_file = os.path.splitext(filetools.basename(i))[0]
                 it.library_playcounts[name_file] = item.playcount
                 episodios_marcados += 1
 

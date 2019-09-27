@@ -13,9 +13,9 @@ host = 'https://es.redtube.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevas" , action="peliculas", url=host + "/newest"))
-    itemlist.append( Item(channel=item.channel, title="Mas Vistas" , action="peliculas", url=host + "/mostviewed"))
-    itemlist.append( Item(channel=item.channel, title="Mejor valorada" , action="peliculas", url=host + "/top"))
+    itemlist.append( Item(channel=item.channel, title="Nuevas" , action="lista", url=host + "/newest"))
+    itemlist.append( Item(channel=item.channel, title="Mas Vistas" , action="lista", url=host + "/mostviewed"))
+    itemlist.append( Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "/top"))
     itemlist.append( Item(channel=item.channel, title="Pornstars" , action="catalogo", url=host + "/pornstar"))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
@@ -27,7 +27,7 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     item.url = host + "/?search=%s" % texto
     try:
-        return peliculas(item)
+        return lista(item)
     except:
         import sys
         for line in sys.exc_info():
@@ -46,7 +46,7 @@ def catalogo(item):
         scrapedplot = ""
         scrapedtitle = scrapedtitle +  " [COLOR yellow]" + cantidad + "[/COLOR] "
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     next_page_url = scrapertools.find_single_match(data,'<a id="wp_navNext" class="js_pop_page" href="([^"]+)">')
     if next_page_url!="":
@@ -59,30 +59,30 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<div class="category_item_wrapper">.*?'
+    patron = '<li id="categories_list_block_.*?'
     patron += '<a href="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?'
     patron += 'alt="([^"]+)".*?'
-    patron += '<span class="category_count">([^"]+) Videos'
+    patron += '_count">([^"]+) Videos'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         cantidad = cantidad.strip()
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append( Item(channel=item.channel, action="peliculas", title=scrapedtitle, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
 
-def peliculas(item):
+def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<img id="img_.*?data-path="([^"]+)".*?'
+    patron = '<img id="img_.*?data-src="([^"]+)".*?'
     patron += '<span class="duration">(.*?)</a>.*?'
-    patron += '<a title="([^"]+)" href="([^"]+)">'
+    patron += '<a title="([^"]+)".*?href="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedthumbnail,duration,scrapedtitle,scrapedurl in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
@@ -99,10 +99,11 @@ def peliculas(item):
         if not "/premium/" in url:
             itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url,
                                   fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=plot, contentTitle = title) )
-    next_page_url = scrapertools.find_single_match(data,'<a id="wp_navNext" class="js_pop_page" href="([^"]+)">')
+ # "Página Siguiente >>"
+    next_page_url = scrapertools.find_single_match(data,'<a id="wp_navNext".*?href="([^"]+)">')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append(item.clone(action="peliculas", title="Página Siguiente >>", text_color="blue", url=next_page_url) )
+        itemlist.append(item.clone(action="lista", title=next_page_url, text_color="blue", url=next_page_url) )
     return itemlist
 
 
@@ -114,6 +115,6 @@ def play(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl  in matches:
         url =  scrapedurl.replace("\/", "/")
-    itemlist.append(item.clone(action="play", title=url, fulltitle = item.title, url=url))
+    itemlist.append(item.clone(action="play", title=url, url=url))
     return itemlist
 

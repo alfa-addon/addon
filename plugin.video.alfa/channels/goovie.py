@@ -17,7 +17,7 @@ from channels import autoplay
 from platformcode import config, logger
 
 
-IDIOMAS = {'EspaL':'Cast', 'LatinoL':'Lat', 'SubL':'VOSE', 'OriL':'VO'}
+IDIOMAS = {'EspaL':'Cast', 'Español':'Cast', 'Latino':'Lat', 'Subtitulado':'VOSE', 'VSO':'VO'}
 list_language = IDIOMAS.values()
 
 CALIDADES = {'1080p':'1080','720p':'720','480p':'480','360p':'360'}
@@ -25,7 +25,7 @@ CALIDADES = {'1080p':'1080','720p':'720','480p':'480','360p':'360'}
 list_quality = ['1080', '720', '480', '360']
 
 list_servers = [
-    'powvideo'
+    'powvideo', 'streamplay','vizoda','clipwatching'
 ]
 
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'goovie')
@@ -59,12 +59,19 @@ def sub_menu(item):
 
     itemlist=[]
 
-    itemlist.append(Item(channel=item.channel, title='Todas', url=host + item.type, action='list_all',
+    url_estreno = host + item.type
+    if item.type == 'peliculas':
+        url_estreno = host + item.type + '/estrenos'
+
+    itemlist.append(Item(channel=item.channel, title='Estrenos', url=url_estreno, action='list_all',
                          thumbnail=get_thumb('all', auto=True), type=item.type))
-    itemlist.append(Item(channel=item.channel, title='Genero', action='section',
+    #25/05 Estas funciones no responden apropiadamente en la web
+    '''itemlist.append(Item(channel=item.channel, title='Genero', action='section',
                          thumbnail=get_thumb('genres', auto=True), type=item.type))
     itemlist.append(Item(channel=item.channel, title='Por Año', action='section',
-                         thumbnail=get_thumb('year', auto=True), type=item.type))
+                         thumbnail=get_thumb('year', auto=True), type=item.type))'''
+    itemlist.append(Item(channel=item.channel, title='Mejor Valoradas', url=host+item.type+'/mas-valoradas', action='list_all',
+                         thumbnail=get_thumb('more voted', auto=True), type=item.type))
 
     return itemlist
 
@@ -124,11 +131,13 @@ def list_all(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
 
         title = scrapedtitle
+        scrapedtitle = re.sub(' \((.*?)\)$', '', scrapedtitle)
         thumbnail = scrapedthumbnail.strip()
         url = scrapedurl
         filter_thumb = thumbnail.replace("https://image.tmdb.org/t/p/w154", "")
         filter_list = {"poster_path": filter_thumb}
         filter_list = filter_list.items()
+        thumbnail = re.sub('p/w\d+', 'p/original', thumbnail)
         new_item = Item(channel=item.channel,
                         title=title,
                         url=url,
@@ -165,6 +174,7 @@ def list_collections(item):
 
     for url, thumb, title, cant in matches:
         plot = 'Contiene %s elementos' % cant
+        thumb = re.sub('p/w\d+', 'p/original', thumb)
         itemlist.append(Item(channel=item.channel, action='list_all', title=title, url=url, thumbnail=thumb, plot=plot))
 
     url_next_page = scrapertools.find_single_match(data, 'class="PageActiva">\d+</a><a href="([^"]+)"')
@@ -237,15 +247,22 @@ def findvideos(item):
 
     data = get_source(item.url)
     data = data.replace('"', "'")
-    patron = "onclick='clickLink\(this, '([^']+)', '([^']+)', '([^']+)'\);'>.*?<b>([a-zA-Z]+)"
+    patron = "alt=''>(.*?)</td><td width='10%'>(.*?)</td><td width='10%'>(.*?)</td>.*?href='([^']+)'>"
     matches = re.compile(patron, re.DOTALL).findall(data)
     headers = {'referer': item.url}
-    for url, quality, language, server in matches:
+    for server, quality, language, url in matches:
 
         if url != '':
+            if not url.startswith(host):
+                url = host+url
             language = IDIOMAS[language]
             if quality.lower() == 'premium':
                 quality = '720p'
+            quality = quality.replace(' HD', '')
+            try:
+                server = server.split(".")[0]
+            except:
+                server= ""
             quality = CALIDADES[quality]
             title = ' [%s] [%s]' % (language, quality)
             if 'visor/vdz' in url:
@@ -257,17 +274,13 @@ def findvideos(item):
 
 
 def play(item):
-    from lib.generictools import privatedecrypt
     logger.info()
     itemlist = []
     url = ''
     item.server = ''
-    data = httptools.downloadpage(item.url, headers=item.headers, follow_redirects=False)
-    if 'visor/vdz' in item.url:
-        url = scrapertools.find_single_match(data.data, 'IFRAME SRC="([^"]+)"')
-    elif 'visor/if' in item.url:
-        url = data.headers['location']
-
+    data = httptools.downloadpage(item.url, headers=item.headers).data
+    bloq = data.split('<div id="informacion">')[1]
+    url = scrapertools.find_single_match(bloq, 'href="([^"]+)">Acceder al')
     itemlist.append(Item(channel=item.channel, url=url, action='play', server=item.server,
                          infoLabels=item.infoLabels))
 
@@ -281,7 +294,7 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
-    item.type = 'peliculas'
+    item.type = 'search'
     if texto != '':
         return list_all(item)
     else:

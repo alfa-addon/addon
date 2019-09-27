@@ -8,7 +8,6 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core import tmdb
-from core import jsontools
 from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
@@ -193,7 +192,9 @@ def findvideos(item):
     new_data = []
     data = get_source(item.url)
     data = data.replace("&lt;","<").replace("&quot;",'"').replace("&gt;",">").replace("&amp;","&").replace('\"',"")
+    
     patron = '<div class=TPlayerTb.*?id=(.*?)>.*?src=(.*?) frameborder'
+
     matches = scrapertools.find_multiple_matches(data, patron)
     for opt, urls_page in matches:
         language = scrapertools.find_single_match (data,'TPlayerNv>.*?tplayernv=%s><span>Opción.*?<span>(.*?)</span>' % opt)
@@ -207,6 +208,11 @@ def findvideos(item):
                 server_repros(urls_page)
             if "itatroniks.com" in urls_page:
                 server_itatroniks(urls_page)
+        #parche
+        elif "repro.live" in urls_page:
+            server_repro(urls_page)
+        elif "itatroniks.com" in urls_page:
+            server_itatroniks(urls_page)
         for url in new_data:
             itemlist.append(item.clone(title='[%s][%s]',
                             url=url,
@@ -226,8 +232,7 @@ def server_itatroniks(urls_page):
     matches = scrapertools.find_multiple_matches(sub_data, 'button id="([^"]+)')
     headers1 = ({"X-Requested-With":"XMLHttpRequest"})
     for serv in matches:
-        data1 = httptools.downloadpage("https://itatroniks.com/get/%s/%s" %(id, serv), headers = headers1).data
-        data_json = jsontools.load(data1)
+        data_json = httptools.downloadpage("https://itatroniks.com/get/%s/%s" %(id, serv), headers=headers1).json
         urls_page = ""
         try:
             if "finished" == data_json["status"]: urls_page = "https://%s/embed/%s" %(data_json["server"], data_json["extid"])
@@ -246,8 +251,7 @@ def server_repros(urls_page):
     for idurl in urls_page1:
         #post = {"codigo":idurl}
         #post = urllib.urlencode(post)
-        dd1 = httptools.downloadpage("https://repros.live/player/ajaxdata", post = urllib.urlencode({"codigo":idurl}), headers = headers1).data
-        data_json = jsontools.load(dd1)
+        data_json = httptools.downloadpage("https://repros.live/player/ajaxdata", post = urllib.urlencode({"codigo":idurl}), headers = headers1).json
         new_data.append(data_json["url"])
 
 

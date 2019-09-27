@@ -6,7 +6,7 @@
 import re
 import sys
 import urllib
-import urlparse
+import urlparse, base64
 
 from core import httptools
 from core import scrapertools
@@ -19,26 +19,9 @@ from channelselector import get_thumb
 
 __channel__ = "canalpelis"
 
-host = "http://www.canalpelis.com/"
+__modo_grafico__ = config.get_setting('modo_grafico', __channel__)
 
-try:
-    __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
-    __perfil__ = int(config.get_setting('perfil', __channel__))
-except:
-    __modo_grafico__ = True
-    __perfil__ = 0
-
-# Fijar perfil de color
-perfil = [['0xFFFFE6CC', '0xFFFFCE9C', '0xFF994D00', '0xFFFE2E2E', '0xFFFFD700'],
-          ['0xFFA5F6AF', '0xFF5FDA6D', '0xFF11811E', '0xFFFE2E2E', '0xFFFFD700'],
-          ['0xFF58D3F7', '0xFF2E9AFE', '0xFF2E64FE', '0xFFFE2E2E', '0xFFFFD700']]
-if __perfil__ < 3:
-    color1, color2, color3, color4, color5 = perfil[__perfil__]
-else:
-    color1 = color2 = color3 = color4 = color5 = ""
-
-headers = [['User-Agent', 'Mozilla/50.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0'],
-           ['Referer', host]]
+host = "https://cinexin.net/"
 
 parameters = channeltools.get_channel_parameters(__channel__)
 fanart_host = parameters['fanart']
@@ -53,25 +36,36 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Peliculas", action="peliculas", thumbnail=get_thumb('movies', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
-                               url=host + 'movies/', viewmode="movie_with_plot"))
+                               url=host + 'peliculas/', viewmode="movie_with_plot"))
 
     itemlist.append(item.clone(title="Géneros", action="generos", thumbnail=get_thumb('genres', auto=True),
                                text_blod=True, page=0, viewcontent='movies',
-                               url=host + 'genre/', viewmode="movie_with_plot"))
+                               url=host + 'peliculas/', viewmode="movie_with_plot"))
 
     itemlist.append(item.clone(title="Año de Estreno", action="year_release", thumbnail=get_thumb('year', auto=True),
-                               text_blod=True, page=0, viewcontent='movies', url=host + 'release/',
+                               text_blod=True, page=0, viewcontent='movies', url=host + 'peliculas/',
                                viewmode="movie_with_plot"))
 
+    itemlist.append(item.clone(title="Series", action="series", extra='serie', url=host + 'series/',
+                               viewmode="movie_with_plot", text_blod=True, viewcontent='movies',
+                               thumbnail=get_thumb('tvshows', auto=True), page=0))
+    
     itemlist.append(item.clone(title="Buscar", action="search", thumbnail=get_thumb('search', auto=True),
                                text_blod=True, url=host, page=0))
 
-    itemlist.append(item.clone(title="Series", action="series", extra='serie', url=host + 'tvshows/',
-                               viewmode="movie_with_plot", text_blod=True, viewcontent='movies',
-                               thumbnail=get_thumb('tvshows', auto=True), page=0))
 
     return itemlist
 
+#color en base al rating (evaluacion)
+def color_rating(rating):
+    try:
+        rating_f = float(rating)
+        if rating_f < 5: color = "tomato"
+        elif rating_f >= 7: color = "palegreen"
+        else: color = "grey"
+    except:
+        color = "grey"
+    return color
 
 def search(item, texto):
     logger.info()
@@ -92,28 +86,60 @@ def search(item, texto):
 
 def sub_search(item):
     logger.info()
-
+    
     itemlist = []
+    
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     # logger.info(data)
     patron = '<div class="thumbnail animation-2"><a href="([^"]+)">.*?'  # url
     patron += '<img src="([^"]+)" alt="([^"]+)" />.*?'  # img and title
     patron += '<span class="([^"]+)".*?'  # tipo
+    patron += '<span class="rating">IMDb (.*?)</span>' #rating
     patron += '<span class="year">([^<]+)</span>'  # year
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedurl, scrapedthumbnail, scrapedtitle, tipo, year in matches:
-        itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, contentTitle=scrapedtitle,
-                                   action="findvideos", infoLabels={"year": year},
-                                   thumbnail=scrapedthumbnail, text_color=color3, page=0))
+    for scrapedurl, scrapedthumbnail, scrapedtitle, tipo, rating, year in matches[item.page:item.page + 30]:
+        #para tomar la imagen completa
+        scrapedthumbnail = scrapedthumbnail.replace("-150x150", "")
+        
+        title = scrapedtitle
+        if not config.get_setting('unify'):
+            #rating con color(evaluacion)
+            rcolor = color_rating(rating)
+            title += " [COLOR blue](%s)[/COLOR] [COLOR %s](%s)[/COLOR] [COLOR yellow][%s][/COLOR]" % (
+                        year, rcolor, rating, quality)
 
-    paginacion = scrapertools.find_single_match(
-        data, '<a class="page larger" href="([^"]+)">\d+</a>')
+        new_item = item.clone(title=title, url=scrapedurl, page=0,
+                              infoLabels={"year": year},
+                              thumbnail=scrapedthumbnail)
+        
+        #diferencia series y peliculas
+        if tipo != "movies":
+            new_item.action = "temporadas"
+            new_item.contentSerieName = scrapedtitle
+            if not config.get_setting('unify'):
+                new_item.title += " [COLOR khaki](Serie)[/COLOR]"
 
-    if paginacion:
-        itemlist.append(Item(channel=item.channel, action="sub_search",
-                             title="» Siguiente »", url=paginacion))
+        else:
+            new_item.action = "findvideos"
+            new_item.contentTitle=scrapedtitle
+
+        itemlist.append(item.clone(title=title, url=scrapedurl, contentTitle=scrapedtitle,
+                                   action=action, infoLabels={"year": year},
+                                   thumbnail=scrapedthumbnail, page=0))
+
+    #busquedas que coinciden con genero arrojan cientos de resultados
+    if item.page + 30 < len(matches):
+        itemlist.append(item.clone(page=item.page + 30, action="sub_search",
+                                   title="» Siguiente »", text_color=color3))
+    else:
+        next_page = scrapertools.find_single_match(
+            data, '<a class=\'arrow_pag\' href="([^"]+)">')
+
+        if next_page:
+            itemlist.append(item.clone(url=next_page, page=0,
+                                       title="» Siguiente »"))
 
     tmdb.set_infoLabels(itemlist)
 
@@ -126,11 +152,11 @@ def newest(categoria):
     item = Item()
     try:
         if categoria == 'peliculas':
-            item.url = host + 'movies/'
+            item.url = host + 'peliculas/'
         elif categoria == 'infantiles':
-            item.url = host + "genre/cine-animacion/"
+            item.url = host + "genero/animacion/"
         elif categoria == 'terror':
-            item.url = host + "genre/cine-terror/"
+            item.url = host + "genero/terror/"
         else:
             return []
 
@@ -151,12 +177,12 @@ def newest(categoria):
 def peliculas(item):
     logger.info()
     itemlist = []
+    action = "findvideos"
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
-
-    patron = '<div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'  # img, title.strip()
-    patron += '<span class="icon-star2"></span>(.*?)/div>.*?'  # rating
+    patron = 'class="item movies">.*?<img src="([^"]+)" alt="([^"]+)">.*?'  # img, title.strip() movies
+    patron += '<span class="icon-star2"></span> (.*?)</div>.*?'  # rating
     patron += '<span class="quality">([^<]+)</span>.*?'  # calidad
     patron += '<a href="([^"]+)"><div class="see"></div>.*?'  # url
     patron += '<span>(\d+)</span>'  # year
@@ -164,13 +190,23 @@ def peliculas(item):
     matches = scrapertools.find_multiple_matches(data, patron)
 
     for scrapedthumbnail, scrapedtitle, rating, quality, scrapedurl, year in matches[item.page:item.page + 30]:
+
         if 'Próximamente' not in quality and '-XXX.jpg' not in scrapedthumbnail:
+            #para tomar la imagen completa
+            scrapedthumbnail = scrapedthumbnail.replace("-185x278", "")
             scrapedtitle = scrapedtitle.replace('Ver ', '').strip()
             contentTitle = scrapedtitle.partition(':')[0].partition(',')[0]
-            title = "%s [COLOR green][%s][/COLOR] [COLOR yellow][%s][/COLOR]" % (
-                scrapedtitle, year, quality)
+            
 
-            itemlist.append(item.clone(channel=__channel__, action="findvideos", text_color=color3,
+            title = scrapedtitle
+            
+            if not config.get_setting('unify'):
+                #rating con color(evaluacion)
+                rcolor = color_rating(rating)
+                title += " [COLOR blue](%s)[/COLOR] [COLOR %s](%s)[/COLOR] [COLOR yellow][%s][/COLOR]" % (
+                        year, rcolor, rating, quality)
+
+            itemlist.append(item.clone(channel=__channel__, action="findvideos",
                                        url=scrapedurl, infoLabels={'year': year},
                                        contentTitle=contentTitle, thumbnail=scrapedthumbnail,
                                        title=title, context="buscar_trailer", quality=quality))
@@ -179,14 +215,14 @@ def peliculas(item):
 
     if item.page + 30 < len(matches):
         itemlist.append(item.clone(page=item.page + 30,
-                                   title="» Siguiente »", text_color=color3))
+                                   title="» Siguiente »"))
     else:
         next_page = scrapertools.find_single_match(
             data, "<span class=\"current\">\d+</span><a href='([^']+)'")
 
         if next_page:
             itemlist.append(item.clone(url=next_page, page=0,
-                                       title="» Siguiente »", text_color=color3))
+                                       title="» Siguiente »"))
 
     for item in itemlist:
         if item.infoLabels['plot'] == '':
@@ -211,15 +247,14 @@ def generos(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-
-    patron = '<li class="cat-item cat-item-[^"]+"><a href="([^"]+)" title="[^"]+">([^<]+)</a> <i>([^<]+)</i></li>'
+    patron = '<li class="cat-item cat-item-\d+"><a href="([^"]+)">([^<]+)</a> <i>([^<]+)</i></li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle, cantidad in matches:
-        if cantidad != '0' and scrapedtitle != '# Próximamente':
+        if cantidad != '0':# and not '♦' in scrapedtitle:
             title = "%s (%s)" % (scrapedtitle, cantidad)
             itemlist.append(item.clone(channel=item.channel, action="peliculas", title=title, page=0,
-                                       url=scrapedurl, text_color=color3, viewmode="movie_with_plot"))
+                                       url=scrapedurl, viewmode="movie_with_plot"))
 
     return itemlist
 
@@ -236,7 +271,7 @@ def year_release(item):
 
     for scrapedurl, scrapedtitle in matches:
         itemlist.append(item.clone(channel=item.channel, action="peliculas", title=scrapedtitle, page=0,
-                                   url=scrapedurl, text_color=color3, viewmode="movie_with_plot", extra='next'))
+                                   url=scrapedurl, viewmode="movie_with_plot", extra='next'))
 
     return itemlist
 
@@ -247,34 +282,47 @@ def series(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\(.*?\)|&nbsp;|<br>", "", data)
-    patron = '<div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?<a href="([^"]+)">.*?'
-    patron += '<div class="texto">([^<]+)</div>'
+    patron = '<div class="poster">.*?<img src="([^"]+)" alt="([^"]+)">'
+    patron += '.*?<a href="([^"]+)">.*?IMDb: (.*?)</span>\s*'
+    patron += '<span>(\d+)</span>.*?<div class="texto">([^<]+)</div>'
 
     matches = scrapertools.find_multiple_matches(data, patron)
 
-    for scrapedthumbnail, scrapedtitle, scrapedurl, plot in matches[item.page:item.page + 30]:
+    for thumbnail, stitle, url, rating, year, plot in matches[item.page:item.page + 30]:
         if plot == '':
             plot = scrapertools.find_single_match(data, '<div class="texto">([^<]+)</div>')
-        scrapedtitle = scrapedtitle.replace('Ver ', '').replace(
-            ' Online HD', '').replace('ver ', '').replace(' Online', '').replace(' (Serie TV)', '').strip()
-        itemlist.append(item.clone(title=scrapedtitle, url=scrapedurl, action="temporadas",
-                                   contentSerieName=scrapedtitle, show=scrapedtitle, plot=plot,
-                                   thumbnail=scrapedthumbnail, contentType='tvshow'))
+        
+        stitle = stitle.strip()
+        
+        thumbnail = thumbnail.replace("-185x278", "")
+        
+        filter_list = {"first_air_date": year}
+        filter_list = filter_list.items()
 
-    # url_next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
+        rcolor = color_rating(rating)
+
+        title = stitle
+        if not config.get_setting('unify'):
+            title += " [COLOR blue](%s)[/COLOR] [COLOR %s](%s)[/COLOR]" % (year, rcolor, rating)
+
+
+        itemlist.append(item.clone(title=title, url=url, action="temporadas",
+                                   contentSerieName=stitle, plot=plot,
+                                   thumbnail=thumbnail, contentType='tvshow',
+                                   infoLabels={'filtro': filter_list}))
 
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
 
     if item.page + 30 < len(matches):
         itemlist.append(item.clone(page=item.page + 30,
-                                   title="» Siguiente »", text_color=color3))
+                                   title="» Siguiente »"))
     else:
         next_page = scrapertools.find_single_match(
             data, '<link rel="next" href="([^"]+)" />')
 
         if next_page:
             itemlist.append(item.clone(url=next_page, page=0,
-                                       title="» Siguiente »", text_color=color3))
+                                       title="» Siguiente »"))
 
     return itemlist
 
@@ -300,21 +348,22 @@ def temporadas(item):
 
         tmdb.set_infoLabels(itemlist, __modo_grafico__)
 
-        for i in itemlist:
-            i.title = "%s. %s" % (i.infoLabels['season'], i.infoLabels['tvshowtitle'])
-            if i.infoLabels['title']:
-                # Si la temporada tiene nombre propio añadirselo al titulo del item
-                i.title += " - %s" % (i.infoLabels['title'])
-            if i.infoLabels.has_key('poster_path'):
-                # Si la temporada tiene poster propio remplazar al de la serie
-                i.thumbnail = i.infoLabels['poster_path']
+        if not config.get_setting('unify'):
+            for i in itemlist:
+                i.title = "%s. %s" % (i.infoLabels['season'], i.infoLabels['tvshowtitle'])
+                if i.infoLabels['title']:
+                    # Si la temporada tiene nombre propio añadirselo al titulo del item
+                    i.title += " - %s" % (i.infoLabels['title'])
+                if i.infoLabels.has_key('poster_path'):
+                    # Si la temporada tiene poster propio remplazar al de la serie
+                    i.thumbnail = i.infoLabels['poster_path']
 
         itemlist.sort(key=lambda it: it.title)
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=__channel__, title="Añadir esta serie a la videoteca", url=item.url,
-                             action="add_serie_to_library", extra="episodios", show=item.show, category="Series",
-                             text_color=color1, thumbnail=thumbnail_host, fanart=fanart_host))
+                             action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
+                             thumbnail=thumbnail_host, fanart=fanart_host))
 
         return itemlist
     else:
@@ -343,8 +392,8 @@ def episodios(item):
             continue
 
         title = "%sx%s: %s" % (season, episode.zfill(2), scrapertools.unescape(scrapedname))
-        new_item = item.clone(title=title, url=scrapedurl, action="findvideos", text_color=color3, fulltitle=title,
-                              contentType="episode")
+        new_item = item.clone(title=title, url=scrapedurl, action="findvideos", 
+                              contentTitle=title, contentType="episode")
         if 'infoLabels' not in new_item:
             new_item.infoLabels = {}
 
@@ -357,23 +406,25 @@ def episodios(item):
     if not item.extra:
         # Obtenemos los datos de todos los capitulos de la temporada mediante multihilos
         tmdb.set_infoLabels(itemlist, __modo_grafico__)
-        for i in itemlist:
-            if i.infoLabels['title']:
-                # Si el capitulo tiene nombre propio añadirselo al titulo del item
-                i.title = "%sx%s %s" % (i.infoLabels['season'], i.infoLabels[
-                    'episode'], i.infoLabels['title'])
-            if i.infoLabels.has_key('poster_path'):
-                # Si el capitulo tiene imagen propia remplazar al poster
-                i.thumbnail = i.infoLabels['poster_path']
+        if not config.get_setting('unify'):
+            for i in itemlist:
+                if i.infoLabels['title']:
+                    # Si el capitulo tiene nombre propio añadirselo al titulo del item
+                    i.title = "%sx%s %s" % (i.infoLabels['season'], i.infoLabels[
+                        'episode'], i.infoLabels['title'])
+                if i.infoLabels.has_key('poster_path'):
+                    # Si el capitulo tiene imagen propia remplazar al poster
+                    i.thumbnail = i.infoLabels['poster_path']
 
     itemlist.sort(key=lambda it: int(it.infoLabels['episode']),
                   reverse=config.get_setting('orden_episodios', __channel__))
-    tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
+
     # Opción "Añadir esta serie a la videoteca"
     if config.get_videolibrary_support() and len(itemlist) > 0:
-        itemlist.append(Item(channel=__channel__, title="Añadir esta serie a la videoteca", url=item.url,
-                             action="add_serie_to_library", extra="episodios", show=item.show, category="Series",
-                             text_color=color1, thumbnail=thumbnail_host, fanart=fanart_host))
+        itemlist.append(Item(channel=__channel__, title="Añadir esta serie a la videoteca",
+                             url=item.url, action="add_serie_to_library", extra="episodios",
+                             contentSerieName=item.contentSerieName,
+                             thumbnail=thumbnail_host, fanart=fanart_host))
 
     return itemlist
 
@@ -396,18 +447,17 @@ def findvideos(item):
                   'gb': '[COLOR red](VOSE)[/COLOR]'}
         if lang in idioma:
             lang = idioma[lang]
+        else:
+            lang = idioma['en']
         post = {'action': 'doo_player_ajax', 'post': id, 'nume': option, 'type': 'movie'}
         post = urllib.urlencode(post)
         test_url = '%swp-admin/admin-ajax.php' % host
         new_data = httptools.downloadpage(test_url, post=post, headers={'Referer': item.url}).data
-        hidden_url = scrapertools.find_single_match(new_data, "src='([^']+)'")
-        new_data = httptools.downloadpage(hidden_url, follow_redirects=False)
-
-        try:
-            b64_url = scrapertools.find_single_match(new_data.headers['location'], "y=(.*)")
+        url = scrapertools.find_single_match(new_data, "src='([^']+)'")
+        
+        b64_url = scrapertools.find_single_match(url, "y=(.*?)&")
+        if b64_url:
             url = base64.b64decode(b64_url)
-        except:
-            url = hidden_url
         if url != '':
             itemlist.append(
                 Item(channel=item.channel, action='play', language=lang, infoLabels=item.infoLabels,

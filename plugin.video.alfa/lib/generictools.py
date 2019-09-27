@@ -15,6 +15,7 @@ import urlparse
 import datetime
 import time
 import traceback
+import json
 
 from channelselector import get_thumb
 from core import httptools
@@ -248,6 +249,14 @@ def refresh_screen(item):
 def post_tmdb_listado(item, itemlist):
     logger.info()
     itemlist_fo = []
+    try:
+        from channels import test
+        if test.TEST_ACTIVE:
+            test_active = True
+        else:
+            test_active = False
+    except:
+        test_active = False
     
     """
         
@@ -343,10 +352,12 @@ def post_tmdb_listado(item, itemlist):
             item_local.infoLabels['aired'] = ''
             
         #Si traía el TMDB-ID, pero no ha funcionado, lo reseteamos e intentamos de nuevo
+        if item_local.infoLabels['tmdb_id'] and test_active:            # Si se están pasando tests,
+            del item_local.infoLabels['tmdb_id']                        # ignorar el TMDB
         if item_local.infoLabels['tmdb_id'] and not item_local.infoLabels['originaltitle']:
             logger.error("*** TMDB-ID erroneo, reseteamos y reintentamos ***")
             logger.error(item_local)
-            del item_local.infoLabels['tmdb_id']                #puede traer un TMDB-ID erroneo
+            del item_local.infoLabels['tmdb_id']                        #puede traer un TMDB-ID erroneo
             try:
                 tmdb.set_infoLabels(item_local, __modo_grafico__, idioma_busqueda='es,en')  #pasamos otra vez por TMDB
             except:
@@ -428,10 +439,13 @@ def post_tmdb_listado(item, itemlist):
                 else:
                     title = '%s -Temporada !!!' % (title)
 
-            elif item.action == "search" or item.extra == "search":
+            elif (item.action == "search" or item.extra == "search") and not \
+                        (item_local.extra == "varios" or item_local.extra == "documentales"):
                 title += " -Serie-"
         
-        if (item_local.extra == "varios" or item_local.extra == "documentales") and (item.action == "search" or item.extra == "search" or item.action == "listado_busqueda"):
+        if (item_local.extra == "varios" or item_local.extra == "documentales") \
+                        and (item.action == "search" or item.extra == "search" or \
+                        item.action == "listado_busqueda"):
             title += " -Varios-"
             item_local.contentTitle += " -Varios-"
         
@@ -491,7 +505,7 @@ def post_tmdb_listado(item, itemlist):
     return (item, itemlist)
 
 
-def post_tmdb_seasons(item, itemlist):
+def post_tmdb_seasons(item, itemlist, url='serie'):
     logger.info()
     
     """
@@ -581,6 +595,8 @@ def post_tmdb_seasons(item, itemlist):
             item_season = item.clone()
             item_season.contentSeason = item_local.contentSeason    #Se pone el núm de Temporada para obtener mejores datos de TMDB
             item_season.title = 'Temporada %s' % item_season.contentSeason
+            if url != 'serie':
+                item_season.url = item_local.url
             itemlist_temporadas.append(item_season.clone(from_title_season_colapse=item.title))
             
     #Si hay más de una temporada se sigue, o se ha forzado a listar por temporadas, si no se devuelve el Itemlist original
@@ -629,7 +645,8 @@ def post_tmdb_seasons(item, itemlist):
     
     #Es un canal estándar, sólo una linea de Añadir a Videoteca
     title = ''
-    if item.infoLabels['status'] and item.infoLabels['status'].lower() == "ended":
+    if item.infoLabels['status'] and (item.infoLabels['status'].lower() == "ended" \
+                        or item.infoLabels['status'].lower() == "canceled"):
         title += ' [TERMINADA]'
     itemlist_temporadas.append(item_season.clone(title="[COLOR yellow]Añadir esta serie a videoteca-[/COLOR]" + title, action="add_serie_to_library", extra="episodios", add_menu=True))
 
@@ -702,16 +719,16 @@ def post_tmdb_episodios(item, itemlist):
     #Restauramos valores si ha habido fail-over
     channel_alt = ''
     if item.channel == channel_py:
-        if item.channel_alt:
+        if item.channel_alt or item.channel_redir:
             channel_alt = item.category
-            item.category = item.channel_alt.capitalize()
-            del item.channel_alt
+            item.category = item.channel_redir.capitalize() or item.channel_alt.capitalize()
+            if item.channel_alt: del item.channel_alt
     else:
-        if item.channel_alt:
+        if item.channel_alt or item.channel_redir:
             channel_alt = item.channel
-            item.channel = item.channel_alt
-            item.category = item.channel_alt.capitalize()
-            del item.channel_alt
+            item.channel = item.channel_redir.lower() or item.channel_alt.lower()
+            item.category = item.channel_redir.capitalize() or item.channel_alt.capitalize()
+            if item.channel_alt: del item.channel_alt
     if item.url_alt:
         item.url = item.url_alt
         del item.url_alt
@@ -730,7 +747,7 @@ def post_tmdb_episodios(item, itemlist):
     if item.channel_host:
         del item.channel_host
         
-    for item_local in itemlist:                             #Recorremos el Itemlist generado por el canal
+    for item_local in itemlist:                                                 #Recorremos el Itemlist generado por el canal
         if item_local.add_videolibrary:
             del item_local.add_videolibrary
         if item_local.add_menu:
@@ -782,30 +799,24 @@ def post_tmdb_episodios(item, itemlist):
         item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
         
         #logger.debug(item_local)
-        
+
         #Ajustamos el nombre de la categoría si es un clone de NewPct1
         if item_local.channel == channel_py:
+            if item.library_urls or item.add_videolibrary:                      # Si videne de videoteca cambiamos el nombre de canal al clone
+                item_local.channel = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
             item_local.category = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
-        
         #Restauramos valores para cada Episodio si ha habido fail-over de un clone de NewPct1
-        if item_local.channel == channel_py:
-            if item_local.channel_alt:
-                item_local.category = item_local.channel_alt
-                del item_local.channel_alt
-        else:
-            if item_local.channel_alt:
-                item_local.channel = item_local.channel_alt
-                del item_local.channel_alt
+        if item_local.channel_alt or item_local.channel_redir:
+            item_local.channel = item_local.channel_redir.lower() or item_local.channel_alt.lower()
+            item_local.category = item_local.channel_redir.capitalize() or item_local.channel_alt.capitalize()
+            if item_local.channel_alt: del item_local.channel_alt
+            #if item_local.channel_redir: del item_local.channel_redir
         if item_local.url_alt:
-            host_act = scrapertools.find_single_match(item_local.url, ':\/\/(.*?)\/')
-            host_org = scrapertools.find_single_match(item_local.url_alt, ':\/\/(.*?)\/')
+            host_act = scrapertools.find_single_match(item_local.url, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
+            host_org = scrapertools.find_single_match(item_local.url_alt, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
             item_local.url = item_local.url.replace(host_act, host_org)
             del item_local.url_alt
             
-        #Si está actualizando videoteca de una serie NewPct1, restauramos el channel con el nombre del clone
-        if item_local.channel == channel_py and (item.library_playcounts or item.add_videolibrary):
-            item_local.channel = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')
-        
         #Si el título de la serie está verificado en TMDB, se intenta descubrir los eisodios fuera de rango,
         #que son probables errores de la Web
         if item.tmdb_stat:
@@ -909,10 +920,15 @@ def post_tmdb_episodios(item, itemlist):
 
         #logger.debug("title: " + item_local.title + " / url: " + item_local.url + " / calidad: " + item_local.quality + " / Season: " + str(item_local.contentSeason) + " / EpisodeNumber: " + str(item_local.contentEpisodeNumber) + " / num_episodios_lista: " + str(num_episodios_lista) + str(num_episodios_flag))
         #logger.debug(item_local)
-    
+
     #Si está actualizando videoteca de una serie NewPct1, restauramos el channel con el nombre del clone
     if item.channel == channel_py and (item.library_playcounts or item.add_videolibrary):
-        item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')
+        if item.channel_redir:
+            item.channel = item.channel_redir.lower()
+        else:
+            item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')
+    if item.channel_redir:
+        del item.channel_redir
     
     #Terminado el repaso de cada episodio, cerramos con el pié de página
     #En primer lugar actualizamos todos los episodios con su núm máximo de episodios por temporada
@@ -1162,7 +1178,8 @@ def post_tmdb_findvideos(item, itemlist):
         
     if item.contentType == "episode" or item.contentType == "season":                   #Series o Temporadas
         title_gen += '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] [%s]' % (item.contentSerieName, item.infoLabels['year'], rating, item.quality, str(item.language), scrapertools.find_single_match(item.title, '\s\[(\d+,?\d*?\s\w[b|B])\]'))                                      #Rating, Calidad, Idioma, Tamaño
-        if item.infoLabels['status'] and item.infoLabels['status'].lower() == "ended":
+        if item.infoLabels['status'] and (item.infoLabels['status'].lower() == "ended" \
+                        or item.infoLabels['status'].lower() == "canceled"):
             title_gen = '[TERM.] %s' % title_gen        #Marca cuando la Serie está terminada y no va a haber más producción
         item.title = title_gen
 
@@ -1195,7 +1212,7 @@ def post_tmdb_findvideos(item, itemlist):
         del item.intervencion
     
     #Pintamos el pseudo-título con toda la información disponible del vídeo
-    itemlist.append(item.clone(action="", server = "", title=title_gen, folder=False))  #Título con todos los datos del vídeo
+    itemlist.append(item.clone(action="", title=title_gen, folder=False))       #Título con todos los datos del vídeo
     
     if item.action == 'show_result':                                            #Viene de una búsqueda global
         channel = item.channel.capitalize()
@@ -1211,20 +1228,106 @@ def post_tmdb_findvideos(item, itemlist):
         itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", action="actualizar_titulos", extra="peliculas", tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
         
     if item.contentType == 'movie' and item.contentChannel != "videolibrary":
-        itemlist.append(item.clone(title="**-[COLOR yellow] Añadir a la videoteca [/COLOR]-**", action="add_pelicula_to_library", extra="peliculas", from_action=item.action, from_title_tmdb=item.title))
+        itemlist.append(item.clone(title="**-[COLOR yellow] Añadir a la videoteca [/COLOR]-**", 
+                    action="add_pelicula_to_library", extra="peliculas", from_action=item.action, 
+                    from_title_tmdb=item.title))
     
     #Añadimos la opción de ver trailers
     if item.contentChannel != "videolibrary":
-        itemlist.append(item.clone(channel="trailertools", title="**-[COLOR magenta] Buscar Trailer [/COLOR]-**", action="buscartrailer", context=""))
+        itemlist.append(item.clone(channel="trailertools", title="**-[COLOR magenta] Buscar Trailer [/COLOR]-**", 
+                    action="buscartrailer", context=""))
+        
+    #Si tiene contraseña, la pintamos
+    if 'RAR-' in item.torrent_info and not item.password:
+        item = find_rar_password(item)
+    if item.password:
+        itemlist.append(item.clone(action="", title="[COLOR magenta][B] Contraseña: [/B][/COLOR]'" 
+                    + item.password + "'", folder=False))
     
     #logger.debug(item)
     
     return (item, itemlist)
     
     
-def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5, file_list=False):
+def find_rar_password(item):
     logger.info()
-    from core import videolibrarytools
+    
+    # Si no hay, buscamos en páginas alternativas
+    rar_search = [
+                 ['1', 'https://descargas2020.org/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
+                                ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
+                 ['1', 'https://pctnew.org/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
+                                ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
+                 ['1', 'http://www.tvsinpagar.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-0', 'capitulo-'], \
+                                ['capitulos-0', 'capitulos-']]], 
+                 ['2', 'https://grantorrent.net/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
+                                ['-temporada', '/temporada'], ['^((?!serie).)*$', 'None'], \
+                                ['.net\/', '.net/descargar/peliculas-castellano/'], ['\/$', '/blurayrip-ac3-5-1/']]], 
+                 ['2', 'https://mejortorrent1.net/', [[]], [['^((?!temporada).)*$', 'None'], \
+                                ['.net\/', '.net/descargar/peliculas-castellano/'], ['-microhd-1080p\/$', '']]]
+    ]
+    
+    url_host = scrapertools.find_single_match(item.url, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
+    url_host_act = url_host
+    url_password = item.url
+    if item.referer:
+        url_password = item.referer
+    
+    for y in ['2', '1']:
+        for active, clone_id, regex_list, regex_url_list in rar_search:
+            x = str(y)
+            if item.password: break
+            if active != x: continue
+            if x == '2' and clone_id not in url_host: continue
+            url_password = url_password.replace(url_host_act, clone_id)
+            url_host_act = scrapertools.find_single_match(url_password, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
+
+            for regex, regex_rep in regex_url_list:
+                if regex_rep == 'None':
+                    if scrapertools.find_single_match(url_password, regex):
+                        continue
+                    else:
+                        break
+                if regex:
+                    url_password = re.sub(regex, regex_rep, url_password)
+            if 'grantorrent' in url_password:
+                if item.contentType == 'episode':
+                    url_password = '%scapitulo-%s/' % (url_password, item.contentEpisodeNumber)
+            
+            if x != '1': continue
+            if url_host == clone_id: continue
+            try:
+                data_password = ''
+                data_password = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url_password).data)
+                data_password = data_password.replace("$!", "#!").replace("'", "\"").replace("Ã±", "ñ").replace("//pictures", "/pictures")
+            except:
+                logger.error(traceback.format_exc(1))
+            
+            for regex_alt in regex_list:
+                for regex in regex_alt:
+                    if scrapertools.find_single_match(data_password, regex):
+                        item.password = scrapertools.find_single_match(data_password, regex)
+                        break
+    
+    logger.info('Contraseña vídeo: %s' % item.password)
+    return item
+
+
+def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torrent=False, \
+                        timeout=5, file_list=False, lookup=True, local_torr=None, headers={}, short_pad=False):
+    logger.info()
+    from servers import torrent
+    try:
+        from channels import test
+        if test.TEST_ACTIVE:
+            test_active = True
+        else:
+            test_active = False
+    except:
+        test_active = False
     
     """
     
@@ -1239,7 +1342,7 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
     Entrada: post:      contenido del post en caso de llamada con post
     Entrada: data_torrent:  Flag por si se quiere el contenido del .torretn de vuelta
     Salida: size:       str con el tamaño y tipo de medida ( MB, GB, etc)
-    Salida: torrent:    dict() con el contenido del .torrent (opcional)
+    Salida: torrent_f:  dict() con el contenido del .torrent (opcional)
     Salida: files:      dict() con los nombres de los archivos del torrent y su tamaño (opcional)
     
     """
@@ -1306,7 +1409,8 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
     
     #Móludo principal
     size = ''
-    torrent = ''
+    torrent_f = ''
+    torrent_file = ''
     files = {}
     try:
         #torrents_path = config.get_videolibrary_path() + '/torrents'            #path para dejar el .torrent
@@ -1317,36 +1421,51 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
         #urllib.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'
         #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
         #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
-        
-        torrents_path, torrent_file = videolibrarytools.caching_torrents(url, referer=referer, post=post, timeout=timeout, lookup=True, data_torrent=True)
+
+        if ((url and not local_torr) or url.startswith('magnet')) and not test_active:
+            torrents_path, torrent_file = torrent.caching_torrents(url, \
+                        referer=referer, post=post, torrents_path=torrents_path, \
+                        timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)
+        elif local_torr:
+            torrent_file = filetools.read(local_torr)
         if not torrent_file:
-            if file_list and data_torrent:
-                return (size, torrent, files)
-            if file_list:
+            if not lookup:
+                return (size, torrents_path, torrent_f, files)
+            elif file_list and data_torrent:
+                return (size, torrent_f, files)
+            elif file_list:
                 return (size, files)
-            if data_torrent:
-                return (size, torrent)
+            elif data_torrent:
+                return (size, torrent_f)
             return size                                         #Si hay un error, devolvemos el "size" y "torrent" vacíos
 
-        torrent = decode(torrent_file)                                          #decodificamos el .torrent
+        torrent_f = decode(torrent_file)                                          #decodificamos el .torrent
 
         #si sólo tiene un archivo, tomamos la longitud y la convertimos a una unidad legible, si no dará error
         try:
-            sizet = torrent["info"]['length']
+            sizet = torrent_f["info"]['length']
             size = convert_size(sizet)
             
-            files = torrent["info"]
+            files = torrent_f["info"].copy()
+            if 'path' not in files: files.update({'path': ['']})
+            if 'piece length' in files: del files['piece length']
+            if 'pieces' in files: del files['pieces']
+            if 'name' in files: del files['name']
+            files = [files]
+            files.append({"__name": torrent_f["info"]["name"], 'length': 0})
         except:
             pass
             
         #si tiene múltiples archivos sumamos la longitud de todos
         if not size:
             try:
-                check_video = scrapertools.find_multiple_matches(str(torrent["info"]["files"]), "'length': (\d+).*?}")
+                check_video = scrapertools.find_multiple_matches(str(torrent_f["info"]["files"]), "'length': (\d+).*?}")
                 sizet = sum([int(i) for i in check_video])
                 size = convert_size(sizet)
                 
-                files = torrent["info"]["files"]
+                files = torrent_f["info"]["files"][:]
+                files.append({"__name": torrent_f["info"]["name"], 'length': 0})
+                
             except:
                 pass
 
@@ -1358,17 +1477,22 @@ def get_torrent_size(url, referer=None, post=None, data_torrent=False, timeout=5
     #    os.remove(torrents_path + "/generictools.torrent")                      #borramos el .torrent
     #except:
     #    pass
+
+    if '.rar' in str(files):
+        size = '[COLOR magenta][B]RAR-[/B][/COLOR]%s' % size
         
     #logger.debug(str(url))
     logger.info(str(size))
     
-    if file_list and data_torrent:
-        return (size, torrent, files)
-    if file_list:
+    if not lookup:
+        return (size, torrents_path, torrent_f, files)
+    elif file_list and data_torrent:
+        return (size, torrent_f, files)
+    elif file_list:
         return (size, files)
-    if data_torrent:
-        return (size, torrent)
-    return size
+    elif data_torrent:
+        return (size, torrent_f)
+    return size 
 
     
 def get_field_from_kodi_DB(item, from_fields='*', files='file'):
@@ -1533,7 +1657,8 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         break
         
     if not channel_failed:
-        logger.error('Patrón: ' + str(patron) + ' / fail_over_list: ' + str(fail_over_list))
+        logger.error('NO CHANNEL FAILED: Patrón: ' + str(patron) + \
+                    ' / fail_over_list: ' + str(fail_over_list))
         logger.error(item)
         return (item, data)                                             #Algo no ha funcionado, no podemos hacer nada
 
@@ -1542,7 +1667,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         data_alt = ''
         if channel == channel_failed or active == '0' or item.action in action_excluded or item.extra2 in action_excluded:  #es válido el nuevo canal?
             continue
-        if (item.action == 'episodios' or item.action == "update_tvshow" or item.action == "get_seasons" or item.action == 'findvideos') and item.contentType not in contentType:          #soporta el contenido?
+        if (item.action == 'episodios' or item.action == "update_tvshow" or item.action == "get_seasons" or item.action == 'findvideos') and item.contentType not in contentType:                           #soporta el contenido?
             continue
         
         #Hacemos el cambio de nombre de canal y url, conservando las anteriores como ALT
@@ -1552,11 +1677,14 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         item.category = channel.capitalize()
         item.url_alt = channel_url_failed
         item.url = channel_url_failed
-        channel_host_bis = re.sub(r'(?i)http.*://', '', channel_host)
-        channel_host_failed_bis = re.sub(r'(?i)http.*://', '', channel_host_failed)
+        #channel_host_bis = re.sub(r'(?i)http.*://', '', channel_host)[:-1]
+        channel_host_bis = channel_host[:-1]
+        #channel_host_failed_bis = re.sub(r'(?i)http.*://', '', channel_host_failed)
+        channel_host_failed_bis = scrapertools.find_single_match(item.url, \
+                            '((?:http.*\:)?\/\/(?:www\.)?[^\?|\/]+)(?:\?|\/)')
         item.url = item.url.replace(channel_host_failed_bis, channel_host_bis)
         
-        url_alt += [item.url]                               #salvamos la url para el bucle
+        url_alt += [item.url]                                           #salvamos la url para el bucle
         item.channel_host = channel_host
         #logger.debug(str(url_alt))
         
@@ -1570,7 +1698,11 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
             try:
                 #quitamos el 0 a la izquierda del episodio.  Algunos clones no lo aceptan
                 inter1, inter2, inter3 = scrapertools.find_single_match(item.url, '(http.*?\/temporada-\d+.*?\/capitulo.?-)(\d+)(.*?\/)')
-                inter2 = re.sub(r'^0', '', inter2)
+                if inter2.startswith('0'):
+                    inter2 = re.sub(r'^0', '', inter2)
+                else:
+                    if len(inter2) == 1:
+                        inter2 = '0%s' % inter2
                 if inter1 + inter2 + inter3 not in url_alt:
                     url_alt += [inter1 + inter2 + inter3]
                 
@@ -1582,8 +1714,8 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                 logger.error(traceback.format_exc())
             logger.debug('URLs convertidas: ' + str(url_alt))
 
-        if patron == True:                                  #solo nos han pedido verificar el clone
-            return (item, data)                             #nos vamos, con un nuevo clone
+        if patron == True:                                              #solo nos han pedido verificar el clone
+            return (item, data)                                         #nos vamos, con un nuevo clone
         
         #Leemos la nueva url.. Puede haber varias alternativas a la url original
         for url in url_alt:
@@ -1596,7 +1728,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
             except:
                 data = ''
                 logger.error(traceback.format_exc())
-            if not data:                                    #no ha habido suerte, probamos con la siguiente url
+            if not data:                                                #no ha habido suerte, probamos con la siguiente url
                 logger.error("ERROR 01: " + item.action + ": La Web no responde o la URL es erronea: " + url)
                 continue
         
@@ -1607,44 +1739,45 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                     data_alt = scrapertools.find_single_match(data, patron)
                     if not data_alt:
                         data_alt = scrapertools.find_single_match(data_comillas, patron)
-                        if data_alt and patron_alt:
+                        if not data_alt and patron_alt:
                             data_alt = scrapertools.find_single_match(data, patron_alt)
                             if not data_alt and patron_alt:
                                 data_alt = scrapertools.find_single_match(data_comillas, patron_alt)
                     if patron2 != None:
                         data_alt = scrapertools.find_single_match(data_alt, patron2)
-                if not data_alt:                            #no ha habido suerte, probamos con el siguiente canal
-                    logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " + url + " / Patron: " + patron + " / " +patron_alt)
+                if not data_alt:                                        #no ha habido suerte, probamos con el siguiente canal
+                    logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " + url + " / Patron: " + patron + " / " + patron_alt)
                     web_intervenida(item, data)
                     data = ''
                     continue
                 else:
                     #Función especial para encontrar en otro clone un .torrent válido
                     if verify_torrent == 'torrent:check:status':
-                        from core import videolibrarytools
+                        from servers import torrent
                         if not data_alt.startswith("http"):                     #Si le falta el http.: lo ponemos
                             data_alt = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + data_alt
-                        if videolibrarytools.verify_url_torrent(data_alt):      #verificamos si el .torrent existe
+                        if torrent.verify_url_torrent(data_alt):        #verificamos si el .torrent existe
                             item.url = url                                      #guardamos la url que funciona
-                            break                           #nos vamos, con la nueva url del .torrent verificada
+                            break                                       #nos vamos, con la nueva url del .torrent verificada
                         data = ''
                         continue                                                #no vale el .torrent, continuamos
-                    item.url = url                          #guardamos la url que funciona, sin verificar
-                    break                                   #por fin !!!  Este canal parece que funciona
+                    item.url = url                                      #guardamos la url que funciona, sin verificar
+                    break                                               #por fin !!!  Este canal parece que funciona
             else:
-                logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " + url + " / Patron: " + patron + " / " +patron_alt)
+                logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " 
+                            + url + " / Patron: " + patron + " / " +patron_alt)
                 web_intervenida(item, data)
                 data = ''
                 continue
                 
-        if not data:                                        #no ha habido suerte, probamos con el siguiente clone
+        if not data:                                                    #no ha habido suerte, probamos con el siguiente clone
             url_alt = []
             continue
         else:
             break
     
-    del item.extra2                                         #Borramos acción temporal excluyente
-    if not data:                                            #Si no ha logrado encontrar nada, salimos limpiando variables
+    del item.extra2                                                     #Borramos acción temporal excluyente
+    if not data:                                                        #Si no ha logrado encontrar nada, salimos limpiando variables
         if item.channel == channel_py:
             if item.channel_alt:
                 item.category = item.channel_alt.capitalize()
@@ -1668,11 +1801,11 @@ def verify_channel(channel):
     #Lista con los datos de los canales alternativos
     #Cargamos en .json del canal para ver las listas de valores en settings
     clones = channeltools.get_channel_json(channel_py)
-    for settings in clones['settings']:                             #Se recorren todos los settings
-        if settings['id'] == "clonenewpct1_channels_list":          #Encontramos en setting
-            clones = settings['default']                            #Carga lista de clones
+    for settings in clones['settings']:                                 #Se recorren todos los settings
+        if settings['id'] == "clonenewpct1_channels_list":              #Encontramos en setting
+            clones = settings['default']                                #Carga lista de clones
             channel_alt = "'%s'" % channel
-            if channel_alt in clones:                               #Si es un clon se pone como canal newpct1, si no se deja
+            if channel_alt in clones:                                   #Si es un clon se pone como canal newpct1, si no se deja
                 channel = channel_py
             return channel
     
@@ -1721,8 +1854,6 @@ def web_intervenida(item, data, desactivar=True):
             return item
         
         #Cargamos en .json del canal para ver las listas de valores en settings.  Carga las claves desordenadas !!!
-        from core import filetools
-        import json
         json_data = channeltools.get_channel_json(item.channel)
         
         if item.channel == channel_py:                                  #Si es un clone de Newpct1, lo desactivamos
@@ -1808,10 +1939,12 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     """
     #logger.debug(item)
     #if it != None: logger.debug(it)
+    if not item and not it:
+        return (item, it, False)
     if not it:
         it = Item()
-    item_back = item.clone()
-    it_back = item.clone()
+    if item: item_back = item.clone()
+    it_back = it.clone()
     ow_force_param = True
     update_stat = 0
     delete_stat = 0
@@ -1825,7 +1958,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #    logger.error('** item.ow_force: ' + item.path)             #aviso que ha habido una incidencia
     if it.ow_force == '1':                                          #Ha podido quedar activado de una pasada anterior
         del it.ow_force
-        if path and it.infoLabels['mediatype'] == 'tvshow':
+        if path and it.infoLabels['mediatype'] in ['tvshow', 'season']:
             try:
                 nfo = filetools.join(path, '/tvshow.nfo')
                 filetools.write(nfo, head_nfo + it.tojson())                #escribo el .nfo de la peli por si aborta update
@@ -1857,6 +1990,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     channel_py_alt = 'xyz123'
     if channel in fail_over_list :                      #Si es un clone de Newpct1, se actualiza el canal y la categoría
         item.channel = channel_py
+        item.category = scrapertools.find_single_match(item.url, 'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
         channel_py_alt = "'%s'" % channel_py
         if item.channel_host:                                               #y se borran resto de pasadas anteriores
             del item.channel_host
@@ -1875,7 +2009,13 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #Cuando en el .json se activa "Borrar", "emergency_urls = 2", se borran todos los enlaces existentes
     #Cuando en el .json se activa "Actualizar", "emergency_urls = 3", se actualizan todos los enlaces existentes
     
-    """
+    """ 
+    try:
+        item, it = borrar_jsons_dups(item, it, path, head_nfo)      #TEMPORAL: Reparación de Videoteca con Newpct1
+    except:
+        logger.error('Error en el proceso de borrar_jsons_dups')
+        logger.error(traceback.format_exc())
+       
     status_migration = regenerate_clones()                          #TEMPORAL: Reparación de Videoteca con Newpct1
     
     verify_cached_torrents()                                        #TEMPORAL: verificamos si los .torrents son correctos
@@ -1933,8 +2073,13 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     try:    
         if item.url and not channel_py in item.url and it.emergency_urls:       #Viene de actualización de videoteca de series
             #Analizamos si el canal ya tiene las urls de emergencia: guardar o borrar
-            if (config.get_setting("emergency_urls", item.channel) == 1 and (not item.emergency_urls or (item.emergency_urls and not item.emergency_urls.get(channel_alt, False)))) or (config.get_setting("emergency_urls", item.channel) == 2 and item.emergency_urls.get(channel_alt, False)) or config.get_setting("emergency_urls", item.channel) == 3 or emergency_urls_force:
-                intervencion += ", ('1', '%s', '%s', '', '', '', '', '', '', '', '*', '%s', 'emerg')" % (channel_alt, channel_alt, config.get_setting("emergency_urls", item.channel))
+            if (config.get_setting("emergency_urls", item.channel) == 1 and (not item.emergency_urls \
+                        or (item.emergency_urls and not item.emergency_urls.get(channel_alt, False)))) or \
+                        (config.get_setting("emergency_urls", item.channel) == 2 \
+                        and item.emergency_urls.get(channel_alt, False)) or \
+                        config.get_setting("emergency_urls", item.channel) == 3 or emergency_urls_force:
+                intervencion += ", ('1', '%s', '%s', '', '', '', '', '', '', '', '*', '%s', 'emerg')" % \
+                        (channel_alt, channel_alt, config.get_setting("emergency_urls", item.channel))
 
         elif it.library_urls:                                                   #Viene de "listar peliculas´"
             for canal_vid, url_vid in it.library_urls.items():                  #Se recorre "item.library_urls" para buscar canales candidatos
@@ -1946,8 +2091,13 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 else:
                     channel_bis = canal_vid
                 #Analizamos si el canal ya tiene las urls de emergencia: guardar o borrar
-                if (config.get_setting("emergency_urls", channel_bis) == 1 and (not it.emergency_urls or (it.emergency_urls and not it.emergency_urls.get(canal_vid, False)))) or (config.get_setting("emergency_urls", channel_bis) == 2 and it.emergency_urls.get(canal_vid, False)) or config.get_setting("emergency_urls", channel_bis) == 3 or emergency_urls_force:
-                    intervencion += ", ('1', '%s', '%s', '', '', '', '', '', '', '', '*', '%s', 'emerg')" % (canal_vid, canal_vid, config.get_setting("emergency_urls", channel_bis))
+                if (config.get_setting("emergency_urls", channel_bis) == 1 and (not it.emergency_urls \
+                        or (it.emergency_urls and not it.emergency_urls.get(canal_vid, False)))) \
+                        or (config.get_setting("emergency_urls", channel_bis) == 2 \
+                        and it.emergency_urls.get(canal_vid, False)) or \
+                        config.get_setting("emergency_urls", channel_bis) == 3 or emergency_urls_force:
+                    intervencion += ", ('1', '%s', '%s', '', '', '', '', '', '', '', '*', '%s', 'emerg')" % \
+                        (canal_vid, canal_vid, config.get_setting("emergency_urls", channel_bis))
     except:
         logger.error('Error en el proceso de ALMACENAMIENTO de URLs de Emergencia')
         logger.error(traceback.format_exc())
@@ -1970,7 +2120,9 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         if activo == '1' and (canal_org == channel_alt or canal_org == item.category.lower() or channel_alt == 'videolibrary' or ow_force == 'del' or ow_force == 'emerg'):     
             
             if item.url:
-                logger.debug('INTERV. LIST: ' + str(intervencion_list[i-1]) + ' / CHANNEL: ' + str(channel_alt) + ' / URL: ' + str(item.url))
+                logger.debug('INTERV. LIST: ' + str(intervencion_list[i-1]) + 
+                            ' / CHANNEL: ' + str(channel_alt) + ' / URL: ' + 
+                            str(item.url))
             
             if ow_force == 'del' or ow_force == 'emerg':    #Si es un borrado de estructuras erroneas, hacemos un proceso aparte
                 canal_des_def = canal_des                   #Si hay canal de sustitución para item.library_urls, lo usamos
@@ -2006,7 +2158,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                                 item.url = url_vid                          
                                 break
                         if canal_vid_alt in fail_over_list:         #Si es un clone de Newpct1, salvamos la nueva categoría
-                            item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()                                              #Salvamos categoría
+                            item.category = scrapertools.find_single_match(item.url, \
+                                    'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()   #Salvamos categoría
                         else:
                             item.category = canal_vid.capitalize()          #si no, salvamos nueva categoría
                     logger.error('item.library_urls ACTUALIZADA: ' + str(item.library_urls))
@@ -2047,8 +2200,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                         pass
                 if channel_enabled == 1 and canal_org != canal_des:         #Si el canal está activo, puede ser solo...
                     continue                                                #... una intervención que afecte solo a una región
-                if ow_force == 'no' and it.library_urls:                    #Esta regla solo vale para findvideos...
-                    continue                                                #... salidmos si estamos actualizando
+                #if ow_force == 'no' and it.library_urls:                    #Esta regla solo vale para findvideos...
+                #    continue                                                #... salidmos si estamos actualizando
                 if lookup == True:                                  #Queremos que el canal solo visualice sin migración?
                     if ow_force != 'no':
                         overwrite = True                                    #Avisamos que hay cambios
@@ -2058,7 +2211,24 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     url_total = item.url
                 elif not item.url and item.library_urls:
                     url_total = item.library_urls[canal_org]
-                url_total = url_total.replace(url_org, url_des)                 #reemplazamos una parte de url
+                
+                if item.channel == channel_py:                  #Si es un clone de Newpct1, salvamos la nueva categoría
+                    item.category = scrapertools.find_single_match(item.url, \
+                            'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()   #Salvamos categoría
+                else:
+                    item.category = canal_des.capitalize()                      #si no, salvamos nueva categoría
+                
+                if url_org == '*':                                              #Si se quiere cambiar desde cualquier url ...
+                    url_host = scrapertools.find_single_match(url_total, '(http.*\:\/\/(?:www.)?\w+\.\w+)\/|\?')
+                    url_total = url_total.replace(url_host, url_des)            #reemplazamos una parte de url
+                elif url_des.startswith('http'):
+                    if item.channel != channel_py or (item.channel == channel_py \
+                            and item.category.lower() == canal_org):
+                        url_total = scrapertools.find_single_match(url_total, \
+                            'http.*\:\/\/(?:www\.)?[^\?|\/]+(.*?$)')            #quitamos el http*:// inicial
+                        url_total = urlparse.urljoin(url_des, url_total)        #reemplazamos una parte de url
+                else:
+                    url_total = url_total.replace(url_org, url_des)             #reemplazamos una parte de url
                 url = ''
                 if patron1:                                                     #Hay expresión regex?
                     url += scrapertools.find_single_match(url_total, patron1)   #La aplicamos a url
@@ -2073,8 +2243,10 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 if url:
                     url_total = url                                     #Guardamos la suma de los resultados intermedios
                 if item.channel == channel_py or channel in fail_over_list:     #Si es Newpct1...
-                    if item.contentType == "tvshow":
-                        url_total = re.sub(r'\/\d+\/?$', '', url_total)         #parece que con el título encuentra la serie, normalmente...
+                    #if item.contentType == "tvshow" and ow_force != 'no':       #parece que con el título encuentra.., ### VIGILAR
+                    if item.contentType in ["tvshow", "season"] and canal_org != canal_des: #parece que con el título solo encuentra..,
+                        url_total = re.sub(r'\/\d{4,20}\/*$', '', url_total)    #mejor la serie, a menos que sea una redir del mismo canal
+                        item.channel_redir = item.category
                 update_stat += 1                                                #Ya hemos actualizado algo
                 canal_org_des_list += [(canal_org, canal_des, url_total, opt, ow_force)]   #salvamos el resultado para su proceso
             
@@ -2215,7 +2387,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                                 del it.emergency_urls
                             if not it.emergency_urls:                           #... lo actualizamos en el .nfo
                                 it.emergency_urls = dict()                      #... iniciamos la variable si no existe
-                            it.emergency_urls.update({canal_des_def: True})     #... se marca como activo
+                            if it.library_urls.get(canal_des_def, False):       #... y si existe el canal
+                                it.emergency_urls.update({canal_des_def: True}) #... se marca como activo
                             if it.ow_force: del it.ow_force
                             filetools.write(archivo_nfo, head_nfo + it.tojson())        #actualizo el .nfo de la peli    
                         else:
@@ -2236,9 +2409,52 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         if it.emergency_urls:
             logger.error(it.emergency_urls)
         logger.error(item)
+    if update_stat > 0 and path == False:
+        if it.library_urls:
+            logger.debug('URL cambiada: '+ str(it.library_urls))
+        else:
+            logger.debug('URL cambiada: '+ str(item.url))
 
     return (item, it, overwrite)
     
+
+def borrar_jsons_dups(item, it, path, head_nfo):
+    logger.info()
+    
+    contentType = ['tvshow', 'season']
+    if it.contentType not in contentType or it.channel != 'videolibrary' or not item \
+                or not it or not path or not head_nfo:
+        return item, it
+    
+    logger.error('Conversión de : [%s]' % it.contentSerieName)
+    claves = []
+    for clave, value in it.library_urls.items():
+        claves.append(clave)
+    
+    if it.emergency_urls:
+        nfo_upd = False
+        for clave, value in it.emergency_urls.items():
+            if clave in claves:
+                continue
+            item.emergency_urls.pop(clave, None)
+            it.emergency_urls.pop(clave, None)
+            nfo_upd = True
+            logger.error('Emergency_urls borrado: [%s] de %s' % (clave, str(claves)))
+        if nfo_upd:
+            nfo = filetools.join(path, '/tvshow.nfo')
+            filetools.write(nfo, head_nfo + it.tojson())                        #escribo el .nfo
+        
+    if path:
+        file_list = filetools.listdir(path)
+        for file in file_list:
+            file_del = filetools.join(path, file)
+            if os.path.splitext(file_del)[1] in ['.json', '.torrent']:
+                if not scrapertools.find_single_match(file, '\[(\w+)\]') in claves:
+                    filetools.remove(file_del)
+                    logger.error('Archivo borrado: "%s" de %s' % (file, str(claves)))
+
+    return item, it
+
 
 def verify_cached_torrents():
     logger.info()
@@ -2535,7 +2751,10 @@ def call_chrome(url):
                 
                 params = [path, '--kiosk', '--start-maximized', '--disable-translate', '--disable-new-tab-first-run', '--no-default-browser-check', '--no-first-run', chrome_call]
                 
-                s = subprocess.Popen(params, shell=False, creationflags=creationFlags, close_fds = True)
+                if xbmc.getCondVisibility("system.platform.Windows"):
+                    s = subprocess.Popen(params, shell=False, creationflags=creationFlags, close_fds = True)
+                else:
+                    s = subprocess.Popen(params, shell=False, close_fds = True)
                 s.communicate()
 
                 """

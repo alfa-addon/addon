@@ -83,6 +83,10 @@ def start():
         logger.info("--------------------------------------------------------------------")
         show_info()
 
+        # Identifica la dirección Proxy y la lista de alternativas
+        from core import proxytools
+        proxytools.get_proxy_list()
+
         flag = True
         while flag:
             time.sleep(1)

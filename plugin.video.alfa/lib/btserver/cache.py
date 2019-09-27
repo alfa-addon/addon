@@ -10,13 +10,15 @@ import re
 import traceback
 
 try:
-    try:
-        import libtorrent as lt
-    except:
-        from python_libtorrent import get_libtorrent
-        lt = get_libtorrent()
-except Exception, e:
-    log(traceback.format_exc())
+    import xbmc, xbmcgui
+except:
+    pass
+
+from platformcode import config
+LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", default='')
+
+from servers import torrent as torr
+lt, e, e1, e2 = torr.import_libtorrent(LIBTORRENT_PATH)
 
 
 class Cache(object):

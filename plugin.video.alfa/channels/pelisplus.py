@@ -233,6 +233,8 @@ def add_vip(item, video_url, language=None):
 
     for url, quality in matches:
         url = url.replace('\/', '/')
+        if 'fvs.io/redirector' in url:
+            url = httptools.downloadpage(url, headers={'Referer':item.url}, only_headers=True).url
         itemlist.append(
             Item(channel=item.channel, title='%s'+title + " " + quality, url=url, action='play', language=language,
                  quality=quality, infoLabels=item.infoLabels))
@@ -258,10 +260,11 @@ def findvideos(item):
         if 'pelisplus.net' in video_url:
             itemlist += add_vip(item, video_url, IDIOMAS[language])
 
-        elif not 'vidoza' in video_url and not 'pelishd' in video_url:
-            url_data = get_source(video_url)
-            url = scrapertools.find_single_match(url_data, '<iframe src="([^"]+)"')
 
+        # elif not 'vidoza' in video_url and not 'pelishd' in video_url:
+        #     url_data = get_source(video_url)
+        #     url = scrapertools.find_single_match(url_data, '<iframe src="([^"]+)"')
+        #
         else:
             url = video_url
 

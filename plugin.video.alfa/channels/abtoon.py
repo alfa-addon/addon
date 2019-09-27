@@ -188,17 +188,17 @@ def findvideos(item):
         new_url = "https://abtoon.net/" + "embed/" + sl[0] + "/" + sl[1] + "/" + str(id) + "/" + sl[2] + url_end
         data_new = httptools.downloadpage(new_url).data
         data_new = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data_new)
-        logger.info("asdasdasdcc"+data_new)
-        valor1, valor2 = scrapertools.find_single_match(data_new, 'var x0x = \["[^"]*", "([^"]+)", "[^"]*", "[^"]*", "([^"]+)"\];') 
-        try:
-            url = base64.b64decode(gktools.transforma_gsv(valor2, base64.b64decode(valor1)))
-            if 'download' in url:
-                url = url.replace('download', 'preview')
-            title = '%s'
-            itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language='latino',
-                         infoLabels=item.infoLabels))
-        except Exception as e:
-            logger.info(e)
+        if data_new!= "502":
+            valor1, valor2 = scrapertools.find_single_match(data_new, 'var x0x = \["[^"]*", "([^"]+)", "[^"]*", "[^"]*", "([^"]+)"\];') 
+            try:
+                url = base64.b64decode(gktools.transforma_gsv(valor2, base64.b64decode(valor1)))
+                if 'download' in url:
+                    url = url.replace('download', 'preview')
+                title = '%s'
+                itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language='latino',
+                            infoLabels=item.infoLabels))
+            except Exception as e:
+                logger.info(e)
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)

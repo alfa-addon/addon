@@ -4,7 +4,7 @@
     "active": true,
     "adult": false,
     "language": ["cast", "lat"],
-    "thumbnail": "http://imgur.com/lmYQgOu.png",
+    "thumbnail": "https://ver-pelis.tv/images/logo-50.png",
     "categories": [
         "movie",
         "direct"
@@ -22,7 +22,7 @@
         "id": "include_in_global_search",
         "type": "bool",
         "label": "Incluir en busqueda global",
-        "default": true,
+        "default": false,
         "enabled": true,
         "visible": true
     },

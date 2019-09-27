@@ -6,7 +6,6 @@
 # ------------------------------------------------------------
 
 from core import httptools
-from core import jsontools
 from core import scrapertools
 from core import servertools
 from core import tmdb
@@ -209,8 +208,8 @@ def findvideos(item):
         if "pelisup.com" in scrapedurl:
             id = scrapertools.find_single_match(scrapedurl, '.com/v/(\w+)')
             post = "r=&d=www.pelisup.com"
-            d1 = httptools.downloadpage("https://www.pelisup.com/api/source/%s" %id, post=post).data
-            d1 = jsontools.load(d1)["data"]
+            d1 = httptools.downloadpage("https://www.pelisup.com/api/source/%s" %id, post=post).json
+            d1 = d1["data"]
             for data in d1:
                 title = "Ver en: %s " + "(" + data["label"] + ") (" + scrapedlanguage + ")"
                 itemlist.append(item.clone(action = "play",
@@ -234,7 +233,7 @@ def findvideos(item):
                                    text_color="magenta"))
         if config.get_videolibrary_support():
             itemlist.append(item.clone(title="Añadir a la videoteca", text_color="green",
-                                 action="add_pelicula_to_library", url=item.url, fulltitle = item.contentTitle
+                                 action="add_pelicula_to_library", url=item.url, contentTitle = item.contentTitle
                                  ))
     return itemlist
 
