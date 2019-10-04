@@ -29,7 +29,6 @@ except:
 
 def mainlist(item):
     logger.info()
-    graba(item)
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
     itemlist.append(Item(channel = item.channel, title = "Novedades", action = "peliculas", url = host, thumbnail = get_thumb("newest", auto = True)))

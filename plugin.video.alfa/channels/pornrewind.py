@@ -76,15 +76,24 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    scrapedurl = scrapertools.find_single_match(data, 'video_alt_url3: \'([^\']+)\'')
-    if scrapedurl == "" :
-        scrapedurl = scrapertools.find_single_match(data, 'video_alt_url2: \'([^\']+)\'')
-    if scrapedurl == "" :
-        scrapedurl = scrapertools.find_single_match(data, 'video_alt_url: \'([^\']+)\'')
-    if scrapedurl == "" :
-        scrapedurl = scrapertools.find_single_match(data, 'video_url: \'([^\']+)\'')
+    data = scrapertools.find_single_match(data, '<div class="player">(.*?)<div class="media-info">')
+    if "/kt_player." in data:
+        patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\''
+    else:
+        patron = '<iframe src="([^"]+)"'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for scrapedurl in matches:
+        itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=scrapedurl))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 
-    itemlist.append(Item(channel=item.channel, action="play", title=scrapedurl, fulltitle=item.title, url=scrapedurl,
-                        thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
-    return itemlist
+    a = len (itemlist)
+    for i in itemlist:
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue
 

@@ -80,12 +80,12 @@ def agregadas(item):
     for url, title, thumbnail, plot in matches:
         title = title.replace("Descargar y ver Online","").strip()
         year = scrapertools.find_single_match(title, '\(([0-9]{4})')
-        fulltitle = title.replace("(%s)" %year,"").strip()
+        contentTitle = title.replace("(%s)" %year,"").strip()
         itemlist.append( Item(action="findvideos",
                               channel=item.channel,
                               contentSerieName="",
                               title=title+" ",
-                              fulltitle=fulltitle ,
+                              contentTitle=contentTitle ,
                               infoLabels={'year':year},
                               url=url ,
                               thumbnail=thumbnail,

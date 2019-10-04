@@ -69,7 +69,7 @@ def lista(item):
         thumbnail = scrapedthumbnail + "|Referer=https://www.shameless.com/"
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
-                              fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = scrapedtitle))
+                              fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, 'class="active">.*?<a href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
@@ -89,7 +89,7 @@ def play(item):
     for url, quality in matches:
         headers = {'Referer': item.url}
         url = httptools.downloadpage(url, headers=headers , follow_redirects=False, only_headers=True).headers.get("location", "")
-        itemlist.append(["%s %s [directo]" % (quality, url), url])
+        itemlist.append([quality, url])
     return itemlist
 
 

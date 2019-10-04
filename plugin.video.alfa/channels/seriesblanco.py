@@ -280,7 +280,7 @@ def new_episodes(item):
                              thumbnail=thumbnail,
                              language=language,
                               ))
-        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     return itemlist
 
@@ -298,14 +298,15 @@ def new_series(item):
 
         url =scrapedurl
         thumbnail = scrapedthumbnail
+        title = scrapedtitle.capitalize()
         itemlist.append(Item(channel=item.channel,
                              action='seasons',
-                             title=scrapedtitle,
+                             title=title,
                              url=url,
                              contentSerieName=scrapedtitle,
                              thumbnail=thumbnail
                               ))
-        tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     return itemlist
 

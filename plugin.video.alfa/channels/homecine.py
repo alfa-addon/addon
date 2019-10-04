@@ -117,8 +117,8 @@ def list_all(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     first = item.first
-    last = first + 19
-    if last > len(matches):
+    last = first + 20
+    if last >= len(matches):
         last = len(matches)
         next = True
 
@@ -155,7 +155,7 @@ def list_all(item):
         url_next_page = host+url_next_page
         first = 0
 
-    if url_next_page:
+    if url_next_page and len(matches) > 20:
         itemlist.append(Item(channel=item.channel,title="Siguiente >>", url=url_next_page, action='list_all',
                              first=first))
 
@@ -191,10 +191,10 @@ def seccion(item):
 def seasons(item):
     logger.info()
     itemlist = []
-
+    
     data = get_source(item.url)
 
-    patron = '<strong>Season (\d+)</strong>'
+    patron = r'<strong>(?:Season|Temporada) (\d+)</strong>'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
@@ -236,11 +236,15 @@ def episodesxseason(item):
     logger.info()
     itemlist = []
     season = item.contentSeasonNumber
-    data = get_source(item.url)
-    data = scrapertools.find_single_match(data, '<strong>Season %s</strong>.*?class="les-content"(.*?)</div>' % season)
-    patron = '<a href="([^"]+)">Episode (\d+)'
-    matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
+    
+    data = get_source(item.url)
+    pat = '<strong>(?:Season|Temporada) %s</strong>.*?class="les-content"(.*?)</div>' % season
+    data = scrapertools.find_single_match(data, pat)
+    
+    patron = '<a href="([^"]+)">(?:Episode|Capitulo) (\d+)'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+    
     for scrapedurl, dataep in matches:
         url = host+scrapedurl
         contentEpisodeNumber = dataep

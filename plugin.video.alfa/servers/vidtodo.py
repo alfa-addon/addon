@@ -26,7 +26,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = response.data
     packed_data = scrapertools.find_single_match(data, "javascript'>(eval.*?)</script>")
     unpacked = jsunpack.unpack(packed_data)
-    matches = scrapertools.find_multiple_matches(unpacked, 'file:"([^"]+)",label:"([^"]+)"')
+    matches = scrapertools.find_multiple_matches(unpacked, 'src:"([^"]+)".*?,label:"([^"]+)"')
     for media_url, quality in matches:
         if media_url.endswith(".mp4"):
             video_urls.append([quality + " [%s]" % id_server, media_url])

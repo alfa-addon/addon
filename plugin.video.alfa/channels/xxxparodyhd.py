@@ -58,14 +58,14 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<div data-movie-id="\d+" class="ml-item">.*?'
+    patron = '<div data-movie-id="\d+".*?'
     patron += '<a href="([^"]+)".*?'
     patron += 'oldtitle="([^"]+)".*?'
     patron += '<img src="([^"]+)".*?rel="tag">(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,scrapedyear in matches:
         scrapedplot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot, infoLabels={'year':scrapedyear}) )
     next_page = scrapertools.find_single_match(data,'<li class=\'active\'>.*?href=\'([^\']+)\'>')
     if next_page!="":
@@ -73,3 +73,30 @@ def lista(item):
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
+
+def play(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
+    patron = ' - on ([^"]+)" href="([^"]+)"'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedtitle,url in matches:
+        itemlist.append( Item(channel=item.channel, action="play", title = "%s", contentTitle=item.title, url=url ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    logger.debug(itemlist)
+    a = len (itemlist)
+    for i in itemlist:
+        if a < 1:
+            return []
+        if 'clipwatching' in i.url:
+            res = ""
+        elif 'mangovideo' in i.url:
+            res = ""
+        else:
+            res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue
