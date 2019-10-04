@@ -10,11 +10,6 @@ from core import servertools
 from core.item import Item
 from core import httptools
 
-server = {'1': 'https://www.mangovideo.pw/contents/videos/', '7' : 'https://server9.mangovideo.pw/contents/videos/',
-          '8' : 'https://s10.mangovideo.pw/contents/videos/', '9' : 'https://server2.mangovideo.pw/contents/videos/',
-          '10' : 'https://server217.mangovideo.pw/contents/videos/', '11' : 'https://234.mangovideo.pw/contents/videos/',
-          '12' : 'https://98.mangovideo.pw/contents/videos/'
-         }
 
 host = 'https://pandamovies.pw'
 
@@ -74,7 +69,7 @@ def lista(item):
         title = scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
                              fanart=thumbnail, plot=plot, contentTitle=title))
     next_page = scrapertools.find_single_match(data, '<li class=\'active\'>.*?href=\'([^\']+)\'>')
     if next_page == "":
@@ -85,11 +80,11 @@ def lista(item):
     return itemlist
 
 
-def findvideos(item):
+def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
-    patron = '- on ([^"]+)" href="([^"]+)"'
+    patron = ' - on ([^"]+)" href="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedtitle,url in matches:
         if 'aHR0' in url:
@@ -98,7 +93,23 @@ def findvideos(item):
                 url= url.replace("https://vshares.tk/goto/", "").replace("https://waaws.tk/goto/", "").replace("https://openloads.tk/goto/", "")
                 url = base64.b64decode(url)
                 n -= 1
-        itemlist.append( Item(channel=item.channel, action="play", title = "%s", fulltitle=item.title, url=url ))
+        itemlist.append( Item(channel=item.channel, action="play", title = "%s", contentTitle=item.title, url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    return itemlist
+
+    a = len (itemlist)
+    for i in itemlist:
+        if a < 1:
+            return []
+        if 'mangovideo' in i.url:
+            res = ""
+        elif 'clipwatching' in i.url:
+            res = ""
+        else:
+            res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue
+
 

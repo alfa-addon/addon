@@ -10,6 +10,7 @@ from core import httptools
 
 host = 'https://es.spankbang.com'
 
+
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -58,17 +59,23 @@ def lista(item):
     patron = '<div class="video-item" data-id="\d+">.*?'
     patron += '<a href="([^"]+)" class="thumb ">.*?'
     patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
-    patron += '</span>(.*?)</a>'
+    patron += '<i class="fa fa-clock-o"></i>(.*?)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,scrapedtime in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle,duration in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
-        scrapedhd = scrapertools.find_single_match(scrapedtime, '<span class="i-hd">(.*?)</span>')
-        duration = scrapertools.find_single_match(scrapedtime, '<i class="fa fa-clock-o"></i>(.*?)</span>')
-        if scrapedhd != '':
-            title = "[COLOR yellow]" + duration + " min[/COLOR] " + "[COLOR red]" +scrapedhd+ "[/COLOR]  "+scrapedtitle
+        duration = duration.strip()
+        minutos = int(duration)
+        horas=int(minutos/60)
+        minutos-=horas*60
+        if minutos < 10:
+            minutos = "0%s" %minutos
+        if horas == 0:
+            duration = "%s:%s" % (horas,minutos)
         else:
-            title = "[COLOR yellow]" + duration + " min[/COLOR] " + scrapedtitle
-        thumbnail = "http:" + scrapedthumbnail
+            duration = "%s:%s" % (horas,minutos)
+
+        title = "[COLOR yellow]" + duration + " min[/COLOR] " + scrapedtitle
+        thumbnail = scrapedthumbnail
         plot = ""
         year = ""
         itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, 
@@ -85,13 +92,15 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    scrapedurl = scrapertools.find_single_match(data, 'var stream_url_1080p  = \'([^\']+)\';')
-    if scrapedurl == "":
-        scrapedurl = scrapertools.find_single_match(data, 'var stream_url_720p  = \'([^\']+)\';')
-    if scrapedurl == "":
-        scrapedurl = scrapertools.find_single_match(data, 'var stream_url_480p  = \'([^\']+)\';')
-    scrapedurl = scrapedurl.replace("amp;", "")
-    itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=scrapedurl, thumbnail=item.thumbnail,
-                         plot=item.plot, show=item.title, server="directo"))
+    skey = scrapertools.find_single_match(data,'data-streamkey="([^"]+)"')
+    session="523034c1c1fc14aabde7335e4f9d9006b0b1e4984bf919d1381316adef299d1e"
+    post = {"id": skey, "data": 0, "sb_csrf_session": session}
+    headers = {'Referer':item.url}
+    url ="%s%s" % (host, "/api/videos/stream")
+    data = httptools.downloadpage(url, post=post, headers=headers).data
+    patron = '"stream_url_(\w+)":\["([^"]+)"'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for quality,url in matches:
+        itemlist.append(['.mp4 %s' %quality, url])
     return itemlist
 

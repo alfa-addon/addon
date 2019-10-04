@@ -67,8 +67,8 @@ def lista(item):
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         thumbnail = "http:" + scrapedthumbnail + "|Referer=%s" % item.url
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                              contentTitle = scrapedtitle, fanart=thumbnail))
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
+                              fanart=thumbnail, plot=plot))
     if item.extra:
        next_page = scrapertools.find_single_match(data, '<li class="next">.*?from_videos\+from_albums:(\d+)')
        if next_page:
@@ -99,16 +99,9 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    scrapedurl = scrapertools.find_single_match(data, 'video_alt_url3: \'([^\']+)\'')
-    if scrapedurl == "" :
-        scrapedurl = scrapertools.find_single_match(data, 'video_alt_url2: \'([^\']+)\'')
-    if scrapedurl == "" :
-        scrapedurl = scrapertools.find_single_match(data, 'video_alt_url: \'([^\']+)\'')
-    if scrapedurl == "" :
-        scrapedurl = scrapertools.find_single_match(data, 'video_url: \'([^\']+)\'')
-
-    itemlist.append(Item(channel=item.channel, action="play", title=scrapedurl, url=scrapedurl,
-                        thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo"))
+    patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
+    patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for url,quality in matches:
+        itemlist.append(['.mp4 %s' %quality, url])
     return itemlist
-
-

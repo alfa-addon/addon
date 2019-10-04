@@ -42,6 +42,22 @@ def search(item, texto):
         return []
 
 
+def categorias(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    patron  = '(?s)<a class="item" href="([^"]+)".*?'
+    patron += 'src="([^"]+)" '
+    patron += 'alt="([^"]+)"'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
+        scrapedurl = urlparse.urljoin(host, scrapedurl)
+        scrapedthumbnail = urlparse.urljoin(host, scrapedthumbnail)
+        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
+                                   fanart=scrapedthumbnail))
+    return sorted(itemlist, key=lambda i: i.title)
+
+
 def lista(item):
     logger.info()
     itemlist = []
@@ -57,11 +73,11 @@ def lista(item):
     for scrapedurl, scrapedthumbnail, scrapedtitle, quality, duration in matches:
         scrapedurl = urlparse.urljoin(host, scrapedurl)
         scrapedtitle = scrapedtitle.strip()
-        if duration:
-            scrapedtitle = "%s - %s" % (duration.strip(), scrapedtitle)
-        if '>HD<' in quality:
-            scrapedtitle += "  [COLOR red][HD][/COLOR]"
-        itemlist.append(item.clone(action=action, title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
+        if not 'HD' in quality :
+            title = "[COLOR yellow] %s [/COLOR] %s" % (duration.strip(), scrapedtitle)
+        else:
+            title = "[COLOR yellow] %s [/COLOR] [COLOR red] HD [/COLOR] %s" % (duration.strip(), scrapedtitle)
+        itemlist.append(item.clone(action=action, title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
                                    fanart=scrapedthumbnail))
     # Extrae la marca de siguiente página
     next_page = scrapertools.find_single_match(data, 'next"><a href="([^"]+)')
@@ -70,35 +86,15 @@ def lista(item):
     return itemlist
 
 
-def categorias(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron  = '(?s)<a class="item" href="([^"]+)".*?'
-    patron += 'src="([^"]+)" '
-    patron += 'alt="([^"]+)"'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedthumbnail, scrapedtitle in matches:
-        scrapedurl = urlparse.urljoin(host, scrapedurl)
-        scrapedthumbnail = urlparse.urljoin(host, scrapedthumbnail)
-        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
-                                   fanart=scrapedthumbnail))
-    return itemlist
-
-
 def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    videourl = scrapertools.find_single_match(data, "video_alt_url2:\s*'([^']+)'")
-    if videourl:
-        itemlist.append(['.mp4 HD [directo]', videourl])
-    videourl = scrapertools.find_single_match(data, "video_alt_url:\s*'([^']+)'")
-    if videourl:
-        itemlist.append(['.mp4 HD [directo]', videourl])
-    videourl = scrapertools.find_single_match(data, "video_url:\s*'([^']+)'")
-    if videourl:
-        itemlist.append(['.mp4 [directo]', videourl])
+    patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
+    patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url,quality in matches:
+        itemlist.append(['.mp4 %s' %quality, url])
     if item.extra == "play_menu":
         return itemlist, data
     return itemlist

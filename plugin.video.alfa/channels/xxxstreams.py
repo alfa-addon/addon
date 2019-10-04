@@ -8,7 +8,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import httptools
 
-host = 'http://xxxstreams.org' #es hhttp://freepornstreams.org
+host = 'http://xxxstreams.org' #es http://freepornstreams.org
 
 def mainlist(item):
     logger.info()
@@ -71,7 +71,7 @@ def lista(item):
         elif 'FullHD' in scrapedtitle : title= "[COLOR red]" + "FullHD" + "[/COLOR] " + scrapedtitle
         elif '1080' in scrapedtitle : title= "[COLOR red]" + "1080p" + "[/COLOR] " + scrapedtitle
         else: title = scrapedtitle
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
                                fanart=scrapedthumbnail, thumbnail=scrapedthumbnail,plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<a class="next page-numbers" href="([^"]+)">Next &rarr;</a>')
     if next_page!="":
@@ -84,10 +84,35 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
+    patron = '<a href="([^"]+)"[^<]+>(?:Streaming|Download)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url in matches:
+        if not "ubiqfile" in url:
+            itemlist.append(item.clone(action='play',title="%s", contentTitle=item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    return itemlist
+
+
+def play(item):
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
     patron = '<a href="([^"]+)" rel="nofollow"[^<]+>(?:Streaming|Download)'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:
         if not "ubiqfile" in url:
-            itemlist.append(item.clone(action='play',title="%s", url=url))
+            itemlist.append(item.clone(action='play',title="%s", contentTitle=item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    return itemlist
+    a = len (itemlist)
+    for i in itemlist:
+        
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue
+            
+            

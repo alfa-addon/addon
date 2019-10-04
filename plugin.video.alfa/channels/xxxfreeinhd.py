@@ -68,7 +68,7 @@ def lista(item):
         title = scrapedtitle
         thumbnail = scrapedthumbnail + "|https://watchxxxfreeinhd.com/" 
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
                               thumbnail=thumbnail, plot=plot, fanart=scrapedthumbnail ))
     next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)"')
     if next_page:
@@ -89,14 +89,12 @@ def findvideos(item):
     data = scrapertools.find_single_match(data,'<div class="video-embed">(.*?)<div class="views-infos">')
     patron = 'data-lazy-src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
-    for title in matches:
-        if "strdef" in title: 
-            url = decode_url(title)
-            if "strdef" in url:
-                url = httptools.downloadpage(url).url
-        if "hqq" in title:
-            url = title
-        itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url ))
+    for scrapedurl in matches:
+        if "strdef" in scrapedurl: 
+            url = decode_url(scrapedurl)
+        else:
+            url = scrapedurl
+        itemlist.append( Item(channel=item.channel, action="play", title = "%s", contentTitle= item.title, url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -106,17 +104,44 @@ def decode_url(txt):
     itemlist = []
     data = httptools.downloadpage(txt).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    rep = True
-    while rep == True:
-        b64_data = scrapertools.find_single_match(data, '\(dhYas638H\("([^"]+)"\)')
-        if b64_data:
-            b64_url = base64.b64decode(b64_data + "=")
-            b64_url = base64.b64decode(b64_url + "==")
-            data = b64_url
-        else:
-            rep = False
+    n = 2
+    while n > 0:
+        b64_url = scrapertools.find_single_match(data, '\(dhYas638H\("([^"]+)"\)')
+        b64_url = base64.b64decode(b64_url + "=")
+        b64_url = base64.b64decode(b64_url + "==")
+        data = b64_url
+        n -= 1
     url = scrapertools.find_single_match(b64_url, '<iframe src="([^"]+)"')
+    url = httptools.downloadpage(url).url
     logger.debug (url)
     return url
 
 
+def play(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    data = scrapertools.find_single_match(data,'<div class="video-embed">(.*?)<div class="views-infos">')
+    patron = 'data-lazy-src="([^"]+)"'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for scrapedurl in matches:
+        if "strdef" in scrapedurl: 
+            url = decode_url(scrapedurl)
+        else:
+            url = scrapedurl
+        itemlist.append( Item(channel=item.channel, action="play", title = "%s", contentTitle= item.title, url=url ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    a = len (itemlist)
+    for i in itemlist:
+        if a < 1:
+            return []
+        if 'videoxseries' in i.url:
+            res = ""
+        else:
+            res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue

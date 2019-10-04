@@ -70,7 +70,7 @@ def lista(item):
         title = scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos" , title=title, url=scrapedurl, thumbnail=thumbnail,
+        itemlist.append( Item(channel=item.channel, action="play" , title=title, url=scrapedurl, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle=title))
     next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)" data-ci-pagination-page="\d+" rel="next">Next &rsaquo;')
     if next_page != "" :
@@ -92,3 +92,26 @@ def findvideos(item):
     return itemlist
 
 
+def play(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    patron  = ';extra_urls\[\d+\]=\'([^\']+)\''
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for scrapedurl in matches:
+        scrapedurl = base64.b64decode(scrapedurl)
+        itemlist.append(item.clone(action="play", title="%s", url=scrapedurl))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
+
+    a = len (itemlist)
+    for i in itemlist:
+        
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue
