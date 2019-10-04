@@ -77,7 +77,8 @@ def mainlist(item):
 
 def listado_alfabetico(item):
     logger.info()
-    itemlist = [item.clone(action="series_por_letra", title="0-9")]
+    #TODO Los numeros tendrian que listarse tambien o buscar otra solucion
+    #itemlist = [item.clone(action="series_por_letra", title="0-9")]
     
     for letra in string.ascii_uppercase:
         itemlist.append(item.clone(action="series_por_letra", title=letra))
@@ -297,20 +298,54 @@ def search(item, texto):
     logger.info("texto: %s" % texto)
     itemlist = []
     infoLabels = ()
-    data_dict = httptools.downloadpage(urlparse.urljoin(HOST, "/buscar.php?term=%s" % texto)).json
     try:
-        tvshows = data_dict["myData"]
+        int(texto)
+        post = urllib.urlencode({'searchquery': texto})
+        data = httptools.downloadpage(urlparse.urljoin(HOST, "/busqueda/"), post=post).data
+        data = re.sub(r'|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+        
+        patron = r"location.href='(.*?)'.*?background-image: url\('(.*?)'\).*?"
+        patron += '<div style="display.*?>([^<]+)'
+        matches = re.compile(patron, re.DOTALL).findall(data)
+        
+        for surl, sthumb, stitle in matches:
+            url = urlparse.urljoin(HOST, surl)
+            thumb = urlparse.urljoin(HOST, sthumb)
+            stitle = stitle.strip()
+            
+            syear = scrapertools.find_single_match(stitle, r'\s*\((\d{4})\)$')
+            title = re.sub(r'\s*\((.*?)\)$', '', stitle)
+            
+            filtro_tmdb = {"first_air_date": syear}.items()
+            
+            itemlist.append(Item(channel=item.channel,
+                                action="seasons",
+                                context=filtertools.context(item, list_idiomas, list_quality),
+                                contentSerieName=title.strip(),
+                                thumbnail=thumb,
+                                title=stitle.strip(),
+                                url=url,
+                                infoLabels={'filtro':filtro_tmdb}
+                                ))
+
     except:
-        return []
-    for show in tvshows:
-        title = re.sub('\s*\((.*?)\)$', '', show["titulo"])
-        itemlist.append(item.clone(action="seasons",
-                       context=filtertools.context(item, list_idiomas, list_quality),
-                       contentSerieName=title,
-                       thumbnail=urlparse.urljoin(HOST, show["img"]),
-                       title=show["titulo"],
-                       url=urlparse.urljoin(HOST, show["urla"])
-                       ))
+        
+        data_dict = httptools.downloadpage(urlparse.urljoin(HOST, "/buscar.php?term=%s" % texto)).json
+        
+        try:
+            tvshows = data_dict["myData"]
+        except:
+            return []
+        
+        for show in tvshows:
+            title = re.sub(r'\s*\((.*?)\)$', '', show["titulo"])
+            itemlist.append(item.clone(action="seasons",
+                           context=filtertools.context(item, list_idiomas, list_quality),
+                           contentSerieName=title,
+                           thumbnail=urlparse.urljoin(HOST, show["img"]),
+                           title=show["titulo"],
+                           url=urlparse.urljoin(HOST, show["urla"])
+                           ))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 

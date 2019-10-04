@@ -252,10 +252,8 @@ def findvideos(item):
 
             #openloadpremium m3u8
             elif r'irgotoolp' in link:
-                #deshabilitar por ahora
-                continue
                 link = redirect_url('https:'+link)
-                server = "directo"
+                server = "opium"
             
             #openloadpremium no les va en la web, se hace un fix aqui
             elif r'irgotogp' in link:

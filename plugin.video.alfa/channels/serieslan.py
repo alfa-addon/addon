@@ -32,13 +32,17 @@ def mainlist(item):
     itemlist = list()
 
     itemlist.append(
-        Item(channel=item.channel, action="lista", title="Series", contentSerieName="Series", url=host, thumbnail=thumb_series, page=0))
+        Item(channel=item.channel, action="lista", title="Series",
+             tipo="series", url=host, thumbnail=thumb_series,
+             page=0, plot="Tus series animadas de la infancia"))
     itemlist.append(
-        Item(channel=item.channel, action="lista", title="Live Action", contentSerieName="Live Action", url=host+"/liveaction", thumbnail=thumb_series, page=0))
-    #TODO buscar solucion para reproducion peliculas (findvideos+js2py)
+        Item(channel=item.channel, action="lista", title="Live Action",
+             url=host+"/liveaction", thumbnail=thumb_series, page=0,
+             plot="Series LiveAction de los 90s y 2000"))
+    #21/09/2019 Fallo con BD
     #itemlist.append(
     #    Item(channel=item.channel, action="peliculas", title="Películas", contentSerieName="Películas", url=host+"/peliculas", thumbnail=thumb_series, page=0))
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar",
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar...",
                          thumbnail=thumb_series))
     itemlist = renumbertools.show_option(item.channel, itemlist)
     autoplay.show_option(item.channel, itemlist)
@@ -92,27 +96,23 @@ def lista(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
+    next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="sa fr">')
+
     patron = '<a href="([^"]+)" '
-    if item.contentSerieName == "Series":
-        patron += 'class="link">.+?<img src="([^"]+)".*?'
-    else:
-        patron += 'class="link-la">.+?<img src="([^"]+)".*?'
+    patron += 'class="(?:link|min-la)">.+?<img src="([^"]+)".*?'
     patron += 'title="([^"]+)">'
-    if item.url==host or item.url==host+"/liveaction":
-        a=1
-    else:
-        num=(item.url).split('-')
-        a=int(num[1])
+    
+
     matches = scrapertools.find_multiple_matches(data, patron)
 
-    # Paginacion
-    num_items_x_pagina = 30
-    min = item.page * num_items_x_pagina
-    min=min-item.page
-    max = min + num_items_x_pagina - 1
-    b=0
+    # Paginacion (mejora)
+    num_items_x_pagina = 25
+    min = item.page
+    max = item.page + num_items_x_pagina
+    f_page = item.page + num_items_x_pagina
+
     for link, img, name in matches[min:max]:
-        b=b+1
+
         if " y " in name:
             title=name.replace(" y "," & ")
         else:
@@ -123,17 +123,20 @@ def lista(item):
         context2 = autoplay.context
         context.extend(context2)
         
-        itemlist.append(item.clone(title=title, url=url, action="episodios", thumbnail=scrapedthumbnail, show=title,contentSerieName=title,
-                                   context=context))
-    if b<29:
-        a=a+1
-        url=host+"/pag-"+str(a)
-        if b>10:
-            itemlist.append(
-                Item(channel=item.channel, contentSerieName=item.contentSerieName, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=url, action="lista", page=0))
-    else:    
+        itemlist.append(Item(channel=item.channel, title=title, url=url,
+                             action="episodios", thumbnail=scrapedthumbnail, 
+                             contentSerieName=title, context=context))
+    
+    if f_page < len(matches):
+        itemlist.append(item.clone(title="[COLOR cyan]Página Siguiente >>[/COLOR]",
+                                    page=f_page, plot=""))
+       
+    elif next_page: 
+        next_page = '%s/%s' % (host, next_page) 
         itemlist.append(
-             Item(channel=item.channel, contentSerieName=item.contentSerieName, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=item.url, action="lista", page=item.page + 1))
+             Item(channel=item.channel, url=next_page, action="lista",
+                  title="[COLOR cyan]Página Siguiente >>[/COLOR]",
+                  page=0, tipo=item.tipo))
 
     tmdb.set_infoLabels(itemlist)
     return itemlist
@@ -162,13 +165,15 @@ def peliculas(item):
         #context.extend(context2)
         title = "%s [COLOR darkgrey](%s)[/COLOR]" % (scrapedtitle, scrapedyear)
         
-        itemlist.append(item.clone(title=title, url=url, action="findvideos", thumbnail=thumbnail, plot=scrapedplot,
-                                   contentTitle=scrapedtitle, context=context, infoLabels={'year': scrapedyear}))
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos",
+                             thumbnail=thumbnail, plot=scrapedplot, contentTitle=scrapedtitle,
+                             context=context, infoLabels={'year': scrapedyear}))
     if b<29:
         pass
     else:    
         itemlist.append(
-             Item(channel=item.channel, contentTitle=item.contentTitle, title="[COLOR cyan]Página Siguiente >>[/COLOR]", url=item.url, action="peliculas", page=item.page + 1))
+             Item(channel=item.channel, title="[COLOR cyan]Página Siguiente >>[/COLOR]",
+                  url=item.url, action="peliculas", page=item.page + 1))
 
     tmdb.set_infoLabels(itemlist)
     return itemlist
