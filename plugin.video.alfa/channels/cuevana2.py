@@ -427,7 +427,7 @@ def findvideos(item):
            
             elif r'irgotoolp.php' in link:
                 link = redirect_url('https:'+link)
-                server = 'opium'
+                server = 'oprem'
             else:
                 link = scrapertools.find_single_match(link, 'php.*?=(\w+)&')
                 link = GKPluginLink(link)
