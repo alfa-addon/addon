@@ -33,14 +33,19 @@ def mainlist(item):
         itemlist.append(item.clone(action="mainlist", title="Página Siguiente >>", text_color="blue", url=next_page_url) )
     return itemlist
     
-    
+
 def play(item):
-    logger.info()
-    data = httptools.downloadpage(item.url).data
-    itemlist = servertools.find_video_items(data=data)
-    for videoitem in itemlist:
-        videoitem.title = item.title
-        videoitem.thumbnail = item.thumbnail
-        videoitem.channel = item.channel
-    return itemlist
+    itemlist = []
+    itemlist = servertools.find_video_items(item)
+    a = len (itemlist)
+    for i in itemlist:
+        
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue
 

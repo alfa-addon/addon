@@ -33,7 +33,7 @@ list_servers = [
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'dospelis')
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'dospelis')
 
-host = 'https://www.dospelis.net/'
+host = 'https://www.dospelis.online/'
 
 def mainlist(item):
     logger.info()
@@ -284,7 +284,7 @@ def findvideos(item):
     itemlist = []
     data = get_source(item.url)
 
-    patron = "data-type='([^']+)' data-post='(\d+)' data-nume='(\d+).*?img src='([^\?]+)\?"
+    patron = "data-type='([^']+)' data-post='(\d+)' data-nume='(\d+).*?img src='([^']+)"
     matches = re.compile(patron, re.DOTALL).findall(data)
     for type, id, option, lang in matches:
         lang = scrapertools.find_single_match(lang, '.*?/flags/(.*?).png')
@@ -302,6 +302,9 @@ def findvideos(item):
         test_url = '%swp-admin/admin-ajax.php' % host
         new_data = httptools.downloadpage(test_url, post=post, headers={'Referer':item.url}).data
         url = scrapertools.find_single_match(new_data, "src='([^']+)'").replace('oladblock.me', 'openload.co')
+        if 'goo.gl' in url:
+            url = httptools.downloadpage(url, only_headers=True).url
+
         if url != '':
             itemlist.append(Item(channel=item.channel, url=url, title='%s'+title, action='play', quality=quality,
                                  language=IDIOMAS[lang], infoLabels=item.infoLabels))

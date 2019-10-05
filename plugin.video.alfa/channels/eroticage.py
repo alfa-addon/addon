@@ -70,11 +70,22 @@ def lista(item):
 
 def play(item):
     logger.info()
+    itemlist = []
     data = httptools.downloadpage(item.url).data
-    itemlist = servertools.find_video_items(data=data)
-    for videoitem in itemlist:
-        videoitem.title = item.title
-        videoitem.thumbnail = item.thumbnail
-        videochannel=item.channel
-    return itemlist
+    patron = '<iframe src="([^"]+)"'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for scrapedurl in matches:
+        itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=scrapedurl))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    a = len (itemlist)
+    for i in itemlist:
+        
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue
 

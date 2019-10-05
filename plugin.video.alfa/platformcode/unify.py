@@ -277,6 +277,19 @@ def title_format(item):
     # Actions excluidos, (se define canal y action) los titulos que contengan ambos valores no se procesaran en unify
     excluded_actions = [('videolibrary','get_episodes')]
 
+    # Verifica el item sea valido para ser formateado por unify
+
+    if item.channel == 'trailertools' or (item.channel.lower(), item.action.lower()) in excluded_actions or \
+            item.action == '':
+        valid = False
+    else:
+        for word in excluded_words:
+            if word in item.title.lower():
+                valid = False
+                break
+        if not valid:
+            return item
+
     # Verifica si hay marca de visto de trakt
 
     visto = False
@@ -301,16 +314,7 @@ def title_format(item):
     if hasattr(item,'text_color'):
         item.text_color=''
 
-    #Verifica el item sea valido para ser formateado por unify
 
-    if item.channel == 'trailertools' or (item.channel.lower(), item.action.lower()) in excluded_actions or \
-            item.action=='':
-        valid = False
-    else:
-        for word in excluded_words:
-            if word in item.title.lower():
-                valid = False
-                break
 
     if valid and item.unify!=False:
 

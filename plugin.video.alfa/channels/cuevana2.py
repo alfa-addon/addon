@@ -78,7 +78,7 @@ def redirect_url(url, parameters=None, scr=False):
 
     try:
         url = url.replace("/irgo", "/go").replace('gotoolp', 'm3u8player')
-        data = httptools.downloadpage(url, post=parameters, timeout=4.0)
+        data = httptools.downloadpage(url, post=parameters, timeout=4)
     except:
         return
 
@@ -96,6 +96,7 @@ def redirect_url(url, parameters=None, scr=False):
             link = host+ '/hls/' + vid + '/' + vid + '.playlist.m3u8'
     elif 'm3u8' in link:
         link = scrapertools.find_single_match(data, '"file": "([^"]+)"')
+
     return link
 
 
@@ -343,7 +344,7 @@ def OpenloadLink(hash):
     hashdata = urllib.urlencode({r'h':hash})
     url = 'https://api.%s/openload/api.php' % domain
     try:
-        json = httptools.downloadpage(url, post=hashdata, timeout=3.0).json
+        json = httptools.downloadpage(url, post=hashdata, timeout=4).json
         return json['url'].replace('\\', '') if json['status'] == 1 else None
     except:
         return None
@@ -425,7 +426,8 @@ def findvideos(item):
                 continue
            
             elif r'irgotoolp.php' in link:
-                continue
+                link = redirect_url('https:'+link)
+                server = 'oprem'
             else:
                 link = scrapertools.find_single_match(link, 'php.*?=(\w+)&')
                 link = GKPluginLink(link)

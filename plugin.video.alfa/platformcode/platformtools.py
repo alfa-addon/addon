@@ -212,7 +212,7 @@ def render_items(itemlist, parent_item):
         if item.fanart:
             fanart = item.fanart
         else:
-            fanart = os.path.join(config.get_runtime_path(), "fanart1.jpg")
+            fanart = config.get_fanart()
 
         # Creamos el listitem
         # listitem = xbmcgui.ListItem(item.title)
@@ -1185,6 +1185,7 @@ def torrent_client_installed(show_tuple=False):
 def play_torrent(item, xlistitem, mediaurl):
     logger.info()
     import time
+    import traceback
 
     from core import filetools
     from core import httptools
@@ -1354,8 +1355,12 @@ def play_torrent(item, xlistitem, mediaurl):
 
         # Si tiene .torrent válido o magnet, lo registramos
         if size or item.url.startswith('magnet'):
-            from lib import alfaresolver
-            alfaresolver.frequency_count(item)
+            try:
+                import threading
+                from lib import alfaresolver
+                threading.Thread(target=alfaresolver.frequency_count, args=(item, )).start()
+            except:
+                logger.error(traceback.format_exc(1))
         
         # Reproductor propio BT (libtorrent)
         if seleccion == 0:

@@ -166,15 +166,24 @@ def check_conditions(_filter, list_item, item, list_language, list_quality, qual
     is_language_valid = True
     if _filter.language:
         # logger.debug("title es %s" % item.title)
+        #2nd lang
+        from platformcode import unify
+        _filter.language = unify.set_lang(_filter.language)
 
         # viene de episodios
         if isinstance(item.language, list):
+            #2nd lang
+            for l, lang in enumerate(item.language):
+                item.language[l] = unify.set_lang(lang)
+
             if _filter.language in item.language:
                 language_count += 1
             else:
                 is_language_valid = False
         # viene de findvideos
         else:
+            #2nd lang
+            item.language = unify.set_lang(item.language)
             if item.language.lower() == _filter.language.lower():
                 language_count += 1
             else:
@@ -192,6 +201,7 @@ def check_conditions(_filter, list_item, item, list_language, list_quality, qual
                 is_quality_valid = False
 
         if is_language_valid and is_quality_valid:
+            #TODO 2nd lang: habría que ver si conviene unificar el idioma aqui o no
             item.list_language = list_language
             if list_quality:
                 item.list_quality = list_quality
@@ -205,7 +215,7 @@ def check_conditions(_filter, list_item, item, list_language, list_quality, qual
         logger.debug(" calidad valida?: %s, item.quality: %s, filter.quality_allowed: %s"
                      % (is_quality_valid, quality, _filter.quality_allowed))
 
-    return list_item, quality_count, language_count
+    return list_item, quality_count, language_count, _filter.language
 
 
 def get_link(list_item, item, list_language, list_quality=None, global_filter_lang_id="filter_languages"):
@@ -268,6 +278,7 @@ def get_links(list_item, item, list_language, list_quality=None, global_filter_l
     """
     logger.info()
 
+
     # si los campos obligatorios son None salimos
     if list_item is None or item is None:
         return []
@@ -275,6 +286,13 @@ def get_links(list_item, item, list_language, list_quality=None, global_filter_l
     # si list_item está vacío volvemos, no se añade validación de plataforma para que Plex pueda hacer filtro global
     if len(list_item) == 0:
         return list_item
+
+
+    second_lang = config.get_setting('second_language')
+
+    #Ordena segun servidores favoritos, elima servers de blacklist y desactivados
+    from core import servertools
+    list_item= servertools.filter_servers(list_item)
 
     logger.debug("total de items : %s" % len(list_item))
 
@@ -285,13 +303,23 @@ def get_links(list_item, item, list_language, list_quality=None, global_filter_l
     _filter = Filter(item, global_filter_lang_id).result
     logger.debug("filter: '%s' datos: '%s'" % (item.show, _filter))
 
+
     if _filter and _filter.active:
 
         for item in list_item:
-            new_itemlist, quality_count, language_count = check_conditions(_filter, new_itemlist, item, list_language,
+            new_itemlist, quality_count, language_count, first_lang = check_conditions(_filter, new_itemlist, item, list_language,
                                                                            list_quality, quality_count, language_count)
 
-        logger.info("ITEMS FILTRADOS: %s/%s, idioma [%s]: %s, calidad_permitida %s: %s"
+        #2nd lang
+        if second_lang and second_lang != 'No' and first_lang.lower() != second_lang.lower() :
+            _filter2 = _filter
+            _filter2.language = second_lang
+            for item in list_item:
+                new_itemlist, quality_count, language_count, second_lang = check_conditions(_filter2, new_itemlist, item, list_language,
+                                                                           list_quality, quality_count, language_count)
+
+
+        logger.debug("ITEMS FILTRADOS: %s/%s, idioma [%s]: %s, calidad_permitida %s: %s"
                     % (len(new_itemlist), len(list_item), _filter.language, language_count, _filter.quality_allowed,
                        quality_count))
 
@@ -307,12 +335,16 @@ def get_links(list_item, item, list_language, list_quality=None, global_filter_l
                 msg_quality_allowed = " y calidad %s" % _filter.quality_allowed
             else:
                 msg_quality_allowed = ""
-
+            
+            msg_lang = ' %s' % first_lang.upper()
+            if second_lang and second_lang != 'No':
+                msg_lang = 's %s ni %s' % (first_lang.upper(), second_lang.upper())
+            
             new_itemlist.append(Item(channel=__channel__, action="no_filter", list_item_all=list_item_all,
                                      show=item.show,
-                                     title="[COLOR %s]No hay elementos con idioma '%s'%s, pulsa para mostrar "
+                                     title="[COLOR %s]No hay elementos con idioma%s%s, pulsa para mostrar "
                                            "sin filtro[/COLOR]"
-                                           % (COLOR.get("error", "auto"), _filter.language, msg_quality_allowed),
+                                           % (COLOR.get("error", "auto"), msg_lang, msg_quality_allowed),
                                      context=_context))
 
     else:

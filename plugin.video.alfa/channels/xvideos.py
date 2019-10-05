@@ -58,7 +58,7 @@ def catalogo(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>|amp;", "", data)
     patron = '<img src="([^"]+)".*?'
     patron += '<p class="profile-name">.*?<a href="([^"]+)">([^<]+)</a>.*?'
     patron += '<span class="with-sub">([^<]+)</span>'
@@ -83,15 +83,16 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<div id="video_\d+".*?'
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>|amp;", "", data)
+    patron = 'data-id="(\d+)".*?'
     patron += 'data-src="([^"]+)".*?'
     patron += '</a>(.*?)<div class=.*?'
-    patron += '<a href="([^"]+)" title="([^"]+)".*?'
+    patron += '<a href="[^"]+" title="([^"]+)".*?'
     patron += '<span class="duration">([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedthumbnail,quality,scrapedurl,scrapedtitle,scrapedtime in matches:
+    for scrapedurl,scrapedthumbnail,quality,scrapedtitle,scrapedtime in matches:
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
+        scrapedurl = "/video" + scrapedurl + "/"
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         thumbnail = scrapedthumbnail.replace("THUMBNUM" , "10")
         quality = scrapertools.find_single_match(quality, 'mark">([^<]+)</span>')
@@ -104,7 +105,7 @@ def lista(item):
     if "profile" in item.url:
         next_page = scrapertools.find_single_match(data, '<li><a class="active" href="">(\d+)</a></li><li><a href="#')
     if next_page:
-        next_page = urlparse.urljoin(item.url,next_page).replace("&amp;", "&")
+        next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
                               url=next_page) )
     return itemlist
@@ -113,7 +114,7 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s", fulltitle = item.title, url=item.url))
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

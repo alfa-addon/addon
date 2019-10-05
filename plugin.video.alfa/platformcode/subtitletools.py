@@ -6,6 +6,9 @@ import string
 import urllib
 from unicodedata import normalize
 from core import filetools
+from core import httptools
+from core import jsontools
+from core import scrapertools
 
 import xbmc
 import xbmcgui
@@ -267,3 +270,70 @@ def saveSubtitleName(item):
     else:
         config.set_setting("subtitle_name", title)
     return
+
+
+def get_from_subdivx(sub_url):
+
+    """
+    :param sub_url: Url de descarga del subtitulo alojado en suvdivx.com
+           Por Ejemplo: http://www.subdivx.com/bajar.php?id=573942&u=8
+
+    :return: La ruta al subtitulo descomprimido
+    """
+
+    logger.info()
+
+    sub = ''
+    sub_dir = os.path.join(config.get_data_path(), 'temp_subs')
+
+    if os.path.exists(sub_dir):
+        for sub_file in os.listdir(sub_dir):
+            old_sub = os.path.join(sub_dir, sub_file)
+            os.remove(old_sub)
+    else:
+        os.mkdir(sub_dir)
+
+    sub_url = sub_url.replace("&amp;", "&")
+    sub_data = httptools.downloadpage(sub_url, follow_redirects=False)
+    if 'x-frame-options' not in sub_data.headers:
+        sub_url = '%s' % sub_data.headers['location']
+        ext = sub_url[-4::]
+        file_id = "subtitle%s" % ext
+        filename = os.path.join(sub_dir, file_id)
+        try:
+            data_dl = httptools.downloadpage(sub_url).data
+            filetools.write(filename, data_dl)
+            sub = extract_file_online(sub_dir, filename)
+        except:
+           logger.info('sub no valido')
+    else:
+       logger.info('sub no valido')
+    return sub
+
+
+def extract_file_online(path, filename):
+
+    """
+    :param path: Ruta donde se encuentra el archivo comprimido
+
+    :param filename: Nombre del archivo comprimido
+
+    :return: Devuelve la ruta al subtitulo descomprimido
+    """
+
+    logger.info()
+
+    url = "http://online.b1.org/rest/online/upload"
+
+    data = httptools.downloadpage(url, file=filename).data
+
+    result = jsontools.load(scrapertools.find_single_match(data, "result.listing = ([^;]+);"))
+    compressed = result["name"]
+    extracted = result["children"][0]["name"]
+
+    dl_url = "http://online.b1.org/rest/online/download/%s/%s" % (compressed, extracted)
+    extracted_path = os.path.join(path, extracted)
+    data_dl = httptools.downloadpage(dl_url).data
+    filetools.write(extracted_path, data_dl)
+
+    return extracted_path

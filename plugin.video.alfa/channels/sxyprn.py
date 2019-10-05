@@ -115,7 +115,7 @@ def play(item):
     url = scrapertools.find_single_match(data, 'data-vnfo=.*?":"([^"]+)"')
     url = url.replace("\/", "/").replace("/cdn/", "/cdn8/")
     url = urlparse.urljoin(item.url,url)
-    itemlist = servertools.find_video_items(item.clone(url = url, fulltitle = item.title))
+    itemlist = servertools.find_video_items(item.clone(url = url, contentTitle = item.title))
     # itemlist.append( Item(channel=item.channel, action="play",server=directo, title = item.title, url=url))
     return itemlist
 

@@ -66,15 +66,26 @@ def mainlist(item):
                          ar_post='buscar=&from=&pinput=0&tipo%5B%5D=2&orden=0'))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...",
-                               action="search",
-                               url=host + '/anime-list/',
-                               thumbnail='https://i.imgur.com/ZVMl3NP.png'))
+                         action="search",
+                         url=host + '/anime-list/',
+                         thumbnail='https://i.imgur.com/ZVMl3NP.png'))
 
+    
+    itemlist.append(Item(channel=item.channel, title="Configurar Canal...", 
+                         action="setting_channel", url="",
+                         thumbnail=get_thumb("setting_0.png"),
+                         text_color='aquamarine'))
+    
+    
     autoplay.show_option(item.channel, itemlist)
-    #itemlist = renumbertools.show_option(item.channel, itemlist)
-
+    
     return itemlist
 
+def setting_channel(item):
+    from platformcode import platformtools
+    ret = platformtools.show_channel_settings()
+    platformtools.itemlist_refresh()
+    return ret
 
 def get_source(url, post=None, host=host, get_url=False):
     logger.info()
@@ -101,14 +112,12 @@ def get_source(url, post=None, host=host, get_url=False):
 def get_info(data, quality=False):
     logger.info()
     txt_info = "[COLOR gold]"
+    patron = 'flag-icon-(\w+)"'
+    
     if quality:
         txt_info = "[COLOR grey]"
+        patron = '>(\d+p)(?:x|)</a>'
     #list_data = []
-
-    if quality:
-        patron = '>(\d+p)x</a>'
-    else:
-        patron = 'flag-icon-(\w+)"'
 
     list_info = re.compile(patron, re.DOTALL).findall(data)
 
@@ -246,7 +255,7 @@ def new_episodes(item):
 
     data = get_source(item.url)
     
-    patron = '<article.*?href=".*?>(.*?) - (\d+|.*?)</a>.*?' #title, ep_n
+    patron = r'<article.*?href=".*?>(.*?) - (\d+|.*?)</a>.*?' #title, ep_n
     patron += '_blank" href="(https://srv[^"]+)".*?Subtitles(.*?)<' #ddl, subs,
     patron += '/td>(.*?)</tbody>(.*?)</article>' #quality,torrents
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -257,20 +266,20 @@ def new_episodes(item):
         urls.append(ddl)
 
         title = scrapedtitle
-        scrapedtitle = re.sub('\((.*?)\)$', '', scrapedtitle)
+        scrapedtitle = re.sub(r'\((.*?)\)$', '', scrapedtitle)
 
         list_quality, quality = get_info(scrapedquality, quality=True)
         list_langs, langs = get_info(scrapedsub)
 
         for q in list_quality:
-            patron = '<i>\[%sx\]</i>.*?<a href="([^"]+)"' % q
+            patron = r'<i>\[%s\]</i>.*?<a href="([^"]+)"' % q
             torrent = scrapertools.find_single_match(storrent, patron)
             
             t_dom = urlparse.urlparse(torrent)[1]
             d_dom = urlparse.urlparse(ddl)[1]
             
             ddl_direct = torrent.replace(t_dom, d_dom)
-            ddl_direct = re.sub('/Torrent|\.torrent$', '', ddl_direct)
+            ddl_direct = re.sub(r'/Torrent|\.torrent$', '', ddl_direct)
 
             if not ddl_direct.endswith('.mkv'):
                 ddl_direct = ddl_direct.replace('/%5BErai', '/?dir=%5BErai')
@@ -291,7 +300,7 @@ def new_episodes(item):
             title += ': %s' % epi
         
         if not config.get_setting('unify'):
-            title += ' %s[COLOR burlywood][Sub-%s][/COLOR]' % (quality, sub_choosen)
+            title += ' %s[COLOR burlywood][Sub-%s][/COLOR]' % (quality, sub_choosen[:3])
         
 
         itemlist.append(Item(channel=item.channel, title=title, url=urls, quality=list_quality,
@@ -331,7 +340,7 @@ def episodios(item):
         list_langs, langs = get_info(scrapedsub)
 
         for q in list_quality:
-            patron = '<i>\[%sx\]</i>.*?<a href="([^"]+)"' % q
+            patron = '<i>\[%s\]</i>.*?<a href="([^"]+)"' % q
             torrent = scrapertools.find_single_match(storrent, patron)
             
             t_dom = urlparse.urlparse(torrent)[1]
@@ -360,7 +369,7 @@ def episodios(item):
             return findvideos(item)
 
         else:
-            title = '1x%s %s[COLOR burlywood][Sub-%s][/COLOR]' % (epi, quality, sub_choosen)
+            title = '1x%s %s[COLOR burlywood][Sub-%s][/COLOR]' % (epi, quality, sub_choosen[:3])
             infoLabels['season'] = 1
             infoLabels['episode'] = scrapertools.find_single_match(epi, '(\d+)')
         
@@ -373,9 +382,11 @@ def episodios(item):
     #itemlist = filtertools.get_links(itemlist, item, list_language)
     itemlist.reverse()
     if matches and not itemlist:
-        zanga = '[COLOR tomato]No hay enlaces con subtitulos en %s[/COLOR]' % str(list_language)
+        zanga = 'No hay enlaces con subtitulos en %s' % sub_choosen
+        if not 'espa' in sub_choosen.lower():
+            zanga = 'There\'s  no links with %s subtitles' % sub_choosen
         from platformcode import platformtools
-        return platformtools.dialog_ok('Information', zanga)
+        return platformtools.dialog_notification('Information', zanga, time=7000)
 
         #itemlist.append(item.clone(title=zanga, url='', action=''))
     return itemlist
@@ -386,7 +397,6 @@ def findvideos(item):
     itemlist = []
     url_list = item.urls_q
 
-    logger.error(url_list[0])
     try:
         test = httptools.downloadpage(url_list[0], only_headers=True).url
     except:

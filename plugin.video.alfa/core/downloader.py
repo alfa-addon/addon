@@ -290,7 +290,7 @@ class Downloader:
             cd_filename, cd_ext = os.path.splitext(urllib.unquote_plus(
                 re.compile("attachment; filename ?= ?[\"|']?([^\"']+)[\"|']?").match(
                     self.response_headers.get("content-disposition")).group(1)))
-        if "filename" in self.response_headers.get("content-disposition", "") and "inline" in self.response_headers.get(
+        elif "filename" in self.response_headers.get("content-disposition", "") and "inline" in self.response_headers.get(
                 "content-disposition", ""):
             cd_filename, cd_ext = os.path.splitext(urllib.unquote_plus(
                 re.compile("inline; filename ?= ?[\"|']?([^\"']+)[\"|']?").match(

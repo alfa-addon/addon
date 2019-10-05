@@ -306,8 +306,7 @@ def findvideos(item):
         
         lang = " [COLOR=grey](%s)[/COLOR]" % language
         for source in matches:
-            if 'streamium.xyz' in source:
-                continue
+            
             url = source
             if 'redirector' in source:
                 new_data = httptools.downloadpage(source).data

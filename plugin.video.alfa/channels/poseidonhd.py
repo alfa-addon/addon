@@ -269,8 +269,6 @@ def findvideos(item):
                     hidden_url = 'https://streamango.poseidonhd.co/repro/plugins/gkpluginsphp.php'
                     dict_vip_url = httptools.downloadpage(hidden_url, post=post).json
                     url = dict_vip_url['link']
-                    if 'hls1.openloadpremium' in url:
-                        continue
 
                 except:
                     continue

@@ -63,15 +63,35 @@ def lista(item):
     logger.info("")
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = '<article class="TPost B">.*?<a href="([^"]+)">.*?src="([^"]+)".*?<div class="Title">([^"]+)</div>'
+    patron = '<article class="TPost B">.*?'
+    patron += '<a href="([^"]+)">.*?'
+    patron += 'src="([^"]+)".*?'
+    patron += '<div class="Title">([^"]+)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         scrapedplot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<a class="next page-numbers" href="([^"]+)">Next &raquo;</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
+
+
+def play(item):
+    itemlist = []
+    itemlist = servertools.find_video_items(item)
+    itemlist.reverse()
+    a = len (itemlist)
+    for i in itemlist:
+        
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue
 
