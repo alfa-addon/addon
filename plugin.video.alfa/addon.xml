@@ -45,8 +45,4 @@
   </extension>
   <extension point="xbmc.service" library="videolibrary_service.py" start="login|startup">
   </extension>
-  <assets>
-    <icon>resources/icon.png</icon>
-    <fanart>resources/fanart1.jpg</fanart>
-  </assets>
 </addon>
