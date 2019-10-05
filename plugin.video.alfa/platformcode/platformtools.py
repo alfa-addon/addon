@@ -212,7 +212,7 @@ def render_items(itemlist, parent_item):
         if item.fanart:
             fanart = item.fanart
         else:
-            fanart = os.path.join(config.get_runtime_path(), "fanart1.jpg")
+            fanart = config.get_fanart()
 
         # Creamos el listitem
         # listitem = xbmcgui.ListItem(item.title)
