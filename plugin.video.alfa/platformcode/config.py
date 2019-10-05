@@ -337,6 +337,14 @@ def get_data_path():
     return dev
 
 
+def get_icon():
+    return xbmc.translatePath(__settings__.getAddonInfo('icon'))
+
+
+def get_fanart():
+    return xbmc.translatePath(__settings__.getAddonInfo('fanart'))
+
+
 def get_cookie_data():
     import os
     ficherocookies = os.path.join(get_data_path(), 'cookies.dat')
