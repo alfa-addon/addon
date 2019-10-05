@@ -254,7 +254,8 @@ def findvideos(item):
     patron = "<a class='optn' href='([^']+)'.*?<img alt='([^']+)'.*?<img src='.*?>([^<]+)<.*?<img src='.*?>([^<]+)<"
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, iserver, quality, language in matches:
-        
+        if 'mediafire' in iserver.lower():
+            continue
         if not qual_fix:
             qual_fix += quality
         
@@ -270,7 +271,8 @@ def findvideos(item):
         except:
             pass
 
-        server = iserver.lower().replace('gvideo', 'directo')
+        server = iserver.lower()
+        
         
         iserver = iserver.capitalize() + title
         itemlist.append(Item(channel=item.channel, title=iserver, url=url,
@@ -308,7 +310,7 @@ def findvideos(item):
         except:
             pass
         
-        server = iserver.lower().replace('gvideo', 'directo')
+        server = iserver.lower()
         iserver = iserver.capitalize() + title
 
         itemlist.append(Item(channel=item.channel, title=iserver, url="", action='play',
@@ -348,19 +350,21 @@ def get_url(url):
             if "FFFFFF" in url:
                 url = scrapertools.find_single_match(d1, 'class="cta" href="([^"]+)"')
     url = url.replace('&amp;f=frame', "")
+    logger.error(url)
     url = url.replace("povwideo","powvideo")
     return url
 
 
 def play(item):
     if not item.spost:
-        new_data = httptools.downloadpage(item.url).data
+        new_data = httptools.downloadpage(item.url, headers={'Referer': item.url}).data
         url = scrapertools.find_single_match(new_data, 'id="link" href="([^"]+)"')
         item.url = get_url(url)
     else:
         post = item.spost
         new_data = httptools.downloadpage(CHANNEL_HOST+'wp-admin/admin-ajax.php',
                                            post=post, headers={'Referer':item.url}).data
+
         url = scrapertools.find_single_match(new_data, "src='([^']+)'")
         item.url = get_url(url)
     item.server = ""

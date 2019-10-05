@@ -392,7 +392,7 @@ def findvideos(item):
 
         if server_id not in ['MediaFire', 'TVM']:
 
-            language = [IDIOMAS[lang], 'VOSE']
+            language = IDIOMAS[lang]
             if server not in duplicados:
                 new_item = Item(channel=item.channel,
                                 action='play',

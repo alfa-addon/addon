@@ -329,7 +329,7 @@ def items_usuario(item):
                     serie = ficha['show_title']['en'].strip()
                 temporada = ficha['season']
                 episodio = ficha['episode']
-                serie = "[COLOR whitesmoke][B]" + serie + "[/B][/COLOR]"
+                serie = "[COLOR whitesmoke]" + serie + "[/COLOR]"
                 if len(episodio) == 1: episodio = '0' + episodio
                 try:
                     title = temporada + "x" + episodio + " - " + serie + ": " + title
@@ -583,6 +583,13 @@ def episodesxseason(item):
         language = episode['languages']
         temporada = episode['season']
         episodio = episode['episode']
+
+        #Fix para thumbs
+        thumb = episode.get('thumbnail', '')
+        if not thumb:
+            thumb = episode['show'].get('thumbnail', '')
+        ua = httptools.get_user_agent()
+        thumbnail = "%s/thumbs/%s|User-Agent=%s" % (host, thumb, ua)
         
         infoLabels['episode'] = episodio
         
@@ -598,9 +605,9 @@ def episodesxseason(item):
             idiomas = ""
         
         if episode['title']:
-            title = episode['title'].get('es', '')
+            title = episode['title'].get('es', '').strip()
             if not title:
-                title = episode['title'].get('en', '')
+                title = episode['title'].get('en', '').strip()
 
         if len(title) == 0: title = "Episodio " + episodio
         
@@ -615,7 +622,7 @@ def episodesxseason(item):
             'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + episode['id'] + ";3"
         itemlist.append(item.clone(action="findvideos", title=title, url=url,
                              contentType="episode", language=langs, text_bold=True,
-                             infoLabels=infoLabels))
+                             infoLabels=infoLabels, thumbnail=thumbnail))
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 

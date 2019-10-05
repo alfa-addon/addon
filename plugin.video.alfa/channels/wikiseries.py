@@ -228,7 +228,7 @@ def findvideos(item):
         elif 'vo' in link.lower():
             language = 'VO'
 
-        url = scrapertools.find_single_match(video_data, '<iframe src=(.*?) scrolling')
+        url = scrapertools.find_single_match(video_data, '<(?:iframe|IFRAME).*?(?:src|SRC)=(.*?) ')
         title = '%s [%s]'
 
         itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language=language,
