@@ -506,7 +506,7 @@ msgid "No links available that meets the requirements of the Black list. Try aga
 msgstr ""
 
 msgctxt "#60003"
-msgid "Connessione con %s"
+msgid "Connecting with %s"
 msgstr ""
 
 msgctxt "#60004"
