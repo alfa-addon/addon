@@ -14,7 +14,7 @@ script:
 # after_success: codecov
 before_deploy:
   # - pip install Sphinx
-  - wget https://raw.githubusercontent.com/alfa-beto/travis_scripts/master/deploy_addon.py
+  - wget https://raw.githubusercontent.com/alfa/travis_scripts/master/deploy_addon.py
   - python deploy_addon.py -z
   - export RELEASE_ZIP=$(ls *.zip)
 deploy:
