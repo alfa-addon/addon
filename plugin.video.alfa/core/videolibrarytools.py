@@ -89,14 +89,10 @@ def save_movie(item):
 
     # Itentamos obtener el titulo correcto:
     # 1. contentTitle: Este deberia ser el sitio correcto, ya que title suele contener "Añadir a la videoteca..."
-    # 2. fulltitle
-    # 3. title
+    # 2. title
     if not item.contentTitle:
         # Colocamos el titulo correcto en su sitio para que scraper lo localize
-        if item.fulltitle:
-            item.contentTitle = item.fulltitle
-        else:
-            item.contentTitle = item.title
+        item.contentTitle = item.title
 
     # Si llegados a este punto no tenemos titulo, salimos
     if not item.contentTitle or not item.channel:
