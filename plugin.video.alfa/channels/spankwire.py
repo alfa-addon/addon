@@ -10,8 +10,10 @@ from core import servertools
 from core import httptools
 
 host = 'https://www.spankwire.com'
-
 url_api = host + "/api/video/list.json?segment=Straight&limit=33&sortby="
+
+
+# Error el Curl de kodi 18.4 quita .net//
 
 def mainlist(item):
     logger.info()
@@ -107,9 +109,10 @@ def lista(item):
             duration = "%s:%s" % (minutos,segundos)
         else:
             duration = "%s:%s:%s" % (horas,minutos,segundos)
+        id = Video["id"]
         title = Video["title"]
         thumbnail = Video["flipBookPath"]
-        url = host + Video["url"]
+        url = "https://www.spankwire.com/api/video/" + str(id) +".json"
         title = "[COLOR yellow]" + duration + "[/COLOR] " + title
         thumbnail = thumbnail.replace("\/", "/").replace("{index}", "2")
         url = url.replace("\/", "/")
@@ -126,8 +129,8 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    scrapedurl = scrapertools.find_single_match(data,'<div class="shareDownload_container__item__dropdown">.*?<a href="([^"]+)"')
-    itemlist.append(item.clone(action="play", server = "directo", url=scrapedurl))
+    json_data = httptools.downloadpage(item.url).json
+    logger.debug(json_data)
+    for key, value in json_data["videos"].items():
+        itemlist.append(['%s' %key.replace("quality_", ""), value])
     return itemlist
-

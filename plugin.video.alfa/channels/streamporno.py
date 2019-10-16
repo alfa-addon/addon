@@ -10,6 +10,8 @@ from core import httptools
 
 host = 'http://streamporno.eu'
 
+# Links caidos en canal y categorias
+
 def mainlist(item):
     logger.info()
     itemlist = []

@@ -17,7 +17,7 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/videos/1"))
     itemlist.append( Item(channel=item.channel, title="Top" , action="lista", url=host + "/top-videos"))
     itemlist.append( Item(channel=item.channel, title="New PornStar" , action="categorias", url=host + "/pornstars"))
-        itemlist.append( Item(channel=item.channel, title="Top PornStar" , action="categorias", url=host + "/pornstars?sort=rank"))
+    itemlist.append( Item(channel=item.channel, title="Top PornStar" , action="categorias", url=host + "/pornstars?sort=rank"))
 
     itemlist.append( Item(channel=item.channel, title="Sitios" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))

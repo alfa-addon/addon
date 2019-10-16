@@ -29,7 +29,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host + "/show/%s" % texto
+    item.url = host + "/show/%s?type=video" % texto
     try:
         return lista(item)
     except:
@@ -66,7 +66,9 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     scrapedurl = scrapertools.find_single_match(data, '<source src="([^"]+)"')
     scrapedurl = scrapedurl.replace("X20", "-")
-    itemlist.append(
-        Item(channel=item.channel, action="play", title=item.title, url=scrapedurl,
-             thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
+    itemlist.append(item.clone(action="play", contentTitle=item.title, url=scrapedurl))
+
+    # itemlist.append(
+        # Item(channel=item.channel, action="play", title=item.title, url=scrapedurl,
+             # thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
     return itemlist

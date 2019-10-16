@@ -78,10 +78,8 @@ def lista(item):
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = contentTitle))
-    next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)" rel="next">&rarr;</a>')
+    next_page = scrapertools.find_single_match(data,'<link rel="next" href="([^"]+)"')
     if next_page!="":
-        next_page = next_page.replace("http://xxxdan.com/","")
-        next_page = "/" + next_page
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
@@ -91,9 +89,8 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    media_url = scrapertools.find_single_match(data, 'src:\'([^\']+)\'')
-    media_url = media_url.replace("https","http")
-    itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=media_url,
-                        thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
+    scrapedurl = scrapertools.find_single_match(data, 'src:\'([^\']+)\'')
+    scrapedurl = scrapedurl.replace("https","http")
+    itemlist.append(item.clone(action="play", contentTitle=item.title, url=scrapedurl))
     return itemlist
 

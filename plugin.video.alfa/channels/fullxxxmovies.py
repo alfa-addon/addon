@@ -65,11 +65,23 @@ def lista(item):
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot) )
-                              # <a class="next page-numbers" href="http://fullxxxmovies.net/page/2/">Next
     next_page = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)">Next')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
+    patron = '<a href="([^"]+)" rel="nofollow"[^<]+>(?:Streaming|Download)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url in matches:
+        if not "ubiqfile" in url:
+            itemlist.append(item.clone(action='play',title="%s", contentTitle=item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
@@ -83,6 +95,7 @@ def play(item):
         if not "ubiqfile" in url:
             itemlist.append(item.clone(action='play',title="%s", contentTitle=item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    itemlist.reverse()
     a = len (itemlist)
     for i in itemlist:
         

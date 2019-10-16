@@ -87,7 +87,7 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     data = scrapertools.find_single_match(data,'<div class="video-embed">(.*?)<div class="views-infos">')
-    patron = 'data-lazy-src="([^"]+)"'
+    patron = 'src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl in matches:
         if "strdef" in scrapedurl: 
@@ -123,7 +123,7 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     data = scrapertools.find_single_match(data,'<div class="video-embed">(.*?)<div class="views-infos">')
-    patron = 'data-lazy-src="([^"]+)"'
+    patron = 'src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl in matches:
         if "strdef" in scrapedurl: 
