@@ -7,11 +7,19 @@ import os
 from core import httptools
 from platformcode import logger, config
 
-# Returns an array of possible video url's from the page_url
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
 
     data = httptools.downloadpage(page_url).data
+    if 'peliculonhd' in page_url:
+        import re
+        patron = r'/mpegTS/([^/]+)/([^\s]+)'
+        matches = re.compile(patron, re.DOTALL).findall(data)
+        for _id, quota in matches:
+            old = '/mpegTS/%s/%s' % (_id, quota)
+            gurl = 'https://lh3.googleusercontent.com/d/%s?quotaUser=%s'
+            new = gurl % (_id, quota)
+            data = data.replace(old, new)
     data = data.replace('s://lh3.googleusercontent.com', '://localhost:8781')
     
     
