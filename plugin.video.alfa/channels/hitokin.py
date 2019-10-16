@@ -36,7 +36,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Nuevos Episodios",
                          action="new_episodes",
                          thumbnail='https://i.imgur.com/IexJg5R.png',
-                         url=host))
+                         url=host+'recientes.php'))
 
     itemlist.append(Item(channel=item.channel, title="Últimos Animes",
                                action="list_all", not_post=True,
@@ -101,7 +101,7 @@ def list_all(item):
     else:
       data = get_source(item.url)
     patron = '<div class="col-6.*?href="([^"]+)".*?>(.*?)<img.*?'#url, info
-    patron += 'src="([^"]+)".*?<p.*?>([^<]+)</p>'#thumb,title
+    patron += 'data-src="([^"]+)".*?<p.*?>([^<]+)</p>'#thumb,title
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, info, scrapedthumbnail, scrapedtitle in matches:
@@ -192,11 +192,11 @@ def new_episodes(item):
     itemlist = []
 
     full_data = get_source(item.url)
-    data = scrapertools.find_single_match(full_data, 'id="episodios_index">(.*?)>Anuncio</h3>')
+    #data = scrapertools.find_single_match(full_data, 'id="episodios_index">(.*?)>Anuncio</h3>')
     
     patron = '<div class="col-6.*?href="([^"]+)">.*?>isodio</span> (\d+)<.*?'
-    patron += 'src="([^"]+)".*?<p.*?>([^<]+)</p>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+    patron += 'data-src="([^"]+)".*?<p.*?>([^<]+)</p>'
+    matches = re.compile(patron, re.DOTALL).findall(full_data)
 
     for scrapedurl, epi, scrapedthumbnail, scrapedtitle in matches:
         url = host+scrapedurl
@@ -211,9 +211,9 @@ def episodios(item):
     logger.info()
     itemlist = []
 
-    data = get_source(item.url)
+    data = httptools.downloadpage(item.url).data
 
-    list_episodes = eval(scrapertools.find_single_match(data, 'var episodios = (.*?);'))
+    list_episodes = eval(scrapertools.find_single_match(data, r'var episodios = (.*?),\s'))
 
 
     infoLabels = item.infoLabels
@@ -247,7 +247,8 @@ def findvideos(item):
     servers_l = {'sm': 'streamango',
               'natsuki': 'directo',
               'izanagui': 'directo',
-              'media': 'mediafire'}
+              'media': 'mediafire',
+              'streamium': 'oprem'}
     itemlist = []
     p_data = ""
 
@@ -260,12 +261,14 @@ def findvideos(item):
     for name, value in matches0:
         p_data += '%s=%s&' % (name, value)
     p_data = urllib.quote(p_data)
-    patron = 'data-tipo="(\d+)" data-.*?title="([^"]+)"'
+    patron = 'data-tipo="(\d+)".*?title="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for p_servidor,scrapedtitle in matches:
         server = ""
+
         scrapedurl = '%s%s.php' % (host, p_seccion)
+        logger.error(scrapedurl)
         '''post = {'seccion': p_seccion,
                 'data': p_data,
                 'nombre': p_nombre,
@@ -307,6 +310,9 @@ def play(item):
             if 'mediafire' in url and not '/file/' in url:
                 url = re.sub('://(.*?)\.mediafire', "://www.mediafire", url)
                 url = re.sub('\.mediafire.*?/(\w+)/', ".mediafire.com/file/", url)
+            elif 'streamium' in url and not '/files/' in url:
+                _hash = scrapertools.find_single_match(url, 'hash=([a-zA-Z0-9]+)')
+                url = 'http://streamium.xyz/files/%s' % _hash
             item.url = url
         else:
             item.url = ''

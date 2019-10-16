@@ -168,13 +168,13 @@ def check_conditions(_filter, list_item, item, list_language, list_quality, qual
         # logger.debug("title es %s" % item.title)
         #2nd lang
         from platformcode import unify
-        _filter.language = unify.set_lang(_filter.language)
+        _filter.language = unify.set_lang(_filter.language).upper()
 
         # viene de episodios
         if isinstance(item.language, list):
             #2nd lang
             for l, lang in enumerate(item.language):
-                item.language[l] = unify.set_lang(lang)
+                item.language[l] = unify.set_lang(lang).upper()
 
             if _filter.language in item.language:
                 language_count += 1
@@ -183,7 +183,8 @@ def check_conditions(_filter, list_item, item, list_language, list_quality, qual
         # viene de findvideos
         else:
             #2nd lang
-            item.language = unify.set_lang(item.language)
+            item.language = unify.set_lang(item.language).upper()
+
             if item.language.lower() == _filter.language.lower():
                 language_count += 1
             else:
@@ -251,7 +252,7 @@ def get_link(list_item, item, list_language, list_quality=None, global_filter_la
 
     if filter_global and filter_global.active:
         list_item, quality_count, language_count = \
-            check_conditions(filter_global, list_item, item, list_language, list_quality)
+            check_conditions(filter_global, list_item, item, list_language, list_quality)[:3]
     else:
         item.context = context(item)
         list_item.append(item)

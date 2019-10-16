@@ -30,8 +30,8 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "Latino",
-        "Castellano",
+        "LAT",
+        "CAST",
         "VOSE"
       ]
     },

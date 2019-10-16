@@ -121,6 +121,15 @@ def put_movies(item, data, pattern, paginacion):
 def episodios(item):
     logger.info()
     itemlist = []
+    templist = seasons(item)
+    for tempitem in templist:
+        itemlist += episodesxseasons(tempitem)
+
+    return itemlist
+
+def episodesxseasons(item):
+    logger.info()
+    itemlist = []
     infoLabels = item.infoLabels
 
     data = load_data(item.url)
@@ -163,11 +172,17 @@ def seasons(item):
         infoLabels['season'] = season
 
         itemlist.append(Item(channel=item.channel, title=title, contentSeason=season,
-            contentSerieName=item.contentSerieName, action="episodios",
+            contentSerieName=item.contentSerieName, action="episodesxseasons",
             infoLabels=infoLabels, url=item.url))
         #episodeMatches = scrapertools.find_single_match(data, episodesPattern % season)
         #put_episodes(itemlist, item, episodeMatches)
     tmdb.set_infoLabels(itemlist, True)
+
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'episodios':
+        itemlist.append(
+                Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]',
+                     url=item.url, action="add_serie_to_library", extra="episodios",
+                     contentSerieName=item.contentSerieName))
     
     return itemlist
 
@@ -236,6 +251,17 @@ def movies(item):
     #coloca las peliculas encontradas en la lista
     return itemlist
 
+def searchShows2(itemlist, item, texto):
+    data = load_data(item.url)
+
+    pattern = '"in"><a href="([^"]+)">(.*?)</a>'
+
+    matches = scrapertools.find_multiple_matches(data, pattern)
+    for link, title in matches:
+
+        if texto.lower() in title.lower():
+            itemlist.append(Item(channel = item.channel, title=title, contentSerieName=title,
+                                url=host + link, action="seasons"))
 def searchShows(itemlist, item, texto):
     texto = texto.lower().split()
     data = load_data(item.url)
@@ -271,7 +297,7 @@ def search(item, texto):
     itemlist = []
 
     if item.extra:
-        searchShows(itemlist, item, texto)
+        searchShows2(itemlist, item, texto)
     else:
         #searchMovies(itemlist, item, texto)
         texto = texto.replace(" ", "+")

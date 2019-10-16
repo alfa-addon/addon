@@ -1,7 +1,7 @@
 {
   "id": "cat3plus",
   "name": "Cat3plus",
-  "active": true,
+  "active": false,
   "adult": true,
   "language": [],
   "thumbnail": "https://i.imgur.com/SJxXKa2.png",
