@@ -1022,7 +1022,7 @@ def last_password_search(pass_path):
 
     # Busca en el Path de extracción si hay algún archivo que contenga la URL donde pueda estar la CONTRASEÑA
     password = ''
-    patron_url = '(http.*\:\/\/(?:www.)?\w+\.\w+\/.*?[\n|\r|$])'
+    patron_url = '(http.*\:\/\/(?:www.)?\w+\.\w+\/.*?)[\n|\r|$]'
     patron_pass = '<input\s*type="text"\s*id="txt_password"\s*name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"'
     
     try:
