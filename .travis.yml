@@ -1,0 +1,44 @@
+branches:
+  only:
+    - develop
+    - master
+    # - /v\.\d+\.\d+\.\d+/
+language: python
+python:
+  - "2.7"
+# install: pip install codecov mock
+script: 
+  # - coverage run tests.py
+  - echo 'testing'
+  - echo $TRAVIS_COMMIT_MESSAGE
+# after_success: codecov
+before_deploy:
+  # - pip install Sphinx
+  - wget https://raw.githubusercontent.com/Alfa-addon/travis_scripts/master/deploy_addon.py
+  - python deploy_addon.py -z
+  - export RELEASE_ZIP=$(ls *.zip)
+deploy:
+  - provider: releases
+    api_key: $GH_TOKEN
+    file_glob: true
+    file: $RELEASE_ZIP
+    skip_cleanup: true
+    on:
+      condition: $TRAVIS_COMMIT_MESSAGE == release
+      python: "2.7"
+  # Deploy to my Kodi repo
+  - provider: script
+    skip_cleanup: true
+    script: python deploy_addon.py -r
+    on:
+      condition: $TRAVIS_COMMIT_MESSAGE == release
+      python: "2.7"
+  # Publish docs to GH Pages
+  # - provider: script
+  #  skip_cleanup: true
+  #  script: python deploy_addon.py -d
+  #  on:
+  #    branch: master
+  #    python: "2.7"
+notifications:
+  email: false

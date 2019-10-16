@@ -4,14 +4,18 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "cloudvideo.tv/(?:embed-|)([a-z0-9]+)(?:.html|)",
-        "url": "https://cloudvideo.tv/embed-\\1.html"
+        "pattern": "(https://[a-zA-Z0-9]+\\.openloadpremium\\.com\\/m3u8\\/.*?\\.m3u8)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "https://streamium\\.xyz/.*?hash=([a-zA-Z0-9]+)",
+        "url": "http://streamium.xyz/files/\\1"
       }
     ]
   },
   "free": true,
-  "id": "cloudvideo",
-  "name": "cloudvideo",
+  "id": "oprem",
+  "name": "oprem",
   "settings": [
     {
       "default": false,
@@ -37,6 +41,5 @@
       "type": "list",
       "visible": false
     }
-  ],
-  "thumbnail": "https://cloudvideo.tv/static/img/logo5.png"
+  ]
 }

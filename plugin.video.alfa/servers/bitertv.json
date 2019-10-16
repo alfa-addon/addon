@@ -6,6 +6,10 @@
       {
         "pattern": "(http://b.ter.tv/v/[A-z0-9]+)",
         "url": "\\1"
+      },
+      {
+        "pattern": "(https://byter.tv/v/[A-z0-9]+)",
+        "url": "\\1"
       }
     ]
   },

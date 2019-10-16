@@ -58,11 +58,11 @@ def mainlist(item):
              url=host+'raking-imdb/', thumbnail=get_thumb("recomended", auto=True)))
     
     itemlist.append(
-        Item(channel=item.channel, title="Por género", action="generos_years",
+        Item(channel=item.channel, title="Por género", action="year",
              url=host, minfo="Géneros", thumbnail=get_thumb("genres", auto=True)))
     
     itemlist.append(
-        Item(channel=item.channel, title="Por año", action="generos_years",
+        Item(channel=item.channel, title="Por año", action="year",
              url=host, minfo="year", thumbnail=get_thumb("year", auto=True)))
     
     itemlist.append(
@@ -70,7 +70,7 @@ def mainlist(item):
              thumbnail=get_thumb("search", auto=True)))
 
     itemlist.append(
-        Item(channel=item.channel, title="Configurar Canal...", action="Config", url="",
+        Item(channel=item.channel, title="Configurar Canal...", action="setting_channel", url="",
              thumbnail=get_thumb("setting_0.png"), text_color='aquamarine'))
     
     
@@ -78,7 +78,7 @@ def mainlist(item):
     
     return itemlist
 
-def Config(item):
+def setting_channel(item):
     from platformcode import platformtools
     ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
@@ -114,7 +114,7 @@ def search(item, texto):
         return []
 
 
-def generos_years(item):
+def year(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data

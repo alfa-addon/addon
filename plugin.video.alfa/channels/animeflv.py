@@ -146,8 +146,8 @@ def novedades_episodios(item):
     patr = '<h2>Últimos episodios</h2>.+?<ul class="ListEpisodios[^>]+>(.*?)</ul>'
     data = get_source(item.url, patron=patr)
     
-    patron = '<li><a href="([^"]+)".*?<img src="([^"]+)".*?"Capi">(.*?)</span>'
-    patron += r'\s*<strong class="Title">(.*?)</strong>'
+    patron = '<a href="([^"]+)"[^>]+>.+?<img src="([^"]+)".+?"Capi">(.*?)</span>'
+    patron += '<strong class="Title">(.*?)</strong>'
     
     matches = re.compile(patron, re.DOTALL).findall(data)
     
@@ -306,8 +306,7 @@ def findvideos(item):
         
         lang = " [COLOR=grey](%s)[/COLOR]" % language
         for source in matches:
-            if 'streamium.xyz' in source:
-                continue
+            
             url = source
             if 'redirector' in source:
                 new_data = httptools.downloadpage(source).data

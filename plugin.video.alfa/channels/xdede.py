@@ -191,9 +191,9 @@ def list_all(item):
         itemlist.sort (key=lambda i: (i.type, i.title))
     #  Paginación
 
-    url_next_page = scrapertools.find_single_match(data,'<link rel="next" href="([^"]+)"')
+    url_next_page = scrapertools.find_single_match(data,'<a href="([^"]+)" up-target="body">Pagina s')
     if url_next_page:
-        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='list_all'))
+        itemlist.append(item.clone(title="Siguiente >>", url=url_next_page, action='list_all', text_color='gold'))
 
     return itemlist
 

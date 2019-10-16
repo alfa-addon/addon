@@ -173,7 +173,7 @@ def check_for_update(overwrite=True):
 
                     interval = int(serie.active)  # Podria ser del tipo bool
 
-                    if not serie.active and not (serie.infoLabels["status"] == "Ended" or serie.infoLabels["status"] == "Canceled"):
+                    if not serie.active:
                         # si la serie no esta activa descartar
                         if overwrite_forced == False:
                             #Sincronizamos los episodios vistos desde la videoteca de Kodi con la de Alfa, aunque la serie esté desactivada
