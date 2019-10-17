@@ -106,8 +106,10 @@ def play(item):
     a = len (itemlist)
     for i in itemlist:
         if a < 1:
-            return []
+            return [] 
         if 'mangovideo' in i.url:
+            res = ""
+        elif 'rapidgator' in i.url:
             res = ""
         elif 'clipwatching' in i.url:
             res = ""

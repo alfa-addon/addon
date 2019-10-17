@@ -84,7 +84,7 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<article>.*?'
     patron += '<a href="([^"]+)".*?'
-    patron += 'data-origen="([^"]+)".*?'
+    patron += '<img.*?src="([^"]+)".*?'
     patron += 'alt="([^"]+)".*?'
     patron += '<span class="r\w">(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)

@@ -79,11 +79,25 @@ def lista(item):
         calidad = scrapertools.find_single_match(scrapedtitle, '\(.*?/(\w+)\)')
         if calidad:
             scrapedtitle = "[COLOR red]" + calidad + "[/COLOR] " + scrapedtitle
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
+        itemlist.append(Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl,
                              fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot))
     next_page = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)"')
     if next_page != "":
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page))
     return itemlist
 
+
+def play(item):
+    itemlist = []
+    itemlist = servertools.find_video_items(item) #findvideo en la url que se le pasa
+    a = len (itemlist)
+    for i in itemlist:
+        if a < 1:
+            return []
+        res = servertools.check_video_link(i.url, i.server, timeout=5)
+        a -= 1
+        if 'green' in res:
+            return [i]
+        else:
+            continue
 

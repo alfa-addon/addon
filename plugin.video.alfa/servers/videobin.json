@@ -4,25 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://flashservice.xvideos.com/embedframe/([0-9]+)",
-        "url": "https://www.xvideos.com/video\\1/"
-      },
-      {
-        "pattern": "https://www.xvideos.com/video([0-9]+)/",
-        "url": "https://www.xvideos.com/video\\1/"
-      },
-      {
-        "pattern": "http://www.xvideos.com/video([0-9]+)/",
-        "url": "https://www.xvideos.com/video\\1/"
+        "pattern": "https://videobin.co/(?:embed-|)([A-z0-9]+)",
+        "url": "https://videobin.co/embed-\\1.html"
       }
     ]
   },
   "free": true,
-  "id": "xvideos",
-  "name": "xvideos",
-  "premium": [
-    "alldebrid"
-  ],
+  "id": "videobin",
+  "name": "videobin",
   "settings": [
     {
       "default": false,
@@ -48,5 +37,6 @@
       "type": "list",
       "visible": false
     }
-  ]
+  ],
+  "thumbnail": ""
 }

@@ -113,7 +113,6 @@ def play(item):
     for scrapedurl  in matches:
         scrapedurl = scrapedurl.replace("https:", "http:")
         scrapedurl += "|Referer=%s" % host
-        itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=scrapedurl,
-                            thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
+        itemlist.append(item.clone(action="play", contentTitle=item.title, url=scrapedurl))
     return itemlist
 

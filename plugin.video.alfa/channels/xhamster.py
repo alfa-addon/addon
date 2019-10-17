@@ -61,7 +61,6 @@ def videos(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, duration in matches:
-        # logger.debug("title=["+scrapedtitle+"], url=["+scrapedurl+"], thumbnail=["+scrapedthumbnail+"]")
         contentTitle = scrapedtitle.strip() + " [" + duration + "]"
         itemlist.append(
             Item(channel=item.channel, action="play", title=contentTitle, url=scrapedurl, thumbnail=scrapedthumbnail,
@@ -119,7 +118,6 @@ def votados(item):
 def vistos(item):
     logger.info()
     itemlist = []
-
     itemlist.append(
         Item(channel=item.channel, action="videos", title="Día", url=urlparse.urljoin(HOST, "/most-viewed/daily"),
              viewmode="movie"))
@@ -132,24 +130,16 @@ def vistos(item):
     itemlist.append(
         Item(channel=item.channel, action="videos", title="De siempre", url=urlparse.urljoin(HOST, "/most-viewed/"),
              viewmode="movie"))
-
     return itemlist
 
 
-# OBTIENE LOS ENLACES SEGUN LOS PATRONES DEL VIDEO Y LOS UNE CON EL SERVIDOR
 def play(item):
     logger.info()
     itemlist = []
-
     data = httptools.downloadpage(item.url).data
-    logger.debug(data)
-
     patron = '"([0-9]+p)":"([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
-
     for res, url in matches:
         url = url.replace("\\", "")
-        logger.debug("url=" + url)
         itemlist.append(["%s %s [directo]" % (res, scrapertools.get_filename_from_url(url)[-4:]), url])
-
     return itemlist
