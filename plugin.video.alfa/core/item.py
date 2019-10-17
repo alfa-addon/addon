@@ -164,7 +164,7 @@ class Item(object):
             return
 
         # Descodificamos los HTML entities
-        if name in ["title", "plot", "fulltitle", "contentPlot", "contentTitle"]:
+        if name in ["title", "plot", "contentPlot", "contentTitle"]:
             value = self.decode_html(value)
 
         # Al modificar cualquiera de estos atributos content...
@@ -246,7 +246,7 @@ class Item(object):
                 return self.__dict__["infoLabels"]["tvshowtitle"]
             elif name == "contentType":
                 ret = self.__dict__["infoLabels"]["mediatype"]
-                if ret == 'list' and self.__dict__.get("fulltitle", None):  # retrocompatibilidad
+                if ret == 'list' and self.__dict__.get("contentTitle", None):  # retrocompatibilidad
                     ret = 'movie'
                     self.__dict__["infoLabels"]["mediatype"] = ret
                 return ret

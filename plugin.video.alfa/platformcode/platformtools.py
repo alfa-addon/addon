@@ -398,10 +398,7 @@ def set_infolabels(listitem, item, player=False):
             logger.error(infoLabels_kodi)
 
     if player and not item.contentTitle:
-        if item.fulltitle:
-            listitem.setInfo("video", {"Title": item.fulltitle})
-        else:
-            listitem.setInfo("video", {"Title": item.title})
+        listitem.setInfo("video", {"Title": item.title})
 
     elif not player:
         listitem.setInfo("video", {"Title": item.title})
@@ -474,7 +471,6 @@ def set_context_commands(item, parent_item):
         if itemBK.contentTitle:             item.contentTitle = itemBK.contentTitle
         if itemBK.contentType:              item.contentType = itemBK.contentType
         if itemBK.duration:                 item.duration = itemBK.duration
-        if itemBK.fulltitle:                item.fulltitle = itemBK.fulltitle
         if itemBK.plot:                     item.plot = itemBK.plot
         if itemBK.quality:                  item.quality = itemBK.quality
         if itemBK.show:                     item.show = itemBK.show
