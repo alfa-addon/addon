@@ -22,12 +22,8 @@ list_quality = ['360p', '480p', '720p', '1080p']
 list_servers = ['mailru', 'openload',  'streamango', 'estream']
 
 
-host = 'http://pelisplus.co'
-CHANNEL_HEADERS = [
-                  ["Host", host.replace("http://","")],
-                  ["X-Requested-With", "XMLHttpRequest"]
-                  ]
-
+host = 'https://pelisplus.me'
+CHANNEL_HEADERS = {"X-Requested-With": "XMLHttpRequest"}
 
 def mainlist(item):
     logger.info()
@@ -252,7 +248,6 @@ def seccion(item):
         itemlist.append(
             Item(action="list_all",
                  channel=item.channel,
-                 contentTitle=item.title,
                  page = "1",
                  slug = slug,
                  title=title,
@@ -390,15 +385,23 @@ def get_links_by_language(item, data):
 
 def findvideos(item):
     logger.info()
-    itemlist = []
     video_list = []
+    CHANNEL_HEADERS.update({'Referer': item.url})
+    
     if item.contentType == 'movie':
-        new_url = new_url = item.url.replace('/pelicula/', '/player/%s/' % item.contentType)
+        new_url = item.url.replace('/pelicula/', '/player/%s/' % item.contentType)
+        new_url = re.sub('/p\d+/', '/', new_url)
     else:
         base_url = scrapertools.find_single_match(item.url, '(.*?)/temporada')
         new_url = base_url.replace('/serie/', '/player/serie/')
         new_url += '|%s|%s/'  % (item.contentSeason, item.contentEpisodeNumber)
-    data = get_source(new_url, referer=item.url)
+
+    data_json = httptools.downloadpage(new_url, headers=CHANNEL_HEADERS).json
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data_json.get('html', ''))
+    
+    if not data:
+        return video_list
+    
     patron_language ='(<ul id="level\d_.*?"*class=.*?ul>)'
     matches = re.compile(patron_language, re.DOTALL).findall(data)
 

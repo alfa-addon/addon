@@ -177,6 +177,7 @@ def genresYears(item):
     matches = scrapertools.find_multiple_matches(bloq, patron)
 
     for scrapedurl, scrapedtitle in matches:
+        scrapedurl = scrapedurl.replace('09', '1')
         url = json_api+"?term=%s&nonce=%s&type=movies" % (scrapedurl, nonce)
         itemlist.append(item.clone(title=scrapedtitle, url=url, action="api_peliculas"))
     return itemlist
@@ -355,17 +356,14 @@ def findvideos(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|#038;|\(.*?\)|\s{2}|&nbsp;", "", data)
-    data = scrapertools.decodeHtmlentities(data)
-    # logger.info(data)
-
-    # patron1 = 'data-tplayernv="Opt(.*?)"><span>(.*?)</span><span>(.*?)</span>' # option, server, lang - quality
-    patron = 'href="#option-(.*?)"><span class="dt_flag"><img src="[^"]+"></span>([^<]+)</a>'
+    data = data.replace("'",'"')
+    
+    patron = 'data-type="([^"]+)" data-post="(\d+)" data-nume="(\d+)'
+    patron += '.*?title">([^<]+).*?server">(\w+)'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    # urls = re.compile(patron2, re.DOTALL).findall(data)
 
-    for option, lang in matches:
-        url = scrapertools.find_single_match(
-            data, '<div id="option-%s" class="[^"]+"><iframe class="metaframe rptss" src="([^"]+)"' % option)
+    for _type, pid, num, lang, server in matches:
+        
         lang = lang.lower().strip()
         languages = {'latino': '[COLOR cornflowerblue](LAT)[/COLOR]',
                      'castellano': '[COLOR green](CAST)[/COLOR]',
@@ -374,13 +372,17 @@ def findvideos(item):
                      'sup espaÑol': '[COLOR grey](VOSE)[/COLOR]',
                      'sub': '[COLOR grey](VOSE)[/COLOR]',
                      'ingles': '[COLOR red](VOS)[/COLOR]'}
-        if lang in languages:
-            lang = languages[lang]
+        lang = languages.get(lang, lang)
+        
         #tratando con los idiomas
         language = scrapertools.find_single_match(lang, '\((\w+)\)')
         list_language.append(language)
+
+        post = {'action': 'doo_player_ajax', 'post': pid, 'nume': num, 'type':_type}
+        post_url = '%swp-admin/admin-ajax.php' % host
+        new_data = httptools.downloadpage(post_url, post=post, headers={'Referer':item.url}).data
+        url = scrapertools.find_single_match(new_data, "src='([^']+)'")
         
-        server = servertools.get_server_from_url(url)
         title = "»» [COLOR yellow](%s)[/COLOR] [COLOR goldenrod](%s)[/COLOR] %s ««" % (
             server.title(), item.quality, lang)
         # if 'google' not in url and 'directo' not in server:

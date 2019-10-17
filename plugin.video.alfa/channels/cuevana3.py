@@ -16,7 +16,7 @@ from channels import autoplay
 from channels import filtertools
 
 
-host = 'http://www.cuevana3.com/'
+host = 'https://cuevana3.co/'
 
 IDIOMAS = {'Latino': 'LAT', 'Español': 'CAST', 'Subtitulado':'VOSE'}
 list_language = IDIOMAS.values()
