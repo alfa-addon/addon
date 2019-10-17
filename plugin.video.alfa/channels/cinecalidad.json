@@ -1,6 +1,7 @@
 {
   "id": "cinecalidad",
   "name": "CineCalidad",
+  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
@@ -12,6 +13,7 @@
     "torrent"
   ],
   "settings": [
+
     {
       "id": "include_in_global_search",
       "type": "bool",
