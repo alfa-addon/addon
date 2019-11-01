@@ -37,7 +37,6 @@ def search(item, texto):
 def lista(item):
     logger.info()
     itemlist = []
-
     if not item.calidad:
         item.calidad = "0"
     filter = 'ch=178.1.2.3.4.191.7.8.5.9.10.169.11.12.13.14.15.16.17.18.28.190.20.21.22.27.23.24.25.26.189.30.31.32.181' \
@@ -47,10 +46,7 @@ def lista(item):
     header = {'X-Requested-With': 'XMLHttpRequest'}
     if item.extra != "buscar":
         header['Cookie'] = 'area=EU; lang=en; search_filter_new=%s' % filter
-    # Descarga la pagina 
     data = httptools.downloadpage(item.url, headers=header, cookies=False).data
-
-    # Extrae las entradas
     patron = '<div class="box-tumb related_vid.*?href="([^"]+)" title="([^"]+)".*?src="([^"]+)"(.*?)<i class="time">([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle, scrapedthumbnail, quality, duration in matches:
@@ -61,8 +57,6 @@ def lista(item):
             scrapedtitle += "  [COLOR red][HD][/COLOR]"
         itemlist.append(
             item.clone(action="play", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, folder=False))
-
-        # Extrae la marca de siguiente página
     next_page = scrapertools.find_single_match(data, '<li class="next1">.*?href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(host, next_page)
@@ -74,11 +68,7 @@ def lista(item):
 def categorias(item):
     logger.info()
     itemlist = []
-
-    # Descarga la pagina    
     data = httptools.downloadpage("https://www.nuvid.com/categories").data
-
-    # Extrae las entradas (carpetas)
     bloques = scrapertools.find_multiple_matches(data, '<h2 class="c-mt-output title2">.*?>([^<]+)</h2>(.*?)</div>')
     for cat, b in bloques:
         cat = cat.replace("Straight", "Hetero")
@@ -88,28 +78,23 @@ def categorias(item):
             scrapedtitle = "   " + scrapedtitle.replace("<span>", "")
             scrapedurl = urlparse.urljoin(host, scrapedurl)
             itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl))
-
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-
     data = httptools.downloadpage(item.url, cookies=False).data
     h = scrapertools.find_single_match(data, "params\s*\+=\s*'h=([^']+)'")
     t = scrapertools.find_single_match(data, "params\s*\+=\s*'%26t=([^']+)'")
     vkey = scrapertools.find_single_match(data, "params\s*\+=\s*'%26vkey='.*?'([^']+)'")
     pkey = hashlib.md5(vkey + base64.b64decode("aHlyMTRUaTFBYVB0OHhS")).hexdigest()
-
-    url = 'https://www.nuvid.com/player_config/?h=%s&check_speed=1&t=%s&vkey=%s&pkey=%s&aid=&domain_id=' % (
-    h, t, vkey, pkey)
+    url = 'https://www.nuvid.com/player_config/?h=%s&check_speed=1&t=%s&vkey=%s&pkey=%s&aid=&domain_id=' % (h,t,vkey,pkey)
     data = httptools.downloadpage(url, cookies=False).data
-    videourl = scrapertools.find_single_match(data, '<video_file>.*?(http.*?)\]')
+    videourl = scrapertools.find_single_match(data, '<video_file>.*?(http.*?)\]\]>')
     if videourl:
         itemlist.append(['.mp4 [directo]', videourl])
-    videourl = scrapertools.find_single_match(data, '<hq_video_file>.*?(http.*?)\]')
+    videourl = scrapertools.find_single_match(data, '<hq_video_file>.*?(http.*?)\]\]>')
     if videourl:
         itemlist.append(['.mp4 HD [directo]', videourl])
-
     return itemlist

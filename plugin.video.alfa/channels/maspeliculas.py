@@ -244,6 +244,7 @@ def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
+    item.first = 0
     if texto != '':
         return list_all(item)
     else:

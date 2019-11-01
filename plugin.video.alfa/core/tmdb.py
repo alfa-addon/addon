@@ -31,8 +31,8 @@ from platformcode import logger
 #       tmdb.set_infoLabels(item, seekTmdb = True)
 #
 #       Obtener datos basicos de una pelicula:
-#           Antes de llamar al metodo set_infoLabels el titulo a buscar debe estar en item.fulltitle
-#           o en item.contentTitle y el año en item.infoLabels['year'].
+#           Antes de llamar al metodo set_infoLabels el titulo a buscar debe estar en item.contentTitle
+#           y el año en item.infoLabels['year'].
 #
 #       Obtener datos basicos de una serie:
 #           Antes de llamar al metodo set_infoLabels el titulo a buscar debe estar en item.show o en
@@ -421,9 +421,6 @@ def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=Non
                         # ...y año o filtro
                         if item.contentTitle:
                             titulo_buscado = item.contentTitle
-                        else:
-                            titulo_buscado = item.fulltitle
-
                         otmdb = Tmdb(texto_buscado=titulo_buscado, tipo=tipo_busqueda, idioma_busqueda=idioma_busqueda,
                                      filtro=item.infoLabels.get('filtro', {}), year=item.infoLabels['year'])
                 if otmdb is not None:

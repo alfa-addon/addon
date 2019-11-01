@@ -83,17 +83,29 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     scrapedurl = scrapertools.find_single_match(data,'<iframe frameborder=0 scrolling="no"  src=\'([^\']+)\'')
     data = httptools.downloadpage(scrapedurl).data
-    scrapedurl1 = scrapertools.find_single_match(data,'<iframe src="(.*?)"')
-    scrapedurl1 = scrapedurl1.replace("//www.playercdn.com/ec/i2.php?url=", "")
-    scrapedurl1 = base64.b64decode(scrapedurl1 + "=")
-    logger.debug(scrapedurl1)
-    data = httptools.downloadpage(scrapedurl1).data
-    if "xvideos" in scrapedurl1:
-        scrapedurl2 = scrapertools.find_single_match(data, 'html5player.setVideoHLS\(\'([^\']+)\'\)')
-    if "xhamster" in scrapedurl1:
-        scrapedurl2 = scrapertools.find_single_match(data, '"[0-9]+p":"([^"]+)"').replace("\\", "")
+    scrapedurl = scrapertools.find_single_match(data,'<iframe src="(.*?)"')
+    scrapedurl = scrapedurl.replace("//www.playercdn.com/ec/i2.php?url=", "")
+    logger.debug(scrapedurl)
+    scrapedurl = base64.b64decode(scrapedurl + "=")
+    if "xhamster" in scrapedurl:
+        data = httptools.downloadpage(scrapedurl).data
+        patron = '"([0-9]+p)":"([^"]+)"'
+        matches = re.compile(patron, re.DOTALL).findall(data)
+        for res, url in matches:
+            url = url.replace("\\", "")
+            itemlist.append(["[xhamster] %s" % res, url])
+    else:
+        itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=scrapedurl))
+        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
 
-    logger.debug(scrapedurl2)
-    itemlist.append(item.clone(action="play", title=item.title, url=scrapedurl2))
+
+
+    # logger.debug(scrapedurl)
+    # data = httptools.downloadpage(scrapedurl1).data
+    # if "xvideos" in scrapedurl:
+        # scrapedurl = scrapertools.find_single_match(data, 'html5player.setVideoHLS\(\'([^\']+)\'\)')
+
+    # logger.debug(scrapedurl)
+    # itemlist.append(item.clone(action="play", title=item.title, url=scrapedurl))
     return itemlist
 

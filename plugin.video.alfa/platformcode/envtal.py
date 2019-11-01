@@ -267,7 +267,7 @@ def get_environment():
             proxy_channel_bloqued = dict()
             proxy_channel_bloqued = ast.literal_eval(proxy_channel_bloqued_str)
             for channel_bloqued, proxy_active in proxy_channel_bloqued.items():
-                if proxy_active == 'ON':
+                if proxy_active != 'OFF':
                     environment['proxy_active'] += channel_bloqued + ', '
         except:
             pass

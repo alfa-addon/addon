@@ -37,6 +37,7 @@ def mainlist(item):
 def play(item):
     itemlist = []
     itemlist = servertools.find_video_items(item)
+    itemlist.reverse()
     a = len (itemlist)
     for i in itemlist:
         

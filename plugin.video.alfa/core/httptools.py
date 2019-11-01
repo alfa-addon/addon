@@ -162,9 +162,15 @@ def channel_proxy_list(url, forced_proxy=None):
         url += '/'
     if scrapertools.find_single_match(url, '(?:http.*\:)?\/\/(?:www\.)?([^\?|\/]+)(?:\?|\/)') \
                 in proxy_channel_bloqued:
+        if forced_proxy and forced_proxy not in ['Total', 'ProxyDirect', 'ProxyCF', 'ProxyWeb']:
+            if forced_proxy in proxy_channel_bloqued[scrapertools.find_single_match(url, 
+                        '(?:http.*\:)?\/\/(?:www\.)?([^\?|\/]+)(?:\?|\/)')]:
+                return True
+            else:
+                return False
         if forced_proxy:
             return True
-        if 'ON' in proxy_channel_bloqued[scrapertools.find_single_match(url, 
+        if not 'OFF' in proxy_channel_bloqued[scrapertools.find_single_match(url, 
                 '(?:http.*\:)?\/\/(?:www\.)?([^\?|\/]+)(?:\?|\/)')]:
             return True
 
@@ -342,10 +348,15 @@ def proxy_post_processing(url, proxy_data, response, opt):
                                                  error_skip=proxy_data['CF_addr'])
                 url = opt['url_save']
             elif ', Proxy Web' in proxy_data.get('stat', ''):
-                proxytools.get_proxy_list_method(proxy_init='ProxyWeb',
-                                                 error_skip=proxy_data['web_name'])
-                url =opt['url_save']
-                opt['post'] = opt['post_save']
+                if channel_proxy_list(opt['url_save'], forced_proxy=proxy_data['web_name']):
+                    opt['forced_proxy'] = 'ProxyCF'
+                    url =opt['url_save']
+                    opt['post'] = opt['post_save']
+                else:
+                    proxytools.get_proxy_list_method(proxy_init='ProxyWeb',
+                                                     error_skip=proxy_data['web_name'])
+                    url =opt['url_save']
+                    opt['post'] = opt['post_save']
 
         else:
             opt['out_break'] = True

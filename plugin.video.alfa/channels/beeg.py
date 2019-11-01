@@ -80,7 +80,7 @@ def videos(item):
         title = Video["title"]
         title = "[COLOR yellow]" + duration + "[/COLOR] " + title
         itemlist.append(
-            Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot="", show="",
+            Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot="", 
                  folder=True, contentType="movie"))
     # Paginador
     Actual = int(scrapertools.find_single_match(item.url, url_api + '/index/[^/]+/([0-9]+)/pc'))

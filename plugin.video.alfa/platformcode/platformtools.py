@@ -140,6 +140,10 @@ def render_items(itemlist, parent_item):
         anime = False
         if 'anime' in channeltools.get_channel_parameters(parent_item.channel)['categories']:
             anime = True
+    try:
+        force_unify = channeltools.get_channel_parameters(parent_item.channel)['force_unify']
+    except:
+        force_unify = False
 
     unify_enabled = config.get_setting('unify')
     # logger.debug('unify_enabled: %s' % unify_enabled)
@@ -175,7 +179,7 @@ def render_items(itemlist, parent_item):
             elif 'serie' in item.action:
                 item.thumbnail = get_thumb("videolibrary_tvshow.png")
 
-        if unify_enabled and parent_item.channel != 'alfavorites':
+        if (unify_enabled or force_unify) and parent_item.channel != 'alfavorites':
             # Formatear titulo con unify
             item = unify.title_format(item)
         else:
@@ -212,7 +216,7 @@ def render_items(itemlist, parent_item):
         if item.fanart:
             fanart = item.fanart
         else:
-            fanart = os.path.join(config.get_runtime_path(), "fanart1.jpg")
+            fanart = config.get_fanart()
 
         # Creamos el listitem
         # listitem = xbmcgui.ListItem(item.title)
@@ -398,10 +402,7 @@ def set_infolabels(listitem, item, player=False):
             logger.error(infoLabels_kodi)
 
     if player and not item.contentTitle:
-        if item.fulltitle:
-            listitem.setInfo("video", {"Title": item.fulltitle})
-        else:
-            listitem.setInfo("video", {"Title": item.title})
+        listitem.setInfo("video", {"Title": item.title})
 
     elif not player:
         listitem.setInfo("video", {"Title": item.title})
@@ -474,7 +475,6 @@ def set_context_commands(item, parent_item):
         if itemBK.contentTitle:             item.contentTitle = itemBK.contentTitle
         if itemBK.contentType:              item.contentType = itemBK.contentType
         if itemBK.duration:                 item.duration = itemBK.duration
-        if itemBK.fulltitle:                item.fulltitle = itemBK.fulltitle
         if itemBK.plot:                     item.plot = itemBK.plot
         if itemBK.quality:                  item.quality = itemBK.quality
         if itemBK.show:                     item.show = itemBK.show
@@ -1185,6 +1185,7 @@ def torrent_client_installed(show_tuple=False):
 def play_torrent(item, xlistitem, mediaurl):
     logger.info()
     import time
+    import traceback
 
     from core import filetools
     from core import httptools
@@ -1354,8 +1355,12 @@ def play_torrent(item, xlistitem, mediaurl):
 
         # Si tiene .torrent válido o magnet, lo registramos
         if size or item.url.startswith('magnet'):
-            from lib import alfaresolver
-            alfaresolver.frequency_count(item)
+            try:
+                import threading
+                from lib import alfaresolver
+                threading.Thread(target=alfaresolver.frequency_count, args=(item, )).start()
+            except:
+                logger.error(traceback.format_exc(1))
         
         # Reproductor propio BT (libtorrent)
         if seleccion == 0:

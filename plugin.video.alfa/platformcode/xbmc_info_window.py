@@ -90,8 +90,7 @@ class InfoWindow(xbmcgui.WindowXMLDialog):
             En caso de peliculas:
                 Coge el titulo de los siguientes campos (en este orden)
                       1. contentTitle (este tiene prioridad 1)
-                      2. fulltitle (este tiene prioridad 2)
-                      3. title (este tiene prioridad 3)
+                      2. title (este tiene prioridad 2)
                 El primero que contenga "algo" lo interpreta como el titulo (es importante asegurarse que el titulo este en
                 su sitio)
 

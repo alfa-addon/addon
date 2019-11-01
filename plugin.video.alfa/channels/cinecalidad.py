@@ -1,38 +1,38 @@
 # -*- coding: utf-8 -*-
-
+# -*- Channel Destotal -*-
+# -*- Created for Alfa-addon -*-
+# -*- By the Alfa Develop Group -*-
 import re
-import urlparse
-
-from channels import autoplay
-from channels import filtertools
-from core import httptools
-from core import scrapertools
-from core import servertools
 from core import tmdb
+from core import httptools
 from core.item import Item
-from platformcode import config, logger
+from core import servertools
+from core import scrapertools
+from bs4 import BeautifulSoup
 from channelselector import get_thumb
+from platformcode import config, logger
+from channels import filtertools, autoplay
 
 IDIOMAS = {'latino': 'Latino', 'castellano': 'Castellano', 'portugues': 'Portugues'}
 list_language = IDIOMAS.values()
 list_quality = ['1080p']
-list_servers = [
-    
-    'gounlimited',
-    'verystream',
-    'mega',
-    'vidcloud',
-    'torrent',
-    'rapidvideo',
-    'streamango',
-    'openload',
-    'torrent'
-]
+list_servers = ['gounlimited',
+                'verystream',
+                'mega',
+                'vidcloud',
+                'torrent',
+                'rapidvideo',
+                'streamango',
+                'openload',
+                'torrent'
+                ]
 
 host = 'http://www.cinecalidad.to'
+
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
 thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'
 thumbbr = 'http://flags.fmcdn.net/data/flags/normal/br.png'
+
 current_lang = ''
 
 site_list = ['', 'cinecalidad.to/', 'cinecalidad.to/espana/', 'cinemaqualidade.to/']
@@ -41,35 +41,35 @@ site_lang = 'http://www.%s' % site_list[site]
 
 def mainlist(item):
     logger.info()
-    
-    itemlist = []
+
+    itemlist = list()
     idioma2 = "destacadas"
-    
+
     if site > 0:
         item.action = 'submenu'
         item.host = site_lang
         return submenu(item)
 
-
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = []
 
-    itemlist.append(
-        item.clone(title="CineCalidad Latino",
-                   action="submenu",
-                   host="http://www.cinecalidad.to/",
-                   thumbnail=thumbmx))
+    itemlist.append(Item(channel=item.channel,
+                         title="CineCalidad Latino",
+                         action="submenu",
+                         host="http://www.cinecalidad.to/",
+                         thumbnail=thumbmx))
 
-    itemlist.append(item.clone(title="CineCalidad Castellano",
-                               action="submenu",
-                               host="http://www.cinecalidad.to/espana/",
-                               thumbnail=thumbes))
+    itemlist.append(Item(channel=item.channel,
+                         title="CineCalidad Castellano",
+                         action="submenu",
+                         host="http://www.cinecalidad.to/espana/",
+                         thumbnail=thumbes))
 
-    itemlist.append(
-        item.clone(title="CineCalidad Portugues",
-                   action="submenu",
-                   host="http://www.cinemaqualidade.to/",
-                   thumbnail=thumbbr))
+    itemlist.append(Item(channel=item.channel,
+                         title="CineCalidad Portugues",
+                         action="submenu",
+                         host="http://www.cinemaqualidade.to/",
+                         thumbnail=thumbbr))
 
     itemlist.append(Item(channel=item.channel,
                          title="Configurar Canal...",
@@ -97,185 +97,132 @@ def submenu(item):
 
     itemlist.append(Item(channel=item.channel,
                          title=idioma.capitalize(),
-                         action="peliculas",
+                         action="list_all",
                          url=host,
                          thumbnail=get_thumb('movies', auto=True),
-                         fanart='https://s8.postimg.cc/6wqwy2c2t/peliculas.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Destacadas",
-                         action="peliculas",
+                         action="list_all",
                          url=host + "/genero-" + idioma + "/" + idioma2 + "/",
                          thumbnail=get_thumb('hot', auto=True),
-                         fanart='https://s30.postimg.cc/humqxklsx/destacadas.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Generos",
-                         action="generos",
+                         action="genres",
                          url=host,
                          thumbnail=get_thumb('genres', auto=True),
-                         fanart='https://s3.postimg.cc/5s9jg2wtf/generos.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Por Año",
-                         action="anyos",
+                         action="by_year",
                          url=host + idioma + "-por-ano",
                          thumbnail=get_thumb('year', auto=True),
-                         fanart='https://s8.postimg.cc/7eoedwfg5/pora_o.png',
                          ))
     itemlist.append(Item(channel=item.channel,
                          title="Buscar...",
                          action="search",
                          thumbnail=get_thumb('search', auto=True),
                          url=host + '/?s=',
-                         fanart='https://s30.postimg.cc/pei7txpa9/buscar.png',
                          host=item.host,
                          ))
     if site > 0:
         autoplay.init(item.channel, list_servers, list_quality)
-        
+
         itemlist.append(Item(channel=item.channel,
-                         title="Configurar Canal...",
-                         text_color="turquoise",
-                         action="settingCanal",
-                         thumbnail=get_thumb('setting_0.png'),
-                         url='',
-                         fanart=get_thumb('setting_0.png')
-                         ))
-        
+                             title="Configurar Canal...",
+                             text_color="turquoise",
+                             action="settingCanal",
+                             thumbnail=get_thumb('setting_0.png'),
+                             url='',
+                             fanart=get_thumb('setting_0.png')
+                             ))
+
         autoplay.show_option(item.channel, itemlist)
 
     return itemlist
+
+
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer': referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+
+    return soup
+
+def list_all(item):
+    logger.info()
+
+    itemlist = list()
+
+    soup = create_soup(item.url, unescape=True)
+    for elem in soup.find_all("div", class_="home_post_cont"):
+        logger.debug(elem)
+        url = elem.a["href"]
+        try:
+            title, year = elem.img["title"].split(' (')
+            year = re.sub(r"\)","", year)
+        except:
+            continue
+        thumb = re.sub(r'(-\d+x\d+.jpg)', '.jpg', elem.img["src"])
+        plot = elem.p.text
+        itemlist.append(Item(channel=item.channel, title=title, url=url, thumbnail=thumb, action="findvideos",
+                             plot=plot, contentTitle=title, infoLabels={'year': year}))
+    tmdb.set_infoLabels_itemlist(itemlist, True)
+
+    ## Pagination ##
+
+    try:
+        next_page = soup.find("a", class_="nextpostslink")["href"]
+        itemlist.append(Item(channel=item.channel,  action="list_all",  title="Página siguiente >>",
+                             url=next_page, language=item.language ))
+    except:
+        pass
+
+    return itemlist
+
+def by_year(item):
+    logger.info()
+
+    itemlist = list()
+
+    soup = create_soup(item.url, unescape=True).find("div", class_="page_single_left")
+
+    for elem in soup.find_all('a'):
+        url = elem["href"]
+        title = elem.text
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
+
+    return itemlist
+
+def genres(item):
+    logger.info()
+
+    itemlist = list()
+
+    soup = create_soup(item.url, unescape=True).find("ul", id="menu-menu")
+
+    for elem in soup.find_all("li"):
+        url = elem.a["href"]
+        title = elem.a.text
+        if 'http' in url and 'año' not in title:
+            itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
+
+    return itemlist
+
 
 def settingCanal(item):
     from platformcode import platformtools
     platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
     return
-
-def anyos(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '<a href=([^>]+)>([^<]+)</a><br'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedurl, scrapedtitle in matches:
-        url = urlparse.urljoin(item.url, scrapedurl)
-        title = scrapedtitle
-        thumbnail = item.thumbnail
-        plot = item.plot
-        itemlist.append(
-            Item(channel=item.channel,
-                 action="peliculas",
-                 title=title,
-                 url=url,
-                 thumbnail=thumbnail,
-                 plot=plot,
-                 fanart=item.thumbnail,
-                 language=item.language
-                 ))
-
-    return itemlist
-
-
-def generos(item):
-    tgenero = {"Comedia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
-               "Suspenso": "https://s13.postimg.cc/wmw6vl1cn/suspenso.png",
-               "Drama": "https://s16.postimg.cc/94sia332d/drama.png",
-               "Acción": "https://s3.postimg.cc/y6o9puflv/accion.png",
-               "Aventura": "https://s10.postimg.cc/6su40czih/aventura.png",
-               "Romance": "https://s15.postimg.cc/fb5j8cl63/romance.png",
-               "Fantas\xc3\xada": "https://s13.postimg.cc/65ylohgvb/fantasia.png",
-               "Infantil": "https://s23.postimg.cc/g5rmazozv/infantil.png",
-               "Ciencia ficción": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png",
-               "Terror": "https://s7.postimg.cc/yi0gij3gb/terror.png",
-               "Com\xc3\xa9dia": "https://s7.postimg.cc/ne9g9zgwb/comedia.png",
-               "Suspense": "https://s13.postimg.cc/wmw6vl1cn/suspenso.png",
-               "A\xc3\xa7\xc3\xa3o": "https://s3.postimg.cc/y6o9puflv/accion.png",
-               "Fantasia": "https://s13.postimg.cc/65ylohgvb/fantasia.png",
-               "Fic\xc3\xa7\xc3\xa3o cient\xc3\xadfica": "https://s9.postimg.cc/diu70s7j3/cienciaficcion.png"}
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron = '<li id=menu-item-.*? class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-.*?'
-    patron +='"><a href=([^>]+)>([^<]+)<\/a></li>'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedtitle in matches:
-        url = urlparse.urljoin(item.url, scrapedurl)
-        title = scrapedtitle
-        thumbnail = ''
-        plot = item.plot
-        itemlist.append(
-            Item(channel=item.channel,
-                 action="peliculas",
-                 title=title, url=url,
-                 thumbnail=thumbnail,
-                 plot=plot,
-                 fanart=item.thumbnail,
-                 language=item.language
-                 ))
-
-    return itemlist
-
-
-def peliculas(item):
-    logger.info()
-    global current_lang
-    itemlist = []
-
-    if 'cinemaqualidade' in item.url:
-        current_lang = 'portugues'
-    elif 'espana' in item.url:
-        current_lang = 'castellano'
-    elif 'cinecalidad' in item.url:
-        current_lang = 'latino'
-
-
-    data = httptools.downloadpage(item.url).data
-    patron = '<div class="home_post_cont.*? post_box">.*?<a href=([^>]+)>.*?src=([^ ]+).*?'
-    patron += 'title="(.*?) \((.*?)\).*?".*?p&gt;(.*?)&lt'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedplot in matches:
-        url = urlparse.urljoin(item.url, scrapedurl)
-        contentTitle = scrapedtitle
-        title = scrapedtitle + ' (' + scrapedyear + ')'
-        thumbnail = scrapedthumbnail
-        plot = scrapedplot
-        year = scrapedyear
-        language = current_lang.capitalize()
-        if item.gb_search:
-            title += " (%s)" % language
-        itemlist.append(
-            Item(channel=item.channel,
-                 action="findvideos",
-                 title=title,
-                 url=url,
-                 thumbnail=thumbnail,
-                 plot=plot,
-                 fanart='https://s31.postimg.cc/puxmvsi7v/cinecalidad.png',
-                 contentTitle=contentTitle,
-                 infoLabels={'year': year},
-                 language=language,
-                 context=autoplay.context
-                 ))
-
-    try:
-        patron = "<link rel=next href=([^>]+)>"
-        next_page = re.compile(patron, re.DOTALL).findall(data)
-        itemlist.append(Item(channel=item.channel,
-                             action="peliculas",
-                             title="Página siguiente >>",
-                             url=next_page[0],
-                             fanart='https://s31.postimg.cc/puxmvsi7v/cinecalidad.png',
-                             language=item.language
-                             ))
-
-    except:
-        pass
-    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
-    return itemlist
 
 
 def dec(item, dec_value):
@@ -314,7 +261,6 @@ def findvideos(item):
                 "https://streamango.com/embed/f/": "streamango",
                 "https://www.rapidvideo.com/embed/": "rapidvideo",
                 }
-
 
     logger.info()
     itemlist = []
@@ -381,12 +327,12 @@ def findvideos(item):
 
         if server_id in server_url:
             server = server_id.lower()
-            
+
             if server_id in ['Gounlimited', 'Clipwatching']:
                 url = server_url[server_id] + video_id + '.html'
             else:
                 url = server_url[server_id] + video_id
-        
+
         title = item.contentTitle + ' (%s)' % server
         quality = '1080p'
 
@@ -399,7 +345,7 @@ def findvideos(item):
                                 title=title,
                                 contentTitle=item.contentTitle,
                                 url=url,
-                                language= language,
+                                language=language,
                                 thumbnail=thumbnail,
                                 quality=quality,
                                 server=server,
@@ -464,7 +410,7 @@ def newest(categoria):
     itemlist = []
     item = Item()
     try:
-        if categoria in ['peliculas','latino']:
+        if categoria in ['peliculas', 'latino']:
             item.url = 'http://www.cinecalidad.to'
         elif categoria == 'infantiles':
             item.url = 'http://www.cinecalidad.to/genero-peliculas/infantil/'
@@ -472,7 +418,7 @@ def newest(categoria):
             item.url = 'http://www.cinecalidad.to/genero-peliculas/terror/'
         elif categoria == 'castellano':
             item.url = 'http://www.cinecalidad.to/espana/'
-        itemlist = peliculas(item)
+        itemlist = list_all(item)
         if itemlist[-1].title == 'Página siguiente >>':
             itemlist.pop()
     except:
@@ -483,22 +429,23 @@ def newest(categoria):
 
     return itemlist
 
+
 def search(item, texto):
     logger.info()
     itemlist = []
 
     texto = texto.replace(" ", "-")
-    
+
     if item.host != '':
         host_list = [item.host]
-    
+
     else:
         item.gb_search = True
         host_list = ['http://www.cinecalidad.to/espana/', 'http://www.cinecalidad.to/']
-    
+
     for host_name in host_list:
         item.url = host_name + '?s=' + texto
         if texto != '':
-            itemlist.extend(peliculas(item))
-    
+            itemlist.extend(list_all(item))
+
     return itemlist
