@@ -230,25 +230,29 @@ def findvideos(item):
     logger.info()
 
     itemlist = []
+    g_host = 'https://storage.googleapis.com/proven-reality-256313.appspot.com/'
 
     data = get_source(item.url)
-    patron = 'id="Opt\d+">.*?src=(.*?) frameborder'
+    patron = r'%sreproductor\?url=([^&]+)' % host
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl in matches:
         server = ''
-        scrapedurl = scrapedurl.replace('&quot;', '')
-        new_data = get_source(scrapedurl)
-
-        if "/stream/" in scrapedurl:
-            scrapedurl = scrapertools.find_single_match(new_data, '<source src="([^"]+)"')
+        scrapedurl = urllib.unquote(scrapedurl)
+        
+        if "cl?url=" in scrapedurl:
+            scrapedurl = scrapertools.find_single_match(scrapedurl, '\?url=(.*)')
+            url = g_host + scrapedurl.replace('+', '%20')
             server = "directo"
+        
+        elif '?url=' in  scrapedurl:
+            url = scrapertools.find_single_match(scrapedurl, '.*?url=([^&]+)?')
         else:
-            scrapedurl = scrapertools.find_single_match(scrapedurl, '.*?url=([^&]+)?')
-            scrapedurl = urllib.unquote(scrapedurl)
+            url = scrapedurl
+            
 
-        if scrapedurl != '':
-            itemlist.append(Item(channel=item.channel, title='%s', url=scrapedurl, action='play',
+        if url:
+            itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play',
                                  language = item.language, infoLabels=item.infoLabels, server=server))
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())

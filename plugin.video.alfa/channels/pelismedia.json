@@ -1,7 +1,7 @@
 {
 	"id": "pelismedia",
 	"name": "PelisMedia",
-	"active": true,
+	"active": false,
 	"adult": false,
 	"language": ["lat"],
 	"thumbnail": "https://s14.postimg.cc/eclmujsch/12715507_1112827435402340_7302361220060367711_n.jpg",

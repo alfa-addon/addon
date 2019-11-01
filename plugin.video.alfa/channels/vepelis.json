@@ -3,7 +3,7 @@
   "name": "VePelis",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["lat"],
   "banner": "vepelis.png",
   "thumbnail": "vepelis.png",
   "categories": [

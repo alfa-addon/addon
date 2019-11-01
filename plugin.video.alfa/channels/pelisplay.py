@@ -188,22 +188,24 @@ def peliculas(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedthumbnail, scrapedurl, year, plot, scrapedtitle in matches:
+
+        new_item = Item(channel=item.channel, thumbnail=host + scrapedthumbnail,
+                        infoLabels={"year": year}, url=scrapedurl, title=scrapedtitle,
+                        plot=plot)
+        
         if 'serie' in scrapedurl:
-            action = 'temporadas'
-            contentType = 'tvshow'
-            title = scrapedtitle + ' [COLOR blue](Serie)[/COLOR]'
+            new_item.action = 'temporadas'
+            new_item.contentType = 'tvshow'
+            new_item.contentSerieName = scrapedtitle
+            new_item.title += ' [COLOR blue](Serie)[/COLOR]'
 
         else:
-            action = 'findvideos'
+            new_item.action = 'findvideos'
             contentType = 'movie'
-            title = scrapedtitle
+            new_item.contentTitle = scrapedtitle
 
-        if item.infoLabels['plot'] == '':
-            item.plot = plot
+        itemlist.append(new_item)
 
-        itemlist.append(Item(channel=item.channel, action=action, contentTitle=scrapedtitle, contentType=contentType,
-                             infoLabels={"year": year}, thumbnail=host + scrapedthumbnail,
-                             url=scrapedurl, title=title, plot=plot))
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
@@ -276,8 +278,8 @@ def series(item):
     for scrapedthumbnail, scrapedurl, scrapedtitle in matches:
         itemlist.append(Item(channel=__channel__, title=scrapedtitle, extra='serie',
                              url=scrapedurl, thumbnail=host + scrapedthumbnail,
-                             contentSerieName=scrapedtitle, show=scrapedtitle,
-                             action="temporadas", contentType='tvshow'))
+                             contentSerieName=scrapedtitle, action="temporadas",
+                             contentType='tvshow'))
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
 
     pagination = scrapertools.find_single_match(
@@ -318,8 +320,9 @@ def temporadas(item):
         # itemlist.sort(key=lambda it: it.title)
     if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(Item(channel=__channel__, title="Añadir esta serie a la videoteca", url=item.url,
-                             action="add_serie_to_library", extra="episodios", show=item.show, category="Series",
-                             text_color=color1, thumbnail=get_thumb("videolibrary_tvshow.png"), fanart=fanart_host))
+                             action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
+                             category="Series", text_color=color1, thumbnail=get_thumb("videolibrary_tvshow.png"),
+                             fanart=fanart_host))
         return itemlist
     else:
         return episodesxseason(item)
