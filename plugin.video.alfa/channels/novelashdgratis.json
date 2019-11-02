@@ -1,7 +1,7 @@
 {
   "id": "novelashdgratis",
   "name": "Novelas HD Gratis",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://s18.postimg.cc/okqzs7zy1/logo.gif",
