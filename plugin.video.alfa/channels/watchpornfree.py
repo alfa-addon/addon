@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,urllib2,urllib,re
-import os, sys
+import urlparse
+import re
+
+from platformcode import config, logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import config, logger
 from core import httptools
+from channels import filtertools
+from channels import autoplay
+
+IDIOMAS = {'vo': 'VO'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['mangovideo']
 
 # https://playpornfree.org/    https://mangoporn.net/   https://watchfreexxx.net/   https://losporn.org/  https://xxxstreams.me/  https://speedporn.net/
 
@@ -15,6 +23,9 @@ host = 'https://watchpornfree.info'
 def mainlist(item):
     logger.info("")
     itemlist = []
+
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist.append( Item(channel=item.channel, title="Videos" , action="lista", url=host + "/category/clips-scenes"))
     itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host))
     itemlist.append( Item(channel=item.channel, title="Parodia" , action="lista", url=host + "/category/parodies"))
@@ -22,6 +33,9 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Año" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+
+    autoplay.show_option(item.channel, itemlist)
+
     return itemlist
 
 
@@ -70,7 +84,7 @@ def lista(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         scrapedplot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<a class="next page-numbers" href="([^"]+)">Next &raquo;</a>')
     if next_page!="":
@@ -79,19 +93,19 @@ def lista(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
+    logger.info()
     itemlist = []
-    itemlist = servertools.find_video_items(item)
-    itemlist.reverse()
-    a = len (itemlist)
-    for i in itemlist:
-        
-        if a < 1:
-            return []
-        res = servertools.check_video_link(i.url, i.server, timeout=5)
-        a -= 1
-        if 'green' in res:
-            return [i]
-        else:
-            continue
-
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    links_data = scrapertools.find_single_match(data, '<div id="pettabs">(.*?)</ul>')
+    patron = 'href="([^"]+)"'
+    matches = re.compile(patron, re.DOTALL).findall(links_data)
+    for url in matches:
+        itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
+    return itemlist

@@ -97,7 +97,7 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '<a href="(/watch/[^"]+)" class=\'video-box-image\'.*?'
     patron += 'data-original="([^"]+)".*?'
-    patron += '<div class="video-box-title">([^"]+)</div>.*?'
+    patron += '<div class="video-box-title" title="([^"]+)".*?'
     patron += '<div class="video-duration">(.*?)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,duracion  in matches:
@@ -126,5 +126,3 @@ def play(item):
         scrapedurl =  scrapedurl.replace("\/", "/").replace("\\u0026", "&")
     itemlist.append(item.clone(action="play", title=scrapedurl, contentTitle = item.title, url=scrapedurl))
     return itemlist
-
-

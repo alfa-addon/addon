@@ -1,30 +1,37 @@
 # -*- coding: utf-8 -*-
-
-import re
 import urlparse
+import re
 
-from core import httptools
-from core import servertools
+from platformcode import config, logger
 from core import scrapertools
+from core import servertools
 from core.item import Item
-from platformcode import logger
+from core import httptools
+from channels import filtertools
+from channels import autoplay
 import base64
 
+IDIOMAS = {'vo': 'VO'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['mangovideo']
 
 host = "https://watchfreexxx.net/"
 
 def mainlist(item):
     itemlist = []
 
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist.append(Item(channel=item.channel, title="Peliculas", action="lista",
                          url = urlparse.urljoin(host, "category/porn-movies/")))
-
     itemlist.append(Item(channel=item.channel, title="Escenas", action="lista",
                          url = urlparse.urljoin(host, "category/xxx-scenes/")))
-
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search", url=host+'?s=',
                          thumbnail='https://s30.postimg.cc/pei7txpa9/buscar.png',
                          fanart='https://s30.postimg.cc/pei7txpa9/buscar.png'))
+
+    autoplay.show_option(item.channel, itemlist)
 
     return itemlist
 
@@ -58,7 +65,7 @@ def lista(item):
         url = data_1
         thumbnail = data_2
         title = data_3
-        itemlist.append(Item(channel=item.channel, action='play', title=title, url=url, thumbnail=thumbnail))
+        itemlist.append(Item(channel=item.channel, action='findvideos', title=title, url=url, thumbnail=thumbnail))
     #Paginacion
     if itemlist != []:
         actual_page_url = item.url
@@ -84,40 +91,8 @@ def findvideos(item):
                 n -= 1
         itemlist.append(item.clone(action="play", title ="%s", contentTitle=item.title, url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
     return itemlist
-
-
-def play(item):
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
-    patron = ' - on ([^"]+)" href="([^"]+)"'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedtitle,url in matches:
-        if 'aHR0' in url:
-            n = 3
-            while n > 0:
-                url= url.replace("https://vshares.tk/goto/", "").replace("https://waaws.tk/goto/", "").replace("https://openloads.tk/goto/", "")
-                url = base64.b64decode(url)
-                n -= 1
-        itemlist.append( Item(channel=item.channel, action="play", title = "%s", contentTitle=item.title, url=url ))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-
-    a = len (itemlist)
-    for i in itemlist:
-        if a < 1:
-            return [] 
-        if 'mangovideo' in i.url:
-            res = ""
-        elif 'rapidgator' in i.url:
-            res = ""
-        elif 'clipwatching' in i.url:
-            res = ""
-        else:
-            res = servertools.check_video_link(i.url, i.server, timeout=5)
-        a -= 1
-        if 'green' in res:
-            return [i]
-        else:
-            continue
-

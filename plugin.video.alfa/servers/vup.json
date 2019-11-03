@@ -6,6 +6,10 @@
       {
         "pattern": "(https://vup.to/embed-[A-z0-9]+.html)",
         "url": "\\1"
+      },
+      {
+        "pattern": "https://vup.to/emb.html\\?([A-z0-9]+)",
+        "url": "https://vup.to/embed-\\1.html"
       }
     ]
   },

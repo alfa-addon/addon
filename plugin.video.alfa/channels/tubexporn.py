@@ -84,7 +84,9 @@ def play(item):
     patron = '&nbsp;([A-z0-9]+);\d+;(\d+);([^,"]+)'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for quality,number,key in matches:
-        url = "http://s%s.cdna.tv/pvid/%s/%s/15000/%s/%s_%s.mp4" % (server,number,key,id,id,quality)
+        nt = int(int(id)/1000)
+        n = str(nt*1000)
+        url = "http://s%s.cdna.tv/pvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
         url= url.replace("_720p", "")
         itemlist.append(['.mp4 %s' %quality, url])
     return itemlist

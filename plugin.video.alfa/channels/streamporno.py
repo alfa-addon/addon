@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,urllib2,urllib,re
-import os, sys
+import urlparse
+import re
+
 from platformcode import config, logger
 from core import scrapertools
-from core.item import Item
 from core import servertools
+from core.item import Item
 from core import httptools
+from channels import filtertools
+from channels import autoplay
+
+IDIOMAS = {'vo': 'VO'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['gounlimited']
 
 host = 'http://streamporno.eu'
 
@@ -15,10 +23,16 @@ host = 'http://streamporno.eu'
 def mainlist(item):
     logger.info()
     itemlist = []
+
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist.append( Item(channel=item.channel, title="Nuevas" , action="lista", url=host))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+
+    autoplay.show_option(item.channel, itemlist)
+
     return itemlist
 
 
@@ -69,7 +83,7 @@ def lista(item):
         contentTitle = title
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url,
+        itemlist.append( Item(channel=item.channel, action="findvideos" , title=title , url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = contentTitle))
     next_page = scrapertools.find_single_match(data,'<a class="nextpostslink" rel="next" href="([^"]+)">&raquo;</a>')
     if next_page!="":
@@ -78,16 +92,19 @@ def lista(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
+    logger.info()
     itemlist = []
-    itemlist = servertools.find_video_items(item)
-    a = len (itemlist)
-    for i in itemlist:
-        if a < 1:
-            return []
-        res = servertools.check_video_link(i.url, i.server, timeout=5)
-        a -= 1
-        if 'green' in res:
-            return [i]
-        else:
-            continue
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    links_data = scrapertools.find_single_match(data, '<div class="entry-content clearfix">(.*?)</div>')
+    patron = '<iframe src="([^"]+)"'
+    matches = re.compile(patron, re.DOTALL).findall(links_data)
+    for url in matches:
+        itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
+    return itemlist
