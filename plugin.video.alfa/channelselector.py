@@ -275,10 +275,16 @@ def filterchannels(category, view="thumb_"):
                 id = ids[x]
             channelslist.insert(x,
                 Item(channel='search', action='discover_list', title=title, search_type='list',
-                     list_type='%s/%s' % (category.replace('show',''), id), thumbnail=get_thumb(id+".png")))
+                     list_type='%s/%s' % (category.replace('show',''), id), thumbnail=get_thumb(id+".png"),
+                     mode=category))
 
-        channelslist.insert(3, Item(channel='search', action='genres_menu', title='Generos',
-                                    type=category.replace('show',''), thumbnail=get_thumb("genres.png")))
+        channelslist.insert(3, Item(channel='search', action='years_menu', title='Por Años',
+                                    type=category.replace('show', ''), thumbnail=get_thumb("years.png"),
+                                    mode=category))
+
+        channelslist.insert(4, Item(channel='search', action='genres_menu', title='Generos',
+                                    type=category.replace('show',''), thumbnail=get_thumb("genres.png"),
+                                    mode=category))
 
     return channelslist
 

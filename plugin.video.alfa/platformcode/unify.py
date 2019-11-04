@@ -223,7 +223,6 @@ def set_color(title, category):
 
     styles_path = os.path.join(config.get_runtime_path(), 'resources', 'color_styles.json')
     preset = config.get_setting("preset_style", default="Estilo 1")
-    logger.debug(preset)
     color_setting = jsontools.load((open(styles_path, "r").read()))[preset]
 
     color_scheme = {'otro': 'white', 'dual': 'white'}
@@ -406,7 +405,7 @@ def title_format(item):
                     if isinstance(item.context, list):
                         item.context.append('Buscar esta pelicula en otros canales')
 
-        if 'Novedades' in item.category and item.from_channel=='news':
+        if ('Novedades' in item.category and item.from_channel=='news'):
             #logger.debug('novedades')
             item.title = '%s [%s]'%(item.title, item.channel)
 
@@ -523,6 +522,7 @@ def title_format(item):
         #logger.debug('item.title antes de server: %s'%item.title)
         if item.action != 'play' and item.server:
             item.title ='%s %s'%(item.title, server.strip())
+
         elif item.action == 'play' and item.server:
             if hasattr(item, "clean_plot"):
                 item.contentPlot = item.clean_plot
@@ -538,6 +538,9 @@ def title_format(item):
             if item.server == 'torrent' and item.torrent_info != '':
                 item.title = '%s [%s]' % (item.title, item.torrent_info)
 
+            if item.channel == 'videolibrary':
+                item.title += ' [%s]' % item.contentChannel
+
             # si hay verificacion de enlaces
             if item.alive != '':
                 if item.alive.lower() == 'no':
@@ -546,6 +549,7 @@ def title_format(item):
                     item.title = '[[COLOR yellow][B]?[/B][/COLOR]] %s' % item.title
         else:
             item.title = '%s' % item.title
+
         #logger.debug('item.title despues de server: %s' % item.title)
     elif 'library' in item.action:
         item.title = '%s' % set_color(item.title, 'library')
