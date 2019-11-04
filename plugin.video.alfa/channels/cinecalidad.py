@@ -17,13 +17,8 @@ IDIOMAS = {'latino': 'Latino', 'castellano': 'Castellano', 'portugues': 'Portugu
 list_language = IDIOMAS.values()
 list_quality = ['1080p']
 list_servers = ['gounlimited',
-                'verystream',
                 'mega',
                 'vidcloud',
-                'torrent',
-                'rapidvideo',
-                'streamango',
-                'openload',
                 'torrent'
                 ]
 
@@ -164,7 +159,6 @@ def list_all(item):
 
     soup = create_soup(item.url, unescape=True)
     for elem in soup.find_all("div", class_="home_post_cont"):
-        logger.debug(elem)
         url = elem.a["href"]
         try:
             title, year = elem.img["title"].split(' (')
@@ -438,7 +432,9 @@ def search(item, texto):
 
     if item.host != '':
         host_list = [item.host]
-
+    elif site:
+        item.gb_search = True
+        host_list = [site_lang]
     else:
         item.gb_search = True
         host_list = ['http://www.cinecalidad.to/espana/', 'http://www.cinecalidad.to/']
