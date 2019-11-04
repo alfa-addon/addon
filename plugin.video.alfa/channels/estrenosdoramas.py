@@ -105,6 +105,9 @@ def list_all(item):
         if scrapedtitle.startswith("Pelicula") or item.type == "movie":
             new_item.action = 'findvideos'
             new_item.contentTitle = title
+        elif 'search' in item.url:
+            new_item.contentSerieName=scrapedtitle
+            new_item.action = 'findvideos'
         else:
             new_item.contentSerieName=scrapedtitle
             new_item.action = 'episodios'
