@@ -386,22 +386,6 @@ def findvideos(item):
 
     return itemlist
 
-
-# def play(item):
-#     logger.info()
-#     itemlist = []
-#     from core import servertools
-#     itemlist.extend(servertools.find_video_items(data=item.url))
-#     for videoitem in itemlist:
-#         videoitem.channel = item.channel
-#         videoitem.title = item.title
-#         videoitem.folder = False
-#         videoitem.thumbnail = item.extra
-#         videoitem.contentTitle = item.contentTitle
-#         videoitem.infoLabels = item.infoLabels
-#     return itemlist
-
-
 def newest(categoria):
     logger.info()
     itemlist = []
