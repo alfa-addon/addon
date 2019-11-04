@@ -39,21 +39,18 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    if "/sites/" in item.url:
-        patron = '<div class="muestra-escena muestra-canales">.*?'
-        patron += 'href="([^"]+)">.*?'
-        patron += 'data-src="([^"]+)".*?'
-        patron += '<a title="([^"]+)".*?'
-        patron += '</span> (\d+) videos</span>'
-    if "/pornstars/" in item.url:
-        patron = '<a class="muestra-escena muestra-pornostar" href="([^"]+)">.*?'
+    if not "/categories/" in item.url:
+        patron = 'class="muestra-escena.*?'
+        patron += 'href="([^"]+)".*?'
         patron += 'data-src="([^"]+)".*?'
         patron += 'alt="([^"]+)".*?'
         patron += '</span> (\d+) videos</span>'
     else:
-        patron  = '<a class="muestra-escena muestra-categoria" href="([^"]+)" title="[^"]+">.*?'
+        patron  = 'class="muestra-escena.*?'
+        patron += 'href="([^"]+)".*?'
         patron += 'data-src="([^"]+)".*?'
-        patron += '</span> ([^"]+) </h2>(.*?)>'
+        patron += 'alt="([^"]+)".*?'
+        patron += '>([^<]+)</h2>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
         logger.debug(scrapedurl + ' / ' + scrapedthumbnail + ' / ' + cantidad + ' / ' + scrapedtitle)
@@ -69,7 +66,6 @@ def categorias(item):
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="categorias", title="Página Siguiente >>", text_color="blue", url=next_page) )
-
     return itemlist
 
 
@@ -80,7 +76,7 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a class="muestra-escena"\s*href="([^"]+)".*?'
     patron += 'data-stats-video-name="([^"]+)".*?'
-    patron += '<img src="([^"]+)".*?'
+    patron += 'data-src="([^"]+)".*?'
     patron += '<span class="ico-minutos sprite" title="Length"></span>([^"]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,duracion  in matches:

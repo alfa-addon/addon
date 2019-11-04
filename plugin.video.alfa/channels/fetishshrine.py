@@ -86,7 +86,6 @@ def play(item):
     patron  = 'video_url: \'([^\']+)\''
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:
-        itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=scrapedurl,
-                            thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
+        itemlist.append(item.clone(action="play", contentTitle=item.title, url=scrapedurl))
     return itemlist
 

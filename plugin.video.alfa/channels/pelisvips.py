@@ -279,7 +279,7 @@ def findvideos(item):
         if config.get_videolibrary_support():
             itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="gold",
                                  action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,
-                                 contentTitle=item.title
+                                 contentTitle=item.contentTitle
                                  ))
     return itemlist
 
@@ -293,23 +293,23 @@ def newest(categoria):
             item.url = host
 
         elif categoria == 'documentales':
-            item.url = host + "/genero/documental/"
+            item.url = host + "genero/documental/"
 
         elif categoria == 'infantiles':
-            item.url = host + "/genero/animacion/"
+            item.url = host + "genero/animacion/"
 
         elif categoria == 'terror':
-            item.url = host + "/genero/terror/"
+            item.url = host + "genero/terror/"
 
         elif categoria == 'castellano':
-            item.url = host + "/idioma/espanol-castellano/"
+            item.url = host + "ver-idioma/castellano/"
 
         elif categoria == 'latino':
-            item.url = host + "/idioma/espanol-latino/"
+            item.url = host + "ver-idioma/latino/"
 
-        itemlist = agregadas(item)
+        itemlist = list_all(item)
 
-        if itemlist[-1].action == "agregadas":
+        if itemlist[-1].action == "list_all":
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla

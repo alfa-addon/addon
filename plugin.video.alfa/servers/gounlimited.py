@@ -24,9 +24,10 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     packed_data = scrapertools.find_single_match(data, "javascript'>(eval.*?)</script>")
     unpacked = jsunpack.unpack(packed_data)
+    logger.debug(unpacked)
     patron = "sources..([^\]]+)"
     matches = re.compile(patron, re.DOTALL).findall(unpacked)
     for url in matches:
         #url += "|Referer=%s" %page_url
-        video_urls.append(['mp4', url])
+        video_urls.append(['[gounlimited]', url])
     return video_urls

@@ -1,7 +1,7 @@
 {
   "id": "peliculashindu",
   "name": "PeliculasHindu",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "peliculashindu.png",

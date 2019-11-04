@@ -70,7 +70,7 @@ def lista(item):
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                              fanart=thumbnail, contentTitle = scrapedtitle))
+                              fanart=thumbnail, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<span class="text16">\d+</span> <a href="..([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
@@ -89,7 +89,6 @@ def play(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for servervideo,path,filee  in matches:
         scrapedurl = servervideo + path + "56ea912c4df934c216c352fa8d623af3" + filee
-        itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=scrapedurl,
-                            thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
+        itemlist.append(item.clone(action="play", title= item.title, url=scrapedurl))
     return itemlist
 

@@ -140,6 +140,10 @@ def render_items(itemlist, parent_item):
         anime = False
         if 'anime' in channeltools.get_channel_parameters(parent_item.channel)['categories']:
             anime = True
+    try:
+        force_unify = channeltools.get_channel_parameters(parent_item.channel)['force_unify']
+    except:
+        force_unify = False
 
     unify_enabled = config.get_setting('unify')
     # logger.debug('unify_enabled: %s' % unify_enabled)
@@ -175,7 +179,7 @@ def render_items(itemlist, parent_item):
             elif 'serie' in item.action:
                 item.thumbnail = get_thumb("videolibrary_tvshow.png")
 
-        if unify_enabled and parent_item.channel != 'alfavorites':
+        if (unify_enabled or force_unify) and parent_item.channel != 'alfavorites':
             # Formatear titulo con unify
             item = unify.title_format(item)
         else:

@@ -102,6 +102,8 @@ def play(item):
             return []
         if 'mangovideo' in i.url:
             res = ""
+        elif 'rapidgator' in i.url:
+            res = ""
         elif 'clipwatching' in i.url:
             res = ""
         else:

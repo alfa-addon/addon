@@ -557,6 +557,9 @@ def findvideos(item):
                 list_servers = servertools.filter_servers(list_servers)
             elif item_json.action == 'play':
                 from platformcode import platformtools
+                autoplay.set_status(True)
+                item_json.contentChannel = item_json.channel
+                item_json.channel = "videolibrary"
                 platformtools.play_video(item_json)
                 return ''
             else:

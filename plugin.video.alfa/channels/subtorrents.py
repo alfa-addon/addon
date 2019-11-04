@@ -26,8 +26,8 @@ list_servers = ['torrent']
 
 #host = 'https://www.subtorrents.tv/'
 #sufix = '.tv/'
-host = 'https://www.subtorrents1.com/'
-sufix = '.com/'
+host = 'https://www.subtorrents.one/'
+sufix = '.one/'
 channel = 'subtorrents'
 categoria = channel.capitalize()
 color1, color2, color3 = ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']

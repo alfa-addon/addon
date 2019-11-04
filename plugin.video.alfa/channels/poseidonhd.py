@@ -49,6 +49,7 @@ def mainlist(item):
         item.clone(title="Buscar", action="search", url=host + '?s=', thumbnail=get_thumb("search", auto=True),
                    extra='movie'))
 
+    itemlist = filtertools.show_option(itemlist, item.channel, list_language, list_quality)
     autoplay.show_option(item.channel, itemlist)
 
     return itemlist
@@ -164,6 +165,7 @@ def list_all(item):
                             url=url,
                             thumbnail=thumbnail,
                             contentSerieName=contentSerieName,
+                            context=filtertools.context(item, list_language, list_quality),
                             infoLabels={'year':year}))
 
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
@@ -190,7 +192,7 @@ def seasons(item):
         infoLabels['season']=season
         title = 'Temporada %s' % season
         itemlist.append(Item(channel=item.channel, title=title, url=item.url, action='episodesxseasons',
-                             infoLabels=infoLabels))
+                             context=filtertools.context(item, list_language, list_quality), infoLabels=infoLabels))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     if config.get_videolibrary_support() and len(itemlist) > 0:
@@ -370,6 +372,7 @@ def search_results(item):
             new_item.contentTitle = new_item.title
         else:
             new_item.contentSerieName = new_item.title
+            new_item.context = filtertools.context(item, list_language, list_quality),
 
         itemlist.append(new_item)
 

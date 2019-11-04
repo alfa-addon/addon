@@ -3,7 +3,7 @@
   "name": "PelisPlus.co",
   "active": true,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["lat"],
   "thumbnail": "https://s26.postimg.cc/jov1pmbh5/pelisplusco.png",
   "banner": "https://s26.postimg.cc/4hf259jmh/pelisplusco-banner.png",
   "version": 1,

@@ -214,6 +214,7 @@ def newest(categoria):
 def seasons(item):
     logger.info()
     itemlist = []
+    infoLabels = item.infoLabels
 
     data = httptools.downloadpage(item.url).data
 
@@ -222,11 +223,12 @@ def seasons(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     if len(matches) == 1:
+        item.contentSeasonNumber = '1'
         return episodesxseasons(item)
     elif len(matches) < 1:
-        itemlist.append(item.clone(title = '[COLOR=grey]No hay episodios disponibles para esta serie[/COLOR]', action='', url=''))
+        itemlist.append(item.clone(title = '[COLOR=grey]Aún no hay episodios disponibles para esta serie[/COLOR]', action='', url=''))
         return itemlist
-    infoLabels = item.infoLabels
+    
     for scrapedseason in matches:
         contentSeasonNumber = scrapedseason
         title = 'Temporada %s' % scrapedseason
@@ -240,7 +242,7 @@ def seasons(item):
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
-                 extra2='library', thumbnail=thumb_videolibrary))
+                 thumbnail=thumb_videolibrary))
 
     return itemlist
 
@@ -258,11 +260,8 @@ def episodesxseasons(item):
 
     infoLabels = item.infoLabels
     data = httptools.downloadpage(item.url).data
-    if item.contentSeasonNumber and item.extra2 != 'library':
-        prevtitle = item.extra1
-        data = scrapertools.find_single_match(data, r'<div style="cursor:pointer">&rarr; Temporada %s(.*?)</div>\n</div>\n'  % item.contentSeasonNumber)
-    else:
-        prevtitle = item.title
+    data = scrapertools.find_single_match(data, r'<div style="cursor:pointer">&rarr; Temporada %s(.*?)</div>\n</div>\n'  % item.contentSeasonNumber)
+    
     patron = 'visco.*?href="(?P<url>[^"]+).+?nbsp; (?P<title>.*?)</a>.+?ucapaudio.?>(?P<langs>.*?)</div>'
     episodes = re.findall(patron, data, re.MULTILINE | re.DOTALL)
     for url, title, langs in episodes:
@@ -278,15 +277,15 @@ def episodesxseasons(item):
         itemlist.append(item.clone(action="findvideos",
                                    infoLabels = infoLabels,
                                    language=filter_lang,
-                                   title="%s %s %s" % (prevtitle, title, languages),
+                                   title="%s %s" % (title, languages),
                                    url=urlparse.urljoin(HOST, url)
                                    ))
-    itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
+    #itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
     
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     
     # Opción "Añadir esta serie a la videoteca de KODI"
-    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.contentSeasonNumber:
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentSeasonNumber == '1':
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
