@@ -24,7 +24,7 @@ list_language = IDIOMAS.values()
 
 list_quality = ['Oficial', '1080p', '720p', '480p', '360p']
 
-list_servers = ['verystream', 'vidcloud','clipwatching', 'gamovideo']
+list_servers = ['fembed', 'vidcloud','clipwatching', 'gamovideo']
 
 host = 'https://xdede.co/'
 
@@ -63,7 +63,10 @@ def sub_menu(item):
         itemlist.append(Item(channel=item.channel, title='Estrenos', url=url_estreno, action='list_all',
                          thumbnail=get_thumb('estrenos', auto=True), type=item.type))
     else:
-        itemlist.append(Item(channel=item.channel, title='Novedades', url=url_estreno, action='list_all',
+        itemlist.append(Item(channel=item.channel, title='Nuevos Capitulos', url=url_estreno, action='list_all',
+                         thumbnail=get_thumb('new episodes', auto=True), type=item.type))
+
+    itemlist.append(Item(channel=item.channel, title='Novedades', url=host+item.type, action='list_all',
                          thumbnail=get_thumb('newest', auto=True), type=item.type))
     
     itemlist.append(Item(channel=item.channel, title='Actualizadas', url=host+'/actualizado/'+item.type,
@@ -266,12 +269,13 @@ def episodesxseasons(item):
     pat = '<div class="season temporada-%s(.*?)</a></li></div>' % item.infoLabels['season']
     data = scrapertools.find_single_match(data, pat)
     
-    patron= '<li><a href="([^"]+)".*?data-echo="([^"]+)".*?'
-    patron += '<h2>([^>]+)</h2>.*?<span>\d+ - (\d+)</span>'
+    patron= '<li><a href="([^"]+)"(.*?)'
+    patron += r'<h2>([^>]+)</h2>.*?<span>\d+ - (\d+)</span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for url, thumbnail, scrapedtitle, ep in matches:
-        thumb = re.sub('p/w\d+', 'p/original', thumbnail)
+    for url, sthumbnail, scrapedtitle, ep in matches:
+        thumbnail = scrapertools.find_single_match(sthumbnail, 'data-echo="([^"]+)"')
+        thumb = re.sub(r'p/w\d+', 'p/original', thumbnail)
         infoLabels['episode'] = ep
         
         title = '%sx%s - %s' % (infoLabels['season'], infoLabels['episode'], scrapedtitle)
@@ -291,14 +295,12 @@ def findvideos(item):
     headers = {'Referer': item.url}
 
     server_url = {'gamovideo': 'http://gamovideo.com/embed-%s.html',
-                  'verystream': 'https://verystream.com/e/%s',
                   'gounlimited': 'https://gounlimited.to/embed-%s.html',
-                  'openload': 'https://openload.co/embed/%s',
+                  'streamplay': 'https://streamp1ay.me/player-%s.html',
                   'vidcloud': 'https://vidcloud.co/player?fid=%s&page=embed',
                   'vidlox': 'https://vidlox.me/embed-%s.html',
-                  'flix555': 'https://flix555.com/embed-%s.html',
                   'clipwatching': 'https://clipwatching.com/embed-%s.html',
-                  'streamango': 'https://streamango.com/embed/%s',
+                  'jetload': 'https://jetload.net/e/%s'
                   }
 
     data = get_source(item.url)
@@ -309,6 +311,7 @@ def findvideos(item):
         url = host+'json/loadVIDEOS'
         session = requests.Session()
         page = session.post(url, data={'id': s_id}).json()
+
         if page.get('status', '') == 200:
             data2 = page['result']
             patron = "C_One\(this, (\d+), '([^']+)'.*?"
@@ -318,6 +321,7 @@ def findvideos(item):
                 
                 req = httptools.downloadpage(url, headers=headers)
                 refresh = req.headers.get('refresh', None)
+
 
                 if refresh:
                     url = scrapertools.find_single_match(refresh, '(http.*)')
@@ -337,7 +341,7 @@ def findvideos(item):
                 quality = 'Oficial'
 
                 title = '%s [%s] [%s]' % (server.capitalize(), lang, quality)
-            
+
                 itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language=lang,
                                  quality=quality, server=server, headers=headers, infoLabels=item.infoLabels,
                                  p_lang=language))
@@ -351,14 +355,16 @@ def findvideos(item):
         if url != '':
 
             try:
-                server = server.split(".")[0]
+                server = server.split(".")[0].replace('1', 'l')
             except:
                 server= ""
             _id = scrapertools.find_single_match(url, 'link/\w+_(.*)')
+
             url = server_url.get(server, url)
             
             if not url.startswith(host):
                 url = url % _id
+            
             language = scrapertools.find_single_match(language, '/(\d+)\.png')
             lang = IDIOMAS.get(language, 'VO')
             
@@ -369,7 +375,7 @@ def findvideos(item):
                                  p_lang=language))
 
     
-    sorted(itemlist2, key=lambda i: (i.p_lang, i.server))
+    itemlist2.sort(key=lambda i: (i.p_lang, i.server))
     
     itemlist.extend(itemlist2)
     
@@ -398,7 +404,13 @@ def search(item, texto):
     item.url = item.url + texto
     item.type = 'search'
     if texto != '':
-        return list_all(item)
+        try:
+            return list_all(item)
+        except:
+            import sys
+            for line in sys.exc_info():
+                logger.error("{0}".format(line))
+            return []
     else:
         return []
 
