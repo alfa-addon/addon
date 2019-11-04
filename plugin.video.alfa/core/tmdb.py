@@ -156,7 +156,6 @@ def cache_response(fn):
                 conn = sqlite3.connect(fname, timeout=15)
                 c = conn.cursor()
                 url = re.sub('&year=-', '', args[0])
-                logger.error('la url %s' % url)
                 url_base64 = base64.b64encode(url)
                 c.execute("SELECT response, added FROM tmdb_cache WHERE url=?", (url_base64,))
                 row = c.fetchone()
@@ -274,8 +273,6 @@ def set_infoLabels_itemlist(item_list, seekTmdb=False, idioma_busqueda=tmdb_lang
 
 
 def set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=tmdb_lang, lock=None):
-    if item.channel == 'catoal':
-        return -1*len(itemlist)
     """
     Obtiene y fija (item.infoLabels) los datos extras de una serie, capitulo o pelicula.
 
