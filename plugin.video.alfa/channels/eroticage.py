@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,urllib2,urllib,re
-import os, sys
+import urlparse
+import re
+
+from platformcode import config, logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import config, logger
 from core import httptools
+from channels import filtertools
+from channels import autoplay
+
+IDIOMAS = {'vo': 'VO'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['mangovideo']
 
 host = 'http://www.eroticage.net'
 
@@ -14,9 +22,15 @@ host = 'http://www.eroticage.net'
 def mainlist(item):
     logger.info()
     itemlist = []
+
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist.append( Item(channel=item.channel, title="Novedades" , action="lista", url=host))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+
+    autoplay.show_option(item.channel, itemlist)
+
     return itemlist
 
 
@@ -59,7 +73,7 @@ def lista(item):
         title = scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl, thumbnail=thumbnail,
+        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl, thumbnail=thumbnail,
                                plot=plot, fanart=scrapedthumbnail, contentTitle=contentTitle ))
     next_page = scrapertools.find_single_match(data,'<a class="nextpostslink" rel="next" href="([^"]+)">')
     if next_page!="":
@@ -68,24 +82,23 @@ def lista(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     patron = '<iframe src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl in matches:
+        if "cine-matik.com" in scrapedurl:
+            m = scrapedurl.replace("https://cine-matik.com/player/play.php?", "")
+            post = "%s&alternative=yandex" %m
+            data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post).data
+            scrapedurl = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
+            scrapedurl = scrapedurl.replace("\/", "/")
         itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=scrapedurl))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    a = len (itemlist)
-    for i in itemlist:
-        
-        if a < 1:
-            return []
-        res = servertools.check_video_link(i.url, i.server, timeout=5)
-        a -= 1
-        if 'green' in res:
-            return [i]
-        else:
-            continue
-
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
+    return itemlist

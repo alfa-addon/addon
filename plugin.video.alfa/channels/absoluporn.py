@@ -8,7 +8,7 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'http://www.absoluporn.es'
+host = 'http://www.absoluporn.com/en'
 
 
 def mainlist(item):
@@ -42,14 +42,15 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = '&nbsp;<a href="([^"]+)" class="link1">([^"]+)</a>'
+    patron  = '&nbsp;<a href="([^"]+)" class="link1b">([^"]+)</a>&nbsp;<span class="text23">([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle in matches:
+    for scrapedurl,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
+        title = "%s %s" %(scrapedtitle,cantidad)
         scrapedurl = scrapedurl.replace(".html", "_date.html")
         scrapedurl = host +"/" + scrapedurl
-        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
     return itemlist
 
