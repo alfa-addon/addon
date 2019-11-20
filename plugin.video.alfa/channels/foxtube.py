@@ -50,7 +50,7 @@ def catalogo(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle  in matches:
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        scrapedthumbnail = scrapedthumbnail + "|Referer=%s" %host
+        thumbnail = scrapedthumbnail.replace("https","http") + "|Referer=%s/pornstars/" %host
         plot = ""
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail, plot=plot) )
@@ -95,7 +95,8 @@ def lista(item):
         title = "[COLOR yellow]" + time + "[/COLOR] " + scrapedtitle
         if 'HD' in duracion :
             title = "[COLOR yellow]" + time + "[/COLOR] " + "[COLOR red]" + "HD" + "[/COLOR]  " + scrapedtitle
-        thumbnail = scrapedthumbnail + "|Referer=%s" %host
+        thumbnail = scrapedthumbnail.replace("https","http") + "|Referer=%s/" %host
+        logger.debug(thumbnail)
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = title))

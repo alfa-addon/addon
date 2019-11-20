@@ -101,6 +101,7 @@ def findvideos(item):
     patron = 'href="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(links_data)
     for url in matches:
+        url = url.replace("/waaws.tk/", "/netu.tv/") 
         itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)
     # Requerido para FilterTools

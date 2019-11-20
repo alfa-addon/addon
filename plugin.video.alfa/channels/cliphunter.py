@@ -77,7 +77,9 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<img class=".*?" src="([^"]+)".*?<div class="tr">(.*?)</div>.*?<a href="([^"]+)\s*" class="vttl.*?">(.*?)</a>'
+    patron = '<img class=".*?" src="([^"]+)".*?'
+    patron += '<div class="tr.*?">([^<]+)</div>.*?'
+    patron += '<a href="([^"]+)" class="vttl.*?">([^<]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedthumbnail,scrapedtime,scrapedurl,scrapedtitle  in matches:
         url = urlparse.urljoin(item.url,scrapedurl)

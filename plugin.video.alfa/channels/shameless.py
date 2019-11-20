@@ -89,6 +89,7 @@ def play(item):
     for url, quality in matches:
         headers = {'Referer': item.url}
         url = httptools.downloadpage(url, headers=headers , follow_redirects=False, only_headers=True).headers.get("location", "")
+        url += "|Referer=%s" % item.url
         itemlist.append([quality, url])
     return itemlist
 

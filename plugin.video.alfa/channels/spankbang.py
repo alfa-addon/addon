@@ -58,10 +58,10 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     patron = '<div class="video-item" data-id="\d+">.*?'
     patron += '<a href="([^"]+)" class="thumb ">.*?'
-    patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
-    patron += '<i class="fa fa-clock-o"></i>(.*?)</span>'
+    patron += 'data-src="([^"]+)" alt="([^"]+)"(.*?)'
+    patron += '<i class="fa fa-clock-o"></i>([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,duration in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle,quality,duration in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
         duration = duration.strip()
         minutos = int(duration)
@@ -73,8 +73,10 @@ def lista(item):
             duration = "%s:%s" % (horas,minutos)
         else:
             duration = "%s:%s" % (horas,minutos)
-
-        title = "[COLOR yellow]" + duration + " min[/COLOR] " + scrapedtitle
+        title = "[COLOR yellow]%s[/COLOR] %s" % (duration,scrapedtitle)
+        if "i-hd" in quality:
+            quality = scrapertools.find_single_match(quality,'<span class="i-hd">([^<]+)</span>')
+            title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (duration,quality,scrapedtitle)
         thumbnail = scrapedthumbnail
         plot = ""
         year = ""

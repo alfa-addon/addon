@@ -88,10 +88,12 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<article class="item" data-video-id="([^"]+)">.*?src="([^"]+)" alt="([^"]+)".*?<div class="thumbnail__info__right">(.*?)</div>'
+    patron = '<article class="item" data-video-id="\d+">.*?'
+    patron += 'href="([^"]+)".*?'
+    patron += 'src="([^"]+)" alt="([^"]+)".*?<div class="thumbnail__info__right">(.*?)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,scrapedtime  in matches:
-        url = urlparse.urljoin(item.url,"/embed/" + scrapedurl)
+        url = urlparse.urljoin(item.url,scrapedurl)
         title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
@@ -114,6 +116,7 @@ def play(item):
     info_b, info_a = scrapertools.find_single_match(data, patron)
     post = 'param=%s,%s' % (info_a, info_b)
     new_data = httptools.downloadpage(post_url, post=post, headers=headers).data
+    logger.debug(new_data)
     texto = scrapertools.find_single_match(new_data, 'video_url":"([^"]+)"')
 
     url = dec_url(texto)

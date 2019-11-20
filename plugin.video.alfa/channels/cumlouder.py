@@ -20,6 +20,7 @@ def mainlist(item):
     itemlist.append(item.clone(title="Últimos videos", action="videos", url= host + "/2/?s=last"))
     itemlist.append(item.clone(title="Pornstars", action="pornstars_list", url=host + "/girls/"))
     itemlist.append(item.clone(title="Listas", action="series", url= host + "/series/"))
+    itemlist.append(item.clone(title="Canal", action="pornstars_list", url=host + "/channels/"))
     itemlist.append(item.clone(title="Categorias", action="categorias", url= host + "/categories/"))
     itemlist.append(item.clone(title="Buscar", action="search", url= host + "/search?q=%s"))
     return itemlist
@@ -40,7 +41,10 @@ def search(item, texto):
 def pornstars_list(item):
     logger.info()
     itemlist = []
-    itemlist.append(item.clone(title="Mas Populares", action="pornstars", url=host + "/girls/1/"))
+    if "/channels/" in item.url:
+        itemlist.append(item.clone(title="Mas Populares", action="pornstars", url=host + "/channels/1/"))
+    else:
+        itemlist.append(item.clone(title="Mas Populares", action="pornstars", url=host + "/girls/1/"))
     for letra in "abcdefghijklmnopqrstuvwxyz":
         itemlist.append(item.clone(title=letra.upper(), url=urlparse.urljoin(item.url, letra), action="pornstars"))
     return itemlist
@@ -50,7 +54,10 @@ def pornstars(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<a girl-url=.*?href="([^"]+)".*?'
+    if "/channels/" in item.url:
+        patron = '<a channel-url=.*?href="([^"]+)".*?'
+    else:
+        patron = '<a girl-url=.*?href="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?alt="([^"]+)".*?'
     patron += '<span class="ico-videos sprite"></span>([^<]+)</span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -68,13 +75,10 @@ def pornstars(item):
         itemlist.append(item.clone(title="%s (%s)" % (title, count.strip()), url=url, 
                         action="videos", fanart=thumbnail, thumbnail=thumbnail))
     # Paginador
-    matches = re.compile('<li[^<]+<a href="([^"]+)" rel="nofollow">Next[^<]+</a[^<]+</li>', re.DOTALL).findall(data)
-    if matches:
-        if "go.php?" in matches[0]:
-            url = urllib.unquote(matches[0].split("/go.php?u=")[1].split("&")[0])
-        else:
-            url = urlparse.urljoin(item.url, matches[0])
-        itemlist.append(item.clone(title="Página Siguiente >>", url=url))
+    next_page = scrapertools.find_single_match(data,'<a class="btn-pagination" itemprop="name"  href="([^"]+)">Next')
+    if next_page!="":
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(item.clone(action="pornstars", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 
@@ -82,7 +86,6 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     patron = '<a tag-url=.*?'
     patron += 'href="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?alt="([^"]+)".*?'
@@ -100,13 +103,10 @@ def categorias(item):
             item.clone(title="%s (%s videos)" % (title, count.strip()), url=url,
                        action="videos", fanart=thumbnail, thumbnail=thumbnail))
     # Paginador
-    matches = re.compile('<li[^<]+<a href="([^"]+)" rel="nofollow">Next[^<]+</a[^<]+</li>', re.DOTALL).findall(data)
-    if matches:
-        if "go.php?" in matches[0]:
-            url = urllib.unquote(matches[0].split("/go.php?u=")[1].split("&")[0])
-        else:
-            url = urlparse.urljoin(item.url, matches[0])
-        itemlist.append(item.clone(title="Página Siguiente >>", url=url))
+    next_page = scrapertools.find_single_match(data,'<a class="btn-pagination" itemprop="name"  href="([^"]+)">Next')
+    if next_page!="":
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(item.clone(action="categorias", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 
@@ -114,7 +114,6 @@ def series(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     patron = '<a onclick=.*?href="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?'
     patron += 'h2 itemprop="name">([^<]+).*?'
@@ -124,13 +123,10 @@ def series(item):
         itemlist.append(
             item.clone(title="%s (%s) " % (title, count), url=urlparse.urljoin(item.url, url), action="videos", fanart=thumbnail, thumbnail=thumbnail))
     # Paginador
-    matches = re.compile('<li[^<]+<a href="([^"]+)" rel="nofollow">Next[^<]+</a[^<]+</li>', re.DOTALL).findall(data)
-    if matches:
-        if "go.php?" in matches[0]:
-            url = urllib.unquote(matches[0].split("/go.php?u=")[1].split("&")[0])
-        else:
-            url = urlparse.urljoin(item.url, matches[0])
-        itemlist.append(item.clone(title="Página Siguiente >>", url=url))
+    next_page = scrapertools.find_single_match(data,'<a class="btn-pagination" itemprop="name"  href="([^"]+)">Next')
+    if next_page!="":
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(item.clone(action="series", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 
@@ -158,16 +154,10 @@ def videos(item):
                                    action="play", thumbnail=thumbnail, contentThumbnail=thumbnail,
                                    fanart=thumbnail, contentType="movie", contentTitle=title))
     # Paginador
-    nextpage = scrapertools.find_single_match(data, '<ul class="paginador(.*?)</ul>')
-    matches = re.compile('<a href="([^"]+)" rel="nofollow">Next »</a>', re.DOTALL).findall(nextpage)
-    if not matches:
-        matches = re.compile('<li[^<]+<a href="([^"]+)">Next »</a[^<]+</li>', re.DOTALL).findall(nextpage)
-    if matches:
-        if "go.php?" in matches[0]:
-            url = urllib.unquote(matches[0].split("/go.php?u=")[1].split("&")[0])
-        else:
-            url = urlparse.urljoin(item.url, matches[0])
-        itemlist.append(item.clone(title="Página Siguiente >>", url=url))
+    next_page = scrapertools.find_single_match(data,'<a class="btn-pagination" itemprop="name"  href="([^"]+)">Next')
+    if next_page!="":
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(item.clone(action="videos", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
 
