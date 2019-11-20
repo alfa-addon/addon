@@ -17,13 +17,8 @@ IDIOMAS = {'latino': 'Latino', 'castellano': 'Castellano', 'portugues': 'Portugu
 list_language = IDIOMAS.values()
 list_quality = ['1080p']
 list_servers = ['gounlimited',
-                'verystream',
                 'mega',
                 'vidcloud',
-                'torrent',
-                'rapidvideo',
-                'streamango',
-                'openload',
                 'torrent'
                 ]
 

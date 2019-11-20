@@ -17,7 +17,7 @@ from channels import autoplay
 from channels import filtertools
 from channels import renumbertools
 
-host = "https://animeboom.net/"
+host = "https://animebum.net/"
 
 __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'animeboom')
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'animeboom')

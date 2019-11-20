@@ -148,30 +148,33 @@ def seccion(item):
 
 def findvideos(item):
     logger.info()
-    url_list = []
-    itemlist = []
-    duplicados = []
-    data = get_source(item.url)
-    src = data
-    patron = '<iframe.*?src=(.*?) scrolling'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    trailer = ""
-    for url in matches:
-            lang = 'LAT'
-            quality = item.quality
-            if "youtube" in url and not trailer:
-                trailer += url
-            elif not '//' in url:#url.startswith('http'):
-                continue
-            title = '[%s] [%s]'
 
-            if url != '' and not "youtube" in url:
-                itemlist.append(item.clone(title=title, url=url, action='play', language=lang))
-    
+    itemlist = []
+
+    data = get_source(item.url)
+    patron = '<li class=elemento> <a href=(.*?) tar'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for surl in matches:
+
+        new_data = get_source(surl)
+        b_url = scrapertools.find_single_match(new_data, 'var hash=([^;]+)')
+
+        import base64, urllib
+        try:
+            url = base64.b64decode(b_url)
+            url = urllib.unquote(url)
+        except:
+            continue
+        lang = 'LAT'
+        quality = item.quality
+        
+        title = '[%s] [%s]'
+
+        if url:
+            itemlist.append(item.clone(title=title, url=url, action='play', language=lang))
+
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % (i.server, i.language))
-    if trailer:
-        title = '[COLOR green]Trailer de %s[/COLOR]' % item.contentTitle
-        itemlist.append(item.clone(title=title, url=trailer, action='play', language='LAT', server='youtube'))
 
     if item.infoLabels['mediatype'] == 'movie':
         if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':

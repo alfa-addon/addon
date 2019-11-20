@@ -23,10 +23,16 @@ def get_video_url(page_url, user="", password="", video_password=""):
     logger.info()
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    videourl = scrapertools.find_multiple_matches(data, '"format":"mp4","quality":"(\d+)","videoUrl":"(.*?)"')
+    data = scrapertools.find_single_match(data, '<div id="vpContentContainer">(.*?)</script>')
+    data = data.replace('" + "', '')
+    videourl = scrapertools.find_multiple_matches(data, 'var quality_(\d+)p=(.*?);')
     scrapertools.printMatches(videourl)
     for scrapedquality,scrapedurl in videourl:
-        scrapedurl = scrapedurl.replace("\\","")
-        video_urls.append([scrapedquality + "p [pornhub]", scrapedurl])
+        orden = scrapertools.find_multiple_matches(scrapedurl, '\*\/([A-z0-9]+)')
+        logger.debug(orden)
+        url= ""
+        for i in orden:
+            url += scrapertools.find_single_match(data, '%s="([^"]+)"' %i)
+        logger.debug(url)
+        video_urls.append([scrapedquality + "p [pornhub]", url])
     return video_urls
-

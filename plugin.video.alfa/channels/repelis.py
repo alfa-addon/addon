@@ -25,7 +25,7 @@ list_servers = ['rapidvideo', 'streamango', 'fastplay', 'openload', 'netu', 'vid
 
 __channel__='repelis'
 
-host = "https://repelisgo.com"
+host = "https://repelisgo.net"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -146,14 +146,23 @@ def newest(categoria):
 
 def search(item, texto):
     logger.info()
+    logger.info()
+
+    texto = texto.replace(" ", "+")
     item.url = item.url + texto
+
     item.extra = "busca"
     item.page = 1
     item.texto = texto
     item.post = {"query":"\n          query ($term: String) {\n            movies: allMovies(search: $term) {\n              id\n              slug\n              title\n              rating\n              releaseDate\n              released\n              poster\n              nowPlaying\n            }\n          }\n        ","variables":{"term":"%s" %texto}}
-    if texto != '':
+    try:
         return peliculas(item)
-    else:
+
+    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
         return []
 
 

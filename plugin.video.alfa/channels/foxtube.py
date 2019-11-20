@@ -8,14 +8,16 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://www.muyzorras.com'
+host = 'https://www.foxtube.com' #https://www.muyzorras.com
+
+#Falta channel ajax {url:"/users/doIFollow/749/"
 
 def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append( Item(channel=item.channel, title="Ultimos" , action="lista", url=host))
-    itemlist.append( Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + '/actrices-porno/'))
-    # itemlist.append( Item(channel=item.channel, title="Canal" , action="catalogo", url=host + '/canales/'))
+    itemlist.append( Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + '/pornstars/'))
+    # itemlist.append( Item(channel=item.channel, title="Canal" , action="catalogo", url=host + '/channels/'))
     
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     
@@ -109,7 +111,7 @@ def play(item):
     itemlist = []
     url = ""
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data,'<iframe title="video" src="([^"]+)"')
+    url = scrapertools.find_single_match(data,'<iframe title="[^"]+" src="([^"]+)"')
     if not url:
         url = scrapertools.find_single_match(data,'href="(https://www.pornhub.com/view_video.php[^"]+)"')
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))

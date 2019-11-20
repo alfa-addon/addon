@@ -13,6 +13,8 @@ from platformcode import config, logger
 
 __channel__ = "xms"
 
+# Xtheatre practicamente muerta
+
 host = 'https://xtheatre.org/'
 host1 = 'https://www.cam4.com/'
 try:
@@ -99,7 +101,7 @@ def peliculas(item):
     for scrapedthumbnail, scrapedurl, scrapedtitle, plot in matches:
         plot = scrapertools.decodeHtmlentities(plot)
 
-        itemlist.append(item.clone(channel=__channel__, action="play", title=scrapedtitle.capitalize(),
+        itemlist.append(item.clone(channel=__channel__, action="findvideos", title=scrapedtitle.capitalize(),
                                    url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels={"plot": plot},
                                    fanart=scrapedthumbnail,viewmode="movie_with_plot",
                                    folder=True, contentTitle=scrapedtitle))
@@ -130,9 +132,9 @@ def webcam(item):
     for scrapedurl, video_url, username, scrapedtitle, scrapedthumbnail in matches:
         scrapedtitle = scrapedtitle.replace(' Chat gratis con webcam.', '')
 
-        itemlist.append(item.clone(channel=__channel__, action="play", title=username,
+        itemlist.append(item.clone(channel=__channel__, action="findvideos", title=username,
                                    url=video_url, thumbnail=scrapedthumbnail, fanart=scrapedthumbnail,
-                                   viewmode="movie_with_plot", folder=True, contentTitle=scrapedtitle))
+                                   viewmode="movie_with_plot", folder=True, contentTitle=username))
     # Extrae el paginador
     paginacion = scrapertools.find_single_match(data, '<span id="pagerSpan">\d+</span> <a href="([^"]+)"')
     paginacion = urlparse.urljoin(item.url, paginacion)
@@ -208,21 +210,24 @@ def sub_search(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
     itemlist = []
     if "playlist.m3u8" in item.url:
         url = item.url
+        itemlist.append(item.clone(action="play", title= "%s", url=url))
     else:
         data = httptools.downloadpage(item.url).data
         data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
-        patron = 'src="([^"]+)" allowfullscreen="true">'
+        data = scrapertools.find_single_match(data, '<div class="video-embed">(.*?)<div id="video-rate">')
+        patron = 'src="([^"]+)"'
         matches = scrapertools.find_multiple_matches(data, patron)
         for url in matches:
             if "strdef" in url: 
                 url = decode_url(url)
                 if "strdef" in url:
                     url = httptools.downloadpage(url).url
-    itemlist.append(item.clone(action="play", title= "%s", url=url))
+            if not "hotvideoz" in url: #netu
+                itemlist.append(item.clone(action="play", title= "%s", url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

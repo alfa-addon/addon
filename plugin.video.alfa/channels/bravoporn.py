@@ -42,7 +42,7 @@ def categorias(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a href="([^"]+)" class="th">.*?'
     patron += '<img src="([^"]+)".*?'
-    patron += '<span>([^"]+)</span>\s*(\d+) movies.*?</strong>'
+    patron += '<span>([^<]+)</span>\s*(\d+) movies.*?</strong>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
         scrapedplot = ""
@@ -61,7 +61,7 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class=".*?video_block"><a href="([^"]+)".*?'
     patron += '<img src="([^"]+)".*?alt="([^"]+)".*?'
-    patron += '<span class="time">([^"]+)</span>'
+    patron += '<span class="time">([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,duracion in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
@@ -69,8 +69,8 @@ def lista(item):
         thumbnail = "https:" + scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                              fanart=thumbnail, plot=plot, contentTitle = scrapedtitle))
-    next_page = scrapertools.find_single_match(data,'<a href="([^"]+)" class="next" title="Next">Next</a>')
+                              fanart=thumbnail, plot=plot, contentTitle = title))
+    next_page = scrapertools.find_single_match(data,'<a href="([^"]+)" class="[^"]+" title="Next">Next</a>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 
 from core import httptools
 from core import jsontools
@@ -183,6 +184,7 @@ def lista(item):
         params = jsontools.dump(dict_param)
     dict_data = httptools.downloadpage(item.url, post=params).json
     for it in dict_data["items"]:
+        it["title"] = re.sub(r'<.*?>', '', it["title"])
         url = host + "pelicula/" + it["slug"]
         title = it["title"] + " (%s)" %it["year"]
         thumb = host + it["image"]

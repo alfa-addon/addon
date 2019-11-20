@@ -8,7 +8,11 @@
         "url": "\\1"
       },
       {
-        "pattern": "https://streamium\\.xyz/.*?hash=([a-zA-Z0-9]+)",
+        "pattern": "(https://[a-zA-Z0-9]+\\.pelisplay\\.tv/.*?m3u8.php\\?id=\\d+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "streamium\\.xyz/.*?hash=([a-zA-Z0-9]+)",
         "url": "http://streamium.xyz/files/\\1"
       }
     ]

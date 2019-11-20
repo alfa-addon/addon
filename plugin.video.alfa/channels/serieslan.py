@@ -97,11 +97,12 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
     next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class="sa fr">')
-
     patron = '<a href="([^"]+)" '
-    patron += 'class="(?:link|min-la)">.+?<img src="([^"]+)".*?'
+    if item.tipo == "series":
+        patron += 'class="(?:link|min-la)">.+?<img src="([^"]+)".*?'
+    else:
+        patron += 'class="(?:link|min-la)"><img src="([^"]+)".*?'
     patron += 'title="([^"]+)">'
-    
 
     matches = scrapertools.find_multiple_matches(data, patron)
 
