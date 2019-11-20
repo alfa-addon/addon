@@ -558,7 +558,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
     # Primero creamos un título para TODAS las Temporadas
     # Pasada por TMDB a Serie, para datos adicionales
     try:
-        tmdb.set_infoLabels(item, True, idioma_busqueda='es,en')    #TMDB de cada Temp
+        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es,en')  #TMDB de la serie
     except:
         logger.error(traceback.format_exc())
     
@@ -594,6 +594,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
             season = item_local.contentSeason                       #Si se detecta una temporada distinta se prepara un título
             item_season = item.clone()
             item_season.contentSeason = item_local.contentSeason    #Se pone el núm de Temporada para obtener mejores datos de TMDB
+            item_season.contentType = 'season'
             item_season.title = 'Temporada %s' % item_season.contentSeason
             if url != 'serie':
                 item_season.url = item_local.url
@@ -607,7 +608,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
             
             # Pasada por TMDB a las Temporada
             try:
-                tmdb.set_infoLabels(item_local, True, idioma_busqueda='es,en')      #TMDB de cada Temp
+                tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda='es,en')    #TMDB de cada Temp
             except:
                 logger.error(traceback.format_exc())
         
@@ -633,7 +634,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
                 item_local.title = item_local.title.replace("[", "-").replace("]", "-").replace(".", ",").replace("GB", "G B").replace("Gb", "G b").replace("gb", "g b").replace("MB", "M B").replace("Mb", "M b").replace("mb", "m b")
             item_local.title = item_local.title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
             
-            #logger.debug(item_local)
+            logger.debug(item_local)
         
     else:                                   #Si hay más de una temporada se sigue, si no se devuelve el Itemlist original
         if item.season_colapse:
