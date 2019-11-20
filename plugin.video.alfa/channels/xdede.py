@@ -26,7 +26,7 @@ list_quality = ['Oficial', '1080p', '720p', '480p', '360p']
 
 list_servers = ['fembed', 'vidcloud','clipwatching', 'gamovideo']
 
-host = 'https://xdede.co/'
+host = 'https://movidy.co/'
 
 def mainlist(item):
     logger.info()
@@ -40,6 +40,9 @@ def mainlist(item):
     
     itemlist.append(Item(channel=item.channel, title='Series', action='sub_menu', type='series',
                          thumbnail= get_thumb('tvshows', auto=True)))
+
+    itemlist.append(Item(channel=item.channel, title='Animes', action='sub_menu', type='animes',
+                         thumbnail= get_thumb('anime', auto=True)))
     
     itemlist.append(Item(channel=item.channel, title='Colecciones', action='list_collections',
                         url= host+'listas', thumbnail=get_thumb('colections', auto=True)))
@@ -140,20 +143,21 @@ def list_all(item):
     itemlist = []
 
     data = get_source(item.url)
-    patron = '<article.*?href="([^"]+)"(.*?)<img.*?data-echo="([^"]+)" alt="([^"]+)"'
-    #patron += '<h2>([^>]+)</h2>.*?</article>'
+    patron = '<article class="Cards.*?href="([^"]+)"(.*?)<img.*?'
+    patron += 'data-echo="([^"]+)" alt="([^"]+)"'
+
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedinfo, scrapedthumbnail, scrapedtitle in matches:
 
         title = scrapedtitle
-        scrapedtitle = re.sub(' \((.*?)\)$', '', scrapedtitle)
+        scrapedtitle = re.sub(r' \((.*?)\)$', '', scrapedtitle)
         thumbnail = scrapedthumbnail.strip()
         url = scrapedurl
-        tmdb_id = scrapertools.find_single_match(url, '/\w(\d+)-')
+        tmdb_id = scrapertools.find_single_match(url, r'/\w(\d+)-')
         
 
-        thumbnail = re.sub('p/w\d+', 'p/original', thumbnail)
+        thumbnail = re.sub(r'p/w\d+', 'p/original', thumbnail)
         
         if item.type == 'search':
             s_title =  scrapertools.find_single_match(url, host+'(\w+)')
@@ -171,7 +175,7 @@ def list_all(item):
             new_item.contentTitle = scrapedtitle
             new_item.type = 1
             
-            calidad_baja = scrapertools.find_single_match(scrapedinfo, '>(\w+\s\w+)</div>$')
+            calidad_baja = scrapertools.find_single_match(scrapedinfo, r'>(\w+\s\w+)</div>$')
             
             if calidad_baja:
                 new_item.title += '[COLOR tomato] (Calidad Baja)[/COLOR]'
@@ -180,7 +184,7 @@ def list_all(item):
             new_item.contentSerieName = scrapedtitle
             new_item.type = 0
             
-            sesxep = scrapertools.find_single_match(url, '/(\d+x\d+)$')
+            sesxep = scrapertools.find_single_match(url, r'/(\d+x\d+)$')
             
             if sesxep:
                 new_item.title += ' '+sesxep
@@ -269,7 +273,7 @@ def episodesxseasons(item):
     pat = '<div class="season temporada-%s(.*?)</a></li></div>' % item.infoLabels['season']
     data = scrapertools.find_single_match(data, pat)
     
-    patron= '<li><a href="([^"]+)"(.*?)'
+    patron= '<li ><a href="([^"]+)"(.*?)'
     patron += r'<h2>([^>]+)</h2>.*?<span>\d+ - (\d+)</span>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
@@ -297,37 +301,42 @@ def findvideos(item):
     server_url = {'gamovideo': 'http://gamovideo.com/embed-%s.html',
                   'gounlimited': 'https://gounlimited.to/embed-%s.html',
                   'streamplay': 'https://streamp1ay.me/player-%s.html',
+                  'powvideo': 'https://powvldeo.net/iframe-%s-1536x701.html',
                   'vidcloud': 'https://vidcloud.co/player?fid=%s&page=embed',
                   'vidlox': 'https://vidlox.me/embed-%s.html',
                   'clipwatching': 'https://clipwatching.com/embed-%s.html',
-                  'jetload': 'https://jetload.net/e/%s'
+                  'jetload': 'https://jetload.net/e/%s',
+                  'mixdrop': 'https://mixdrop.co/e/%s'
                   }
 
     data = get_source(item.url)
-    s_id = scrapertools.find_single_match(data, 'loadVideos" secid="([^"]+)"')
+    s_id = scrapertools.find_single_match(data, r'id="loadVideos".*?secid="(\w\d+)"')
 
     if s_id:
         import requests
-        url = host+'json/loadVIDEOS'
+        url = host + 'json/loadVIDEOS'
+        header = {'User-Agent': 'Mozilla/5.0 (Android 10; Mobile; rv:70.0) Gecko/70.0 Firefox/70.0'}
         session = requests.Session()
-        page = session.post(url, data={'id': s_id}).json()
+        page = session.post(url, data={'id': s_id}, headers=header).json()
 
         if page.get('status', '') == 200:
             data2 = page['result']
-            patron = "C_One\(this, (\d+), '([^']+)'.*?"
-            patron += 'src=".*?/img/(\w+)'
+            patron = r"C_One\(this, (\d+), '([^']+)'.*?"
+            patron += r'src=".*?/img/(\w+)'
             matches = re.compile(patron, re.DOTALL).findall(data2)
             for language, url, server in matches:
                 
-                req = httptools.downloadpage(url, headers=headers)
-                refresh = req.headers.get('refresh', None)
+                req = httptools.downloadpage(url, headers=headers, follow_redirects=False)
+                location = req.headers.get('location', None)
 
 
-                if refresh:
-                    url = scrapertools.find_single_match(refresh, '(http.*)')
+                if location:
+                    url = location
                 else:
-                    new_data = req.data
-                    url = scrapertools.find_single_match(new_data, "file\": '([^']+)'")                
+                    new_data = req.data.replace("'", '"')
+                    url = scrapertools.find_single_match(new_data, 'file": "([^"]+)"')
+                if not url:
+                     continue             
                 try:
                     server = server.split(".")[0]
                 except:
@@ -335,7 +344,7 @@ def findvideos(item):
 
                 if 'betaserver' in server:
                     server = 'directo'
-                
+
                 lang = IDIOMAS.get(language, 'VO')
 
                 quality = 'Oficial'
@@ -346,7 +355,7 @@ def findvideos(item):
                                  quality=quality, server=server, headers=headers, infoLabels=item.infoLabels,
                                  p_lang=language))
 
-    patron = '<li><a href="([^"]+)".*?domain=([^"]+)".*?<b>([^<]+)<.*?src="([^"]+)"'
+    patron = '<li><a href="([^"]+)".*?<img.*?>([^<]+)<b>([^<]+)<.*?src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for url, server, quality, language in matches:
@@ -357,15 +366,16 @@ def findvideos(item):
             try:
                 server = server.split(".")[0].replace('1', 'l')
             except:
-                server= ""
-            _id = scrapertools.find_single_match(url, 'link/\w+_(.*)')
+                continue
+
+            _id = scrapertools.find_single_match(url, r'link/\w+_(.*)')
 
             url = server_url.get(server, url)
             
             if not url.startswith(host):
                 url = url % _id
             
-            language = scrapertools.find_single_match(language, '/(\d+)\.png')
+            language = scrapertools.find_single_match(language, r'/(\d+)\.png')
             lang = IDIOMAS.get(language, 'VO')
             
             title = '%s [%s] [%s]' % (server.capitalize(), lang, quality)
@@ -378,6 +388,11 @@ def findvideos(item):
     itemlist2.sort(key=lambda i: (i.p_lang, i.server))
     
     itemlist.extend(itemlist2)
+
+    if not itemlist:
+        itemlist.append(Item(channel=item.channel, folder=False, text_color='tomato',
+                            title='[I] Aún no hay enlaces disponibles [/I]'))
+        return itemlist
     
     itemlist = filtertools.get_links(itemlist, item, list_language)
 

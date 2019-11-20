@@ -1,7 +1,7 @@
 {
 "id": "verystreamtv",
   "name": "VeryStream Movies",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": [],
   "thumbnail": "https://verystreamtv.com/wp-content/uploads/2019/06/logo.png",

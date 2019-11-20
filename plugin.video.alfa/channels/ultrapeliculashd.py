@@ -11,7 +11,7 @@ from channels import filtertools, autoplay
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'http://www.ultrapeliculashd.com'
+host = 'https://www.ultrapeliculashd.com'
 
 thumbletras = {'#': 'https://s32.postimg.cc/drojt686d/image.png',
                'a': 'https://s32.postimg.cc/llp5ekfz9/image.png',
@@ -42,17 +42,11 @@ thumbletras = {'#': 'https://s32.postimg.cc/drojt686d/image.png',
                'z': 'https://s32.postimg.cc/jb4vfm9d1/image.png'
                }
 
-tcalidad = {'1080P': 'https://s21.postimg.cc/4h1s0t1wn/hd1080.png',
-            '720P': 'https://s12.postimg.cc/lthu7v4q5/hd720.png', "HD": "https://s27.postimg.cc/m2dhhkrur/image.png"}
-
-
 IDIOMAS = {'Latino': 'LAT', 'Español': 'CAST', 'SUB':'VOSE'}
 list_language = IDIOMAS.values()
-list_quality = ['default', '1080p']
-list_servers = ['openload','directo']
+list_quality = ['default', '1080p', 'HD', 'CAM']
+list_servers = ['fembed', 'uqload']
 
-__comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'ultrapeliculashd')
-__comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'ultrapeliculashd')
 
 def mainlist(item):
     logger.info()
@@ -61,10 +55,22 @@ def mainlist(item):
 
     itemlist = []
 
-    itemlist.append(Item(channel=item.channel, title="Todas",
+    itemlist.append(Item(channel=item.channel, title="Estrenos",
                          action="lista",
-                         thumbnail=get_thumb('all', auto=True),
+                         thumbnail=get_thumb('premieres', auto=True),
+                         url=host + '/genre/estreno/'
+                         ))
+
+    itemlist.append(Item(channel=item.channel, title="Actualizadas",
+                         action="lista",
+                         thumbnail=get_thumb('updated', auto=True),
                          url=host + '/movies/'
+                         ))
+
+    itemlist.append(Item(channel=item.channel, title="Destacadas",
+                         action="lista",
+                         thumbnail=get_thumb('hot', auto=True),
+                         url=host + '/genre/destacados/'
                          ))
 
     itemlist.append(Item(channel=item.channel, title="Generos",
@@ -95,67 +101,91 @@ def lista(item):
     logger.info()
 
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    if item.extra != 'buscar':
-        patron = '<article id=.*?<img src=(.*?) alt=(.*?)>.*?<a href=(.*?)>.*?</h3><span>(.*?)<'
-    else:
-        patron = '<article><div class=image>.*?<a href=(.*?)\/><img src=(.*?) alt=(.*?) \/>.*?year>(.*?)<\/span>'
+    data = get_source(item.url)
+
+    patron = '<article id=.*?<img src="([^"]+)" alt="([^"]+)">.*?'
+    patron += r'quality">([^<]+).*?<a href="([^"]+)">.*?<span>(\d{4})'
+
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    for scrapedthumbnail, scrapedtitle, scrapedurl, scrapedyear in matches:
-        if item.extra == 'buscar':
-            aux = scrapedthumbnail
-            scrapedthumbnail=scrapedtitle
-            scrapedtitle = scrapedurl
-            scrapedurl =  aux
+    for scrapedthumbnail, scrapedtitle, quality, url, year in matches:
+        
+        thumbnail = re.sub(r'p/w\d+', 'p/original', scrapedthumbnail)
+        contentTitle = re.sub(r'\(\d{4}\)| / .*| 4K', '', scrapedtitle).strip()
+        title = contentTitle
+        
+        if not config.get_setting("unify"):
+            title += ' [COLOR blue](%s)[/COLOR] [COLOR khaki][%s][/COLOR]' % (year, quality)
 
-
-        url = scrapedurl
-        thumbnail = scrapedthumbnail
-        contentTitle = re.sub(r'\d{4}', '', scrapedtitle)
-        contentTitle = contentTitle.replace('|', '')
-        contentTitle = contentTitle.strip(' ')
-        title = scrapertools.decodeHtmlentities(contentTitle)
-        year = scrapedyear
-        fanart = ''
-
-
-        itemlist.append(Item(channel=item.channel, action="findvideos", title=title, contentTitle=item.title, url=url,
-                             thumbnail=thumbnail, fanart=fanart, infoLabels={'year': year}))
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title,
+                             contentTitle=contentTitle, url=url, quality=quality,
+                             thumbnail=thumbnail, infoLabels={'year': year}))
+    
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     # Paginacion
 
-    if itemlist != []:
-        actual_page_url = item.url
-        next_page = scrapertools.find_single_match(data, '<link rel=next href=(.*?) />')
-        if next_page != '':
-            itemlist.append(Item(channel=item.channel, action="lista", title='Siguiente >>>', url=next_page,
-                                 thumbnail='https://s16.postimg.cc/9okdu7hhx/siguiente.png'))
+    next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
+    if next_page and itemlist:
+        itemlist.append(Item(channel=item.channel, action="lista",
+                             title='Siguiente >>>', url=next_page))
     return itemlist
+
+def search_results(item):
+    logger.info()
+    
+    itemlist = []
+    data = get_source(item.url)
+
+    patron = '<article><div class="image">.*?<a href="([^"]+)"><img src="([^"]+)" '
+    patron += 'alt="([^"]+)" /><span class="movies">.*?year">([^<]+)'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for url, scrapedthumbnail, scrapedtitle, year in matches:
+
+        thumbnail = re.sub(r'p/w\d+', 'p/original', scrapedthumbnail)
+        contentTitle = re.sub(r'\d{4}$| / .*| 4K|\(\)', '', scrapedtitle).strip()
+        title = contentTitle
+
+        if not config.get_setting("unify"):
+            title += ' [COLOR blue](%s)[/COLOR]' % (year)
+
+
+        itemlist.append(Item(channel=item.channel, action="findvideos", title=title,
+                             contentTitle=contentTitle, url=url,
+                             thumbnail=thumbnail, infoLabels={'year': year}))
+    
+    tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
+    # Paginacion
+    next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
+    if next_page and itemlist:
+        itemlist.append(Item(channel=item.channel, action="search_results",
+                             title='Siguiente >>>', url=next_page))
+    return itemlist
+
+
 
 
 def generos(item):
     logger.info()
     itemlist = []
+    not_allowed = ['PRÓXIMAMENTE', 'ESTRENOS HD', '4K ULTRA HD']
+    
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     patron = 'genres menu-item-.*?><a href=(.*?)>(.*?)<'
+    
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedtitle in matches:
-        thumbnail = ''
-        fanart = ''
+
         title = scrapedtitle
         url = scrapedurl
-        if scrapedtitle not in ['PRÓXIMAMENTE', 'EN CINE']:
+        if scrapedtitle not in not_allowed:
+            not_allowed.append(scrapedtitle)
             itemlist.append(Item(channel=item.channel, action="lista",
-                                 title=title,
-                                 contentTitle=item.title,
-                                 url=url,
-                                 thumbnail=thumbnail,
-                                 fanart=fanart
+                                 title=title, url=url
                                  ))
+    itemlist.sort(key=lambda it:it.title)
     return itemlist
 
 
@@ -169,16 +199,14 @@ def seccion(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedid, scrapedtitle in matches:
-        thumbnail = ''
         if scrapedtitle.lower() in thumbletras:
             thumbnail = thumbletras[scrapedtitle.lower()]
-        fanart = ''
         title = scrapedtitle
         id = scrapedid
 
         itemlist.append(
-            Item(channel=item.channel, action="alpha", title=title, contentTitle=item.title, thumbnail=thumbnail,
-                 fanart=fanart, id = id))
+            Item(channel=item.channel, action="alpha",
+                 title=title, id = id))
     return itemlist
 
 def alpha(item):
@@ -186,13 +214,14 @@ def alpha(item):
 
     itemlist = []
 
-    url = 'https://www.ultrapeliculashd.com/wp-json/dooplay/glossary/?term=%s&nonce=4e850b7d59&type=all' % item.id
+    url = '%s/wp-json/dooplay/glossary/?term=%s&nonce=4e850b7d59&type=all' % (host, item.id)
     dict_data = httptools.downloadpage(url).json
     if 'error' not in dict_data:
         for elem in dict_data:
             elem = dict_data[elem]
-            itemlist.append(Item(channel=item.channel, action='findvideos', title = elem['title'], url=elem['url'],
-                                 thumbnail=elem['img']))
+            thumb = re.sub(r'-\d+x\d+.jpg', '.jpg', elem['img'])
+            itemlist.append(Item(channel=item.channel, action='findvideos', title = elem['title'],
+                                 url=elem['url'], thumbnail=thumb))
     return itemlist
 
 
@@ -209,7 +238,10 @@ def findvideos(item):
     from lib import jsunpack
     logger.info()
     itemlist = []
+    title = ''
+    
     full_data = get_source(item.url)
+    quality = item.quality or scrapertools.find_single_match(full_data, 'qualityx">([^<]+)')
 
     patron = '<div id="([^"]+)" class="play-box-iframe.*?src="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(full_data)
@@ -218,32 +250,20 @@ def findvideos(item):
         if 'sub' in language.lower():
             language = 'SUB'
         language = IDIOMAS[language]
-        quality = ''
-        # if 'waaw.tv' in video_url:
-        #     continue
-        # data = httptools.downloadpage(video_url, follow_redirects=False, headers={'Referer': item.url}).data
-        #
-        # if 'hideload' in video_url:
-        #     quality = ''
-        #     new_id = scrapertools.find_single_match(data, "var OLID = '([^']+)'")
-        #     new_url = 'https://www.ultrapeliculashd.com/hideload/?ir=%s' % new_id[::-1]
-        #     data = httptools.downloadpage(new_url, follow_redirects=False, headers={'Referer': video_url}).headers
-        #     url = data['location']+"|%s" % video_url
-        # elif 'd.php' in video_url:
-        #     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-        #     quality = '1080p'
-        #     packed = scrapertools.find_single_match(data, '<script>(eval\(.*?)eval')
-        #     unpacked = jsunpack.unpack(packed)
-        #     url = scrapertools.find_single_match(unpacked, '"file":("[^"]+)"')
-        # elif 'drive' in video_url:
-        #     quality = '1080p'
-        #     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-        #     url = scrapertools.find_single_match(data, 'src="([^"]+)"')
-        #
+
+        if 'hideload' in video_url:
+            srv, new_id = scrapertools.find_single_match(video_url, r"\?(\w)d=(\w+)")
+            new_url = 'https://www.ultrapeliculashd.com/hideload/?%sr=%s' % (srv, new_id[::-1])
+            try:
+                video_url = httptools.downloadpage(new_url, headers={'Referer': video_url}, timeout=2).url
+            except:
+                continue
+        
+        elif 'drive/player' in video_url:
+            continue
+        
         if not config.get_setting("unify"):
             title = ' [%s] [%s]' % (quality, language)
-        else:
-            title = ''
 
         new_item = (Item(channel=item.channel, title='%s'+title, url=video_url, action='play', quality=quality,
                          language=language,  infoLabels=item.infoLabels))
@@ -252,8 +272,7 @@ def findvideos(item):
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title %  i.server.capitalize())
 
-    if __comprueba_enlaces__:
-        itemlist = servertools.check_list_links(itemlist, __comprueba_enlaces_num__)
+
     # Requerido para FilterTools
 
     itemlist = filtertools.get_links(itemlist, item, list_language)
@@ -276,8 +295,7 @@ def search(item, texto):
     item.url = item.url + texto
     try:
         if texto != '':
-            item.extra = 'buscar'
-            return lista(item)
+            return search_results(item)
         else:
             return []
     except:

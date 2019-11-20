@@ -322,6 +322,7 @@ def findvideos(item):
             #Parche por error tipografico en web(RV)
             elif 'e/http' in source:
                 url = url.split('/e/')[1]
+            url = url.replace('embedsito', 'fembed')
 
             itemlist.append(Item(channel=item.channel, url=url, title='%s'+lang, 
                                 action='play', infoLabels=item.infoLabels, language=language))
