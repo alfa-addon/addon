@@ -26,8 +26,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     data = scrapertools.find_single_match(data, 'JuicyCodes.Run\(([^\)]+)\)')
     data = data.replace("+", "")
     data = base64.b64decode(data)
-    data = scrapertools.find_single_match(data, 'https\|manyvideos\|xyz\|(.*?)\|autostart\|')
-    a,b = scrapertools.find_single_match(data, 'link\|([^\|]+)\|([^\|]+)\|')
+    logger.debug(data)
+    data = scrapertools.find_single_match(data, 'file\|https\|(.*?)\|autostart\|')
+    a,b = scrapertools.find_single_match(data, 'link\|([^\|]+)\|label\|type\|([^\|]+)\|')
     matches = scrapertools.find_multiple_matches(data, '\|(\d+)\|')
     for quality in matches:
         if int(quality) >= 360:
