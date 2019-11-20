@@ -3,14 +3,13 @@
   "name": "TuPeliHD",
   "thumbnail":"https://www.tupelihd.com/wp-content/uploads/2018/06/logotupelihdV5.png",
   "banner":"",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "version": 1,
   "categories": [
     "movie",
     "tvshow",
-    "torrent",
     "vos"
   ],
   "settings": [

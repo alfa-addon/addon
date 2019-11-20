@@ -28,8 +28,8 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url).data)
     patron = '<div class="videobox">\s*<a href="([^"]+)".*?'
     patron += 'url\(\'([^\']+)\'.*?'
-    patron += '<span>(.*?)<\/span>.*?'
-    patron += 'class="title">(.*?)<\/a>'
+    patron += '<span>([^<]+)<\/span>.*?'
+    patron += 'class="title">([^<]+)<\/a>'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, duration, scrapedtitle in matches:
         if "/embed-" not in scrapedurl:
@@ -40,12 +40,11 @@ def lista(item):
             scrapedtitle += ' gb'
             scrapedtitle = "[COLOR yellow]" + duration + "[/COLOR] " + scrapedtitle
             scrapedtitle = scrapedtitle.replace(":", "'")
-        # logger.debug(scrapedurl + ' / ' + scrapedthumbnail + ' / ' + duration + ' / ' + scrapedtitle)
         itemlist.append(item.clone(action="play", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, server="datoporn", 
                                    fanart=scrapedthumbnail.replace("_t.jpg", ".jpg"), plot = ""))
     next_page = scrapertools.find_single_match(data, '<a class=["|\']page-link["|\'] href=["|\']([^["|\']+)["|\']>Next')
     if next_page and itemlist:
-        itemlist.append(item.clone(action="lista", title=">> Página Siguiente", url=next_page))
+        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page))
     return itemlist
 
 

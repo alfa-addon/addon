@@ -250,19 +250,19 @@ def findvideos(item):
     import urllib
 
     itemlist = []
+    urls = []
 
     data = get_source(item.url)
-    player = scrapertools.find_single_match(data, "({'action': 'movie_player','foobar_id':\d+,})")
-    post = eval(player)
-    post = urllib.urlencode(post)
-    data = httptools.downloadpage(host+'wp-admin/admin-ajax.php', post=post, headers={'Referer':item.url}).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = 'data-url="([^"]+)"'
+    patron = 'data-url="([^"]+)" class'
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for url in matches:
-        itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', infoLabels=item.infoLabels))
+        if url not in urls:
+            itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', infoLabels=item.infoLabels))
+            urls.append(url)
+    
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server)
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':

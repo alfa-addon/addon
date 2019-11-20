@@ -76,7 +76,9 @@ def mainlist(item):
 
 
 def listado_alfabetico(item):
+
     logger.info()
+    itemlist = []
     #TODO Los numeros tendrian que listarse tambien o buscar otra solucion
     #itemlist = [item.clone(action="series_por_letra", title="0-9")]
     
@@ -280,7 +282,9 @@ def episodesxseasons(item):
                                    title="%s %s" % (title, languages),
                                    url=urlparse.urljoin(HOST, url)
                                    ))
-    #itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
+    itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
+    
+    itemlist.sort(key=lambda it: int(it.infoLabels["episode"]))
     
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     

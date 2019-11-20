@@ -248,27 +248,6 @@ def findvideos(item):
         itemlist.append(Item(channel=item.channel, title='%s'+title, url=url, action='play', infoLabels=item.infoLabels,
                              language=lang))
 
-    d_link = soup.find("div", class_="TPTblCn")
-
-    for elem in d_link.find_all("tr"):
-        lang = ''
-        try:
-            lang = elem.find_all("span")[2].text.strip()
-        except:
-            continue
-
-        if elem.a:
-            url = elem.a["href"]
-
-        title = add_lang(lang)
-
-        new_item = Item(channel=item.channel, title='%s' + title, url=url, action='play', infoLabels=item.infoLabels,
-                        language=lang)
-        if host in url:
-            new_item.server = 'torrent'
-
-        itemlist.append(new_item)
-
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     # Requerido para FilterTools

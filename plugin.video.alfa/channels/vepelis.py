@@ -173,23 +173,35 @@ def listado2(item):
 
 
 def get_link(data):
-    new_url = scrapertools.find_single_match(data, '(?:IFRAME|iframe) src="([^"]+)" scrolling')
-    return new_url
+    logger.info()
+
+    b_url = scrapertools.find_single_match(data, '(?:IFRAME|iframe) src=.*?video/([^.]+)')
+    url = b_url[:-2]+'=='
+
+    import base64
+    while True:
+        try:
+            url = base64.b64decode(url)
+            if url.startswith('http'):
+                break
+            if url.endswith('+'):
+                url = url[:-1]
+        except:
+            break
+
+    return url
 
 def findvideos(item):
     logger.info()
-    host = 'https://www.locopelis.tv/'
     itemlist = []
-    new_url = get_link(get_source(item.url))
-    new_url = get_link(get_source(new_url))
-    video_id = scrapertools.find_single_match(new_url, 'http.*?h=(\w+)')
-    new_url = '%s%s' % (host, 'playeropstream/api.php')
-    post = {'h': video_id}
-    post = urllib.urlencode(post)
-    json_data = httptools.downloadpage(new_url, post=post).json
-    url = json_data['url']
+    
+    url = get_link(get_source(item.url))
+    if not url:
+        return itemlist
+    
     server = servertools.get_server_from_url(url)
     title = '%s' % server
+    
     itemlist.append(Item(channel=item.channel, title=title, url=url, action='play',
                          server=server, infoLabels=item.infoLabels))
 

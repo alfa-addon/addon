@@ -41,12 +41,12 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<a href="([^"]+)" class="th-[^"]+">.*?'
-    patron += 'src="([^"]+)".*?'
     patron += '<span>(\d+)</span>.*?'
     patron += '<span class="title">([^"]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,cantidad,scrapedtitle in matches:
+    for scrapedurl,cantidad,scrapedtitle in matches:
         scrapedplot = ""
+        scrapedthumbnail = ""
         scrapedtitle = scrapedtitle + " (" + cantidad + ")"
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )

@@ -336,7 +336,7 @@ def search_results(item):
     
     json_data = httptools.downloadpage(item.url).json
     
-    if json_data['results']:
+    if json_data.get('results', ''):
         for elem in json_data['results']:
             url = '%ssecure/titles/%s?titleId=%s' % (host, elem['id'], elem['id'])
             try:

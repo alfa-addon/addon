@@ -376,6 +376,12 @@ def search_results(item):
 
         itemlist.append(new_item)
 
+    url_next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)" />')
+    
+    if url_next_page:
+        itemlist.append(
+            Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='search_results'))
+
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
     return itemlist

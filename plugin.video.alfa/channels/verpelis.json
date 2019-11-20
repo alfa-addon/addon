@@ -1,7 +1,7 @@
 {
     "id": "verpelis",
     "name": "Ver-pelis",
-    "active": true,
+    "active": false,
     "adult": false,
     "language": ["cast", "lat"],
     "thumbnail": "https://ver-pelis.tv/images/logo-50.png",

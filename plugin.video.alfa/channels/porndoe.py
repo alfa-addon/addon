@@ -48,8 +48,7 @@ def categorias(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for match in matches:
         scrapedurl = scrapertools.find_single_match(match,'href="([^"]+)"')
-        scrapedtitle = scrapertools.find_single_match(match,'alt="([^"]+)"')
-        thumbnail = scrapertools.find_single_match(match,'data-src="([^"]+)"')
+        thumbnail,scrapedtitle = scrapertools.find_single_match(match,'data-src="([^"]+)"\s+alt="([^"]+)"')
         quality = ""
         if "/category" in scrapedurl:
             quality = scrapertools.find_single_match(match,'<span class="count">([^<]+)<')

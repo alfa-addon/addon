@@ -1,24 +1,36 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,re
-# import os, sys
+import urlparse
+import re
 
-from bs4 import BeautifulSoup
 from platformcode import config, logger
 from core import scrapertools
-from core.item import Item
 from core import servertools
+from core.item import Item
 from core import httptools
+from bs4 import BeautifulSoup
+from channels import filtertools
+from channels import autoplay
+
+IDIOMAS = {'vo': 'VO'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['gounlimited']
 
 host = 'https://www.porndish.com'
-
 
 def mainlist(item):
     logger.info()
     itemlist = []
+
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="sub_menu", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+
+    autoplay.show_option(item.channel, itemlist)
+
     return itemlist
 
 
@@ -89,14 +101,14 @@ def lista(item):
     matches = soup.find_all('article', class_='entry-tpl-grid')
     for elem in matches:
         url = elem.a['href']
-        thumbnail = elem.img['src']
         stitle = elem.img['alt']
+        thumbnail = elem.img['data-lazy-src']
         stime = elem.find('time', class_='entry-date').text
         stime =scrapertools.find_single_match(stime,'(\d+:\d+)')
         title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url,
-                              fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = stitle))
+        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=url,
+                              fanart=thumbnail, thumbnail=thumbnail, plot=plot, contentTitle = title))
     try:
         next_page = soup.find('a', class_='g1-delta g1-delta-1st next')['href']
     except:
@@ -107,23 +119,17 @@ def lista(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url).find_all('iframe')
-    logger.debug(soup)
     for elem in soup:
         url = elem['src']
         itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
-    a = len (itemlist)
-    for i in itemlist:
-        
-        if a < 1:
-            return []
-        res = servertools.check_video_link(i.url, i.server, timeout=5)
-        a -= 1
-        if 'green' in res:
-            return [i]
-        else:
-            continue
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
+    return itemlist
+

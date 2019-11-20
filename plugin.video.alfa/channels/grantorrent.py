@@ -25,10 +25,10 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['torrent']
 
-host = "https://grantorrent1.com/"
+host = "https://grantorrent.one/"
 channel = "grantorrent"
-domain = 'grantorrent1.com'
-domain_files = 'files.grantorrent1.com'
+domain = 'grantorrent.one'
+domain_files = 'files.grantorrent.one'
 
 dict_url_seasons = dict()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)

@@ -86,17 +86,17 @@ def chicas(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     patron = '<div class="box-chica">.*?'
-    patron += '<a href="([^"]+)" title="">.*?'
-    patron += '<img class="img" src=\'([^"]+)\' width="175" height="150" border=\'0\' alt="[^"]+" />.*?'
-    patron += '<h4><a href="[^"]+" title="">([^"]+)</a></h4>.*?'
-    patron += '<a class="total-videos" href="[^"]+" title="">([^<]+)</a>'
+    patron += '<a href="([^"]+)".*?'
+    patron += '<img class="img" src=\'([^\']+)\'.*?'
+    patron += '<h4><a href="[^"]+">([^<]+)</a></h4>.*?'
+    patron += '<a class="total-videos".*?>([^<]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for url, thumbnail, title, videos in matches:
         last = urlparse.urljoin(item.url, url)
         url= last.replace("/pornstar", "/ajax/show_pornstar") + "?page=1"
         title = title + " (" + videos + ")"
         itemlist.append(Item(channel=item.channel, action='videos', title=title, url=url, last=last, thumbnail=thumbnail, fanart=thumbnail))
-    # Paginador   "Página Siguiente >>"
+    # Paginador
     current_page = int(scrapertools.find_single_match(item.url, "/?page=(\d+)"))
     if not item.last_page:
         last_page = get_last_page(item.last)
