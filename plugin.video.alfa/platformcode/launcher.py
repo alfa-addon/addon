@@ -28,8 +28,7 @@ def start():
     #config.set_setting('show_once', True)
     # Test if all the required directories are created
     config.verify_directories_created()
-
-
+    
 def run(item=None):
     logger.info()
 
@@ -60,6 +59,9 @@ def run(item=None):
     logger.info(item.tostring())
 
     try:
+        if not config.get_setting('tmdb_active'):
+            config.set_setting('tmdb_active', True)
+
         # If item has no action, stops here
         if item.action == "":
             logger.info("Item sin accion")
