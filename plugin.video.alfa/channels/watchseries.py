@@ -18,7 +18,7 @@ from platformcode import config, logger
 IDIOMAS = {'default': 'VO'}
 title2 = {'Action': 'Action2','Xmas':'Christmas', 'Kungfu':'Martial%20Arts','Psychological':'Genres','TV Show':'TV', 'Sitcom':'Genres', 'Costume':'Genres', 'Mythological':'Genres'}
 list_language = IDIOMAS.values()
-list_servers = ['directo', 'rapidvideo', 'streamango', 'openload', 'xstreamcdn']
+list_servers = ['directo', 'xstreamcdn']
 list_quality = ['default']
 
 
@@ -245,17 +245,17 @@ def findvideos(item):
         elif '/load.php' in source:
             new_data = httptools.downloadpage("https:" + source).data
             url = scrapertools.find_single_match(new_data, "file: '(https://[A-z0-9]+.cdnfile.info/.*?)'")
-            thumbnail= "https://vidcloud.icu/img/logo_vid.png"
+            thumbnail= "https://vidnode.net/img/logo_vid.png"
         else:
             url = source
             thumbnail= ""
         if "https://redirector."  in url or "cdnfile.info" in url:
-            url = url+"|referer=https://vidcloud.icu/"  
+            url += "|referer=https://vidnode.net/"  
         
         if url != "":
             itemlist.append(Item(channel=item.channel, url=url, title='%s', action='play',plot=item.plot,  thumbnail=thumbnail, subtitle=urlsub))
 
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server)
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra == 'film':
         itemlist.append(Item(channel=item.channel, title="Añadir a la Videoteca", text_color="yellow",
                              action="add_pelicula_to_library", url=item.url, thumbnail = item.thumbnail,

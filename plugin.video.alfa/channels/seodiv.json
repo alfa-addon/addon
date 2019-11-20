@@ -1,7 +1,7 @@
 {
   "id": "seodiv",
   "name": "Seodiv",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://s32.postimg.cc/gh8lhbkb9/seodiv.png",

@@ -247,8 +247,8 @@ def episodesxseason(item):
 
         url = elem.a['href']
 
-        ep, t_ep = scrapertools.find_single_match(elem.text, r'x(\d+)(.*?) \d+-')
-        t_ep = t_ep.replace(' – ', '')
+        ep, t_ep = scrapertools.find_single_match(elem.text, r'x(\d+) (.*)')
+        t_ep = re.sub(r' – |\d+-\d+-\d+', '', t_ep)
         title = '%sx%s [COLOR aquamarine][I]%s[/I][/COLOR]' % (season, ep, t_ep)
         infoLabels['episode'] = ep
 

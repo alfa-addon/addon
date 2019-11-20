@@ -35,12 +35,12 @@ def mainlist(item):
 
 
     itemlist.append(Item(channel=item.channel, title='Peliculas',
-                         url=host+'ver-pelicula-online',
+                         url=host+'pelicula',
                          action='list_all',
                          thumbnail= get_thumb('movies', auto=True)))
     
     itemlist.append(Item(channel=item.channel, title='Series', 
-                         url=host+'ver-serie-online',
+                         url=host+'serie',
                          action='list_all',
                          thumbnail= get_thumb('tvshows', auto=True)))
 
@@ -131,7 +131,7 @@ def search_results(item):
         new_item = Item(channel=item.channel, title=title, url=url,
                         action='findvideos', thumbnail=thumb, infoLabels = {'year': year})
         
-        if '/ver-pelicula' in url:
+        if '/pelicula' in url:
             new_item.contentTitle = ctitle
         else:
             new_item.contentSerieName=ctitle
@@ -172,7 +172,7 @@ def list_all(item):
                         action='findvideos', thumbnail=thumb,
                         infoLabels = {'year': year})
         
-        if '/ver-pelicula' in url:
+        if '/pelicula' in url:
             new_item.contentTitle = ctitle
         else:
             new_item.contentSerieName=ctitle
@@ -385,15 +385,18 @@ def play(item):
         post = urllib.urlencode(item._post)
         try:
             data = httptools.downloadpage(item.url, post=post, headers=item._ref).json
-            logger.error(data)
             item.url = data.get('url', '')
+            
             if 'peliculonhd' in item.url:
                 url = item.url.replace('embed/', 'hls/')
+                if not url.endswith('.m3u8'):
+                    url += '.m3u8'
                 data = httptools.downloadpage(url).data
                 new_url = scrapertools.find_single_match(data, '(/mpegURL.*)')
                 item.url = 'https://videos.peliculonhd.com%s' % new_url
+                return [item]
 
-            logger.error(item.url)
+            item.server = servertools.get_server_from_url(item.url)
         
         except:
             logger.error('Error get link %s' % item.url)

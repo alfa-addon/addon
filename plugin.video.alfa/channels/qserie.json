@@ -1,7 +1,7 @@
 {
   "id": "qserie",
   "name": "QSerie",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://s31.postimg.cc/dousrbu9n/qserie.png",
