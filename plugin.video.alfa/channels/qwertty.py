@@ -57,7 +57,7 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<article id="post-\d+".*?'
-    patron += '<a href="([^"]+)" title="([^"]+)">.*?'
+    patron += '<a href="(https://qwertty.net/\d+/).*?" title="([^"]+)">.*?'
     patron += '<div class="post-thumbnail(.*?)<span class="views">.*?'
     patron += '<span class="duration"><i class="fa fa-clock-o"></i>([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)

@@ -51,7 +51,7 @@ def sub_menu(item):
     logger.info()
 
     itemlist = list()
-    itemlist.append( Item(channel=item.channel, title="Bangbros" , action="categorias", url=host, id="menu-item-785"))
+    itemlist.append( Item(channel=item.channel, title="Bangbros" , action="categorias", url=host, id="menu-item-62819"))
     itemlist.append( Item(channel=item.channel, title="Brazzers" , action="categorias", url=host, id="menu-item-817"))
     itemlist.append( Item(channel=item.channel, title="Mofos" , action="categorias", url=host, id="menu-item-1707"))
     itemlist.append( Item(channel=item.channel, title="Pornpros" , action="categorias", url=host, id="menu-item-3774"))
@@ -68,11 +68,7 @@ def categorias(item):
     soup = create_soup(item.url).find('li', id=item.id)
     matches = soup.find_all('li', class_='menu-item-object-category')
     for elem in matches:
-        try:
-            scrapedurl = elem.a['href']
-        except:
-            scrapedurl = None
-            scrapedurl = "https://www.porndish.com/videos4/bangbros/"
+        scrapedurl = elem.a['href']
         scrapedtitle = elem.a.text
         scrapedplot = ""
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)

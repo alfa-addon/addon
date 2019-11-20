@@ -87,7 +87,7 @@ def lista(item):
     patron += '</a>(.*?)</div>.*?href="([^"]+)">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedthumbnail, scrapedtime, scrapedurl, scrapedtitle in matches:
-        
+        scrapedurl = urlparse.urljoin(host,scrapedurl)
         contentTitle = scrapedtitle
         scrapedhd = scrapertools.find_single_match(scrapedtime, '<span class="thumb__hd">(.*?)</span>')
         duration = scrapertools.find_single_match(scrapedtime, '<span class="thumb__duration">(.*?)</span>')

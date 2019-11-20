@@ -67,7 +67,7 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<source src=\'([^,\']+)\'')
+    data = data.replace("\u0022" , "\"").replace("\u002D", "-")
+    url = scrapertools.find_single_match(data, '"hls_source"\: "([^"]+)"')
     itemlist.append(item.clone(action="play", url=url))
     return itemlist
-

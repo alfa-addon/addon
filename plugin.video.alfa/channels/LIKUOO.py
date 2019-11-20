@@ -60,7 +60,7 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="item">.*?'
-    patron += '<a href="([^"]+)" title="(.*?)">.*?'
+    patron += '<a href="([^"]+)" title="([^"]+)".*?'
     patron += 'src="(.*?)".*?'
     patron += '<div class="runtime">(.*?)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -90,10 +90,9 @@ def play(item):
     for scrapedurl,post in matches:
         post = post.replace("%3D", "=")
         scrapedurl = host + scrapedurl
-        # logger.debug( item.url +" , "+ scrapedurl +" , " +post )
         datas = httptools.downloadpage(scrapedurl, post=post, headers={'Referer':item.url}).data
         datas = datas.replace("\\", "")
-        url = scrapertools.find_single_match(datas, '<iframe src="([^"]+)"')
+        url = scrapertools.find_single_match(datas, '<iframe.*?src="([^"]+)"')
         if not url.startswith("https"):
             url = "https:%s" % url
         itemlist.append( Item(channel=item.channel, action="play", title="%s",contentTitle = item.title, url=url ))
