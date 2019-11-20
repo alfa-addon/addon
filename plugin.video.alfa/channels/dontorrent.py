@@ -22,7 +22,7 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://dontorrent.com/'
+host = 'https://dontorrent.org/'
 channel = 'dontorrent'
 categoria = channel.capitalize()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
@@ -98,7 +98,8 @@ def submenu(item):
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data).replace("'", '"')
     data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         
-    patron = '<span\s*class="list-group-item\s*top">Torrents<\/span>(.*?)<\/span><\/div>'
+    #patron = '<span\s*class="list-group-item\s*top">Torrents<\/span>(.*?)<\/span><\/div>'
+    patron = '<h1\s*class="list-group-item top"\s*style="[^"]+">.*?<\/h1>\s*(.*?)<\/span><\/div>'
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if not data or not scrapertools.find_single_match(data, patron):
         
@@ -112,7 +113,7 @@ def submenu(item):
             return itemlist                                                     #Salimos
         
         logger.error("ERROR 01: SUBMENU: La Web no responde o ha cambiado de URL: " 
-                        + item.url + data)
+                        + item.url + " PATRON: " + patron + " DATA: " + data)
     
     if not data:                                                                #Si no ha logrado encontrar nada, salimos
         itemlist.append(item.clone(action='', title=item.category + 
@@ -124,6 +125,10 @@ def submenu(item):
     data = scrapertools.find_single_match(data, patron)
     patron = '<a\s*href="([^"]+)"\s*class="list-group-item list-group-item-action">(.*?)<span'
     matches = re.compile(patron, re.DOTALL).findall(data)
+    
+    #logger.debug(patron)
+    #logger.debug(matches)
+    #logger.debug(data)
 
     if not matches:
         logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + 
@@ -133,10 +138,6 @@ def submenu(item):
                         + 'Reportar el error con el log'))
         return itemlist                                             #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
-    #logger.debug(patron)
-    #logger.debug(matches)
-    #logger.debug(data)
-    
     # En películas las categorías se llaman con Post
     post_alfabeto = 'campo=letra&valor3=%s&valor=&valor2=&pagina=1'
     post_anno = 'campo=anyo&valor=%s&valor2=&valor3=&valor4=&pagina=1'
@@ -147,7 +148,12 @@ def submenu(item):
             continue
         
         url = urlparse.urljoin(host, scrapedurl)
-        itemlist.append(item.clone(action="listado", title=scrapedtitle.strip(), url=url+'/page/1', extra2='submenu'))
+        url = url.replace('descargar-', '')
+        quality = ''
+        if 'HD' in scrapedtitle or '4K' in scrapedtitle: quality = 'HD'
+        
+        itemlist.append(item.clone(action="listado", title=scrapedtitle.strip(), 
+                    url=url+'/page/1', extra2='submenu', quality=quality))
         if item.extra != 'peliculas':                                           # Para todo, menos películas
             itemlist.append(item.clone(action="alfabeto", title=scrapedtitle.strip() 
                     + " [A-Z]", url=url + "/letra-%s/page/1", thumbnail=thumb_alfabeto))
@@ -229,6 +235,10 @@ def genero(item):
     patron = '<option[^>]*>(.*?)<\/option>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
+    #logger.debug(patron)
+    #logger.debug(matches)
+    #logger.debug(data)
+
     if not matches:
         logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + 
                         " / PATRON: " + patron + " / DATA: " + data)
@@ -237,10 +247,6 @@ def genero(item):
                         + 'Reportar el error con el log'))
         return itemlist                                             #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
-    #logger.debug(patron)
-    #logger.debug(matches)
-    #logger.debug(data)
-    
     for gen in matches:
         itemlist.append(item.clone(action="listado", title=gen, url=item.url + "/buscar", 
                         extra2='genero', post=item.post % gen))
@@ -293,6 +299,10 @@ def novedades(item):
 
     matches = re.compile(patron, re.DOTALL).findall(data)
 
+    #logger.debug(patron)
+    #logger.debug(matches)
+    #logger.debug(data)
+    
     if not matches:
         logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + 
                         " / PATRON: " + patron + " / DATA: " + data)
@@ -301,10 +311,6 @@ def novedades(item):
                         + 'Reportar el error con el log'))
         return itemlist                                             #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
-    #logger.debug(patron)
-    #logger.debug(matches)
-    #logger.debug(data)
-    
     extra = item.extra                                                          # Ajuste de categorías a la url
     if extra == 'peliculas':
         extra = 'pelicula'
@@ -403,13 +409,18 @@ def listado(item):                                                              
         elif (item.extra == 'series' or item.extra == 'documentales') and item.extra2 == 'novedades':   # Series, Docs desde Novedades
             patron = '(?:Temporada.*|Miniserie.*): (\d+[x|X]\d+)'
         else:                                                                   # Películas o Series o Documentales menú
-            patron = 'a\s*href="([^"]+)">([^<]+)<\/a>(?:\s*<b>\(([^\)]+)\)\s*<\/b>)?'
+            #patron = 'a\s*href="([^"]+)">([^<]+)<\/a>(?:\s*<b>\(([^\)]+)\)\s*<\/b>)?'
+            patron = '<a\s*href="([^"]+)">\s*<img\s*src="([^"]+)"\s*border=[^>]+><\/a>()'
 
         if not item.matches:                                                    # De pasada anterior o desde Novedades?
             matches = re.compile(patron, re.DOTALL).findall(data)
         else:
             matches = item.matches
             del item.matches
+            
+        #logger.debug("PATRON: " + patron)
+        #logger.debug(matches)
+        #logger.debug(data)
 
         if not matches and item.extra != 'search':                              #error
             item = generictools.web_intervenida(item, data)                     #Verificamos que no haya sido clausurada
@@ -435,10 +446,6 @@ def listado(item):                                                              
                 last_page = 0
                 break
             return itemlist                                                     #Salimos
-        
-        #logger.debug("PATRON: " + patron)
-        #logger.debug(matches)
-        #logger.debug(data)
 
         #Buscamos la próxima página
         if item.extra2 != 'novedades':
@@ -476,7 +483,22 @@ def listado(item):                                                              
         #Empezamos el procesado de matches
         for scrapedurl, scrapedtitle, scrapedquality in matches:
             cnt_match += 1
-            title = scrapertools.remove_htmltags(scrapedtitle).rstrip('.')      # Removemos Tags del título
+            
+            title = scrapedtitle
+            
+            #Adaptamos la parte de listado desde menú para que guarde la coherencia con el resto
+            if not scrapedquality and item.extra2 == 'submenu':
+                if scrapertools.find_single_match(scrapedurl, '-\d{3,10}-\d{3,10}(.*?).htm'):
+                    title = scrapertools.find_single_match(scrapedurl, '-\d{3,10}-\d{3,10}(.*?).htm')\
+                                .replace('-', ' ').replace('_', ' ')
+                    title = re.sub('\d+\s*[t|T]emporada', '', title)
+                else:
+                    title = scrapertools.find_single_match(scrapedurl, '-\d{3,10}-(.*?).htm')\
+                                .replace('-', ' ').replace('_', ' ')
+                if not title:
+                    title = scrapedurl
+
+            title = scrapertools.remove_htmltags(title).rstrip('.')             # Removemos Tags del título
             url = scrapedurl
             if '/aviso-legal' in url:                                           # Ignoramos estas entradas
                 continue
@@ -532,9 +554,11 @@ def listado(item):                                                              
                 
             # Procesamos idiomas
             item_local.language = []                                            #creamos lista para los idiomas
-            if '[Subs. integrados]' in title or '(Sub Forzados)' in title:
+            if '[Subs. integrados]' in title or '(Sub Forzados)' in title \
+                        or 'Subs integrados' in title:
                 title = title.replace('[Subs. integrados]', '')
                 title = title.replace('(Sub Forzados)', '')
+                title = title.replace('Subs integrados', '')
                 item_local.language = ['VOS']                                   # añadimos VOS
             if '[Dual' in title:
                 title = re.sub(r'(?i)\[dual.*?\]', '', title)
@@ -543,13 +567,16 @@ def listado(item):                                                              
                 item_local.language = ['CAST']                                  # [CAST] por defecto
                 
             # Procesamos Calidad
-            item_local.quality = scrapertools.remove_htmltags(scrapedquality)   # iniciamos calidad
+            if scrapedquality:
+                item_local.quality = scrapertools.remove_htmltags(scrapedquality)   # iniciamos calidad
             if item_local.extra == 'series' or item_local.extra == 'documentales':
-                if '[720p]' in title:
+                if '[720p]' in title or '720p' in title:
                     title = title.replace('[720p]', '')
+                    title = title.replace('720p', '')
                     item_local.quality = 'HDTV-720p'
-                elif '[1080p]' in title:
+                elif '[1080p]' in title or '1080p' in title:
                     title = title.replace('[1080p]', '')
+                    title = title.replace('1080p', '')
                     item_local.quality = '1080p'
                 else:
                     item_local.quality = 'HDTV'
@@ -624,7 +651,7 @@ def listado(item):                                                              
         matches = matches[cnt_match:]                                           # Salvamos la entradas no procesadas
     
     #Pasamos a TMDB la lista completa Itemlist
-    tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda='es,en')
+    tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda='es')
     
     #Llamamos al método para el maquillaje de los títulos obtenidos desde TMDB
     item, itemlist = generictools.post_tmdb_listado(item, itemlist)
