@@ -217,7 +217,7 @@ def parse_mixed_results(item, data):
     itemlist = []
     patron = '<div class="media-dropdown mini dropdown model" data-value="([^"]+)"+'
     patron += '.*?<a href="([^"]+)"[^<]data-toggle="tooltip" data-container="body"+'
-    patron += ' data-delay="500" title="([^"]+)"[^<]+'
+    patron += ' data-delay="500" title="(.*?)"[^<]+'
     patron += '.*?src="([^"]+)"+'
     patron += '.*?<div class="year">([^<]+)</div>+'
     patron += '.*?<div class="value"><i class="fa fa-star"></i> ([^<]+)</div>'
