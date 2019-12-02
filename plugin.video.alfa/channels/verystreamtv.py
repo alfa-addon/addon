@@ -14,11 +14,10 @@ from core.item import Item
 from channels import autoplay
 from platformcode import config, logger
 
-list_quality = []
+list_quality = ['1080p', '720p', 'SD', 'CAM']
 
-list_servers = ['verystream', 'gounlimited', 'openload',
-                'vidlox', 'flix555', 'clipwatching',
-                'streamango', 'xstream']
+list_servers = ['fembed', 'gounlimited', 'vidlox',
+                'onlystream', 'clipwatching']
 
 
 host = 'https://verystreamtv.com/'
@@ -217,16 +216,7 @@ def episodesxseasons(item):
 def findvideos(item):
     logger.info()
 
-    servers = {'xstream': 'xstreamcdn'}
-    server_url = {'verystream': 'https://verystream.com/e/%s',
-                  'gounlimited': 'https://gounlimited.to/embed-%s.html',
-                  'openload': 'https://openload.co/embed/%s',
-                  'vidcloud': 'https://vidcloud.icu/load.php?id=%s',
-                  'vidlox': 'https://vidlox.me/embed-%s.html',
-                  'flix555': 'https://flix555.com/embed-%s.html',
-                  'clipwatching': 'https://clipwatching.com/embed-%s.html',
-                  'streamango': 'https://streamango.com/embed/%s',
-                  'xstream': 'https://www.xstreamcdn.com/v/%s'}
+    servers = {'xstream': 'fembed', 'streamhoe': 'fembed'}
 
     itemlist = []
 
@@ -246,26 +236,36 @@ def findvideos(item):
         url = '%swp-content/themes/dooplay/vs_player.php?id=%s&tv=0&s=0&e=0' % (host, item.v_id)
     
     url_spider = httptools.downloadpage(url).url
-    url_oload1 = httptools.downloadpage(url_spider, headers={'Referer': url_spider}).url
-    url_oload = re.sub('video/(.*)', 'watch/', url_oload1)
-    
-    data = httptools.downloadpage(url_oload, headers={'Referer': url_oload1}).data
 
-    if 'Video not found' in data:
+    url_oload1 = httptools.downloadpage(url_spider, headers={'Referer': url_spider}).url
+
+    #url_oload = re.sub('video/(.*)', 'watch/', url_oload1)
+    
+    data = get_source(url_oload1)
+
+    if "We haven't found any sources for this" in data:
         title = '[COLOR tomato][B]Aún no hay enlaces disponibles para este video[/B][/COLOR]'
         itemlist.append(item.clone(title = title, action=''))
         return itemlist
-    matches = scrapertools.find_multiple_matches(data, 'data-id="([^"]+)">([^<]+)')
+    parts = url_oload1.partition('/video/')
+    
+    patron = '<img src.*?alt="([^"]+)".*?>([^<]+)'
+    patron += '.*?class="quality">([^<]+)'
+    
+    matches = scrapertools.find_multiple_matches(data, patron)
 
-    for id_, server in matches:
-
-        title = '[COLOR yellowgreen]%s[/COLOR]' % server.capitalize()
-        url = server_url.get(server, '')
-        if url:
-            url = url % id_
+    for id_, server, quality in matches:
+        if quality in ['HD', '?']:
+            quality = 'SD'
+        
+        title = '[COLOR yellowgreen]%s[/COLOR] [%s]' % (server.capitalize(), quality)
+        url = '%s/loadsource.php?server=%s&token=%s' % (parts[0], id_, parts[2])
         server = servers.get(server, server)
+        
         itemlist.append(item.clone(title = title, url=url, action='play',
-                            language='VO', server=server))
+                            language='VO', server=server, quality=quality))
+    
+    itemlist.sort(key=lambda it: it.quality)
 
     # Requerido para AutoPlay
 
@@ -342,3 +342,16 @@ def color_rating(rating):
     except:
         color = "ivory"
     return color
+
+def play(item):
+    if 'oload.' in item.url:
+        data = get_source(item.url)
+        url = scrapertools.find_single_match(data, '<iframe src="([^"]+)')
+        
+        if 'vidnode.' in url:
+            data = get_source(url)
+            url = scrapertools.find_single_match(data, r"sources:\[\{file: '([^']+)")
+            url += '|referer=https://vidnode.net/'
+            item.server = 'directo'
+        item.url = url
+    return [item]

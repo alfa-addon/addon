@@ -109,7 +109,15 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
     if texto != '':
-        return peliculas(item)
+        try:
+            return peliculas(item)
+        except:
+            import sys
+            for line in sys.exc_info():
+                logger.error("{0}".format(line))
+            return []
+
+
     else:
         return []
 
@@ -304,7 +312,7 @@ def findvideos(item):
         stitle = ""
         #en los embed no siempre sale el idioma, y si sale puede ser el mismo para varios videos
         mlang = scrapertools.find_multiple_matches(data, '<strong>(.*?)</strong>')
-        patron = '<iframe src="([^"]+)"' #server
+        patron = '<iframe.*?src="([^"]+)"' #server
         matches = scrapertools.find_multiple_matches(data, patron)
         for i, surl in enumerate(matches):
             if mlang:
@@ -322,6 +330,11 @@ def findvideos(item):
                     lang = "Cast"
                 else:
                     lang = "Lat"
+            try:
+                int(mlang[0])
+                lang = 'VOSE'
+            except:
+                pass
             if lang:
                 stitle = " [COLOR=yellow](%s)[/COLOR]" % lang
             itemlist.append(

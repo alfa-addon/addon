@@ -5,9 +5,10 @@ import re
 import urlparse
 from core import httptools
 from core import scrapertools
+from core import servertools
 from core.item import Item
 from platformcode import logger
-
+from channels import youporn
 host = 'https://es.redtube.com'
 
 def mainlist(item):
@@ -115,11 +116,13 @@ def lista(item):
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron  = '"defaultQuality":true,"format":"",.*?"videoUrl"\:"([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl  in matches:
-        url =  scrapedurl.replace("\/", "/")
-    itemlist.append(item.clone(action="play", title=url, url=url))
+    url = item.url
+    if "youporn" in url: 
+        item1 = item.clone(url=url)
+        itemlist = youporn.play(item1)
+        return itemlist
+
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

@@ -45,7 +45,7 @@
             "id": "include_in_newest_peliculas",
             "type": "bool",
             "label": "Incluir en Novedades - Peliculas",
-            "default": true,
+            "default": false,
             "enabled": true,
             "visible": true
         },
@@ -53,7 +53,7 @@
             "id": "include_in_newest_infantiles",
             "type": "bool",
             "label": "Incluir en Novedades - Infantiles",
-            "default": true,
+            "default": false,
             "enabled": true,
             "visible": true
         },
@@ -61,7 +61,7 @@
             "id": "include_in_newest_terror",
             "type": "bool",
             "label": "Incluir en Novedades -Terror",
-            "default": true,
+            "default": false,
             "enabled": true,
             "visible": true
         }

@@ -16,12 +16,13 @@ from channels import autoplay
 from channels import filtertools
 
 
-host = 'https://cuevana3.co/'
+host = 'https://cuevana3.io/'
+
 
 IDIOMAS = {'Latino': 'LAT', 'Español': 'CAST', 'Subtitulado':'VOSE'}
 list_language = IDIOMAS.values()
 list_quality = []
-list_servers = ['fastplay', 'rapidvideo', 'streamplay', 'flashx', 'streamito', 'streamango', 'vidoza']
+list_servers = ['fastplay', 'directo', 'streamplay', 'flashx', 'streamito', 'streamango', 'vidoza']
 
 
 def mainlist(item):
@@ -151,10 +152,8 @@ def findvideos(item):
     for option, url_data, language, quality in matches:
         if 'domain' in url_data:
             url = scrapertools.find_single_match(url_data, 'domain=([^"]+)"')
-        elif '1' in option:
-            url = scrapertools.find_single_match(data, 'id="Opt%s">.*?file=([^"]+)"' % option)
         else:
-            url = scrapertools.find_single_match(data, 'id="Opt%s">.*?h=([^"]+)"' % option)
+            url = scrapertools.find_single_match(data, 'id="Opt%s">.*?data-src="([^"]+)"' % option)
 
         
         if url != '' and 'youtube' not in url:
@@ -218,33 +217,57 @@ def newest(categoria):
     return itemlist
 
 def play(item):
-    if not item.url.startswith('http'):
-        url_list = []
-        res = ''
-        ext = 'mp4'
-        post = urllib.urlencode({'link': item.url})
-        new_data = httptools.downloadpage("https://api.cuevana3.com/stream/plugins/gkpluginsphp.php", post=post).data
+    if 'cuevana' in item.url:
+        if not item.url.startswith('http'):
+            item.url = 'https:%s' % item.url
+        if '/stream' in item.url:
+            url_list = []
+            res = ''
+            ext = 'mp4'
+            api = 'https://api.cuevana3.io/'
+            _id = item.url.partition('?file=')[2]
+            post = urllib.urlencode({'link': _id})
+            try:
+                new_data = httptools.downloadpage(api+"stream/plugins/gkpluginsphp.php", post=post, timeout=2).data
+            except:
+                item.url = ''
+                return [item]
 
-        if new_data and not "error" in new_data:
-            matches = re.compile('"link":"([^"]+)"', re.DOTALL).findall(new_data)
-            itags = {'18': '360p', '22': '720p', '34': '360p', '35': '480p', '37': '1080p', '43': '360p', '59': '480p'}
-            for link in matches:
-                item.url = link.replace('\\', '').strip()
+            if new_data and not "error" in new_data:
+                matches = re.compile('"link":"([^"]+)"', re.DOTALL).findall(new_data)
+                itags = {'18': '360p', '22': '720p', '34': '360p', '35': '480p',
+                         '37': '1080p', '43': '360p', '59': '480p'}
+                for link in matches:
+                    item.url = link.replace('\\', '').strip()
 
-                #tratar con multilinks/multicalidad de gvideo
-                tag = scrapertools.find_single_match(link,'&itag=(\d+)&')
-                ext = scrapertools.find_single_match(link,'&mime=.*?/(\w+)&')
-                if tag:
-                    res = itags[tag]
-                    url_list.append([".%s (%s)" % (ext,res), item.url])
-            if len(matches) > 1 and url_list:
-                item.password = url_list
+                    #tratar con multilinks/multicalidad de gvideo
+                    tag = scrapertools.find_single_match(link,'&itag=(\d+)&')
+                    ext = scrapertools.find_single_match(link,'&mime=.*?/(\w+)&')
+                    if tag:
+                        res = itags[tag]
+                        url_list.append([".%s (%s)" % (ext,res), item.url])
+                if len(matches) > 1 and url_list:
+                    item.password = url_list
+            else:
+                item.url = ''
+            
         else:
-            url = 'https://api.cuevana3.com/rr/gotogd.php?h=%s' % item.url
-            link = httptools.downloadpage(url).url
+            url = item.url.replace('gd.php', 'gotogd.php')
+            if 'olpremium/' in item.url:
+                url = item.url.replace('gd.php', 'goto.php')
+            try:
+                link = httptools.downloadpage(url, timeout=4).url
+            except:
+                item.url = ''
+                return [item]
             shost = 'https://' + link.split("/")[2]
             vid = scrapertools.find_single_match(link, "\?id=(\w+)")
-            if vid:
+            if vid and 'olpremium/' in item.url:
+                surl = shost + '/index/' + vid +  '.m3u8'
+                data = httptools.downloadpage(surl).data
+                item.url = scrapertools.find_single_match(data, r'http.*?\.m3u8')
+                item.server = 'oprem'
+            elif vid and '/rr/' in item.url:
                 item.url = shost+ '/hls/' + vid + '/' + vid + '.playlist.m3u8'
             else:
                 item.url = ''

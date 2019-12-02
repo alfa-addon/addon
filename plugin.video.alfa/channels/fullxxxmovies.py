@@ -76,8 +76,9 @@ def lista(item):
     for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl, thumbnail=thumbnail,
-                              fanart=thumbnail, plot=plot) )
+        if not "Ubiqfile" in scrapedtitle:
+            itemlist.append( Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl, 
+                                  thumbnail=thumbnail, fanart=thumbnail, plot=plot) )
     next_page = scrapertools.find_single_match(data, '<a class="next page-numbers" href="([^"]+)">Next')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)

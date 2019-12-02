@@ -73,7 +73,7 @@ def categorias(item):
         url = scrapedurl
         itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
-    return itemlist
+    return  sorted(itemlist, key=lambda i: i.title)
 
 
 def lista(item):
