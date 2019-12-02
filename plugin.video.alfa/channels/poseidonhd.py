@@ -126,9 +126,9 @@ def list_all(item):
 
     data = get_source(item.url)
     if item.type ==  'movies':
-        patron = '<article id="post-\d+" class="item movies"><div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'
-        patron += 'quality">([^<]+)</span> <\/div><a href="([^"]+)">.*?'
-        patron += '<\/h3><span>([^>]+)<\/span><\/div>.*?flags(.*?)metadata'
+        patron = r'<article id="post-\d+" class="item movies"><div class="poster"><img src="([^"]+)" alt="([^"]+)">.*?'
+        patron += r'quality">([^<]+)</span>\s*<\/div><a href="([^"]+)">.*?'
+        patron += r'<\/h3><span>([^>]+)<\/span><\/div>.*?flags(.*?)metadata'
         matches = re.compile(patron, re.DOTALL).findall(data)
 
         for scrapedthumbnail, scrapedtitle, quality, scrapedurl, year, lang_data in matches:
@@ -179,11 +179,11 @@ def list_all(item):
 
 def seasons(item):
     logger.info()
-
+    logger.error(item.url)
     itemlist=[]
 
-    data=get_source(item.url)
-    patron='Temporada \d+'
+    data = get_source(item.url)
+    patron = r'Temporada\s*\d+'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     infoLabels = item.infoLabels
@@ -268,7 +268,7 @@ def findvideos(item):
                     file_id = scrapertools.find_single_match(url, 'file=(.*?)&')
                     post = {'link': file_id}
                     post = urllib.urlencode(post)
-                    hidden_url = 'https://streamango.poseidonhd.co/repro/plugins/gkpluginsphp.php'
+                    hidden_url = 'https://streamango.poseidonhd.me/repro/plugins/gkpluginsphp.php'
                     dict_vip_url = httptools.downloadpage(hidden_url, post=post).json
                     url = dict_vip_url['link']
 
@@ -281,7 +281,7 @@ def findvideos(item):
                         file_id = scrapertools.find_single_match(url, 'h=(\w+)')
                         post = {'h': file_id}
                         post = urllib.urlencode(post)
-                        hidden_url = 'https://streamango.poseidonhd.co/repro/openload/api.php'
+                        hidden_url = 'https://streamango.poseidonhd.me/repro/openload/api.php'
                         json_data = httptools.downloadpage(hidden_url, post=post, follow_redirects=False).json
                         url = json_data.get('url', '')
                         #url = scrapertools.find_single_match(data_url, "VALUES \('[^']+','([^']+)'")
@@ -291,7 +291,7 @@ def findvideos(item):
                         file_id = scrapertools.find_single_match(url, 'url=(\w+)')
                         post = {'url': file_id}
                         post = urllib.urlencode(post)
-                        hidden_url = 'https://streamango.poseidonhd.co/repro/r.php'
+                        hidden_url = 'https://streamango.poseidonhd.me/repro/r.php'
                         data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False)
                         url = data_url.headers['location']
                     
@@ -300,11 +300,13 @@ def findvideos(item):
                         file_id = scrapertools.find_single_match(new_data, 'value="([^"]+)"')
                         post = {'url': file_id}
                         post = urllib.urlencode(post)
-                        hidden_url = 'https://streamango.poseidonhd.co/repro/r.php'
+                        hidden_url = 'https://streamango.poseidonhd.me/repro/r.php'
                         data_url = httptools.downloadpage(hidden_url, post=post, follow_redirects=False)
                         url = data_url.headers['location']
                 except:
                     continue
+            if '.openplay.vip' in url:
+                continue
             url = url.replace(" ", "%20")
             itemlist.append(item.clone(title = '[%s] [%s]', url=url, action='play',
                             language=language, quality=quality, subtitle=subs))

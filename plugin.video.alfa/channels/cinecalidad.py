@@ -22,7 +22,7 @@ list_servers = ['gounlimited',
                 'torrent'
                 ]
 
-host = 'http://www.cinecalidad.is'
+host = 'https://www.cinecalidad.is'
 
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
 thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'
@@ -32,7 +32,7 @@ current_lang = ''
 
 site_list = ['', 'cinecalidad.is/', 'cinecalidad.is/espana/', 'cinemaqualidade.is/']
 site = config.get_setting('filter_site', channel='cinecalidad')
-site_lang = 'http://www.%s' % site_list[site]
+site_lang = 'https://www.%s' % site_list[site]
 
 def mainlist(item):
     logger.info()
@@ -51,19 +51,19 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Latino",
                          action="submenu",
-                         host="http://www.cinecalidad.is/",
+                         host="https://www.cinecalidad.is/",
                          thumbnail=thumbmx))
 
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Castellano",
                          action="submenu",
-                         host="http://www.cinecalidad.is/espana/",
+                         host="https://www.cinecalidad.is/espana/",
                          thumbnail=thumbes))
 
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Portugues",
                          action="submenu",
-                         host="http://www.cinemaqualidade.is/",
+                         host="https://www.cinemaqualidade.is/",
                          thumbnail=thumbbr))
 
     itemlist.append(Item(channel=item.channel,
@@ -84,7 +84,7 @@ def submenu(item):
     idioma = 'peliculas'
     idioma2 = "destacada"
     host = item.host
-    if item.host == "http://www.cinemaqualidade.is/":
+    if item.host == "https://www.cinemaqualidade.is/":
         idioma = "filmes"
         idioma2 = "destacado"
     logger.info()
@@ -206,7 +206,9 @@ def genres(item):
     for elem in soup.find_all("li"):
         url = elem.a["href"]
         title = elem.a.text
-        if 'http' in url and 'año' not in title:
+        if not url.startswith('http'):
+            url = host +url
+        if 'año' not in title:
             itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
 
     return itemlist
@@ -230,31 +232,6 @@ def dec(item, dec_value):
 
 
 def findvideos(item):
-    servidor = {"http://uptobox.com/": "uptobox",
-                "http://userscloud.com/": "userscloud",
-                "https://my.pcloud.com/publink/show?code=": "pcloud",
-                "http://thevideos.tv/": "thevideos",
-                "http://ul.to/": "uploadedto",
-                "http://turbobit.net/": "turbobit",
-                "http://www.cinecalidad.is/protect/v.html?i=": "cinecalidad",
-                "http://www.mediafire.com/download/": "mediafire",
-                "https://www.youtube.com/watch?v=": "youtube",
-                "http://thevideos.tv/embed-": "thevideos",
-                "//www.youtube.com/embed/": "youtube",
-                "http://ok.ru/video/": "okru",
-                "http://ok.ru/videoembed/": "okru",
-                "http://www.cinemaqualidade.com/protect/v.html?i=": "cinemaqualidade.com",
-                "http://usersfiles.com/": "usersfiles",
-                "https://depositfiles.com/files/": "depositfiles",
-                "http://www.nowvideo.sx/video/": "nowvideo",
-                "http://vidbull.com/": "vidbull",
-                "http://filescdn.com/": "filescdn",
-                "https://www.yourupload.com/watch/": "yourupload",
-                "http://www.cinecalidad.is/protect/gdredirect.php?l=": "directo",
-                "https://openload.co/embed/": "openload",
-                "https://streamango.com/embed/f/": "streamango",
-                "https://www.rapidvideo.com/embed/": "rapidvideo",
-                }
 
     logger.info()
     itemlist = []
@@ -266,28 +243,54 @@ def findvideos(item):
         lang = 'castellano'
     elif 'cinecalidad' in item.url:
         lang = 'latino'
-
+    
     data = httptools.downloadpage(item.url).data
     patron = 'target=_blank.*? service=.*? data="(.*?)"><li>(.*?)<\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    server_url = {'YourUpload': 'https://www.yourupload.com/embed/',
-                  'Openload': 'https://openload.co/embed/',
-                  'TVM': 'https://thevideo.me/embed-',
-                  'Streamango': 'https://streamango.com/embed/',
-                  'RapidVideo': 'https://www.rapidvideo.com/embed/',
-                  'Trailer': 'https://www.youtube.com/embed/',
-                  'BitTorrent': '',
-                  'Mega': 'https://mega.nz/#!',
-                  'MediaFire': '',
-                  'Fembed': 'https://www.fembed.com/v/',
-                  'Verystream': 'https://verystream.com/e/',
-                  'Gounlimited': 'https://gounlimited.to/embed-',
-                  'Clipwatching': 'https://clipwatching.com/embed-',
-                  'Vidcloud': 'https://vidcloud.co/embed/'}
+    patronk = '<a href="(/vip/v.php\?i=.*?")'
+    matchesk = re.compile(patronk, re.DOTALL).findall(data)
+
+    server_url = {'yourupload': 'https://www.yourupload.com/embed/%s',
+                  'trailer': 'https://www.youtube.com/embed/%s',
+                  'bittorrent': '',
+                  'mega': 'https://mega.nz/#!%s',
+                  'fembed': 'https://www.fembed.com/v/%s',
+                  'gounlimited': 'https://gounlimited.to/embed-%s.html',
+                  'clipwatching': 'https://clipwatching.com/embed-%s.html',
+                  'vidcloud': 'https://vidcloud.co/embed/%s',
+                  'jetload': 'https://jetload.net/e/%s'}
+    
     dec_value = scrapertools.find_single_match(data, 'String\.fromCharCode\(parseInt\(str\[i\]\)-(\d+)\)')
     torrent_link = scrapertools.find_single_match(data, '<a href=".*?/protect/v\.php\?i=([^"]+)"')
     subs = scrapertools.find_single_match(data, '<a id=subsforlink href=(.*?) ')
+
+    for scrapedurl in matchesk:
+        
+        base_url = host + scrapedurl
+        
+        headers={'Cookie': 'codigovip=100734121;'}
+        protect = httptools.downloadpage(base_url, headers=headers).data
+        
+        url = scrapertools.find_single_match(protect, 'font-size:1.05em"><a href="([^"]+)')
+        server = servertools.get_server_from_url(url)
+
+        title = '(%s)' % server.capitalize()
+        quality = '4K'
+        language = IDIOMAS[lang]
+        if url:
+            new_item = Item(channel=item.channel,
+                            action='play',
+                            title=title,
+                            contentTitle=item.contentTitle,
+                            url=url,
+                            language=language,
+                            thumbnail=item.thumbnail,
+                            quality=quality,
+                            server=server
+                            )
+            itemlist.append(new_item)
+    
     if torrent_link != '':
         import urllib
         base_url = '%s/protect/v.php' % host
@@ -316,27 +319,20 @@ def findvideos(item):
 
     for video_cod, server_id in matches:
         thumbnail = item.thumbnail
-        if server_id not in ['MediaFire', 'TVM'] or server.lower() not in duplicados:
+        server = server_id.lower()
+        if server in server_url and server not in duplicados:
             video_id = dec(video_cod, dec_value)
 
-        if server_id in server_url:
-            server = server_id.lower()
-
-            if server_id in ['Gounlimited', 'Clipwatching']:
-                url = server_url[server_id] + video_id + '.html'
-            else:
-                url = server_url[server_id] + video_id
-
-        title = item.contentTitle + ' (%s)' % server
-        quality = '1080p'
-
-        if server_id not in ['MediaFire', 'TVM']:
-
+            url = server_url.get(server, '')
+            
+            title = '(%s)' % server.capitalize()
+            quality = '1080p'
             language = IDIOMAS[lang]
-            if server not in duplicados:
+            if url:
+                url = url % video_id
                 new_item = Item(channel=item.channel,
                                 action='play',
-                                title=title,
+                                title=server.capitalize(),
                                 contentTitle=item.contentTitle,
                                 url=url,
                                 language=language,
@@ -347,6 +343,7 @@ def findvideos(item):
                                 )
                 itemlist.append(new_item)
                 duplicados.append(server)
+
 
     # Requerido para FilterTools
 
