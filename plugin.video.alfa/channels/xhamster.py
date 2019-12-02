@@ -61,9 +61,9 @@ def videos(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for scrapedurl, scrapedthumbnail, scrapedtitle, duration in matches:
-        contentTitle = scrapedtitle.strip() + " [" + duration + "]"
+        title = "[COLOR yellow]" + duration + "[/COLOR] " + scrapedtitle.strip()
         itemlist.append(
-            Item(channel=item.channel, action="play", title=contentTitle, url=scrapedurl, thumbnail=scrapedthumbnail,
+            Item(channel=item.channel, action="play", title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
                  folder=True))
 
     # Paginador

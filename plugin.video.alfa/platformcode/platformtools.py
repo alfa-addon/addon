@@ -179,7 +179,7 @@ def render_items(itemlist, parent_item):
             elif 'serie' in item.action:
                 item.thumbnail = get_thumb("videolibrary_tvshow.png")
 
-        if (unify_enabled or force_unify) and parent_item.channel != 'alfavorites':
+        if (unify_enabled or force_unify) and parent_item.channel not in ['alfavorites', 'adult']:
             # Formatear titulo con unify
             item = unify.title_format(item)
         else:
@@ -589,24 +589,30 @@ def set_context_commands(item, parent_item):
 
         # Buscar en otros canales
         if item.contentType in ['movie', 'tvshow'] and item.channel != 'search':
+
+
             # Buscar en otros canales
             if item.contentSerieName != '':
                 item.wanted = item.contentSerieName
             else:
                 item.wanted = item.contentTitle
-            context_commands.append((config.get_localized_string(60350),
-                                     "XBMC.Container.Update (%s?%s)" % (sys.argv[0],
-                                                                        item.clone(channel='search',
-                                                                                   action="do_search",
-                                                                                   from_channel=item.channel,
-                                                                                   contextual=True).tourl())))
+
             if item.contentType == 'tvshow':
                 mediatype = 'tv'
             else:
                 mediatype = item.contentType
+
+            context_commands.append((config.get_localized_string(60350),
+                                     "XBMC.Container.Update (%s?%s)" % (sys.argv[0],
+                                                                        item.clone(channel='search',
+                                                                                   action="from_context",
+                                                                                   from_channel=item.channel,
+                                                                                   contextual=True,
+                                                                                   text=item.wanted).tourl())))
+
             context_commands.append(
                 ("[COLOR yellow]%s[/COLOR]" % config.get_localized_string(70561), "XBMC.Container.Update (%s?%s)" % (
-                    sys.argv[0], item.clone(channel='search', action='discover_list', search_type='list', page='1',
+                    sys.argv[0], item.clone(channel='search', action='from_context', search_type='list', page='1',
                                             list_type='%s/%s/similar' % (
                                             mediatype, item.infoLabels['tmdb_id'])).tourl())))
 

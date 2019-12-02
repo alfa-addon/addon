@@ -17,17 +17,12 @@ IDIOMAS = {'latino': 'Latino', 'castellano': 'Castellano', 'portugues': 'Portugu
 list_language = IDIOMAS.values()
 list_quality = ['1080p']
 list_servers = ['gounlimited',
-                'verystream',
                 'mega',
                 'vidcloud',
-                'torrent',
-                'rapidvideo',
-                'streamango',
-                'openload',
                 'torrent'
                 ]
 
-host = 'http://www.cinecalidad.to'
+host = 'http://www.cinecalidad.is'
 
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
 thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'
@@ -35,7 +30,7 @@ thumbbr = 'http://flags.fmcdn.net/data/flags/normal/br.png'
 
 current_lang = ''
 
-site_list = ['', 'cinecalidad.to/', 'cinecalidad.to/espana/', 'cinemaqualidade.to/']
+site_list = ['', 'cinecalidad.is/', 'cinecalidad.is/espana/', 'cinemaqualidade.is/']
 site = config.get_setting('filter_site', channel='cinecalidad')
 site_lang = 'http://www.%s' % site_list[site]
 
@@ -56,19 +51,19 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Latino",
                          action="submenu",
-                         host="http://www.cinecalidad.to/",
+                         host="http://www.cinecalidad.is/",
                          thumbnail=thumbmx))
 
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Castellano",
                          action="submenu",
-                         host="http://www.cinecalidad.to/espana/",
+                         host="http://www.cinecalidad.is/espana/",
                          thumbnail=thumbes))
 
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Portugues",
                          action="submenu",
-                         host="http://www.cinemaqualidade.to/",
+                         host="http://www.cinemaqualidade.is/",
                          thumbnail=thumbbr))
 
     itemlist.append(Item(channel=item.channel,
@@ -89,7 +84,7 @@ def submenu(item):
     idioma = 'peliculas'
     idioma2 = "destacada"
     host = item.host
-    if item.host == "http://www.cinemaqualidade.to/":
+    if item.host == "http://www.cinemaqualidade.is/":
         idioma = "filmes"
         idioma2 = "destacado"
     logger.info()
@@ -164,7 +159,6 @@ def list_all(item):
 
     soup = create_soup(item.url, unescape=True)
     for elem in soup.find_all("div", class_="home_post_cont"):
-        logger.debug(elem)
         url = elem.a["href"]
         try:
             title, year = elem.img["title"].split(' (')
@@ -242,7 +236,7 @@ def findvideos(item):
                 "http://thevideos.tv/": "thevideos",
                 "http://ul.to/": "uploadedto",
                 "http://turbobit.net/": "turbobit",
-                "http://www.cinecalidad.to/protect/v.html?i=": "cinecalidad",
+                "http://www.cinecalidad.is/protect/v.html?i=": "cinecalidad",
                 "http://www.mediafire.com/download/": "mediafire",
                 "https://www.youtube.com/watch?v=": "youtube",
                 "http://thevideos.tv/embed-": "thevideos",
@@ -256,7 +250,7 @@ def findvideos(item):
                 "http://vidbull.com/": "vidbull",
                 "http://filescdn.com/": "filescdn",
                 "https://www.yourupload.com/watch/": "yourupload",
-                "http://www.cinecalidad.to/protect/gdredirect.php?l=": "directo",
+                "http://www.cinecalidad.is/protect/gdredirect.php?l=": "directo",
                 "https://openload.co/embed/": "openload",
                 "https://streamango.com/embed/f/": "streamango",
                 "https://www.rapidvideo.com/embed/": "rapidvideo",
@@ -378,7 +372,7 @@ def findvideos(item):
 
 def get_urls(item, link):
     logger.info()
-    url = 'http://www.cinecalidad.to/ccstream/ccstream.php'
+    url = 'http://www.cinecalidad.is/ccstream/ccstream.php'
     headers = dict()
     headers["Referer"] = item.url
     post = 'link=%s' % link
@@ -411,13 +405,13 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas', 'latino']:
-            item.url = 'http://www.cinecalidad.to'
+            item.url = 'http://www.cinecalidad.is'
         elif categoria == 'infantiles':
-            item.url = 'http://www.cinecalidad.to/genero-peliculas/infantil/'
+            item.url = 'http://www.cinecalidad.is/genero-peliculas/infantil/'
         elif categoria == 'terror':
-            item.url = 'http://www.cinecalidad.to/genero-peliculas/terror/'
+            item.url = 'http://www.cinecalidad.is/genero-peliculas/terror/'
         elif categoria == 'castellano':
-            item.url = 'http://www.cinecalidad.to/espana/'
+            item.url = 'http://www.cinecalidad.is/espana/'
         itemlist = list_all(item)
         if itemlist[-1].title == 'Página siguiente >>':
             itemlist.pop()
@@ -438,10 +432,12 @@ def search(item, texto):
 
     if item.host != '':
         host_list = [item.host]
-
+    elif site:
+        item.gb_search = True
+        host_list = [site_lang]
     else:
         item.gb_search = True
-        host_list = ['http://www.cinecalidad.to/espana/', 'http://www.cinecalidad.to/']
+        host_list = ['http://www.cinecalidad.is/espana/', 'http://www.cinecalidad.is/']
 
     for host_name in host_list:
         item.url = host_name + '?s=' + texto

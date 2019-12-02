@@ -15,7 +15,7 @@ host = 'http://www.alsoporn.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    # itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/en/g/All/new/1"))
+    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/g/All/new/1"))
     itemlist.append( Item(channel=item.channel, title="Top" , action="lista", url=host + "/g/All/top/1"))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
@@ -59,7 +59,7 @@ def lista(item):
     patron = '<div class="alsoporn_prev">.*?'
     patron += '<a href="([^"]+)">.*?'
     patron += '<img src="([^"]+)" alt="([^"]+)">.*?'
-    patron += '<span>([^"]+)</span>'
+    patron += '<span>([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,scrapedtime in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
@@ -68,7 +68,7 @@ def lista(item):
         plot = ""
         if not "0:00" in scrapedtime:
             itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                                  fanart=thumbnail, plot=plot, contentTitle = scrapedtitle))
+                                  fanart=thumbnail, plot=plot, contentTitle = title))
 
     next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)" target="_self"><span class="alsoporn_page">NEXT</span></a>')
     if next_page!="":
@@ -97,15 +97,4 @@ def play(item):
     else:
         itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=scrapedurl))
         itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-
-
-
-    # logger.debug(scrapedurl)
-    # data = httptools.downloadpage(scrapedurl1).data
-    # if "xvideos" in scrapedurl:
-        # scrapedurl = scrapertools.find_single_match(data, 'html5player.setVideoHLS\(\'([^\']+)\'\)')
-
-    # logger.debug(scrapedurl)
-    # itemlist.append(item.clone(action="play", title=item.title, url=scrapedurl))
     return itemlist
-

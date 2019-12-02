@@ -1,9 +1,9 @@
 {
   "id": "vepelis",
   "name": "VePelis",
-  "active": true,
+  "active": false,
   "adult": false,
-  "language": ["cast", "lat"],
+  "language": ["lat"],
   "banner": "vepelis.png",
   "thumbnail": "vepelis.png",
   "categories": [

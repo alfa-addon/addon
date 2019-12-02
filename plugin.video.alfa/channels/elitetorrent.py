@@ -24,7 +24,7 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['torrent']
 
-host = 'http://www.elitetorrent.io'
+host = 'https://www.elitetorrent.is'
 channel = "elitetorrent"
 
 categoria = channel.capitalize()
@@ -157,14 +157,14 @@ def listado(item):
     
     patron = '<li>\s*<div\s*class="[^"]+">\s*<a href="([^"]+)"\s*'              #url
     patron += 'title="([^"]+)"\s*(?:alt="[^"]+")?\s*>\s*'                       #título
-    patron += '<img (?:class="[^"]+")?\s*src="([^"]+)"\s*border="[^"]+"\s*'     #thumb
+    patron += '<img (?:class="[^"]+")?\s*src="([^"]+)".*?border="[^"]+"\s*'     #thumb
     patron += 'title="([^"]+)".*?'                                              #categoría, idioma
-    patron += '<span class="[^"]+" style="[^"]+"\s*><i>(.*?)<\/i><\/span.*?'    #calidad
-    patron += '="dig1">(.*?)<.*?'                                               #tamaño
-    patron += '="dig2">(.*?)<\/span><\/div>'                                    #tipo tamaño
+    patron += '<span class="[^"]+" style="[^"]+"\s*><i>(.*?)?<\/i>(?:<\/span.*?'    #calidad
+    patron += '="dig1">(.*?)?<.*?'                                              #tamaño
+    patron += '="dig2">(.*?)?)?<\/span><\/div>'                                 #tipo tamaño
 
     matches = re.compile(patron, re.DOTALL).findall(data)
-    if not matches and not '<title>503 Backend fetch failed</title>' in data and not 'No se han encontrado resultados' in data:                                                                           #error
+    if not matches and not '<title>503 Backend fetch failed</title>' in data and not 'No se han encontrado resultados' in data:                                                                            #error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
             item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error
@@ -197,7 +197,7 @@ def listado(item):
         if not item_local.quality and ("DVDRip" in title or "HDRip" in title or "BR-LINE" in title or "HDTS-SCREENER" in title or "BDRip" in title or "BR-Screener" in title or "DVDScreener" in title or "TS-Screener" in title):
             item_local.quality = scrapertools.find_single_match(title, r'\((.*?)\)')
             item_local.quality = item_local.quality.replace("Latino", "")
-        if not scrapedsizet:
+        if not scrapedsizet or "---" in scrapedsizet:
             scrapedsize = ''
         else:
             item_local.quality += ' [%s %s]' % (scrapedsize.replace(".", ","), scrapedsizet)

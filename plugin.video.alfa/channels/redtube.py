@@ -5,9 +5,10 @@ import re
 import urlparse
 from core import httptools
 from core import scrapertools
+from core import servertools
 from core.item import Item
 from platformcode import logger
-
+from channels import youporn
 host = 'https://es.redtube.com'
 
 def mainlist(item):
@@ -40,7 +41,12 @@ def catalogo(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<a class="pornstar_link js_mpop js-pop" href="([^"]+)".*?"([^"]+)"\s+title="([^"]+)".*?<div class="ps_info_count">\s+([^"]+)\s+Videos'
+    data = scrapertools.find_single_match(data,'<ul id="recommended_pornstars_block"(.*?)<div id="footer_container">')
+    patron  = '<a class="pornstar_link js_mpop js-pop".*?'
+    patron  = 'href="([^"]+)".*?'
+    patron += 'data-src = "([^"]+)".*?'
+    patron += 'title="([^"]+)".*?'
+    patron += '<div class="ps_info_count">\s+(\d+)\s+Videos'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
         scrapedplot = ""
@@ -48,11 +54,12 @@ def catalogo(item):
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=scrapedplot) )
-    next_page_url = scrapertools.find_single_match(data,'<a id="wp_navNext" class="js_pop_page" href="([^"]+)">')
+    next_page_url = scrapertools.find_single_match(data,'<a id="wp_navNext".*?href="([^"]+)">')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
         itemlist.append(item.clone(action="catalogo", title="Página Siguiente >>", text_color="blue", url=next_page_url) )
     return itemlist
+
 
 def categorias(item):
     logger.info()
@@ -99,22 +106,23 @@ def lista(item):
         if not "/premium/" in url:
             itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url,
                                   fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=plot, contentTitle = title) )
- # "Página Siguiente >>"
     next_page_url = scrapertools.find_single_match(data,'<a id="wp_navNext".*?href="([^"]+)">')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append(item.clone(action="lista", title=next_page_url, text_color="blue", url=next_page_url) )
+        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page_url) )
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron  = '"defaultQuality":true,"format":"",.*?"videoUrl"\:"([^"]+)"'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl  in matches:
-        url =  scrapedurl.replace("\/", "/")
-    itemlist.append(item.clone(action="play", title=url, url=url))
+    url = item.url
+    if "youporn" in url: 
+        item1 = item.clone(url=url)
+        itemlist = youporn.play(item1)
+        return itemlist
+
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

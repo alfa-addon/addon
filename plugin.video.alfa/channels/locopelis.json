@@ -1,7 +1,7 @@
 {
   "id": "locopelis",
   "name": "LOCOPELIS",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://s31.postimg.cc/5worjw2nv/locopelis.png",

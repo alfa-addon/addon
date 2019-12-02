@@ -1,7 +1,7 @@
 {
   "id": "pornhive",
   "name": "pornhive",
-  "active": true,
+  "active": false,
   "adult": true,
   "language": ["*"],
   "thumbnail": "http://www.pornhive.tv/assets/images/logo.png",
@@ -10,7 +10,17 @@
     "adult"
   ],
   "settings": [
-
+    {
+      "id": "filter_languages",
+      "type": "list",
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "No filtrar"
+      ]
+    }
   ]
 }
 

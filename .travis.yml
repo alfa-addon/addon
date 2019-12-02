@@ -6,7 +6,7 @@ branches:
 language: python
 python:
   - "2.7"
-# install: pip install codecov mock
+# install: pip install codecov mock 
 script: 
   # - coverage run tests.py
   - echo 'testing'
@@ -33,7 +33,7 @@ deploy:
     on:
       condition: $TRAVIS_COMMIT_MESSAGE == release
       python: "2.7"
-  # Publish docs to GH Pages
+  # Publish docs to GH Pages 
   # - provider: script
   #  skip_cleanup: true
   #  script: python deploy_addon.py -d

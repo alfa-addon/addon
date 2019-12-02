@@ -28,8 +28,7 @@ def start():
     #config.set_setting('show_once', True)
     # Test if all the required directories are created
     config.verify_directories_created()
-
-
+    
 def run(item=None):
     logger.info()
 
@@ -60,6 +59,9 @@ def run(item=None):
     logger.info(item.tostring())
 
     try:
+        if not config.get_setting('tmdb_active'):
+            config.set_setting('tmdb_active', True)
+
         # If item has no action, stops here
         if item.action == "":
             logger.info("Item sin accion")
@@ -217,21 +219,21 @@ def run(item=None):
             elif item.action == "search":
                 logger.info("item.action=%s" % item.action.upper())
 
-                last_search = ""
-                last_search_active = config.get_setting("last_search", "search")
-                if last_search_active:
-                    try:
-                        current_saved_searches_list = list(config.get_setting("saved_searches_list", "search"))
-                        last_search = current_saved_searches_list[0]
-                    except:
-                        pass
+                # last_search = ""
+                # last_search_active = config.get_setting("last_search", "search")
+                # if last_search_active:
+                #     try:
+                #         current_saved_searches_list = list(config.get_setting("saved_searches_list", "search"))
+                #         last_search = current_saved_searches_list[0]
+                #     except:
+                #         pass
+
+                last_search = channeltools.get_channel_setting('Last_searched', 'search', '')
 
                 tecleado = platformtools.dialog_input(last_search)
-                if tecleado is not None:
-                    if last_search_active and not tecleado.startswith("http"):
-                        from channels import search
-                        search.save_search(tecleado)
 
+                if tecleado is not None:
+                    channeltools.set_channel_setting('Last_searched', tecleado, 'search')
                     itemlist = channel.search(item, tecleado)
                 else:
                     return

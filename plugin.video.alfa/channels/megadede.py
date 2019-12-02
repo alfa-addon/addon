@@ -547,6 +547,7 @@ def findvideos(item, verTodos=False):
             "  ", "").replace("\n", "")
         thumb_servidor = scrapertools.find_single_match(match, '<img src="([^"]+)">')
         nombre_servidor = scrapertools.find_single_match(thumb_servidor, "hosts/([^\.]+).png")
+        server = nombre_servidor.lower().strip()
         if jdown != '':
             title = "Download " + nombre_servidor + " (" + idioma + ") (Calidad " + calidad_video.strip() + ", audio " + calidad_audio.strip() + ")"
         else:
@@ -577,13 +578,13 @@ def findvideos(item, verTodos=False):
                 valora_calidad(calidad_video, calidad_audio) * 1000) + valoracion
             itemsort.append(
                 {'action': "play", 'title': title, 'data_id': data_id, 'token': token, 'tipo': data_model, 'url': url,
-                 'thumbnail': thumbnail, 'fanart': item.fanart, 'plot': plot, 'extra': item.url,
+                 'thumbnail': thumbnail, 'fanart': item.fanart, 'plot': plot, 'extra': item.url, 'server': server,
                  'contentTitle': item.contentTitle, 'orden1': (jdown == ''), 'orden2': orden})
         else:
             itemlist.append(
                 Item(channel=item.channel, action="play", data_id=data_id, token=token, tipo=data_model, title=title,
                      url=url, thumbnail=thumbnail, fanart=item.fanart, plot=plot, extra=item.url,
-                     contentTitle=item.contentTitle))
+                     contentTitle=item.contentTitle, server=server))
 
     if sortlinks > 0:
         numberlinks = config.get_setting("megadedenumberlinks", item.channel)  # 0:todos, > 0:n*5 (5,10,15,20,...)
@@ -605,7 +606,7 @@ def findvideos(item, verTodos=False):
                 Item(channel=item.channel, action=subitem['action'], title=subitem['title'], data_id=subitem['data_id'],
                      token=subitem['token'], tipo=subitem['tipo'], url=subitem['url'], thumbnail=subitem['thumbnail'],
                      fanart=subitem['fanart'], plot=subitem['plot'], extra=subitem['extra'],
-                     contentTitle=subitem['contentTitle']))
+                     contentTitle=subitem['contentTitle'], server=subitem['server']))
     if data_model == "4":
         itemlist.append(
             Item(channel=item.channel, action="megadede_check", tipo="4", token=token, title="Marcar como Pendiente",

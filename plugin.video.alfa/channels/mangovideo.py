@@ -8,13 +8,6 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-
-server = {'1': 'https://www.mangovideo.pw/contents/videos/', '7' : 'https://server9.mangovideo.pw/contents/videos/',
-          '8' : 'https://s10.mangovideo.pw/contents/videos/', '9' : 'https://server2.mangovideo.pw/contents/videos/',
-          '10' : 'https://server217.mangovideo.pw/contents/videos/', '11' : 'https://234.mangovideo.pw/contents/videos/',
-          '12' : 'https://98.mangovideo.pw/contents/videos/', '13' : 'https://68.mangovideo.pw/contents/videos/'
-         }
-
 host = 'http://mangovideo.pw'
 
 def mainlist(item):

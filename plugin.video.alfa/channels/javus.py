@@ -1,12 +1,19 @@
 # -*- coding: utf-8 -*-
-
+import urlparse
 import re
 
-from core import httptools
-from core import servertools
+from platformcode import config, logger
 from core import scrapertools
+from core import servertools
 from core.item import Item
-from platformcode import logger
+from core import httptools
+from channels import filtertools
+from channels import autoplay
+
+IDIOMAS = {'vo': 'VO'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['bitp']
 
 host = 'http://javuss.com'
 
@@ -14,8 +21,14 @@ host = 'http://javuss.com'
 def mainlist(item):
     logger.info()
     itemlist = []
+
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+
+    autoplay.show_option(item.channel, itemlist)
+
     return itemlist
 
 
@@ -44,7 +57,7 @@ def lista(item):
         thumbnail = scrapedthumbnail
         fanart = ''
         itemlist.append(
-            Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, fanart=thumbnail))
+            Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail, fanart=thumbnail))
     next_page = scrapertools.find_single_match(data,'<link rel="next" href="([^"]+)"')
     next_page = next_page.replace('"', '')
     if next_page!="":
@@ -52,16 +65,12 @@ def lista(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
+    logger.info()
     itemlist = []
-    itemlist = servertools.find_video_items(item)
-    a = len (itemlist)
-    for i in itemlist:
-        if a < 1:
-            return []
-        res = servertools.check_video_link(i.url, i.server, timeout=5)
-        a -= 1
-        if 'green' in res:
-            return [i]
-        else:
-            continue
+    itemlist = servertools.find_video_items(item.clone(url = item.url, action='play', language='VO', contentTitle = item.title))
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
+    return itemlist
