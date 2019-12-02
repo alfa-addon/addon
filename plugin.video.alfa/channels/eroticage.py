@@ -14,7 +14,7 @@ from channels import autoplay
 IDIOMAS = {'vo': 'VO'}
 list_language = IDIOMAS.values()
 list_quality = []
-list_servers = ['mangovideo']
+list_servers = ['pornhub']
 
 host = 'http://www.eroticage.net'
 

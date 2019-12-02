@@ -182,10 +182,13 @@ def get_link(data):
     while True:
         try:
             url = base64.b64decode(url)
-            if url.startswith('http'):
-                break
             if url.endswith('+'):
                 url = url[:-1]
+            elif '+' in url:
+                url = url[:-2]
+            if url.startswith('http'):
+                break
+            
         except:
             break
 
@@ -199,11 +202,10 @@ def findvideos(item):
     if not url:
         return itemlist
     
-    server = servertools.get_server_from_url(url)
-    title = '%s' % server
-    
-    itemlist.append(Item(channel=item.channel, title=title, url=url, action='play',
-                         server=server, infoLabels=item.infoLabels))
+    itemlist.append(Item(channel=item.channel, title='%s', url=url,
+                         action='play', infoLabels=item.infoLabels))
+
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
         itemlist.append(Item(channel=item.channel,

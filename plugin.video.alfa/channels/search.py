@@ -199,7 +199,7 @@ def channel_search(item):
     progress = platformtools.dialog_progress('Buscando %s ...' % item.title, "Preparando Resultados",
                                              'Por favor espere...')
 
-    config.set_setting('tmdb_active', False)
+    config.set_setting('tmdb_active', True)
 
     for key, value in ch_list.items():
         grouped = list()
@@ -214,8 +214,7 @@ def channel_search(item):
                 if not elem.infoLabels.get('year', ""):
                     elem.infoLabels['year'] = '-'
                     tmdb.set_infoLabels_item(elem, True)
-                logger.error(elem.infoLabels['tmdb_id'])
-                logger.error(searched_id)
+                
                 if elem.infoLabels['tmdb_id'] == searched_id:
                     elem.from_channel = key
                     if not config.get_setting('unify'):
@@ -223,6 +222,8 @@ def channel_search(item):
                     valid.append(elem)
 
         for it in value:
+            if it.channel == item.channel:
+                it.channel = key
             if it in valid:
                 continue
             if mode == 'all' or (it.contentType and mode == it.contentType):
@@ -306,16 +307,18 @@ def get_channels(item):
     for ch in all_channels:
         channel = ch.channel
         ch_param = channeltools.get_channel_parameters(channel)
-        list_cat = ch_param["categories"]
+        if not ch_param.get("active", False):
+            continue
+        list_cat = ch_param.get("categories", [])
 
-        if not ch_param["include_in_global_search"]:
+        if not ch_param.get("include_in_global_search", False):
             continue
 
         if 'anime' in list_cat:
             n = list_cat.index('anime')
             list_cat[n] = 'tvshow'
 
-        if (item.mode == 'all' and ch_param["active"]) or (item.mode in list_cat and ch_param["active"]):
+        if item.mode == 'all' or (item.mode in list_cat):
             if config.get_setting("include_in_global_search", channel):
                 channels_list.append(channel)
 
@@ -687,5 +690,9 @@ def get_from_temp(item):
                             action='get_from_temp', from_channel=item.from_channel, page=item.page+1))
 
     tmdb.set_infoLabels_itemlist(results, True)
+    for elem in results:
+        if not elem.infoLabels.get('year', ""):
+            elem.infoLabels['year'] = '-'
+            tmdb.set_infoLabels_item(elem, True)
 
     return results

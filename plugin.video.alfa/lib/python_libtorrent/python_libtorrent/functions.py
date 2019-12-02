@@ -69,7 +69,8 @@ class LibraryManager():
             pass
         if ver1 >= 1 and ver2 >= 2:
             global __libbaseurl__
-            __libbaseurl__ = 'https://github.com/alfa-addon/alfa-repo/raw/master/downloads/libtorrent'
+            #__libbaseurl__ = 'https://github.com/alfa-addon/alfa-repo/raw/master/downloads/libtorrent'
+            __libbaseurl__ = 'https://bitbucket.org/alfa_addon/alfa-repo/raw/master/downloads/libtorrent'
 
     def check_exist(self):
         for libname in get_libname(self.platform):

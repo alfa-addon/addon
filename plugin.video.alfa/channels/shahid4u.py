@@ -292,7 +292,7 @@ def episodes(item):
 
 def findvideos(item):
     logger.info()
-    
+    servers = {'vidhd':'directo', '1fichier': 'onefichier', 'uploaded': 'uploadedto', 'ok': 'okru'}
     itemlist = []
     downlist = []
     server = ""
@@ -318,15 +318,14 @@ def findvideos(item):
         except:
             data2 = ""
     
-    matches = scrapertools.find_multiple_matches(data, 'data-embedd="([^"]+)".*?<(.*?) class="server_.*?">(.*?)</li>')
+    patron = 'data-embedd="([^"]+)".*?<(.*?) class="server_.*?">(.*?)</li>'
+    matches = scrapertools.find_multiple_matches(data, patron)
     
-    for source, thumbnail, server in matches:
-        #server = server.lower()
+    for source, thumbnail, srv in matches:
+        
+        server = servers.get(srv.lower(), srv.lower())
         thumbnail = scrapertools.find_single_match(thumbnail, 'img src="([^"]+)"')
-        
-        if "vidbom" in server.lower():
-            continue
-        
+
         if not thumbnail:
             thumbnail = item.thumbnail
         
@@ -335,10 +334,11 @@ def findvideos(item):
         else:
             server = servertools.get_server_from_url(source)
         
-        title = server.capitalize().replace("</span>", "")
+        title = srv.capitalize().replace("</span>", "")
         url = source
         
-        itemlist.append(Item(channel=item.channel, url=url, title=title, action='play', thumbnail=thumbnail, infoLabels=item.infoLabels))
+        itemlist.append(Item(channel=item.channel, url=url, title=title, action='play',
+                             thumbnail=thumbnail, infoLabels=item.infoLabels, server=server))
 
     data2 = re.sub(r"\n|\r|\t|\s{2}", "", data2)
     
@@ -350,22 +350,24 @@ def findvideos(item):
         
         for server, source in matches:
             
-            server = server.lower()
-            server= server.replace("1fichier", "onefichier").replace("uploaded", "uploadedto")
+            server = servers.get(server.lower(), server.lower())
             title = server.capitalize()
             
             if quality:
                 title = "[COLOR=blue][%s][/COLOR] " % quality +title
             
-            itemlist.append(Item(channel=item.channel, url=source, title=title, action='play', infoLabels=item.infoLabels, server=server))
+            itemlist.append(Item(channel=item.channel, url=source, title=title, action='play',
+                                 infoLabels=item.infoLabels, server=server))
 
     matches2 = scrapertools.find_multiple_matches(data2, '<a class="LiQuality" target="_NEW" href="([^"]+)">(.*?)</a')
     
     for url, title in matches2:
+        server = servertools.get_server_from_url(url)
 
-        itemlist.append(Item(channel=item.channel, url=url, title=title, action='play', infoLabels=item.infoLabels))
+        itemlist.append(Item(channel=item.channel, url=url, title=title, action='play',
+                             infoLabels=item.infoLabels, server=server))
     
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title)
+    #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title)
     if not data2:
         itemlist.reverse()
     if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra == 'film':

@@ -90,7 +90,7 @@ def mainlist(item):
                                extra='a-z'
                                ))
 
-    itemlist.append(item.clone(title="Mas Vistas",
+    '''itemlist.append(item.clone(title="Mas Vistas",
                                action="lista",
                                thumbnail=get_thumb('more watched', auto=True),
                                url=host + 'peliculas-mas-vistas'
@@ -100,7 +100,7 @@ def mainlist(item):
                                action="lista",
                                thumbnail=get_thumb('more voted', auto=True),
                                url=host + 'peliculas-mas-votadas'
-                               ))
+                               ))'''
 
     itemlist.append(item.clone(title="Buscar...",
                                action="search",
