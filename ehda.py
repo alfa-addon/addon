@@ -101,7 +101,7 @@ def episodios(item):
     patron += 'class="MvTbTtl"><a href="([^"]+)">([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapednum_epi, scrapedthumbnail, scrapedurl, scrapedtitle in matches:
-        #title="1x%s - %s" % (episode, item.contentSerieName) # episode es scrapednum_epi
+       
         title="1x%s - %s" % (scrapednum_epi, item.contentSerieName)
         #urls = scrapertools.find_multiple_matches(scrapedurls, 'href="([^"]+)')
         itemlist.append(item.clone(action='findvideos', episodios=scrapednum_epi, thumbnail=scrapedthumbnail, url=scrapedurl, title=title, type=item.type,
@@ -151,7 +151,7 @@ def lista(item):
         title="%s - %s" % (scrapedtitle,scrapedyear)
         new_item = Item(channel=item.channel, title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
                         infoLabels={'year':scrapedyear}) # no utilizas scrapedtype por lo que no es necesario
-        #if scrapedtype == "Serie": # scrapedtype no toma nada en el regex si miras
+       
         if '/serie' in scrapedurl: # sabes que es una serie porque la url lo dice
             new_item.contentSerieName = scrapedtitle
             #new_item.action = 'episode' # La funcion que lista los episodios se llama episodios
