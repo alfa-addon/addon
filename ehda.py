@@ -101,7 +101,8 @@ def episodios(item):
     patron += 'class="MvTbTtl"><a href="([^"]+)">([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapednum_epi, scrapedthumbnail, scrapedurl, scrapedtitle in matches:
-        title="1x%s - %s" % (episode, item.contentSerieName)
+        #title="1x%s - %s" % (episode, item.contentSerieName) # episode es scrapednum_epi
+        title="1x%s - %s" % (scrapednum_epi, item.contentSerieName)
         #urls = scrapertools.find_multiple_matches(scrapedurls, 'href="([^"]+)')
         itemlist.append(item.clone(action='findvideos', episodios=scrapednum_epi, thumbnail=scrapedthumbnail, url=scrapedurl, title=title, type=item.type,
                                     infoLabels=item.infoLabels))
@@ -138,22 +139,23 @@ def lista(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data)
-        
+    logger.debug(data)
     patron  = '(?is)class="TPost C">.*?href="([^"]+)".*?' #scrapedurl
     patron += 'src="([^"]+)".*?>.*?' #scrapedthumbnail
-    patron += 'title">([^<]+)<.*?' #scrapedtitle
-    patron += 'year">([^<]+)<.*?' #scrapedyear
-    patron += 'href.*?>([^"]+)<\/a>' #scrapedtype
+    patron += 'Title">([^<]+)<.*?' #scrapedtitle
+    patron += 'Year">([^<]+)<.*?' #scrapedyear
+    #patron += 'href.*?>([^"]+)<\/a>' #scrapedtype
     matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear, scrapedtype in matches:
+    for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear in matches:
         if not scrapedthumbnail.startswith("http"): scrapedthumbnail = "https:" + scrapedthumbnail
         title="%s - %s" % (scrapedtitle,scrapedyear)
-
         new_item = Item(channel=item.channel, title=title, url=scrapedurl, thumbnail=scrapedthumbnail,
-                       type=scrapedtype, infoLabels={'year':scrapedyear})
-        if scrapedtype == 'Serie':
+                        infoLabels={'year':scrapedyear}) # no utilizas scrapedtype por lo que no es necesario
+        #if scrapedtype == "Serie": # scrapedtype no toma nada en el regex si miras
+        if '/serie' in scrapedurl: # sabes que es una serie porque la url lo dice
             new_item.contentSerieName = scrapedtitle
-            new_item.action = 'episode'
+            #new_item.action = 'episode' # La funcion que lista los episodios se llama episodios
+            new_item.action = 'episodios' # La funcion que lista los episodios se llama episodios
         else:
             new_item.contentTitle = scrapedtitle
             new_item.action = 'findvideos'
