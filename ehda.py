@@ -144,7 +144,7 @@ def lista(item):
     patron += 'src="([^"]+)".*?>.*?' #scrapedthumbnail
     patron += 'Title">([^<]+)<.*?' #scrapedtitle
     patron += 'Year">([^<]+)<.*?' #scrapedyear
-    #patron += 'href.*?>([^"]+)<\/a>' #scrapedtype
+    
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedthumbnail, scrapedtitle, scrapedyear in matches:
         if not scrapedthumbnail.startswith("http"): scrapedthumbnail = "https:" + scrapedthumbnail
@@ -154,8 +154,8 @@ def lista(item):
        
         if '/serie' in scrapedurl: # sabes que es una serie porque la url lo dice
             new_item.contentSerieName = scrapedtitle
-            #new_item.action = 'episode' # La funcion que lista los episodios se llama episodios
-            new_item.action = 'episodios' # La funcion que lista los episodios se llama episodios
+            #new_item.action = 'episode' 
+            new_item.action = 'episodios' 
         else:
             new_item.contentTitle = scrapedtitle
             new_item.action = 'findvideos'
@@ -176,10 +176,10 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data.replace("&quot;",'"').replace("amp;","").replace("#038;","")
     matches = scrapertools.find_multiple_matches(data, 'TPlayerTb.*?id="([^"]+)".*?src="([^"]+)"')
     matches_del = scrapertools.find_multiple_matches(data, '(?is)<!--<td>.*?-->')
-    # Borra los comentarios - que contienen enlaces duplicados
+    
     for del_m in matches_del:
         data = data.replace(del_m, "")
-    # Primer grupo de enlaces
+    
     for id, url1 in matches:
         language = scrapertools.find_single_match(data, '(?is)data-tplayernv="%s".*?span><span>([^<]+)' %id)
         data1 = httptools.downloadpage(url1).data
@@ -198,7 +198,7 @@ def findvideos(item):
         for url2, quality in urls:
             if url2:
                 itemlist.append(item.clone(action = "play", title = "Servidor: %s (" + quality + ") (" + language + ")", language = language, url = url2))
-    # Segundo grupo de enlaces
+    
     matches = scrapertools.find_multiple_matches(data, '<span><a rel="nofollow" target="_blank" href="([^"]+)"')
     for url in matches:
         data1 = httptools.downloadpage(url).data
@@ -216,10 +216,10 @@ def findvideos(item):
                 if url2:
                     itemlist.append(item.clone(action = "play", title = "Servidor: %s (" + quality + ") (" + language + ")", language = language, url = url2))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-     # Requerido para FilterTools
+    
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
-    # Requerido para AutoPlay
+    
 
     autoplay.start(itemlist, item)
     return itemlist
