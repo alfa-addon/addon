@@ -27,4 +27,8 @@ def test_video_exists(page_url):
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info()
-    return [["[pornrewind]", decode(video_url, license_code)]]
+    # mediaurl = decode(video_url, license_code)
+    mediaurl = video_url
+    if not mediaurl.startswith("https"):
+        mediaurl = "https://%s" % mediaurl
+    return [["[pornrewind]", mediaurl]]

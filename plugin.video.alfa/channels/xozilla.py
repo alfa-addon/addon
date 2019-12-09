@@ -54,20 +54,23 @@ def categorias(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle, scrapedthumbnail, cantidad in matches:
         scrapedplot = ""
+        scrapedurl += "1/" 
         cantidad = scrapertools.find_single_match(cantidad, '(\d+) videos</div>')
         if cantidad:
             scrapedtitle += " (" + cantidad + ")"
         itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                              thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot))
-    if "Categorias" in item.title:
+    if not "models" in item.url:
         itemlist.sort(key=lambda x: x.title)
+
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
-    if next_page != "#videos":
+    page = scrapertools.find_single_match(item.url, '([^"]+/)\d+/')
+    if next_page != "#videos" and next_page != "":
         next_page = urlparse.urljoin(item.url, next_page)
         itemlist.append(item.clone(action="categorias", title="Página Siguiente >>", text_color="blue", url=next_page))
     if next_page == "#videos":
         next_page = scrapertools.find_single_match(data, 'from:(\d+)">Next</a>')
-        next_page = urlparse.urljoin(item.url, next_page) + "/"
+        next_page = page + next_page + "/"
         itemlist.append(item.clone(action="categorias", title="Página Siguiente >>", text_color="blue", url=next_page))
     return itemlist
 
@@ -92,12 +95,13 @@ def lista(item):
         itemlist.append(Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
                              fanart=thumbnail, plot=plot, contentTitle=contentTitle))
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
-    if next_page != "#videos":
+    page = scrapertools.find_single_match(item.url, '([^"]+/)\d+/')
+    if next_page != "#videos" and next_page != "#search":
         next_page = urlparse.urljoin(item.url, next_page)
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page))
-    if next_page == "#videos":
+    if next_page == "#videos" or next_page == "#search":
         next_page = scrapertools.find_single_match(data, 'from:(\d+)">Next</a>')
-        next_page = urlparse.urljoin(item.url, next_page) + "/"
+        next_page = page + next_page + "/"
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page))
     return itemlist
 
@@ -106,9 +110,13 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
-    patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
+    if "video_url_text" in data:
+        patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
+        patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
+    else:
+        patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
+        patron += 'postfix:\s*\'([^\']+)\''
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url,quality in matches:
-        itemlist.append(['.mp4 %s' %quality, url])
+        itemlist.append(['%s' %quality, url])
     return itemlist

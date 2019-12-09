@@ -12,45 +12,22 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
 
     subtitles = ""
-    global video_urls
     response = httptools.downloadpage(page_url)
-    if not response.sucess or "Not Found" in response.data or "File was deleted" in response.data or "is no longer available" in response.data:
-        return False, "[jetload] El fichero no existe o ha sido borrado"
+    global data
     data = response.data
-    srv = scrapertools.find_single_match(data, 'id="srv" value="([^"]+)"')
-    srv_id = scrapertools.find_single_match(data, 'id="srv_id" value="([^"]+)"')
-    file_name = scrapertools.find_single_match(data, 'file_name" value="([^"]+)"')
-    file_id = scrapertools.find_single_match(data, 'file_id" value="([^"]+)"')
-    archive = scrapertools.find_single_match(data, 'archive" value="([^"]+)"')
-    try:
-        data_sub = httptools.downloadpage("https://jetload.net/api/get/subtitles/%s" % file_id).json
-        subtitles = "https://jetload.net/tmp/%s" % data_sub[0]["sub_file"]
-    except:
-        pass
-    if srv_id:
-        post = jsontools.dump({"file_name":file_name+".mp4", "srv":srv_id})
-        data = httptools.downloadpage("https://jetload.net/api/download", post=post, headers={"Content-Type":"application/json;charset=UTF-8"}).data
-        media_url = data
-        video_urls.append([".mp4 [jetload]", media_url, 0, subtitles ])
-    else:
-        m3u8 = srv + "/v2/schema/%s/master.m3u8" %file_name
-        if archive == '1':
-            m3u8 = srv + "/v2/schema/archive/%s/master.m3u8" %file_name
-        new_data = httptools.downloadpage(m3u8)
-        if new_data.code != 200:
-            return False, "[jetload] El fichero no existe o ha sido borrado"
-        data = re.sub(r"\n|\r|\t|\s{2}", "", new_data.data)
-        matches = scrapertools.find_multiple_matches(data, r'RESOLUTION=\d+x(\d+)(\w+).m3u8')
-        for res, uri in matches:
-            res = res+"p"
-            media_url = m3u8.replace("master", uri)
-            video_urls.append([".m3u8 (%s) [jetload]" % res, media_url, 0, subtitles ])
+    if not response.sucess or "Not Found" in data or "File was deleted" in data or "is no longer available" in data:
+        return False, "[jetload] El fichero no existe o ha sido borrado"
     return True, ""
 
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
-    for video_url in video_urls:
-        logger.info("%s - %s" % (video_url[0], video_url[1]))
+    video_urls = []
+    media_url = scrapertools.find_single_match(data, '<video src="([^"]+)"')
+    if media_url:
+        ext = media_url[-4:]
+        if ext == 'm3u8':
+            media_url = ''
+        video_urls.append(["%s [Jetload]" % (ext), media_url])
 
     return video_urls

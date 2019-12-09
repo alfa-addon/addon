@@ -89,10 +89,7 @@ def start(itemlist, item):
 
     base_item = item
 
-
-    #2nd lang
-    second_lang = config.get_setting('second_language')
-
+    
     if not config.is_xbmc():
         #platformtools.dialog_notification('AutoPlay ERROR', 'Sólo disponible para XBMC/Kodi')
         return itemlist
@@ -306,7 +303,7 @@ def start(itemlist, item):
 
                     lang = " "
                     if hasattr(videoitem, 'language') and videoitem.language != "":
-                        lang = " '%s' " % videoitem.language.capitalize()
+                        lang = " '%s' " % videoitem.language
 
                     platformtools.dialog_notification("AutoPlay %s" %text_b, "%s%s%s" % (
                         videoitem.server.upper(), lang, videoitem.quality.upper()), sound=False)

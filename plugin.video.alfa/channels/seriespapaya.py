@@ -21,8 +21,7 @@ IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán',
            'Español Castellano':'Español', 'Sub Español':'VOSE'}
 list_idiomas = IDIOMAS.values()
 list_quality = ['360p', '480p', '720p HD', '1080p HD', 'default']
-list_servers = ['powvideo', 'streamplay', 'filebebo', 'flashx', 'gamovideo', 'nowvideo', 'openload', 'streamango',
-                'streamcloud', 'vidzi', 'clipwatching', ]
+list_servers = ['powvideo', 'streamplay', 'clipwatching', 'vidoza', 'gamovideo', 'vidtodo']
 thumb_videolibrary = get_thumb("videolibrary_tvshow.png")
 
 def mainlist(item):
@@ -39,7 +38,8 @@ def mainlist(item):
     thumb_buscar = get_thumb("search.png")
     itemlist = []
     itemlist.append(
-        Item(title="Capitulos de Estreno:", channel=item.channel, folder=False, thumbnail=thumb_hot))
+        Item(title="Capitulos de Estreno:", channel=item.channel,
+             folder=False, thumbnail=thumb_hot))
     
     itemlist.append(
         Item(action="showmore", title="    Latino",
@@ -58,15 +58,23 @@ def mainlist(item):
              thumbnail=thumb_vos, extra_lang="VOSE", page=0))
     
     itemlist.append(
-        Item(action="novedades", title="Capitulos Recientes", channel=item.channel, thumbnail=thumb_recientes, extra="recientes"))
+        Item(action="novedades", title="Capitulos Recientes", channel=item.channel,
+             thumbnail=thumb_recientes, extra="recientes", url=HOST))
+    
     itemlist.append(
-        Item(action="novedades", title="Series Nuevas", channel=item.channel, thumbnail=thumb_series, extra="nuevas"))
+        Item(action="novedades", title="Series Nuevas", channel=item.channel,
+             thumbnail=thumb_series, extra="nuevas", url=HOST))
+    
     itemlist.append(
-        Item(action="novedades", title="Las Más Vistas", channel=item.channel, thumbnail=thumb_vistas, url= HOST + "/lista-series-populares/"))
+        Item(action="novedades", title="Las Más Vistas", channel=item.channel,
+             thumbnail=thumb_vistas, url= HOST + "/lista-series-populares/"))
+    
     itemlist.append(
-        Item(action="listado_alfabetico", title="Listado Alfabetico", channel=item.channel, thumbnail=thumb_series_az))
+        Item(action="listado_alfabetico", title="Listado Alfabetico",
+             channel=item.channel, thumbnail=thumb_series_az))
 
-    itemlist.append(Item(action="search", title="Buscar", channel=item.channel, thumbnail=thumb_buscar))
+    itemlist.append(Item(action="search", title="Buscar",
+                     channel=item.channel, thumbnail=thumb_buscar))
     
     itemlist = filtertools.show_option(itemlist, item.channel, list_idiomas, list_quality)
     
@@ -76,8 +84,11 @@ def mainlist(item):
 
 
 def listado_alfabetico(item):
+
     logger.info()
-    itemlist = [item.clone(action="series_por_letra", title="0-9")]
+    itemlist = []
+    #TODO Los numeros tendrian que listarse tambien o buscar otra solucion
+    #itemlist = [item.clone(action="series_por_letra", title="0-9")]
     
     for letra in string.ascii_uppercase:
         itemlist.append(item.clone(action="series_por_letra", title=letra))
@@ -134,9 +145,11 @@ def series_por_letra_y_grupo(item):
 def novedades(item):
     logger.info()
     itemlist = []
+    
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+    
     if item.extra == "recientes":
-        data = httptools.downloadpage(HOST).data
-        data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
         patron0 = '<h2>Capitulos Recientes</h2>(.*?)<div class=clearfix></div>'
         patron = ' src=(.*?) />.*?href=(.*?)>(.*?)</a><br />(.*?):'
         match = scrapertools.find_single_match(data, patron0)
@@ -152,8 +165,6 @@ def novedades(item):
                                       thumbnail=urlparse.urljoin(HOST, img), contentSerieName=title))
     
     elif item.extra == "nuevas":
-        data = httptools.downloadpage(HOST).data
-        data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
         patron0 = '<h2>Series Nuevas</h2>(.*?)<div class=clearfix></div>'
         patron = '<a title=(.*?) alt.*?href=(.*?)>.*?src=(.*?) />'
         match = scrapertools.find_single_match(data, patron0)
@@ -165,8 +176,6 @@ def novedades(item):
             itemlist.append(item.clone(action="seasons", title=title, url=urlparse.urljoin(HOST, url),
                                        thumbnail=urlparse.urljoin(HOST, img), contentSerieName=stitle))
     else:
-        data = httptools.downloadpage(item.url).data
-        data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
         patron0 = '<h2>Lista De Series - Mas Vistas</h2>(.*?)Vistas de la Semana</h3>'
         match = scrapertools.find_single_match(data, patron0)
         patron = 'class=esimagen>.*? src=(.*?) />.*?href=(.*?) .*?>(.*?)</a>'
@@ -184,17 +193,20 @@ def novedades(item):
 def showmore(item):
     logger.info()
     language = item.extra_lang
+
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'"|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    patron = r"location.href='(.*?)'.*?background-image: url\('(.*?)'\).*?"
-    patron += r"<strong>(\d+)<\/strong>x<strong>(\d+)<\/strong>.*?margin-top: 3px;>(.*?)<\/div>"
+
+    patron = r"location.href='([^']+).*?background-image: url\((.*?)\);.*?"
+    patron += r"<strong>(\d+)</strong>x<strong>(\d+)</strong>.*?margin-top: 3px;>([^<]+)"
     matches = re.compile(patron, re.DOTALL).findall(data)
     itemlist = []
     for url, img , ses, ep, title in matches[item.page:item.page + 30]:
+        thumbnail = urlparse.urljoin(HOST, img.replace("'", ""))
         ftitle =  title + " %sx%s" % (ses, ep)
         title = re.sub(r'\s*\((.*?)\)$', '', title)
         itemlist.append(item.clone(action="findvideos", title=ftitle, url=urlparse.urljoin(HOST, url), 
-                        thumbnail=urlparse.urljoin(HOST, img), language=language, contentSerieName=title))
+                        thumbnail=thumbnail, language=language, contentSerieName=title))
     
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     
@@ -213,6 +225,7 @@ def newest(categoria):
 def seasons(item):
     logger.info()
     itemlist = []
+    infoLabels = item.infoLabels
 
     data = httptools.downloadpage(item.url).data
 
@@ -221,11 +234,13 @@ def seasons(item):
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     if len(matches) == 1:
+        item.contentSeasonNumber = '1'
         return episodesxseasons(item)
     elif len(matches) < 1:
-        itemlist.append(item.clone(title = '[COLOR=grey]No hay episodios disponibles para esta serie[/COLOR]', action='', url=''))
+        title = '[COLOR=grey]Aún no hay episodios disponibles para esta serie[/COLOR]'
+        itemlist.append(item.clone(title = title, action='', url=''))
         return itemlist
-    infoLabels = item.infoLabels
+    
     for scrapedseason in matches:
         contentSeasonNumber = scrapedseason
         title = 'Temporada %s' % scrapedseason
@@ -239,7 +254,7 @@ def seasons(item):
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
-                 extra2='library', thumbnail=thumb_videolibrary))
+                 thumbnail=thumb_videolibrary))
 
     return itemlist
 
@@ -257,11 +272,9 @@ def episodesxseasons(item):
 
     infoLabels = item.infoLabels
     data = httptools.downloadpage(item.url).data
-    if item.contentSeasonNumber and item.extra2 != 'library':
-        prevtitle = item.extra1
-        data = scrapertools.find_single_match(data, r'<div style="cursor:pointer">&rarr; Temporada %s(.*?)</div>\n</div>\n'  % item.contentSeasonNumber)
-    else:
-        prevtitle = item.title
+    bloq = r'<div style="cursor:pointer">&rarr; Temporada %s(.*?)</div>\n</div>\n'
+    data = scrapertools.find_single_match(data, bloq  % item.contentSeasonNumber)
+    
     patron = 'visco.*?href="(?P<url>[^"]+).+?nbsp; (?P<title>.*?)</a>.+?ucapaudio.?>(?P<langs>.*?)</div>'
     episodes = re.findall(patron, data, re.MULTILINE | re.DOTALL)
     for url, title, langs in episodes:
@@ -277,15 +290,17 @@ def episodesxseasons(item):
         itemlist.append(item.clone(action="findvideos",
                                    infoLabels = infoLabels,
                                    language=filter_lang,
-                                   title="%s %s %s" % (prevtitle, title, languages),
+                                   title="%s %s" % (title, languages),
                                    url=urlparse.urljoin(HOST, url)
                                    ))
     itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
     
+    itemlist.sort(key=lambda it: int(it.infoLabels["episode"]))
+    
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     
     # Opción "Añadir esta serie a la videoteca de KODI"
-    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.contentSeasonNumber:
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentSeasonNumber == '1':
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
@@ -297,20 +312,54 @@ def search(item, texto):
     logger.info("texto: %s" % texto)
     itemlist = []
     infoLabels = ()
-    data_dict = httptools.downloadpage(urlparse.urljoin(HOST, "/buscar.php?term=%s" % texto)).json
     try:
-        tvshows = data_dict["myData"]
+        int(texto)
+        post = urllib.urlencode({'searchquery': texto})
+        data = httptools.downloadpage(urlparse.urljoin(HOST, "/busqueda/"), post=post).data
+        data = re.sub(r'|\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
+        
+        patron = r"location.href='(.*?)'.*?background-image: url\('(.*?)'\).*?"
+        patron += '<div style="display.*?>([^<]+)'
+        matches = re.compile(patron, re.DOTALL).findall(data)
+        
+        for surl, sthumb, stitle in matches:
+            url = urlparse.urljoin(HOST, surl)
+            thumb = urlparse.urljoin(HOST, sthumb)
+            stitle = stitle.strip()
+            
+            syear = scrapertools.find_single_match(stitle, r'\s*\((\d{4})\)$')
+            title = re.sub(r'\s*\((.*?)\)$', '', stitle)
+            
+            filtro_tmdb = {"first_air_date": syear}.items()
+            
+            itemlist.append(Item(channel=item.channel,
+                                action="seasons",
+                                context=filtertools.context(item, list_idiomas, list_quality),
+                                contentSerieName=title.strip(),
+                                thumbnail=thumb,
+                                title=stitle.strip(),
+                                url=url,
+                                infoLabels={'filtro':filtro_tmdb}
+                                ))
+
     except:
-        return []
-    for show in tvshows:
-        title = re.sub('\s*\((.*?)\)$', '', show["titulo"])
-        itemlist.append(item.clone(action="seasons",
-                       context=filtertools.context(item, list_idiomas, list_quality),
-                       contentSerieName=title,
-                       thumbnail=urlparse.urljoin(HOST, show["img"]),
-                       title=show["titulo"],
-                       url=urlparse.urljoin(HOST, show["urla"])
-                       ))
+        
+        data_dict = httptools.downloadpage(urlparse.urljoin(HOST, "/buscar.php?term=%s" % texto)).json
+        
+        try:
+            tvshows = data_dict["myData"]
+        except:
+            return []
+        
+        for show in tvshows:
+            title = re.sub(r'\s*\((.*?)\)$', '', show["titulo"])
+            itemlist.append(item.clone(action="seasons",
+                           context=filtertools.context(item, list_idiomas, list_quality),
+                           contentSerieName=title,
+                           thumbnail=urlparse.urljoin(HOST, show["img"]),
+                           title=show["titulo"],
+                           url=urlparse.urljoin(HOST, show["urla"])
+                           ))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     return itemlist
 
@@ -381,8 +430,7 @@ def play(item):
 
     data = httptools.downloadpage(item.url).data
     
-    if item.server not in ['openload', 'streamcherry', 'streamango']:
-        item.server = ''
+    item.server = ''
     item.url = scrapertools.find_single_match(data, "location.href='([^']+)'")
     itemlist.append(item.clone())
     itemlist = servertools.get_servers_itemlist(itemlist)

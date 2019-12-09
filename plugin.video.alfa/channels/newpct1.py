@@ -813,9 +813,11 @@ def listado(item):
                     .replace("Bluray en", "").replace("BluRay", "").replace("Bonus Disc", "")\
                     .replace("de Cine ", "").replace("TeleCine ", "").replace("latino", "")\
                     .replace("Latino", "").replace("argentina", "").replace("Argentina", "")\
-                    .replace("++Sub", "").replace("+-+Sub", "").replace("Directors Cut", "").strip()
+                    .replace("++Sub", "").replace("+-+Sub", "").replace("Directors Cut", "")\
+                    .replace("720p", "").replace("1080p", "").strip()
         
         title = re.sub(r'\(\d{4}\)$', '', title)
+        title = re.sub(r'\-\d{4}\-$', '', title)
         if re.sub(r'\d{4}$', '', title).strip():
             title = re.sub(r'\d{4}$', '', title)
         if item_local.contentType != "movie":
@@ -1456,9 +1458,11 @@ def listado_busqueda(item):
         .replace("Bonus Disc", "").replace("de Cine ", "").replace("TeleCine ", "")\
         .replace("latino", "").replace("Latino", "").replace("argentina", "")\
         .replace("Argentina", "").replace("++Sub", "").replace("+-+Sub", "")\
-        .replace("Directors Cut", "").strip()
+        .replace("Directors Cut", "").replace("720p", "").replace("1080p", "").strip()
         
+        logger.error(title)
         title = re.sub(r'\(\d{4}\)$', '', title)
+        title = re.sub(r'\-\d{4}\-$', '', title)
         if re.sub(r'\d{4}$', '', title).strip():
             title = re.sub(r'\d{4}$', '', title)
         if item_local.contentType != "movie":
@@ -1546,9 +1550,9 @@ def listado_busqueda(item):
             year = int(scrapedyear)
         except:
             year = ""
-        year = str(year)
-        if year >= "1900" and year <= "2040" and year != "2020":
-            item_local.infoLabels['year'] = year
+        #year = str(year)
+        if year >= 1900 and year <= 2040 and year != 2020:
+            item_local.infoLabels['year'] = str(year)
             #title_subs += [year]
         else:
             item_local.infoLabels['year'] = '-'
@@ -2382,8 +2386,12 @@ def episodios(item):
             epi_json_path = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
             if epi_json_path in item.path:
                 epi_json_path = filetools.join(item.path, '%s [%s].json' % (key, json_category))
+                if not filetools.exists(epi_json_path):
+                    epi_json_path = filetools.join(item.path, '1x01 [%s].json' % (json_category))
             else:
                 epi_json_path = filetools.join(epi_json_path, item.path, '%s [%s].json' % (key, json_category))
+                if not filetools.exists(epi_json_path):
+                    epi_json_path = filetools.join(epi_json_path, item.path, '1x01 [%s].json' % (json_category))
             epi_json = jsontools.load(filetools.read(epi_json_path))
             if 'language' in epi_json:
                 item.language = epi_json['language']
@@ -2391,6 +2399,7 @@ def episodios(item):
                 item.language = ['CAST']
         except:
             item.language = ['CAST']
+            logger.error('epi_json_path %s' % epi_json_path)
             logger.error(traceback.format_exc(1))
     
     data = ''

@@ -60,8 +60,6 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    
-    
     patron = '<li><figure>\s*<a href="([^"]+)".*?'
     patron += 'data-original="([^"]+)".*?'
     patron += '<time datetime="\w+">([^"]+)</time>'
@@ -70,18 +68,15 @@ def lista(item):
     for scrapedurl,scrapedthumbnail,duracion,calidad in matches:
         url = scrapedurl
         scrapedtitle = scrapertools.find_single_match(scrapedurl,'https://xxxdan.com/es/.*?/(.*?).html')
-        contentTitle = scrapedtitle
         title = "[COLOR yellow]" + duracion + "[/COLOR] " + scrapedtitle
         if '<li class="hd">' in calidad :
             title = "[COLOR yellow]" + duracion + "[/COLOR] " + "[COLOR red]" + "HD" + "[/COLOR] " + scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail,
-                              fanart=thumbnail, plot=plot, contentTitle = contentTitle))
-    next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)" rel="next">&rarr;</a>')
+                              fanart=thumbnail, plot=plot, contentTitle = title))
+    next_page = scrapertools.find_single_match(data,'<link rel="next" href="([^"]+)"')
     if next_page!="":
-        next_page = next_page.replace("http://xxxdan.com/","")
-        next_page = "/" + next_page
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
@@ -91,9 +86,8 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    media_url = scrapertools.find_single_match(data, 'src:\'([^\']+)\'')
-    media_url = media_url.replace("https","http")
-    itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=media_url,
-                        thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
+    scrapedurl = scrapertools.find_single_match(data, 'src:\'([^\']+)\'')
+    scrapedurl = scrapedurl.replace("https","http")
+    itemlist.append(item.clone(action="play", contentTitle=item.title, url=scrapedurl))
     return itemlist
 

@@ -16,7 +16,7 @@ from channels import filtertools
 from platformcode import platformtools
 from channelselector import get_thumb
 
-host = "https://hdfull.me"
+host = "https://hdfull.io"
 
 _silence = config.get_setting('silence_mode', channel='hdfull')
 show_langs = config.get_setting('show_langs', channel='hdfull')
@@ -257,13 +257,14 @@ def menuseries(item):
 
 def search(item, texto):
     logger.info()
-    data = agrupa_datos(host)
-    sid = scrapertools.find_single_match(data, '.__csrf_magic. value="(sid:[^"]+)"')
-    item.extra = urllib.urlencode({'__csrf_magic': sid}) + '&menu=search&query=' + texto
-    item.title = "Buscar..."
-    item.url = host + "/buscar"
-    item.texto = texto
+    
     try:
+        data = agrupa_datos(host)
+        sid = scrapertools.find_single_match(data, '.__csrf_magic. value="(sid:[^"]+)"')
+        item.extra = urllib.urlencode({'__csrf_magic': sid}) + '&menu=search&query=' + texto
+        item.title = "Buscar..."
+        item.url = host + "/buscar"
+        item.texto = texto
         return fichas(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
     except:
@@ -291,7 +292,7 @@ def items_usuario(item):
     logger.info()
     itemlist = []
     ## Carga estados
-    status = httptools.downloadpage(host + '/a/status/all').json
+    status = check_status()
     ## Fichas usuario
     url = item.url.split("?")[0]
     post = item.url.split("?")[1]
@@ -329,7 +330,7 @@ def items_usuario(item):
                     serie = ficha['show_title']['en'].strip()
                 temporada = ficha['season']
                 episodio = ficha['episode']
-                serie = "[COLOR whitesmoke][B]" + serie + "[/B][/COLOR]"
+                serie = "[COLOR whitesmoke]" + serie + "[/COLOR]"
                 if len(episodio) == 1: episodio = '0' + episodio
                 try:
                     title = temporada + "x" + episodio + " - " + serie + ": " + title
@@ -381,8 +382,7 @@ def fichas(item):
     textoidiomas=''
     infoLabels=dict()
     ## Carga estados
-    if account:
-        status = httptools.downloadpage(host + '/a/status/all').json
+    status = check_status()
 
     if item.title == "Buscar...":
         data = agrupa_datos(item.url, post=item.extra)
@@ -497,8 +497,7 @@ def seasons(item):
     infoLabels = item.infoLabels
     
     ## Carga estados
-    if account:
-        status = httptools.downloadpage(host + '/a/status/all').json
+    status = check_status()
     
     url_targets = item.url
     if "###" in item.url:
@@ -572,8 +571,7 @@ def episodesxseason(item):
     ssid = item.contentSeasonNumber
 
     #si hay cuenta
-    if account:
-        status = httptools.downloadpage(host + '/a/status/all').json
+    status = check_status()
     
     post = "action=season&start=0&limit=0&show=%s&season=%s" % (sid, ssid)
     episodes = httptools.downloadpage(url, post=post).json
@@ -583,6 +581,13 @@ def episodesxseason(item):
         language = episode['languages']
         temporada = episode['season']
         episodio = episode['episode']
+
+        #Fix para thumbs
+        thumb = episode.get('thumbnail', '')
+        if not thumb:
+            thumb = episode['show'].get('thumbnail', '')
+        ua = httptools.get_user_agent()
+        thumbnail = "%s/thumbs/%s|User-Agent=%s" % (host, thumb, ua)
         
         infoLabels['episode'] = episodio
         
@@ -598,6 +603,7 @@ def episodesxseason(item):
             idiomas = ""
         
         if episode['title']:
+            
             title = episode['title'].get('es', '')
             if not title:
                 title = episode['title'].get('en', '')
@@ -606,7 +612,7 @@ def episodesxseason(item):
         
         serie = item.contentSerieName
         
-        title = '%sx%s: [COLOR greenyellow]%s[/COLOR] %s' % (temporada, episodio, title, idiomas)
+        title = '%sx%s: [COLOR greenyellow]%s[/COLOR] %s' % (temporada, episodio, title.strip(), idiomas)
         if account:
             str = get_status(status, 'episodes', episode['id'])
             if str != "": title += str
@@ -615,7 +621,7 @@ def episodesxseason(item):
             'permalink'] + '/temporada-' + temporada + '/episodio-' + episodio) + "###" + episode['id'] + ";3"
         itemlist.append(item.clone(action="findvideos", title=title, url=url,
                              contentType="episode", language=langs, text_bold=True,
-                             infoLabels=infoLabels))
+                             infoLabels=infoLabels, thumbnail=thumbnail))
 
     tmdb.set_infoLabels_itemlist(itemlist, __modo_grafico__)
 
@@ -626,8 +632,8 @@ def novedades_episodios(item):
     logger.info()
     itemlist = []
     ## Carga estados
-    if account:
-        status = httptools.downloadpage(host + '/a/status/all').json
+    status = check_status()
+    
     ## Episodios
     url = item.url.split("?")[0]
     post = item.url.split("?")[1]
@@ -735,8 +741,7 @@ def findvideos(item):
     it2 = []
 
     ## Carga estados
-    if account:
-        status = httptools.downloadpage(host + '/a/status/all').json
+    status = check_status()
     
     url_targets = item.url
 
@@ -919,7 +924,19 @@ def set_status(item):
     
     return
 
+def check_status():
+    status = ""
+    if account:
+        try:
+            status = httptools.downloadpage(host + '/a/status/all').json
+        except:
+            pass
+            
+    return status
+
 def get_status(status, type, id):
+    if not status:
+        return ""
     if type == 'shows':
         state = {'0': '', '1': 'Finalizada', '2': 'Pendiente', '3': 'Siguiendo'}
     else:

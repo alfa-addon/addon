@@ -58,11 +58,11 @@ def mainlist(item):
              url=host+'raking-imdb/', thumbnail=get_thumb("recomended", auto=True)))
     
     itemlist.append(
-        Item(channel=item.channel, title="Por género", action="generos_years",
+        Item(channel=item.channel, title="Por género", action="year",
              url=host, minfo="Géneros", thumbnail=get_thumb("genres", auto=True)))
     
     itemlist.append(
-        Item(channel=item.channel, title="Por año", action="generos_years",
+        Item(channel=item.channel, title="Por año", action="year",
              url=host, minfo="year", thumbnail=get_thumb("year", auto=True)))
     
     itemlist.append(
@@ -70,7 +70,7 @@ def mainlist(item):
              thumbnail=get_thumb("search", auto=True)))
 
     itemlist.append(
-        Item(channel=item.channel, title="Configurar Canal...", action="Config", url="",
+        Item(channel=item.channel, title="Configurar Canal...", action="setting_channel", url="",
              thumbnail=get_thumb("setting_0.png"), text_color='aquamarine'))
     
     
@@ -78,7 +78,7 @@ def mainlist(item):
     
     return itemlist
 
-def Config(item):
+def setting_channel(item):
     from platformcode import platformtools
     ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
@@ -109,12 +109,20 @@ def search(item, texto):
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
     if texto != '':
-        return peliculas(item)
+        try:
+            return peliculas(item)
+        except:
+            import sys
+            for line in sys.exc_info():
+                logger.error("{0}".format(line))
+            return []
+
+
     else:
         return []
 
 
-def generos_years(item):
+def year(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -304,7 +312,7 @@ def findvideos(item):
         stitle = ""
         #en los embed no siempre sale el idioma, y si sale puede ser el mismo para varios videos
         mlang = scrapertools.find_multiple_matches(data, '<strong>(.*?)</strong>')
-        patron = '<iframe src="([^"]+)"' #server
+        patron = '<iframe.*?src="([^"]+)"' #server
         matches = scrapertools.find_multiple_matches(data, patron)
         for i, surl in enumerate(matches):
             if mlang:
@@ -322,6 +330,11 @@ def findvideos(item):
                     lang = "Cast"
                 else:
                     lang = "Lat"
+            try:
+                int(mlang[0])
+                lang = 'VOSE'
+            except:
+                pass
             if lang:
                 stitle = " [COLOR=yellow](%s)[/COLOR]" % lang
             itemlist.append(

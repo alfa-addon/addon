@@ -1211,22 +1211,31 @@ class related(xbmcgui.WindowDialog):
 
 def busqueda_global(item, infoLabels, org_title=False):
     logger.info()
+
+    logger.debug(item)
+
     if item.contentType != "movie":
         cat = ["serie"]
     else:
         cat = ["movie"]
     cat += ["infoPlus"]
 
-    new_item = Item()
-    new_item.extra = infoLabels.get("title", "")
-    new_item.extra = re.sub('\[.*?\]', '', new_item.extra)
-
-    if org_title:
-        new_item.extra = infoLabels.get("originaltitle", "")
-    new_item.category = item.contentType
+    new_item = Item(title=item.contentTitle, text=item.contentTitle.replace("+", " "), mode=item.contentType,
+                    infoLabels=item.infoLabels)
 
     from channels import search
-    return search.do_search(new_item, cat)
+    return search.channel_search(new_item)
+
+    # new_item = Item()
+    # new_item.extra = infoLabels.get("title", "")
+    # new_item.extra = re.sub('\[.*?\]', '', new_item.extra)
+    #
+    # if org_title:
+    #     new_item.extra = infoLabels.get("originaltitle", "")
+    # new_item.category = item.contentType
+    #
+    # from channels import search
+    # return search.do_search(new_item, cat)
 
 
 class Busqueda(xbmcgui.WindowXMLDialog):

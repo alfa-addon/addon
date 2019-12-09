@@ -98,6 +98,8 @@ thumb_dict = {"movies": "https://s10.postimg.cc/fxtqzdog9/peliculas.png",
     "western": "https://s10.postimg.cc/5wc1nokjt/western.png"
     }
 
+
+
 def set_genre(string):
     #logger.info()
 
@@ -182,8 +184,46 @@ def add_languages(title, languages):
         title = '%s %s' % (title, set_color(languages, languages))
     return title
 
+def add_info_plot(plot, languages, quality):
+    #logger.info()
+    last = '[/I][/B]\n'
+    
+    if languages:
+        l_part = '[COLOR yellowgreen][B][I]Idiomas:[/COLOR] '
+        mid = ''
+        
+        if isinstance(languages, list):
+            for language in languages:
+                mid += '%s ' % (set_color(language, language))
+        else:
+            mid = '%s ' % (set_color(languages, languages))
+        
+        p_lang = '%s%s%s' % (l_part, mid, last)
+    
+    if quality:
+        q_part = '[COLOR yellowgreen][B][I]Calidad:[/COLOR] '
+        p_quality = '%s%s%s' % (q_part, quality, last)
+        
+    if languages and quality:
+        plot_ = '%s%s\n%s' % (p_lang, p_quality, plot)
+    
+    elif languages:
+        plot_ = '%s\n%s' % (p_lang, plot)
+
+    elif quality:
+        plot_ = '%s\n%s' % (p_quality, plot)
+
+    else: plot_ = plot
+
+    return plot_
+
 def set_color(title, category):
     #logger.info()
+    from core import jsontools
+
+    styles_path = os.path.join(config.get_runtime_path(), 'resources', 'color_styles.json')
+    preset = config.get_setting("preset_style", default="Estilo 1")
+    color_setting = jsontools.load((open(styles_path, "r").read()))[preset]
 
     color_scheme = {'otro': 'white', 'dual': 'white'}
 
@@ -205,7 +245,9 @@ def set_color(title, category):
             if custom_colors:
                 color_scheme[element] = remove_format(config.get_setting('%s_color' % element))
             else:
-                color_scheme[element] = 'white'
+                color_scheme[element] = remove_format(color_setting.get(element, 'white'))
+                #color_scheme[element] = 'white'
+
         if category in ['update', 'no_update']:
            #logger.debug('title antes de updates: %s' % title)
            title= re.sub(r'\[COLOR .*?\]','[COLOR %s]' % color_scheme[category],title)
@@ -266,6 +308,7 @@ def title_format(item):
     lang = False
     valid = True
     language_color = 'otro'
+    simple_language = ''
 
     #logger.debug('item.title antes de formatear: %s' % item.title.lower())
 
@@ -362,7 +405,7 @@ def title_format(item):
                     if isinstance(item.context, list):
                         item.context.append('Buscar esta pelicula en otros canales')
 
-        if 'Novedades' in item.category and item.from_channel=='news':
+        if ('Novedades' in item.category and item.from_channel=='news'):
             #logger.debug('novedades')
             item.title = '%s [%s]'%(item.title, item.channel)
 
@@ -425,13 +468,31 @@ def title_format(item):
         # Damos formato a la calidad si existiera y lo agregamos al titulo
         if item.quality and isinstance(item.quality, str):
             quality = item.quality.strip()
-            item.title = '%s %s' % (item.title, set_color(quality, 'quality'))
         else:
             quality = ''
 
-        # Damos formato al idioma si existiera y lo agregamos al titulo
-        if lang:
-            item.title = add_languages(item.title, simple_language)
+        # Damos formato al idioma-calidad si existieran y los agregamos al plot
+        quality_ = set_color(quality, 'quality')
+
+        if (lang or quality) and item.action == "play":
+            if hasattr(item, "clean_plot"):
+                item.contentPlot = item.clear_plot
+
+            if lang: item.title = add_languages(item.title, simple_language)
+            if quality: item.title = '%s %s' % (item.title, quality_)
+        
+        elif (lang or quality) and item.action != "play":
+            
+            if item.contentPlot:
+                item.clean_plot = item.contentPlot
+                plot_ = add_info_plot(item.contentPlot, simple_language, quality_)
+                item.contentPlot = plot_
+            else:
+                item.clean_plot = None
+                plot_ = add_info_plot('', simple_language, quality_)
+                item.contentPlot = plot_
+
+
 
         # Para las busquedas por canal
         if item.from_channel != '':
@@ -461,7 +522,10 @@ def title_format(item):
         #logger.debug('item.title antes de server: %s'%item.title)
         if item.action != 'play' and item.server:
             item.title ='%s %s'%(item.title, server.strip())
+
         elif item.action == 'play' and item.server:
+            if hasattr(item, "clean_plot"):
+                item.contentPlot = item.clean_plot
 
             if item.quality == 'default':
                 quality = ''
@@ -474,6 +538,9 @@ def title_format(item):
             if item.server == 'torrent' and item.torrent_info != '':
                 item.title = '%s [%s]' % (item.title, item.torrent_info)
 
+            if item.channel == 'videolibrary':
+                item.title += ' [%s]' % item.contentChannel
+
             # si hay verificacion de enlaces
             if item.alive != '':
                 if item.alive.lower() == 'no':
@@ -482,6 +549,7 @@ def title_format(item):
                     item.title = '[[COLOR yellow][B]?[/B][/COLOR]] %s' % item.title
         else:
             item.title = '%s' % item.title
+
         #logger.debug('item.title despues de server: %s' % item.title)
     elif 'library' in item.action:
         item.title = '%s' % set_color(item.title, 'library')

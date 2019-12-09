@@ -69,17 +69,17 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron  = '"name":"([^"]+)".*?'
-    patron  += '"image":"([^"]+)".*?'
-    patron  += '"url":"([^"]+)"'
+    patron  += '<a href="([^"]+)".*?'
+    patron  += '<span class="categoryCount">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedtitle,scrapedthumbnail,scrapedurl in matches:
-        scrapedplot = ""
-        scrapedthumbnail = "https://th-us2.vporn.com" + scrapedthumbnail
-        scrapedthumbnail= scrapedthumbnail.replace("\/", "/")
+    for scrapedtitle,scrapedurl,cantidad in matches:
+        title = scrapedtitle + " (" + cantidad + ")"
+        plot = ""
+        thumbnail = "https://th-eu3.vporn.com/images/categories/" + scrapedtitle.lower() + ".jpg"
+        logger.debug(thumbnail)
         scrapedurl = host + scrapedurl
-        scrapedurl = scrapedurl.replace("\/", "/")
-        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
+        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
+                              fanart=thumbnail, thumbnail=thumbnail, plot=plot) )
     return itemlist
 
 

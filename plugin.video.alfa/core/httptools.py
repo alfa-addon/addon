@@ -28,7 +28,7 @@ ficherocookies = os.path.join(config.get_data_path(), "cookies.dat")
 
 # Headers por defecto, si no se especifica nada
 default_headers = dict()
-default_headers["User-Agent"] = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
+default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:70.0) Gecko/20100101 Firefox/70.0"
 default_headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
 default_headers["Accept-Language"] = "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3"
 default_headers["Accept-Charset"] = "UTF-8"
@@ -162,9 +162,15 @@ def channel_proxy_list(url, forced_proxy=None):
         url += '/'
     if scrapertools.find_single_match(url, '(?:http.*\:)?\/\/(?:www\.)?([^\?|\/]+)(?:\?|\/)') \
                 in proxy_channel_bloqued:
+        if forced_proxy and forced_proxy not in ['Total', 'ProxyDirect', 'ProxyCF', 'ProxyWeb']:
+            if forced_proxy in proxy_channel_bloqued[scrapertools.find_single_match(url, 
+                        '(?:http.*\:)?\/\/(?:www\.)?([^\?|\/]+)(?:\?|\/)')]:
+                return True
+            else:
+                return False
         if forced_proxy:
             return True
-        if 'ON' in proxy_channel_bloqued[scrapertools.find_single_match(url, 
+        if not 'OFF' in proxy_channel_bloqued[scrapertools.find_single_match(url, 
                 '(?:http.*\:)?\/\/(?:www\.)?([^\?|\/]+)(?:\?|\/)')]:
             return True
 
@@ -342,10 +348,15 @@ def proxy_post_processing(url, proxy_data, response, opt):
                                                  error_skip=proxy_data['CF_addr'])
                 url = opt['url_save']
             elif ', Proxy Web' in proxy_data.get('stat', ''):
-                proxytools.get_proxy_list_method(proxy_init='ProxyWeb',
-                                                 error_skip=proxy_data['web_name'])
-                url =opt['url_save']
-                opt['post'] = opt['post_save']
+                if channel_proxy_list(opt['url_save'], forced_proxy=proxy_data['web_name']):
+                    opt['forced_proxy'] = 'ProxyCF'
+                    url =opt['url_save']
+                    opt['post'] = opt['post_save']
+                else:
+                    proxytools.get_proxy_list_method(proxy_init='ProxyWeb',
+                                                     error_skip=proxy_data['web_name'])
+                    url =opt['url_save']
+                    opt['post'] = opt['post_save']
 
         else:
             opt['out_break'] = True
@@ -434,7 +445,7 @@ def downloadpage(url, **opt):
         opt['proxy_retries_counter'] += 1
         
         session = cloudscraper.create_scraper()
-        session.verify = False
+        session.verify = True
         if opt.get('cookies', True):
             session.cookies = cj
         session.headers.update(req_headers)

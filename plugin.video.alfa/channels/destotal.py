@@ -136,7 +136,7 @@ def list_all(item):
     matches = soup.find_all("article", id=re.compile(r"^post-\d+"))
 
     first = item.first
-    last = first + 20
+    last = first + 25
     if last >= len(matches):
         last = len(matches)
         next = True
@@ -169,7 +169,7 @@ def list_all(item):
         url_next_page = '%s' % url_next_page
         first = 0
 
-    if url_next_page and len(matches) > 21:
+    if url_next_page and len(matches) > 26:
         itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all',
                              first=first))
 

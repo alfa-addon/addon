@@ -164,17 +164,19 @@ def load(item):
 
 def check_conditions(_filter, list_item, item, list_language, list_quality, quality_count=0, language_count=0):
     is_language_valid = True
+
     if _filter.language:
         # logger.debug("title es %s" % item.title)
         #2nd lang
+
         from platformcode import unify
-        _filter.language = unify.set_lang(_filter.language)
+        _filter.language = unify.set_lang(_filter.language).upper()
 
         # viene de episodios
         if isinstance(item.language, list):
             #2nd lang
-            for l, lang in enumerate(item.language):
-                item.language[l] = unify.set_lang(lang)
+            for n, lang in enumerate(item.language):
+                item.language[n] = unify.set_lang(lang).upper()
 
             if _filter.language in item.language:
                 language_count += 1
@@ -183,7 +185,8 @@ def check_conditions(_filter, list_item, item, list_language, list_quality, qual
         # viene de findvideos
         else:
             #2nd lang
-            item.language = unify.set_lang(item.language)
+            item.language = unify.set_lang(item.language).upper()
+
             if item.language.lower() == _filter.language.lower():
                 language_count += 1
             else:
@@ -251,7 +254,7 @@ def get_link(list_item, item, list_language, list_quality=None, global_filter_la
 
     if filter_global and filter_global.active:
         list_item, quality_count, language_count = \
-            check_conditions(filter_global, list_item, item, list_language, list_quality)
+            check_conditions(filter_global, list_item, item, list_language, list_quality)[:3]
     else:
         item.context = context(item)
         list_item.append(item)
@@ -312,10 +315,19 @@ def get_links(list_item, item, list_language, list_quality=None, global_filter_l
 
         #2nd lang
         if second_lang and second_lang != 'No' and first_lang.lower() != second_lang.lower() :
+            second_list= []
             _filter2 = _filter
             _filter2.language = second_lang
+            for it in new_itemlist:
+                
+                if isinstance(it.language, list):
+                    if not second_lang in it.language:
+                        second_list.append(it)
+                else:
+                    second_list = new_itemlist
+                    break
             for item in list_item:
-                new_itemlist, quality_count, language_count, second_lang = check_conditions(_filter2, new_itemlist, item, list_language,
+                new_itemlist, quality_count, language_count, second_lang = check_conditions(_filter2, second_list, item, list_language,
                                                                            list_quality, quality_count, language_count)
 
 

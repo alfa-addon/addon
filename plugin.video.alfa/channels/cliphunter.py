@@ -77,7 +77,9 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron  = '<img class=".*?" src="([^"]+)".*?<div class="tr">(.*?)</div>.*?<a href="([^"]+)\s*" class="vttl.*?">(.*?)</a>'
+    patron = '<img class=".*?" src="([^"]+)".*?'
+    patron += '<div class="tr.*?">([^<]+)</div>.*?'
+    patron += '<a href="([^"]+)" class="vttl.*?">([^<]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedthumbnail,scrapedtime,scrapedurl,scrapedtitle  in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
@@ -102,7 +104,6 @@ def play(item):
     for scrapedurl  in matches:
         scrapedurl = scrapedurl.replace("\/", "/")
         title = scrapedurl
-    itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=scrapedurl,
-                         thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo"))
+    itemlist.append(item.clone(action="play", title=item.title, url=scrapedurl))
     return itemlist
 

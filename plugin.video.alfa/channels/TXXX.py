@@ -87,7 +87,7 @@ def lista(item):
     patron += '</a>(.*?)</div>.*?href="([^"]+)">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedthumbnail, scrapedtime, scrapedurl, scrapedtitle in matches:
-        
+        scrapedurl = urlparse.urljoin(host,scrapedurl)
         contentTitle = scrapedtitle
         scrapedhd = scrapertools.find_single_match(scrapedtime, '<span class="thumb__hd">(.*?)</span>')
         duration = scrapertools.find_single_match(scrapedtime, '<span class="thumb__duration">(.*?)</span>')
@@ -99,7 +99,7 @@ def lista(item):
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play" , title=title , url=scrapedurl, thumbnail=thumbnail, 
                         plot=plot, contentTitle=title) )
-    next_page = scrapertools.find_single_match(data,'<a class=" btn btn--size--l btn--next.*?" href="([^"]+)" title="Next Page"')
+    next_page = scrapertools.find_single_match(data,'<a class="paginator__item paginator__item--next paginator__item--arrow" href="([^"]+)"')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )

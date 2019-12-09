@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,urllib2,urllib,re
-import os, sys
+import urlparse
+import re
+
+from platformcode import config, logger
 from core import scrapertools
 from core import servertools
 from core.item import Item
-from platformcode import config, logger
 from core import httptools
+from channels import filtertools
+from channels import autoplay
+
+IDIOMAS = {'vo': 'VO'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['bitp']
 
 host = 'http://yuuk.net'
 
@@ -14,9 +22,15 @@ host = 'http://yuuk.net'
 def mainlist(item):
     logger.info()
     itemlist = []
+
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/list-genres/"))
     itemlist.append( Item(channel=item.channel, title="Buscar" , action="search"))
+
+    autoplay.show_option(item.channel, itemlist)
+
     return itemlist
 
 
@@ -65,7 +79,7 @@ def lista(item):
         scrapedplot = ""
         calidad = calidad.replace(" Full HD JAV", "")
         title = "[COLOR red]" + calidad + "[/COLOR] " + scrapedtitle
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data,'<li class=\'current\'>.*?<a rel=\'nofollow\' href=\'([^\']+)\' class=\'inactive\'>')
     if next_page!="":
@@ -89,32 +103,8 @@ def findvideos(item):
             url = scrapertools.find_single_match(data,'"file": "([^"]+)"')
         itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
     return itemlist
-
-
-def play(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    data = scrapertools.find_single_match(data,'Streaming Server<(.*?)Screenshot<')
-    patron = '(?:src|SRC)="([^"]+)"'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for url in matches:
-        if "http://stream.yuuk.net/embeds.php" in url:
-            data = httptools.downloadpage(url).data
-            url = scrapertools.find_single_match(data,'"file": "([^"]+)"')
-        itemlist.append( Item(channel=item.channel, action="play", title = "%s", contentTitle=item.title, url=url ))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-
-    a = len (itemlist)
-    for i in itemlist:
-        if a < 1:
-            return []
-        res = servertools.check_video_link(i.url, i.server, timeout=5)
-        a -= 1
-        if 'green' in res:
-            return [i]
-        else:
-            continue
-

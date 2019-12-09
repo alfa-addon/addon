@@ -25,10 +25,10 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['torrent']
 
-host = "https://grantorrent1.com/"
+host = "https://grantorrent.la/"
 channel = "grantorrent"
-domain = 'grantorrent1.com'
-domain_files = 'files.grantorrent1.com'
+domain = 'grantorrent.la'
+domain_files = 'files.grantorrent.one'
 
 dict_url_seasons = dict()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
@@ -53,15 +53,15 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url=host, extra="peliculas", thumbnail=thumb_pelis))
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url=host + "principal/", extra="peliculas", thumbnail=thumb_pelis))
 
     #Buscar películas
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar en Películas >>", url=host, extra="peliculas", thumbnail=thumb_buscar))
     
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Series", url=host, extra="series", thumbnail=thumb_series))
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Series", url=host + "principal/", extra="series", thumbnail=thumb_series))
 
     #Buscar series
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar en Series >>", url=host + "series/", extra="series", thumbnail=thumb_buscar))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar en Series >>", url=host + "series-2/", extra="series", thumbnail=thumb_buscar))
         
     itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", folder=False, thumbnail=thumb_separador))
     
@@ -107,9 +107,9 @@ def submenu(item):
                     itemlist.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
                 return itemlist                                             #Salimos
         
-        itemlist.append(item.clone(action="listado", title="Novedades", url=host))          #Menú principal películas
+        itemlist.append(item.clone(action="listado", title="Novedades"))          #Menú principal películas
         
-        itemlist.append(item.clone(action="generos", title="Películas **Géneros**", url=host))         #Lista de Géneros
+        itemlist.append(item.clone(action="generos", title="Películas **Géneros**"))         #Lista de Géneros
     
         for scrapedurl, scrapedtitle in matches:
             title = scrapedtitle.strip()
@@ -135,7 +135,7 @@ def submenu(item):
 
             itemlist.append(item.clone(action="listado", title=title, url=scrapedurl))              #Menú series
             
-            itemlist.append(item.clone(action="generos", title="Series **Géneros**", url=host + "series/")) #Lista de Géneros
+            itemlist.append(item.clone(action="generos", title="Series **Géneros**", url=host + "series-2/"))   #Lista de Géneros
 
     return itemlist
     
@@ -406,7 +406,7 @@ def listado(item):
         #Limpiamos el título de la basuna innecesaria
         title = title.replace("Dual", "").replace("dual", "").replace("Subtitulada", "").replace("subtitulada", "").replace("Subt", "").replace("subt", "").replace("Sub", "").replace("sub", "").replace("(Reparado)", "").replace("(Proper)", "").replace("(proper)", "").replace("Proper", "").replace("proper", "").replace("(Latino)", "").replace("Latino", "")
         title = title.replace("- HDRip", "").replace("(HDRip)", "").replace("- Hdrip", "").replace("(microHD)", "").replace("(DVDRip)", "").replace("(HDRip)", "").replace("(BR-LINE)", "").replace("(HDTS-SCREENER)", "").replace("(BDRip)", "").replace("(BR-Screener)", "").replace("(DVDScreener)", "").replace("TS-Screener", "").replace(" TS", "").replace(" Ts", "")
-            
+        
         if item_local.extra == "peliculas":                 #preparamos Item para películas
             if "/serie" in scrapedurl or "/serie" in item.url:
                 continue
@@ -482,7 +482,7 @@ def findvideos(item):
     #logger.debug(item)
 
     timeout_find = timeout
-    follow_redirects=True
+    follow_redirects=False
     if item.videolibray_emergency_urls:                 #Si se están cacheando enlaces aumentamos el timeout
         timeout_find = timeout * 2
     elif item.emergency_urls:                           #Si se llama desde la Videoteca con enlaces cacheados... 
@@ -546,9 +546,10 @@ def findvideos(item):
         emergency_torrents = []
         emergency_urls = []
     i = -1
-    for lang, quality, size, scrapedurl in matches:
+    for lang, quality, size, scrapedurl_la in matches:
         i += 1
         temp_epi = ''
+        scrapedurl = scrapedurl_la.replace('.la', '.one')
         if scrapertools.find_single_match(quality, '\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.'):
             password = scrapertools.find_single_match(quality, '\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.')
             quality = re.sub(r'\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.', '', quality)
@@ -1195,7 +1196,7 @@ def search(item, texto):
     item.media = "search"                           #Marcar para "Listado": igual comportamiento que "Categorías"
 
     try:
-        if "series/" in item.url:
+        if "/series" in item.url:
             item.extra = "series"
             item.title = "Series"
         else:

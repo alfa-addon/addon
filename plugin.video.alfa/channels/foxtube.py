@@ -8,14 +8,16 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'https://www.muyzorras.com'
+host = 'https://www.foxtube.com' #https://www.muyzorras.com
+
+#Falta channel ajax {url:"/users/doIFollow/749/"
 
 def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append( Item(channel=item.channel, title="Ultimos" , action="lista", url=host))
-    itemlist.append( Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + '/actrices-porno/'))
-    # itemlist.append( Item(channel=item.channel, title="Canal" , action="catalogo", url=host + '/canales/'))
+    itemlist.append( Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + '/pornstars/'))
+    # itemlist.append( Item(channel=item.channel, title="Canal" , action="catalogo", url=host + '/channels/'))
     
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     
@@ -48,7 +50,7 @@ def catalogo(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle  in matches:
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        scrapedthumbnail = scrapedthumbnail + "|Referer=%s" %host
+        thumbnail = scrapedthumbnail.replace("https","http") + "|Referer=%s/pornstars/" %host
         plot = ""
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail, plot=plot) )
@@ -84,7 +86,7 @@ def lista(item):
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<article>.*?'
     patron += '<a href="([^"]+)".*?'
-    patron += 'data-origen="([^"]+)".*?'
+    patron += '<img.*?src="([^"]+)".*?'
     patron += 'alt="([^"]+)".*?'
     patron += '<span class="r\w">(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -93,7 +95,8 @@ def lista(item):
         title = "[COLOR yellow]" + time + "[/COLOR] " + scrapedtitle
         if 'HD' in duracion :
             title = "[COLOR yellow]" + time + "[/COLOR] " + "[COLOR red]" + "HD" + "[/COLOR]  " + scrapedtitle
-        thumbnail = scrapedthumbnail + "|Referer=%s" %host
+        thumbnail = scrapedthumbnail.replace("https","http") + "|Referer=%s/" %host
+        logger.debug(thumbnail)
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = title))
@@ -109,7 +112,7 @@ def play(item):
     itemlist = []
     url = ""
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data,'<iframe title="video" src="([^"]+)"')
+    url = scrapertools.find_single_match(data,'<iframe title="[^"]+" src="([^"]+)"')
     if not url:
         url = scrapertools.find_single_match(data,'href="(https://www.pornhub.com/view_video.php[^"]+)"')
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))

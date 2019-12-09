@@ -29,10 +29,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     matches = re.compile(patron, re.DOTALL).findall(data)
 
     for url in matches:
-        ext = url[-4:]
-        #Los .mp4 no van bien en este server, hasta que lo arreglen...
-        if ext != 'm3u8':
-            continue
+        ext = url[-4:]        
         video_urls.append(["%s [onlystream]" % (ext), url])
 
     return video_urls

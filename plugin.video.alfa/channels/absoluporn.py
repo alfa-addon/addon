@@ -8,7 +8,7 @@ from core.item import Item
 from core import servertools
 from core import httptools
 
-host = 'http://www.absoluporn.es'
+host = 'http://www.absoluporn.com/en'
 
 
 def mainlist(item):
@@ -42,14 +42,15 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = '&nbsp;<a href="([^"]+)" class="link1">([^"]+)</a>'
+    patron  = '&nbsp;<a href="([^"]+)" class="link1b">([^"]+)</a>&nbsp;<span class="text23">([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle in matches:
+    for scrapedurl,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
+        title = "%s %s" %(scrapedtitle,cantidad)
         scrapedurl = scrapedurl.replace(".html", "_date.html")
         scrapedurl = host +"/" + scrapedurl
-        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
     return itemlist
 
@@ -70,7 +71,7 @@ def lista(item):
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
-                              fanart=thumbnail, contentTitle = scrapedtitle))
+                              fanart=thumbnail, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<span class="text16">\d+</span> <a href="..([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
@@ -89,7 +90,6 @@ def play(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for servervideo,path,filee  in matches:
         scrapedurl = servervideo + path + "56ea912c4df934c216c352fa8d623af3" + filee
-        itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=scrapedurl,
-                            thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
+        itemlist.append(item.clone(action="play", title= item.title, url=scrapedurl))
     return itemlist
 

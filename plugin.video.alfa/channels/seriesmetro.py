@@ -31,7 +31,7 @@ def create_soup(url, referer=None, unescape=False):
 
     return soup
 
-def Config_(item):
+def setting_channel(item):
     from platformcode import platformtools
     ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
@@ -66,7 +66,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + '?s=',
                          thumbnail=get_thumb('search', auto=True)))
 
-    itemlist.append(Item(channel=item.channel,action="Config_", title="Configurar canal...",
+    itemlist.append(Item(channel=item.channel,action="setting_channel", title="Configurar canal...",
                          text_color="aquamarine", thumbnail=get_thumb("setting_0.png"),
                          folder=False))
 
@@ -247,8 +247,8 @@ def episodesxseason(item):
 
         url = elem.a['href']
 
-        ep, t_ep = scrapertools.find_single_match(elem.text, r'x(\d+)(.*?) \d+-')
-        t_ep = t_ep.replace(' – ', '')
+        ep, t_ep = scrapertools.find_single_match(elem.text, r'x(\d+) (.*)')
+        t_ep = re.sub(r' – |\d+-\d+-\d+', '', t_ep)
         title = '%sx%s [COLOR aquamarine][I]%s[/I][/COLOR]' % (season, ep, t_ep)
         infoLabels['episode'] = ep
 

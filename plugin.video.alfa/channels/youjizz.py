@@ -98,14 +98,9 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, 'var encodings(.*?)var')
-    if '360' in data:
-        patron = '"360".*?"filename"\:"(.*?)"'
-    if '720' in data:
-        patron = '"720".*?"filename"\:"(.*?)"'
-    if '1080' in data:
-        patron = '"1080".*?"filename"\:"(.*?)"'
-    media_url = scrapertools.find_single_match(data, patron)
-    media_url = "https:" + media_url.replace("\\", "")
-    itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=media_url,
-                         thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
+    patron = '"quality":"(\d+)","filename":"([^"]+)",'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for quality,scrapedurl in matches:
+        url = "https:" + scrapedurl.replace("\\", "")
+        itemlist.append(['%sp' %quality, url])
     return itemlist

@@ -97,6 +97,7 @@ def list_all(item):
         cleantitle = title
         year = ''
         tvshow = elem.find("span", class_="TpTv BgA")
+
         if not tvshow:
             year = elem.find("span", class_="Date AAIco-date_range").text
             extra_info = elem.find("span", class_="calidad").text.split("|")
@@ -120,7 +121,8 @@ def list_all(item):
         else:
             new_item.action = 'findvideos'
             new_item.contentTitle = cleantitle
-            new_item.mode = 'movies'
+            if item.mode != 'search':
+                new_item.mode = 'movies'
 
         if item.mode == new_item.mode or item.mode == 'search':
             itemlist.append(new_item)
@@ -141,7 +143,6 @@ def section(item):
     logger.info()
 
     itemlist = list()
-    item.mode = 'tvshows'
     data = httptools.downloadpage(host).data
     soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
@@ -247,27 +248,6 @@ def findvideos(item):
         itemlist.append(Item(channel=item.channel, title='%s'+title, url=url, action='play', infoLabels=item.infoLabels,
                              language=lang))
 
-    d_link = soup.find("div", class_="TPTblCn")
-
-    for elem in d_link.find_all("tr"):
-        lang = ''
-        try:
-            lang = elem.find_all("span")[2].text.strip()
-        except:
-            continue
-
-        if elem.a:
-            url = elem.a["href"]
-
-        title = add_lang(lang)
-
-        new_item = Item(channel=item.channel, title='%s' + title, url=url, action='play', infoLabels=item.infoLabels,
-                        language=lang)
-        if host in url:
-            new_item.server = 'torrent'
-
-        itemlist.append(new_item)
-
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server.capitalize())
 
     # Requerido para FilterTools
@@ -309,3 +289,27 @@ def search(item, texto):
         return list_all(item)
     else:
         return []
+
+def newest(categoria):
+    logger.info()
+    itemlist = []
+    item = Item()
+    try:
+        if categoria == 'peliculas':
+            item.url = host+'todas-las-peliculas/'
+
+        elif categoria == 'infantiles':
+            item.url = host + 'peliculas/animacion/'
+        elif categoria == 'terror':
+            item.url = host + 'peliculas/terror/'
+        item.mode = 'movies'        
+        itemlist = list_all(item)
+        if itemlist[-1].title == 'Siguiente >>>':
+            itemlist.pop()
+    except:
+        import sys
+        for line in sys.exc_info():
+            logger.error("{0}".format(line))
+        return []
+
+    return itemlist

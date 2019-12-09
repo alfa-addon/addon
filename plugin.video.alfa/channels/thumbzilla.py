@@ -50,7 +50,7 @@ def mainlist(item):
                          action="videos", viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(Item(channel=__channel__, title="Tendencias", url=host + '/tending',
+    itemlist.append(Item(channel=__channel__, title="Tendencias", url=host + '/trending',
                          action="videos", viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
@@ -75,10 +75,10 @@ def mainlist(item):
                          thumbnail=get_thumb("channels_adult.png")))
  
     itemlist.append(Item(channel=__channel__, title="Categorías", action="categorias",
-                         url=host + '/categories/', viewmode="movie_with_plot", viewcontent='movies',
+                         url=host, viewmode="movie_with_plot", viewcontent='movies',
                          thumbnail=get_thumb("channels_adult.png")))
 
-    itemlist.append(Item(channel=__channel__, title="Buscador", action="search", url=host,
+    itemlist.append(Item(channel=__channel__, title="Buscar", action="search", url=host,
                          thumbnail=get_thumb("channels_adult.png"), extra="buscar"))
     return itemlist
 
@@ -151,13 +151,13 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
+    data = scrapertools.find_single_match(data, '<p>Categories</p>(.*?)</nav>')
     # logger.info(data)
-    patron = 'class="checkHomepage"><a href="([^"]+)".*?'  # url
-    patron += '<span class="count">([^<]+)</span>'  # title, vids
+    patron = '<a href="([^"]+)".*?'  # url
+    patron += '<span class="wrapper">([^<]+)<span class="count">([^<]+)</span>'  # title, vids
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, vids in matches:
-        scrapedtitle = scrapedurl.replace('/categories/', '').replace('-', ' ').title()
-        title = "%s (%s)" % (scrapedtitle, vids.title())
+    for scrapedurl,title, vids in matches:
+        title = "%s (%s)" % (title, vids)
         thumbnail = item.thumbnail
         url = urlparse.urljoin(item.url, scrapedurl)
         itemlist.append(Item(channel=item.channel, action="videos", fanart=thumbnail,

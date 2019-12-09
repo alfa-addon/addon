@@ -146,8 +146,8 @@ def novedades_episodios(item):
     patr = '<h2>Últimos episodios</h2>.+?<ul class="ListEpisodios[^>]+>(.*?)</ul>'
     data = get_source(item.url, patron=patr)
     
-    patron = '<li><a href="([^"]+)".*?<img src="([^"]+)".*?"Capi">(.*?)</span>'
-    patron += r'\s*<strong class="Title">(.*?)</strong>'
+    patron = '<a href="([^"]+)"[^>]+>.+?<img src="([^"]+)".+?"Capi">(.*?)</span>'
+    patron += '<strong class="Title">(.*?)</strong>'
     
     matches = re.compile(patron, re.DOTALL).findall(data)
     
@@ -306,23 +306,24 @@ def findvideos(item):
         
         lang = " [COLOR=grey](%s)[/COLOR]" % language
         for source in matches:
-            if 'streamium.xyz' in source:
-                continue
+            
             url = source
             if 'redirector' in source:
                 new_data = httptools.downloadpage(source).data
                 url = scrapertools.find_single_match(new_data, 'window.location.href = "([^"]+)"')
             elif 'animeflv.net/embed' in source:
                 source = source.replace('embed', 'check')
-                new_data = httptools.downloadpage(source).data
-                json_data = jsontools.load(new_data)
+               
                 try:
+                    new_data = httptools.downloadpage(source).data
+                    json_data = jsontools.load(new_data)
                     url = json_data['file']
                 except:
                     continue
             #Parche por error tipografico en web(RV)
             elif 'e/http' in source:
                 url = url.split('/e/')[1]
+            url = url.replace('embedsito', 'fembed')
 
             itemlist.append(Item(channel=item.channel, url=url, title='%s'+lang, 
                                 action='play', infoLabels=item.infoLabels, language=language))

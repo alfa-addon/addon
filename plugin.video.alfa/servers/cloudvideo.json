@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://cloudvideo.tv/(?:embed-|)([a-z0-9]+)(?:.html|)",
+        "pattern": "cloudvideo.tv/(?:embed-|)([a-z0-9]+)(?:.html|)",
         "url": "https://cloudvideo.tv/embed-\\1.html"
       }
     ]

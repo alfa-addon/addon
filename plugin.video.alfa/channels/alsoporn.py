@@ -15,7 +15,7 @@ host = 'http://www.alsoporn.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    # itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/en/g/All/new/1"))
+    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/g/All/new/1"))
     itemlist.append( Item(channel=item.channel, title="Top" , action="lista", url=host + "/g/All/top/1"))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
@@ -59,7 +59,7 @@ def lista(item):
     patron = '<div class="alsoporn_prev">.*?'
     patron += '<a href="([^"]+)">.*?'
     patron += '<img src="([^"]+)" alt="([^"]+)">.*?'
-    patron += '<span>([^"]+)</span>'
+    patron += '<span>([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,scrapedtime in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
@@ -68,7 +68,7 @@ def lista(item):
         plot = ""
         if not "0:00" in scrapedtime:
             itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                                  fanart=thumbnail, plot=plot, contentTitle = scrapedtitle))
+                                  fanart=thumbnail, plot=plot, contentTitle = title))
 
     next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)" target="_self"><span class="alsoporn_page">NEXT</span></a>')
     if next_page!="":
@@ -83,17 +83,18 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     scrapedurl = scrapertools.find_single_match(data,'<iframe frameborder=0 scrolling="no"  src=\'([^\']+)\'')
     data = httptools.downloadpage(scrapedurl).data
-    scrapedurl1 = scrapertools.find_single_match(data,'<iframe src="(.*?)"')
-    scrapedurl1 = scrapedurl1.replace("//www.playercdn.com/ec/i2.php?url=", "")
-    scrapedurl1 = base64.b64decode(scrapedurl1 + "=")
-    logger.debug(scrapedurl1)
-    data = httptools.downloadpage(scrapedurl1).data
-    if "xvideos" in scrapedurl1:
-        scrapedurl2 = scrapertools.find_single_match(data, 'html5player.setVideoHLS\(\'([^\']+)\'\)')
-    if "xhamster" in scrapedurl1:
-        scrapedurl2 = scrapertools.find_single_match(data, '"[0-9]+p":"([^"]+)"').replace("\\", "")
-
-    logger.debug(scrapedurl2)
-    itemlist.append(item.clone(action="play", title=item.title, url=scrapedurl2))
+    scrapedurl = scrapertools.find_single_match(data,'<iframe src="(.*?)"')
+    scrapedurl = scrapedurl.replace("//www.playercdn.com/ec/i2.php?url=", "")
+    logger.debug(scrapedurl)
+    scrapedurl = base64.b64decode(scrapedurl + "=")
+    if "xhamster" in scrapedurl:
+        data = httptools.downloadpage(scrapedurl).data
+        patron = '"([0-9]+p)":"([^"]+)"'
+        matches = re.compile(patron, re.DOTALL).findall(data)
+        for res, url in matches:
+            url = url.replace("\\", "")
+            itemlist.append(["[xhamster] %s" % res, url])
+    else:
+        itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=scrapedurl))
+        itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
-

@@ -72,7 +72,7 @@ def mainlist(item):
 
     
     itemlist.append(Item(channel=item.channel, title="Configurar Canal...", 
-                         action="Config", url="",
+                         action="setting_channel", url="",
                          thumbnail=get_thumb("setting_0.png"),
                          text_color='aquamarine'))
     
@@ -81,7 +81,7 @@ def mainlist(item):
     
     return itemlist
 
-def Config(item):
+def setting_channel(item):
     from platformcode import platformtools
     ret = platformtools.show_channel_settings()
     platformtools.itemlist_refresh()
@@ -382,11 +382,11 @@ def episodios(item):
     #itemlist = filtertools.get_links(itemlist, item, list_language)
     itemlist.reverse()
     if matches and not itemlist:
-        zanga = '[COLOR tomato]No hay enlaces con subtitulos en %s[/COLOR]' % sub_choosen
+        zanga = 'No hay enlaces con subtitulos en %s' % sub_choosen
         if not 'espa' in sub_choosen.lower():
-            zanga = '[COLOR tomato]There\'s  no links with %s[/COLOR] subtitles' % sub_choosen
+            zanga = 'There\'s  no links with %s subtitles' % sub_choosen
         from platformcode import platformtools
-        return platformtools.dialog_ok('Information', zanga)
+        return platformtools.dialog_notification('Information', zanga, time=7000)
 
         #itemlist.append(item.clone(title=zanga, url='', action=''))
     return itemlist

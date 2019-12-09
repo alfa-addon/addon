@@ -1,23 +1,37 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,urllib2,urllib,re
-import os, sys
+import urlparse
+import re
+
 from platformcode import config, logger
 from core import scrapertools
-from core.item import Item
 from core import servertools
+from core.item import Item
 from core import httptools
+from channels import filtertools
+from channels import autoplay
+
+IDIOMAS = {'vo': 'VO'}
+list_language = IDIOMAS.values()
+list_quality = []
+list_servers = ['gounlimited']
 
 host = 'http://streamingporn.xyz'
 
 def mainlist(item):
     logger.info()
     itemlist = []
+
+    autoplay.init(item.channel, list_servers, list_quality)
+
     itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/category/movies/"))
     itemlist.append( Item(channel=item.channel, title="Videos" , action="lista", url=host + "/category/stream/"))
     itemlist.append( Item(channel=item.channel, title="Canal" , action="catalogo", url=host))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+
+    autoplay.show_option(item.channel, itemlist)
+
     return itemlist
 
 
@@ -88,7 +102,7 @@ def lista(item):
         contentTitle = title
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, 
+        itemlist.append( Item(channel=item.channel, action="findvideos" , title=title , url=url, thumbnail=thumbnail, 
                               fanart=scrapedthumbnail, plot=plot, contentTitle = contentTitle) )
     next_page_url = scrapertools.find_single_match(data,'<div class="loadMoreInfinite"><a href="(.*?)" >Load More')
     if next_page_url!="":
@@ -98,7 +112,7 @@ def lista(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
@@ -107,13 +121,9 @@ def play(item):
     for scrapedurl in matches:
         itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=scrapedurl))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    a = len (itemlist)
-    for i in itemlist:
-        if a < 1:
-            return []
-        res = servertools.check_video_link(i.url, i.server, timeout=5)
-        a -= 1
-        if 'green' in res:
-            return [i]
-        else:
-            continue
+    # Requerido para FilterTools
+    itemlist = filtertools.get_links(itemlist, item, list_language)
+    # Requerido para AutoPlay
+    autoplay.start(itemlist, item)
+    return itemlist
+

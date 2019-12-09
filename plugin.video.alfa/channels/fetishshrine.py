@@ -67,11 +67,10 @@ def lista(item):
             title = "[COLOR yellow]" + duracion + "[/COLOR] " + "[COLOR red]" + "HD" + "[/COLOR] " +scrapedtitle
         else:
             title = "[COLOR yellow]" + duracion + "[/COLOR] " + scrapedtitle
-        contentTitle = scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
-                               plot=plot, fanart=scrapedthumbnail, contentTitle = contentTitle ))
+                               plot=plot, fanart=scrapedthumbnail, contentTitle = title ))
     next_page = scrapertools.find_single_match(data,'<li><a data=\'\d+\' href="([^"]+)" title="Next">')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
@@ -86,7 +85,6 @@ def play(item):
     patron  = 'video_url: \'([^\']+)\''
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl  in matches:
-        itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=scrapedurl,
-                            thumbnail=item.thumbnail, plot=item.plot, show=item.title, server="directo", folder=False))
+        itemlist.append(item.clone(action="play", contentTitle=item.title, url=scrapedurl))
     return itemlist
 

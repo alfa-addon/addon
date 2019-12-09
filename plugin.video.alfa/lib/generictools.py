@@ -359,7 +359,7 @@ def post_tmdb_listado(item, itemlist):
             logger.error(item_local)
             del item_local.infoLabels['tmdb_id']                        #puede traer un TMDB-ID erroneo
             try:
-                tmdb.set_infoLabels(item_local, __modo_grafico__, idioma_busqueda='es,en')  #pasamos otra vez por TMDB
+                tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda='es,en') #pasamos otra vez por TMDB
             except:
                 logger.error(traceback.format_exc())
             logger.error(item_local)
@@ -370,7 +370,7 @@ def post_tmdb_listado(item, itemlist):
                 year = item_local.infoLabels['year']            #salvamos el año por si no tiene éxito la nueva búsqueda
                 item_local.infoLabels['year'] = "-"             #reseteo el año
                 try:
-                    tmdb.set_infoLabels(item_local, __modo_grafico__, idioma_busqueda='es,en')  #pasamos otra vez por TMDB
+                    tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda='es,en') #pasamos otra vez por TMDB
                 except:
                     logger.error(traceback.format_exc())
                 if not item_local.infoLabels['tmdb_id']:        #ha tenido éxito?
@@ -558,7 +558,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
     # Primero creamos un título para TODAS las Temporadas
     # Pasada por TMDB a Serie, para datos adicionales
     try:
-        tmdb.set_infoLabels(item, True, idioma_busqueda='es,en')    #TMDB de cada Temp
+        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es,en')  #TMDB de la serie
     except:
         logger.error(traceback.format_exc())
     
@@ -594,6 +594,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
             season = item_local.contentSeason                       #Si se detecta una temporada distinta se prepara un título
             item_season = item.clone()
             item_season.contentSeason = item_local.contentSeason    #Se pone el núm de Temporada para obtener mejores datos de TMDB
+            item_season.contentType = 'season'
             item_season.title = 'Temporada %s' % item_season.contentSeason
             if url != 'serie':
                 item_season.url = item_local.url
@@ -607,7 +608,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
             
             # Pasada por TMDB a las Temporada
             try:
-                tmdb.set_infoLabels(item_local, True, idioma_busqueda='es,en')      #TMDB de cada Temp
+                tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda='es,en')    #TMDB de cada Temp
             except:
                 logger.error(traceback.format_exc())
         
@@ -1050,7 +1051,7 @@ def post_tmdb_findvideos(item, itemlist):
         item.unify = config.get_setting("unify")
         logger.error(traceback.format_exc())
     
-    if item.contentSeason_save:                                 #Restauramos el num. de Temporada
+    if item.contentSeason_save:                                                 #Restauramos el num. de Temporada
         item.contentSeason = item.contentSeason_save
         del item.contentSeason_save
     
@@ -1064,11 +1065,11 @@ def post_tmdb_findvideos(item, itemlist):
 
     # Obtener la información actualizada del vídeo.  En una segunda lectura de TMDB da más información que en la primera
     #if not item.infoLabels['tmdb_id'] or (not item.infoLabels['episodio_titulo'] and item.contentType == 'episode'):
-    #    tmdb.set_infoLabels(item, True)
+    #    tmdb.set_infoLabels_item(item, True)
     #elif (not item.infoLabels['tvdb_id'] and item.contentType == 'episode') or item.contentChannel == "videolibrary":
-    #    tmdb.set_infoLabels(item, True)
+    #    tmdb.set_infoLabels_item(item, True)
     try:
-        tmdb.set_infoLabels(item, True, idioma_busqueda='es,en')    #TMDB de cada Temp
+        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es,en')  #TMDB de cada Temp
     except:
         logger.error(traceback.format_exc())
     #Restauramos la información de max num. de episodios por temporada despues de TMDB
@@ -1078,6 +1079,8 @@ def post_tmdb_findvideos(item, itemlist):
                 item.infoLabels['temporada_num_episodios'] = num_episodios
         else:
             item.infoLabels['temporada_num_episodios'] = num_episodios
+        if item.infoLabels['number_of_seasons'] == 1 and item.infoLabels['number_of_episodes'] > item.infoLabels['temporada_num_episodios']:
+            item.infoLabels['temporada_num_episodios'] = item.infoLabels['number_of_episodes']
     except:
         logger.error(traceback.format_exc())
 
@@ -1087,7 +1090,7 @@ def post_tmdb_findvideos(item, itemlist):
         if category:
             item.category = category
     
-    if item.armagedon:                                          #Es una situación catastrófica?
+    if item.armagedon:                                                          #Es una situación catastrófica?
         itemlist.append(item.clone(action='', title=item.category + ': [COLOR hotpink]Usando enlaces de emergencia[/COLOR]', folder=False))
     
     #Quitamos el la categoría o nombre del título, si lo tiene
@@ -1130,7 +1133,7 @@ def post_tmdb_findvideos(item, itemlist):
             tiempo = item.infoLabels['duration']
             logger.error(traceback.format_exc())
     
-    elif item.contentChannel == 'videolibrary':                         #No hay, viene de la Videoteca? buscamos en la DB
+    elif item.contentChannel == 'videolibrary':                                     #No hay, viene de la Videoteca? buscamos en la DB
     #Leo de la BD de Kodi la duración de la película o episodio.  En "from_fields" se pueden poner las columnas que se quiera
         nun_records = 0
         try:

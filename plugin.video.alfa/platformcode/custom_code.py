@@ -328,7 +328,7 @@ def verify_Kodi_video_DB():
                 if filetools.exists(filetools.join(path, platform['video_db'])):
                     for root, folders, files in db_files:
                         for file in files:
-                            if file != platform['video_db']:
+                            if platform['video_db'] not in file:
                                 if file.startswith('MyVideos'):
                                     randnum = str(random.randrange(1, 999999))
                                     filetools.rename(filetools.join(path, file), 'OLD_' + randnum +'_' + file)
