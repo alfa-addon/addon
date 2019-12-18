@@ -13,7 +13,8 @@ from platformcode import config, logger
 
 __channel__ = "xms"
 
-# Xtheatre practicamente muerta
+# Xtheatre links netu, vidlox y nuevo serve https://watchanimestream.net/v/kep0pc3jzlwq0n6
+
 
 host = 'https://xtheatre.org/'
 host1 = 'https://www.cam4.com/'
@@ -93,7 +94,10 @@ def peliculas(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|#038;", "", data)
-    patron = 'src="([^"]+)" class="attachment-thumb_site.*?'  # img
+    if "category" in item.url:
+            patron = 'title="[^"]+" data-lazy-src="([^"]+)".*?'  # img
+    else:
+        patron = '<img width="\d+" height="\d+" src="([^"]+)".*?'
     patron += '<a href="([^"]+)" title="([^"]+)".*?'          # url, title
     patron += '<div class="right"><p>([^<]+)</p>'             # plot
     matches = re.compile(patron, re.DOTALL).findall(data)
