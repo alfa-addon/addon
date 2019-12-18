@@ -75,7 +75,7 @@ def lista(item):
                               url=next_page) )
     return itemlist
 
-
+# http://s125.cdna.tv/wqpvid/1575908208/8ZUHCPU8dOS5hsL3i9LXLg/16000/16134/16134_480p.mp4
 def play(item):
     logger.info()
     itemlist = []
@@ -86,7 +86,7 @@ def play(item):
     for quality,number,key in matches:
         nt = int(int(id)/1000)
         n = str(nt*1000)
-        url = "http://s%s.cdna.tv/qqpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
+        url = "http://s%s.cdna.tv/wqpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
         url= url.replace("_720p", "")
         itemlist.append(['.mp4 %s' %quality, url])
     return itemlist
