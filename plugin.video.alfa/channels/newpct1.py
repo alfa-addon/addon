@@ -15,9 +15,9 @@ from core import httptools
 from core import scrapertools
 from core import servertools
 from core import channeltools
+from core import tmdb
 from core.item import Item
 from platformcode import config, logger
-from core import tmdb
 from lib import generictools
 from channels import filtertools
 from channels import autoplay
@@ -953,6 +953,8 @@ def listado_busqueda(item):
     post_num = 1
     inicio = time.time()                                    # Controlaremos que el proceso no exceda de un tiempo razonable
     fin = inicio + 5                                                            # Después de este tiempo pintamos (segundos)
+    search1 = '<h3><strong>( 0 ) Resultados encontrados </strong>'
+    search2 = '"data":{"total":0'
     
     #Máximo num. de líneas permitidas por TMDB. Máx de 5 páginas por Itemlist para no degradar el rendimiento
     while cnt_title <= cnt_tot and cnt_next < 10 and fin > time.time():
@@ -971,10 +973,10 @@ def listado_busqueda(item):
         if item.extra == "novedades":
             pattern = '<div class="content">.*?<ul class="noticias(.*?)<\/div><!-- end .content -->'
             if not scrapertools.find_single_match(data, pattern) and not \
-                            '<h3><strong>( 0 ) Resultados encontrados </strong>' in data:
+                            search1 in data and not search2 in data:
                 pattern = '<div class="content">.*?<ul class="noticias(.*?)<\/li><\/ul><\/form><\/div>'
                 if not scrapertools.find_single_match(data, pattern) and not \
-                            '<h3><strong>( 0 ) Resultados encontrados </strong>' in data:
+                            search1 in data and not search2 in data:
                     pattern = 'patron|'
                     pattern += '<div class="content">.*?<ul class="noticias(.*?)<\/div><!-- end .content -->|'
                     pattern += '<div class="content">.*?<ul class="noticias(.*?)<\/li><\/ul><\/form><\/div>'
@@ -984,7 +986,7 @@ def listado_busqueda(item):
         else:
             pattern = '<ul class="%s">(.*?)</ul>' % item.pattern
         if not data or (not scrapertools.find_single_match(data, pattern) and not \
-                    '<h3><strong>( 0 ) Resultados encontrados </strong>' in data):
+                    search1 in data and not search2 in data):
             item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
             if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
                 item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error
@@ -1073,8 +1075,8 @@ def listado_busqueda(item):
             pattern += '<span.*?>(?P<size>\d+[\.|\s].*?[GB|MB])?<\/span>'       #tamaño (significativo para peliculas)
         
         matches_alt = re.compile(pattern, re.DOTALL).findall(data)
-        if not matches_alt and not '<h3><strong>( 0 ) Resultados encontrados </strong>' \
-                    in data_alt and not '<ul class="noticias-series"></ul></form></div>' + \
+        if not matches_alt and not search1 in data_alt and not search2 in data_alt \
+                    and not '<ul class="noticias-series"></ul></form></div>' + \
                     '<!-- end .page-box -->' in data_alt:                       #error
             logger.error("ERROR 02: LISTADO_BUSQUEDA: Ha cambiado la estructura de la Web " + 
                     " / PATRON: " + pattern + " / DATA: " + data_alt)
@@ -1659,6 +1661,12 @@ def findvideos(item):
         item.language = ['CAST']                                                #Castellano por defecto
 
     #logger.debug(item)
+    
+    #Obtener la información actualizada del vídeo.  En una segunda lectura de TMDB da más información que en la primera
+    try:
+        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es,en')  #TMDB del episodio o película
+    except:
+        logger.error(traceback.format_exc())
     
     item, host_alt = verify_host(item, host)                                    # Actualizamos la url del host
 
@@ -2329,7 +2337,7 @@ def episodios(item):
     item, host_alt = verify_host(item, host)                                    # Actualizamos la url del host
     if not json_category:
         json_category = item.category.lower()
-
+    
     #Limpiamos num. Temporada y Episodio que ha podido quedar por Novedades
     season_display = 0
     if item.contentSeason:
@@ -2389,10 +2397,13 @@ def episodios(item):
                 if not filetools.exists(epi_json_path):
                     epi_json_path = filetools.join(item.path, '1x01 [%s].json' % (json_category))
             else:
-                epi_json_path = filetools.join(epi_json_path, item.path, '%s [%s].json' % (key, json_category))
+                epi_json_path_save = epi_json_path
+                epi_json_path = filetools.join(epi_json_path_save, item.path, '%s [%s].json' % (key, json_category))
                 if not filetools.exists(epi_json_path):
-                    epi_json_path = filetools.join(epi_json_path, item.path, '1x01 [%s].json' % (json_category))
+                    epi_json_path = filetools.join(epi_json_path_save, item.path, '1x01 [%s].json' % (json_category))
             epi_json = jsontools.load(filetools.read(epi_json_path))
+            if not epi_json:
+                logger.error('epi_json_path %s' % epi_json_path)
             if 'language' in epi_json:
                 item.language = epi_json['language']
             else:
@@ -2585,6 +2596,7 @@ def episodios(item):
                 thumb = interm
             
             item_local = item.clone()                                           #Creamos copia local de Item por episodio
+            item_local.category = json_category.capitalize()                    #Restauramos la Categoría del .NFO
             item_local.url = url
             if not item_local.url.startswith("http"):                           #Si le falta el http.: lo ponemos
                 item_local.url = scrapertools.find_single_match(item_local.channel_host, \

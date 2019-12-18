@@ -15,7 +15,7 @@ from channels import autoplay
 from core.item import Item
 from platformcode import config, logger
 
-HOST = "https://www.seriespapaya.net/"
+HOST = "https://www.seriespapaya.nu/"
 
 IDIOMAS = {'es': 'Español', 'lat': 'Latino', 'in': 'Inglés', 'ca': 'Catalán', 'sub': 'VOSE', 'Español Latino':'Latino',
            'Español Castellano':'Español', 'Sub Español':'VOSE'}
