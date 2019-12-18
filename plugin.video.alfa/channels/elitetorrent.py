@@ -24,7 +24,7 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://www.elitetorrent.is'
+host = 'https://www.elitetorrent.tv'
 channel = "elitetorrent"
 
 categoria = channel.capitalize()
@@ -43,18 +43,24 @@ def mainlist(item):
     thumb_buscar = get_thumb("search.png")
     thumb_separador = get_thumb("next.png")
     thumb_settings = get_thumb("setting_0.png")
+    home = '/home'
     
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url=host, extra="peliculas", thumbnail=thumb_pelis))
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", 
+                    url=host + home, extra="peliculas", thumbnail=thumb_pelis))
     
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Series", url=host, extra="series", thumbnail=thumb_series))
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Series", 
+                    url=host + home, extra="series", thumbnail=thumb_series))
     
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", url=host, thumbnail=thumb_buscar, filter_lang=True))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", 
+                    url=host + home, thumbnail=thumb_buscar, filter_lang=True))
 
-    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", folder=False, thumbnail=thumb_separador))
+    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", 
+                    folder=False, thumbnail=thumb_separador))
     
-    itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", thumbnail=thumb_settings))
+    itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
+                    thumbnail=thumb_settings))
     
     autoplay.show_option(item.channel, itemlist)            #Activamos Autoplay
 

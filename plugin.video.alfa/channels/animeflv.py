@@ -313,9 +313,10 @@ def findvideos(item):
                 url = scrapertools.find_single_match(new_data, 'window.location.href = "([^"]+)"')
             elif 'animeflv.net/embed' in source:
                 source = source.replace('embed', 'check')
-                new_data = httptools.downloadpage(source).data
-                json_data = jsontools.load(new_data)
+               
                 try:
+                    new_data = httptools.downloadpage(source).data
+                    json_data = jsontools.load(new_data)
                     url = json_data['file']
                 except:
                     continue

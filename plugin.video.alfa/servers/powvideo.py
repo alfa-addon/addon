@@ -36,7 +36,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     
     url = scrapertools.find_single_match(unpacked, "(?:src):\\\\'([^\\\\]+.mp4)\\\\'")
     from lib import alfaresolver
-    url = alfaresolver.decode_video_url(url, data)
+    url = alfaresolver.decode_video_url(url, data, 2)
     itemlist.append([".mp4" + " [powvideo]", url])
 
     itemlist.sort(key=lambda x: x[0], reverse=True)
