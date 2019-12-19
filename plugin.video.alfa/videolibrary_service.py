@@ -6,29 +6,36 @@
 import datetime, imp, math, threading, traceback, sys
 
 
-
-from platformcode import config
 try:
+    from platformcode import config
     import xbmc, os
     librerias = xbmc.translatePath(os.path.join(config.get_runtime_path(), 'lib'))
     sys.path.append(librerias)
 except:
     import os
-    librerias = os.path.join(config.get_runtime_path(), 'lib')
-    sys.path.append(librerias)
+    try:
+        librerias = os.path.join(config.get_runtime_path(), 'lib')
+        sys.path.append(librerias)
+    except:
+        pass
 
 
+try:
+    from platformcode import logger
+except:
+    pass
 
-from core import filetools
-from core import channeltools, videolibrarytools
-from platformcode import logger
-from platformcode import platformtools
-from channels import videolibrary
-from lib import generictools
 
 
 def update(path, p_dialog, i, t, serie, overwrite):
     logger.info("Actualizando " + path)
+    
+    from core import filetools
+    from core import channeltools, videolibrarytools
+    from platformcode import platformtools
+    from channels import videolibrary
+    from lib import generictools
+
     insertados_total = 0
       
     head_nfo, it = videolibrarytools.read_nfo(path + '/tvshow.nfo')
@@ -116,6 +123,13 @@ def update(path, p_dialog, i, t, serie, overwrite):
 
 def check_for_update(overwrite=True):
     logger.info("Actualizando series...")
+    
+    from core import filetools
+    from core import channeltools, videolibrarytools
+    from platformcode import platformtools
+    from channels import videolibrary
+    from lib import generictools
+    
     p_dialog = None
     serie_actualizada = False
     update_when_finished = False
@@ -255,7 +269,7 @@ def check_for_update(overwrite=True):
                                 xbmc_videolibrary.update(folder=filetools.basename(path))
                         else:
                             update_when_finished = True
-                except Exception, ex:
+                except Exception as ex:
                     logger.error("Se ha producido un error al actualizar la serie %s" % tvshow_file)
                     template = "An exception of type %s occured. Arguments:\n%r"
                     message = template % (type(ex).__name__, ex.args)
@@ -276,7 +290,7 @@ def check_for_update(overwrite=True):
         else:
             logger.info("No actualiza la videoteca, está desactivado en la configuración de alfa")
 
-    except Exception, ex:
+    except Exception as ex:
         logger.error("Se ha producido un error al actualizar las series")
         template = "An exception of type %s occured. Arguments:\n%r"
         message = template % (type(ex).__name__, ex.args)
@@ -333,7 +347,10 @@ def monitor_update():
         # logger.info("Atraso del inicio del dia: %i:00" % update_start)
 
         if last_check <= hoy and datetime.datetime.now().hour == int(update_start):
-            logger.info("Inicio actualizacion programada para las %s h.: %s" % (update_start, datetime.datetime.now()))
+            try:
+                logger.info("Inicio actualizacion programada para las %s h.: %s" % (update_start, datetime.datetime.now()))
+            except:
+                pass
             check_for_update(overwrite=False)
 
 
