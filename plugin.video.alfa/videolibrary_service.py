@@ -3,7 +3,14 @@
 # Service for updating new episodes on library series
 # ------------------------------------------------------------
 
-import datetime, imp, math, threading, traceback, sys
+import datetime, math, threading, traceback
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str
+if PY3:
+    import importlib as imp
+else:
+    import imp
 
 
 try:
@@ -93,14 +100,14 @@ def update(path, p_dialog, i, t, serie, overwrite):
                         #    serie.infoLabels['playcount'] = serie.playcount
                     insertados_total += insertados
 
-                except Exception, ex:
+                except Exception as ex:
                     logger.error("Error al guardar los capitulos de la serie")
                     template = "An exception of type %s occured. Arguments:\n%r"
                     message = template % (type(ex).__name__, ex.args)
                     logger.error(message)
                     logger.error(traceback.format_exc())
 
-            except Exception, ex:
+            except Exception as ex:
                 logger.error("Error al obtener los episodios de: %s" % serie.show)
                 template = "An exception of type %s occured. Arguments:\n%r"
                 message = template % (type(ex).__name__, ex.args)
