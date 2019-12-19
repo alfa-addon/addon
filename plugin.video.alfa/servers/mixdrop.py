@@ -25,8 +25,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     
     packed = scrapertools.find_single_match(data, r'(eval.*?)</script>')
     unpacked = jsunpack.unpack(packed)
-    
-    media_url = scrapertools.find_single_match(unpacked, r'MDCore.vsrc\s*=\s*"([^"]+)"')
+    media_url = scrapertools.find_single_match(unpacked, r'MDCore.vvsr\s*=\s*"([^"]+)"')
     if not media_url.startswith('http'):
         media_url = 'http:%s' % media_url
     video_urls.append(["%s [Mixdrop]" % ext, media_url])
