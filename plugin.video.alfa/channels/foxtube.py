@@ -7,8 +7,9 @@ from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
+from channels import cumlouder
 
-host = 'https://www.muyzorras.com' # https://www.foxtube.com
+host = 'https://www.foxtube.com' #https://www.muyzorras.com
 
 #Falta channel ajax {url:"/users/doIFollow/749/"
 
@@ -16,8 +17,8 @@ def mainlist(item):
     logger.info()
     itemlist = []
     itemlist.append( Item(channel=item.channel, title="Ultimos" , action="lista", url=host))
-    itemlist.append( Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + '/actrices-porno/'))
-    # itemlist.append( Item(channel=item.channel, title="Canal" , action="catalogo", url=host + '/canales/'))
+    itemlist.append( Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + '/pornstars/'))
+    # itemlist.append( Item(channel=item.channel, title="Canal" , action="catalogo", url=host + '/channels/'))
     
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
     
@@ -50,10 +51,10 @@ def catalogo(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle  in matches:
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        thumbnail = scrapedthumbnail.replace("https","http") + "|Referer=%s" %item.url
+        thumbnail = scrapedthumbnail.replace("https","http") + "|Referer=%s/pornstars/" %host
         plot = ""
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=thumbnail, plot=plot) )
+                              thumbnail=scrapedthumbnail, plot=plot) )
     next_page = scrapertools.find_single_match(data,'<a rel="next" href="([^"]+)">&gt')
     if not next_page:
         next_page = scrapertools.find_single_match(data,'<span class="">.*?href="([^"]+)"')
@@ -84,10 +85,9 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    logger.debug(data)
     patron = '<article>.*?'
     patron += '<a href="([^"]+)".*?'
-    patron += '<img id="v_\d+".*?src="([^"]+)".*?'
+    patron += '<img.*?src="([^"]+)".*?'
     patron += 'alt="([^"]+)".*?'
     patron += '<span class="r\w">(.*?)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -97,7 +97,6 @@ def lista(item):
         if 'HD' in duracion :
             title = "[COLOR yellow]" + time + "[/COLOR] " + "[COLOR red]" + "HD" + "[/COLOR]  " + scrapedtitle
         thumbnail = scrapedthumbnail.replace("https","http") + "|Referer=%s/" %host
-        logger.debug(thumbnail)
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle = title))
@@ -113,14 +112,13 @@ def play(item):
     itemlist = []
     url = ""
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data,'<div class="vvi">.*?href="([^"]+)">')
-    url = httptools.downloadpage(url).url
-    if "cumlouder.com" in url:
-        data = httptools.downloadpage(url).data
-        url = scrapertools.find_single_match(data, '<source src="([^"]+)" type=\'video/[^\']+\' label=\'[^\']+\' res=\'[^\']+\'')
-        url = "https:" + url.replace("&amp;", "&")
-        logger.debug(url)
+    url = scrapertools.find_single_match(data,'<iframe title="[^"]+" class="lz" data-src="([^"]+)"')
+    if "cumlouder" in url:
+        item1 = item.clone(url=url)
+        itemlist = cumlouder.play(item1)
+        return itemlist
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
+
 
