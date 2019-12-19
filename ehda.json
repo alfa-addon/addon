@@ -1,0 +1,24 @@
+{
+  "id": "ehda",
+  "name": "El Hogar del Aprendiz",
+  "active": true,
+  "adult": false,
+  "language": ["cast", "lat"],
+  "thumbnail": "https://elhogardelaprendiz.es/wp-content/uploads/2019/10/logo-e1572100371471.png",
+  "banner": "https://imgur.com/B1IOAu4.png",
+  "categories": [
+    "movie",
+    "tvshow",
+    "vos"
+  ],
+  "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    }
+  ]
+}
