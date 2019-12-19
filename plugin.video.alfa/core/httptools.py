@@ -17,6 +17,9 @@ from platformcode import config, logger
 from platformcode.logger import WebErrorException
 import scrapertools
 
+#Dominios que necesitan Cloudscraper.  AÑADIR dominios de canales sólo si es necesario
+global DOMAIN_CS
+DOMAIN_CS = ["animeflv.ru", "www.divxtotal.la", "gnula.nu", "mejortorrent1.net"]
 
 ## Obtiene la versión del addon
 __version = config.get_addon_version()
@@ -368,11 +371,8 @@ def proxy_post_processing(url, proxy_data, response, opt):
     return response["data"], response['sucess'], url, opt
 
 
-
 def downloadpage(url, **opt):
     logger.info()
-
-
 
     """
         Abre una url y retorna los datos obtenidos
@@ -443,9 +443,14 @@ def downloadpage(url, **opt):
         files = {}
         file_name = ''
         opt['proxy_retries_counter'] += 1
-        
-        session = cloudscraper.create_scraper()
-        session.verify = True
+
+        domain = urlparse.urlparse(url)[1]
+        if domain in DOMAIN_CS or opt.get('CF', False):                         #Está en la lista de CF o viene en la llamada
+            session = cloudscraper.create_scraper()                             #El dominio necesita CloudScraper
+        else:
+            session = requests.session()
+        session.verify = False
+
         if opt.get('cookies', True):
             session.cookies = cj
         session.headers.update(req_headers)
@@ -456,12 +461,13 @@ def downloadpage(url, **opt):
             session.proxies = opt['proxies']
         elif proxy_data.get('dict', {}):
             session.proxies = proxy_data['dict']
-            
+
         inicio = time.time()
         
         if opt.get('timeout', None) is None and HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT is not None: 
             opt['timeout'] = HTTPTOOLS_DEFAULT_DOWNLOAD_TIMEOUT
-        if opt['timeout'] == 0: opt['timeout'] = None
+        if opt['timeout'] == 0:
+            opt['timeout'] = None
 
         if len(url) > 0:
             try:
@@ -516,7 +522,7 @@ def downloadpage(url, **opt):
                     req = session.get(url, allow_redirects=opt.get('follow_redirects', True),
                                       timeout=opt['timeout'])
 
-            except Exception, e:
+            except Exception as e:
                 if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', ''):
                     req = requests.Response()
                     response['data'] = ''

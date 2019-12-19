@@ -68,6 +68,11 @@ class ziptools:
                     import traceback
                     logger.error(traceback.format_exc())
                     logger.error("Error en fichero " + nameo)
+        
+        try:
+            zf.close()
+        except:
+            logger.info("Error cerrando .zip " + file)
 
     def _createstructure(self, file, dir):
         self._makedirs(self._listdirs(file), dir)
