@@ -180,9 +180,6 @@ def channel_search(item):
 
     channel_list, channel_titles = get_channels(item)
 
-    import requests
-    session = requests.Session()
-
     searching += channel_list
     searching_titles += channel_titles
     cnt = 0
@@ -192,7 +189,7 @@ def channel_search(item):
     config.set_setting('tmdb_active', False)
 
     with futures.ThreadPoolExecutor(max_workers=set_workers()) as executor:
-        c_results = [executor.submit(get_channel_results, ch, item, session) for ch in channel_list]
+        c_results = [executor.submit(get_channel_results, ch, item) for ch in channel_list]
 
         for res in futures.as_completed(c_results):
             cnt += 1
@@ -259,9 +256,9 @@ def channel_search(item):
         # to_temp[key] = grouped
         if config.get_setting('result_mode', 'search') == 0:
             if not config.get_setting('unify'):
-                title = ch_name + str(len(grouped))
+                title = ch_name + ' [COLOR yellow](' + str(len(grouped)) + ')[/COLOR]'
             else:
-                title = '%s %s' % (len(grouped), config.get_localized_string(70695))
+                title = '[COLOR yellow]%s %s[/COLOR]' % (len(grouped), config.get_localized_string(70695))
             res_count += len(grouped)
             plot=''
 
@@ -285,7 +282,7 @@ def channel_search(item):
     return valid + results
 
 
-def get_channel_results(ch, item, session):
+def get_channel_results(ch, item):
     max_results = 10
     results = list()
 
@@ -298,7 +295,6 @@ def get_channel_results(ch, item, session):
 
     if search_action:
         for search_ in search_action:
-            search_.session = session
             try:
                 results.extend(module.search(search_, item.text))
             except:
@@ -562,20 +558,20 @@ def actor_list(item):
 
         rol = elem.get('known_for_department', '')
         rol = prof.get(rol, rol)
-        # genero = elem.get('gender', 0)
-        # if genero == 1 and rol in prof:
-        #     rol += 'a'
-        #     rol = rol.replace('Actora', 'Actriz')
+        genero = elem.get('gender', 0)
+        if genero == 1 and rol in prof:
+            rol += 'a'
+            rol = rol.replace('Actora', 'Actriz')
 
         know_for = elem.get('known_for', '')
         cast_id = elem.get('id', '')
         if know_for:
             t_k = know_for[0].get('title', '')
             if t_k:
-                plot = '%s in %s' % (rol, t_k)
+                plot = '%s en [COLOR limegreen]%s[/COLOR] y otras' % (rol, t_k)
 
         thumbnail = 'http://image.tmdb.org/t/p/original%s' % elem.get('profile_path', '')
-        title = name + rol
+        title = '%s [COLOR grey](%s)[/COLOR]' % (name, rol)
 
         discovery = {'url': 'person/%s/combined_credits' % cast_id, 'page': '1',
                      'sort_by': 'primary_release_date.desc', 'language': def_lang}
@@ -586,7 +582,7 @@ def actor_list(item):
     if len(results) > 19:
         next_ = item.page + 1
         itemlist.append(Item(channel=item.channel, title=config.get_localized_string(30992), action='actor_list',
-                             page=next_, thumbnail=thumbnail,
+                             page=next_, thumbnail=thumbnail, text_color='gold',
                              searched_text=item.searched_text))
     return itemlist
 
@@ -700,7 +696,7 @@ def get_from_temp(item):
     results = [Item().fromurl(elem) for elem in item.itemlist[prevp:nextp]]
 
     if nextp < nTotal:
-        results.append(Item(channel='search', title=config.get_localized_string(30992),
+        results.append(Item(channel='search', title='[COLOR yellow]' + config.get_localized_string(30992) + '[/COLOR]',
                             action='get_from_temp', itemlist=item.itemlist, page=item.page + 1))
 
     tmdb.set_infoLabels_itemlist(results, True)

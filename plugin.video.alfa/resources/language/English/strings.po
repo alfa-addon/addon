@@ -3802,7 +3802,7 @@ msgid "Add Torrent channels in search"
 msgstr ""
 
 msgctxt "#70276"
-msgid "Search by Title"
+msgid "Search by title"
 msgstr ""
 
 msgctxt "#70277"
