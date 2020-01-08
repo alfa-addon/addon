@@ -1682,7 +1682,7 @@ msgid "Delete saved searches"
 msgstr "Cancella ricerche salvate"
 
 msgctxt "#60420"
-msgid "More Options"
+msgid "More search options"
 msgstr "Altre opzioni"
 
 msgctxt "#60421"

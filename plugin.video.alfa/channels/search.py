@@ -258,7 +258,7 @@ def channel_search(item):
             if not config.get_setting('unify'):
                 title = ch_name + ' [COLOR yellow](' + str(len(grouped)) + ')[/COLOR]'
             else:
-                title = '[COLOR yellow]%s %s[/COLOR]' % (len(grouped), config.get_localized_string(70695))
+                title = '[COLOR yellow](%s)[/COLOR]' % (len(grouped))
             res_count += len(grouped)
             plot=''
 
@@ -266,7 +266,7 @@ def channel_search(item):
                 plot += it.title +'\n'
             ch_thumb = channeltools.get_channel_parameters(key)['thumbnail']
             results.append(Item(channel='search', title=title,
-                                action='get_from_temp', thumbnail=ch_thumb, itemlist=[ris.tourl() for ris in grouped], plot=plot, page=1))
+                                action='get_from_temp', thumbnail=ch_thumb, itemlist=[ris.tourl() for ris in grouped], plot=plot, page=1, from_channel=key))
 
 
 

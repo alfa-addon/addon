@@ -1694,8 +1694,8 @@ msgid "Delete saved searches"
 msgstr "Borrar búsquedas guardadas"
 
 msgctxt "#60420"
-msgid "More Options"
-msgstr "Otros Ajustes"
+msgid "More search options"
+msgstr "Más opciones de búsqueda"
 
 msgctxt "#60421"
 msgid "Channels included in the global search "

@@ -1694,7 +1694,7 @@ msgid "Delete saved searches"
 msgstr ""
 
 msgctxt "#60420"
-msgid "More Options"
+msgid "More search options"
 msgstr ""
 
 msgctxt "#60421"
