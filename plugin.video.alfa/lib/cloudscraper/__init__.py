@@ -37,7 +37,7 @@ except ImportError:
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '1.2.16'
+__version__ = '1.2.19'
 
 # ------------------------------------------------------------------------------- #
 
@@ -242,7 +242,7 @@ class CloudScraper(Session):
         return False
 
     # ------------------------------------------------------------------------------- #
-    # check if the response contains a valid Cloudflare reCaptcha challenge
+    # check if the response contains Firewall 1020 Error
     # ------------------------------------------------------------------------------- #
 
     @staticmethod
@@ -269,10 +269,7 @@ class CloudScraper(Session):
     def is_Challenge_Request(self, resp):
         if self.is_Firewall_Blocked(resp):
             sys.tracebacklimit = 0
-            raise RuntimeError(
-                'Cloudflare has a restriction on your IP (Code 1020 Detected), '
-                'you are BLOCKED.'
-            )
+            raise RuntimeError('Cloudflare has blocked this request (Code 1020 Detected).')
 
         if self.is_reCaptcha_Challenge(resp) or self.is_IUAM_Challenge(resp):
             return True
@@ -433,6 +430,7 @@ class CloudScraper(Session):
         # ------------------------------------------------------------------------------- #
 
         if submit_url:
+
             def updateAttr(obj, name, newValue):
                 try:
                     obj[name].update(newValue)
@@ -449,13 +447,18 @@ class CloudScraper(Session):
                 'data',
                 submit_url['data']
             )
+
+            urlParsed = urlparse(resp.url)
             cloudflare_kwargs['headers'] = updateAttr(
                 cloudflare_kwargs,
                 'headers',
-                {'Referer': resp.url}
+                {
+                    'Origin': '{}://{}'.format(urlParsed.scheme, urlParsed.netloc),
+                    'Referer': resp.url
+                }
             )
 
-            ret = self.request(
+            challengeSubmitResponse = self.request(
                 'POST',
                 submit_url['url'],
                 **cloudflare_kwargs
@@ -463,13 +466,44 @@ class CloudScraper(Session):
 
             # ------------------------------------------------------------------------------- #
             # Return response if Cloudflare is doing content pass through instead of 3xx
+            # else request with redirect URL also handle protocol scheme change http -> https
             # ------------------------------------------------------------------------------- #
 
-            if not ret.is_redirect:
-                return ret
+            if not challengeSubmitResponse.is_redirect:
+                return challengeSubmitResponse
+            else:
+                cloudflare_kwargs = deepcopy(kwargs)
+
+                if not urlparse(challengeSubmitResponse.headers['Location']).netloc:
+                    cloudflare_kwargs['headers'] = updateAttr(
+                        cloudflare_kwargs,
+                        'headers',
+                        {'Referer': '{}://{}'.format(urlParsed.scheme, urlParsed.netloc)}
+                    )
+                    return self.request(
+                        resp.request.method,
+                        '{}://{}{}'.format(
+                            urlParsed.scheme,
+                            urlParsed.netloc,
+                            challengeSubmitResponse.headers['Location']
+                        ),
+                        **cloudflare_kwargs
+                    )
+                else:
+                    redirectParsed = urlparse(challengeSubmitResponse.headers['Location'])
+                    cloudflare_kwargs['headers'] = updateAttr(
+                        cloudflare_kwargs,
+                        'headers',
+                        {'Referer': '{}://{}'.format(redirectParsed.scheme, redirectParsed.netloc)}
+                    )
+                    return self.request(
+                        resp.request.method,
+                        challengeSubmitResponse.headers['Location'],
+                        **cloudflare_kwargs
+                    )
 
         # ------------------------------------------------------------------------------- #
-        # Cloudflare is doing http 3xx instead of pass through again....
+        # We shouldn't be here...
         # Re-request the original query and/or process again....
         # ------------------------------------------------------------------------------- #
 
@@ -550,6 +584,17 @@ class CloudScraper(Session):
         tokens, user_agent = cls.get_tokens(url, **kwargs)
         return '; '.join('='.join(pair) for pair in tokens.items()), user_agent
 
+
+# ------------------------------------------------------------------------------- #
+
+if ssl.OPENSSL_VERSION_INFO < (1, 1, 1):
+    print(
+        "DEPRECATION: The OpenSSL being used by this python install ({}) does not meet the minimum supported "
+        "version (>= OpenSSL 1.1.1) in order to support TLS 1.3 required by Cloudflare, "
+        "You may encounter an unexpected reCaptcha or cloudflare 1020 blocks.".format(
+            ssl.OPENSSL_VERSION
+        )
+    )
 
 # ------------------------------------------------------------------------------- #
 
