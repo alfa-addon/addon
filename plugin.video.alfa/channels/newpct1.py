@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import re
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+#from builtins import str
 import sys
-import urllib
-import urlparse
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+from builtins import range
+from past.utils import old_div
+
+import re
+import urllib.request, urllib.parse, urllib.error
 import datetime
 import time
 import ast
@@ -25,7 +33,7 @@ from channels import autoplay
 
 #IDIOMAS = {'CAST': 'Castellano', 'LAT': 'Latino', 'VO': 'Version Original'}
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
@@ -225,7 +233,8 @@ def submenu(item):
         if item.url_alt: del item.url_alt
         del item.channel_alt
 
-    data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
+    if not PY3:
+        data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
     data = data.replace("'", '"').replace('/series"', '/series/"')              #Compatibilidad con mispelisy.series.com
     if "pelisyseries.com" in item.channel_host and item.extra == "varios":      #compatibilidad con mispelisy.series.com
         data_menu = '<li><a href="' + item.channel_host + 'varios/" title="Documentales">Documentales</a></li>'
@@ -370,7 +379,8 @@ def submenu_novedades(item):
         del item.channel_alt
         
     data = scrapertools.find_single_match(data, patron)                         #Seleccionamos el trozo que nos interesa
-    data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
+    if not PY3:
+        data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
     data = data.replace("'", '"').replace('/series"', '/series/"')              #Compatibilidad con mispelisy.series.com
     
     patron = '<option value="([^"]+)".*?>(.*?)<\/option>'
@@ -448,7 +458,8 @@ def alfabeto(item):
     try:
         data = ''
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
-        data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
+        if not PY3:
+            data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
     except:
         logger.error(traceback.format_exc())
 
@@ -635,7 +646,7 @@ def listado(item):
         matches_next_page = re.compile(patron_next_page, re.DOTALL).findall(data)
         modo = 'continue'
         if len(matches_next_page) > 0:
-            url_next_page = urlparse.urljoin(item.url, matches_next_page[0])
+            url_next_page = urllib.parse.urljoin(item.url, matches_next_page[0])
             modo = 'next'
     
     # Avanzamos el contador de líneas en una página
@@ -646,7 +657,7 @@ def listado(item):
     else:
         cnt_pag += cnt_tot
 
-    #Tratamos todos los contenidos, creardo una variable local de Item
+    #Tratamos todos los contenidos, creando una variable local de Item
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedtitle_alt, calidad in matches:
         item_local = item.clone()
         if item_local.tipo:
@@ -666,10 +677,10 @@ def listado(item):
         item_local.context = "['buscar_trailer']"
         
         # Limpiamos títulos, Sacamos datos de calidad, audio y lenguaje
-        title = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf8').strip()
-        #title = re.sub('\r\n', '', scrapedtitle).decode('utf-8').encode('utf-8').strip()
-        title_alt = re.sub('\r\n', '', scrapedtitle_alt).decode('iso-8859-1').encode('utf8').strip()
-        #title_alt = re.sub('\r\n', '', scrapedtitle_alt).decode('utf-8').encode('utf-8').strip()
+        title = re.sub('\r\n', '', scrapedtitle).strip()
+        #title = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf-8').strip()
+        title_alt = re.sub('\r\n', '', scrapedtitle_alt).strip()
+        #title_alt = re.sub('\r\n', '', scrapedtitle_alt).decode('iso-8859-1').encode('utf-8').strip()
         title = title.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o")\
                     .replace("ú", "u").replace("ü", "u").replace("ï¿½", "ñ")\
                     .replace("Ã±", "ñ").replace(".", " ")
@@ -815,21 +826,21 @@ def listado(item):
                     .replace("Latino", "").replace("argentina", "").replace("Argentina", "")\
                     .replace("++Sub", "").replace("+-+Sub", "").replace("Directors Cut", "")\
                     .replace("720p", "").replace("1080p", "").strip()
-        
-        title = re.sub(r'\(\d{4}\)$', '', title)
-        title = re.sub(r'\-\d{4}\-$', '', title)
-        if re.sub(r'\d{4}$', '', title).strip():
-            title = re.sub(r'\d{4}$', '', title)
-        if item_local.contentType != "movie":
-            title = re.sub(r'\d+x\d+', '', title)
-            title = re.sub(r'x\d+', '', title).strip()
-        
+
         if title.endswith("torrent gratis"): title = title[:-15]
         if title.endswith("gratis"): title = title[:-7]
         if title.endswith("torrent"): title = title[:-8]
         if title.endswith("en HD"): title = title[:-6]
         if title.endswith(" -"): title = title[:-2]
         if "en espa" in title: title = title[:-11]
+            
+        title = re.sub(r'\(\d{4}\)\s*$', '', title)
+        title = re.sub(r'\-\d{4}\-\s*$', '', title)
+        if re.sub(r'\d{4}\s*$', '', title).strip():
+            title = re.sub(r'\d{4}\s*$', '', title)
+        if item_local.contentType != "movie":
+            title = re.sub(r'\d+x\d+', '', title)
+            title = re.sub(r'x\d+', '', title).strip()
         
         item_local.quality = item_local.quality.replace("gratis ", "")
         if "HDR" in title:
@@ -1108,9 +1119,9 @@ def listado_busqueda(item):
                 calidad = _scrapedtitle
                 size = _scrapedthumbnail
                 scrapedthumbnail = _calidad.replace('\\', '')
-                scrapedthumbnail = urlparse.urljoin(host_alt, scrapedthumbnail)
+                scrapedthumbnail = urllib.parse.urljoin(host_alt, scrapedthumbnail)
                 scrapedurl = _year.replace('\\', '')
-                scrapedurl = urlparse.urljoin(host_alt, scrapedurl)
+                scrapedurl = urllib.parse.urljoin(host_alt, scrapedurl)
                 year = _size
                 
             #Realiza un control de las series que se añaden, ya que el buscador devuelve episodios y no las series completas
@@ -1175,9 +1186,9 @@ def listado_busqueda(item):
             calidad = _scrapedtitle
             size = _scrapedthumbnail
             scrapedthumbnail = _calidad.replace('\\', '')
-            scrapedthumbnail = urlparse.urljoin(host_alt, scrapedthumbnail)
+            scrapedthumbnail = urllib.parse.urljoin(host_alt, scrapedthumbnail)
             scrapedurl = _scrapedyear.replace('\\', '')
-            scrapedurl = urlparse.urljoin(host_alt, scrapedurl)
+            scrapedurl = urllib.parse.urljoin(host_alt, scrapedurl)
             year = _scrapedsize
         
         #Realiza un control de las series que se añaden, ya que el buscador devuelve episodios y no las series completas
@@ -1325,8 +1336,8 @@ def listado_busqueda(item):
             item_local.extra = "peliculas"
         
         # Limpiamos títulos, Sacamos datos de calidad, audio y lenguaje
-        title = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf8').strip()
-        #title = re.sub('\r\n', '', scrapedtitle).decode('utf-8').encode('utf-8').strip()
+        title = re.sub('\r\n', '', scrapedtitle).strip()
+        #title = re.sub('\r\n', '', scrapedtitle).decode('iso-8859-1').encode('utf-8').strip()
         title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
                     .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
                     .replace("ï¿½", "ñ").replace("Ã±", "ñ")
@@ -1461,16 +1472,7 @@ def listado_busqueda(item):
         .replace("latino", "").replace("Latino", "").replace("argentina", "")\
         .replace("Argentina", "").replace("++Sub", "").replace("+-+Sub", "")\
         .replace("Directors Cut", "").replace("720p", "").replace("1080p", "").strip()
-        
-        logger.error(title)
-        title = re.sub(r'\(\d{4}\)$', '', title)
-        title = re.sub(r'\-\d{4}\-$', '', title)
-        if re.sub(r'\d{4}$', '', title).strip():
-            title = re.sub(r'\d{4}$', '', title)
-        if item_local.contentType != "movie":
-            title = re.sub(r'\d+x\d+', '', title)
-            title = re.sub(r'x\d+', '', title).strip()
-        
+
         if "pelisyseries.com" in host_alt and item_local.contentType == "tvshow":
             titulo = ''
             title = title.lower()
@@ -1495,6 +1497,14 @@ def listado_busqueda(item):
         #title = re.sub(r'^\s', '', title)
         title = title.replace("a?o", 'año').replace("a?O", 'año').replace("A?o", 'Año')\
                     .replace("A?O", 'Año').strip()
+                    
+        title = re.sub(r'\(\d{4}\)\s*$', '', title)
+        title = re.sub(r'\-\d{4}\-\s*$', '', title)
+        if re.sub(r'\d{4}\s*$', '', title).strip():
+            title = re.sub(r'\d{4}\s*$', '', title)
+        if item_local.contentType != "movie":
+            title = re.sub(r'\d+x\d+', '', title)
+            title = re.sub(r'x\d+', '', title).strip()
 
         #Preparamos calidad
         item_local.quality = item_local.quality.replace("[ ", "").replace(" ]", "")     #Preparamos calidad para Series
@@ -1551,8 +1561,7 @@ def listado_busqueda(item):
         try:
             year = int(scrapedyear)
         except:
-            year = ""
-        #year = str(year)
+            year = 0
         if year >= 1900 and year <= 2040 and year != 2020:
             item_local.infoLabels['year'] = str(year)
             #title_subs += [year]
@@ -1594,7 +1603,8 @@ def listado_busqueda(item):
             #Leemos la página, a ver  si es una página de episodios
             data_serie = data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage\
                         (url_id, timeout=timeout, ignore_response_code=True).data)
-            data_serie = unicode(data_serie, "iso-8859-1", errors="replace").encode("utf-8")
+            if not PY3:
+                data_serie = unicode(data_serie, "iso-8859-1", errors="replace").encode("utf-8")
             data_serie = data_serie.replace("chapters", "buscar-list")
             
             pattern = '<ul class="%s">(.*?)</ul>' % "buscar-list"       #Patrón de lista de episodios
@@ -1602,7 +1612,8 @@ def listado_busqueda(item):
                                                                                         #intentarlo con la otra url
                 data_serie = data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage\
                         (url_tvshow, timeout=timeout, ignore_response_code=True).data)
-                data_serie = unicode(data_serie, "iso-8859-1", errors="replace").encode("utf-8")
+                if not PY3:
+                    data_serie = unicode(data_serie, "iso-8859-1", errors="replace").encode("utf-8")
                 data_serie = data_serie.replace("chapters", "buscar-list")
                 
                 if not scrapertools.find_single_match(data_serie, pattern):     #No ha habido suerte ...
@@ -1758,7 +1769,7 @@ def findvideos(item):
                     excluir_enlaces_descargas += [channel_exclude[valor]]   #Añadimos el nombre de servidor excluido a la lista
                 x += 1
 
-        except Exception, ex:                                   #En caso de error, lo mostramos y reseteamos todas las variables
+        except Exception as ex:                                   #En caso de error, lo mostramos y reseteamos todas las variables
             logger.error("Error en la lectura de parámentros del .json del canal: " 
                     + item.channel + " \n%s" % ex)
             #Mostrar los errores
@@ -1788,7 +1799,7 @@ def findvideos(item):
     try:
         url_servidores = item.url
         category_servidores = item.category
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = re.sub(r"\n|\r|\t|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
         data = data.replace("$!", "#!").replace("'", "\"").replace("Ã±", "ñ").replace("//pictures", "/pictures")
         data_servidores = data                                  #salvamos data para verificar servidores, si es necesario
         data_servidores_stat = False
@@ -1819,7 +1830,7 @@ def findvideos(item):
         torrent_link = torrent_link.replace('/descargar-torrent/', '/download/')
         torrent_link = torrent_link + '.torrent'
         torrent_link = torrent_link.replace('/.torrent', '.torrent')
-    url_torr = urlparse.urljoin(torrent_tag, torrent_link)
+    url_torr = urllib.parse.urljoin(torrent_tag, torrent_link)
     if not url_torr.startswith("http"):                                         #Si le falta el http.: lo ponemos
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
 
@@ -1897,7 +1908,8 @@ def findvideos(item):
         data = data_servidores                                                  #restauramos los datos
         data_servidores_stat = True                                             #Marcamos como que los hemos usado
 
-    data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
+    if not PY3:
+        data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
     data = data.replace("$!", "#!").replace("'", "\"").replace("Ã±", "ñ").replace("//pictures", "/pictures")
 
     # patrón para la url torrent
@@ -1909,7 +1921,7 @@ def findvideos(item):
             patron += '(?:,\s*idlt\s*=\s*"[^"]*")?,\s*nalt\s*=\s*"([^"]+)"'                 #descargas2020
         if not scrapertools.find_single_match(data, patron):
             patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'  #Patron para .torrent (planetatorrent)
-    url_torr = urlparse.urljoin(torrent_tag, scrapertools.find_single_match(data, patron))
+    url_torr = urllib.parse.urljoin(torrent_tag, scrapertools.find_single_match(data, patron))
     if not url_torr.startswith("http"):                                         #Si le falta el http.: lo ponemos
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
 
@@ -2386,7 +2398,7 @@ def episodios(item):
     if item.library_playcounts:
         try:
             from core import filetools, jsontools
-            for key, value in item.library_playcounts.items():
+            for key, value in list(item.library_playcounts.items()):
                 if scrapertools.find_single_match(key, '\d+x\d+'):
                     break
             if not item.path and item.infoLabels['IMDBNumber']:
@@ -2492,7 +2504,7 @@ def episodios(item):
 
     max_page = 100                                                              # Límite de páginas a visitar
     if item.library_playcounts: 
-        max_page = max_page / 5                                                 # Si es una actualización, recortamos
+        max_page = old_div(max_page, 5)                                                 # Si es una actualización, recortamos
     page = 1
     if scrapertools.find_single_match(item.url, '\/(\d{4,20})\/*$'):            # Tiene número de serie?
         list_pages = ['%s/pg/%s' % (item.url, page)]
@@ -2512,7 +2524,8 @@ def episodios(item):
         try:
             if not data:
                 data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(list_pages[0], timeout=timeout).data)
-            data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
+            if not PY3:
+                data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
             data = data.replace("chapters", "buscar-list")                      #Compatibilidad con mispelisy.series.com
         except:
             if len(itemlist) == 0:                                              # Si ya hay datos, puede ser la última página
@@ -2864,7 +2877,7 @@ def verify_host(item, host_call, force=True, category=''):
             category = channel_clone_name
         x = 0
         for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list_check:
-            if category == channel_clone and active_clone == '1':               # Se coprueba que el clone esté activo
+            if category == channel_clone and active_clone == '1':               # Se comprueba que el clone esté activo
                 clone_list_alt.append(clone_list_check[x])                      # y se salva como referencia
                 break
             x += 1
@@ -2877,7 +2890,11 @@ def verify_host(item, host_call, force=True, category=''):
     for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list_alt:
         host_call = host_clone                                                  # URL del clone actual
         item.channel_host = host_call
+        dom_sufix_org = scrapertools.find_single_match(item.url, ':\/\/(.*?)[\/|?]').replace('.', '-')
+        dom_sufix_clone = scrapertools.find_single_match(host_call, ':\/\/(.*?)\/*$').replace('.', '-')
+        if 'descargas2020' not in dom_sufix_clone and 'pctnew' not in dom_sufix_clone: dom_sufix_clone = ''
         item.url = re.sub(scrapertools.find_single_match(item.url, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)'), host_call, item.url)
+        item.url = item.url.replace(dom_sufix_org, dom_sufix_clone)
         item.category = channel_clone.capitalize()
         
         break                                                                   # Terminado

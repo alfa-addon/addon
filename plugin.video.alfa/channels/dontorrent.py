@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 
+from future import standard_library
+standard_library.install_aliases()
+#from builtins import str
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
-import urlparse
+import urllib.parse
 import time
 import traceback
 
@@ -18,7 +25,7 @@ from channels import autoplay
 
 #IDIOMAS = {'CAST': 'Castellano', 'LAT': 'Latino', 'VO': 'Version Original'}
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
@@ -96,7 +103,8 @@ def submenu(item):
     data = ''
     response = httptools.downloadpage(item.url, timeout=timeout, ignore_response_code=True)
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data).replace("'", '"')
-    data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+    if not PY3 and isinstance(data, str):
+        data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         
     #patron = '<span\s*class="list-group-item\s*top">Torrents<\/span>(.*?)<\/span><\/div>'
     patron = '<h1\s*class="list-group-item top"\s*style="[^"]+">.*?<\/h1>\s*(.*?)<\/span><\/div>'
@@ -147,7 +155,7 @@ def submenu(item):
         if item.extra not in scrapedurl:                                        # Seleccionamos las categorias del apartado
             continue
         
-        url = urlparse.urljoin(host, scrapedurl)
+        url = urllib.parse.urljoin(host, scrapedurl)
         url = url.replace('descargar-', '')
         quality = ''
         if 'HD' in scrapedtitle or '4K' in scrapedtitle: quality = 'HD'
@@ -158,11 +166,11 @@ def submenu(item):
             itemlist.append(item.clone(action="alfabeto", title=scrapedtitle.strip() 
                     + " [A-Z]", url=url + "/letra-%s/page/1", thumbnail=thumb_alfabeto))
         
-        elif scrapedtitle.strip() == 'Pel&iacute;culas':                        # Categorías sólo de películas
+        elif scrapedtitle.strip() == 'Películas':                               # Categorías sólo de películas
             itemlist.append(item.clone(action="alfabeto", title="         " 
                     + "- Por [A-Z]", url=url + "/buscar", post=post_alfabeto, thumbnail=thumb_alfabeto))
             itemlist.append(item.clone(action="genero", title="         " 
-                    + "- Por Género", url=url, post=post_genero, thumbnail=thumb_genero))
+                    + "- Por Género", url=url + "/buscar", post=post_genero, thumbnail=thumb_genero))
             itemlist.append(item.clone(action="anno", title="         " 
                     + "- Buscar por Año", url=url + "/buscar", post=post_anno, thumbnail=thumb_anno))
 
@@ -206,7 +214,8 @@ def genero(item):
     data = ''
     response = httptools.downloadpage(item.url, timeout=timeout, ignore_response_code=True)
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data).replace("'", '"')
-    data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+    if not PY3 and isinstance(data, str):
+        data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         
     patron = '<select\s*name="valor2"\s*id="valor2"\s*'
     patron += 'class="[^"]+">(.*?)<\/select>'
@@ -248,7 +257,7 @@ def genero(item):
         return itemlist                                             #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
     for gen in matches:
-        itemlist.append(item.clone(action="listado", title=gen, url=item.url + "/buscar", 
+        itemlist.append(item.clone(action="listado", title=gen, url=item.url, 
                         extra2='genero', post=item.post % gen))
 
     return itemlist
@@ -272,7 +281,8 @@ def novedades(item):
     data = ''
     response = httptools.downloadpage(item.url, timeout=timeout, ignore_response_code=True)
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data).replace("'", '"')
-    data = unicode(data, "utf-8", errors="replace").encode("utf-8").replace("'", '"')
+    if not PY3 and isinstance(data, str):
+        data = unicode(data, "utf-8", errors="replace").encode("utf-8").replace("'", '"')
         
     patron = '<span\s*class="text-muted">(?:\d{4})?[^<]+<\/span>\s*<a\s*href="([^"]+)"'
     patron += '\s*class="text-primary">([^<]+)<\/a>(?:\s*<span\s*class="text-muted">\((.*?)\)<\/span>)?'
@@ -380,7 +390,8 @@ def listado(item):                                                              
         if not item.matches:                                                    # si no viene de una pasada anterior, descargamos
             response = httptools.downloadpage(next_page_url, timeout=timeout_search, ignore_response_code=True, post=post)
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data).replace("'", '"')
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+            if not PY3 and isinstance(data, str):
+                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
             
             curr_page += 1                                                      #Apunto ya a la página siguiente
             if not data:                                                        #Si la web está caída salimos sin dar error
@@ -474,7 +485,8 @@ def listado(item):                                                              
                 try:
                     response = httptools.downloadpage(last_page_url, timeout=timeout_search, ignore_response_code=True, post=post)
                     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data).replace("'", '"')
-                    data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+                    if not PY3 and isinstance(data, str):
+                        data = unicode(data, "utf-8", errors="replace").encode("utf-8")
                     last_page = int(scrapertools.find_single_match(data, patron_last))
                 except:                                                         #Si no lo encuentra, lo ponemos a 999
                     last_page = 999
@@ -587,7 +599,7 @@ def listado(item):                                                              
                 
             item_local.thumbnail = ''                                           #iniciamos thumbnail
 
-            item_local.url = urlparse.urljoin(host, url)                        #guardamos la url final
+            item_local.url = urllib.parse.urljoin(host, url)                        #guardamos la url final
             item_local.context = "['buscar_trailer']"                           #... y el contexto
 
             # Guardamos los formatos para películas
@@ -694,7 +706,8 @@ def findvideos(item):
     data = ''
     response = httptools.downloadpage(item.url, timeout=timeout, ignore_response_code=True)
     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data).replace("'", '"')
-    data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+    if not PY3 and isinstance(data, str):
+        data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         
     if not data:
         logger.error("ERROR 01: FINDVIDEOS: La Web no responde o la URL es erronea: " + item.url)
@@ -770,7 +783,7 @@ def findvideos(item):
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
 
-        item_local.url = urlparse.urljoin(host, scrapedurl)
+        item_local.url = urllib.parse.urljoin(host, scrapedurl)
 
         # Restauramos urls de emergencia si es necesario
         local_torr = ''
@@ -932,7 +945,7 @@ def episodios(item):
     list_temps.append(item.url)
     
     # Si no hay TMDB o es sólo una temporada, listamos lo que tenemos
-    if season_display == 0 and item.infoLabels['tmdb_id']:
+    if season_display == 0 and item.infoLabels['tmdb_id'] and max_temp > 1:
         # Si hay varias temporadas, buscamos todas las ocurrencias y las filtraos por TMDB y calidad
         item_search = item.clone()
         item_search.extra = 'search'
@@ -987,7 +1000,8 @@ def episodios(item):
         data = ''
         response = httptools.downloadpage(url, timeout=timeout, ignore_response_code=True)
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data).replace("'", '"')
-        data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+        if not PY3 and isinstance(data, str):
+            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
 
         if not data:
             logger.error("ERROR 01: EPISODIOS: La Web no responde o la URL es erronea" + item.url)
