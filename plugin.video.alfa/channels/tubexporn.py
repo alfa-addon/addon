@@ -76,6 +76,15 @@ def lista(item):
     return itemlist
 
 
+# <div class="plwidth" id="playernew">
+# <div id="player" data-id="16098" 
+                 # data-s="146" 
+                 # data-q="240p;ad653824122280e8c0a2e57eb76e99ea;LQ&nbsp;240p;89000;1575977728;LFwyX8GL-jAy-k2NmNrqeg,360p;ff53c1a9e21c243f2b510b0d521b4a6b;SD&nbsp;360p;137000;1575977728;YiAqpAy5iTfe0Zp8GeaCnQ,480p;3b5430db5a6defea95b752421d059261;SD&nbsp;480p;197250;1575977728;14YBH_UvUqbKaLDqSMl3VQ,720p;d4f959bf48c8ed137801d92ec3859a1c;HD&nbsp;720p;335750;1575977728;wW6N9c0V3osfSI1S7wCnmQ,1080p;b49af371e1392da05a455226bbac42ab;FULL&nbsp;HD&nbsp;1080p;1141750;1575977728;9Yi74xf_TtMP7eHr9AnOKA" 
+                 # data-t="244" 
+                 # data-n="129">
+
+# http://s129.cdna.tv/wqpvid/1575977817/bVE5kVYenKZjw2c9mN5WIw/16000/16098/16098_1080p.mp4
+
 def play(item):
     logger.info()
     itemlist = []
@@ -86,7 +95,7 @@ def play(item):
     for quality,number,key in matches:
         nt = int(int(id)/1000)
         n = str(nt*1000)
-        url = "http://s%s.cdna.tv/xqpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
+        url = "http://s%s.cdna.tv/wqpvid/%s/%s/%s/%s/%s_%s.mp4" % (server,number,key,n,id,id,quality)
         url= url.replace("_720p", "")
         itemlist.append(['.mp4 %s' %quality, url])
     return itemlist

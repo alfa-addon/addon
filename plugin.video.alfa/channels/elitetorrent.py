@@ -43,7 +43,7 @@ def mainlist(item):
     thumb_buscar = get_thumb("search.png")
     thumb_separador = get_thumb("next.png")
     thumb_settings = get_thumb("setting_0.png")
-    home = '/home'
+    home = '/'
     
     autoplay.init(item.channel, list_servers, list_quality)
 
@@ -90,9 +90,9 @@ def submenu(item):
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
         return itemlist                                                         #Algo no funciona, pintamos lo que tenemos
     
-    patron = '<div class="cab_menu"\s*>.*?<\/div>'                                 #Menú principal
+    patron = '<div class="cab_menu"\s*>.*?<\/div>'                              #Menú principal
     data1 = scrapertools.find_single_match(data, patron)
-    patron = '<div id="menu_langen"\s*>.*?<\/div>'                                 #Menú de idiomas
+    patron = '<div id="menu_langen"\s*>.*?<\/div>'                              #Menú de idiomas
     data1 += scrapertools.find_single_match(data, patron)
     
     patron = '<a href="(.*?)".*?title="(.*?)"'                                  #Encontrar todos los apartados
@@ -165,9 +165,9 @@ def listado(item):
     patron += 'title="([^"]+)"\s*(?:alt="[^"]+")?\s*>\s*'                       #título
     patron += '<img (?:class="[^"]+")?\s*src="([^"]+)".*?border="[^"]+"\s*'     #thumb
     patron += 'title="([^"]+)".*?'                                              #categoría, idioma
-    patron += '<span class="[^"]+" style="[^"]+"\s*><i>(.*?)?<\/i>(?:<\/span.*?'    #calidad
-    patron += '="dig1">(.*?)?<.*?'                                              #tamaño
-    patron += '="dig2">(.*?)?)?<\/span><\/div>'                                 #tipo tamaño
+    patron += '<span class="[^"]+" style="[^"]+"\s*><i>(.*?)?<\/i>'             #calidad
+    patron += '(?:<\/span.*?="dig1">(.*?)?)?'                                   #tamaño
+    patron += '(?:<.*?="dig2">(.*?)?)?<\/span><\/div>'                          #tipo tamaño
 
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches and not '<title>503 Backend fetch failed</title>' in data and not 'No se han encontrado resultados' in data:                                                                            #error

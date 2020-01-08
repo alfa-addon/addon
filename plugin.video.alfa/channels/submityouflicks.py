@@ -59,9 +59,12 @@ def videos(item):
 def play(item):
     logger.info()
     data = httptools.downloadpage(item.url).data
-    media_url = "https:" + scrapertools.find_single_match(data, 'source src="([^"]+)"')
+    url = scrapertools.find_single_match(data, 'source src="([^"]+)"')
+    if not url.startswith("https"):
+        url = "https:%s" % url
+
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=media_url,
+    itemlist.append(Item(channel=item.channel, action="play", title=item.title, url=url,
                          thumbnail=item.thumbnail, show=item.title, server="directo", folder=False))
     return itemlist
 
