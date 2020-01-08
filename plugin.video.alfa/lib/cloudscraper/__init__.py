@@ -1,5 +1,3 @@
-## Based on https://github.com/VeNoMouS/cloudscraper ###
-
 import logging
 import re
 import sys
@@ -39,7 +37,7 @@ except ImportError:
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '1.2.14'
+__version__ = '1.2.16'
 
 # ------------------------------------------------------------------------------- #
 
@@ -87,7 +85,7 @@ class CloudScraper(Session):
         self.debug = kwargs.pop('debug', False)
         self.delay = kwargs.pop('delay', None)
         self.cipherSuite = kwargs.pop('cipherSuite', None)
-        self.interpreter = kwargs.pop('interpreter', 'js2py')
+        self.interpreter = kwargs.pop('interpreter', 'native')
         self.recaptcha = kwargs.pop('recaptcha', {})
         self.allow_brotli = kwargs.pop(
             'allow_brotli',
@@ -113,7 +111,9 @@ class CloudScraper(Session):
         self.mount(
             'https://',
             CipherSuiteAdapter(
-                cipherSuite=self.loadCipherSuite() if not self.cipherSuite else self.cipherSuite
+                cipherSuite=':'.join(self.user_agent.cipherSuite)
+                if not self.cipherSuite else ':'.join(self.cipherSuite)
+                if isinstance(self.cipherSuite, list) else self.cipherSuite
             )
         )
 
@@ -157,29 +157,6 @@ class CloudScraper(Session):
         return resp
 
     # ------------------------------------------------------------------------------- #
-    # construct a cipher suite of ciphers the system actually supports
-    # ------------------------------------------------------------------------------- #
-
-    def loadCipherSuite(self):
-        if self.cipherSuite:
-            return self.cipherSuite
-
-        if hasattr(ssl, 'Purpose') and hasattr(ssl.Purpose, 'SERVER_AUTH'):
-            for cipher in self.user_agent.cipherSuite[:]:
-                try:
-                    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-                    context.set_ciphers(cipher)
-                except (ssl.SSLError):
-                    self.user_agent.cipherSuite.remove(cipher)
-
-            if self.user_agent.cipherSuite:
-                self.cipherSuite = ':'.join(self.user_agent.cipherSuite)
-                return self.cipherSuite
-
-        sys.tracebacklimit = 0
-        #raise RuntimeError("The OpenSSL on this system does not meet the minimum cipher requirements.")
-
-    # ------------------------------------------------------------------------------- #
     # Our hijacker request function
     # ------------------------------------------------------------------------------- #
 
@@ -209,13 +186,15 @@ class CloudScraper(Session):
                 sys.tracebacklimit = 0
                 _ = self._solveDepthCnt
                 self._solveDepthCnt = 0
-                raise RuntimeError("!!Loop Protection!! We have tried to solve {} time(s) in a row.".format(_))
+                raise RuntimeError(
+                    "!!Loop Protection!! We have tried to solve {} time(s) in a row.".format(_)
+                )
 
             self._solveDepthCnt += 1
 
             resp = self.Challenge_Response(resp, **kwargs)
         else:
-            if resp.status_code not in [302, 429, 503]:
+            if not resp.is_redirect and resp.status_code not in [429, 503]:
                 self._solveDepthCnt = 0
 
         return resp
@@ -263,10 +242,38 @@ class CloudScraper(Session):
         return False
 
     # ------------------------------------------------------------------------------- #
-    # Wrapper for is_reCaptcha_Challenge and is_IUAM_Challenge
+    # check if the response contains a valid Cloudflare reCaptcha challenge
+    # ------------------------------------------------------------------------------- #
+
+    @staticmethod
+    def is_Firewall_Blocked(resp):
+        try:
+            return (
+                resp.headers.get('Server', '').startswith('cloudflare')
+                and resp.status_code == 403
+                and re.search(
+                    r'<span class="cf-error-code">1020</span>',
+                    resp.text,
+                    re.M | re.DOTALL
+                )
+            )
+        except AttributeError:
+            pass
+
+        return False
+
+    # ------------------------------------------------------------------------------- #
+    # Wrapper for is_reCaptcha_Challenge, is_IUAM_Challenge, is_Firewall_Blocked
     # ------------------------------------------------------------------------------- #
 
     def is_Challenge_Request(self, resp):
+        if self.is_Firewall_Blocked(resp):
+            sys.tracebacklimit = 0
+            raise RuntimeError(
+                'Cloudflare has a restriction on your IP (Code 1020 Detected), '
+                'you are BLOCKED.'
+            )
+
         if self.is_reCaptcha_Challenge(resp) or self.is_IUAM_Challenge(resp):
             return True
 
@@ -445,19 +452,25 @@ class CloudScraper(Session):
             cloudflare_kwargs['headers'] = updateAttr(
                 cloudflare_kwargs,
                 'headers',
-                {
-                    'Referer': resp.url
-                }
+                {'Referer': resp.url}
             )
 
-            return self.request(
+            ret = self.request(
                 'POST',
                 submit_url['url'],
                 **cloudflare_kwargs
             )
 
+            # ------------------------------------------------------------------------------- #
+            # Return response if Cloudflare is doing content pass through instead of 3xx
+            # ------------------------------------------------------------------------------- #
+
+            if not ret.is_redirect:
+                return ret
+
         # ------------------------------------------------------------------------------- #
-        # We shouldn't be here.... Re-request the original query and process again....
+        # Cloudflare is doing http 3xx instead of pass through again....
+        # Re-request the original query and/or process again....
         # ------------------------------------------------------------------------------- #
 
         return self.request(resp.request.method, resp.url, **kwargs)

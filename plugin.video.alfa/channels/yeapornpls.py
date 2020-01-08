@@ -85,7 +85,7 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<div class="video-embedded"> <iframe width="100%" height="100%" src="([^"]+)"'
+    patron = '<div class="video-embedded">.*?(?:src|SRC)="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url in matches:
         itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))

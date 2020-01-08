@@ -16,8 +16,8 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?orderby=newest"))
     itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/?orderby=popular"))
     itemlist.append( Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/?orderby="))
-    itemlist.append( Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "/pornstar"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append( Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "/pornstar/?orderby=popular"))
+    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -49,12 +49,12 @@ def catalogo(item):
     for scrapedurl,scrapedthumbnail,scrapedtitle, cantidad in matches:
         title = "%s (%s)" %(scrapedtitle,cantidad)
         thumbnail = scrapedthumbnail
-        url = scrapedurl.replace("/pornstar/", "/videos/")
+        url = scrapedurl
         itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     next_page = scrapertools.find_single_match(data, '<link rel=next href=([^<]+)>')
     if next_page:
-        next_page = urlparse.urljoin(item.url,next_page)
+        next_page =next_page.replace("\"", "")
         itemlist.append( Item(channel=item.channel, action="catalogo", title="Página Siguiente >>", text_color="blue", 
                               url=next_page) )
     return itemlist
@@ -77,12 +77,13 @@ def categorias(item):
     return itemlist
 
 
-
 def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
+    logger.debug(data)
+    
     patron = '<article class=pinbox>.*?'
     patron += 'href=([^>]+).*?'
     patron += 'src=([^\s]+).*?'
@@ -97,10 +98,9 @@ def lista(item):
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
-    next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class=next>')
-    if not next_page:
-        next_page = scrapertools.find_single_match(data, '<a href=([^\s]+) class=next>')
+    next_page = scrapertools.find_single_match(data, '<link rel=next href=([^<]+)>')
     if next_page:
+        next_page =next_page.replace("\"", "")
         itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
                               url=next_page) )
     return itemlist

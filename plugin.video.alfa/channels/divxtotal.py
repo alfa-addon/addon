@@ -24,8 +24,8 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://www.divxtotal3.net/'
-domain = 'www.divxtotal3.net'
+host = 'https://www.divxtotal.la/'
+domain = 'www.divxtotal.la'
 channel = 'divxtotal'
 categoria = channel.capitalize()
 color1, color2, color3 = ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']
@@ -33,7 +33,8 @@ __modo_grafico__ = config.get_setting('modo_grafico', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)        #Actualización sólo últ. Temporada?
 timeout = config.get_setting('timeout_downloadpage', channel)
 
-headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3', 'Accept-Encoding': 'gzip, deflate, br', 'Accept-Language': 'es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36', 'Referer': 'https://www.divxtotal3.net/peliculas-15/'}
+#headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3', 'Accept-Encoding': 'gzip, deflate, br', 'Accept-Language': 'es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36', 'Referer': 'https://www.divxtotal3.net/peliculas-15/'}
+headers = {}
 
 
 def mainlist(item):
@@ -49,12 +50,22 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
 
-    item.url_plus = "peliculas-15/"
-    itemlist.append(Item(channel=item.channel, title="Películas", action="categorias", url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_cartelera, extra="Películas"))
-    item.url_plus = "peliculas-hd-3/"
-    itemlist.append(Item(channel=item.channel, title="Películas HD", action="categorias", url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, extra="Películas HD"))
+    item.url_plus = "peliculas-16/"
+    itemlist.append(Item(channel=item.channel, title="Películas", action="categorias", 
+                url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_cartelera, 
+                extra="Películas"))
+    item.url_plus = "peliculas-hd/"
+    itemlist.append(Item(channel=item.channel, title="Películas HD", action="categorias", 
+                url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, 
+                extra="Películas HD"))
     item.url_plus = "peliculas-dvdr/"
-    itemlist.append(Item(channel=item.channel, title="Películas DVDR", action="categorias", url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, extra="Películas DVDR"))
+    itemlist.append(Item(channel=item.channel, title="Películas DVDR", action="categorias", 
+                url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, 
+                extra="Películas DVDR"))
+    item.url_plus = "peliculas-3-d/"
+    itemlist.append(Item(channel=item.channel, title="Películas 3D", action="categorias", 
+                url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, 
+                extra="Películas 3D"))
 
     itemlist.append(Item(channel=item.channel, url=host, title="", folder=False, thumbnail=thumb_separador))
     
@@ -97,7 +108,7 @@ def submenu(item):
 
         patron = '<ul class="nav navbar-nav">.*?<li><a href="[^"]+\/(series[^\/]+\/)">Series<\/a><\/li>'
         item.url_plus = scrapertools.find_single_match(data, patron)
-        if not item.url_plus: item.url_plus = 'series-16/'
+        if not item.url_plus: item.url_plus = 'series/'
         itemlist.append(item.clone(title="Series completas", action="listado", url=item.url + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_series, extra="series"))
         itemlist.append(item.clone(title="Alfabético A-Z", action="alfabeto", url=item.url + item.url_plus + "?s=letra-%s", url_plus=item.url_plus, thumbnail=thumb_series, extra="series"))
 
@@ -156,7 +167,8 @@ def categorias(item):
         itemlist.append(item.clone(title="Alfabético A-Z", action="alfabeto", url=item.url + "?s=letra-%s"))
         #itemlist.append(item.clone(title="Géneros", url=item.url))
     
-    for scrapedurl, scrapedtitle in matches:
+    for scrapedurl_i, scrapedtitle in matches:
+        scrapedurl = scrapedurl_i.replace('hd-4', 'hd')
         if item.url_plus not in scrapedurl:
             continue
         if "Todas" in scrapedtitle:
@@ -261,8 +273,8 @@ def listado(item):
                 item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
                 return itemlist                                                     #Salimos
             
-            #logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-            logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + str(matches))
+            logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
+            #logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + str(matches))
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + \
                         ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
@@ -375,10 +387,15 @@ def listado(item):
                 item_local.quality = 'HD '
             elif '/peliculas-dvdr' in scrapedurl or item_local.extra == 'Películas DVDR':
                 item_local.quality = 'DVDR '
+            elif '/peliculas-dvdr' in scrapedurl or item_local.extra == 'Películas 3D':
+                item_local.quality = '3D '
             elif 'subtituladas' in cat_ppal or item_local.extra == 'VOSE' or 'vose' in title.lower():
                 item_local.language += ['VOSE']
             elif 'Version Original' in cat_ppal or item_local.extra == 'VO' or 'vo' in title.lower():
                 item_local.language += ['VO']
+                
+            if '4k' in title.lower():
+                item_local.quality = '4K, %s' % item_local.quality
 
             #Analizamos los formatos de series, temporadas y episodios
             elif '/series' in scrapedurl or item_local.extra == 'series':
@@ -450,8 +467,8 @@ def listado(item):
             title = re.sub(r'\[.*?\]', '', title)
 
             #Limpiamos el título de la basura innecesaria
-            title = title.replace("Dual", "").replace("dual", "").replace("Subtitulada", "").replace("subtitulada", "").replace("Subt", "").replace("subt", "").replace("Sub", "").replace("sub", "").replace("(Proper)", "").replace("(proper)", "").replace("Proper", "").replace("proper", "").replace("#", "").replace("(Latino)", "").replace("Latino", "").replace("LATINO", "").replace("Spanish", "").replace("Trailer", "").replace("Audio", "")
-            title = title.replace("HDTV-Screener", "").replace("DVDSCR", "").replace("TS ALTA", "").replace("- HDRip", "").replace("(HDRip)", "").replace("- Hdrip", "").replace("(microHD)", "").replace("(DVDRip)", "").replace("HDRip", "").replace("(BR-LINE)", "").replace("(HDTS-SCREENER)", "").replace("(BDRip)", "").replace("(BR-Screener)", "").replace("(DVDScreener)", "").replace("TS-Screener", "").replace(" TS", "").replace(" Ts", "").replace(" 480p", "").replace(" 480P", "").replace(" 720p", "").replace(" 720P", "").replace(" 1080p", "").replace(" 1080P", "").replace("DVDRip", "").replace(" Dvd", "").replace(" DVD", "").replace(" V.O", "").replace(" Unrated", "").replace(" UNRATED", "").replace(" unrated", "").replace("screener", "").replace("TS-SCREENER", "").replace("TSScreener", "").replace("HQ", "").replace("AC3 5.1", "").replace("Telesync", "").replace("Line Dubbed", "").replace("line Dubbed", "").replace("LineDuB", "").replace("Line", "").replace("XviD", "").replace("xvid", "").replace("XVID", "").replace("Mic Dubbed", "").replace("HD", "").replace("V2", "").replace("CAM", "").replace("VHS.SCR", "").replace("Dvd5", "").replace("DVD5", "").replace("Iso", "").replace("ISO", "").replace("Reparado", "").replace("reparado", "").replace("DVD9", "").replace("Dvd9", "")
+            title = title.replace("Dual", "").replace("dual", "").replace("Subtitulada", "").replace("subtitulada", "").replace("Subt", "").replace("subt", "").replace("Sub", "").replace("sub", "").replace("(Proper)", "").replace("(proper)", "").replace("Proper", "").replace("proper", "").replace("#", "").replace("(Latino)", "").replace("Latino", "").replace("LATINO", "").replace("Spanish", "").replace("(Español)", "").replace("Castellano-Ingles", "").replace("Trailer", "").replace("Audio", "").replace("(SBS) itulado", "").replace("(SBS)", "")
+            title = title.replace("HDTV-Screener", "").replace("DVDSCR", "").replace("TS ALTA", "").replace("- HDRip", "").replace("(HDRip)", "").replace("- Hdrip", "").replace("(microHD)", "").replace("(DVDRip)", "").replace("HDRip", "").replace("(BR-LINE)", "").replace("(HDTS-SCREENER)", "").replace("(BDRip)", "").replace("(BR-Screener)", "").replace("(DVDScreener)", "").replace("TS-Screener", "").replace(" TS", "").replace(" Ts", "").replace(" 480p", "").replace(" 480P", "").replace(" 720p", "").replace(" 720P", "").replace(" 1080p", "").replace(" 1080P", "").replace("(1080p)", "").replace(" 2160p", "").replace("(2160p)", "").replace("DVDRip", "").replace(" Dvd", "").replace(" DVD", "").replace(" V.O", "").replace(" Unrated", "").replace(" UNRATED", "").replace(" unrated", "").replace("screener", "").replace("TS-SCREENER", "").replace("TSScreener", "").replace("HQ", "").replace("AC3 5.1", "").replace("Telesync", "").replace("Line Dubbed", "").replace("line Dubbed", "").replace("LineDuB", "").replace("Line", "").replace("XviD", "").replace("xvid", "").replace("XVID", "").replace("Mic Dubbed", "").replace("HD", "").replace("V2", "").replace("CAM", "").replace("VHS.SCR", "").replace("Dvd5", "").replace("DVD5", "").replace("Iso", "").replace("ISO", "").replace("Reparado", "").replace("reparado", "").replace("DVD9", "").replace("Dvd9", "").replace("(3D)", "").replace("(3d)", "").replace("3D", "").replace("3d", "").replace("(4K) (U)", "").replace("(-U)", "").replace("(U)", "").replace("(4K)", "").replace("(4k)", "").replace("4K U", "").replace("4K", "").replace("4k", "").replace("(Trial)", "").replace("Trial", "").replace("(.DTS.5.1)", "").replace("(DTS.5.1)", "").replace("(Extendida)", "").replace("()", "")
 
             #Obtenemos temporada y episodio si se trata de Episodios
             if item_local.contentType == "episode":
@@ -543,7 +560,7 @@ def findvideos(item):
 
     #Bajamos los datos de la página
     data = ''
-    patron = '<a onclick="eventDownloadTorrent\(.*?\)".?class="linktorrent" href="([^"]+)"'
+    patron = '<a onclick="eventDownloadTorrent\(.*?\)".*class="linktorrent.*?" href="([^"]+)"'
     if item.contentType == 'movie':                                                 #Es una peli
         try:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout, headers=headers).data)

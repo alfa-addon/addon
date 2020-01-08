@@ -16,11 +16,11 @@ def mainlist(item):
 
     itemlist = []
     itemlist.append(Item(channel=item.channel, action="videos", title="Útimos videos", url=HOST, viewmode="movie"))
-    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=HOST))
     itemlist.append(Item(channel=item.channel, action="votados", title="Lo mejor"))
     itemlist.append(Item(channel=item.channel, action="vistos", title="Los mas vistos"))
     itemlist.append(Item(channel=item.channel, action="videos", title="Recomendados",
                          url=urlparse.urljoin(HOST, "/videos/recommended")))
+    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorías", url=HOST))
     itemlist.append(
         Item(channel=item.channel, action="search", title="Buscar", url=urlparse.urljoin(HOST, "/search?q=%s")))
 
@@ -83,12 +83,9 @@ def videos(item):
 def categorias(item):
     logger.info()
     itemlist = []
-
     data = httptools.downloadpage(item.url).data
-
-    data = scrapertools.find_single_match(data, '(?s)<div class="all-categories">(.*?)</aside>')
-
-    patron = '(?s)<li>.*?<a href="([^"]+)".*?>([^<]+).*?</a></li>'
+    data = scrapertools.find_single_match(data, '<div class="all-categories">(.*?)<li class="show-all-link">')
+    patron = '<a href="([^"]+)".*?>([^<]+)\s+<'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle in matches:
         contentTitle = scrapedtitle.strip()

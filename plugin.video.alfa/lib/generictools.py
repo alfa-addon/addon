@@ -7,11 +7,20 @@
 # y resultado de cada canal y reducir el costo su mantenimiento
 # ------------------------------------------------------------
 
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+#from builtins import next
+from builtins import zip
+#from builtins import str
+from builtins import range
+from past.utils import old_div
+
 import re
 import os
 import sys
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 import datetime
 import time
 import traceback
@@ -23,9 +32,9 @@ from core import scrapertools
 from core import servertools
 from core import channeltools
 from core import filetools
+from core import tmdb
 from core.item import Item
 from platformcode import config, logger, platformtools
-from core import tmdb
 from lib import jsunpack
 
 channel_py = "newpct1"
@@ -801,11 +810,12 @@ def post_tmdb_episodios(item, itemlist):
         
         #logger.debug(item_local)
 
-        #Ajustamos el nombre de la categoría si es un clone de NewPct1
-        if item_local.channel == channel_py:
-            if item.library_urls or item.add_videolibrary:                      # Si videne de videoteca cambiamos el nombre de canal al clone
-                item_local.channel = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
-            item_local.category = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
+        #Ajustamos el nombre del canal si es un clone de NewPct1 y viene de Videoteca. Tomamos el canal original, no el actual
+        if item_local.channel == channel_py and (item.library_urls or item.add_videolibrary):
+            item_local.channel = item_local.category.lower()
+            #if item.library_urls or item.add_videolibrary:                     # Si videne de videoteca cambiamos el nombre de canal al clone
+            #    item_local.channel = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
+            #item_local.category = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
         #Restauramos valores para cada Episodio si ha habido fail-over de un clone de NewPct1
         if item_local.channel_alt or item_local.channel_redir:
             item_local.channel = item_local.channel_redir.lower() or item_local.channel_alt.lower()
@@ -840,6 +850,8 @@ def post_tmdb_episodios(item, itemlist):
             if num_temporada != item_local.contentSeason:
                 num_temporada = item_local.contentSeason
                 num_episodios = 0
+            if item_local.infoLabels['number_of_seasons'] == 1 and item_local.infoLabels['number_of_episodes'] > item_local.infoLabels['temporada_num_episodios']:
+                item_local.infoLabels['temporada_num_episodios'] = item_local.infoLabels['number_of_episodes']
             if item_local.infoLabels['temporada_num_episodios'] and int(item_local.infoLabels['temporada_num_episodios']) > int(num_episodios):
                 num_episodios = item_local.infoLabels['temporada_num_episodios']
         except:
@@ -1062,6 +1074,10 @@ def post_tmdb_findvideos(item, itemlist):
     num_episodios = item.contentEpisodeNumber
     if item.infoLabels['temporada_num_episodios'] and item.contentEpisodeNumber <= item.infoLabels['temporada_num_episodios']:
         num_episodios = item.infoLabels['temporada_num_episodios']
+        
+    #Si no existe "clean_plot" se crea a partir de "plot"
+    if not item.clean_plot and item.infoLabels['plot']:
+        item.clean_plot = item.infoLabels['plot']
 
     # Obtener la información actualizada del vídeo.  En una segunda lectura de TMDB da más información que en la primera
     #if not item.infoLabels['tmdb_id'] or (not item.infoLabels['episodio_titulo'] and item.contentType == 'episode'):
@@ -1152,8 +1168,9 @@ def post_tmdb_findvideos(item, itemlist):
         tiempo_final = int(tiempo)                                                  #lo convierto a int, pero puede se null
         if tiempo_final > 0:                                                        #Si el tiempo está a 0, pasamos
             if tiempo_final > 700:                                                  #Si está en segundos
-                tiempo_final = tiempo_final / 60                                    #Lo transformo a minutos
-            horas = tiempo_final / 60                                               #Lo transformo a horas
+                tiempo_final = old_div(tiempo_final, 60)                                    #Lo transformo a minutos
+            #horas = tiempo_final / 60
+            horas = old_div(tiempo_final, 60)                                               #Lo transformo a horas
             resto = tiempo_final - (horas * 60)                                     #guardo el resto de minutos de la hora
             if not scrapertools.find_single_match(item.quality, '(\[\d+:\d+)'):     #si ya tiene la duración, pasamos
                 item.quality += ' [/COLOR][COLOR white][%s:%s h]' % (str(horas).zfill(2), str(resto).zfill(2))     #Lo agrego a Calidad del Servidor
@@ -1357,14 +1374,18 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         size_name = ("B", "KB", "M·B", "G·B", "TB", "PB", "EB", "ZB", "YB")
         i = int(math.floor(math.log(size, 1024)))
         p = math.pow(1024, i)
-        s = round(size / p, 2)
+        #s = round(size / p, 2)
+        s = round(old_div(size, p), 2)
         return '%s %s' % (s, size_name[i])
     
     def decode(text):
         try:
             src = tokenize(text)
-            data = decode_item(src.next, src.next())
-            for token in src:  # look for more tokens
+            try:
+                data = decode_item(src.next, src.next())                        #Py2
+            except:
+                data = decode_item(src.__next__, next(src))                     #Py3
+            for token in src:                                                   # look for more tokens
                 raise SyntaxError("trailing junk")
         except (AttributeError, ValueError, StopIteration):
             try:
@@ -1404,7 +1425,8 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                 data.append(decode_item(next, tok))
                 tok = next()
             if token == "d":
-                data = dict(zip(data[0::2], data[1::2]))
+                #data = dict(zip(data[0::2], data[1::2]))
+                data = dict(list(zip(data[0::2], data[1::2])))
         else:
             raise ValueError
         return data
@@ -1442,7 +1464,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                 return (size, torrent_f)
             return size                                         #Si hay un error, devolvemos el "size" y "torrent" vacíos
 
-        torrent_f = decode(torrent_file)                                          #decodificamos el .torrent
+        torrent_f = decode(torrent_file)                                        #decodificamos el .torrent
 
         #si sólo tiene un archivo, tomamos la longitud y la convertimos a una unidad legible, si no dará error
         try:
@@ -1470,9 +1492,10 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                 files.append({"__name": torrent_f["info"]["name"], 'length': 0})
                 
             except:
-                pass
+                size = 'ERROR'
 
     except:
+        size = 'ERROR'
         logger.error('ERROR al buscar el tamaño de un .Torrent: ' + str(url))
         logger.error(traceback.format_exc())
         
@@ -1500,6 +1523,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     
 def get_field_from_kodi_DB(item, from_fields='*', files='file'):
     logger.info()
+    from builtins import next
     """
         
     Llamada para leer de la DB de Kodi los campos que se reciben de entrada (from_fields, por defecto "*") del vídeo señalado en Item
@@ -1527,7 +1551,8 @@ def get_field_from_kodi_DB(item, from_fields='*', files='file'):
         path2 = filetools.join(VIDEOLIBRARY_PATH, FOLDER_TVSHOWS)
         folder = FOLDER_TVSHOWS
 
-    raiz, carpetas, ficheros = filetools.walk(path).next()      #listo las series o películas en la Videoteca
+    #raiz, carpetas, ficheros = filetools.walk(path).next()
+    raiz, carpetas, ficheros = next(filetools.walk(path))      #listo las series o películas en la Videoteca
     carpetas = [filetools.join(path, f) for f in carpetas]      #agrego la carpeta del contenido al path
     for carpeta in carpetas:                                    #busco el contenido seleccionado en la lista de carpetas
         if item.contentType == 'movie' and (item.contentTitle.lower() in carpeta or item.contentTitle in carpeta):                                                        #Películas?
@@ -1896,6 +1921,7 @@ def web_intervenida(item, data, desactivar=True):
     
 def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=False, lookup=False):
     logger.info()
+    from builtins import next
     
     """
         
@@ -2085,7 +2111,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                         (channel_alt, channel_alt, config.get_setting("emergency_urls", item.channel))
 
         elif it.library_urls:                                                   #Viene de "listar peliculas´"
-            for canal_vid, url_vid in it.library_urls.items():                  #Se recorre "item.library_urls" para buscar canales candidatos
+            for canal_vid, url_vid in list(it.library_urls.items()):                  #Se recorre "item.library_urls" para buscar canales candidatos
                 if canal_vid == channel_py:                                     #Si tiene Newcpt1 en canal, es un error
                     continue
                 canal_vid_alt = "'%s'" % canal_vid
@@ -2106,7 +2132,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         logger.error(traceback.format_exc())
 
     #Ahora tratamos las webs intervenidas, tranformamos la url, el nfo y borramos los archivos obsoletos de la serie
-    if (channel not in intervencion and channel_py_alt not in intervencion and category not in intervencion and channel_alt != 'videolibrary') or not item.infoLabels or status_migration:          #lookup o migración
+    if (channel not in intervencion and channel_py_alt not in intervencion and category not in intervencion and channel_alt != 'videolibrary') or not item.infoLabels or status_migration:             #lookup o migración
         return (item, it, overwrite)                                        #... el canal/clone está listado
         
     import ast
@@ -2155,7 +2181,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                         it.library_urls = item.library_urls                 #lo salvamos en el .nfo, si lo hay
                         
                     if item.url and item.url == url_total and url_total_status == False:    #si la url es la del canal borrado...
-                        for canal_vid, url_vid in item.library_urls.items():
+                        for canal_vid, url_vid in list(item.library_urls.items()):
                             canal_vid_alt = "'%s'" % canal_vid
                             if canal_vid_alt not in intervencion:           #... la sustituimos por la primera válida
                                 item.url = url_vid                          
@@ -2174,7 +2200,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
 
             else:
                 if channel_alt == 'videolibrary':                           #Viene de videolibrary.list_movies: IMPRESCINDIBLE
-                    for canal_vid, url_vid in item.library_urls.items():
+                    for canal_vid, url_vid in list(item.library_urls.items()):
                         if canal_org != canal_vid:              #Miramos si canal_org de la regla está en item.library_urls
                             continue
                         else:
@@ -2229,7 +2255,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                             and item.category.lower() == canal_org):
                         url_total = scrapertools.find_single_match(url_total, \
                             'http.*\:\/\/(?:www\.)?[^\?|\/]+(.*?$)')            #quitamos el http*:// inicial
-                        url_total = urlparse.urljoin(url_des, url_total)        #reemplazamos una parte de url
+                        url_total = urllib.parse.urljoin(url_des, url_total)        #reemplazamos una parte de url
                 else:
                     url_total = url_total.replace(url_org, url_des)             #reemplazamos una parte de url
                 url = ''
@@ -2285,7 +2311,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
             canal_org_des_list_ALT = []                                         #Creamos esta lista para salvar las parejas
             canal_org_des_list_ALT.extend(canal_org_des_list)                   #... y borrar de la original las web caidas
             for canal_org_def, canal_des_def, url_total, opt_def, ow_force_def in canal_org_des_list_ALT: #pasamos por las "parejas" a borrar
-                if "magnet:" in url_total or type(url_total) != str:    #Si la url es un Magnet, o es una lista, pasamos
+                if "magnet:" in url_total or not isinstance(url_total, str):    #Si la url es un Magnet, o es una lista, pasamos
                     i += 1
                     continue
                 try:
@@ -2309,7 +2335,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
             # Listamos todos los ficheros de la serie, asi evitamos tener que comprobar si existe uno por uno
             canal_erase_list = []
             from core import videolibrarytools
-            raiz, carpetas_series, ficheros = filetools.walk(path).next()
+            #raiz, carpetas_series, ficheros = filetools.walk(path).next()
+            raiz, carpetas_series, ficheros = next(filetools.walk(path))
             ficheros = [filetools.join(path, f) for f in ficheros]      #Almacenamos la lista de archivos de la carpeta
             #logger.error(ficheros)
             for archivo in ficheros:
@@ -2431,12 +2458,12 @@ def borrar_jsons_dups(item, it, path, head_nfo):
     
     logger.error('Conversión de : [%s]' % it.contentSerieName)
     claves = []
-    for clave, value in it.library_urls.items():
+    for clave, value in list(it.library_urls.items()):
         claves.append(clave)
     
     if it.emergency_urls:
         nfo_upd = False
-        for clave, value in it.emergency_urls.items():
+        for clave, value in list(it.emergency_urls.items()):
             if clave in claves:
                 continue
             item.emergency_urls.pop(clave, None)
@@ -2645,7 +2672,7 @@ def regenerate_clones():
                             newpct1 = True                                      #marcamos par a resetar los .jsons
                         
                         if len(nfo.library_urls) > 1:                           #Tiene más de un canal?
-                            for canal, url in nfo.library_urls.items():
+                            for canal, url in list(nfo.library_urls.items()):
                                 canal_json = "[%s].json" % canal
                                 if canal_json not in file_list:                 #Canal zomby, lo borramos
                                     logger.error('pop: ' + canal)
