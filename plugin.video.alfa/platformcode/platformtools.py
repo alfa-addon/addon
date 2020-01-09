@@ -146,6 +146,11 @@ def render_items(itemlist, parent_item):
         force_unify = False
 
     unify_enabled = config.get_setting('unify')
+    try:
+        if channeltools.get_channel_parameters(parent_item.channel)['adult']:
+            unify_enabled = False
+    except:
+        pass
     # logger.debug('unify_enabled: %s' % unify_enabled)
 
     # Recorremos el itemlist
@@ -179,7 +184,7 @@ def render_items(itemlist, parent_item):
             elif 'serie' in item.action:
                 item.thumbnail = get_thumb("videolibrary_tvshow.png")
 
-        if (unify_enabled or force_unify) and parent_item.channel not in ['alfavorites', 'adult']:
+        if (unify_enabled or force_unify) and parent_item.channel not in ['alfavorites']:
             # Formatear titulo con unify
             item = unify.title_format(item)
         else:
