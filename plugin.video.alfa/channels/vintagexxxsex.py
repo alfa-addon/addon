@@ -67,6 +67,7 @@ def lista(item):
         scrapedurl = scrapedurl.replace("/up.php?xxx=", "")
         scrapedurl = host + scrapedurl
         thumbnail = scrapedthumbnail
+        
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play" , title=title , url=scrapedurl, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, contentTitle=contentTitle))
@@ -82,13 +83,10 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    scrapedurl = scrapertools.find_single_match(data,'<iframe src="([^"]+)"')
-    data = httptools.downloadpage(scrapedurl).data
-    scrapedurl = scrapertools.find_single_match(data,'<source src="([^"]+)"')
-    if scrapedurl == "":
-        scrapedurl = "http:" + scrapertools.find_single_match(data,'<iframe src="([^"]+)"')
-        data = httptools.downloadpage(scrapedurl).data
-        scrapedurl = scrapertools.find_single_match(data,'file: "([^"]+)"')
-    itemlist.append(item.clone(action="play", contentTitle=item.title, url=scrapedurl))
+    txt = scrapertools.find_single_match(data,'<iframe src=".*?(aHR0[^"]+)"')
+    import base64
+    url = base64.b64decode(txt)
+    itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url ))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

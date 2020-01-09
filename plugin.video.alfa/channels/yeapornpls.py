@@ -67,8 +67,7 @@ def lista(item):
     for scrapedurl,scrapedthumbnail,scrapedtitle,time in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" % (time, scrapedtitle)
         thumbnail = urlparse.urljoin(item.url,scrapedthumbnail)
-        url = scrapedurl
-        logger.debug(url)
+        url = host + scrapedurl
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
