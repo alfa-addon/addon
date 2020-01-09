@@ -218,7 +218,7 @@ def listado(item):
             if not item.post:
                 item.post = item.url
             video_section = ''
-            data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.post, timeout=timeout_search).data)
+            data = re.sub(r"\n|\r|\t|(<!--.*?-->)", "", httptools.downloadpage(item.post, timeout=timeout_search).data)
             data = js2py_conversion(data, item.post, timeout=timeout_search)
             video_section = scrapertools.find_single_match(data, '<div class="contenedor-home">(?:\s*<div class="titulo-inicial">\s*Últi.*?Añadi...\s*<\/div>)?\s*<div class="contenedor-imagen">\s*(<div class="imagen-post">.*?<\/div><\/div>)<\/div>')
         except:
@@ -493,7 +493,7 @@ def findvideos(item):
     #Bajamos los datos de la página
     data = ''
     try:
-        data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, timeout=timeout_find, follow_redirects=follow_redirects).data)
+        data = re.sub(r"\n|\r|\t", "", httptools.downloadpage(item.url, timeout=timeout_find, follow_redirects=follow_redirects).data)
         data = js2py_conversion(data, item.url, timeout=timeout_find, follow_redirects=follow_redirects)
     except:
         pass
@@ -515,7 +515,9 @@ def findvideos(item):
     
     patron = '\/icono_.*?png"\s*(?:title|alt)="(?P<lang>[^"]+)?"[^>]+><\/td><td>'
     patron += '(?P<temp_epi>.*?)?<?\/td>.*?<td>(?P<quality>.*?)?<\/td><td><a\s*'
-    patron += 'class="link"\s*href="(?P<url>[^"]+)?"'
+    #patron += 'class="link"\s*href="(?P<url>[^"]+)?"'
+    patron += 'class="link"\s*onclick="'
+    patron += "post\('(?P<url>[^']+)',\s*{u:\s*'(?P<key>[^']+)'}\);"
     if not item.armagedon:                                                      #Si es un proceso normal, seguimos
         matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                                             #error
@@ -546,10 +548,11 @@ def findvideos(item):
         emergency_torrents = []
         emergency_urls = []
     i = -1
-    for lang, quality, size, scrapedurl_la in matches:
+    for lang, quality, size, scrapedurl_la, scrapedkey in matches:
         i += 1
         temp_epi = ''
-        scrapedurl = scrapedurl_la.replace('.la', '.one')
+        scrapedurl = '%s?u=%s' % (urlparse.urljoin(host, scrapedurl_la).replace('.la', '.one')\
+                    .replace('download/torrent.php', 'download_tt.php'), scrapedkey)
         if scrapertools.find_single_match(quality, '\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.'):
             password = scrapertools.find_single_match(quality, '\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.')
             quality = re.sub(r'\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.', '', quality)
@@ -577,8 +580,8 @@ def findvideos(item):
                     contentSeason = int(contentSeason)
                     contentEpisodeNumber = 1
                 else:
-                    if scrapertools.find_single_match(temp_epi, r'(\d+)&#.*?;(\d+)'):
-                        contentSeason, contentEpisodeNumber = scrapertools.find_single_match(temp_epi, r'(\d+)&#.*?;(\d+)')
+                    if scrapertools.find_single_match(temp_epi, r'(\d+)(?:&#.*?;|x|X)(\d+)'):
+                        contentSeason, contentEpisodeNumber = scrapertools.find_single_match(temp_epi, r'(\d+)(?:&#.*?;|x|X)(\d+)')
                     if not contentEpisodeNumber:
                         contentSeason = scrapertools.find_single_match(item.url, r'temporadas?-(\d+)')  #num de temporada
                         if not contentEpisodeNumber:
@@ -631,7 +634,7 @@ def findvideos(item):
         if config.get_setting("cookie_ren", channel=channel, default=True):
             data_tor = ''
             try:
-                data_tor = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(scrapedurl, timeout=timeout).data)
+                data_tor = re.sub(r"\n|\r|\t", "", httptools.downloadpage(scrapedurl, timeout=timeout).data)
                 data_tor = js2py_conversion(data_tor, scrapedurl, domain_name=domain_files, timeout=timeout)
                 config.set_setting("cookie_ren", False, channel=channel)            #Cookie renovada
             except:
@@ -747,7 +750,7 @@ def episodios(item):
 
     data = ''
     try:
-        data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(item.url, timeout=timeout).data)    #Cargamos los datos de la página
+        data = re.sub(r"\n|\r|\t", "", httptools.downloadpage(item.url, timeout=timeout).data)    #Cargamos los datos de la página
         data = js2py_conversion(data, item.url, timeout=timeout)
 
         patron_actual = '<link rel="canonical" href="(.*?)"'                            #Patrón de url temporada actual
@@ -834,7 +837,7 @@ def episodios(item):
     while temp_actual != '':                            #revisamos las temporadas hasta el final
         if not data:                                    #si no hay datos, descargamos. Si los hay de loop anterior, los usamos
             try:
-                data = re.sub(r"\n|\r|\t|\s{2,}", "", httptools.downloadpage(temp_actual, timeout=timeout).data)
+                data = re.sub(r"\n|\r|\t", "", httptools.downloadpage(temp_actual, timeout=timeout).data)
                 data = js2py_conversion(data, temp_actual, timeout=timeout)
                 
                 #Controla que no haya un bucle en la cadena de links entre temporadas
@@ -940,7 +943,9 @@ def episodios(item):
         
         patron = '\/icono_.*?png"\s*(?:title|alt)="(?P<lang>[^"]+)?"[^>]+><\/td><td>'
         patron += '(?P<temp_epi>.*?)?<?\/td>.*?<td>(?P<quality>.*?)?<\/td><td><a\s*'
-        patron += 'class="link"\s*href="(?P<url>[^"]+)?"'
+        #patron += 'class="link"\s*href="(?P<url>[^"]+)?"'
+        patron += 'class="link"\s*onclick="'
+        patron += "post\('(?P<url>[^']+)',\s*{u:\s*'(?P<key>[^']+)'}\);"
         matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches:                             #error
             item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
@@ -957,18 +962,20 @@ def episodios(item):
         #logger.debug(data)
         
         #Ahora recorremos todos los links por calidades
-        for lang, temp_epi, quality, scrapedurl in matches:     #la URL apunta ya al .torrent. nos quedamos con la URL de temporada
+        for lang, temp_epi, quality, scrapedurl_la, scrapedkey in matches:  #la URL apunta ya al .torrent. nos quedamos con la URL de temporada
             #Generamos una copia de Item para trabajar sobre ella y la rellenamos.  Borramos etiquetas innecesarias
             item_local = item.clone()
+            scrapedurl = '%s?u=%s' % (urlparse.urljoin(host, scrapedurl_la).replace('.la', '.one')\
+                    .replace('download/torrent.php', 'download_tt.php'), scrapedkey)
             if item_local.category:
                 del item_local.category
             if item_local.infoLabels['title']:
                 del item_local.infoLabels['title']
             item_local.context = "['buscar_trailer']"
-            item_local.url = temp_actual                        #salvamos la URL de la temporada
+            item_local.url = temp_actual                            #salvamos la URL de la temporada
             item_local.action = "findvideos"
             item_local.contentType = "episode"
-            #item_local.contentSeason = temp_actual_num          #salvamos num de temporada
+            #item_local.contentSeason = temp_actual_num             #salvamos num de temporada
             item_local.title = re.sub(r'\[COLOR limegreen\]\[.*?\]\[\/COLOR\]', '', item_local.title)
             if item_local.library_playcounts:
                 del item_local.library_playcounts
@@ -1003,12 +1010,13 @@ def episodios(item):
                     item_local.contentSeason = int(item_local.contentSeason)
                     item_local.contentEpisodeNumber = 1
                 else:                                           #si es un episodio lo guardamos
-                    if scrapertools.find_single_match(temp_epi, r'(\d+)&#.*?;(\d+)'):
-                        item_local.contentSeason, item_local.contentEpisodeNumber = scrapertools.find_single_match(temp_epi, r'(\d+)&#.*?;(\d+)')
+                    if scrapertools.find_single_match(temp_epi, r'(\d+)(?:&#.*?;|x|X)(\d+)'):
+                        item_local.contentSeason, item_local.contentEpisodeNumber = \
+                                scrapertools.find_single_match(temp_epi, r'(\d+)(?:&#.*?;|x|X)(\d+)')
                     if not item_local.contentSeason:
                         item_local.contentSeason = temp_actual_num
                     item_local.contentSeason = int(item_local.contentSeason)
-                    #item_local.contentEpisodeNumber = scrapertools.find_single_match(temp_epi, r'\d+&#.*?;(\d+)')
+                    #item_local.contentEpisodeNumber = scrapertools.find_single_match(temp_epi, r'\\d+(?:&#.*?;|x|X)(\d+)')
                     if not item_local.contentEpisodeNumber:
                         item_local.contentEpisodeNumber = scrapertools.find_single_match(temp_epi, r'(\d+)-')
                         if not item_local.contentEpisodeNumber:
@@ -1173,7 +1181,7 @@ def js2py_conversion(data, url, post=None, domain_name=domain, headers={}, timeo
     config.set_setting("cookie_ren", True, channel=channel)
 
     data_new = ''
-    data_new = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url, \
+    data_new = re.sub(r"\n|\r|\t|(<!--.*?-->)", "", httptools.downloadpage(url, \
                 timeout=timeout, headers=headers, post=post, follow_redirects=follow_redirects).data)
     #data_new = re.sub('\r\n', '', data_new).decode('utf8').encode('utf8')
     if data_new:

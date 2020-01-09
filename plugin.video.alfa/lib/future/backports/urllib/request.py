@@ -827,7 +827,7 @@ class ProxyHandler(BaseHandler):
         if user and password:
             user_pass = '%s:%s' % (unquote(user),
                                    unquote(password))
-            creds = base64.b64encode(user_pass.encode()).decode("ascii")
+            creds = base64.b64encode(user_pass.encode()).decode("utf8")
             req.add_header('Proxy-authorization', 'Basic ' + creds)
         hostport = unquote(hostport)
         req.set_proxy(hostport, proxy_type)
@@ -977,7 +977,7 @@ class AbstractBasicAuthHandler(object):
         user, pw = self.passwd.find_user_password(realm, host)
         if pw is not None:
             raw = "%s:%s" % (user, pw)
-            auth = "Basic " + base64.b64encode(raw.encode()).decode("ascii")
+            auth = "Basic " + base64.b64encode(raw.encode()).decode("utf8")
             if req.headers.get(self.auth_header, None) == auth:
                 return None
             req.add_unredirected_header(self.auth_header, auth)
@@ -1080,7 +1080,7 @@ class AbstractDigestAuthHandler(object):
         # authentication, and to provide some message integrity protection.
         # This isn't a fabulous effort, but it's probably Good Enough.
         s = "%s:%s:%s:" % (self.nonce_count, nonce, time.ctime())
-        b = s.encode("ascii") + _randombytes(8)
+        b = s.encode("utf8") + _randombytes(8)
         dig = hashlib.sha1(b).hexdigest()
         return dig[:16]
 
@@ -1147,9 +1147,9 @@ class AbstractDigestAuthHandler(object):
     def get_algorithm_impls(self, algorithm):
         # lambdas assume digest modules are imported at the top level
         if algorithm == 'MD5':
-            H = lambda x: hashlib.md5(x.encode("ascii")).hexdigest()
+            H = lambda x: hashlib.md5(x.encode("utf8")).hexdigest()
         elif algorithm == 'SHA':
-            H = lambda x: hashlib.sha1(x.encode("ascii")).hexdigest()
+            H = lambda x: hashlib.sha1(x.encode("utf8")).hexdigest()
         # XXX MD5-sess
         KD = lambda s, d: H("%s:%s" % (s, d))
         return H, KD
@@ -1829,13 +1829,13 @@ class URLopener(object):
 
         if proxy_passwd:
             proxy_passwd = unquote(proxy_passwd)
-            proxy_auth = base64.b64encode(proxy_passwd.encode()).decode('ascii')
+            proxy_auth = base64.b64encode(proxy_passwd.encode()).decode('utf8')
         else:
             proxy_auth = None
 
         if user_passwd:
             user_passwd = unquote(user_passwd)
-            auth = base64.b64encode(user_passwd.encode()).decode('ascii')
+            auth = base64.b64encode(user_passwd.encode()).decode('utf8')
         else:
             auth = None
         http_conn = connection_factory(host)
@@ -2040,7 +2040,7 @@ class URLopener(object):
         msg.append('Content-type: %s' % type)
         if encoding == 'base64':
             # XXX is this encoding/decoding ok?
-            data = base64.decodebytes(data.encode('ascii')).decode('latin-1')
+            data = base64.decodebytes(data.encode('utf8')).decode('latin-1')
         else:
             data = unquote(data)
         msg.append('Content-Length: %d' % len(data))
@@ -2498,7 +2498,17 @@ def _proxy_bypass_macosx_sysconf(host, proxy_settings):
 
 
 if sys.platform == 'darwin':
-    from _scproxy import _get_proxy_settings, _get_proxies
+    try:
+        from _scproxy import _get_proxy_settings, _get_proxies
+    except:
+        try:
+            # By default use environment variables
+            _get_proxy_settings = getproxies_environment
+            _get_proxies = proxy_bypass_environment
+            getproxies = getproxies_environment
+            proxy_bypass = proxy_bypass_environment
+        except:
+            pass
 
     def proxy_bypass_macosx_sysconf(host):
         proxy_settings = _get_proxy_settings()
