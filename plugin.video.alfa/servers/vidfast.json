@@ -1,17 +1,17 @@
 {
-  "active": false,
+  "active": true,
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "jetload.net/(?:e|v|p|\\#\\!/v|\\#\\!/d)/(\\w+)",
-        "url": "https://jetload.net/e/\\1"
+        "pattern": "vidfast.co/(\\w+)",
+        "url": "https://vidfast.co/\\1"
       }
     ]
   },
   "free": true,
-  "id": "jetload",
-  "name": "jetload",
+  "id": "vidfast",
+  "name": "vidfast",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://jetload.net/jetlogo.png"
+  "thumbnail": "https://i.postimg.cc/jdnS13jQ/vidfast.jpg"
 }
