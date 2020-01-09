@@ -32,7 +32,7 @@ list_servers = ['flix555', 'clipwatching', 'verystream', 'gamovideo', 'powvideo'
 
 def login():
     logger.info()
-    data = httptools.downloadpage(host).data
+    data = httptools.downloadpage(host, headers={'referer': host}).data
     _logged = '<a href="%s/logout"' % host
     if _logged in data:
         config.set_setting("logged", True, channel="hdfull")
@@ -51,7 +51,7 @@ def login():
             config.set_setting("logged", False, channel="hdfull")
             return False
         post = '__csrf_magic=%s&username=%s&password=%s&action=login' % (sid, user_, pass_)
-        new_data = httptools.downloadpage(host, post=post).data
+        new_data = httptools.downloadpage(host, post=post, headers={'referer': host}).data
         if _logged in new_data:
             config.set_setting("logged", True, channel="hdfull")
             return True
@@ -302,7 +302,7 @@ def items_usuario(item):
     post = post.replace("start=" + old_start, "start=" + start)
     next_page = url + "?" + post
     ## Carga las fichas de usuario
-    fichas_usuario = httptools.downloadpage(url, post=post).json
+    fichas_usuario = httptools.downloadpage(url, post=post, headers={'referer': host}).json
     for ficha in fichas_usuario:
         try:
             title = ficha['title']['es'].strip()
@@ -574,7 +574,8 @@ def episodesxseason(item):
     status = check_status()
     
     post = "action=season&start=0&limit=0&show=%s&season=%s" % (sid, ssid)
-    episodes = httptools.downloadpage(url, post=post).json
+    #episodes = httptools.downloadpage(url, post=post).json
+    episodes = httptools.downloadpage(url, post=post, headers={"Referer": item.url+"/temporada-"+ssid}).json
     
     for episode in episodes:
 
@@ -641,7 +642,8 @@ def novedades_episodios(item):
     start = "%s" % (int(old_start) + 24)
     post = post.replace("start=" + old_start, "start=" + start)
     next_page = url + "?" + post
-    episodes = httptools.downloadpage(url, post=post).json
+    #episodes = httptools.downloadpage(url, post=post).json
+    episodes = httptools.downloadpage(url, post=post, headers={"Referer": item.url}).json
     for episode in episodes:
         #Fix para thumbs
         thumb = episode['show'].get('thumbnail', '')
@@ -761,10 +763,10 @@ def findvideos(item):
         it1.append(Item(channel=item.channel, action="set_status", title=title, url=url_targets,
                         thumbnail=item.thumbnail, contentTitle=item.contentTitle, language=item.language, folder=True))
 
-    data_js = httptools.downloadpage("%s/templates/hdfull/js/jquery.hdfull.view.min.js" % host).data
+    data_js = httptools.downloadpage("%s/templates/hdfull/js/jquery.hdfull.view.min.js" % host, headers={'referer': host}).data
     key = scrapertools.find_single_match(data_js, 'JSON.parse\(atob.*?substrings\((.*?)\)')
 
-    data_js = httptools.downloadpage("%s/js/providers.js" % host).data
+    data_js = httptools.downloadpage("%s/js/providers.js" % host, headers={'referer': host}).data
     decoded = jhexdecode(data_js).replace("'", '"')
     providers_pattern = 'p\[(\d+)\]= {"t":"([^"]+)","d":".*?","e":.function.*?,"l":.function.*?return "([^"]+)".*?};'
     providers = scrapertools.find_multiple_matches (decoded, providers_pattern)
@@ -847,7 +849,7 @@ def play(item):
         type = item.url.split("###")[1].split(";")[1]
         item.url = item.url.split("###")[0]
         post = "target_id=%s&target_type=%s&target_status=1" % (id, type)
-        data = httptools.downloadpage(host + "/a/status", post=post).data
+        data = httptools.downloadpage(host + "/a/status", post=post, headers={'referer': host}).data
     devuelve = servertools.findvideosbyserver(item.url, item.server)
     if devuelve:
         item.url = devuelve[0][1]
@@ -863,7 +865,7 @@ def play(item):
 
 def agrupa_datos(url, post=None):
     
-    data = httptools.downloadpage(url, post=post).data
+    data = httptools.downloadpage(url, post=post, headers={'referer': host}).data
     ## Agrupa los datos
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|<!--.*?-->', '', data)
     data = re.sub(r'\s+', ' ', data)
@@ -918,7 +920,7 @@ def set_status(item):
         title = "[COLOR darkgrey][B]%s eliminada de Favoritos[/B][/COLOR]"
         path = "/a/favorite"
         post = "like_id=" + id + "&like_type=" + type + "&like_comment=&vote=-1"
-    data = httptools.downloadpage(host + path, post=post).data
+    data = httptools.downloadpage(host + path, post=post, headers={'referer': host}).data
     title = title % item.contentTitle
     platformtools.dialog_ok(item.contentTitle, title)
     
@@ -928,7 +930,7 @@ def check_status():
     status = ""
     if account:
         try:
-            status = httptools.downloadpage(host + '/a/status/all').json
+            status = httptools.downloadpage(host + '/a/status/all', headers={'referer': host}).json
         except:
             pass
             

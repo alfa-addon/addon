@@ -155,7 +155,13 @@ def findvideos(item):
         else:
             url = scrapertools.find_single_match(data, 'id="Opt%s">.*?data-src="([^"]+)"' % option)
 
-        
+            if 'fembed' in url.lower():
+                id = scrapertools.find_single_match(url, '\?h=(.*)')
+                url = 'https://api.cuevana3.io/fembed/api.php'
+                new_data = httptools.downloadpage(url, headers={'X-Requested-With': 'XMLHttpRequest'}, post={'h': id}).json
+                if new_data:
+                    url = new_data["url"]
+
         if url != '' and 'youtube' not in url:
                 itemlist.append(item.clone(channel=item.channel, title='%s', url=url, language=IDIOMAS[language],
                                      quality=quality, action='play'))
