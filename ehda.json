@@ -2,6 +2,7 @@
   "id": "ehda",
   "name": "El Hogar del Aprendiz",
   "active": true,
+  "force_unify": true,
   "adult": false,
   "language": ["lat", "cast", "vose"],
   "fanart": "",
@@ -26,30 +27,6 @@
         "Latino",
         "Castellano",
         "English"
-      ]
-    },
-    {
-      "id": "modo_grafico",
-      "type": "bool",
-      "label": "Buscar información extra",
-      "default": true,
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "perfil",
-      "type": "list",
-      "label": "Perfil de color",
-      "default": 3,
-      "enabled": true,
-      "visible": true,
-      "lvalues": [
-        "Sin color",
-        "Perfil 5",
-        "Perfil 4",
-        "Perfil 3",
-        "Perfil 2",
-        "Perfil 1"
       ]
     },
     {
