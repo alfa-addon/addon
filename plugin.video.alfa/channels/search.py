@@ -466,8 +466,6 @@ def setting_channel_new(item):
     # Save changes to search channels
     for canal in ids:
         channel_status = config.get_setting('include_in_global_search', canal)
-        # if not channel_status:
-        #     channel_status = True
 
         if channel_status and canal not in seleccionados:
             config.set_setting('include_in_global_search', False, canal)
@@ -489,7 +487,6 @@ def genres_menu(item):
         itemlist.append(Item(channel=item.channel, title=value, page=1,
                              action='discover_list', discovery=discovery,
                              mode=item.mode))
-    channelselector.thumb(itemlist)
     return sorted(itemlist, key=lambda it: it.title)
 
 
