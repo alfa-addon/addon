@@ -13,13 +13,14 @@ standard_library.install_aliases()
 #from builtins import next
 from builtins import zip
 #from builtins import str
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 from builtins import range
 from past.utils import old_div
 
 import re
 import os
-import sys
-import urllib.request, urllib.parse, urllib.error
 import urllib.parse
 import datetime
 import time
@@ -700,9 +701,7 @@ def post_tmdb_episodios(item, itemlist):
     """
     #logger.debug(item)
     
-    modo_serie_temp = ''
-    if config.get_setting('seleccionar_serie_temporada', item.channel) >= 0:
-        modo_serie_temp = config.get_setting('seleccionar_serie_temporada', item.channel)
+    modo_serie_temp = config.get_setting('seleccionar_serie_temporada', item.channel, default=0)
     modo_ultima_temp = ''
     if config.get_setting('seleccionar_ult_temporadda_activa', item.channel) is True or config.get_setting('seleccionar_ult_temporadda_activa', item.channel) is False:
         modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', item.channel)
@@ -847,12 +846,14 @@ def post_tmdb_episodios(item, itemlist):
         
         #Salvamos en número de episodios de la temporada
         try:
+            if not item_local.infoLabels['temporada_num_episodios']:
+                item_local.infoLabels['temporada_num_episodios'] = 0
             if num_temporada != item_local.contentSeason:
                 num_temporada = item_local.contentSeason
                 num_episodios = 0
             if item_local.infoLabels['number_of_seasons'] == 1 and item_local.infoLabels['number_of_episodes'] > item_local.infoLabels['temporada_num_episodios']:
                 item_local.infoLabels['temporada_num_episodios'] = item_local.infoLabels['number_of_episodes']
-            if item_local.infoLabels['temporada_num_episodios'] and int(item_local.infoLabels['temporada_num_episodios']) > int(num_episodios):
+            if item_local.infoLabels['temporada_num_episodios'] and item_local.infoLabels['temporada_num_episodios'] > int(num_episodios):
                 num_episodios = item_local.infoLabels['temporada_num_episodios']
         except:
             num_episodios = 0
@@ -982,15 +983,15 @@ def post_tmdb_episodios(item, itemlist):
 
             if item.action == 'get_seasons':                    #si es actualización desde videoteca, título estándar
                 #Si hay una nueva Temporada, se activa como la actual
-                if item.library_urls[item.channel] != item.url and (item.contentType == "season" or modo_ultima_temp):
-                    item.library_urls[item.channel] = item.url  #Se actualiza la url apuntando a la última Temporada
-                    try:
+                try:
+                    if item.library_urls[scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')] != item.url and (item.contentType == "season" or modo_ultima_temp):
+                        item.library_urls[scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/')] = item.url     #Se actualiza la url apuntando a la última Temporada
                         from core import videolibrarytools      #Se fuerza la actualización de la url en el .nfo
                         itemlist_fake = []                      #Se crea un Itemlist vacio para actualizar solo el .nfo
                         videolibrarytools.save_tvshow(item, itemlist_fake)      #Se actualiza el .nfo
-                    except:
-                        logger.error("ERROR 08: EPISODIOS: No se ha podido actualizar la URL a la nueva Temporada")
-                        logger.error(traceback.format_exc())
+                except:
+                    logger.error("ERROR 08: EPISODIOS: No se ha podido actualizar la URL a la nueva Temporada")
+                    logger.error(traceback.format_exc())
                 itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Serie a Videoteca-[/COLOR]" + title, action="add_serie_to_library"))
                 
             elif modo_serie_temp == 1:      #si es Serie damos la opción de guardar la última temporada o la serie completa
@@ -1280,7 +1281,7 @@ def find_rar_password(item):
                  ['1', 'https://pctnew.org/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
-                 ['1', 'http://www.tvsinpagar.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                 ['1', 'http://planetatorrent.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-0', 'capitulo-'], \
                                 ['capitulos-0', 'capitulos-']]], 
                  ['2', 'https://grantorrent.net/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
@@ -1291,6 +1292,7 @@ def find_rar_password(item):
     ]
     
     url_host = scrapertools.find_single_match(item.url, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
+    dom_sufix_org = scrapertools.find_single_match(item.url, ':\/\/(.*?)[\/|?]').replace('.', '-')
     url_host_act = url_host
     url_password = item.url
     if item.referer:
@@ -1304,6 +1306,11 @@ def find_rar_password(item):
             if x == '2' and clone_id not in url_host: continue
             url_password = url_password.replace(url_host_act, clone_id)
             url_host_act = scrapertools.find_single_match(url_password, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
+
+            dom_sufix_clone = scrapertools.find_single_match(url_host_act, ':\/\/(.*?)\/*$').replace('.', '-')
+            if 'descargas2020' not in dom_sufix_clone and 'pctnew' not in dom_sufix_clone: dom_sufix_clone = ''
+            url_password = url_password.replace(dom_sufix_org, dom_sufix_clone)
+            dom_sufix_org = dom_sufix_clone
 
             for regex, regex_rep in regex_url_list:
                 if regex_rep == 'None':
@@ -1321,7 +1328,7 @@ def find_rar_password(item):
             if url_host == clone_id: continue
             try:
                 data_password = ''
-                data_password = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url_password).data)
+                data_password = re.sub(r"\n|\r|\t|(<!--.*?-->)", "", httptools.downloadpage(url_password).data)
                 data_password = data_password.replace("$!", "#!").replace("'", "\"").replace("Ã±", "ñ").replace("//pictures", "/pictures")
             except:
                 logger.error(traceback.format_exc(1))
@@ -1381,9 +1388,9 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     def decode(text):
         try:
             src = tokenize(text)
-            try:
+            if not PY3:
                 data = decode_item(src.next, src.next())                        #Py2
-            except:
+            else:
                 data = decode_item(src.__next__, next(src))                     #Py3
             for token in src:                                                   # look for more tokens
                 raise SyntaxError("trailing junk")
@@ -1749,9 +1756,9 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         for url in url_alt:
             try:
                 if item.post:
-                    data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url, post=item.post, timeout=timeout).data)
+                    data = re.sub(r"\n|\r|\t|(<!--.*?-->)", "", httptools.downloadpage(url, post=item.post, timeout=timeout).data)
                 else:
-                    data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url, timeout=timeout).data)
+                    data = re.sub(r"\n|\r|\t|(<!--.*?-->)", "", httptools.downloadpage(url, timeout=timeout).data)
                 data_comillas = data.replace("'", "\"")
             except:
                 data = ''

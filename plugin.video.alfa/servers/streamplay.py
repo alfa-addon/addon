@@ -33,7 +33,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     for video_url in sources:
         
         from lib import alfaresolver
-        video_url = alfaresolver.decode_video_url(video_url, data)
+        video_url = alfaresolver.decode_video_url(video_url, data, 2)
         filename = scrapertools.get_filename_from_url(video_url)[-4:]
         if not video_url.endswith(".mpd"):
             video_urls.append([filename + " [streamplay]", video_url])

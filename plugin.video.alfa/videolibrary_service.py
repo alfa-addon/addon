@@ -6,12 +6,7 @@
 import datetime, math, threading, traceback
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str
-if PY3:
-    import importlib as imp
-else:
-    import imp
-
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 try:
     from platformcode import config
@@ -49,7 +44,7 @@ def update(path, p_dialog, i, t, serie, overwrite):
     category = serie.category
 
     # logger.debug("%s: %s" %(serie.contentSerieName,str(list_canales) ))
-    for channel, url in serie.library_urls.items():
+    for channel, url in list(serie.library_urls.items()):
         serie.channel = channel
         serie.url = url
         
@@ -75,14 +70,13 @@ def update(path, p_dialog, i, t, serie, overwrite):
                                                                               serie.channel.capitalize()))
             try:
                 pathchannels = filetools.join(config.get_runtime_path(), "channels", serie.channel + '.py')
-                logger.info("Cargando canal: " + pathchannels + " " +
-                            serie.channel)
+                logger.info("Cargando canal: " + pathchannels)
 
                 if serie.library_filter_show:
                     serie.show = serie.library_filter_show.get(serie.channel, serie.contentSerieName)
 
-                obj = imp.load_source(serie.channel, pathchannels)
-                itemlist = obj.episodios(serie)
+                obj = __import__('channels.%s' % serie.channel, fromlist=["channels.%s" % serie.channel])
+                itemlist = getattr(obj, 'episodios')(serie)                     #... se procesa Episodios para ese canal
 
                 try:
                     if int(overwrite) == 3:

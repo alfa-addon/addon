@@ -87,7 +87,7 @@ def clear_cache():
 # decoding and encoding. If valid use cases are
 # presented, we may relax this by using latin-1
 # decoding internally for 3.3
-_implicit_encoding = 'ascii'
+_implicit_encoding = 'utf8'
 _implicit_errors = 'strict'
 
 def _noop(obj):
@@ -122,7 +122,7 @@ class _ResultMixinStr(object):
     """Standard approach to encoding parsed results from str to bytes"""
     __slots__ = ()
 
-    def encode(self, encoding='ascii', errors='strict'):
+    def encode(self, encoding='utf8', errors='strict'):
         return self._encoded_counterpart(*(x.encode(encoding, errors) for x in self))
 
 
@@ -130,7 +130,7 @@ class _ResultMixinBytes(object):
     """Standard approach to decoding parsed results from bytes to str"""
     __slots__ = ()
 
-    def decode(self, encoding='ascii', errors='strict'):
+    def decode(self, encoding='utf8', errors='strict'):
         return self._decoded_counterpart(*(x.decode(encoding, errors) for x in self))
 
 
@@ -730,7 +730,7 @@ def quote_from_bytes(bs, safe='/'):
     ###
     if isinstance(safe, str):
         # Normalize 'safe' by converting to bytes and removing non-ASCII chars
-        safe = str(safe).encode('ascii', 'ignore')
+        safe = str(safe).encode('utf8', 'ignore')
     else:
         ### For Python-Future:
         safe = bytes(safe)

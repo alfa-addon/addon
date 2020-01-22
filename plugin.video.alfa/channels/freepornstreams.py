@@ -86,7 +86,8 @@ def lista(item):
         else: title = scrapedtitle
         thumbnail = scrapedthumbnail.replace("jpg#", "jpg")
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl, thumbnail=thumbnail,
+        if not "manyvids" in title:
+            itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=scrapedurl, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot) )
     next_page = scrapertools.find_single_match(data, '<div class="nav-previous"><a href="([^"]+)"')
     if next_page!="":
