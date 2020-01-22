@@ -14,7 +14,6 @@ def get_video_url(page_url, video_password):
     data = scrapertools.find_single_match(data, '<footer id="Footer" class="clearfix">(.*?)</html>')
     packed = scrapertools.find_single_match(data, r'(eval.*?)</script>')
     unpacked = jsunpack.unpack(packed)
-    logger.debug(unpacked)
     url = scrapertools.find_single_match(unpacked, '(https://streamz.cc/getlink.*?.dll)')
     url = httptools.downloadpage(url).url
     logger.debug(url)
