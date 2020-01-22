@@ -41,15 +41,15 @@ def categorias(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|\\", "", data)
     patron = '<div class="list-global__item".*?'
-    patron += 'data-src="([^"]+)" alt="[^"]+".*?'
-    patron += '<a href="([^"]+)">([^<]+)<.*?'
+    patron += 'href="([^"]+)">.*?'
+    patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
     patron += '<span>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedthumbnail,scrapedurl,scrapedtitle,cantidad in matches:
-        url = urlparse.urljoin(item.url,scrapedurl)
+    for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
         thumbnail = scrapedthumbnail
+        scrapedtitle = scrapedtitle.replace(" Porn", "")
         title = "%s (%s)" % (scrapedtitle, cantidad)
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     next_page = scrapertools.find_single_match(data, '<a class="next pagination__number" href="([^"]+)" rel="nofollow">Next')
     if next_page:
@@ -67,8 +67,8 @@ def lista(item):
     patron = '<div class="list-global__item(.*?)'
     patron += 'class="go" title="([^"]+)".*?'
     patron += 'data-src="([^"]+)".*?'
-    patron += 'duration">([^<]+)</span>.*?'
-    patron += '<span><a href="[^"]+">([^<]+)</a>'
+    patron += 'duration">([^<]+)<.*?'
+    patron += '<span><a href="[^"]+">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,time,server in matches:
         title = "[COLOR yellow]%s [/COLOR] [%s] %s" % (time, server, scrapedtitle)

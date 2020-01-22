@@ -4,22 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "youtube(?:-nocookie)?\\.com/(?:(?:(?:v/|embed/))|(?:(?:watch(?:_popup)?(?:\\.php)?)?(?:\\?|#!?)(?:.+&)?v=))?([0-9A-Za-z_-]{11})",
-        "url": "http://www.youtube.com/watch?v=\\1"
-      },
-      {
-        "pattern": "youtube.com/v/([0-9A-Za-z_-]{11})",
-        "url": "http://www.youtube.com/watch?v=\\1"
+        "pattern": "(https://www.videomega.co/e/[A-z0-9]+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "youtube",
-  "name": "youtube",
-  "premium": [
-    "realdebrid",
-    "alldebrid"
-  ],
+  "id": "videomega",
+  "name": "videomega",
   "settings": [
     {
       "default": false,
@@ -46,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "server_youtube.png"
+  "thumbnail": ""
 }
