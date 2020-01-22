@@ -4,6 +4,10 @@
 # Gestion de archivos con discriminación xbmcvfs/samba/local
 # ------------------------------------------------------------
 
+from __future__ import division
+#from builtins import str
+from builtins import range
+from past.utils import old_div
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
@@ -170,10 +174,13 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, silent=False, vfs=Tr
         return False
 
     else:
-        return "".join(data)
+        if not PY3:
+            return "".join(data)
+        else:
+            return b"".join(data)
 
 
-def write(path, data, silent=False, vfs=True):
+def write(path, data, mode="wb", silent=False, vfs=True):
     """
     Guarda los datos en un archivo
     @param path: ruta del archivo a guardar
@@ -186,14 +193,14 @@ def write(path, data, silent=False, vfs=True):
     path = encode(path)
     try:
         if xbmc_vfs and vfs:
-            f = xbmcvfs.File(path, "w")
+            f = xbmcvfs.File(path, mode)
             result = f.write(data)
             f.close()
             return bool(result)
         elif path.lower().startswith("smb://"):
-            f = samba.smb_open(path, "wb")
+            f = samba.smb_open(path, mode)
         else:
-            f = open(path, "wb")
+            f = open(path, mode)
 
         f.write(data)
         f.close()
@@ -379,7 +386,7 @@ def copy(path, dest, silent=False, vfs=True):
             copiado = 0
             while True:
                 if not silent:
-                    dialogo.update(copiado * 100 / size, basename(path))
+                    dialogo.update(old_div(copiado * 100, size), basename(path))
                 buf = fo.read(1024 * 1024)
                 if not buf:
                     break

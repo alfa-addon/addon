@@ -4,8 +4,6 @@
 # ------------------------------------------------------------
 
 from __future__ import division
-from future import standard_library
-standard_library.install_aliases()
 #from builtins import str
 import sys
 PY3 = False
@@ -948,9 +946,17 @@ def report_send(item, description='', fatal=False):
     import xbmc
     import xbmcaddon
     import random
-    import urllib.parse
     import traceback
     import re
+    
+    if PY3:
+        #from future import standard_library
+        #standard_library.install_aliases()
+        import urllib.parse as urlparse                         # Es muy lento en PY2.  En PY3 es nativo
+        import urllib.parse as urllib
+    else:
+        import urllib                                           # Usamos el nativo de PY2 que es más rápido
+        import urlparse
 
     try:
         requests_status = True
@@ -1118,7 +1124,7 @@ def report_send(item, description='', fatal=False):
                 if paste_name in ['hastebin']:                              # Hay algunos servicios que no necesitan "quote"
                     paste_post = log_data
                 else:
-                    paste_post = urllib.parse.quote_plus(log_data)                # Se hace un "quote" de los datos del LOG
+                    paste_post = urllib.quote_plus(log_data)                # Se hace un "quote" de los datos del LOG
                 if paste_post1:
                     paste_post = '%s%s' % (paste_post1, paste_post)
                 if paste_post2:
@@ -1195,7 +1201,7 @@ def report_send(item, description='', fatal=False):
             elif paste_type == 'headers':                               # Respuesta en HEADERS, a buscar en "location"?
                 if paste_url in data:
                     item.url = data[paste_url]                          # Etiqueta de retorno de la clave
-                    item.url =  urllib.parse.urljoin(paste_host_resp + paste_host_return, 
+                    item.url =  urlparse.urljoin(paste_host_resp + paste_host_return, 
                                     item.url + paste_host_return_tail)
                 else:
                     logger.error('ERROR en formato de retorno de datos. response.headers=' + 
