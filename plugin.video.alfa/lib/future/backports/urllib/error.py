@@ -11,9 +11,9 @@ an application may want to handle an exception like a regular
 response.
 """
 from __future__ import absolute_import, division, unicode_literals
-from future import standard_library
+from ... import standard_library
 
-from future.backports.urllib import response as urllib_response
+from . import response as urllib_response
 
 
 __all__ = ['URLError', 'HTTPError', 'ContentTooShortError']

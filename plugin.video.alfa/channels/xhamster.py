@@ -7,6 +7,7 @@ import urlparse
 from platformcode import logger
 from core import scrapertools, httptools
 from core.item import Item
+from core import servertools
 
 HOST = "http://es.xhamster.com/"
 
@@ -134,9 +135,8 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '"([0-9]+p)":"([^"]+)"'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for res, url in matches:
-        url = url.replace("\\", "")
-        itemlist.append(["%s %s [directo]" % (res, scrapertools.get_filename_from_url(url)[-4:]), url])
+    url = scrapertools.find_single_match(data, '"embedUrl":"([^"]+)"')
+    url = url.replace("\\", "")
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

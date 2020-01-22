@@ -106,7 +106,8 @@ def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
-    links_data = scrapertools.find_single_match(data, '>severeporn.com<(.*?)</div>')
+    links_data = scrapertools.find_single_match(data, '<span id="more-(.*?)</p>')
+    logger.debug(links_data)
     patron = '<a href="([^"]+)"[^<]+>Streaming'
     matches = re.compile(patron, re.DOTALL).findall(links_data)
     for url in matches:

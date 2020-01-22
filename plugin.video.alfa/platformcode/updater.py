@@ -14,8 +14,6 @@ from core import httptools
 from core import jsontools
 from core import downloadtools
 from core import ziptools
-from core import filetools
-
 
 def check_addon_init():
     logger.info()

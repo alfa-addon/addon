@@ -81,18 +81,22 @@ def lista(item):
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
     return itemlist
 
+# http://www.eroticage.net/three-aka-survival-island-2005-stewart-raffill/
+# https://video.meta.ua/iframe/8118651/
 
 def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<iframe src="([^"]+)"'
+    # data = scrapertools.find_single_match(data,'<div class="videoAlani">(.*?)<div class="separator"')
+    patron = '<iframe (?:width="\d+" height="\d+" |)src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl in matches:
         if "cine-matik.com" in scrapedurl:
             m = scrapedurl.replace("https://cine-matik.com/player/play.php?", "")
             post = "%s&alternative=yandex" %m
-            data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post).data
+            headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+            data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
             scrapedurl = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
             scrapedurl = scrapedurl.replace("\/", "/")
         itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=scrapedurl))
