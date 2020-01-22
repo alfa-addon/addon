@@ -1,9 +1,23 @@
 # -*- coding: utf-8 -*-
 
+#from builtins import str
+from builtins import chr
+from builtins import range
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urlparse
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
+    import urlparse
+
 import base64
 import re
-import urllib
-import urlparse
 
 from core import httptools
 from core import jsontools
@@ -25,7 +39,7 @@ __modo_grafico__ = config.get_setting('modo_grafico', channel='hdfull')
 account = config.get_setting("logged", channel="hdfull")
 
 IDIOMAS = {'lat': 'LAT', 'spa': 'CAST', 'esp': 'CAST', 'sub': 'VOSE', 'espsub': 'VOSE', 'engsub': 'VOS', 'eng': 'VO'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = ['HD1080', 'HD720', 'HDTV', 'DVDRIP', 'RHDTV', 'DVDSCR']
 list_servers = ['flix555', 'clipwatching', 'verystream', 'gamovideo', 'powvideo', 'streamplay', 'vidoza', 'vidtodo', 'openload', 'uptobox']
 
@@ -779,7 +793,7 @@ def findvideos(item):
 
     data_decrypt = jsontools.load(obfs(base64.b64decode(data_obf), 126 - int(key)))
     infolabels = item.infoLabels
-    year = scrapertools.find_single_match(data, '<span>A&ntilde;o:\s*</span>.*?(\d{4})')
+    year = scrapertools.find_single_match(data, '<span>Año:\s*</span>.*?(\d{4})')
     infolabels["year"] = year
     matches = []
     for match in data_decrypt:
@@ -800,7 +814,8 @@ def findvideos(item):
             option1 = 1
 
         idioma = IDIOMAS.get(idioma.lower(), idioma)
-        calidad = unicode(calidad, "utf8").upper().encode("utf8")
+        if not PY3:
+            calidad = unicode(calidad, "utf8").upper().encode("utf8")
         title = option + ": %s [COLOR greenyellow](" + calidad + ")[/COLOR] [COLOR darkgrey](" + idioma + ")[/COLOR]"
         plot = item.plot
         if not item.plot:
@@ -989,6 +1004,7 @@ def jhexdecode(t):
 
 
 def obfs(data, key, n=126):
+    if PY3: data = "".join(chr(x) for x in bytes(data))
     chars = list(data)
     for i in range(0, len(chars)):
         c = ord(chars[i])

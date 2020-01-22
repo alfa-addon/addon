@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division
-from future import standard_library
-standard_library.install_aliases()
+#from future import standard_library
+#standard_library.install_aliases()
 #from builtins import str
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+
 from builtins import range
 from past.utils import old_div
 
 import re
-import urllib.request, urllib.parse, urllib.error
 import datetime
 import time
 import ast
@@ -188,7 +193,7 @@ def submenu(item):
     
     data = ''
     try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = re.sub(r"\n|\r|\t|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
     except:
         logger.error(traceback.format_exc())
         
@@ -457,7 +462,7 @@ def alfabeto(item):
     
     try:
         data = ''
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = re.sub(r"\n|\r|\t|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
         if not PY3:
             data = unicode(data, "iso-8859-1", errors="replace").encode("utf-8")
     except:
@@ -530,7 +535,7 @@ def listado(item):
 
     data = ''
     try:
-        data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
+        data = re.sub(r"\n|\r|\t|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout).data)
     except:
         logger.error(traceback.format_exc())
     
@@ -646,7 +651,7 @@ def listado(item):
         matches_next_page = re.compile(patron_next_page, re.DOTALL).findall(data)
         modo = 'continue'
         if len(matches_next_page) > 0:
-            url_next_page = urllib.parse.urljoin(item.url, matches_next_page[0])
+            url_next_page = urlparse.urljoin(item.url, matches_next_page[0])
             modo = 'next'
     
     # Avanzamos el contador de líneas en una página
@@ -1119,9 +1124,9 @@ def listado_busqueda(item):
                 calidad = _scrapedtitle
                 size = _scrapedthumbnail
                 scrapedthumbnail = _calidad.replace('\\', '')
-                scrapedthumbnail = urllib.parse.urljoin(host_alt, scrapedthumbnail)
+                scrapedthumbnail = urlparse.urljoin(host_alt, scrapedthumbnail)
                 scrapedurl = _year.replace('\\', '')
-                scrapedurl = urllib.parse.urljoin(host_alt, scrapedurl)
+                scrapedurl = urlparse.urljoin(host_alt, scrapedurl)
                 year = _size
                 
             #Realiza un control de las series que se añaden, ya que el buscador devuelve episodios y no las series completas
@@ -1186,9 +1191,9 @@ def listado_busqueda(item):
             calidad = _scrapedtitle
             size = _scrapedthumbnail
             scrapedthumbnail = _calidad.replace('\\', '')
-            scrapedthumbnail = urllib.parse.urljoin(host_alt, scrapedthumbnail)
+            scrapedthumbnail = urlparse.urljoin(host_alt, scrapedthumbnail)
             scrapedurl = _scrapedyear.replace('\\', '')
-            scrapedurl = urllib.parse.urljoin(host_alt, scrapedurl)
+            scrapedurl = urlparse.urljoin(host_alt, scrapedurl)
             year = _scrapedsize
         
         #Realiza un control de las series que se añaden, ya que el buscador devuelve episodios y no las series completas
@@ -1830,7 +1835,7 @@ def findvideos(item):
         torrent_link = torrent_link.replace('/descargar-torrent/', '/download/')
         torrent_link = torrent_link + '.torrent'
         torrent_link = torrent_link.replace('/.torrent', '.torrent')
-    url_torr = urllib.parse.urljoin(torrent_tag, torrent_link)
+    url_torr = urlparse.urljoin(torrent_tag, torrent_link)
     if not url_torr.startswith("http"):                                         #Si le falta el http.: lo ponemos
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
 
@@ -1921,7 +1926,7 @@ def findvideos(item):
             patron += '(?:,\s*idlt\s*=\s*"[^"]*")?,\s*nalt\s*=\s*"([^"]+)"'                 #descargas2020
         if not scrapertools.find_single_match(data, patron):
             patron = '<a href="([^"]+)"\s?title="[^"]+"\s?class="btn-torrent"'  #Patron para .torrent (planetatorrent)
-    url_torr = urllib.parse.urljoin(torrent_tag, scrapertools.find_single_match(data, patron))
+    url_torr = urlparse.urljoin(torrent_tag, scrapertools.find_single_match(data, patron))
     if not url_torr.startswith("http"):                                         #Si le falta el http.: lo ponemos
         url_torr = scrapertools.find_single_match(item.channel_host, '(\w+:)//') + url_torr
 
