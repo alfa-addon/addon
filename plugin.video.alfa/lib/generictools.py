@@ -8,20 +8,25 @@
 # ------------------------------------------------------------
 
 from __future__ import division
-from future import standard_library
-standard_library.install_aliases()
 #from builtins import next
 from builtins import zip
 #from builtins import str
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+
 from builtins import range
 from past.utils import old_div
 
 import re
 import os
-import urllib.parse
 import datetime
 import time
 import traceback
@@ -259,14 +264,6 @@ def refresh_screen(item):
 def post_tmdb_listado(item, itemlist):
     logger.info()
     itemlist_fo = []
-    try:
-        from channels import test
-        if test.TEST_ACTIVE:
-            test_active = True
-        else:
-            test_active = False
-    except:
-        test_active = False
     
     """
         
@@ -362,17 +359,14 @@ def post_tmdb_listado(item, itemlist):
             item_local.infoLabels['aired'] = ''
             
         #Si traía el TMDB-ID, pero no ha funcionado, lo reseteamos e intentamos de nuevo
-        if item_local.infoLabels['tmdb_id'] and test_active:            # Si se están pasando tests,
-            del item_local.infoLabels['tmdb_id']                        # ignorar el TMDB
         if item_local.infoLabels['tmdb_id'] and not item_local.infoLabels['originaltitle']:
-            logger.error("*** TMDB-ID erroneo, reseteamos y reintentamos ***")
-            logger.error(item_local)
+            logger.info("*** TMDB-ID erroneo, reseteamos y reintentamos: %s" % item_local.infoLabels['tmdb_id'])
             del item_local.infoLabels['tmdb_id']                        #puede traer un TMDB-ID erroneo
             try:
                 tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda='es,en') #pasamos otra vez por TMDB
             except:
                 logger.error(traceback.format_exc())
-            logger.error(item_local)
+            logger.info("*** TMDB-ID erroneo reseteado: %s" % item_local.infoLabels['tmdb_id'])
         
         # Si TMDB no ha encontrado nada y hemos usado el año de la web, lo intentamos sin año
         if not item_local.infoLabels['tmdb_id']:
@@ -959,7 +953,7 @@ def post_tmdb_episodios(item, itemlist):
     
     #Borro num. Temporada si no viene de menú de Añadir a Videoteca y no está actualizando la Videoteca
     if not item.library_playcounts:                         #si no está actualizando la Videoteca
-        if modo_serie_temp != '':                           #y puede cambiara a serie-temporada
+        if modo_serie_temp > 0:                             #y puede cambiara a serie-temporada
             if item.contentSeason and not item.add_menu:
                 del item.infoLabels['season']               #La decisión de ponerlo o no se toma en la zona de menús
 
@@ -977,7 +971,7 @@ def post_tmdb_episodios(item, itemlist):
         if item_local.quality:      #La Videoteca no toma la calidad del episodio, sino de la serie.  Pongo del episodio
             item.quality = item_local.quality
         
-        if modo_serie_temp != '':
+        if modo_serie_temp > 0:
             #Estamos en un canal que puede seleccionar entre gestionar Series completas o por Temporadas
             #Tendrá una línea para Añadir la Serie completa y otra para Añadir sólo la Temporada actual
 
@@ -992,26 +986,36 @@ def post_tmdb_episodios(item, itemlist):
                 except:
                     logger.error("ERROR 08: EPISODIOS: No se ha podido actualizar la URL a la nueva Temporada")
                     logger.error(traceback.format_exc())
-                itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Serie a Videoteca-[/COLOR]" + title, action="add_serie_to_library"))
+                itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Serie a Videoteca-[/COLOR]" + \
+                            title, action="add_serie_to_library", extra="episodios"))
                 
             elif modo_serie_temp == 1:      #si es Serie damos la opción de guardar la última temporada o la serie completa
-                itemlist.append(item.clone(title="[COLOR yellow]Añadir última Temp. a Videoteca-[/COLOR]" + title, action="add_serie_to_library", contentType="season", contentSeason=contentSeason, url=item_local.url, add_menu=True))
-                itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Serie a Videoteca-[/COLOR]" + title, action="add_serie_to_library", contentType="tvshow", add_menu=True))
+                itemlist.append(item.clone(title="[COLOR yellow]Añadir última Temp. a Videoteca-[/COLOR]" + \
+                            title, action="add_serie_to_library", contentType="season", contentSeason=contentSeason, \
+                            url=item_local.url, extra="episodios", add_menu=True))
+                itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Serie a Videoteca-[/COLOR]" + \
+                            title, action="add_serie_to_library", contentType="tvshow", extra="episodios", add_menu=True))
 
             else:                           #si no, damos la opción de guardar la temporada actual o la serie completa
-                itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Serie a Videoteca-[/COLOR]" + title, action="add_serie_to_library", contentType="tvshow", add_menu=True))
+                itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Serie a Videoteca-[/COLOR]" + \
+                            title, action="add_serie_to_library", contentType="tvshow", extra="episodios", add_menu=True))
                 if item.add_videolibrary and not item.add_menu:
                     item.contentSeason = contentSeason
-                itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Temp. a Videoteca-[/COLOR]" + title, action="add_serie_to_library", contentType="season", contentSeason=contentSeason, add_menu=True))
+                itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Temp. a Videoteca-[/COLOR]" + \
+                            title, action="add_serie_to_library", contentType="season", contentSeason=contentSeason, \
+                            extra="episodios", add_menu=True))
 
-        else:   #Es un canal estándar, sólo una linea de Añadir a Videoteca
-            itemlist.append(item.clone(title="[COLOR yellow]Añadir esta serie a videoteca-[/COLOR]" + title, action="add_serie_to_library", extra="episodios", add_menu=True))
+        else:                               #Es un canal estándar, sólo una linea de Añadir a Videoteca
+            itemlist.append(item.clone(title="[COLOR yellow]Añadir esta serie a videoteca-[/COLOR]" + \
+                            title, action="add_serie_to_library", extra="episodios", add_menu=True))
         
     #Si intervención judicial, alerto!!!
     if item.intervencion:
         for clone_inter, autoridad in item.intervencion:
             thumb_intervenido = get_thumb(autoridad)
-            itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', thumbnail=thumb_intervenido))
+            itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() \
+                            + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', \
+                            thumbnail=thumb_intervenido))
         del item.intervencion
     
     #Si ha habido fail-over, lo comento
@@ -1050,6 +1054,9 @@ def post_tmdb_findvideos(item, itemlist):
     
     """
     #logger.debug(item)
+    
+    if not config.get_setting("pseudo_titulos", item.channel, default=False):
+        return (item, itemlist)
     
     # Saber si estamos en una ventana emergente lanzada desde una viñeta del menú principal,
     # con la función "play_from_library"
@@ -1281,15 +1288,16 @@ def find_rar_password(item):
                  ['1', 'https://pctnew.org/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
-                 ['1', 'http://planetatorrent.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
-                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-0', 'capitulo-'], \
-                                ['capitulos-0', 'capitulos-']]], 
                  ['2', 'https://grantorrent.net/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
                                 ['-temporada', '/temporada'], ['^((?!serie).)*$', 'None'], \
                                 ['.net\/', '.net/descargar/peliculas-castellano/'], ['\/$', '/blurayrip-ac3-5-1/']]], 
                  ['2', 'https://mejortorrent1.net/', [[]], [['^((?!temporada).)*$', 'None'], \
                                 ['.net\/', '.net/descargar/peliculas-castellano/'], ['-microhd-1080p\/$', '']]]
     ]
+    
+    #             ['1', 'http://planetatorrent.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+    #                            'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-0', 'capitulo-'], \
+    #                            ['capitulos-0', 'capitulos-']]], 
     
     url_host = scrapertools.find_single_match(item.url, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
     dom_sufix_org = scrapertools.find_single_match(item.url, ':\/\/(.*?)[\/|?]').replace('.', '-')
@@ -1347,14 +1355,6 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                         timeout=5, file_list=False, lookup=True, local_torr=None, headers={}, short_pad=False):
     logger.info()
     from servers import torrent
-    try:
-        from channels import test
-        if test.TEST_ACTIVE:
-            test_active = True
-        else:
-            test_active = False
-    except:
-        test_active = False
     
     """
     
@@ -1454,7 +1454,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
         #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
 
-        if ((url and not local_torr) or url.startswith('magnet')) and not test_active:
+        if ((url and not local_torr) or url.startswith('magnet')):
             torrents_path, torrent_file = torrent.caching_torrents(url, \
                         referer=referer, post=post, torrents_path=torrents_path, \
                         timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)
@@ -2118,7 +2118,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                         (channel_alt, channel_alt, config.get_setting("emergency_urls", item.channel))
 
         elif it.library_urls:                                                   #Viene de "listar peliculas´"
-            for canal_vid, url_vid in list(it.library_urls.items()):                  #Se recorre "item.library_urls" para buscar canales candidatos
+            for canal_vid, url_vid in list(it.library_urls.items()):            #Se recorre "item.library_urls" para buscar canales candidatos
                 if canal_vid == channel_py:                                     #Si tiene Newcpt1 en canal, es un error
                     continue
                 canal_vid_alt = "'%s'" % canal_vid
@@ -2139,7 +2139,9 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
         logger.error(traceback.format_exc())
 
     #Ahora tratamos las webs intervenidas, tranformamos la url, el nfo y borramos los archivos obsoletos de la serie
-    if (channel not in intervencion and channel_py_alt not in intervencion and category not in intervencion and channel_alt != 'videolibrary') or not item.infoLabels or status_migration:             #lookup o migración
+    if (channel not in intervencion and channel_py_alt not in intervencion and \
+                        category not in intervencion and channel_alt != 'videolibrary') or not \
+                        item.title or status_migration:                     #lookup o migración
         return (item, it, overwrite)                                        #... el canal/clone está listado
         
     import ast
@@ -2217,13 +2219,16 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                                 channel_alt = channel_py
                     if channel_alt == 'videolibrary':
                         continue
-                if item.contentType == "list":                      #Si viene de Videolibrary, le cambiamos ya el canal
+
+                if item.contentType == "list":                              #Si viene de Videolibrary, le cambiamos ya el canal
                     if item.channel != channel_py:
-                        item.channel = canal_des                    #Cambiamos el canal.  Si es clone, lo hace el canal
-                        continue                                    #Salimos sin hacer nada más. item está casi vacío
-                if item.contentType not in content_inc and "*" not in content_inc:  #Está el contenido el la lista de incluidos
+                        item.channel = canal_des                            #Cambiamos el canal.  Si es clone, lo hace el canal
+                        continue                                            #Salimos sin hacer nada más. item está casi vacío
+                
+                if item.contentType and item.contentType not in content_inc and "*" not in content_inc:  #Está el contenido el la lista de incluidos
                     continue
-                if item.contentType in content_exc:                         #Está el contenido excluido?
+                
+                if item.contentType and item.contentType in content_exc:                         #Está el contenido excluido?
                     continue
                 channel_enabled = 0
                 channel_enabled_alt = 1
@@ -2242,6 +2247,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                     if ow_force != 'no':
                         overwrite = True                                    #Avisamos que hay cambios
                     continue                                                #Salimos sin tocar archivos
+
                 url_total = ''
                 if item.url:
                     url_total = item.url
@@ -2262,7 +2268,7 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                             and item.category.lower() == canal_org):
                         url_total = scrapertools.find_single_match(url_total, \
                             'http.*\:\/\/(?:www\.)?[^\?|\/]+(.*?$)')            #quitamos el http*:// inicial
-                        url_total = urllib.parse.urljoin(url_des, url_total)        #reemplazamos una parte de url
+                        url_total = urlparse.urljoin(url_des, url_total)          #reemplazamos una parte de url
                 else:
                     url_total = url_total.replace(url_org, url_des)             #reemplazamos una parte de url
                 url = ''

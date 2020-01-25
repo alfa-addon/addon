@@ -62,6 +62,10 @@ def init():
     """
 
     try:
+        #Borra el .zip de instalación de Alfa de la carpeta Packages, por si está corrupto, y que así se pueda descargar de nuevo
+        version = 'plugin.video.alfa-%s.zip' % config.get_addon_version(with_fix=False)
+        filetools.remove(filetools.join(xbmc.translatePath('special://home'), 'addons', 'packages', version), True)
+        
         #Verifica si Kodi tiene algún achivo de Base de Datos de Vídeo de versiones anteriores, entonces los borra
         verify_Kodi_video_DB()
         
