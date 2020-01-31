@@ -20,7 +20,7 @@ import time
 import traceback
 
 from channelselector import get_thumb
-from core import httptools, proxytools
+from core import httptools
 from core import scrapertools
 from core import servertools
 from core.item import Item

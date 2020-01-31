@@ -39,10 +39,17 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = "https://grantorrent.la/"
+#host = 'http://grantorrent.net/'
+#host = 'https://grantorrent1.com/'
+#host = 'https://grantorrent.one/'
+#host = 'https://grantorrent.tv/'
+#host = 'https://grantorrent.la/'
+host = 'https://grantorrent.io/'
 channel = "grantorrent"
-domain = 'grantorrent.la'
+domain = 'grantorrent.io'
+sufix = '.io'
 domain_files = 'files.grantorrent.one'
+sufix_alt = '.one'
 
 dict_url_seasons = dict()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
@@ -573,7 +580,7 @@ def findvideos(item):
     for lang, quality, size, scrapedurl_la, scrapedkey in matches:
         i += 1
         temp_epi = ''
-        scrapedurl = '%s?u=%s' % (urlparse.urljoin(host, scrapedurl_la).replace('.la', '.one')\
+        scrapedurl = '%s?u=%s' % (urlparse.urljoin(host, scrapedurl_la).replace(sufix, sufix_alt)\
                     .replace('download/torrent.php', 'download_tt.php'), scrapedkey)
         if scrapertools.find_single_match(quality, '\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.'):
             password = scrapertools.find_single_match(quality, '\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.')
@@ -992,7 +999,7 @@ def episodios(item):
         for lang, temp_epi, quality, scrapedurl_la, scrapedkey in matches:  #la URL apunta ya al .torrent. nos quedamos con la URL de temporada
             #Generamos una copia de Item para trabajar sobre ella y la rellenamos.  Borramos etiquetas innecesarias
             item_local = item.clone()
-            scrapedurl = '%s?u=%s' % (urlparse.urljoin(host, scrapedurl_la).replace('.la', '.one')\
+            scrapedurl = '%s?u=%s' % (urlparse.urljoin(host, scrapedurl_la).replace(sufix, sufix_alt)\
                     .replace('download/torrent.php', 'download_tt.php'), scrapedkey)
             if item_local.category:
                 del item_local.category
