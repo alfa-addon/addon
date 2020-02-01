@@ -4,19 +4,27 @@
 # --------------------------------------------------------------------------------
 
 
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
+#from __future__ import absolute_import
 #from builtins import str
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urllib
+    import http.cookiejar as cookielib
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
+    import urlparse
+    import cookielib
+
 import inspect
-import http.cookiejar
 import os
 import time
-import urllib.parse
+
 from threading import Lock
 import json
 from core.jsontools import to_utf8
@@ -28,19 +36,21 @@ from platformcode.logger import WebErrorException
 global DOMAIN_CS
 DOMAIN_CS = ["animeflv.ru", "www.divxtotal.la", "gnula.nu", "mejortorrent1.net", \
              'zooqle.com', 'zooqle1.unblocked.is', 'zooqle.unblocked.win', \
-             'zooqle-com.prox2.info', 'blazing.network', 'hdfull.io', 'www.cinetux.to']
+             'zooqle-com.prox2.info', 'blazing.network', 'www.cinetux.to', 'hdfull.io', \
+             'vidtodo.com', 'seriesdanko.net']
 
 ## Obtiene la versión del addon
 __version = config.get_addon_version()
 
 cookies_lock = Lock()
 
-cj = http.cookiejar.MozillaCookieJar()
+cj = cookielib.MozillaCookieJar()
 ficherocookies = os.path.join(config.get_data_path(), "cookies.dat")
 
 # Headers por defecto, si no se especifica nada
 default_headers = dict()
-default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:70.0) Gecko/20100101"
+#default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) Chrome/79.0.3945.117"
+default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36"
 default_headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
 default_headers["Accept-Language"] = "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3"
 default_headers["Accept-Charset"] = "UTF-8"
@@ -60,7 +70,7 @@ def get_user_agent():
 def get_url_headers(url, forced=False):
     from . import scrapertools
     
-    domain = urllib.parse.urlparse(url)[1]
+    domain = urlparse.urlparse(url)[1]
     sub_dom = scrapertools.find_single_match(domain, '\.(.*?\.\w+)')
     if sub_dom and not 'google' in url:
         domain = sub_dom
@@ -74,7 +84,7 @@ def get_url_headers(url, forced=False):
     headers["User-Agent"] = default_headers["User-Agent"]
     headers["Cookie"] = "; ".join(["%s=%s" % (c.name, c.value) for c in list(domain_cookies.values())])
 
-    return url + "|" + "&".join(["%s=%s" % (h, urllib.parse.quote(headers[h])) for h in headers])
+    return url + "|" + "&".join(["%s=%s" % (h, urllib.quote(headers[h])) for h in headers])
 
 def set_cookies(dict_cookie, clear=True, alfa_s=False):
     """
@@ -109,7 +119,7 @@ def set_cookies(dict_cookie, clear=True, alfa_s=False):
         except:
             pass
 
-    ck = http.cookiejar.Cookie(version=0, name=name, value=value, port=None, 
+    ck = cookielib.Cookie(version=0, name=name, value=value, port=None, 
                     port_specified=False, domain=domain, 
                     domain_specified=False, domain_initial_dot=False,
                     path='/', path_specified=True, secure=False, 
@@ -171,6 +181,10 @@ def channel_proxy_list(url, forced_proxy=None):
         proxy_channel_bloqued = ast.literal_eval(proxy_channel_bloqued_str)
     except:
         logger.debug('Proxytools no inicializado correctamente')
+        try:
+            logger.debug('Bloqued: ' + str(proxy_channel_bloqued_str))
+        except:
+            pass
         return False
 
     if not url.endswith('/'):
@@ -263,7 +277,8 @@ def check_proxy(url, **opt):
     try:
         if (proxy or proxy_web) and (forced_proxy or proxy_addr_forced or
                                      channel_proxy_list(url, forced_proxy=forced_proxy)):
-            from . import proxytools
+            if not PY3: from . import proxytools
+            else: from . import proxytools_py3 as proxytools
             proxy_data['addr'], proxy_data['CF_addr'], proxy_data['web_name'], \
             proxy_data['log'] = proxytools.get_proxy_addr(url, post=opt.get('post', None), forced_proxy=forced_proxy)
             
@@ -341,7 +356,8 @@ def proxy_post_processing(url, proxy_data, response, opt):
     opt['out_break'] = False
     try:
         if ', Proxy Web' in proxy_data.get('stat', ''):
-            from . import proxytools
+            if not PY3: from . import proxytools
+            else: from . import proxytools_py3 as proxytools
             response["data"] = proxytools.restore_after_proxy_web(response["data"],
                                                                   proxy_data['web_name'], opt['url_save'])
             if response["data"] == 'ERROR':
@@ -355,7 +371,8 @@ def proxy_post_processing(url, proxy_data, response, opt):
 
         if proxy_data.get('stat', '') and response['sucess'] == False and \
                 opt.get('proxy_retries_counter', 0) <= opt.get('proxy_retries', 1) and opt.get('count_retries_tot', 5) > 1:
-            from . import proxytools
+            if not PY3: from . import proxytools
+            else: from . import proxytools_py3 as proxytools
             if ', Proxy Direct' in proxy_data.get('stat', ''):
                 proxytools.get_proxy_list_method(proxy_init='ProxyDirect',
                                                  error_skip=proxy_data['addr'], url_test=url)
@@ -444,7 +461,7 @@ def downloadpage(url, **opt):
 
     if opt.get('random_headers', False) or HTTPTOOLS_DEFAULT_RANDOM_HEADERS:
         req_headers['User-Agent'] = random_useragent()
-    url = urllib.parse.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
+    url = urllib.quote(url, safe="%/:=&?~#+!$,;'@()*[]")
 
     opt['proxy_retries_counter'] = 0
     opt['url_save'] = url
@@ -458,7 +475,7 @@ def downloadpage(url, **opt):
         file_name = ''
         opt['proxy_retries_counter'] += 1
 
-        domain = urllib.parse.urlparse(url)[1]
+        domain = urlparse.urlparse(url)[1]
         global CS_stat
         if domain in DOMAIN_CS or opt.get('CF', False):                         #Está en la lista de CF o viene en la llamada
             session = cloudscraper.create_scraper()                             #El dominio necesita CloudScraper
@@ -497,7 +514,7 @@ def downloadpage(url, **opt):
                             payload = opt['post']
                         except:
                             if not isinstance(opt['post'], dict):
-                                post = urllib.parse.parse_qs(opt['post'], keep_blank_values=1)
+                                post = urlparse.parse_qs(opt['post'], keep_blank_values=1)
                                 payload = dict()
 
                                 for key, value in list(post.items()):
@@ -572,17 +589,24 @@ def downloadpage(url, **opt):
             if not encoding:
                 encoding = 'utf8'
             if PY3 and isinstance(response['data'], bytes) and 'Content-Type' in req.headers \
-                        and ('text/html' in req.headers['Content-Type'] \
-                        or 'json' in req.headers['Content-Type']):
+                        and ('text/' in req.headers['Content-Type'] or 'json' in req.headers['Content-Type'] \
+                        or 'xml' in req.headers['Content-Type']):
                 response['data'] = response['data'].decode(encoding)
-            elif PY3 and isinstance(response['data'], bytes) and 'Content-Type' in req.headers \
-                        and not 'text/html' in req.headers['Content-Type'] \
-                        and not 'json' in req.headers['Content-Type'] \
-                        and not 'bittorrent' in req.headers['Content-Type']:
+        except:
+            import traceback
+            logger.error(traceback.format_exc(1))
+        try:
+            if PY3 and isinstance(response['data'], bytes) and 'Content-Type' in req.headers \
+                        and (not 'application' in req.headers['Content-Type'] \
+                        or 'javascript' in req.headers['Content-Type']):
                 response['data'] = "".join(chr(x) for x in bytes(response['data']))
+        except:
+            import traceback
+            logger.error(traceback.format_exc(1))
 
-            if 'Content-Type' in req.headers and ('text/html' in req.headers['Content-Type'] \
-                        or 'json' in req.headers['Content-Type']):
+        try:
+            if 'Content-Type' in req.headers and ('text/' in req.headers['Content-Type'] \
+                        or 'json' in req.headers['Content-Type'] or 'xml' in req.headers['Content-Type']):
                 response['data'] = response['data'].replace('&Aacute;', 'Á').replace('&Eacute;', 'É')\
                       .replace('&Iacute;', 'Í').replace('&Oacute;', 'Ó').replace('&Uacute;', 'Ú')\
                       .replace('&Uuml;', 'Ü').replace('&iexcl;', '¡').replace('&iquest;', '¿')\
@@ -591,7 +615,8 @@ def downloadpage(url, **opt):
                       .replace('&oacute;', 'ó').replace('&uacute;', 'ú').replace('&ordf;', 'ª')\
                       .replace('&ordm;', 'º')
         except:
-            pass
+            import traceback
+            logger.error(traceback.format_exc(1))
 
         response['url'] = req.url
         if not response['data']:
@@ -615,7 +640,7 @@ def downloadpage(url, **opt):
             if not opt.get('ignore_response_code', False) and not proxy_data.get('stat', ''):
                 if response_code > 399:
                     show_infobox(info_dict)
-                    raise WebErrorException(urllib.parse.urlparse(url)[1])
+                    raise WebErrorException(urlparse.urlparse(url)[1])
 
         if not 'api.themoviedb' in url and not opt.get('alfa_s', False):
             show_infobox(info_dict)
@@ -633,7 +658,7 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
     try:
         info_dict.append(('Timeout', opt['timeout']))
         info_dict.append(('URL', url))
-        info_dict.append(('Dominio', urllib.parse.urlparse(url)[1]))
+        info_dict.append(('Dominio', urlparse.urlparse(url)[1]))
         if CS_stat:
             info_dict.append(('Dominio_CF', True))
         if opt.get('post', None):

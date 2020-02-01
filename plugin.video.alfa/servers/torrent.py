@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from future import standard_library
-standard_library.install_aliases()
 #from builtins import str
 from builtins import range
 import sys
@@ -9,12 +7,18 @@ PY3 = False
 VFS = True
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int; VFS = False
 
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urllib
+
 import time
 import threading
 import os
 import traceback
 import re
-import urllib.parse
 
 try:
     import xbmc
@@ -362,7 +366,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     video_path = erase_file_path
     if video_names: video_file = video_names[0]
     if not video_file and mediaurl.startswith('magnet'):
-        video_file = urllib.parse.unquote_plus(scrapertools.find_single_match(mediaurl, '(?:\&|&amp;)dn=([^\&]+)\&'))
+        video_file = urllib.unquote_plus(scrapertools.find_single_match(mediaurl, '(?:\&|&amp;)dn=([^\&]+)\&'))
         erase_file_path = filetools.join(save_path_videos, video_file)
     
     if rar and RAR and not UNRAR:

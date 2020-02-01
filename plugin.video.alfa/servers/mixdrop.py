@@ -31,7 +31,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls.append(["%s [Mixdrop]" % ext, media_url])
 
     return video_urls
-=======
+
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------
 # Conector Mixdrop By Alfa development Group

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import urlparse
+
 from core import httptools
 from core import scrapertools
 from platformcode import logger
