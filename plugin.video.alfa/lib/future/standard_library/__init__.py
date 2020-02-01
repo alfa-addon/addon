@@ -518,8 +518,11 @@ def install_aliases():
     except ImportError:
         pass
     else:
-        test.support = support
-        sys.modules['test.support'] = support
+        try:
+            test.support = support
+            sys.modules['test.support'] = support
+        except:
+            pass
 
     # Patch the dbm module so it appears to have the same structure on Py2 as on Py3
     try:
@@ -527,23 +530,26 @@ def install_aliases():
     except ImportError:
         pass
     else:
-        from future.moves.dbm import dumb
-        dbm.dumb = dumb
-        sys.modules['dbm.dumb'] = dumb
         try:
-            from future.moves.dbm import gnu
-        except ImportError:
-            pass
-        else:
-            dbm.gnu = gnu
-            sys.modules['dbm.gnu'] = gnu
-        try:
-            from future.moves.dbm import ndbm
-        except ImportError:
-            pass
-        else:
-            dbm.ndbm = ndbm
-            sys.modules['dbm.ndbm'] = ndbm
+            from future.moves.dbm import dumb
+            dbm.dumb = dumb
+            sys.modules['dbm.dumb'] = dumb
+            try:
+                from future.moves.dbm import gnu
+            except ImportError:
+                pass
+            else:
+                dbm.gnu = gnu
+                sys.modules['dbm.gnu'] = gnu
+            try:
+                from future.moves.dbm import ndbm
+            except ImportError:
+                pass
+            else:
+                dbm.ndbm = ndbm
+                sys.modules['dbm.ndbm'] = ndbm
+        except:
+            flog.warning('*** FUTURE ERROR importing MOVES.dbm')
 
     # install_aliases.run_already = True
 
