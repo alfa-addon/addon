@@ -37,7 +37,7 @@ global DOMAIN_CS
 DOMAIN_CS = ["animeflv.ru", "www.divxtotal.la", "gnula.nu", "mejortorrent1.net", \
              'zooqle.com', 'zooqle1.unblocked.is', 'zooqle.unblocked.win', \
              'zooqle-com.prox2.info', 'blazing.network', 'www.cinetux.to', 'hdfull.io', \
-             'vidtodo.com', 'seriesdanko.net']
+             'vidtodo.com', 'seriesdanko.net', 'sexgalaxy.net']
 
 ## Obtiene la versión del addon
 __version = config.get_addon_version()
