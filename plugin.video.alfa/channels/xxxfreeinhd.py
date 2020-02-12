@@ -16,7 +16,7 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['vidlox']
 
-host = 'https://watchxxxfreeinhd.com'
+host = 'https://watchxxxfree.org/'
 
 
 def mainlist(item):
