@@ -965,8 +965,11 @@ def report_send(item, description='', fatal=False):
         requests_status = False
         logger.error(traceback.format_exc())
     
-    from core import jsontools, httptools, proxytools, scrapertools
+    from core import jsontools, httptools, scrapertools
     from platformcode import envtal
+    
+    if not PY3: from core import proxytools
+    else: from core import proxytools_py3 as proxytools
     
     # Esta función realiza la operación de upload del LOG.  El tamaño del archivo es de gran importacia porque
     # los servicios de "pastebin" gratuitos tienen limitaciones, a veces muy bajas.

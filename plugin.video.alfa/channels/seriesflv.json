@@ -1,20 +1,22 @@
 {
-  "id": "javus",
-  "name": "javus.net",
-  "active": false,
-  "adult": true,
-  "language": ["*"],
-  "thumbnail": "https://s15.postimg.cc/pzd3h4vy3/javus.png",
-  "banner": "https://s21.postimg.cc/5pqzedp2f/javus_banner.png",
+  "id": "seriesflv",
+  "name": "SeriesFLV",
+  "active": true,
+  "adult": false,
+  "language": ["cast", "lat"],
+  "thumbnail": "https://i.postimg.cc/qMyN4YMJ/seriesflv.png",
+  "banner": "",
   "categories": [
-    "adult"
+    "tvshow",
+    "anime",
+    "vos"
   ],
   "settings": [
     {
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     },
@@ -26,7 +28,12 @@
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "No filtrar"
+        "No filtrar",
+        "CAST",
+        "LAT",
+        "VOSE",
+        "VOS",
+        "VO"
       ]
     }
   ]
