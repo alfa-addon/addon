@@ -43,13 +43,15 @@ list_servers = ['torrent']
 #host = 'https://grantorrent1.com/'
 #host = 'https://grantorrent.one/'
 #host = 'https://grantorrent.tv/'
-#host = 'https://grantorrent.la/'
 host = 'https://grantorrent.io/'
+#host = 'https://grantorrent.la/'
 channel = "grantorrent"
 domain = 'grantorrent.io'
 sufix = '.io'
-domain_files = 'files.grantorrent.one'
-sufix_alt = '.one'
+#domain_files = 'files.grantorrent.one'
+domain_files = domain
+sufix_alt = '.io'
+series_sufix = 'series/'
 
 dict_url_seasons = dict()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
@@ -82,7 +84,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, action="submenu", title="Series", url=host + "principal/", extra="series", thumbnail=thumb_series))
 
     #Buscar series
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar en Series >>", url=host + "series-2/", extra="series", thumbnail=thumb_buscar))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar en Series >>", url=host + series_sufix, extra="series", thumbnail=thumb_buscar))
         
     itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", folder=False, thumbnail=thumb_separador))
     
@@ -154,10 +156,11 @@ def submenu(item):
 
         for scrapedurl, scrapedtitle in matches:
             title = scrapedtitle.strip()
+            url = scrapedurl.replace('series-2/', series_sufix)
 
-            itemlist.append(item.clone(action="listado", title=title, url=scrapedurl))              #Menú series
+            itemlist.append(item.clone(action="listado", title=title, url=url))                     #Menú series
             
-            itemlist.append(item.clone(action="generos", title="Series **Géneros**", url=host + "series-2/"))   #Lista de Géneros
+            itemlist.append(item.clone(action="generos", title="Series **Géneros**", url=host + series_sufix))   #Lista de Géneros
 
     return itemlist
     
