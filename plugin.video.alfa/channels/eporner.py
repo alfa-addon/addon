@@ -88,11 +88,11 @@ def videos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     patron = '<div class="mvhdico"><span>([^<]+)</span>.*?'
-    patron += '<a href="([^"]+)" title="([^"]+)" id="[^"]+">.*?'
-    patron += 'src="([^"]+)"[^>]+>.*?'
-    patron += '<div class="mbtim">([^<]+)</div>'
+    patron += 'src="([^"]+.jpg)".*?'
+    patron += '<a href="([^"]+)" title="([^"]+)".*?'
+    patron += 'class="mbtim">([^<]+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
-    for quality, url, title, thumbnail, duration in matches:
+    for quality, thumbnail, url, title, duration in matches:
         title = "[COLOR yellow]" + duration + "[/COLOR] " + "[COLOR red]" + quality + "[/COLOR] " +title
         itemlist.append(item.clone(title=title, url=urlparse.urljoin(item.url, url),
                                    action="play", thumbnail=thumbnail, contentThumbnail=thumbnail,
