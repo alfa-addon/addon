@@ -43,14 +43,15 @@ list_servers = ['torrent']
 #host = 'https://grantorrent1.com/'
 #host = 'https://grantorrent.one/'
 #host = 'https://grantorrent.tv/'
-host = 'https://grantorrent.io/'
+#host = 'https://grantorrent.io/'
 #host = 'https://grantorrent.la/'
+host = 'https://grantorrent.li'
 channel = "grantorrent"
-domain = 'grantorrent.io'
-sufix = '.io'
+domain = 'grantorrent.li'
+sufix = '.li'
 #domain_files = 'files.grantorrent.one'
 domain_files = domain
-sufix_alt = '.io'
+sufix_alt = '.li'
 series_sufix = 'series/'
 
 dict_url_seasons = dict()
@@ -76,7 +77,7 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url=host + "principal/", extra="peliculas", thumbnail=thumb_pelis))
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url=host, extra="peliculas", thumbnail=thumb_pelis))
 
     #Buscar películas
     itemlist.append(Item(channel=item.channel, action="search", title="Buscar en Películas >>", url=host, extra="peliculas", thumbnail=thumb_buscar))
