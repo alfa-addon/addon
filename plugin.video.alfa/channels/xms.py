@@ -13,8 +13,7 @@ from platformcode import config, logger
 
 __channel__ = "xms"
 
-# Xtheatre links netu, vidlox y nuevo serve https://watchanimestream.net/v/kep0pc3jzlwq0n6
-
+#xtheatre mucho contenido NETU
 
 host = 'https://xtheatre.org/'
 host1 = 'https://www.cam4.com/'
@@ -230,7 +229,7 @@ def findvideos(item):
                 url = decode_url(url)
                 if "strdef" in url:
                     url = httptools.downloadpage(url).url
-            if not "hotvideoz" in url: #netu
+            if not "/player/embed_player.php?vid=" in url: #netu
                 itemlist.append(item.clone(action="play", title= "%s", url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist

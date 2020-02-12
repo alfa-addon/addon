@@ -59,20 +59,10 @@ def lista(item):
     patron = '<div class="video-item" data-id="\d+">.*?'
     patron += '<a href="([^"]+)" class="thumb ">.*?'
     patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
-    patron += '<span class="i-len">(\d+)m</span>(.*?)</p>'
+    patron += '<span class="i-len">(\d+m)</span>(.*?)</p>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,scrapedtitle,duration,quality in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
-        duration = duration.strip()
-        minutos = int(duration)
-        horas=int(minutos/60)
-        minutos-=horas*60
-        if minutos < 10:
-            minutos = "0%s" %minutos
-        if horas == 0:
-            duration = "%s:%s" % (horas,minutos)
-        else:
-            duration = "%s:%s" % (horas,minutos)
         title = "[COLOR yellow]%s[/COLOR] %s" % (duration,scrapedtitle)
         if "i-hd" in quality:
             quality = scrapertools.find_single_match(quality,'<span class="i-hd">([^<]+)</span>')
