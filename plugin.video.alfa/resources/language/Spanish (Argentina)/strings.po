@@ -4982,3 +4982,51 @@ msgstr "Restan %s canales"
 msgctxt "#70745"
 msgid "Enter another year..."
 msgstr "Introduzca otro año..."
+
+msgctxt "#70746"
+msgid "When playback ends"
+msgstr "Al finalizar la reproducción"
+
+msgctxt "#70747"
+msgid "Hide server selection"
+msgstr "Ocultar selección de servidor"
+
+msgctxt "#70748"
+msgid "Go to the next episode"
+msgstr "Reproducir el siguiente episodio"
+
+msgctxt "#70749"
+msgid "Seconds before notification"
+msgstr "Segundos antes de mostrar la notificación"
+
+msgctxt "#70750"
+msgid "Next Episode in"
+msgstr "Siguiente episodio en..."
+
+msgctxt "#70751"
+msgid "seconds"
+msgstr "Segundos"
+
+msgctxt "#70752"
+msgid "Do nothing"
+msgstr "No hacer nada"
+
+msgctxt "#70753"
+msgid "Playback"
+msgstr "Reproducir"
+
+msgctxt "#70754"
+msgid "Compact Mode"
+msgstr "Modo Compacto"
+
+msgctxt "#70755"
+msgid "Coming up..."
+msgstr "A continuación..."
+
+msgctxt "#70756"
+msgid "WATCH NOW"
+msgstr "VER AHORA"
+
+msgctxt "#70757"
+msgid "CANCEL"
+msgstr "CANCELAR"
