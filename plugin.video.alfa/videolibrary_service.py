@@ -6,12 +6,7 @@
 import datetime, math, threading, traceback
 import sys
 PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str
-if PY3:
-    import importlib as imp
-else:
-    import imp
-
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 try:
     from platformcode import config
@@ -49,7 +44,7 @@ def update(path, p_dialog, i, t, serie, overwrite):
     category = serie.category
 
     # logger.debug("%s: %s" %(serie.contentSerieName,str(list_canales) ))
-    for channel, url in serie.library_urls.items():
+    for channel, url in list(serie.library_urls.items()):
         serie.channel = channel
         serie.url = url
         
@@ -75,14 +70,13 @@ def update(path, p_dialog, i, t, serie, overwrite):
                                                                               serie.channel.capitalize()))
             try:
                 pathchannels = filetools.join(config.get_runtime_path(), "channels", serie.channel + '.py')
-                logger.info("Cargando canal: " + pathchannels + " " +
-                            serie.channel)
+                logger.info("Cargando canal: " + pathchannels)
 
                 if serie.library_filter_show:
                     serie.show = serie.library_filter_show.get(serie.channel, serie.contentSerieName)
 
-                obj = imp.load_source(serie.channel, pathchannels)
-                itemlist = obj.episodios(serie)
+                obj = __import__('channels.%s' % serie.channel, fromlist=["channels.%s" % serie.channel])
+                itemlist = getattr(obj, 'episodios')(serie)                     #... se procesa Episodios para ese canal
 
                 try:
                     if int(overwrite) == 3:
@@ -175,8 +169,13 @@ def check_for_update(overwrite=True):
                     if overwrite_forced == True:
                         overwrite = True
                         serie.update_next = ''
-                        
-                    logger.info("serie=" + serie.contentSerieName)
+                    
+                    info_status = ''
+                    if serie.infoLabels['status']:
+                        info_status = serie.infoLabels['status']
+
+                    logger.info("Serie=%s, Activa=%s, Fecha=%s, Status=%s" % (serie.contentSerieName, \
+                                str(serie.active), str(serie.update_last), str(info_status)))
                     p_dialog.update(int(math.ceil((i + 1) * t)), heading, serie.contentSerieName)
                     
                     #Verificamos el estado del serie.library_playcounts de la Serie por si está incompleto
@@ -184,13 +183,13 @@ def check_for_update(overwrite=True):
                         estado = False
                         #Si no hemos hecho la verificación o no tiene playcount, entramos
                         estado = config.get_setting("verify_playcount", "videolibrary")
-                        if not estado or estado == False or not serie.library_playcounts:               #Si no se ha pasado antes, lo hacemos ahora
-                            serie, estado = videolibrary.verify_playcount_series(serie, path)           #También se pasa si falta un PlayCount por completo
+                        if not estado or estado == False or not serie.library_playcounts:       #Si no se ha pasado antes, lo hacemos ahora
+                            serie, estado = videolibrary.verify_playcount_series(serie, path)   #También se pasa si falta un PlayCount por completo
                     except:
                         logger.error(traceback.format_exc())
                     else:
-                        if estado:                                                                      #Si ha tenido éxito la actualización...
-                            estado_verify_playcount_series = True                                       #... se marca para cambiar la opción de la Videoteca
+                        if estado:                                              #Si ha tenido éxito la actualización...
+                            estado_verify_playcount_series = True               #... se marca para cambiar la opción de la Videoteca
 
                     interval = int(serie.active)  # Podria ser del tipo bool
 
@@ -371,7 +370,10 @@ if __name__ == "__main__":
     # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie Kodi
     # si es == 2 lo desactivamos.
     if config.get_platform(True)['num_version'] >= 17.0:
-        from lib.alfaresolver import updated, update_now
+        if not PY3:
+            from lib.alfaresolver import updated, update_now
+        else:
+            from lib.alfaresolver_py3 import updated, update_now
         if not updated():
             update_now()
     if config.get_setting("adult_mode") == 2:
@@ -392,7 +394,9 @@ if __name__ == "__main__":
     custom_code.init()
 
     # Identifica la dirección Proxy y la lista de alternativas
-    from core import proxytools
+    #if PY3: from core import proxytool_py3 as proxytool else from core import proxytool_py2 as proxytool
+    if not PY3: from core import proxytools
+    else: from core import proxytools_py3 as proxytools
     proxytools.get_proxy_list()
     
     if not config.get_setting("update", "videolibrary") == 2:

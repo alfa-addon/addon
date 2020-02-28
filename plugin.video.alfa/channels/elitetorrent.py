@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import re
 import sys
-import urllib
-import urlparse
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urlparse                                 # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                                 # Usamos el nativo de PY2 que es más rápido
+
+import re
 import time
 
 from channelselector import get_thumb
@@ -20,7 +28,7 @@ from channels import autoplay
 
 #IDIOMAS = {'CAST': 'Castellano', 'LAT': 'Latino', 'VO': 'Version Original'}
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
@@ -110,7 +118,10 @@ def submenu(item):
         return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     for scrapedurl, scrapedtitle in matches:
-        scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('utf8').strip()
+        if PY3:
+            scrapedtitle = re.sub('\r\n', '', scrapedtitle).strip()
+        else:
+            scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('utf8').strip()
         scrapedtitle = scrapedtitle.replace(" torrent", "").replace(" Torrent", "").replace("Series y ", "").title()
         
         if "castellano" in scrapedtitle.lower():            #Evita la entrada de peliculas castellano del menú de idiomas
@@ -187,7 +198,10 @@ def listado(item):
     for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedcategory, scrapedcalidad, scrapedsize, scrapedsizet in matches:
         item_local = item.clone()                           #Creamos copia de Item para trabajar
         
-        title = re.sub('\r\n', '', scrapedtitle).decode('utf8').strip()
+        if PY3:
+            title = re.sub('\r\n', '', scrapedtitle).strip()
+        else:
+            title = re.sub('\r\n', '', scrapedtitle).decode('utf8').strip()
         title = title.replace(" torrent", "").replace(" Torrent", "").replace("Series y ", "")
         item_local.url = urlparse.urljoin(host, scrapedurl)
         item_local.thumbnail = urlparse.urljoin(host, scrapedthumbnail)

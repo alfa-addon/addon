@@ -30,5 +30,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     unpack = jsunpack.unpack(data)
     matches = scrapertools.find_multiple_matches(unpack, '"file":"([^"]+)","label":"([^"]+)"')
     for url,quality in matches:
+        url = url.replace("v2.", "v1.")
         video_urls.append(["[manyvideos] %s" % quality, url])
     return video_urls

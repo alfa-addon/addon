@@ -17,7 +17,7 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/?orderby=popular"))
     itemlist.append( Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/?orderby="))
     itemlist.append( Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "/pornstar/?orderby=popular"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
+    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -82,8 +82,6 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    logger.debug(data)
-    
     patron = '<article class=pinbox>.*?'
     patron += 'href=([^>]+).*?'
     patron += 'src=([^\s]+).*?'
@@ -111,7 +109,7 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    url = scrapertools.find_single_match(data, '<source src=([^\s]+)')
+    url = scrapertools.find_single_match(data, 'source:"([^"]+)"')
     itemlist.append(item.clone(action="play", title = url, url=url))
     return itemlist
 

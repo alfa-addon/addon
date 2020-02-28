@@ -1,5 +1,5 @@
 from __future__ import absolute_import, division, unicode_literals
-from future.builtins import str
+from ...builtins import str
 """ robotparser.py
 
     Copyright (C) 2000  Bastian Kleineidam
@@ -13,8 +13,8 @@ from future.builtins import str
 """
 
 # Was: import urllib.parse, urllib.request
-from future.backports import urllib
-from future.backports.urllib import parse as _parse, request as _request
+from .. import urllib
+from . import parse as _parse, request as _request
 urllib.parse = _parse
 urllib.request = _request
 

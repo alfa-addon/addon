@@ -450,35 +450,63 @@ def install_aliases():
     # if hasattr(install_aliases, 'run_already'):
     #     return
     for (newmodname, newobjname, oldmodname, oldobjname) in MOVES:
-        __import__(newmodname)
-        # We look up the module in sys.modules because __import__ just returns the
-        # top-level package:
-        newmod = sys.modules[newmodname]
-        # newmod.__future_module__ = True
+        try:
+            __import__(newmodname)
+            # We look up the module in sys.modules because __import__ just returns the
+            # top-level package:
+            newmod = sys.modules[newmodname]
+            # newmod.__future_module__ = True
 
-        __import__(oldmodname)
-        oldmod = sys.modules[oldmodname]
+            __import__(oldmodname)
+            oldmod = sys.modules[oldmodname]
 
-        obj = getattr(oldmod, oldobjname)
-        setattr(newmod, newobjname, obj)
+            obj = getattr(oldmod, oldobjname)
+            setattr(newmod, newobjname, obj)
+        except:
+            try:
+                flog.warning('*** FUTURE ERROR in module %s %s ' % (str(oldmod), str(oldobjname)))
+            except:
+                pass
 
     # Hack for urllib so it appears to have the same structure on Py2 as on Py3
-    import urllib
-    from future.backports.urllib import request
-    from future.backports.urllib import response
-    from future.backports.urllib import parse
-    from future.backports.urllib import error
-    from future.backports.urllib import robotparser
-    urllib.request = request
-    urllib.response = response
-    urllib.parse = parse
-    urllib.error = error
-    urllib.robotparser = robotparser
-    sys.modules['urllib.request'] = request
-    sys.modules['urllib.response'] = response
-    sys.modules['urllib.parse'] = parse
-    sys.modules['urllib.error'] = error
-    sys.modules['urllib.robotparser'] = robotparser
+    try:
+        import urllib
+        from future.backports.urllib import response
+        urllib.response = response
+        sys.modules['urllib.response'] = response
+        from future.backports.urllib import parse
+        urllib.parse = parse
+        sys.modules['urllib.parse'] = parse
+        from future.backports.urllib import error
+        urllib.error = error
+        sys.modules['urllib.error'] = error
+    except ImportError:
+        try:
+            flog.warning('*** FUTURE ERROR importing URLLIB.response, parse, error')
+            urllib.response = urllib
+            sys.modules['urllib.response'] = urllib
+            urllib.parse = urllib
+            sys.modules['urllib.parse'] = urllib
+            urllib.error = urllib
+            sys.modules['urllib.error'] = urllib
+        except:
+            pass
+    try:
+        from future.backports.urllib import request
+        urllib.request = request
+        sys.modules['urllib.request'] = request
+        from future.backports.urllib import robotparser
+        urllib.robotparser = robotparser
+        sys.modules['urllib.robotparser'] = robotparser
+    except ImportError:
+        try:
+            flog.warning('*** FUTURE ERROR importing URLLIB.Request')
+            urllib.request = urllib
+            sys.modules['urllib.request'] = urllib
+            urllib.robotparser = urllib
+            sys.modules['urllib.robotparser'] = urllib
+        except:
+            pass
 
     # Patch the test module so it appears to have the same structure on Py2 as on Py3
     try:
@@ -490,8 +518,11 @@ def install_aliases():
     except ImportError:
         pass
     else:
-        test.support = support
-        sys.modules['test.support'] = support
+        try:
+            test.support = support
+            sys.modules['test.support'] = support
+        except:
+            pass
 
     # Patch the dbm module so it appears to have the same structure on Py2 as on Py3
     try:
@@ -499,23 +530,26 @@ def install_aliases():
     except ImportError:
         pass
     else:
-        from future.moves.dbm import dumb
-        dbm.dumb = dumb
-        sys.modules['dbm.dumb'] = dumb
         try:
-            from future.moves.dbm import gnu
-        except ImportError:
-            pass
-        else:
-            dbm.gnu = gnu
-            sys.modules['dbm.gnu'] = gnu
-        try:
-            from future.moves.dbm import ndbm
-        except ImportError:
-            pass
-        else:
-            dbm.ndbm = ndbm
-            sys.modules['dbm.ndbm'] = ndbm
+            from future.moves.dbm import dumb
+            dbm.dumb = dumb
+            sys.modules['dbm.dumb'] = dumb
+            try:
+                from future.moves.dbm import gnu
+            except ImportError:
+                pass
+            else:
+                dbm.gnu = gnu
+                sys.modules['dbm.gnu'] = gnu
+            try:
+                from future.moves.dbm import ndbm
+            except ImportError:
+                pass
+            else:
+                dbm.ndbm = ndbm
+                sys.modules['dbm.ndbm'] = ndbm
+        except:
+            flog.warning('*** FUTURE ERROR importing MOVES.dbm')
 
     # install_aliases.run_already = True
 

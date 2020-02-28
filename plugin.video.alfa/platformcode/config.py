@@ -3,6 +3,11 @@
 # Parámetros de configuración (kodi)
 # ------------------------------------------------------------
 
+#from builtins import str
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import os
 import re
 
@@ -282,7 +287,7 @@ def set_setting(name, value, channel="", server=""):
 
             __settings__.setSetting(name, value)
 
-        except Exception, ex:
+        except Exception as ex:
             from platformcode import logger
             logger.error("Error al convertir '%s' no se guarda el valor \n%s" % (name, ex))
             return None
@@ -294,7 +299,18 @@ def get_localized_string(code):
     dev = __language__(code)
 
     try:
-        dev = dev.encode("utf-8")
+        # Unicode to utf8
+        if isinstance(dev, unicode):
+            dev = dev.encode("utf8")
+            if PY3: dev = dev.decode("utf8")
+
+        # All encodings to utf8
+        elif not PY3 and isinstance(dev, str):
+            dev = unicode(dev, "utf8", errors="replace").encode("utf8")
+        
+        # Bytes encodings to utf8
+        elif PY3 and isinstance(dev, bytes):
+            dev = dev.decode("utf8")
     except:
         pass
 
