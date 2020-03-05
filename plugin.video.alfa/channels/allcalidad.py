@@ -19,7 +19,7 @@ list_servers = ['rapidvideo', 'streamango', 'fastplay', 'flashx', 'openload', 'v
 
 __channel__='allcalidad'
 
-host = "https://allcalidad.net"
+host = "https://allcalidad.org"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -161,41 +161,15 @@ def peliculas(item):
 def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    bloque = scrapertools.find_single_match(data, 'var data = {([^\}]+)}')
-    action, dataurl = scrapertools.find_single_match(bloque, "(?is)action : '([^']+)'.*?postID, .*?(\w+) : dataurl")
-    if not item.infoLabels["year"]:
-        item.infoLabels["year"] = scrapertools.find_single_match(data, 'dateCreated.*?(\d{4})')
-        if "orig_title" in data:
-            contentTitle = scrapertools.find_single_match(data, 'orig_title.*?>([^<]+)<').strip()
-            if contentTitle != "":
-                item.contentTitle = contentTitle
-    bloque = scrapertools.find_single_match(data, '(?s)<div class="bottomPlayer">(.*?)<script>')
-    match = scrapertools.find_multiple_matches(bloque, '(?is)data-Url="([^"]+).*?data-postId="([^"]*)')
-    for d_u, datapostid in match:
-        page_url = host + "/wp-admin/admin-ajax.php"
-        post = "action=%s&postID=%s&%s=%s" %(action, datapostid, dataurl, d_u)
-        data = httptools.downloadpage(page_url, post=post).data
-        url = scrapertools.find_single_match(data, '(?i)src="([^"]+)')
-        titulo = "Ver en: %s"
-        text_color = "white"
-        if "goo.gl" in url:
-            url = httptools.downloadpage(url, follow_redirects=False, only_headers=True).headers.get("location", "")
-        if "youtube" in url:
-            titulo = "Ver trailer: %s"
-            text_color = "yellow"
-        if "ad.js" in url or "script" in url or "jstags.js" in url or not datapostid:
-            continue
-        elif "vimeo" in url:
-            url += "|" + "http://www.allcalidad.com"
-        itemlist.append(
-                 item.clone(channel = item.channel,
-                 action = "play",
-                 text_color = text_color,
-                 title = titulo,
-                 url = url
-                 ))
+    post_id = scrapertools.find_single_match(data, 'data-post="(\d+)"')
+    json_data = httptools.downloadpage("%s/wp-json/elifilms/movies?id=%s" % (host, post_id)).json
+    for info in json_data["data"]["server_list"]:
+        url = info["link"]
+        itemlist.append(Item(channel=item.channel, url=url, title='%s', action="play", infoLables=item.infoLabels,
+                             language="Latino"))
+
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    tmdb.set_infoLabels(itemlist, __modo_grafico__)
+    #tmdb.set_infoLabels(itemlist, __modo_grafico__)
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
