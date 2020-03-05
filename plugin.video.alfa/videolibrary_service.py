@@ -335,9 +335,9 @@ def start(thread=True):
 def monitor_update():
     update_setting = config.get_setting("update", "videolibrary")
 
-    # "Actualizar "Una sola vez al dia" o "al inicar Kodi y al menos una vez al dia"
+    # "Actualizar "Una sola vez al dia" o "al inicar Kodi y al menos una vez al dia" o "Dos veces al día"
 
-    if update_setting == 2 or update_setting == 3:
+    if update_setting == 2 or update_setting == 3 or update_setting == 4:
         hoy = datetime.date.today()
         last_check = config.get_setting("updatelibrary_last_check", "videolibrary")
         if last_check:
@@ -347,12 +347,15 @@ def monitor_update():
             last_check = hoy - datetime.timedelta(days=1)
 
         update_start = config.get_setting("everyday_delay", "videolibrary") * 4
+        update_start_2 = config.get_setting("everyday_delay_2", "videolibrary") * 4
 
         # logger.info("Ultima comprobacion: %s || Fecha de hoy:%s || Hora actual: %s" %
         #             (last_check, hoy, datetime.datetime.now().hour))
         # logger.info("Atraso del inicio del dia: %i:00" % update_start)
 
-        if last_check <= hoy and datetime.datetime.now().hour == int(update_start):
+        if last_check <= hoy and (datetime.datetime.now().hour == int(update_start) \
+                        or (datetime.datetime.now().hour == int(update_start_2) \
+                        and update_setting == 4)):
             try:
                 logger.info("Inicio actualizacion programada para las %s h.: %s" % (update_start, datetime.datetime.now()))
             except:
@@ -399,7 +402,7 @@ if __name__ == "__main__":
     else: from core import proxytools_py3 as proxytools
     proxytools.get_proxy_list()
     
-    if not config.get_setting("update", "videolibrary") == 2:
+    if config.get_setting("update", "videolibrary") != 2 and config.get_setting("update", "videolibrary") != 4:
         check_for_update(overwrite=False)
     
     # Añade al LOG las variables de entorno necesarias para diagnóstico
