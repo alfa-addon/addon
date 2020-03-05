@@ -568,10 +568,12 @@ def title_format(item):
 
             title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, item.title.decode('utf-8'))
             item.title = title.encode('utf-8')
+            if PY3: item.title = item.title.decode('utf-8')
         except:
             check = 'v'
             title = '[B][COLOR limegreen][%s][/COLOR][/B] %s' % (check, item.title.decode('utf-8'))
             item.title = title.encode('utf-8')
+            if PY3: item.title = item.title.decode('utf-8')
 
     return item
 

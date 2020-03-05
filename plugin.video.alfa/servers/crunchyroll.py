@@ -221,5 +221,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         output += ',' + event.attrib['effect']
         output += ',' + event.attrib['text']
         output += '\n'
+        output = output.encode('utf-8')
+        if PY3: output = output.decode("utf-8")
 
-    return output.encode('utf-8')
+    return output

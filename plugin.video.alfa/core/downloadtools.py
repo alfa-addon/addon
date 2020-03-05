@@ -110,6 +110,8 @@ def limpia_nombre_excepto_1(s):
     stripped = ''.join(c for c in s if c in validchars)
     # Convierte a iso
     s = stripped.encode("iso-8859-1")
+    if PY3:
+        s = s.decode('utf-8')
     return s
 
 
@@ -169,7 +171,10 @@ def downloadbest(video_urls, title, continuar=False):
     for elemento in invertida:
         # videotitle = elemento[0]
         url = elemento[1]
-        logger.info("Descargando opción " + title + " " + url.encode('ascii', 'ignore'))
+        if not PY3:
+            logger.info("Descargando opción " + title + " " + url.encode('ascii', 'ignore'))
+        else:
+            logger.info("Descargando opción " + title + " " + url.encode('ascii', 'ignore').decode('utf-8'))
 
         # Calcula el fichero donde debe grabar
         try:
