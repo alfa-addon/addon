@@ -37,7 +37,8 @@ global DOMAIN_CS
 DOMAIN_CS = ["animeflv.ru", "www.divxtotal.la", "gnula.nu", "mejortorrent1.net", \
              'zooqle.com', 'zooqle1.unblocked.is', 'zooqle.unblocked.win', \
              'zooqle-com.prox2.info', 'blazing.network', 'www.cinetux.to', 'hdfull.io', \
-             'vidtodo.com', 'seriesdanko.net', 'sexgalaxy.net']
+             'vidtodo.com', 'seriesdanko.net', 'sexgalaxy.net', 'grantorrent.io', \
+             'grantorrent.li', 'animeflv.net']
 
 ## Obtiene la versión del addon
 __version = config.get_addon_version()
@@ -358,6 +359,7 @@ def proxy_post_processing(url, proxy_data, response, opt):
         if ', Proxy Web' in proxy_data.get('stat', ''):
             if not PY3: from . import proxytools
             else: from . import proxytools_py3 as proxytools
+            
             response["data"] = proxytools.restore_after_proxy_web(response["data"],
                                                                   proxy_data['web_name'], opt['url_save'])
             if response["data"] == 'ERROR':
@@ -370,9 +372,11 @@ def proxy_post_processing(url, proxy_data, response, opt):
                 response['sucess'] = False
 
         if proxy_data.get('stat', '') and response['sucess'] == False and \
-                opt.get('proxy_retries_counter', 0) <= opt.get('proxy_retries', 1) and opt.get('count_retries_tot', 5) > 1:
+                opt.get('proxy_retries_counter', 0) <= opt.get('proxy_retries', 1) and \
+                opt.get('count_retries_tot', 5) > 1:
             if not PY3: from . import proxytools
             else: from . import proxytools_py3 as proxytools
+            
             if ', Proxy Direct' in proxy_data.get('stat', ''):
                 proxytools.get_proxy_list_method(proxy_init='ProxyDirect',
                                                  error_skip=proxy_data['addr'], url_test=url)
@@ -447,7 +451,6 @@ def downloadpage(url, **opt):
         """
     load_cookies()
     import requests
-    from lib import cloudscraper
 
     # Headers por defecto, si no se especifica nada
     req_headers = default_headers.copy()
@@ -478,6 +481,7 @@ def downloadpage(url, **opt):
         domain = urlparse.urlparse(url)[1]
         global CS_stat
         if domain in DOMAIN_CS or opt.get('CF', False):                         #Está en la lista de CF o viene en la llamada
+            from lib import cloudscraper
             session = cloudscraper.create_scraper()                             #El dominio necesita CloudScraper
             session.verify = True
             CS_stat = True

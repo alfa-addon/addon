@@ -4986,3 +4986,51 @@ msgstr ""
 msgctxt "#70745"
 msgid "Enter another year..."
 msgstr ""
+
+msgctxt "#70746"
+msgid "When playback ends"
+msgstr ""
+
+msgctxt "#70747"
+msgid "Hide server selection"
+msgstr ""
+
+msgctxt "#70748"
+msgid "Go to the next episode"
+msgstr ""
+
+msgctxt "#70749"
+msgid "Seconds before notification"
+msgstr ""
+
+msgctxt "#70750"
+msgid "Next Episode in"
+msgstr ""
+
+msgctxt "#70751"
+msgid "seconds"
+msgstr ""
+
+msgctxt "#70752"
+msgid "Do nothing"
+msgstr ""
+
+msgctxt "#70753"
+msgid "Playback"
+msgstr ""
+
+msgctxt "#70754"
+msgid "Compact mode"
+msgstr ""
+
+msgctxt "#70755"
+msgid "Coming up..."
+msgstr ""
+
+msgctxt "#70756"
+msgid "WATCH NOW"
+msgstr ""
+
+msgctxt "#70757"
+msgid "CANCEL"
+msgstr ""

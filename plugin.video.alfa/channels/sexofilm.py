@@ -91,13 +91,13 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data,'<div class="entry-inner">.*?<source src="([^"]+)"')
+    data = scrapertools.find_single_match(data,'<div class="entry-inner">(.*?)<h4>')
+    url = scrapertools.find_single_match(data,'<source src="([^"]+)"')
     if not url:
-        url = scrapertools.find_single_match(data,'<div class="entry-inner">.*?<source src=\'([^\']+)\'')
-    else:
-        itemlist = servertools.find_video_items(item.clone(url = item.url))
+        url = scrapertools.find_single_match(data,'<source src=\'([^\']+)\'')
+    itemlist = servertools.find_video_items(item.clone(url = item.url))
     if url:
-        itemlist.append(item.clone(action="play", title=url, url=url, contentTitle=item.title))
+        itemlist.append(item.clone(action="play", title= url, url=url, contentTitle = item.title))
     return itemlist
 
 

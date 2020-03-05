@@ -9,6 +9,14 @@ try:
 except ImportError:
     import copy_reg as copyreg
 
+try:
+    from HTMLParser import HTMLParser
+except ImportError:
+    if sys.version_info >= (3, 4):
+        import html
+    else:
+        from html.parser import HTMLParser
+
 from copy import deepcopy
 from time import sleep
 from collections import OrderedDict
@@ -37,7 +45,7 @@ except ImportError:
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '1.2.19'
+__version__ = '1.2.21'
 
 # ------------------------------------------------------------------------------- #
 
@@ -91,6 +99,7 @@ class CloudScraper(Session):
             'allow_brotli',
             True if 'brotli' in sys.modules.keys() else False
         )
+
         self.user_agent = User_Agent(
             allow_brotli=self.allow_brotli,
             browser=kwargs.pop('browser', None)
@@ -107,13 +116,16 @@ class CloudScraper(Session):
             # Set a random User-Agent if no custom User-Agent has been set
             # ------------------------------------------------------------------------------- #
             self.headers = self.user_agent.headers
+            if not self.cipherSuite:
+                self.cipherSuite = self.user_agent.cipherSuite
+
+        if isinstance(self.cipherSuite, list):
+            self.cipherSuite = ':'.join(self.cipherSuite)
 
         self.mount(
             'https://',
             CipherSuiteAdapter(
-                cipherSuite=':'.join(self.user_agent.cipherSuite)
-                if not self.cipherSuite else ':'.join(self.cipherSuite)
-                if isinstance(self.cipherSuite, list) else self.cipherSuite
+                cipherSuite=self.cipherSuite
             )
         )
 
@@ -282,12 +294,29 @@ class CloudScraper(Session):
 
     @staticmethod
     def IUAM_Challenge_Response(body, url, interpreter):
+
+        # ------------------------------------------------------------------------------- #
+
+        def unescape(html_text):
+            if sys.version_info >= (3, 0):
+                if sys.version_info >= (3, 4):
+                    return html.unescape(html_text)
+
+                return HTMLParser().unescape(html_text)
+
+            return HTMLParser().unescape(html_text)
+
+        # ------------------------------------------------------------------------------- #
+
         try:
-            challengeUUID = re.search(
-                r'id="challenge-form" action="(?P<challengeUUID>\S+)"',
-                body, re.M | re.DOTALL
-            ).groupdict().get('challengeUUID', '')
+            challengeUUID = unescape(
+                re.search(
+                    r'id="challenge-form" action="(?P<challengeUUID>\S+)"',
+                    body, re.M | re.DOTALL
+                ).groupdict().get('challengeUUID', '')
+            )
             payload = OrderedDict(re.findall(r'name="(r|jschl_vc|pass)"\svalue="(.*?)"', body))
+
         except AttributeError:
             sys.tracebacklimit = 0
             raise RuntimeError(
@@ -588,16 +617,13 @@ class CloudScraper(Session):
 # ------------------------------------------------------------------------------- #
 
 if ssl.OPENSSL_VERSION_INFO < (1, 1, 1):
-    try:                                            # ALFA: evitar error aleatorio
-        print(
-            "DEPRECATION: The OpenSSL being used by this python install ({}) does not meet the minimum supported "
-            "version (>= OpenSSL 1.1.1) in order to support TLS 1.3 required by Cloudflare, "
-            "You may encounter an unexpected reCaptcha or cloudflare 1020 blocks.".format(
-                ssl.OPENSSL_VERSION
-            )
+    print(
+        "DEPRECATION: The OpenSSL being used by this python install ({}) does not meet the minimum supported "
+        "version (>= OpenSSL 1.1.1) in order to support TLS 1.3 required by Cloudflare, "
+        "You may encounter an unexpected reCaptcha or cloudflare 1020 blocks.".format(
+            ssl.OPENSSL_VERSION
         )
-    except:
-        pass
+    )
 
 # ------------------------------------------------------------------------------- #
 

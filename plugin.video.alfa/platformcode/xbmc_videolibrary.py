@@ -908,8 +908,12 @@ def add_sources(path):
     nodo_video.appendChild(nodo_source)
 
     # Guardamos los cambios
-    filetools.write(SOURCES_PATH,
+    if not PY3:
+        filetools.write(SOURCES_PATH,
                     '\n'.join([x for x in xmldoc.toprettyxml().encode("utf-8").splitlines() if x.strip()]))
+    else:
+        filetools.write(SOURCES_PATH,
+                    b'\n'.join([x for x in xmldoc.toprettyxml().encode("utf-8").splitlines() if x.strip()]), vfs=False)
 
 
 def ask_set_content(flag, silent=False):
