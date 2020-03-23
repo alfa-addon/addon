@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 from channelselector import get_thumb
 from channels import autoplay
 from channels import filtertools
@@ -19,7 +20,7 @@ list_servers = ['rapidvideo', 'streamango', 'fastplay', 'flashx', 'openload', 'v
 
 __channel__='allcalidad'
 
-host = "https://allcalidad.org"
+host = "https://allcalidad.la"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -161,15 +162,20 @@ def peliculas(item):
 def findvideos(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    post_id = scrapertools.find_single_match(data, 'data-post="(\d+)"')
-    json_data = httptools.downloadpage("%s/wp-json/elifilms/movies?id=%s" % (host, post_id)).json
-    for info in json_data["data"]["server_list"]:
-        url = info["link"]
-        itemlist.append(Item(channel=item.channel, url=url, title='%s', action="play", infoLables=item.infoLabels,
-                             language="Latino"))
+
+    patron = '<a href="([^"]+)" class="btn btn-xs btn-info".*?<span>([^<]+)</span>'
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for url, srv in matches:
+
+        new_item= Item(channel=item.channel, url=url, title='%s', action="play", infoLables=item.infoLabels,
+                       language="Latino")
+        if "torrent" in srv.lower():
+            new_item.server = "Torrent"
+        itemlist.append(new_item)
 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    #tmdb.set_infoLabels(itemlist, __modo_grafico__)
+
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
@@ -178,9 +184,10 @@ def findvideos(item):
     autoplay.start(itemlist, item)
 
     if itemlist and item.contentChannel != "videolibrary":
-        itemlist.append(Item(channel = item.channel))
+        itemlist.append(Item(channel=item.channel))
         itemlist.append(item.clone(channel="trailertools", title="Buscar Tráiler", action="buscartrailer", context="",
                                    text_color="magenta"))
+
         # Opción "Añadir esta película a la biblioteca de KODI"
         if config.get_videolibrary_support():
             itemlist.append(Item(channel=item.channel, title="Añadir a la videoteca", text_color="green",

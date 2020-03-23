@@ -459,7 +459,7 @@ def play_from_library(item):
             p_dialog.update(50, '')
 
         it = item
-        if not check_next_ep:
+        if not check_next_ep or not autoplay.is_active(item.contentChannel):
 
             '''# Se filtran los enlaces segun la lista negra
             if config.get_setting('filter_servers', "servers"):
@@ -474,9 +474,9 @@ def play_from_library(item):
                 itemlist = reorder_itemlist(itemlist)
 
 
-                p_dialog.update(100, '')
-                sleep(0.5)
-                p_dialog.close()
+            p_dialog.update(100, '')
+            sleep(0.5)
+            p_dialog.close()
 
 
             if len(itemlist) > 0:
@@ -504,7 +504,14 @@ def play_from_library(item):
                         return
                     else:
                         item = videolibrary.play(itemlist[seleccion])[0]
-                        platformtools.play_video(item)
+                        if item.action == 'play':
+                            platformtools.play_video(item)
+                        else:
+                            channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
+                            if hasattr(channel, item.action):
+                                play_items = getattr(channel, item.action)(item.clone(action=item.action, 
+                                                     channel=item.contentChannel))
+                            return
 
                     from channels import autoplay
                     if (platformtools.is_playing() and item.action) or item.server == 'torrent' or autoplay.is_active(item.contentChannel):
