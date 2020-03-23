@@ -50,7 +50,7 @@ import cloudflare_exceptions  # noqa: E402
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '1.2.24'
+__version__ = '1.2.27'
 
 # ------------------------------------------------------------------------------- #
 
@@ -73,6 +73,10 @@ class CipherSuiteAdapter(HTTPAdapter):
         if not self.ssl_context:
             self.ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
             self.ssl_context.set_ciphers(self.cipherSuite)
+            try:
+                self.ssl_context.set_alpn_protocols(['http/1.1'])
+            except:
+                pass
             self.ssl_context.options |= (ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1)
 
         super(CipherSuiteAdapter, self).__init__(**kwargs)
@@ -610,13 +614,16 @@ class CloudScraper(Session):
 # ------------------------------------------------------------------------------- #
 
 if ssl.OPENSSL_VERSION_INFO < (1, 1, 1):
-    print(
-        "DEPRECATION: The OpenSSL being used by this python install ({}) does not meet the minimum supported "
-        "version (>= OpenSSL 1.1.1) in order to support TLS 1.3 required by Cloudflare, "
-        "You may encounter an unexpected reCaptcha or cloudflare 1020 blocks.".format(
-            ssl.OPENSSL_VERSION
+    try:
+        print(
+            "DEPRECATION: The OpenSSL being used by this python install ({}) does not meet the minimum supported "
+            "version (>= OpenSSL 1.1.1) in order to support TLS 1.3 required by Cloudflare, "
+            "You may encounter an unexpected reCaptcha or cloudflare 1020 blocks.".format(
+                ssl.OPENSSL_VERSION
+            )
         )
-    )
+    except:
+        pass
 
 # ------------------------------------------------------------------------------- #
 
