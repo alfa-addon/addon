@@ -168,6 +168,10 @@ def seasons(item):
             itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.tile,
                 url=item.url, plot=item.plot, thumbnail=item.thumbnail,
                 action="episodesxseason", context=item.context, infoLabels=infoLabels))
+    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.extra:
+        itemlist.append(Item(channel=item.channel, url=item.url, action="add_serie_to_library",
+                        extra="episodes", contentSerieName=item.contentSerieName,
+                        title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]'))
     return itemlist
 
 def episodesxseason(item):
@@ -194,11 +198,6 @@ def episodesxseason(item):
             url=host + scrapedurl, plot=item.plot, thumbnail=item.thumbnail,
             action="findvideos", context=item.context, infoLabels=infoLabels))
     tmdb.set_infoLabels_itemlist(itemlist, True)
-
-    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.extra:
-        itemlist.append(Item(channel=item.channel, url=item.url, action="add_serie_to_library",
-                        extra="episodes", contentSerieName=item.contentSerieName,
-                        title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]'))
     return itemlist
 
 def episodes(item):
@@ -220,8 +219,6 @@ def findvideos(item):
     matches = scrapertools.find_multiple_matches(url_videos, '"(.+?)"')
     for url in matches:
         url=url.replace('\/', '/')
-        if "goo" in url:
-            url = googl(url)
         itemlist.append(item.clone(url=url, action="play", title= "%s"))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     
@@ -233,14 +230,3 @@ def findvideos(item):
             action="add_pelicula_to_library"))
 
     return itemlist
-
-def googl(url):
-    logger.info()
-    a=url.split("/")
-    link=a[3]
-    link="http://www.trueurl.net/?q=http%3A%2F%2Fgoo.gl%2F"+link+"&lucky=on&Uncloak=Find+True+URL"
-    data_other = httptools.downloadpage(link).data
-    data_other = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data_other)
-    patron='<td class="withbg">Destination URL<\/td><td><A title="(.+?)"'
-    trueurl = scrapertools.find_single_match(data_other, patron)
-    return trueurl
