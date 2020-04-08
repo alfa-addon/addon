@@ -3,12 +3,17 @@
 # XBMC Library Tools
 # ------------------------------------------------------------
 
-from future import standard_library
-standard_library.install_aliases()
+#from future import standard_library
+#standard_library.install_aliases()
 #from builtins import str
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+    
+if PY3:
+    import urllib.request as urllib2                                # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urllib2                                                  # Usamos el nativo de PY2 que es más rápido
     
 import os
 import threading
@@ -430,7 +435,6 @@ def get_data(payload):
     @param payload: data
     :return:
     """
-    import urllib.request, urllib.error
     logger.info("payload: %s" % payload)
     # Required header for XBMC JSON-RPC calls, otherwise you'll get a 415 HTTP response code - Unsupported media type
     headers = {'content-type': 'application/json'}
@@ -444,8 +448,8 @@ def get_data(payload):
 
             xbmc_json_rpc_url = "http://" + config.get_setting("xbmc_host", "videolibrary") + ":" + str(
                 xbmc_port) + "/jsonrpc"
-            req = urllib.request.Request(xbmc_json_rpc_url, data=jsontools.dump(payload), headers=headers)
-            f = urllib.request.urlopen(req)
+            req = urllib2.Request(xbmc_json_rpc_url, data=jsontools.dump(payload), headers=headers)
+            f = urllib2.urlopen(req)
             response = f.read()
             f.close()
 
@@ -465,7 +469,7 @@ def get_data(payload):
             logger.error("error en xbmc.executeJSONRPC: %s" % message)
             data = ["error"]
 
-    logger.info("data: %s" % data)
+    #logger.info("data: %s" % data)
 
     return data
 
@@ -488,7 +492,9 @@ def update(folder_content=config.get_setting("folder_tvshows"), folder=""):
     }
 
     if folder:
-        folder = str(folder)
+        if folder == '_scan_series':
+            folder = ''
+        folder = filetools.encode(folder)
         videolibrarypath = config.get_videolibrary_config_path()
 
         if folder.endswith('/') or folder.endswith('\\'):
@@ -501,8 +507,8 @@ def update(folder_content=config.get_setting("folder_tvshows"), folder=""):
                 videolibrarypath = videolibrarypath[:-1]
             update_path = videolibrarypath + "/" + folder_content + "/" + folder + "/"
         else:
-            #update_path = filetools.join(videolibrarypath, folder_content, folder) + "/"   # Problemas de encode en "folder"
-            update_path = filetools.join(videolibrarypath, folder_content, ' ').rstrip()
+            update_path = filetools.join(videolibrarypath, folder_content, folder, ' ').rstrip()        #Probelmas de encode en folder
+            #update_path = filetools.join(videolibrarypath, folder_content, ' ').rstrip()
 
         if not scrapertools.find_single_match(update_path, '(^\w+:\/\/)'):
             payload["params"] = {"directory": update_path}
