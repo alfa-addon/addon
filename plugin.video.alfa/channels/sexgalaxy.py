@@ -32,9 +32,10 @@ def mainlist(item):
     autoplay.init(item.channel, list_servers, list_quality)
 
     itemlist.append(Item(channel=item.channel, title="Peliculas", action="lista", url=host + "/full-movies/"))
-    itemlist.append(Item(channel=item.channel, title="Videos", action="lista", url=host + "/new-releases/"))
-    itemlist.append(Item(channel=item.channel, title="Canales", action="canales", url=host))
-    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host))
+    itemlist.append(Item(channel=item.channel, title="Peliculas JAV", action="lista", url=host + "/jav-movies/"))
+    itemlist.append(Item(channel=item.channel, title="Videos", action="lista", url=host + "/videos/"))
+    itemlist.append(Item(channel=item.channel, title="Canales", action="categorias", url=host + "/videos/"))
+    itemlist.append(Item(channel=item.channel, title="Categorias", action="categorias", url=host + "/videos/"))
     itemlist.append(Item(channel=item.channel, title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
@@ -45,7 +46,7 @@ def mainlist(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url =  "%s/?s=%s" % (host, texto)
+    item.url =  "%s/?s=%s&submit=Search" % (host, texto)
     try:
         return lista(item)
     except:
@@ -55,29 +56,15 @@ def search(item, texto):
         return []
 
 
-def canales(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(host).data
-    data = scrapertools.find_single_match(data, '>Popular Paysites<(.*?)</p>')
-    patron = '<a href="([^"]+)">([^<]+)<'
-    matches = re.compile(patron, re.DOTALL).findall(data)
-    for scrapedurl, scrapedtitle in matches:
-        scrapedplot = ""
-        scrapedthumbnail = ""
-        scrapedtitle = str(scrapedtitle)
-        thumbnail = urlparse.urljoin(item.url, scrapedthumbnail)
-        itemlist.append(Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                             thumbnail=scrapedthumbnail, plot=scrapedplot))
-    return itemlist
-
-
 def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, '>Popular Categories<(.*?)>Popular Paysites<')
-    patron = '<a href="([^"]+)">([^<]+)</a>'
+    if "Categorias" in item.title:
+        data = scrapertools.find_single_match(data, '>Popular Categories<(.*?)>Popular Paysites<')
+    else:
+        data = scrapertools.find_single_match(data, '>Popular Paysites<(.*?)</p>')
+    patron = '<a href="([^"]+)">([^<]+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedtitle in matches:
         scrapedplot = ""
@@ -93,6 +80,7 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url, timeout=3).data
+    logger.debug(data)
     patron = '<article id="post-.*?'
     patron += '<a href="([^"]+)" rel="bookmark">([^<]+)<.*?'
     patron += '<img src="([^"]+)"'
@@ -102,8 +90,6 @@ def lista(item):
         if not "manyvids" in scrapedtitle:
             itemlist.append(Item(channel=item.channel, action="findvideos", title=scrapedtitle, contentTitle=scrapedtitle,
                              fanart=scrapedthumbnail, url=scrapedurl, thumbnail=scrapedthumbnail, plot=scrapedplot))
-# class="page-numbers current">1</span><a class="page-numbers" href="https://sexgalaxy.net/full-movies/page/2/">2</a>
-                             # <a class="next page-numbers" href="https://sexgalaxy.net/full-movies/page/2/">Older posts 
     next_page = scrapertools.find_single_match(data, '"page-numbers current">.*?href="([^"]+)">')
     if next_page != "":
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page))
