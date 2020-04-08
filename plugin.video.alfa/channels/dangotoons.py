@@ -170,7 +170,7 @@ def seasons(item):
                 action="episodesxseason", context=item.context, infoLabels=infoLabels))
     if config.get_videolibrary_support() and len(itemlist) > 0 and not item.extra:
         itemlist.append(Item(channel=item.channel, url=item.url, action="add_serie_to_library",
-                        extra="episodes", contentSerieName=item.contentSerieName,
+                        extra="episodios", contentSerieName=item.contentSerieName,
                         title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]'))
     return itemlist
 
@@ -200,7 +200,7 @@ def episodesxseason(item):
     tmdb.set_infoLabels_itemlist(itemlist, True)
     return itemlist
 
-def episodes(item):
+def episodios(item):
     logger.info()
     itemlist = list()
     templist = seasons(item)
