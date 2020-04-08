@@ -80,7 +80,6 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url, timeout=3).data
-    logger.debug(data)
     patron = '<article id="post-.*?'
     patron += '<a href="([^"]+)" rel="bookmark">([^<]+)<.*?'
     patron += '<img src="([^"]+)"'
@@ -103,7 +102,6 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data)
     links_data = scrapertools.find_single_match(data, '<span id="more-(.*?)</p>')
-    logger.debug(links_data)
     patron = '<a href="([^"]+)"[^<]+>(?:<strong> |)Streaming'
     matches = re.compile(patron, re.DOTALL).findall(links_data)
     for url in matches:

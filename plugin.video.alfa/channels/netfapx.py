@@ -121,7 +121,6 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url, timeout=15).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    logger.debug(data)
     url = scrapertools.find_single_match(data, 'source:"([^"]+)"')
     itemlist.append(item.clone(action="play", title = url, url=url))
     return itemlist

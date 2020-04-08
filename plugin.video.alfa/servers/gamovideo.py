@@ -64,7 +64,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         while n < 3 and not data:
             
             data1 = alfaresolver.get_data(page_url, False)
-            logger.debug(data1)
             check_c, data = get_gcookie(data1, True)
             if check_c == False:
                 logger.error("Error get gcookie")
@@ -96,7 +95,6 @@ def get_gcookie(data, realcheck=False):
     if packer != "" and realcheck:
         try:
             data = jsunpack.unpack(packer)
-            logger.debug(data)
             return True, data
         except:
             pass

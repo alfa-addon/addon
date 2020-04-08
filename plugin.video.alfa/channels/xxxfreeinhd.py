@@ -140,6 +140,5 @@ def decode_url(txt):
         n -= 1
     url = scrapertools.find_single_match(b64_url, '<iframe src="([^"]+)"')
     url = httptools.downloadpage(url).url
-    logger.debug (url)
     return url
 

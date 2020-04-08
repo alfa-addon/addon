@@ -50,7 +50,6 @@ def categorias(item):
     if PY3 and isinstance(data, bytes):
         data = data.decode('utf-8')
     data = scrapertools.find_single_match(data, '<div class="menu-categories-tab"(.*?)<div class="menu-categories-tab"')
-    logger.debug(data)
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|\\", "", data)
     patron = '<a href="([^"]+)" class="[^"]+">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)

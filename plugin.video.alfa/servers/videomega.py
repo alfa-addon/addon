@@ -14,7 +14,6 @@ def get_video_url(page_url, video_password):
     url= "https://www.videomega.co/streamurl/%s.css/" % n
     post="myreason=%s&saveme=/videojs/crexcode/video-js.min.css" %m
     url = httptools.downloadpage(url, post=post).data
-    logger.debug(url)
     url = url.replace(" ", "")
     data=httptools.downloadpage(url).data
     url = scrapertools.find_single_match(data, '<source src="([^"]+)"')
