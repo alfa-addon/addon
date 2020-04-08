@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------
-# Conector javwhores By Alfa development Group
+# Conector vipporns By Alfa development Group
 # --------------------------------------------------------
 import re
+
 from core import httptools
 from core import scrapertools
 from platformcode import logger
@@ -17,9 +18,16 @@ def test_video_exists(page_url):
        "Not Found" in response.data \
        or "File was deleted" in response.data \
        or "is no longer available" in response.data:
-        return False, "[javwhores] El fichero no existe o ha sido borrado"
+        return False, "[ktplayer] El fichero no existe o ha sido borrado"
+
+    global video_url, license_code
+    # video_url = scrapertools.find_single_match(response.data, "video_url: '([^']+)'")
+    license_code = scrapertools.find_single_match(response.data, "license_code: '([^']+)'")
+
     return True, ""
 
+        # function/0/https://www.vipporns.com/get_file/4/d56c8b4bdbca83143a7b27dca85756c12296f1862e/6000/6090/6090.mp4/?embed=true
+# function/0/https://www.submityourflicks.com/get_file/1/809ed209b418a110e4805e284243d4ee4589f3307e/16000/16269/16269.mp4/
 
 def get_video_url(page_url, premium=False, user="", password="", video_password=""):
     logger.info()
@@ -33,6 +41,9 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
         patron += 'postfix:\s*\'([^\']+)\''
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url,quality in matches:
-        itemlist.append(['%s' %quality, url])
-    
+        if not "?login" in url:
+            if "function/" in url:
+                url = decode(url, license_code)
+            itemlist.append(['%s' %quality, url])
     return itemlist
+
