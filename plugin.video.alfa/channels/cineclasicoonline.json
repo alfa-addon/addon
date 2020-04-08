@@ -1,14 +1,15 @@
 {
-  "id": "seodiv",
-  "name": "Seodiv",
+  "id": "cineclasicoonline",
+  "name": "CineClasicoOnline",
+  "force_unify": true,
+  "thumbnail":"https://i.postimg.cc/CMNTMhv1/CCONLINE.png",
+  "banner":"",
   "active": true,
   "adult": false,
-  "language": ["lat"],
-  "thumbnail": "https://seodiv.com/templates/Ariana/images/logo.png",
-  "banner": "",
+  "language": ["cast"],
   "categories": [
-    "tvshow",
-    "anime"
+    "movie",
+    "vos"
   ],
   "settings": [
     {
@@ -20,8 +21,10 @@
       "visible": true,
       "lvalues": [
         "No filtrar",
-        "LAT"
+        "CAST",
+        "VOSE"
       ]
     }
   ]
+
 }
