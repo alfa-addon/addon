@@ -18,8 +18,7 @@ from lib import gktools
 
 IDIOMAS = {'latino': 'Latino'}
 list_language = IDIOMAS.values()
-list_servers = ['openload'
-                ]
+list_servers = []
 list_quality = ['default']
 
 
@@ -53,7 +52,7 @@ def mainlist(item):
 
     itemlist.append(
         Item(channel=item.channel, action="letters", title="Listado alfabético",
-            url=host+"/lista.php?or=abc", thumbnail=get_thumb("all", auto=True), page=0,
+            url=host+"/lista.php?or=abc", thumbnail=get_thumb("alphabet", auto=True), page=0,
             plot="Tus series animadas de la infancia"))
 
     itemlist.append(
