@@ -111,7 +111,14 @@ def init():
         
         #Si se han quedado "colgadas" descargas con archivos .RAR, se intenta identificarlos y reactivar el UnRar
         reactivate_unrar(init=True, mute=True)
-
+        
+        #Inicia un rastreo de vídeos decargados desde .torrent: marca los VISTOS y elimina los controles de los BORRADOS
+        from servers import torrent
+        try:
+            threading.Thread(target=torrent.mark_torrent_as_watched).start()    # Creamos un Thread independiente, hasta el fin de Kodi
+            time.sleep(2)                                                       # Dejamos terminar la inicialización...
+        except:                                                                 # Si hay problemas de threading, nos vamos
+            logger.error(traceback.format_exc())
     except:
         logger.error(traceback.format_exc())
 
@@ -390,37 +397,25 @@ def verify_Kodi_video_DB():
 
 def reactivate_unrar(init=False, mute=True):
     logger.info()
-
-    if not mute:
-        platformtools.dialog_notification("Iniciando recuperación de", "UnRARs interrumpidos")
-    torrent_options = []
-    #torrent_options.append(["Cliente interno BT"])
-    #torrent_options.append(["Cliente interno MCT"])
-    torrent_options.extend(platformtools.torrent_client_installed(show_tuple=False))
-    download_paths = []
-    for torr_client in torrent_options:
-        # Localizamos el path de descarga del .torrent
-        torr_client = torr_client.replace('Plugin externo: ', '').replace('Cliente interno ', '')
-        save_path_videos = ''
-        __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)      # Apunta settings del cliente torrent
-        if torr_client == 'torrenter':
-            save_path_videos = str(xbmc.translatePath(__settings__.getSetting('storage')))
-            if not save_path_videos:
-                save_path_videos = str(filetools.join(xbmc.translatePath("special://home/"), \
-                                       "cache", "xbmcup", "plugin.video.torrenter", "Torrenter"))
-        else:
-            save_path_videos = str(xbmc.translatePath(__settings__.getSetting('download_path')))
-            if __settings__.getSetting('download_storage') == '1':              # Descarga en memoria?
-                continue                                                        # pasamos
-        if not save_path_videos:                                                # No hay path de descarga?
-            continue                                                            # pasamos
-
-        for t_client, download_path in download_paths:
-            if save_path_videos == download_path:
-                break
-        else:
-            download_paths.append((torr_client, save_path_videos))              # Agregamos el path para este Cliente
+    from servers import torrent
     
+    torrent_paths = torrent.torrent_dirs()
+    download_paths = []
+    
+    for torr_client, save_path_videos in list(torrent_paths.items()):
+        if 'BT' not in torr_client and 'MCT' not in torr_client:
+            torr_client = torr_client.lower()
+        if '_' not in torr_client and '_web' not in torr_client and save_path_videos \
+                            and save_path_videos not in str(download_paths):
+            download_paths.append((torr_client, save_path_videos))              # Agregamos el path para este Cliente
+
+            # Borramos archivos de control "zombies"
+            rar_control = {}
+            if filetools.exists(filetools.join(save_path_videos, '_rar_control.json')):
+                rar_control = jsontools.load(filetools.read(filetools.join(save_path_videos, '_rar_control.json')))
+            if rar_control and len(rar_control['rar_files']) == 1:
+                ret = filetools.remove(filetools.join(save_path_videos, '_rar_control.json'), silent=True)
+
     search_for_unrar_in_error(download_paths, init=init)    
 
 
@@ -445,6 +440,7 @@ def search_for_unrar_in_error(download_paths, init=False):
             if 'UnRARing' in rar_control['status'] or 'ERROR' in rar_control['status']:
                 rar_control['status'] = 'RECOVERY: ' + rar_control['status']
             rar_control['download_path'] = folder
+            rar_control['torr_client'] = torrent_client
             if 'ERROR' in rar_control['status'] or 'UnRARing' in rar_control['status'] \
                         or 'RECOVERY' in rar_control['status']:
                 rar_control['error'] += 1
@@ -497,3 +493,4 @@ def call_unrar(rar_control):
     
     return platformtools.rar_control_mng(item, xlistitem, mediaurl, rar_files, \
                     torr_client, password, size, rar_control)
+

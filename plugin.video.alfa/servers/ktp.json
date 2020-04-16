@@ -4,14 +4,26 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:datoporn.com|dato.porn|datoporn.co)/(?:embed-|)([A-z0-9]+)",
-        "url": "http://dato.porn/embed-\\1.html"
+        "pattern": "(https://(?:www.|)(?:0dayporn|submityourflicks|3movs).com/video(?:s|)/[0-9]+/[A-z0-9-]+/)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://www.(?:javbangers|fapnado|xozilla|camwhoresbay|pornrewind).com/(?:video|videos)/[0-9]+/[A-z0-9-]+(?:/|))",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://www.analdin.com/es/videos/[0-9]+/[A-z0-9-]+/)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://severeporn.com/embed/\\w+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "datoporn",
-  "name": "datoporn",
+  "id": "ktp",
+  "name": "ktp",
   "settings": [
     {
       "default": false,
@@ -38,5 +50,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "http://i.imgur.com/tBSWudd.png?1"
+  "thumbnail": ""
 }

@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,urllib2,urllib,re
-import os, sys
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+
+import re
+
 from core import scrapertools
 from core import servertools
 from core.item import Item
@@ -17,14 +26,14 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Mas visto" , action="lista", url=host + "/most-viewed/all-time/1"))
     itemlist.append( Item(channel=item.channel, title="Pornstar" , action="categorias", url=host + "/models/top-rated/"))
     itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    # itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "%20")
-    item.url = host + "/search/%s" % texto
+    item.url = "%s/search/%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -71,11 +80,10 @@ def lista(item):
         scrapedplot = ""
         title = "[COLOR yellow]%s[/COLOR] %s" %(scrapedtime,scrapedtitle)
         scrapedurl = scrapedurl.replace("/xxx.php?tube=", "")
-        scrapedurl = host + scrapedurl
+        scrapedurl = "%s%s" % (host, scrapedurl)
         itemlist.append( Item(channel=item.channel, action="play", title=title, contentTitle=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
     last_page= scrapertools.find_single_match(data,'<a href=".*?/latest/(\d+)"><div style="display:inline">Last<')
-    logger.debug(last_page)
     page = scrapertools.find_single_match(item.url, "(.*?)/\d+")
     current_page = scrapertools.find_single_match(item.url, ".*?/(\d+)")
     if last_page:
@@ -85,7 +93,8 @@ def lista(item):
     if current_page < last_page:
         current_page = current_page + 1
         next_page = "%s/%s" %(page,current_page)
-        itemlist.append(Item(channel=item.channel, action="lista", title=next_page, text_color="blue",
+        next_page = urlparse.urljoin(item.url,next_page)
+        itemlist.append(Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue",
                               url=next_page, thumbnail=""))
     return itemlist
 

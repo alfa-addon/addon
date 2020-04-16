@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-
+# ------------------------------------------------------------
 import re
 
 from core import httptools
 from core.item import Item
 from platformcode import logger
-from urlparse import urljoin
 from core import servertools
 
-
+# URLJOIN             URL de BAJA
 HOST="http://yespornplease.com"
+
 
 def mainlist(item):
     logger.info()
@@ -22,7 +22,7 @@ def mainlist(item):
 
 def search(item, texto):
     logger.info("texto = %s" %(texto))
-    item.url = urljoin(HOST, "search?q=" + texto)
+    item.url = urljoin(HOST, "search?q=%s" % texto)
     try:
         return links(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -51,11 +51,11 @@ def get_page(url):
 
 
 def get_page_url(url, page):
-    logger.debug("URL: %s to page %d" % (url, page))
+    # logger.debug("URL: %s to page %d" % (url, page))
     resultURL = re.sub("([&\?]p=)(?:\d+)", "\g<1>%d" % page, url)
     if resultURL == url:
         resultURL += ("&" if "?" in url else "?") + "p=%d" % (page)
-    logger.debug("Result: %s" % (resultURL))
+    # logger.debug("Result: %s" % (resultURL))
     return resultURL
 
 

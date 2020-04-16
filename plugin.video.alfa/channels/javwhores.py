@@ -83,13 +83,13 @@ def lista(item):
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
                               plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
-    if "#videos" in next_page:
-        next_page = scrapertools.find_single_match(data, 'data-parameters="sort_by:post_date;from:(\d+)">Next')
-        next = scrapertools.find_single_match(item.url, '(.*?/)\d+')
-        next_page = next + "%s/" % next_page
+    if "#" in next_page:
+        next_page = scrapertools.find_single_match(data, 'data-parameters="([^"]+)">Next')
+        next_page = next_page.replace(":", "=").replace(";", "&").replace("+from_albums", "")
+        next_page = "?%s" % next_page
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title= "Página Siguiente >>", text_color="blue", url=next_page ) )
+        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page ) )
     return itemlist
 
 
@@ -97,15 +97,9 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    if "video_url_text" in data:
-        patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
-        patron += '(?:video_url_text|video_alt_url[0-9]*_text):\s*\'([^\']+)\''
-    else:
-        patron = '(?:video_url|video_alt_url[0-9]*):\s*\'([^\']+)\'.*?'
-        patron += 'postfix:\s*\'([^\']+)\''
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for url,quality in matches:
-        itemlist.append(['%s' %quality, url])
+    if "kt_player" in data:
+        url = item.url
+    itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
-
 

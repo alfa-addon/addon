@@ -46,13 +46,14 @@ list_servers = ['torrent']
 #host = 'https://grantorrent.io/'
 #host = 'https://grantorrent.la/'
 #host = 'https://grantorrent.li/'
-host = 'https://grantorrent.cc/'
+#host = 'https://grantorrent.cc/'
+host = 'https://grantorrent.eu/'
 channel = "grantorrent"
-domain = 'grantorrent.cc'
-sufix = '.cc'
+domain = 'grantorrent.eu'
+sufix = '.eu'
 #domain_files = 'files.grantorrent.one'
 domain_files = domain
-sufix_alt = '.cc'
+sufix_alt = '.eu'
 series_sufix = 'series/'
 
 dict_url_seasons = dict()
@@ -547,7 +548,8 @@ def findvideos(item):
         data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     data = scrapertools.find_single_match(data, 'div id="Tokyo" [^>]+>(.*?)</div>')     #Seleccionamos la zona de links
     
-    patron = '\/icono_.*?png"\s*(?:title|alt)="(?P<lang>[^"]+)?"[^>]+><\/td><td>'
+    #patron = '\/icono_.*?png"\s*(?:title|alt)="(?P<lang>[^"]+)?"[^>]+><\/td><td>'
+    patron = '\/icono_.*?png"\s*(?:title|alt)="(?P<lang>[^"]+)?"[^>]+>.*?<\/td><td>'
     patron += '(?P<temp_epi>.*?)?<?\/td>.*?<td>(?P<quality>.*?)?<\/td><td><a\s*'
     #patron += 'class="link"\s*href="(?P<url>[^"]+)?"'
     patron += 'class="link"\s*onclick="'

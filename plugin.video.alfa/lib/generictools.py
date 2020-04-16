@@ -8,16 +8,12 @@
 # ------------------------------------------------------------
 
 from __future__ import division
-#from builtins import next
 from builtins import zip
-#from builtins import str
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
     import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
 else:
     import urlparse                                             # Usamos el nativo de PY2 que es más rápido
@@ -30,6 +26,7 @@ import os
 import datetime
 import time
 import traceback
+import inspect
 import json
 
 from channelselector import get_thumb
@@ -48,6 +45,94 @@ intervenido_judicial = 'Dominio intervenido por la Autoridad Judicial'
 intervenido_policia = 'Judicial_Policia_Nacional'
 intervenido_guardia = 'Judicial_Guardia_Civil'
 intervenido_sucuri = 'Access Denied - Sucuri Website Firewall'
+
+
+
+def downloadpage(url, post=None, headers=None, random_headers=False, replace_headers=False, 
+                 only_headers=False, referer=None, follow_redirects=True, timeout=None, 
+                 proxy=False, proxy_web=False, proxy_addr_forced={}, forced_proxy=None, 
+                 proxy_retries=1, CF=False, file=None, filename=None, ignore_response_code=True, 
+                 alfa_s=False, decode_code=None, s2=None, patron=None, item={}, itemlist=[]):
+    
+    # Función "wraper" que puede ser llamada desde los canales para descargar páginas de forma unificada y evitar
+    # tener que hacer todas las comprobaciones dentro del canal, lo que dificulta su mantenimiento y mejora.
+    # La llamada tiene todos los parámetros típicos que puede usar un canal al descargar.
+    
+    if not PY3:
+        funcion = inspect.stack()[1][3]                                         # Identifica el nombre de la función que llama
+    else:
+        funcion = inspect.stack()[1].function
+    ERROR_01 = '%s: La Web no responde o ha cambiado de URL: ' % funcion.upper()    # Prepara los literales de los errores posibles
+    ERROR_02 = '%s: Ha cambiado la estructura de la Web. Reportar el error con el log: ' % funcion.upper()
+    if s2 is None and funcion == 'findvideos':                                  # Si es "findvideos" no sustituye los \s{2,}
+        s2 = False                                                              # para no corromper las contraseñas de los .RAR
+    elif s2 is None:
+        s2 = True
+    if referer is not None:
+        if headers is None:
+            headers = {'Referer':referer}
+        else:
+            headers['Referer'] = referer
+    
+    try:
+        response = httptools.downloadpage(url, post=post, headers=headers, random_headers=random_headers, 
+                                      replace_headers=replace_headers, only_headers=only_headers, 
+                                      follow_redirects=follow_redirects, 
+                                      timeout=timeout, proxy=proxy, proxy_web=proxy_web, 
+                                      proxy_addr_forced=proxy_addr_forced, forced_proxy=forced_proxy, 
+                                      proxy_retries=proxy_retries, CF=CF, file=file, filename=filename, 
+                                      ignore_response_code=ignore_response_code, alfa_s=alfa_s)
+        data = ''
+        success = False
+        code = 999
+        if not item: item = Item()
+
+        if response:
+            data = response.data
+            success = response.sucess
+            code = response.code
+            if success and only_headers:
+                data = response.headers
+                return (data, success, code, item, itemlist)
+            if success and 'Content-Type' in response.headers and not 'text/html' \
+                                in response.headers['Content-Type']:
+                return (data, success, code, item, itemlist)
+
+        if data:
+            data = re.sub(r"\n|\r|\t|(<!--.*?-->)", "", data).replace("'", '"') # Reemplaza caracteres innecesarios
+            if s2:
+                data = re.sub(r"\s{2,}", "", data)                              # Reemplaza blancos innecesarios, salvo en "findvideos"
+            if decode_code is not None:                                         # Si se especifica, se decodifica con el código dado
+                if not PY3 and isinstance(data, str):
+                    data = unicode(data, decode_code, errors="replace").encode("utf8")
+                elif PY3 and isinstance(data, bytes):
+                    data = data.decode(decode_code)
+            if patron and not scrapertools.find_single_match(data, patron):     # Se comprueba que el patrón funciona
+                code = 999                                                      # Si no funciona, se pasa error
+                logger.error('ERROR 02: ' + ERROR_02 + item.url + " CODE: " + str(code) 
+                             + " PATRON: " + patron + " DATA: " + data)
+                itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
+                             '[COLOR yellow]' + str(code) + '[/COLOR]: ERROR 02: ' + ERROR_02, 
+                             folder=False))
+        else:                                                                   # Si no hay datos, se verifica la razón
+            item = generictools.web_intervenida(item, data)                     #Verificamos que no haya sido clausurada
+            if item.intervencion:                                               #Sí ha sido clausurada judicialmente
+                for clone_inter, autoridad in item.intervencion:
+                    thumb_intervenido = get_thumb(autoridad)
+                    itemlist.append(item.clone(action='', title="[COLOR yellow]" + 
+                            clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + 
+                            '. Reportar el problema en el foro', thumbnail=thumb_intervenido, 
+                            folder=False))
+            else:
+                logger.error('ERROR 01: ' + ERROR_01 + item.url + " CODE: " + str(code) 
+                             + " PATRON: " + patron + " DATA: " + data)
+                itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
+                             '[COLOR yellow]' + str(code) + '[/COLOR]: ERROR 01: ' + ERROR_01, 
+                             folder=False))
+    except:
+        logger.error(traceback.format_exc(1))
+    
+    return (data, success, code, item, itemlist)
 
 
 def update_title(item):
@@ -800,6 +885,7 @@ def post_tmdb_episodios(item, itemlist):
         item_local.unify = 'xyz'
         del item_local.unify
         item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
+        item_local.url_tvshow = item.url                                        # Salvamos la url de la serie para descargas
         
         #logger.debug(item_local)
 
@@ -810,11 +896,13 @@ def post_tmdb_episodios(item, itemlist):
             #    item_local.channel = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
             #item_local.category = scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
         #Restauramos valores para cada Episodio si ha habido fail-over de un clone de NewPct1
-        if item_local.channel_alt or item_local.channel_redir:
+        if (item_local.channel_alt or item_local.channel_redir) and not item.downloadFilename:
             item_local.channel = item_local.channel_redir.lower() or item_local.channel_alt.lower()
             item_local.category = item_local.channel_redir.capitalize() or item_local.channel_alt.capitalize()
             if item_local.channel_alt: del item_local.channel_alt
             #if item_local.channel_redir: del item_local.channel_redir
+        if (item_local.channel_alt or item_local.channel_redir) and item.downloadFilename:
+            item_local.channel_alt = channel_alt
         if item_local.url_alt:
             host_act = scrapertools.find_single_match(item_local.url, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
             host_org = scrapertools.find_single_match(item_local.url_alt, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
@@ -941,7 +1029,7 @@ def post_tmdb_episodios(item, itemlist):
     #Terminado el repaso de cada episodio, cerramos con el pié de página
     #En primer lugar actualizamos todos los episodios con su núm máximo de episodios por temporada
     try:
-        if not num_episodios_flag:  #Si el num de episodios no está informado, acualizamos episodios de toda la serie
+        if not num_episodios_flag:              #Si el num de episodios no está informado, acualizamos episodios de toda la serie
             for item_local in itemlist:
                 item_local.infoLabels['temporada_num_episodios'] = int(num_episodios_lista[item_local.contentSeason])
     except:
@@ -949,7 +1037,10 @@ def post_tmdb_episodios(item, itemlist):
         logger.error(traceback.format_exc())
     
     #Permitimos la actualización de los títulos, bien para uso inmediato, o para añadir a la videoteca
-    itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", action="actualizar_titulos", tmdb_stat=False, from_action=item.action, from_title_tmdb=item.title, from_update=True))
+    if not item.downloadFilename:                           #... si no viene de Descargas
+        itemlist.append(item.clone(title="** [COLOR yelow]Actualizar Títulos - vista previa videoteca[/COLOR] **", 
+                    action="actualizar_titulos", tmdb_stat=False, from_action=item.action, contentType='episode', 
+                    from_title_tmdb=item.title, from_update=True))
     
     #Borro num. Temporada si no viene de menú de Añadir a Videoteca y no está actualizando la Videoteca
     if not item.library_playcounts:                         #si no está actualizando la Videoteca
@@ -958,7 +1049,7 @@ def post_tmdb_episodios(item, itemlist):
                 del item.infoLabels['season']               #La decisión de ponerlo o no se toma en la zona de menús
 
     #Ponemos el título de Añadir a la Videoteca, con el núm. de episodios de la última temporada y el estado de la Serie
-    if config.get_videolibrary_support() and len(itemlist) > 1:
+    if config.get_videolibrary_support() and len(itemlist) > 1 and not item.downloadFilename:
         item_local = itemlist[-2]
         title = ''
         
@@ -987,7 +1078,7 @@ def post_tmdb_episodios(item, itemlist):
                     logger.error("ERROR 08: EPISODIOS: No se ha podido actualizar la URL a la nueva Temporada")
                     logger.error(traceback.format_exc())
                 itemlist.append(item.clone(title="[COLOR yellow]Añadir esta Serie a Videoteca-[/COLOR]" + \
-                            title, action="add_serie_to_library", extra="episodios"))
+                            title, action="add_serie_to_library", extra="episodios", contentType='episode'))
                 
             elif modo_serie_temp == 1:      #si es Serie damos la opción de guardar la última temporada o la serie completa
                 itemlist.append(item.clone(title="[COLOR yellow]Añadir última Temp. a Videoteca-[/COLOR]" + \
@@ -1007,21 +1098,24 @@ def post_tmdb_episodios(item, itemlist):
 
         else:                               #Es un canal estándar, sólo una linea de Añadir a Videoteca
             itemlist.append(item.clone(title="[COLOR yellow]Añadir esta serie a videoteca-[/COLOR]" + \
-                            title, action="add_serie_to_library", extra="episodios", add_menu=True))
+                            title, action="add_serie_to_library", extra="episodios", add_menu=True, 
+                            contentType='episode'))
         
     #Si intervención judicial, alerto!!!
-    if item.intervencion:
+    if item.intervencion and not item.downloadFilename:
         for clone_inter, autoridad in item.intervencion:
             thumb_intervenido = get_thumb(autoridad)
             itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + clone_inter.capitalize() \
                             + ': [/COLOR]' + intervenido_judicial + '. Reportar el problema en el foro', \
-                            thumbnail=thumb_intervenido))
+                            thumbnail=thumb_intervenido, contentType='episode'))
         del item.intervencion
     
     #Si ha habido fail-over, lo comento
-    if channel_alt:
-        itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + channel_alt.capitalize() + '[/COLOR] [ALT ] en uso'))
-        itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + item.category.capitalize() + '[/COLOR] inaccesible'))
+    if channel_alt and not item.downloadFilename:
+        itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + channel_alt.capitalize() 
+                        + '[/COLOR] [ALT ] en uso', contentType='episode'))
+        itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + item.category.capitalize() 
+                        + '[/COLOR] inaccesible', contentType='episode'))
     
     if len(itemlist_fo) > 0:
         itemlist = itemlist_fo + itemlist
@@ -1055,7 +1149,7 @@ def post_tmdb_findvideos(item, itemlist):
     """
     #logger.debug(item)
     
-    if not config.get_setting("pseudo_titulos", item.channel, default=False):
+    if not config.get_setting("pseudo_titulos", item.channel, default=False) or item.downloadFilename:
         return (item, itemlist)
     
     # Saber si estamos en una ventana emergente lanzada desde una viñeta del menú principal,
@@ -1115,7 +1209,8 @@ def post_tmdb_findvideos(item, itemlist):
             item.category = category
     
     if item.armagedon:                                                          #Es una situación catastrófica?
-        itemlist.append(item.clone(action='', title=item.category + ': [COLOR hotpink]Usando enlaces de emergencia[/COLOR]', folder=False))
+        itemlist.append(item.clone(action='', title=item.category + ': [COLOR hotpink]Usando enlaces de emergencia[/COLOR]', 
+                        folder=False))
     
     #Quitamos el la categoría o nombre del título, si lo tiene
     if item.contentTitle:
@@ -1130,7 +1225,7 @@ def post_tmdb_findvideos(item, itemlist):
     if item.infoLabels['aired'] and item.contentType == "episode":
         item.infoLabels['year'] = scrapertools.find_single_match(str(item.infoLabels['aired']), r'\/(\d{4})')
 
-    rating = ''     #Ponemos el rating
+    rating = ''                                                                 #Ponemos el rating
     try:
         if item.infoLabels['rating'] and item.infoLabels['rating'] != 0.0:
             rating = float(item.infoLabels['rating'])
@@ -1176,9 +1271,9 @@ def post_tmdb_findvideos(item, itemlist):
         tiempo_final = int(tiempo)                                                  #lo convierto a int, pero puede se null
         if tiempo_final > 0:                                                        #Si el tiempo está a 0, pasamos
             if tiempo_final > 700:                                                  #Si está en segundos
-                tiempo_final = old_div(tiempo_final, 60)                                    #Lo transformo a minutos
+                tiempo_final = old_div(tiempo_final, 60)                            #Lo transformo a minutos
             #horas = tiempo_final / 60
-            horas = old_div(tiempo_final, 60)                                               #Lo transformo a horas
+            horas = old_div(tiempo_final, 60)                                       #Lo transformo a horas
             resto = tiempo_final - (horas * 60)                                     #guardo el resto de minutos de la hora
             if not scrapertools.find_single_match(item.quality, '(\[\d+:\d+)'):     #si ya tiene la duración, pasamos
                 item.quality += ' [/COLOR][COLOR white][%s:%s h]' % (str(horas).zfill(2), str(resto).zfill(2))     #Lo agrego a Calidad del Servidor
@@ -1192,7 +1287,7 @@ def post_tmdb_findvideos(item, itemlist):
     #Formateamos de forma especial el título para un episodio
     title = ''
     title_gen = ''
-    if item.contentType == "episode":                   #Series
+    if item.contentType == "episode":                                                           #Series
         title = '%sx%s' % (str(item.contentSeason), str(item.contentEpisodeNumber).zfill(2))    #Temporada y Episodio
         if item.infoLabels['temporada_num_episodios']:
             title = '%s (de %s)' % (title, str(item.infoLabels['temporada_num_episodios']))     #Total Episodios
@@ -1201,17 +1296,17 @@ def post_tmdb_findvideos(item, itemlist):
         if (" al " in item.title or " Al " in item.title) and not "al " in item.infoLabels['episodio_titulo']: 
             title = '%s al %s - ' % (title, scrapertools.find_single_match(item.title, '[al|Al] (\d+)'))
         else:
-            title = '%s %s' % (title, item.infoLabels['episodio_titulo'])               #Título Episodio
+            title = '%s %s' % (title, item.infoLabels['episodio_titulo'])                       #Título Episodio
         title_gen = '%s, ' % title
         
-    if item.contentType == "episode" or item.contentType == "season":                   #Series o Temporadas
+    if item.contentType == "episode" or item.contentType == "season":                           #Series o Temporadas
         title_gen += '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] [%s]' % (item.contentSerieName, item.infoLabels['year'], rating, item.quality, str(item.language), scrapertools.find_single_match(item.title, '\s\[(\d+,?\d*?\s\w[b|B])\]'))                                      #Rating, Calidad, Idioma, Tamaño
         if item.infoLabels['status'] and (item.infoLabels['status'].lower() == "ended" \
                         or item.infoLabels['status'].lower() == "canceled"):
-            title_gen = '[TERM.] %s' % title_gen        #Marca cuando la Serie está terminada y no va a haber más producción
+            title_gen = '[TERM.] %s' % title_gen            #Marca cuando la Serie está terminada y no va a haber más producción
         item.title = title_gen
 
-    else:                                               #Películas
+    else:                                                   #Películas
         title = item.title
         title_gen = item.title
 
@@ -1272,6 +1367,25 @@ def post_tmdb_findvideos(item, itemlist):
         itemlist.append(item.clone(action="", title="[COLOR magenta][B] Contraseña: [/B][/COLOR]'" 
                     + item.password + "'", folder=False))
     
+    #Si es ventana damos la opción de descarga, ya que no hay menú contextual
+    if not Window_IsMedia:
+        if item.contentChannel: del item.contentChannel
+        if item.contentType == 'movie': contentType = 'Película'
+        if item.contentType == 'episode': contentType = 'Episodio'
+        itemlist.append(item.clone(title="-Descargar %s-" % contentType, channel="downloads", server='torrent', 
+                        action="save_download", from_channel=item.channel, from_action='play', folder=False))
+        if item.contentType == 'episode':
+            item.quality = scrapertools.find_single_match(item.quality, '(.*?)\s\[')
+            itemlist.append(item.clone(title="-Descargar Temporada-", channel="downloads", contentType="season", 
+                        action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
+                        sub_action="season"))
+            itemlist.append(item.clone(title="-Descargar Serie-", channel="downloads", contentType="tvshow", 
+                        action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
+                        sub_action="tvshow"))
+            itemlist.append(item.clone(title="-Descargar NO Vistos-", channel="downloads", contentType="tvshow", 
+                        action="save_download", from_channel=item.channel, from_action='episodios', folder=False,  
+                        sub_action="unseen"))
+    
     #logger.debug(item)
     
     return (item, itemlist)
@@ -1286,6 +1400,9 @@ def find_rar_password(item):
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
                  ['1', 'https://pctnew.org/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
+                                ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
+                 ['1', 'https://pctreload.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
                  ['2', 'https://grantorrent.net/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
@@ -1312,11 +1429,13 @@ def find_rar_password(item):
             if item.password: break
             if active != x: continue
             if x == '2' and clone_id not in url_host: continue
+            if x == '1' and clone_id in item.url: continue
             url_password = url_password.replace(url_host_act, clone_id)
             url_host_act = scrapertools.find_single_match(url_password, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
 
             dom_sufix_clone = scrapertools.find_single_match(url_host_act, ':\/\/(.*?)\/*$').replace('.', '-')
-            if 'descargas2020' not in dom_sufix_clone and 'pctnew' not in dom_sufix_clone: dom_sufix_clone = ''
+            if 'descargas2020' not in dom_sufix_clone and 'pctnew' not in \
+                        dom_sufix_clone and  'pctreload' not in dom_sufix_clone: dom_sufix_clone = ''
             url_password = url_password.replace(dom_sufix_org, dom_sufix_clone)
             dom_sufix_org = dom_sufix_clone
 
@@ -1461,6 +1580,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         elif local_torr:
             torrent_file = filetools.read(local_torr)
         if not torrent_file:
+            size = 'ERROR'
             if not lookup:
                 return (size, torrents_path, torrent_f, files)
             elif file_list and data_torrent:
@@ -1718,6 +1838,16 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         channel_host_failed_bis = scrapertools.find_single_match(item.url, \
                             '((?:http.*\:)?\/\/(?:www\.)?[^\?|\/]+)(?:\?|\/)')
         item.url = item.url.replace(channel_host_failed_bis, channel_host_bis)
+        if item.url.endswith('-org'):
+            item.url = item.url.replace(channel_failed, channel)
+            item.url = re.sub('\/\w+(-\w+)$', r'/%s\1' % channel, item.url)
+        if channel == 'pctreload':
+            item.url = re.sub('\/\w+-\w+$', '/pctreload-com', item.url)
+            url_alt += [item.url]                                       #salvamos la url para el bucle
+            item.url = re.sub('\/\w+-\w+$', '/pctnew-org', item.url)
+        if channel == 'planetatorrent':
+            item.url = re.sub('\/\w+-\w+$', '', item.url)
+            item.url = re.sub('\/\w+-\w+$', '', item.url)
         
         url_alt += [item.url]                                           #salvamos la url para el bucle
         item.channel_host = channel_host
@@ -1778,13 +1908,15 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                             data_alt = scrapertools.find_single_match(data, patron_alt)
                             if not data_alt and patron_alt:
                                 data_alt = scrapertools.find_single_match(data_comillas, patron_alt)
-                    if patron2 != None:
+                    if patron2 is not None:
                         data_alt = scrapertools.find_single_match(data_alt, patron2)
-                if not data_alt:                                        #no ha habido suerte, probamos con el siguiente canal
-                    logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " + url + " / Patron: " + patron + " / " + patron_alt)
-                    web_intervenida(item, data)
-                    data = ''
-                    continue
+                    if not data_alt:                                        #no ha habido suerte, probamos con el siguiente canal
+                        logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " + url + " / Patron: " + patron + " / " + patron_alt)
+                        web_intervenida(item, data)
+                        data = ''
+                        continue
+                    else:
+                        break                                               #por fin !!!  Este canal parece que funciona
                 else:
                     #Función especial para encontrar en otro clone un .torrent válido
                     if verify_torrent == 'torrent:check:status':
@@ -1840,7 +1972,7 @@ def verify_channel(channel):
         if settings['id'] == "clonenewpct1_channels_list":              #Encontramos en setting
             clones = settings['default']                                #Carga lista de clones
             channel_alt = "'%s'" % channel
-            if channel_alt in clones:                                   #Si es un clon se pone como canal newpct1, si no se deja
+            if channel_alt in str(clones):                              #Si es un clon se pone como canal newpct1, si no se deja
                 channel = channel_py
             return channel
     
@@ -2257,6 +2389,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 if item.channel == channel_py:                  #Si es un clone de Newpct1, salvamos la nueva categoría
                     item.category = scrapertools.find_single_match(item.url, \
                             'http.*\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()   #Salvamos categoría
+                    if canal_org != item.category.lower():
+                        item.category_alt = canal_org.capitalize()
                 else:
                     item.category = canal_des.capitalize()                      #si no, salvamos nueva categoría
                 
