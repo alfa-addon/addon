@@ -112,12 +112,13 @@ def sub_search(item):
         except:
             scrapedyear = ''
         filtro_tmdb = {"first_air_date": scrapedyear}.items()
-        itemlist.append(item.clone(action = "episodios",
+        itemlist.append(item.clone(action = "seasons",
                                    title = scrapedtitle,
                                    thumbnail = scrapedthumbnail,
                                    url = scrapedurl,
                                    context=context,
                                    contentSerieName = scrapedtitle,
+                                   page=0,
                                    infoLabels={'filtro':filtro_tmdb}
                         ))
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
@@ -191,8 +192,12 @@ def list_all(item):
             
             itemlist.append(Item(channel=item.channel, title=title, url=url,
                 action="seasons", thumbnail=thumbnail, contentSerieName=title, context=context))
+    
+    #if f_page < len(matches) and len(itemlist)>30:
+    #    itemlist.append(item.clone(title="[COLOR cyan]Página Siguiente >>[/COLOR]", page=f_page))
 
     return itemlist
+
 def seasons(item):
     logger.info()
     itemlist = []
@@ -200,10 +205,13 @@ def seasons(item):
     match = soup.find("div", class_="box lista")
     matches = match.find_all("h3", class_="colapse")
     infoLabels = item.infoLabels
-    for elem in matches:
+    for i, elem in enumerate(matches):
         title = elem.text
         dt = elem['dt']
-        infoLabels['season'] = title.split(" ")[1] if "temporada" in title.lower() else 0
+        season = title.split(" ")[1] if "temporada" in title.lower() else 0
+        if not "temporada" in title.lower():
+            season = i+1 if not [int(s) for s in title if s.isdigit()] else [int(s) for s in title if s.isdigit()][0]
+        infoLabels['season'] = season
         itemlist.append(Item(channel=item.channel, title=title, contentSerieName=item.tile,
                 url=item.url, plot=item.plot, thumbnail=item.thumbnail, dt = dt,
                 action="episodesxseason", context=item.context, infoLabels=infoLabels))
