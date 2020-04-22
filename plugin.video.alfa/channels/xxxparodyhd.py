@@ -24,7 +24,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['mangovideo']
 
-host = 'https://xxxparodyhd.net'
+host = 'https://xxxparodyhd.net'   #'https://watchpornfree.info'
 
 def mainlist(item):
     logger.info()
@@ -83,16 +83,16 @@ def lista(item):
     patron = '<div data-movie-id="\d+".*?'
     patron += '<a href="([^"]+)".*?'
     patron += 'oldtitle="([^"]+)".*?'
-    patron += '<img src="([^"]+)".*?rel="tag">(.*?)</a>'
+    patron += 'data-original="([^"]+)".*?rel="tag">(\d+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,scrapedyear in matches:
         scrapedplot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=scrapedtitle, url=scrapedurl,
+        itemlist.append( Item(channel=item.channel, action="findvideos", title=scrapedtitle, contentTitle=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot, infoLabels={'year':scrapedyear}) )
     next_page = scrapertools.find_single_match(data,'<li class=\'active\'>.*?href=\'([^\']+)\'>')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 

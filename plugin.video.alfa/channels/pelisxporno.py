@@ -10,6 +10,7 @@ else:
 
 import re
 
+from core.item import Item
 from platformcode import config, logger
 from core import httptools
 from core import scrapertools
@@ -26,6 +27,7 @@ def mainlist(item):
     itemlist.append(item.clone(action="search", title="Buscar"))
     return itemlist
 
+
 def search(item, texto):
     logger.info("")
     texto = texto.replace(" ", "+")
@@ -38,17 +40,13 @@ def search(item, texto):
             logger.error("%s" % line)
         return []
         
-def search(item, texto):
-    logger.info()
-    item.url = item.url % texto
-    return lista(item)
 
 
 def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<li class="cat-item cat-item-.*?"><a href="(.*?)".*?>(.*?)<'
+    patron = '<li class="cat-item cat-item-.*?"><a href="([^"]+)".*?>([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle in matches:
         itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl))
@@ -59,16 +57,19 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<div class="video.".*?<a href="(.*?)" title="(.*?)">.*?<img src="(.*?)".*?\/>.*?duration.*?>(.*?)<'
+    patron = '<div class="video.*?'
+    patron += '<a href="([^"]+)" title="([^"]+)">.*?'
+    patron += '<img src="([^"]+)".*?'
+    patron += 'duration.*?>([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle, scrapedthumbnail, duration in matches:
         if duration:
             scrapedtitle = "[COLOR yellow]%s[/COLOR] %s" % (duration,scrapedtitle)
-        itemlist.append(item.clone(action="play", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
-                                   fanart=scrapedthumbnail))
+        itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, contentTitle=scrapedtitle, url=scrapedurl,
+                                   fanart=scrapedthumbnail, thumbnail=scrapedthumbnail))
     next_page = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)"')
     if next_page:
-        itemlist.append(item.clone(action="lista", title=">> Página Siguiente", url=next_page))
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page))
     return itemlist
 
 
