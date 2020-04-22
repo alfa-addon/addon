@@ -78,7 +78,9 @@ if DOWNLOAD_LIMIT:
         DOWNLOAD_LIMIT = 0
 else:
     DOWNLOAD_LIMIT = 0
-UPLOAD_LIMIT = 100 * 1024
+UPLOAD_LIMIT = 0
+if DOWNLOAD_LIMIT > 0:
+    UPLOAD_LIMIT = DOWNLOAD_LIMIT / 35
 msg_header = 'Alfa MCT Cliente Torrent'
 
 
@@ -348,7 +350,6 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
 
     h.force_reannounce()
     h.force_dht_announce()
-    h.set_upload_limit(UPLOAD_LIMIT)
 
     # -- Inicio de variables para 'pause' automático cuando el  -
     # -- el vídeo se acerca a una pieza sin completar           -
@@ -521,7 +522,9 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
             bkg_auto = True
             log("##### PLAY %s" % (h.status().num_pieces))
             if item: torr.mark_auto_as_watched(item)
-            if ses_lt: h.set_download_limit(DOWNLOAD_LIMIT)
+            if ses_lt:
+                h.set_download_limit(DOWNLOAD_LIMIT)
+                h.set_upload_limit(UPLOAD_LIMIT)
             while player.isPlaying():
 
                 # -- Impedir que kodi haga 'resume' al inicio ---

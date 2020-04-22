@@ -127,7 +127,9 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
             DOWNLOAD_LIMIT = 0
     else:
         DOWNLOAD_LIMIT = 0
-    UPLOAD_LIMIT = 100
+    UPLOAD_LIMIT = 0
+    if DOWNLOAD_LIMIT > 0:
+        UPLOAD_LIMIT = DOWNLOAD_LIMIT / 35
     
     torr_client = 'BT'
     rar_file = ''
