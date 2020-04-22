@@ -19,6 +19,7 @@ from core import httptools
 
 host = 'https://netfapx.com'
 
+# Timming 
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -47,7 +48,7 @@ def search(item, texto):
 def catalogo(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, timeout=20).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<article class=pinbox>.*?'
     patron += 'href=([^>]+).*?'
@@ -72,7 +73,7 @@ def catalogo(item):
 def categorias(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, timeout=20).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     data = scrapertools.find_single_match(data, '<div class=cat-thumb>(.*?)</div>')
     patron = '<a href=([^<]+)><img src=([^<]+)>'
@@ -89,7 +90,7 @@ def categorias(item):
 def lista(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, timeout=20).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<article class=pinbox>.*?'
     patron += 'href=([^>]+).*?'
@@ -110,15 +111,14 @@ def lista(item):
         next_page = scrapertools.find_single_match(data, '<a href="([^"]+)" class=next>Next')
     if next_page:
         next_page =next_page.replace("\"", "")
-        itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
-                              url=next_page) )
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def play(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
+    data = httptools.downloadpage(item.url, timeout=20).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     url = scrapertools.find_single_match(data, 'source:"([^"]+)"')
     itemlist.append(item.clone(action="play", title = url, url=url))
