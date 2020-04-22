@@ -48,9 +48,18 @@ class XBMCPlayer(xbmc.Player):
 xbmc_player = XBMCPlayer()
 
 
+def makeMessage(line1, line2, line3):
+    message = line1
+    if line2:
+        message += '\n' + line2
+    if line3:
+        message += '\n' + line3
+    return message
+
+
 def dialog_ok(heading, line1, line2="", line3=""):
     dialog = xbmcgui.Dialog()
-    return dialog.ok(heading, line1, line2, line3)
+    return dialog.ok(heading, makeMessage(line1, line2, line3))
 
 
 def dialog_notification(heading, message, icon=0, time=5000, sound=True):
@@ -62,12 +71,23 @@ def dialog_notification(heading, message, icon=0, time=5000, sound=True):
         dialog_ok(heading, message)
 
 
-def dialog_yesno(heading, line1, line2="", line3="", nolabel="No", yeslabel="Si", autoclose=""):
+def dialog_yesno(heading, line1, line2="", line3="", nolabel="No", yeslabel="Si", autoclose=0, customlabel=None):
+    # customlabel only on kodi 19
     dialog = xbmcgui.Dialog()
-    if autoclose:
-        return dialog.yesno(heading, line1, line2, line3, nolabel, yeslabel, autoclose)
+    if PY3:
+        if autoclose:
+            return dialog.yesno(heading, makeMessage(line1, line2, line3), nolabel=nolabel, 
+                            yeslabel=yeslabel, customlabel=customlabel, autoclose=autoclose)
+        else:
+            return dialog.yesno(heading, makeMessage(line1, line2, line3), nolabel=nolabel, 
+                            yeslabel=yeslabel, customlabel=customlabel)
     else:
-        return dialog.yesno(heading, line1, line2, line3, nolabel, yeslabel)
+        if autoclose:
+            return dialog.yesno(heading, makeMessage(line1, line2, line3), nolabel=nolabel, 
+                            yeslabel=yeslabel, autoclose=autoclose)
+        else:
+            return dialog.yesno(heading, makeMessage(line1, line2, line3), nolabel=nolabel, 
+                            yeslabel=yeslabel)
 
 
 def dialog_select(heading, _list):
@@ -80,7 +100,7 @@ def dialog_multiselect(heading, _list, autoclose=0, preselect=[], useDetails=Fal
 
 def dialog_progress(heading, line1, line2=" ", line3=" "):
     dialog = xbmcgui.DialogProgress()
-    dialog.create(heading, line1, line2, line3)
+    dialog.create(heading, makeMessage(line1, line2, line3))
     return dialog
 
 
@@ -111,6 +131,11 @@ def dialog_numeric(_type, heading, default=""):
 def dialog_textviewer(heading, text):  # disponible a partir de kodi 16
     return xbmcgui.Dialog().textviewer(heading, text)
 
+
+def dialog_browse(_type, heading, default=""):
+    dialog = xbmcgui.Dialog()
+    d = dialog.browse(_type, heading, 'files')
+    return d
 
 def itemlist_refresh():
     xbmc.executebuiltin("Container.Refresh")
@@ -1252,6 +1277,7 @@ def play_torrent(item, xlistitem, mediaurl):
     torrent_paths = torrent.torrent_dirs()
     UNRAR = config.get_setting("unrar_path", server="torrent", default="")
     LIBTORRENT = config.get_setting("libtorrent_path", server="torrent", default='')
+    LIBTORRENT_in_use_local = False
     RAR_UNPACK = config.get_setting("mct_rar_unpack", server="torrent", default='')
     BACKGROUND_DOWNLOAD = config.get_setting("mct_background_download", server="torrent", default='')
     size_rar = 2
@@ -1429,8 +1455,22 @@ def play_torrent(item, xlistitem, mediaurl):
                                '.mpe', '.mp4', '.ogg', '.rar', '.wmv', '.zip']
             video_name = ''
             video_path = ''
+            
             if not item.downloadFilename:
                 item.downloadStatus = 5
+            item.contentAction = 'play'
+            
+            # Comprobamos si Libtorrent está en uso por otra descarga.  Si lo está, ponemos esta petición en cola
+            if torr_client in ['BT', 'MCT']:
+                if config.get_setting("LIBTORRENT_in_use", server="torrent", default=False):
+                    LIBTORRENT_in_use_local = True
+                    item.downloadQueued = 1
+                    item.downloadProgress = 0
+                    if item.downloadStatus == 5:
+                        dialog_notification("LIBTORRENT en USO", "Descarga encolada.  Puedes seguir haciendo otras cosas...", time=10000)
+                else:
+                    config.set_setting("LIBTORRENT_in_use", True, server="torrent")     # Marcamos Libtorrent como en uso
+
             if rar_files:
                 for entry in rar_files:
                     for file, path in list(entry.items()):
@@ -1440,6 +1480,7 @@ def play_torrent(item, xlistitem, mediaurl):
                         elif file == '__name':
                             video_path = path
                 item.downloadFilename = filetools.join(':%s: ' % torr_client.upper(), video_path, video_name)
+            
             if item.url.startswith('magnet:'):
                 t_hash = scrapertoolsV2.find_single_match(item.url, 'xt=urn:btih:([^\&]+)\&')
                 video_name = urllib.unquote_plus(scrapertoolsV2.find_single_match(item.url, '(?:\&|&amp;)dn=([^\&]+)\&'))
@@ -1468,12 +1509,16 @@ def play_torrent(item, xlistitem, mediaurl):
         
         # Reproductor propio BT (libtorrent)
         if seleccion == 0:
-            torrent.bt_client(mediaurl, xlistitem, rar_files, subtitle=item.subtitle, password=password, item=item)
+            if not LIBTORRENT_in_use_local:
+                torrent.bt_client(mediaurl, xlistitem, rar_files, subtitle=item.subtitle, password=password, item=item)
+                config.set_setting("LIBTORRENT_in_use", False, server="torrent")   # Marcamos Libtorrent como disponible
 
         # Reproductor propio MCT (libtorrent)
         elif seleccion == 1:
-            from platformcode import mct
-            mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=password, item=item)
+            if not LIBTORRENT_in_use_local:
+                from platformcode import mct
+                mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=password, item=item)
+                config.set_setting("LIBTORRENT_in_use", False, server="torrent")    # Marcamos Libtorrent como disponible
 
         # Plugins externos
         else:
@@ -1490,9 +1535,11 @@ def play_torrent(item, xlistitem, mediaurl):
             result = False
             __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)  # Apunta settings del cliente torrent externo
             save_path_videos = str(xbmc.translatePath(__settings__.getSetting('download_path')))
+            
             if torr_client == 'quasar' and 'cliente_torrent_Alfa' not in item.url:  # Quasar no copia el .torrent
                 ret = filetools.copy(item.url, filetools.join(save_path_videos, 'torrents', \
                             filetools.basename(item.url)), silent=True)
+            
             if (torr_client in ['quasar', 'elementum'] and item.downloadFilename and item.downloadStatus != 5) \
                     or (torr_client in ['quasar', 'elementum'] and 'RAR-' in size and BACKGROUND_DOWNLOAD):
                 result = torrent.call_torrent_via_web(urllib.quote_plus(item.url), torr_client)
@@ -1562,11 +1609,11 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
         item.downloadProgress = 100
     else:
         if torrent_paths[torr_client.upper()+'_web']:                           # Es un cliente monitorizable?
-            item.downloadProgress = 1
+            item.downloadProgress = 0
         else:
             item.downloadProgress = 100                                         # ... si no, se da por terminada la monitorización
-    if torrent_paths[torr_client.upper()]:                                      # Es un cliente monitorizable?
-        torrent.update_control(item)
+    item.downloadQueued = 0
+    torrent.update_control(item)
 
     # Seleccionamos que clientes torrent soportamos para el marcado de vídeos vistos: asumimos que todos funcionan
     if not item.downloadFilename or item.downloadStatus == 5:
@@ -1580,11 +1627,8 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
                 log("##### erase_file_path: %s" % erase_file_path)
                 try:
                     torr_data, deamon_url, index = torrent.get_tclient_data(torr_folder, \
-                                        torr_client, torrent_paths['ELEMENTUM_port'], delete=True)
-                    if filetools.isdir(erase_file_path):
-                        filetools.rmdirtree(erase_file_path)
-                    elif filetools.exists(erase_file_path) and filetools.isfile(erase_file_path):
-                        filetools.remove(erase_file_path)
+                                        torr_client, torrent_paths['ELEMENTUM_port'], delete=True, \
+                                        folder_new=erase_file_path)
                 except:
                     logger.error(traceback.format_exc(1))
     
