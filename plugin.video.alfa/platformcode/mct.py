@@ -28,6 +28,7 @@ import re
 import tempfile
 import platform
 import traceback
+import time
 
 try:
     import xbmc
@@ -299,9 +300,11 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
     log("##### _video_file ## %s ##" % str(_video_file))
     log("##### _video_file_ext ## %s ##" % _video_file_ext)
 
-    if url.startswith('magnet:'):
+    if url.startswith('magnet:') or _index > 0:
         item.downloadFilename = ':%s: %s' % ('MCT', video_file)
-        torr.update_control(item)
+    item.downloadQueued = 0
+    time.sleep(1)
+    torr.update_control(item)
 
     dp_cerrado = True
     rar = False
@@ -407,7 +410,8 @@ def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
         # Si se ha borrado el .torrent es porque se quiere cancelar la sesión
         #log("##### x: %s" % str(x))
         #log("##### exists: %s" % str(filetools.exists(torrent_file)))
-        if download > 1 and (str(x).endswith('0') or str(x).endswith('5')) and not filetools.exists(torrent_file):
+        if ((download > 1 and (str(x).endswith('0') or str(x).endswith('5'))) \
+                        or (download == 0 and x > 30)) and not filetools.exists(torrent_file):
             bkg_user = False
             item.downloadProgress = 0
             remove_files( 1, '', video_file, ses, h, ren_video_file, item )
@@ -729,7 +733,7 @@ def getProgress(h, video_file, _pf={}):
     msg_file = video_file
 
     if len(msg_file) > 50:
-        msg_file = msg_file.replace( video_file, os.path.splitext(video_file)[0][:40] + "... " + os.path.splitext(video_file)[1] )
+        msg_file = msg_file.replace( video_file, os.path.splitext(video_file)[0][:50] + "... " + os.path.splitext(video_file)[1] )
     msg_file = msg_file + "[CR]" + "%.2f MB" % (s.total_wanted/1048576.0) + " - " + _pf_msg
 
     return (message, porcent, msg_file, s, download)
