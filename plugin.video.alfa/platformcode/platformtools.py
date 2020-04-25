@@ -254,7 +254,7 @@ def render_items(itemlist, parent_item):
             item.thumbnail = unify.thumbnail_type(item)
         # if cloudflare, cookies are needed to display images taken from site
         # before checking domain (time consuming), checking if tmdb failed (so, images scraped from website are used)
-        if item.action in ['findvideos'] and not item.infoLabels['tmdb_id'] and item.channel in httptools.CF_LIST:
+        if item.action in ['findvideos'] and not item.infoLabels['tmdb_id'] and scrapertoolsV2.get_domain_from_url(item.url) in httptools.CF_LIST:
             item.thumbnail = httptools.get_url_headers(item.thumbnail)
             item.fanart = httptools.get_url_headers(item.fanart)
 
@@ -433,6 +433,8 @@ def set_infolabels(listitem, item, player=False):
                        'url_scraper': 'None', 'votes': 'votes', 'writer': 'writer', 'year': 'year'}
 
     if item.infoLabels:
+        if 'mediatype' not in item.infoLabels:
+            item.infoLabels['mediatype'] = item.contentType
         try:
             infoLabels_kodi = {infoLabels_dict[label_tag]: item.infoLabels[label_tag] for label_tag, label_value in list(item.infoLabels.items()) if infoLabels_dict[label_tag] != 'None'}
             listitem.setInfo("video", infoLabels_kodi)
@@ -461,11 +463,11 @@ def set_infolabels(listitem, item, player=False):
     #         logger.error(item.infoLabels)
     #         logger.error(infoLabels_kodi)
     #
-    # if player and not item.contentTitle:
-    #     listitem.setInfo("video", {"Title": item.title})
-    #
-    # elif not player:
-    #     listitem.setInfo("video", {"Title": item.title})
+    if player and not item.contentTitle:
+        listitem.setInfo("video", {"Title": item.title})
+
+    elif not player:
+        listitem.setInfo("video", {"Title": item.title})
 
 
 def set_context_commands(item, item_url, parent_item, **kwargs):
