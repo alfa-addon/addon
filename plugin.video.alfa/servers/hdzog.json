@@ -4,14 +4,18 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://hclips.com/embed/[0-9]+)",
+        "pattern": "(https://(?:hdzog|tubepornclassic).com/embed/[0-9]+)",
+        "url": "\\1"
+      },
+      {
+        "pattern": "(https://tubepornclassic.com/videos/[0-9]+/[A-z0-9-]+/)",
         "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "hclips",
-  "name": "hclips",
+  "id": "hdzog",
+  "name": "hdzog",
   "settings": [
     {
       "default": false,
@@ -38,5 +42,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://hclips.com/favicon-194x194.png"
+  "thumbnail": ""
 }
