@@ -525,8 +525,10 @@ def delete_torrent_session(item):
 
     # Vuelve a  actualiza el .json de control después de que el gestor de torrent termine su función (timing...)
     time.sleep(1)
+    if item.url_control:
+        item.url = item.url_control
     update_json(item.path, {"downloadStatus": item.downloadStatus, "downloadProgress": 0, "downloadQueued": 0,
-                                "downloadServer": {}})
+                                "downloadServer": {}, "url": item.url})
     
     return torr_data, deamon_url, index
 
@@ -1103,20 +1105,30 @@ def get_episodes(item):
             
             if item.sub_action in ["auto"]:
                 if not nfo_json: return []
-                for epi, visto in list(nfo_json.library_playcounts.items()):
-                    epi_num = 0
+                
+                # Calculamos la última temporada disponible
+                y = []
+                patron = 'season (\d+)'
+                matches = re.compile(patron, re.DOTALL).findall(str(nfo_json.library_playcounts))
+                for x in matches:
+                    y += [int(x)]
+                max_ses = max(y)
+                
+                # Verificamos si hay algún episodio no visto de la última temporada
+                for ses_epi, visto in list(nfo_json.library_playcounts.items()):
+                    ses_num = 0
                     try:
-                        if scrapertools.find_single_match(epi, '^(\d+)x\d+'):
-                            epi_num = int(scrapertools.find_single_match(epi, '^(\d+)x\d+'))
+                        if scrapertools.find_single_match(ses_epi, '^(\d+)x\d+'):
+                            ses_num = int(scrapertools.find_single_match(ses_epi, '^(\d+)x\d+'))
                         else:
                             continue
-                        if item.infoLabels['number_of_seasons'] != epi_num:
+                        if max_ses != ses_num:
                             continue
                         if visto == 0:
                             continue
                         break
                     except:
-                        logger.error(epi)
+                        logger.error(ses_epi)
                         continue
                 else:
                     return []
