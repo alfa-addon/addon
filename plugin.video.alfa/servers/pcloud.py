@@ -11,10 +11,6 @@ import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
-if PY3:
-    #from future import standard_library
-    #standard_library.install_aliases()
-
 
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
