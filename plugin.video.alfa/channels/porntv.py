@@ -107,7 +107,7 @@ def play(item):
     patron = 'file: "([^"]+)",.*?label: "([^"]+)",'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url,quality in matches:
-        itemlist.append([".mp4 %s" % quality, url])
+        itemlist.append(["%s %s [directo]" % (quality, url), url])
     return itemlist
 
 

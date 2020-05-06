@@ -1,7 +1,7 @@
 {
   "id": "submityouflicks",
   "name": "Submit Your Flicks",
-  "active": false,
+  "active": true,
   "adult": true,
   "language": ["*"],
   "banner": "submityouflicks.png",
