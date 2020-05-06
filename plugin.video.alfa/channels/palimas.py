@@ -26,6 +26,8 @@ list_servers = ['mixdrop']
 
 host = 'https://palimas.tv/'
 
+# falta server https://dood.watch/e/1ijbolcx8daz
+
 def mainlist(item):
     logger.info()
     itemlist = []

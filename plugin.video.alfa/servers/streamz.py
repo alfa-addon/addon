@@ -9,10 +9,15 @@ from lib import jsunpack
 def get_video_url(page_url, video_password):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    url= httptools.downloadpage(page_url).url
-    url= url.replace("/x", "/getlink-")
-    url += ".dll"
-    url = httptools.downloadpage(url, headers={"referer": page_url}, follow_redirects=False).headers["location"]
+    url = httptools.downloadpage(page_url).url
+    data = httptools.downloadpage(url).data
+    data = scrapertools.find_single_match(data, '<footer id="Footer" class="clearfix">(.*?)</html>')
+    logger.debug(data)
+    packed = scrapertools.find_single_match(data, r'(eval.*?)</script>')
+    unpacked = jsunpack.unpack(packed)
+    url = scrapertools.find_single_match(unpacked, '(https://streamz.cc/get.*?.dll)')
+    url= url.replace("getmp4", "getlink")
+    url = httptools.downloadpage(url, follow_redirects=False).headers["location"]
     video_urls.append(["[streamz]", url])
     return video_urls
 

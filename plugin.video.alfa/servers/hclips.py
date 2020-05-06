@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
-import re
+# --------------------------------------------------------
+# Conector hclips By Alfa development Group
+# --------------------------------------------------------
+
 from core import httptools
 from core import scrapertools
-from platformcode import logger
+from platformcode import logger, config
 
 
 def test_video_exists(page_url):
@@ -14,18 +17,18 @@ def test_video_exists(page_url):
     return True, ""
 
 
-def get_video_url(page_url, video_password):
-    logger.info("(page_url='%s')" % page_url)
+def get_video_url(page_url, premium=False, user="", password="", video_password=""):
+    logger.info("url=" + page_url)
     video_urls = []
     id = scrapertools.find_single_match(page_url, r"embed/([0-9]+)")
-    url= "https://txxx.com/api/videofile.php?video_id=%s&lifetime=864000" % id
+    url = "https://hclips.com/api/videofile.php?video_id=%s&lifetime=8640000" % id
     headers = {'Referer': page_url}
     data = httptools.downloadpage(url, headers=headers).data
-    texto = scrapertools.find_single_match(data, '"video_url":"([^"]+)"')
+    texto = scrapertools.find_single_match(data, 'video_url":"([^"]+)"')
     url = dec_url(texto)
-    url = "https://txxx.com%s" % url
-    url = httptools.downloadpage(url, only_headers=True).url
-    video_urls.append(["[TXX]", url])
+    url = "https://hclips.com%s" % url
+    media_url = httptools.downloadpage(url, only_headers=True).url
+    video_urls.append(["[hclips]", media_url])
     return video_urls
 
 
@@ -37,3 +40,4 @@ def dec_url(txt):
     import base64
     url = base64.b64decode(txt)
     return url
+

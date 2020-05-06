@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://s9.sharedvid.com/embed/[a-zA-Z0-9]+)",
+        "pattern": "(https://(?:www|).vipporns.com/embed/\\w+)",
         "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "sharedvid",
-  "name": "sharedvid",
+  "id": "vipporns",
+  "name": "vipporns",
   "settings": [
     {
       "default": false,
@@ -37,5 +37,6 @@
       "type": "list",
       "visible": false
     }
-  ]
+  ],
+  "thumbnail": ""
 }

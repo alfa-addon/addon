@@ -24,7 +24,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['gounlimited']
 
-host = 'http://streamingporn.xyz'   #'http://sexgalaxy.net'
+host = 'http://streamingporn.xyz'
 
 def mainlist(item):
     logger.info()

@@ -23,7 +23,7 @@ list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['gounlimited']
 
-host = 'http://sexgalaxy.net'  #'http://streamingporn.xyz'
+host = 'http://sexgalaxy.net'
 
 # UBIQFILE  falta jetload
 
