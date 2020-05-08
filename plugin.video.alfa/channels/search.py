@@ -251,7 +251,7 @@ def channel_search(item):
             if mode == 'all' or (it.contentType and mode == it.contentType):
                 if config.get_setting('result_mode', 'search') != 0:
                     if config.get_localized_string(30992) not in it.title:
-                        it.title += ch_name
+                        it.title += " " + ch_name
                         results.append(it)
                 else:
                     grouped.append(it)
