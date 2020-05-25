@@ -1,5 +1,5 @@
 {
-  "active": true,
+  "active": false,
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
@@ -37,5 +37,6 @@
       "type": "list",
       "visible": false
     }
-  ]
+  ],
+  "thumbnail": "https://i.postimg.cc/Ss9HvTsr/vidtodo.png"
 }
