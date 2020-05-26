@@ -26,7 +26,7 @@ list_servers = ['mangovideo']
 
 # https://playpornfree.org/    https://mangoporn.net/   https://watchfreexxx.net/   https://losporn.org/  https://xxxstreams.me/  https://speedporn.net/
 
-host = 'https://watchpornfree.info'   #'https://xxxparodyhd.net'  'http://www.veporns.com'  'http://streamporno.eu'
+host = 'https://watchpornfree.info'   #'https://xxxparodyhd.net'  'http://www.veporns.com'  'http://streamporno.eu'  playpornx
 
 def mainlist(item):
     logger.info("")
@@ -110,7 +110,13 @@ def findvideos(item):
     patron = 'href="([^"]+)"'
     matches = re.compile(patron, re.DOTALL).findall(links_data)
     for url in matches:
-        if not "waaws.tk" in url: #netu
+        if "streamz" in url:
+            url = url.replace(".cc", ".vg")
+            url= httptools.downloadpage(url).url
+            url= url.replace("/x", "/getlink-")
+            url += ".dll"
+            url = httptools.downloadpage(url, headers={"referer": url}, follow_redirects=False).headers["location"]
+        if not ".xyz/" in url: #netu
             itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play', language='VO',contentTitle = item.contentTitle))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)
     # Requerido para FilterTools

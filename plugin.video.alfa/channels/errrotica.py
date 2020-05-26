@@ -112,6 +112,7 @@ def play(item):
     patron = '<source src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url in matches:
+        url = url + "|verifypeer=false"
         itemlist.append(['.mp4', url])
     return itemlist
 

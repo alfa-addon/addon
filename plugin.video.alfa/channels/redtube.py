@@ -104,7 +104,7 @@ def lista(item):
     data = scrapertools.find_single_match(data,'<em class="premium_tab_icon rt_icon rt_Menu_Star">(.*?)<div class="footer">')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="video_block_wrapper js_mediaBookBounds ">.*?'
-    patron += 'data-src="([^"]+)"(.*?)'
+    patron += 'data-o_thumb="([^"]+)"(.*?)'
     patron += '<span class="duration">(.*?)</a>.*?'
     patron += '<a title="([^"]+)".*?href="(/\d+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
@@ -115,7 +115,6 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (duration,scrapedtitle)
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (duration, scrapedtitle)
-        scrapedthumbnail = scrapedthumbnail.replace("{index}.", "1.")
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url,
                               fanart=scrapedthumbnail, thumbnail=scrapedthumbnail, plot=plot, contentTitle = title) )

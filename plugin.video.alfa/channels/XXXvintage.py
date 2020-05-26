@@ -17,7 +17,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import httptools
 
-host = 'http://www.vintagetube.xxx'
+host = 'https://vintagetube.xxx'
 
 def mainlist(item):
     logger.info()
@@ -71,16 +71,16 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     patron = '<div class="item col-lg-2 col-md-3 col-xs-12">.*?'
-    patron += '<a href="([^"]+)">.*?'
     patron += '<span class="duration">([^<]+)</span>.*?'
     patron += 'src="([^"]+)".*?'
     patron += '<strong class="thumb-title">([^<]+)</strong>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtime,scrapedthumbnail,scrapedtitle in matches:
+    for scrapedtime,scrapedthumbnail,scrapedtitle in matches:
         scrapedplot = ""
         title = "[COLOR yellow]%s[/COLOR] %s" %(scrapedtime,scrapedtitle)
-        scrapedurl = scrapedurl.replace("/xxx.php?tube=", "")
-        scrapedurl = "%s%s" % (host, scrapedurl)
+        scrapedurl = scrapedtitle.replace(" ", "-")
+        num = scrapertools.find_single_match(scrapedthumbnail, '.*?/videos_screenshots/\d+/(\d+)/')
+        scrapedurl = "%s/videos/%s/%s" % (host, num, scrapedurl)
         itemlist.append( Item(channel=item.channel, action="play", title=title, contentTitle=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
     last_page= scrapertools.find_single_match(data,'<a href=".*?/latest/(\d+)"><div style="display:inline">Last<')
