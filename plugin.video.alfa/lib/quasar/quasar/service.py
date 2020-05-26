@@ -22,7 +22,8 @@ def run():
         t.start()
 
     # XBMC loop
-    while not xbmc.abortRequested:
+    monitor_abort = xbmc.Monitor()  # For Kodi >= 14
+    while not monitor_abort.abortRequested():
         xbmc.sleep(1000)
 
     log.info("quasar: exiting quasard")
