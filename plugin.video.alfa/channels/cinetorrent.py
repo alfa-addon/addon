@@ -5,9 +5,9 @@ PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
 else:
-    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+    import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
 
 import re
 import time
@@ -45,18 +45,13 @@ def mainlist(item):
     logger.info()
     itemlist = []
     
-    thumb_cartelera = get_thumb("now_playing.png")
     thumb_pelis = get_thumb("channels_movie.png")
-    thumb_pelis_hd = get_thumb("channels_movie_hd.png")
-    thumb_pelis_VO = get_thumb("channels_vos.png")
-    
+
     thumb_series = get_thumb("channels_tvshow.png")
-    thumb_series_hd = get_thumb("channels_tvshow_hd.png")
-    thumb_series_VOD = get_thumb("videolibrary_tvshow.png")
-    
-    thumb_documentales = get_thumb("channels_documentary.png")
-    thumb_alfabeto = get_thumb("channels_movie_az.png")
+
     thumb_genero = get_thumb("genres.png")
+    thumb_anno = get_thumb("years.png")
+    thumb_calidad = get_thumb("top_rated.png")
     thumb_buscar = get_thumb("search.png")
     thumb_separador = get_thumb("next.png")
     thumb_settings = get_thumb("setting_0.png")
@@ -66,16 +61,16 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Películas", action="listado", 
                 url=host + "peliculas/page/1", thumbnail=thumb_pelis, extra="peliculas"))
     itemlist.append(Item(channel=item.channel, title="    - por Género", action="genero", 
-                url=host, thumbnail=thumb_pelis, extra="peliculas"))
+                url=host, thumbnail=thumb_genero, extra="peliculas"))
     itemlist.append(Item(channel=item.channel, title="    - por Año", action="anno", 
-                url=host, thumbnail=thumb_pelis, extra="peliculas"))
+                url=host, thumbnail=thumb_anno, extra="peliculas"))
     itemlist.append(Item(channel=item.channel, title="    - por Calidad", action="calidad", 
-                url=host, thumbnail=thumb_pelis, extra="peliculas"))
+                url=host, thumbnail=thumb_calidad, extra="peliculas"))
     
     itemlist.append(Item(channel=item.channel, title="Series", action="listado", 
                 url=host + "series/page/1", thumbnail=thumb_series, extra="series"))
     itemlist.append(Item(channel=item.channel, title="    - por Año", action="anno", 
-                url=host, thumbnail=thumb_pelis, extra="series"))
+                url=host, thumbnail=thumb_anno, extra="series"))
     
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search",
                 url=host, thumbnail=thumb_buscar, extra="search"))
@@ -199,15 +194,28 @@ def listado(item):                                                              
     
     curr_page = 1                                                               # Página inicial
     last_page = 99999                                                           # Última página inicial
+    last_page_print = 1                                                         # Última página inicial, para píe de página
+    page_factor = 1.0                                                           # Factor de conversión de pag. web a pag. Alfa
     if item.curr_page:
         curr_page = int(item.curr_page)                                         # Si viene de una pasada anterior, lo usamos
         del item.curr_page                                                      # ... y lo borramos
     if item.last_page:
         last_page = int(item.last_page)                                         # Si viene de una pasada anterior, lo usamos
         del item.last_page                                                      # ... y lo borramos
+    if item.page_factor:
+        page_factor = float(item.page_factor)                                   # Si viene de una pasada anterior, lo usamos
+        del item.page_factor                                                    # ... y lo borramos
+    if item.last_page_print:
+        last_page_print = item.last_page_print                                  # Si viene de una pasada anterior, lo usamos
+        del item.last_page_print                                                # ... y lo borramos
     
     cnt_tot = 30                                                                # Poner el num. máximo de items por página
     cnt_title = 0                                                               # Contador de líneas insertadas en Itemlist
+    if item.cnt_tot_match:
+        cnt_tot_match = float(item.cnt_tot_match)                               # restauramos el contador TOTAL de líneas procesadas de matches
+        del item.cnt_tot_match
+    else:
+        cnt_tot_match = 0.0                                                     # Contador TOTAL de líneas procesadas de matches
     inicio = time.time()                                    # Controlaremos que el proceso no exceda de un tiempo razonable
     fin = inicio + 5                                                            # Después de este tiempo pintamos (segundos)
     timeout_search = timeout * 2                                                # Timeout para descargas
@@ -292,8 +300,10 @@ def listado(item):                                                              
             patron_last += '(\d+)<\/a><\/li>\s*<li>\s*<a\s*class="next page-numbers"\s*href="[^"]+">»<\/a><\/li>\s*<\/ul>'
             try:
                 last_page = int(scrapertools.find_single_match(data, patron_last))
+                page_factor = float(len(matches)) / float(cnt_tot)
             except:                                                             #Si no lo encuentra, lo ponemos a 999
                 last_page = 1
+                last_page_print = int((float(len(matches)) / float(cnt_tot)) + 0.999999)
 
             #logger.debug('curr_page: ' + str(curr_page) + ' / last_page: ' + str(last_page))
         
@@ -375,8 +385,8 @@ def listado(item):                                                              
                     item_local.quality = '4K'
                 if '3d' in scrapedquality.lower() and not '3d' in item_local.quality.lower():
                     item_local.quality += ', 3D'
-                if not item_local.quality:
-                    item_local.quality = '720p'
+            if not item_local.quality:
+                item_local.quality = '720p'
                 
             item_local.thumbnail = ''                                           #iniciamos thumbnail
 
@@ -403,8 +413,11 @@ def listado(item):                                                              
 
             #Analizamos el año.  Si no está claro ponemos '-'
             item_local.infoLabels["year"] = '-'
-            if 'anno' in item.extra2:
-                item_local.infoLabels["year"] = item.extra2.replace('anno', '')
+            try:
+                if 'anno' in item.extra2:
+                    item_local.infoLabels["year"] = int(item.extra2.replace('anno', ''))
+            except:
+                pass
             
             #Terminamos de limpiar el título
             title = re.sub(r'[\(|\[]\s+[\)|\]]', '', title)
@@ -441,6 +454,7 @@ def listado(item):                                                              
             #logger.debug(item_local)
     
         matches = matches[cnt_match:]                                           # Salvamos la entradas no procesadas
+        cnt_tot_match += cnt_match                                              # Calcular el num. total de items mostrados
     
     #Pasamos a TMDB la lista completa Itemlist
     tmdb.set_infoLabels(itemlist, __modo_grafico__, idioma_busqueda='es')
@@ -450,15 +464,21 @@ def listado(item):                                                              
 
     # Si es necesario añadir paginacion
     if curr_page <= last_page or len(matches) > 0:
+        curr_page_print = int(cnt_tot_match / float(cnt_tot))
+        if curr_page_print < 1:
+            curr_page_print = 1
         if last_page:
-            title = '%s de %s' % (curr_page-1, last_page)
+            if last_page > 1:
+                last_page_print = int((last_page * page_factor) + 0.999999)
+            title = '%s de %s' % (curr_page_print, last_page_print)
         else:
-            title = '%s' % curr_page-1
+            title = '%s' % curr_page_print
 
         itemlist.append(Item(channel=item.channel, action="listado", title=">> Página siguiente " 
                         + title, title_lista=title_lista, url=next_page_url, extra=item.extra, 
                         extra2=item.extra2, last_page=str(last_page), curr_page=str(curr_page), 
-                        matches=matches, post=post))
+                        page_factor=str(page_factor), cnt_tot_match=str(cnt_tot_match), matches=matches, 
+                        last_page_print=last_page_print, post=post))
 
     return itemlist
 
@@ -487,7 +507,8 @@ def findvideos(item):
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if (not data and not item.matches) or code == 999:
         if item.emergency_urls and not item.videolibray_emergency_urls:         #Hay urls de emergencia?
-            matches = item.emergency_urls[1]                                    #Restauramos matches de vídeos
+            if len(item.emergency_urls) > 1:
+                matches = item.emergency_urls[1]                                #Restauramos matches de vídeos
             item.armagedon = True                                               #Marcamos la situación como catastrófica 
         else:
             if item.videolibray_emergency_urls:                                 #Si es llamado desde creación de Videoteca...
@@ -618,7 +639,12 @@ def findvideos(item):
                         .replace("()", "").replace("(/)", "").replace("[/]", "")\
                         .replace("|", "").strip()
         
-        item_local.alive = "??"                                                 #Calidad del link sin verificar
+        if not size or 'Magnet' in size:
+            item_local.alive = "??"                                             #Calidad del link sin verificar
+        elif 'ERROR' in size:
+            item_local.alive = "no"                                             #Calidad del link en error
+        else:
+            item_local.alive = "ok"                                             #Calidad del link verificada
         item_local.action = "play"                                              #Visualizar vídeo
         item_local.server = "torrent"                                           #Seridor Torrent
         
@@ -754,19 +780,26 @@ def episodios(item):
                 del item_local.season_colapse
 
             item_local.url = url                                                # Usamos las url de la temporada, no hay de episodio
-            item.matches = [matches[x]]                                         # Salvado Matches de cada episodio
+            item_local.matches = []
+            item_local.matches.append(matches[x])                               # Salvado Matches de cada episodio
             x += 1
             item_local.context = "['buscar_trailer']"
             if not item_local.infoLabels['poster_path']:
                 item_local.thumbnail = item_local.infoLabels['thumbnail']
             
             # Extraemos números de temporada y episodio
-            item_local.contentSeason = season_num
-            item_local.contentEpisodeNumber = episode_num
+            try:
+                item_local.contentSeason = int(season_num)
+            except:
+                item_local.contentSeason = 1
+            try:
+                item_local.contentEpisodeNumber = int(episode_num)
+            except:
+                item_local.contentEpisodeNumber = 0
 
             item_local.title = '%sx%s - ' % (str(item_local.contentSeason), 
                         str(item_local.contentEpisodeNumber).zfill(2))
-            
+
             # Procesamos Calidad
             if scrapedquality:
                 item_local.quality = scrapertools.remove_htmltags(scrapedquality)   # iniciamos calidad
@@ -778,8 +811,8 @@ def episodios(item):
                     item_local.quality = '4K'
                 if '3d' in scrapedquality.lower() and not '3d' in item_local.quality.lower():
                     item_local.quality += ', 3D'
-                if not item_local.quality:
-                    item_local.quality = '720p'
+            if not item_local.quality:
+                item_local.quality = '720p'
             
             # Comprobamos si hay más de un enlace por episodio, entonces los agrupamos
             if len(itemlist) > 0 and item_local.contentSeason == itemlist[-1].contentSeason \
@@ -790,6 +823,7 @@ def episodios(item):
                         itemlist[-1].quality += ", " + item_local.quality       # ... pero acumulamos las calidades
                 else:
                     itemlist[-1].quality = item_local.quality
+                itemlist[-1].matches.append(item_local.matches[0])              # Salvado Matches en el episodio anterior
                 continue                                                        # ignoramos el episodio duplicado
             
             if season_display > 0:                                              # Son de la temporada estos episodios?
@@ -810,7 +844,7 @@ def episodios(item):
         itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))       #clasificamos
         
     if item.season_colapse and not item.add_videolibrary:                       #Si viene de listado, mostramos solo Temporadas
-        item, itemlist = generictools.post_tmdb_seasons(item, itemlist, url='episode')
+        item, itemlist = generictools.post_tmdb_seasons(item, itemlist)
 
     if not item.season_colapse:                                                 #Si no es pantalla de Temporadas, pintamos todo
         # Pasada por TMDB y clasificación de lista por temporada y episodio
