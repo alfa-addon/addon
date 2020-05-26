@@ -11,7 +11,7 @@ from platformcode import logger
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
-    if "no longer exists" in data:
+    if "no longer exists" in data or "Removed by user" in data or "Method Not Allowed" in data:
         return False, "[videobb] El video ha sido borrado"
     return True, ""
 
