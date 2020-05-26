@@ -111,7 +111,7 @@ def lista(item):
         stime =scrapertools.find_single_match(stime,'(\d+:\d+)')
         title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=url,
+        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))
     try:
         next_page = soup.find('a', class_='g1-delta g1-delta-1st next')['href']

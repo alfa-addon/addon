@@ -54,12 +54,13 @@ def categorias(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    data = scrapertools.find_single_match(data, '<h1>(.*?)<h1>Community</h1>')
-    patron = '<h2><a href="([^"]+)">([^<]+)</a>.*?'
+    patron = '<div class="item video-category".*?'
+    patron += '<a href="([^"]+)".*?' 
     patron += 'src="([^"]+)".*?'
-    patron += '<span class="contentquantity">([^<]+)</span>'
+    patron += '>([^<]+)</a></h2>.*?'
+    patron += '<h2>(\d+)</h2>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedtitle,scrapedthumbnail,cantidad in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         title = "%s (%s)" %(scrapedtitle,cantidad)
@@ -73,14 +74,12 @@ def lista(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<div class="item" style="width: 320px">.*?'
+    patron = '<div class="item">.*?'
     patron += '<a href="([^"]+)".*?'
-    patron += '<img.*?src="([^"]+)".*?'
-    patron += '>(.*?)<div class="trailer".*?'
-    patron += 'title="([^"]+)".*?'
-    patron += 'clock"></use></svg>([^<]+)</span>'
+    patron += 'src="([^"]+)" alt="([^"]+)"(.*?)'
+    patron += '<span class="time">([^<]+)<.*?'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,quality,scrapedtitle,scrapedtime in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle,quality,scrapedtime in matches:
         title = "[COLOR yellow]%s[/COLOR] %s" % (scrapedtime,scrapedtitle)
         if "flag-hd" in quality:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (scrapedtime,scrapedtitle)
