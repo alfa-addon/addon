@@ -112,7 +112,7 @@ def lista(item):
         contentTitle = title
         thumbnail = scrapedthumbnail
         plot = ""
-        if not "manyvids" in title:
+        if not "manyvids" in url:
             itemlist.append( Item(channel=item.channel, action="findvideos" , title=title , url=url, thumbnail=thumbnail, 
                               fanart=scrapedthumbnail, plot=plot, contentTitle = contentTitle) )
     next_page_url = scrapertools.find_single_match(data,'<a class="next page-numbers" href="([^"]+)">Next page')
@@ -124,16 +124,14 @@ def lista(item):
 
 
 def findvideos(item):
-    logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data= scrapertools.find_single_match(data, '<div class="entry-content">(.*?)</div>')
-    matches = scrapertools.find_multiple_matches(data, '<a href="([^"]+)" [^<]+>Streaming')
-    matches = re.compile('<a href="([^"]+)" [^>]+>Streaming',re.DOTALL).findall(data)
-    if not matches:
-        matches = re.compile('<a href="([^"]+.mp4)',re.DOTALL).findall(data)
-    for scrapedurl in matches:
-        itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=scrapedurl))
+    data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
+    patron = '<a href="([^"]+)" rel="nofollow[^<]+>(?:Streaming|Download)'
+    matches = scrapertools.find_multiple_matches(data, patron)
+    for url in matches:
+        if not "ubiqfile" in url:
+            itemlist.append(item.clone(action='play',title="%s", contentTitle=item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)

@@ -128,6 +128,7 @@ def findvideos(item):
     soup = create_soup(item.url).find_all('iframe')
     for elem in soup:
         url = elem['src']
+        url = url.replace("dood.to", "dood.watch")
         itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     # Requerido para FilterTools

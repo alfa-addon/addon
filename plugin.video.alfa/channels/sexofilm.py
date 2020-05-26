@@ -11,6 +11,8 @@ from core import httptools
 host = 'http://sexofilm.com'
 
 # SOLOS LOS LINKS DE 2020, todo lo anterior sin videos
+# TIMELIG
+
 def mainlist(item):
     logger.info()
     itemlist = []
@@ -81,7 +83,7 @@ def play(item):
         url = scrapertools.find_single_match(data,'<source src=\'([^\']+)\'')
     itemlist = servertools.find_video_items(item.clone(url = item.url))
     if url:
-        itemlist.append(item.clone(action="play", title= url, url=url, contentTitle = item.title))
+        itemlist.append(item.clone(action="play", title= url, url=url, contentTitle = item.title, timeout=40))
     return itemlist
 
 
