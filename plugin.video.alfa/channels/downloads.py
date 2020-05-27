@@ -61,13 +61,21 @@ def mainlist(item):
                 # Comprobamos que la serie no este ya en el itemlist
                 if not [x for x in itemlist if x.contentSerieName == i.contentSerieName and x.contentChannel == i.contentChannel]:
 
-                    title = TITLE_TVSHOW % (
-                        STATUS_COLORS[i.downloadStatus], i.downloadProgress, i.contentSerieName, i.contentChannel)
+                    i_bis = Item.clone(i)
+                    title = TITLE_FILE % (
+                        STATUS_COLORS[i.downloadStatus], i.downloadProgress, i.contentSerieName)
+                    if i_bis.infoLabels['season']: del i_bis.infoLabels['season']
+                    if i_bis.infoLabels['episode']: del i_bis.infoLabels['episode']
+                    if i_bis.infoLabels['title']: del i_bis.infoLabels['title']
+                    itemlist.append(i_bis.clone(channel="downloads", action="mainlist", title=title, 
+                                                contentType="tvshow", downloadProgress=[i.downloadProgress]))
 
+                    """
                     itemlist.append(Item(title=title, channel="downloads", action="mainlist", contentType="tvshow",
                                          contentSerieName=i.contentSerieName, contentChannel=i.contentChannel,
                                          downloadStatus=i.downloadStatus, downloadProgress=[i.downloadProgress],
                                          fanart=i.fanart, thumbnail=i.thumbnail))
+                    """
 
                 else:
                     s = [x for x in itemlist if x.contentSerieName == i.contentSerieName and x.contentChannel == i.contentChannel][0]
@@ -78,8 +86,8 @@ def mainlist(item):
                         STATUS_CODES.completed, STATUS_CODES.stoped]:
                         s.downloadStatus = i.downloadStatus
 
-                    s.title = TITLE_TVSHOW % (
-                        STATUS_COLORS[s.downloadStatus], downloadProgress, i.contentSerieName, i.contentChannel)
+                    s.title = TITLE_FILE % (
+                        STATUS_COLORS[s.downloadStatus], downloadProgress, i.contentSerieName)
 
             # Peliculas
             elif i.contentType == "movie" or i.contentType == "video":
@@ -90,7 +98,9 @@ def mainlist(item):
         else:
             if i.contentType == "episode" and i.contentSerieName == item.contentSerieName and i.contentChannel == item.contentChannel:
                 i.title = TITLE_FILE % (STATUS_COLORS[i.downloadStatus], i.downloadProgress,
-                                        "%dx%0.2d: %s" % (i.contentSeason, i.contentEpisodeNumber, i.contentTitle))
+                                        "%dx%0.2d: %s [%s] [%s]" % (i.contentSeason, i.contentEpisodeNumber, 
+                                        i.contentTitle, scrapertools.find_single_match(i.infoLabels['aired'], '\d{4}'), 
+                                        str(i.infoLabels['rating']).zfill(1)))
                 itemlist.append(i)
 
     estados = [i.downloadStatus for i in itemlist]
@@ -226,6 +236,7 @@ def restart_error(item):
                 if download_item.downloadStatus == STATUS_CODES.error:
                     if download_item.server == 'torrent':
                         delete_torrent_session(download_item)
+                        download_item.downloadServer = {}
                     
                     else:
                         if filetools.isfile(filetools.join(config.get_setting("downloadpath"), download_item.downloadFilename)):
@@ -237,8 +248,13 @@ def restart_error(item):
                                 filetools.rmdirtree(filetools.join(config.get_setting("downloadpath"), \
                                         filetools.dirname(download_item.downloadFilename)), silent=True)
 
+                    contentAction = download_item.contentAction
+                    if download_item.contentAction == 'play' and not download_item.downloadServer and not download_item.torr_folder:
+                        contentAction = 'findvideos'
                     update_json(fichero,
-                                {"downloadStatus": STATUS_CODES.stoped, "downloadCompleted": 0, "downloadProgress": 0, "downloadQueued": 0})
+                                {"downloadStatus": STATUS_CODES.stoped, "downloadCompleted": 0, \
+                                            "downloadProgress": 0, "downloadQueued": download_item.downloadQueued, \
+                                            "contentAction": contentAction})
 
     platformtools.itemlist_refresh()
 
@@ -254,6 +270,7 @@ def restart_all(item):
 
                 if download_item.server == 'torrent':
                     delete_torrent_session(download_item)
+                    download_item.downloadServer = {}
                 
                 else:
                     if filetools.isfile(filetools.join(config.get_setting("downloadpath"), download_item.downloadFilename)):
@@ -265,8 +282,13 @@ def restart_all(item):
                             filetools.rmdirtree(filetools.join(config.get_setting("downloadpath"), \
                                     filetools.dirname(download_item.downloadFilename)), silent=True)
 
+                contentAction = download_item.contentAction
+                if download_item.contentAction == 'play' and not download_item.downloadServer and not download_item.torr_folder:
+                    contentAction = 'findvideos'
                 update_json(fichero,
-                            {"downloadStatus": STATUS_CODES.stoped, "downloadCompleted": 0, "downloadProgress": 0, "downloadQueued": 0})
+                            {"downloadStatus": STATUS_CODES.stoped, "downloadCompleted": 0, \
+                                        "downloadProgress": 0, "downloadQueued": download_item.downloadQueued, \
+                                        "contentAction": contentAction})
 
     platformtools.itemlist_refresh()
 
@@ -425,7 +447,9 @@ def menu(item):
     if opciones[seleccion] == op[2] or opciones[seleccion] == op[4]:
 
         if item.server == 'torrent':
-            delete_torrent_session(item)
+            delete_RAR = True
+            if opciones[seleccion] == op[2]: delete_RAR = False
+            delete_torrent_session(item, delete_RAR)
         
         else:
             if filetools.isfile(filetools.join(config.get_setting("downloadpath"), item.downloadFilename)):
@@ -449,20 +473,24 @@ def menu(item):
     platformtools.itemlist_refresh()
 
 
-def delete_torrent_session(item):
-    logger.info()
-    
+def delete_torrent_session(item, delete_RAR=True):
+    if not delete_RAR and 'RAR-' not in item.torr_info:
+        delete_RAR = True
+    logger.info('delete_RAR: %s' % str(delete_RAR))
+
     # Detiene y borra la descarga de forma específica al gestor de torrent en uso
     torr_data = ''
     deamon_url = ''
     index = -1
     filebase = ''
     folder_new = ''
-    
+
     # Obtenemos los datos del gestor de torrents
     torrent_paths = torrent.torrent_dirs()
     torr_client = scrapertools.find_single_match(item.downloadFilename, '^\:(\w+)\:')
-    folder_new = filetools.dirname(scrapertools.find_single_match(item.downloadFilename, '^\:\w+\:\s*(.*?)$'))
+    folder_new = scrapertools.find_single_match(item.downloadFilename, '^\:\w+\:\s*(.*?)$')
+    if filetools.dirname(folder_new):
+        folder_new = filetools.dirname(folder_new)
     if item.torr_folder:
         folder = item.torr_folder
     else:
@@ -485,6 +513,7 @@ def delete_torrent_session(item):
 
     # Detiene y borra la sesion de los clientes externos Quasar y Elementum
     if torr_client in ['QUASAR', 'ELEMENTUM']:
+        if not delete_RAR: folder_new = ''
         torr_data, deamon_url, index = torrent.get_tclient_data(folder, torr_client.lower(), \
                                 torrent_paths['ELEMENTUM_port'], delete=True, folder_new=folder_new)
         
@@ -505,7 +534,7 @@ def delete_torrent_session(item):
                 time.sleep(8)
             
         downloadFilename = scrapertools.find_single_match(item.downloadFilename, '\:\w+\:\s*(.*?)$')
-        if downloadFilename:
+        if downloadFilename and delete_RAR:
             if downloadFilename.startswith('\\') or downloadFilename.startswith('/'):
                 downloadFilename = downloadFilename[1:]
             downloadFolder = filetools.dirname(downloadFilename)
@@ -782,7 +811,7 @@ def download_from_url(url, item):
 
 
 def download_from_server(item, silent=False):
-    logger.info()
+    logger.info(item)
     
     unsupported_servers = ["torrent"]
     result = {}
@@ -853,6 +882,7 @@ def download_from_server(item, silent=False):
         if not PATH:
             result["contentAction"] = item.contentAction
             result["downloadServer"] = {"url": item.url, "server": item.server}
+            result["server"] = item.server
             result["downloadQueued"] = 0
             result["downloadProgress"] = 0
             result["downloadStatus"] = STATUS_CODES.error
@@ -884,6 +914,7 @@ def download_from_server(item, silent=False):
 
         result["contentAction"] = item.contentAction
         result["downloadServer"] = {"url": item.url, "server": item.server}
+        result["server"] = item.server
         result["downloadProgress"] = 1
         result["downloadQueued"] = 1
         if item.downloadStatus == 0:
@@ -960,7 +991,7 @@ def download_from_best_server(item, silent=False):
             item.clone(action=item.contentAction, channel=item.contentChannel))
     else:
         play_items = servertools.find_video_items(item.clone(action=item.contentAction, channel=item.contentChannel))
-
+    
     play_items = [x for x in play_items if x.action == "play" and not "trailer" in x.title.lower()]
 
     if not silent: progreso.update(100, config.get_localized_string(70183), config.get_localized_string(70181) % len(play_items),
@@ -1270,6 +1301,14 @@ def get_episodes(item):
         # Cualquier otro resultado no nos vale, lo ignoramos
         else:
             logger.info("Omitiendo item no válido: %s" % episode.action)
+            
+    try:
+        from core import tmdb
+        if len(itemlist) > 1:
+            itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))
+        tmdb.set_infoLabels(itemlist, True, idioma_busqueda='es,en')
+    except:
+        logger.error(traceback.format_exc(1))
 
     return itemlist
 
@@ -1439,9 +1478,14 @@ def save_download_tvshow(item, silent=False):
             i.downloadQueued = 1
             update_json(i.path, {"downloadCompleted": i.downloadCompleted, "downloadQueued": i.downloadQueued})
         for i in episodes:
-            res = start_download(i)
-            if res == STATUS_CODES.canceled:
-                break
+            time.sleep(0.5)
+            if filetools.exists(filetools.join(DOWNLOAD_LIST_PATH, i.path)):
+                res = start_download(i)
+                if res == STATUS_CODES.canceled:
+                    break
+            else:
+                logger.info("Episodio BORRADO: Serie: %s | Episode: %sx%s | Archivo: %s" % \
+                            (i.contentSerieName, str(i.contentSeason), str(i.contentEpisodeNumber).zfill(2), i.path))
 
 
 def set_movie_title(item):

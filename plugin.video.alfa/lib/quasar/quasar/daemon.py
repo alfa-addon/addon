@@ -274,7 +274,8 @@ def wait_for_abortRequested(proc, monitor):
 def quasard_thread(monitor):
     crash_count = 0
     try:
-        while not xbmc.abortRequested:
+        monitor_abort = xbmc.Monitor()  # For Kodi >= 14
+        while not monitor_abort.abortRequested():
             log.info("quasard: starting quasard")
             proc = start_quasard(stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if not proc:
@@ -305,7 +306,7 @@ def quasard_thread(monitor):
                         time.sleep(1)  # nothing to read, sleep
 
             log.info("quasard: proc.return code: %s" % str(proc.returncode))
-            if proc.returncode == 0 or xbmc.abortRequested:
+            if proc.returncode == 0 or monitor_abort.abortRequested():
                 break
 
             crash_count += 1

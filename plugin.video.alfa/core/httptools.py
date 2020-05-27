@@ -52,7 +52,7 @@ ficherocookies = os.path.join(config.get_data_path(), "cookies.dat")
 # Headers por defecto, si no se especifica nada
 default_headers = dict()
 #default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) Chrome/79.0.3945.117"
-default_headers["User-Agent"] = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.92 Safari/537.36"
+default_headers["User-Agent"] = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36"
 default_headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
 default_headers["Accept-Language"] = "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3"
 default_headers["Accept-Charset"] = "UTF-8"
@@ -295,6 +295,7 @@ def check_proxy(url, **opt):
                 if proxy_addr_forced: proxy_data['CF_addr'] = proxy_addr_forced
                 proxy_data['dict'] = proxy_data['CF_addr']
                 proxy_data['stat'] = ', Proxy CF ' + proxy_data['log']
+                opt['CF'] = True
             elif proxy and proxy_addr_forced:
                 proxy_data['addr'] = proxy_addr_forced
                 proxy_data['dict'] = proxy_data['addr']
@@ -330,6 +331,7 @@ def check_proxy(url, **opt):
                     proxy = True
                     proxy_data['dict'] = proxy_data['CF_addr']
                     proxy_data['stat'] = ', Proxy CF ' + proxy_data['log']
+                    opt['CF'] = True
                 elif proxy_data['addr']:
                     proxy = True
                     proxy_data['dict'] = proxy_data['addr']
@@ -390,6 +392,7 @@ def proxy_post_processing(url, proxy_data, response, opt):
                     opt['forced_proxy'] = 'ProxyCF'
                     url =opt['url_save']
                     opt['post'] = opt['post_save']
+                    opt['CF'] = True
                 else:
                     proxytools.get_proxy_list_method(proxy_init='ProxyWeb',
                                                      error_skip=proxy_data['web_name'])
@@ -481,7 +484,7 @@ def downloadpage(url, **opt):
 
         domain = urlparse.urlparse(url)[1]
         global CS_stat
-        if domain in CF_LIST or opt.get('CF', False):                         #Está en la lista de CF o viene en la llamada
+        if domain in CF_LIST or opt.get('CF', False):                           #Está en la lista de CF o viene en la llamada
             from lib import cloudscraper
             session = cloudscraper.create_scraper()                             #El dominio necesita CloudScraper
             session.verify = True
