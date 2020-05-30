@@ -439,6 +439,7 @@ class main(xbmcgui.WindowDialog):
             while thread1.isAlive():
                 xbmc.sleep(100)
         for idp, peli, thumb in self.recomendaciones:
+            if thumb is None: continue
             if self.item.contentType == "movie":
                 peli = "[COLOR yellow][B]" + peli + "[/B][/COLOR]"
             else:
@@ -1219,8 +1220,6 @@ class related(xbmcgui.WindowDialog):
 
 def busqueda_global(item, infoLabels, org_title=False):
     logger.info()
-
-    logger.debug(item)
 
     if item.contentType != "movie":
         cat = ["serie"]
