@@ -7,6 +7,7 @@ import re
 from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
+from core import servertools
 from core import tmdb, jsontools
 from core.item import Item
 from platformcode import config, logger
@@ -220,7 +221,6 @@ def findvideos(item):
 
     soup = create_soup(item.url)
     matches = soup.find_all("ul", class_="menuPlayer")
-
     for elem in matches:
         lang = re.sub("servidores-", '', elem["id"])
         for opt in elem.find_all("li", class_="option"):
@@ -295,8 +295,13 @@ def newest(categoria):
 
 
 def play(item):
+    itemlist = list()
+
     soup = create_soup(item.url)
     url = soup.find("a", id="DownloadScript")["href"]
+    item.server = ""
+    itemlist.append(item.clone(url=url))
 
-    return [item.clone(url=url)]
+    itemlist = servertools.get_servers_itemlist(itemlist)
+    return itemlist
 
