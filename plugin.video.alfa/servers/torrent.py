@@ -269,7 +269,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
             if (rar and RAR and BACKGROUND) or bkg_user:
                 progreso.update(s.buffer, txt, txt2 + '[CR]' + txt3)
             else:
-                progreso.update(s.buffer, txt, txt2, txt3)
+                progreso.update(s.buffer, txt + '\n' + txt2 + '\n' + txt3 + '\n' + " ")
             time.sleep(1)
             if ((s.progress_file > 1 and (str(x).endswith('0') or str(x).endswith('5'))) \
                         or (s.progress_file == 0 and x > 30)) and not filetools.exists(torrent_path):
@@ -423,7 +423,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
                 # Cuando este cerrado,  Volvemos a mostrar el dialogo
                 if not (rar and bkg_user):
                     progreso = platformtools.dialog_progress(msg_header, '')
-                    progreso.update(s.buffer, txt, txt2, txt3)
+                    progreso.update(s.buffer, txt + '\n' + txt2 + '\n' + txt3 + '\n' + " ")
                     dp_cerrado = False
                     
                 break
@@ -435,7 +435,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
         if rar or bkg_user:
             progreso.update(100, config.get_localized_string(70200), " ")
         else:
-            progreso.update(100, config.get_localized_string(70200), " ", " ")
+            progreso.update(100, config.get_localized_string(70200) + '\n' + " " + '\n' + " " )
 
     # Detenemos el cliente
     if activo and not c.closed:
@@ -983,6 +983,10 @@ def update_control(item):
         item_control = item.clone()
         item_control.server = 'torrent'
         item_control.contentAction = 'play'
+        item_control.unify = True
+        del item_control.unify
+        item_control.folder = True
+        del item_control.folder
         if item.category:
             item_control.contentChannel = generictools.verify_channel(item.category.lower())
         else:
@@ -1023,7 +1027,7 @@ def update_control(item):
             item_control.downloadProgress = item.downloadProgress
             item_control.downloadFilename = item.downloadFilename
             item_control.torr_folder = item.torr_folder
-            item_control.torr_info = item.torr_info
+            item_control.torrent_info = item.torrent_info
             if not item.url.startswith('magnet:') and item.contentAction == 'play' and item.server and item.downloadProgress:
                 item.downloadServer = {"url": item.url, "server": item.server}
             item_control.downloadServer = item.downloadServer

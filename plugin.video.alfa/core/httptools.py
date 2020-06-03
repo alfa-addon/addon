@@ -639,7 +639,10 @@ def downloadpage(url, **opt):
         if not response['data']:
             response['data'] = ''
         try:
-            response['json'] = to_utf8(req.json())
+            if 'Content-Type' in req.headers and 'json' in req.headers['Content-Type']:
+                response['json'] = to_utf8(req.json())
+            else:
+                response['json'] = dict()
         except:
             response['json'] = dict()
         response['code'] = response_code

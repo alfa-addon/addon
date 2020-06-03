@@ -31,6 +31,22 @@ from quasar.dialog_insert import DialogInsert
 
 XBMC_PLAYER = xbmc.Player()
 
+def makeMessage(*args, **kwargs):
+    heading = 'Quasar'
+    message = ''
+    for x, value in enumerate(args):
+        if x == 0:
+            heading = value
+            continue
+        if x == 1:
+            message = value
+            continue
+        message += '\n' + value
+    for key, value in kwargs.items():
+        message += '\n' + value
+    return heading, message
+
+
 class QuasarRPCServer(BaseHandler):
     public_methods_pattern = r'^[A-Za-z]\w+$'
 
@@ -274,14 +290,20 @@ class QuasarRPCServer(BaseHandler):
     def DialogProgress_Create(self, *args, **kwargs):
         dialog = xbmcgui.DialogProgress()
         self._objects[id(dialog)] = dialog
-        dialog.create(*args, **kwargs)
+        #dialog.create(*args, **kwargs)
+        heading, message = makeMessage(*args, **kwargs)
+        dialog.create(heading, message)
         return id(dialog)
 
     def DialogProgress_IsCanceled(self, hwnd, *args, **kwargs):
-        return int(self._objects[hwnd].iscanceled(*args, **kwargs))
+        #return int(self._objects[hwnd].iscanceled(*args, **kwargs))
+        heading, message = makeMessage(*args, **kwargs)
+        return int(self._objects[hwnd].iscanceled(heading, message))
 
     def DialogProgress_Update(self, hwnd, *args, **kwargs):
-        return self._objects[hwnd].update(*args, **kwargs)
+        #return self._objects[hwnd].update(*args, **kwargs)
+        heading, message = makeMessage(*args, **kwargs)
+        return self._objects[hwnd].update(heading, message)
 
     def DialogProgress_Close(self, hwnd, *args, **kwargs):
         dialog = self._objects.pop(hwnd)
