@@ -64,23 +64,19 @@ def mainlist(item):
                 url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_cartelera, 
                 extra="Películas"))
     item.url_plus = "peliculas-hd/"
-    itemlist.append(Item(channel=item.channel, title="Películas HD", action="categorias", 
+    itemlist.append(Item(channel=item.channel, title="    - Películas HD", action="categorias", 
                 url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, 
                 extra="Películas HD"))
     item.url_plus = "peliculas-dvdr/"
-    itemlist.append(Item(channel=item.channel, title="Películas DVDR", action="categorias", 
+    itemlist.append(Item(channel=item.channel, title="    - Películas DVDR", action="categorias", 
                 url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, 
                 extra="Películas DVDR"))
     item.url_plus = "peliculas-3-d/"
-    itemlist.append(Item(channel=item.channel, title="Películas 3D", action="categorias", 
+    itemlist.append(Item(channel=item.channel, title="    - Películas 3D", action="categorias", 
                 url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, 
                 extra="Películas 3D"))
-
-    itemlist.append(Item(channel=item.channel, url=host, title="", folder=False, thumbnail=thumb_separador))
     
     itemlist.append(Item(channel=item.channel, url=host, title="Series", action="submenu", thumbnail=thumb_series, extra="series"))
-
-    itemlist.append(Item(channel=item.channel, url=host, title="", folder=False, thumbnail=thumb_separador))
     
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + "?s=%s", thumbnail=thumb_buscar, extra="search"))
 

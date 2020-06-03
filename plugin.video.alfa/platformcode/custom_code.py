@@ -242,13 +242,13 @@ def update_external_addon(addon_name):
                 for root, folders, files in filetools.walk(alfa_addon_updates):
                     for file in files:
                         input_file = filetools.join(root, file)
-                        output_file = input_file.replace(alfa_addon_updates, addon_path)
+                        output_file = input_file.replace(alfa_addon_updates, addon_path_mig)
                         if not filetools.copy(input_file, output_file, silent=True):
                             logger.error('Error en la copia: Input: %s o Output: %s' % (input_file, output_file))
                             return False
                 return True
             else:
-                logger.error('Alguna carpeta no existe: Alfa: %s o %s: %s' % (alfa_addon_updates, addon_name, addon_path))
+                logger.error('Alguna carpeta no existe: Alfa: %s o %s: %s' % (alfa_addon_updates, addon_name, addon_path_mig))
         # Se ha desinstalado Quasar, reseteamos la opción
         else:
             config.set_setting('addon_quasar_update', False)

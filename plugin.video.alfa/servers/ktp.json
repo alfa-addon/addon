@@ -22,6 +22,10 @@
       {
         "pattern": "(https://severeporn.com/embed/\\w+)",
         "url": "\\1"
+      },
+      {
+        "pattern": "(https://datoporn.co/embed-[A-z0-9-]+.html)",
+        "url": "\\1"
       }
     ]
   },

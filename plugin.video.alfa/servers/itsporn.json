@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://www.tubeon.com/es/video/([0-9]+)/",
+        "pattern": "(https://(?:www.|)its.porn/video/[A-z0-9-]+/)",
         "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "tubeon",
-  "name": "tubeon",
+  "id": "itsporn",
+  "name": "itsporn",
   "settings": [
     {
       "default": false,

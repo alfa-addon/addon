@@ -111,7 +111,7 @@ def lista(item):
         stime =scrapertools.find_single_match(stime,'(\d+:\d+)')
         title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=url,
+        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, contentTitle=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))
     try:
         next_page = soup.find('a', class_='g1-delta g1-delta-1st next')['href']
@@ -128,6 +128,7 @@ def findvideos(item):
     soup = create_soup(item.url).find_all('iframe')
     for elem in soup:
         url = elem['src']
+        url = url.replace("dood.to", "dood.watch")
         itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=url)) 
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
     # Requerido para FilterTools
