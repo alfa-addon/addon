@@ -86,7 +86,8 @@ def findvideos(item):
     patron = '<(?:iframe src|IFRAME SRC|a href)="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for url in matches:
-        itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
+        if not "0load" in url: #NETU
+            itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language, list_quality)

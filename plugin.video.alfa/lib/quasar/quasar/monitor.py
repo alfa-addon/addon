@@ -29,7 +29,8 @@ class QuasarMonitor(xbmc.Monitor):
 
     def onAbortRequested(self):
         # Only when closing Kodi
-        if xbmc.abortRequested:
+        monitor_abort = xbmc.Monitor()  # For Kodi >= 14
+        if monitor_abort.abortRequested():
             xbmc.executebuiltin("Dialog.Close(all, true)")
             shutdown()
             try:

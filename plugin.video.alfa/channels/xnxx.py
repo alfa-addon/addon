@@ -80,7 +80,7 @@ def lista(item):
         plot = ""
         itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, quality=quality,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
-    next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)" class="no-page next">(?:Next|Siguiente)')
+    next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)" class="no-page next">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
