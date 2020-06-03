@@ -306,7 +306,7 @@ def quasard_thread(monitor):
                         time.sleep(1)  # nothing to read, sleep
 
             log.info("quasard: proc.return code: %s" % str(proc.returncode))
-            if proc.returncode == 0 or monitor_abort.abortRequested():
+            if proc.returncode == 0 or proc.returncode == -9 or monitor_abort.abortRequested():
                 break
 
             crash_count += 1

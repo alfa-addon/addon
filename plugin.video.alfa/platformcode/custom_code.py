@@ -64,16 +64,22 @@ def init():
     """
 
     try:
+        #Verifica si es necsario instalar script.alfa-update-helper
+        verify_script_alfa_update_helper()
+        
         #Borra el .zip de instalación de Alfa de la carpeta Packages, por si está corrupto, y que así se pueda descargar de nuevo
         version = 'plugin.video.alfa-%s.zip' % config.get_addon_version(with_fix=False)
         filetools.remove(filetools.join(xbmc.translatePath('special://home'), 'addons', 'packages', version), True)
         
         #Borrar contenido de carpeta de Torrents
         filetools.rmdirtree(filetools.join(config.get_videolibrary_path(), 'temp_torrents_Alfa'), silent=True)
-        
+
         #Verifica si Kodi tiene algún achivo de Base de Datos de Vídeo de versiones anteriores, entonces los borra
         verify_Kodi_video_DB()
         
+        #Verifica si la Base de Datos de Vídeo tiene la fuente de CINE con useFolderNames=1
+        set_Kodi_video_DB_useFolderNames()
+
         #LIBTORRENT: se descarga el binario de Libtorrent cada vez que se actualiza Alfa
         try:
             threading.Thread(target=update_libtorrent).start()          # Creamos un Thread independiente, hasta el fin de Kodi
@@ -121,6 +127,58 @@ def init():
             logger.error(traceback.format_exc())
     except:
         logger.error(traceback.format_exc())
+
+
+def verify_script_alfa_update_helper():
+    logger.info()
+    
+    import json
+    from zipfile import ZipFile
+    from core import httptools
+    
+    addonid = 'script.alfa-update-helper'
+    package = addonid + '-0.0.1.zip'
+    filetools.remove(filetools.join(xbmc.translatePath('special://home'), 'addons', 'packages', package), True)
+    
+    # Comprobamos si hay acceso a Github
+    url = 'https://github.com/alfa-addon/alfa-repo/raw/master/plugin.video.alfa/addon.xml'
+    response = httptools.downloadpage(url, timeout=5, ignore_response_code=True, alfa_s=True)
+    if response.code != 200 and not bool(xbmc.getCondVisibility("System.HasAddon(%s)" % addonid)):
+        
+        # Si no lo hay, descargamos el Script desde Bitbucket y lo salvamos a disco
+        url = 'https://bitbucket.org/alfa_addon/alfa-repo/raw/master/script.alfa-update-helper/%s' % package
+        response = httptools.downloadpage(url, ignore_response_code=True, alfa_s=True)
+        if response.code == 200:
+            zip_data = response.data
+            addons_path = xbmc.translatePath("special://home/addons")
+            pkg_updated = filetools.join(addons_path, 'packages', package)
+            with open(pkg_updated, "wb") as f:
+                f.write(zip_data)
+            
+            # Verificamos el .zip
+            ret = None
+            try:
+                with ZipFile(pkg_updated, "r") as zf:
+                    ret = zf.testzip()
+            except Exception as e:
+                ret = str(e)
+            if ret is not None:
+                logger.error("Corrupted .zip, error: %s" % (str(ret)))
+            else:
+                # Si el .zip es correcto los extraemos e instalamos
+                with ZipFile(pkg_updated, "r") as zf:
+                    zf.extractall(addons_path)
+
+                logger.info("Installiing %s" % package)
+                xbmc.executebuiltin('UpdateLocalAddons')
+                time.sleep(2)
+                method = "Addons.SetAddonEnabled"
+                xbmc.executeJSONRPC(
+                    '{"jsonrpc": "2.0", "id":1, "method": "%s", "params": {"addonid": "%s", "enabled": true}}' % (method, addonid))
+                profile = json.loads(xbmc.executeJSONRPC('{"jsonrpc": "2.0", "id":1, "method": "Profiles.GetCurrentProfile"}'))
+                logger.info("Reloading Profile...")
+                user = profile["result"]["label"]
+                xbmc.executebuiltin('LoadProfile(%s)' % user)
 
 
 def create_folder_structure(custom_code_dir):
@@ -394,6 +452,23 @@ def verify_Kodi_video_DB():
         
     return
     
+
+def set_Kodi_video_DB_useFolderNames():
+    logger.info()
+    
+    from platformcode import xbmc_videolibrary
+
+    strPath = filetools.join(config.get_setting("videolibrarypath"), config.get_setting("folder_movies"), ' ').strip()
+    scanRecursive = 2147483647
+        
+    sql = 'UPDATE path SET useFolderNames=1 WHERE (strPath="%s" and scanRecursive=%s and strContent="movies" ' \
+                        'and useFolderNames=0)' % (strPath, scanRecursive)
+                      
+    nun_records, records = xbmc_videolibrary.execute_sql_kodi(sql)
+    
+    if nun_records > 0:
+        logger.debug('MyVideos DB updated to Videolibrary %s useFolderNames=1' % config.get_setting("folder_movies"))
+
 
 def reactivate_unrar(init=False, mute=True):
     logger.info()

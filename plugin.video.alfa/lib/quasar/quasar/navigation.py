@@ -142,12 +142,11 @@ def _json(url):
             if xbmc.Player().isPlaying() and ADDON_ID in xbmc.Player().getPlayingFile():
                 xbmc.Player().pause()
             _infoLabels = InfoLabels(getInfoLabels())
-
+            
             item = xbmcgui.ListItem(
-                path=response.geturl(),
-                label=_infoLabels["label"],
-                label2=_infoLabels["label2"],
-                thumbnailImage=_infoLabels["thumbnail"])
+                    path=response.geturl(),
+                    label=_infoLabels["label"],
+                    label2=_infoLabels["label2"])
 
             item.setArt({
                 "thumb": _infoLabels["artthumb"],
@@ -250,7 +249,9 @@ def run(url_suffix=""):
         if item["label2"][0:8] == "LOCALIZE":
             item["label2"] = getLocalizedLabel(item["label2"])
 
-        listItem = xbmcgui.ListItem(label=item["label"], label2=item["label2"], iconImage=item["icon"], thumbnailImage=item["thumbnail"])
+        listItem = xbmcgui.ListItem(label=item["label"], label2=item["label2"])
+        listItem.setArt({'icon': item["icon"]})
+        listItem.setArt({'thumb': item["thumbnail"]})
         if item.get("info"):
             listItem.setInfo("video", item["info"])
         if item.get("stream_info"):

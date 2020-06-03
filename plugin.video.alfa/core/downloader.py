@@ -112,7 +112,7 @@ class Downloader(object):
                 self.speed[1], self.speed[2], self.connections[0], self.connections[1])
             line3 = config.get_localized_string(60202) % (self.remaining_time)
 
-            progreso.update(int(self.progress), line1, line2, line3)
+            progreso.update(int(self.progress), line1 + '\n' + line2 + '\n' + line3 + '\n' + ' ')
         if self.state == self.states.downloading:
             self.stop()
         progreso.close()

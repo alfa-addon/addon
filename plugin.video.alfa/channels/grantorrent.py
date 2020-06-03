@@ -47,12 +47,12 @@ list_servers = ['torrent']
 #host = 'https://grantorrent.la/'
 #host = 'https://grantorrent.li/'
 #host = 'https://grantorrent.cc/'
-#host = 'https://grantorrent.eu/'
-host = 'https://grantorrentt.com/'
+host = 'https://grantorrent.eu/'
+#host = 'https://grantorrentt.com/'
 channel = "grantorrent"
-domain = 'grantorrentt.com'
-sufix = '.com'
-domain_files = 'files.grantorrent.la'
+domain = 'grantorrent.eu'
+sufix = '.eu'
+domain_files = 'files.grantorrent.eu'
 domain_files_old = 'files.grantorrent.eu'
 #domain_files = domain
 sufix_alt = '.com'
@@ -256,7 +256,6 @@ def listado(item):
             video_section = scrapertools.find_single_match(data, '<div class="contenedor-home">(?:\s*<div class="titulo-inicial">\s*Últi.*?Añadi...\s*<\/div>)?\s*<div class="contenedor-imagen">\s*(<div class="imagen-post">.*?<\/div><\/div>)<\/div>')
             if not video_section:
                 video_section = scrapertools.find_single_match(data, '<div class="contenedor-home">(?:\s*<div class="titulo-inicial">.*?<\/div>)?\s*<div class="contenedor-imagen">\s*(<div class="imagen-post">.*?<\/div><\/div>)<\/div>')
-            logger.error(video_section)
         except:
             pass
             
@@ -553,12 +552,15 @@ def findvideos(item):
         data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     data = scrapertools.find_single_match(data, 'div id="Tokyo" [^>]+>(.*?)</div>')     #Seleccionamos la zona de links
     
-    #patron = '\/icono_.*?png"\s*(?:title|alt)="(?P<lang>[^"]+)?"[^>]+><\/td><td>'
     patron = '\/icono_.*?png"\s*(?:title|alt)="(?P<lang>[^"]+)?"[^>]+>.*?<\/td><td>'
     patron += '(?P<temp_epi>.*?)?<?\/td>.*?<td>(?P<quality>.*?)?<\/td><td><a\s*'
-    patron += 'class="link"\s*href="(?P<url>[^"]+)?"'
-    #patron += 'class="link"\s*onclick="'
-    #patron += "post\('(?P<url>[^']+)',\s*{u:\s*'(?P<key>[^']+)'}\);"
+    patron += 'class="link"\s*onclick="'
+    patron += "post\('(?P<url>[^']+)',\s*{u:\s*'(?P<key>[^']+)'}\);"
+    if not scrapertools.find_single_match(data, patron):
+        patron = '\/icono_.*?png"\s*(?:title|alt)="(?P<lang>[^"]+)?"[^>]+>.*?<\/td><td>'
+        patron += '(?P<temp_epi>.*?)?<?\/td>.*?<td>(?P<quality>.*?)?<\/td><td><a\s*'
+        patron += 'class="link"\s*href="(?P<url>[^"]+)?"()'
+    
     if not item.armagedon:                                                      #Si es un proceso normal, seguimos
         matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                                             #error
@@ -590,8 +592,7 @@ def findvideos(item):
         emergency_urls = []
     i = -1
     scrapedkey = ''
-    for lang, quality, size, scrapedurl_la in matches:
-    #for lang, quality, size, scrapedurl_la, scrapedkey in matches:
+    for lang, quality, size, scrapedurl_la, scrapedkey in matches:
         i += 1
         temp_epi = ''
         if scrapedkey:

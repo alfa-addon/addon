@@ -606,6 +606,14 @@
       "visible": false
     },
     {
+      "id": "include_in_newest_torrent",
+      "type": "bool",
+      "label": "Incluir en Novedades - Torrent",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
       "id": "clonenewpct1_timeout_downloadpage",
       "type": "list",
       "label": "Timeout (segs.) en descarga de páginas o verificación de servidores",

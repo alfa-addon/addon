@@ -361,8 +361,6 @@ def title_format(item):
     if hasattr(item,'text_color'):
         item.text_color=''
 
-
-
     if valid and item.unify!=False:
 
         # Formamos el titulo para serie, se debe definir contentSerieName
@@ -404,7 +402,7 @@ def title_format(item):
                 item.title = '%s [Miniserie]' % set_color(item.contentTitle, 'movie')
             elif 'extend' in item.title.lower():
                 item.title = '%s [V.Extend.]' % set_color(item.contentTitle, 'movie')
-            elif item.channel == 'downloads':
+            elif item.channel == 'downloads' or item.from_channel == 'news':
                 item.title = '%s' % set_color(item.title, 'movie')
             else:
                 item.title = '%s' % set_color(item.contentTitle, 'movie')
@@ -413,7 +411,7 @@ def title_format(item):
                     if isinstance(item.context, list):
                         item.context.append('Buscar esta pelicula en otros canales')
 
-        if ('Novedades' in item.category and item.from_channel=='news'):
+        if 'Novedades' in item.category and item.from_channel == 'news' and item.channel not in item.title.lower():
             #logger.debug('novedades')
             item.title = '%s [%s]'%(item.title, item.channel)
 
@@ -503,7 +501,7 @@ def title_format(item):
 
 
         # Para las busquedas por canal
-        if item.from_channel != '':
+        if item.from_channel != '' and item.from_channel != 'news':
             from core import channeltools
             channel_parameters = channeltools.get_channel_parameters(item.from_channel)
             logger.debug(channel_parameters)
