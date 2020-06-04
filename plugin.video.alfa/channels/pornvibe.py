@@ -74,6 +74,7 @@ def lista(item):
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedthumbnail,quality,time,scrapedurl,scrapedtitle in matches:
         quality = scrapertools.find_single_match(quality, '<h6>([^<]+)</h6>')
+        quality = ""  # Solo links SD
         time = scrapertools.find_single_match(time, '<span>([^<]+)</span>')
         title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (time,quality, scrapedtitle)
         thumbnail = scrapedthumbnail

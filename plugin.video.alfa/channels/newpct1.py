@@ -963,16 +963,16 @@ def listado(item):                                                              
 
             #Terminamos de preparar la calidad
             item_local.quality = re.sub(r'(?i)\[es-\w+]|[\s|-]caste\w+|[\s|-]espa\w+|[\s|-|\[]spani\w+|[\s|-].ngl\w+', '', item_local.quality)
-            item_local.quality = re.sub(r'(?i)proper|unrated|directors|cut|repack|internal|real|gratis', '', item_local.quality).strip()
-            item_local.quality = re.sub(r'(?i)extended|masted|docu|super|duper|amzn|uncensored|hulu', '', item_local.quality).strip()
-            item_local.quality = re.sub(r'(?i)[\s|-]latino\s*|[\+|-]*subs|vose\s*|vos\s*', '', item_local.quality).strip()
+            item_local.quality = re.sub(r'(?i)proper|unrated|directors|cut|repack|internal|real|gratis', '', item_local.quality)
+            item_local.quality = re.sub(r'(?i)extended|masted|docu|super|duper|amzn|uncensored|hulu', '', item_local.quality)
+            item_local.quality = re.sub(r'(?i)[\s|-]latino\s*|[\+|-]*subs|vose\s*|vos\s*', '', item_local.quality)
             item_local.quality = re.sub(r'(?i)\[\d{4}\]\s*|\[cap.*?\]\s*|\s*cap\w*\s*|\[docu.*?\]\s*|\[\s*|\]\s*', '', item_local.quality)
-            item_local.quality = item_local.quality.replace("ALTA DEFINICION", "HDTV")
+            item_local.quality = item_local.quality.replace("ALTA DEFINICION", "HDTV").strip()
             
             #Eliminamos Temporada de Series, solo nos interesa la serie completa
             if ("temp" in title.lower() or "cap" in title.lower()) and item_local.contentType != "movie":
-                title = re.sub(r'(?i)(?:-*\s*temp\w+\s*\d+\s*)?(?:cap\w+.?\d+\s*)?(?:al|Al|y)\s*\d+', '', title)
-                title = re.sub(r'(?i)-*\s*temp\w+\s*\d+(?:x\d+)?', '', title)
+                title = re.sub(r'(?i)(?:-*\s*temp\w*\.*\s*\d+\s*)?(?:cap\w*\.*\s*\d+\s*)?(?:al|Al|y)\s*\d+', '', title)
+                title = re.sub(r'(?i)-*\s*temp\w*\.*\s*\d+(?:x\d+)?', '', title)
                 title = re.sub(r'(?i)-*\s*cap.*?\d+(?:\s*al\s*\d+)?', '', title)
             if "audio" in title.lower():                                        #Reservamos info de audio para después de TMDB
                 title_subs += ['[%s]' % scrapertools.find_single_match(title, r'(\[[a|A]udio.*?\])')]
@@ -1340,6 +1340,8 @@ def findvideos(item):
     if item.videolibray_emergency_urls:
         if item.channel_host: del item.channel_host
         item.emergency_urls = []
+        
+    item.quality = re.sub(r'(?i)\s*\d+(?:.\d+)?\s*(?:gb|mb)', '', item.quality)    # Quitamos el tamaño que viene de Search
     
     #Llamamos al método para crear el título general del vídeo, con toda la información obtenida de TMDB
     if not item.videolibray_emergency_urls:
@@ -1647,7 +1649,6 @@ def findvideos(item):
                         except:
                             logger.error('ERROR al procesar enlaces VER/DESCARGAS DIRECTOS: ' + 
                                         servidor + ' / ' + enlace)
-                            logger.error(traceback.format_exc(1))
                             break
 
     if len(itemlist_f) > 0:                                                     #Si hay entradas filtradas...
@@ -1937,8 +1938,11 @@ def episodios(item):
                     estado = False                                              #Mala calidad de datos
             
             """ Procesamos en PATRON encontrado/creado del episodio """
-            r = re.compile(pattern)
-            match = [m.groupdict() for m in r.finditer(info)][0]
+            try:
+                r = re.compile(pattern)
+                match = [m.groupdict() for m in r.finditer(info)][0]
+            except:
+                match = []
             if not match:                                                       #error
                 logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " 
                             + " / PATRON: " + pattern + " / DATA: " + info)
@@ -2058,8 +2062,11 @@ def episodios(item):
             
         data = '' 
 
-    if len(itemlist) > 1:
-        itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))       #clasificamos
+    try:
+        if len(itemlist) > 1:
+            itemlist = sorted(itemlist, key=lambda it: (int(it.contentSeason), int(it.contentEpisodeNumber)))       #clasificamos
+    except:
+        pass
         
     if item.season_colapse and not item.add_videolibrary:                       #Si viene de listado, mostramos solo Temporadas
         item, itemlist = generictools.post_tmdb_seasons(item, itemlist)
@@ -2102,6 +2109,7 @@ def find_language(item, json_category=''):
                 epi_json_file = filetools.join(epi_json_path, '1x01 [%s].json' % (json_category))
                 if not filetools.exists(epi_json_file):
                     logger.info('MISSING epi_json_file %s' % epi_json_file)
+                    item.language = ['CAST']
                     return item
             
             # Cargamos el episodio.json y obtenemos el language
@@ -2207,7 +2215,7 @@ def newest(categoria):
     item = Item()
     
     item.title = "newest"
-    item.category = "newest"
+    item.category_new= 'newest'
     item.channel = channel_py
     
     try:
@@ -2256,6 +2264,25 @@ def newest(categoria):
             item.extra = "novedades"
             item.action = "listado"
             itemlist = listado(item)
+            
+        elif categoria == 'torrent':
+            item.url = host + 'ultimas-descargas/'
+            value = 757
+            item.post = "categoryIDR=%s&date=%s&pg=1" % (value, fecha_rango)
+            item.extra = "novedades"
+            item.action = "listado"
+            itemlist.extend(listado(item))
+            
+            if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
+                itemlist.pop()
+                
+            item.url = host + 'ultimas-descargas/'
+            value = 767
+            item.post = "categoryIDR=%s&date=%s&pg=1" % (value, fecha_rango)
+            item.extra = "novedades"
+            item.category_new= 'newest'
+            item.action = "listado"
+            itemlist.extend(listado(item))
             
         if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
             itemlist.pop()

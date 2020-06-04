@@ -385,7 +385,7 @@ def listado(item):                                                              
                     item_local.quality = '4K'
                 if '3d' in scrapedquality.lower() and not '3d' in item_local.quality.lower():
                     item_local.quality += ', 3D'
-            if not item_local.quality:
+            if not item_local.quality or item_local.extra == 'series':
                 item_local.quality = '720p'
                 
             item_local.thumbnail = ''                                           #iniciamos thumbnail
@@ -897,19 +897,23 @@ def newest(categoria):
     item.channel = channel
     
     try:
-        if categoria == 'peliculas':
+        if categoria in ['peliculas', 'latino', 'torrent']:
             item.url = host + "peliculas/page/1/"
             item.extra = "peliculas"
             item.extra2 = "novedades"
             item.action = "listado"
-            itemlist = listado(item)
+            itemlist.extend(listado(item))
                 
-        elif categoria == 'series':
+        if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
+            itemlist.pop()
+        
+        if categoria in ['series', 'latino', 'torrent']:
+            item.category_new= 'newest'
             item.url = host + "series/page/1/"
             item.extra = "series"
             item.extra2 = "novedades"
             item.action = "listado"
-            itemlist = listado(item)
+            itemlist.extend(listado(item))
 
         if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
             itemlist.pop()

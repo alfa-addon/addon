@@ -59,11 +59,11 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
 
-    item.url_plus = "peliculas-19/"
+    item.url_plus = "peliculas-20/"
     itemlist.append(Item(channel=item.channel, title="Películas", action="categorias", 
                 url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_cartelera, 
                 extra="Películas"))
-    item.url_plus = "peliculas-hd/"
+    item.url_plus = "peliculas-hd-5/"
     itemlist.append(Item(channel=item.channel, title="    - Películas HD", action="categorias", 
                 url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, 
                 extra="Películas HD"))
@@ -114,7 +114,7 @@ def submenu(item):
 
         patron = '<ul class="nav navbar-nav">.*?<li><a href="[^"]+\/(series[^\/]+\/)">Series<\/a><\/li>'
         item.url_plus = scrapertools.find_single_match(data, patron)
-        if not item.url_plus: item.url_plus = 'series/'
+        if not item.url_plus: item.url_plus = 'series-5/'
         itemlist.append(item.clone(title="Series completas", action="listado", url=item.url + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_series, extra="series"))
         itemlist.append(item.clone(title="Alfabético A-Z", action="alfabeto", url=item.url + item.url_plus + "?s=letra-%s", url_plus=item.url_plus, thumbnail=thumb_series, extra="series"))
 
