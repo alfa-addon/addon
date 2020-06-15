@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://streamtape.com/v/\\w+)",
+        "pattern": "(https://streamtape.com/(?:v|e)/\\w+)",
         "url": "\\1"
       }
     ]
