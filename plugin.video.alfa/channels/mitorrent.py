@@ -762,6 +762,11 @@ def findvideos(item):
         if not size and not item.videolibray_emergency_urls and not item_local.url.startswith('magnet:'):
             if not item.armagedon:
                 size = generictools.get_torrent_size(item_local.url, local_torr=local_torr) #Buscamos el tamaño en el .torrent desde la web
+                if 'ERROR' in size and item.emergency_urls and not item.videolibray_emergency_urls:
+                    item_local.armagedon = True
+                    item_local.url = item.emergency_urls[0][0]                      #Restauramos la url
+                    local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
+                    size = generictools.get_torrent_size(item_local.url, local_torr=local_torr) #Buscamos el tamaño en el .torrent emergencia
         if size:
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                         .replace('Mb', 'M·b').replace('.', ',')
@@ -788,6 +793,9 @@ def findvideos(item):
             item.emergency_urls[0].append(item_local.url)                       #guardamos la url y nos vamos
             continue
 
+        if item_local.armagedon:
+            item_local.quality = '[COLOR hotpink][E][/COLOR] [COLOR limegreen]%s[/COLOR]' % item_local.quality
+        
         #Ahora pintamos el link del Torrent
         item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
                         + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] %s' % \
@@ -808,12 +816,22 @@ def findvideos(item):
         
         if not size or 'Magnet' in size:
             item_local.alive = "??"                                             #Calidad del link sin verificar
+        elif 'ERROR' in size and 'Pincha' in size:
+            item_local.alive = "ok"                                             #link en error, CF challenge, Chrome disponible
+        elif 'ERROR' in size and 'Introduce' in size:
+            item_local.alive = "??"                                             #link en error, CF challenge, ruta de descarga no disponible
+            item_local.channel = 'setting'
+            item_local.action = 'setting_torrent'
+            item_local.unify = False
+            item_local.folder = False
+            item_local.item_org = item.tourl()
         elif 'ERROR' in size:
-            item_local.alive = "no"                                             #Calidad del link en error
+            item_local.alive = "no"                                             #Calidad del link en error, CF challenge?
         else:
             item_local.alive = "ok"                                             #Calidad del link verificada
-        item_local.action = "play"                                              #Visualizar vídeo
-        item_local.server = "torrent"                                           #Seridor Torrent
+        if item_local.channel != 'setting':
+            item_local.action = "play"                                          #Visualizar vídeo
+            item_local.server = "torrent"                                       #Seridor Torrent
         
         itemlist_t.append(item_local.clone())                                   #Pintar pantalla, si no se filtran idiomas
         
