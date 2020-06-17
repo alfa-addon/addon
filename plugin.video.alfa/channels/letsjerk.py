@@ -27,8 +27,6 @@ def mainlist(item):
     itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/?order=views_month"))
     itemlist.append( Item(channel=item.channel, title="Mas comentado" , action="lista", url=host + "/?order=comments_month"))
     
-    # itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host + "/studios/"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
     itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
     return itemlist
 
@@ -44,24 +42,6 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
-
-
-def categorias(item):
-    logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    patron = '<a class="th" href="([^"]+)">.*?'
-    patron += 'data-original="([^"]+)" alt="([^"]+)".*?'
-    patron += '<div class="number">([^<]+)<'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,cantidad in matches:
-        title = "%s (%s)" % (scrapedtitle, cantidad)
-        thumbnail = scrapedthumbnail
-        url = urlparse.urljoin(host,scrapedurl)
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
-                              fanart=thumbnail, thumbnail=thumbnail, plot="") )
-    return sorted(itemlist, key=lambda i: i.title)
 
 
 def lista(item):

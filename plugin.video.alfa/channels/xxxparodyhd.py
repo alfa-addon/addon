@@ -105,12 +105,12 @@ def findvideos(item):
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedtitle,url in matches:
         if "streamz" in url:
-            url = url.replace(".cc", ".vg")
-            url= httptools.downloadpage(url).url
-            url= url.replace("/x", "/getlink-")
-            url += ".dll"
-            logger.debug(url)
-            url = httptools.downloadpage(url, headers={"referer": url}, follow_redirects=False).headers["location"]
+            url = url.replace("streamz.cc", "stream2.vg").replace("streamz.vg", "stream2.vg")
+            # url= httptools.downloadpage(url).url
+            # url= url.replace("/x", "/getlink-")
+            # url += ".dll"
+            # logger.debug(url)
+            # url = httptools.downloadpage(url, headers={"referer": url}, follow_redirects=False).headers["location"]
         if not "waaws.tk" in url: #netu
             itemlist.append( Item(channel=item.channel, action="play", title = "%s", contentTitle=item.title, url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
