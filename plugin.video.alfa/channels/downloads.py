@@ -1378,6 +1378,8 @@ def save_download(item, silent=False):
 
     item.contentChannel = item.channel
     item.contentAction = item.action
+    if item.contentAction in ['get_seasons', 'update_tvshow']:
+        item.contentAction = 'episodios'
 
     if item.contentType in ["tvshow", "episode", "season"]:
         save_download_tvshow(item, silent=silent)

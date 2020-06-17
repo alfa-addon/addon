@@ -115,8 +115,10 @@ def update(path, p_dialog, i, t, serie, overwrite):
             if insertados > 0  and config.get_setting('auto_download_new', serie.channel, default=False):
                 config.set_setting("search_new_content", 1, "videolibrary")     # Escaneamos a final todas la series
                 serie.sub_action = 'auto'
+                serie.category = itemlist[0].category
                 from channels import downloads
                 downloads.save_download(serie, silent=True)
+                if serie.sub_action: del serie.sub_action
 
         else:
             logger.debug("Canal %s no activo no se actualiza" % serie.channel)
@@ -290,6 +292,7 @@ def check_for_update(overwrite=True):
                     template = "An exception of type %s occured. Arguments:\n%r"
                     message = template % (type(ex).__name__, ex.args)
                     logger.error(message)
+                    logger.error(traceback.format_exc(1))
                     
 
             if estado_verify_playcount_series:                                  #Si se ha cambiado algún playcount, ...

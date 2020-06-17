@@ -1812,7 +1812,7 @@ def episodios(item):
         if not matches or '>( 0 ) Capitulos encontrados <' in data:             #error
             if len(itemlist) == 0:                                              # Si ya hay datos, puede ser la última página
                 logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " 
-                        + " / PATRON: " + pattern + " / DATA: " + data)
+                        + " / PATRON: " + patron + " / DATA: " + data)
                 itemlist.append(item.clone(action='', title=item.category + 
                         ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  ' 
                         + 'Reportar el error con el log', contentSeason=0, contentEpisodeNumber=1))
