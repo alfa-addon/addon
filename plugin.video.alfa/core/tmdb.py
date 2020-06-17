@@ -49,7 +49,9 @@ from platformcode import logger
 #
 #       Obtener datos basicos de una pelicula:
 #           Antes de llamar al metodo set_infoLabels el titulo a buscar debe estar en item.contentTitle
-#           y el año en item.infoLabels['year'].
+#           y el año en item.infoLabels['year'] o se puede usar item.infoLabels['filtro']
+#           donde se para el jpg para la búsqueda en vez del año, ejemplo:
+#           infoLabels = {'filtro': '/wHP2GZcIQN42L8Gpb8m8znxOt6O.jpg'}
 #
 #       Obtener datos basicos de una serie:
 #           Antes de llamar al metodo set_infoLabels el titulo a buscar debe estar en item.show o en
