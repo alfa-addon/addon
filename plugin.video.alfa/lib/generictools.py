@@ -383,8 +383,9 @@ def post_tmdb_listado(item, itemlist):
         del item.url_alt
 
     #Ajustamos el nombre de la categoría
-    if not item.category_new:
-        item.category_new = ''
+    if item.category_new == "newest":                           #Viene de Novedades.  Lo marcamos para Unify
+        item.from_channel = 'news'
+        del item.category_new
 
     for item_local in itemlist:                                 #Recorremos el Itemlist generado por el canal
         item_local.title = re.sub(r'(?i)online|descarga|downloads|trailer|videoteca|gb|autoplay', '', item_local.title).strip()
@@ -409,6 +410,9 @@ def post_tmdb_listado(item, itemlist):
             del item_local.library_filter_show
         if item_local.channel_host:
             del item_local.channel_host
+        if item_local.category_new == "newest":                 #Viene de Novedades.  Lo marcamos para Unify
+            item_local.from_channel = 'news'
+            del item_local.category_new
 
         #Ajustamos el nombre de la categoría
         if item_local.channel == channel_py:
@@ -540,15 +544,19 @@ def post_tmdb_listado(item, itemlist):
                 else:
                     title = '%s -Temporada !!!' % (title)
 
-            elif (item.action == "search" or item.extra == "search") and not \
+            elif (item.action == "search" or item.extra == "search" or item_local.from_channel == "news") and not \
                         (item_local.extra == "varios" or item_local.extra == "documentales"):
                 title += " -Serie-"
+                if item_local.from_channel == "news":
+                    title_add += " -Serie-"
 
         if (item_local.extra == "varios" or item_local.extra == "documentales") \
                         and (item.action == "search" or item.extra == "search" or \
-                        item.action == "listado_busqueda"):
+                        item.action == "listado_busqueda" or item_local.from_channel == "news"):
             title += " -Varios-"
             item_local.contentTitle += " -Varios-"
+            if item_local.from_channel == "news":
+                title_add += " -Varios-"
         
         title += title_add                                                      #Se añaden etiquetas adicionales, si las hay
 
@@ -568,7 +576,9 @@ def post_tmdb_listado(item, itemlist):
         title = re.sub(r'\s?\[COLOR \w+\]\[\[?\s?\]?\]\[\/COLOR\]', '', title).strip()
         title = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', title).strip()
     
-        if item.category_new == "newest":           #Viene de Novedades.  Marcamos el título con el nombre del canal
+        #Viene de Novedades.  Lo preparamos para Unify
+        if item_local.from_channel == "news":
+            """
             if scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/'):
                 title += ' -%s-' % scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
             else:
@@ -578,6 +588,9 @@ def post_tmdb_listado(item, itemlist):
                     item_local.contentTitle += ' -%s-' % scrapertools.find_single_match(item_local.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
                 else:
                     item_local.contentTitle += ' -%s-' % item_local.channel.capitalize()
+            """
+            if item_local.contentType in ['season', 'tvshow']:
+                title = '%s %s' % (item_local.contentSerieName, title_add)
             elif "Episodio " in title:
                 if not item_local.contentSeason or not item_local.contentEpisodeNumber:
                     item_local.contentSeason, item_local.contentEpisodeNumber = scrapertools.find_single_match(title_add, 'Episodio (\d+)x(\d+)')
@@ -585,6 +598,7 @@ def post_tmdb_listado(item, itemlist):
         if item_local.infoLabels['status'] and (item_local.infoLabels['status'].lower() == "ended" \
                         or item_local.infoLabels['status'].lower() == "canceled"):
             title += ' [TERM]'
+        
         item_local.title = title
         
         #logger.debug("url: " + item_local.url + " / title: " + item_local.title + " / content title: " + item_local.contentTitle + "/" + item_local.contentSerieName + " / calidad: " + item_local.quality + "[" + str(item_local.language) + "]" + " / year: " + str(item_local.infoLabels['year']))
@@ -599,14 +613,15 @@ def post_tmdb_listado(item, itemlist):
         del item.intervencion
     
     #Si ha habido fail-over, lo comento
-    if channel_alt and item.category_new != "newest":
+    if channel_alt and item.from_channel != "news":
         itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + item.category + '[/COLOR] [ALT ] en uso'))
         itemlist_fo.append(item.clone(action='', title="[COLOR yellow]" + channel_alt.capitalize() + '[/COLOR] inaccesible'))
     
     if len(itemlist_fo) > 0:
         itemlist = itemlist_fo + itemlist
         
-    del item.category_new
+    if item.from_channel:
+        del item.from_channel
         
     return (item, itemlist)
 

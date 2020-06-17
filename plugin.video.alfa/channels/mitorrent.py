@@ -111,9 +111,9 @@ def submenu(item):
                     url=host + 'search-result/page/1/?tax_generos=&tax_ano=&tax_calidad=&tax_masopciones=estrenos&wpas_id=myform&wpas_submit=1'))
         itemlist.append(item.clone(title="    - Recomendadas", action="listado", thumbnail=thumb_popular, extra="peliculas", 
                     url=host + 'search-result/page/1/?tax_generos=&tax_ano=&tax_calidad=&tax_masopciones=recomendadas&wpas_id=myform&wpas_submit=1'))
-        itemlist.append(item.clone(title="    - por Género", action="genero", thumbnail=thumb_genero, extra="peliculas", 
+        itemlist.append(item.clone(title="    - por Género", action="genero_rec", thumbnail=thumb_genero, extra="peliculas", 
                     url=host + 'search-result/page/1/?tax_generos=%s&tax_ano=&tax_calidad=&tax_masopciones=&wpas_id=myform&wpas_submit=1'))
-        itemlist.append(item.clone(title="    - por Calidad", action="calidad", thumbnail=thumb_calidad, extra="peliculas", 
+        itemlist.append(item.clone(title="    - por Calidad", action="calidad_rec", thumbnail=thumb_calidad, extra="peliculas", 
                     url=host + 'search-result/page/1/?tax_generos=&tax_ano=&tax_calidad=%s&tax_masopciones=&wpas_id=myform&wpas_submit=1'))
     else:
         itemlist.append(item.clone(title="Series: todas", action="listado", extra="series"))
@@ -162,9 +162,9 @@ def anno(item):
         item.url =  item.url % year
     item.extra2 = 'anno' + str(year)
     
-    itemlist.append(item.clone(action="genero", title="** Seleccionar Género (opcional)" + genero, extra2='anno', thumbnail=thumb_genero))
+    itemlist.append(item.clone(action="genero_rec", title="** Seleccionar Género (opcional)" + genero, extra2='anno', thumbnail=thumb_genero))
     if item.extra == 'peliculas':
-        itemlist.append(item.clone(action="calidad", title="** Seleccionar Calidad (opcional)" + calidad, extra2='anno', thumbnail=thumb_calidad))
+        itemlist.append(item.clone(action="calidad_rec", title="** Seleccionar Calidad (opcional)" + calidad, extra2='anno', thumbnail=thumb_calidad))
     
     itemlist.append(item.clone(title=" ", thumbnail=thumb_separador, folder=False))
     itemlist.append(item.clone(title="Por AÑO: " + seleccion, action="listado", thumbnail=thumb_anno))
@@ -178,7 +178,7 @@ def anno(item):
     return itemlist
 
     
-def genero(item):
+def genero_rec(item):
     logger.info()
     
     itemlist = []
@@ -232,7 +232,7 @@ def genero(item):
     
     if not extra2:
         itemlist.append(item.clone(action="anno", title="** Seleccionar Año (opcional)" + year, extra2='genero', thumbnail=thumb_anno))
-        itemlist.append(item.clone(action="calidad", title="** Seleccionar Calidad (opcional)" + calidad, extra2='genero', thumbnail=thumb_calidad))
+        itemlist.append(item.clone(action="calidad_rec", title="** Seleccionar Calidad (opcional)" + calidad, extra2='genero', thumbnail=thumb_calidad))
 
     for gen, title in matches:
         if title == 'todos':
@@ -246,7 +246,7 @@ def genero(item):
     return itemlist
 
 
-def calidad(item):
+def calidad_rec(item):
     logger.info()
     
     itemlist = []
@@ -299,7 +299,7 @@ def calidad(item):
     
     if not extra2:
         itemlist.append(item.clone(action="anno", title="** Seleccionar Año (opcional)" + year, extra2='calidad', thumbnail=thumb_anno))
-        itemlist.append(item.clone(action="genero", title="** Seleccionar Género (opcional)" + genero, extra2='calidad', thumbnail=thumb_genero))
+        itemlist.append(item.clone(action="genero_rec", title="** Seleccionar Género (opcional)" + genero, extra2='calidad', thumbnail=thumb_genero))
     
     for cal, title in matches:
         if title == 'todos':
@@ -338,9 +338,9 @@ def filter_search(item, itemlist=[]):
         seleccion += calidad
     
     itemlist.append(item.clone(action="anno", title="** Seleccionar Año (opcional)" + year, thumbnail=thumb_anno))
-    itemlist.append(item.clone(action="genero", title="** Seleccionar Género (opcional)" + genero, thumbnail=thumb_genero))
+    itemlist.append(item.clone(action="genero_rec", title="** Seleccionar Género (opcional)" + genero, thumbnail=thumb_genero))
     if '/series' not in item.url:
-        itemlist.append(item.clone(action="calidad", title="** Seleccionar Calidad (opcional)" + calidad, thumbnail=thumb_calidad))
+        itemlist.append(item.clone(action="calidad_rec", title="** Seleccionar Calidad (opcional)" + calidad, thumbnail=thumb_calidad))
     
     itemlist.append(item.clone(title=" ", thumbnail=thumb_separador, folder=False))
 
@@ -1071,19 +1071,23 @@ def newest(categoria):
     item.channel = channel
     
     try:
-        if categoria == 'peliculas':
+        if categoria in ['peliculas', 'latino', 'torrent']:
             item.url = host + "page/1/"
             item.extra = "peliculas"
             item.extra2 = "novedades"
             item.action = "listado"
-            itemlist = listado(item)
+            itemlist.extend(listado(item))
                 
-        elif categoria == 'series':
+        if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
+            itemlist.pop()
+        
+        if categoria in ['series', 'latino', 'torrent']:
+            item.category_new= 'newest'
             item.url = host + "series/page/1/"
             item.extra = "series"
             item.extra2 = "novedades"
             item.action = "listado"
-            itemlist = listado(item)
+            itemlist.extend(listado(item))
 
         if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
             itemlist.pop()
