@@ -123,7 +123,7 @@ def update(path, p_dialog, i, t, serie, overwrite):
 
     #Sincronizamos los episodios vistos desde la videoteca de Kodi con la de Alfa
     try:
-        if config.is_xbmc():                                                    #Si es Kodi, lo hacemos
+        if config.is_xbmc() and not config.get_setting('cleanlibrary', 'videolibrary', default=False):  #Si es Kodi, lo hacemos
             xbmc_videolibrary.mark_content_as_watched_on_alfa(path + '/tvshow.nfo')
     except:
         logger.error(traceback.format_exc())
@@ -277,7 +277,7 @@ def check_for_update(overwrite=True):
                         serie.action = "get_seasons"
                         filetools.write(tvshow_file, head_nfo + serie.tojson())
 
-                    if serie_actualizada:
+                    if serie_actualizada and not config.get_setting('cleanlibrary', 'videolibrary', default=False):
                         if config.get_setting("search_new_content", "videolibrary") == 0:
                             # Actualizamos la videoteca de Kodi: Buscar contenido en la carpeta de la serie
                             if config.is_xbmc():
@@ -296,6 +296,14 @@ def check_for_update(overwrite=True):
                 estado = config.set_setting("verify_playcount", True, "videolibrary")   #... actualizamos la opción de Videolibrary
 
             #if config.get_setting("search_new_content", "videolibrary") == 1 and update_when_finished:
+            if config.is_xbmc() and config.get_setting('cleanlibrary', 'videolibrary', default=False):
+                while xbmc.getCondVisibility('Library.IsScanningVideo()'):      # Se espera a que acabe
+                    time.sleep(1)
+                xbmc.executebuiltin('CleanLibrary(video)')
+                while xbmc.getCondVisibility('Library.IsScanningVideo()'):      # Se espera a que acabe
+                    time.sleep(1)
+                update_when_finished = True
+                config.set_setting('cleanlibrary', False, 'videolibrary')
             if update_when_finished:
                 # Actualizamos la videoteca de Kodi: Buscar contenido en todas las series
                 if config.is_xbmc():
