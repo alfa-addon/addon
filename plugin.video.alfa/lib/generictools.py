@@ -2326,24 +2326,10 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #Cuando en el .json se activa "Borrar", "emergency_urls = 2", se borran todos los enlaces existentes
     #Cuando en el .json se activa "Actualizar", "emergency_urls = 3", se actualizan todos los enlaces existentes
     
-    if it.verified_encode or it.verified:
-        if it.verified_encode:
-            del it.verified_encode
-        if it.verified:
-            del it.verified
-        try:
-            it.path = filetools.join(' ', filetools.basename(path)).strip()
-            nfo = filetools.join(path, '/tvshow.nfo')
-            filetools.write(nfo, head_nfo + it.tojson())                        #escribo el .nfo de la peli por si aborta update
-            logger.error('** .nfo ACTUALIZADO: it.verified: %s' % it.path)      #aviso que ha habido una incidencia
-        except:
-            logger.error('** .nfo ERROR actualizar: it.verified: %s' % it.path) #aviso que ha habido una incidencia
-            logger.error(traceback.format_exc(1))
-        
-    """
     if not it.verified_encode and path and it.library_playcounts and it.infoLabels['mediatype'] in ['tvshow', 'season', 'episode']:
         it = borrar_episodio_add_videolibrary(path, head_nfo, it)
-
+    
+    """ 
     try:
         item, it = borrar_jsons_dups(item, it, path, head_nfo)      #TEMPORAL: Reparación de Videoteca con Newpct1
     except:
@@ -3151,11 +3137,11 @@ def call_chrome(url, lookup=False):
             
         elif xbmc.getCondVisibility("system.platform.OSX"):
             exePath = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",]
-            prefs_file = ''
+            prefs_file = filetools.join(os.getenv('HOME'), 'Library/Application Support/Google/Chrome/Default/Preferences')
             
         elif xbmc.getCondVisibility("system.platform.Linux"):
             exePath = ["/usr/bin/google-chrome", "/usr/bin/google-chrome-stable"]
-            prefs_file = ''
+            prefs_file = filetools.join(os.getenv('HOME'), '.config/google-chrome/Default/Preferences')
             
         else:
             return False
@@ -3167,7 +3153,8 @@ def call_chrome(url, lookup=False):
                     chrome_prefs = filetools.read(prefs_file, silent=True)
                     res = scrapertools.find_single_match(chrome_prefs, '"savefile"\s*:\s*{.*?"default_directory"\s*:\s*"([^"]+)"')\
                                 .replace('\\\\', '\\')
-                    if not res: res = None
+                    if not res and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                        res = None
                     return res
                 
                 chrome_call = filetools.join(xbmc.translatePath(config.get_data_path()), 'chrome_call.html')
