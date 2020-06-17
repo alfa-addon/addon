@@ -259,7 +259,8 @@ def findvideos(item):
 
     soup = create_soup(item.url)
     matches = soup.find("ul", id="playeroptionsul")
-
+    if not matches:
+        return itemlist
     for elem in matches.find_all("li"):
         if "youtube" in elem.find("span", class_="server").text:
             continue
