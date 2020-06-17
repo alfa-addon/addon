@@ -53,6 +53,10 @@ def mainlist(item):
         file = filetools.join(DOWNLOAD_LIST_PATH, file)
         i = Item(path=file).fromjson(filetools.read(file))
         i.thumbnail = i.contentThumbnail
+        i.unify = True
+        del i.unify
+        i.folder = True
+        del i.folder
 
         # Listado principal
         if not item.contentType == "tvshow":
@@ -359,7 +363,7 @@ def download_auto(item, start_up=False):
                     # Si el usuario desea descargar esta Serie en otro servidor Kodi, copia el fichero a la dirección aportada
                     if res and move_to_remote:
                         for serie, address in move_to_remote:
-                            if serie in download_item.strm_path:
+                            if serie.lower() in download_item.contentSerieName.lower():     # Si está en la lista es que es remoto
                                 if download_item.nfo:
                                     download_item.nfo = download_item.nfo.replace(PATH, '')
                                 if download_item.strm_path:
@@ -474,7 +478,7 @@ def menu(item):
 
 
 def delete_torrent_session(item, delete_RAR=True):
-    if not delete_RAR and 'RAR-' not in item.torr_info:
+    if not delete_RAR and 'RAR-' not in item.torrent_info:
         delete_RAR = True
     logger.info('delete_RAR: %s' % str(delete_RAR))
 
@@ -811,7 +815,7 @@ def download_from_url(url, item):
 
 
 def download_from_server(item, silent=False):
-    logger.info(item)
+    logger.info()
     
     unsupported_servers = ["torrent"]
     result = {}
@@ -827,7 +831,7 @@ def download_from_server(item, silent=False):
     if hasattr(channel, "play") and not item.play_menu and not item.url.startswith('magnet:'):
 
         if not silent: progreso.update(50, config.get_localized_string(70178) % \
-                        item.server, config.get_localized_string(60003) % item.contentChannel)
+                        item.server + '\n' + config.get_localized_string(60003) % item.contentChannel)
         if item.server == 'torrent': item.url_control = item.url
         try:
             itemlist = getattr(channel, "play")(item.clone(channel=item.contentChannel, action=item.contentAction))
@@ -984,7 +988,7 @@ def download_from_best_server(item, silent=False):
     if not silent: progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70179))
     channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
 
-    if not silent: progreso.update(50, config.get_localized_string(70184), config.get_localized_string(70180) % item.contentChannel)
+    if not silent: progreso.update(50, config.get_localized_string(70184) + '\n' + config.get_localized_string(70180) % item.contentChannel)
 
     if hasattr(channel, item.contentAction):
         play_items = getattr(channel, item.contentAction)(
@@ -994,7 +998,7 @@ def download_from_best_server(item, silent=False):
     
     play_items = [x for x in play_items if x.action == "play" and not "trailer" in x.title.lower()]
 
-    if not silent: progreso.update(100, config.get_localized_string(70183), config.get_localized_string(70181) % len(play_items),
+    if not silent: progreso.update(100, config.get_localized_string(70183) + '\n' + config.get_localized_string(70181) % len(play_items) + '\n' + 
                     config.get_localized_string(70182))
 
     if config.get_setting("server_reorder", "downloads") == 1:
@@ -1032,7 +1036,7 @@ def select_server(item):
 
     progreso = platformtools.dialog_progress(config.get_localized_string(30101), config.get_localized_string(70179))
     channel = __import__('channels.%s' % item.contentChannel, None, None, ["channels.%s" % item.contentChannel])
-    progreso.update(50, config.get_localized_string(70184), config.get_localized_string(70180) % item.contentChannel)
+    progreso.update(50, config.get_localized_string(70184) + '\n' + config.get_localized_string(70180) % item.contentChannel)
 
     if hasattr(channel, item.contentAction):
         play_items = getattr(channel, item.contentAction)(
@@ -1042,7 +1046,7 @@ def select_server(item):
 
     play_items = [x for x in play_items if x.action == "play" and not "trailer" in x.title.lower()]
 
-    progreso.update(100, config.get_localized_string(70183), config.get_localized_string(70181) % len(play_items),
+    progreso.update(100, config.get_localized_string(70183) + '\n' + config.get_localized_string(70181) % len(play_items) + '\n' + 
                     config.get_localized_string(70182))
 
     for x, i in enumerate(play_items):
@@ -1086,11 +1090,14 @@ def get_episodes(item):
     logger.info("contentAction: %s | contentChannel: %s | contentType: %s" % (
         item.contentAction, item.contentChannel, item.contentType))
 
+    from lib import generictools
+    
     sub_action = ["tvshow", "season", "unseen", "auto"]                         # Acciones especiales desde Findvideos
     SERIES = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_tvshows"))
     nfo_json = {}
     serie_path = ''
     episode_local = False
+    remote = False
     season = item.infoLabels['season']
     sesxepi = []
     
@@ -1099,10 +1106,17 @@ def get_episodes(item):
     if item.nfo:
         head, nfo_json = videolibrarytools.read_nfo(item.nfo)                   #... tratamos de recuperar la info de la Serie
 
+    # Miramos si los episodio se van a mover a un site remoto, con lo que no pueden usar archivos locales
+    move_to_remote = config.get_setting("move_to_remote", "downloads", default=[])
+    for serie, address in move_to_remote:
+        if serie.lower() in item.contentSerieName.lower():                      # Si está en la lista es que es remoto
+            remote = True
+            break
+    
     # El item que pretendemos descargar YA es un episodio
     if item.contentType == "episode" and item.sub_action not in sub_action:
         episodes = [item.clone()]
-        if item.strm_path:
+        if item.strm_path and not remote:
             episode_local = True
 
     # El item es uma serie o temporada
@@ -1180,7 +1194,7 @@ def get_episodes(item):
             if item.torrent_info: del item.torrent_info
             if item.torrent_alt: del item.torrent_alt
 
-        if item.strm_path or item.nfo:                                          # Si viene de Videoteca, usamos los .jsons
+        if (item.strm_path or item.nfo) and not remote:                         # Si viene de Videoteca, usamos los .jsons, salvo que vaya a remoto
             if item.strm_path: serie_path = filetools.dirname(item.strm_path)
             if not serie_path and item.nfo: serie_path = filetools.dirname(item.nfo)
             serie_listdir = sorted(filetools.listdir(serie_path))
@@ -1200,7 +1214,6 @@ def get_episodes(item):
                                     and episode.emergency_urls[0][0].endswith('.torrent'):
                     episode.server = 'torrent'
                     episode.action = 'play'
-                    episode.folder = False
                 episode.strm_path = filetools.join(serie_path, '%sx%s.strm' % (str(episode.infoLabels['season']), \
                                     str(episode.infoLabels['episode']).zfill(2))).replace(SERIES, '')
                 episode.sub_action = item.sub_action
@@ -1218,7 +1231,7 @@ def get_episodes(item):
     for episode in episodes:
         if episode.action in ["add_serie_to_library", "actualizar_titulos"] or not episode.action:
             continue
-        
+
         # Si se ha llamado con la opción de NO Vistos, se comprueba contra el .NFO de la serie
         if item.sub_action in ["unseen", "auto"] and nfo_json.library_playcounts \
                         and episode.contentSeason and episode.contentEpisodeNumber:   # Descargamos solo los episodios NO vistos
@@ -1233,7 +1246,7 @@ def get_episodes(item):
         if item.sub_action in ["tvshow", "unseen"] and episode.strm_path:
             episode.strm_path = re.sub(r'x\d{2,}.strm', 'x%s.strm' % str(episode.contentEpisodeNumber).zfill(2), episode.strm_path)
             
-        if episode.emergency_urls:
+        if episode.emergency_urls and not remote:
             for x, emergency_urls in enumerate(episode.emergency_urls[0]):
                 if not episode_local:
                     episode.emergency_urls[0][x] = re.sub(r'x\d{2,}\s*\[', 'x%s [' \
@@ -1255,6 +1268,7 @@ def get_episodes(item):
         if item.contentType != "episode":
             episode.contentAction = episode.action
             episode.contentChannel = episode.channel
+        episode.contentChannel = generictools.verify_channel(episode.contentChannel)
 
         # Si es una temporada, descartameos lo que sea de esa temporada
         if item.contentType in ["season"] or item.sub_action in ["season"]:
@@ -1318,6 +1332,10 @@ def write_json(item):
 
     item.action = "menu"
     item.channel = "downloads"
+    item.unify = True
+    del item.unify
+    item.folder = True
+    del item.folder
     if item.sub_action in ["auto"]:
         item.downloadStatus = STATUS_CODES.auto
     else:
@@ -1451,15 +1469,15 @@ def save_download_tvshow(item, silent=False):
 
     item.downloadFilename = filetools.validate_path("%s [%s]" % (item.contentSerieName, item.contentChannel))
 
-    if not silent: progreso.update(0, config.get_localized_string(70186), config.get_localized_string(70187) % item.contentChannel)
+    if not silent: progreso.update(0, config.get_localized_string(70186) + '\n' + config.get_localized_string(70187) % item.contentChannel)
 
     episodes = get_episodes(item)
 
-    if not silent: progreso.update(0, config.get_localized_string(70190), " ")
+    if not silent: progreso.update(0, config.get_localized_string(70190) + '\n' + " ")
 
     epi_saved = []
     for x, i in enumerate(episodes):
-        if not silent: progreso.update(old_div(x * 100, len(episodes)),
+        if not silent: progreso.update(old_div(x * 100, len(episodes)),  
                         "%dx%0.2d: %s" % (i.contentSeason, i.contentEpisodeNumber, i.contentTitle))
         write_json(i)
         epi_saved += ['%sx%s' % (str(i.contentSeason), str(i.contentEpisodeNumber).zfill(2))]

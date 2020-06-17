@@ -1,8 +1,26 @@
+# ------------------------------------------------------------------------------- #
+
 import logging
 import re
+import requests
 import sys
 import ssl
-import requests
+
+from collections import OrderedDict
+from copy import deepcopy
+
+from requests.adapters import HTTPAdapter
+from requests.sessions import Session
+from requests_toolbelt.utils import dump
+
+from time import sleep
+
+# ------------------------------------------------------------------------------- #
+
+try:
+    import brotli
+except ImportError:
+    pass
 
 try:
     import copyreg
@@ -17,12 +35,12 @@ except ImportError:
     else:
         from html.parser import HTMLParser
 
-from copy import deepcopy
-from time import sleep
-from collections import OrderedDict
+try:
+    from urlparse import urlparse, urljoin
+except ImportError:
+    from urllib.parse import urlparse, urljoin
 
-from requests.sessions import Session
-from requests.adapters import HTTPAdapter
+# ------------------------------------------------------------------------------- #
 
 from .exceptions import (
     CloudflareLoopProtection,
@@ -37,25 +55,9 @@ from .interpreters import JavaScriptInterpreter
 from .reCaptcha import reCaptcha
 from .user_agent import User_Agent
 
-try:
-    from requests_toolbelt.utils import dump
-except ImportError:
-    pass
-
-try:
-    import brotli
-except ImportError:
-    pass
-
-try:
-    from urlparse import urlparse, urljoin
-except ImportError:
-    from urllib.parse import urlparse, urljoin
-
-
 # ------------------------------------------------------------------------------- #
 
-__version__ = '1.2.39'
+__version__ = '1.2.41'
 
 # ------------------------------------------------------------------------------- #
 
@@ -156,6 +158,13 @@ class CloudScraper(Session):
         return self.__dict__
 
     # ------------------------------------------------------------------------------- #
+    # Allow replacing actual web request call via subclassing
+    # ------------------------------------------------------------------------------- #
+
+    def perform_request(self, method, url, *args, **kwargs):
+        return super(CloudScraper, self).request(method, url, *args, **kwargs)
+
+    # ------------------------------------------------------------------------------- #
     # Raise an Exception with no stacktrace and reset depth counter.
     # ------------------------------------------------------------------------------- #
 
@@ -234,7 +243,7 @@ class CloudScraper(Session):
         # ------------------------------------------------------------------------------- #
 
         response = self.decodeBrotli(
-            super(CloudScraper, self).request(method, url, *args, **kwargs)
+            self.perform_request(method, url, *args, **kwargs)
         )
 
         # ------------------------------------------------------------------------------- #
@@ -405,7 +414,7 @@ class CloudScraper(Session):
                 )
 
             payload = OrderedDict()
-            for challengeParam in re.findall(r'^\s+<input\s(.*?)/>', formPayload['form'], re.M | re.S):
+            for challengeParam in re.findall(r'^\s*<input\s(.*?)/>', formPayload['form'], re.M | re.S):
                 inputPayload = dict(re.findall(r'(\S+)="(\S+)"', challengeParam))
                 if inputPayload.get('name') in ['r', 'jschl_vc', 'pass']:
                     payload.update({inputPayload['name']: inputPayload['value']})
@@ -515,7 +524,7 @@ class CloudScraper(Session):
             # ------------------------------------------------------------------------------- #
 
             resp = self.decodeBrotli(
-                super(CloudScraper, self).request(resp.request.method, resp.url, **kwargs)
+                self.perform_request(resp.request.method, resp.url, **kwargs)
             )
 
             if not self.is_reCaptcha_Challenge(resp):

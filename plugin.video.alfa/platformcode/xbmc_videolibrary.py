@@ -711,6 +711,7 @@ def set_content(content_type, silent=False):
         if content_type == 'movie':
             strContent = 'movies'
             scanRecursive = 2147483647
+            useFolderNames = 1
             if seleccion == -1 or seleccion == 0:
                 strScraper = 'metadata.themoviedb.org'
                 path_settings = xbmc.translatePath("special://profile/addon_data/metadata.themoviedb.org/settings.xml")
@@ -727,6 +728,7 @@ def set_content(content_type, silent=False):
         else:
             strContent = 'tvshows'
             scanRecursive = 0
+            useFolderNames = 0
             if seleccion == -1 or seleccion == 0:
                 strScraper = 'metadata.tvdb.com'
                 path_settings = xbmc.translatePath("special://profile/addon_data/metadata.tvdb.com/settings.xml")
@@ -749,9 +751,9 @@ def set_content(content_type, silent=False):
         if nun_records == 0:
             # Insertamos el scraper
             sql = 'INSERT INTO path (idPath, strPath, strContent, strScraper, scanRecursive, useFolderNames, ' \
-                  'strSettings, noUpdate, exclude, idParentPath) VALUES (%s, "%s", "%s", "%s", %s, 0, ' \
+                  'strSettings, noUpdate, exclude, idParentPath) VALUES (%s, "%s", "%s", "%s", %s, %s, ' \
                   '"%s", 0, 0, %s)' % (
-                      idPath, strPath, strContent, strScraper, scanRecursive, strSettings, idParentPath)
+                      idPath, strPath, strContent, strScraper, scanRecursive, useFolderNames, strSettings, idParentPath)
         else:
             if not silent:
                 # Preguntar si queremos configurar themoviedb.org como opcion por defecto
@@ -762,8 +764,8 @@ def set_content(content_type, silent=False):
             if actualizar:
                 # Actualizamos el scraper
                 idPath = records[0][0]
-                sql = 'UPDATE path SET strContent="%s", strScraper="%s", scanRecursive=%s, strSettings="%s" ' \
-                      'WHERE idPath=%s' % (strContent, strScraper, scanRecursive, strSettings, idPath)
+                sql = 'UPDATE path SET strContent="%s", strScraper="%s", scanRecursive=%s, useFolderNames=%s, strSettings="%s" ' \
+                      'WHERE idPath=%s' % (strContent, strScraper, scanRecursive, useFolderNames, strSettings, idPath)
 
         if sql:
             nun_records, records = execute_sql_kodi(sql)

@@ -167,7 +167,7 @@ def findvideos(item):
     match = scrapertools.find_single_match(data, "<link rel='shortlink'.*?=([^']+)" )
     data1 = httptools.downloadpage(host + "/wp-json/elifilms/movies?id=" + match).json
     for url in data1["data"]["server_list"]:
-        url["link"] = url["link"].replace("fembed.com/v","fembed.com/f").replace("mega.nz/embed","mega.nz/file")
+        url["link"] = url["link"].replace("fembed.com/v","fembed.com/f").replace("mega.nz/embed","mega.nz/").replace("mega.nz/file","https://mega.nz/")
         if url["link"] in encontrado or "youtube.com" in url["link"]:
             continue
         encontrado.append(url["link"])

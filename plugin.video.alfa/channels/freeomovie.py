@@ -24,7 +24,7 @@ list_language = list(IDIOMAS.values())
 list_quality = ['default']
 list_servers = ['gounlimited']
 
-host = 'https://www.freeomovie.com'
+host = 'https://freeomovie.to'
 
 def mainlist(item):
     logger.info()
@@ -77,7 +77,7 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<h2><a href="([^"]+)" rel="bookmark" title="([^"]+)".*?'
-    patron += '<img src="([^"]+)"'
+    patron += 'src="([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
         title = scrapedtitle
