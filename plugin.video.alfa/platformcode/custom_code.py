@@ -274,10 +274,11 @@ def update_external_addon(addon_name):
             #Path de destino en addon externo
             __settings__ = xbmcaddon.Addon(id="plugin.video." + addon_name)
             if addon_name.lower() in ['quasar', 'elementum']:
-                addon_path_mig = filetools.join(xbmc.translatePath(__settings__.getAddonInfo('Path')), \
-                        filetools.join("resources", "site-packages"))
+                addon_path_root = xbmc.translatePath(__settings__.getAddonInfo('Path'))
+                addon_path_mig = filetools.join(addon_path_root, filetools.join("resources", "site-packages"))
                 addon_path = filetools.join(addon_path_mig, addon_name)
             else:
+                addon_path_root = ''
                 addon_path_mig = ''
                 addon_path = ''
             
@@ -301,6 +302,9 @@ def update_external_addon(addon_name):
                     for file in files:
                         input_file = filetools.join(root, file)
                         output_file = input_file.replace(alfa_addon_updates, addon_path_mig)
+                        if file in ['addon.xml']:
+                            filetools.copy(input_file, filetools.join(addon_path_root, file), silent=True)
+                            continue
                         if not filetools.copy(input_file, output_file, silent=True):
                             logger.error('Error en la copia: Input: %s o Output: %s' % (input_file, output_file))
                             return False
@@ -399,8 +403,21 @@ def update_libtorrent():
         
         if unrar: config.set_setting("unrar_path", unrar, server="torrent")
 
-    if filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json")) and \
-                    config.get_setting("libtorrent_path", server="torrent", default="") :
+    # Ahora descargamos la última versión disponible de Liborrent para esta plataforma
+    current_version = config.get_setting("libtorrent_path", server="torrent", default="")
+    try:
+        if current_version:
+            old_version = filetools.basename(current_version)
+            new_version = sorted(filetools.listdir(filetools.dirname(current_version)))
+            for folder in new_version:
+                if not filetools.isdir(filetools.join(filetools.dirname(current_version), folder)):
+                    new_version.remove(folder)
+            if old_version != new_version[-1]:
+                current_version = ''
+    except:
+        logger.error(traceback.format_exc(1))
+    
+    if filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json")) and current_version :
         return
 
     try:
