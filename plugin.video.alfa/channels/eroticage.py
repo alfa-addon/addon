@@ -32,7 +32,7 @@ host = 'http://www.eroticage.net'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Novedades" , action="lista", url=host))
+    itemlist.append( Item(channel=item.channel, title="Novedades" , action="lista", url=host + "/?filter=latest"))
     itemlist.append( Item(channel=item.channel, title="Mas Popular" , action="lista", url=host + "/?filter=popular"))
     itemlist.append( Item(channel=item.channel, title="Mas Visto" , action="lista", url=host + "/?filter=most-viewed"))
     itemlist.append( Item(channel=item.channel, title="Mas Largo" , action="lista", url=host + "/?filter=longest"))
@@ -90,7 +90,7 @@ def lista(item):
     for elem in matches:
         url = elem.a['href']
         title = elem.a['title']
-        thumbnail = elem.img['data-src']
+        thumbnail = elem.img['src']
         # stime = elem.find('span', class_='duration')
         # if stime:
             # title = "[COLOR yellow]%s[/COLOR] %s" % (stime.text,title)
@@ -106,6 +106,39 @@ def lista(item):
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
+    return itemlist
+
+
+def findvideos(item):
+    logger.info()
+    itemlist = []
+    soup = create_soup(item.url)
+    matches = soup.find_all('div', class_='responsive-player')
+    for elem in matches:
+        scrapedurl = elem.iframe['src']
+        if "cine-matik.com" in scrapedurl:
+            n = "yandex"
+            m = scrapedurl.replace("https://cine-matik.com/player/play.php?", "")
+            post = "%s&alternative=%s" %(m,n)
+            headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+            data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
+            if data1=="":
+                n = "blogger"
+                m = scrapedurl.replace("https://cine-matik.com/player/play.php?", "")
+                post = "%s&alternative=%s" %(m,n)
+                headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+                data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
+            scrapedurl = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
+            if not scrapedurl:
+                n = scrapertools.find_single_match(data1,'"alternative":"([^"]+)"')
+                post = "%s&alternative=%s" %(m,n)
+                headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+                data1 = httptools.downloadpage("https://cine-matik.com/player/ajax_sources.php", post=post, headers=headers).data
+                scrapedurl = scrapertools.find_single_match(data1,'"file":"([^"]+)"')
+            scrapedurl = scrapedurl.replace("\/", "/")
+        if not "meta" in scrapedurl:
+            itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=scrapedurl))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
 
