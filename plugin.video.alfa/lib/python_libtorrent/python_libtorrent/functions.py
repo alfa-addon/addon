@@ -33,9 +33,10 @@ import os
 import xbmc, xbmcgui, xbmcaddon
 
 from .net import HTTP
-from core import filetools                                                                                          ### Alfa
+from core import filetools                                                      ### Alfa
 
-__libbaseurl__ = "https://github.com/DiMartinoXBMC/script.module.libtorrent/raw/master/python_libtorrent"
+#__libbaseurl__ = "https://github.com/DiMartinoXBMC/script.module.libtorrent/raw/master/python_libtorrent"
+__libbaseurl__ = ["https://github.com/DiMartinoXBMC/script.module.libtorrent/raw/master/python_libtorrent"]
 #__settings__ = xbmcaddon.Addon(id='script.module.libtorrent')
 #__version__ = __settings__.getAddonInfo('version')
 #__plugin__ = __settings__.getAddonInfo('name') + " v." + __version__
@@ -77,7 +78,8 @@ class LibraryManager(object):
         if ver1 >= 1 and ver2 >= 2:
             global __libbaseurl__
             #__libbaseurl__ = 'https://github.com/alfa-addon/alfa-repo/raw/master/downloads/libtorrent'
-            __libbaseurl__ = 'https://bitbucket.org/alfa_addon/alfa-repo/raw/master/downloads/libtorrent'
+            __libbaseurl__ = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/libtorrent', \
+                              'https://bitbucket.org/alfa_addon/alfa-repo/raw/master/downloads/libtorrent']
 
     def check_exist(self):
         for libname in get_libname(self.platform):
@@ -112,28 +114,39 @@ class LibraryManager(object):
             if PY3: p_version += '_PY3'
             dest = os.path.join(self.dest_path, libname)
             log("try to fetch %s/%s/%s" % (self.platform['system'], p_version, libname))
-            url = "%s/%s/%s/%s.zip" % (__libbaseurl__, self.platform['system'], p_version, libname)
-            url_size = "%s/%s/%s/%s.size.txt" % (__libbaseurl__, self.platform['system'], p_version, libname)
-            if libname!='liblibtorrent.so':
-                try:
-                    self.http = HTTP()
-                    self.http.fetch(url, download=dest + ".zip", progress=False)                    ### Alfa
-                    log("%s -> %s" % (url, dest))
-                    self.http.fetch(url_size, download=dest + '.size.txt', progress=False)          ### Alfa
-                    log("%s -> %s" % (url_size, dest + '.size.txt'))
-                    xbmc.executebuiltin('XBMC.Extract("%s.zip","%s")' % (dest, self.dest_path), True)
-                    filetools.remove(dest + ".zip")
-                except:
-                    text = 'Failed download %s!' % libname
-                    xbmc.executebuiltin("XBMC.Notification(%s,%s,%s,%s)" % (__plugin__,text,750,__icon__))
+            
+            for url_lib in __libbaseurl__:                                      ### Alfa
+                url = "%s/%s/%s/%s.zip" % (url_lib, self.platform['system'], p_version, libname)
+                url_size = "%s/%s/%s/%s.size.txt" % (url_lib, self.platform['system'], p_version, libname)
+                if libname!='liblibtorrent.so':
+                    try:
+                        self.http = HTTP()
+                        response = self.http.fetch(url, download=dest + ".zip", progress=False)                ### Alfa
+                        log("%s -> %s" % (url, dest))
+                        if response.code != 200: continue                                      ### Alfa
+                        response = self.http.fetch(url_size, download=dest + '.size.txt', progress=False)      ### Alfa
+                        log("%s -> %s" % (url_size, dest + '.size.txt'))
+                        if response.code != 200: continue                                      ### Alfa
+                        
+                        xbmc.executebuiltin('XBMC.Extract("%s.zip","%s")' % (dest, self.dest_path), True)
+                        filetools.remove(dest + ".zip")
+                    except:
+                        text = 'Failed download %s!' % libname
+                        #xbmc.executebuiltin("XBMC.Notification(%s,%s,%s,%s)" % (__plugin__,text,750,__icon__))
+                        continue
+                else:
+                    filetools.copy(os.path.join(self.dest_path, 'libtorrent.so'), dest, silent=True)    ### Alfa
+                
+                dest_alfa = os.path.join(xbmc.translatePath(__settings__.getAddonInfo('Path')), \
+                                'lib', libname)                                 ### Alfa
+                filetools.copy(dest, dest_alfa, silent=True)                    ### Alfa
+                dest_alfa = os.path.join(xbmc.translatePath(__settings__.getAddonInfo('Profile')), \
+                                'custom_code', 'lib', libname)                  ### Alfa
+                filetools.copy(dest, dest_alfa, silent=True)                    ### Alfa
+                break
             else:
-                filetools.copy(os.path.join(self.dest_path, 'libtorrent.so'), dest, silent=True)    ### Alfa
-            dest_alfa = os.path.join(xbmc.translatePath(__settings__.getAddonInfo('Path')), \
-                            'lib', libname)                                     ### Alfa
-            filetools.copy(dest, dest_alfa, silent=True)                        ### Alfa
-            dest_alfa = os.path.join(xbmc.translatePath(__settings__.getAddonInfo('Profile')), \
-                            'custom_code', 'lib', libname)                      ### Alfa
-            filetools.copy(dest, dest_alfa, silent=True)                        ### Alfa
+                return False
+
         return True
 
     def android_workaround(self, new_dest_path):                                ### Alfa (entera)

@@ -374,7 +374,7 @@ def download_auto(item, start_up=False):
                                     if res: second_pass = False
                                     break
 
-                elif not second_pass and not start_up:
+                elif not second_pass and not start_up and download_item.downloadProgress != 100:
                     res = start_download(download_item)
                     if res == STATUS_CODES.canceled: break
     
@@ -1087,8 +1087,8 @@ def start_download(item):
 
 
 def get_episodes(item):
-    logger.info("contentAction: %s | contentChannel: %s | contentType: %s" % (
-        item.contentAction, item.contentChannel, item.contentType))
+    logger.info("contentAction: %s | sub_action: %s | contentChannel: %s | contentType: %s | contentSeason: %s | contentEpisodeNumber: %s" % (
+        item.contentAction, item.sub_action, item.contentChannel, item.contentType, item.contentSeason, item.contentEpisodeNumber, ))
 
     from lib import generictools
     
@@ -1178,8 +1178,8 @@ def get_episodes(item):
                 else:
                     return []
             
-            item.contentAction = 'episodios'
-            item.from_action = 'episodios'
+            if not item.from_action: item.from_action = 'episodios'
+            if not item.contentAction: item.contentAction = item.from_action
             if item.sub_action in ["tvshow", "unseen", "auto"]:
                 item.contentType = "tvshow"
                 item.season_colapse = False
@@ -1378,6 +1378,8 @@ def save_download(item, silent=False):
 
     item.contentChannel = item.channel
     item.contentAction = item.action
+    if item.contentAction in ['get_seasons', 'update_tvshow']:
+        item.contentAction = 'episodios'
 
     if item.contentType in ["tvshow", "episode", "season"]:
         save_download_tvshow(item, silent=silent)

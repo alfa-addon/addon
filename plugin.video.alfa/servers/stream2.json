@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "((?:http|https)://www.(?:nuvid|drtuber|iceporn|viptube|vivatube|tubeon|hd21|yeptube|winporn).com/embed/[0-9]+)",
-        "url": "\\1"
+        "pattern": "https://stream2.vg/([A-z0-9]+)",
+        "url": "https://streamz.vg/\\1"
       }
     ]
   },
   "free": true,
-  "id": "nuvid",
-  "name": "nuvid",
+  "id": "stream2",
+  "name": "stream2",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": ""
+  "thumbnail": "https://cache.hollywood.to/streamz.cc/400dpiLogoCropped.png"
 }
