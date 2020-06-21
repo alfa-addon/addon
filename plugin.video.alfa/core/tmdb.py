@@ -572,19 +572,19 @@ def discovery(item, dict_=False, cast=False):
         listado = Tmdb(discover = dict_, cast=cast)
     
     elif item.search_type == 'discover':
-        listado = Tmdb(discover={'url':'discover/%s' % item.type, 'with_genres':item.list_type, 'language':'es',
+        listado = Tmdb(discover={'url':'discover/%s' % item.type, 'with_genres':item.list_type, 'language':tmdb_lang,
                                  'page':item.page})
 
     elif item.search_type == 'list':
         if item.page == '':
             item.page = '1'
-        listado = Tmdb(discover={'url': item.list_type, 'language':'es', 'page':item.page})
+        listado = Tmdb(discover={'url': item.list_type, 'language':tmdb_lang, 'page':item.page})
 
 
     return listado
 
 def get_genres(type):
-    lang = 'es'
+    lang = tmdb_lang
     genres = Tmdb(tipo=type)
 
     return genres.dic_generos[lang]
@@ -812,7 +812,7 @@ class Tmdb(object):
         self.busqueda_id = kwargs.get('id_Tmdb', '')
         self.busqueda_texto = re.sub('\[\\\?(B|I|COLOR)\s?[^\]]*\]', '', self.texto_buscado).strip()
         self.busqueda_tipo = kwargs.get('tipo', '')
-        self.busqueda_idioma = kwargs.get('idioma_busqueda', 'es')
+        self.busqueda_idioma = kwargs.get('idioma_busqueda', tmdb_lang)
         self.busqueda_include_adult = kwargs.get('include_adult', False)
         self.busqueda_year = kwargs.get('year', '')
         self.busqueda_filtro = kwargs.get('filtro', {})
@@ -887,7 +887,7 @@ class Tmdb(object):
         return dict_data
 
     @classmethod
-    def rellenar_dic_generos(cls, tipo='movie', idioma='es'):
+    def rellenar_dic_generos(cls, tipo='movie', idioma=tmdb_lang):
         # Rellenar diccionario de generos del tipo e idioma pasados como parametros
         if idioma not in cls.dic_generos:
             cls.dic_generos[idioma] = {}
