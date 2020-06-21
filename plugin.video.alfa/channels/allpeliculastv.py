@@ -152,6 +152,7 @@ def generos(item):
                              pagina = 0,
                              title = titulo,
                              ))
+    itemlist = sorted(itemlist, key=lambda i: i.title)
     return itemlist
 
 
