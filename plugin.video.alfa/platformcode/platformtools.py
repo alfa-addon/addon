@@ -783,7 +783,12 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
 
     # si se trata de un vídeo en formato mpd, se configura el listitem para reproducirlo
     # con el addon inpustreamaddon implementado en Kodi 17
+    # el itemlist debe enviarse de esta manera:
+    # video_urls.append(['.mpd [CinemaUpload]', url, 0, "", "mpd"])
+    # donde el quinto parámetro debe existir (tipo:str o int) para que sea reconocido como un mpd
     if mpd:
+        if not xbmc.getCondVisibility("System.HasAddon(inputstream.adaptive)"):
+            xbmc.executebuiltin("InstallAddon(inputstream.adaptive)")
         xlistitem.setProperty('inputstreamaddon', 'inputstream.adaptive')
         xlistitem.setProperty('inputstream.adaptive.manifest_type', 'mpd')
 
@@ -1098,6 +1103,7 @@ def get_video_seleccionado(item, seleccion, video_urls):
     # Ha elegido uno de los vídeos
     if seleccion < len(video_urls):
         mediaurl = video_urls[seleccion][1]
+        logger.info("Intel77 %s" %(len(video_urls[seleccion])))
         if len(video_urls[seleccion]) > 4:
             wait_time = video_urls[seleccion][2]
             if not item.subtitle:
