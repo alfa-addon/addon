@@ -1103,7 +1103,6 @@ def get_video_seleccionado(item, seleccion, video_urls):
     # Ha elegido uno de los vídeos
     if seleccion < len(video_urls):
         mediaurl = video_urls[seleccion][1]
-        logger.info("Intel77 %s" %(len(video_urls[seleccion])))
         if len(video_urls[seleccion]) > 4:
             wait_time = video_urls[seleccion][2]
             if not item.subtitle:
