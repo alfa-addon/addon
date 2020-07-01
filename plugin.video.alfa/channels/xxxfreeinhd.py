@@ -107,13 +107,15 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     data = scrapertools.find_single_match(data,'<div class="responsive-player">(.*?)</div>')
-    patron = 'src="([^"]+)"'
+    patron = 'data-lazy-src="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl in matches:
         if "strdef" in scrapedurl: 
             url = decode_url(scrapedurl)
         else:
             url = scrapedurl
+        if not url.startswith("https"):
+            url = "https:%s" % url
         if not "xyz/" in url or not "vid=" in url: #netu
             itemlist.append( Item(channel=item.channel, action="play", title = "%s", contentTitle= item.title, url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())

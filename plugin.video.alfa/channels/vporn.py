@@ -18,7 +18,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import httptools
 
-host = 'https://www.vporn.com'
+host = 'https://www.vporn.com' #https://pornone.com/
 
 
 def mainlist(item):
