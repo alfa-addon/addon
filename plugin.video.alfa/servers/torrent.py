@@ -41,6 +41,8 @@ extensions_list = ['.aaf', '.3gp', '.asf', '.avi', '.flv', '.mpeg',
                    '.m1v', '.m2v', '.m4v', '.mkv', '.mov', '.mpg',
                    '.mpe', '.mp4', '.ogg', '.rar', '.wmv', '.zip']
 
+CF_BLOCKING_ERRORS = ['Detected the new Cloudflare challenge']
+
 trackers = [
         "udp://tracker.openbittorrent.com:80/announce",
         "http://tracker.torrentbay.to:6969/announce",
@@ -555,17 +557,17 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
             else:                                                               #Descarga sin post
                 response = httptools.downloadpage(url, headers=headers, timeout=timeout, \
                             proxy_retries=proxy_retries)
-            if not response.sucess and not capture_path:
-                logger.error('Archivo .torrent no encontrado: ' + url)
-                torrents_path = ''
-                torrent_file = str(response.code)
-                if data_torrent:
-                    return (torrents_path, torrent_file)
-                return torrents_path                                            #Si hay un error, devolvemos el "path" vacío
             
-            elif not response.sucess and capture_path:
+            if not response.sucess:
                 # Si hay un bloqueo de CloudFlare, intenta descargarlo directamente desde el Browser y lo recoge de descargas
-                if not lookup:
+                for cf_error in CF_BLOCKING_ERRORS:
+                    if cf_error in str(response.code):
+                        cf_error = 'CF_BLOCKED'
+                        break
+                else:
+                    cf_error = ''
+
+                if not lookup and cf_error:
                     url_save, torrent_file = capture_thru_browser(url, capture_path, response, VFS)
                     if not url_save:
                         torrent_file = str(response.code)
@@ -576,11 +578,11 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
                             return torrents_path 
                 elif data_torrent:
                     torrent_file = str(response.code)
-                    torrents_path = ''
+                    torrents_path = cf_error
                     return (torrents_path, torrent_file)
                 else:
                     torrent_file = str(response.code)
-                    torrents_path = ''
+                    torrents_path = cf_error
                     return torrents_path                                        #Si hay un error, devolvemos el "path" vacío
             
             else:
@@ -610,7 +612,7 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
                     unzipper.extract(torrents_path_zip_file, torrents_path_zip)
                 except:
                     import xbmc
-                    xbmc.executebuiltin('XBMC.Extract("%s", "%s")' % (torrents_path_zip_file, torrents_path_zip))
+                    xbmc.executebuiltin('Extract("%s", "%s")' % (torrents_path_zip_file, torrents_path_zip))
                     time.sleep(1)
                 
                 for root, folders, files in filetools.walk(torrents_path_zip):  #Recorremos la carpeta para leer el .torrent
@@ -685,14 +687,14 @@ def capture_thru_browser(url, capture_path, response, VFS):
     torrents_path = ''
     torrent_file = ''
     salida = False
-    
-    if 'Detected the new Cloudflare challenge' not in str(response.code):
-        return (torrents_path, torrent_file)
         
     startlist = filetools.listdir(capture_path)
-    res = generictools.call_chrome(url)
+    browser, res = generictools.call_browser(url, download_path=capture_path)
+    if not browser:
+        logger.error('ERROR: No Browser Externo')
+        return (torrents_path, torrent_file)
     if not res:
-        logger.error('ERROR de Chrome')
+        logger.error('ERROR de %s' % browser)
         return (torrents_path, torrent_file)
     
     i = 1
