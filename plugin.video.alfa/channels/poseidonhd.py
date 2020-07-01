@@ -255,7 +255,7 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
-    servers = {'drive': 'gvideo', 'fembed': 'fembed'}
+    servers = {'drive': 'gvideo', 'fembed': 'fembed', "player": "oprem"}
     soup = create_soup(item.url)
     matches = soup.find("ul", class_="aa-tbs aa-tbs-video").find_all("li")
 
@@ -263,7 +263,7 @@ def findvideos(item):
         srv, lang = elem.find("span", class_="server").text.replace(" - ", "-").split("-")
         opt = elem.a["href"].replace("#","")
         url = soup.find("div", id="%s" % opt).find("iframe")["data-src"]
-        if srv.lower() in ["player", "waaw", "jetload"]:
+        if srv.lower() in ["waaw", "jetload"]:
            continue
         if srv.lower() in servers:
            srv = servers[srv.lower()]

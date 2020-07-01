@@ -54,6 +54,9 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Todas", url=host + "peliculas", action="list_all",
                          thumbnail=get_thumb("all", auto=True)))
 
+    itemlist.append(Item(channel=item.channel, title="Generos", url=host + "peliculas", action="section",
+                         thumbnail=get_thumb("all", auto=True)))
+
     itemlist.append(Item(channel=item.channel, title="Buscar...", url=host+ "peliculas/?type=post&search=",
                          action="search", thumbnail=get_thumb("search", auto=True)))
 
@@ -92,6 +95,25 @@ def list_all(item):
         itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=next_page, action='list_all'))
     except:
         pass
+
+    return itemlist
+
+
+def section(item):
+    logger.info()
+
+    itemlist = list()
+
+    soup = create_soup(item.url).find("div", class_="filter-options-mob")
+    matches = soup.find_all("label", class_=re.compile("dropdown-item"))
+
+    for elem in matches:
+
+        value = elem.find("input", class_="filter-radio")["value"]
+        title = elem["title"]
+        url = "%s?type=post&genres[]=%s&search" % (item.url, value)
+
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
 
     return itemlist
 

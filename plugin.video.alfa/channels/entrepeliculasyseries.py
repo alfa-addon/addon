@@ -17,7 +17,7 @@ from bs4 import BeautifulSoup
 
 host = 'https://www.entrepeliculasyseries.com/'
 
-IDIOMAS = {"lat": "LAT", "cas": "CAST", "sub": "VOSE"}
+IDIOMAS = {"lat": "LAT", "cas": "CAST", "sub": "VOSE", "esp": "CAST"}
 list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['mega', 'fembed', 'vidtodo', 'gvideo']
@@ -202,12 +202,12 @@ def episodesxseason(item):
                 if "href" not in elem.a.attrs:
                     continue
                 url = elem.a["href"]
-                title = elem.a.text
-                infoLabels["episode"] = scrapertools.find_single_match(title, "(\d+)")
+                episode = scrapertools.find_single_match(elem.a.text, r"(\d+)")
+                title = "%sx%s" % (infoLabels["season"], episode)
+                infoLabels["episode"] = episode
 
                 itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos",
                                      infoLabels=infoLabels))
-
 
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
@@ -220,17 +220,20 @@ def findvideos(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-    matches = soup.find_all("ul", class_="menuPlayer")
+
+    matches = soup.find_all("div", class_=re.compile(r"col-sm-12 col-md-3 option-lang"))
     for elem in matches:
-        lang = re.sub("servidores-", '', elem["id"])
+
+        lang = (elem.find("span", class_="text-options")["id"]).replace("-option", "")
+
         for opt in elem.find_all("li", class_="option"):
-            server = re.sub(r'(ver o [\w]+) en ', '', opt["title"].lower())
+            server = re.sub(opt.find("noscript").text, "", opt.text).strip().lower().replace("| ", "")
+            url = opt["data-link"]
+
             if server == "google drive":
                 server = "gvideo"
-            if "publicidad" in server:
+            if server.lower() in ["descargar"]:
                 continue
-            url = opt.a["href"]
-
             itemlist.append(Item(channel=item.channel, title=server.capitalize(), url=url, server=server, action="play",
                                  language=IDIOMAS.get(lang, 'LAT'), infoLabels=item.infoLabels))
 
@@ -297,8 +300,8 @@ def newest(categoria):
 def play(item):
     itemlist = list()
 
-    soup = create_soup(item.url)
-    url = soup.find("a", id="DownloadScript")["href"]
+    data = httptools.downloadpage(item.url).data
+    url = scrapertools.find_single_match(data, 'window.location="([^"]+)"')
     item.server = ""
     itemlist.append(item.clone(url=url))
 
