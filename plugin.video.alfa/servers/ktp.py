@@ -15,9 +15,9 @@ def test_video_exists(page_url):
     response = httptools.downloadpage(page_url)
 
     if response.code == 404 or \
-       "Page not Found" in response.data \
-       or "File was deleted" in response.data \
-       or "is no longer available" in response.data:
+    "Page not Found" in response.data \
+    or "File was deleted" in response.data \
+    or "is no longer available" in response.data:
         return False, "[ktplayer] El fichero no existe o ha sido borrado"
 
     global data, license_code

@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(?:http|s)://xhamster.com/(?:xembed.php\\?video=|embed/)([A-z0-9]+)",
-        "url": "https://xhamster.com/embed/\\1"
+        "pattern": "(https://aparat.cam/[A-z0-9]+/[A-z0-9-_.]+.html)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "xhamster",
-  "name": "xhamster",
+  "id": "aparatcam",
+  "name": "aparatcam",
   "settings": [
     {
       "default": false,
