@@ -477,7 +477,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
 
 
 def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=10, \
-                    lookup=False, data_torrent=False, headers={}, proxy_retries=1):
+                     lookup=False, data_torrent=False, headers={}, proxy_retries=1):
     if torrents_path != None:
         logger.info("path = " + torrents_path)
         if url != torrents_path:
@@ -489,6 +489,7 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
 
     torrent_file = ''
     t_hash = ''
+    url_save = url
     if referer:
         headers.update({'Content-Type': 'application/x-www-form-urlencoded', 'Referer': referer})   #Necesario para el Post del .Torrent
     
@@ -520,6 +521,7 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
     
     try:
         #Descargamos el .torrent
+        capture_path = config.get_setting("capture_thru_browser_path", server="torrent", default="")
         if url.startswith("magnet:"):
             if config.get_setting("magnet2torrent", server="torrent", default=False):
                 torrent_file = magnet2torrent(url, headers=headers)             #Convierte el Magnet en un archivo Torrent
@@ -553,14 +555,37 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
             else:                                                               #Descarga sin post
                 response = httptools.downloadpage(url, headers=headers, timeout=timeout, \
                             proxy_retries=proxy_retries)
-            if not response.sucess:
+            if not response.sucess and not capture_path:
                 logger.error('Archivo .torrent no encontrado: ' + url)
                 torrents_path = ''
+                torrent_file = str(response.code)
                 if data_torrent:
                     return (torrents_path, torrent_file)
                 return torrents_path                                            #Si hay un error, devolvemos el "path" vacío
-            torrent_file = response.data
-            torrent_file_uncoded = response.data
+            
+            elif not response.sucess and capture_path:
+                # Si hay un bloqueo de CloudFlare, intenta descargarlo directamente desde el Browser y lo recoge de descargas
+                if not lookup:
+                    url_save, torrent_file = capture_thru_browser(url, capture_path, response, VFS)
+                    if not url_save:
+                        torrent_file = str(response.code)
+                        torrents_path = ''
+                        if data_torrent:
+                            return (torrents_path, torrent_file)
+                        else:
+                            return torrents_path 
+                elif data_torrent:
+                    torrent_file = str(response.code)
+                    torrents_path = ''
+                    return (torrents_path, torrent_file)
+                else:
+                    torrent_file = str(response.code)
+                    torrents_path = ''
+                    return torrents_path                                        #Si hay un error, devolvemos el "path" vacío
+            
+            else:
+                torrent_file = response.data
+            torrent_file_uncoded = torrent_file
             if PY3 and isinstance(torrent_file, bytes):
                 torrent_file = "".join(chr(x) for x in bytes(torrent_file_uncoded))
 
@@ -625,9 +650,11 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
         
         #Salvamos el .torrent
         if not lookup:
-            if not url.startswith("http") and not torrent_file.startswith("PK") and filetools.isfile(url):
-                if url != torrents_path:
-                    ret = filetools.copy(url, torrents_path_encode, silent=True)
+            if not url_save.startswith("http") and not torrent_file.startswith("PK") and filetools.isfile(url_save):
+                if url_save != torrents_path:
+                    ret = filetools.copy(url_save, torrents_path_encode, silent=True)
+                    if capture_path and capture_path in url_save:
+                        filetools.remove(url_save, silent=True)
                 else:
                     ret = True
             else:
@@ -650,6 +677,44 @@ def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=1
         return (torrents_path, torrent_file)
     return torrents_path
     
+
+def capture_thru_browser(url, capture_path, response, VFS):
+    # Si hay un bloqueo insalvable de CloudFlare, se intenta descargar el .torrent directamente desde Chrome
+    logger.info('url: %s, capture_path: %s' % (url, capture_path))
+    
+    torrents_path = ''
+    torrent_file = ''
+    salida = False
+    
+    if 'Detected the new Cloudflare challenge' not in str(response.code):
+        return (torrents_path, torrent_file)
+        
+    startlist = filetools.listdir(capture_path)
+    res = generictools.call_chrome(url)
+    if not res:
+        logger.error('ERROR de Chrome')
+        return (torrents_path, torrent_file)
+    
+    i = 1
+    while not salida:
+        endist = filetools.listdir(capture_path)
+        if startlist != endist:
+            for file in endist:
+                if file.endswith('.torrent') and file not in startlist:
+                    salida = True
+                    break
+        time.sleep(2)
+        i += 1
+        if i > 30 and not salida:
+            salida = True
+            logger.error('No se ha encontrado .torrent descargado')
+            return (torrents_path, torrent_file)
+
+    torrent_file = filetools.read(filetools.join(capture_path, file), silent=True, vfs=VFS)
+    torrents_path = filetools.join(capture_path, file)
+
+    return (torrents_path, torrent_file)
+
 
 def magnet2torrent(magnet, headers={}):
     logger.info()
@@ -1114,6 +1179,11 @@ def restart_unfinished_downloads():
                         filetools.read(filetools.join(DOWNLOAD_LIST_PATH, fichero)))
                     torr_client = torrent_paths['TORR_client'].upper()
                     
+                    if item.contentType == 'movie':
+                        title = item.infoLabels['title']
+                    else:
+                        title = '%s: %sx%s' % (item.infoLabels['tvshowtitle'], item.infoLabels['season'], item.infoLabels['episode'])
+                    
                     if item.downloadStatus in [1, 3]:
                         continue
                     if item.server != 'torrent' and config.get_setting("DOWNLOADER_in_use", "downloads"):
@@ -1122,7 +1192,9 @@ def restart_unfinished_downloads():
                         continue
                     if torr_client in ['QUASAR', 'ELEMENTUM'] and item.downloadProgress > 0 \
                                     and item.downloadProgress < 100 and init and not 'RAR-' in item.torrent_info:
-                        relaunch_torrent_monitoring(item, torr_client, torrent_paths)
+                        if not relaunch_torrent_monitoring(item, torr_client, torrent_paths):
+                            logger.info('BORRANDO descarga INACTIVA de %s: %s' % (torr_client, title))
+                            filetools.remove(filetools.join(DOWNLOAD_LIST_PATH, fichero))
                         continue
                     elif torr_client in ['QUASAR', 'ELEMENTUM'] and item.downloadProgress > 0:
                         continue
@@ -1139,10 +1211,6 @@ def restart_unfinished_downloads():
                                 item.downloadServer['url'] = new_torrent_url
                                 item.url = new_torrent_url
 
-                        if item.contentType == 'movie':
-                            title = item.infoLabels['title']
-                        else:
-                            title = '%s: %sx%s' % (item.infoLabels['tvshowtitle'], item.infoLabels['season'], item.infoLabels['episode'])
                         if not config.get_setting("LIBTORRENT_in_use", server="torrent", default=False) or item.server != 'torrent':
                             try:
                                 if isinstance(item.downloadProgress, (int, float)):
@@ -1183,12 +1251,14 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
                                 torr_client.lower(), torrent_paths['ELEMENTUM_port'])
         except:
             logger.error(traceback.format_exc(1))
-            return
+            return False
         if torr_data:                                                           # Existe la descarga ?
             if torr_data['label'].startswith('100.00%'):                        # Ha terminado la descarga?
                 item.downloadProgress = 100                                     # Lo marcamos como terminado
                 update_control(item)
-                return
+                return True
+        else:
+            return False
         
         # Creamos el listitem
         xlistitem = xbmcgui.ListItem(path=item.url)
@@ -1236,6 +1306,8 @@ def relaunch_torrent_monitoring(item, torr_client='', torrent_paths=[]):
         time.sleep(3)                                                           # Dejamos terminar la inicialización...
     except:
         logger.error(traceback.format_exc())
+        
+    return True
 
 
 def check_seen_torrents():
@@ -1561,6 +1633,9 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                 if rar_file and len(filetools.listdir(rar_control['download_path'], silent=True)) <= 1:
                     filetools.remove(filetools.join(rar_control['download_path'], '_rar_control.json'), silent=True)
                     filetools.rmdir(rar_control['download_path'], silent=True)
+                path = filetools.join(config.get_setting("downloadlistpath"), item.path)
+                if path.endswith('.json'):
+                    filetools.remove(path, silent=True)
                 logger.error('%s session aborted: %s' % (str(torr_client).upper(), str(folder)))
                 return ('', '', folder, rar_control)                            # Volvemos
 

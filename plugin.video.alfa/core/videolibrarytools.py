@@ -213,7 +213,7 @@ def save_movie(item):
                 # actualizamos la videoteca de Kodi con la pelicula
                 if config.is_xbmc():
                     from platformcode import xbmc_videolibrary
-                    xbmc_videolibrary.update(FOLDER_MOVIES, filetools.basename(path) + "/")
+                    xbmc_videolibrary.update(FOLDER_MOVIES, '_scan_series')
 
                 p_dialog.close()
                 return insertados, sobreescritos, fallidos
@@ -413,11 +413,11 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         p_dialog = platformtools.dialog_progress(config.get_localized_string(20000), config.get_localized_string(60064))
         p_dialog.update(0, config.get_localized_string(60065))
 
-    channel_alt = generictools.verify_channel(serie.channel)            #Preparamos para añadir las urls de emergencia
-    emergency_urls_stat = config.get_setting("emergency_urls", channel_alt)         #El canal quiere urls de emergencia?
+    channel_alt = generictools.verify_channel(serie.channel)                    #Preparamos para añadir las urls de emergencia
+    emergency_urls_stat = config.get_setting("emergency_urls", channel_alt)     #El canal quiere urls de emergencia?
     emergency_urls_succ = False
     channel = __import__('channels.%s' % channel_alt, fromlist=["channels.%s" % channel_alt])
-    if serie.torrent_caching_fail:                              #Si el proceso de conversión ha fallado, no se cachean
+    if serie.torrent_caching_fail:                                              #Si el proceso de conversión ha fallado, no se cachean
         emergency_urls_stat = 0
         del serie.torrent_caching_fail
     
@@ -436,7 +436,9 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
         
         try:
             season_episode = scrapertools.get_season_and_episode(e.title)
-            if not season_episode:
+            if not season_episode or 'temp. a videoteca' in e.title.lower() \
+                            or 'serie a videoteca' in e.title.lower() \
+                            or 'vista previa videoteca' in e.title.lower():
                 continue
         
             # Si se ha marcado la opción de url de emergencia, se añade ésta a cada episodio después de haber ejecutado Findvideos del canal
@@ -646,7 +648,7 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             # ... si ha sido correcto actualizamos la videoteca de Kodi
             if config.is_xbmc() and not silent:
                 from platformcode import xbmc_videolibrary
-                xbmc_videolibrary.update(FOLDER_TVSHOWS, filetools.basename(path))
+                xbmc_videolibrary.update(FOLDER_TVSHOWS, '_scan_series')
 
     if fallidos == len(episodelist):
         fallidos = -1

@@ -72,17 +72,12 @@ def getmainlist(view="thumb_"):
                          thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
                          category=config.get_localized_string(30104), viewmode="list"))
                          
-    itemlist.append(Item(channel="setting", action="call_chrome", url='https://alfa-addon.com/threads/descargas-gestion-integral-de-clientes-torrent.3526/', 
-                         title="-     [COLOR yellow]Descargas: Gestión Integral de Clientes Torrent[/COLOR]   " + 
-                         "https://alfa-addon.com/threads/descargas-gestion-integral-de-clientes-torrent.3526/", 
+    itemlist.append(Item(channel="setting", action="call_chrome", url='https://alfa-addon.com/threads/bloqueos-en-la-descarga-de-torrents.3646/', 
+                         title="-     [COLOR yellow]¿Bloqueos en la descarga de Torrents?[/COLOR]   " + 
+                         "https://alfa-addon.com/threads/bloqueos-en-la-descarga-de-torrents.3646/", 
                          thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
                          category=config.get_localized_string(30104), viewmode="list"))
-    
-    itemlist.append(Item(channel="setting", action="call_chrome", url='https://alfa-addon.com/threads/no-se-actualiza-alfa-como-descargarlo-manualmente.3292/', 
-                         title="-     [COLOR yellow]¿No se ACTUALIZA Alfa? Cómo DESCARGARLO manualmente[/COLOR]   " + 
-                         "https://alfa-addon.com/threads/no-se-actualiza-alfa-como-descargarlo-manualmente.3292/", 
-                         thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
-                         category=config.get_localized_string(30104), viewmode="list"))
+
     return itemlist
 
 

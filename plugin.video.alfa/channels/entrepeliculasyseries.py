@@ -232,7 +232,7 @@ def findvideos(item):
             url = opt.a["href"]
 
             itemlist.append(Item(channel=item.channel, title=server.capitalize(), url=url, server=server, action="play",
-                                 language=IDIOMAS.get(lang, 'LAT')))
+                                 language=IDIOMAS.get(lang, 'LAT'), infoLabels=item.infoLabels))
 
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)

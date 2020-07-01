@@ -95,7 +95,7 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    txt = scrapertools.find_single_match(data,'<iframe src=".*?(aHR0[^"]+)"')
+    txt = scrapertools.find_single_match(data,'src=".*?(aHR0[^"]+)"')
     import base64
     url = base64.b64decode(txt)
     itemlist.append( Item(channel=item.channel, action="play", title = "%s", url=url, contentTitle=item.title))

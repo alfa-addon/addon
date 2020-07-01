@@ -597,7 +597,8 @@ def findvideos(item):
         temp_epi = ''
         if scrapedkey:
             scrapedurl = '%s?u=%s' % (urlparse.urljoin(host, scrapedurl_la).replace(sufix, sufix_alt)\
-                    .replace('download/torrent.php', 'download_tt.php'), scrapedkey)
+                    .replace('download/torrent.php', 'download_tt.php')\
+                    .replace('/torrent.php', '/download_tt.php') ,scrapedkey)
         else:
             scrapedurl = scrapedurl_la.replace(domain_files_old, domain_files)
         if scrapertools.find_single_match(quality, '\([C|c]ontrase[^>]+>(.*?)<\/[^>]+>.'):
@@ -691,7 +692,7 @@ def findvideos(item):
         
         #if size and item_local.contentType != "episode":
         if not item.armagedon:
-            size = generictools.get_torrent_size(scrapedurl)                        #Buscamos el tamaño en el .torrent y si es RAR
+            size = generictools.get_torrent_size(scrapedurl, timeout=10)        #Buscamos el tamaño en el .torrent y si es RAR
         if size:
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
                         .replace('Mb', 'M·b').replace('.', ',')
@@ -745,7 +746,12 @@ def findvideos(item):
             item_local.quality = re.sub(r'\s?\[COLOR \w+\]\s?\[\/COLOR\]', '', item_local.quality)
             item_local.quality = item_local.quality.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
             
-            item_local.alive = "??"                                             #Calidad del link sin verificar
+            if not size or 'Magnet' in size:
+                item_local.alive = "??"                                         #Calidad del link sin verificar
+            elif 'ERROR' in size:
+                item_local.alive = "??"                                         #Calidad del link en error, timeout???
+            else:
+                item_local.alive = "ok"                                         #Calidad del link verificada
             item_local.action = "play"                                          #Visualizar vídeo
             item_local.server = "torrent"                                       #Seridor Torrent
         

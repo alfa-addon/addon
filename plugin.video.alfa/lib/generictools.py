@@ -52,7 +52,7 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                  only_headers=False, referer=None, follow_redirects=True, timeout=None, 
                  proxy=True, proxy_web=False, proxy_addr_forced={}, forced_proxy=None, 
                  proxy_retries=1, CF=False, file=None, filename=None, ignore_response_code=True, 
-                 alfa_s=False, decode_code=None, s2=None, patron='', quote_rep=False, 
+                 alfa_s=False, decode_code=None, json=False, s2=None, patron='', quote_rep=False, 
                  no_comments=True, item={}, itemlist=[]):
     
     # Función "wraper" que puede ser llamada desde los canales para descargar páginas de forma unificada y evitar
@@ -88,13 +88,20 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                                           proxy_retries=proxy_retries, CF=CF, file=file, filename=filename, 
                                           ignore_response_code=ignore_response_code, alfa_s=alfa_s)
         if response:
-            data = response.data
+            if json and response.json:
+                data = response.json
+            else:
+                data = response.data
             success = response.sucess
             code = response.code
+            if decode_code is None and response.encoding is not None:
+                decode_code = response.encoding
             if success and only_headers:
                 data = response.headers
                 return (data, success, code, item, itemlist)
             if success and 'Content-Type' in response.headers and not 'text/html' \
+                                in response.headers['Content-Type'] and not 'json' \
+                                in response.headers['Content-Type'] and not 'xml' \
                                 in response.headers['Content-Type']:
                 return (data, success, code, item, itemlist)
 
@@ -106,15 +113,20 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                 data = re.sub(r"\s{2,}", "", data)                              # Reemplaza blancos innecesarios, salvo en "findvideos"
             if no_comments:
                 data = re.sub(r"(<!--.*?-->)", "", data)                        # Reemplaza comentarios
-            if decode_code is not None:                                         # Si se especifica, se decodifica con el código dado
-                if not PY3 and isinstance(data, str):
-                    data = unicode(data, decode_code, errors="replace").encode("utf8")
-                elif PY3 and isinstance(data, bytes):
-                    data = data.decode(decode_code)
+            if decode_code is None:                                             # Si se especifica, se decodifica con el código dado
+                decode_code = 'utf8'
+            if not PY3 and isinstance(data, str):
+                data = unicode(data, decode_code, errors="replace").encode("utf8")
+            elif PY3 and isinstance(data, bytes):
+                data = data.decode(decode_code)
             if patron and not scrapertools.find_single_match(data, patron):     # Se comprueba que el patrón funciona
                 code = 999                                                      # Si no funciona, se pasa error
-                logger.error('ERROR 02: ' + ERROR_02 + item.url + " CODE: " + str(code) 
-                             + " PATRON: " + patron + " DATA: " + str(data))
+                try:
+                    logger.error('ERROR 02: ' + ERROR_02 + str(item.url) + " CODE: " + str(code) 
+                            + " PATRON: " + str(patron) + " DATA: " + str(data))
+                except:
+                    logger.error('ERROR 02: ' + ERROR_02 + str(item.url) + " CODE: " + str(code)
+                            + " PATRON: " + str(patron) + " DATA: ")
                 if funcion != 'episodios':
                     itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
                              '[COLOR yellow]' + str(code) + '[/COLOR]: ERROR 02: ' + ERROR_02))
@@ -130,8 +142,8 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                             '. Reportar el problema en el foro', thumbnail=thumb_intervenido, 
                             folder=False))
             else:
-                logger.error('ERROR 01: ' + ERROR_01 + item.url + " CODE: " + str(code) 
-                             + " PATRON: " + patron + " DATA: ")
+                logger.error('ERROR 01: ' + ERROR_01 + str(item.url) + " CODE: " + str(code) 
+                                 + " PATRON: " + str(patron) + " DATA: ")
                 if funcion != 'episodios':
                     itemlist.append(item.clone(action='', title=item.category + ': CODE: ' +
                              '[COLOR yellow]' + str(code) + '[/COLOR]: ERROR 01: ' + ERROR_01))
@@ -431,6 +443,8 @@ def post_tmdb_listado(item, itemlist):
                     continue
 
                 title_add = title_add.rstrip()
+                if scrapertools.find_single_match(title_subs, r'Episodio\s*(\d+)x(\d+)'):
+                    title_subs += ' (MAX_EPISODIOS)'
                 title_add = '%s -%s-' % (title_add, title_subs)                 #se agregan el resto de etiquetas salvadas
         item_local.title_subs = []
         del item_local.title_subs
@@ -497,12 +511,48 @@ def post_tmdb_listado(item, itemlist):
         
         # Preparamos el título para series, con los núm. de temporadas, si las hay
         if item_local.contentType in ['season', 'tvshow', 'episode']:
-            # Pasada por TMDB a Serie, para datos adicionales
+            
+            # Pasada por TMDB a Serie, para datos adicionales, y mejorar la experiencia en Novedades
+            if scrapertools.find_single_match(title_add, r'Episodio\s*(\d+)x(\d+)') and item_local.infoLabels['tmdb_id']:
+                # Salva los datos de la Serie y lo transforma temporalmente en Season o Episode
+                contentPlot = item_local.contentPlot
+                contentType = item_local.contentType
+                season, episode = scrapertools.find_single_match(title_add, r'Episodio\s*(\d+)x(\d+)')
+                episode_max = int(episode)
+                item_local.infoLabels['season'] = season
+                if '-al-' not in title_add:
+                    item_local.infoLabels['episode'] = episode
+                    item_local.contentType = "episode"
+                else:
+                    item_local.contentType = "season"
+                    episode_max = int(scrapertools.find_single_match(title_add, r'Episodio\s*\d+x\d+-al-(\d+)'))
+            
             try:
-                tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda='es,en')  #TMDB de la serie
+                if item_local.infoLabels['tmdb_id']:
+                    tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda='es,en')  #TMDB de la serie
             except:
                 logger.error(traceback.format_exc())
-            
+                
+            if scrapertools.find_single_match(title_add, r'Episodio\s*(\d+)x(\d+)') and item_local.infoLabels['tmdb_id']:
+                # Restaura los datos de infoLabels a su estado original, menos plot y año
+                item_local.infoLabels['year'] = scrapertools.find_single_match(item_local.infoLabels['aired'], r'\d{4}')
+                if item_local.infoLabels.get('temporada_num_episodios', 0) >= episode_max:
+                    tot_epis = ' (de %s' % str(item_local.infoLabels['temporada_num_episodios'])
+                    if item_local.infoLabels.get('number_of_seasons', 0) > int(season) \
+                            and item_local.infoLabels.get('number_of_episodes', 0) > 0:
+                        tot_epis += ', de %sx%s' % (str(item_local.infoLabels['number_of_seasons']), \
+                            str(item_local.infoLabels['number_of_episodes']))
+                    tot_epis += ')'
+                    title_add = title_add.replace(' (MAX_EPISODIOS)', tot_epis)
+                else:
+                    title_add = title_add.replace(' (MAX_EPISODIOS)', '')
+                if contentPlot[10:] != item_local.contentPlot[10:]:
+                    item_local.contentPlot += '\n\n%s' % contentPlot
+                item_local.contentType = contentType
+                if item_local.contentType in ['tvshow']: del item_local.infoLabels['season']
+                if item_local.contentType in ['season', 'tvshow'] and item_local.contentEpisodeNumber: del item_local.infoLabels['episode']
+
+            # Exploramos los diferentes formatos
             if item_local.contentType == "episode":
                 #Si no está el título del episodio, pero sí está en "title", lo rescatamos
                 if not item_local.infoLabels['episodio_titulo'] and item_local.infoLabels['title'].lower() \
@@ -558,7 +608,7 @@ def post_tmdb_listado(item, itemlist):
             if item_local.from_channel == "news":
                 title_add += " -Varios-"
         
-        title += title_add                                                      #Se añaden etiquetas adicionales, si las hay
+        title += title_add.replace(' (MAX_EPISODIOS)', '')                      #Se añaden etiquetas adicionales, si las hay
 
         #Ahora maquillamos un poco los titulos dependiendo de si se han seleccionado títulos inteleigentes o no
         if not config.get_setting("unify"):                                     #Si Titulos Inteligentes NO seleccionados:
@@ -692,7 +742,8 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
         del item_season.season_colapse
     title = '** Todas las Temporadas'                                           #Agregamos título de TODAS las Temporadas (modo tradicional)
     if item_season.infoLabels['number_of_episodes']:                            #Ponemos el núm de episodios de la Serie
-        title += ' [%sx%s epi]' % (str(item_season.infoLabels['number_of_seasons']), str(item_season.infoLabels['number_of_episodes']))
+        title += ' [%sx%s epi]' % (str(item_season.infoLabels['number_of_seasons']), \
+                str(item_season.infoLabels['number_of_episodes']))
     
     rating = ''                                                                 #Ponemos el rating, si es diferente del de la Serie
     if item_season.infoLabels['rating'] and item_season.infoLabels['rating'] != 0.0:
@@ -705,7 +756,8 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
         rating = ''
     
     if not config.get_setting("unify"):                                         #Si Titulos Inteligentes NO seleccionados:
-        title = '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % (title, str(item_season.infoLabels['year']), rating, item_season.quality, str(item_season.language))
+        title = '%s [COLOR yellow][%s][/COLOR] [%s] [COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR]' % \
+                (title, str(item_season.infoLabels['year']), rating, item_season.quality, str(item_season.language))
     else:                                                                       #Lo arreglamos un poco para Unify
         title = title.replace('[', '-').replace(']', '-').replace('.', ',').strip()
     title = title.replace("--", "").replace("[]", "").replace("()", "").replace("(/)", "").replace("[/]", "").strip()
@@ -778,7 +830,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
     title = ''
     if item.infoLabels['status'] and (item.infoLabels['status'].lower() == "ended" \
                         or item.infoLabels['status'].lower() == "canceled"):
-        title += ' [TERMINADA]'
+        title += ' [TERM]'
     itemlist_temporadas.append(item_season.clone(title="[COLOR yellow]Añadir esta serie a videoteca-[/COLOR]" + title, action="add_serie_to_library", extra="episodios", add_menu=True))
 
     #Si intervención judicial, alerto!!!
@@ -1103,10 +1155,15 @@ def post_tmdb_episodios(item, itemlist):
         title = ''
         
         if item_local.infoLabels['temporada_num_episodios']:
-            title += ' [Temp. de %s ep.]' % item_local.infoLabels['temporada_num_episodios']
-            
+            title += ' [%sx%s' % (item_local.infoLabels['season'], item_local.infoLabels['temporada_num_episodios'])
+        
+        if item_local.infoLabels['number_of_episodes'] and item_local.infoLabels['number_of_seasons'] > 1:
+            title += ' de %sx%s' % (str(item_local.infoLabels['number_of_seasons']), \
+                    str(item_local.infoLabels['number_of_episodes']))   
+        title += ']'
+        
         if item_local.infoLabels['status'] and item_local.infoLabels['status'].lower() == "ended":
-            title += ' [TERMINADA]'
+            title += ' [TERM]'
             
         if item_local.quality:      #La Videoteca no toma la calidad del episodio, sino de la serie.  Pongo del episodio
             item.quality = item_local.quality
@@ -1339,7 +1396,12 @@ def post_tmdb_findvideos(item, itemlist):
     if item.contentType == "episode":                                                           #Series
         title = '%sx%s' % (str(item.contentSeason), str(item.contentEpisodeNumber).zfill(2))    #Temporada y Episodio
         if item.infoLabels['temporada_num_episodios']:
-            title = '%s (de %s)' % (title, str(item.infoLabels['temporada_num_episodios']))     #Total Episodios
+            title = '%s (de %s' % (title, str(item.infoLabels['temporada_num_episodios']))     #Total Episodios
+            
+        if item.infoLabels['number_of_episodes'] and item.infoLabels['number_of_seasons'] > 1:
+            title += ', de %sx%s' % (str(item.infoLabels['number_of_seasons']), \
+                    str(item.infoLabels['number_of_episodes']))   
+        title += ')'
         
         #Si son episodios múltiples, y viene de Videoteca, ponemos nombre de serie        
         if (" al " in item.title or " Al " in item.title) and not "al " in item.infoLabels['episodio_titulo']: 
@@ -1630,8 +1692,24 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                         timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)
         elif local_torr:
             torrent_file = filetools.read(local_torr)
-        if not torrent_file:
+            torrents_path = local_torr
+        if not torrents_path:
             size = 'ERROR'
+            if torrent_file:
+                size += ' [COLOR hotpink][B]BLOQUEO[/B][/COLOR]'
+                res = call_chrome('', lookup=True)
+                if res is None and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                    size += ': [COLOR gold][B]Introduce la ruta para usar con Chrome[/B][/COLOR]'
+                elif not res:
+                    size += ': [COLOR magenta][B]Instala Chrome para usar este enlace[/B][/COLOR]'
+                elif res or config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                    if res is not True:
+                        config.set_setting("capture_thru_browser_path", res, server="torrent")
+                        size += ': [COLOR limegreen][B]Pincha para usar con Chrome[/B][/COLOR]'
+                    elif res and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                        size += ': [COLOR gold][B]Introduce la ruta para usar con Chrome[/B][/COLOR]'
+                else:
+                    size += ': [COLOR gold][B]Introduce la ruta para usar con Chrome[/B][/COLOR]'
             if not lookup:
                 return (size, torrents_path, torrent_f, files)
             elif file_list and data_torrent:
@@ -2191,8 +2269,19 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
                 filetools.write(nfo, head_nfo + it.tojson())                #escribo el .nfo de la peli por si aborta update
                 logger.error('** .nfo ACTUALIZADO: it.ow_force: ' + nfo)    #aviso que ha habido una incidencia
             except:
-                logger.error('** .nfo ERROR actualizar: it.ow_force: ' + nfo)   #aviso que ha habido una incidencia
-                logger.error(traceback.format_exc())
+                logger.error('** .nfo ERROR actualizar: it.ow_force: %s' % nfo)     #aviso que ha habido una incidencia
+                logger.error(traceback.format_exc(1))
+    
+    # Si no existe el path al .nfo, se regenera
+    if it.library_urls and head_nfo and path and not it.path:
+        try:
+            it.path = filetools.join(' ', filetools.basename(path)).strip()
+            nfo = filetools.join(path, '/tvshow.nfo')
+            filetools.write(nfo, head_nfo + it.tojson())                    #escribo el .nfo de la peli por si aborta update
+            logger.error('** .nfo ACTUALIZADO: it.path: %s' % it.path)      #aviso que ha habido una incidencia
+        except:
+            logger.error('** .nfo ERROR actualizar: it.path: %s' % it.path) #aviso que ha habido una incidencia
+            logger.error(traceback.format_exc(1))
 
     #Array con los datos de los canales alternativos
     #Cargamos en .json de Newpct1 para ver las listas de valores en settings
@@ -2224,7 +2313,8 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
 
     if it.emergency_urls:
         item.emergency_urls = it.emergency_urls                             #Refrescar desde el .nfo
-    
+
+
     #Analizamos si hay series o películas que migrar, debido a que se ha activado en el .json del canal la opción "guardar" 
     #"emergency_urls = 1", y hay que calcularla para todos los episodios y película existentes en la Videoteca.
     #Si "emergency_urls" está activada para uno o más canales, se verifica en el .nfo del vídeo si ya se ha realizado
@@ -2235,6 +2325,9 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #automáticamente.  En el caso de peliculas, se general aquí el json actualizado y se marca el .nfo como actualizado.
     #Cuando en el .json se activa "Borrar", "emergency_urls = 2", se borran todos los enlaces existentes
     #Cuando en el .json se activa "Actualizar", "emergency_urls = 3", se actualizan todos los enlaces existentes
+    
+    if not it.verified_encode and path and it.library_playcounts and it.infoLabels['mediatype'] in ['tvshow', 'season', 'episode']:
+        it = borrar_episodio_add_videolibrary(path, head_nfo, it)
     
     """ 
     try:
@@ -2654,6 +2747,68 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     return (item, it, overwrite)
     
 
+def borrar_episodio_add_videolibrary(path, head_nfo, nfo):
+    logger.info()
+    # Por error se ha creado un episodio en la actualización de la videteca que hace referencia a "añadir a la Videoteca"
+    # Hay que borrar ese episodio completo (json, strm, nfo, torrents) y borraar la entrada de library_playcounts del .nfo
+    # Hay que restaurar la temporada/serie como vista/no vista y hay que limpiar el Catálogo de Kodi para que borre los episodios
+
+    from channels import videolibrary
+
+    # Pasamos por todos los episodios de la SERIE
+    sesxepi_list = []
+    season = 0
+    files = sorted(filetools.listdir(path), reverse=True)
+    for file in files:
+        if not '.json' in file:
+            continue
+            
+        # Localizamos y cargamos el .json con el error
+        """
+        json_file = Item(path=filetools.join(path, file)).fromjson(
+                    filetools.read(filetools.join(path, file)))
+        if not 'serie a videoteca' in json_file.title.lower() and not \
+                    'temp. a videoteca' in json_file.title.lower() and not \
+                    'vista previa videoteca' in json_file.title.lower():
+            continue
+        """
+        json_file = filetools.read(filetools.join(path, file))
+        if 'infoLabels' in json_file:
+            continue
+            
+        # Estraemos el nº de temporada y episodio para localizar y borrar los otros archivos del episodio (strm, nfo, torrents)
+        sesxepi = '%sx%s' % (str(scrapertools.find_single_match(file, '^(\d+)x\d+\s*\[')), \
+                    str(scrapertools.find_single_match(file, '^\d+x(\d+)\s*\[')).zfill(2))
+        sesxepi_list += [sesxepi]
+        season = str(scrapertools.find_single_match(file, '^(\d+)x\d+\s*\['))
+        for file in files:
+            if file.startswith(sesxepi):
+                filetools.remove(filetools.join(path, file))
+                logger.error('Episodio borrado: %s' % file)
+        break
+            
+    logger.error('Serie: %s, Episodios: %s' % (filetools.basename(path), str(sesxepi_list)))
+    """
+    if sesxepi_list:
+        # Actualizamos el .nfo borrado las entradas de library_playcounts que no procedan
+        for epi, valor in list(nfo.library_playcounts.items()):
+            if epi in str(sesxepi_list):
+                nfo.library_playcounts.pop(epi, None)
+                logger.error('pop %s: %s' % (epi, valor))
+        
+        # Llamamos al método que reestablece los vistos/no vistos en el .nfo
+        nfo.active = 1
+        nfo = videolibrary.check_season_playcount(nfo, season)
+        config.set_setting('cleanlibrary', True, 'videolibrary')
+        logger.error('.nfo actualizado de Serie: %s, %s' % (nfo.infoLabels['tvshowtitle'], nfo.library_playcounts))
+    """
+    nfo.verified_encode = True
+    if nfo.verified: del nfo.verified
+    filetools.write(filetools.join(path, 'tvshow.nfo'), head_nfo + nfo.tojson())
+    
+    return nfo
+
+
 def borrar_jsons_dups(item, it, path, head_nfo):
     logger.info()
     
@@ -2951,7 +3106,7 @@ def regenerate_clones():
     return True
 
                             
-def call_chrome(url):
+def call_chrome(url, lookup=False):
     logger.info()
     # Basado en el código de "Chrome Launcher 1.2.0" de Jani (@rasjani) Mikkonen
     # Llama al browse Chrome y le pasa una url
@@ -2963,6 +3118,14 @@ def call_chrome(url):
     
     try:
         if xbmc.getCondVisibility("system.platform.Android"):
+            if lookup:
+                res = True
+                prefs_file = '/data/user/0/com.android.chrome/app_chrome/Default/Preferences'
+                chrome_prefs = filetools.read(prefs_file, silent=True)
+                res = scrapertools.find_single_match(chrome_prefs, '"savefile"\s*:\s*{.*?"default_directory"\s*:\s*"([^"]+)"')
+                if not res and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                    res = "/storage/emulated/0/Download"
+                return res
             xbmc.executebuiltin("StartAndroidActivity(com.android.chrome,,," + url + ")")
             return True
             
@@ -2970,18 +3133,30 @@ def call_chrome(url):
             exePath = ['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
                         'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe']
             creationFlags = 0x00000008
+            prefs_file = filetools.join(os.getenv('LOCALAPPDATA'), 'Google\\Chrome\\User Data\\Default\\Preferences')
             
         elif xbmc.getCondVisibility("system.platform.OSX"):
             exePath = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",]
+            prefs_file = filetools.join(os.getenv('HOME'), 'Library/Application Support/Google/Chrome/Default/Preferences')
             
         elif xbmc.getCondVisibility("system.platform.Linux"):
             exePath = ["/usr/bin/google-chrome", "/usr/bin/google-chrome-stable"]
+            prefs_file = filetools.join(os.getenv('HOME'), '.config/google-chrome/Default/Preferences')
             
         else:
             return False
         
         for path in exePath:
             if filetools.exists(path):
+                if lookup:
+                    res = True
+                    chrome_prefs = filetools.read(prefs_file, silent=True)
+                    res = scrapertools.find_single_match(chrome_prefs, '"savefile"\s*:\s*{.*?"default_directory"\s*:\s*"([^"]+)"')\
+                                .replace('\\\\', '\\')
+                    if not res and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                        res = None
+                    return res
+                
                 chrome_call = filetools.join(xbmc.translatePath(config.get_data_path()), 'chrome_call.html')
                 filetools.write(chrome_call, '<html><body style="background:black"><script>window.location.href = "%s";</script></body></html>' % url)
                 
@@ -2992,6 +3167,8 @@ def call_chrome(url):
                 else:
                     s = subprocess.Popen(params, shell=False, close_fds = True)
                 s.communicate()
+                
+                break
 
                 """
                 bringChromeToFront(s.pid)
