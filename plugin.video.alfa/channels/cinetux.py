@@ -20,7 +20,7 @@ list_quality = []
 list_servers = ['directo', 'rapidvideo', 'streamango', 'okru', 'vidoza', 'openload', 'powvideo']
 
 
-CHANNEL_HOST = "http://www.cinetux.to/"
+CHANNEL_HOST = "https://cinetux.nu/"
 
 # Configuracion del canal
 __modo_grafico__ = config.get_setting('modo_grafico', 'cinetux')

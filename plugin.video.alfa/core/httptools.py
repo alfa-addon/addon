@@ -52,7 +52,7 @@ ficherocookies = os.path.join(config.get_data_path(), "cookies.dat")
 # Headers por defecto, si no se especifica nada
 default_headers = dict()
 #default_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) Chrome/79.0.3945.117"
-default_headers["User-Agent"] = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36"
+default_headers["User-Agent"] = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36"
 default_headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
 default_headers["Accept-Language"] = "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3"
 default_headers["Accept-Charset"] = "UTF-8"
@@ -602,9 +602,12 @@ def downloadpage(url, **opt):
 
         response['data'] = req.content
         try:
-            encoding = req.encoding
+            response['encoding'] = None
+            if req.encoding is not None:
+                response['encoding'] = str(req.encoding).lower()
+            encoding = response['encoding']
             if not encoding:
-                encoding = 'utf8'
+                encoding = 'utf-8'
             if PY3 and isinstance(response['data'], bytes) and 'Content-Type' in req.headers \
                         and ('text/' in req.headers['Content-Type'] or 'json' in req.headers['Content-Type'] \
                         or 'xml' in req.headers['Content-Type']):
@@ -639,7 +642,7 @@ def downloadpage(url, **opt):
         if not response['data']:
             response['data'] = ''
         try:
-            if 'Content-Type' in req.headers and 'json' in req.headers['Content-Type']:
+            if 'Content-Type' in req.headers and 'bittorrent' not in req.headers['Content-Type']:
                 response['json'] = to_utf8(req.json())
             else:
                 response['json'] = dict()

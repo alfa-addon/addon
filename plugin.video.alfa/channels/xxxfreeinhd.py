@@ -114,7 +114,7 @@ def findvideos(item):
             url = decode_url(scrapedurl)
         else:
             url = scrapedurl
-        if not "vid=" in url: #netu
+        if not "xyz/" in url or not "vid=" in url: #netu
             itemlist.append( Item(channel=item.channel, action="play", title = "%s", contentTitle= item.title, url=url ))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     # Requerido para FilterTools

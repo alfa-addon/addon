@@ -41,7 +41,7 @@ def categorias(item):
     patron = '<a class="category-item" href="([^"]+)">([^"]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle in matches:
-        url = "%s%s?ajax=1&type=most-recent&page=1" % (host, scrapedurl)
+        url = "%s%s?ajax=1&type=top-rated&page=1" %(host, scrapedurl)  #most-recent
         scrapedplot = ""
         thumbnail = ""
         itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=url,

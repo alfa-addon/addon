@@ -43,7 +43,8 @@ item.channel = channel_py
 categoria = channel_py.capitalize()
 clone_list_random = []                                                          #Iniciamos la lista aleatoria de clones
 host = ''
-decode_code = 'iso-8859-1'
+#decode_code = 'iso-8859-1'
+decode_code = None
 page_url = 'pg/1'
 
 #Código para permitir usar un único canal para todas las webs clones de NewPct1
@@ -1384,6 +1385,11 @@ def findvideos(item):
             size = scrapertools.find_single_match(item.quality, '\s?\[(\d+.?\d*?\s?\w\s?[b|B])\]')
         if not size and item.armagedon and not item.videolibray_emergency_urls:
             size = generictools.get_torrent_size(item_local.url, local_torr=local_torr)   #Buscamos el tamaño en el .torrent
+            if 'ERROR' in size and item.emergency_urls and not item.videolibray_emergency_urls:
+                item_local.armagedon = True
+                item_local.url = item.emergency_urls[0][0]                      #Restauramos la url
+                local_torr = filetools.join(config.get_videolibrary_path(), FOLDER, item_local.url)
+                size = generictools.get_torrent_size(item_local.url, local_torr=local_torr) #Buscamos el tamaño en el .torrent emergencia
 
         if size:
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
@@ -1414,6 +1420,9 @@ def findvideos(item):
             item.emergency_urls.append([item_local.url])                        #Guardamos el enlace del .torrent
         #... si no, ejecutamos el proceso normal
         else:
+            if item.armagedon:
+                item_local.quality = '[COLOR hotpink][E][/COLOR] [COLOR limegreen]%s[/COLOR]' % item_local.quality
+            
             #Ahora pintamos el link del Torrent
             item_local.title = '[[COLOR yellow]?[/COLOR]] [COLOR yellow][Torrent][/COLOR] ' \
                             + '[COLOR limegreen][%s][/COLOR] [COLOR red]%s[/COLOR] %s' % \
@@ -1434,12 +1443,22 @@ def findvideos(item):
             
             if not size or 'Magnet' in size:
                 item_local.alive = "??"                                         #Calidad del link sin verificar
+            elif 'ERROR' in size and 'Pincha' in size:
+                item_local.alive = "ok"                                         #link en error, CF challenge, Chrome disponible
+            elif 'ERROR' in size and 'Introduce' in size:
+                item_local.alive = "??"                                         #link en error, CF challenge, ruta de descarga no disponible
+                item_local.channel = 'setting'
+                item_local.action = 'setting_torrent'
+                item_local.unify = False
+                item_local.folder = False
+                item_local.item_org = item.tourl()
             elif 'ERROR' in size:
-                item_local.alive = "no"                                         #Calidad del link en error
+                item_local.alive = "no"                                         #Calidad del link en error, CF challenge?
             else:
                 item_local.alive = "ok"                                         #Calidad del link verificada
-            item_local.action = "play"                                          #Visualizar vídeo
-            item_local.server = "torrent"                                       #Seridor Torrent
+            if item_local.channel != 'setting':
+                item_local.action = "play"                                      #Visualizar vídeo
+                item_local.server = "torrent"                                   #Seridor Torrent
             
             itemlist_t.append(item_local.clone())                               #Pintar pantalla, si no se filtran idiomas
             
@@ -1793,7 +1812,7 @@ def episodios(item):
         if not matches or '>( 0 ) Capitulos encontrados <' in data:             #error
             if len(itemlist) == 0:                                              # Si ya hay datos, puede ser la última página
                 logger.error("ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web " 
-                        + " / PATRON: " + pattern + " / DATA: " + data)
+                        + " / PATRON: " + patron + " / DATA: " + data)
                 itemlist.append(item.clone(action='', title=item.category + 
                         ': ERROR 02: EPISODIOS: Ha cambiado la estructura de la Web.  ' 
                         + 'Reportar el error con el log', contentSeason=0, contentEpisodeNumber=1))

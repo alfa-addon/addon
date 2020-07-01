@@ -110,6 +110,7 @@ def setting_torrent(item):
     DOWNLOAD_PATH_BT = config.get_setting("bt_download_path", server="torrent", default=config.get_setting("downloadpath"))
     if not DOWNLOAD_PATH_BT: DOWNLOAD_PATH_BT = filetools.join(config.get_data_path(), 'downloads')
     MAGNET2TORRENT = config.get_setting("magnet2torrent", server="torrent", default=False)
+    CAPTURE_THRU_ROWSER_PATH = config.get_setting("capture_thru_browser_path", server="torrent", default="")
 
     torrent_options = [config.get_localized_string(30006), config.get_localized_string(70254), config.get_localized_string(70255)]
     torrent_options.extend(platformtools.torrent_client_installed())
@@ -204,11 +205,23 @@ def setting_torrent(item):
             "default": MAGNET2TORRENT,
             "enabled": True,
             "visible": True
+        },
+        {
+            "id": "capture_thru_browser_path",
+            "type": "text",
+            "label": "Path para descargar con Chrome archivos .torrent bloqueados",
+            "default": CAPTURE_THRU_ROWSER_PATH,
+            "enabled": True,
+            "visible": True
         }
     ]
 
     platformtools.show_channel_settings(list_controls=list_controls, callback='save_setting_torrent', item=item,
                                         caption=config.get_localized_string(70257), custom_button={'visible': False})
+    if item.item_org:
+        item_org = Item().fromurl(item.item_org)
+        if item_org.torrent_info: del item_org.torrent_info
+        platformtools.itemlist_update(item_org)
 
 
 def save_setting_torrent(item, dict_data_saved):
@@ -230,6 +243,8 @@ def save_setting_torrent(item, dict_data_saved):
         config.set_setting("bt_download_path", dict_data_saved["bt_download_path"], server="torrent")
     if dict_data_saved and "magnet2torrent" in dict_data_saved:
         config.set_setting("magnet2torrent", dict_data_saved["magnet2torrent"], server="torrent")
+    if dict_data_saved and "capture_thru_browser_path" in dict_data_saved:
+        config.set_setting("capture_thru_browser_path", dict_data_saved["capture_thru_browser_path"], server="torrent")
 
 def menu_servers(item):
     logger.info()

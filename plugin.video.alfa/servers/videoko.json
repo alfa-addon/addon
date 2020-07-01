@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://watchanimestream.net/v/[A-z0-9-]+)",
+        "pattern": "(https://videoko.to/embed-\\w+.html)",
         "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "watchanimestream",
-  "name": "watchanimestream",
+  "id": "videoko",
+  "name": "videoko",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": ""
+  "thumbnail": "https://videoko.to/assets/img/logo.png"
 }

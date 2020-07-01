@@ -1354,11 +1354,11 @@ def play_torrent(item, xlistitem, mediaurl):
                     item.url = item.url_control                                 # ... se restaura la url original
                 elif item.torrent_alt:                                          # Si hay error, se busca un .torrent alternativo
                     item.url = item.torrent_alt                                 # El .torrent alternativo puede estar en una url o en local
-                    if ('\\' in item.url or item.url.startswith("/") or item.url.startswith("magnet:")) and \
-                            videolibrary_path not in item.url and torrent_paths[torr_client.upper()+'_torrents'] \
-                            not in item.url and not item.url.startswith("magnet:"):
-                        item.url = filetools.join(videolibrary_path, folder, item.url)
-                        url_local = filetools.exists(item.url)
+                if ('\\' in item.url or item.url.startswith("/") or item.url.startswith("magnet:")) and \
+                        videolibrary_path not in item.url and torrent_paths[torr_client.upper()+'_torrents'] \
+                        not in item.url and not item.url.startswith("magnet:"):
+                    item.url = filetools.join(videolibrary_path, folder, item.url)
+                    url_local = filetools.exists(item.url)
         
         url_stat = False
         torrents_path = ''
