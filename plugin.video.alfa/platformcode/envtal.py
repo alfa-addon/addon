@@ -199,6 +199,8 @@ def get_environment():
             lib_path = 'Activo'
         else:
             lib_path = 'Inactivo'
+        if config.get_setting("libtorrent_version", server="torrent", default=""):
+            lib_path += '-%s' % config.get_setting("libtorrent_version", server="torrent", default="")
         environment['torrentcli_unrar'] = config.get_setting("unrar_path", server="torrent", default="")
         if environment['torrentcli_unrar']:
             if xbmc.getCondVisibility("system.platform.Android"):

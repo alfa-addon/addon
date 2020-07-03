@@ -543,7 +543,7 @@ class main(xbmcgui.WindowDialog):
     def onAction(self, action):
         if action == ACTION_PREVIOUS_MENU or action == ACTION_GESTURE_SWIPE_LEFT or action == 110 or action == 92:
             global mainWindow
-            xbmc.executebuiltin('xbmc.PlayMedia(Stop)')
+            xbmc.executebuiltin('PlayMedia(Stop)')
             self.close()
             mainWindow.pop()
             if not mainWindow:
