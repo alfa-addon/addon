@@ -13,7 +13,7 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 def test_video_exists(page_url):
     global data
     logger.info("(page_url='%s')" % page_url)
-    data = httptools.downloadpage(page_url).data
+    data = httptools.downloadpage(page_url, add_referer=True).data
     if "Page not found" in data:
         return False, "[ZPlayer] El fichero no existe o ha sido borrado"
     return True, ""
