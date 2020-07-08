@@ -137,7 +137,7 @@ def check_addon_updates(verbose=False):
             unzipper.extract(localfilename, config.get_runtime_path())
         except:
             import xbmc
-            xbmc.executebuiltin('XBMC.Extract("%s", "%s")' % (localfilename, config.get_runtime_path()))
+            xbmc.executebuiltin('Extract("%s", "%s")' % (localfilename, config.get_runtime_path()))
             time.sleep(1)
         
         # Borrar el zip descargado

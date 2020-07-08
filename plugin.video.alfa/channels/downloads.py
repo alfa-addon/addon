@@ -1194,7 +1194,7 @@ def get_episodes(item):
             if item.torrent_info: del item.torrent_info
             if item.torrent_alt: del item.torrent_alt
 
-        if (item.strm_path or item.nfo) and not remote:                         # Si viene de Videoteca, usamos los .jsons, salvo que vaya a remoto
+        if (item.strm_path or item.nfo):                                        # Si viene de Videoteca, usamos los .jsons
             if item.strm_path: serie_path = filetools.dirname(item.strm_path)
             if not serie_path and item.nfo: serie_path = filetools.dirname(item.nfo)
             serie_listdir = sorted(filetools.listdir(serie_path))
@@ -1210,6 +1210,10 @@ def get_episodes(item):
                                 != str(item.infoLabels['season']):
                     continue
                 episode = Item().fromjson(filetools.read(filetools.join(serie_path, file)))
+                if remote:                                                      # Quitamos las referencias locales
+                    if episode.emergency_urls: del episode.emergency_urls
+                    if episode.torrent_info: del episode.torrent_info
+                    if episode.server: del episode.server
                 if episode.emergency_urls and not episode.emergency_urls[0][0].startswith('http') \
                                     and episode.emergency_urls[0][0].endswith('.torrent'):
                     episode.server = 'torrent'
@@ -1218,8 +1222,9 @@ def get_episodes(item):
                                     str(episode.infoLabels['episode']).zfill(2))).replace(SERIES, '')
                 episode.sub_action = item.sub_action
                 episode.channel = item.contentChannel
-                
                 episode.downloadServer = {}
+                
+                #logger.debug(episode)
                 episodes.append(episode.clone())
         
         else:

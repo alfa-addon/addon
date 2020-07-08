@@ -1693,23 +1693,33 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         elif local_torr:
             torrent_file = filetools.read(local_torr)
             torrents_path = local_torr
-        if not torrents_path:
+        
+        if not torrents_path or torrents_path == 'CF_BLOCKED':
             size = 'ERROR'
-            if torrent_file:
+            
+            # si el archivo .torrent está bloqueado con CF, se intentará descargarlo a través de un browser externo
+            if torrent_file and torrents_path == 'CF_BLOCKED':
                 size += ' [COLOR hotpink][B]BLOQUEO[/B][/COLOR]'
-                res = call_chrome('', lookup=True)
-                if res is None and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
-                    size += ': [COLOR gold][B]Introduce la ruta para usar con Chrome[/B][/COLOR]'
-                elif not res:
-                    size += ': [COLOR magenta][B]Instala Chrome para usar este enlace[/B][/COLOR]'
+                browser, res = call_browser('', lookup=True, strict=True)
+                if not browser:
+                    browser, res = call_browser('', lookup=True)
+                if not browser:
+                    size += ': [COLOR magenta][B]Instala un browser externo para usar este enlace[/B][/COLOR] (Chrome, Firefox, Opera)'
+                elif res is None and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                    size += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
+                elif res is None and config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                    size += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
                 elif res or config.get_setting("capture_thru_browser_path", server="torrent", default=""):
                     if res is not True:
                         config.set_setting("capture_thru_browser_path", res, server="torrent")
-                        size += ': [COLOR limegreen][B]Pincha para usar con Chrome[/B][/COLOR]'
+                        size += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
                     elif res and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
-                        size += ': [COLOR gold][B]Introduce la ruta para usar con Chrome[/B][/COLOR]'
+                        size += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
+                    else:
+                        size += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
                 else:
-                    size += ': [COLOR gold][B]Introduce la ruta para usar con Chrome[/B][/COLOR]'
+                    size += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
+            
             if not lookup:
                 return (size, torrents_path, torrent_f, files)
             elif file_list and data_torrent:
@@ -2326,10 +2336,21 @@ def redirect_clone_newpct1(item, head_nfo=None, it=None, path=False, overwrite=F
     #Cuando en el .json se activa "Borrar", "emergency_urls = 2", se borran todos los enlaces existentes
     #Cuando en el .json se activa "Actualizar", "emergency_urls = 3", se actualizan todos los enlaces existentes
     
+    """
+    if it.verified_encode:
+        try:
+            del it.verified_encode
+            it.path = filetools.join(' ', filetools.basename(path)).strip()
+            nfo = filetools.join(path, '/tvshow.nfo')
+            filetools.write(nfo, head_nfo + it.tojson())                                #escribo el .nfo de la peli por si aborta update
+            logger.error('** .nfo ACTUALIZADO: it.verified_encode: %s' % it.path)       #aviso que ha habido una incidencia
+        except:
+            logger.error('** .nfo ERROR actualizar: it.verified_encode: %s' % it.path)  #aviso que ha habido una incidencia
+            logger.error(traceback.format_exc(1))
+    
     if not it.verified_encode and path and it.library_playcounts and it.infoLabels['mediatype'] in ['tvshow', 'season', 'episode']:
         it = borrar_episodio_add_videolibrary(path, head_nfo, it)
     
-    """ 
     try:
         item, it = borrar_jsons_dups(item, it, path, head_nfo)      #TEMPORAL: Reparación de Videoteca con Newpct1
     except:
@@ -3106,84 +3127,350 @@ def regenerate_clones():
     return True
 
                             
-def call_chrome(url, lookup=False):
+def call_browser(url, download_path=None, lookup=False, strict=False, wait=False):
     logger.info()
     # Basado en el código de "Chrome Launcher 1.2.0" de Jani (@rasjani) Mikkonen
-    # Llama al browse Chrome y le pasa una url
+    # Llama a un browser disponible y le pasa una url
     import xbmc
     import subprocess
     
-    exePath = []
+    exePath = {}
+    PATHS = []
+    PM_LIST = ''
     creationFlags = 0
+    prefs_file = ''
+    res = None
+    
+    logger.debug(os.environ)
     
     try:
+        # Establecemos las variables relativas a cada browser
+        browser_params = {
+                          "chrome": ['<html><body style="background:black"><script>window.location.href = "%s";</script></body></html>' % url, 
+                                     ['--start-maximized', '--disable-translate', '--disable-new-tab-first-run', 
+                                     '--no-default-browser-check', '--no-first-run '], 
+                                     '', '"savefile"\s*:\s*{.*?"default_directory"\s*:\s*"([^"]+)"'], 
+                          "chromium": ['<html><body style="background:black"><script>window.location.href = "%s";</script></body></html>' % url, 
+                                       ['--noerordialogs', '--disable-session-crashed-bubble', '--disable-infobars', '--start-maximized'], 
+                                       '', '"savefile"\s*:\s*{.*?"default_directory"\s*:\s*"([^"]+)"'], 
+                          "firefox": ['<html><body style="background:black"><script>window.location.href = "%s";</script></body></html>' % url, 
+                                      [], 
+                                      'Default=(.*?)[\r|\n]', 'user_pref\s*\("browser.download.dir",\s*"([^"]+)"\)'], 
+                          "opera": ['<html><body style="background:black"><script>window.location.href = "%s";</script></body></html>' % url, 
+                                    [], 
+                                    '', '"savefile"\s*:\s*{.*?"default_directory"\s*:\s*"([^"]+)"']
+                         }
+
+        # Establecemos las variables relativas a cada plataforma
         if xbmc.getCondVisibility("system.platform.Android"):
-            if lookup:
-                res = True
-                prefs_file = '/data/user/0/com.android.chrome/app_chrome/Default/Preferences'
-                chrome_prefs = filetools.read(prefs_file, silent=True)
-                res = scrapertools.find_single_match(chrome_prefs, '"savefile"\s*:\s*{.*?"default_directory"\s*:\s*"([^"]+)"')
-                if not res and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
-                    res = "/storage/emulated/0/Download"
-                return res
-            xbmc.executebuiltin("StartAndroidActivity(com.android.chrome,,," + url + ")")
-            return True
-            
-        elif xbmc.getCondVisibility("system.platform.Windows"):
-            exePath = ['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-                        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe']
-            creationFlags = 0x00000008
-            prefs_file = filetools.join(os.getenv('LOCALAPPDATA'), 'Google\\Chrome\\User Data\\Default\\Preferences')
-            
-        elif xbmc.getCondVisibility("system.platform.OSX"):
-            exePath = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",]
-            prefs_file = filetools.join(os.getenv('HOME'), 'Library/Application Support/Google/Chrome/Default/Preferences')
-            
-        elif xbmc.getCondVisibility("system.platform.Linux"):
-            exePath = ["/usr/bin/google-chrome", "/usr/bin/google-chrome-stable"]
-            prefs_file = filetools.join(os.getenv('HOME'), '.config/google-chrome/Default/Preferences')
-            
-        else:
-            return False
-        
-        for path in exePath:
-            if filetools.exists(path):
-                if lookup:
-                    res = True
-                    chrome_prefs = filetools.read(prefs_file, silent=True)
-                    res = scrapertools.find_single_match(chrome_prefs, '"savefile"\s*:\s*{.*?"default_directory"\s*:\s*"([^"]+)"')\
-                                .replace('\\\\', '\\')
-                    if not res and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
-                        res = None
-                    return res
-                
-                chrome_call = filetools.join(xbmc.translatePath(config.get_data_path()), 'chrome_call.html')
-                filetools.write(chrome_call, '<html><body style="background:black"><script>window.location.href = "%s";</script></body></html>' % url)
-                
-                params = [path, '--kiosk', '--start-maximized', '--disable-translate', '--disable-new-tab-first-run', '--no-default-browser-check', '--no-first-run', chrome_call]
-                
-                if xbmc.getCondVisibility("system.platform.Windows"):
-                    s = subprocess.Popen(params, shell=False, creationflags=creationFlags, close_fds = True)
+            try:
+                ANDROID_STORAGE = os.getenv('ANDROID_STORAGE')
+            except:
+                ANDROID_STORAGE = ''
+            if not ANDROID_STORAGE:
+                if "'HOME'" in os.environ:
+                    ANDROID_STORAGE = scrapertools.find_single_match(os.getenv('HOME'), '^(\/.*?)\/')
+                    if not ANDROID_STORAGE:
+                        ANDROID_STORAGE = '/storage'
                 else:
-                    s = subprocess.Popen(params, shell=False, close_fds = True)
-                s.communicate()
+                    ANDROID_STORAGE = '/storage'
+            
+            exePath = {
+                       "chrome": [[ANDROID_STORAGE + '/emulated/0/Android/data/com.android.chrome',
+                                   ANDROID_STORAGE + '/emulated/0/Android/data/com.chrome.canary'], 
+                                  0, 'ANDROID_DATA', [], ['/user/0/com.android.chrome/app_chrome/Default/Preferences', 
+                                  '/user/0/com.chrome.canary/app_chrome/Default/Preferences']], 
+                       "chromium": [[ANDROID_STORAGE + '/emulated/0/Android/data/org.bromite.chromium'], 
+                                    0, 'ANDROID_DATA', [], ['/user/0/org.bromite.chromium/app_chrome/Default/Preferences']], 
+                       "firefox": [[ANDROID_STORAGE + '/emulated/0/Android/data/org.mozilla.firefox'], 
+                                   0, 'ANDROID_DATA', ['/user/0/org.mozilla.firefox/files/mozilla/installs.ini', 
+                                   '/user/0/org.mozilla.firefox/files/mozilla/profiles.ini'], ['prefs.js']],
+                       "opera": [[ANDROID_STORAGE + '/emulated/0/Android/data/com.opera.browser', 
+                                  ANDROID_STORAGE + '/emulated/0/Android/data/com.vewd.core.integration.dia', 
+                                  os.getenv('ANDROID_DATA') + '/user/0/com.vewd.core.integration.dia', 
+                                  ANDROID_STORAGE + '/emulated/0/Android/data/com.opera.sdk.example', 
+                                  os.getenv('ANDROID_DATA') + '/user/0/com.opera.sdk.example'], 
+                                 0, 'ANDROID_DATA', [], ['/user/0/com.opera.browser/Preferences', 
+                                 'user/0/com.vewd.core.integration.dia/Preferences', 'user/0/com.opera.sdk.example/Preferences']]
+                      }
+        
+            PATHS = [ANDROID_STORAGE + '/emulated/0/Android/data', os.getenv('ANDROID_DATA') + '/user/0']
+            
+            try:
+                command = ['pm', 'list', 'packages']
+                p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                PM_LIST, error_cmd = p.communicate()
+                PM_LIST = PM_LIST.replace('\n', ', ')
+            except:
+                PM_LIST = ''
+                logger.error(traceback.format_exc())
+            logger.info('PACKAGE LIST: %s' % PM_LIST)
+
+            PREF_PATHS = [ANDROID_STORAGE + '/emulated/0/Android/data']
+            PREF_PATHS += [os.getenv('ANDROID_DATA') + '/user/0']
+        
+        elif xbmc.getCondVisibility("system.platform.Windows"):
+            exePath = {
+                       "chrome": [['%PATH%\\Google\\Chrome\\Application\\chrome.exe'], 
+                                  0x00000008, 'LOCALAPPDATA', [], ['\\Google\\Chrome\\User Data\\Default\\Preferences']], 
+                       "chromium": [[os.getenv('LOCALAPPDATA') + '\\Chromium\\Application\\chrome.exe'], 
+                                    0x00000008, 'LOCALAPPDATA', [], ['\\Chromium\\User Data\\Default\\Preferences']], 
+                       "firefox": [['%PATH%\\Mozilla Firefox\\firefox.exe'], 
+                                   0x00000008, 'APPDATA', ['\\Mozilla\\Firefox\\installs.ini'], ['prefs.js']],
+                       "opera": [[os.getenv('LOCALAPPDATA') + '\\Programs\\Opera\\launcher.exe'], 
+                                 0x00000008, 'APPDATA', [], ['\\Opera Software\\Opera Stable\\Preferences']]
+                      }
+                      
+            PATHS = [os.getenv('PROGRAMFILES')]
+            PATHS += [os.getenv('PROGRAMFILES(X86)')]
+            if not PATHS:
+                PATHS = ['C:\\Program Files', 'C:\\Program Files (x86)']
                 
+            PREF_PATHS = [os.getenv('LOCALAPPDATA')]
+            PREF_PATHS += [os.getenv('APPDATA')]
+
+        elif xbmc.getCondVisibility("system.platform.OSX"):
+            exePath = {
+                       "chrome": [['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'], 
+                                  0, 'HOME', [], ['Library/Application Support/Google/Chrome/Default/Preferences']], 
+                       "chromium": [['/Applications/Chromium.app/Contents/MacOS/Chromium'], 
+                                    0, 'HOME', [], ['Library/Application Support/Chromium/Default/Preferences']], 
+                       "firefox": [['/Applications/Firefox.app/Contents/MacOS/firefox'], 
+                                   0, 'HOME', ['Library/Application Support/Firefox/installs.ini'], ['prefs.js']],
+                       "opera": [['/Applications/Firefox.app/Contents/MacOS/opera'], 
+                                 0, 'HOME', [], ['/Library/Application Support/com.operasoftware.Opera/Preferences']]
+                      }
+            
+            PATHS = ['/Applications']
+            
+            PREF_PATHS = [filetools.join(os.getenv('HOME'), '/Library/Application Support')]
+            
+        elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
+            exePath = {
+                       "chrome": [['%PATH%/google-chrome', '%PATH%/google-chrome-stable'], 
+                                  0, 'HOME', [], ['.config/google-chrome/Default/Preferences', 
+                                  '.config/google-chrome-stable/Default/Preferences', 
+                                  'snap/google-chrome/current/.config/google-chrome/Default/Preferences']],
+                       "opera": [['%PATH%/opera'], 
+                                 0, 'HOME', [], ['.config/opera/Preferences', 
+                                 'snap/opera/current/.config/opera/Preferences']], 
+                       "firefox": [['%PATH%/firefox'], 
+                                   0, 'HOME', ['.mozilla/firefox/installs.ini', 
+                                   'snap/mozilla/current/.mozilla/firefox/installs.ini'], ['prefs.js']], 
+                       "chromium": [['%PATH%/chromium', '%PATH%/chromium-browser'], 
+                                    0, 'HOME', [], ['.config/chromium/Default/Preferences', 
+                                    'snap/chromium/current/.config/chromium/Default/Preferences']]
+                      }
+            
+            PATHS = ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/usr/local/sbin']
+            xpaths = os.getenv('PATH').split(':')
+            if xpaths:
+                for xpath in xpaths:
+                    if xpath not in PATHS:
+                        PATHS += [xpath]
+            
+            PREF_PATHS = [os.getenv('HOME')]
+            PREF_PATHS += [filetools.join(os.getenv('HOME'), '.config')]
+            PREF_PATHS += [filetools.join(os.getenv('HOME'), 'snap')]
+        
+        elif xbmc.getCondVisibility("system.platform.Linux"):
+            exePath = {
+                       "chrome": [['%PATH%/google-chrome', '%PATH%/google-chrome-stable'], 
+                                  0, 'HOME', [], ['.config/google-chrome/Default/Preferences', 
+                                  '.config/google-chrome-stable/Default/Preferences', 
+                                  'snap/google-chrome/current/.config/google-chrome/Default/Preferences']], 
+                       "chromium": [['%PATH%/chromium', '%PATH%/chromium-browser'], 
+                                    0, 'HOME', [], ['.config/chromium/Default/Preferences', 
+                                    'snap/chromium/current/.config/chromium/Default/Preferences']],
+                       "opera": [['%PATH%/opera'], 
+                                 0, 'HOME', [], ['.config/opera/Preferences', 
+                                 'snap/opera/current/.config/opera/Preferences']], 
+                       "firefox": [['%PATH%/firefox'], 
+                                   0, 'HOME', ['.mozilla/firefox/installs.ini', 
+                                   'snap/mozilla/current/.mozilla/firefox/installs.ini'], ['prefs.js']]
+                      }
+            
+            PATHS = ['/usr/bin', '/usr/local/bin', '/usr/sbin', '/usr/local/sbin']
+            xpaths = os.getenv('PATH').split(':')
+            if xpaths:
+                for xpath in xpaths:
+                    if xpath not in PATHS:
+                        PATHS += [xpath]
+            
+            PREF_PATHS = [os.getenv('HOME')]
+            PREF_PATHS += [filetools.join(os.getenv('HOME'), '.config')]
+            PREF_PATHS += [filetools.join(os.getenv('HOME'), 'snap')]
+
+        else:
+            return (False, False)
+            
+        # Añadimos PATHS adicionales para listar carpetas de Preferencias
+        for browser, paths in list(exePath.items()):
+            for path in paths[4]:
+                if filetools.dirname(path):
+                    PREF_PATHS += [filetools.join(os.getenv(paths[2]), filetools.dirname(path))]
+            for path in paths[3]:
+                if filetools.dirname(path):
+                    PREF_PATHS += [filetools.join(os.getenv(paths[2]), filetools.dirname(path))]
+
+        
+        # Buscamos si está instalado un browser soportado
+        for browser, paths in list(exePath.items()):
+            for path in paths[0]:
+                #if browser != 'chromium': continue
+                if path.startswith('%PATH%'):
+                    for PATH in PATHS:
+                        xpath = path.replace('%PATH%', PATH)
+                        if filetools.exists(xpath):
+                            path = xpath
+                            break
+                    else:
+                        if PM_LIST and filetools.basename(xpath) in PM_LIST:
+                            path = xpath
+                            break
+                        continue
+
+                # Se comprueba que los paths de ejecución existen.  En el caso de Android se comprueban los paths de configuración en sdcard
+                if filetools.basename(path) in PM_LIST or filetools.exists(path):
+                    creationFlags = paths[1]
+                    try:
+                        prefs_file = os.getenv(paths[2])
+                        if not prefs_file and xbmc.getCondVisibility("system.platform.Android"):
+                            prefs_file = '/data'
+                    except:
+                        if xbmc.getCondVisibility("system.platform.Android"):
+                            prefs_file = '/data'
+                    break
+            else:
+                continue
+            
+            logger.info('BROWSER: %s, PATH: %s, PREFS_FILE: %s, LOOKUP: %s, STRICIT: %s, DOWNLOAD_PATH: %s' % \
+                                (browser, path, prefs_file, lookup, strict, download_path))
+            # Cuando se necesita conocer el path de Downloads
+            if lookup or download_path:
+                res = True
+                if not prefs_file:
+                    return (browser.capitalize(), res)
+                
+                # Buscamos el path correcto para obtener el archivo de preferencias
+                if paths[3]:
+                    for prefs_path in paths[3]:
+                        if filetools.exists(filetools.join(prefs_file, prefs_path)):
+                            break
+                else:
+                    for prefs_path in paths[4]:
+                        if filetools.exists(filetools.join(prefs_file, prefs_path)):
+                            break
+                
+                # Opción especial para Firefox
+                if browser_params[browser][2]:
+                    installs = filetools.join(prefs_file, prefs_path)
+                    scraper = browser_params[browser][2]
+                    if xbmc.getCondVisibility("system.platform.Android"):
+                        scraper = scraper.replace('Default', 'Path')
+                    profile = scrapertools.find_single_match(filetools.read(installs, silent=True), scraper)
+                    prefs_file = filetools.join(prefs_file, filetools.dirname(prefs_path), profile)
+                    prefs_path = paths[4][0]
+                
+                # Accedemos al archivo de las preferencias del browser.  
+                prefs_file = filetools.join(prefs_file, prefs_path)
+                browser_prefs = filetools.read(prefs_file, silent=True)
+                res = scrapertools.find_single_match(browser_prefs, browser_params[browser][3]).replace('\\\\', '\\')
+                if not res and browser_prefs:
+                    try:
+                        logger.error('Archivo de Preferencias en ERROR %s: %s' % (prefs_file, str(browser_prefs[:200])))
+                    except:
+                        logger.error('Archivo de Preferencias en ERROR no PRINTABLE %s' % (prefs_file))
+                elif not res:
+                    logger.error('Archivo de preferencias no encontrado/accesible: %s' % (prefs_file))
+                    for prefs_dir in PREF_PATHS:
+                        logger.error('Listado de %s - %s' % (prefs_dir, sorted(filetools.listdir(prefs_dir))))
+
+                # En Android puede haber problemas de permisos.  Si no se encuentra el path, se asume un path por defecto
+                if not res and (download_path or not config.get_setting("capture_thru_browser_path", server="torrent", default="")):
+                    if xbmc.getCondVisibility("system.platform.Android"):
+                        res = filetools.join(ANDROID_STORAGE, 'emulated/0/Download')
+                    elif xbmc.getCondVisibility("system.platform.Linux") or \
+                                xbmc.getCondVisibility("system.platform.Linux.RaspberryPi") or \
+                                xbmc.getCondVisibility("system.platform.OSX"):
+                        res = filetools.join(os.getenv('HOME'), 'Descargas')
+                        if xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
+                            if not filetools.exists(res):
+                                res = filetools.join(os.getenv('HOME'), 'Downloads')
+                                if not filetools.exists(res):
+                                    filetools.mkdir(res)
+                        elif xbmc.getCondVisibility("system.platform.Linux") \
+                                and os.getenv('LANG') and 'es' not in os.getenv('LANG') \
+                                and not filetools.exists(res):
+                            res = filetools.join(os.getenv('HOME'), 'Downloads')
+                
+                # Si se ha pasado la opción de download_path y difiere del path obtenido, se pasa a otro browser
+                if download_path and download_path.lower() != res.lower():
+                    logger.info('Paths de DESCARGA DIFERENTES: download_PATH: %s - RES: %s' % (download_path, res))
+                    continue
+                # Si no se ha obtenido el path y se ha pedido la opción strict, se pasa a otro browser
+                if not res and strict:
+                    continue
+                # Si no se ha obtenido el path y no hay ninguno guardado, se notifica
+                if not res and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                    res = None
+                # Si no se ha obtenido el path pero hay uno guardado, se notifica
+                elif not res:
+                    res = True
+                # Si era un funcion de lookup, se retorna.  Si no se llama al browser
+                logger.info('LOOKUP: BROWSER: %s, RES: %s' % (browser, res))
+                if lookup:
+                    return (browser.capitalize(), res)
+                else:
+                    break
+            
+            else:
+                # Se ha encontrado un browser aceptable.  Se llama al browser
                 break
-
-                """
-                bringChromeToFront(s.pid)
-
-                xbmcplugin.endOfDirectory(pluginhandle)
-                xbmc.executebuiltin("ReplaceWindow(Programs,%s)" % ("plugin://"+addonID+"/"))
-                """
                 
         else:
-            return False
+            # Si no se ha encontrado ningún browser que cumpla las condidiciones, se vuelve con error
+            logger.error('No se ha encontrado ningún BROWSER: %s' % str(exePath))
+            logger.error('Listado de APPS INSTALADAS en %s: %s' % (PATHS[0], sorted(filetools.listdir(PATHS[0]))))
+            if len(PATHS) > 1:
+                logger.error('Listado de APPS INSTALADAS en %s: %s' % (PATHS[1], sorted(filetools.listdir(PATHS[1]))))
+            return (False, False)
         
+        
+        # Ahora hacemos la Call al Browser detectado
+        # Si la plataforma es Android, se llama de una forma diferente.
+        if xbmc.getCondVisibility("system.platform.Android"):
+            xbmc.executebuiltin("StartAndroidActivity(%s,,,%s)" % (filetools.basename(path), url))
+        
+        else:
+            # Se crea una página .html intermedia con los parámetros necesarios para que funcione la llamada al browser
+            if browser == 'chromium':
+                browser_call = url
+            else:
+                browser_call = filetools.join(xbmc.translatePath(config.get_data_path()), 'browser_call.html')
+                filetools.write(browser_call, browser_params[browser][0])
+
+            params = [path]
+            # Se añaden las opciones de llamada del browser seleccionado
+            for option in browser_params[browser][1]:
+                params += [option]
+            params += [browser_call]
+            
+            # Se crea un subproceso con la llama al browser
+            if xbmc.getCondVisibility("system.platform.Windows"):
+                s = subprocess.Popen(params, shell=False, creationflags=creationFlags, close_fds = True)
+            else:
+                s = subprocess.Popen(params, shell=False, close_fds = True)
+            
+            # Si se ha pedido esperar hasta que termine el browser...
+            if wait:
+                s.communicate()
+
     except:
         logger.error(traceback.format_exc())
+        return (False, False)
     
-    return True
+    return (browser.capitalize(), res)
 
 
 def dejuice(data):
