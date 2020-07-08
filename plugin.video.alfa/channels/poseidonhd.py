@@ -255,7 +255,7 @@ def findvideos(item):
     logger.info()
 
     itemlist = list()
-    servers = {'drive': 'gvideo', 'fembed': 'fembed', "player": "oprem"}
+    servers = {'drive': 'gvideo', 'fembed': 'fembed', "player": "oprem", "openplay": "oprem"}
     soup = create_soup(item.url)
     matches = soup.find("ul", class_="aa-tbs aa-tbs-video").find_all("li")
 
@@ -295,6 +295,11 @@ def play(item):
     base_url = "%sr.php" % host
     post = {"data": data}
     url = httptools.downloadpage(base_url, post=post).url
+    if "fs.poseidonhdd.com" in url:
+        api_url = "%sapi.php" % host.replace("https://", "https://fs.")
+        v_id = scrapertools.find_single_match(url, r"\?h=([A-z0-9]+)")
+        post = {"h": v_id}
+        url = httptools.downloadpage(api_url, post=post, allow_redirects=False).json["url"]
 
     itemlist.append(item.clone(url=url, server=""))
     itemlist = servertools.get_servers_itemlist(itemlist)

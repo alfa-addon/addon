@@ -42,7 +42,7 @@ def mainlist(item):
     itemlist = list()
 
     itemlist.append(Item(channel=item.channel, title='Peliculas', action='sub_menu', url=host + "pelicula",
-                         thumbnail=get_thumb('movies', auto=True)))
+                         thumbnail=get_thumb('movies', auto=True), type="movies"))
     itemlist.append(Item(channel=item.channel, title='Series', url=host + 'series', action='sub_menu',
                          thumbnail=get_thumb('tvshows', auto=True)))
     itemlist.append(Item(channel=item.channel, title='Por Año', action='section',
