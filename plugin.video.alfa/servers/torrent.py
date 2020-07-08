@@ -100,7 +100,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
         save_path_videos = ''
         save_path_videos = filetools.join(config.get_setting("bt_download_path", server="torrent", \
                default=config.get_setting("downloadpath")), 'BT-torrents')
-        torrent_path = filetools.join(save_path_videos, '.cache', filetools.basename(mediaurl).upper())
+        torrent_path = filetools.join(save_path_videos, '.cache', filetools.basename(mediaurl).upper()).replace('.TORRENT', '.torrent')
         if mediaurl.startswith('magnet:'):
             t_hash = scrapertools.find_single_match(item.url, 'xt=urn:btih:([^\&]+)\&')
             if t_hash:
@@ -476,6 +476,14 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
             time.sleep(5)
             if not filetools.exists(erase_file_path):
                 break
+    
+    if not filetools.exists(erase_file_path):
+        if item.path.endswith('.json'):
+            log("##### BORRANDO Archivo de CONTROL: %s" % item.path)
+            filetools.remove(filetools.join(config.get_setting("downloadlistpath"), item.path), silent=True)
+        if filetools.exists(torrent_path):
+            log("##### BORRANDO Archivo TORRENT: %s" % filetools.basename(torrent_path))
+            filetools.remove(torrent_path, silent=True)
 
 
 def caching_torrents(url, referer=None, post=None, torrents_path=None, timeout=10, \
