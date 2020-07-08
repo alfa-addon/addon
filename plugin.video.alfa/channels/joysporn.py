@@ -24,11 +24,11 @@ host = 'https://www.joysporn.com/'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/most-popular/"))
-    itemlist.append( Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/top-rated/"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories.html"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/"))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories.html"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
@@ -55,7 +55,7 @@ def categorias(item):
         thumbnail = elem.img['src']
         title = elem.find('h2').text
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     return itemlist
 
@@ -84,7 +84,7 @@ def lista(item):
         if stime:
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('div', class_='navigation').span.find_next_siblings("a")
     if next_page:

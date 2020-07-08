@@ -24,9 +24,9 @@ host = 'https://pornvibe.org'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/all-videos/"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/all-videos/"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
@@ -56,7 +56,7 @@ def categorias(item):
     for thumbnail,scrapedtitle,scrapedurl,cantidad in matches:
         title = "%s (%s)" %(scrapedtitle,cantidad)
         url = urlparse.urljoin(host,scrapedurl)
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot="") )
     return sorted(itemlist, key=lambda i: i.title)
 
@@ -80,7 +80,7 @@ def lista(item):
         thumbnail = scrapedthumbnail
         url = urlparse.urljoin(item.url,scrapedurl)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url,
+        itemlist.append(item.clone(action="play", title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle=title))
     next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)"')
     if next_page:

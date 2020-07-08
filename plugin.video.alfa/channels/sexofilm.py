@@ -16,10 +16,10 @@ host = 'http://sexofilm.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/xtreme-adult-wing/adult-dvds/"))
-    itemlist.append( Item(channel=item.channel, title="Parody" , action="lista", url=host + "/keywords/parodies/"))
-    itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Peliculas" , action="lista", url=host + "/xtreme-adult-wing/adult-dvds/"))
+    itemlist.append(item.clone(title="Parody" , action="lista", url=host + "/keywords/parodies/"))
+    itemlist.append(item.clone(title="Canal" , action="categorias", url=host))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
@@ -44,11 +44,11 @@ def categorias(item):
         data = scrapertools.find_single_match(data,'>Best Porn Studios</a>(.*?)</ul>')
     else:
         data = scrapertools.find_single_match(data,'<div class="nav-wrap">(.*?)<ul class="sub-menu">')
-        itemlist.append( Item(channel=item.channel, action="lista", title="Big tit", url="https://sexofilm.com/?s=big+tits"))
+        itemlist.append(item.clone(action="lista", title="Big tit", url="https://sexofilm.com/?s=big+tits"))
     patron  = '<a href="([^<]+)">([^<]+)</a>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle  in matches:
-        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl) )
+        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl) )
     return itemlist
 
 
