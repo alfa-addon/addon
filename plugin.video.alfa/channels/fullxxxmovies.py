@@ -36,9 +36,9 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/streams"))
-    # itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Peliculas" , action="lista", url=host + "/streams"))
+    # itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
+    itemlist.append(item.clone(title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -71,7 +71,7 @@ def categorias(item):
             scrapedplot = ""
             scrapedthumbnail = ""
             scrapedurl = scrapedurl.replace ("http://freepornstreams.org/freepornst/stout.php?s=100,75,65:*&#038;u=" , "")
-            itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
+            itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
                                    thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return sorted(itemlist, key=lambda i: i.title)
 
@@ -97,15 +97,14 @@ def lista(item):
         url = elem.a['href']
         title = elem.find('header',  class_='entry-header').text
         thumbnail = elem.img['src']
-        logger.debug(matches)
         plot = ""
         if not "ubiqfile" in url or not "siterip" in url:
-            itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=url, 
+            itemlist.append(item.clone(action="findvideos", title=title, url=url, 
                                   thumbnail=thumbnail, fanart=thumbnail, plot=plot) )
     next_page = soup.find('a', class_='next')['href']
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
