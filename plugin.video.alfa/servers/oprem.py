@@ -33,9 +33,8 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     headers = {"referer": page_url}
 
     if v_type == "mp4":
-
         url = httptools.downloadpage(url, headers=headers, follow_redirects=False, stream=True).headers["location"]
-        page_url = "%s|referer=%s" % (url, page_url)
+        page_url = "%s|Referer=%s&User-Agent=%s" % (url, page_url, httptools.get_user_agent())
 
     elif v_type == "hls":
 

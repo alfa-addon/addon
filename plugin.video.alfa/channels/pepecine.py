@@ -22,7 +22,7 @@ list_language = IDIOMAS.values()
 list_quality = []
 list_servers = ['rapidvideo', 'verystream', 'streamplay']
 
-host = 'https://pepecine.tv/'
+host = 'https://pepecine.to/'
 
 
 def mainlist(item):
