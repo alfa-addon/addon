@@ -404,20 +404,36 @@ def update_libtorrent():
         if unrar: config.set_setting("unrar_path", unrar, server="torrent")
 
     # Ahora descargamos la última versión disponible de Liborrent para esta plataforma
-    current_version = config.get_setting("libtorrent_path", server="torrent", default="")
     try:
+        version_base = filetools.join(config.get_runtime_path(), 'lib', 'python_libtorrent')
+        if config.get_setting("libtorrent_version", server="torrent", default=""):
+            current_system, current_version = config.get_setting("libtorrent_version", server="torrent", default="").split('/')
+        else:
+            current_system = ''
+            current_version = ''
+
+        version_base = filetools.join(version_base, current_system)
         if current_version:
-            old_version = filetools.basename(current_version)
-            new_version = sorted(filetools.listdir(filetools.dirname(current_version)))
-            for folder in new_version:
-                if not filetools.isdir(filetools.join(filetools.dirname(current_version), folder)):
-                    new_version.remove(folder)
-            if old_version != new_version[-1]:
+            old_version = current_version
+            new_version = sorted(filetools.listdir(version_base))
+            new_version_alt = new_version[:]
+            if new_version:
+                for folder in new_version_alt:
+                    if not filetools.isdir(filetools.join(version_base, folder)):
+                        new_version.remove(folder)
+                if old_version != new_version[-1]:
+                    current_version = ''
+            else:
                 current_version = ''
     except:
+        current_version = ''
         logger.error(traceback.format_exc(1))
     
-    if filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json")) and current_version :
+    if filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json")) and current_version:
+        msg = 'Libtorrent_path: %s' % config.get_setting("libtorrent_path", server="torrent", default="")
+        if current_version not in msg:
+            msg += ' - Libtorrent_version: %s/%s' % (current_system, current_version)
+        logger.info(msg, force=True)
         return
 
     try:

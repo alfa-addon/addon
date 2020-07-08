@@ -209,7 +209,7 @@ def setting_torrent(item):
         {
             "id": "capture_thru_browser_path",
             "type": "text",
-            "label": "Path para descargar con Chrome archivos .torrent bloqueados",
+            "label": "Path para descargar con un browser archivos .torrent bloqueados",
             "default": CAPTURE_THRU_ROWSER_PATH,
             "enabled": True,
             "visible": True
@@ -911,20 +911,32 @@ def report_menu(item):
         itemlist.append(Item(channel=item.channel, action="", 
                     title="[COLOR limegreen]Ha terminado de generar el informe de fallo,[/COLOR]", 
                     thumbnail=thumb_next, folder=False))
-        itemlist.append(Item(channel=item.channel, action="", 
-                    title="[COLOR limegreen]Repórtelo en el Foro de Alfa: [/COLOR][COLOR yellow](pinche si Chrome)[/COLOR]", 
+        browser, res = call_browser(item, lookup=True)
+        if browser:
+            itemlist.append(Item(channel=item.channel, action="", 
+                    title="[COLOR limegreen]Repórtelo en el Foro de Alfa: [/COLOR][COLOR yellow](pinche para usar [I]%s[/I])[/COLOR]" % browser, 
                     thumbnail=thumb_next, 
-                    folder=False))        
-        itemlist.append(Item(channel=item.channel, action="call_chrome", 
-                    url='https://alfa-addon.com/foros/ayuda.12/', 
-                    title="**- [COLOR yellow]https://alfa-addon.com/foros/ayuda.12/[/COLOR] -**", 
-                    thumbnail=thumb_next, unify=False, folder=False))
-    
-        if item.one_use:
+                    folder=False))
+        else:
+            itemlist.append(Item(channel=item.channel, action="", 
+                    title="[COLOR limegreen]Repórtelo en el Foro de Alfa: [/COLOR]", 
+                    thumbnail=thumb_next, 
+                    folder=False))
+        if not browser:
             action = ''
             url = ''
         else:
-            action = 'call_chrome'
+            action = 'call_browser'
+            url='https://alfa-addon.com/foros/ayuda.12/'
+        itemlist.append(Item(channel=item.channel, action=action, url=url, 
+                    title="**- [COLOR yellow]https://alfa-addon.com/foros/ayuda.12/[/COLOR] -**", 
+                    thumbnail=thumb_next, unify=False, folder=False))
+    
+        if item.one_use or not browser:
+            action = ''
+            url = ''
+        else:
+            action = 'call_browser'
             url = item.url
         itemlist.append(Item(channel=item.channel, action=action, 
                     title="**- LOG: [COLOR gold]%s[/COLOR] -**" % item.url, url=url, 
@@ -1247,9 +1259,12 @@ def report_send(item, description='', fatal=False):
     return report_menu(item)
     
     
-def call_chrome(item):
+def call_browser(item, lookup=False):
     from lib import generictools
 
-    resultado = generictools.call_chrome(item.url)
+    if lookup:
+        browser, resultado = generictools.call_browser(item.url, lookup=lookup)
+    else:
+        browser, resultado = generictools.call_browser(item.url)
     
-    return resultado
+    return browser, resultado

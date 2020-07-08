@@ -49,7 +49,7 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, '>Trending Categories<(.*?)</ul>')
+    data = scrapertools.find_single_match(data, '>Trending in<(.*?)</ul>')
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<li><a href="([^"]+)">([^"]+)</a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -68,11 +68,11 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
     patron = '<div class="video-item">.*?'
-    patron += 'class="frame image" href="([^"]+)".*?'
-    patron += 'data-original="([^"]+)".*?'
+    patron += 'href="([^"]+)".*?'
+    patron += 'src="([^"]+)".*?'
     patron += '<div class="video-title">.*?'
-    patron += '>(.*?)</a>.*?'
-    patron += '<span class="time">(.*?)</span>'
+    patron += '>([^<]+)</a>.*?'
+    patron += '<span class="time">([^<]+)<'
     matches = re.compile(patron, re.DOTALL).findall(data)
     for scrapedurl, scrapedthumbnail, scrapedtitle, duracion in matches:
         url = urlparse.urljoin(item.url, scrapedurl)

@@ -425,7 +425,7 @@ def listado(item):                                                              
         
         #Patrón para búsquedas, pelis y series
         patron = '<div class="browse-movie-wrap[^"]+">\s*<a\s*href="([^"]+)"\s*class='
-        patron += '"browse-movie-link">\s*(?:<figure>\s*)?<img\s*class="[^"]+"\s*'
+        patron += '"browse-movie-link">\s*(?:<figure>\s*)?<img.*?class="[^"]+"\s*'
         patron += 'src="([^"]+)"\s*alt="[^>]*>.*?class="browse-movie-title">([^<]+)<\/a>\s*'
         patron += '<div\s*class="browse-movie-year">(\d+)<\/div>\s*<div\s*class='
         patron += '"browse-movie-tags">(?:\s*<a\s*href=[^>]+>([^<]+)<\/a>)?'
