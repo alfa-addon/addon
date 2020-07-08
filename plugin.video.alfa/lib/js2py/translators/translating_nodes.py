@@ -155,7 +155,7 @@ def limited(func):
 inf = float('inf')
 
 
-def Literal(type, value, raw, regex=None, comments=None):
+def Literal(type, value, raw, regex=None):
     if regex:  # regex
         return 'JsRegExp(%s)' % repr(compose_regex(value))
     elif value is None:  # null
@@ -165,12 +165,12 @@ def Literal(type, value, raw, regex=None, comments=None):
     return 'Js(%s)' % repr(value) if value != inf else 'Js(float("inf"))'
 
 
-def Identifier(type, name, comments=None):
+def Identifier(type, name):
     return 'var.get(%s)' % repr(name)
 
 
 @limited
-def MemberExpression(type, computed, object, property, comments=None):
+def MemberExpression(type, computed, object, property):
     far_left = trans(object)
     if computed:  # obj[prop] type accessor
         # may be literal which is the same in every case so we can save some time on conversion
@@ -183,12 +183,12 @@ def MemberExpression(type, computed, object, property, comments=None):
     return far_left + '.get(%s)' % prop
 
 
-def ThisExpression(type, comments=None):
+def ThisExpression(type):
     return 'var.get(u"this")'
 
 
 @limited
-def CallExpression(type, callee, arguments, comments=None):
+def CallExpression(type, callee, arguments):
     arguments = [trans(e) for e in arguments]
     if callee['type'] == 'MemberExpression':
         far_left = trans(callee['object'])
@@ -210,38 +210,47 @@ def CallExpression(type, callee, arguments, comments=None):
 # ========== ARRAYS ============
 
 
-def ArrayExpression(type, elements, comments=None):  # todo fix null inside problem
+def ArrayExpression(type, elements):  # todo fix null inside problem
     return 'Js([%s])' % ', '.join(trans(e) if e else 'None' for e in elements)
 
 
 # ========== OBJECTS =============
 
 
-def ObjectExpression(type, properties, comments=None):
-    name = inline_stack.require('Object')
+def ObjectExpression(type, properties):
+    name = None
     elems = []
     after = ''
     for p in properties:
         if p['kind'] == 'init':
             elems.append('%s:%s' % Property(**p))
-        elif p['kind'] == 'set':
-            k, setter = Property(
-                **p
-            )  # setter is just a lval referring to that function, it will be defined in InlineStack automatically
-            after += '%s.define_own_property(%s, {"set":%s, "configurable":True, "enumerable":True})\n' % (
-                name, k, setter)
-        elif p['kind'] == 'get':
-            k, getter = Property(**p)
-            after += '%s.define_own_property(%s, {"get":%s, "configurable":True, "enumerable":True})\n' % (
-                name, k, getter)
         else:
-            raise RuntimeError('Unexpected object propery kind')
-    obj = '%s = Js({%s})\n' % (name, ','.join(elems))
-    inline_stack.define(name, obj + after)
-    return name
+            if name is None:
+                name = inline_stack.require('Object')
+            if p['kind'] == 'set':
+                k, setter = Property(
+                    **p
+                )  # setter is just a lval referring to that function, it will be defined in InlineStack automatically
+                after += '%s.define_own_property(%s, {"set":%s, "configurable":True, "enumerable":True})\n' % (
+                    name, k, setter)
+            elif p['kind'] == 'get':
+                k, getter = Property(**p)
+                after += '%s.define_own_property(%s, {"get":%s, "configurable":True, "enumerable":True})\n' % (
+                    name, k, getter)
+            else:
+                raise RuntimeError('Unexpected object propery kind')
+    definition = 'Js({%s})' % ','.join(elems)
+    if name is None:
+        return definition
+    body = '%s = %s\n' % (name, definition)
+    body += after
+    body += 'return %s\n' % name
+    code = 'def %s():\n%s' % (name, indent(body))
+    inline_stack.define(name, code)
+    return name + '()'
 
 
-def Property(type, kind, key, computed, value, method, shorthand, comments=None):
+def Property(type, kind, key, computed, value, method, shorthand):
     if shorthand or computed:
         raise NotImplementedError(
             'Shorthand and Computed properties not implemented!')
@@ -256,7 +265,7 @@ def Property(type, kind, key, computed, value, method, shorthand, comments=None)
 
 
 @limited
-def UnaryExpression(type, operator, argument, prefix, comments=None):
+def UnaryExpression(type, operator, argument, prefix):
     a = trans(
         argument, standard=True
     )  # unary involve some complex operations so we cant use line shorteners here
@@ -271,7 +280,7 @@ def UnaryExpression(type, operator, argument, prefix, comments=None):
 
 
 @limited
-def BinaryExpression(type, operator, left, right, comments=None):
+def BinaryExpression(type, operator, left, right):
     a = trans(left)
     b = trans(right)
     # delegate to our friends
@@ -279,7 +288,7 @@ def BinaryExpression(type, operator, left, right, comments=None):
 
 
 @limited
-def UpdateExpression(type, operator, argument, prefix, comments=None):
+def UpdateExpression(type, operator, argument, prefix):
     a = trans(
         argument, standard=True
     )  # also complex operation involving parsing of the result so no line length reducing here
@@ -287,7 +296,7 @@ def UpdateExpression(type, operator, argument, prefix, comments=None):
 
 
 @limited
-def AssignmentExpression(type, operator, left, right, comments=None):
+def AssignmentExpression(type, operator, left, right):
     operator = operator[:-1]
     if left['type'] == 'Identifier':
         if operator:
@@ -319,12 +328,12 @@ six
 
 
 @limited
-def SequenceExpression(type, expressions, comments=None):
+def SequenceExpression(type, expressions):
     return reduce(js_comma, (trans(e) for e in expressions))
 
 
 @limited
-def NewExpression(type, callee, arguments, comments=None):
+def NewExpression(type, callee, arguments):
     return trans(callee) + '.create(%s)' % ', '.join(
         trans(e) for e in arguments)
 
@@ -332,7 +341,7 @@ def NewExpression(type, callee, arguments, comments=None):
 @limited
 def ConditionalExpression(
         type, test, consequent,
-        alternate, comments=None):  # caused plenty of problems in my home-made translator :)
+        alternate):  # caused plenty of problems in my home-made translator :)
     return '(%s if %s else %s)' % (trans(consequent), trans(test),
                                    trans(alternate))
 
@@ -340,49 +349,49 @@ def ConditionalExpression(
 # ===========  STATEMENTS =============
 
 
-def BlockStatement(type, body, comments=None):
+def BlockStatement(type, body):
     return StatementList(
         body)  # never returns empty string! In the worst case returns pass\n
 
 
-def ExpressionStatement(type, expression, comments=None):
+def ExpressionStatement(type, expression):
     return trans(expression) + '\n'  # end expression space with new line
 
 
-def BreakStatement(type, label, comments=None):
+def BreakStatement(type, label):
     if label:
         return 'raise %s("Breaked")\n' % (get_break_label(label['name']))
     else:
         return 'break\n'
 
 
-def ContinueStatement(type, label, comments=None):
+def ContinueStatement(type, label):
     if label:
         return 'raise %s("Continued")\n' % (get_continue_label(label['name']))
     else:
         return 'continue\n'
 
 
-def ReturnStatement(type, argument, comments=None):
+def ReturnStatement(type, argument):
     return 'return %s\n' % (trans(argument)
                             if argument else "var.get('undefined')")
 
 
-def EmptyStatement(type, comments=None):
+def EmptyStatement(type):
     return 'pass\n'
 
 
-def DebuggerStatement(type, comments=None):
+def DebuggerStatement(type):
     return 'pass\n'
 
 
-def DoWhileStatement(type, body, test, comments=None):
+def DoWhileStatement(type, body, test):
     inside = trans(body) + 'if not %s:\n' % trans(test) + indent('break\n')
     result = 'while 1:\n' + indent(inside)
     return result
 
 
-def ForStatement(type, init, test, update, body, comments=None):
+def ForStatement(type, init, test, update, body):
     update = indent(trans(update)) if update else ''
     init = trans(init) if init else ''
     if not init.endswith('\n'):
@@ -398,7 +407,7 @@ def ForStatement(type, init, test, update, body, comments=None):
     return result
 
 
-def ForInStatement(type, left, right, body, each, comments=None):
+def ForInStatement(type, left, right, body, each):
     res = 'for PyJsTemp in %s:\n' % trans(right)
     if left['type'] == "VariableDeclaration":
         addon = trans(left)  # make sure variable is registered
@@ -417,7 +426,7 @@ def ForInStatement(type, left, right, body, each, comments=None):
     return res
 
 
-def IfStatement(type, test, consequent, alternate, comments=None):
+def IfStatement(type, test, consequent, alternate):
     # NOTE we cannot do elif because function definition inside elif statement would not be possible!
     IF = 'if %s:\n' % trans(test)
     IF += indent(trans(consequent))
@@ -427,7 +436,7 @@ def IfStatement(type, test, consequent, alternate, comments=None):
     return IF + ELSE
 
 
-def LabeledStatement(type, label, body, comments=None):
+def LabeledStatement(type, label, body):
     # todo consider using smarter approach!
     inside = trans(body)
     defs = ''
@@ -448,7 +457,7 @@ def LabeledStatement(type, label, body, comments=None):
     return defs + inside
 
 
-def StatementList(lis, comments=None):
+def StatementList(lis):
     if lis:  # ensure we don't return empty string because it may ruin indentation!
         code = ''.join(trans(e) for e in lis)
         return code if code else 'pass\n'
@@ -456,7 +465,7 @@ def StatementList(lis, comments=None):
         return 'pass\n'
 
 
-def PyimportStatement(type, imp, comments=None):
+def PyimportStatement(type, imp):
     lib = imp['name']
     jlib = 'PyImport_%s' % lib
     code = 'import %s as %s\n' % (lib, jlib)
@@ -471,7 +480,7 @@ def PyimportStatement(type, imp, comments=None):
     return code
 
 
-def SwitchStatement(type, discriminant, cases, comments=None):
+def SwitchStatement(type, discriminant, cases):
     #TODO there will be a problem with continue in a switch statement.... FIX IT
     code = 'while 1:\n' + indent('SWITCHED = False\nCONDITION = (%s)\n')
     code = code % trans(discriminant)
@@ -491,12 +500,12 @@ def SwitchStatement(type, discriminant, cases, comments=None):
     return code
 
 
-def ThrowStatement(type, argument, comments=None):
+def ThrowStatement(type, argument):
     return 'PyJsTempException = JsToPyException(%s)\nraise PyJsTempException\n' % trans(
         argument)
 
 
-def TryStatement(type, block, handler, handlers, guardedHandlers, finalizer, comments=None):
+def TryStatement(type, block, handler, handlers, guardedHandlers, finalizer):
     result = 'try:\n%s' % indent(trans(block))
     # complicated catch statement...
     if handler:
@@ -516,13 +525,13 @@ def TryStatement(type, block, handler, handlers, guardedHandlers, finalizer, com
     return result
 
 
-def LexicalDeclaration(type, declarations, kind, comments=None):
+def LexicalDeclaration(type, declarations, kind):
     raise NotImplementedError(
         'let and const not implemented yet but they will be soon! Check github for updates.'
     )
 
 
-def VariableDeclarator(type, id, init, comments=None):
+def VariableDeclarator(type, id, init):
     name = id['name']
     # register the name if not already registered
     Context.register(name)
@@ -531,21 +540,21 @@ def VariableDeclarator(type, id, init, comments=None):
     return ''
 
 
-def VariableDeclaration(type, declarations, kind, comments=None):
+def VariableDeclaration(type, declarations, kind):
     code = ''.join(trans(d) for d in declarations)
     return code if code else 'pass\n'
 
 
-def WhileStatement(type, test, body, comments=None):
+def WhileStatement(type, test, body):
     result = 'while %s:\n' % trans(test) + indent(trans(body))
     return result
 
 
-def WithStatement(type, object, body, comments=None):
+def WithStatement(type, object, body):
     raise NotImplementedError('With statement not implemented!')
 
 
-def Program(type, body, comments=None):
+def Program(type, body):
     inline_stack.reset()
     code = ''.join(trans(e) for e in body)
     # here add hoisted elements (register variables and define functions)
@@ -559,7 +568,7 @@ def Program(type, body, comments=None):
 
 
 def FunctionDeclaration(type, id, params, defaults, body, generator,
-                        expression, comments=None):
+                        expression):
     if generator:
         raise NotImplementedError('Generators not supported')
     if defaults:
@@ -610,7 +619,7 @@ def FunctionDeclaration(type, id, params, defaults, body, generator,
 
 
 def FunctionExpression(type, id, params, defaults, body, generator,
-                       expression, comments=None):
+                       expression):
     if generator:
         raise NotImplementedError('Generators not supported')
     if defaults:
