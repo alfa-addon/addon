@@ -1,7 +1,7 @@
 {
   "id": "peliculasaudiolatino",
   "name": "Peliculasaudiolatino",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "peliculasaudiolatino.png",

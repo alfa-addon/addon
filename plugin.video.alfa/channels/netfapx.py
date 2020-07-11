@@ -24,12 +24,12 @@ host = 'https://netfapx.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?orderby=newest"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/?orderby=popular"))
-    itemlist.append( Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/?orderby="))
-    itemlist.append( Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "/pornstar/?orderby=popular"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/?orderby=newest"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/?orderby=popular"))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/?orderby="))
+    itemlist.append(item.clone(title="PornStar" , action="catalogo", url=host + "/pornstar/?orderby=popular"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
@@ -72,7 +72,7 @@ def catalogo(item):
         title = "%s (%s)" %(stitle,cantidad)
         url = url.replace("pornstar", "videos")
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))
     try:
         next_page = soup.find('a', class_='next')['href']
@@ -95,7 +95,7 @@ def categorias(item):
         thumbnail = elem.img['src']
         title = scrapertools.find_single_match(thumbnail, '.*?/02/(.*?)-Porn-Videos.jpg')
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))
     return itemlist
 
@@ -112,7 +112,7 @@ def lista(item):
         stime = elem.find_all("div")[-2].text.split("\n")[3]
         title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, contentTitle=title, url=url,
+        itemlist.append(item.clone(action="play", title=title, contentTitle=title, url=url,
                               fanart=thumbnail, thumbnail=thumbnail, plot=plot,))
     try:
         next_page = soup.find('a', class_='next')['href']

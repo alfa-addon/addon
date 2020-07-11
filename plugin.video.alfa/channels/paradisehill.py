@@ -25,13 +25,13 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/all/?sort=created_at"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/popular/?filter=month&sort=by_likes"))
-    itemlist.append( Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/actors/?sort=by_likes"))
-    itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host + "/studios/?sort=by_likes"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/all/?sort=created_at"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/popular/?filter=month&sort=by_likes"))
+    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/actors/?sort=by_likes"))
+    itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "/studios/?sort=by_likes"))
 
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/?sort=by_likes"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/?sort=by_likes"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
@@ -60,7 +60,7 @@ def categorias(item):
         url = urlparse.urljoin(item.url,url)
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('li', class_='next')
     if next_page:
@@ -94,7 +94,7 @@ def lista(item):
         url = urlparse.urljoin(item.url,url)
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('li', class_='next')
     if next_page:

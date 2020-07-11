@@ -25,13 +25,13 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "newest/page1"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "popullar/page1"))
-    itemlist.append( Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/actors/?sort=by_likes"))
-    itemlist.append( Item(channel=item.channel, title="Canal" , action="canal", url=host + "paysitelist"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "newest/page1"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "popullar/page1"))
+    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/actors/?sort=by_likes"))
+    itemlist.append(item.clone(title="Canal" , action="canal", url=host + "paysitelist"))
 
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "tags"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "tags"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
@@ -59,7 +59,7 @@ def canal(item):
         url = urlparse.urljoin(host,url)
         thumbnail = ""
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     return itemlist
 
@@ -76,7 +76,7 @@ def categorias(item):
         url = urlparse.urljoin(host,url)
         thumbnail = urlparse.urljoin(host,thumbnail)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     return itemlist
 
@@ -108,7 +108,7 @@ def lista(item):
         url = urlparse.urljoin(host,url)
         thumbnail = urlparse.urljoin(host,thumbnail)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('li', class_='active').next_sibling
     if next_page:
