@@ -223,7 +223,7 @@ def findvideos(item):
         elif scrapedurl.find("pi7.php") > 0:
             logger.info("Caso 2")
             source_data = get_source(scrapedurl)
-            source_regex = 'post\( "(.*?)", { acc: "(.*?)", id: \'(.*?)\', tk: \'(.*?)\' }'
+            source_regex = 'post\("(.*?)",{acc: "(.*?)", id: \'(.*?)\', tk: \'(.*?)\'}'
             source_matches = re.compile(source_regex, re.DOTALL).findall(source_data)
             for source_page, source_acc, source_id, source_tk in source_matches:
                 source_url = scrapedurl[0:scrapedurl.find("pi7.php")] + source_page
