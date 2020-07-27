@@ -398,6 +398,10 @@ if __name__ == "__main__":
     # modo adulto:
     # sistema actual 0: Nunca, 1:Siempre, 2:Solo hasta que se reinicie Kodi
     # si es == 2 lo desactivamos.
+    # Detecta la versión correcta de marshal
+    if PY3:
+        from platformcode import custom_code
+        custom_code.marshal_check()
     if config.get_platform(True)['num_version'] >= 17.0:
         if not PY3:
             from lib.alfaresolver import updated, update_now

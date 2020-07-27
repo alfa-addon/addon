@@ -25,10 +25,10 @@ if __perfil__ < 3:
 else:
     color1 = color2 = color3 = color4 = color5 = color6 = ""
 
-langs = ['de', 'fr', 'pt', 'it', 'es-MX', 'ca', 'en', 'es']
+langs = ['de', 'fr', 'pt', 'it', 'es-MX', 'ca', 'en', 'es', 'pt-BR']
 langt = langs[config.get_setting('tmdb', "tvmoviedb")]
 langt_alt = langs[config.get_setting('tmdb_alternativo', "tvmoviedb")]
-langs = ['co', 'cl', 'ar', 'mx', 'en', 'es']
+langs = ['co', 'cl', 'ar', 'mx', 'en', 'es', 'pt-BR']
 langf = langs[config.get_setting('filmaff', "tvmoviedb")]
 langs = ['de-de', 'fr-fr', 'pt-pt', 'it-it', 'es-MX', 'ca-es', 'en', 'es']
 langi = langs[config.get_setting('imdb', "tvmoviedb")]

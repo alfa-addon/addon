@@ -25,15 +25,15 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/latest-updates/?sort_by=post_date&from=01"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/most-popular/?sort_by=video_viewed_month&from=01"))
-    itemlist.append( Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/top-rated/1/?sort_by=rating_month&from=01"))
-    itemlist.append( Item(channel=item.channel, title="Mas comentado" , action="lista", url=host + "/most-commented/1/?sort_by=most_commented_month&from=01"))
-    itemlist.append( Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/models/?sort_by=avg_videos_popularity&from=01"))
-    itemlist.append( Item(channel=item.channel, title="Canal" , action="categorias", url=host + "/sites/?sort_by=avg_videos_popularity&from=01"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/?sort_by=post_date&from=01"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/?sort_by=video_viewed_month&from=01"))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/1/?sort_by=rating_month&from=01"))
+    itemlist.append(item.clone(title="Mas comentado" , action="lista", url=host + "/most-commented/1/?sort_by=most_commented_month&from=01"))
+    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/models/?sort_by=avg_videos_popularity&from=01"))
+    itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "/sites/?sort_by=avg_videos_popularity&from=01"))
 
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/?sort_by=avg_videos_popularity&from=01"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/?sort_by=avg_videos_popularity&from=01"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
@@ -67,7 +67,7 @@ def categorias(item):
         url = urlparse.urljoin(item.url,url)
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('li', class_='item-pagin is_last')
     if next_page:
@@ -105,7 +105,7 @@ def lista(item):
         if quality:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]HD[/COLOR] %s" % (stime,stitle)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('li', class_='item-pagin is_last')
     if next_page:

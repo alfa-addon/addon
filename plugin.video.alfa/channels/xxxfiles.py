@@ -25,14 +25,14 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/latest-updates/"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/most-popular/"))
-    itemlist.append( Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/top-rated/"))
-    itemlist.append( Item(channel=item.channel, title="PornStar" , action="catalogo", url=host + "/models/most-viewed/"))
-    itemlist.append( Item(channel=item.channel, title="Canal" , action="canal", url=host + "/sites/"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/"))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/"))
+    itemlist.append(item.clone(title="PornStar" , action="catalogo", url=host + "/models/most-viewed/"))
+    itemlist.append(item.clone(title="Canal" , action="canal", url=host + "/sites/"))
 
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
@@ -60,7 +60,7 @@ def canal(item):
         url = urlparse.urljoin(item.url,url)
         thumbnail = ""
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('a', string='Next')
     if next_page:
@@ -81,8 +81,7 @@ def categorias(item):
         url = urlparse.urljoin(item.url,url)
         thumbnail = ""
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
-                              thumbnail=thumbnail , plot=plot) )
+        itemlist.append(item.clone(action="lista", title=title, url=url, thumbnail=thumbnail , plot=plot) )
     return itemlist
 
 def catalogo(item):
@@ -97,7 +96,7 @@ def catalogo(item):
         url = urlparse.urljoin(item.url,url)
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('a', string='Next')
     if next_page:
@@ -132,7 +131,7 @@ def lista(item):
         if quality:
             title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (stime,quality,stitle)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('a', string='Next')
     if next_page:
@@ -148,7 +147,6 @@ def play(item):
     soup = create_soup(item.url)
     matches = soup.find_all('source', type='video/mp4')
     for elem in matches:
-        logger.debug(elem)
         url = elem['src']
         quality = elem['label']
         itemlist.append(['.mp4 %s' %quality, url])
