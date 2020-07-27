@@ -1,10 +1,28 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import division
+#from __future__ import absolute_import
+#from future import standard_library
+#standard_library.install_aliases()
+#from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
+
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+    
+if PY3:
+
+    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
+
 import os
 import pickle
 import random
 import time
-import urllib
 
 try:
     import xbmc, xbmcgui
@@ -17,13 +35,13 @@ LIBTORRENT_PATH = config.get_setting("libtorrent_path", server="torrent", defaul
 from servers import torrent as torr
 lt, e, e1, e2 = torr.import_libtorrent(LIBTORRENT_PATH)
 
-from cache import Cache
-from dispatcher import Dispatcher
-from file import File
-from handler import Handler
-from monitor import Monitor
-from resume_data import ResumeData
-from server import Server
+from .cache import Cache
+from .dispatcher import Dispatcher
+from .file import File
+from .handler import Handler
+from .monitor import Monitor
+from .resume_data import ResumeData
+from .server import Server
 
 try:
     BUFFER = int(config.get_setting("bt_buffer", server="torrent", default="50"))
@@ -98,7 +116,7 @@ class Client(object):
         self.bkg_user = bkg_user
         try:
             self.torrent_paramss = {'save_path': self.temp_path, 'storage_mode': lt.storage_mode_t.storage_mode_allocate}
-        except Exception, e:
+        except Exception as e:
             try:
                 do = xbmcgui.Dialog()
                 e = e1 or e2
@@ -208,7 +226,7 @@ class Client(object):
         """
         self.total_size = 0
         # Obtenemos los archivos que la extension este en la lista
-        videos = filter(lambda f: self.VIDEO_EXTS.has_key(os.path.splitext(f.path)[1]), files)
+        videos = [f for f in files if os.path.splitext(f.path)[1] in self.VIDEO_EXTS]
 
         if not videos:
             raise Exception('No video files in torrent')
@@ -248,12 +266,12 @@ class Client(object):
             tail_pieces = 9
             # Piezas anteriores a la primera se desactivan
             if (self.file.last_piece - pc) > tail_pieces:
-                for i in xrange(self.file.first_piece, pc):
+                for i in range(self.file.first_piece, pc):
                     self._th.piece_priority(i, 0)
                     self._th.reset_piece_deadline(i)
 
             # Piezas siguientes a la primera se activan
-            for i in xrange(pc + 1, self.file.last_piece + 1):
+            for i in range(pc + 1, self.file.last_piece + 1):
                 #self._th.piece_priority(i, 0)
                 self._th.piece_priority(i, 1)
 
@@ -262,7 +280,7 @@ class Client(object):
         Función encargada de priorizar las piezas correspondientes al archivo seleccionado en la funcion set_file()
         """
         priorities = []
-        for i in xrange(self.meta.num_pieces()):
+        for i in range(self.meta.num_pieces()):
             if i >= self.file.first_piece and i <= self.file.last_piece:
                 priorities.append(1)
             else:
@@ -409,7 +427,7 @@ class Client(object):
         if self._th:
             s = self._th.status()
             # Download Rate
-            s._download_rate = s.download_rate / 1024
+            s._download_rate = old_div(s.download_rate, 1024)
 
             # Progreso del archivo
             if self.file:
@@ -439,7 +457,7 @@ class Client(object):
             # Estado del buffer
             if self.file and self.file.cursor:  # Con una conexion activa: Disponible vs Posicion del reproductor
                 percent = len(self.file.cursor.cache)
-                percent = percent * 100 / self.buffer_size
+                percent = old_div(percent * 100, self.buffer_size)
                 s.buffer = int(percent)
 
             elif self.file:  # Sin una conexion activa: Pre-buffer antes de iniciar
@@ -465,7 +483,7 @@ class Client(object):
                     else:
                         bp.append(False)
 
-                s.buffer = int(sum(bp) * 100 / self.buffer_size)
+                s.buffer = int(old_div(sum(bp) * 100, self.buffer_size))
 
             else:  # Si no hay ningun archivo seleccionado: No hay buffer
                 s.buffer = 0
@@ -596,7 +614,7 @@ class Client(object):
             if isinstance(fs, list):
                 files = fs
             else:
-                files = [fs.at(i) for i in xrange(fs.num_files())]
+                files = [fs.at(i) for i in range(fs.num_files())]
 
             # Guardamos la lista de archivos
             self.files = self._find_files(files)

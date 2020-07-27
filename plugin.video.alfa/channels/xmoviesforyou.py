@@ -32,8 +32,8 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host))
+    itemlist.append(item.clone(title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -67,13 +67,12 @@ def lista(item):
         thumbnail = scrapedthumbnail
         url = urlparse.urljoin(item.url,scrapedurl)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="findvideos", title=title, url=url,
+        itemlist.append(item.clone(action="findvideos", title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
-                              url=next_page) )
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 

@@ -24,9 +24,9 @@ host = 'http://www.free18.net'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
@@ -57,7 +57,7 @@ def categorias(item):
         url = urlparse.urljoin(item.url,url)
         thumbnail = urlparse.urljoin(item.url,thumbnail)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     return itemlist
 
@@ -88,7 +88,7 @@ def lista(item):
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,title)
         url = urlparse.urljoin(item.url,url)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
+        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail, plot=plot,
                               contentTitle = title))
     next_page = soup.find('span', class_='ThisPage').find_next_siblings("a")
     if next_page:

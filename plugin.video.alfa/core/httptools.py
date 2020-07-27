@@ -458,6 +458,8 @@ def downloadpage(url, **opt):
 
     # Headers por defecto, si no se especifica nada
     req_headers = default_headers.copy()
+    if opt.get('add_referer', False):
+        req_headers['Referer'] = "/".join(url.split("/")[:3])
 
     # Headers pasados como parametros
     if opt.get('headers', None) is not None:

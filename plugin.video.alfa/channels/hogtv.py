@@ -25,13 +25,13 @@ def mainlist(item):
     logger.info()
     itemlist = []
 
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/new"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/trending"))
-    itemlist.append( Item(channel=item.channel, title="Mejor valorado" , action="lista", url=host + "/all"))
-    itemlist.append( Item(channel=item.channel, title="Mas comentado" , action="lista", url=host + "/engaging"))
-    itemlist.append( Item(channel=item.channel, title="PornStar" , action="categorias", url=host + "/pornstars"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/new"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/trending"))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/all"))
+    itemlist.append(item.clone(title="Mas comentado" , action="lista", url=host + "/engaging"))
+    itemlist.append(item.clone(title="PornStar" , action="categorias", url=host + "/pornstars"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
@@ -64,7 +64,7 @@ def categorias(item):
         if not thumbnail.startswith("https"):
             thumbnail = "https:%s" % thumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     next_page = soup.find('a', class_='pagination__button--next')
     if next_page:
@@ -101,7 +101,7 @@ def lista(item):
         if not thumbnail.startswith("https"):
             thumbnail = "https:%s" % thumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url, thumbnail=thumbnail,
+        itemlist.append(item.clone(action="play", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
     next_page = soup.find('a', class_='pagination__button--next')
     if next_page:

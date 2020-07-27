@@ -129,6 +129,36 @@ def init():
         logger.error(traceback.format_exc())
 
 
+def marshal_check():
+    try:
+        marshal_modules = ['lib/alfaresolver_py3', 'core/proxytools_py3']
+        for module in marshal_modules:
+            path = filetools.join(config.get_runtime_path(), filetools.dirname(module))
+            path_list = filetools.listdir(path)
+            library = filetools.dirname(module).rstrip('/')
+            module_name = filetools.basename(module)
+            for alt_module in path_list:
+                if module_name not in alt_module:
+                    continue
+                if alt_module == module_name + '.py':
+                    continue
+                try:
+                    alt_module_path = '%s.%s' % (library, alt_module.rstrip('.py'))
+                    spec = __import__(alt_module_path, None, None, [alt_module_path])
+                    if not spec:
+                        raise
+                except Exception as e:
+                    logger.info('marshal_check ERROR in %s: %s' % (alt_module, str(e)), force=True)
+                    continue
+                filetools.copy(filetools.join(path, alt_module), filetools.join(path, module_name + '.py'), silent=True)
+                logger.info('marshal_check FOUND: %s' % alt_module, force=True)
+                break
+            else:
+                logger.info('marshal_check NOT FOUND: %s.py' % module_name, force=True)
+    except:
+        logger.error(traceback.format_exc(1))
+
+
 def verify_script_alfa_update_helper():
     logger.info()
     

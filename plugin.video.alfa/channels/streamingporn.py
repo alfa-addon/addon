@@ -32,11 +32,11 @@ def mainlist(item):
 
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append( Item(channel=item.channel, title="Peliculas" , action="lista", url=host + "/category/movies/"))
-    itemlist.append( Item(channel=item.channel, title="Videos" , action="lista", url=host + "/category/stream/"))
-    itemlist.append( Item(channel=item.channel, title="Canal" , action="catalogo", url=host))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Peliculas" , action="lista", url=host + "/category/movies/"))
+    itemlist.append(item.clone(title="Videos" , action="lista", url=host + "/category/stream/"))
+    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
+    itemlist.append(item.clone(title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -68,7 +68,7 @@ def catalogo(item):
     for scrapedurl,scrapedtitle in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle , url=scrapedurl , 
+        itemlist.append(item.clone(action="lista", title=scrapedtitle , url=scrapedurl , 
                         thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
@@ -86,7 +86,7 @@ def categorias(item):
         scrapedthumbnail = ""
         scrapedtitle = scrapedtitle
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle , url=scrapedurl , 
+        itemlist.append(item.clone(action="lista", title=scrapedtitle , url=scrapedurl , 
                         thumbnail=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
@@ -112,17 +112,17 @@ def lista(item):
         thumbnail = scrapedthumbnail
         plot = ""
         if not "manyvids" in url:
-            itemlist.append( Item(channel=item.channel, action="findvideos" , title=title , url=url, thumbnail=thumbnail, 
+            itemlist.append(item.clone(action="findvideos" , title=title , url=url, thumbnail=thumbnail, 
                               fanart=scrapedthumbnail, plot=plot, contentTitle = contentTitle) )
     next_page_url = scrapertools.find_single_match(data,'<a class="next page-numbers" href="([^"]+)">Next page')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append( Item(channel=item.channel , action="lista" , title="Página Siguiente >>" , 
-                        text_color="blue", url=next_page_url) )
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page_url) )
     return itemlist
 
 
 def findvideos(item):
+    logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)

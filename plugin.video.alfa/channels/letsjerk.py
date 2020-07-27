@@ -22,12 +22,12 @@ host = 'https://letsjerk.to'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/?order=newest"))
-    itemlist.append( Item(channel=item.channel, title="Mas valorados" , action="lista", url=host + "/?order=rating_month"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/?order=views_month"))
-    itemlist.append( Item(channel=item.channel, title="Mas comentado" , action="lista", url=host + "/?order=comments_month"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/?order=newest"))
+    itemlist.append(item.clone(title="Mas valorados" , action="lista", url=host + "/?order=rating_month"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/?order=views_month"))
+    itemlist.append(item.clone(title="Mas comentado" , action="lista", url=host + "/?order=comments_month"))
     
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
@@ -57,13 +57,12 @@ def lista(item):
         thumbnail = scrapedthumbnail
         url = urlparse.urljoin(item.url,scrapedurl)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=url,
+        itemlist.append(item.clone(action="play", title=title, url=url,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<link rel="next" href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
-                              url=next_page) )
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 

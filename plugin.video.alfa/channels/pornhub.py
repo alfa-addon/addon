@@ -23,21 +23,21 @@ host = 'http://pornhub.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append(Item(channel=item.channel, action="lista", title="Novedades", fanart=item.fanart,
+    itemlist.append(item.clone(action="lista", title="Novedades", fanart=item.fanart,
                          url="%s/video?o=cm" %host))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Mas visto", fanart=item.fanart,
+    itemlist.append(item.clone(action="lista", title="Mas visto", fanart=item.fanart,
                          url="%s/video?o=mv" %host))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Mejor valorado", fanart=item.fanart,
+    itemlist.append(item.clone(action="lista", title="Mejor valorado", fanart=item.fanart,
                          url="%s/video?o=tr" %host))
-    itemlist.append(Item(channel=item.channel, action="lista", title="Mas largo", fanart=item.fanart,
+    itemlist.append(item.clone(action="lista", title="Mas largo", fanart=item.fanart,
                          url="%s/video?o=lg" %host))
-    itemlist.append(Item(channel=item.channel, action="catalogo", title="Canal", fanart=item.fanart,
+    itemlist.append(item.clone(action="catalogo", title="Canal", fanart=item.fanart,
                          url= "%s/channels?o=tr" % host))
-    itemlist.append(Item(channel=item.channel, action="catalogo", title="PornStar", fanart=item.fanart,
+    itemlist.append(item.clone(action="catalogo", title="PornStar", fanart=item.fanart,
                          url= "%s/pornstars?o=t" % host))
-    itemlist.append(Item(channel=item.channel, action="categorias", title="Categorias", fanart=item.fanart,
+    itemlist.append(item.clone(action="categorias", title="Categorias", fanart=item.fanart,
                          url= "%s/categories" % host))
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", fanart=item.fanart))
+    itemlist.append(item.clone(action="search", title="Buscar", fanart=item.fanart))
     return itemlist
 
 
@@ -75,7 +75,7 @@ def catalogo(item):
             cantidad = elem.find('span', class_='videosNumber').text.split(' Videos')[0]
             url = urlparse.urljoin(item.url, url + "/videos?o=cm")
         title = "%s (%s)" % (stitle,cantidad)
-        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail))
         # Paginador
     next_page = soup.find('li', class_='page_next')
@@ -101,7 +101,7 @@ def categorias(item):
         else:
             url = urlparse.urljoin(item.url, url + "?o=cm")
         title = "%s %s" % (stitle,cantidad)
-        itemlist.append(Item(channel=item.channel, action="lista", title=title, url=url,
+        itemlist.append(item.clone(action="lista", title=title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail))
     return itemlist
 
@@ -134,7 +134,7 @@ def lista(item):
         else:
             title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)
         url = urlparse.urljoin(item.url, url)
-        itemlist.append(Item(channel=item.channel, action="play", title=title, contentTitle = title, url=url,
+        itemlist.append(item.clone(action="play", title=title, contentTitle = title, url=url,
                              fanart=thumbnail, thumbnail=thumbnail))
     next_page = soup.find('li', class_='page_next')
     if next_page:
