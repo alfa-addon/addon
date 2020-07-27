@@ -229,7 +229,6 @@ def findvideos(item):
         for opt in elem.find_all("li", class_="option"):
             server = re.sub(opt.find("noscript").text, "", opt.text).strip().lower().replace("| ", "")
             url = opt["data-link"]
-
             if server == "google drive":
                 server = "gvideo"
             if server.lower() in ["descargar"]:
@@ -302,6 +301,8 @@ def play(item):
 
     data = httptools.downloadpage(item.url).data
     url = scrapertools.find_single_match(data, 'window.location="([^"]+)"')
+    if not url.startswith("http"):
+        url = "https:" + url
     item.server = ""
     itemlist.append(item.clone(url=url))
 
