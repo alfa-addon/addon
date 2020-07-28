@@ -365,6 +365,8 @@ def list_env(environment={}):
     logger.info('Variables de entorno Alfa: ' + environment['addon_version'] + 
                 ' Debug: ' + environment['debug'])
     logger.info("----------------------------------------------")
+    logger.info(os.environ)
+    logger.info("----------------------------------------------")
 
     logger.info(environment['os_name'] + ' ' + environment['prod_model'] + ' ' + 
                 environment['os_release'] + ' ' + environment['machine'] + ' ' + 

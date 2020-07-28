@@ -834,9 +834,9 @@ if ssl.OPENSSL_VERSION_INFO < (1, 1, 1):
         )
     except:
         print(
-        "DEPRECATION: The OpenSSL being used by this python install does not meet the minimum supported "
-        "version (>= OpenSSL 1.1.1) in order to support TLS 1.3 required by Cloudflare, "
-        "You may encounter an unexpected reCaptcha or cloudflare 1020 blocks."
+            "DEPRECATION: The OpenSSL being used by this python install ({}) does not meet the minimum supported "
+            "version (>= OpenSSL 1.1.1) in order to support TLS 1.3 required by Cloudflare, "
+            "You may encounter an unexpected Captcha or cloudflare 1020 blocks."
         )
 
 # ------------------------------------------------------------------------------- #
