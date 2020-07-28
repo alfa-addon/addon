@@ -1584,7 +1584,7 @@ def find_rar_password(item):
 
 
 def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torrent=False, \
-                        timeout=10, file_list=False, lookup=True, local_torr=None, headers={}, short_pad=False):
+                        timeout=5, file_list=False, lookup=True, local_torr=None, headers={}, short_pad=False):
     logger.info()
     from servers import torrent
     
@@ -1685,7 +1685,8 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         #urllib.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'
         #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
         #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
-
+        
+        if not lookup: timeout = timeout * 3
         if ((url and not local_torr) or url.startswith('magnet')):
             torrents_path, torrent_file = torrent.caching_torrents(url, \
                         referer=referer, post=post, torrents_path=torrents_path, \
@@ -3140,9 +3141,8 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
     creationFlags = 0
     prefs_file = ''
     res = None
-    
-    logger.debug(os.environ)
-    
+    browsers = []
+
     try:
         # Establecemos las variables relativas a cada browser
         browser_params = {
@@ -3197,6 +3197,7 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                       }
         
             PATHS = [ANDROID_STORAGE + '/emulated/0/Android/data', os.getenv('ANDROID_DATA') + '/user/0']
+            DOWNLOADS_PATH = [filetools.join(ANDROID_STORAGE, 'emulated/0/Download')]
             
             try:
                 command = ['pm', 'list', 'packages']
@@ -3206,7 +3207,7 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
             except:
                 PM_LIST = ''
                 logger.error(traceback.format_exc())
-            logger.info('PACKAGE LIST: %s' % PM_LIST)
+            logger.info('PACKAGE LIST: %s' % PM_LIST, force=True)
 
             PREF_PATHS = [ANDROID_STORAGE + '/emulated/0/Android/data']
             PREF_PATHS += [os.getenv('ANDROID_DATA') + '/user/0']
@@ -3227,6 +3228,8 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
             PATHS += [os.getenv('PROGRAMFILES(X86)')]
             if not PATHS:
                 PATHS = ['C:\\Program Files', 'C:\\Program Files (x86)']
+            DOWNLOADS_PATH = [filetools.join(os.getenv('SYSTEMDRIVE'), os.getenv('HOMEPATH'), 'Downloads'), \
+                                'D:\\Downloads', 'D:\\Mis documentos\\Downloads']
                 
             PREF_PATHS = [os.getenv('LOCALAPPDATA')]
             PREF_PATHS += [os.getenv('APPDATA')]
@@ -3244,6 +3247,7 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                       }
             
             PATHS = ['/Applications']
+            DOWNLOADS_PATH = [filetools.join(os.getenv('HOME'), 'Descargas'), filetools.join(os.getenv('HOME'), 'Downloads')]
             
             PREF_PATHS = [filetools.join(os.getenv('HOME'), '/Library/Application Support')]
             
@@ -3270,6 +3274,7 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                 for xpath in xpaths:
                     if xpath not in PATHS:
                         PATHS += [xpath]
+            DOWNLOADS_PATH = [filetools.join(os.getenv('HOME'), 'Descargas'), filetools.join(os.getenv('HOME'), 'Downloads')]
             
             PREF_PATHS = [os.getenv('HOME')]
             PREF_PATHS += [filetools.join(os.getenv('HOME'), '.config')]
@@ -3298,6 +3303,7 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                 for xpath in xpaths:
                     if xpath not in PATHS:
                         PATHS += [xpath]
+            DOWNLOADS_PATH = [filetools.join(os.getenv('HOME'), 'Descargas'), filetools.join(os.getenv('HOME'), 'Downloads')]
             
             PREF_PATHS = [os.getenv('HOME')]
             PREF_PATHS += [filetools.join(os.getenv('HOME'), '.config')]
@@ -3346,8 +3352,9 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
             else:
                 continue
             
+            browsers.append((browser, path))
             logger.info('BROWSER: %s, PATH: %s, PREFS_FILE: %s, LOOKUP: %s, STRICIT: %s, DOWNLOAD_PATH: %s' % \
-                                (browser, path, prefs_file, lookup, strict, download_path))
+                                (browser, path, prefs_file, lookup, strict, download_path), force=True)
             # Cuando se necesita conocer el path de Downloads
             if lookup or download_path:
                 res = True
@@ -3380,35 +3387,24 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                 res = scrapertools.find_single_match(browser_prefs, browser_params[browser][3]).replace('\\\\', '\\')
                 if not res and browser_prefs:
                     try:
-                        logger.error('Archivo de Preferencias en ERROR %s: %s' % (prefs_file, str(browser_prefs[:200])))
+                        logger.error('Archivo de Preferencias en ERROR %s: %s' % (prefs_file, str(browser_prefs[:60])))
                     except:
-                        logger.error('Archivo de Preferencias en ERROR no PRINTABLE %s' % (prefs_file))
+                        logger.error('Archivo de Preferencias en ERROR no PRINTABLE %s' % (prefs_file))  
                 elif not res:
                     logger.error('Archivo de preferencias no encontrado/accesible: %s' % (prefs_file))
                     for prefs_dir in PREF_PATHS:
                         logger.error('Listado de %s - %s' % (prefs_dir, sorted(filetools.listdir(prefs_dir))))
 
                 # En Android puede haber problemas de permisos.  Si no se encuentra el path, se asume un path por defecto
-                if not res and (download_path or not config.get_setting("capture_thru_browser_path", server="torrent", default="")):
-                    if xbmc.getCondVisibility("system.platform.Android"):
-                        res = filetools.join(ANDROID_STORAGE, 'emulated/0/Download')
-                    elif xbmc.getCondVisibility("system.platform.Linux") or \
-                                xbmc.getCondVisibility("system.platform.Linux.RaspberryPi") or \
-                                xbmc.getCondVisibility("system.platform.OSX"):
-                        res = filetools.join(os.getenv('HOME'), 'Descargas')
-                        if xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
-                            if not filetools.exists(res):
-                                res = filetools.join(os.getenv('HOME'), 'Downloads')
-                                if not filetools.exists(res):
-                                    filetools.mkdir(res)
-                        elif xbmc.getCondVisibility("system.platform.Linux") \
-                                and os.getenv('LANG') and 'es' not in os.getenv('LANG') \
-                                and not filetools.exists(res):
-                            res = filetools.join(os.getenv('HOME'), 'Downloads')
-                
+                if not res and not download_path and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                    for folder in DOWNLOADS_PATH:
+                        if filetools.exists(folder):
+                            res = folder
+                            break
+
                 # Si se ha pasado la opción de download_path y difiere del path obtenido, se pasa a otro browser
                 if download_path and download_path.lower() != res.lower():
-                    logger.info('Paths de DESCARGA DIFERENTES: download_PATH: %s - RES: %s' % (download_path, res))
+                    logger.info('Paths de DESCARGA DIFERENTES: download_PATH: %s - RES: %s' % (download_path, res), force=True)
                     continue
                 # Si no se ha obtenido el path y se ha pedido la opción strict, se pasa a otro browser
                 if not res and strict:
@@ -3419,10 +3415,6 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                 # Si no se ha obtenido el path pero hay uno guardado, se notifica
                 elif not res:
                     res = True
-                # Si era un funcion de lookup, se retorna.  Si no se llama al browser
-                logger.info('LOOKUP: BROWSER: %s, RES: %s' % (browser, res))
-                if lookup:
-                    return (browser.capitalize(), res)
                 else:
                     break
             
@@ -3431,12 +3423,28 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                 break
                 
         else:
-            # Si no se ha encontrado ningún browser que cumpla las condidiciones, se vuelve con error
-            logger.error('No se ha encontrado ningún BROWSER: %s' % str(exePath))
-            logger.error('Listado de APPS INSTALADAS en %s: %s' % (PATHS[0], sorted(filetools.listdir(PATHS[0]))))
-            if len(PATHS) > 1:
-                logger.error('Listado de APPS INSTALADAS en %s: %s' % (PATHS[1], sorted(filetools.listdir(PATHS[1]))))
-            return (False, False)
+            if browsers:
+                browser = browsers[0][0]
+                path = browsers[0][1]
+                # Si hay browser(s) pero no hay res pero se ha suministrado un download path, y existe, se usa éste último con el primer browser
+                if not strict and not res and (download_path or config.get_setting("capture_thru_browser_path", server="torrent", default="")):
+                    if download_path and filetools.exists(download_path):
+                        res = download_path
+                    elif config.get_setting("capture_thru_browser_path", server="torrent", default="") and \
+                                filetools.exists(config.get_setting("capture_thru_browser_path", server="torrent", default="")):
+                        res = config.get_setting("capture_thru_browser_path", server="torrent", default="")
+
+            else:
+                # Si no se ha encontrado ningún browser que cumpla las condidiciones, se vuelve con error
+                logger.error('No se ha encontrado ningún BROWSER: %s' % str(exePath))
+                logger.error('Listado de APPS INSTALADAS en %s: %s' % (PATHS[0], sorted(filetools.listdir(PATHS[0]))))
+                if len(PATHS) > 1:
+                    logger.error('Listado de APPS INSTALADAS en %s: %s' % (PATHS[1], sorted(filetools.listdir(PATHS[1]))))
+                return (False, False)
+        
+        if lookup:
+            logger.info('LOOKUP: Selección BROWSER: %s, RES: %s' % (browser, res), force=True)
+            return (browser.capitalize(), res)
         
         
         # Ahora hacemos la Call al Browser detectado

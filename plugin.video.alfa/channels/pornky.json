@@ -1,10 +1,10 @@
 {
-  "id": "severeporn",
-  "name": "severeporn",
+  "id": "pornky",
+  "name": "pornky",
   "active": true,
   "adult": true,
   "language": ["*"],
-  "thumbnail": "https://severeporn.com/static/images/logo.png",
+  "thumbnail": "pornky.png",
   "banner": "",
   "categories": [
     "adult"
