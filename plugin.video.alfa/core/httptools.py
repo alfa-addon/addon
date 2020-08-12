@@ -77,6 +77,7 @@ def get_url_headers(url, forced=False):
     if sub_dom and not 'google' in url:
         domain = sub_dom
     domain_cookies = cj._cookies.get("." + domain, {}).get("/", {})
+    domain_cookies.update(cj._cookies.get("www." + domain, {}).get("/", {}))
 
     if "|" in url or not "cf_clearance" in domain_cookies:
         if not forced:

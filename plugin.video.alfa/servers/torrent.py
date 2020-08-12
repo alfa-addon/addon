@@ -41,7 +41,7 @@ extensions_list = ['.aaf', '.3gp', '.asf', '.avi', '.flv', '.mpeg',
                    '.m1v', '.m2v', '.m4v', '.mkv', '.mov', '.mpg',
                    '.mpe', '.mp4', '.ogg', '.rar', '.wmv', '.zip']
 
-CF_BLOCKING_ERRORS = ['Detected the new Cloudflare challenge']
+CF_BLOCKING_ERRORS = ['Detected a Cloudflare version 2']
 
 trackers = [
         "udp://tracker.openbittorrent.com:80/announce",

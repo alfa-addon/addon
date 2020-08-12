@@ -144,21 +144,24 @@ def list_all(item):
 
     soup = create_soup(item.url)
 
-    matches = soup.find_all("article", class_=re.compile(r"post (?:dfx|fcl|movies)"))
-
-    for elem in matches:
+    matches = soup.find("section", class_="section movies")
+    for elem in matches.find_all("article", class_=re.compile(r"post (?:dfx|fcl|movies)")):
 
         type = item.type
         url = elem.a["href"]
 
-        if item.type != "search" and (("/series/" in url and type != "series") or ("/movies/" in url and type != "movies")):
+        if item.type != "search" and (("/series/" in url and type != "series") or ("/movie" in url and type != "movies")):
             continue
 
         title = elem.h2.text
         thumb = elem.img["src"]
+
         year = "-"
         if not "series" in url:
-            year = elem.find("span", class_="year").text
+            try:
+                year = elem.find("span", class_="year").text
+            except:
+                pass
 
         new_item = Item(channel=item.channel, title=title, url=url, thumbnail=thumb, infoLabels={"year": year})
 
@@ -178,7 +181,7 @@ def list_all(item):
     except:
         return itemlist
 
-    itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
+    itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all', type=item.type))
 
     return itemlist
 
@@ -262,7 +265,10 @@ def findvideos(item):
     for elem in matches:
         srv, lang = elem.find("span", class_="server").text.replace(" - ", "-").split("-")
         opt = elem.a["href"].replace("#","")
-        url = soup.find("div", id="%s" % opt).find("iframe")["data-src"]
+        try:
+            url = soup.find("div", id="%s" % opt).find("iframe")["data-src"]
+        except:
+            continue
         if srv.lower() in ["waaw", "jetload"]:
            continue
         if srv.lower() in servers:
