@@ -1,18 +1,19 @@
 {
-  "id": "divxtotal",
-  "name": "Divxtotal",
+  "id": "pelispanda",
+  "name": "Pelispanda",
   "active": true,
   "adult": false,
-  "language": ["cast"],
-  "thumbnail": "http://imgur.com/Madj03A.jpg",
+  "language": ["lat"],
+  "thumbnail": "https://pelispanda.com/wp-content/uploads/2020/07/panda1.png",
   "categories": [
     "torrent",
     "movie",
-    "tvshow"
+    "tvshow",
+    "vos"
   ],
   "settings": [
     {
-      "default": false, 
+      "default": true, 
       "enabled": true, 
       "id": "include_in_global_search", 
       "label": "Incluir en busqueda global", 
@@ -107,8 +108,21 @@
         "7",
         "8",
         "9",
-        "10"
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15"
       ]
+    },
+    {
+      "id": "season_colapse",
+      "type": "bool",
+      "label": "Seleccionar si quiere colapsar las Temporadas de Series",
+      "default": true,
+      "enabled": true,
+      "visible": true
     },
     {
       "id": "seleccionar_ult_temporadda_activa",
@@ -125,6 +139,30 @@
       "default": true,
       "enabled": true,
       "visible": false
+    },
+    {
+      "id": "include_in_newest_series",
+      "type": "bool",
+      "label": "Incluir en Novedades - Series",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_latino",
+      "type": "bool",
+      "label": "Incluir en Novedades - Latino",
+      "default": true,
+      "enabled": true,
+      "visible": false
+    },
+    {
+      "id": "include_in_newest_torrent",
+      "type": "bool",
+      "label": "Incluir en Novedades - Torrent",
+      "default": true,
+      "enabled": true,
+      "visible": true
     }
   ]
 }
