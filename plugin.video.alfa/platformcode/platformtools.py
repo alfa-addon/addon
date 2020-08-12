@@ -1533,54 +1533,60 @@ def play_torrent(item, xlistitem, mediaurl):
             except:
                 logger.error(traceback.format_exc(1))
         
-        # Reproductor propio BT (libtorrent)
-        if seleccion == 0:
-            if not LIBTORRENT_in_use_local:
-                torrent.bt_client(mediaurl, xlistitem, rar_files, subtitle=item.subtitle, password=password, item=item)
-                config.set_setting("LIBTORRENT_in_use", False, server="torrent")   # Marcamos Libtorrent como disponible
+        try:
+            # Reproductor propio BT (libtorrent)
+            if seleccion == 0:
+                if not LIBTORRENT_in_use_local:
+                    torrent.bt_client(mediaurl, xlistitem, rar_files, subtitle=item.subtitle, password=password, item=item)
+                    config.set_setting("LIBTORRENT_in_use", False, server="torrent")   # Marcamos Libtorrent como disponible
 
-        # Reproductor propio MCT (libtorrent)
-        elif seleccion == 1:
-            if not LIBTORRENT_in_use_local:
-                from platformcode import mct
-                mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=password, item=item)
-                config.set_setting("LIBTORRENT_in_use", False, server="torrent")    # Marcamos Libtorrent como disponible
+            # Reproductor propio MCT (libtorrent)
+            elif seleccion == 1:
+                if not LIBTORRENT_in_use_local:
+                    from platformcode import mct
+                    mct.play(mediaurl, xlistitem, subtitle=item.subtitle, password=password, item=item)
+                    config.set_setting("LIBTORRENT_in_use", False, server="torrent")    # Marcamos Libtorrent como disponible
 
-        # Plugins externos
-        else:
-            mediaurl = urllib.quote_plus(item.url)
-            # Llamada con más parámetros para completar el título
-            if torr_client in ['quasar', 'elementum'] and item.infoLabels['tmdb_id']:
-                if item.contentType == 'episode' and "elementum" not in torr_client:
-                    mediaurl += "&episode=%s&library=&season=%s&show=%s&tmdb=%s&type=episode" % (
-                    item.infoLabels['episode'], item.infoLabels['season'], item.infoLabels['tmdb_id'],
-                    item.infoLabels['tmdb_id'])
-                elif item.contentType == 'movie':
-                    mediaurl += "&library=&tmdb=%s&type=movie" % (item.infoLabels['tmdb_id'])
+            # Plugins externos
+            else:
+                mediaurl = urllib.quote_plus(item.url)
+                # Llamada con más parámetros para completar el título
+                if torr_client in ['quasar', 'elementum'] and item.infoLabels['tmdb_id']:
+                    if item.contentType == 'episode' and "elementum" not in torr_client:
+                        mediaurl += "&episode=%s&library=&season=%s&show=%s&tmdb=%s&type=episode" % (
+                        item.infoLabels['episode'], item.infoLabels['season'], item.infoLabels['tmdb_id'],
+                        item.infoLabels['tmdb_id'])
+                    elif item.contentType == 'movie':
+                        mediaurl += "&library=&tmdb=%s&type=movie" % (item.infoLabels['tmdb_id'])
 
-            result = False
-            __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)  # Apunta settings del cliente torrent externo
-            save_path_videos = str(xbmc.translatePath(__settings__.getSetting('download_path')))
-            
-            if torr_client == 'quasar' and 'cliente_torrent_Alfa' not in item.url:  # Quasar no copia el .torrent
-                ret = filetools.copy(item.url, filetools.join(save_path_videos, 'torrents', \
-                            filetools.basename(item.url)), silent=True)
-            
-            if (torr_client in ['quasar', 'elementum'] and item.downloadFilename and item.downloadStatus != 5) \
-                    or (torr_client in ['quasar', 'elementum'] and 'RAR-' in size and BACKGROUND_DOWNLOAD):
-                result = torrent.call_torrent_via_web(urllib.quote_plus(item.url), torr_client)
-            if not result:
-                xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
+                result = False
+                __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)  # Apunta settings del cliente torrent externo
+                save_path_videos = str(xbmc.translatePath(__settings__.getSetting('download_path')))
+                
+                if torr_client == 'quasar' and 'cliente_torrent_Alfa' not in item.url:  # Quasar no copia el .torrent
+                    ret = filetools.copy(item.url, filetools.join(save_path_videos, 'torrents', \
+                                filetools.basename(item.url)), silent=True)
+                
+                if (torr_client in ['quasar', 'elementum'] and item.downloadFilename and item.downloadStatus != 5) \
+                        or (torr_client in ['quasar', 'elementum'] and 'RAR-' in size and BACKGROUND_DOWNLOAD):
+                    result = torrent.call_torrent_via_web(urllib.quote_plus(item.url), torr_client)
+                if not result:
+                    xbmc.executebuiltin("PlayMedia(" + torrent_options[seleccion][1] % mediaurl + ")")
 
-            # Si es un archivo RAR, monitorizamos el cliente Torrent hasta que haya descargado el archivo,
-            # y después lo extraemos, incluso con RAR's anidados y con contraseña
-            #rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password, size, rar_control)
-            try:
-                threading.Thread(target=rar_control_mng, args=(item, xlistitem, mediaurl, \
-                        rar_files, torr_client, password, size, rar_control)).start()       # Creamos un Thread independiente por .torrent
-                time.sleep(3)                                                   # Dejamos terminar la inicialización...
-            except:                                                             # Si hay problemas de threading, salimos
-                logger.error(traceback.format_exc())
+                # Si es un archivo RAR, monitorizamos el cliente Torrent hasta que haya descargado el archivo,
+                # y después lo extraemos, incluso con RAR's anidados y con contraseña
+                #rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password, size, rar_control)
+                try:
+                    threading.Thread(target=rar_control_mng, args=(item, xlistitem, mediaurl, \
+                            rar_files, torr_client, password, size, rar_control)).start()       # Creamos un Thread independiente por .torrent
+                    time.sleep(3)                                               # Dejamos terminar la inicialización...
+                except:                                                         # Si hay problemas de threading, salimos
+                    logger.error(traceback.format_exc())
+
+        except Exception as e:
+            config.set_setting("LIBTORRENT_in_use", False, server="torrent")    # Marcamos Libtorrent como disponible
+            logger.error(traceback.format_exc())
+            dialog_ok('Error descargando .torrent', line1='Inténtelo de nuevo más tarde ... ', line2='[COLOR yellow][B]%s[/B][/COLOR]' % str(e))
 
 
 def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password, size, rar_control={}):

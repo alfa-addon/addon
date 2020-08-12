@@ -80,10 +80,10 @@ def lista(item):
     patron  = '<div class="thumb">.*?'
     patron += '<a href="([^"]+)".*?'
     patron += '<img class="lazy" data-original="([^"]+)" alt="([^"]+)".*?'
-    patron += '<span class="duration">([^"]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,duracion  in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
+        duracion = ""
         title = "[COLOR yellow]%s[/COLOR] %s" % (duracion, scrapedtitle)
         contentTitle = title
         thumbnail = scrapedthumbnail

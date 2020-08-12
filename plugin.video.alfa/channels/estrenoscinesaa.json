@@ -1,6 +1,7 @@
 {
   "id": "estrenoscinesaa",
   "name": "EstrenosCinesaa",
+  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["cast"],

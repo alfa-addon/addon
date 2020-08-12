@@ -26,7 +26,8 @@ def mainlist(item):
     itemlist.append(item.clone(title="Mas valorados" , action="lista", url=host + "/?order=rating_month"))
     itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/?order=views_month"))
     itemlist.append(item.clone(title="Mas comentado" , action="lista", url=host + "/?order=comments_month"))
-    
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories"))
+
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
@@ -42,6 +43,24 @@ def search(item, texto):
         for line in sys.exc_info():
             logger.error("%s" % line)
         return []
+
+
+def categorias(item):
+    logger.info()
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
+    patron = '<a class="th" href="([^"]+)".*?'
+    patron += '<div class="taxonomy-name">([^<]+)<.*?'
+    patron += '<div class="number">([^<]+)<'
+    matches = re.compile(patron,re.DOTALL).findall(data)
+    for scrapedurl,scrapedtitle,cantidad in matches:
+        title = "%s (%s)" % (scrapedtitle, cantidad)
+        thumbnail = ""
+        url = urlparse.urljoin(item.url,scrapedurl)
+        itemlist.append(item.clone(action="lista", title=title, url=url,
+                              thumbnail=thumbnail, fanart=thumbnail))
+    return itemlist
 
 
 def lista(item):

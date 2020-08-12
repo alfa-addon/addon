@@ -819,6 +819,7 @@ def download_from_server(item, silent=False):
     
     unsupported_servers = ["torrent"]
     result = {}
+    CF_BLOCKED = '[B]Pincha para usar con [I]'
     
     if item.contentType == 'movie':
         PATH = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"))
@@ -865,7 +866,8 @@ def download_from_server(item, silent=False):
                 item.torrent_info += '[ERROR]'
             else:
                 item.torrent_info = item.torrent_info.replace('ERROR', '')
-        if 'cliente_torrent_Alfa.torrent' in item.url or 'ERROR' in item.torrent_info:
+            
+        if 'cliente_torrent_Alfa.torrent' in item.url or ('ERROR' in item.torrent_info and not CF_BLOCKED in item.torrent_info):
             try:
                 if item.torrent_alt or item.emergency_urls:
                     if item.torrent_alt:
