@@ -81,7 +81,7 @@ else:
 UPLOAD_LIMIT = 0
 if DOWNLOAD_LIMIT > 0:
     UPLOAD_LIMIT = DOWNLOAD_LIMIT / 35
-msg_header = 'Alfa MCT Cliente Torrent'
+msg_header = 'Alfa MCT Cliente Torrent: %s' % config.get_setting("libtorrent_version", server="torrent", default="")
 
 
 def play(url, xlistitem={}, is_view=None, subtitle="", password="", item=None):
