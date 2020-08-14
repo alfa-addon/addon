@@ -152,7 +152,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
     video_file = ''
     video_path = ''
     videourl = ''
-    msg_header = 'Alfa %s Cliente Torrent' % torr_client
+    msg_header = 'Alfa %s Cliente Torrent: %s' % (torr_client, config.get_setting("libtorrent_version", server="torrent", default=""))
     
     # Iniciamos el cliente:
     c = Client(url=mediaurl, is_playing_fnc=xbmc_player.isPlaying, wait_time=None, auto_shutdown=False, timeout=10,
@@ -241,7 +241,7 @@ def bt_client(mediaurl, xlistitem, rar_files, subtitle=None, password=None, item
             platformtools.dialog_notification("Descarga de RAR en curso", "Puedes realizar otras tareas en Kodi mientrastanto. " + \
                     "Te informaremos...", time=10000)
     else:
-        progreso = platformtools.dialog_progress('Alfa %s Cliente Torrent' % torr_client, '')
+        progreso = platformtools.dialog_progress(msg_header, '')
     dp_cerrado = False
 
     x = 1
