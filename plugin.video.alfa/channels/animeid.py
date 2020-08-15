@@ -74,7 +74,7 @@ def search(item, texto):
         data = httptools.downloadpage(item.url, headers=headers).data
         data = data.replace("\\", "")
         patron = '{"id":"([^"]+)","text":"([^"]+)","date":"[^"]*","image":"([^"]+)","link":"([^"]+)"}'
-        matches = re.compile(patron, re.DOTALL).findall(data)
+        matches = scrapertools.find_multiple_matches(data, patron)
 
         for id, scrapedtitle, scrapedthumbnail, scrapedurl in matches:
             title = scrapedtitle
@@ -105,7 +105,7 @@ def novedades_series(item):
     data = httptools.downloadpage(item.url).data
     data = scrapertools.find_single_match(data, '<ol class="reciente tab" data-tab="2">(.*?)</section>')
     patronvideos = '(?s)<a href="([^"]+)">.*?tipo\d+">([^<]+)</span>.*?<strong>([^<]+)</strong>'
-    matches = re.compile(patronvideos, re.DOTALL).findall(data)
+    matches = find_multiple_matches(data, patronvideos)
     for url, tipo, title in matches:
         scrapedtitle = title + " (" + tipo + ")"
         scrapedurl = urlparse.urljoin(item.url, url)
@@ -122,7 +122,7 @@ def novedades_episodios(item):
     logger.info()
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|\s{2}|-\s", "", data)
-    data = scrapertools.find_single_match(data, '<section class="lastcap">(.*?)</section>')
+    data = scrapertools.find_single_match(data, '(?is)<section class="lastcap">(.*?)</section>')
     patronvideos = '<article><a href="([^"]+)"><header>([^<]+).*?src="([^"]+)" class="cove'
     matches = re.compile(patronvideos, re.DOTALL).findall(data)
     itemlist = []
@@ -289,3 +289,15 @@ def findvideos(item):
     autoplay.start(itemlist, item)
 
     return itemlist
+
+
+def play(item):
+    if "vid=" in item.url:
+        data = httptools.downloadpage(item.url).data
+        logger.info("Intel11 %s" %data)
+        url = scrapertools.find_single_match(data, '(?is)SRC="([^"]+)')
+        logger.info("Intel22 %s" %url)
+        if "clipwatching" in url:
+            item.server = "clipwatching"
+            item.url = url
+    return [item]
