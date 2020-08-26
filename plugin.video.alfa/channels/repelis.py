@@ -25,7 +25,7 @@ list_servers = ['rapidvideo', 'streamango', 'fastplay', 'openload', 'netu', 'vid
 
 __channel__='repelis'
 
-host = "https://repelisgo.net"
+host = "https://repelisxd.com"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
@@ -145,7 +145,6 @@ def newest(categoria):
 
 
 def search(item, texto):
-    logger.info()
     logger.info()
 
     texto = texto.replace(" ", "+")
