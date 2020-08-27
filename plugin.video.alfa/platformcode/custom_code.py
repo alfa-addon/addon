@@ -15,6 +15,7 @@ import xbmcgui
 import threading
 import subprocess
 import time
+import os
 
 from platformcode import config, logger, platformtools
 
@@ -182,8 +183,7 @@ def verify_script_alfa_update_helper():
             zip_data = response.data
             addons_path = xbmc.translatePath("special://home/addons")
             pkg_updated = filetools.join(addons_path, 'packages', package)
-            with open(pkg_updated, "wb") as f:
-                f.write(zip_data)
+            res = filetools.write(pkg_updated, zip_data, mode='wb')
             
             # Verificamos el .zip
             ret = None
@@ -199,7 +199,7 @@ def verify_script_alfa_update_helper():
                 with ZipFile(pkg_updated, "r") as zf:
                     zf.extractall(addons_path)
 
-                logger.info("Installiing %s" % package)
+                logger.info("Installing %s" % package)
                 xbmc.executebuiltin('UpdateLocalAddons')
                 time.sleep(2)
                 method = "Addons.SetAddonEnabled"
@@ -209,6 +209,111 @@ def verify_script_alfa_update_helper():
                 logger.info("Reloading Profile...")
                 user = profile["result"]["label"]
                 xbmc.executebuiltin('LoadProfile(%s)' % user)
+
+
+def install_alfa_assistant():
+    logger.info()
+    
+    from zipfile import ZipFile
+    from core import httptools
+    
+    respuesta = False
+    addonid = 'alfa-mobile-assistant'
+    app_name = 'com.alfa.alfamobileassistant'
+    download = addonid + '.zip'
+    package = addonid + '.apk'
+    version = 'alfa-mobile-assistant.version'
+    urls = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/%s.zip' % addonid, \
+            'https://bitbucket.org/alfa_addon/alfa-repo/raw/master/downloads/assistant/%s.zip' % addonid]
+    
+    addons_path = config.get_runtime_path()
+    apk_updated = filetools.join(addons_path, 'tools')
+    apk_path = filetools.join(apk_updated, download)
+    apk_apk = filetools.join(apk_updated, package)
+    upk_install_path = filetools.join(xbmc.translatePath('special://xbmc/'), 'files').replace('/cache/apk/assets', '')
+    ANDROID_STORAGE = os.getenv('ANDROID_STORAGE')
+    if not ANDROID_STORAGE: ANDROID_STORAGE = '/storage'
+    apk_files = filetools.join(os.getenv('ANDROID_STORAGE'), 'emulated', '0', 'Android', 'data', app_name, 'files', 'temp', 'logs')
+    version_path = filetools.join(apk_updated, version)
+    
+    alfa_s = True
+    if filetools.exists(filetools.join(addons_path, 'channels', 'custom.py')):
+        alfa_s = False
+        
+    # Si ya está instalada, directamente la llamamos
+    if filetools.exists(apk_files):
+        logger.info('Ya instalada. Llamando a la app: %s' % addonid)
+        return True, app_name
+    
+    # Comprobamos si hay acceso a Github o BitBucket
+    for url in urls:
+        logger.debug('Descargando de_ %s' % url)
+        response = httptools.downloadpage(url, timeout=5, ignore_response_code=True, alfa_s=alfa_s)
+        if response.sucess:
+            break
+    
+    # Guardamos el zip
+    if response.sucess:
+        zip_data = response.data
+        res = filetools.write(apk_path, zip_data, mode='wb')
+        if not res:
+            platformtools.dialog_notification("Instalación Alfa Assistant", "Error en la escritura del .zip")
+            logger.error("Error en la escritura del .zip: %s" % apk_path)
+            return respuesta, app_name
+        
+        # Descargamos el archivo de version.  Si hay error avisamos, pero continuamos
+        url = url.replace('alfa-mobile-assistant.zip', 'alfa-mobile-assistant.version')
+        response = httptools.downloadpage(url, timeout=5, ignore_response_code=True, alfa_s=alfa_s)
+        if not response.sucess:
+            platformtools.dialog_notification("Instalación Alfa Assistant", "Error en la descarga de control de versión. Seguimos...")
+            logger.error("Error en la descarga de control de versión. Seguimos...: %s" % url)
+        else:
+            res = filetools.write(version_path, response.data, mode='wb')
+            if not res:
+                platformtools.dialog_notification("Instalación Alfa Assistant", "Error en la escritura de control de versión. Seguimos...")
+                logger.error("Error en la escritura de control de versión. Seguimos...: %s" % url)
+
+        # Verificamos el .zip
+        ret = None
+        try:
+            with ZipFile(apk_path, "r") as zf:
+                ret = zf.testzip()
+        except Exception as e:
+            ret = str(e)
+        if ret is not None:
+            platformtools.dialog_notification("Corrupted .zip", "error: %s" % str(ret))
+            logger.error("Corrupted .zip: %s, error: %s" % (apk_path, str(ret)))
+        else:
+            # Si el .zip es correcto los extraemos e instalamos
+            with ZipFile(apk_path, "r") as zf:
+                zf.extractall(apk_updated)
+
+            logger.info("Installing %s" % package)
+            
+            if not filetools.exists(upk_install_path):
+                filetools.mkdir(upk_install_path)
+            upk_install_path = filetools.join(upk_install_path, package)
+            filetools.copy(apk_apk, upk_install_path, silent=True)
+            command = ['chmod', '777', '%s' % upk_install_path]
+            p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output_cmd, error_cmd = p.communicate()
+
+            command = ['su', '-c', 'pm', 'install', '%s' % upk_install_path]
+            p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output_cmd, error_cmd = p.communicate()
+            if error_cmd:
+                platformtools.dialog_notification("Instalación Alfa Assistant", "Error de instalación. Consulte el log")
+                logger.error(str(error_cmd))
+            else:
+                respuesta = True
+            
+    else:
+        platformtools.dialog_notification("Instalación Alfa Assistant", "Ha fallado. Consulte el log")
+        
+    if respuesta:
+        logger.info('Instalada terminada con éxito. Llamando a la app: %s' % addonid)
+        
+    return respuesta, app_name
 
 
 def create_folder_structure(custom_code_dir):
@@ -408,6 +513,8 @@ def update_libtorrent():
                         command = ['ls', '-l', unrar]
                         p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         output_cmd, error_cmd = p.communicate()
+                        if PY3 and isinstance(output_cmd, bytes):
+                            output_cmd = output_cmd.decode()
                         xbmc.log('######## UnRAR file: %s' % str(output_cmd), xbmc.LOGNOTICE)
                     except:
                         xbmc.log('######## UnRAR ERROR in path: %s' % str(unrar), xbmc.LOGNOTICE)
