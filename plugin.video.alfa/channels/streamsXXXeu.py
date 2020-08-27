@@ -11,6 +11,7 @@ else:
 
 import re
 
+from channels import autoplay
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
@@ -18,26 +19,42 @@ from core import servertools
 from core import httptools
 from bs4 import BeautifulSoup
 
-host = 'https://ultrahorny.com'
+host = 'https://xxxstreams.eu'
 
+list_language = []
+list_servers = ['Gounlimited', 'Mixdrop']
+list_quality = []
+__channel__='streamsXXXeu'
+# __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', __channel__)
+# __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', __channel__)
+try:
+    __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
+except:
+    __modo_grafico__ = True
+
+#server mixdrop
 
 def mainlist(item):
     logger.info()
     itemlist = []
+    autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-video/"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-viewed/"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/"))
-    itemlist.append(item.clone(title="Mas comentado" , action="lista", url=host + "/most-comment/"))
-    itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "/channels/"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/?orderby=date"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/?orderby=views"))
+    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/?orderby=likes"))
+    itemlist.append(item.clone(title="Mas comentado" , action="lista", url=host + "/?orderby=comments"))
+    # itemlist.append(item.clone(title="Canal" , action="categorias", url=host))   #No tiene links
+
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
     itemlist.append(item.clone(title="Buscar", action="search"))
+    autoplay.show_option(item.channel, itemlist)
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = "%s/search/%s" % (host,texto)
+    item.url = "%s/?s=%s" % (host,texto)
     try:
         return lista(item)
     except:
@@ -50,20 +67,23 @@ def search(item, texto):
 def categorias(item):
     logger.info()
     itemlist = []
-    soup = create_soup(item.url) 
-    matches = soup.find_all('article', class_='post')
+    soup = create_soup(item.url)
+    if "Canal" in item.title:
+        matches = soup.find('ul', class_='menu').find_all('li')
+        del matches[-1]
+        del matches[-1]
+    else:
+        matches = soup.find('div',  id='popular_searches-2').find_all('li')
     for elem in matches:
         url = elem.a['href']
-        title = elem.find('h2').text
-        cantidad = elem.find('span')
-        if cantidad:
-            cantidad = cantidad.text.strip().replace(" videos", "")
-            title = "%s (%s)" % (title,cantidad)
+        title = elem.a.text
         thumbnail = ""
         plot = ""
-        itemlist.append(item.clone(action="lista", title=title, url=url,
+        if title:
+            itemlist.append(item.clone(action="lista", title=title, url=url,
                               thumbnail=thumbnail , plot=plot) )
     return itemlist
+
 
 def create_soup(url, referer=None, unescape=False):
     logger.info()
@@ -81,20 +101,18 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('article', class_='post')
+    matches = soup.find_all('div', id=re.compile(r"^post-\d+"))
     for elem in matches:
         url = elem.a['href']
-        stitle = elem.a['title']
+        title = elem.a['title'].replace("&#8211;", "-")
         thumbnail = elem.img['src']
-        quality = elem.find('span', class_='quality')
-        if quality:
-            title = "[COLOR red]HD[/COLOR] %s" % stitle
         plot = ""
         itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
-    next_page = soup.find('a', class_='next page-numbers')
+    next_page = soup.find('a', class_='nextpostslink')
     if next_page:
         next_page = next_page['href']
+        next_page = urlparse.urljoin(item.url,next_page)
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
@@ -102,28 +120,12 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<div class="video videocc">.*?src="([^"]+)"')
-    logger.debug(url)
-    if "ultrahorny" in url:
-        import base64
-        data = httptools.downloadpage(url).data
-        data = scrapertools.find_single_match(data, '<script>document.write\(atob\("([^"]+)"')
-        data = data.replace("\\x", "").decode('hex')
-        data = base64.b64decode(data)
-        logger.debug(data)
-        patron = 'file:"([^"]+)",label: "([^"]+)",'
-        matches = re.compile(patron,re.DOTALL).findall(data)
-        for url, quality in matches:
-            itemlist.append(item.clone(action="play", title= quality, contentTitle = item.title, url=url))
-    else:
-        itemlist.append(item.clone(action="play", title=url, contentTitle = item.title, url=url))
-    return itemlist[::-1]
-
-def play(item):
-    logger.info()
-    itemlist = []
-    itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
+    soup = create_soup(item.url).find('div', class_='entry-content')
+    matches = soup.find_all('iframe')
+    for elem in matches:
+        url = elem['src']
+        itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
+    autoplay.start(itemlist, item)
     return itemlist
 
