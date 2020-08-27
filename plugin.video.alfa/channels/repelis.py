@@ -3,6 +3,10 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 from channelselector import get_thumb
 from channels import autoplay
 from channels import filtertools
@@ -18,7 +22,7 @@ from platformcode import config, logger, platformtools
 idio = {'es-mx': 'LAT','es-es': 'ESP','en': 'VO'}
 cali = {'poor': 'SD','low': 'SD','medium': 'HD','high': 'HD'}
 
-list_language = idio.values()
+list_language = list(idio.values())
 list_quality = ["SD","HD"]
 list_servers = ['rapidvideo', 'streamango', 'fastplay', 'openload', 'netu', 'vidoza', 'uptobox']
 
