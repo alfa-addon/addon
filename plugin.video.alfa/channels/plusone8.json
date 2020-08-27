@@ -1,16 +1,15 @@
 {
-  "id": "TXXX",
-  "name": "TXXX",
+  "id": "plusone8",
+  "name": "plusone8",
   "active": true,
   "adult": true,
   "language": ["*"],
-  "thumbnail": "https://i.postimg.cc/8C6jd8tM/txxx.png",
+  "thumbnail": "https://plusone8.com/wp-content/uploads/2020/06/logo2020.png",
   "banner": "",
   "categories": [
     "adult"
   ],
   "settings": [
-
   ]
 }
 
