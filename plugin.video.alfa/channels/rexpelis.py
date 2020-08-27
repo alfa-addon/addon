@@ -22,7 +22,7 @@ list_servers = ['fembed', 'verystream','directo', 'fastplay', 'digiloaded']
 
 __channel__='rexpelis'
 
-host = "https://rexpelis.biz"
+host = "https://www.rexpelis.biz"
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
 except:
