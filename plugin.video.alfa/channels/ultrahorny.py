@@ -102,17 +102,22 @@ def lista(item):
 def findvideos(item):
     logger.info()
     itemlist = []
-    import base64
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<iframe src="([^"]+)"')
-    data = httptools.downloadpage(url).data
-    data = scrapertools.find_single_match(data, '<script>document.write\(atob\("([^"]+)"')
-    data = data.replace("\\x", "").decode('hex')
-    data = base64.b64decode(data)
-    patron = 'file:"([^"]+)",label: "([^"]+)",'
-    matches = re.compile(patron,re.DOTALL).findall(data)
-    for url, quality in matches:
-        itemlist.append(item.clone(action="play", title= quality, contentTitle = item.title, url=url))
+    url = scrapertools.find_single_match(data, '<div class="video videocc">.*?src="([^"]+)"')
+    logger.debug(url)
+    if "ultrahorny" in url:
+        import base64
+        data = httptools.downloadpage(url).data
+        data = scrapertools.find_single_match(data, '<script>document.write\(atob\("([^"]+)"')
+        data = data.replace("\\x", "").decode('hex')
+        data = base64.b64decode(data)
+        logger.debug(data)
+        patron = 'file:"([^"]+)",label: "([^"]+)",'
+        matches = re.compile(patron,re.DOTALL).findall(data)
+        for url, quality in matches:
+            itemlist.append(item.clone(action="play", title= quality, contentTitle = item.title, url=url))
+    else:
+        itemlist.append(item.clone(action="play", title=url, contentTitle = item.title, url=url))
     return itemlist[::-1]
 
 def play(item):
@@ -121,3 +126,4 @@ def play(item):
     itemlist.append(item.clone(action="play", title= "%s", contentTitle = item.title, url=item.url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
+
