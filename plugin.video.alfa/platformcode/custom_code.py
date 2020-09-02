@@ -70,7 +70,7 @@ def init():
         
         #Borra el .zip de instalación de Alfa de la carpeta Packages, por si está corrupto, y que así se pueda descargar de nuevo
         version = 'plugin.video.alfa-%s.zip' % config.get_addon_version(with_fix=False)
-        filetools.remove(filetools.join(xbmc.translatePath('special://home'), 'addons', 'packages', version), True)
+        filetools.remove(filetools.join('special://home', 'addons', 'packages', version), True)
         
         #Borrar contenido de carpeta de Torrents
         filetools.rmdirtree(filetools.join(config.get_videolibrary_path(), 'temp_torrents_Alfa'), silent=True)
@@ -169,7 +169,7 @@ def verify_script_alfa_update_helper():
     
     addonid = 'script.alfa-update-helper'
     package = addonid + '-0.0.1.zip'
-    filetools.remove(filetools.join(xbmc.translatePath('special://home'), 'addons', 'packages', package), True)
+    filetools.remove(filetools.join('special://home', 'addons', 'packages', package), True)
     
     # Comprobamos si hay acceso a Github
     url = 'https://github.com/alfa-addon/alfa-repo/raw/master/plugin.video.alfa/addon.xml'
@@ -178,10 +178,10 @@ def verify_script_alfa_update_helper():
         
         # Si no lo hay, descargamos el Script desde Bitbucket y lo salvamos a disco
         url = 'https://bitbucket.org/alfa_addon/alfa-repo/raw/master/script.alfa-update-helper/%s' % package
-        response = httptools.downloadpage(url, ignore_response_code=True, alfa_s=True)
+        response = httptools.downloadpage(url, ignore_response_code=True, alfa_s=True, json_to_utf8=False)
         if response.code == 200:
             zip_data = response.data
-            addons_path = xbmc.translatePath("special://home/addons")
+            addons_path = filetools.translatePath("special://home/addons")
             pkg_updated = filetools.join(addons_path, 'packages', package)
             res = filetools.write(pkg_updated, zip_data, mode='wb')
             
@@ -209,111 +209,6 @@ def verify_script_alfa_update_helper():
                 logger.info("Reloading Profile...")
                 user = profile["result"]["label"]
                 xbmc.executebuiltin('LoadProfile(%s)' % user)
-
-
-def install_alfa_assistant():
-    logger.info()
-    
-    from zipfile import ZipFile
-    from core import httptools
-    
-    respuesta = False
-    addonid = 'alfa-mobile-assistant'
-    app_name = 'com.alfa.alfamobileassistant'
-    download = addonid + '.zip'
-    package = addonid + '.apk'
-    version = 'alfa-mobile-assistant.version'
-    urls = ['https://github.com/alfa-addon/alfa-repo/raw/master/downloads/assistant/%s.zip' % addonid, \
-            'https://bitbucket.org/alfa_addon/alfa-repo/raw/master/downloads/assistant/%s.zip' % addonid]
-    
-    addons_path = config.get_runtime_path()
-    apk_updated = filetools.join(addons_path, 'tools')
-    apk_path = filetools.join(apk_updated, download)
-    apk_apk = filetools.join(apk_updated, package)
-    upk_install_path = filetools.join(xbmc.translatePath('special://xbmc/'), 'files').replace('/cache/apk/assets', '')
-    ANDROID_STORAGE = os.getenv('ANDROID_STORAGE')
-    if not ANDROID_STORAGE: ANDROID_STORAGE = '/storage'
-    apk_files = filetools.join(os.getenv('ANDROID_STORAGE'), 'emulated', '0', 'Android', 'data', app_name, 'files', 'temp', 'logs')
-    version_path = filetools.join(apk_updated, version)
-    
-    alfa_s = True
-    if filetools.exists(filetools.join(addons_path, 'channels', 'custom.py')):
-        alfa_s = False
-        
-    # Si ya está instalada, directamente la llamamos
-    if filetools.exists(apk_files):
-        logger.info('Ya instalada. Llamando a la app: %s' % addonid)
-        return True, app_name
-    
-    # Comprobamos si hay acceso a Github o BitBucket
-    for url in urls:
-        logger.debug('Descargando de_ %s' % url)
-        response = httptools.downloadpage(url, timeout=5, ignore_response_code=True, alfa_s=alfa_s)
-        if response.sucess:
-            break
-    
-    # Guardamos el zip
-    if response.sucess:
-        zip_data = response.data
-        res = filetools.write(apk_path, zip_data, mode='wb')
-        if not res:
-            platformtools.dialog_notification("Instalación Alfa Assistant", "Error en la escritura del .zip")
-            logger.error("Error en la escritura del .zip: %s" % apk_path)
-            return respuesta, app_name
-        
-        # Descargamos el archivo de version.  Si hay error avisamos, pero continuamos
-        url = url.replace('alfa-mobile-assistant.zip', 'alfa-mobile-assistant.version')
-        response = httptools.downloadpage(url, timeout=5, ignore_response_code=True, alfa_s=alfa_s)
-        if not response.sucess:
-            platformtools.dialog_notification("Instalación Alfa Assistant", "Error en la descarga de control de versión. Seguimos...")
-            logger.error("Error en la descarga de control de versión. Seguimos...: %s" % url)
-        else:
-            res = filetools.write(version_path, response.data, mode='wb')
-            if not res:
-                platformtools.dialog_notification("Instalación Alfa Assistant", "Error en la escritura de control de versión. Seguimos...")
-                logger.error("Error en la escritura de control de versión. Seguimos...: %s" % url)
-
-        # Verificamos el .zip
-        ret = None
-        try:
-            with ZipFile(apk_path, "r") as zf:
-                ret = zf.testzip()
-        except Exception as e:
-            ret = str(e)
-        if ret is not None:
-            platformtools.dialog_notification("Corrupted .zip", "error: %s" % str(ret))
-            logger.error("Corrupted .zip: %s, error: %s" % (apk_path, str(ret)))
-        else:
-            # Si el .zip es correcto los extraemos e instalamos
-            with ZipFile(apk_path, "r") as zf:
-                zf.extractall(apk_updated)
-
-            logger.info("Installing %s" % package)
-            
-            if not filetools.exists(upk_install_path):
-                filetools.mkdir(upk_install_path)
-            upk_install_path = filetools.join(upk_install_path, package)
-            filetools.copy(apk_apk, upk_install_path, silent=True)
-            command = ['chmod', '777', '%s' % upk_install_path]
-            p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output_cmd, error_cmd = p.communicate()
-
-            command = ['su', '-c', 'pm', 'install', '%s' % upk_install_path]
-            p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output_cmd, error_cmd = p.communicate()
-            if error_cmd:
-                platformtools.dialog_notification("Instalación Alfa Assistant", "Error de instalación. Consulte el log")
-                logger.error(str(error_cmd))
-            else:
-                respuesta = True
-            
-    else:
-        platformtools.dialog_notification("Instalación Alfa Assistant", "Ha fallado. Consulte el log")
-        
-    if respuesta:
-        logger.info('Instalada terminada con éxito. Llamando a la app: %s' % addonid)
-        
-    return respuesta, app_name
 
 
 def create_folder_structure(custom_code_dir):
@@ -409,7 +304,7 @@ def update_external_addon(addon_name):
             #Path de destino en addon externo
             __settings__ = xbmcaddon.Addon(id="plugin.video." + addon_name)
             if addon_name.lower() in ['quasar', 'elementum']:
-                addon_path_root = xbmc.translatePath(__settings__.getAddonInfo('Path'))
+                addon_path_root = filetools.translatePath(__settings__.getAddonInfo('Path'))
                 addon_path_mig = filetools.join(addon_path_root, filetools.join("resources", "site-packages"))
                 addon_path = filetools.join(addon_path_mig, addon_name)
             else:
@@ -501,7 +396,7 @@ def update_libtorrent():
                         if xbmc.getCondVisibility("system.platform.android"):
                             # Para Android copiamos el binario a la partición del sistema
                             unrar_org = unrar
-                            unrar = filetools.join(xbmc.translatePath('special://xbmc/'), 'files').replace('/cache/apk/assets', '')
+                            unrar = filetools.join('special://xbmc/', 'files').replace('/cache/apk/assets', '')
                             if not filetools.exists(unrar):
                                 filetools.mkdir(unrar)
                             unrar = filetools.join(unrar, 'unrar')
@@ -595,7 +490,7 @@ def verify_Kodi_video_DB():
     db_files = []
     
     try:
-        path = filetools.join(xbmc.translatePath("special://masterprofile/"), "Database")
+        path = filetools.join("special://masterprofile/", "Database")
         if filetools.exists(path):
             platform = config.get_platform(full_version=True)
             if platform and platform['num_version'] <= 19:

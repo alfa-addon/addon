@@ -989,20 +989,20 @@ def torrent_dirs():
                             server="torrent", default='')), 'MCT-torrents')
                 torrent_paths['MCT_buffer'] = config.get_setting("mct_buffer", server="torrent", default=50)
         elif 'torrenter' in torr_client.lower():
-            torrent_paths[torr_client.upper()] = str(filetools.join(xbmc.translatePath(__settings__.getSetting('storage')),  "Torrenter"))
+            torrent_paths[torr_client.upper()] = str(filetools.join(filetools.translatePath(__settings__.getSetting('storage')),  "Torrenter"))
             if not torrent_paths[torr_client.upper()]:
-                torrent_paths[torr_client.upper()] = str(filetools.join(xbmc.translatePath("special://home/"), \
+                torrent_paths[torr_client.upper()] = str(filetools.join("special://home/", \
                                        "cache", "xbmcup", "plugin.video.torrenter", "Torrenter"))
             torrent_paths[torr_client.upper()+'_torrents'] = filetools.join(torrent_paths[torr_client.upper()], 'torrents')
             torrent_paths[torr_client.upper()+'_buffer'] = __settings__.getSetting('pre_buffer_bytes')
         elif torr_client in ['quasar', 'elementum']:
             try:
                 if not __settings__: continue
-                torrent_paths[torr_client.upper()] = str(xbmc.translatePath(__settings__.getSetting('download_path')))
+                torrent_paths[torr_client.upper()] = str(filetools.translatePath(__settings__.getSetting('download_path')))
                 torrent_paths[torr_client.upper() + '_torrents'] = filetools.join(torrent_paths[torr_client.upper()], 'torrents')
                 torrent_paths[torr_client.upper() + '_buffer'] = __settings__.getSetting('buffer_size')
                 if 'elementum' in torr_client.lower():
-                    torrent_paths['ELEMENTUM_torrents'] = str(xbmc.translatePath(__settings__.getSetting('torrents_path')))
+                    torrent_paths['ELEMENTUM_torrents'] = str(filetools.translatePath(__settings__.getSetting('torrents_path')))
                     torrent_paths['ELEMENTUM_port'] = __settings__.getSetting('remote_port')
                     torrent_paths['ELEMENTUM_web'] = '%s%s/' % (torrent_paths['ELEMENTUM_web'], \
                                 str(torrent_paths['ELEMENTUM_port']))
@@ -2181,7 +2181,7 @@ def import_libtorrent(LIBTORRENT_PATH):
                     dll_path = os.path.join(LIBTORRENT_PATH, 'liblibtorrent.so')
                     liblibtorrent = CDLL(dll_path)
                     
-                    path_list = [LIBTORRENT_PATH, xbmc.translatePath('special://xbmc')]
+                    path_list = [LIBTORRENT_PATH, filetools.translatePath('special://xbmc')]
                     fp, pathname, description = imp.find_module('libtorrent', path_list)
                     
                     # Esta parte no funciona en Android.  Por algún motivo da el error "dlopen failed: library "liblibtorrent.so" not found"
