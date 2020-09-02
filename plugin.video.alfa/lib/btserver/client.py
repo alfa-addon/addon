@@ -142,6 +142,7 @@ class Client(object):
         # Sesion
         self._cache = Cache(self.temp_path)
         self._ses = lt.session()
+        logger.info("***** Alfa BT Cliente Torrent: %s" % str(lt.version), force=True)
         #self._ses.listen_on(0, 0)                                              ### ALFA: it blocks repro of some .torrents
         # Cargamos el archivo de estado (si existe)
         """                                                                     ### ALFA: it blocks repro of some .torrents
@@ -294,9 +295,9 @@ class Client(object):
         x = 0
         for i, _set in enumerate(self._th.piece_priorities()):
             if _set > 0: x += 1
-            #logger.info("***** Nº Pieza: %s: %s" % (i, str(_set)))
-        logger.info("***** Piezas %s : Activas: %s" % (str(i+1), str(x)))
-        logger.info("***** first_piece %s : last_piece: %s" % (str(self.file.first_piece), str(self.file.last_piece)))
+            #logger.info("***** Nº Pieza: %s: %s" % (i, str(_set)), force=True)
+        logger.info("***** Piezas %s : Activas: %s" % (str(i+1), str(x)), force=True)
+        logger.info("***** first_piece %s : last_piece: %s" % (str(self.file.first_piece), str(self.file.last_piece)), force=True)
 
     def download_torrent(self, url):
         """
@@ -435,7 +436,7 @@ class Client(object):
                 progress = float(sum(pieces)) / len(pieces)
                 s.pieces_len = len(pieces)                                      ### ALFA
                 s.pieces_sum = sum(pieces)                                      ### ALFA
-                #logger.info('***** Estado piezas: %s' % pieces)
+                #logger.info('***** Estado piezas: %s' % pieces, force=True)
             else:
                 progress = 0
                 s.pieces_len = 0                                                ### ALFA
@@ -686,4 +687,4 @@ class Client(object):
             '%.2f%% de %.1fMB %s | %.1f kB/s | #%s %d%% | AutoClose: %s | S: %d(%d) P: %d(%d)) | TRK: %d DHT: %d PEX: %d LSD %d | DHT:%s (%d) | Trakers: %d | Pieces: %d (%d)' % \
             (s.progress_file, s.file_size, s.str_state, s._download_rate, archivo, s.buffer, s.timeout, s.num_seeds, \
              s.num_complete, s.num_peers, s.num_incomplete, s.trk_peers, s.dht_peers, s.pex_peers, s.lsd_peers,
-             s.dht_state, s.dht_nodes, s.trackers, s.pieces_sum, s.pieces_len)) ### ALFA
+             s.dht_state, s.dht_nodes, s.trackers, s.pieces_sum, s.pieces_len), force=True) ### ALFA
