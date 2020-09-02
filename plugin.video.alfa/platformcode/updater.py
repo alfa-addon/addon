@@ -185,7 +185,7 @@ def check_update_to_others(verbose=False):
             if not os.path.isdir(in_folder):
                 continue
 
-            out_folder = config.translatePath(os.path.join('special://home/', 'addons', folder))
+            out_folder = xbmc.translatePath(os.path.join('special://home/', 'addons', folder))
             if os.path.exists(out_folder):
                 
                 copytree(in_folder, out_folder)
