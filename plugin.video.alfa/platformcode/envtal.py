@@ -166,8 +166,8 @@ def get_environment():
             environment['kodi_buffer'] = '20'
             environment['kodi_bmode'] = '0'
             environment['kodi_rfactor'] = '4.0'
-            if filetools.exists(filetools.join(xbmc.translatePath("special://userdata"), "advancedsettings.xml")):
-                advancedsettings = filetools.read(filetools.join(xbmc.translatePath("special://userdata"), 
+            if filetools.exists(filetools.join("special://userdata", "advancedsettings.xml")):
+                advancedsettings = filetools.read(filetools.join("special://userdata", 
                                 "advancedsettings.xml")).split('\n')
                 for label_a in advancedsettings:
                     if 'memorysize' in label_a:
@@ -182,7 +182,7 @@ def get_environment():
         except:
             pass
         
-        environment['userdata_path'] = str(xbmc.translatePath(config.get_data_path()))
+        environment['userdata_path'] = str(config.get_data_path())
         try:
             if environment['os_name'].lower() == 'windows':
                 free_bytes = ctypes.c_ulonglong(0)
@@ -201,7 +201,7 @@ def get_environment():
             environment['videolab_series'] = '?'
             environment['videolab_episodios'] = '?'
             environment['videolab_pelis'] = '?'
-            environment['videolab_path'] = str(xbmc.translatePath(config.get_videolibrary_path()))
+            environment['videolab_path'] = str(config.get_videolibrary_path())
             if filetools.exists(filetools.join(environment['videolab_path'], \
                                 config.get_setting("folder_tvshows"))):
                 environment['videolab_series'] = str(len(filetools.listdir(filetools.join(environment['videolab_path'], \
@@ -294,13 +294,13 @@ def get_environment():
                 __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % cliente['Plug_in'])
                 cliente['Plug_in'] = cliente['Plug_in'].capitalize()
                 if cliente['Plug_in'] == 'Torrenter':
-                    cliente['D_load_Path'] = str(xbmc.translatePath(__settings__.getSetting('storage')))
+                    cliente['D_load_Path'] = str(filetools.translatePath(__settings__.getSetting('storage')))
                     if not cliente['D_load_Path']:
-                        cliente['D_load_Path'] = str(filetools.join(xbmc.translatePath("special://home/"), \
+                        cliente['D_load_Path'] = str(filetools.join("special://home/", \
                                                      "cache", "xbmcup", "plugin.video.torrenter", "Torrenter"))
                     cliente['Buffer'] = str(__settings__.getSetting('pre_buffer_bytes'))
                 else:
-                    cliente['D_load_Path'] = str(xbmc.translatePath(__settings__.getSetting('download_path')))
+                    cliente['D_load_Path'] = str(filetools.translatePath(__settings__.getSetting('download_path')))
                     cliente['Buffer'] = str(__settings__.getSetting('buffer_size'))
                     if __settings__.getSetting('download_storage') == '1' and __settings__.getSetting('memory_size'):
                         cliente['Memoria'] = str(__settings__.getSetting('memory_size'))
@@ -335,7 +335,7 @@ def get_environment():
         if not environment['proxy_active']: environment['proxy_active'] = 'OFF'
         environment['proxy_active'] = environment['proxy_active'].rstrip(', ')
 
-        for root, folders, files in filetools.walk(xbmc.translatePath("special://logpath/")):
+        for root, folders, files in filetools.walk("special://logpath/"):
             for file in files:
                 if file.lower() in ['kodi.log', 'jarvis.log', 'spmc.log', 'cemc.log', \
                                     'mygica.log', 'wonderbox.log', 'leiapp,log', \

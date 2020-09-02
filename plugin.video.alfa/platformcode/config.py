@@ -13,11 +13,32 @@ import re
 
 import xbmc
 import xbmcaddon
+import xbmcvfs
 
 PLUGIN_NAME = "alfa"
 
 __settings__ = xbmcaddon.Addon(id="plugin.video." + PLUGIN_NAME)
 __language__ = __settings__.getLocalizedString
+
+
+def translatePath(path):
+    """
+    Kodi 19: xbmc.translatePath is deprecated and might be removed in future kodi versions. Please use xbmcvfs.translatePath instead.
+    @param path: cadena con path special://
+    @type path: str
+    @rtype: str
+    @return: devuelve la cadena con el path real
+    """
+    if PY3:
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
+        path = xbmcvfs.translatePath(path)
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
+    else:
+        path = xbmc.translatePath(path)
+        
+    return path
 
 
 def get_addon_version(with_fix=True):
@@ -224,7 +245,7 @@ def get_setting(name, channel="", server="", default=None):
             return default
         # Translate Path if start with "special://"
         if value.startswith("special://") and "videolibrarypath" not in name:
-            value = xbmc.translatePath(value)
+            value = translatePath(value)
 
         # hack para devolver el tipo correspondiente
         if value == "true":
@@ -335,19 +356,19 @@ def get_videolibrary_config_path():
 
 
 def get_videolibrary_path():
-    return xbmc.translatePath(get_videolibrary_config_path())
+    return translatePath(get_videolibrary_config_path())
 
 
 def get_temp_file(filename):
-    return xbmc.translatePath(os.path.join("special://temp/", filename))
+    return translatePath(os.path.join("special://temp/", filename))
 
 
 def get_runtime_path():
-    return xbmc.translatePath(__settings__.getAddonInfo('Path'))
+    return translatePath(__settings__.getAddonInfo('Path'))
 
 
 def get_data_path():
-    dev = xbmc.translatePath(__settings__.getAddonInfo('Profile'))
+    dev = translatePath(__settings__.getAddonInfo('Profile'))
 
     # Crea el directorio si no existe
     if not os.path.exists(dev):
@@ -357,11 +378,11 @@ def get_data_path():
 
 
 def get_icon():
-    return xbmc.translatePath(__settings__.getAddonInfo('icon'))
+    return translatePath(__settings__.getAddonInfo('icon'))
 
 
 def get_fanart():
-    return xbmc.translatePath(__settings__.getAddonInfo('fanart'))
+    return translatePath(__settings__.getAddonInfo('fanart'))
 
 
 def get_cookie_data():
@@ -400,7 +421,7 @@ def verify_directories_created():
             saved_path = "special://profile/addon_data/plugin.video." + PLUGIN_NAME + "/" + default
             set_setting(path, saved_path)
 
-        saved_path = xbmc.translatePath(saved_path)
+        saved_path = translatePath(saved_path)
         if not filetools.exists(saved_path):
             logger.debug("Creating %s: %s" % (path, saved_path))
             filetools.mkdir(saved_path)
@@ -425,8 +446,7 @@ def verify_directories_created():
     try:
         from core import scrapertools
         # Buscamos el archivo addon.xml del skin activo
-        skindir = filetools.join(xbmc.translatePath("special://home"), 'addons', xbmc.getSkinDir(),
-                                 'addon.xml')
+        skindir = filetools.join("special://home", 'addons', xbmc.getSkinDir(), 'addon.xml')
         if not os.path.isdir(skindir): return # No hace falta mostrar error en el log si no existe la carpeta
         # Extraemos el nombre de la carpeta de resolución por defecto
         folder = ""

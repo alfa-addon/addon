@@ -312,12 +312,11 @@ def run(item=None):
         canal = scrapertools.find_single_match(traceback.format_exc(), patron)
 
         try:
-            import xbmc
             if config.get_platform(True)['num_version'] < 14:
                 log_name = "xbmc.log"
             else:
                 log_name = "kodi.log"
-            log_message = config.get_localized_string(50004) + xbmc.translatePath("special://logpath") + log_name
+            log_message = config.get_localized_string(50004) + config.translatePath("special://logpath") + log_name
         except:
             log_message = ""
 

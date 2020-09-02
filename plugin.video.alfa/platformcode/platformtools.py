@@ -196,7 +196,7 @@ def render_items(itemlist, parent_item):
     # for adding extendedinfo to contextual menu, if it's used
     has_extendedinfo = xbmc.getCondVisibility('System.HasAddon(script.extendedinfo)')
     # for adding superfavourites to contextual menu, if it's used
-    sf_file_path = xbmc.translatePath("special://home/addons/plugin.program.super.favourites/LaunchSFMenu.py")
+    sf_file_path = config.translatePath("special://home/addons/plugin.program.super.favourites/LaunchSFMenu.py")
     check_sf = os.path.exists(sf_file_path)
     superfavourites = check_sf and xbmc.getCondVisibility('System.HasAddon("plugin.program.super.favourites")')
     num_version_xbmc = config.get_platform(True)['num_version']
@@ -1563,7 +1563,7 @@ def play_torrent(item, xlistitem, mediaurl):
 
                 result = False
                 __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % torr_client)  # Apunta settings del cliente torrent externo
-                save_path_videos = str(xbmc.translatePath(__settings__.getSetting('download_path')))
+                save_path_videos = str(config.translatePath(__settings__.getSetting('download_path')))
                 
                 if torr_client == 'quasar' and 'cliente_torrent_Alfa' not in item.url:  # Quasar no copia el .torrent
                     ret = filetools.copy(item.url, filetools.join(save_path_videos, 'torrents', \
