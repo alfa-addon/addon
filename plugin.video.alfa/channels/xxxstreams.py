@@ -103,6 +103,12 @@ def lista(item):
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
+# https://k2s.cc/file/a4948953ebe66/Edyn_Blair_Up_and_Close_and_Personal_sd.mp4
+# https://k2s.cc/file/d5445d9833d4d/Edyn_Blair_Up_and_Close_and_Personal_fullhd.mp4
+# https://api.k2s.cc/v1/files/a4948953ebe66
+
+# https://www.okstream.cc/e/e5d48e3fa183
+# https://playtube.ws/embed-c0ffkg097ts9-658x400.html  packed
 
 def findvideos(item):
     logger.info()

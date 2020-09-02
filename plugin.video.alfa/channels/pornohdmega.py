@@ -115,7 +115,7 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>", "", data)
-    patron = '<div class="responsive-player">.*?src="([^"]+)"'
+    patron = '<div class="responsive-player".*?(?:src|SRC)="([^"]+)"'
     matches = scrapertools.find_multiple_matches(data, patron)
     for url in matches:
         itemlist.append(item.clone(action="play", title= "%s", contentTitle=item.title, url=url))

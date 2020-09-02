@@ -28,6 +28,8 @@ list_servers = ['mangovideo']
 
 host = 'https://watchpornfree.info'   #'https://xxxparodyhd.net'  'http://www.veporns.com'  'http://streamporno.eu'  playpornx
 
+                                # STREAMZ2  y VARIOS DIRECTOS
+
 def mainlist(item):
     logger.info("")
     itemlist = []
