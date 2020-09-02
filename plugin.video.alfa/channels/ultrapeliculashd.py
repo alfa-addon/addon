@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
+import codecs
 
 from core import httptools
 from core import scrapertools
@@ -16,7 +21,7 @@ host = 'https://www.ultrapeliculashd.com'
 
 
 IDIOMAS = {'mx': 'LAT', 'es': 'CAST', 'en':'VOSE'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = ['default', '1080p', 'HD', 'CAM']
 list_servers = ['fembed', 'uqload']
 
@@ -232,13 +237,15 @@ def unhideload(url):
     logger.info()
     server_dict = {"ud": "https://waaw.tv/watch_video.php?v=",
                    "od": "https://www.fembed.com/v/",
-                   "ad": "https://uqload.com/embed-"}
+                   "ad": "https://uqload.com/embed-",
+                   "id": "https://waaw.tv/f/",
+                   "bd": "https://gounlimited.to/embed-"}
 
     server = server_dict[scrapertools.find_single_match(url, "(\wd)=")]
 
     hash_ = url.split("=")[1].split("&")[0]
     inv = hash_[::-1]
-    result = inv.decode('hex')
+    result = codecs.decode(inv, "hex").decode("utf-8")
     url = "%s%s" % (server, result)
     return url
 

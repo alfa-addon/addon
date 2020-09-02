@@ -151,7 +151,7 @@ def menupeliculas(item):
     
     itemlist.append(
         Item(channel=item.channel, action="fichas", title="Últimas Películas",
-             url=host + "/peliculas", text_bold=True,
+             url=host + "/movies", text_bold=True,
              thumbnail=get_thumb('last', auto=True)))
     
     itemlist.append(
