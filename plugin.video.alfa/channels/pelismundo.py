@@ -208,13 +208,17 @@ def findvideos(item):
     players = {'pelisvips': 'https://pelisvips.com', 
                'stape': 'https://streamtape.com',
                'stream': 'https://streamtape.com',
+               'streamtape': 'https://streamtape.com',
                'netu': 'https://hqq.tv',
                'up': 'https://upstream.to', 
+               'upstream': 'https://upstream.to', 
                'easy': 'https://easyload.io', 
+               'easyload': 'https://easyload.io', 
                'fembed': 'https://fembad.net',
                'youtube': '',
                'pelisup': 'https://www.pelisup.com',
-               'goo': 'https://gounlimited.to'}
+               'goo': 'https://gounlimited.to',
+               'gounlimited': 'https://gounlimited.to'}
                
     data = httptools.downloadpage(item.url).data
     patron  = '(?is)hand"\s*rel="([^"]+)"\s*'

@@ -2359,10 +2359,10 @@ def get_fonts(skin):
     if not fonts:
         from core import filetools
         try:
-            data_font = filetools.read(xbmc.translatePath(filetools.join('special://skin/1080i', 'Font.xml')), "r")
+            data_font = filetools.read(filetools.join('special://skin/1080i', 'Font.xml'), "r")
         except:
             try:
-                data_font = filetools.read(xbmc.translatePath(filetools.join('special://skin/720p', 'Font.xml')), "r")
+                data_font = filetools.read(filetools.join('special://skin/720p', 'Font.xml'), "r")
             except:
                 pass
 

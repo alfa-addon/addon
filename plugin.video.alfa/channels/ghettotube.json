@@ -1,15 +1,15 @@
 {
-  "id": "qwertty",
-  "name": "qwertty",
+  "id": "ghettotube",
+  "name": "ghettotube",
   "active": true,
   "adult": true,
   "language": ["*"],
-  "thumbnail": "https://qwertty.net/wp-content/uploads/2019/07/favicon.ico",
+  "thumbnail": "https://cdn1.images.ghettotube.com/dart/logo.png",
   "banner": "",
   "categories": [
     "adult"
   ],
   "settings": [
-
   ]
 }
+

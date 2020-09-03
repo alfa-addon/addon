@@ -79,7 +79,7 @@ def lista(item):
     patron = '<div class="item  ">.*?'
     patron += '<a href="([^"]+)" title="([^"]+)".*?'
     patron += 'data-original="([^"]+)".*?'
-    patron += 'title="Watch Later"(.*?)</div>.*?'
+    patron += 'title="(?:Watch Later|Ver más tarde)"(.*?)</div>.*?'
     patron += '<div class="duration">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,quality,time in matches:
@@ -107,11 +107,12 @@ def play(item):
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
-    data = scrapertools.find_single_match(data, '<div class="player-holder">(.*?)<div class="sponsor">')
+    data = scrapertools.find_single_match(data, '<div class="player-holder">(.*?)<a href="#like"')
     if "kt_player" in data:
         url = item.url
     else:
         url = scrapertools.find_single_match(data, '<(?:iframe|IFRAME).*?(?:src|SRC)="([^"]+)"')
+    logger.debug(url)
     itemlist.append(item.clone(action="play", title= "%s", contentTitle= item.title, url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
