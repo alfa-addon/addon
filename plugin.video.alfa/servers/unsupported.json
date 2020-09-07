@@ -4,7 +4,7 @@
   	"ignore_urls": [],
     "patterns": [
       {
-        "pattern": "((?:katfile|nitroflare|filerio|mexa|rockfile).(?:net|to|com|in|sh|co)/[^\\s]+)",
+        "pattern": "((?:rapidvideo|streamango|openload|katfile|nitroflare|filerio|mexa|rockfile).(?:net|to|com|in|sh|co)/[^\\s]+)",
         "url": "https://\\1"
       }
     ]
