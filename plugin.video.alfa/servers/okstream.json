@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://stream2.vg/([A-z0-9]+)",
-        "url": "https://streamz.vg/\\1"
+        "pattern": "(https://www.okstream.cc/e/[a-z0-9]+)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "stream2",
-  "name": "stream2",
+  "id": "okstream",
+  "name": "okstream",
   "settings": [
     {
       "default": false,
@@ -38,6 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://cache.hollywood.to/streamz.cc/400dpiLogoCropped.png"
+  "thumbnail": ""
 }
-
