@@ -65,6 +65,14 @@ def init():
     """
 
     try:
+        #Borra las claves ofuscadas de Proxytools, para evitar acumulaciones
+        #Borra la BD de cache de TMDB para evitar que crezca demasiado
+        delete_obsolete_keys()
+        
+        #### TEMPORAL: poner el limpiado de cahce de TMDB a 15 días desde Nunca
+        if config.get_setting('tmdb_cache_expire', default=4):
+            config.set_setting('tmdb_cache_expire', 2)
+
         #Verifica si es necsario instalar script.alfa-update-helper
         verify_script_alfa_update_helper()
         
@@ -352,7 +360,37 @@ def update_external_addon(addon_name):
     
     return False
     
+
+def delete_obsolete_keys():
+    if filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json")):
+        return
     
+    logger.info('Borrando claves...')
+    from core import scrapertools
+    
+    try:
+        # Borra la BD de cache de TMDB para evitar que crezca demasiado
+        filetools.remove(filetools.join(config.get_data_path(), "alfa_db.sqlite"), silent=True)
+        return
+        
+        # Borra las claves ofuscadas de Proxytools, para evitar acumulaciones
+        settings_path = filetools.join(config.get_data_path(), "settings.xml")
+        settings = filetools.read(settings_path)
+        matches = settings.split('\n')
+        patron = '<setting\s*id="([^"]+)"(?:\s*default="[^"]*")?>.*?<\/setting>'
+        for setting in matches:
+            key = scrapertools.find_single_match(setting, patron)
+            if len(key) > 400 or key.startswith('proxy_'):
+                settings = settings.replace(setting + '\n', '')
+                logger.debug('BORRADA: %s' % key)
+
+        res = filetools.write(settings_path, settings)
+        if not res:
+            raise
+    except:
+        logger.error(traceback.format_exc())
+
+
 def update_libtorrent():
     logger.info()
     
