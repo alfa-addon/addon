@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------
-# alfa_assistant tools
+# alfa_assistant tools v. 1.0.376 (07/09/2020)
 # --------------------------------------------------------
 
 import sys
@@ -33,8 +33,7 @@ if config.get_setting("assistant_mode") == "otro":
 
 
 JS_CODE_CLICK_ON_VJS_BIG_PLAY_BUTTON = """
-((() => {
-    
+((() => { 
     try {
         document.documentElement.getElementsByClassName('vjs-big-play-button')[0].click();
     } catch (e) {
@@ -44,8 +43,7 @@ JS_CODE_CLICK_ON_VJS_BIG_PLAY_BUTTON = """
 """
 
 JS_CODE_CLICK_ON_JWPLAYER = """
-    ((() => {
-    
+((() => {
     try {
         document.documentElement.getElementsByClassName('jwplayer')[0].click();
     } catch (e) {
@@ -54,13 +52,99 @@ JS_CODE_CLICK_ON_JWPLAYER = """
 }))();
 """
 
-def get_source_by_page_finished(url=None, timeout=None, jsCode=None, jsDirectCodeNoReturn=None, jsDirectCode2NoReturn=None, extraPostDelay=None, userAgent=None, debug=None, headers=None, malwareWhiteList=None, disableCache = None, closeAfter = None):
-    return get_generic_call('getSourceByPageFinished', url, timeout, jsCode, jsDirectCodeNoReturn, jsDirectCode2NoReturn, extraPostDelay, userAgent, debug, headers, malwareWhiteList, disableCache, closeAfter)
+## Comunica con el navegador Alfa Assistant ##################################################################################################################################
+#
+# Recupera el código fuente de los recursos visitados y las URLS
+#
+def get_source_by_page_finished(url=None, timeout=None, jsCode=None, jsDirectCodeNoReturn=None, jsDirectCode2NoReturn=None, extraPostDelay=None, userAgent=None, debug=None, headers=None, malwareWhiteList=None, disableCache = None, closeAfter = None, getData = None, postData = None):
+    return get_generic_call('getSourceByPageFinished', url, timeout, jsCode, jsDirectCodeNoReturn, jsDirectCode2NoReturn, extraPostDelay, userAgent, debug, headers, malwareWhiteList, disableCache, closeAfter, getData, postData)
+##############################################################################################################################################################################
 
-def get_urls_by_page_finished(url=None, timeout=None, jsCode=None, jsDirectCodeNoReturn=None, jsDirectCode2NoReturn=None, extraPostDelay=None, userAgent=None, debug=None, headers=None, malwareWhiteList=None, disableCache = None, closeAfter = None):
-    return get_generic_call('getUrlsByPageFinished', url, timeout, jsCode, jsDirectCodeNoReturn, jsDirectCode2NoReturn, extraPostDelay, userAgent, debug, headers, malwareWhiteList, disableCache, closeAfter)
+## Comunica con el navegador Alfa Assistant ##################################################################################################################################
+#
+# Recupera las URLS de los recursos visitados
+#
+def get_urls_by_page_finished(url=None, timeout=None, jsCode=None, jsDirectCodeNoReturn=None, jsDirectCode2NoReturn=None, extraPostDelay=None, userAgent=None, debug=None, headers=None, malwareWhiteList=None, disableCache = None, closeAfter = None, getData = None, postData = None):
+    return get_generic_call('getUrlsByPageFinished', url, timeout, jsCode, jsDirectCodeNoReturn, jsDirectCode2NoReturn, extraPostDelay, userAgent, debug, headers, malwareWhiteList, disableCache, closeAfter, getData, postData)
+##############################################################################################################################################################################
 
-def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCodeNoReturn=None, jsDirectCode2NoReturn=None, extraPostDelay=None, userAgent=None, debug=None, headers=None, malwareWhiteList=None, disableCache = None, closeAfter = None):
+## Comunica con el navegador Alfa Assistant ##################################################################################################################################
+#
+# [Uso de parámetros]
+#
+# - Dirección Web done Assistant va a navegar (GET) usando "url". Para usar POST ver "postData". El audio de la Web se silenciará para no molestar al usuario.
+#   Ejemplo:
+#       url = "https://www.myhost.com"
+#
+# - Configurar tiempo extra de espera tras la carga de la Web (para permitir que JS realice tareas).
+#   Ejemplo (milisegundos):
+#       timeout = 1000
+#
+# - Envío de datos JSON a través de POST usando "postData".
+#   Ejemplo:
+#       postData = '''{"jsonKey1":"jsonValue1", "jsonKey2":"jsonValue2"}'''
+#
+# - Envío de datos de formulario a través de POST usando "postData".
+#   Ejemplo:
+#       postData = '''formKey1=formValue1&formkey2=formValue2'''
+#
+# - Envío de datos de formulario a través de GET usando "getData": mismos ejemplos de uso que "postData".
+#
+# - Configurar "UserAgent" para TODA la navegación en Assistant.
+#   Ejemplo:
+#       userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36"
+#
+# - Añadir "headers" a la URL inicial. El User Agent no se debería indicar aquí pues solo valdría para la URL inicial y no el resto (usar mejor parámetro "useAgent").
+#   Ejemplo:
+#       headers = '''[
+#       {"name": "referer", "value": "https://www.myWebsite.com/"},
+#       {"name": "otherKey", "value": "otherValue"},
+#       ]'''
+#
+# - Ejecución de Javascript (CON retorno opcional) usando "jsCode".
+#   Ejemplo:
+#       jsCode = """
+#           ((() => {
+#               try {
+#                   document.documentElement.getElementsByClassName('myClass')[0].click();
+#                   return 'OK';    //LÍNEA OPCIONAL!!
+#               } catch (e) {
+#                   console.error('##Error getting jwplayer', e);
+#                   return 'KO';    //LÍNEA OPCIONAL!!
+#               };
+#           }))();
+#       """
+#
+# - Ejecución de Javascript SIN retorno usando "jsDirectCodeNoReturn": mismo uso y ejemplos que jsCode pero sin "return".
+#
+# - Ejecución de Javascript SIN retorno usando jsDirectCode2NoReturn: mismo uso y ejemplos que jsCode pero sin "return".
+#
+# - Espera tras ejecución de JS (o sea tras "jsCode", "jsDirectCodeNoReturn" o "jsDirectCode2NoReturn") usando "extraPostDelay".
+#   Ejemplo (milisegundos):
+#       extraPostDelay = 1000
+#
+# - Por defecto y para acelerar las consultas repetitivas, Assistant usa caché de respuestas (con caducidad de 24 horas).
+#   Ejemplo de desactivación:
+#       disableCache = True
+#
+# - Cierre automático de Assistant tras su uso (sino queda abierto -aunque no en primer plano sino de fondo-).
+#   Ejemplo de cierre tras uso de Assistant:
+#       closeAfter = True
+#
+# - Assistant filtra los recursos que se intentan usar en la navegación a partir de varios repositorios online anti-malware, anti-mining, etc. Se pueden añadir exclusiones a esta lista a través del parámetro "malwareWhiteList" (usando Regex de tipo Java).
+#   Ejemplo:
+#       malwareWhiteList = '''[
+#       ".*google.*com",
+#       ".*yahoo.*com",
+#       ]'''
+#
+#
+#
+# - NUNCA USAR EN PRODUCCIÓN: PARA AYUDAR A LOS DESARROLLADORES se puede mostrar lo que el navegador Assistant está haciendo. Cuidado: ni limpia recursos ni se cierra, además se puede incluso oir el audio de la Web visitada.
+#   Ejemplo de activación de depuración:
+#       debug = true
+#
+def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCodeNoReturn=None, jsDirectCode2NoReturn=None, extraPostDelay=None, userAgent=None, debug=None, headers=None, malwareWhiteList=None, disableCache = None, closeAfter = None, getData = None, postData = None):
     open_alfa_assistant(closeAfter)
     logger.info('##Assistant Endpoint: %s' % endpoint)
     if url:
@@ -100,6 +184,12 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
     if malwareWhiteList:
         serverCall += '&malwareWhiteList=%s' % base64.b64encode(malwareWhiteList)
         logger.info('##Assistant malware-white-list: %s' % malwareWhiteList)
+    if getData:
+        serverCall += '&getData=%s' % base64.b64encode(getData)
+        logger.info('##Assistant get-data: %s' % getData)
+    if postData:
+        serverCall += '&postData=%s' % base64.b64encode(postData)
+        logger.info('##Assistant post-data: %s' % postData)
 
     logger.info('##Assistant Alfa Assistant URL: ' + serverCall)
     data = httptools.downloadpage(serverCall, timeout=timeout + EXTRA_TIMEOUT).data
@@ -111,12 +201,15 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
         return string_to_json(data)
     else:
         return data
+##############################################################################################################################################################################
 
 
 def string_to_json(data):
     return json.loads(data)
 
-
+#
+# Lista el código fuente (decodificado) según filtro regex (parámetro "pattern") entre los datos que devuelve el navegador Alfa Assistant (parámetro "data")
+#
 def find_htmlsource_by_url_pattern(data, pattern):
     if not data:
         logger.info('##Assistant NOT received data from Alfa Mobile Helper')
@@ -134,6 +227,14 @@ def find_htmlsource_by_url_pattern(data, pattern):
                     logger.info('##Assistant The data found in Alfa Assistant has not the right info')
     return
 
+#
+# Prepara en una línea los argumentos necesarios para constituir una URL a partir de una lista que proviene de consultar Alfa Assistant
+# Ejemplo:
+#   from lib import alfa_assistant
+#   data_assistant = alfa_assistant.get_urls_by_page_finished(global_url, 1000, jsDirectCode2NoReturn=js_code, extraPostDelay=2000, userAgent=ua, disableCache=True, closeAfter=True)
+#   for visited in data_assistant["urlsVisited"]:
+#       url = visited["url"] + alfa_assistant.getInlineRequestedHeaders(visited["requestHeaders"], [])
+#
 def getInlineRequestedHeaders(requestHeaders, namesExceptionList = None):
     res = ""
     try:
@@ -153,8 +254,20 @@ def getInlineRequestedHeaders(requestHeaders, namesExceptionList = None):
         logger.error('##Assistant getInlineRequestedHeaders Error')
         pass
 
-    return res
+    return res    #Ejemplo: |param1=value1&param2=value2
 
+
+##############################################################################################################################################################################
+##############################################################################################################################################################################
+##############################################################################################################################################################################
+## F U N C I O N E S   D E   B A J O   N I V E L #############################################################################################################################
+################# NO TOCAR ###################################################################################################################################################
+##############################################################################################################################################################################
+##############################################################################################################################################################################
+
+#
+## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
+#
 def open_alfa_assistant(closeAfter = None):
     global isAlfaAssistantOpen
     if not isAlfaAssistantOpen:
@@ -180,6 +293,9 @@ def open_alfa_assistant(closeAfter = None):
     else:
         logger.info('##Assistant Already was Assistant')
 
+#
+## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
+#
 def close_alfa_assistant():
     global isAlfaAssistantOpen
     isAlfaAssistantOpen = False
@@ -192,17 +308,29 @@ def close_alfa_assistant():
         logger.error('##Assistant Error closing Assistant')
         pass
 
-def is_alfa_installed():
-    respuesta, app_name = alfaresolver.install_alfa_assistant(update=False)
+#
+## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
+#
+def is_alfa_installed(remote=''):
+    respuesta, app_name = alfaresolver.install_alfa_assistant(update=False, remote=remote)
     return respuesta
 
-def update_alfa_assistant():
+#
+## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
+#
+def update_alfa_assistant(remote=''):
     #return execute_in_alfa_assistant_with_cmd('update')
-    return alfaresolver.install_alfa_assistant(update=True)
-    
+    return alfaresolver.install_alfa_assistant(update=True, remote=remote)
+
+#
+## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
+#
 def check_permissions_alfa_assistant():
     return execute_in_alfa_assistant_with_cmd('checkPermissions')
 
+#
+## Comunica DIRECTAMENTE con el navegador Alfa Assistant ##################################################################################################################################
+#
 def execute_in_alfa_assistant_with_cmd(cmd):
     if xbmc.getCondVisibility("system.platform.Android"):
         # try:

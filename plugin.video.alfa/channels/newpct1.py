@@ -44,7 +44,8 @@ categoria = channel_py.capitalize()
 clone_list_random = []                                                          #Iniciamos la lista aleatoria de clones
 host = ''
 decode_code = ''
-page_url = 'pg/1'
+#page_url = 'pg/1'
+page_url = ''
 
 #Código para permitir usar un único canal para todas las webs clones de NewPct1
 #Cargamos en .json del canal para ver las listas de valores en settings
@@ -56,8 +57,8 @@ for settings in channel_json['settings']:                                       
         break
 clone_list = ast.literal_eval(clone_list)                                       #la convierte en array
 clone_list_check = clone_list[:]                                                #la salvamos para otros usos
-host_index = 0
-host_index = config.get_setting('clonenewpct1_channel_default', channel_py)     #Clone por defecto
+host_index = config.get_setting('clonenewpct1_channel_default', channel_py, 0)  #Clone por defecto
+if host_index > 2:  config.set_setting('clonenewpct1_channel_default', 0, channel_py)   # Si el clone seleccionado no existe, se pone "Aleatorio"
 host_index_check = host_index                                                   #lo salvamos para otros usos
 
 if host_index == 0:                                                             #Si el clones es "Aleatorio"...
@@ -135,7 +136,8 @@ def mainlist(item):
     thumb_separador = get_thumb("next.png")
     thumb_settings = get_thumb("setting_0.png")
     
-    item, host_alt = verify_host(item, host, force=False)                       # Actualizamos la url del host
+    global host
+    item, host = verify_host(item, host, force=False)                       # Actualizamos la url del host
     if channel_clone_name == "*** DOWN ***":                                    # Ningún clones activo !!!
         itemlist.append(item.clone(action='', title="[COLOR yellow]Ningún canal NewPct1 activo[/COLOR]"))    
         return itemlist                                     # si no hay más datos, algo no funciona, pintamos lo que tenemos y salimos
@@ -195,16 +197,22 @@ def submenu(item):
     item.extra2 = ''
     matches_hd = []
     
-    item, host_alt = verify_host(item, host)                                    # Actualizamos la url del host
+    global host
+    item, host = verify_host(item, host)                                    # Actualizamos la url del host
     
     data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
                                           decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
         
     patron = '<li><a\s*class="[^"]+"\s*href="[^"]+"><i\s*class="[^"]+".*?><\/i>.*?'
-    patron += 'Inicio.*?<\/a><\/li>(.+)<\/ul>\s*<\/nav>'
+    patron += 'Inicio.*?<\/a><\/li>(.*?)<\/ul>\s*<\/nav>'
     if not scrapertools.find_single_match(data, patron):
-        patron = '<div class="links-content">\s*<div class="one_fourth">\s*<h3>'
+        patron = '<div\s*class="links-content">\s*<div class="one_fourth">\s*<h3>'
         patron += 'Categorias<\/h3>\s*<ul class="content-links">(.*?)<\/ul>\s*<\/div>'
+        if not scrapertools.find_single_match(data, patron):
+            patron = '<div\s*class="[^"]+">\s*<h4>\s*Categorias\s*<\/h4>\s*<ul>(.*?)<\/ul>\s*<\/div>'
+    
+    #logger.debug("PATRON: " + patron)
+    #logger.debug(data)
     
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
@@ -245,10 +253,14 @@ def submenu(item):
     patron = '<li><a\s*(?:style="[^"]+"\s*)?href="([^"]+)"\s*.itle="[^"]+"\s*>'
     patron += '(?:<i\s*class="[^"]+">\s*<\/i>)?([^>]+)<\/a><\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data_menu)
+    
+    if not 'series' in str(matches):
+        #patron_series = '<\/ul><\/li><li\s*class="li-series">\s*<a\s*href="([^"]+)">\s*<i\s*class=[^>]+>\s*<\/i>\s*<br>\s*(\w+)\s*<\/a>'
+        matches.append((host + 'series/', 'Series'))
 
     #logger.debug(patron)
     #logger.debug(matches)
-    #logger.debug(data)
+    #logger.debug(data_menu)
     
     if not matches:
         logger.error("ERROR 02: SUBMENU: Ha cambiado la estructura de la Web " + 
@@ -324,8 +336,9 @@ def submenu_novedades(item):
     thumb_buscar = get_thumb("search.png")
     thumb_settings = get_thumb("setting_0.png")
     
-    #item, host_alt = verify_host(item, host, force=True, category='descargas2020')  # Actualizamos el clone, preferible descargas2020
-    item, host_alt = verify_host(item, host)                                    # Actualizamos la url del host
+    category = 'pctreload'                                                      # Clone preferido para Novedades
+    global host
+    item, host = verify_host(item, host, category=category)                     # Actualizamos la url del host
     
     data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
                                           decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
@@ -350,8 +363,9 @@ def submenu_novedades(item):
         itemlist.append(item.clone(action='', title="[COLOR yellow]" + item.channel_alt.capitalize() 
                     + '[/COLOR] inaccesible'))
         
-        if item.url_alt: del item.url_alt
-        del item.channel_alt
+        item.from_channel_alt = item.channel_alt
+        #if item.url_alt: del item.url_alt
+        #del item.channel_alt
         
     # Procesamos la página
     data = scrapertools.find_single_match(data, patron)                         #Seleccionamos el trozo que nos interesa
@@ -365,7 +379,7 @@ def submenu_novedades(item):
     # Si es el formato reducido, pasamos directamente a Listado
     if not matches:
         item.action = "listado"
-        item.url = '%spg/1' % item.url
+        #item.url = '%spg/1' % item.url
         return listado(item)
     
     
@@ -430,7 +444,8 @@ def alfabeto(item):
     logger.info()
     itemlist = []
     
-    item, host_alt = verify_host(item, host)                                    # Actualizamos la url del host
+    global host
+    item, host = verify_host(item, host)                                        # Actualizamos la url del host
     
     data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
                                           decode_code=decode_code, quote_rep=True, item=item, itemlist=[])      # Descargamos la página
@@ -477,7 +492,7 @@ def alfabeto(item):
     for scrapedurl, scrapedtitle in matches:
         title = scrapedtitle.upper()
 
-        itemlist.append(item.clone(action="listado", title=title, url=scrapedurl+"/"+page_url))
+        itemlist.append(item.clone(action="listado", title=title, url=scrapedurl))
 
     return itemlist
 
@@ -493,7 +508,8 @@ def listado(item):                                                              
     thumb_pelis = get_thumb("channels_movie.png")
     thumb_series = get_thumb("channels_tvshow.png")
     
-    item, host_alt = verify_host(item, host)                                    # Actualizamos la url del host
+    global host
+    item, host = verify_host(item, host)                                        # Actualizamos la url del host
     if channel_clone_name == "*** DOWN ***":                                    #Ningún clones activo !!!
         itemlist.append(item.clone(action='', title="[COLOR yellow]Ningún canal NewPct1 activo[/COLOR]"))    
         return itemlist 
@@ -502,6 +518,7 @@ def listado(item):                                                              
     
     curr_page = 1                                                               # Página inicial
     last_page = 99999                                                           # Última página inicial
+    page_name = 'pg'                                                            # Nombre de pie de página (pg o page)
     last_page_print = 1                                                         # Última página inicial, para píe de página
     page_factor = 1.0                                                           # Factor de conversión de pag. web a pag. Alfa
     if item.curr_page:
@@ -542,8 +559,9 @@ def listado(item):                                                              
         item.extra2 = ''
         
     post = None
-    if item.post:                                                               # Rescatamos el Post, si lo hay
+    if item.post or item.post is None:                                                               # Rescatamos el Post, si lo hay
         post = item.post
+        del item.post
 
     next_page_url = item.url
     #Máximo num. de líneas permitidas por TMDB. Máx de 5 segundos por Itemlist para no degradar el rendimiento
@@ -583,6 +601,9 @@ def listado(item):                                                              
             else:
                 patron = '<ul class="%s">(.*?)</ul>' % clase
 
+            #logger.debug("PATRON: " + patron)
+            #logger.debug(data)
+            
             #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar la lista
             if not data or (not scrapertools.find_single_match(data, patron) and 'letter/' not in item.url):
 
@@ -615,7 +636,7 @@ def listado(item):                                                              
             elif item.channel_alt:                                              #Si ha habido fail-over, lo comento
                 for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
                     if channel_clone == item.category.lower():
-                        host_alt = host_clone
+                        host = host_clone
                         break
 
             #Selecciona el tramo de la página con el listado de contenidos
@@ -704,20 +725,9 @@ def listado(item):                                                              
                 break
             return itemlist                                                     #Salimos
 
-        #Buscamos la próxima página
-        if post:                                                                # Search o Novedades antiguas
-            post = re.sub(r'\&pg=(\d+)', '&pg=%s' % str(curr_page), post)
-            next_page_log = post
-        else:                                                                   # Resto
-            next_page_url = re.sub(r'pg\/(\d+)', 'pg/%s' % str(curr_page), item.url)
-            next_page_log = next_page_url
         """
-        logger.debug('curr_page: ' + str(curr_page) + ' / last_page: ' + str(last_page) + \
-                    ' / page_factor: ' + str(page_factor) + ' / cnt_tot_match: ' +  str(cnt_tot_match) + \
-                    ' / url o post: ' +  str(next_page_log))
-        """
-        
         #Buscamos la última página
+        """
         if last_page == 99999:                                                  #Si es el valor inicial, buscamos
             patron_last = '"total":\d+,"all":(\d+),'
             if not scrapertools.find_single_match(data, patron_last):
@@ -730,6 +740,10 @@ def listado(item):                                                              
                         patron_last = '<ul class="pagination">.*?<a\s*href="[^"]+"(?:\s*onClick='
                         patron_last += '".*?\(\'[^"]+\'\);">Next<\/a>.*?onClick=".*?\(\'([^"]+)\'\)'
                         patron_last += ';">Last<\/a>)'
+                        if not scrapertools.find_single_match(data, patron_last):
+                            patron_last = '<ul\s*class="pagination"\s*>.*?<li>\s*<a\s*href='
+                            patron_last += '"[^"]+\/page\/(\d+)\/"\s*>\s*&raquo;\s*<\/a>\s*<\/li>\s*&nbsp;\s*<\/div>'
+                            page_name = 'page'
 
             try:
                 last_page = int(scrapertools.find_single_match(data, patron_last))
@@ -740,9 +754,25 @@ def listado(item):                                                              
             if item.extra == "search":
                 last_page = 999                                                 # La gestión de última pag. en search es penosa...
                 last_page_print = int((float(len(matches)) / float(cnt_tot)) + 0.999999)
-
+            if not post:
+                next_page_url += '%s/1' % page_name
+                item.url = next_page_url
             #logger.debug('curr_page: ' + str(curr_page) + ' / last_page: ' + str(last_page) + ' / page_factor: ' + str(page_factor))
         
+        #Buscamos la próxima página
+        if post:                                                                # Search o Novedades antiguas
+            post = re.sub(r'\&%s=(\d+)' % page_name, '&%s=%s' % (page_name, str(curr_page)), post)
+            next_page_log = post
+        else:                                                                   # Resto
+            #next_page_url = re.sub(r'%s\/\d+' % page_name, '%s/%s' % (page_name, str(curr_page)), item.url)
+            next_page_url = re.sub(r'\/\d+$', '/%s' % (str(curr_page)), item.url)
+            next_page_log = next_page_url
+        """
+        logger.debug('curr_page: ' + str(curr_page) + ' / last_page: ' + str(last_page) + \
+                    ' / page_factor: ' + str(page_factor) + ' / cnt_tot_match: ' +  str(cnt_tot_match) + \
+                    ' / url o post: ' +  str(next_page_log))
+        """
+
         #Empezamos el procesado de matches
         for _scrapedurl, _scrapedtitle, _scrapedthumbnail, _calidad, _year, _size in matches:
             
@@ -758,9 +788,9 @@ def listado(item):                                                              
                 calidad = _scrapedtitle
                 size = _scrapedthumbnail
                 scrapedthumbnail = _calidad.replace('\\', '')
-                scrapedthumbnail = urlparse.urljoin(host_alt, scrapedthumbnail)
+                scrapedthumbnail = urlparse.urljoin(host, scrapedthumbnail)
                 scrapedurl = _year.replace('\\', '')
-                scrapedurl = urlparse.urljoin(host_alt, scrapedurl)
+                scrapedurl = urlparse.urljoin(host, scrapedurl)
                 year = _size
             
             cnt_match += 1
@@ -804,8 +834,6 @@ def listado(item):                                                              
                 del item_local.post
             if item_local.pattern:
                 del item_local.pattern
-            if item_local.title_lista:
-                del item_local.title_lista
             if item_local.category:
                 del item_local.category
             if item_local.intervencion:
@@ -818,6 +846,10 @@ def listado(item):                                                              
             del item_local.text_bold
             item_local.text_color = True
             del item_local.text_color
+            item_local.matches = []
+            del item_local.matches
+            item_local.title_lista = []
+            del item_local.title_lista
             
             item_local.title = ''
             item_local.context = "['buscar_trailer']"
@@ -920,7 +952,8 @@ def listado(item):                                                              
                         or "sub" in calidad.lower() or "-vo/" in item.url:
                 item_local.language += ["VOS"]                                  # VOS
             if "latino" in title.lower() or "argentina" in title.lower() or "-latino/" in \
-                        scrapedurl or "latino" in calidad.lower() or "argentina" in calidad.lower():
+                        scrapedurl or "latino" in calidad.lower() or "argentina" in calidad.lower() \
+                        or "latino" in item.url:
                 item_local.language += ["LAT"]                                  # LAT
             if "[dual" in title.lower() or "multileng" in title.lower() or "multileng" \
                         in item_local.quality.lower() or (("espa" in title.lower() or \
@@ -1013,7 +1046,10 @@ def listado(item):                                                              
             #Guardamos el año que puede venir en el título, por si luego no hay resultados desde TMDB
             if scrapertools.find_single_match(title, r'\s+[\[|\(|-]*(\d{4})[\]|\)|-]*\s*'):
                 year = int(scrapertools.find_single_match(title, r'\s+[\[|\(|-]*(\d{4})[\]|\)|-]*\s*'))
-                title = re.sub(r'\s+[\[|\(|-]*(\d{4})[\]|\)|-]*\s*', '', title)
+                if title != str(year):
+                    title = re.sub(r'\s+[\[|\(|-]*(\d{4})[\]|\)|-]*\s*', '', title)
+                else:
+                    year = ''
             else:
                 year = ''
             if year and year >= 1900 and year <= 2040:
@@ -1096,7 +1132,8 @@ def findvideos(item):
     
     #logger.debug(item)
     
-    item, host_alt = verify_host(item, host)                                    # Actualizamos la url del host
+    global host
+    item, host = verify_host(item, host)                                        # Actualizamos la url del host
     if channel_clone_name == "*** DOWN ***":                                    #Ningún clones activo !!!
         itemlist.append(item.clone(action='', title="[COLOR yellow]Ningún canal NewPct1 activo[/COLOR]"))    
         return itemlist 
@@ -1689,9 +1726,11 @@ def episodios(item):
     logger.info()
     
     itemlist = []
+    matches_old = []
     
     json_category = item.category.lower()                                       # Salvamos la categoría que viene de la videoteca
-    item, host_alt = verify_host(item, host)                                    # Actualizamos la url del host
+    global host
+    item, host = verify_host(item, host)                                        # Actualizamos la url del host
     if channel_clone_name == "*** DOWN ***":                                    # Ningún clones activo !!!
         itemlist.append(item.clone(action='', title="[COLOR yellow]Ningún canal NewPct1 activo[/COLOR]"))    
         return itemlist 
@@ -1807,6 +1846,9 @@ def episodios(item):
             return itemlist
         
         matches = re.compile(patron, re.DOTALL).findall(data)
+        if matches_old == matches:
+            break
+        matches_old = matches[:]
         
         if not matches or '>( 0 ) Capitulos encontrados <' in data:             #error
             if len(itemlist) == 0:                                              # Si ya hay datos, puede ser la última página
@@ -2153,13 +2195,21 @@ def find_language(item, json_category=''):
 def verify_host(item, host_call, force=True, category=''):
     clone_list_alt = []
     
+    item.url = urlparse.urljoin(host_call, item.url)
+    
     if channel_clone_name == "*** DOWN ***":                                    #Ningún clone activo !!!
         return (item, host_call)
     
+    if item.channel_alt:
+        category = item.category.lower()
+        item.from_channel_alt = item.channel_alt
+    elif item.from_channel_alt:
+        category = item.category.lower()
+
     if force or host_index_check > 0:                                           # Si se quiere usar el mismo clone, en lo posible ...
         if not category:
             category = scrapertools.find_single_match(item.url, 'http.*\:\/\/(?:www.)?(\w+)\.\w+\/')
-        if host_index_check > 0:
+        if host_index_check > 0 and not category:
             category = channel_clone_name
         x = 0
         for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list_check:
@@ -2180,15 +2230,21 @@ def verify_host(item, host_call, force=True, category=''):
         dom_sufix_clone = scrapertools.find_single_match(host_call, ':\/\/(.*?)\/*$').replace('.', '-')
         #if 'pctreload' in dom_sufix_clone:
         #    dom_sufix_clone = 'pctnew-org'
-        if 'descargas2020' not in dom_sufix_clone and 'pctnew' not in dom_sufix_clone \
-                        and 'pctreload' not in dom_sufix_clone: dom_sufix_clone = ''
+        if 'descargas2020' not in dom_sufix_clone and 'descargas2020' not in dom_sufix_clone \
+                        and 'pctreload' not in dom_sufix_clone and 'pctmix' not in dom_sufix_clone: dom_sufix_clone = ''
         item.url = re.sub(scrapertools.find_single_match(item.url, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)'), host_call, item.url)
+        dom_sufix_clone = dom_sufix_clone.replace('pctmix-com', 'pctreload-com')
         item.url = item.url.replace(dom_sufix_org, dom_sufix_clone)
         item.category = channel_clone.capitalize()
         
         break                                                                   # Terminado
+        
+    item = generictools.verify_channel_regex(item, clone_list_alt)              # Procesamos los regex de url que tenga el clone
+        
+    global host
+    host = host_call
     
-    return (item, host_call)
+    return (item, host)
 
 
 def actualizar_titulos(item):
@@ -2206,12 +2262,8 @@ def search(item, texto):
     # texto = texto.replace(" ", "+")
 
     try:
-        if '.org' in host or 'pctreload' in host:
-            item.url = host + "get/result/"
-            item.post = "categoryIDR=&categoryID=&idioma=&calidad=&ordenar=Fecha&inon=Descendente&s=%s&pg=1" % texto
-        else:
-            item.url = host + "buscar"
-            item.post = "q=%s" % texto
+        item.url = host + "get/result/"
+        item.post = "categoryIDR=&categoryID=&idioma=&calidad=&ordenar=Fecha&inon=Descendente&s=%s&pg=1" % texto
         item.pattern = "buscar-list"
         item.extra = "search"
         itemlist = listado(item)
