@@ -24,11 +24,7 @@ host = 'https://ultrahorny.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-
-    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-video/"))
-    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-viewed/"))
-    itemlist.append(item.clone(title="Mejor valorado" , action="lista", url=host + "/top-rated/"))
-    itemlist.append(item.clone(title="Mas comentado" , action="lista", url=host + "/most-comment/"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/videos/"))
     itemlist.append(item.clone(title="Canal" , action="categorias", url=host + "/channels/"))
     itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
@@ -51,13 +47,13 @@ def categorias(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url) 
-    matches = soup.find_all('article', class_='post')
+    matches = soup.find_all('div', class_='col-6')
     for elem in matches:
         url = elem.a['href']
-        title = elem.find('h2').text
-        cantidad = elem.find('span')
+        title = elem.find('div', class_='float-left').text.strip()
+        cantidad = elem.find('div', class_='float-right')
         if cantidad:
-            cantidad = cantidad.text.strip().replace(" videos", "")
+            cantidad = cantidad.text.strip()
             title = "%s (%s)" % (title,cantidad)
         thumbnail = ""
         plot = ""
@@ -81,18 +77,18 @@ def lista(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    matches = soup.find_all('article', class_='post')
+    matches = soup.find_all('div', class_='article-post')
     for elem in matches:
         url = elem.a['href']
-        stitle = elem.a['title']
         thumbnail = elem.img['src']
-        quality = elem.find('span', class_='quality')
+        stitle = elem.img['title'].replace("&lpar;", "(").replace("&rpar;", ")")
+        quality = elem.find('span', class_='hd-text-icon')
         if quality:
             title = "[COLOR red]HD[/COLOR] %s" % stitle
         plot = ""
         itemlist.append(item.clone(action="findvideos", title=title, url=url, thumbnail=thumbnail,
                                plot=plot, fanart=thumbnail, contentTitle=title ))
-    next_page = soup.find('a', class_='next page-numbers')
+    next_page = soup.find('a', class_='next page-link')
     if next_page:
         next_page = next_page['href']
         itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
@@ -103,8 +99,7 @@ def findvideos(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    url = scrapertools.find_single_match(data, '<div class="video videocc">.*?src="([^"]+)"')
-    logger.debug(url)
+    url = scrapertools.find_single_match(data, '<div class="video-container">.*?src="([^"]+)"')
     if "ultrahorny" in url:
         import base64
         data = httptools.downloadpage(url).data

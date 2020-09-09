@@ -650,7 +650,8 @@ def downloadpage(url, **opt):
         if not response['data']:
             response['data'] = ''
         try:
-            if 'Content-Type' in req.headers and 'bittorrent' not in req.headers['Content-Type']:
+            if 'Content-Type' in req.headers and 'bittorrent' not in req.headers['Content-Type'] \
+                        and opt.get('json_to_utf8', True):
                 response['json'] = to_utf8(req.json())
             else:
                 response['json'] = dict()

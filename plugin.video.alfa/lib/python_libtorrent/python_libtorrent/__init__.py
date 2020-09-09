@@ -41,21 +41,22 @@ import traceback                                                                
 __version__ = '1.1.17'                                                          ### Alfa
 __plugin__ = "python-libtorrent v.1.1.7"                                        ### Alfa
 #__language__ = __settings__.getLocalizedString                                 ### Alfa
-__root__ = os.path.dirname(os.path.dirname(__file__))
+__root__ = filetools.dirname(filetools.dirname(__file__))
 
 from platformcode import config
+from core import filetools
 LIBTORRENT_SAFE = False
 
 libtorrent=None
 platform = get_platform()
 #set_dirname=__settings__.getSetting('dirname')                                 ### Alfa
-#set_dirname=os.path.join(__settings__.getAddonInfo('Path'),'lib', 'python_libtorrent')  ### Alfa
+#set_dirname=filetools.join(__settings__.getAddonInfo('Path'),'lib', 'python_libtorrent')  ### Alfa
 set_dirname=__root__                                                            ### Alfa
 if getSettingAsBool('custom_dirname') and set_dirname:
     log('set_dirname:' +str(set_dirname))
     dirname=set_dirname
 else:
-    #dirname = os.path.join(xbmc.translatePath('special://temp'), 'xbmcup', 'script.module.libtorrent',
+    #dirname = filetools.join(filetools.translatePath('special://temp'), 'xbmcup', 'script.module.libtorrent',
     #                       'python_libtorrent')
     dirname=set_dirname                                                         ### Alfa
 
@@ -76,15 +77,15 @@ while VERSIONS:
     else:
         platform['version'] = default_path
 
-    sizefile_path = os.path.join(__root__, platform['system'], platform['version'])
-    if not os.path.exists(sizefile_path):
+    sizefile_path = filetools.join(__root__, platform['system'], platform['version'])
+    if not filetools.exists(sizefile_path):
         log('set_version: no sizefile at %s back to default %s' % (sizefile_path, default_path))
         platform['version'] = default_path
-        sizefile_path = os.path.join(__root__, platform['system'], platform['version'])
-        if not os.path.exists(sizefile_path):
+        sizefile_path = filetools.join(__root__, platform['system'], platform['version'])
+        if not filetools.exists(sizefile_path):
             log('set_version: no default at %s searching for any version' % sizefile_path)
             try:
-                versions = sorted(os.listdir(os.path.join(__root__, platform['system'])))
+                versions = sorted(filetools.listdir(filetools.join(__root__, platform['system'])))
             except:
                 versions = []
             
@@ -93,7 +94,7 @@ while VERSIONS:
                 if ver not in VERSIONS:
                     versions.remove(ver)
                     continue
-                if not os.path.isdir(os.path.join(__root__, platform['system'], ver)):
+                if not filetools.isdir(filetools.join(__root__, platform['system'], ver)):
                     versions.remove(ver)
                     
             VERSIONS_for = VERSIONS[:]
@@ -109,7 +110,7 @@ while VERSIONS:
                 log(e)
                 raise Exception(e)
     
-    dest_path = os.path.join(dirname, platform['system'], platform['version'])
+    dest_path = filetools.join(dirname, platform['system'], platform['version'])
     sys.path.insert(0, dest_path)
 
     lm=LibraryManager(dest_path, platform)
@@ -162,7 +163,7 @@ while VERSIONS:
                 import imp
                 from ctypes import CDLL
                 
-                dest_path=lm.android_workaround(os.path.join(xbmc.translatePath('special://xbmc/'), 'files').replace('/cache/apk/assets', ''))
+                dest_path=lm.android_workaround(filetools.join(filetools.translatePath('special://xbmc/'), 'files').replace('/cache/apk/assets', ''))
                 dll_path=os.path.join(dest_path, 'liblibtorrent.so')
                 log('CDLL path = ' + dll_path)
                 liblibtorrent=CDLL(dll_path)
@@ -206,7 +207,7 @@ while VERSIONS:
                         config.set_setting("libtorrent_msg", 'OK', server="torrent")
                     
                     from core import scrapertools
-                    kodi_app = xbmc.translatePath('special://xbmc')
+                    kodi_app = filetools.translatePath('special://xbmc')
                     kodi_app = scrapertools.find_single_match(kodi_app, '\/\w+\/\w+\/.*?\/(.*?)\/')
                     kodi_dir = '%s-1' % kodi_app
                     dir_list = ''

@@ -18,6 +18,12 @@ import traceback
 from core import scrapertools
 from platformcode import platformtools, logger
 
+try:
+    import xbmc
+    KODI = True
+except:
+    KODI = False
+    
 xbmc_vfs = True                                                 # False para desactivar XbmcVFS, True para activar
 if xbmc_vfs:
     try:
@@ -70,6 +76,69 @@ def validate_path(path):
         return unidad + ''.join([c for c in path if c not in chars])
 
 
+def translatePath(path):
+    """
+    Kodi 19: xbmc.translatePath is deprecated and might be removed in future kodi versions. Please use xbmcvfs.translatePath instead.
+    @param path: cadena con path special://
+    @type path: str
+    @rtype: str
+    @return: devuelve la cadena con el path real
+    """
+    if PY3 and xbmc_vfs:
+        if PY3 and isinstance(path, bytes):
+            path = path.decode(fs_encoding)
+        path = xbmcvfs.translatePath(path)
+        if isinstance(path, bytes):
+            path = path.decode(fs_encoding)
+    
+    elif KODI:
+        path = xbmc.translatePath(path)
+        
+    return path
+
+
+def makeLegalFilename(path):
+    """
+    Kodi 19: xbmc.makeLegalFilename is deprecated and might be removed in future kodi versions. Please use xbmcvfs.makeLegalFilename instead.
+    @param path: cadena a convertir platform specific
+    @type path: str
+    @rtype: str
+    @return: devuelve la cadena con el path ajustado
+    """
+    if PY3 and xbmc_vfs:
+        if PY3 and isinstance(path, bytes):
+            path = path.decode(fs_encoding)
+        path = xbmcvfs.makeLegalFilename(path)
+        if isinstance(path, bytes):
+            path = path.decode(fs_encoding)
+    
+    elif KODI:
+        path = xbmc.makeLegalFilename(path)
+        
+    return path
+
+
+def validatePath(path):
+    """
+    Kodi 19: xbmc.validatePath is deprecated and might be removed in future kodi versions. Please use xbmcvfs.validatePath instead.
+    @param path: cadena a convertir platform specific
+    @type path: str
+    @rtype: str
+    @return: devuelve la cadena con el path ajustado
+    """
+    if PY3 and xbmc_vfs:
+        if PY3 and isinstance(path, bytes):
+            path = path.decode(fs_encoding)
+        path = xbmcvfs.validatePath(path)
+        if isinstance(path, bytes):
+            path = path.decode(fs_encoding)
+    
+    elif KODI:
+        path = xbmc.validatePath(path)
+        
+    return path
+
+
 def encode(path, _samba=False):
     """
     Codifica una ruta según el sistema operativo que estemos utilizando.
@@ -81,6 +150,9 @@ def encode(path, _samba=False):
     @rtype: str
     @return ruta codificada en juego de caracteres del sistema o utf-8 si samba
     """
+    if path.startswith("special://"):
+        path = translatePath(path)
+    
     if not isinstance(path, unicode):
         path = unicode(path, "utf-8", "ignore")
 
@@ -89,7 +161,7 @@ def encode(path, _samba=False):
     else:
         if fs_encoding:
             path = path.encode(fs_encoding, "ignore")
-    
+            
     if PY3 and isinstance(path, bytes):
         path = path.decode(fs_encoding)
 
