@@ -12,18 +12,7 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 
-try:
-    # Fijamos la ruta a favourites.xml
-    if config.is_xbmc():
-        import xbmc
-
-        FAVOURITES_PATH = xbmc.translatePath("special://profile/favourites.xml")
-    else:
-        FAVOURITES_PATH = os.path.join(config.get_data_path(), "favourites.xml")
-except:
-    import traceback
-
-    logger.error(traceback.format_exc())
+FAVOURITES_PATH = filetools.join(config.get_data_path(), "favourites.xml")
 
 
 def mainlist(item):
@@ -201,10 +190,6 @@ def readbookmark(filepath):
 def check_bookmark(readpath):
     # Crea un listado con las entradas de favoritos
     itemlist = []
-
-    if readpath.startswith("special://") and config.is_xbmc():
-        import xbmc
-        readpath = xbmc.translatePath(readpath)
 
     for fichero in sorted(filetools.listdir(readpath)):
         # Ficheros antiguos (".txt")

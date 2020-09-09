@@ -3205,12 +3205,24 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                 command = ['pm', 'list', 'packages']
                 p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 PM_LIST, error_cmd = p.communicate()
-                if PY3 and isinstance(label_a, bytes):
+                if PY3 and isinstance(PM_LIST, bytes):
                     PM_LIST = PM_LIST.decode()
                 PM_LIST = PM_LIST.replace('\n', ', ')
             except:
-                PM_LIST = ''
-                logger.error(traceback.format_exc())
+                logger.error(command)
+                logger.error(traceback.format_exc(1))
+                try:
+                    command = ['su', '-c', 'pm list packages']
+                    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    PM_LIST, error_cmd = p.communicate()
+                    if PY3 and isinstance(PM_LIST, bytes):
+                        PM_LIST = PM_LIST.decode()
+                    PM_LIST = PM_LIST.replace('\n', ', ')
+                except:
+                    PM_LIST = ''
+                    logger.error(command)
+                    logger.error(traceback.format_exc(1))
+                
             logger.info('PACKAGE LIST: %s' % PM_LIST, force=True)
 
             PREF_PATHS = [ANDROID_STORAGE + '/emulated/0/Android/data']
@@ -3461,7 +3473,7 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
             if browser == 'chromium':
                 browser_call = url
             else:
-                browser_call = filetools.join(xbmc.translatePath(config.get_data_path()), 'browser_call.html')
+                browser_call = filetools.join(config.get_data_path(), 'browser_call.html')
                 filetools.write(browser_call, browser_params[browser][0])
 
             params = [path]

@@ -4,14 +4,14 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://.+.d0stream.com/embed/([a-z0-9]+)",
-        "url": "https://v.d0stream.com/embed/\\1"
+        "pattern": "(https://playtube.ws/embed-\\w+.html)",
+        "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "dostream",
-  "name": "dostream",
+  "id": "playtube",
+  "name": "playtube",
   "settings": [
     {
       "default": false,
@@ -38,5 +38,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s14.postimg.cc/lczc08bsx/dostream.png"
+  "thumbnail": "https://i.postimg.cc/8CVV6DnF/playtube.png"
 }

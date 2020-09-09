@@ -34,8 +34,8 @@ def mainlist(item):
 
     itemlist.append(item.clone(title="Peliculas" , action="lista", url=host + "/category/movies/"))
     itemlist.append(item.clone(title="Videos" , action="lista", url=host + "/category/stream/"))
-    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host))
-    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
+    # itemlist.append(item.clone(title="Canal" , action="catalogo", url=host))
+    # itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
     itemlist.append(item.clone(title="Buscar", action="search"))
 
     autoplay.show_option(item.channel, itemlist)

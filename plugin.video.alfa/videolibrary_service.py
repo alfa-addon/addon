@@ -11,7 +11,7 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 try:
     from platformcode import config
     import xbmc, os, time
-    librerias = xbmc.translatePath(os.path.join(config.get_runtime_path(), 'lib'))
+    librerias = os.path.join(config.get_runtime_path(), 'lib')
     sys.path.append(librerias)
 except:
     import os, time

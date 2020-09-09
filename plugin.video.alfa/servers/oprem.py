@@ -28,8 +28,11 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     logger.info("(page_url='%s')" % page_url)
 
     video_urls = list()
-
-    url, v_type = scrapertools.find_single_match(data, '"file": "([^"]+)",\s+"type": "([^"]+)"')
+    if "const source = '" in data:
+        url = scrapertools.find_single_match(data, "const source = '([^']+)")
+        v_type = "hls"
+    else:
+        url, v_type = scrapertools.find_single_match(data, '"file": "([^"]+)",\s+"type": "([^"]+)"')
     headers = {"referer": page_url}
 
     if v_type == "mp4":
