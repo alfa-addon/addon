@@ -17,7 +17,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     data = httptools.downloadpage(page_url).data
 
-    if "Oops.. Page you're looking is not available" in data:
+    if "File Not Found" in data or "File is no longer available" in data:
         return False, "[Vidia] El fichero no existe o ha sido borrado"
     return True, ""
 

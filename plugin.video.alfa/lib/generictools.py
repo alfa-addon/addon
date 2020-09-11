@@ -1509,13 +1509,13 @@ def find_rar_password(item):
     
     # Si no hay, buscamos en páginas alternativas
     rar_search = [
-                 ['1', 'https://descargas2020.org/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
-                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
-                                ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
-                 ['1', 'https://pctnew.org/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
-                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
-                                ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
                  ['1', 'https://pctreload.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
+                                ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
+                 ['1', 'https://pctfenix.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
+                                'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['descargar\/', ''], ['capitulo-[^0][^\d]', 'None'], \
+                                ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
+                 ['1', 'https://pctmix.com/', [['<input\s*type="text"\s*id="txt_password"\s*' + \
                                 'name="[^"]+"\s*onClick="[^"]+"\s*value="([^"]+)"']], [['capitulo-[^0][^\d]', 'None'], \
                                 ['capitulo-', 'capitulo-0'], ['capitulos-', 'capitulos-0']]], 
                  ['2', 'https://grantorrent.net/', [[]], [['series(?:-\d+)?\/', 'descargar/serie-en-hd/'], \
@@ -1547,9 +1547,14 @@ def find_rar_password(item):
             url_host_act = scrapertools.find_single_match(url_password, '(http.*\:\/\/(?:www.)?\w+\.\w+\/)')
 
             dom_sufix_clone = scrapertools.find_single_match(url_host_act, ':\/\/(.*?)\/*$').replace('.', '-')
-            if 'descargas2020' not in dom_sufix_clone and 'pctnew' not in \
-                        dom_sufix_clone and  'pctreload' not in dom_sufix_clone: dom_sufix_clone = ''
-            url_password = url_password.replace(dom_sufix_org, dom_sufix_clone)
+            if 'descargas2020' not in dom_sufix_clone and 'descargas2020' not in \
+                        dom_sufix_clone and 'pctreload' not in dom_sufix_clone and \
+                        'pctmix' not in dom_sufix_clone: dom_sufix_clone = ''
+            dom_sufix_clone = dom_sufix_clone.replace('pctmix-com', 'pctreload-com')
+            if dom_sufix_org and url_password.endswith(dom_sufix_org):
+                url_password = url_password.replace(dom_sufix_org, dom_sufix_clone)
+            else:
+                url_password += dom_sufix_clone
             dom_sufix_org = dom_sufix_clone
 
             for regex, regex_rep in regex_url_list:
@@ -1711,7 +1716,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                 elif res is None and config.get_setting("capture_thru_browser_path", server="torrent", default=""):
                     size += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
                 elif res or config.get_setting("capture_thru_browser_path", server="torrent", default=""):
-                    if res is not True:
+                    if res and res is not True:
                         config.set_setting("capture_thru_browser_path", res, server="torrent")
                         size += ': [COLOR limegreen][B]Pincha para usar con [I]%s[/I][/B][/COLOR]' % browser
                     elif res and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
@@ -1969,7 +1974,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                     item.action == "get_seasons" or item.action == 'findvideos') and \
                     item.contentType not in contentType:                        #soporta el contenido?
             continue
-        
+
         #Hacemos el cambio de nombre de canal y url, conservando las anteriores como ALT
         item.channel_alt = channel_failed
         if item.channel != channel_py:
@@ -1983,18 +1988,16 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
         channel_host_failed_bis = scrapertools.find_single_match(item.url, \
                             '((?:http.*\:)?\/\/(?:www\.)?[^\?|\/]+)(?:\?|\/)')
         item.url = item.url.replace(channel_host_failed_bis, channel_host_bis)
+
         if item.url.endswith('-org'):
             item.url = item.url.replace(channel_failed, channel)
             item.url = re.sub('\/\w+(-\w+)$', r'/%s\1' % channel, item.url)
-        if channel == 'pctreload':
+        if channel == 'pctreload' or channel == 'pctmix':
             item.url = re.sub('\/\w+-\w+$', '/pctreload-com', item.url)
-            url_alt += [item.url]                                               #salvamos la url para el bucle
-            item.url = re.sub('\/\w+-\w+$', '/pctnew-org', item.url)
-        if channel == 'planetatorrent':
-            item.url = re.sub('\/\w+-\w+$', '', item.url)
-            item.url = re.sub('\/\w+-\w+$', '', item.url)
+            #item.url = re.sub('\/\w+-\w+$', '/pctnew-org', item.url)
         
-        url_alt += [item.url]                                                   #salvamos la url para el bucle
+        item = verify_channel_regex(item, fail_over_list)                       # Procesamos los regex de url que tenga el clone
+        url_alt += [item.url]                                                   # salvamos la url para el bucle
         item.channel_host = channel_host
         #logger.debug(str(url_alt))
         
@@ -2058,7 +2061,8 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
                     if patron2 is not None:
                         data_alt = scrapertools.find_single_match(data_alt, patron2)
                     if not data_alt:                                            #no ha habido suerte, probamos con el siguiente canal
-                        logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " + url + " / Patron: " + patron + " / " + patron_alt)
+                        logger.error("ERROR 02: " + item.action + ": Ha cambiado la estructura de la Web: " \
+                                        + url + " / Patron: " + patron + " / " + patron_alt)
                         web_intervenida(item, data)
                         data = ''
                         continue
@@ -2126,6 +2130,34 @@ def verify_channel(channel):
                 channel = channel_py
             return channel
     
+
+def verify_channel_regex(item, clone_list):
+    
+    try:
+        for active_clone, channel_clone, host_clone, contentType_clone, info_clone in clone_list:
+            if channel_clone != item.category.lower():
+                continue
+            if not info_clone:
+                break
+
+            info_clone = info_clone.split(';')
+            for pareja in info_clone:
+                logger.debug(pareja)
+                par = pareja.split(',')
+                if par[1] == 'null':
+                    par[1] = ''
+                item.url = re.sub(par[0], par[1], item.url)
+            break
+        
+        if item.action == 'findvideos' and 'pctreload' not in item.category.lower():
+            if '/descargar/' not in item.url:
+                item.url = re.sub(r'\.com\/', '.com/descargar/', item.url)
+                item.url = re.sub(r'\.net\/', '.net/descargar/', item.url)
+    except:
+        logger.error(traceback.format_exc(1))
+            
+    return item
+
     
 def web_intervenida(item, data, desactivar=True):
     logger.info()
@@ -3130,7 +3162,7 @@ def regenerate_clones():
     return True
 
                             
-def call_browser(url, download_path=None, lookup=False, strict=False, wait=False):
+def call_browser(url, download_path='', lookup=False, strict=False, wait=False):
     logger.info()
     # Basado en el código de "Chrome Launcher 1.2.0" de Jani (@rasjani) Mikkonen
     # Llama a un browser disponible y le pasa una url
@@ -3144,6 +3176,7 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
     prefs_file = ''
     res = None
     browsers = []
+    SAVED_D_PATH = config.get_setting("capture_thru_browser_path", server="torrent", default="")
 
     try:
         # Establecemos las variables relativas a cada browser
@@ -3290,7 +3323,10 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                 for xpath in xpaths:
                     if xpath not in PATHS:
                         PATHS += [xpath]
-            DOWNLOADS_PATH = [filetools.join(os.getenv('HOME'), 'Descargas'), filetools.join(os.getenv('HOME'), 'Downloads')]
+            DOWNLOADS_PATH = [filetools.join(os.getenv('HOME'), 'Descargas'), 
+                              filetools.join(os.getenv('HOME'), 'descargas'), 
+                              filetools.join(os.getenv('HOME'), 'Downloads'), 
+                              filetools.join(os.getenv('HOME'), 'downloads')]
             
             PREF_PATHS = [os.getenv('HOME')]
             PREF_PATHS += [filetools.join(os.getenv('HOME'), '.config')]
@@ -3319,7 +3355,10 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                 for xpath in xpaths:
                     if xpath not in PATHS:
                         PATHS += [xpath]
-            DOWNLOADS_PATH = [filetools.join(os.getenv('HOME'), 'Descargas'), filetools.join(os.getenv('HOME'), 'Downloads')]
+            DOWNLOADS_PATH = [filetools.join(os.getenv('HOME'), 'Descargas'), 
+                            filetools.join(os.getenv('HOME'), 'descargas'), 
+                            filetools.join(os.getenv('HOME'), 'Downloads'), 
+                            filetools.join(os.getenv('HOME'), 'downloads')]
             
             PREF_PATHS = [os.getenv('HOME')]
             PREF_PATHS += [filetools.join(os.getenv('HOME'), '.config')]
@@ -3369,8 +3408,8 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                 continue
             
             browsers.append((browser, path))
-            logger.info('BROWSER: %s, PATH: %s, PREFS_FILE: %s, LOOKUP: %s, STRICIT: %s, DOWNLOAD_PATH: %s' % \
-                                (browser, path, prefs_file, lookup, strict, download_path), force=True)
+            logger.info('BROWSER: %s, PATH: %s, PREFS_FILE: %s, LOOKUP: %s, STRICIT: %s, DOWNLOAD_PATH: %s, SAVED_D_PATH: %s' % \
+                                (browser, path, prefs_file, lookup, strict, download_path, SAVED_D_PATH), force=True)
             # Cuando se necesita conocer el path de Downloads
             if lookup or download_path:
                 res = True
@@ -3412,10 +3451,15 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                         logger.error('Listado de %s - %s' % (prefs_dir, sorted(filetools.listdir(prefs_dir))))
 
                 # En Android puede haber problemas de permisos.  Si no se encuentra el path, se asume un path por defecto
-                if not res and not download_path and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                if SAVED_D_PATH and not filetools.exists(SAVED_D_PATH):
+                    logger.error('Path de DESCARGAS almacenado NO EXISTE.  Reseteado: %s' % SAVED_D_PATH)
+                    SAVED_D_PATH = ''
+                    config.set_setting("capture_thru_browser_path", SAVED_D_PATH, server="torrent")
+                if not res and not download_path and not SAVED_D_PATH:
                     for folder in DOWNLOADS_PATH:
                         if filetools.exists(folder):
                             res = folder
+                            logger.error('Path de DESCARGAS por defecto: %s - %s' % (folder, sorted(filetools.listdir(folder))))
                             break
 
                 # Si se ha pasado la opción de download_path y difiere del path obtenido, se pasa a otro browser
@@ -3426,10 +3470,10 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                 if not res and strict:
                     continue
                 # Si no se ha obtenido el path y no hay ninguno guardado, se notifica
-                if not res and not config.get_setting("capture_thru_browser_path", server="torrent", default=""):
+                if not res and not SAVED_D_PATH:
                     res = None
                 # Si no se ha obtenido el path pero hay uno guardado, se notifica
-                elif not res:
+                elif not res and SAVED_D_PATH:
                     res = True
                 else:
                     break
@@ -3443,19 +3487,25 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                 browser = browsers[0][0]
                 path = browsers[0][1]
                 # Si hay browser(s) pero no hay res pero se ha suministrado un download path, y existe, se usa éste último con el primer browser
-                if not strict and not res and (download_path or config.get_setting("capture_thru_browser_path", server="torrent", default="")):
+                if not strict and not res and (download_path or SAVED_D_PATH):
                     if download_path and filetools.exists(download_path):
                         res = download_path
-                    elif config.get_setting("capture_thru_browser_path", server="torrent", default="") and \
-                                filetools.exists(config.get_setting("capture_thru_browser_path", server="torrent", default="")):
-                        res = config.get_setting("capture_thru_browser_path", server="torrent", default="")
+                        logger.info('No RES. Se toma Path de entrada: download_path: %s' % download_path, force=True)
+                    elif SAVED_D_PATH and filetools.exists(SAVED_D_PATH):
+                        res = SAVED_D_PATH
+                        logger.info('No RES. Se toma Path Almacenado: SAVED_D_PATH: %s' % SAVED_D_PATH, force=True)
+                elif strict and not res and (download_path or SAVED_D_PATH):
+                    logger.info('Browser no encontrado en mod STRICT.  Disponible: %s' % browser.capitalize(), force=True)
+                    return (False, False)
 
             else:
-                # Si no se ha encontrado ningún browser que cumpla las condidiciones, se vuelve con error
+                # Si no se ha encontrado ningún browser que cumpla las condiciones, se vuelve con error
                 logger.error('No se ha encontrado ningún BROWSER: %s' % str(exePath))
                 logger.error('Listado de APPS INSTALADAS en %s: %s' % (PATHS[0], sorted(filetools.listdir(PATHS[0]))))
                 if len(PATHS) > 1:
                     logger.error('Listado de APPS INSTALADAS en %s: %s' % (PATHS[1], sorted(filetools.listdir(PATHS[1]))))
+                for prefs_dir in PREF_PATHS:
+                    logger.error('Listado de %s - %s' % (prefs_dir, sorted(filetools.listdir(prefs_dir))))
                 return (False, False)
         
         if lookup:
@@ -3482,15 +3532,22 @@ def call_browser(url, download_path=None, lookup=False, strict=False, wait=False
                 params += [option]
             params += [browser_call]
             
-            # Se crea un subproceso con la llama al browser
-            if xbmc.getCondVisibility("system.platform.Windows"):
-                s = subprocess.Popen(params, shell=False, creationflags=creationFlags, close_fds = True)
-            else:
-                s = subprocess.Popen(params, shell=False, close_fds = True)
-            
-            # Si se ha pedido esperar hasta que termine el browser...
-            if wait:
-                s.communicate()
+            try:
+                # Se crea un subproceso con la llama al browser
+                if xbmc.getCondVisibility("system.platform.Windows"):
+                    s = subprocess.Popen(params, shell=False, creationflags=creationFlags, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                else:
+                    s = subprocess.Popen(params, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                
+                # Si se ha pedido esperar hasta que termine el browser...
+                if wait:
+                    s.communicate()
+                    output_cmd, error_cmd = s.communicate()
+                    if error_cmd: res = False
+                    logger.error('Error "%s" en Browser %s, Comando %s' % (str(error_cmd), browser, str(params)))
+            except:
+                res = False
+                logger.error('Error "%s" en Browser %s, Comando %s' % (str(error_cmd), browser, str(params)))
 
     except:
         logger.error(traceback.format_exc())

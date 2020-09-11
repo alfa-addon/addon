@@ -1395,6 +1395,13 @@ def save_download(item, silent=False):
     item.contentAction = item.action
     if item.contentAction in ['get_seasons', 'update_tvshow']:
         item.contentAction = 'episodios'
+        
+    if item.sub_action in ['tvshow', 'season']:
+        item.contentAction = 'episodios'
+        if item.server:
+            del item.server
+        if item.alive:
+            del item.alive
 
     if item.contentType in ["tvshow", "episode", "season"]:
         save_download_tvshow(item, silent=silent)
