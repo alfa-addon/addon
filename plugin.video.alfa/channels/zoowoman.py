@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
+
 from channelselector import get_thumb
 from channels import autoplay
 from channels import filtertools
@@ -18,7 +23,7 @@ IDIOMAS = {'VOSE': 'VOSE',
            'Iberian spanish': 'Cast',
            'VO': 'VO'
         }
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = ['720p', '480p']
 list_servers = ['mega', 'archiveorg', 'wetube', 'peertube']
 

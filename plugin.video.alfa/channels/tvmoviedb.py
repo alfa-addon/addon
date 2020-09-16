@@ -25,17 +25,17 @@ if __perfil__ < 3:
 else:
     color1 = color2 = color3 = color4 = color5 = color6 = ""
 
-langs = ['de', 'fr', 'pt', 'it', 'es-MX', 'ca', 'en', 'es']
+langs = ['de', 'fr', 'pt', 'it', 'es-MX', 'ca', 'en', 'es', 'pt-BR']
 langt = langs[config.get_setting('tmdb', "tvmoviedb")]
 langt_alt = langs[config.get_setting('tmdb_alternativo', "tvmoviedb")]
-langs = ['co', 'cl', 'ar', 'mx', 'en', 'es']
+langs = ['co', 'cl', 'ar', 'mx', 'en', 'es', 'pt-BR']
 langf = langs[config.get_setting('filmaff', "tvmoviedb")]
 langs = ['de-de', 'fr-fr', 'pt-pt', 'it-it', 'es-MX', 'ca-es', 'en', 'es']
 langi = langs[config.get_setting('imdb', "tvmoviedb")]
 adult_mal = config.get_setting('adult_mal', "tvmoviedb")
 mal_ck = "MzE1MDQ2cGQ5N2llYTY4Z2xwbGVzZjFzbTY="
 images_predef = "https://raw.githubusercontent.com/master-1970/resources/master/images/genres/"
-default_fan = filetools.join(config.get_runtime_path(), "fanart1.jpg")
+default_fan = filetools.join(config.get_runtime_path(), "fanart1_2.jpg")
 
 
 def mainlist(item):
@@ -43,11 +43,11 @@ def mainlist(item):
     item.text_color = color1
     itemlist = []
 
-    itemlist.append(item.clone(title=config.get_localized_string(70021), action="", text_color=color2))
-    itemlist.append(item.clone(title=config.get_localized_string(70022), action="tmdb", extra="movie",
-                               thumbnail="%s0/Movies.png" % images_predef))
-    itemlist.append(item.clone(title=config.get_localized_string(70023), action="tmdb", extra="tv",
-                               thumbnail=images_predef + "0/TV%20Series.png"))
+    #itemlist.append(item.clone(title=config.get_localized_string(70021), action="", text_color=color2))
+    #itemlist.append(item.clone(title=config.get_localized_string(70022), action="tmdb", extra="movie",
+    #                           thumbnail="%s0/Movies.png" % images_predef))
+    #itemlist.append(item.clone(title=config.get_localized_string(70023), action="tmdb", extra="tv",
+    #                           thumbnail=images_predef + "0/TV%20Series.png"))
     itemlist.append(item.clone(title=config.get_localized_string(70024), action="", text_color=color2))
     itemlist.append(item.clone(title=config.get_localized_string(70022), action="filmaf", extra="movie",
                                thumbnail="%s0/Movies.png" % images_predef))
@@ -120,13 +120,12 @@ def search_(item):
 
 def busqueda(item):
     logger.info()
-    cat = [item.extra.replace("tv", "serie")]
-    new_item = Item()
-    new_item.extra = item.contentTitle.replace("+", " ")
-    new_item.category = item.extra
+
+    new_item = Item(title=item.contentTitle, text=item.contentTitle.replace("+", " "), mode=item.contentType,
+         infoLabels=item.infoLabels)
 
     from channels import search
-    return search.do_search(new_item, cat)
+    return search.channel_search(new_item)
 
 
 def tmdb(item):

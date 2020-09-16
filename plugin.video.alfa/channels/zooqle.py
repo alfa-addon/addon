@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import re
 import sys
-import urllib
-import urlparse
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urlparse                                 # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                                 # Usamos el nativo de PY2 que es más rápido
+
+import re
 import time
 import random
 
@@ -21,7 +29,7 @@ from channels import autoplay
 
 #IDIOMAS = {'CAST': 'Castellano', 'LAT': 'Latino', 'VO': 'Version Original'}
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
@@ -40,7 +48,7 @@ host_alt = ['https://zooqle.com/', 'https://zooqle1.unblocked.is/', 'https://zoo
 categoria = channel.capitalize()
 __modo_grafico__ = config.get_setting('modo_grafico', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)        #Actualización sólo últ. Temporada?
-timeout = config.get_setting('timeout_downloadpage', channel)
+timeout = 20
 
 
 def mainlist(item):
@@ -136,7 +144,8 @@ def generos(item):
     try:
         response = httptools.downloadpage(item.url, timeout=timeout, ignore_response_code=True)
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-        data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+        if not PY3:
+            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:
         pass
     if not response.sucess:
@@ -254,7 +263,8 @@ def listado(item):
         try:
             response = httptools.downloadpage(next_page_url, timeout=timeout_search, ignore_response_code=True)
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+            if not PY3:
+                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
             pass
         if not response.sucess:
@@ -380,12 +390,9 @@ def listado(item):
             
             title = scrapedtitle
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
-                        .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
-                        .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&atilde;", "a")\
-                        .replace("&etilde;", "e").replace("&itilde;", "i")\
-                        .replace("&otilde;", "o").replace("&utilde;", "u")\
-                        .replace("&ntilde;", "ñ").replace("&#8217;", "'")\
-                        .replace("&amp;", "&")
+                    .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
+                    .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&#8217;", "'")\
+                    .replace("&amp;", "&")
 
             if url in title_lista:                                   #Si ya hemos procesado el título, lo ignoramos
                 continue
@@ -550,7 +557,8 @@ def findvideos(item):
         try:
             response = httptools.downloadpage(next_page_url, timeout=timeout, ignore_response_code=True)
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+            if not PY3:
+                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
             pass
         if not response.sucess:
@@ -780,7 +788,8 @@ def play(item):                                 #Permite preparar la descarga de
     try:
         response = httptools.downloadpage(item.url, timeout=timeout, ignore_response_code=True)
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-        data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+        if not PY3:
+            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:
         pass
     if not response.sucess:
@@ -798,6 +807,7 @@ def play(item):                                 #Permite preparar la descarga de
                         ': ERROR 02: PLAY: No hay enlaces o ha cambiado la estructura de la Web.  ' 
                         + 'Verificar en la Web esto último y reportar el error con el log'))
         return itemlist
+    item.url_control = item.url
     item.url = urlparse.urljoin(host, scrapertools.find_single_match(data, patron))
     
     #buscamos subtítulos en español     ###     CÓDIGO HEREDADO DE RARBG.  LO DEJAMOS POR SI ES NECESARIO EN EL FUTURO
@@ -841,7 +851,7 @@ def play(item):                                 #Permite preparar la descarga de
                 unzipper.extract(subtitle_folder_path, videolibrary_path)
             except:
                 import xbmc
-                xbmc.executebuiltin('XBMC.Extract("%s", "%s")' % (subtitle_folder_path, videolibrary_path))
+                xbmc.executebuiltin('Extract("%s", "%s")' % (subtitle_folder_path, videolibrary_path))
                 time.sleep(1)
             
             # Borrar el zip descargado
@@ -925,7 +935,8 @@ def episodios(item):
     try:
         response = httptools.downloadpage(item.url, timeout=timeout, ignore_response_code=True)
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-        data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+        if not PY3:
+            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:
         pass
     if not response.sucess:
@@ -1117,7 +1128,8 @@ def retry_alt(url, timeout=timeout):                                            
         try:
             response = httptools.downloadpage(url_final, timeout=timeout, count_retries_tot=1, ignore_response_code=True)
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", response.data)
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+            if not PY3:
+                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
             pass
             

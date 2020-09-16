@@ -3,16 +3,42 @@
 # Parámetros de configuración (kodi)
 # ------------------------------------------------------------
 
+#from builtins import str
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import os
 import re
 
 import xbmc
 import xbmcaddon
+import xbmcvfs
 
 PLUGIN_NAME = "alfa"
 
 __settings__ = xbmcaddon.Addon(id="plugin.video." + PLUGIN_NAME)
 __language__ = __settings__.getLocalizedString
+
+
+def translatePath(path):
+    """
+    Kodi 19: xbmc.translatePath is deprecated and might be removed in future kodi versions. Please use xbmcvfs.translatePath instead.
+    @param path: cadena con path special://
+    @type path: str
+    @rtype: str
+    @return: devuelve la cadena con el path real
+    """
+    if PY3:
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
+        path = xbmcvfs.translatePath(path)
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
+    else:
+        path = xbmc.translatePath(path)
+        
+    return path
 
 
 def get_addon_version(with_fix=True):
@@ -54,10 +80,12 @@ def get_platform(full_version=False):
     ret = {}
     codename = {"10": "dharma", "11": "eden", "12": "frodo",
                 "13": "gotham", "14": "helix", "15": "isengard",
-                "16": "jarvis", "17": "krypton", "18": "leia"}
+                "16": "jarvis", "17": "krypton", "18": "leia", 
+                "19": "matrix"}
     code_db = {'10': 'MyVideos37.db', '11': 'MyVideos60.db', '12': 'MyVideos75.db',
                '13': 'MyVideos78.db', '14': 'MyVideos90.db', '15': 'MyVideos93.db',
-               '16': 'MyVideos99.db', '17': 'MyVideos107.db', '18': 'MyVideos116.db'}
+               '16': 'MyVideos99.db', '17': 'MyVideos107.db', '18': 'MyVideos116.db', 
+               '19': 'MyVideos118.db'}
 
     num_version = xbmc.getInfoLabel('System.BuildVersion')
     num_version = re.match("\d+\.\d+", num_version).group(0)
@@ -217,7 +245,7 @@ def get_setting(name, channel="", server="", default=None):
             return default
         # Translate Path if start with "special://"
         if value.startswith("special://") and "videolibrarypath" not in name:
-            value = xbmc.translatePath(value)
+            value = translatePath(value)
 
         # hack para devolver el tipo correspondiente
         if value == "true":
@@ -280,7 +308,7 @@ def set_setting(name, value, channel="", server=""):
 
             __settings__.setSetting(name, value)
 
-        except Exception, ex:
+        except Exception as ex:
             from platformcode import logger
             logger.error("Error al convertir '%s' no se guarda el valor \n%s" % (name, ex))
             return None
@@ -292,7 +320,18 @@ def get_localized_string(code):
     dev = __language__(code)
 
     try:
-        dev = dev.encode("utf-8")
+        # Unicode to utf8
+        if isinstance(dev, unicode):
+            dev = dev.encode("utf8")
+            if PY3: dev = dev.decode("utf8")
+
+        # All encodings to utf8
+        elif not PY3 and isinstance(dev, str):
+            dev = unicode(dev, "utf8", errors="replace").encode("utf8")
+        
+        # Bytes encodings to utf8
+        elif PY3 and isinstance(dev, bytes):
+            dev = dev.decode("utf8")
     except:
         pass
 
@@ -302,7 +341,8 @@ def get_localized_category(categ):
     categories = {'movie': get_localized_string(30122), 'tvshow': get_localized_string(30123),
                   'anime': get_localized_string(30124), 'documentary': get_localized_string(30125),
                   'vos': get_localized_string(30136), 'adult': get_localized_string(30126),
-                  'direct': get_localized_string(30137), 'torrent': get_localized_string(70015)}
+                  'direct': get_localized_string(30137), 'torrent': get_localized_string(70015),
+                  'sport': 'Deportes'}
     return categories[categ] if categ in categories else categ
 
 
@@ -316,19 +356,19 @@ def get_videolibrary_config_path():
 
 
 def get_videolibrary_path():
-    return xbmc.translatePath(get_videolibrary_config_path())
+    return translatePath(get_videolibrary_config_path())
 
 
 def get_temp_file(filename):
-    return xbmc.translatePath(os.path.join("special://temp/", filename))
+    return translatePath(os.path.join("special://temp/", filename))
 
 
 def get_runtime_path():
-    return xbmc.translatePath(__settings__.getAddonInfo('Path'))
+    return translatePath(__settings__.getAddonInfo('Path'))
 
 
 def get_data_path():
-    dev = xbmc.translatePath(__settings__.getAddonInfo('Profile'))
+    dev = translatePath(__settings__.getAddonInfo('Profile'))
 
     # Crea el directorio si no existe
     if not os.path.exists(dev):
@@ -338,11 +378,11 @@ def get_data_path():
 
 
 def get_icon():
-    return xbmc.translatePath(__settings__.getAddonInfo('icon'))
+    return translatePath(__settings__.getAddonInfo('icon'))
 
 
 def get_fanart():
-    return xbmc.translatePath(__settings__.getAddonInfo('fanart'))
+    return translatePath(__settings__.getAddonInfo('fanart'))
 
 
 def get_cookie_data():
@@ -381,7 +421,7 @@ def verify_directories_created():
             saved_path = "special://profile/addon_data/plugin.video." + PLUGIN_NAME + "/" + default
             set_setting(path, saved_path)
 
-        saved_path = xbmc.translatePath(saved_path)
+        saved_path = translatePath(saved_path)
         if not filetools.exists(saved_path):
             logger.debug("Creating %s: %s" % (path, saved_path))
             filetools.mkdir(saved_path)
@@ -406,8 +446,7 @@ def verify_directories_created():
     try:
         from core import scrapertools
         # Buscamos el archivo addon.xml del skin activo
-        skindir = filetools.join(xbmc.translatePath("special://home"), 'addons', xbmc.getSkinDir(),
-                                 'addon.xml')
+        skindir = filetools.join("special://home", 'addons', xbmc.getSkinDir(), 'addon.xml')
         if not os.path.isdir(skindir): return # No hace falta mostrar error en el log si no existe la carpeta
         # Extraemos el nombre de la carpeta de resolución por defecto
         folder = ""

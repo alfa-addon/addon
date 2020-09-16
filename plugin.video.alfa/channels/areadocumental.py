@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import urllib
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urllib                                               # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urllib                                                               # Usamos el nativo de PY2 que es más rápido
+
 import re
 
 from core import httptools
@@ -8,7 +16,7 @@ from core import scrapertools
 from core.item import Item
 from platformcode import config, logger
 
-host = "https://www.area-documental.com"
+host = "https://area-documental.com"
 __perfil__ = int(config.get_setting('perfil', "areadocumental"))
 
 # Fijar perfil de color
@@ -214,11 +222,11 @@ def findvideos(item):
     data = httptools.downloadpage(item.url).data
 
     subs = scrapertools.find_multiple_matches(data, 'file: "(/webvtt[^"]+)".*?label: "([^"]+)"')
-    patron = 'file:\s*"(https://[^/]*/Videos/[^"]+)",\s*label:\s*"([^"]+)"'
-    matches = scrapertools.find_multiple_matches(data, patron)
+    bloque = scrapertools.find_single_match(data, 'title.*?track')
+    patron = 'file:\s*"([^"]+).*?label:\s*"([^"]+)"'
+    matches = scrapertools.find_multiple_matches(bloque, patron)
     for url, quality in matches:
-        url += "|User-Agent=%s&Referer=%s" \
-               % ("Mozilla/5.0 (Windows NT 10.0; WOW64; rv:66.0) Gecko/20100101 Firefox/66.0", item.url)
+        url = httptools.get_url_headers(host + "/" + url, forced=True)
         for url_sub, label in subs:
             url_sub = host + urllib.quote(url_sub)
             title = "Ver video en [[COLOR %s]%s[/COLOR]] Sub %s" % (color3, quality, label)

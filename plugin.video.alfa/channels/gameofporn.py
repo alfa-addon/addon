@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,urllib2,urllib,re
-import os, sys
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+
+import re
+
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
@@ -14,20 +23,20 @@ host = 'http://www.gameofporn.net'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/videos/1"))
-    itemlist.append( Item(channel=item.channel, title="Top" , action="lista", url=host + "/top-videos"))
-    itemlist.append( Item(channel=item.channel, title="New PornStar" , action="categorias", url=host + "/pornstars"))
-    itemlist.append( Item(channel=item.channel, title="Top PornStar" , action="categorias", url=host + "/pornstars?sort=rank"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/videos/1"))
+    itemlist.append(item.clone(title="Top" , action="lista", url=host + "/top-videos"))
+    itemlist.append(item.clone(title="New PornStar" , action="categorias", url=host + "/pornstars"))
+    itemlist.append(item.clone(title="Top PornStar" , action="categorias", url=host + "/pornstars?sort=rank"))
 
-    itemlist.append( Item(channel=item.channel, title="Sitios" , action="categorias", url=host))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Sitios" , action="categorias", url=host))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host + "/search.html?q=%s" % texto
+    item.url = "%s/search.html?q=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -56,15 +65,14 @@ def categorias(item):
             title = scrapedthumbnail
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
+        itemlist.append(item.clone(action="lista", title=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail , plot=plot) )
     if "Sitios" in item.title:
         itemlist.sort(key=lambda x: x.title)
     next_page = scrapertools.find_single_match(data, '<a class="current".*?<a class="" href="([^"]+)">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="categorias", title="Página Siguiente >>", text_color="blue", 
-                              url=next_page) )
+        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -74,8 +82,6 @@ def lista(item):
     data = httptools.downloadpage(item.url).data
     if "videos" in item.url:
         data= scrapertools.find_single_match(data, '<div class="thumblist" style="margin-left:17px;(.*?)alt="Next Page">')
-    else:
-        data=data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
     patron = '<div  class="bx".*?'
     patron += '<a href="([^"]+)".*?'
@@ -85,13 +91,12 @@ def lista(item):
         title = scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
+        itemlist.append(item.clone(action="play", title=title, url=scrapedurl,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = scrapedtitle))
     next_page = scrapertools.find_single_match(data, '<a class="current".*?<a class="" href="([^"]+)">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
-                              url=next_page) )
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 

@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,urllib2,urllib,re
-import os, sys
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+
+import re
+
 from core import scrapertools
 from core import servertools
 from core.item import Item
@@ -13,19 +22,19 @@ host = 'http://mporno.tv'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Novedades" , action="lista", url=host + "/most-recent/"))
-    itemlist.append( Item(channel=item.channel, title="Mejor valoradas" , action="lista", url=host + "/top-rated/"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistas" , action="lista", url=host + "/most-viewed/"))
-    itemlist.append( Item(channel=item.channel, title="Longitud" , action="lista", url=host + "/longest/"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/channels/"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Novedades" , action="lista", url=host + "/most-recent/"))
+    itemlist.append(item.clone(title="Mejor valoradas" , action="lista", url=host + "/top-rated/"))
+    itemlist.append(item.clone(title="Mas vistas" , action="lista", url=host + "/most-viewed/"))
+    itemlist.append(item.clone(title="Longitud" , action="lista", url=host + "/longest/"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/channels/"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = host + "/search/videos/%s/page1.html" % texto
+    texto = texto.replace(" ", "-")
+    item.url = "%s/search/videos/%s/page1.html" % (host, texto)
     try:
         return lista(item)
     except:
@@ -44,8 +53,8 @@ def categorias(item):
     for scrapedurl,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
-        scrapedtitle = scrapedtitle + "  " + cantidad
-        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
+        scrapedtitle = "%s %s" %(scrapedtitle,cantidad)
+        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl,
                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
     return itemlist
 
@@ -62,13 +71,12 @@ def lista(item):
         title = scrapedtitle
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl, thumbnail=thumbnail,
+        itemlist.append(item.clone(action="play", title=title, url=scrapedurl, thumbnail=thumbnail,
                               fanart=thumbnail, plot=plot, server= "directo", contentTitle=contentTitle))
     next_page_url = scrapertools.find_single_match(data,'<a href=\'([^\']+)\' class="next">Next &gt;&gt;</a>')
     if next_page_url!="":
         next_page_url = urlparse.urljoin(item.url,next_page_url)
-        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page_url) )
-        
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page_url) )
     return itemlist
 
 
@@ -76,5 +84,5 @@ def play(item):
     logger.info()
     itemlist = []
     url = item.url.replace("/thumbs/", "/videos/") + ".mp4"
-    itemlist.append( Item(channel=item.channel, action="play", title= item.title, server= "directo", url=url))
+    itemlist.append(item.clone(action="play", title= item.title, server= "directo", url=url))
     return itemlist

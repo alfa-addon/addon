@@ -343,63 +343,48 @@ def search(item, texto):
 
 
 def get_link(data):
-    new_url = scrapertools.find_single_match(data, '(?:IFRAME|iframe) src=(.*?) scrolling')
-    return new_url
+    logger.info()
+
+    b_url = scrapertools.find_single_match(data, '(?:IFRAME|iframe) src=.*?video/([^.]+)')
+    url = b_url[:-2]+'=='
+
+    import base64
+    while True:
+        try:
+            url = base64.b64decode(url)
+            if url.startswith('http'):
+                break
+            if url.endswith('+'):
+                url = url[:-1]
+        except:
+            break
+
+    return url
+
 
 def findvideos(item):
     logger.info()
-
     itemlist = []
-    try:
-        new_url = get_link(get_source(item.url))
-        new_url = get_link(get_source(new_url))
-        video_id = scrapertools.find_single_match(new_url, 'http.*?h=(\w+)')
-        new_url = '%s%s' % (host.replace('.com','.tv'), 'playeropstream/api.php')
-        post = {'h': video_id}
-        post = urllib.urlencode(post)
-        json_data = httptools.downloadpage(new_url, post=post).json
-        url = json_data['url']
-        server = servertools.get_server_from_url(url)
-        title = '%s [%s]' % (server, item.language)
-        itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language=item.language,
-                             server=server, infoLabels=item.infoLabels))
 
-        # Requerido para FilterTools
+    url = get_link(get_source(item.url))
+    if not url:
+        return itemlist
 
-        itemlist = filtertools.get_links(itemlist, item, list_language)
+    itemlist.append(Item(channel=item.channel, title='%s', url=url, action='play',
+                         infoLabels=item.infoLabels))
 
-        # Requerido para AutoPlay
+    servertools.get_servers_itemlist(itemlist, lambda x: x.title % x.server)
 
-        autoplay.start(itemlist, item)
-
-        if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
-            itemlist.append(Item(channel=item.channel,
-                                 title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
-                                 url=item.url,
-                                 action="add_pelicula_to_library",
-                                 extra="findvideos",
-                                 contentTitle=item.contentTitle
-                                 ))
-    except:
-        pass
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos':
+        itemlist.append(Item(channel=item.channel,
+                             title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                             url=item.url,
+                             action="add_pelicula_to_library",
+                             extra="findvideos",
+                             contentTitle=item.contentTitle
+                             ))
 
     return itemlist
-
-
-def play(item):
-    logger.info()
-    itemlist = []
-    from core import servertools
-    itemlist.extend(servertools.find_video_items(data=item.url))
-    for videoitem in itemlist:
-        videoitem.channel = item.channel
-        videoitem.title = item.title
-        videoitem.folder = False
-        videoitem.thumbnail = item.extra
-        videoitem.contentTitle = item.contentTitle
-        videoitem.infoLabels = item.infoLabels
-    return itemlist
-
 
 def newest(categoria):
     logger.info()

@@ -1,6 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import urlparse, re
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.parse as urllib
+else:
+    import urlparse                                                             # Usamos el nativo de PY2 que es más rápido
+    import urllib
+
+import re
 
 from channels import autoplay
 from channels import filtertools
@@ -15,12 +26,12 @@ from channelselector import get_thumb
 servers = {'ul': 'uploaded', 'ok': 'okru', 'hqq': 'netu', 'waaw': 'netu',
           'drive': 'gvideo', 'mp4': 'gvideo', 'api': 'gvideo'}
 IDIOMAS = {'Latino': 'LAT', 'Español': 'CAST', 'SUB': 'VOSE', 'Subtitulado': 'VOSE', 'Inglés':'VO' }
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['directo', 'rapidvideo', 'streamango', 'okru', 'vidoza', 'openload', 'powvideo']
 
 
-CHANNEL_HOST = "http://www.cinetux.to/"
+CHANNEL_HOST = "https://cinetux.nu/"
 
 # Configuracion del canal
 __modo_grafico__ = config.get_setting('modo_grafico', 'cinetux')
@@ -102,6 +113,7 @@ def search(item, texto):
     item.url = CHANNEL_HOST + "?s="
     texto = texto.replace(" ", "+")
     item.url = item.url + texto
+    item.extra = "search"
     try:
         return peliculas(item)
     # Se captura la excepción, para no interrumpir al buscador global si un canal falla
@@ -159,7 +171,10 @@ def peliculas(item):
     itemlist = []
     item.text_color = color2
     data = httptools.downloadpage(item.url).data
-    patron = '(?s)class="(?:result-item|item movies)">.*?<img src="([^"]+)'
+    buscar = "data-lazy-src"
+    if item.extra:
+        buscar = "img src"
+    patron = '(?s)class="(?:result-item|item movies)">.*?%s="([^"]+)' %buscar
     patron += '.*?alt="([^"]+)"'
     patron += '(.*?)'
     patron += 'href="([^"]+)"'
@@ -199,10 +214,12 @@ def destacadas(item):
     item.text_color = color2
     data = httptools.downloadpage(item.url).data
     bloque = scrapertools.find_single_match(data, 'peliculas_destacadas.*?class="letter_home"')
+    
     patron = '(?s)href="([^"]+)".*?'
     patron += 'alt="([^"]+)".*?'
     patron += 'src="([^"]+)'
     matches = scrapertools.find_multiple_matches(bloque, patron)
+    logger.error(matches)
     for scrapedurl, scrapedtitle, scrapedthumbnail in matches:
         #scrapedurl = CHANNEL_HOST + scrapedurl
         url = urlparse.urljoin(CHANNEL_HOST, scrapedurl)
@@ -227,8 +244,9 @@ def generos(item):
     for scrapedurl, scrapedtitle in matches:
         #scrapedurl = CHANNEL_HOST + scrapedurl
         url = urlparse.urljoin(CHANNEL_HOST, scrapedurl)
-        scrapedtitle = scrapertools.htmlclean(scrapedtitle).strip()
-        scrapedtitle = unicode(scrapedtitle, "utf8").capitalize().encode("utf8")
+        scrapedtitle = scrapertools.htmlclean(scrapedtitle).strip().capitalize()
+        if not PY3:
+            scrapedtitle = unicode(scrapedtitle, "utf8").encode("utf8")
         if scrapedtitle == "Erotico" and config.get_setting("adult_mode") == 0:
             continue
         itemlist.append(item.clone(action="peliculas", title=scrapedtitle, url=url))
@@ -245,12 +263,10 @@ def idioma(item):
 
 
 def findvideos(item):
-    import urllib
     logger.info()
     itemlist=[]
     qual_fix = ''
     data = httptools.downloadpage(item.url).data
-    
     patron = "<a class='optn' href='([^']+)'.*?<img alt='([^']+)'.*?<img src='.*?>([^<]+)<.*?<img src='.*?>([^<]+)<"
     matches = scrapertools.find_multiple_matches(data, patron)
     for url, iserver, quality, language in matches:
@@ -278,12 +294,12 @@ def findvideos(item):
         itemlist.append(Item(channel=item.channel, title=iserver, url=url,
                             action='play', quality=quality, text_color="",
                             language=lang, infoLabels=item.infoLabels, server=server))
-
-    patron  = 'tooltipctx.*?data-type="([^"]+).*?'
-    patron += 'data-post="(\d+)".*?'
-    patron += 'data-nume="(\d+).*?'
-    patron += '</noscript> (.*?)</.*?'
-    patron += 'assets/img/(.*?)"/>'
+    data = data.replace('"',"'")
+    patron  = "tooltipctx.*?data-type='([^']+)'.*?"
+    patron += "data-post='(\d+)'.*?"
+    patron += "data-nume='(\d+).*?"
+    patron += "</noscript> (.*?)</.*?"
+    patron += "assets/img/(.*?)'"
     matches = scrapertools.find_multiple_matches(data, patron)
     for tp, pt, nm, language, iserver in matches:
         language = language.strip()
@@ -316,6 +332,7 @@ def findvideos(item):
         itemlist.append(Item(channel=item.channel, title=iserver, url="", action='play',
                              infoLabels=item.infoLabels, language=lang, text_color = "", server=server,
                                  spost=post, quality=quality))
+   
     #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     itemlist.sort(key=lambda it: (it.language, it.title, it.quality))
     tmdb.set_infoLabels(itemlist, __modo_grafico__)
@@ -358,7 +375,7 @@ def get_url(url):
 def play(item):
     if not item.spost:
         new_data = httptools.downloadpage(item.url, headers={'Referer': item.url}).data
-        url = scrapertools.find_single_match(new_data, 'id="link" href="([^"]+)"')
+        url = scrapertools.find_single_match(new_data, 'id="link".*?href="([^"]+)"')
         item.url = get_url(url)
     else:
         post = item.spost

@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "https://gounlimited.to/(?:embed-|)(\\w+)(?:\\.html|/|)",
+        "pattern": "http(?:s|)://gounlimited.to/(?:embed-|)(\\w+)(?:\\.html|/|)",
         "url": "https://gounlimited.to/embed-\\1.html"
       },
       {
@@ -42,5 +42,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s31.postimg.cc/bsiaj2q2j/goo.png"
+  "thumbnail": "https://i.postimg.cc/KvxYc52n/gounlimited.png"
 }

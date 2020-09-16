@@ -3,10 +3,22 @@
 # XBMC Library Tools
 # ------------------------------------------------------------
 
+#from future import standard_library
+#standard_library.install_aliases()
+#from builtins import str
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+    
+if PY3:
+    import urllib.request as urllib2                                # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urllib2                                                  # Usamos el nativo de PY2 que es más rápido
+    
 import os
 import threading
 import time
-import urllib2
+import re
 
 import xbmc
 from core import filetools
@@ -83,8 +95,7 @@ def sync_trakt_addon(path_folder):
                  "special://home/addons/script.trakt/"]
 
         for path in paths:
-            import sys
-            sys.path.append(xbmc.translatePath(path))
+            sys.path.append(filetools.translatePath(path))
 
         # se obtiene las series vistas
         try:
@@ -94,10 +105,9 @@ def sync_trakt_addon(path_folder):
             return
 
         shows = traktapi.getShowsWatched({})
-        shows = shows.items()
+        shows = list(shows.items())
 
         # obtenemos el id de la serie para comparar
-        import re
         _id = re.findall("\[(.*?)\]", path_folder, flags=re.DOTALL)[0]
         logger.debug("el id es %s" % _id)
 
@@ -329,7 +339,7 @@ def mark_season_as_watched_on_kodi(item, value=1):
 def mark_content_as_watched_on_alfa(path):
     from channels import videolibrary
     from core import videolibrarytools
-    import re
+    
     """
         marca toda la serie o película como vista o no vista en la Videoteca de Alfa basado en su estado en la Videoteca de Kodi
         @type str: path
@@ -359,8 +369,8 @@ def mark_content_as_watched_on_alfa(path):
     if "\\" in path:
         path = path.replace("/", "\\")
     head_nfo, item = videolibrarytools.read_nfo(path)                   #Leo el .nfo del contenido
-    if not item:
-        logger.error('.NFO no encontrado: ' + path)
+    if not item or not isinstance(item.library_playcounts, dict):
+        logger.error('.NFO no encontrado o erroneo: ' + path)
         return
 
     if FOLDER_TVSHOWS in path:                                          #Compruebo si es CINE o SERIE
@@ -400,7 +410,11 @@ def mark_content_as_watched_on_alfa(path):
             playCount_final = 0
         elif playCount >= 1:
             playCount_final = 1
-        title_plain = title_plain.decode("utf-8").encode("utf-8")       #Hacemos esto porque si no genera esto: u'title_plain'
+
+        elif not PY3 and isinstance(title_plain, (str, unicode)):
+            title_plain = title_plain.decode("utf-8").encode("utf-8")   #Hacemos esto porque si no genera esto: u'title_plain'
+        elif PY3 and isinstance(var, bytes):
+            title_plain = title_plain.decode('utf-8')
         item.library_playcounts.update({title_plain: playCount_final})  #actualizamos el playCount del .nfo
 
     if item.infoLabels['mediatype'] == "tvshow":                        #Actualizamos los playCounts de temporadas y Serie
@@ -441,7 +455,7 @@ def get_data(payload):
 
             logger.info("get_data: response %s" % response)
             data = jsontools.load(response)
-        except Exception, ex:
+        except Exception as ex:
             template = "An exception of type %s occured. Arguments:\n%r"
             message = template % (type(ex).__name__, ex.args)
             logger.error("error en xbmc_json_rpc_url: %s" % message)
@@ -449,13 +463,13 @@ def get_data(payload):
     else:
         try:
             data = jsontools.load(xbmc.executeJSONRPC(jsontools.dump(payload)))
-        except Exception, ex:
+        except Exception as ex:
             template = "An exception of type %s occured. Arguments:\n%r"
             message = template % (type(ex).__name__, ex.args)
             logger.error("error en xbmc.executeJSONRPC: %s" % message)
             data = ["error"]
 
-    logger.info("data: %s" % data)
+    #logger.info("data: %s" % data)
 
     return data
 
@@ -478,7 +492,9 @@ def update(folder_content=config.get_setting("folder_tvshows"), folder=""):
     }
 
     if folder:
-        folder = str(folder)
+        if folder == '_scan_series':
+            folder = ''
+        folder = filetools.encode(folder)
         videolibrarypath = config.get_videolibrary_config_path()
 
         if folder.endswith('/') or folder.endswith('\\'):
@@ -491,8 +507,8 @@ def update(folder_content=config.get_setting("folder_tvshows"), folder=""):
                 videolibrarypath = videolibrarypath[:-1]
             update_path = videolibrarypath + "/" + folder_content + "/" + folder + "/"
         else:
-            #update_path = filetools.join(videolibrarypath, folder_content, folder) + "/"   # Problemas de encode en "folder"
-            update_path = filetools.join(videolibrarypath, folder_content, ' ').rstrip()
+            update_path = filetools.join(videolibrarypath, folder_content, folder, ' ').rstrip()        #Probelmas de encode en folder
+            #update_path = filetools.join(videolibrarypath, folder_content, ' ').rstrip()
 
         if not scrapertools.find_single_match(update_path, '(^\w+:\/\/)'):
             payload["params"] = {"directory": update_path}
@@ -555,7 +571,7 @@ def set_content(content_type, silent=False):
                 if install:
                     try:
                         # Instalar metadata.themoviedb.org
-                        xbmc.executebuiltin('xbmc.installaddon(metadata.themoviedb.org)', True)
+                        xbmc.executebuiltin('InstallAddon(metadata.themoviedb.org)', True)
                         logger.info("Instalado el Scraper de películas de TheMovieDB")
                     except:
                         pass
@@ -564,7 +580,7 @@ def set_content(content_type, silent=False):
                 if not continuar:
                     msg_text = config.get_localized_string(60047)
             if continuar:
-                xbmc.executebuiltin('xbmc.addon.opensettings(metadata.themoviedb.org)', True)
+                xbmc.executebuiltin('Addon.OpenSettings(metadata.themoviedb.org)', True)
 
         # Instalar Universal Movie Scraper
         elif seleccion == 1:
@@ -578,7 +594,7 @@ def set_content(content_type, silent=False):
 
                 if install:
                     try:
-                        xbmc.executebuiltin('xbmc.installaddon(metadata.universal)', True)
+                        xbmc.executebuiltin('InstallAddon(metadata.universal)', True)
                         if xbmc.getCondVisibility('System.HasAddon(metadata.universal)'):
                             continuar = True
                     except:
@@ -588,7 +604,7 @@ def set_content(content_type, silent=False):
                 if not continuar:
                     msg_text = config.get_localized_string(70097)
             if continuar:
-                xbmc.executebuiltin('xbmc.addon.opensettings(metadata.universal)', True)
+                xbmc.executebuiltin('Addon.OpenSettings(metadata.universal)', True)
 
     else:  # SERIES
         scraper = [config.get_localized_string(70098), config.get_localized_string(70093)]
@@ -606,7 +622,7 @@ def set_content(content_type, silent=False):
                 if install:
                     try:
                         # Instalar metadata.tvdb.com
-                        xbmc.executebuiltin('xbmc.installaddon(metadata.tvdb.com)', True)
+                        xbmc.executebuiltin('InstallAddon(metadata.tvdb.com)', True)
                         logger.info("Instalado el Scraper de series de The TVDB")
                     except:
                         pass
@@ -615,7 +631,7 @@ def set_content(content_type, silent=False):
                 if not continuar:
                     msg_text = config.get_localized_string(70099)
             if continuar:
-                xbmc.executebuiltin('xbmc.addon.opensettings(metadata.tvdb.com)', True)
+                xbmc.executebuiltin('Addon.OpenSettings(metadata.tvdb.com)', True)
 
         # Instalar The Movie Database
         elif seleccion == 1:
@@ -630,7 +646,7 @@ def set_content(content_type, silent=False):
                 if install:
                     try:
                         # Instalar metadata.tvshows.themoviedb.org
-                        xbmc.executebuiltin('xbmc.installaddon(metadata.tvshows.themoviedb.org)', True)
+                        xbmc.executebuiltin('InstallAddon(metadata.tvshows.themoviedb.org)', True)
                         if xbmc.getCondVisibility('System.HasAddon(metadata.tvshows.themoviedb.org)'):
                             continuar = True
                     except:
@@ -640,7 +656,7 @@ def set_content(content_type, silent=False):
                 if not continuar:
                     msg_text = config.get_localized_string(60047)
             if continuar:
-                xbmc.executebuiltin('xbmc.addon.opensettings(metadata.tvshows.themoviedb.org)', True)
+                xbmc.executebuiltin('Addon.OpenSettings(metadata.tvshows.themoviedb.org)', True)
 
     idPath = 0
     idParentPath = 0
@@ -695,12 +711,13 @@ def set_content(content_type, silent=False):
         if content_type == 'movie':
             strContent = 'movies'
             scanRecursive = 2147483647
+            useFolderNames = 1
             if seleccion == -1 or seleccion == 0:
                 strScraper = 'metadata.themoviedb.org'
-                path_settings = xbmc.translatePath("special://profile/addon_data/metadata.themoviedb.org/settings.xml")
+                path_settings = filetools.translatePath("special://profile/addon_data/metadata.themoviedb.org/settings.xml")
             elif seleccion == 1: 
                 strScraper = 'metadata.universal'
-                path_settings = xbmc.translatePath("special://profile/addon_data/metadata.universal/settings.xml")
+                path_settings = filetools.translatePath("special://profile/addon_data/metadata.universal/settings.xml")
             settings_data = filetools.read(path_settings)
             strSettings = ' '.join(settings_data.split()).replace("> <", "><")
             strSettings = strSettings.replace("\"","\'")
@@ -711,12 +728,13 @@ def set_content(content_type, silent=False):
         else:
             strContent = 'tvshows'
             scanRecursive = 0
+            useFolderNames = 0
             if seleccion == -1 or seleccion == 0:
                 strScraper = 'metadata.tvdb.com'
-                path_settings = xbmc.translatePath("special://profile/addon_data/metadata.tvdb.com/settings.xml")
+                path_settings = filetools.translatePath("special://profile/addon_data/metadata.tvdb.com/settings.xml")
             elif seleccion == 1: 
                 strScraper = 'metadata.tvshows.themoviedb.org'
-                path_settings = xbmc.translatePath("special://profile/addon_data/metadata.tvshows.themoviedb.org/settings.xml")
+                path_settings = filetools.translatePath("special://profile/addon_data/metadata.tvshows.themoviedb.org/settings.xml")
             settings_data = filetools.read(path_settings)
             strSettings = ' '.join(settings_data.split()).replace("> <", "><")
             strSettings = strSettings.replace("\"","\'")
@@ -733,9 +751,9 @@ def set_content(content_type, silent=False):
         if nun_records == 0:
             # Insertamos el scraper
             sql = 'INSERT INTO path (idPath, strPath, strContent, strScraper, scanRecursive, useFolderNames, ' \
-                  'strSettings, noUpdate, exclude, idParentPath) VALUES (%s, "%s", "%s", "%s", %s, 0, ' \
+                  'strSettings, noUpdate, exclude, idParentPath) VALUES (%s, "%s", "%s", "%s", %s, %s, ' \
                   '"%s", 0, 0, %s)' % (
-                      idPath, strPath, strContent, strScraper, scanRecursive, strSettings, idParentPath)
+                      idPath, strPath, strContent, strScraper, scanRecursive, useFolderNames, strSettings, idParentPath)
         else:
             if not silent:
                 # Preguntar si queremos configurar themoviedb.org como opcion por defecto
@@ -746,8 +764,8 @@ def set_content(content_type, silent=False):
             if actualizar:
                 # Actualizamos el scraper
                 idPath = records[0][0]
-                sql = 'UPDATE path SET strContent="%s", strScraper="%s", scanRecursive=%s, strSettings="%s" ' \
-                      'WHERE idPath=%s' % (strContent, strScraper, scanRecursive, strSettings, idPath)
+                sql = 'UPDATE path SET strContent="%s", strScraper="%s", scanRecursive=%s, useFolderNames=%s, strSettings="%s" ' \
+                      'WHERE idPath=%s' % (strContent, strScraper, scanRecursive, useFolderNames, strSettings, idPath)
 
         if sql:
             nun_records, records = execute_sql_kodi(sql)
@@ -789,13 +807,13 @@ def execute_sql_kodi(sql):
     # Buscamos el archivo de la BBDD de videos segun la version de kodi
     video_db = config.get_platform(True)['video_db']
     if video_db:
-        file_db = filetools.join(xbmc.translatePath("special://userdata/Database"), video_db)
+        file_db = filetools.join("special://userdata/Database", video_db)
 
     # metodo alternativo para localizar la BBDD
     if not file_db or not filetools.exists(file_db):
         file_db = ""
-        for f in filetools.listdir(xbmc.translatePath("special://userdata/Database")):
-            path_f = filetools.join(xbmc.translatePath("special://userdata/Database"), f)
+        for f in filetools.listdir("special://userdata/Database"):
+            path_f = filetools.join("special://userdata/Database", f)
 
             if filetools.isfile(path_f) and f.lower().startswith('myvideos') and f.lower().endswith('.db'):
                 file_db = path_f
@@ -840,7 +858,7 @@ def add_sources(path):
     logger.info()
     from xml.dom import minidom
 
-    SOURCES_PATH = xbmc.translatePath("special://userdata/sources.xml")
+    SOURCES_PATH = filetools.translatePath("special://userdata/sources.xml")
 
     if os.path.exists(SOURCES_PATH):
         xmldoc = minidom.parse(SOURCES_PATH)
@@ -898,8 +916,12 @@ def add_sources(path):
     nodo_video.appendChild(nodo_source)
 
     # Guardamos los cambios
-    filetools.write(SOURCES_PATH,
+    if not PY3:
+        filetools.write(SOURCES_PATH,
                     '\n'.join([x for x in xmldoc.toprettyxml().encode("utf-8").splitlines() if x.strip()]))
+    else:
+        filetools.write(SOURCES_PATH,
+                    b'\n'.join([x for x in xmldoc.toprettyxml().encode("utf-8").splitlines() if x.strip()]), vfs=False)
 
 
 def ask_set_content(flag, silent=False):

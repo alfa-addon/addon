@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
 import base64
-
+from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from core import httptools
 from core import scrapertools
@@ -11,14 +15,16 @@ from core import tmdb
 from core.item import Item
 from platformcode import config, logger
 from channels import autoplay
+from channels import filtertools
 
 host = "https://www.danimados.com/"
 
-list_servers = ['openload',
+list_servers = [
                 'okru',
                 'rapidvideo'
                 ]
 list_quality = ['default']
+list_idiomas = ['LAT']
 
 
 def mainlist(item):
@@ -26,7 +32,15 @@ def mainlist(item):
     thumb_series = get_thumb("channels_tvshow.png")
     autoplay.init(item.channel, list_servers, list_quality)
     itemlist = list()
-    itemlist.append(Item(channel=item.channel, action="mainpage", title="Categorías", url=host,
+    itemlist.append(Item(channel=item.channel, action="lista", title="Series Clásicas", url=host+"genero/series-clasicas/",
+                         thumbnail=thumb_series))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Series Actuales", url=host+"genero/series-actuales/",
+                         thumbnail=thumb_series))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Anime Clásico", url=host+"genero/anime-clasico/",
+                         thumbnail=thumb_series))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Anime Moderno", url=host+"genero/anime-moderno/",
+                         thumbnail=thumb_series))
+    itemlist.append(Item(channel=item.channel, action="lista", title="Live Action", url=host+"genero/live-action/",
                          thumbnail=thumb_series))
     itemlist.append(Item(channel=item.channel, action="lista", title="Peliculas Animadas", url=host+"peliculas/", extra="Peliculas Animadas",
                          thumbnail=thumb_series))
@@ -116,8 +130,9 @@ def lista(item):
     matches = scrapertools.find_multiple_matches(data_lista, patron)
     for scrapedthumbnail, scrapedtitle, scrapedurl, scrapedyear in matches:
         if item.title=="Peliculas Animadas":
+            thumbnail = re.sub('p/w\d+','p/original',scrapedthumbnail)
             itemlist.append(
-                item.clone(title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail, contentType="movie",
+                item.clone(title=scrapedtitle, url=scrapedurl, thumbnail=thumbnail, contentType="movie",
                        action="findvideos", contentTitle=scrapedtitle, infoLabels={'year':scrapedyear}))
         else:    
             itemlist.append(
@@ -176,7 +191,7 @@ def episodiosxtemporada(item):
     patron = '<divid=episodes (.+?)<\/div><\/div><\/div>'
     data_lista = scrapertools.find_single_match(data,patron)
     contentSerieName = item.title
-    patron_caps  = 'href=(.+?)><imgalt=".+?" '
+    patron_caps  = '<ahref=(.+?) ><imgalt=".+?" '
     patron_caps += 'src=([^"]+)><\/a>.*?'
     patron_caps += 'numerando>([^<]+).*?'
     patron_caps += 'episodiotitle>.*?>([^<]+)<\/a>'
@@ -200,41 +215,70 @@ def episodiosxtemporada(item):
     return itemlist
 
 
+def create_soup(url, referer=None, unescape=False):
+    logger.info()
+
+    if referer:
+        data = httptools.downloadpage(url, headers={'Referer':referer}).data
+    else:
+        data = httptools.downloadpage(url).data
+
+    if unescape:
+        data = scrapertools.unescape(data)
+    soup = BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+
+    return soup
+
 def findvideos(item):
     logger.info()
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    patron  = 'player-option-\d+.*?'
-    patron += 'data-sv=(\w+).*?'
-    patron += 'data-user="([^"]+)'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    headers = {"X-Requested-With":"XMLHttpRequest"}
-    for scrapedserver, scrapeduser in matches:
-        data1 = httptools.downloadpage("https://space.danimados.space/gilberto.php?id=%s&sv=mp4" %scrapeduser).data
-        data1 = re.sub(r"\n|\r|\t|\s{2}|&nbsp;", "", data1)
-        url = base64.b64decode(scrapertools.find_single_match(data1, '<iframe data-source="([^"]+)"'))
-        url1 = devuelve_enlace(url)
-        if url1:
-            itemlist.append(item.clone(title="Ver en %s",url=url1, action="play"))
-    tmdb.set_infoLabels(itemlist)
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentType=="movie" and item.contentChannel!='videolibrary':
-        itemlist.append(
-            item.clone(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]', url=item.url,
-                action="add_pelicula_to_library"))
+    srv_list = {'opru': 'okru', 'neopen-o-gd': 'netutv', 'mp4': 'mp4upload','streamnormal': 'netutv',
+                'cloudvid': 'gounlimited', 'streamonly': 'uqload', 'uploadyour': 'yourupload',
+                'embedfe': 'fembed', 'loadjet': 'jetload', 'loaduq': 'uqload', 'unlimitedgo': 'gounlimited'}
+    itemlist = list()
+    soup = create_soup(item.url).find("ul", class_="new-servers").find_all("li")    
+    infoLabels = item.infoLabels
+    for btn in soup:
+        opt = btn["data-sv"]
+        srv = srv_list.get(opt.lower(), 'directo').capitalize()
+        id_opt = btn["id"]
+        itemlist.append(Item(channel=item.channel, url=item.url, action='play', server=srv, id_opt=id_opt, language='LAT',
+                        title=srv, infoLabels=infoLabels))
+    
+    # Requerido para FilterTools
+
+    itemlist = filtertools.get_links(itemlist, item, list_idiomas, list_quality)
+    itemlist = sorted(itemlist, key=lambda i: i.server)
+    # Requerido para AutoPlay
+
     autoplay.start(itemlist, item)
+
     return itemlist
 
-
 def play(item):
-    item.thumbnail = item.contentThumbnail
-    return [item]
+    logger.info()
+    itemlist = list()
 
+    soup = create_soup(item.url).find("li", class_="dooplay_player_option", id=item.id_opt)
+    scrapeduser = scrapertools.find_single_match(str(soup), 'data-user="([^"]+)"')
+    headers = {"X-Requested-With":"XMLHttpRequest"}
+    data1 = httptools.downloadpage("https://sv.danimados.com/gilberto.php?id=%s&sv=mp4" % scrapeduser).data
+    url = base64.b64decode(scrapertools.find_single_match(data1, '<iframe data-source="([^"]+)"'))
+    url1 = devuelve_enlace(url)
+    if url1:
+        item.url = url1
+        if item.server == "Directo": item.server = ""
+        itemlist = servertools.get_servers_itemlist([item])
+    
+    return itemlist
 
 def devuelve_enlace(url1):
+    logger.info()
     if 'danimados' in url1:
-        url = 'https:' + url1
-        new_data = httptools.downloadpage(url).data
-        new_data = new_data.replace('"',"'")
-        url1 = scrapertools.find_single_match(new_data, "sources.*?file: '([^']+)")
+        url2 = "https:%s" % url1
+        new_data = httptools.downloadpage(url2, follow_redirects=False)
+        url1 = new_data.headers.get("location", "")
+        if not url1:
+            url1 = scrapertools.find_single_match(new_data.data, '<iframe src="([^"]+)"')
+            if not url1:
+                url1 = scrapertools.find_single_match(new_data.data, 'sources: \[{file: "([^"]+)"')
     return url1

@@ -8,11 +8,23 @@
         "url": "http://netu.tv/watch_video.php?v=\\2"
       },
       {
+        "pattern": "https://waaws.tk/player/embed_player.php?vid=([A-z0-9]+)&autoplay=yes",
+        "url": "http://netu.tv/watch_video.php?v=\\2"
+      },
+      {
         "pattern": "(?:hqq|waaw|netu)(?:\\.tv\\/|\\.watch\\/|\\.php\\?).*?(?:v=|vid=)([A-z0-9]+)",
         "url": "http://netu.tv/watch_video.php?v=\\1"
       },
       {
         "pattern": "(?:hqq|waaw|netu)(?:\\.tv\\/|\\.watch\\/|\\.php\\?).*hash=([A-z0-9]+)",
+        "url": "http://hqq.tv/player/hash.php?hash=\\1"
+      },
+      {
+        "pattern": "https://vidxhot.(?:com|net)/e/([A-z0-9]+)",
+        "url": "http://hqq.tv/player/hash.php?hash=\\1"
+      },
+      {
+        "pattern": "(?:hqq|waaw|netu)(?:\\.tv\\/|\\.watch\\/|\\.php\\?)(e/|f/)([A-z0-9]+)",
         "url": "http://hqq.tv/player/hash.php?hash=\\1"
       }
     ]

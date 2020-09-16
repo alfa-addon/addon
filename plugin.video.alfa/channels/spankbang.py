@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,urllib2,urllib,re
-import os, sys
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+
+import re
+
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
@@ -14,19 +23,19 @@ host = 'https://es.spankbang.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevos", action="lista", url= host + "/new_videos/"))
-    itemlist.append( Item(channel=item.channel, title="Mas valorados", action="lista", url=host + "/trending_videos/"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos", action="lista", url= host + "/most_popular/"))
-    itemlist.append( Item(channel=item.channel, title="Mas largos", action="lista", url= host + "/longest_videos/"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Nuevos", action="lista", url= host + "/new_videos/"))
+    itemlist.append(item.clone(title="Mas valorados", action="lista", url=host + "/trending_videos/"))
+    itemlist.append(item.clone(title="Mas vistos", action="lista", url= host + "/most_popular/"))
+    itemlist.append(item.clone(title="Mas largos", action="lista", url= host + "/longest_videos/"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host + "/s/%s" % texto
+    item.url = "%s/s/%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -47,7 +56,7 @@ def categorias(item):
         scrapedplot = ""
         scrapedurl =  urlparse.urljoin(item.url,scrapedurl)
         scrapedthumbnail =  urlparse.urljoin(item.url,scrapedthumbnail)
-        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle , url=scrapedurl , 
+        itemlist.append(item.clone(action="lista", title=scrapedtitle , url=scrapedurl , 
                               thumbnail=scrapedthumbnail, fanart=scrapedthumbnail, plot=scrapedplot) )
     return itemlist
 
@@ -56,35 +65,26 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<div class="video-item" data-id="\d+">.*?'
+    patron = '<div class="video-item v-i-\d+" data-id="\d+">.*?'
     patron += '<a href="([^"]+)" class="thumb ">.*?'
     patron += 'data-src="([^"]+)" alt="([^"]+)".*?'
-    patron += '<i class="fa fa-clock-o"></i>(.*?)</span>'
+    patron += '<span class="i-len">(\d+m)</span>(.*?)</p>'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,duration in matches:
+    for scrapedurl,scrapedthumbnail,scrapedtitle,duration,quality in matches:
         url = urlparse.urljoin(item.url,scrapedurl)
-        duration = duration.strip()
-        minutos = int(duration)
-        horas=int(minutos/60)
-        minutos-=horas*60
-        if minutos < 10:
-            minutos = "0%s" %minutos
-        if horas == 0:
-            duration = "%s:%s" % (horas,minutos)
-        else:
-            duration = "%s:%s" % (horas,minutos)
-
-        title = "[COLOR yellow]" + duration + " min[/COLOR] " + scrapedtitle
+        title = "[COLOR yellow]%s[/COLOR] %s" % (duration,scrapedtitle)
+        if "i-hd" in quality:
+            quality = scrapertools.find_single_match(quality,'<span class="i-hd">([^<]+)</span>')
+            title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (duration,quality,scrapedtitle)
         thumbnail = scrapedthumbnail
         plot = ""
         year = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=url, thumbnail=thumbnail, 
+        itemlist.append(item.clone(action="play" , title=title , url=url, thumbnail=thumbnail, 
                               fanart=thumbnail, plot=plot, contentTitle=title) )
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)">')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>" , text_color="blue",
-                              url=next_page ) )
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page ) )
     return itemlist
 
 
@@ -94,11 +94,11 @@ def play(item):
     data = httptools.downloadpage(item.url).data
     skey = scrapertools.find_single_match(data,'data-streamkey="([^"]+)"')
     session="523034c1c1fc14aabde7335e4f9d9006b0b1e4984bf919d1381316adef299d1e"
-    post = {"id": skey, "data": 0, "sb_csrf_session": session}
+    post = {"id": skey, "data": 0}
     headers = {'Referer':item.url}
     url ="%s%s" % (host, "/api/videos/stream")
     data = httptools.downloadpage(url, post=post, headers=headers).data
-    patron = '"stream_url_(\w+)":\["([^"]+)"'
+    patron = '"(\d+(?:p|k))":\["([^"]+)"'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for quality,url in matches:
         itemlist.append(['.mp4 %s' %quality, url])

@@ -1789,8 +1789,8 @@ msgid "Delete saved searches"
 msgstr "Suprimeix les cerques desades"
 
 msgctxt "#60420"
-msgid "More Options"
-msgstr "Mes Opccions"
+msgid "More search options"
+msgstr "Més opcions de cerca"
 
 msgctxt "#60421"
 msgid "Channels included in the global search "
@@ -2620,6 +2620,10 @@ msgstr "S'està esperant l'actualització a l'inici de Kodi"
 msgctxt "#60607"
 msgid "When Kodi starts"
 msgstr "En iniciar Kodi"
+
+msgctxt "#60608"
+msgid "Twice a day"
+msgstr "Dues vegades al dia"
 
 msgctxt "#60609"
 msgid "10 sec"

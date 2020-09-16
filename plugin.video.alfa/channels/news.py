@@ -3,6 +3,11 @@
 # Channel for recent videos on several channels
 # ------------------------------------------------------------
 
+#from builtins import str
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import glob
 import os
 import re
@@ -114,6 +119,13 @@ def mainlist(item):
                     thumbnail=thumbnail)
     set_category_context(new_item)
     itemlist.append(new_item)
+    
+    #if list_canales['deportes']:
+    thumbnail = get_thumb("channels_sport.png")
+    new_item = Item(channel=item.channel, action="novedades", extra="deportes", title="Deportes", 
+                    thumbnail=thumbnail)
+    set_category_context(new_item)
+    itemlist.append(new_item)
 
     return itemlist
 
@@ -130,7 +142,7 @@ def get_channels_list():
     logger.info()
 
     list_canales = {'peliculas': [], '4k': [], 'terror': [], 'infantiles': [], 'series': [], 'anime': [],
-                    'castellano': [], 'latino':[], 'torrent':[], 'documentales': []}
+                    'castellano': [], 'latino':[], 'torrent':[], 'documentales': [], 'deportes': []}
     any_active = False
     # Rellenar listas de canales disponibles
     channels_path = os.path.join(config.get_runtime_path(), "channels", '*.json')
@@ -278,13 +290,13 @@ def novedades(item):
                 t.start()
                 threads.append(t)
                 if mode == 'normal':
-                    progreso.update(percentage, "", config.get_localized_string(60520) % channel_title)
+                    progreso.update(percentage, "" + '\n' + config.get_localized_string(60520) % channel_title)
 
             # Modo single Thread
             else:
                 if mode == 'normal':
                     logger.info("Obteniendo novedades de channel_id=" + channel_id)
-                    progreso.update(percentage, "", config.get_localized_string(60520) % channel_title)
+                    progreso.update(percentage, "" + '\n' + config.get_localized_string(60520) % channel_title)
                 get_newest(channel_id, item.extra)
 
         # Modo Multi Thread: esperar q todos los hilos terminen
@@ -298,8 +310,7 @@ def novedades(item):
                 list_pendent_names = [a.getName() for a in pendent]
                 if mode == 'normal':
                     mensaje = config.get_localized_string(30994) % (", ".join(list_pendent_names))
-                    progreso.update(percentage, config.get_localized_string(60521) % (len(threads) - len(pendent), len(threads)),
-                                mensaje)
+                    progreso.update(percentage, config.get_localized_string(60521) % (len(threads) - len(pendent), len(threads)) + '\n' + mensaje + '\n' + ' ' + '\n' + ' ')
                     logger.debug(mensaje)
 
                     if progreso.iscanceled():
@@ -310,7 +321,7 @@ def novedades(item):
                 pendent = [a for a in threads if a.isAlive()]
         if mode == 'normal':
             mensaje = config.get_localized_string(60522) % (len(list_newest), time.time() - start_time)
-            progreso.update(100, mensaje, " ", " ")
+            progreso.update(100, mensaje + '\n' + " " + '\n' + " " + '\n' + " ")
             logger.info(mensaje)
             start_time = time.time()
             # logger.debug(start_time)
@@ -360,7 +371,8 @@ def get_newest(channel_id, categoria):
             modulo = __import__('channels.%s' % channel_id, fromlist=["channels.%s" % channel_id])
         except:
             try:
-                exec "import channels." + channel_id + " as modulo"
+                #exec("import channels." + channel_id + " as modulo")
+                modulo = __import__('channels.%s' % channel_id, fromlist=["channels.%s" % channel_id])
             except:
                 puede = False
 
@@ -412,6 +424,13 @@ def get_title(item):
     title = re.compile("\[/*COLO.*?\]", re.DOTALL).sub("", title)
     title = re.compile("\[/*B\]", re.DOTALL).sub("", title)
     title = re.compile("\[/*I\]", re.DOTALL).sub("", title)
+    
+    if '-Serie-' in item.title:
+        title = '%s -Serie-' % title
+    elif '-Varios-' in item.title:
+        title = '%s -Varios-' % title
+    if '[TERM]' in item.title:
+        title = '%s [TERM]' % title
 
     return title
 
@@ -483,7 +502,7 @@ def group_by_content(list_result_canal):
             dict_contenidos[new_key] = [i]
 
     # Añadimos el contenido encontrado en la lista list_result
-    for v in dict_contenidos.values():
+    for v in list(dict_contenidos.values()):
         title = v[0].title
         if len(v) > 1:
             # Eliminar de la lista de nombres de canales los q esten duplicados
@@ -637,7 +656,7 @@ def cb_custom_button(item, dict_values):
     if value == "":
         value = False
 
-    for v in dict_values.keys():
+    for v in list(dict_values.keys()):
         dict_values[v] = not value
 
     if config.set_setting("custom_button_value_news", not value, item.channel) == True:

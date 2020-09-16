@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,urllib2,urllib,re
-import os, sys
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+
+import re
+
 from core import scrapertools
 from core import servertools
 from core.item import Item
@@ -14,18 +23,18 @@ host = 'http://www.vintagexxxsex.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Top" , action="lista", url=host + "/all-top/1/"))
-    itemlist.append( Item(channel=item.channel, title="Novedades" , action="lista", url=host + "/all-new/1/"))
-    itemlist.append( Item(channel=item.channel, title="Longitud" , action="lista", url=host + "/all-longest/1/"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Top" , action="lista", url=host + "/all-top/1/"))
+    itemlist.append(item.clone(title="Novedades" , action="lista", url=host + "/all-new/1/"))
+    itemlist.append(item.clone(title="Longitud" , action="lista", url=host + "/all-longest/1/"))
+    # itemlist.append(item.clone(title="Categorias" , action="categorias", url=host))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
-    texto = texto.replace(" ", "+")
-    item.url = host + "/?s=%s" % texto
+    texto = texto.replace(" ", "%20")
+    item.url = "%s/en/search/%s/" % (host, texto)
     try:
         return lista(item)
     except:
@@ -39,15 +48,18 @@ def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron  = '<li><a href="([^"]+)"><i class="fa fa-tag"></i>(.*?)</a>'
+    patron  = '<div class="preview">.*?'
+    patron += '<a href="(/en/category/[^"]+)".*?'
+    patron += '<img src="([^"]+)".*?'
+    patron += '<div class="name name-2">([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    scrapertools.printMatches(matches)
-    for scrapedurl,scrapedtitle in matches:
-        scrapedplot = ""
-        scrapedthumbnail = ""
-        scrapedurl = host + scrapedurl
-        itemlist.append( Item(channel=item.channel, action="lista", title=scrapedtitle, url=scrapedurl,
-                              thumbnail=scrapedthumbnail, plot=scrapedplot) )
+    for scrapedurl,scrapedthumbnail,scrapedtitle in matches:
+        plot = ""
+        url ="%s%s" %(host,scrapedurl)
+        if not scrapedthumbnail.startswith("https"):
+            thumbnail= "https:%s" %scrapedthumbnail
+        itemlist.append(item.clone(action="lista", title=scrapedtitle, url=url,
+                              thumbnail=thumbnail, fanart=thumbnail, plot=plot) )
     return itemlist
 
 
@@ -55,25 +67,26 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<div class="th">.*?'
+    data = re.sub(r"\n|\r|\t|&nbsp;|<br>|<br/>", "", data)
+    patron = '<div class="preview">.*?'
     patron += '<a href="([^"]+)".*?'
     patron += '<img src="([^"]+)".*?'
-    patron += '<span class="th_nm">([^"]+)</span>.*?'
-    patron += '<i class="fa fa-clock-o"></i>([^"]+)</span>'
+    patron += '<div class="name">([^<]+)<.*?'
+    patron += '<i class="fa fa-clock-o"></i>([^<]+)<'
     matches = re.compile(patron,re.DOTALL).findall(data)
-    for scrapedurl,scrapedthumbnail,scrapedtitle,time in matches:
-        contentTitle = scrapedtitle
-        title = "[COLOR yellow]" + time + " [/COLOR]" + scrapedtitle
-        scrapedurl = scrapedurl.replace("/up.php?xxx=", "")
-        scrapedurl = host + scrapedurl
-        thumbnail = scrapedthumbnail
+    for scrapedurl,scrapedthumbnail,scrapedtitle,scrapedtime in matches:
+        title = "[COLOR yellow]%s[/COLOR] %s" %(scrapedtime.strip(),scrapedtitle)
+        scrapedurl = scrapedurl.replace("/real.php?tube=", "")
+        scrapedurl = "%s%s" %(host,scrapedurl)
+        if not scrapedthumbnail.startswith("https"):
+            thumbnail= "https:%s" %scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play" , title=title , url=scrapedurl, thumbnail=thumbnail,
-                              fanart=thumbnail, plot=plot, contentTitle=contentTitle))
-    next_page = scrapertools.find_single_match(data,'<li><span class="pg_nm">\d+</span></li>.*?href="([^"]+)"')
+        itemlist.append(item.clone(action="play" , title=title , url=scrapedurl,
+                              thumbnail=thumbnail, fanart=thumbnail, plot=plot))
+    next_page = scrapertools.find_single_match(data,'<li><a href="([^"]+)" target="_blank">NEXT')
     if next_page!="":
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append(item.clone(action="lista", title="Página Siguiente >>", text_color="blue", url=next_page) )
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -82,13 +95,10 @@ def play(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    scrapedurl = scrapertools.find_single_match(data,'<iframe src="([^"]+)"')
-    data = httptools.downloadpage(scrapedurl).data
-    scrapedurl = scrapertools.find_single_match(data,'<source src="([^"]+)"')
-    if scrapedurl == "":
-        scrapedurl = "http:" + scrapertools.find_single_match(data,'<iframe src="([^"]+)"')
-        data = httptools.downloadpage(scrapedurl).data
-        scrapedurl = scrapertools.find_single_match(data,'file: "([^"]+)"')
-    itemlist.append(item.clone(action="play", contentTitle=item.title, url=scrapedurl))
+    txt = scrapertools.find_single_match(data,'src=".*?(aHR0[^"]+)"')
+    import base64
+    url = base64.b64decode(txt)
+    itemlist.append(item.clone(action="play", title = "%s", url=url, contentTitle=item.title))
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 

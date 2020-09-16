@@ -1,6 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import urllib
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
 
 from core import httptools
 from core import scrapertools
@@ -15,7 +24,7 @@ def test_video_exists(page_url):
     if "Streaming link:" in data:
         return True, ""
     elif "Unfortunately, the file you want is not available." in data or "Unfortunately, the video you want to see is not available" in data or "This stream doesn" in data\
-         or "Page not found" in data:
+         or "Page not found" in data or "Archivo no encontrado" in data:
         return False, "[Uptobox] El archivo no existe o ha sido borrado"
     wait = scrapertools.find_single_match(data, "You have to wait ([0-9]+) (minute|second)")
     if len(wait) > 0:

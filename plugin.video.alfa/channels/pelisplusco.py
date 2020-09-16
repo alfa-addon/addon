@@ -3,8 +3,17 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urllib                                               # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urllib                                                               # Usamos el nativo de PY2 que es más rápido
+
 import re
-import urllib
+
 from platformcode import logger
 from platformcode import config
 from core import scrapertools
@@ -17,7 +26,7 @@ from core import tmdb
 
 
 IDIOMAS = {'latino':'Lat', 'castellano':'Cast', 'subtitulado':'VOSE'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = ['360p', '480p', '720p', '1080p']
 list_servers = ['mailru', 'openload',  'streamango', 'estream']
 
@@ -70,7 +79,7 @@ def movie_menu(item):
 
     itemlist.append(item.clone(title="Buscar",
                                action="search",
-                               url=host + "/suggest/?query=",
+                               url=host + "/suggest/",
                                type="m",
                                seccion='buscar'
                                ))
@@ -82,8 +91,8 @@ def search(item, texto):
     logger.info()
     if not item.type:
         item.type = "m"
-        item.url = host + "/suggest/?query="
-    item.url = item.url + texto
+        item.url = host + "/suggest/"
+    item.query = texto
     if texto != '':
         return sub_search(item)
     else:
@@ -93,28 +102,27 @@ def search(item, texto):
 def sub_search(item):
     logger.info()
     itemlist =[]
-    headers = {'Referer':host, 'X-Requested-With': 'XMLHttpRequest'}
-    dict_data = httptools.downloadpage(item.url, headers=headers).json
-    list =dict_data["data"] [item.type]
+    headers = {'Referer': host, 'X-Requested-With': 'XMLHttpRequest'}
+    dict_data = httptools.downloadpage(item.url, headers=headers, post="query=%s" % item.query).json
+    list = dict_data["data"][item.type]
 
-    if item.type == "m":
-        action = "findvideos"
-    else:
-        action = "seasons"
     for dict in list:
-        itemlist.append(item.clone(channel = item.channel,
-                             action = action,
-                             contentTitle = dict["title"],
-                             show = dict["title"],
-                             infoLabels={"year":dict["release_year"]},
-                             thumbnail = "http://static.pelisfox.tv/static/movie/" + dict["cover"],
-                             title = dict["title"] + " (" + dict["release_year"] + ")",
-                             url = host + dict["slug"]
-                             ))
+        title = re.sub(r" (\([^\)]+\))", "", dict["title"])
+        new_item = Item(channel=item.channel, thumbnail="https://static.noimg.net/movie/" + dict["cover"],
+                        title=title + " (" + dict["release_year"] + ")", url=host + dict["slug"],
+                        infoLabels={"year": dict["release_year"]})
+
+        if item.type == "m":
+            new_item.action = "findvideos"
+            new_item.contentTitle = title
+        else:
+            new_item.action = "seasons"
+            new_item.contentSerieName = title
+        itemlist.append(new_item)
+
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 
-    
 
 def series_menu(item):
 
@@ -130,7 +138,7 @@ def series_menu(item):
 
     itemlist.append(item.clone(title="Buscar",
                                action="search",
-                               url=host + "/suggest/?query=",
+                               url=host + "/suggest/",
                                type="s",
                                seccion='buscar'
                                ))
@@ -314,17 +322,18 @@ def episodios(item):
 
     return itemlist
 
+
 def season_episodes(item):
     logger.info()
     itemlist = []
 
-    full_data = httptools.downloadpage(item.url+'/').data
+    full_data = httptools.downloadpage(item.url).data
     full_data = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", full_data)
 
     season = str(item.infoLabels['season'])
     if int(season) <= 9:
         season = '0'+season
-    data = scrapertools.find_single_match(full_data, '</i>Temporada %s</div>(.*?)(?:down arrow|cuadre_comments)' % season)
+    data = scrapertools.find_single_match(full_data, '</i>Temporada %s</div>(.*?)(?:<div class="footer"|<div class="item-season">)' % season)
     patron = '<a href="([^"]+)" title=".*?i-play"><\/i> (.*?)<\/a>'
     matches = re.compile(patron, re.DOTALL).findall(data)
     infoLabels = item.infoLabels
@@ -387,7 +396,6 @@ def findvideos(item):
     logger.info()
     video_list = []
     CHANNEL_HEADERS.update({'Referer': item.url})
-    
     if item.contentType == 'movie':
         new_url = item.url.replace('/pelicula/', '/player/%s/' % item.contentType)
         new_url = re.sub('/p\d+/', '/', new_url)

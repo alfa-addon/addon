@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
 
 import re
-import urlparse
-import base64
 
+import base64
+from core import jsontools as json
 from core import channeltools
 from core import httptools
 from core import scrapertools
@@ -12,6 +20,9 @@ from core.item import Item
 from platformcode import config, logger
 
 __channel__ = "xms"
+
+#xtheatre XMS contenido NETU
+#cam4 realizado canal separado
 
 host = 'https://xtheatre.org/'
 host1 = 'https://www.cam4.com/'
@@ -72,16 +83,22 @@ def mainlist(item):
 
 def webcamenu(item):
     logger.info()
-    itemlist = [item.clone(title="Trending Cams", action="webcam", text_blod=True, url=host1,
+    all = "https://www.cam4.es/directoryCams?directoryJson=true&online=true&url=true&page=1&orderBy=VIDEO_QUALITY&resultsPerPage=60"
+    url1= "https://www.cam4.es/directoryCams?directoryJson=true&online=true&url=true&gender=%s&broadcastType=%s_group&broadcastType=solo&broadcastType=male_female_group&page=1&orderBy=VIDEO_QUALITY&resultsPerPage=60"
+        # https://www.cam4.es/directoryCams?directoryJson=true&online=true&url=true&gender=male&broadcastType=male_group&broadcastType=solo&broadcastType=male_female_group&page=1&orderBy=VIDEO_QUALITY&resultsPerPage=60
+    url2= "https://www.cam4.es/directoryCams?directoryJson=true&online=true&url=true&broadcastType=male_group&broadcastType=female_group&broadcastType=male_female_group&page=1&orderBy=VIDEO_QUALITY&resultsPerPage=60"
+    url3= "https://www.cam4.es/directoryCams?directoryJson=true&online=true&url=true&gender=shemale&page=1&orderBy=VIDEO_QUALITY&resultsPerPage=60"
+   
+    itemlist = [item.clone(title="Trending Cams", action="webcam", text_blod=True, url=all,
                            viewcontent='movies', viewmode="movie_with_plot"),
                 item.clone(title="Females", action="webcam", text_blod=True,
-                           viewcontent='movies', url=host1 + 'female', viewmode="movie_with_plot"),
+                           viewcontent='movies', url=url1 %('female', 'female'), viewmode="movie_with_plot"),
                 item.clone(title="Males", action="webcam", text_blod=True,
-                           viewcontent='movies', url=host1 + 'male', viewmode="movie_with_plot"),
+                           viewcontent='movies', url=url1 %('male', 'male'), viewmode="movie_with_plot"),
                 item.clone(title="Couples", action="webcam", text_blod=True,
-                           viewcontent='movies', url=host1 + 'couple', viewmode="movie_with_plot"),
+                           viewcontent='movies', url=url2, viewmode="movie_with_plot"),
                 item.clone(title="Trans", action="webcam", text_blod=True, extra="Películas Por año",
-                           viewcontent='movies', url=host1 + 'transgender', viewmode="movie_with_plot")]
+                           viewcontent='movies', url=url3, viewmode="movie_with_plot")]
     return itemlist
 
 
@@ -91,7 +108,10 @@ def peliculas(item):
 
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|#038;", "", data)
-    patron = 'src="([^"]+)" class="attachment-thumb_site.*?'  # img
+    if "category" in item.url:
+            patron = 'title="[^"]+" data-lazy-src="([^"]+)".*?'  # img
+    else:
+        patron = '<img width="\d+" height="\d+" src="([^"]+)".*?'
     patron += '<a href="([^"]+)" title="([^"]+)".*?'          # url, title
     patron += '<div class="right"><p>([^<]+)</p>'             # plot
     matches = re.compile(patron, re.DOTALL).findall(data)
@@ -99,7 +119,7 @@ def peliculas(item):
     for scrapedthumbnail, scrapedurl, scrapedtitle, plot in matches:
         plot = scrapertools.decodeHtmlentities(plot)
 
-        itemlist.append(item.clone(channel=__channel__, action="play", title=scrapedtitle.capitalize(),
+        itemlist.append(item.clone(channel=__channel__, action="findvideos", title=scrapedtitle.capitalize(),
                                    url=scrapedurl, thumbnail=scrapedthumbnail, infoLabels={"plot": plot},
                                    fanart=scrapedthumbnail,viewmode="movie_with_plot",
                                    folder=True, contentTitle=scrapedtitle))
@@ -115,32 +135,32 @@ def peliculas(item):
     return itemlist
 
 
+
+
+
 def webcam(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|&nbsp;|<br>|#038;", "", data)
-    patron = '<div class="profileBox">.*?<a href="/([^"]+)".*?'  # url
-    patron += 'data-hls-preview-url="([^"]+)">.*?'               # video_url
-    patron += 'data-username="([^"]+)".*?'                       # username
-    patron += 'title="([^"]+)".*?'                               # title
-    patron += 'data-profile="([^"]+)"'                        # img
-    matches = re.compile(patron, re.DOTALL).findall(data)
-
-    for scrapedurl, video_url, username, scrapedtitle, scrapedthumbnail in matches:
-        scrapedtitle = scrapedtitle.replace(' Chat gratis con webcam.', '')
-
-        itemlist.append(item.clone(channel=__channel__, action="play", title=username,
-                                   url=video_url, thumbnail=scrapedthumbnail, fanart=scrapedthumbnail,
-                                   viewmode="movie_with_plot", folder=True, contentTitle=scrapedtitle))
+    JSONData = json.load(data)
+    for Video in  JSONData["users"]:
+        title = Video["username"]
+        pais = Video["countryCode"]
+        thumbnail = Video["snapshotImageLink"]
+        video_url = Video["hlsPreviewUrl"]
+        title =  "%s (%s)" % (title,pais)
+        itemlist.append(item.clone(channel=__channel__, action="play", title=title,
+                                   url=video_url, thumbnail=thumbnail, fanart=thumbnail,
+                                   viewmode="movie_with_plot", folder=True, contentTitle=title))
     # Extrae el paginador
     paginacion = scrapertools.find_single_match(data, '<span id="pagerSpan">\d+</span> <a href="([^"]+)"')
     paginacion = urlparse.urljoin(item.url, paginacion)
 
-    if paginacion:
-        itemlist.append(Item(channel=__channel__, action="webcam",
-                             thumbnail=thumbnail % 'rarrow',
-                             title="\xc2\xbb Siguiente \xc2\xbb", url=paginacion))
+    # if paginacion:
+        # itemlist.append(Item(channel=__channel__, action="webcam",
+                             # thumbnail=thumbnail % 'rarrow',
+                             # title="\xc2\xbb Siguiente \xc2\xbb", url=paginacion))
 
     return itemlist
 
@@ -208,21 +228,24 @@ def sub_search(item):
     return itemlist
 
 
-def play(item):
+def findvideos(item):
     itemlist = []
     if "playlist.m3u8" in item.url:
         url = item.url
+        itemlist.append(item.clone(action="play", title= "%s", url=url))
     else:
         data = httptools.downloadpage(item.url).data
         data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)
-        patron = 'src="([^"]+)" allowfullscreen="true">'
+        data = scrapertools.find_single_match(data, '<div class="video-embed">(.*?)<div id="video-rate">')
+        patron = 'src="([^"]+)"'
         matches = scrapertools.find_multiple_matches(data, patron)
         for url in matches:
             if "strdef" in url: 
                 url = decode_url(url)
                 if "strdef" in url:
                     url = httptools.downloadpage(url).url
-    itemlist.append(item.clone(action="play", title= "%s", url=url))
+            if not "/player/embed_player.php?vid=" in url: #netu
+                itemlist.append(item.clone(action="play", title= "%s", url=url))
     itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())
     return itemlist
 
@@ -242,5 +265,4 @@ def decode_url(txt):
         else:
             rep = False
     url = scrapertools.find_single_match(b64_url, '<iframe src="([^"]+)"')
-    logger.debug (url)
     return url

@@ -3,8 +3,16 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urllib                                               # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urllib                                                               # Usamos el nativo de PY2 que es más rápido
+
 import re
-import urllib
 
 from core import httptools
 from core import scrapertools
@@ -23,7 +31,7 @@ __comprueba_enlaces__ = config.get_setting('comprueba_enlaces', 'animespace')
 __comprueba_enlaces_num__ = config.get_setting('comprueba_enlaces_num', 'animespace')
 
 IDIOMAS = {'VOSE': 'VOSE', 'Latino':'LAT', 'Castellano':'CAST'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['directo', 'openload', 'streamango']
 
@@ -70,11 +78,22 @@ def mainlist(item):
                               thumbnail='',
                               url=host + 'categoria/ona'))
 
-
     itemlist.append(Item(channel=item.channel, title="Especiales",
                               action="list_all",
                               thumbnail='',
                               url=host + 'categoria/especial'))
+
+    itemlist.append(Item(channel=item.channel, title="A - Z",
+                         action="section",
+                         thumbnail=get_thumb('alphabet', auto=True),
+                         url=host + 'animes',
+                         mode="letra"))
+
+    itemlist.append(Item(channel=item.channel, title="Generos",
+                         action="section",
+                         thumbnail=get_thumb('genres', auto=True),
+                         url=host + 'animes',
+                         mode="genero"))
 
     itemlist.append(Item(channel=item.channel, title="Buscar",
                                action="search",
@@ -151,6 +170,23 @@ def list_all(item):
     tmdb.set_infoLabels(itemlist, seekTmdb=True)
     return itemlist
 
+
+def section(item):
+
+    itemlist = []
+
+    data = get_source(item.url)
+
+    patron = '<a class="dropdown-item" href="(/%s/[^"]+)">([^<]+)</a>' % item.mode
+
+    matches = re.compile(patron, re.DOTALL).findall(data)
+
+    for url, title in matches:
+        itemlist.append(Item(channel=item.channel, title=title, url=host + url, action="list_all"))
+
+    return itemlist
+
+
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
@@ -226,7 +262,6 @@ def episodios(item):
 
 
 def findvideos(item):
-    import urllib
     logger.info()
 
     itemlist = []

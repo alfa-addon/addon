@@ -9,24 +9,25 @@ from platformcode import logger
 
 
 def test_video_exists(page_url):
-    response = httptools.downloadpage(page_url)
-    if not response.sucess or \
-       "Not Found" in response.data \
-       or "File was deleted" in response.data \
-       or "removed" in response.data \
-       or not "defaultQuality" in response.data \
-       or "is no longer available" in response.data:
-        return False, "[pornhub] El fichero no existe o ha sido borrado"
+    logger.info("(page_url='%s')" % page_url)
+    data = httptools.downloadpage(page_url).data
+    if "has been disabled" in data or "ha sido deshabilitado" in data:
+        return False, "[pornhub] El video ha sido borrado o no existe"
     return True, ""
 
+
 def get_video_url(page_url, user="", password="", video_password=""):
-    logger.info()
+    logger.info("(page_url='%s')" % page_url)
     video_urls = []
     data = httptools.downloadpage(page_url).data
-    videourl = scrapertools.find_multiple_matches(data, '"format":"mp4","quality":"(\d+)","videoUrl":"(.*?)"')
-    scrapertools.printMatches(videourl)
+    data = scrapertools.find_single_match(data, '<div id="vpContentContainer">(.*?)</script>')
+    data = data.replace('" + "', '')
+    videourl = scrapertools.find_multiple_matches(data, 'var quality_(\d+)p=(.*?);')
     for scrapedquality,scrapedurl in videourl:
-        scrapedurl = scrapedurl.replace("\\","")
-        video_urls.append([scrapedquality + "p [pornhub]", scrapedurl])
+        orden = scrapertools.find_multiple_matches(scrapedurl, '\*\/([A-z0-9]+)')
+        url= ""
+        for i in orden:
+            url += scrapertools.find_single_match(data, '%s="([^"]+)"' %i)
+        video_urls.append([scrapedquality + "p [pornhub]", url])
     return video_urls
 

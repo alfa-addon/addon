@@ -3,6 +3,13 @@
 # Localiza las variables de entorno más habituales (kodi)
 # ------------------------------------------------------------
 
+from __future__ import division
+#from builtins import str
+from past.utils import old_div
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import xbmc
 import xbmcaddon
 
@@ -10,12 +17,19 @@ import os
 import subprocess
 import re
 import platform
-import sys
-import ctypes
+try:
+    import ctypes
+except:
+    pass
 import traceback
 
 from core import filetools, scrapertools
 from platformcode import logger, config, platformtools
+
+if PY3:
+    FF = b'\n'
+else:
+    FF = '\n'
 
 
 def get_environment():
@@ -30,20 +44,40 @@ def get_environment():
         
         environment = config.get_platform(full_version=True)
         environment['num_version'] = str(environment['num_version'])
-        environment['python_version'] = str(platform.python_version())
-        
+        environment['python_version'] = '%s (%s, %s)' % (str(platform.python_version()), \
+                    str(sys.api_version), str(platform.python_implementation()))
         environment['os_release'] = str(platform.release())
+        environment['prod_model'] = ''
+        try:
+            import multiprocessing
+            environment['proc_num'] = ' (%sx)' % str(multiprocessing.cpu_count())
+        except:
+            environment['proc_num'] = ''
+        
         if xbmc.getCondVisibility("system.platform.Windows"):
             try:
-                if platform._syscmd_ver()[2]:
+                if platform.platform():
+                    environment['os_release'] = str(platform.platform()).replace('Windows-', '')
+                elif platform._syscmd_ver()[2]:
                     environment['os_release'] = str(platform._syscmd_ver()[2])
+                
+                command = ["wmic", "cpu", "get", "name"]
+                p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=0x08000000)
+                output_cmd, error_cmd = p.communicate()
+                if PY3 and isinstance(output_cmd, bytes):
+                    output_cmd = output_cmd.decode()
+                output_cmd = re.sub(r'\n|\r|\s{2}', '', output_cmd)
+                environment['prod_model'] = str(scrapertools.find_single_match(output_cmd, \
+                                '\w+.*?(?i)(?:Intel\(R\))?(?:\s*Core\(TM\))\s*(.*?CPU.*?)\s*(?:\@|$)'))
             except:
                 pass
-        environment['prod_model'] = ''
+        
         if xbmc.getCondVisibility("system.platform.Android"):
             environment['os_name'] = 'Android'
             try:
-                for label_a in subprocess.check_output('getprop').split('\n'):
+                for label_a in subprocess.check_output('getprop').split(FF):
+                    if PY3 and isinstance(label_a, bytes):
+                        label_a = label_a.decode()
                     if 'build.version.release' in label_a:
                         environment['os_release'] = str(scrapertools.find_single_match(label_a, ':\s*\[(.*?)\]$'))
                     if 'product.model' in label_a:
@@ -58,11 +92,34 @@ def get_environment():
                 except:
                     pass
         
+        elif xbmc.getCondVisibility("system.platform.Linux"):
+            environment['os_name'] = 'Linux'
+            try:
+                for label_a in subprocess.check_output('hostnamectl').split(FF):
+                    if PY3 and isinstance(label_a, bytes):
+                        label_a = label_a.decode()
+                    if 'Operating' in label_a:
+                        environment['os_release'] = str(scrapertools.find_single_match(label_a, 'Operating\s*S\w+:\s*(.*?)\s*$'))
+                        break
+                        
+                for label_a in subprocess.check_output(['cat', '/proc/cpuinfo']).split(FF):
+                    if PY3 and isinstance(label_a, bytes):
+                        label_a = label_a.decode()
+                    if 'model name' in label_a:
+                        environment['prod_model'] = str(scrapertools.find_single_match(label_a, \
+                                'model.*?:\s*(?i)(?:Intel\(R\))?(?:\s*Core\(TM\))\s*(.*?CPU.*?)\s*(?:\@|$)'))
+                        break
+            except:
+                pass
+
         elif xbmc.getCondVisibility("system.platform.Linux.RaspberryPi"):
             environment['os_name'] = 'RaspberryPi'
+        
         else:
             environment['os_name'] = str(platform.system())
 
+        if not environment['os_release']: environment['os_release'] = str(platform.release())
+        if environment['proc_num'] and environment['prod_model']: environment['prod_model'] += environment['proc_num']
         environment['machine'] = str(platform.machine())
         environment['architecture'] = str(sys.maxsize > 2 ** 32 and "64-bit" or "32-bit")
         environment['language'] = str(xbmc.getInfoLabel('System.Language'))
@@ -93,14 +150,14 @@ def get_environment():
                     memoryStatus = MEMORYSTATUS()
                     memoryStatus.dwLength = ctypes.sizeof(MEMORYSTATUS)
                     kernel32.GlobalMemoryStatus(ctypes.byref(memoryStatus))
-                    environment['mem_total'] = str(int(memoryStatus.dwTotalPhys) / (1024**2))
-                    environment['mem_free'] = str(int(memoryStatus.dwAvailPhys) / (1024**2))
+                    environment['mem_total'] = str(old_div(int(memoryStatus.dwTotalPhys), (1024**2)))
+                    environment['mem_free'] = str(old_div(int(memoryStatus.dwAvailPhys), (1024**2)))
 
                 else:
                     with open('/proc/meminfo') as f:
                         meminfo = f.read()
-                    environment['mem_total'] = str(int(re.search(r'MemTotal:\s+(\d+)', meminfo).groups()[0]) / 1024)
-                    environment['mem_free'] = str(int(re.search(r'MemAvailable:\s+(\d+)', meminfo).groups()[0]) / 1024)
+                    environment['mem_total'] = str(old_div(int(re.search(r'MemTotal:\s+(\d+)', meminfo).groups()[0]), 1024))
+                    environment['mem_free'] = str(old_div(int(re.search(r'MemAvailable:\s+(\d+)', meminfo).groups()[0]), 1024))
             except:
                 environment['mem_total'] = ''
                 environment['mem_free'] = ''
@@ -109,13 +166,13 @@ def get_environment():
             environment['kodi_buffer'] = '20'
             environment['kodi_bmode'] = '0'
             environment['kodi_rfactor'] = '4.0'
-            if filetools.exists(filetools.join(xbmc.translatePath("special://userdata"), "advancedsettings.xml")):
-                advancedsettings = filetools.read(filetools.join(xbmc.translatePath("special://userdata"), 
+            if filetools.exists(filetools.join("special://userdata", "advancedsettings.xml")):
+                advancedsettings = filetools.read(filetools.join("special://userdata", 
                                 "advancedsettings.xml")).split('\n')
                 for label_a in advancedsettings:
                     if 'memorysize' in label_a:
-                        environment['kodi_buffer'] = str(int(scrapertools.find_single_match
-                                (label_a, '>(\d+)<\/')) / 1024**2)
+                        environment['kodi_buffer'] = str(old_div(int(scrapertools.find_single_match
+                                (label_a, '>(\d+)<\/')), 1024**2))
                     if 'buffermode' in label_a:
                         environment['kodi_bmode'] = str(scrapertools.find_single_match
                                 (label_a, '>(\d+)<\/'))
@@ -125,7 +182,7 @@ def get_environment():
         except:
             pass
         
-        environment['userdata_path'] = str(xbmc.translatePath(config.get_data_path()))
+        environment['userdata_path'] = str(config.get_data_path())
         try:
             if environment['os_name'].lower() == 'windows':
                 free_bytes = ctypes.c_ulonglong(0)
@@ -144,7 +201,7 @@ def get_environment():
             environment['videolab_series'] = '?'
             environment['videolab_episodios'] = '?'
             environment['videolab_pelis'] = '?'
-            environment['videolab_path'] = str(xbmc.translatePath(config.get_videolibrary_path()))
+            environment['videolab_path'] = str(config.get_videolibrary_path())
             if filetools.exists(filetools.join(environment['videolab_path'], \
                                 config.get_setting("folder_tvshows"))):
                 environment['videolab_series'] = str(len(filetools.listdir(filetools.join(environment['videolab_path'], \
@@ -162,7 +219,7 @@ def get_environment():
         except:
             pass
         try:
-            video_updates = ['No', 'Inicio', 'Una vez', 'Inicio+Una vez']
+            video_updates = ['No', 'Inicio', 'Una vez', 'Inicio+Una vez', 'Dos veces al día']
             environment['videolab_update'] = str(video_updates[config.get_setting("update", "videolibrary")])
         except:
             environment['videolab_update'] = '?'
@@ -190,6 +247,8 @@ def get_environment():
             lib_path = 'Activo'
         else:
             lib_path = 'Inactivo'
+        if config.get_setting("libtorrent_version", server="torrent", default=""):
+            lib_path += '-%s' % config.get_setting("libtorrent_version", server="torrent", default="")
         environment['torrentcli_unrar'] = config.get_setting("unrar_path", server="torrent", default="")
         if environment['torrentcli_unrar']:
             if xbmc.getCondVisibility("system.platform.Android"):
@@ -224,22 +283,24 @@ def get_environment():
             if cliente['Plug_in'] == 'BT':
                 cliente['D_load_Path'] = str(config.get_setting("bt_download_path", server="torrent", default=''))
                 if not cliente['D_load_Path']: continue
+                cliente['D_load_Path'] = filetools.join(cliente['D_load_Path'], 'BT-torrents')
                 cliente['Buffer'] = str(config.get_setting("bt_buffer", server="torrent", default=50))
             elif cliente['Plug_in'] == 'MCT':
                 cliente['D_load_Path'] = str(config.get_setting("mct_download_path", server="torrent", default=''))
                 if not cliente['D_load_Path']: continue
+                cliente['D_load_Path'] = filetools.join(cliente['D_load_Path'], 'MCT-torrent-videos')
                 cliente['Buffer'] = str(config.get_setting("mct_buffer", server="torrent", default=50))
             elif xbmc.getCondVisibility('System.HasAddon("plugin.video.%s")' % cliente['Plug_in']):
                 __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % cliente['Plug_in'])
                 cliente['Plug_in'] = cliente['Plug_in'].capitalize()
                 if cliente['Plug_in'] == 'Torrenter':
-                    cliente['D_load_Path'] = str(xbmc.translatePath(__settings__.getSetting('storage')))
+                    cliente['D_load_Path'] = str(filetools.translatePath(__settings__.getSetting('storage')))
                     if not cliente['D_load_Path']:
-                        cliente['D_load_Path'] = str(filetools.join(xbmc.translatePath("special://home/"), \
+                        cliente['D_load_Path'] = str(filetools.join("special://home/", \
                                                      "cache", "xbmcup", "plugin.video.torrenter", "Torrenter"))
                     cliente['Buffer'] = str(__settings__.getSetting('pre_buffer_bytes'))
                 else:
-                    cliente['D_load_Path'] = str(xbmc.translatePath(__settings__.getSetting('download_path')))
+                    cliente['D_load_Path'] = str(filetools.translatePath(__settings__.getSetting('download_path')))
                     cliente['Buffer'] = str(__settings__.getSetting('buffer_size'))
                     if __settings__.getSetting('download_storage') == '1' and __settings__.getSetting('memory_size'):
                         cliente['Memoria'] = str(__settings__.getSetting('memory_size'))
@@ -266,7 +327,7 @@ def get_environment():
             proxy_channel_bloqued_str = base64.b64decode(config.get_setting('proxy_channel_bloqued')).decode('utf-8')
             proxy_channel_bloqued = dict()
             proxy_channel_bloqued = ast.literal_eval(proxy_channel_bloqued_str)
-            for channel_bloqued, proxy_active in proxy_channel_bloqued.items():
+            for channel_bloqued, proxy_active in list(proxy_channel_bloqued.items()):
                 if proxy_active != 'OFF':
                     environment['proxy_active'] += channel_bloqued + ', '
         except:
@@ -274,7 +335,7 @@ def get_environment():
         if not environment['proxy_active']: environment['proxy_active'] = 'OFF'
         environment['proxy_active'] = environment['proxy_active'].rstrip(', ')
 
-        for root, folders, files in filetools.walk(xbmc.translatePath("special://logpath/")):
+        for root, folders, files in filetools.walk("special://logpath/"):
             for file in files:
                 if file.lower() in ['kodi.log', 'jarvis.log', 'spmc.log', 'cemc.log', \
                                     'mygica.log', 'wonderbox.log', 'leiapp,log', \
@@ -352,9 +413,11 @@ def list_env(environment={}):
     logger.info('Variables de entorno Alfa: ' + environment['addon_version'] + 
                 ' Debug: ' + environment['debug'])
     logger.info("----------------------------------------------")
+    logger.info(os.environ)
+    logger.info("----------------------------------------------")
 
-    logger.info(environment['os_name'] + ' ' + environment['prod_model'] + ' ' + 
-                environment['os_release'] + ' ' + environment['machine'] + ' ' + 
+    logger.info(environment['os_name'] + ' ' + environment['os_release'] + ' ' + 
+                environment['prod_model'] + ' ' + environment['machine'] + ' ' + 
                 environment['architecture'] + ' ' + environment['language'])
     
     logger.info('Kodi ' + environment['num_version'] + ', Vídeo: ' + 
@@ -440,7 +503,7 @@ def paint_env(item, environment={}):
     Muestra los datos especificos de la instalación de [COLOR yellow]Kodi[/COLOR]:
         - Versión de Kodi
         - Base de Datos de Vídeo
-        - Versión de Python
+        - Versión de Python (API, Fuente)
     """
     cpu = """\
     Muestra los datos consumo actual de [COLOR yellow]CPU(s)[/COLOR]
@@ -510,8 +573,8 @@ def paint_env(item, environment={}):
                     action="", plot=cabecera, thumbnail=thumb, folder=False)) 
 
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]%s[/COLOR]' % 
-                    environment['os_name'] + ' ' + environment['prod_model'] + ' ' + 
-                    environment['os_release'] + ' '  + environment['machine'] + ' ' + 
+                    environment['os_name'] + ' ' + environment['os_release'] + ' ' + 
+                    environment['prod_model'] + ' '  + environment['machine'] + ' ' + 
                     environment['architecture'] + ' ' + environment['language'], 
                     action="", plot=plataform, thumbnail=thumb, folder=False))
     

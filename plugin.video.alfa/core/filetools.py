@@ -4,19 +4,33 @@
 # Gestion de archivos con discriminación xbmcvfs/samba/local
 # ------------------------------------------------------------
 
+from __future__ import division
+#from builtins import str
+from builtins import range
+from past.utils import old_div
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import os
 import traceback
-import sys
 
 from core import scrapertools
 from platformcode import platformtools, logger
 
+try:
+    import xbmc
+    KODI = True
+except:
+    KODI = False
+    
 xbmc_vfs = True                                                 # False para desactivar XbmcVFS, True para activar
 if xbmc_vfs:
     try:
         import xbmcvfs
-        reload(sys)                                             ### Workoround.  Revisar en la migración a Python 3
-        sys.setdefaultencoding('utf-8')                         # xbmcvfs degrada el valor de defaultencoding.  Se reestablece
+        if not PY3:
+            reload(sys)                                         ### Workoround.  Revisar en la migración a Python 3
+            sys.setdefaultencoding('utf-8')                     # xbmcvfs degrada el valor de defaultencoding.  Se reestablece
         xbmc_vfs = True
     except:
         xbmc_vfs = False
@@ -30,10 +44,10 @@ if not xbmc_vfs:
         # Python 2.4 No compatible con modulo samba, hay que revisar
 
 # Windows es "mbcs" linux, osx, android es "utf8"
-if os.name == "nt":
+if not PY3 and os.name == "nt":
     fs_encoding = ""
 else:
-    fs_encoding = "utf8"
+    fs_encoding = "utf-8"
 
 
 
@@ -62,6 +76,69 @@ def validate_path(path):
         return unidad + ''.join([c for c in path if c not in chars])
 
 
+def translatePath(path):
+    """
+    Kodi 19: xbmc.translatePath is deprecated and might be removed in future kodi versions. Please use xbmcvfs.translatePath instead.
+    @param path: cadena con path special://
+    @type path: str
+    @rtype: str
+    @return: devuelve la cadena con el path real
+    """
+    if PY3 and xbmc_vfs:
+        if PY3 and isinstance(path, bytes):
+            path = path.decode(fs_encoding)
+        path = xbmcvfs.translatePath(path)
+        if isinstance(path, bytes):
+            path = path.decode(fs_encoding)
+    
+    elif KODI:
+        path = xbmc.translatePath(path)
+        
+    return path
+
+
+def makeLegalFilename(path):
+    """
+    Kodi 19: xbmc.makeLegalFilename is deprecated and might be removed in future kodi versions. Please use xbmcvfs.makeLegalFilename instead.
+    @param path: cadena a convertir platform specific
+    @type path: str
+    @rtype: str
+    @return: devuelve la cadena con el path ajustado
+    """
+    if PY3 and xbmc_vfs:
+        if PY3 and isinstance(path, bytes):
+            path = path.decode(fs_encoding)
+        path = xbmcvfs.makeLegalFilename(path)
+        if isinstance(path, bytes):
+            path = path.decode(fs_encoding)
+    
+    elif KODI:
+        path = xbmc.makeLegalFilename(path)
+        
+    return path
+
+
+def validatePath(path):
+    """
+    Kodi 19: xbmc.validatePath is deprecated and might be removed in future kodi versions. Please use xbmcvfs.validatePath instead.
+    @param path: cadena a convertir platform specific
+    @type path: str
+    @rtype: str
+    @return: devuelve la cadena con el path ajustado
+    """
+    if PY3 and xbmc_vfs:
+        if PY3 and isinstance(path, bytes):
+            path = path.decode(fs_encoding)
+        path = xbmcvfs.validatePath(path)
+        if isinstance(path, bytes):
+            path = path.decode(fs_encoding)
+    
+    elif KODI:
+        path = xbmc.validatePath(path)
+        
+    return path
+
+
 def encode(path, _samba=False):
     """
     Codifica una ruta según el sistema operativo que estemos utilizando.
@@ -73,7 +150,10 @@ def encode(path, _samba=False):
     @rtype: str
     @return ruta codificada en juego de caracteres del sistema o utf-8 si samba
     """
-    if not type(path) == unicode:
+    if path.startswith("special://"):
+        path = translatePath(path)
+    
+    if not isinstance(path, unicode):
         path = unicode(path, "utf-8", "ignore")
 
     if scrapertools.find_single_match(path, '(^\w+:\/\/)') or _samba:
@@ -81,6 +161,9 @@ def encode(path, _samba=False):
     else:
         if fs_encoding:
             path = path.encode(fs_encoding, "ignore")
+            
+    if PY3 and isinstance(path, bytes):
+        path = path.decode(fs_encoding)
 
     return path
 
@@ -94,19 +177,23 @@ def decode(path):
     @rtype: str
     @return: ruta codificado en UTF-8
     """
-    if type(path) == list:
+    if isinstance(path, list):
         for x in range(len(path)):
-            if not type(path[x]) == unicode:
+            if not isinstance(path[x], unicode):
                 path[x] = path[x].decode(fs_encoding, "ignore")
             path[x] = path[x].encode("utf-8", "ignore")
     else:
-        if not type(path) == unicode:
+        if not isinstance(path, unicode):
             path = path.decode(fs_encoding, "ignore")
         path = path.encode("utf-8", "ignore")
+    
+    if PY3 and isinstance(path, bytes):
+        path = path.decode(fs_encoding)
+    
     return path
 
 
-def read(path, linea_inicio=0, total_lineas=None, whence=0, silent=False, vfs=True):
+def read(path, linea_inicio=0, total_lineas=None, whence=0, mode='r', silent=False, vfs=True):
     """
     Lee el contenido de un archivo y devuelve los datos
     @param path: ruta del fichero
@@ -116,28 +203,39 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, silent=False, vfs=Tr
     @param total_lineas: numero maximo de lineas a leer. Si es None o superior al total de lineas se leera el
         fichero hasta el final.
     @type total_lineas: int positivo
-    @rtype: str
+    @rtype: str, bytes, bytesarray
     @return: datos que contiene el fichero
     """
     path = encode(path)
     try:
-        if type(linea_inicio) != int:
+        mode_open = mode.replace('s', '')
+        if not isinstance(linea_inicio, int):
             try:
                 linea_inicio = int(linea_inicio)
             except:
                 logger.error('Read: ERROR de linea_inicio: %s' % str(linea_inicio))
                 linea_inicio = 0
-        if total_lineas != None and type(total_lineas) != int:
+        if total_lineas != None and not isinstance(total_lineas, int):
             try:
                 total_lineas = int(total_lineas)
             except:
                 logger.error('Read: ERROR de total_lineas: %s' % str(total_lineas))
                 total_lineas = None
+        
         if xbmc_vfs and vfs:
+            if 'r' in mode and '+' in mode:
+                mode = mode.replace('r', 'w').replace('+', '')
+                mode_open = mode.replace('r', 'w').replace('+', '')
+                logger.debug('Open MODE cambiado a: %s' % mode)
+            if 'a' in mode:
+                mode = mode.replace('a', 'w').replace('+', '')
+                mode_open = mode.replace('a', 'w').replace('+', '')
+                logger.debug('Open MODE cambiado a: %s' % mode)
+                
             if not exists(path): return False
             f = xbmcvfs.File(path, "rb")
             if linea_inicio > 0:
-                if type(whence) != int:
+                if not isinstance(whence, int):
                     try:
                         whence = int(whence)
                     except:
@@ -146,12 +244,35 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, silent=False, vfs=Tr
                 logger.debug('POSICIÓN de comienzo de lectura, tell(): %s' % f.seek(0, 1))
             if total_lineas == None:
                 total_lineas = 0
-            data = f.read(total_lineas)
-            return "".join(data)
+            if mode in ['r', 'ra']:
+                try:
+                    data = f.read(total_lineas)
+                except Exception as e:
+                    if "codec can't decode" in str(e):
+                        mode = 'rbs'
+                        f.seek(linea_inicio, whence)
+                        logger.error(str(e) + '.  Intentaremos leerlo en "mode=rbs", bytes a string')
+                    else:
+                        raise Exception(e)
+            if mode not in ['r', 'ra']:
+                data = f.readBytes(total_lineas)
+            f.close()
+            if mode in ['r', 'ra']:
+                return "".join(data)
+            elif mode in ['rbs', 'rabs'] and isinstance(data, (bytes, bytearray)):
+                return "".join(chr(x) for x in data)
+            elif mode in ['rb', 'rab'] and isinstance(data, bytearray):
+                return bytes(data)
+            else:
+                return data
+
         elif path.lower().startswith("smb://"):
             f = samba.smb_open(path, "rb")
+        
+        elif PY3 and mode in ['r', 'ra']:
+            f = open(path, mode_open, encoding=fs_encoding)
         else:
-            f = open(path, "rb")
+            f = open(path, mode_open)
 
         data = []
         for x, line in enumerate(f):
@@ -160,40 +281,76 @@ def read(path, linea_inicio=0, total_lineas=None, whence=0, silent=False, vfs=Tr
             data.append(line)
         f.close()
     except:
+        logger.error("ERROR al leer el archivo: %s" % path)
         if not silent:
-            logger.error("ERROR al leer el archivo: %s" % path)
             logger.error(traceback.format_exc())
+        try:
+            f.close()
+        except:
+            pass
         return False
 
     else:
-        return "".join(data)
+        if not PY3 or mode in ['r', 'ra']:
+            return "".join(data)
+        elif mode in ['rbs', 'rabs'] and isinstance(data, (bytes, bytearray)):
+            return "".join(chr(x) for x in data)
+        else:
+            return b"".join(data)
 
 
-def write(path, data, silent=False, vfs=True):
+def write(path, data, mode="wb", silent=False, vfs=True):
     """
     Guarda los datos en un archivo
     @param path: ruta del archivo a guardar
     @type path: str
     @param data: datos a guardar
-    @type data: str
+    @type data: str, bytes, bytesarray
     @rtype: bool
     @return: devuelve True si se ha escrito correctamente o False si ha dado un error
     """
     path = encode(path)
     try:
+        mode_open = mode.replace('s', '')
         if xbmc_vfs and vfs:
-            f = xbmcvfs.File(path, "wb")
+            if 'r' in mode and '+' in mode:
+                mode = mode.replace('r', 'w').replace('+', '')
+                mode_open = mode.replace('r', 'w').replace('+', '')
+                logger.debug('Open MODE cambiado a: %s' % mode)
+            if 'a' in mode:
+                mode = mode.replace('a', 'w').replace('+', '')
+                mode_open = mode.replace('a', 'w').replace('+', '')
+                logger.debug('Open MODE cambiado a: %s' % mode)
+                
+            if mode not in ['w', 'a'] and PY3 and isinstance(data, str):
+                data = bytearray(list(ord(x) for x in data))
+            elif isinstance(data, bytes):
+                data = bytearray(data)
+            f = xbmcvfs.File(path, mode_open)
+            result = f.write(data)
+            f.close()
+            return bool(result)
+        
         elif path.lower().startswith("smb://"):
             f = samba.smb_open(path, "wb")
+        
+        elif PY3 and mode in ['w', 'a']:
+            f = open(path, mode_open, encoding=fs_encoding)
         else:
-            f = open(path, "wb")
+            f = open(path, mode_open)
+        
+        if mode not in ['w', 'a'] and PY3 and isinstance(data, str):
+            data = bytes(list(ord(x) for x in data))
 
         f.write(data)
         f.close()
     except:
         logger.error("ERROR al guardar el archivo: %s" % path)
-        if not silent:
-            logger.error(traceback.format_exc())
+        logger.error(traceback.format_exc())
+        try:
+            f.close()
+        except:
+            pass
         return False
     else:
         return True
@@ -209,6 +366,7 @@ def file_open(path, mode="r", silent=False, vfs=True):
     """
     path = encode(path)
     try:
+        mode = mode.replace('s', '')
         if xbmc_vfs and vfs:
             if 'r' in mode and '+' in mode:
                 mode = mode.replace('r', 'w').replace('+', '')
@@ -217,10 +375,15 @@ def file_open(path, mode="r", silent=False, vfs=True):
                 mode = mode.replace('a', 'w').replace('+', '')
                 logger.debug('Open MODE cambiado a: %s' % mode)
             return xbmcvfs.File(path, mode)
+        
         elif path.lower().startswith("smb://"):
             return samba.smb_open(path, mode)
+        
+        elif PY3 and mode in ['r', 'ra']:
+            return open(path, mode, encoding=fs_encoding)
         else:
             return open(path, mode)
+    
     except:
         logger.error("ERROR al abrir el archivo: %s, %s" % (path, mode))
         if not silent:
@@ -372,7 +535,7 @@ def copy(path, dest, silent=False, vfs=True):
             copiado = 0
             while True:
                 if not silent:
-                    dialogo.update(copiado * 100 / size, basename(path))
+                    dialogo.update(old_div(copiado * 100, size), basename(path))
                 buf = fo.read(1024 * 1024)
                 if not buf:
                     break
@@ -493,7 +656,7 @@ def getsize(path, silent=False, vfs=True):
     path = encode(path)
     try:
         if xbmc_vfs and vfs:
-            if not exists(path): return 0L
+            if not exists(path): return long(0)
             f = xbmcvfs.File(path)
             s = f.size()
             f.close()
@@ -506,7 +669,7 @@ def getsize(path, silent=False, vfs=True):
         logger.error("ERROR al obtener el tamaño: %s" % path)
         if not silent:
             logger.error(traceback.format_exc())
-        return 0L
+        return long(0)
 
 
 def remove(path, silent=False, vfs=True):
@@ -677,7 +840,14 @@ def walk_vfs(top, topdown=True, onerror=None):
         yield top, dirs, nondirs
 
     for name in dirs:
-        new_path = "/".join(top.split("/") + [unicode(name, "utf8")])
+        if isinstance(name, unicode):
+            name = name.encode("utf8")
+            if PY3: name = name.decode("utf8")
+        elif PY3 and isinstance(name, bytes):
+            name = name.decode("utf8")
+        elif not PY3:
+            name = unicode(name, "utf8")
+        new_path = "/".join(top.split("/") + [name])
         for x in walk_vfs(new_path, topdown, onerror):
             yield x
     if not topdown:
@@ -722,9 +892,7 @@ def join(*paths):
 
     for path in paths:
         if path:
-            if xbmc_vfs and scrapertools.find_single_match(paths[0], '(^\w+:\/\/)'):
-                path = encode(path, True)
-            elif xbmc_vfs:
+            if xbmc_vfs:
                 path = encode(path)
             list_path += path.replace("\\", "/").strip("/").split("/")
 

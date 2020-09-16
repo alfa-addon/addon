@@ -1,10 +1,10 @@
 {
   "id": "submityouflicks",
   "name": "Submit Your Flicks",
-  "active": true,
+  "active": false,
   "adult": true,
   "language": ["*"],
-  "banner": "submityouflicks.png",
+  "banner": "https://i.postimg.cc/jw3CTFx7/submityouflicks.png",
   "thumbnail": "submityouflicks.png",
   "categories": [
     "adult"

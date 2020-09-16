@@ -2,6 +2,21 @@
 # -*- Channel Destotal -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
+
+from builtins import map
+from builtins import range
+
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
+
 import re
 from core import tmdb
 from core import httptools
@@ -14,7 +29,7 @@ from platformcode import config, logger
 from channels import filtertools, autoplay
 
 IDIOMAS = {'latino': 'Latino', 'castellano': 'Castellano', 'portugues': 'Portugues'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = ['1080p']
 list_servers = ['gounlimited',
                 'mega',
@@ -22,7 +37,7 @@ list_servers = ['gounlimited',
                 'torrent'
                 ]
 
-host = 'http://www.cinecalidad.to'
+host = 'https://www.cinecalidad.is'
 
 thumbmx = 'http://flags.fmcdn.net/data/flags/normal/mx.png'
 thumbes = 'http://flags.fmcdn.net/data/flags/normal/es.png'
@@ -30,9 +45,9 @@ thumbbr = 'http://flags.fmcdn.net/data/flags/normal/br.png'
 
 current_lang = ''
 
-site_list = ['', 'cinecalidad.to/', 'cinecalidad.to/espana/', 'cinemaqualidade.to/']
+site_list = ['', 'cinecalidad.is/', 'cinecalidad.is/espana/', 'cinemaqualidade.is/']
 site = config.get_setting('filter_site', channel='cinecalidad')
-site_lang = 'http://www.%s' % site_list[site]
+site_lang = 'https://www.%s' % site_list[site]
 
 def mainlist(item):
     logger.info()
@@ -51,19 +66,19 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Latino",
                          action="submenu",
-                         host="http://www.cinecalidad.to/",
+                         host="https://www.cinecalidad.is/",
                          thumbnail=thumbmx))
 
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Castellano",
                          action="submenu",
-                         host="http://www.cinecalidad.to/espana/",
+                         host="https://www.cinecalidad.is/espana/",
                          thumbnail=thumbes))
 
     itemlist.append(Item(channel=item.channel,
                          title="CineCalidad Portugues",
                          action="submenu",
-                         host="http://www.cinemaqualidade.to/",
+                         host="https://www.cinemaqualidade.is/",
                          thumbnail=thumbbr))
 
     itemlist.append(Item(channel=item.channel,
@@ -84,7 +99,7 @@ def submenu(item):
     idioma = 'peliculas'
     idioma2 = "destacada"
     host = item.host
-    if item.host == "http://www.cinemaqualidade.to/":
+    if item.host == "https://www.cinemaqualidade.is/":
         idioma = "filmes"
         idioma2 = "destacado"
     logger.info()
@@ -166,7 +181,10 @@ def list_all(item):
         except:
             continue
         thumb = re.sub(r'(-\d+x\d+.jpg)', '.jpg', elem.img["src"])
-        plot = elem.p.text
+        if elem.p: 
+            plot = elem.p.text
+        else:
+            plot = ''
         itemlist.append(Item(channel=item.channel, title=title, url=url, thumbnail=thumb, action="findvideos",
                              plot=plot, contentTitle=title, infoLabels={'year': year}))
     tmdb.set_infoLabels_itemlist(itemlist, True)
@@ -201,13 +219,14 @@ def genres(item):
 
     itemlist = list()
 
-    soup = create_soup(item.url, unescape=True).find("ul", id="menu-menu")
-
-    for elem in soup.find_all("li"):
+    soup = create_soup(item.url, unescape=True).find("ul")
+    for elem in soup.find_all("li", class_=re.compile("menu-item-object-category")):
         url = elem.a["href"]
         title = elem.a.text
-        if 'http' in url and 'año' not in title:
-            itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
+        if not url.startswith('http'):
+            url = host +url
+        
+        itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
 
     return itemlist
 
@@ -222,7 +241,7 @@ def settingCanal(item):
 def dec(item, dec_value):
     link = []
     val = item.split(' ')
-    link = map(int, val)
+    link = list(map(int, val))
     for i in range(len(link)):
         link[i] = link[i] - int(dec_value)
         real = ''.join(map(chr, link))
@@ -230,31 +249,6 @@ def dec(item, dec_value):
 
 
 def findvideos(item):
-    servidor = {"http://uptobox.com/": "uptobox",
-                "http://userscloud.com/": "userscloud",
-                "https://my.pcloud.com/publink/show?code=": "pcloud",
-                "http://thevideos.tv/": "thevideos",
-                "http://ul.to/": "uploadedto",
-                "http://turbobit.net/": "turbobit",
-                "http://www.cinecalidad.to/protect/v.html?i=": "cinecalidad",
-                "http://www.mediafire.com/download/": "mediafire",
-                "https://www.youtube.com/watch?v=": "youtube",
-                "http://thevideos.tv/embed-": "thevideos",
-                "//www.youtube.com/embed/": "youtube",
-                "http://ok.ru/video/": "okru",
-                "http://ok.ru/videoembed/": "okru",
-                "http://www.cinemaqualidade.com/protect/v.html?i=": "cinemaqualidade.com",
-                "http://usersfiles.com/": "usersfiles",
-                "https://depositfiles.com/files/": "depositfiles",
-                "http://www.nowvideo.sx/video/": "nowvideo",
-                "http://vidbull.com/": "vidbull",
-                "http://filescdn.com/": "filescdn",
-                "https://www.yourupload.com/watch/": "yourupload",
-                "http://www.cinecalidad.to/protect/gdredirect.php?l=": "directo",
-                "https://openload.co/embed/": "openload",
-                "https://streamango.com/embed/f/": "streamango",
-                "https://www.rapidvideo.com/embed/": "rapidvideo",
-                }
 
     logger.info()
     itemlist = []
@@ -266,30 +260,55 @@ def findvideos(item):
         lang = 'castellano'
     elif 'cinecalidad' in item.url:
         lang = 'latino'
-
+    
     data = httptools.downloadpage(item.url).data
     patron = 'target=_blank.*? service=.*? data="(.*?)"><li>(.*?)<\/li>'
     matches = re.compile(patron, re.DOTALL).findall(data)
 
-    server_url = {'YourUpload': 'https://www.yourupload.com/embed/',
-                  'Openload': 'https://openload.co/embed/',
-                  'TVM': 'https://thevideo.me/embed-',
-                  'Streamango': 'https://streamango.com/embed/',
-                  'RapidVideo': 'https://www.rapidvideo.com/embed/',
-                  'Trailer': 'https://www.youtube.com/embed/',
-                  'BitTorrent': '',
-                  'Mega': 'https://mega.nz/#!',
-                  'MediaFire': '',
-                  'Fembed': 'https://www.fembed.com/v/',
-                  'Verystream': 'https://verystream.com/e/',
-                  'Gounlimited': 'https://gounlimited.to/embed-',
-                  'Clipwatching': 'https://clipwatching.com/embed-',
-                  'Vidcloud': 'https://vidcloud.co/embed/'}
+    patronk = '<a href="(/vip/v.php\?i=.*?")'
+    matchesk = re.compile(patronk, re.DOTALL).findall(data)
+
+    server_url = {'yourupload': 'https://www.yourupload.com/embed/%s',
+                  'trailer': 'https://www.youtube.com/embed/%s',
+                  'bittorrent': '',
+                  'mega': 'https://mega.nz/file/%s',
+                  'fembed': 'https://www.fembed.com/v/%s',
+                  'gounlimited': 'https://gounlimited.to/embed-%s.html',
+                  'clipwatching': 'https://clipwatching.com/embed-%s.html',
+                  'vidcloud': 'https://vidcloud.co/embed/%s',
+                  'jetload': 'https://jetload.net/e/%s'}
+    
     dec_value = scrapertools.find_single_match(data, 'String\.fromCharCode\(parseInt\(str\[i\]\)-(\d+)\)')
     torrent_link = scrapertools.find_single_match(data, '<a href=".*?/protect/v\.php\?i=([^"]+)"')
     subs = scrapertools.find_single_match(data, '<a id=subsforlink href=(.*?) ')
+
+    for scrapedurl in matchesk:
+        
+        base_url = host + scrapedurl
+        
+        headers={'Cookie': 'codigovip=100734121;'}
+        protect = httptools.downloadpage(base_url, headers=headers).data
+        
+        url = scrapertools.find_single_match(protect, 'font-size:1.05em"><a href="([^"]+)')
+        server = servertools.get_server_from_url(url)
+
+        title = '(%s)' % server.capitalize()
+        quality = '4K'
+        language = IDIOMAS[lang]
+        if url:
+            new_item = Item(channel=item.channel,
+                            action='play',
+                            title=title,
+                            contentTitle=item.contentTitle,
+                            url=url,
+                            language=language,
+                            thumbnail=item.thumbnail,
+                            quality=quality,
+                            server=server
+                            )
+            itemlist.append(new_item)
+    
     if torrent_link != '':
-        import urllib
         base_url = '%s/protect/v.php' % host
         post = {'i': torrent_link, 'title': item.title}
         post = urllib.urlencode(post)
@@ -316,27 +335,20 @@ def findvideos(item):
 
     for video_cod, server_id in matches:
         thumbnail = item.thumbnail
-        if server_id not in ['MediaFire', 'TVM'] or server.lower() not in duplicados:
+        server = server_id.lower()
+        if server in server_url and server not in duplicados:
             video_id = dec(video_cod, dec_value)
 
-        if server_id in server_url:
-            server = server_id.lower()
-
-            if server_id in ['Gounlimited', 'Clipwatching']:
-                url = server_url[server_id] + video_id + '.html'
-            else:
-                url = server_url[server_id] + video_id
-
-        title = item.contentTitle + ' (%s)' % server
-        quality = '1080p'
-
-        if server_id not in ['MediaFire', 'TVM']:
-
+            url = server_url.get(server, '')
+            
+            title = '(%s)' % server.capitalize()
+            quality = '1080p'
             language = IDIOMAS[lang]
-            if server not in duplicados:
+            if url:
+                url = url % video_id
                 new_item = Item(channel=item.channel,
                                 action='play',
-                                title=title,
+                                title=server.capitalize(),
                                 contentTitle=item.contentTitle,
                                 url=url,
                                 language=language,
@@ -347,6 +359,7 @@ def findvideos(item):
                                 )
                 itemlist.append(new_item)
                 duplicados.append(server)
+
 
     # Requerido para FilterTools
 
@@ -372,7 +385,7 @@ def findvideos(item):
 
 def get_urls(item, link):
     logger.info()
-    url = 'http://www.cinecalidad.to/ccstream/ccstream.php'
+    url = 'http://www.cinecalidad.is/ccstream/ccstream.php'
     headers = dict()
     headers["Referer"] = item.url
     post = 'link=%s' % link
@@ -405,13 +418,13 @@ def newest(categoria):
     item = Item()
     try:
         if categoria in ['peliculas', 'latino']:
-            item.url = 'http://www.cinecalidad.to'
+            item.url = 'http://www.cinecalidad.is'
         elif categoria == 'infantiles':
-            item.url = 'http://www.cinecalidad.to/genero-peliculas/infantil/'
+            item.url = 'http://www.cinecalidad.is/genero-peliculas/infantil/'
         elif categoria == 'terror':
-            item.url = 'http://www.cinecalidad.to/genero-peliculas/terror/'
+            item.url = 'http://www.cinecalidad.is/genero-peliculas/terror/'
         elif categoria == 'castellano':
-            item.url = 'http://www.cinecalidad.to/espana/'
+            item.url = 'http://www.cinecalidad.is/espana/'
         itemlist = list_all(item)
         if itemlist[-1].title == 'Página siguiente >>':
             itemlist.pop()
@@ -437,7 +450,7 @@ def search(item, texto):
         host_list = [site_lang]
     else:
         item.gb_search = True
-        host_list = ['http://www.cinecalidad.to/espana/', 'http://www.cinecalidad.to/']
+        host_list = ['http://www.cinecalidad.is/espana/', 'http://www.cinecalidad.is/']
 
     for host_name in host_list:
         item.url = host_name + '?s=' + texto

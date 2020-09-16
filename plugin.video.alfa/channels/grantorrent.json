@@ -4,9 +4,9 @@
   "active": true,
   "adult": false,
   "language": ["cast", "lat"],
-  "thumbnail": "grantorrent.jpg",
+  "thumbnail": "https://i.postimg.cc/crqnx0Kc/grantorrent.jpg",
   "banner": "grantorrent.png",
-  "fanart": "grantorrent.png",
+  "fanart": "https://i.postimg.cc/jjYFR6dY/grantorrent.png",
   "categories": [
     "torrent",
     "movie",
@@ -27,6 +27,30 @@
       "type": "bool",
       "label": "Buscar información extra (TMDB)",
       "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "pseudo_titulos",
+      "type": "bool",
+      "label": "Desea ver Pseudo títulos de ayuda?",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "auto_download_new",
+      "type": "bool",
+      "label": "Desea que se descarguen automáticamente los nuevos episodios de la Videoteca?",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "auto_download_new_all",
+      "type": "bool",
+      "label": "Incluso si es una Temporada NUEVA?",
+      "default": false,
       "enabled": true,
       "visible": true
     },

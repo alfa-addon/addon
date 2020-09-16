@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,urllib2,urllib,re
-import os, sys
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+
+import re
+
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
@@ -14,20 +23,20 @@ host = 'https://www.xvideos.com'
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host))
-    itemlist.append( Item(channel=item.channel, title="Lo mejor" , action="lista", url=host + "/best/"))
-    itemlist.append( Item(channel=item.channel, title="Pornstar" , action="catalogo", url=host + "/pornstars-index"))
-    itemlist.append( Item(channel=item.channel, title="WebCAM" , action="catalogo", url=host + "/webcam-models-index"))
-    itemlist.append( Item(channel=item.channel, title="Canal" , action="catalogo", url=host + "/channels-index/top"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/tags"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host))
+    itemlist.append(item.clone(title="Lo mejor" , action="lista", url=host + "/best/"))
+    itemlist.append(item.clone(title="Pornstar" , action="catalogo", url=host + "/pornstars-index"))
+    itemlist.append(item.clone(title="WebCAM" , action="catalogo", url=host + "/webcam-models-index"))
+    itemlist.append(item.clone(title="Canal" , action="catalogo", url=host + "/channels-index/top"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/tags"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host + "/?k=%s" % texto
+    item.url = "%s/?k=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -48,8 +57,8 @@ def categorias(item):
         scrapedplot = ""
         scrapedthumbnail = ""
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
-        title = scrapedtitle + " (" + cantidad + ")"
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
+        title = "%s (%s)" % (scrapedtitle, cantidad)
+        itemlist.append(item.clone(action="lista", title=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
     return itemlist
 
@@ -66,16 +75,15 @@ def catalogo(item):
     for scrapedthumbnail,scrapedurl,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         scrapedurl = urlparse.urljoin(host,scrapedurl) + "/videos/new/0"
-        title = scrapedtitle + " (" + cantidad + ")"
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
+        title = "%s (%s)" % (scrapedtitle, cantidad)
+        itemlist.append(item.clone(action="lista", title=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
     next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)" class="no-page next-page">Siguiente')
     if next_page=="":
         next_page = scrapertools.find_single_match(data, '<li><a class="active".*?<a href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="catalogo", title="Página Siguiente >>", text_color="blue", 
-                              url=next_page) )
+        itemlist.append(item.clone(action="catalogo", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -91,23 +99,23 @@ def lista(item):
     patron += '<span class="duration">([^<]+)</span>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedthumbnail,quality,scrapedtitle,scrapedtime in matches:
-        title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
-        scrapedurl = "/video" + scrapedurl + "/"
+        title = "[COLOR yellow]%s[/COLOR] %s" % (scrapedtime, scrapedtitle)
+        scrapedurl = "/video%s/" % scrapedurl
         scrapedurl = urlparse.urljoin(item.url,scrapedurl)
         thumbnail = scrapedthumbnail.replace("THUMBNUM" , "10")
         quality = scrapertools.find_single_match(quality, 'mark">([^<]+)</span>')
         if quality:
-            title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + "[COLOR red]" + quality + "[/COLOR] " + scrapedtitle
+            title = "[COLOR yellow]%s[/COLOR] [COLOR red]%s[/COLOR] %s" % (scrapedtime, quality, scrapedtitle)
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
+        itemlist.append(item.clone(action="play", title=title, url=scrapedurl,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<li><a href="([^"]+)" class="no-page next-page">Siguiente')
-    if "profile" in item.url:
-        next_page = scrapertools.find_single_match(data, '<li><a class="active" href="">(\d+)</a></li><li><a href="#')
+    if next_page=="":
+        next_page = scrapertools.find_single_match(data, '<li><a class="active".*?<a href="([^"]+)"')
+    next_page = next_page.replace("#", "")
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
-                              url=next_page) )
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 

@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from builtins import map
+#from builtins import str
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 from threading import Timer
 
 import xbmc
@@ -62,7 +67,7 @@ def set_key():
         file_xml = "special://profile/keymaps/alfa.xml"
         data = '<keymap><global><keyboard><key id="%s">' % new_key + 'runplugin(plugin://' \
                                                                      'plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAia2V5bWFwIiwNCiAgICAib3BlbiI6IHRydWUNCn0=)</key></keyboard></global></keymap>'
-        filetools.write(xbmc.translatePath(file_xml), data)
+        filetools.write(file_xml, data)
         platformtools.dialog_notification("Tecla guardada", "Reinicia Kodi para que se apliquen los cambios")
 
         config.set_setting("shortcut_key", new_key)
@@ -101,7 +106,7 @@ class Main(xbmcgui.WindowXMLDialog):
         if config.get_platform(True)['num_version'] < 18:
             self.setCoordinateResolution(2)
 
-        for menuentry in MAIN_MENU.keys():
+        for menuentry in list(MAIN_MENU.keys()):
             item = xbmcgui.ListItem(MAIN_MENU[menuentry]["label"])
             item.setProperty("thumb", str(MAIN_MENU[menuentry]["icon"]))
             item.setProperty("identifier", str(menuentry))

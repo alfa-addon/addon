@@ -3,6 +3,10 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
 
 from channels import autoplay
@@ -18,9 +22,10 @@ from channelselector import get_thumb
 host = 'http://www.tupelicula.tv/'
 
 IDIOMAS = {'la_la': 'LAT', 'es_es':'CAST', 'en_es':'VOSE', 'en_en':'VO'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['xdrive', 'bitertv', 'okru']
+
 
 def get_source(url, referer=None):
     logger.info()
@@ -136,7 +141,7 @@ def findvideos(item):
 
     for scraped_id, lang_data, quality in matches:
         hidden_url = get_source('%splayer/rep/%s' % (host, scraped_id), player)
-        url = scrapertools.find_single_match(hidden_url, 'iframe src=.?"([^"]+)"').replace('\\','')
+        url = scrapertools.find_single_match(hidden_url.lower(), 'iframe src=.?"([^"]+)"').replace('\\','')
         lang = get_language(lang_data)
 
         if not config.get_setting('unify'):
@@ -168,15 +173,20 @@ def findvideos(item):
 
 def search(item, texto):
     logger.info()
-    itemlist = []
-    texto = texto.replace(" ", "+")
-    item.url = item.url + texto
-    if texto != '':
-        try:
+    try:
+        texto = texto.replace(" ", "+")
+        item.url = item.url + texto
+
+        if texto != '':
             return list_all(item)
-        except:
-            itemlist.append(item.clone(url='', title='No hay elementos...', action=''))
-            return itemlist
+        else:
+            return []
+    # Se captura la excepción, para no interrumpir al buscador global si un canal falla
+    except:
+        for line in sys.exc_info():
+            logger.error("%s" % line)
+        return []
+
 
 def newest(categoria):
     logger.info()

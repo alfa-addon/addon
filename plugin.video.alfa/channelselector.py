@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from builtins import range
+
 import glob
 import os
 
@@ -62,8 +64,30 @@ def getmainlist(view="thumb_"):
                          category=config.get_localized_string(30104), viewmode="list"))
 
     itemlist.append(Item(title=config.get_localized_string(30104) + " (" + config.get_localized_string(20000) +" " + config.get_addon_version(with_fix=False) + ")", channel="help", action="mainlist",
-                         thumbnail=get_thumb("help.png", view),
+                         thumbnail=os.path.join(config.get_runtime_path(), "resources", 'Screenshot.jpg'),
                          category=config.get_localized_string(30104), viewmode="list"))
+
+    from lib import generictools
+    browser, res = generictools.call_browser('', lookup=True)
+    if not browser:
+        action = ''
+        itemlist.append(Item(channel="setting", action=action, url='https://alfa-addon.com/foros/tutoriales.11/', 
+                         title="Tutoriales relevantes [COLOR gold](Instala un browser externo: Chrome, Firefox, Opera)[/COLOR]:", 
+                         thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
+                         category=config.get_localized_string(30104), viewmode="list"))
+    else:
+        action = 'call_browser'
+        itemlist.append(Item(channel="setting", action=action, url='https://alfa-addon.com/foros/tutoriales.11/', 
+                         title="Tutoriales relevantes [COLOR limegreen](pincha para usar [I]%s[/I])[/COLOR]:" % browser, 
+                         thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
+                         category=config.get_localized_string(30104), viewmode="list"))
+                         
+    itemlist.append(Item(channel="setting", action=action, url='https://alfa-addon.com/threads/bloqueos-en-la-descarga-de-torrents.3646/', 
+                         title="-     [COLOR yellow]¿Bloqueos en la descarga de Torrents?[/COLOR]   " + 
+                         "https://alfa-addon.com/threads/bloqueos-en-la-descarga-de-torrents.3646/", 
+                         thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
+                         category=config.get_localized_string(30104), viewmode="list"))
+
     return itemlist
 
 
@@ -71,7 +95,7 @@ def getchanneltypes(view="thumb_"):
     logger.info()
 
     # Lista de categorias
-    channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent"]
+    channel_types = ["movie", "tvshow", "anime", "documentary", "vos", "direct", "torrent", "sport"]
 
     if config.get_setting("adult_mode") != 0:
         channel_types.append("adult")
@@ -170,7 +194,7 @@ def filterchannels(category, view="thumb_"):
 
             # Se salta el canal para adultos si el modo adultos está desactivado
             if channel_parameters["adult"] and config.get_setting("adult_mode") == 0:
-                if category <> "all_channels":
+                if category != "all_channels":
                     continue
 
             # Se salta el canal si está en un idioma filtrado
@@ -179,12 +203,12 @@ def filterchannels(category, view="thumb_"):
             # Los canales de adultos se mostrarán siempre que estén activos
             if channel_language != "all" and channel_language not in channel_parameters["language"] \
                     and "*" not in channel_parameters["language"]:
-                if category <> "all_channels":
+                if category != "all_channels":
                     continue
 
             # Se salta el canal si está en una categoria filtrado
             if category != "all" and category not in channel_parameters["categories"]:
-                if category <> "all_channels":
+                if category != "all_channels":
                     continue
 
             # Si tiene configuración añadimos un item en el contexto
@@ -275,10 +299,16 @@ def filterchannels(category, view="thumb_"):
                 id = ids[x]
             channelslist.insert(x,
                 Item(channel='search', action='discover_list', title=title, search_type='list',
-                     list_type='%s/%s' % (category.replace('show',''), id), thumbnail=get_thumb(id+".png")))
+                     list_type='%s/%s' % (category.replace('show',''), id), thumbnail=get_thumb(id+".png"),
+                     mode=category))
 
-        channelslist.insert(3, Item(channel='search', action='genres_menu', title='Generos',
-                                    type=category.replace('show',''), thumbnail=get_thumb("genres.png")))
+        channelslist.insert(3, Item(channel='search', action='years_menu', title='Por Años',
+                                    type=category.replace('show', ''), thumbnail=get_thumb("years.png"),
+                                    mode=category))
+
+        channelslist.insert(4, Item(channel='search', action='genres_menu', title='Generos',
+                                    type=category.replace('show',''), thumbnail=get_thumb("genres.png"),
+                                    mode=category))
 
     return channelslist
 

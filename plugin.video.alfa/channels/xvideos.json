@@ -4,12 +4,20 @@
   "active": true,
   "adult": true,
   "language": ["*"],
-  "thumbnail": "xvideos.png",
+  "thumbnail": "https://i.postimg.cc/2qpKcknq/xvideos.png",
   "banner": "",
   "categories": [
     "adult"
   ],
   "settings": [
+    {
+      "id": "include_in_global_search",
+      "type": "bool",
+      "label": "Incluir en busqueda global",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    }
   ]
 }
 

@@ -5,17 +5,31 @@
 # Based on code from the Mega add-on (xbmchub.com)
 # ---------------------------------------------------------------------------
 
+from __future__ import division
+from past.utils import old_div
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urllib                                             # Es muy lento en PY2.  En PY3 es nativo
+    import urllib.request as urllib2
+    import urllib.error as urllib_error
+else:
+    import urllib                                                             # Usamos el nativo de PY2 que es más rápido
+    import urllib2
+    import urllib2 as urllib_error
+
+
 import os
 import re
 import socket
 import threading
 import time
-import urllib
-import urllib2
 
 import xbmc
 import xbmcgui
-from core import downloadtools
+from core import downloadtools, filetools
 from platformcode import config, logger
 
 
@@ -41,10 +55,10 @@ def download_and_play(url, file_name, download_path):
         dialog.update(0)
 
         while not cancelled and download_thread.isAlive():
-            dialog.update(download_thread.get_progress(), config.get_localized_string(60313),
-                          "Velocidad: " + str(int(download_thread.get_speed() / 1024)) + " KB/s " + str(
+            dialog.update(download_thread.get_progress(), config.get_localized_string(60313) + '\n' + 
+                          "Velocidad: " + str(int(old_div(download_thread.get_speed(), 1024))) + " KB/s " + str(
                               download_thread.get_actual_size()) + "MB de " + str(
-                              download_thread.get_total_size()) + "MB",
+                              download_thread.get_total_size()) + "MB" + 
                           "Tiempo restante: " + str(downloadtools.sec_to_hms(download_thread.get_remaining_time())))
             xbmc.sleep(1000)
 
@@ -211,7 +225,7 @@ class DownloadThread(threading.Thread):
 
         # Se asegura de que el fichero se podrá crear
         logger.info("nombrefichero=" + self.file_name)
-        self.file_name = xbmc.makeLegalFilename(self.file_name)
+        self.file_name = filetools.makeLegalFilename(self.file_name)
         logger.info("nombrefichero=" + self.file_name)
         logger.info("url=" + self.url)
 
@@ -252,7 +266,7 @@ class DownloadThread(threading.Thread):
         urllib2.install_opener(opener)
         try:
             connexion = opener.open(request)
-        except urllib2.HTTPError, e:
+        except urllib_error.HTTPError as e:
             logger.error("error %d (%s) al abrir la url %s" % (e.code, e.msg, self.url))
             # print e.code
             # print e.msg
@@ -314,10 +328,10 @@ class DownloadThread(threading.Thread):
                         bloqueleido = connexion.read(blocksize)
                         after = time.time()
                         if (after - before) > 0:
-                            self.velocidad = len(bloqueleido) / ((after - before))
+                            self.velocidad = old_div(len(bloqueleido), ((after - before)))
                             falta = totalfichero - grabado
                             if self.velocidad > 0:
-                                self.tiempofalta = falta / self.velocidad
+                                self.tiempofalta = old_div(falta, self.velocidad)
                             else:
                                 self.tiempofalta = 0
                         break

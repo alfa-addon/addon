@@ -1,9 +1,22 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+#from builtins import str
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urllib                               # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urllib                                               # Usamos el nativo de PY2 que es más rápido
+
 import os
 import re
 import string
-import urllib
+
 from unicodedata import normalize
 from core import filetools
 from core import httptools
@@ -14,7 +27,8 @@ import xbmc
 import xbmcgui
 from platformcode import config, logger
 
-allchars = string.maketrans('', '')
+if PY3: allchars = str.maketrans('', '')
+if not PY3: allchars = string.maketrans('', '')
 deletechars = ',\\/:*"<>|?'
 
 
@@ -41,14 +55,14 @@ def regex_tvshow(compare, file, sub=""):
     for regex in regex_expressions:
         response_file = re.findall(regex, file)
         if len(response_file) > 0:
-            print "Regex File Se: %s, Ep: %s," % (str(response_file[0][0]), str(response_file[0][1]),)
+            print("Regex File Se: %s, Ep: %s," % (str(response_file[0][0]), str(response_file[0][1]),))
             tvshow = 1
             if not compare:
                 title = re.split(regex, file)[0]
                 for char in ['[', ']', '_', '(', ')', '.', '-']:
                     title = title.replace(char, ' ')
                 if title.endswith(" "): title = title.strip()
-                print "title: %s" % title
+                print("title: %s" % title)
                 return title, response_file[0][0], response_file[0][1]
             else:
                 break
@@ -93,9 +107,9 @@ def set_Subtitle():
                 config.set_setting("subtitlepath_folder", subtitle_path)
         else:
             subtitle_path = config.get_setting("subtitlepath_keyboard")
-            long = len(subtitle_path)
-            if long > 0:
-                if subtitle_path.startswith("http") or subtitle_path[long - 4, long] in exts:
+            long_v = len(subtitle_path)
+            if long_v > 0:
+                if subtitle_path.startswith("http") or subtitle_path[long_v - 4, long] in exts:
                     logger.info("Con subtitulo : " + subtitle_path)
                     xbmc.Player().setSubtitles(subtitle_path)
                     return
@@ -173,7 +187,7 @@ def searchSubtitle(item):
             logger.error("error no se pudo crear path subtitulos")
             return
 
-    path_movie_subt = xbmc.translatePath(filetools.join(subtitlepath, "Movies"))
+    path_movie_subt = filetools.translatePath(filetools.join(subtitlepath, "Movies"))
     if not filetools.exists(path_movie_subt):
         try:
             filetools.mkdir(path_movie_subt)
@@ -181,7 +195,7 @@ def searchSubtitle(item):
             logger.error("error no se pudo crear el path Movies")
             return
     full_path_tvshow = ""
-    path_tvshow_subt = xbmc.translatePath(filetools.join(subtitlepath, "Tvshows"))
+    path_tvshow_subt = filetools.translatePath(filetools.join(subtitlepath, "Tvshows"))
     if not filetools.exists(path_tvshow_subt):
         try:
             filetools.mkdir(path_tvshow_subt)
@@ -192,19 +206,19 @@ def searchSubtitle(item):
         title_new = title = urllib.unquote_plus(item.title)
     else:
         title_new = title = urllib.unquote_plus(item.show + " - " + item.title)
-    path_video_temp = xbmc.translatePath(filetools.join(config.get_runtime_path(), "resources", "subtitle.mp4"))
+    path_video_temp = filetools.translatePath(filetools.join(config.get_runtime_path(), "resources", "subtitle.mp4"))
     if not filetools.exists(path_video_temp):
         logger.error("error : no existe el video temporal de subtitulos")
         return
-    # path_video_temp = xbmc.translatePath(filetools.join( ,video_temp + ".mp4" ))
+    # path_video_temp = filetools.translatePath(filetools.join( ,video_temp + ".mp4" ))
 
     title_new = _normalize(title_new)
     tvshow_title, season, episode = regex_tvshow(False, title_new)
     if episode != "":
-        full_path_tvshow = xbmc.translatePath(filetools.join(path_tvshow_subt, tvshow_title))
+        full_path_tvshow = filetools.translatePath(filetools.join(path_tvshow_subt, tvshow_title))
         if not filetools.exists(full_path_tvshow):
             filetools.mkdir(full_path_tvshow)  # title_new + ".mp4"
-        full_path_video_new = xbmc.translatePath(
+        full_path_video_new = filetools.translatePath(
             filetools.join(full_path_tvshow, "%s %sx%s.mp4" % (tvshow_title, season, episode)))
         logger.info(full_path_video_new)
         listitem = xbmcgui.ListItem(title_new, iconImage="DefaultVideo.png", thumbnailImage="")
@@ -213,7 +227,7 @@ def searchSubtitle(item):
                           "tvshowtitle": tvshow_title})
 
     else:
-        full_path_video_new = xbmc.translatePath(filetools.join(path_movie_subt, title_new + ".mp4"))
+        full_path_video_new = filetools.translatePath(filetools.join(path_movie_subt, title_new + ".mp4"))
         listitem = xbmcgui.ListItem(title, iconImage="DefaultVideo.png", thumbnailImage="")
         listitem.setInfo("video", {"Title": title_new, "Genre": "Movies"})
 

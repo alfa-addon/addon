@@ -29,6 +29,30 @@
       "visible": true
     },
     {
+      "id": "pseudo_titulos",
+      "type": "bool",
+      "label": "Desea ver Pseudo títulos de ayuda?",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "auto_download_new",
+      "type": "bool",
+      "label": "Desea que se descarguen automáticamente los nuevos episodios de la Videoteca?",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "auto_download_new_all",
+      "type": "bool",
+      "label": "Incluso si es una Temporada NUEVA?",
+      "default": false,
+      "enabled": true,
+      "visible": true
+    },
+    {
       "id": "filter_languages",
       "type": "list",
       "label": "Mostrar enlaces en idioma...",

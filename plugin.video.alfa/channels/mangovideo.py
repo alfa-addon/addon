@@ -1,38 +1,40 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
-import urlparse,urllib2,urllib,re
-import os, sys
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+
+import re
+
 from platformcode import config, logger
 from core import scrapertools
 from core.item import Item
 from core import servertools
 from core import httptools
 
-
-server = {'1': 'https://www.mangovideo.pw/contents/videos/', '7' : 'https://server9.mangovideo.pw/contents/videos/',
-          '8' : 'https://s10.mangovideo.pw/contents/videos/', '9' : 'https://server2.mangovideo.pw/contents/videos/',
-          '10' : 'https://server217.mangovideo.pw/contents/videos/', '11' : 'https://234.mangovideo.pw/contents/videos/',
-          '12' : 'https://98.mangovideo.pw/contents/videos/', '13' : 'https://68.mangovideo.pw/contents/videos/'
-         }
-
 host = 'http://mangovideo.pw'
 
 def mainlist(item):
     logger.info()
     itemlist = []
-    itemlist.append( Item(channel=item.channel, title="Nuevos" , action="lista", url=host + "/latest-updates/"))
-    itemlist.append( Item(channel=item.channel, title="Mas vistos" , action="lista", url=host + "/most-popular/"))
-    itemlist.append( Item(channel=item.channel, title="Mejor valorada" , action="lista", url=host + "/top-rated/"))
-    itemlist.append( Item(channel=item.channel, title="Sitios" , action="categorias", url=host + "/sites/"))
-    itemlist.append( Item(channel=item.channel, title="Categorias" , action="categorias", url=host + "/categories/"))
-    itemlist.append( Item(channel=item.channel, title="Buscar", action="search"))
+    itemlist.append(item.clone(title="Nuevos" , action="lista", url=host + "/latest-updates/"))
+    itemlist.append(item.clone(title="Mas vistos" , action="lista", url=host + "/most-popular/"))
+    itemlist.append(item.clone(title="Mejor valorada" , action="lista", url=host + "/top-rated/"))
+    itemlist.append(item.clone(title="Sitios" , action="categorias", url=host + "/sites/"))
+    itemlist.append(item.clone(title="Categorias" , action="categorias", url=host + "/categories/"))
+    itemlist.append(item.clone(title="Buscar", action="search"))
     return itemlist
 
 
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    item.url = host + "/search/%s/" % texto
+    item.url = "%s/search/%s/" % (host, texto)
     try:
         return lista(item)
     except:
@@ -53,15 +55,14 @@ def categorias(item):
     for scrapedurl,scrapedtitle,cantidad in matches:
         scrapedplot = ""
         scrapedthumbnail = ""
-        title = scrapedtitle + " (" + cantidad + ")"
-        itemlist.append( Item(channel=item.channel, action="lista", title=title, url=scrapedurl,
+        title = "%s (%s)"  %(scrapedtitle,cantidad)
+        itemlist.append(item.clone(action="lista", title=title, url=scrapedurl,
                               thumbnail=scrapedthumbnail , plot=scrapedplot) )
     itemlist.sort(key=lambda x: x.title)
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="categorias", title="Página Siguiente >>", text_color="blue", 
-                              url=next_page) )
+        itemlist.append(item.clone(action="categorias", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
@@ -76,20 +77,24 @@ def lista(item):
     patron += '<div class="duration">([^<]+)</div>'
     matches = re.compile(patron,re.DOTALL).findall(data)
     for scrapedurl,scrapedtitle,scrapedthumbnail,scrapedtime in matches:
-        title = "[COLOR yellow]" + scrapedtime + "[/COLOR] " + scrapedtitle
+        title = "[COLOR yellow]%s[/COLOR] %s" % (scrapedtime,scrapedtitle)
         thumbnail = scrapedthumbnail
         plot = ""
-        itemlist.append( Item(channel=item.channel, action="play", title=title, url=scrapedurl,
+        itemlist.append(item.clone(action="play", title=title, url=scrapedurl,
                               thumbnail=thumbnail, fanart=thumbnail, plot=plot, contentTitle = title))
     next_page = scrapertools.find_single_match(data, '<li class="next"><a href="([^"]+)"')
+    if "#" in next_page:
+        next_page = scrapertools.find_single_match(data, 'data-parameters="([^"]+)">Next')
+        next_page = next_page.replace(":", "=").replace(";", "&").replace("+from_albums", "")
+        next_page = "?%s" % next_page
     if next_page:
         next_page = urlparse.urljoin(item.url,next_page)
-        itemlist.append( Item(channel=item.channel, action="lista", title="Página Siguiente >>", text_color="blue", 
-                              url=next_page) )
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page) )
     return itemlist
 
 
 def play(item):
+    logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
     data = re.sub(r"\n|\r|\t|amp;|\s{2}|&nbsp;", "", data)

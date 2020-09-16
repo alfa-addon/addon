@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import re
 import sys
-import urllib
-import urlparse
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urlparse                                 # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                                 # Usamos el nativo de PY2 que es más rápido
+
+import re
 import time
 
 from channelselector import get_thumb
@@ -20,11 +28,11 @@ from channels import autoplay
 
 #IDIOMAS = {'CAST': 'Castellano', 'LAT': 'Latino', 'VO': 'Version Original'}
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'http://www.elitetorrent.io'
+host = 'https://www.elitetorrent.nl'
 channel = "elitetorrent"
 
 categoria = channel.capitalize()
@@ -43,18 +51,24 @@ def mainlist(item):
     thumb_buscar = get_thumb("search.png")
     thumb_separador = get_thumb("next.png")
     thumb_settings = get_thumb("setting_0.png")
+    home = '/'
     
     autoplay.init(item.channel, list_servers, list_quality)
 
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", url=host, extra="peliculas", thumbnail=thumb_pelis))
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Películas", 
+                    url=host + home, extra="peliculas", thumbnail=thumb_pelis))
     
-    itemlist.append(Item(channel=item.channel, action="submenu", title="Series", url=host, extra="series", thumbnail=thumb_series))
+    itemlist.append(Item(channel=item.channel, action="submenu", title="Series", 
+                    url=host + home, extra="series", thumbnail=thumb_series))
     
-    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", url=host, thumbnail=thumb_buscar, filter_lang=True))
+    itemlist.append(Item(channel=item.channel, action="search", title="Buscar", 
+                    url=host + home, thumbnail=thumb_buscar, filter_lang=True))
 
-    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", folder=False, thumbnail=thumb_separador))
+    itemlist.append(Item(channel=item.channel, url=host, title="[COLOR yellow]Configuración:[/COLOR]", 
+                    folder=False, thumbnail=thumb_separador))
     
-    itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", thumbnail=thumb_settings))
+    itemlist.append(Item(channel=item.channel, action="configuracion", title="Configurar canal", 
+                    thumbnail=thumb_settings))
     
     autoplay.show_option(item.channel, itemlist)            #Activamos Autoplay
 
@@ -84,9 +98,9 @@ def submenu(item):
         itemlist.append(item.clone(action='', title=item.channel.capitalize() + ': ERROR 01: La Web no responde o ha cambiado de URL. Si la Web está activa, reportar el error con el log'))
         return itemlist                                                         #Algo no funciona, pintamos lo que tenemos
     
-    patron = '<div class="cab_menu"\s*>.*?<\/div>'                                 #Menú principal
+    patron = '<div class="cab_menu"\s*>.*?<\/div>'                              #Menú principal
     data1 = scrapertools.find_single_match(data, patron)
-    patron = '<div id="menu_langen"\s*>.*?<\/div>'                                 #Menú de idiomas
+    patron = '<div id="menu_langen"\s*>.*?<\/div>'                              #Menú de idiomas
     data1 += scrapertools.find_single_match(data, patron)
     
     patron = '<a href="(.*?)".*?title="(.*?)"'                                  #Encontrar todos los apartados
@@ -104,7 +118,10 @@ def submenu(item):
         return itemlist                                     #si no hay más datos, algo no funciona, pintamos lo que tenemos
     
     for scrapedurl, scrapedtitle in matches:
-        scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('utf8').strip()
+        if PY3:
+            scrapedtitle = re.sub('\r\n', '', scrapedtitle).strip()
+        else:
+            scrapedtitle = re.sub('\r\n', '', scrapedtitle).decode('utf8').strip()
         scrapedtitle = scrapedtitle.replace(" torrent", "").replace(" Torrent", "").replace("Series y ", "").title()
         
         if "castellano" in scrapedtitle.lower():            #Evita la entrada de peliculas castellano del menú de idiomas
@@ -157,14 +174,17 @@ def listado(item):
     
     patron = '<li>\s*<div\s*class="[^"]+">\s*<a href="([^"]+)"\s*'              #url
     patron += 'title="([^"]+)"\s*(?:alt="[^"]+")?\s*>\s*'                       #título
-    patron += '<img (?:class="[^"]+")?\s*src="([^"]+)"\s*border="[^"]+"\s*'     #thumb
-    patron += 'title="([^"]+)".*?'                                              #categoría, idioma
-    patron += '<span class="[^"]+" style="[^"]+"\s*><i>(.*?)<\/i><\/span.*?'    #calidad
-    patron += '="dig1">(.*?)<.*?'                                               #tamaño
-    patron += '="dig2">(.*?)<\/span><\/div>'                                    #tipo tamaño
+    patron += '<img (?:class="[^"]+")?\s*src="([^"]+)".*?border="[^"]+"\s*'     #thumb
+    patron += 'title="([^"]+)".*?'                                              #categoría
+    patron += '<span class="[^"]+"\s*id="[^"]+">\s*<i>\s*'
+    patron += "<img src='[^']+'\s*data-src='[^']+\/(\w+).png'.*?"               #idioma
+    patron += '<span class="[^"]+" style="[^"]+"\s*><i>(.*?)?<\/i>'             #calidad
+    patron += '(?:<\/span.*?="dig1">(.*?)?)?'                                   #tamaño
+    patron += '(?:<.*?="dig2">(.*?)?)?<\/span><\/div>'                          #tipo tamaño
+    
 
     matches = re.compile(patron, re.DOTALL).findall(data)
-    if not matches and not '<title>503 Backend fetch failed</title>' in data and not 'No se han encontrado resultados' in data:                                                                           #error
+    if not matches and not '<title>503 Backend fetch failed</title>' in data and not 'No se han encontrado resultados' in data:                                                                            #error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada
         if item.intervencion:                                                   #Sí ha sido clausurada judicialmente
             item, itemlist = generictools.post_tmdb_listado(item, itemlist)     #Llamamos al método para el pintado del error
@@ -178,10 +198,14 @@ def listado(item):
     #logger.debug(matches)
     #logger.debug(data)
 
-    for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedcategory, scrapedcalidad, scrapedsize, scrapedsizet in matches:
+    for scrapedurl, scrapedtitle, scrapedthumbnail, scrapedcategory, scrapedlang, \
+                            scrapedcalidad, scrapedsize, scrapedsizet in matches:
         item_local = item.clone()                           #Creamos copia de Item para trabajar
         
-        title = re.sub('\r\n', '', scrapedtitle).decode('utf8').strip()
+        if PY3:
+            title = re.sub('\r\n', '', scrapedtitle).strip()
+        else:
+            title = re.sub('\r\n', '', scrapedtitle).decode('utf8').strip()
         title = title.replace(" torrent", "").replace(" Torrent", "").replace("Series y ", "")
         item_local.url = urlparse.urljoin(host, scrapedurl)
         item_local.thumbnail = urlparse.urljoin(host, scrapedthumbnail)
@@ -197,25 +221,26 @@ def listado(item):
         if not item_local.quality and ("DVDRip" in title or "HDRip" in title or "BR-LINE" in title or "HDTS-SCREENER" in title or "BDRip" in title or "BR-Screener" in title or "DVDScreener" in title or "TS-Screener" in title):
             item_local.quality = scrapertools.find_single_match(title, r'\((.*?)\)')
             item_local.quality = item_local.quality.replace("Latino", "")
-        if not scrapedsizet:
+        if not scrapedsizet or "---" in scrapedsizet:
             scrapedsize = ''
         else:
             item_local.quality += ' [%s %s]' % (scrapedsize.replace(".", ","), scrapedsizet)
         
         item_local.language = []                            #Verificamos el idioma por si encontramos algo
-        if "latino" in scrapedcategory.lower() or "latino" in item.url or "latino" in title.lower():
+        if "latino" in scrapedlang.lower() or "latino" in item.url or "latino" in title.lower():
             item_local.language += ["LAT"]
-        if "ingles" in scrapedcategory.lower() or "ingles" in item.url or "vose" in scrapedurl or "vose" in item.url:
-            if "VOSE" in scrapedcategory.lower() or "sub" in title.lower() or "vose" in scrapedurl or "vose" in item.url:
-                item_local.language += ["VOS"]
-            else:
+        if scrapedlang.lower() in ['vos', 'vose'] or "vose" in item.url or "vos" in item.url \
+                        or "vose" in scrapedurl or "vos" in scrapedurl or "subt" in title.lower():
+                item_local.language += ["VOSE"]
+        elif scrapedlang.lower() in ['ingles', 'inglés', 'english', 'original', 'vo'] or "ingles" in item.url \
+                        or "vo" in item.url or "ingles" in scrapedurl or "vo" in scrapedurl:
                 item_local.language += ["VO"]
-        if "dual" in scrapedcategory.lower() or "dual" in title.lower():
-            item_local.language[0:0] = ["DUAL"]
-            
         if item_local.language == []:
                 item_local.language = ['CAST']              #Por defecto
         
+        if "dual" in scrapedlang.lower() or "dual" in title.lower():
+            item_local.language[0:0] = ["DUAL"]
+
         #Limpiamos el título de la basura innecesaria
         title = title.replace("Dual", "").replace("dual", "").replace("Subtitulada", "").replace("subtitulada", "").replace("Subt", "").replace("subt", "").replace("Sub", "").replace("sub", "").replace("(Proper)", "").replace("(proper)", "").replace("Proper", "").replace("proper", "").replace("#", "").replace("(Latino)", "").replace("Latino", "")
         title = title.replace("- HDRip", "").replace("(HDRip)", "").replace("- Hdrip", "").replace("(microHD)", "").replace("(DVDRip)", "").replace("(HDRip)", "").replace("(BR-LINE)", "").replace("(HDTS-SCREENER)", "").replace("(BDRip)", "").replace("(BR-Screener)", "").replace("(DVDScreener)", "").replace("TS-Screener", "").replace(" TS", "").replace(" Ts", "").replace("temporada", "").replace("Temporada", "").replace("capitulo", "").replace("Capitulo", "")

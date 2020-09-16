@@ -20,7 +20,7 @@
         "url": "http://docs.google.com/get_video_info?docid=\\1"
       },
       {
-        "pattern": "(?s)https://(lh.).googleusercontent.com/([A-z0-9-_=]+)",
+        "pattern": "(?s)https://(lh.).googleusercontent.com/(?!proxy)([A-z0-9-_=]+)",
         "url": "https://\\1.googleusercontent.com/\\2"
       }
     ]
@@ -58,5 +58,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://s11.postimg.cc/giobzkprz/logo-google1.png"
+  "thumbnail": "https://i.postimg.cc/43CFNw7M/gvideo.png"
 }

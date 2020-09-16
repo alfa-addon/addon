@@ -1,9 +1,18 @@
 # -*- coding: utf-8 -*-
 
-import re
+from builtins import range
 import sys
-import urllib
-import urlparse
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    #from future import standard_library
+    #standard_library.install_aliases()
+    import urllib.parse as urlparse                               # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                               # Usamos el nativo de PY2 que es más rápido
+
+import re
 import time
 
 from channelselector import get_thumb
@@ -20,12 +29,12 @@ from channels import autoplay
 
 #IDIOMAS = {'CAST': 'Castellano', 'LAT': 'Latino', 'VO': 'Version Original'}
 IDIOMAS = {'Castellano': 'CAST', 'Latino': 'LAT', 'Version Original': 'VO'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['torrent']
 
-host = 'https://www.divxtotal3.net/'
-domain = 'www.divxtotal3.net'
+host = 'https://www.divxtotal.la/'
+domain = 'www.divxtotal.la'
 channel = 'divxtotal'
 categoria = channel.capitalize()
 color1, color2, color3 = ['0xFF58D3F7', '0xFF2E64FE', '0xFF0404B4']
@@ -33,7 +42,8 @@ __modo_grafico__ = config.get_setting('modo_grafico', channel)
 modo_ultima_temp = config.get_setting('seleccionar_ult_temporadda_activa', channel)        #Actualización sólo últ. Temporada?
 timeout = config.get_setting('timeout_downloadpage', channel)
 
-headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3', 'Accept-Encoding': 'gzip, deflate, br', 'Accept-Language': 'es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36', 'Referer': 'https://www.divxtotal3.net/peliculas-15/'}
+#headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3', 'Accept-Encoding': 'gzip, deflate, br', 'Accept-Language': 'es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36', 'Referer': 'https://www.divxtotal3.net/peliculas-15/'}
+headers = {}
 
 
 def mainlist(item):
@@ -49,18 +59,24 @@ def mainlist(item):
     
     autoplay.init(item.channel, list_servers, list_quality)
 
-    item.url_plus = "peliculas-15/"
-    itemlist.append(Item(channel=item.channel, title="Películas", action="categorias", url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_cartelera, extra="Películas"))
-    item.url_plus = "peliculas-hd-3/"
-    itemlist.append(Item(channel=item.channel, title="Películas HD", action="categorias", url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, extra="Películas HD"))
+    item.url_plus = "peliculas-20/"
+    itemlist.append(Item(channel=item.channel, title="Películas", action="categorias", 
+                url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_cartelera, 
+                extra="Películas"))
+    item.url_plus = "peliculas-hd-5/"
+    itemlist.append(Item(channel=item.channel, title="    - Películas HD", action="categorias", 
+                url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, 
+                extra="Películas HD"))
     item.url_plus = "peliculas-dvdr/"
-    itemlist.append(Item(channel=item.channel, title="Películas DVDR", action="categorias", url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, extra="Películas DVDR"))
-
-    itemlist.append(Item(channel=item.channel, url=host, title="", folder=False, thumbnail=thumb_separador))
+    itemlist.append(Item(channel=item.channel, title="    - Películas DVDR", action="categorias", 
+                url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, 
+                extra="Películas DVDR"))
+    item.url_plus = "peliculas-3-d/"
+    itemlist.append(Item(channel=item.channel, title="    - Películas 3D", action="categorias", 
+                url=host + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_pelis_hd, 
+                extra="Películas 3D"))
     
     itemlist.append(Item(channel=item.channel, url=host, title="Series", action="submenu", thumbnail=thumb_series, extra="series"))
-
-    itemlist.append(Item(channel=item.channel, url=host, title="", folder=False, thumbnail=thumb_separador))
     
     itemlist.append(Item(channel=item.channel, title="Buscar...", action="search", url=host + "?s=%s", thumbnail=thumb_buscar, extra="search"))
 
@@ -91,13 +107,14 @@ def submenu(item):
         try:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout, headers=headers).data)
             data = js2py_conversion(data, item.url)
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+            if not PY3:
+                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
             pass
 
         patron = '<ul class="nav navbar-nav">.*?<li><a href="[^"]+\/(series[^\/]+\/)">Series<\/a><\/li>'
         item.url_plus = scrapertools.find_single_match(data, patron)
-        if not item.url_plus: item.url_plus = 'series-16/'
+        if not item.url_plus: item.url_plus = 'series-5/'
         itemlist.append(item.clone(title="Series completas", action="listado", url=item.url + item.url_plus, url_plus=item.url_plus, thumbnail=thumb_series, extra="series"))
         itemlist.append(item.clone(title="Alfabético A-Z", action="alfabeto", url=item.url + item.url_plus + "?s=letra-%s", url_plus=item.url_plus, thumbnail=thumb_series, extra="series"))
 
@@ -119,7 +136,8 @@ def categorias(item):
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout, headers=headers).data)
         data = js2py_conversion(data, item.url)
-        data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+        if not PY3:
+            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:
         pass
         
@@ -156,7 +174,8 @@ def categorias(item):
         itemlist.append(item.clone(title="Alfabético A-Z", action="alfabeto", url=item.url + "?s=letra-%s"))
         #itemlist.append(item.clone(title="Géneros", url=item.url))
     
-    for scrapedurl, scrapedtitle in matches:
+    for scrapedurl_i, scrapedtitle in matches:
+        scrapedurl = scrapedurl_i.replace('hd-4', 'hd')
         if item.url_plus not in scrapedurl:
             continue
         if "Todas" in scrapedtitle:
@@ -237,7 +256,8 @@ def listado(item):
         try:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(next_page_url, timeout=timeout_search, headers=headers).data)
             data = js2py_conversion(data, next_page_url)
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+            if not PY3:
+                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
             pass
         
@@ -261,8 +281,8 @@ def listado(item):
                 item, itemlist = generictools.post_tmdb_episodios(item, itemlist)   #Llamamos al método para el pintado del error
                 return itemlist                                                     #Salimos
             
-            #logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
-            logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + str(matches))
+            logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + data)
+            #logger.error("ERROR 02: LISTADO: Ha cambiado la estructura de la Web " + " / PATRON: " + patron + " / DATA: " + str(matches))
             itemlist.append(item.clone(action='', title=item.channel.capitalize() + \
                         ': ERROR 02: LISTADO: Ha cambiado la estructura de la Web.  Reportar el error con el log'))
             break                                       #si no hay más datos, algo no funciona, pintamos lo que tenemos
@@ -299,7 +319,10 @@ def listado(item):
             
             title = scrapedtitle
             url = scrapedurl
-            title = title.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&atilde;", "a").replace("&etilde;", "e").replace("&itilde;", "i").replace("&otilde;", "o").replace("&utilde;", "u").replace("&ntilde;", "ñ").replace("&#8217;", "'")
+            title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
+                    .replace("ó", "o").replace("ú", "u").replace("ü", "u")\
+                    .replace("ï¿½", "ñ").replace("Ã±", "ñ").replace("&#8217;", "'")\
+                    .replace("&amp;", "&")
             extra = item.extra
 
             #Si es una búsqueda, convierte los episodios en Series completas, aptas para la Videoteca
@@ -312,7 +335,8 @@ def listado(item):
                 try:
                     data_serie = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(scrapedurl, timeout=timeout, headers=headers).data)
                     data_serie = js2py_conversion(data_serie, scrapedurl)
-                    data_serie = unicode(data_serie, "utf-8", errors="replace").encode("utf-8")
+                    if not PY3:
+                        data_serie = unicode(data_serie, "utf-8", errors="replace").encode("utf-8")
                 except:
                     pass
                 
@@ -375,10 +399,15 @@ def listado(item):
                 item_local.quality = 'HD '
             elif '/peliculas-dvdr' in scrapedurl or item_local.extra == 'Películas DVDR':
                 item_local.quality = 'DVDR '
+            elif '/peliculas-dvdr' in scrapedurl or item_local.extra == 'Películas 3D':
+                item_local.quality = '3D '
             elif 'subtituladas' in cat_ppal or item_local.extra == 'VOSE' or 'vose' in title.lower():
                 item_local.language += ['VOSE']
             elif 'Version Original' in cat_ppal or item_local.extra == 'VO' or 'vo' in title.lower():
                 item_local.language += ['VO']
+                
+            if '4k' in title.lower():
+                item_local.quality = '4K, %s' % item_local.quality
 
             #Analizamos los formatos de series, temporadas y episodios
             elif '/series' in scrapedurl or item_local.extra == 'series':
@@ -450,8 +479,8 @@ def listado(item):
             title = re.sub(r'\[.*?\]', '', title)
 
             #Limpiamos el título de la basura innecesaria
-            title = title.replace("Dual", "").replace("dual", "").replace("Subtitulada", "").replace("subtitulada", "").replace("Subt", "").replace("subt", "").replace("Sub", "").replace("sub", "").replace("(Proper)", "").replace("(proper)", "").replace("Proper", "").replace("proper", "").replace("#", "").replace("(Latino)", "").replace("Latino", "").replace("LATINO", "").replace("Spanish", "").replace("Trailer", "").replace("Audio", "")
-            title = title.replace("HDTV-Screener", "").replace("DVDSCR", "").replace("TS ALTA", "").replace("- HDRip", "").replace("(HDRip)", "").replace("- Hdrip", "").replace("(microHD)", "").replace("(DVDRip)", "").replace("HDRip", "").replace("(BR-LINE)", "").replace("(HDTS-SCREENER)", "").replace("(BDRip)", "").replace("(BR-Screener)", "").replace("(DVDScreener)", "").replace("TS-Screener", "").replace(" TS", "").replace(" Ts", "").replace(" 480p", "").replace(" 480P", "").replace(" 720p", "").replace(" 720P", "").replace(" 1080p", "").replace(" 1080P", "").replace("DVDRip", "").replace(" Dvd", "").replace(" DVD", "").replace(" V.O", "").replace(" Unrated", "").replace(" UNRATED", "").replace(" unrated", "").replace("screener", "").replace("TS-SCREENER", "").replace("TSScreener", "").replace("HQ", "").replace("AC3 5.1", "").replace("Telesync", "").replace("Line Dubbed", "").replace("line Dubbed", "").replace("LineDuB", "").replace("Line", "").replace("XviD", "").replace("xvid", "").replace("XVID", "").replace("Mic Dubbed", "").replace("HD", "").replace("V2", "").replace("CAM", "").replace("VHS.SCR", "").replace("Dvd5", "").replace("DVD5", "").replace("Iso", "").replace("ISO", "").replace("Reparado", "").replace("reparado", "").replace("DVD9", "").replace("Dvd9", "")
+            title = title.replace("Dual", "").replace("dual", "").replace("Subtitulada", "").replace("subtitulada", "").replace("Subt", "").replace("subt", "").replace("Sub", "").replace("sub", "").replace("(Proper)", "").replace("(proper)", "").replace("Proper", "").replace("proper", "").replace("#", "").replace("(Latino)", "").replace("Latino", "").replace("LATINO", "").replace("Spanish", "").replace("(Español)", "").replace("Castellano-Ingles", "").replace("Trailer", "").replace("Audio", "").replace("(SBS) itulado", "").replace("(SBS)", "")
+            title = title.replace("HDTV-Screener", "").replace("DVDSCR", "").replace("TS ALTA", "").replace("- HDRip", "").replace("(HDRip)", "").replace("- Hdrip", "").replace("(microHD)", "").replace("(DVDRip)", "").replace("HDRip", "").replace("(BR-LINE)", "").replace("(HDTS-SCREENER)", "").replace("(BDRip)", "").replace("(BR-Screener)", "").replace("(DVDScreener)", "").replace("TS-Screener", "").replace(" TS", "").replace(" Ts", "").replace(" 480p", "").replace(" 480P", "").replace(" 720p", "").replace(" 720P", "").replace(" 1080p", "").replace(" 1080P", "").replace("(1080p)", "").replace(" 2160p", "").replace("(2160p)", "").replace("DVDRip", "").replace(" Dvd", "").replace(" DVD", "").replace(" V.O", "").replace(" Unrated", "").replace(" UNRATED", "").replace(" unrated", "").replace("screener", "").replace("TS-SCREENER", "").replace("TSScreener", "").replace("HQ", "").replace("AC3 5.1", "").replace("Telesync", "").replace("Line Dubbed", "").replace("line Dubbed", "").replace("LineDuB", "").replace("Line", "").replace("XviD", "").replace("xvid", "").replace("XVID", "").replace("Mic Dubbed", "").replace("HD", "").replace("V2", "").replace("CAM", "").replace("VHS.SCR", "").replace("Dvd5", "").replace("DVD5", "").replace("Iso", "").replace("ISO", "").replace("Reparado", "").replace("reparado", "").replace("DVD9", "").replace("Dvd9", "").replace("(3D)", "").replace("(3d)", "").replace("3D", "").replace("3d", "").replace("(4K) (U)", "").replace("(-U)", "").replace("(U)", "").replace("(4K)", "").replace("(4k)", "").replace("4K U", "").replace("4K", "").replace("4k", "").replace("(Trial)", "").replace("Trial", "").replace("(.DTS.5.1)", "").replace("(DTS.5.1)", "").replace("(Extendida)", "").replace("()", "")
 
             #Obtenemos temporada y episodio si se trata de Episodios
             if item_local.contentType == "episode":
@@ -543,12 +572,16 @@ def findvideos(item):
 
     #Bajamos los datos de la página
     data = ''
-    patron = '<a onclick="eventDownloadTorrent\(.*?\)".?class="linktorrent" href="([^"]+)"'
+    patron = 'class="linktorrent[^"]*"\s*(?:target="[^"]*"\s*)?href="([^"]+)"'
+    patron1 = 'onclick="'
+    patron1 += "post\('(?P<url>[^']+',\s*{u:\s*'[^']+)'}\);"
+    
     if item.contentType == 'movie':                                                 #Es una peli
         try:
             data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(item.url, timeout=timeout, headers=headers).data)
             data = js2py_conversion(data, item.url)
-            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+            if not PY3:
+                data = unicode(data, "utf-8", errors="replace").encode("utf-8")
         except:
             pass
             
@@ -564,6 +597,9 @@ def findvideos(item):
                 else:
                     return itemlist                                         #si no hay más datos, algo no funciona, pintamos lo que tenemos
 
+        if not scrapertools.find_single_match(data, patron):                        # Buscar con patrón alternativo
+            patron = patron1
+        
         if not item.armagedon:                                                      #Si es un proceso normal, seguimos
             matches = re.compile(patron, re.DOTALL).findall(data)
         if not matches:                                                             #error
@@ -600,14 +636,18 @@ def findvideos(item):
         item, itemlist = generictools.post_tmdb_findvideos(item, itemlist)
 
     #Ahora tratamos los enlaces .torrent
-    for scrapedurl in matches:                                          #leemos los torrents con la diferentes calidades
+    for scrapedurl_la in matches:                                               #leemos los torrents con la diferentes calidades
+        if '/' not in scrapedurl_la:
+            scrapedurl = urlparse.urljoin(host, 'download_tt.php?u=' + scrapedurl_la)
+        else:
+            scrapedurl = urlparse.urljoin(host, scrapedurl_la).replace("download/torrent.php', {u: ", "download_tt.php?u=")
         #Generamos una copia de Item para trabajar sobre ella
         item_local = item.clone()
 
         #Buscamos si ya tiene tamaño, si no, los buscamos en el archivo .torrent
         size = scrapertools.find_single_match(item_local.quality, '\s\[(\d+,?\d*?\s\w\s?[b|B])\]')
         if not item.armagedon:
-            size = generictools.get_torrent_size(scrapedurl)                                #Buscamos el tamaño en el .torrent
+            size = generictools.get_torrent_size(scrapedurl, timeout=timeout*2)             #Buscamos el tamaño en el .torrent
         if size:
             item_local.title = re.sub(r'\s\[\d+,?\d*?\s\w[b|B]\]', '', item_local.title)    #Quitamos size de título, si lo traía
             size = size.replace('GB', 'G·B').replace('Gb', 'G·b').replace('MB', 'M·B')\
@@ -721,7 +761,8 @@ def episodios(item):
     try:
         data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)|&nbsp;", "", httptools.downloadpage(item.url, timeout=timeout, headers=headers).data)
         data = js2py_conversion(data, item.url)
-        data = unicode(data, "utf-8", errors="replace").encode("utf-8")
+        if not PY3:
+            data = unicode(data, "utf-8", errors="replace").encode("utf-8")
     except:                                                                                 #Algún error de proceso, salimos
         pass
         
@@ -731,7 +772,15 @@ def episodios(item):
         return itemlist
 
     #Usamos el mismo patrón que en listado
-    patron = '<tr><td><img src="[^"]+".*?title="Idioma Capitulo" \/>(.*?)<a onclick="[^"]+".?href="[^"]+".?title="[^"]*">(.*?)<\/a><\/td><td><a href="([^"]+)".?title="[^"]*".?onclick="[^"]+".?<img src="([^"]+)".*?<\/a><\/td><td>.*?<\/td><\/tr>'
+    #patron = '<tr><td><img src="[^"]+".*?title="Idioma Capitulo" \/>(.*?)<a onclick="[^"]+".?href="[^"]+".?title="[^"]*">(.*?)<\/a><\/td><td><a href="([^"]+)".?title="[^"]*".?onclick="[^"]+".?<img src="([^"]+)".*?<\/a><\/td><td>.*?<\/td><\/tr>'
+    patron = '<tr><td><img src="[^"]+".*?title="Idioma Capitulo"\s* \/>(.*?)'
+    patron += '<a href=.*?title="">(.*?)<\/a><\/td><td><a href=.*?'
+    patron += '<td\s*class="opcion2_td".*?<a href="([^"]+)".*?<img src="([^"]+)"'
+    if not scrapertools.find_single_match(data, patron):
+        patron = '<tr><td><img\s*src="[^"]+".*?title="Idioma\s*Capitulo"\s*\/>(.*?)'
+        patron += '<a.*?href="[^"]+"\s*title="\s*">(.*?)<\/a><\/td><td><a.*?href=.*?'
+        patron +='<td\s*class="opcion2_td".*?<a\s*href="([^"]+)".*?<img\s*src="([^"]+)"'
+    
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                                             #error
         item = generictools.web_intervenida(item, data)                         #Verificamos que no haya sido clausurada

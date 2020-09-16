@@ -1,7 +1,8 @@
 {
 "id": "xdede",
   "name": "Xdede",
-  "active": true,
+  "force_unify": true,
+  "active": false,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://i.imgur.com/MJd3fUd.png",

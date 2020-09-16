@@ -14,8 +14,6 @@ from core import httptools
 from core import jsontools
 from core import downloadtools
 from core import ziptools
-from core import filetools
-
 
 def check_addon_init():
     logger.info()
@@ -80,6 +78,12 @@ def check_addon_updates(verbose=False):
         last_fix_json = os.path.join(config.get_runtime_path(), 'last_fix.json')   # información de la versión fixeada del usuario
         # Se guarda en get_runtime_path en lugar de get_data_path para que se elimine al cambiar de versión
 
+        try:
+            localfilename = os.path.join(config.get_data_path(), 'temp_updates.zip')
+            if os.path.exists(localfilename): os.remove(localfilename)
+        except:
+            pass
+        
         # Descargar json con las posibles actualizaciones
         # -----------------------------------------------
         data = httptools.downloadpage(ADDON_UPDATES_JSON, timeout=5).data
@@ -87,6 +91,7 @@ def check_addon_updates(verbose=False):
             logger.info('No se encuentran actualizaciones del addon')
             if verbose:
                 platformtools.dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
+            check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
             return False
 
         data = jsontools.load(data)
@@ -94,6 +99,7 @@ def check_addon_updates(verbose=False):
             logger.info('No hay actualizaciones del addon')
             if verbose:
                 platformtools.dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
+            check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
             return False
 
         # Comprobar versión que tiene instalada el usuario con versión de la actualización
@@ -103,16 +109,18 @@ def check_addon_updates(verbose=False):
             logger.info('No hay actualizaciones para la versión %s del addon' % current_version)
             if verbose:
                 platformtools.dialog_notification('Alfa ya está actualizado', 'No hay ninguna actualización urgente')
+            check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
             return False
 
         if os.path.exists(last_fix_json):
             try:
                 lastfix =  {} 
-                lastfix = jsontools.load(filetools.read(last_fix_json))
+                lastfix = jsontools.load(open(last_fix_json, "r").read())
                 if lastfix['addon_version'] == data['addon_version'] and lastfix['fix_version'] == data['fix_version']:
                     logger.info('Ya está actualizado con los últimos cambios. Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
                     if verbose:
                         platformtools.dialog_notification('Alfa ya está actualizado', 'Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
+                    check_update_to_others(verbose=verbose)                             # Comprueba las actualuzaciones de otros productos
                     return False
             except:
                 if lastfix:
@@ -123,8 +131,6 @@ def check_addon_updates(verbose=False):
 
         # Descargar zip con las actualizaciones
         # -------------------------------------
-        localfilename = os.path.join(config.get_data_path(), 'temp_updates.zip')
-        if os.path.exists(localfilename): os.remove(localfilename)
 
         downloadtools.downloadfile(ADDON_UPDATES_ZIP, localfilename, silent=True)
         
@@ -135,21 +141,27 @@ def check_addon_updates(verbose=False):
             unzipper.extract(localfilename, config.get_runtime_path())
         except:
             import xbmc
-            xbmc.executebuiltin('XBMC.Extract("%s", "%s")' % (localfilename, config.get_runtime_path()))
+            xbmc.executebuiltin('Extract("%s", "%s")' % (localfilename, config.get_runtime_path()))
             time.sleep(1)
         
         # Borrar el zip descargado
         # ------------------------
-        os.remove(localfilename)
+        try:
+            os.remove(localfilename)
+        except:
+            pass
         
         # Guardar información de la versión fixeada
         # -----------------------------------------
         if 'files' in data: data.pop('files', None)
-        filetools.write(last_fix_json, jsontools.dump(data))
+            
+        open(last_fix_json, "w").write(jsontools.dump(data))
         
         logger.info('Addon actualizado correctamente a %s.fix%d' % (data['addon_version'], data['fix_version']))
         if verbose:
             platformtools.dialog_notification('Alfa actualizado a', 'Versión %s.fix%d' % (data['addon_version'], data['fix_version']))
+        
+        check_update_to_others(verbose=verbose)                                 # Comprueba las actualuzaciones de otros productos
         return True
 
     except:
@@ -157,4 +169,96 @@ def check_addon_updates(verbose=False):
         logger.error(traceback.format_exc())
         if verbose:
             platformtools.dialog_notification('Alfa actualizaciones', 'Error al comprobar actualizaciones')
+        check_update_to_others(verbose=verbose)                                 # Comprueba las actualuzaciones de otros productos
         return False
+
+
+def check_update_to_others(verbose=False):
+    logger.info()
+    
+    try:
+        import xbmc
+        
+        list_folder = os.listdir(os.path.join(config.get_runtime_path(), 'tools'))
+        for folder in list_folder:
+            in_folder = os.path.join(config.get_runtime_path(), 'tools', folder)
+            if not os.path.isdir(in_folder):
+                continue
+
+            out_folder = xbmc.translatePath(os.path.join('special://home/', 'addons', folder))
+            if os.path.exists(out_folder):
+                
+                copytree(in_folder, out_folder)
+                
+                logger.info('%s updated' % folder)
+    except:
+        logger.error('Error al actualizar OTROS paquetes')
+        logger.error(traceback.format_exc())
+        
+    try:
+        from lib import alfa_assistant
+        res, addonid = alfa_assistant.update_alfa_assistant()
+    except:
+        logger.error("Alfa Assistant.  Error en actualización")
+        logger.error(traceback.format_exc())
+
+
+def copytree(src, dst, symlinks=False, ignore=None):
+    """Recursively copy a directory tree using copy2().
+    
+    *** Obtained from Kody Python 2.7 Shutil ***
+    *** Ignores error if dst-dir exists ***
+
+    The destination directory must not already exist.
+    If exception(s) occur, an Error is raised with a list of reasons.
+
+    If the optional symlinks flag is true, symbolic links in the
+    source tree result in symbolic links in the destination tree; if
+    it is false, the contents of the files pointed to by symbolic
+    links are copied.
+
+    The optional ignore argument is a callable. If given, it
+    is called with the `src` parameter, which is the directory
+    being visited by copytree(), and `names` which is the list of
+    `src` contents, as returned by os.listdir():
+
+        callable(src, names) -> ignored_names
+
+    Since copytree() is called recursively, the callable will be
+    called once for each directory that is copied. It returns a
+    list of names relative to the `src` directory that should
+    not be copied.
+
+    XXX Consider this example code rather than the ultimate tool.
+
+    """
+    length = 16*1024
+    names = os.listdir(src)
+    if ignore is not None:
+        ignored_names = ignore(src, names)
+    else:
+        ignored_names = set()
+
+    if not os.path.exists(dst):
+        os.makedirs(dst)
+    
+    for name in names:
+        if name in ignored_names:
+            continue
+        srcname = os.path.join(src, name)
+        dstname = os.path.join(dst, name)
+
+        if symlinks and os.path.islink(srcname):
+            linkto = os.readlink(srcname)
+            os.symlink(linkto, dstname)
+        elif os.path.isdir(srcname):
+            copytree(srcname, dstname, symlinks, ignore)
+        else:
+            # Will raise a SpecialFileError for unsupported file types
+            with open(srcname, 'rb') as fsrc:
+                with open(dstname, 'wb') as fdst:
+                    while 1:
+                        buf = fsrc.read(length)
+                        if not buf:
+                            break
+                        fdst.write(buf)

@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
-import urlparse
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
+if PY3:
+    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse                                             # Usamos el nativo de PY2 que es más rápido
+
 import re
 
+from core.item import Item
 from platformcode import config, logger
 from core import httptools
 from core import scrapertools
@@ -18,10 +27,11 @@ def mainlist(item):
     itemlist.append(item.clone(action="search", title="Buscar"))
     return itemlist
 
+
 def search(item, texto):
     logger.info("")
     texto = texto.replace(" ", "+")
-    item.url = host + "/?s=%s" % texto
+    item.url = "%s/?s=%s" % (host, texto)
     try:
         return lista(item)
     except:
@@ -30,17 +40,13 @@ def search(item, texto):
             logger.error("%s" % line)
         return []
         
-def search(item, texto):
-    logger.info()
-    item.url = item.url % texto
-    return lista(item)
 
 
 def categorias(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<li class="cat-item cat-item-.*?"><a href="(.*?)".*?>(.*?)<'
+    patron = '<li class="cat-item cat-item-.*?"><a href="([^"]+)".*?>([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle in matches:
         itemlist.append(item.clone(action="lista", title=scrapedtitle, url=scrapedurl))
@@ -51,51 +57,23 @@ def lista(item):
     logger.info()
     itemlist = []
     data = httptools.downloadpage(item.url).data
-    patron = '<div class="video.".*?<a href="(.*?)" title="(.*?)">.*?<img src="(.*?)".*?\/>.*?duration.*?>(.*?)<'
+    patron = '<div class="video.*?'
+    patron += '<a href="([^"]+)" title="([^"]+)">.*?'
+    patron += '<img src="([^"]+)".*?'
+    patron += 'duration.*?>([^<]+)<'
     matches = scrapertools.find_multiple_matches(data, patron)
     for scrapedurl, scrapedtitle, scrapedthumbnail, duration in matches:
         if duration:
-            scrapedtitle = "[COLOR yellow]" + duration + "[/COLOR] " + scrapedtitle
-        itemlist.append(item.clone(action="play", title=scrapedtitle, url=scrapedurl, thumbnail=scrapedthumbnail,
-                                   fanart=scrapedthumbnail))
+            scrapedtitle = "[COLOR yellow]%s[/COLOR] %s" % (duration,scrapedtitle)
+        itemlist.append( Item(channel=item.channel, action="play", title=scrapedtitle, contentTitle=scrapedtitle, url=scrapedurl,
+                                   fanart=scrapedthumbnail, thumbnail=scrapedthumbnail))
     next_page = scrapertools.find_single_match(data, '<a class="nextpostslink" rel="next" href="([^"]+)"')
     if next_page:
-        itemlist.append(item.clone(action="lista", title=">> Página Siguiente", url=next_page))
+        itemlist.append(item.clone(action="lista", title="[COLOR blue]Página Siguiente >>[/COLOR]", url=next_page))
     return itemlist
 
 
 def play(item):
-    itemlist = []
-    data = httptools.downloadpage(item.url).data
-    data = scrapertools.find_single_match(data, '<div class="video_code">(.*?)<h3')
-    patron = '(?:src|SRC)="([^"]+)"'
-    matches = scrapertools.find_multiple_matches(data, patron)
-    for scrapedurl in matches:
-        if 'mixdrop' in scrapedurl:
-            url = "https:" + scrapedurl
-            headers = {'Referer': item.url}
-            data = httptools.downloadpage(url, headers=headers).data
-            url = scrapertools.find_single_match(data, 'vsrc = "([^"]+)"')
-            url= "https:" + url
-        else:
-            url = scrapedurl
-            if 'base64' in scrapedurl:  #el base64 es netu.tv
-                url = "https://hqq.tv/player/embed_player.php?vid=RODE5Z2Hx3hO&autoplay=none"
-
-        itemlist.append(item.clone(action="play", title = "%s", contentTitle= item.title, url=url ))
-    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize())  
-    
-    a = len (itemlist)
-    for i in itemlist:
-        if a < 1:
-            return []
-        if 'mixdrop' in i.url: #check_video_link no analiza videos directos
-            res = "green"
-        else:
-            res = servertools.check_video_link(i.url, i.server, timeout=5)
-        a -= 1
-        if 'green' in res:
-            return [i]
-        else:
-            continue
-
+    logger.info(item)
+    itemlist = servertools.find_video_items(item.clone(url = item.url, contentTitle = item.title))
+    return itemlist

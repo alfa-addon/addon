@@ -3,6 +3,10 @@
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
+
 import re
 
 from channels import autoplay
@@ -15,10 +19,10 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = 'http://pelkex.net/'
+host = 'http://okpelis.net/'
 
 IDIOMAS = {'Latino': 'LAT'}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_quality = []
 list_servers = ['openload', 'streamango', 'fastplay', 'okru', 'rapidvideo']
 
