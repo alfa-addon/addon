@@ -2,26 +2,27 @@
 # -*- Channel SeriesKao -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 import re
+import base64
+from bs4 import BeautifulSoup
+
 from core import tmdb
 from core import httptools
 from core.item import Item
 from core import servertools
 from core import scrapertools
-from bs4 import BeautifulSoup
 from channelselector import get_thumb
 from platformcode import config, logger
 from channels import filtertools, autoplay
-import sys
-
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
 
 IDIOMAS = {'subtitulado': 'VOSE', "latino": "LAT", u"español": "CAST"}
 
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 
 list_quality = []
 
@@ -248,7 +249,6 @@ def findvideos(item):
 
     soup = create_soup(item.url)
     matches = soup.find("ul", id="playeroptionsul")
-
     if not matches:
         return itemlist
 
@@ -267,12 +267,10 @@ def findvideos(item):
         player_url = BeautifulSoup(data, "html5lib").find("iframe")["src"]
 
         player = httptools.downloadpage(player_url, headers={"referer": item.url}).data
-
-        patron = r'data-test="(\d+)" data-player="([^"]+)"'
-        matches = re.compile(patron, re.DOTALL).findall(player)
-
-        for opt, srv in matches:
-            url = scrapertools.find_single_match(player, r"addiframe\('([^']+)', '%s'\)" % opt)
+        soup = BeautifulSoup(player, "html5lib")
+        matches = soup.find_all("li", {"onclick": True})
+        for elem in matches:
+            url = base64.b64decode(elem["data-r"])
 
             if "animekao.club/player.php" in url:
                 url = url.replace("animekao.club/player.php?x", "player.premiumstream.live/player.php?id")
