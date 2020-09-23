@@ -1,7 +1,7 @@
 {
 "id": "seriemega",
   "name": "SerieMega",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat", "cast"],
   "thumbnail": "https://seriemega.net/wp-content/uploads/2020/04/Sin-título-1-1.jpg",
