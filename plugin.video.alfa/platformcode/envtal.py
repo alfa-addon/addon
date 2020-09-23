@@ -91,6 +91,7 @@ def get_environment():
                             environment['prod_model'] = str(scrapertools.find_single_match(label_a, '=(.*?)$'))
                 except:
                     pass
+            environment['prod_model'] += ' (%s)' % config.is_rooted(silent=True)
         
         elif xbmc.getCondVisibility("system.platform.Linux"):
             environment['os_name'] = 'Linux'
