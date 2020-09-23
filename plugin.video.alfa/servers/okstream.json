@@ -1,21 +1,17 @@
 {
-  "active": false,
+  "active": true,
   "find_videos": {
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://www.fapnado.com/videos/[0-9]+/[A-z0-9-]+/)",
-        "url": "\\1"
-      },
-      {
-        "pattern": "(https://www.javbangers.com/embed/\\w+)",
+        "pattern": "(https://www.okstream.cc/e/[a-z0-9]+)",
         "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "javwhores",
-  "name": "javwhores",
+  "id": "okstream",
+  "name": "okstream",
   "settings": [
     {
       "default": false,

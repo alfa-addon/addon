@@ -38,8 +38,12 @@
       {
         "pattern": "(https://ok.xxx/video/[0-9]+/)",
         "url": "\\1"
+      },
+      {
+        "pattern": "(https://pornwild.to/videos/[0-9]+/[A-z0-9-]+/)",
+        "url": "\\1"
       }
-    ]
+      ]
   },
   "free": true,
   "id": "ktp",

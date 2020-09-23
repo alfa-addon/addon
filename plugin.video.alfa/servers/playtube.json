@@ -4,8 +4,8 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://playtube.ws/embed-\\w+.html)",
-        "url": "\\1"
+        "pattern": "(https://playtube.ws/embed-\\w+)",
+        "url": "\\1.html"
       }
     ]
   },

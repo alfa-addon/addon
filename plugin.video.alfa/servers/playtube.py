@@ -14,7 +14,7 @@ def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global data
     data = httptools.downloadpage(page_url)
-    if data.code == 404:
+    if data.code == 404 or "File is no longer available" in data.data:
         return False, "[playtube] El archivo no existe o ha sido borrado"
     return True, ""
 

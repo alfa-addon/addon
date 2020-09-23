@@ -143,7 +143,7 @@
         <setting id="tmdb_plus_info" type="bool" label="70156" default="false"/>
         <setting id="tmdb_cache" type="bool" label="70157" default="true"/>
         <setting id="tmdb_cache_expire" type="enum" lvalues="70158|70159|70160|70161|70170" label="70162"
-                 enable="eq(-1,true)" default="4"/>
+                 enable="eq(-1,true)" default="2"/>
         <setting id="tmdb_clean_db_cache" type="action" label="70163"
                  action="RunPlugin(plugin://plugin.video.alfa/?ew0KICAgICJhY3Rpb24iOiAic2NyaXB0Ig0KfQ==)"/>
 
