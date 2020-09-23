@@ -2,11 +2,19 @@
 # -*- Channel SerieMega -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
+if PY3:
+    import urllib.parse as urlparse                                             # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urlparse
 
 import re
-from channels import filtertools
 from bs4 import BeautifulSoup
+
+from channels import filtertools
 from core import httptools
 from core import scrapertools
 from core import servertools
@@ -15,18 +23,10 @@ from core import tmdb
 from channels import autoplay
 from platformcode import config, logger
 from channelselector import get_thumb
-import sys
-PY3 = False
-if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-
-if PY3:
-    import urllib.parse as urlparse                             # Es muy lento en PY2.  En PY3 es nativo
-else:
-    import urlparse
 
 host = 'https://seriemega.net/'
 IDIOMAS = {"Latino": "LAT", "Castellano": "CAST", "Subtitulado": "VOSE"}
-list_language = IDIOMAS.values()
+list_language = list(IDIOMAS.values())
 list_servers = ['directo', 'jawclowd']
 list_quality = ['HD-RIP', 'TSC-SCR', 'HD-720', 'HD-1080']
 
