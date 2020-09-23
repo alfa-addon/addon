@@ -2,8 +2,15 @@
 # ------------------------------------------------------------
 # Lista de vídeos favoritos
 # ------------------------------------------------------------
+import sys
+PY3 = False
+if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 
-import os
+if PY3:
+    import urllib.parse as urllib                                               # Es muy lento en PY2.  En PY3 es nativo
+else:
+    import urllib                                                               # Usamos el nativo de PY2 que es más rápido
+
 import time
 
 from core import filetools
@@ -12,7 +19,12 @@ from core.item import Item
 from platformcode import config, logger
 from platformcode import platformtools
 
-FAVOURITES_PATH = filetools.join(config.get_data_path(), "favourites.xml")
+# Fijamos la ruta a favourites.xml
+if config.is_xbmc():
+
+    FAVOURITES_PATH = filetools.translatePath("special://profile/favourites.xml")
+else:
+    FAVOURITES_PATH = filetools.join(config.get_data_path(), "favourites.xml")
 
 
 def mainlist(item):
@@ -134,7 +146,6 @@ def renameFavourite(item):
 # Funciones para migrar favoritos antiguos (.txt)
 def readbookmark(filepath):
     logger.info()
-    import urllib
 
     bookmarkfile = filetools.file_open(filepath)
 

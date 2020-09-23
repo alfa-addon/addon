@@ -205,6 +205,8 @@ def save_movie(item):
             logger.error("No se ha podido guardar las urls de emergencia de %s en la videoteca" % item.contentTitle)
             logger.error(traceback.format_exc())
         
+        if item.from_channel_alt: del item.from_channel_alt
+        if item_nfo.from_channel_alt: del item_nfo.from_channel_alt
         if filetools.write(json_path, item.tojson()):
             p_dialog.update(100, 'Añadiendo película...' + '\n' + item.contentTitle + '\n' + ' ')
             item_nfo.library_urls[item.channel] = item.url
@@ -481,6 +483,9 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
                 logger.error("No se ha podido guardar las urls de emergencia de %s en la videoteca" % e.contentTitle)
                 logger.error(traceback.format_exc())
             continue
+            
+        if e.from_channel_alt: del e.from_channel_alt
+    if serie.from_channel_alt: del serie.from_channel_alt
 
     # No hay lista de episodios, no hay nada que guardar
     if not len(new_episodelist):

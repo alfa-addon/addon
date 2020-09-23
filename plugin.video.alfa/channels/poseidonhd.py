@@ -143,8 +143,9 @@ def list_all(item):
     itemlist = list()
 
     soup = create_soup(item.url)
-
     matches = soup.find("section", class_="section movies")
+    if not matches:
+        matches = soup.find("div", id="aa-movies")
     for elem in matches.find_all("article", class_=re.compile(r"post (?:dfx|fcl|movies)")):
 
         type = item.type

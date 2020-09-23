@@ -4,7 +4,7 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://vidia.tv/embed-[A-z0-9]+.html)",
+        "pattern": "(https://vidia.tv/(?:embed-|)[A-z0-9]+.html)",
         "url": "\\1"
       }
     ]

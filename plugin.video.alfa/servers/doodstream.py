@@ -42,11 +42,6 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     base_url = scrapertools.find_single_match(data, r"\$.get\('([^']+)'")
     data = httptools.downloadpage("%s%s" % (host, base_url), headers={"referer": page_url}).data
     data = re.sub(r'\s+', '', data)
-    values = [("/", "1"), ("/", "Z"), ("@", "a")]
-    for val in values:
-        logger.debug(data)
-        data = re.sub(val[0], val[1], data)
-        data = base64.b64decode(data)
 
     url = data + makeplay + "|Referer=%s" % page_url
     video_urls.append(['%s [doodstream]' % label, url])
