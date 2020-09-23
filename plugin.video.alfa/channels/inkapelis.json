@@ -1,21 +1,22 @@
 {
-"id": "pelix",
-  "name": "Pelix",
+  "id": "inkapelis",
+  "name": "InkaPelis",
+  "force_unify": true,
+  "language": ["lat"],
   "active": true,
   "adult": false,
-  "language": ["lat"],
-  "thumbnail": "https://pelix.tv/wp-content/themes/allcine/images/logossss.png",
+  "thumbnail": "https://i.postimg.cc/fTVV35zr/inkapelis.png",
   "banner": "",
   "categories": [
     "movie",
-    "tvshow"
+    "vos"
   ],
   "settings": [
     {
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     },
@@ -27,16 +28,11 @@
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "No filtrar"
+        "No filtrar",
+        "LAT",
+        "CAST",
+        "VOSE"
       ]
-    },
-    {
-      "id": "include_in_newest_peliculas",
-      "type": "bool",
-      "label": "Incluir en Novedades - Peliculas",
-      "default": true,
-      "enabled": true,
-      "visible": true
     },
     {
       "id": "include_in_newest_latino",
@@ -47,9 +43,9 @@
       "visible": true
     },
     {
-      "id": "include_in_newest_torrent",
+      "id": "include_in_newest_castellano",
       "type": "bool",
-      "label": "Incluir en Novedades - Torrent",
+      "label": "Incluir en Novedades - Castellano",
       "default": true,
       "enabled": true,
       "visible": true
@@ -57,7 +53,7 @@
     {
       "id": "include_in_newest_infantiles",
       "type": "bool",
-      "label": "Incluir en Novedades - Infantiles",
+      "label": "Incluir en Novedades - Películas",
       "default": true,
       "enabled": true,
       "visible": true
@@ -65,7 +61,15 @@
     {
       "id": "include_in_newest_terror",
       "type": "bool",
-      "label": "Incluir en Novedades - terror",
+      "label": "Incluir en Novedades - Terror",
+      "default": true,
+      "enabled": true,
+      "visible": true
+    },
+    {
+      "id": "include_in_newest_peliculas",
+      "type": "bool",
+      "label": "Incluir en Novedades - Películas",
       "default": true,
       "enabled": true,
       "visible": true
