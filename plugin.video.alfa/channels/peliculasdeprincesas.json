@@ -1,21 +1,22 @@
 {
-"id": "pelix",
-  "name": "Pelix",
+"id": "peliculasdeprincesas",
+  "name": "Peliculas de princesas",
+  "force_unify": true,
   "active": true,
   "adult": false,
   "language": ["lat"],
-  "thumbnail": "https://pelix.tv/wp-content/themes/allcine/images/logossss.png",
+  "thumbnail": "https://www.peliculasdeprincesas.net/wp-content/uploads/2019/05/peliculas-de-princesas.jpg",
   "banner": "",
   "categories": [
     "movie",
-    "tvshow"
+    "direct"
   ],
   "settings": [
     {
       "id": "include_in_global_search",
       "type": "bool",
       "label": "Incluir en busqueda global",
-      "default": false,
+      "default": true,
       "enabled": true,
       "visible": true
     },
@@ -39,33 +40,9 @@
       "visible": true
     },
     {
-      "id": "include_in_newest_latino",
-      "type": "bool",
-      "label": "Incluir en Novedades - Latino",
-      "default": true,
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "include_in_newest_torrent",
-      "type": "bool",
-      "label": "Incluir en Novedades - Torrent",
-      "default": true,
-      "enabled": true,
-      "visible": true
-    },
-    {
       "id": "include_in_newest_infantiles",
       "type": "bool",
       "label": "Incluir en Novedades - Infantiles",
-      "default": true,
-      "enabled": true,
-      "visible": true
-    },
-    {
-      "id": "include_in_newest_terror",
-      "type": "bool",
-      "label": "Incluir en Novedades - terror",
       "default": true,
       "enabled": true,
       "visible": true
