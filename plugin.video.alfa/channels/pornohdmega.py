@@ -95,7 +95,7 @@ def lista(item):
     for scrapedurl,scrapedtitle,scrapedthumbnail in matches:
         if "0p" in scrapedtitle:
             quality = scrapertools.find_single_match(scrapedtitle, '(\d+p)')
-            title = scrapertools.find_single_match(scrapedtitle, '([^"]+)(?:-| )\d+p')
+            title = scrapertools.find_single_match(scrapedtitle, '([^"]+)(?:-| |)\d+p')
             title = "[COLOR red]%s[/COLOR] %s" % (quality,title)
         else:
             title = scrapedtitle

@@ -36,6 +36,10 @@
         "url": "\\1"
       },
       {
+        "pattern": "(https://www.theyarehuge.com/v/[A-z0-9-.]+/)",
+        "url": "\\1"
+      },
+      {
         "pattern": "(https://ok.xxx/video/[0-9]+/)",
         "url": "\\1"
       },
