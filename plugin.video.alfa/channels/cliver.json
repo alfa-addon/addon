@@ -1,7 +1,7 @@
 {
   "id": "cliver",
   "name": "Cliver",
-  "active": false,
+  "active": true,
   "adult": false,
   "language": ["cast", "lat"],
   "thumbnail": "https://www.cliver.to/img/logo.png",

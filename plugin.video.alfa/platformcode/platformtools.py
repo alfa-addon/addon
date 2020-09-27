@@ -1686,4 +1686,4 @@ def rar_control_mng(item, xlistitem, mediaurl, rar_files, torr_client, password,
 
 
 def log(texto):
-    xbmc.log(texto, xbmc.LOGNOTICE)
+    logger.info(texto, force=True)

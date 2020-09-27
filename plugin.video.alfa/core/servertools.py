@@ -245,7 +245,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
 
     if httptools.channel_proxy_list(url):
         url_proxy, proxy_data, opt = httptools.check_proxy(url, forced_proxy=None, force_proxy_get=True)
-        if not proxy_data[web_name]:
+        if not proxy_data['web_name']:
             url_proxy = url
 
     # Si el vídeo es "directo" o "local", no hay que buscar más
@@ -410,7 +410,7 @@ def get_server_name(serverid):
     for server in server_list:
         params = get_server_parameters(server)
         # Si la nombre esta en el listado de ids
-        if serverid in params["id"]:
+        if serverid in str(params["id"]):
             return server
         # Si el nombre es mas de una palabra, comprueba si algun id esta dentro del nombre:
         elif len(serverid.split()) > 1:
@@ -434,19 +434,18 @@ def is_server_enabled(server):
 
     server = get_server_name(server)
 
-    # El server no existe
-    if not server:
-        return False
-
     server_parameters = get_server_parameters(server)
-    if server_parameters["active"] == True:
+    if server_parameters.get("active", False) == True:
         if not config.get_setting("hidepremium"):
             return True
-        elif server_parameters["free"] == True:
+        elif server_parameters.get("free", False) == True:
             return True
         elif [premium for premium in server_parameters["premium"] if config.get_setting("premium", server=premium)]:
             return True
-
+    
+    if not server:
+        return False
+    
     return False
 
 

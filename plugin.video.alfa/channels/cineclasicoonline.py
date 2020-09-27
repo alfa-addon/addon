@@ -147,6 +147,7 @@ def findvideos(item):
     soup = create_soup(item.url).find("div", id="videos")
     matches = soup.find("div", class_="links_table")
     added = list()
+    from channels.clubdecine import findvideos as fv
     for elem in matches.find_all("tr", id=re.compile(r"link-\d+")):
         links = elem.find_all("td")
 
@@ -156,18 +157,11 @@ def findvideos(item):
         if server == "my":
             server = "mailru"
         if server == "mycinedesiempre":
-            new_url = create_soup(url).find("a", class_="btn")["href"]
-            data = httptools.downloadpage(new_url).data
-            data = re.sub(r"\n|\r|\t|\(.*?\)|\s{2}|&nbsp;", "", data)
-            data = scrapertools.find_single_match(data, "</ul></dd>(.*?)tags")
-            v_data = re.compile(r'<a href="([^"]+)".*?<br', re.DOTALL).findall(data)
-            for v_url in v_data:
-                url = v_url
-                srv = servertools.get_server_from_url(url)
-                if url not in added:
-                    itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, server=srv,
-                                         infoLabels=item.infoLabels))
-                    added.append(url)
+            redir = create_soup(url)
+            url = redir.find("a", id="link")["href"]
+            if re.sub(r"-\d+/", "/", url) not in added:
+                itemlist.extend(fv(item.clone(url=url))[:-1])
+                added.append(url)
         else:
             itemlist.append(Item(channel=item.channel, title='%s', action='play', url=url, server=server,
                                  language=IDIOMAS.get(lang, "VOSE"), infoLabels=item.infoLabels))

@@ -1,7 +1,7 @@
 {
   "id": "megadede",
   "name": "Megadede",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["cast"],
   "thumbnail": "https://i.postimg.cc/L5pNtXdS/megadede1.png",
