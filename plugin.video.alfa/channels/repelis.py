@@ -29,7 +29,7 @@ list_servers = ['rapidvideo', 'streamango', 'fastplay', 'openload', 'netu', 'vid
 
 __channel__='repelis'
 
-host = "https://repelisxd.com"
+host = "https://repelis.io"
 
 try:
     __modo_grafico__ = config.get_setting('modo_grafico', __channel__)
