@@ -13,7 +13,7 @@ response = ""
 def test_video_exists(page_url):
     logger.info("(page_url='%s')" % page_url)
     global response
-    response = httptools.downloadpage(page_url)
+    response = httptools.downloadpage(page_url, add_referer=True)
 
     if not response.sucess or "Not Found" in response.data:
         return False, "[%s] El fichero no existe o ha sido borrado" %id_server

@@ -30,7 +30,7 @@ list_servers = [
     'fembed'
     ]
 
-host = 'https://poseidonhdd.com/'
+host = 'https://tekilaz.org/'
 
 
 def mainlist(item):
