@@ -1589,7 +1589,8 @@ def find_rar_password(item):
 
 
 def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torrent=False, \
-                        timeout=5, file_list=False, lookup=True, local_torr=None, headers={}, short_pad=False):
+                        timeout=5, file_list=False, lookup=True, local_torr=None, headers={}, \
+                        force=False, short_pad=False):
     logger.info()
     from servers import torrent
     
@@ -1690,6 +1691,16 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         #urllib.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36 SE 2.X MetaSr 1.0'
         #urllib.urlretrieve(url, torrents_path + "/generictools.torrent")        #desacargamos el .torrent a la carpeta
         #torrent_file = open(torrents_path + "/generictools.torrent", "rb").read()   #leemos el .torrent
+        
+        # Si es lookup, verifica si el canal tiene activado el Autoplay.  Si es así, retorna sin hacer el lookup
+        if lookup and not force and not local_torr:
+            is_channel = inspect.getmodule(inspect.currentframe().f_back)
+            is_channel = scrapertools.find_single_match(str(is_channel), "<module\s*'channels\.(.*?)'")
+            if is_channel:
+                from channels import autoplay
+                res = autoplay.is_active(is_channel)
+                if res:
+                    return 'autoplay'
         
         if not lookup: timeout = timeout * 3
         if ((url and not local_torr) or url.startswith('magnet')):

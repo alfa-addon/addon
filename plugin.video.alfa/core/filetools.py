@@ -59,6 +59,9 @@ def validate_path(path):
     @rtype: str
     @return: devuelve la cadena sin los caracteres no permitidos
     """
+    if not path:
+        path = ''
+
     chars = ":*?<>|"
     if scrapertools.find_single_match(path, '(^\w+:\/\/)'):
         protocolo = scrapertools.find_single_match(path, '(^\w+:\/\/)')
@@ -84,6 +87,9 @@ def translatePath(path):
     @rtype: str
     @return: devuelve la cadena con el path real
     """
+    if not path:
+        return ''
+
     if PY3 and xbmc_vfs:
         if PY3 and isinstance(path, bytes):
             path = path.decode(fs_encoding)
@@ -105,6 +111,9 @@ def makeLegalFilename(path):
     @rtype: str
     @return: devuelve la cadena con el path ajustado
     """
+    if not path:
+        return ''
+
     if PY3 and xbmc_vfs:
         if PY3 and isinstance(path, bytes):
             path = path.decode(fs_encoding)
@@ -126,6 +135,9 @@ def validatePath(path):
     @rtype: str
     @return: devuelve la cadena con el path ajustado
     """
+    if not path:
+        return ''
+
     if PY3 and xbmc_vfs:
         if PY3 and isinstance(path, bytes):
             path = path.decode(fs_encoding)
@@ -150,6 +162,9 @@ def encode(path, _samba=False):
     @rtype: str
     @return ruta codificada en juego de caracteres del sistema o utf-8 si samba
     """
+    if not path:
+        return ''
+    
     if path.startswith("special://"):
         path = translatePath(path)
     
@@ -177,6 +192,9 @@ def decode(path):
     @rtype: str
     @return: ruta codificado en UTF-8
     """
+    if not path:
+        return ''
+    
     if isinstance(path, list):
         for x in range(len(path)):
             if not isinstance(path[x], unicode):
@@ -1084,6 +1102,7 @@ def split(path, vfs=True):
     @return: (dirname, basename)
     @rtype: tuple
     """
+    path = encode(path)
     if scrapertools.find_single_match(path, '(^\w+:\/\/)'):
         protocol = scrapertools.find_single_match(path, '(^\w+:\/\/)')
         if '/' not in path[6:]:
@@ -1101,6 +1120,7 @@ def basename(path, vfs=True):
     @return: fichero de la ruta
     @rtype: str
     """
+    path = encode(path)
     return split(path)[1]
 
 
@@ -1112,6 +1132,7 @@ def dirname(path, vfs=True):
     @return: directorio de la ruta
     @rtype: str
     """
+    path = encode(path)
     return split(path)[0]
 
 
