@@ -2254,7 +2254,7 @@ class Trailer(xbmcgui.WindowXMLDialog):
         elif action == ACTION_SELECT_ITEM:
             xbmc.executebuiltin('PlayerControl(Play)')
         elif action == 199 or action == ACTION_SHOW_FULLSCREEN or action == 9:
-            xbmc.log("tuprimalafachaaa")
+            logger.info("tuprimalafachaaa", force=True)
         if action == 13:
             self.close()
 

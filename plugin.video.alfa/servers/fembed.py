@@ -18,19 +18,18 @@ def test_video_exists(page_url):
     page_url = page_url.replace("/f/","/v/")
     page_url = page_url.replace("/v/","/api/source/")
     data = httptools.downloadpage(page_url, post={}).json
-    if "Video not found or" in data:
-        return False, "[fembed] El fichero ha sido borrado"
+
+    if "Video not found or" in data.get('data'):
+        return False, "[Fembed] El fichero ha sido borrado"
     return True, ""
 
 
 def get_video_url(page_url, user="", password="", video_password=""):
     logger.info("(page_url='%s')" % page_url)
     video_urls = []
-    # page_url = page_url.replace("/f/","/v/")
-    # page_url = page_url.replace("/v/","/api/source/")
-    #data = httptools.downloadpage(page_url, post={}).json
+    
     for videos in data["data"]:
         v = videos["file"]
         if not v.startswith("http"): v = "https://www.fembed.com" + videos["file"]
-        video_urls.append([videos["label"] + " [fembed]", v])
+        video_urls.append([videos["label"] + " [Fembed]", v])
     return video_urls

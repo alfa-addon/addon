@@ -15,6 +15,7 @@ data = ""
 
 def test_video_exists(page_url):
     global data
+    page_url = page_url.replace('/d/', '/e/')
     logger.info("(page_url='%s')" % page_url)
     response = httptools.downloadpage(page_url)
 
@@ -32,7 +33,7 @@ def get_video_url(page_url, premium=False, user="", password="", video_password=
     video_urls = list()
     host = "https://dood.watch"
 
-    label = scrapertools.find_single_match(data, 'type:"video/([^"]+)"')
+    label = scrapertools.find_single_match(data, 'type:\s*"video/([^"]+)"')
 
     js_code = scrapertools.find_single_match(data, ("(function makePlay.*?;})"))
     js_code = re.sub(r"\+Date.now\(\)", '', js_code)

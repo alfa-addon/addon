@@ -23,11 +23,10 @@
     WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
 from __future__ import absolute_import
-#from builtins import str
+from builtins import object
 import sys
 PY3 = False
 if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
-from builtins import object
 
 import time
 import xbmc, xbmcgui, xbmcaddon
@@ -35,6 +34,7 @@ import xbmc, xbmcgui, xbmcaddon
 from .net import HTTP
 from core import filetools                                                      ### Alfa
 from core import ziptools
+from platformcode import config                                                 ### Alfa
 
 #__libbaseurl__ = "https://github.com/DiMartinoXBMC/script.module.libtorrent/raw/master/python_libtorrent"
 __libbaseurl__ = ["https://github.com/DiMartinoXBMC/script.module.libtorrent/raw/master/python_libtorrent"]
@@ -180,55 +180,22 @@ class LibraryManager(object):
         return True
 
     def android_workaround(self, new_dest_path):                                ### Alfa (entera)
-        import subprocess
-        
+
         for libname in get_libname(self.platform):
-            libpath=filetools.join(self.dest_path, libname)
-            size=str(filetools.getsize(libpath))
-            new_libpath=filetools.join(new_dest_path, libname)
+            libpath = filetools.join(self.dest_path, libname)
+            size = str(filetools.getsize(libpath))
+            new_libpath = filetools.join(new_dest_path, libname)
 
             if filetools.exists(new_libpath):
-                new_size=str(filetools.getsize(new_libpath))
+                new_size = str(filetools.getsize(new_libpath))
                 if size != new_size:
-                    filetools.remove(new_libpath)
-                    if filetools.exists(new_libpath):
-                        try:
-                            command = ['su', '-c', 'rm', '%s' % new_libpath]
-                            p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                            output_cmd, error_cmd = p.communicate()
-                            log('Comando ROOT: %s' % str(command))
-                        except:
-                            log('Sin PERMISOS ROOT: %s' % str(command))
-                    
-                    if not filetools.exists(new_libpath):
+                    res = filetools.remove(new_libpath, su=True)
+                    if res:
                         log('Deleted: (%s) %s -> (%s) %s' %(size, libpath, new_size, new_libpath))
                     
             if not filetools.exists(new_libpath):
-                filetools.copy(libpath, new_libpath, silent=True)                 ### ALFA
-                log('Copying... %s -> %s' %(libpath, new_libpath))
-                
-                if not filetools.exists(new_libpath):
-                    try:
-                        command = ['su', '-c', 'cp', '%s' % libpath, '%s' % new_libpath]
-                        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        output_cmd, error_cmd = p.communicate()
-                        log('Comando ROOT: %s' % str(command))
-                        
-                        command = ['su', '-c', 'chmod', '777', '%s' % new_libpath]
-                        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        output_cmd, error_cmd = p.communicate()
-                        log('Comando ROOT: %s' % str(command))
-                    except:
-                        log('Sin PERMISOS ROOT: %s' % str(command))
+                res = filetools.copy(libpath, new_libpath, ch_mod='777', su=True)   ### ALFA
 
-                    if not filetools.exists(new_libpath):
-                        log('ROOT Copy Failed!')
-                
-                else:
-                    command = ['chmod', '777', '%s' % new_libpath]
-                    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    output_cmd, error_cmd = p.communicate()
-                    log('Comando: %s' % str(command))
             else:
                 log('Module exists.  Not copied... %s' % new_libpath)           ### ALFA
 
