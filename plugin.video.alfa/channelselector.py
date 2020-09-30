@@ -82,9 +82,9 @@ def getmainlist(view="thumb_"):
                          thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
                          category=config.get_localized_string(30104), viewmode="list"))
                          
-    itemlist.append(Item(channel="setting", action=action, url='https://alfa-addon.com/threads/bloqueos-en-la-descarga-de-torrents.3646/', 
-                         title="-     [COLOR yellow]¿Bloqueos en la descarga de Torrents?[/COLOR]   " + 
-                         "https://alfa-addon.com/threads/bloqueos-en-la-descarga-de-torrents.3646/", 
+    itemlist.append(Item(channel="setting", action=action, url='https://alfa-addon.com/threads/manual-de-alfa-mobile-assistant-herramienta-de-apoyo.3797/', 
+                         title="-     [COLOR yellow]Manual de Alfa Mobile Assistant (herramienta de apoyo)[/COLOR]   " + 
+                         "https://alfa-addon.com/threads/manual-de-alfa-mobile-assistant-herramienta-de-apoyo.3797/", 
                          thumbnail=get_thumb("help.png", view), unify=False, folder=False, 
                          category=config.get_localized_string(30104), viewmode="list"))
 
