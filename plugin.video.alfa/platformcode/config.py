@@ -107,6 +107,74 @@ def is_xbmc():
     return True
 
 
+def is_rooted(silent=False):
+    res = get_setting('is_rooted_device', default='check')
+    
+    if res in ['rooted', 'no_rooted']:
+        return res
+    
+    res = 'no_rooted'
+    from platformcode import logger
+    
+    if xbmc.getCondVisibility("system.platform.windows"):
+        res = 'no_rooted'
+
+    elif xbmc.getCondVisibility("system.platform.android"):
+        LIBTORRENT_MSG = get_setting("libtorrent_msg", server="torrent", default='')
+        if not LIBTORRENT_MSG:
+            import xbmcgui
+            dialog = xbmcgui.Dialog()
+            dialog.notification('ALFA: Verificando privilegios de Super-usuario', \
+                        'Puede solicitarle permisos de Super usuario', time=10000)
+            logger.info('### ALFA: Notificación enviada: privilegios de Super-usuario verificados', force=True)
+            set_setting("libtorrent_msg", 'OK', server="torrent")
+        
+        for subcmd in ['-c', '-0']:
+            command = ['su', subcmd, 'ls']
+            output_cmd, error_cmd = su_command(command, silent=silent)
+            if not error_cmd:
+                res = 'rooted'
+                break
+
+    elif xbmc.getCondVisibility("system.platform.linux"):
+        res = 'rooted'
+
+    if not silent:
+        if res == 'rooted':
+            logger.info('Dispositivo Rooteado', force=True)
+        else:
+            logger.info('Dispositivo NO Rooteado', force=True)
+
+    set_setting('is_rooted_device', res)
+    return res
+
+
+def su_command(command, silent=False):
+    import subprocess
+    
+    try:
+        if not silent:
+            from platformcode import logger
+        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output_cmd, error_cmd = p.communicate()
+        if not error_cmd and not silent:
+            logger.info('Command: %s' % str(command))
+        if error_cmd and not silent:
+            logger.info('Command ERROR: %s, %s' % (str(command), str(error_cmd)))
+    
+    except Exception as e:
+        if not PY3:
+            e = unicode(str(e), "utf8", errors="replace").encode("utf8")
+        elif PY3 and isinstance(e, bytes):
+            e = e.decode("utf8")
+        error_cmd = e
+        output_cmd = ''
+        if not silent:
+            logger.info('Command ERROR: %s, %s' % (str(command), str(error_cmd)))
+
+    return output_cmd, error_cmd
+
+
 def get_videolibrary_support():
     return True
 

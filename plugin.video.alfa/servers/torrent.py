@@ -2232,8 +2232,5 @@ def import_libtorrent(LIBTORRENT_PATH):
 
 
 def log(texto):
-    try:
-        xbmc.log(texto, xbmc.LOGNOTICE)
-    except:
-        pass
+    logger.info(texto, force=True)
     

@@ -3162,7 +3162,7 @@ def regenerate_clones():
     return True
 
                             
-def call_browser(url, download_path='', lookup=False, strict=False, wait=False):
+def call_browser(url, download_path='', lookup=False, strict=False, wait=False, intent='', dataType=''):
     logger.info()
     # Basado en el código de "Chrome Launcher 1.2.0" de Jani (@rasjani) Mikkonen
     # Llama a un browser disponible y le pasa una url
@@ -3234,27 +3234,43 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False):
             PATHS = [ANDROID_STORAGE + '/emulated/0/Android/data', os.getenv('ANDROID_DATA') + '/user/0']
             DOWNLOADS_PATH = [filetools.join(ANDROID_STORAGE, 'emulated/0/Download')]
             
+            commands = [['pm', 'list', 'packages'], ['pm', 'list packages']]
             try:
-                command = ['pm', 'list', 'packages']
-                p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                PM_LIST, error_cmd = p.communicate()
+                for command in commands:
+                    try:
+                        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        PM_LIST, error_cmd = p.communicate()
+                        if not error_cmd:
+                            break
+                    except:
+                        continue
+                if not PM_LIST: raise
+                
                 if PY3 and isinstance(PM_LIST, bytes):
                     PM_LIST = PM_LIST.decode()
                 PM_LIST = PM_LIST.replace('\n', ', ')
             except:
                 logger.error(command)
-                logger.error(traceback.format_exc(1))
-                try:
-                    command = ['su', '-c', 'pm list packages']
-                    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    PM_LIST, error_cmd = p.communicate()
+                if config.is_rooted(silent=True) == 'rooted':
+                    commands = [['su', '-c', 'pm list packages'], ['su', '-c', 'pm',  'list', 'packages'], \
+                                ['su', '-0', 'pm list packages'], ['su', '-0', 'pm',  'list', 'packages']]
+                    for command in commands:
+                        try:
+                            p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            PM_LIST, error_cmd = p.communicate()
+                            if not error_cmd:
+                                break
+                        except Exception as e:
+                            if not PY3:
+                                e = unicode(str(e), "utf8", errors="replace").encode("utf8")
+                            elif PY3 and isinstance(e, bytes):
+                                e = e.decode("utf8")
+                            logger.info('Command ERROR: %s, %s' % (str(command), str(e)), force=True)
+                            continue
+                    
                     if PY3 and isinstance(PM_LIST, bytes):
                         PM_LIST = PM_LIST.decode()
                     PM_LIST = PM_LIST.replace('\n', ', ')
-                except:
-                    PM_LIST = ''
-                    logger.error(command)
-                    logger.error(traceback.format_exc(1))
                 
             logger.info('PACKAGE LIST: %s' % PM_LIST, force=True)
 
@@ -3459,7 +3475,7 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False):
                     for folder in DOWNLOADS_PATH:
                         if filetools.exists(folder):
                             res = folder
-                            logger.error('Path de DESCARGAS por defecto: %s - %s' % (folder, sorted(filetools.listdir(folder))))
+                            logger.error('Path de DESCARGAS por defecto: %s' % (folder))
                             break
 
                 # Si se ha pasado la opción de download_path y difiere del path obtenido, se pasa a otro browser
@@ -3516,7 +3532,9 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False):
         # Ahora hacemos la Call al Browser detectado
         # Si la plataforma es Android, se llama de una forma diferente.
         if xbmc.getCondVisibility("system.platform.Android"):
-            xbmc.executebuiltin("StartAndroidActivity(%s,,,%s)" % (filetools.basename(path), url))
+            cmd = "StartAndroidActivity(%s,%s,%s,%s)" % (filetools.basename(path), intent, dataType, url)
+            logger.info(cmd, force=True)
+            xbmc.executebuiltin(cmd)
         
         else:
             # Se crea una página .html intermedia con los parámetros necesarios para que funcione la llamada al browser

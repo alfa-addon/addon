@@ -65,12 +65,9 @@ def init():
     """
 
     try:
-        #Borra las claves ofuscadas de Proxytools, para evitar acumulaciones
-        #Borra la BD de cache de TMDB para evitar que crezca demasiado
-        delete_obsolete_keys()
-        
-        #### TEMPORAL: poner el limpiado de cahce de TMDB a 15 días desde Nunca
-        if config.get_setting('tmdb_cache_expire', default=4):
+        #Comprime la BD de cache de TMDB para evitar que crezca demasiado
+        bd_tmdb_maintenance()
+        if config.get_setting('tmdb_cache_expire', default=4) == 4:
             config.set_setting('tmdb_cache_expire', 2)
 
         #Verifica si es necsario instalar script.alfa-update-helper
@@ -136,6 +133,21 @@ def init():
             logger.error(traceback.format_exc())
     except:
         logger.error(traceback.format_exc())
+
+
+def bd_tmdb_maintenance():
+    try:
+        import sqlite3
+        
+        fname = filetools.join(config.get_data_path(), "alfa_db.sqlite")
+        
+        if filetools.exists(fname):
+            conn = sqlite3.connect(fname)
+            conn.execute("VACUUM")
+            conn.close()
+            logger.info('TMDB DB compacted')
+    except:
+        logger.error(traceback.format_exc(1))
 
 
 def marshal_check():
@@ -359,36 +371,6 @@ def update_external_addon(addon_name):
         logger.error(traceback.format_exc())
     
     return False
-    
-
-def delete_obsolete_keys():
-    if filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json")):
-        return
-    
-    logger.info('Borrando claves...')
-    from core import scrapertools
-    
-    try:
-        # Borra la BD de cache de TMDB para evitar que crezca demasiado
-        filetools.remove(filetools.join(config.get_data_path(), "alfa_db.sqlite"), silent=True)
-        return
-        
-        # Borra las claves ofuscadas de Proxytools, para evitar acumulaciones
-        settings_path = filetools.join(config.get_data_path(), "settings.xml")
-        settings = filetools.read(settings_path)
-        matches = settings.split('\n')
-        patron = '<setting\s*id="([^"]+)"(?:\s*default="[^"]*")?>.*?<\/setting>'
-        for setting in matches:
-            key = scrapertools.find_single_match(setting, patron)
-            if len(key) > 400 or key.startswith('proxy_'):
-                settings = settings.replace(setting + '\n', '')
-                logger.debug('BORRADA: %s' % key)
-
-        res = filetools.write(settings_path, settings)
-        if not res:
-            raise
-    except:
-        logger.error(traceback.format_exc())
 
 
 def update_libtorrent():
@@ -440,18 +422,10 @@ def update_libtorrent():
                             unrar = filetools.join(unrar, 'unrar')
                             filetools.copy(unrar_org, unrar, silent=True)
                         
-                        command = ['chmod', '777', '%s' % unrar]
-                        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        output_cmd, error_cmd = p.communicate()
-                        command = ['ls', '-l', unrar]
-                        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        output_cmd, error_cmd = p.communicate()
-                        if PY3 and isinstance(output_cmd, bytes):
-                            output_cmd = output_cmd.decode()
-                        xbmc.log('######## UnRAR file: %s' % str(output_cmd), xbmc.LOGNOTICE)
+                        filetools.chmod(unrar, '777')
                     except:
-                        xbmc.log('######## UnRAR ERROR in path: %s' % str(unrar), xbmc.LOGNOTICE)
-                        logger.error(traceback.format_exc(1))
+                        logger.info('######## UnRAR ERROR in path: %s' % str(unrar), force=True)
+                        logger.error(traceback.format_exc())
 
                 try:
                     if xbmc.getCondVisibility("system.platform.windows"):
@@ -460,14 +434,14 @@ def update_libtorrent():
                         p = subprocess.Popen(unrar, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     output_cmd, error_cmd = p.communicate()
                     if p.returncode != 0 or error_cmd:
-                        xbmc.log('######## UnRAR returncode in module %s: %s, %s in %s' % \
-                                (device, str(p.returncode), str(error_cmd), unrar), xbmc.LOGNOTICE)
+                        logger.info('######## UnRAR returncode in module %s: %s, %s in %s' % \
+                                (device, str(p.returncode), str(error_cmd), unrar), force=True)
                         unrar = ''
                     else:
-                        xbmc.log('######## UnRAR OK in %s: %s' % (device, unrar), xbmc.LOGNOTICE)
+                        logger.info('######## UnRAR OK in %s: %s' % (device, unrar), force=True)
                         break
                 except:
-                    xbmc.log('######## UnRAR ERROR in module %s: %s' % (device, unrar), xbmc.LOGNOTICE)
+                    logger.info('######## UnRAR ERROR in module %s: %s' % (device, unrar), force=True)
                     logger.error(traceback.format_exc(1))
                     unrar = ''
         
@@ -499,7 +473,8 @@ def update_libtorrent():
         current_version = ''
         logger.error(traceback.format_exc(1))
     
-    if filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json")) and current_version:
+    custom_code_json = filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json"))
+    if custom_code_json and current_version:
         msg = 'Libtorrent_path: %s' % config.get_setting("libtorrent_path", server="torrent", default="")
         if current_version not in msg:
             msg += ' - Libtorrent_version: %s/%s' % (current_system, current_version)
@@ -507,6 +482,8 @@ def update_libtorrent():
         return
 
     try:
+        logger.info('Libtorrent stored version: %s, %s' % (config.get_setting("libtorrent_version", \
+                            server="torrent", default=""), str(custom_code_json)), force=True)
         from lib.python_libtorrent.python_libtorrent import get_libtorrent
     except Exception as e:
         logger.error(traceback.format_exc(1))

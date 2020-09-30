@@ -106,7 +106,7 @@ def lista(item):
     for elem in matches:
         url = elem.a['href']
         stitle = elem.img['alt']
-        thumbnail = elem.img['data-lazy-src']
+        thumbnail = elem.img['src']
         stime = elem.find('time', class_='entry-date').text
         stime =scrapertools.find_single_match(stime,'(\d+:\d+)')
         title = "[COLOR yellow]%s[/COLOR] %s" % (stime,stitle)

@@ -437,17 +437,19 @@ def listado(item):                                                              
             
             #Adaptamos la parte de listado desde menú para que guarde la coherencia con el resto
             if not scrapedquality and item.extra2 == 'submenu':
-                if scrapertools.find_single_match(scrapedurl, '-\d{3,10}-\d{3,10}(.*?).htm'):
-                    title = scrapertools.find_single_match(scrapedurl, '-\d{3,10}-\d{3,10}(.*?).htm')\
+                if scrapertools.find_single_match(scrapedurl, '[-|\/]\d{3,10}[-|\/]\d{3,10}[-|\/]*(.*?)(?:.htm|$)'):
+                    title = scrapertools.find_single_match(scrapedurl, '[-|\/]\d{3,10}[-|\/]\d{3,10}[-|\/]*(.*?)(?:.htm|$)')\
                                 .replace('-', ' ').replace('_', ' ')
                     title = re.sub('\d+\s*[t|T]emporada', '', title)
                 else:
-                    title = scrapertools.find_single_match(scrapedurl, '-\d{3,10}-(.*?).htm')\
+                    title = scrapertools.find_single_match(scrapedurl, '[-|\/]\d{3,10}[-|\/](.*?)(?:.htm|$)')\
                                 .replace('-', ' ').replace('_', ' ')
                 if not title:
                     title = scrapedurl
 
+            logger.error(title)
             title = scrapertools.remove_htmltags(title).rstrip('.')             # Removemos Tags del título
+            logger.error(title)
             url = scrapedurl
             if '/aviso-legal' in url:                                           # Ignoramos estas entradas
                 continue
