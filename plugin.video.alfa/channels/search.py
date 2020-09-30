@@ -604,6 +604,8 @@ def discover_list(item):
     itemlist = []
 
     year = 0
+    if not item.discovery.get("language", ""):
+        item.discovery["language"] = def_lang
     tmdb_inf = tmdb.discovery(item, dict_=item.discovery, cast=item.cast_)
     result = tmdb_inf.results
     tvshow = False
@@ -648,7 +650,7 @@ def discover_list(item):
     elif len(result) > 19 and item.discovery:
         item.discovery['page'] = str(int(item.discovery['page']) + 1)
         itemlist.append(Item(channel=item.channel, action='discover_list', title=config.get_localized_string(70065),
-                             list_type=item.list_type, discovery=item.discovery, text_color='gold'))
+                             list_type=item.list_type, discovery=item.discovery, mode=item.mode, text_color='gold'))
     elif len(result) > 19:
         next_page = str(int(item.page) + 1)
 
