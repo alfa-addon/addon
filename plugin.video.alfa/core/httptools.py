@@ -84,6 +84,9 @@ def get_url_headers(url, forced=False):
             return url
 
     headers = dict()
+    cf_ua = config.get_setting('cf_assistant_ua', None)
+    if cf_ua and cf_ua != 'Default':
+        default_headers["User-Agent"] = cf_ua
     headers["User-Agent"] = default_headers["User-Agent"]
     headers["Cookie"] = "; ".join(["%s=%s" % (c.name, c.value) for c in list(domain_cookies.values())])
 
@@ -458,6 +461,8 @@ def downloadpage(url, **opt):
     load_cookies()
     import requests
 
+    cf_ua = config.get_setting('cf_assistant_ua', None)
+
     # Headers por defecto, si no se especifica nada
     req_headers = default_headers.copy()
     if opt.get('add_referer', False):
@@ -493,6 +498,8 @@ def downloadpage(url, **opt):
             session = cloudscraper.create_scraper()                             #El dominio necesita CloudScraper
             session.verify = True
             CS_stat = True
+            if cf_ua and cf_ua != 'Default':
+                req_headers['User-Agent'] = cf_ua
         else:
             session = requests.session()
             session.verify = False
@@ -500,6 +507,11 @@ def downloadpage(url, **opt):
 
         if opt.get('cookies', True):
             session.cookies = cj
+        
+        if not opt.get('keep_alive', True):
+            #session.keep_alive =  opt['keep_alive']
+            req_headers['Connection'] = "close"
+        
         session.headers.update(req_headers)
         
         # Prepara la url en caso de necesitar proxy, o si se envía "proxy_addr_forced" desde el canal
@@ -603,6 +615,11 @@ def downloadpage(url, **opt):
                     CF_File.write("%s\n" % domain)
                 logger.debug("CF retry... for domain: %s" % domain)
                 return downloadpage(url, **opt)
+        
+        if req.headers.get('Server', '') == 'Alfa' and response_code in [429, 503, 403] and not opt.get('cf_v2', False):
+            opt["cf_v2"] = True
+            logger.debug("CF Assistant retry... for domain: %s" % urlparse.urlparse(url)[1])
+            return downloadpage(url, **opt)
 
         response['data'] = req.content
         try:
@@ -693,6 +710,10 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
         info_dict.append(('Dominio', urlparse.urlparse(url)[1]))
         if CS_stat:
             info_dict.append(('Dominio_CF', True))
+        if not opt.get('keep_alive', True):
+            info_dict.append(('Keep Alive', opt.get('keep_alive', True)))
+        if opt.get('cf_v2', False):
+            info_dict.append(('CF v2 Assistant', opt.get('cf_v2', False)))
         if opt.get('post', None):
             info_dict.append(('Peticion', 'POST' + proxy_data.get('stat', '')))
         elif opt.get('only_headers', False):
