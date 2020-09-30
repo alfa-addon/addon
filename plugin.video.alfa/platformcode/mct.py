@@ -1071,4 +1071,7 @@ def encode(s):
 
 
 def log(texto):
-    xbmc.log(texto, xbmc.LOGNOTICE)
+    if PY3:
+        xbmc.log(texto, xbmc.LOGINFO)
+    else:
+        xbmc.log(texto, xbmc.LOGNOTICE)
