@@ -773,13 +773,21 @@ def episodios(item):
 
     #Usamos el mismo patrón que en listado
     #patron = '<tr><td><img src="[^"]+".*?title="Idioma Capitulo" \/>(.*?)<a onclick="[^"]+".?href="[^"]+".?title="[^"]*">(.*?)<\/a><\/td><td><a href="([^"]+)".?title="[^"]*".?onclick="[^"]+".?<img src="([^"]+)".*?<\/a><\/td><td>.*?<\/td><\/tr>'
-    patron = '<tr><td><img src="[^"]+".*?title="Idioma Capitulo"\s* \/>(.*?)'
-    patron += '<a href=.*?title="">(.*?)<\/a><\/td><td><a href=.*?'
-    patron += '<td\s*class="opcion2_td".*?<a href="([^"]+)".*?<img src="([^"]+)"'
+    patron = '<tr><td><img\s*src="[^>]+title="Idioma\s*Capitulo"\s*\/>(.*?)<a\s*class='
+    patron += '[^>]+>([^<]+)<\/a><\/td><td><[^>]+><[^>]+><\/a><\/td><td\s*class='
+    patron += '"opcion2_td"[^>]+><a\s*href="([^"]+)"[^>]+><img\s*src="([^"]+)"'
     if not scrapertools.find_single_match(data, patron):
-        patron = '<tr><td><img\s*src="[^"]+".*?title="Idioma\s*Capitulo"\s*\/>(.*?)'
-        patron += '<a.*?href="[^"]+"\s*title="\s*">(.*?)<\/a><\/td><td><a.*?href=.*?'
-        patron +='<td\s*class="opcion2_td".*?<a\s*href="([^"]+)".*?<img\s*src="([^"]+)"'
+        patron = '<tr><td><img src="[^"]+".*?title="Idioma Capitulo"\s*\/>(.*?)'
+        patron += '<a href=.*?title="">(.*?)<\/a><\/td><td><a href=.*?'
+        patron += '<td\s*class="opcion2_td".*?<a href="([^"]+)".*?<img src="([^"]+)"'
+        if not scrapertools.find_single_match(data, patron):
+            patron = '<tr><td><img\s*src="[^"]+".*?title="Idioma\s*Capitulo"\s*\/>(.*?)'
+            patron += '<a.*?href="[^"]+"\s*title="\s*">(.*?)<\/a><\/td><td><a.*?href=.*?'
+            patron +='<td\s*class="opcion2_td".*?<a\s*href="([^"]+)".*?<img\s*src="([^"]+)"'
+            if not scrapertools.find_single_match(data, patron):
+                logger.debug("PATRON: " + patron)
+                logger.debug(data)
+                data = ''
     
     matches = re.compile(patron, re.DOTALL).findall(data)
     if not matches:                                                             #error

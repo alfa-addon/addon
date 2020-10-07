@@ -538,7 +538,7 @@ def set_Kodi_video_DB_useFolderNames():
     
     from platformcode import xbmc_videolibrary
 
-    strPath = filetools.join(config.get_setting("videolibrarypath"), config.get_setting("folder_movies"), ' ').strip()
+    strPath = filetools.join(config.get_videolibrary_path(), config.get_setting("folder_movies"), ' ').strip()
     scanRecursive = 2147483647
         
     sql = 'UPDATE path SET useFolderNames=1 WHERE (strPath="%s" and scanRecursive=%s and strContent="movies" ' \

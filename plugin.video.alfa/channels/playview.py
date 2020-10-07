@@ -301,7 +301,8 @@ def play(item):
     logger.info()
 
     data = httptools.downloadpage(host + 'playview', post=item.post).data
-    url_data = BeautifulSoup(data, "html5lib").find("button", class_="linkfull")["data-url"]
+    logger.debug(data)
+    url_data = BeautifulSoup(data, "html5lib").find("iframe", class_="embed-responsive-item")["src"]
     url = httptools.downloadpage(url_data).url
     srv = servertools.get_server_from_url(url)
     item = item.clone(url=url, server=srv)

@@ -8,8 +8,8 @@
   "banner": "",
   "version": 1,
   "categories": [
-    "movie",
-    "tvshow"  ],
+    "movie"
+  ],
   "settings": [
     {
       "id": "include_in_global_search",
