@@ -11,6 +11,7 @@ if sys.version_info[0] >= 3: PY3 = True; unicode = str; unichr = chr; long = int
 import errno
 import math
 import traceback
+import re
 
 from core import filetools
 from core import scraper
@@ -216,6 +217,15 @@ def save_movie(item):
                 if config.is_xbmc():
                     from platformcode import xbmc_videolibrary
                     xbmc_videolibrary.update(FOLDER_MOVIES, '_scan_series')
+                # Si el usuario quiere un backup de la película (local o remoto), se toma la dirección/direcciones de destino y se copia
+                videolibrary_backup =  config.get_setting('videolibrary_backup', channel='videolibrary')
+                if videolibrary_backup:
+                    try:
+                        import threading
+                        threading.Thread(target=videolibrary_backup_exec, args=(item_nfo, videolibrary_backup)).start()
+                    except:
+                        logger.error('Error en el backup de la película %s' % item_nfo.strm_path)
+                        logger.error(traceback.format_exc(1))
 
                 p_dialog.close()
                 return insertados, sobreescritos, fallidos
@@ -654,6 +664,15 @@ def save_episodes(path, episodelist, serie, silent=False, overwrite=True):
             if config.is_xbmc() and not silent:
                 from platformcode import xbmc_videolibrary
                 xbmc_videolibrary.update(FOLDER_TVSHOWS, '_scan_series')
+            # Si el usuario quiere un backup de la serie (local o remoto), se toma la dirección/direcciones de destino y se copia lo nuevo
+            videolibrary_backup =  config.get_setting('videolibrary_backup', channel='videolibrary')
+            if videolibrary_backup:
+                try:
+                    import threading
+                    threading.Thread(target=videolibrary_backup_exec, args=(tvshow_item, videolibrary_backup)).start()
+                except:
+                    logger.error('Error en el backup de la serie %s' % tvshow_item.path)
+                    logger.error(traceback.format_exc(1))
 
     if fallidos == len(episodelist):
         fallidos = -1
@@ -885,7 +904,90 @@ def emergency_urls(item, channel=None, path=None, headers={}):
         except:
             logger.error('ERROR al cachear el .torrent de: ' + item.channel + ' / ' + item.title)
             logger.error(traceback.format_exc())
-            item_res = item.clone()                             #Si ha habido un error, se devuelve el Item original
+            item_res = item.clone()                                             #Si ha habido un error, se devuelve el Item original
 
     #logger.debug(item_res.emergency_urls)
-    return item_res                                             #Devolvemos el Item actualizado con los enlaces de emergencia
+    return item_res                                                             #Devolvemos el Item actualizado con los enlaces de emergencia
+
+
+def videolibrary_backup_exec(item, videolibrary_backup):
+    try: 
+        if item.strm_path:
+            contentType = config.get_setting("folder_movies")
+            video_path = filetools.join(config.get_videolibrary_path(), contentType, filetools.dirname(item.strm_path))
+        else:
+            contentType = config.get_setting("folder_tvshows")
+            video_path = filetools.join(config.get_videolibrary_path(), contentType, item.path)
+        logger.info(filetools.basename(video_path))
+
+        if not item or not videolibrary_backup:
+            logger.error('Peli/Serie o Ruta incorrectos')
+            raise
+        if not filetools.exists(video_path):
+            logger.error('Ruta a Videolibrary incorrecta: %s' % video_path)
+            raise
+
+        backup_addr_list = videolibrary_backup.split(',')
+        backup_addr_list_alt = backup_addr_list[:]
+        # Verificamos que las direcciones están accesibles
+        for addr in backup_addr_list_alt:
+            addr_alt = addr
+            if scrapertools.find_single_match(addr_alt, '^\w+:\/\/') and '@' in addr_alt:
+                addr_alt = re.sub(':\/\/.*?\:.*?\@', '://USERNAME:PASSWORD@', addr_alt)
+            if not filetools.exists(addr):
+                logger.error('Dirección no accesible: %s' % addr_alt)
+                backup_addr_list.remove(addr)
+            else:
+                path = filetools.join(addr, contentType)
+                if not filetools.exists(path):
+                    filetools.mkdir(path)
+                if not filetools.exists(path) and path.startswith('ftp'):
+                    path = path.replace('ftp://', 'smb://')
+                    filetools.mkdir(path)
+                if filetools.exists(path):
+                    res = filetools.write(filetools.join(path, 'back_up_test'), contentType, silent=True)
+                    if res:
+                        res = filetools.remove(filetools.join(path, 'back_up_test'), silent=True)
+                        if not res and path.startswith('ftp'):
+                            path = path.replace('ftp://', 'smb://')
+                            res = filetools.remove(filetools.join(path, 'back_up_test'), silent=True)
+                        continue
+                logger.error('Dirección no accesible para escritura: %s' % filetools.join(addr_alt, contentType))
+                backup_addr_list.remove(addr)
+                    
+        if not backup_addr_list:
+            logger.error('No hay direcciones accesibles para el backup.  Operación terminada')
+            return False
+            
+        # Una vez validadas la(s) ruta(s) se procede a la copia de los archivos que no están en el destino, más el tvshow.nfo de Series
+        for addr in backup_addr_list:
+            backup_path = filetools.join(addr, contentType, filetools.basename(video_path))
+            if not filetools.exists(backup_path):
+                filetools.mkdir(backup_path)
+            if not filetools.exists(backup_path) and backup_path.startswith('ftp'):
+                backup_path_alt = backup_path.replace('ftp://', 'smb://')
+                filetools.mkdir(backup_path_alt)
+            if filetools.exists(backup_path):
+                list_video = filetools.listdir(video_path)
+                list_backup = filetools.listdir(backup_path)
+                addr_alt = backup_path
+                if scrapertools.find_single_match(addr_alt, '^\w+:\/\/') and '@' in addr_alt:
+                    addr_alt = re.sub(':\/\/.*?\:.*?\@', '://USERNAME:PASSWORD@', addr_alt)
+                    logger.info('Haciendo backup en %s' % addr_alt)
+                for file in list_video:
+                    if file not in str(list_backup) or file == 'tvshow.nfo':
+                        res = filetools.copy(filetools.join(video_path, file), filetools.join(backup_path, file), silent=True)
+                        if not res and backup_path.startswith('ftp'):
+                            backup_path = backup_path.replace('ftp://', 'smb://')
+                            addr_alt = addr_alt.replace('ftp://', 'smb://')
+                            logger.error('Dirección no accesible para escritura.  Cambiado a SMB: %s' % filetools.join(addr_alt, contentType))
+                            res = filetools.copy(filetools.join(video_path, file), filetools.join(backup_path, file), silent=True)
+                        logger.info('%s %s, Status: %s' % (backup_path[:4], file, str(res)))
+            else:
+                logger.error('Dirección no accesible para escritura: %s' % backup_path)
+                
+    except:
+        logger.error(traceback.format_exc())
+        return False
+    
+    return True

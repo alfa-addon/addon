@@ -1286,7 +1286,7 @@ def findvideos(item):
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     if url_torr:
-        size = generictools.get_torrent_size(url_torr, timeout=timeout)         #Buscamos si hay .torrent y el tamaño
+        size = generictools.get_torrent_size(url_torr, timeout=timeout, force=True)                 #Buscamos si hay .torrent y el tamaño
     if (not data and not item.matches) or not scrapertools.find_single_match(data, patron) \
                     or not size or 'ERROR' in size or code == 999 or 'javascript:;' in url_torr:    # Si no hay datos o url, error
         size = ''
@@ -1550,6 +1550,8 @@ def findvideos(item):
         return item
 
     if not enlaces_ver:
+        # Requerido para AutoPlay
+        autoplay.start(itemlist, item)                                          #Lanzamos Autoplay
         return itemlist
 
     """ Recorre todos los links de VER y DESCARGAR, si está permitido """

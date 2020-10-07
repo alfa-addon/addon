@@ -4,14 +4,18 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:anonfiles|bayfiles).com/\\w+)",
-        "url": "\\1"
+        "pattern": "(www.jottacloud.com/s/[A-z0-9]+)",
+        "url": "https://\\1"
       }
     ]
   },
   "free": true,
-  "id": "anonfile",
-  "name": "anonfile",
+  "id": {
+    "value": [
+      "jottacloud"
+    ]
+  },
+  "name": "jottacloud",
   "settings": [
     {
       "default": false,
@@ -38,5 +42,5 @@
       "visible": false
     }
   ],
-  "thumbnail": "https://anonfile.com/img/logo/logo-anonfile.png"
+  "thumbnail": ""
 }
