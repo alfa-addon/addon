@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel Destotal -*-
+# -*- Channel CineCalidad -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -219,12 +219,14 @@ def genres(item):
 
     itemlist = list()
 
+    itemlist.append(Item(channel=item.channel, title='4K UHD', url=item.url+'peliculas/4k-ultra-hd/', action="list_all"))
+    
     soup = create_soup(item.url, unescape=True).find("ul")
     for elem in soup.find_all("li", class_=re.compile("menu-item-object-category")):
         url = elem.a["href"]
         title = elem.a.text
         if not url.startswith('http'):
-            url = host +url
+            url = item.url +url
         
         itemlist.append(Item(channel=item.channel, title=title, url=url, action="list_all"))
 

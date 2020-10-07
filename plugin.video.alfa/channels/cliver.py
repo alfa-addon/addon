@@ -486,7 +486,7 @@ def play(item):
 
 def js2py_conversion(data):
     logger.info()
-    import js2py
+    from lib import js2py
     import base64
         
     patron = ",\s*S='([^']+)'"

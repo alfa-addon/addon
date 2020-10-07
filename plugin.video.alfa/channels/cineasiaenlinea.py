@@ -10,7 +10,7 @@ from core.item import Item
 from platformcode import config, logger
 from channelselector import get_thumb
 
-host = "https://daxveray.xyz/"
+host = "https://cineasiaenlinea.com/"
 __channel__='cineasiaenlinea'
 
 try:

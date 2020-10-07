@@ -604,7 +604,7 @@ def discover_list(item):
     itemlist = []
 
     year = 0
-    if not item.discovery.get("language", ""):
+    if item.discovery and not item.discovery.get("language", ""):
         item.discovery["language"] = def_lang
     tmdb_inf = tmdb.discovery(item, dict_=item.discovery, cast=item.cast_)
     result = tmdb_inf.results
