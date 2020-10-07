@@ -101,7 +101,7 @@ def submenu(item):
     thumb_genero = get_thumb("genres.png")
     thumb_anno = get_thumb("years.png")
 
-    patron = '<h1\s*class="list-group-item top"\s*style="[^"]+">.*?<\/h1>\s*(.*?)<\/span><\/div>'
+    patron = '<h1\s*class="list-group-item top"\s*style="[^"]+">.*?<\/h1>\s*(.*?)<\/span>(?:<\/a><div|<\/div>)'
     data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, s2=False, 
                                           patron=patron, item=item, itemlist=[])    # Descargamos la página
 
