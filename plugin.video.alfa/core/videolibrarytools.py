@@ -330,6 +330,7 @@ def save_tvshow(item, episodelist):
                            infoLabels=item.infoLabels, path=path.replace(TVSHOWS_PATH, ""))
         item_tvshow.library_playcounts = {}
         item_tvshow.library_urls = {item.channel: item.url}
+        if item.serie_info: item_tvshow.serie_info = item.serie_info
 
     else:
         # Si existe tvshow.nfo, pero estamos añadiendo un nuevo canal actualizamos el listado de urls
