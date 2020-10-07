@@ -447,9 +447,7 @@ def listado(item):                                                              
                 if not title:
                     title = scrapedurl
 
-            logger.error(title)
             title = scrapertools.remove_htmltags(title).rstrip('.')             # Removemos Tags del título
-            logger.error(title)
             url = scrapedurl
             if '/aviso-legal' in url:                                           # Ignoramos estas entradas
                 continue

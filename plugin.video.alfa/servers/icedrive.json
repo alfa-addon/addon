@@ -4,14 +4,18 @@
     "ignore_urls": [],
     "patterns": [
       {
-        "pattern": "(https://(?:www|).vipporns.com/embed/\\w+)",
+        "pattern": "(https://icedrive.net/0/[A-z0-9]+)",
         "url": "\\1"
       }
     ]
   },
   "free": true,
-  "id": "vipporns",
-  "name": "vipporns",
+  "id": {
+    "value": [
+      "icedrive"
+    ]
+  },
+  "name": "icedrive",
   "settings": [
     {
       "default": false,
