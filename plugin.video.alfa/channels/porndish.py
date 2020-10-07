@@ -99,7 +99,6 @@ def create_soup(url):
         response = httptools.downloadpage(url + "|verifypeer=false", ignore_response_code=True)
         if response.sucess:
             data = response.data
-    # else:
     elif alfa_assistant.open_alfa_assistant():
         data = alfa_assistant.get_source_by_page_finished(url, 5, closeAfter=True)
         if not data:
@@ -145,7 +144,6 @@ def findvideos(item):
     logger.info()
     itemlist = []
     soup = create_soup(item.url)
-    logger.debug(soup)
     if not soup:
         return itemlist
     soup = soup.find('div', class_='entry-content')
