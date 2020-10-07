@@ -1,7 +1,7 @@
 {
   "id": "pelismundo",
   "name": "Pelismundo",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://s26.postimg.cc/72c9mr3ux/pelismundo1.png",

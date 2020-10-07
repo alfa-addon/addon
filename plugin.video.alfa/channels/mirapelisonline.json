@@ -1,7 +1,7 @@
 {
   "id": "mirapelisonline",
   "name": "Mira Pelis Online",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat","cast"],
   "thumbnail": "https://i.postimg.cc/BZpn5LCF/mirapelisonline.png",
