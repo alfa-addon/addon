@@ -151,3 +151,13 @@ def play(item):
     itemlist = servertools.find_video_items(item.clone(url = item.url))
     return itemlist
 
+
+def findvideos(item):
+    logger.info(item)
+    itemlist = []
+    data = httptools.downloadpage(item.url).data
+    url = scrapertools.find_single_match(data, '"embedUrl": "([^"]+)"')
+    itemlist.append(item.clone(action="play", title= "%s" , contentTitle=item.title, url=url)) 
+    itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % i.server.capitalize()) 
+    return itemlist
+
