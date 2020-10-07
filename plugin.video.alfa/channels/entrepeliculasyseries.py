@@ -241,6 +241,8 @@ def findvideos(item):
             itemlist.append(Item(channel=item.channel, title=server.capitalize(), url=url, server=server, action="play",
                                  language=IDIOMAS.get(lang, 'LAT'), infoLabels=item.infoLabels))
 
+    itemlist = sorted(itemlist, key=lambda it: it.language)
+
     # Requerido para FilterTools
     itemlist = filtertools.get_links(itemlist, item, list_language)
 
