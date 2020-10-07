@@ -334,7 +334,7 @@ class CloudScraper(Session):
                 resp.headers.get('Server', '').startswith('cloudflare')
                 and resp.status_code in [429, 503]
                 and re.search(
-                    r'cpo.src\s*=\s*"/cdn-cgi/challenge-platform/(?:\w+/\w+/|)orchestrate/jsch/v1"',
+                    r'cpo.src\s*=\s*"/cdn-cgi/challenge-platform/\S+orchestrate/jsch/v1"',
                     resp.text,
                     re.M | re.S
                 )
@@ -355,7 +355,7 @@ class CloudScraper(Session):
             return (
                 CloudScraper.is_Captcha_Challenge(resp)
                 and re.search(
-                    r'cpo.src\s*=\s*"/cdn-cgi/challenge-platform/(?:\w+/\w+/|)orchestrate/captcha/v1"',
+                    r'cpo.src\s*=\s*"/cdn-cgi/challenge-platform/\S+orchestrate/captcha/v1"',
                     resp.text,
                     re.M | re.S
                 )
@@ -422,12 +422,21 @@ class CloudScraper(Session):
 
         if self.is_New_Captcha_Challenge(resp):
             return cf_assistant.get_cl(resp)
+            """
+            self.simpleException(
+                CloudflareChallengeError,
+                'Detected a Cloudflare version 2 Captcha challenge, This feature is not available in the opensource (free) version.'
+            )
+            """
 
         if self.is_New_IUAM_Challenge(resp):
-            if self.debug:
-                print('Detected a Cloudflare version 2 js challenge.')
-            
             return cf_assistant.get_cl(resp)
+            """
+            self.simpleException(
+                CloudflareChallengeError,
+                'Detected a Cloudflare version 2 challenge, This feature is not available in the opensource (free) version.'
+            )
+            """
 
         if self.is_Captcha_Challenge(resp) or self.is_IUAM_Challenge(resp):
             if self.debug:

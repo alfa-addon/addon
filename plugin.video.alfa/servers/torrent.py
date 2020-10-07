@@ -2089,6 +2089,8 @@ def last_password_search(pass_path, erase_file_path=''):
             if 'contrase' in file.lower() and '.rar' not in file:
                 file_pass = filetools.read(filetools.join(pass_path, file))
                 url = scrapertools.find_single_match(file_pass, patron_url)
+                url = url.replace('descargas2020.org', 'pctreload.com').replace('descargas2020-org', 'pctnew-org')
+                url = url.replace('pctnew.org', 'pctreload.com')
                 if url:
                     data = re.sub(r"\n|\r|\t|\s{2}|(<!--.*?-->)", "", httptools.downloadpage(url).data)
                     password = scrapertools.find_single_match(data, patron_pass)
