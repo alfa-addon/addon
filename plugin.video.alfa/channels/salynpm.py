@@ -32,10 +32,6 @@ def mainlist(item):
     itemlist = []
     autoplay.init(item.channel, list_servers, list_quality)
     
-    itemlist.append(item.clone(title="onedrive y torrent" , action="findvideos", url="https://salyn-pm.blogspot.com/2020/02/contra-lo-imposible.html"))
-    itemlist.append(item.clone(title="onedrive y ln.sync" , action="findvideos", url="https://salyn-pm.blogspot.com/2019/01/el-grinch.html"))
-    itemlist.append(item.clone(title="torrent en dropbox onedrive cuenta no va" , action="findvideos", url="https://salyn-pm.blogspot.com/2020/04/aves-de-presa.html"))
-
     itemlist.append(item.clone(title="Películas" , action="lista", url=host + "/search/label/Pel%C3%ADcula?&max-results=24"))
     itemlist.append(item.clone(title="Géneros" , action="generos", url=host + "/p/categorias.html"))
     itemlist.append(item.clone(title="Buscar", action="search"))

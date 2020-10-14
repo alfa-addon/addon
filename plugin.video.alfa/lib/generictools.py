@@ -45,6 +45,7 @@ intervenido_judicial = 'Dominio intervenido por la Autoridad Judicial'
 intervenido_policia = 'Judicial_Policia_Nacional'
 intervenido_guardia = 'Judicial_Guardia_Civil'
 intervenido_sucuri = 'Access Denied - Sucuri Website Firewall'
+idioma_busqueda = 'es'
 
 
 
@@ -141,7 +142,7 @@ def downloadpage(url, post=None, headers=None, random_headers=False, replace_hea
                             clone_inter.capitalize() + ': [/COLOR]' + intervenido_judicial + 
                             '. Reportar el problema en el foro', thumbnail=thumb_intervenido, 
                             folder=False))
-            else:
+            elif not success:
                 logger.error('ERROR 01: ' + ERROR_01 + str(item.url) + " CODE: " + str(code) 
                                  + " PATRON: " + str(patron) + " DATA: ")
                 if funcion != 'episodios':
@@ -472,7 +473,7 @@ def post_tmdb_listado(item, itemlist):
             logger.info("*** TMDB-ID erroneo, reseteamos y reintentamos: %s" % item_local.infoLabels['tmdb_id'])
             del item_local.infoLabels['tmdb_id']                        #puede traer un TMDB-ID erroneo
             try:
-                tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda='es,en') #pasamos otra vez por TMDB
+                tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda=idioma_busqueda) #pasamos otra vez por TMDB
             except:
                 logger.error(traceback.format_exc())
             logger.info("*** TMDB-ID erroneo reseteado: %s" % item_local.infoLabels['tmdb_id'])
@@ -483,7 +484,7 @@ def post_tmdb_listado(item, itemlist):
                 year = item_local.infoLabels['year']            #salvamos el año por si no tiene éxito la nueva búsqueda
                 item_local.infoLabels['year'] = "-"             #reseteo el año
                 try:
-                    tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda='es,en') #pasamos otra vez por TMDB
+                    tmdb.set_infoLabels_item(item_local, __modo_grafico__, idioma_busqueda=idioma_busqueda) #pasamos otra vez por TMDB
                 except:
                     logger.error(traceback.format_exc())
                 if not item_local.infoLabels['tmdb_id']:        #ha tenido éxito?
@@ -529,7 +530,7 @@ def post_tmdb_listado(item, itemlist):
             
             try:
                 if item_local.infoLabels['tmdb_id']:
-                    tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda='es,en')  #TMDB de la serie
+                    tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma_busqueda)  #TMDB de la serie
             except:
                 logger.error(traceback.format_exc())
                 
@@ -538,7 +539,7 @@ def post_tmdb_listado(item, itemlist):
                 item_local.infoLabels['year'] = scrapertools.find_single_match(item_local.infoLabels['aired'], r'\d{4}')
                 if item_local.infoLabels.get('temporada_num_episodios', 0) >= episode_max:
                     tot_epis = ' (de %s' % str(item_local.infoLabels['temporada_num_episodios'])
-                    if item_local.infoLabels.get('number_of_seasons', 0) > int(season) \
+                    if item_local.infoLabels.get('number_of_seasons', 0) > 1 \
                             and item_local.infoLabels.get('number_of_episodes', 0) > 0:
                         tot_epis += ', de %sx%s' % (str(item_local.infoLabels['number_of_seasons']), \
                             str(item_local.infoLabels['number_of_episodes']))
@@ -733,7 +734,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
     # Primero creamos un título para TODAS las Temporadas
     # Pasada por TMDB a Serie, para datos adicionales
     try:
-        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es,en')  #TMDB de la serie
+        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=idioma_busqueda)  #TMDB de la serie
     except:
         logger.error(traceback.format_exc())
     
@@ -785,7 +786,7 @@ def post_tmdb_seasons(item, itemlist, url='serie'):
             
             # Pasada por TMDB a las Temporada
             try:
-                tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda='es,en')    #TMDB de cada Temp
+                tmdb.set_infoLabels_item(item_local, seekTmdb=True, idioma_busqueda=idioma_busqueda)    #TMDB de cada Temp
             except:
                 logger.error(traceback.format_exc())
         
@@ -1290,7 +1291,7 @@ def post_tmdb_findvideos(item, itemlist):
     #elif (not item.infoLabels['tvdb_id'] and item.contentType == 'episode') or item.contentChannel == "videolibrary":
     #    tmdb.set_infoLabels_item(item, True)
     try:
-        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda='es,en')  #TMDB de cada Temp
+        tmdb.set_infoLabels_item(item, seekTmdb=True, idioma_busqueda=idioma_busqueda)  #TMDB de cada Temp
     except:
         logger.error(traceback.format_exc())
     #Restauramos la información de max num. de episodios por temporada despues de TMDB
@@ -1937,6 +1938,7 @@ def fail_over_newpct1(item, patron, patron2=None, timeout=None):
             patron = patron1
         except:
             logger.error(traceback.format_exc())
+    patron = patron.replace('¡', '|')
         
     #Array con los datos de los canales alternativos
     #Cargamos en .json del canal para ver las listas de valores en settings

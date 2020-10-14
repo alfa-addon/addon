@@ -203,6 +203,9 @@ def get_environment():
             environment['videolab_episodios'] = '?'
             environment['videolab_pelis'] = '?'
             environment['videolab_path'] = str(config.get_videolibrary_path())
+            environment['videolab_path_perm'] = filetools.file_info(environment['videolab_path'])
+            if not environment['videolab_path_perm']:
+                environment['videolab_path_perm'] = environment['videolab_path']
             if filetools.exists(filetools.join(environment['videolab_path'], \
                                 config.get_setting("folder_tvshows"))):
                 environment['videolab_series'] = str(len(filetools.listdir(filetools.join(environment['videolab_path'], \
@@ -265,7 +268,7 @@ def get_environment():
         torrent_id = config.get_setting("torrent_client", server="torrent", default=0)
         environment['torrentcli_option'] = str(torrent_id)
         torrent_options = platformtools.torrent_client_installed()
-        if lib_path == 'Activo':
+        if lib_path != 'Inactivo':
             torrent_options = ['MCT'] + torrent_options
             torrent_options = ['BT'] + torrent_options
         environment['torrent_list'].append({'Torrent_opt': str(torrent_id), 'Libtorrent': lib_path, \
@@ -284,11 +287,13 @@ def get_environment():
             if cliente['Plug_in'] == 'BT':
                 cliente['D_load_Path'] = str(config.get_setting("bt_download_path", server="torrent", default=''))
                 if not cliente['D_load_Path']: continue
+                cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
                 cliente['D_load_Path'] = filetools.join(cliente['D_load_Path'], 'BT-torrents')
                 cliente['Buffer'] = str(config.get_setting("bt_buffer", server="torrent", default=50))
             elif cliente['Plug_in'] == 'MCT':
                 cliente['D_load_Path'] = str(config.get_setting("mct_download_path", server="torrent", default=''))
                 if not cliente['D_load_Path']: continue
+                cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
                 cliente['D_load_Path'] = filetools.join(cliente['D_load_Path'], 'MCT-torrent-videos')
                 cliente['Buffer'] = str(config.get_setting("mct_buffer", server="torrent", default=50))
             elif xbmc.getCondVisibility('System.HasAddon("plugin.video.%s")' % cliente['Plug_in']):
@@ -302,6 +307,7 @@ def get_environment():
                     cliente['Buffer'] = str(__settings__.getSetting('pre_buffer_bytes'))
                 else:
                     cliente['D_load_Path'] = str(filetools.translatePath(__settings__.getSetting('download_path')))
+                    cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
                     cliente['Buffer'] = str(__settings__.getSetting('buffer_size'))
                     if __settings__.getSetting('download_storage') == '1' and __settings__.getSetting('memory_size'):
                         cliente['Memoria'] = str(__settings__.getSetting('memory_size'))
@@ -321,6 +327,9 @@ def get_environment():
                                     (1024**3)) * float(disk_space.f_frsize), 3)).replace('.', ',')
                 except:
                     pass
+                if cliente['D_load_Path_perm']:
+                    cliente['D_load_Path'] = cliente['D_load_Path_perm']
+                    del cliente['D_load_Path_perm']
             environment['torrent_list'].append(cliente)
 
         environment['proxy_active'] = ''
@@ -391,6 +400,7 @@ def get_environment():
         environment['videolab_episodios'] = ''
         environment['videolab_pelis'] = ''
         environment['videolab_update'] = ''
+        environment['videolab_path_perm'] = ''
         environment['debug'] = ''
         environment['addon_version'] = ''
         environment['torrent_list'] = []
@@ -441,7 +451,7 @@ def list_env(environment={}):
                     environment['videolab_episodios'] + ' - Pelis: ' + 
                     environment['videolab_pelis'] + ' - Upd: ' + 
                     environment['videolab_update'] + ' - Path: ' + 
-                    environment['videolab_path'] + ' - Libre: ' + 
+                    environment['videolab_path_perm'] + ' - Libre: ' + 
                     environment['videolab_free'].replace('.', ',') +  ' GB')
     
     if environment['torrent_list']:
