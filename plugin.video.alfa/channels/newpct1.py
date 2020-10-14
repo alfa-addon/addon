@@ -346,7 +346,8 @@ def submenu_novedades(item):
 
     #Verificamos si se ha cargado una página, y si además tiene la estructura correcta
     #Si no hay datos consistentes, llamamos al método de fail_over para que encuentre un canal que esté activo y pueda gestionar el submenú
-    patron = '<div class="content">.*?<ul class="noticias'
+    #patron = '<div class="content">.*?<ul class="noticias'
+    patron = '<div class="content">.*?$'
     if not data or not scrapertools.find_single_match(data, patron):
         item, data = generictools.fail_over_newpct1(item, patron, timeout=timeout)
     
@@ -586,11 +587,12 @@ def listado(item):                                                              
             search3 = '<ul class="noticias-series"></ul></form></div><!-- end .page-box -->'
             if item.extra == "novedades":
                 patron = '<div class="content">.*?<ul class="noticias(.*?)<\/div><!-- end .content -->'
+                patron = '<div class="content">.*?$'
                 if not scrapertools.find_single_match(data, patron) and not search1 in data:
                     patron = '<div class="content">.*?<ul class="noticias(.*?)<\/li><\/ul>(?:<\/form>)?<\/div>'
                     if not scrapertools.find_single_match(data, patron) and not search1 in data:
                         patron = 'patron|'
-                        patron += '<div class="content">.*?<ul class="noticias(.*?)<\/div><!-- end .content -->|'
+                        patron += '<div class="content">.*?$|'
                         patron += '<div class="content">.*?<ul class="noticias(.*?)<\/li><\/ul>(?:<\/form>)?<\/div>'
             elif scrapertools.find_single_match(data, '"torrentName":'):
                 patron = '"torrentName":\s*"([^"]+)",\s*'                       #título
@@ -642,7 +644,7 @@ def listado(item):                                                              
 
             #Selecciona el tramo de la página con el listado de contenidos
             if item.extra == "novedades":
-                patron = '<div class="content">.*?<ul class="noticias(.*?)<\/li><\/ul>(?:<\/form>)?<\/div>'
+                patron = '<div class="content">.*?$'
                 if not scrapertools.find_single_match(data, patron):
                     patron = '<div class="content">.*?<ul class="noticias(.*?)<\/div><!-- end .content -->'  
             elif scrapertools.find_single_match(data, '"torrentName":'):
@@ -668,12 +670,12 @@ def listado(item):                                                              
         
         #Scrapea los datos de cada vídeo.  Título alternativo se mantiene, aunque no se usa de momento
         if item.extra == "novedades":
-            patron = '<a href="(?P<scrapedurl>[^"]+)"\s?'                       #url
-            patron += 'title="(?P<scrapedtitle>[^"]+)"[^>]*>'                   #título
+            patron = '<li><a\s*href="(?P<scrapedurl>[^"]+)"\s*'                 #url
+            patron += '(?:style="[^"]+"\s*)?title="(?P<scrapedtitle>[^"]+)"[^>]*>\s*'   #título
             patron += '<img[^>]*src="(?P<scrapedthumbnail>[^"]+)"?.*?'          #thumb
-            patron += '<\/h2>\s*<\/a>\s*<span.*?">(?P<calidad>.*?)?'            #calidad
-            patron += '<(?P<year>.*?)?'                                         #año
-            patron += '>Tama.*?\s(?P<size>\d+[.|\s].*?[GB|MB])?\s?<\/strong>'   #tamaño (significativo para peliculas)
+            patron += '<\/h2>\s*<\/a>\s*<span[^>]+>(?P<calidad>.*?)?'           #calidad
+            patron += '<(?P<year>[^>]*)?'                                       #año
+            patron += '>Tama.*?\s(?P<size>\d+[.|\s].*?[GB|MB])?\s*<\/strong>'   #tamaño (significativo para peliculas)
         elif scrapertools.find_single_match(data, '"torrentName":'):
             patron = '"torrentName":\s*"([^"]+)",\s*'                           #título
             patron += '"calidad":\s*(?:"([^"]+)"|null),.*?'                     #calidad
@@ -704,6 +706,7 @@ def listado(item):                                                              
             del item.matches
             
         #logger.debug("PATRON: " + patron)
+        #logger.debug(len(matches))
         #logger.debug(matches)
         #logger.debug(fichas)
 
@@ -798,7 +801,7 @@ def listado(item):                                                              
             
             title = scrapedtitle
             title = scrapertools.remove_htmltags(title).rstrip('.')             # Removemos Tags del título
-            url = scrapedurl
+            url = urlparse.urljoin(host, scrapedurl)
             title_subs = []                                                     #creamos una lista para guardar info importante
             
             title = title.replace("á", "a").replace("é", "e").replace("í", "i")\
@@ -825,8 +828,6 @@ def listado(item):                                                              
                 title_lista += [scrapedthumbnail]
             
             # Tratamiento especial para Novedades, con opciones como 4K
-            logger.error(item.extra)
-            logger.error(item.extra2)
             if item.extra == "novedades" and item.extra2:
                 if not item.extra2 in url and not item.extra2 in scrapedtitle and not item.extra2 in scrapedthumbnail:
                     continue
@@ -864,10 +865,10 @@ def listado(item):                                                              
             item_local.quality = calidad
             
             #Guardamos el resto de variables del vídeo
-            item_local.url = scrapedurl
+            item_local.url = url
             if not item_local.url.startswith("http"):                           #Si le falta el http.: lo ponemos
                 item_local.url = scrapertools.find_single_match(item_local.channel_host, '(\w+:)//') + item_local.url
-            item_local.thumbnail = scrapedthumbnail
+            item_local.thumbnail = urlparse.urljoin(host, scrapedthumbnail)
             if not item_local.thumbnail.startswith("http"):                     #Si le falta el http.: lo ponemos
                 item_local.thumbnail = scrapertools.find_single_match(item_local.channel_host, \
                         '(\w+:)//') + item_local.thumbnail
@@ -1735,8 +1736,9 @@ def findvideos(item):
                         "[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", 
                         thumbnail=thumb_separador, folder=False))
         
-        if itemlist[-1].server != 'torrent' and len(itemlist_t) == 0:
-            return []
+        if len(itemlist_t) == 0:
+            if len(itemlist) == 0 or (len(itemlist) > 0 and itemlist[-1].server != 'torrent'):
+                return []
         itemlist.extend(itemlist_t)                                             #Pintar pantalla con todo si no hay filtrado
 
     # Requerido para AutoPlay
@@ -2371,7 +2373,7 @@ def newest(categoria):
             item.action = "listado"
             itemlist.extend(listado(item))
             
-        if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
+        if len(itemlist) > 0 and (">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla

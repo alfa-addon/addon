@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------------------------
-# alfa_assistant tools - Requiere al menos Assistant v. 1.0.492 (del 02/10/2020)
+# alfa_assistant tools - Requiere al menos Assistant v. 1.0.498 (del 09/10/2020)
 # ------------------------------------------------------------------------------
 
 import sys
@@ -249,7 +249,7 @@ def get_generic_call(endpoint, url=None, timeout=None, jsCode=None, jsDirectCode
         logger.info('##Assistant URL: ' + serverCall)
     response = httptools.downloadpage(serverCall, timeout=timeout+EXTRA_TIMEOUT, alfa_s=alfa_s, ignore_response_code=True, keep_alive=keep_alive)
     if not response.sucess and endpoint in ['ping', 'getWebViewInfo']:
-        logger.info('##Assistant "Ping" FALSE, timeout %s: %s' % (timeout+EXTRA_TIMEOUT, serverCall), force=True)
+        logger.info('##Assistant "%s" FALSE, timeout %s: %s' % (endpoint, timeout+EXTRA_TIMEOUT, serverCall), force=True)
     if not (response.sucess or response.data) and endpoint not in ['ping', 'getWebViewInfo', 'quit']:
         close_alfa_assistant()
         time.sleep(2)
@@ -486,6 +486,7 @@ def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank'):
             intent = ''  # com.alfa.alfamobilehelper.MainActivity'
             dataType = cmd # 'openForDebug'
             cmd = 'StartAndroidActivity("%s", "%s", "%s", "%s")' % (app, intent, dataType, dataURI)
+            logger.info('##Assistant executing CMD: ' + cmd)
             xbmc.executebuiltin(cmd)
             return True
         except:
@@ -531,7 +532,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
             apk_files = '%s/%s' % (apk_files_alt, app_name)
 
     version_path = filetools.join(config.get_data_path(), version)
-    version_act = filetools.read(version_path)
+    version_act = filetools.read(version_path, silent=True)
     if not version_act: version_act = '0.0.0'
     
     # Averiguamos si es instalacción, update, o forzado desde el Menú de Ajustes
@@ -543,7 +544,16 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         if filetools.exists(apk_files):
             return version_act, app_name
     # Mirarmos si la app está activa y obtenemos el nº de versión
-    version_app = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
+    version_dict = get_generic_call('getWebViewInfo', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
+    if isinstance(version_dict, dict):
+        version_app = version_dict.get('assistantVersion', '')
+        try:
+            android_version = int(scrapertools.find_single_match(version_dict.get('userAgent', ''), r"Android\s*(\d+)"))
+        except:
+            android_version = 8
+    else:
+        version_app = version_dict
+        android_version = 8
     if version_app and not update:
         return version_app, app_name
     
@@ -552,14 +562,22 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
     else:
         app_active = False
         if ASSISTANT_MODE == "este":
-            execute_in_alfa_assistant_with_cmd('open')                          # activamos la app por si no se ha inicializado
-            time.sleep(1)
-            version_app = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
-            execute_in_alfa_assistant_with_cmd('quit')
-    version_actual = filetools.read(version_path)
+            execute_in_alfa_assistant_with_cmd('openAndQuit')                   # activamos la app por si no se ha inicializado
+            time.sleep(2)
+            version_dict = get_generic_call('getWebViewInfo', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
+            if isinstance(version_dict, dict):
+                version_app = version_dict.get('assistantVersion', '')
+                try:
+                    android_version = int(scrapertools.find_single_match(version_dict.get('userAgent', ''), r"Android\s*(\d+)"))
+                except:
+                    android_version = 8
+            else:
+                version_app = version_dict
+                android_version = 8
+    version_actual = filetools.read(version_path, silent=True)
     if not version_actual and version_app:
         version_actual = version_app
-        filetools.write(version_path, version_actual, mode='wb')
+        filetools.write(version_path, version_actual, mode='wb', silent=True)
     elif not version_actual:
         version_actual = '0.0.0'
 
@@ -589,8 +607,8 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         logger.info('El sistema local no es Android: %s' % app_name)
         return False, app_name
 
-    logger.info('assistant_mode=%s, update=%s, forced_menu=%s, assistant_flag_install=%s, version_actual=%s, app_active=%s' \
-                % (ASSISTANT_MODE, str(update), str(forced_menu), str(assistant_flag_install), version_actual, str(app_active)))
+    logger.info('assistant_mode=%s, update=%s, forced_menu=%s, assistant_flag_install=%s, version_actual=%s, android=%s, app_active=%s' \
+            % (ASSISTANT_MODE, str(update), str(forced_menu), str(assistant_flag_install), version_actual, str(android_version), str(app_active)))
     
     # Si no está instalada, o se quiere actualizar, empezamos el proceso
     alfa_assistant_pwd = ''
@@ -661,7 +679,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         if version_actual != response.data:
             if version_app:
                 version_actual = version_app
-                filetools.write(version_path, version_actual, mode='wb')
+                filetools.write(version_path, version_actual, mode='wb', silent=True)
         if version_actual == response.data:
             if verbose: platformtools.dialog_notification("Instalación Alfa Assistant", "Ya está actualizado a version %s" % response.data)
             logger.info("Alfa Assistant ya actualizado a versión: %s" % response.data)
@@ -678,7 +696,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
     version_old = version_actual
     version_actual = response.data
     if version_path:
-        res = filetools.write(version_path, response.data, mode='wb')
+        res = filetools.write(version_path, response.data, mode='wb', silent=True)
         if not res:
             if not update: platformtools.dialog_notification("Instalación Alfa Assistant", \
                             "Error en la escritura de control de versión. Seguimos...")
@@ -696,7 +714,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         logger.error("Error en la descarga del .apk: %s" % str(response.code))
     else:
         # Guardamos archivo descargado de APK
-        res = filetools.write(apk_path, response.data, mode='wb')
+        res = filetools.write(apk_path, response.data, mode='wb', silent=True)
         if not res:
             if not update or verbose: platformtools.dialog_notification("Instalación Alfa Assistant", "Error en la escritura del APK")
             logger.error("Error en la escritura del APK: %s" % apk_path)
@@ -738,7 +756,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
                     
                     # Instalación Remota
                     if remote:
-                        filetools.remove(apk_apk)
+                        filetools.remove(apk_apk, silent=True)
                         platformtools.dialog_notification("Alfa Assistant: Descarga Remota terminada", "Instale manualmente desde: %s" % apk_install_SD)
                         logger.info("Alfa Assistant: Descarga Remota terminada. Instale manualmente desde: %s" % apk_install_SD)
                         return version_actual, app_name
@@ -818,10 +836,15 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         if not isinstance(update, bool):
             version_mod = '9.9.999'                                             # Intenta forzar la actualización si viene desde el Menú
         if ASSISTANT_MODE == "este":
-            if not app_active:
-                execute_in_alfa_assistant_with_cmd('openAndQuit')               # activamos la app por si no se ha inicializado
-                time.sleep(1)
-            respuesta = get_generic_call(cmd, version=version_mod, alfa_s=alfa_s)
+            if android_version >= 10:
+                app_active = False
+                respuesta = execute_in_alfa_assistant_with_cmd(cmd, dataURI=dataURI % version_mod)
+            else:
+                if not app_active:
+                    execute_in_alfa_assistant_with_cmd('openAndQuit')               # activamos la app por si no se ha inicializado
+                    time.sleep(1)
+                app_active = False
+                respuesta = get_generic_call(cmd, version=version_mod, alfa_s=alfa_s)
         else:
             if app_active:
                 respuesta = get_generic_call(cmd, version=version_mod, alfa_s=alfa_s)
@@ -833,8 +856,8 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
             return False, app_name
         elif not respuesta:
             # Update local
-            res = execute_in_alfa_assistant_with_cmd(cmd, dataURI=dataURI % version_mod)
-            if not res:
+            #respuesta = execute_in_alfa_assistant_with_cmd(cmd, dataURI=dataURI % version_mod)
+            if not respuesta:
                 if verbose or not isinstance(update, bool):
                     platformtools.dialog_notification("Instalación Alfa Assistant", "Actualización en error %s. REINTENTANDO" % version_actual)
                 logger.info("Instalación Alfa Assistant. Actualización en error %s. REINTENTANDO" % version_actual)
@@ -851,14 +874,14 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
                 assistant_rar = assistant_rar.replace('/raw/', '/tree/')            # Apuntar a la web de descargas
                 browser, res = generictools.call_browser(assistant_rar, lookup=True)
                 if browser:
-                    filetools.remove(apk_install_SD)
+                    filetools.remove(apk_install_SD, silent=True)
                     platformtools.dialog_ok("Alfa Assistant: Instale desde [COLOR yellow]%s[/COLOR]" % browser.capitalize(), 
                                     "O Instale manualmente desde: [COLOR yellow]%s[/COLOR]" % apk_install_SD)
                     logger.info('Browser: %s, Ruta: %s' % (browser.capitalize(), apk_install_SD))
                     time.sleep(5)
                     browser, res = generictools.call_browser(assistant_rar, dataType='application/vnd.android.package-archive')
-                    filetools.remove(apk_path)
-                    filetools.remove(upk_install_path)
+                    filetools.remove(apk_path, silent=True)
+                    filetools.remove(upk_install_path, silent=True)
                 else:
                     logger.error('Error de Instalación: NO Browser, Ruta: %s' % apk_install_SD)
                     raise
@@ -869,8 +892,8 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
             if ASSISTANT_MODE == "este":
                 platformtools.dialog_ok("Alfa Assistant: Error", "Instale manualmente desde: [COLOR yellow]%s[/COLOR]" % apk_install_SD)
                 logger.error("Alfa Assistant: Error. Instale manualmente desde: [COLOR yellow]%s[/COLOR]" % apk_install_SD)
-                filetools.remove(apk_path)
-                filetools.remove(upk_install_path)
+                filetools.remove(apk_path, silent=True)
+                filetools.remove(upk_install_path, silent=True)
             else:
                 platformtools.dialog_ok("Alfa Assistant: Error", "Copie a Android manualmente desde: [COLOR yellow]%s[/COLOR]" % apk_apk)
                 logger.error("Alfa Assistant: Error. Copie a Android manualmente desde: [COLOR yellow]%s[/COLOR]" % apk_apk)
@@ -884,9 +907,9 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         else:
             platformtools.dialog_notification("Alfa Assistant", "Instalación con exito: %s" % respuesta)
             logger.info("Instalación terminada con éxito: %s" % respuesta)
-        filetools.remove(apk_path)
-        filetools.remove(apk_install_SD)
-        filetools.remove(upk_install_path)
+        filetools.remove(apk_path, silent=True)
+        filetools.remove(apk_install_SD, silent=True)
+        filetools.remove(upk_install_path, silent=True)
         if not update and not forced_menu:
             time.sleep(1)
             check_permissions_alfa_assistant()

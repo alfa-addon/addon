@@ -1591,7 +1591,7 @@ def find_rar_password(item):
 
 def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torrent=False, \
                         timeout=5, file_list=False, lookup=True, local_torr=None, headers={}, \
-                        force=False, short_pad=False):
+                        force=False, short_pad=False, subtitles=False):
     logger.info()
     from servers import torrent
     
@@ -1705,7 +1705,7 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
         
         if not lookup: timeout = timeout * 3
         if ((url and not local_torr) or url.startswith('magnet')):
-            torrents_path, torrent_file = torrent.caching_torrents(url, \
+            torrents_path, torrent_file, subtitles_list = torrent.caching_torrents(url, \
                         referer=referer, post=post, torrents_path=torrents_path, \
                         timeout=timeout, lookup=lookup, data_torrent=True, headers=headers)
         elif local_torr:
@@ -1738,7 +1738,9 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
                 else:
                     size += ': [COLOR gold][B]Introduce la ruta para usar con [I]%s[/I][/B][/COLOR]' % browser
             
-            if not lookup:
+            if not lookup and subtitles:
+                return (size, torrents_path, torrent_f, files, subtitles_list)
+            elif not lookup:
                 return (size, torrents_path, torrent_f, files)
             elif file_list and data_torrent:
                 return (size, torrent_f, files)
@@ -1796,7 +1798,9 @@ def get_torrent_size(url, referer=None, post=None, torrents_path=None, data_torr
     #logger.debug(str(url))
     logger.info(str(size))
     
-    if not lookup:
+    if not lookup and subtitles:
+        return (size, torrents_path, torrent_f, files, subtitles_list)
+    elif not lookup:
         return (size, torrents_path, torrent_f, files)
     elif file_list and data_torrent:
         return (size, torrent_f, files)
@@ -3285,7 +3289,7 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
                         PM_LIST = PM_LIST.decode()
                     PM_LIST = PM_LIST.replace('\n', ', ')
                 
-            logger.info('PACKAGE LIST: %s' % PM_LIST, force=True)
+            #logger.info('PACKAGE LIST: %s' % PM_LIST, force=True)
 
             PREF_PATHS = [ANDROID_STORAGE + '/emulated/0/Android/data']
             PREF_PATHS += [os.getenv('ANDROID_DATA') + '/user/0']
@@ -3470,25 +3474,22 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
                 browser_prefs = filetools.read(prefs_file, silent=True)
                 res = scrapertools.find_single_match(browser_prefs, browser_params[browser][3]).replace('\\\\', '\\')
                 if not res and browser_prefs:
-                    try:
-                        logger.error('Archivo de Preferencias en ERROR %s: %s' % (prefs_file, str(browser_prefs[:60])))
-                    except:
-                        logger.error('Archivo de Preferencias en ERROR no PRINTABLE %s' % (prefs_file))  
+                    logger.debug('Archivo de Preferencias sin PARÁMETRO %s: %s' % (prefs_file, str(browser_params[browser][3])))
                 elif not res:
                     logger.error('Archivo de preferencias no encontrado/accesible: %s' % (prefs_file))
                     for prefs_dir in PREF_PATHS:
-                        logger.error('Listado de %s - %s' % (prefs_dir, sorted(filetools.listdir(prefs_dir))))
+                        logger.debug('Listado de %s - %s' % (prefs_dir, sorted(filetools.listdir(prefs_dir))))
 
                 # En Android puede haber problemas de permisos.  Si no se encuentra el path, se asume un path por defecto
                 if SAVED_D_PATH and not filetools.exists(SAVED_D_PATH):
-                    logger.error('Path de DESCARGAS almacenado NO EXISTE.  Reseteado: %s' % SAVED_D_PATH)
+                    logger.debug('Path de DESCARGAS almacenado NO EXISTE.  Reseteado: %s' % SAVED_D_PATH)
                     SAVED_D_PATH = ''
                     config.set_setting("capture_thru_browser_path", SAVED_D_PATH, server="torrent")
                 if not res and not download_path and not SAVED_D_PATH:
                     for folder in DOWNLOADS_PATH:
                         if filetools.exists(folder):
                             res = folder
-                            logger.error('Path de DESCARGAS por defecto: %s' % (folder))
+                            logger.debug('Path de DESCARGAS por defecto: %s' % (folder))
                             break
 
                 # Si se ha pasado la opción de download_path y difiere del path obtenido, se pasa a otro browser
@@ -3530,11 +3531,12 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
             else:
                 # Si no se ha encontrado ningún browser que cumpla las condiciones, se vuelve con error
                 logger.error('No se ha encontrado ningún BROWSER: %s' % str(exePath))
-                logger.error('Listado de APPS INSTALADAS en %s: %s' % (PATHS[0], sorted(filetools.listdir(PATHS[0]))))
+                if PM_LIST: logger.debug('PACKAGE LIST: %s' % PM_LIST)
+                logger.debug('Listado de APPS INSTALADAS en %s: %s' % (PATHS[0], sorted(filetools.listdir(PATHS[0]))))
                 if len(PATHS) > 1:
-                    logger.error('Listado de APPS INSTALADAS en %s: %s' % (PATHS[1], sorted(filetools.listdir(PATHS[1]))))
+                    logger.debug('Listado de APPS INSTALADAS en %s: %s' % (PATHS[1], sorted(filetools.listdir(PATHS[1]))))
                 for prefs_dir in PREF_PATHS:
-                    logger.error('Listado de %s - %s' % (prefs_dir, sorted(filetools.listdir(prefs_dir))))
+                    logger.debug('Listado de %s - %s' % (prefs_dir, sorted(filetools.listdir(prefs_dir))))
                 return (False, False)
         
         if lookup:
@@ -3546,7 +3548,7 @@ def call_browser(url, download_path='', lookup=False, strict=False, wait=False, 
         # Si la plataforma es Android, se llama de una forma diferente.
         if xbmc.getCondVisibility("system.platform.Android"):
             cmd = "StartAndroidActivity(%s,%s,%s,%s)" % (filetools.basename(path), intent, dataType, url)
-            logger.info(cmd, force=True)
+            logger.info('Android Browser call: %s' % cmd, force=True)
             xbmc.executebuiltin(cmd)
         
         else:
