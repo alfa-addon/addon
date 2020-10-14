@@ -184,6 +184,8 @@ def get_environment():
             pass
         
         environment['userdata_path'] = str(config.get_data_path())
+        environment['userdata_path_perm'] = filetools.file_info(environment['userdata_path'])
+        if not environment['userdata_path_perm']: del environment['userdata_path_perm']
         try:
             if environment['os_name'].lower() == 'windows':
                 free_bytes = ctypes.c_ulonglong(0)
@@ -197,6 +199,12 @@ def get_environment():
                                 (1024**3)) * float(disk_space.f_frsize), 3))
         except:
             environment['userdata_free'] = '?'
+        
+        if environment['userdata_path_perm']:
+            environment['userdata_path'] = environment['userdata_path_perm']
+            del environment['userdata_path_perm']
+        environment['torrent_lang'] = '%s/%s' % (config.get_setting("channel_language", default="").upper(), \
+                                config.get_setting("second_language", default="").upper())
 
         try:
             environment['videolab_series'] = '?'
@@ -247,6 +255,7 @@ def get_environment():
         environment['torrentcli_rar'] = config.get_setting("mct_rar_unpack", server="torrent", default=True)
         environment['torrentcli_backgr'] = config.get_setting("mct_background_download", server="torrent", default=True)
         environment['torrentcli_lib_path'] = config.get_setting("libtorrent_path", server="torrent", default="")
+        
         if environment['torrentcli_lib_path']:
             lib_path = 'Activo'
         else:
@@ -258,11 +267,8 @@ def get_environment():
             if xbmc.getCondVisibility("system.platform.Android"):
                 unrar = 'Android'
             else:
-                unrar, bin = filetools.split(environment['torrentcli_unrar'])
-                unrar = unrar.replace('\\', '/')
-                if not unrar.endswith('/'):
-                    unrar = unrar + '/'
-                unrar = scrapertools.find_single_match(unrar, '\/([^\/]+)\/$').capitalize()
+                unrar = filetools.dirname(environment['torrentcli_unrar'])
+                unrar = filetools.basename(unrar).capitalize()
         else:
             unrar = 'Inactivo'
         torrent_id = config.get_setting("torrent_client", server="torrent", default=0)
@@ -287,14 +293,16 @@ def get_environment():
             if cliente['Plug_in'] == 'BT':
                 cliente['D_load_Path'] = str(config.get_setting("bt_download_path", server="torrent", default=''))
                 if not cliente['D_load_Path']: continue
-                cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
                 cliente['D_load_Path'] = filetools.join(cliente['D_load_Path'], 'BT-torrents')
+                cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
+                if not cliente['D_load_Path_perm']: del cliente['D_load_Path_perm']
                 cliente['Buffer'] = str(config.get_setting("bt_buffer", server="torrent", default=50))
             elif cliente['Plug_in'] == 'MCT':
                 cliente['D_load_Path'] = str(config.get_setting("mct_download_path", server="torrent", default=''))
                 if not cliente['D_load_Path']: continue
-                cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
                 cliente['D_load_Path'] = filetools.join(cliente['D_load_Path'], 'MCT-torrent-videos')
+                cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
+                if not cliente['D_load_Path_perm']: del cliente['D_load_Path_perm']
                 cliente['Buffer'] = str(config.get_setting("mct_buffer", server="torrent", default=50))
             elif xbmc.getCondVisibility('System.HasAddon("plugin.video.%s")' % cliente['Plug_in']):
                 __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % cliente['Plug_in'])
@@ -304,10 +312,13 @@ def get_environment():
                     if not cliente['D_load_Path']:
                         cliente['D_load_Path'] = str(filetools.join("special://home/", \
                                                      "cache", "xbmcup", "plugin.video.torrenter", "Torrenter"))
+                    cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
+                    if not cliente['D_load_Path_perm']: del cliente['D_load_Path_perm']
                     cliente['Buffer'] = str(__settings__.getSetting('pre_buffer_bytes'))
                 else:
                     cliente['D_load_Path'] = str(filetools.translatePath(__settings__.getSetting('download_path')))
                     cliente['D_load_Path_perm'] = filetools.file_info(cliente['D_load_Path'])
+                    if not cliente['D_load_Path_perm']: del cliente['D_load_Path_perm']
                     cliente['Buffer'] = str(__settings__.getSetting('buffer_size'))
                     if __settings__.getSetting('download_storage') == '1' and __settings__.getSetting('memory_size'):
                         cliente['Memoria'] = str(__settings__.getSetting('memory_size'))
@@ -404,6 +415,7 @@ def get_environment():
         environment['debug'] = ''
         environment['addon_version'] = ''
         environment['torrent_list'] = []
+        environment['torrent_lang'] = ''
         environment['torrentcli_option'] = ''
         environment['torrentcli_rar'] = ''
         environment['torrentcli_lib_path'] = ''
@@ -445,7 +457,8 @@ def list_env(environment={}):
                     environment['kodi_rfactor'])
 
     logger.info('Userdata: ' + environment['userdata_path'] + ' - Libre: ' + 
-                environment['userdata_free'].replace('.', ',') +  ' GB')
+                environment['userdata_free'].replace('.', ',') +  ' GB' + 
+                ' - Idioma: ' + environment['torrent_lang'])
     
     logger.info('Videoteca: Series/Epis: ' + environment['videolab_series'] + '/' + 
                     environment['videolab_episodios'] + ' - Pelis: ' + 
@@ -539,6 +552,7 @@ def paint_env(item, environment={}):
     Muestra los datos del "path" de [COLOR yellow]Userdata[/COLOR]:
         - Path
         - Espacio disponible
+        - Idioma primario/secudario de Alfa
     """
     videoteca = """\
     Muestra los datos de la [COLOR yellow]Videoteca[/COLOR]:
@@ -610,7 +624,7 @@ def paint_env(item, environment={}):
 
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Userdata: [/COLOR]' + 
                     environment['userdata_path'] + ' - Free: ' + environment['userdata_free'].replace('.', ',') + 
-                    ' GB', action="", plot=userdata, thumbnail=thumb, folder=False))
+                    ' GB' + ' - Idioma: ' + environment['torrent_lang'], action="", plot=userdata, thumbnail=thumb, folder=False))
     
     itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Videoteca: [/COLOR]Series/Epis: ' + 
                     environment['videolab_series'] + '/' + environment['videolab_episodios'] + 

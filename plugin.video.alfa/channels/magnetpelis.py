@@ -687,6 +687,10 @@ def findvideos(item):
             itemlist.append(Item(channel=item.channel, url=host, 
                         title="[COLOR red][B]NO hay elementos con el idioma seleccionado[/B][/COLOR]", 
                         thumbnail=thumb_separador, folder=False))
+        
+        if len(itemlist_t) == 0:
+            if len(itemlist) == 0 or (len(itemlist) > 0 and itemlist[-1].server != 'torrent'):
+                return []
         itemlist.extend(itemlist_t)                                             #Pintar pantalla con todo si no hay filtrado
     
     # Requerido para AutoPlay
@@ -922,7 +926,7 @@ def newest(categoria):
             item.action = "listado"
             itemlist.extend(listado(item))
                 
-        if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
+        if len(itemlist) > 0 (and ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title):
             itemlist.pop()
         
         if categoria in ['series', 'latino', 'torrent']:
@@ -933,7 +937,7 @@ def newest(categoria):
             item.action = "listado"
             itemlist.extend(listado(item))
 
-        if ">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title:
+        if len(itemlist) > 0 and (">> Página siguiente" in itemlist[-1].title or "Pagina siguiente >>" in itemlist[-1].title):
             itemlist.pop()
 
     # Se captura la excepción, para no interrumpir al canal novedades si un canal falla

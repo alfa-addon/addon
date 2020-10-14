@@ -387,6 +387,53 @@ def set_setting(name, value, channel="", server=""):
         return value
 
 
+def get_kodi_setting(name, total=False):
+    """
+    Retorna el valor de configuracion del parametro solicitado.
+
+    Devuelve el valor del parametro 'name' en la configuracion global de Kodi
+
+    @param default: valor devuelto en caso de que no exista el parametro name
+    @type default: any
+
+    @return: El valor del parametro 'name'
+    @rtype: any
+
+    """
+
+    # Global Kodi setting
+    from core import scrapertools
+
+    infile = open(os.path.join(translatePath('special://masterprofile/'), "guisettings.xml"), "r")
+    data = infile.read()
+    infile.close()
+
+    ret = {}
+    matches = scrapertools.find_multiple_matches(data, '<setting\s*id="([^"]+)"[^>]*>([^<]*)<\/setting>')
+
+    for _id, value in matches:
+        # hack para devolver el tipo correspondiente
+        if value == "true":
+            value = True
+        elif value == "false":
+            value =  False
+        else:
+            try:
+                value = int(value)
+            except ValueError:
+                value = str(value)
+        
+        if _id == name and not total:
+            return value
+        
+        ret[_id] = value
+    
+    if not total:
+        return None
+    else:
+        return ret
+
+
 def get_localized_string(code):
     dev = __language__(code)
 

@@ -77,8 +77,14 @@ def init():
         version = 'plugin.video.alfa-%s.zip' % config.get_addon_version(with_fix=False)
         filetools.remove(filetools.join('special://home', 'addons', 'packages', version), True)
         
-        #Borrar contenido de carpeta de Torrents
+        #Borrar contenido de carpeta de Torrents y de Subtitles
         filetools.rmdirtree(filetools.join(config.get_videolibrary_path(), 'temp_torrents_Alfa'), silent=True)
+        subtitle_path = config.get_kodi_setting("subtitles.custompath")
+        ret = filetools.rmdirtree(subtitle_path, silent=True)
+        if not ret: logger.error('RMDIR: ' + subtitle_path)
+        time.sleep(1)
+        ret = filetools.mkdir(subtitle_path, silent=True)
+        if not ret: logger.error('MKDIR: ' + subtitle_path)
 
         #Verifica si Kodi tiene algún achivo de Base de Datos de Vídeo de versiones anteriores, entonces los borra
         verify_Kodi_video_DB()
@@ -390,6 +396,12 @@ def update_libtorrent():
         config.set_setting("mct_download_limit", "", server="torrent")
         config.set_setting("magnet2torrent", False, server="torrent")
         
+    if not filetools.exists(filetools.join(config.get_setting("bt_download_path", server="torrent"), 'BT-torrents')):
+        filetools.mkdir(filetools.join(config.get_setting("bt_download_path", server="torrent"), 'BT-torrents'))
+    if not filetools.exists(filetools.join(config.get_setting("mct_download_path", server="torrent"), 'MCT-torrent-videos')):
+        filetools.mkdir(filetools.join(config.get_setting("mct_download_path", server="torrent"), 'MCT-torrent-videos'))
+        filetools.mkdir(filetools.join(config.get_setting("mct_download_path", server="torrent"), 'MCT-torrents'))
+        
     if not filetools.exists(filetools.join(config.get_runtime_path(), "custom_code.json")) or not \
                     config.get_setting("unrar_path", server="torrent", default=""):
     
@@ -447,7 +459,7 @@ def update_libtorrent():
         
         if unrar: config.set_setting("unrar_path", unrar, server="torrent")
 
-    # Ahora descargamos la última versión disponible de Liborrent para esta plataforma
+    # Ahora descargamos la última versión disponible de Libtorrent para esta plataforma
     try:
         version_base = filetools.join(config.get_runtime_path(), 'lib', 'python_libtorrent')
         if config.get_setting("libtorrent_version", server="torrent", default=""):
