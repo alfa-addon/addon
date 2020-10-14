@@ -19,6 +19,7 @@ from platformcode import config, logger
 from channels import autoplay
 from channels import filtertools
 from bs4 import BeautifulSoup
+import base64
 
 host = 'https://playview.io/'
 
@@ -301,9 +302,14 @@ def play(item):
     logger.info()
 
     data = httptools.downloadpage(host + 'playview', post=item.post).data
-    logger.debug(data)
-    url_data = BeautifulSoup(data, "html5lib").find("iframe", class_="embed-responsive-item")["src"]
-    url = httptools.downloadpage(url_data).url
+    url_data = BeautifulSoup(data, "html5lib")
+    try:
+        iframe = url_data.find("iframe", class_="embed-responsive-item")["src"]
+        url = httptools.downloadpage(iframe).url
+    except:
+        url_data = url_data.find("button", class_="linkfull")["data-url"]
+        url = base64.b64decode(scrapertools.find_single_match(url_data, "/go/(.+)"))
+
     srv = servertools.get_server_from_url(url)
     item = item.clone(url=url, server=srv)
 
