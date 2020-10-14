@@ -218,8 +218,12 @@ def genres(item):
     logger.info()
 
     itemlist = list()
+    pl = 'peliculas'
+    if item.url == "https://www.cinemaqualidade.is/":
+        pl = "filmes"
 
-    itemlist.append(Item(channel=item.channel, title='4K UHD', url=item.url+'peliculas/4k-ultra-hd/', action="list_all"))
+    itemlist.append(Item(title='4K UHD', url='%s%s/4k-ultra-hd/' % (item.url, pl),
+    					 action="list_all", channel=item.channel))
     
     soup = create_soup(item.url, unescape=True).find("ul")
     for elem in soup.find_all("li", class_=re.compile("menu-item-object-category")):

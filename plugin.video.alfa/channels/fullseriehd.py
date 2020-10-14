@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# -*- Channel SeriesRetro -*-
+# -*- Channel FullSerieHD -*-
 # -*- Created for Alfa-addon -*-
 # -*- By the Alfa Develop Group -*-
 
@@ -25,7 +25,7 @@ host = 'https://fullseriehd.com/'
 
 IDIOMAS = {'Subtitulado': 'VOSE', 'Latino':'LAT', 'Castellano':'CAST'}
 list_language = list(IDIOMAS.values())
-list_servers = ['okru', 'fembed', 'mega']
+list_servers = ['okru', 'fembed', 'gvideo', 'mega']
 list_quality = ['HD-1080p', 'HD-720p', 'Cam']
 
 
@@ -99,10 +99,12 @@ def list_all(item):
         return itemlist
 
     for elem in soup.find_all("article"):
-
         url = elem.a["href"]
         title = fix_title(elem.a.h3.text)
-        thumb = re.sub(r'-\d+x\d+.jpg', '.jpg', elem.find("img")["data-src"])
+        try:
+            thumb = re.sub(r'-\d+x\d+.jpg', '.jpg', elem.find("img")["data-src"])
+        except:
+            thumb = elem.find("img")["src"]
 
         
         year = ''
@@ -137,7 +139,25 @@ def list_all(item):
     return itemlist
 
 def year(item):
-    return
+    import datetime
+    logger.info()
+
+    itemlist = list()
+    
+    now = datetime.datetime.now()
+    c_year = now.year + 1
+        
+    l_year = c_year - 21
+    year_list = list(range(l_year, c_year))
+
+    for year in year_list:
+        year = str(year)
+        url = '%s?s=trfilter&trfilter=1&tr_post_type=%s&years[]=%s,' % (host, item.type, year)
+            
+        itemlist.append(Item(channel=item.channel, title=year, url=url,
+                                 action="list_all"))
+    itemlist.reverse()
+    return itemlist
 
 def section(item):
     logger.info()
@@ -300,9 +320,12 @@ def findvideos(item):
 
     itemlist = list()
     #servers = {'opciÃ³n 1': 'okru', 'opción 2': 'fembed'}
-    soup = create_soup(item.url).find("ul", class_="TPlayerNv").find_all("li")
+    data = create_soup(item.url)
+    soup = data.find("ul", class_="TPlayerNv")
+    if not soup:
+        return itemlist
     infoLabels = item.infoLabels
-    for btn in soup:
+    for btn in soup.find_all("li"):
         opt = btn["data-tplayernv"]
         srv = btn.span.text.lower()
         if 'opc' in srv:
@@ -310,6 +333,8 @@ def findvideos(item):
                 srv = 'fembed'
             else:
                 srv = 'okru'
+        elif 'premi' in srv:
+            srv = 'gvideo'
         
         info = btn.span.findNext('span').text.split(' - ')
         lang = IDIOMAS.get(info[0], info[0])
@@ -317,8 +342,11 @@ def findvideos(item):
 
         itemlist.append(Item(channel=item.channel, title=srv, url=item.url, action='play', server=srv, opt=opt,
                             infoLabels=infoLabels, language=lang, quality=quality))
-
-    itemlist = sorted(itemlist, key=lambda i: i.language)
+    
+    downlist = get_downlist(item, data)
+    itemlist.extend(downlist)
+    
+    itemlist = sorted(itemlist, key=lambda i: (i.language, i.server))
 
     # Requerido para FilterTools
 
@@ -328,6 +356,11 @@ def findvideos(item):
 
     autoplay.start(itemlist, item)
 
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.extra != 'findvideos' and not item.contentSerieName:
+        itemlist.append(Item(channel=item.channel, title='[COLOR yellow]Añadir esta pelicula a la videoteca[/COLOR]',
+                             url=item.url, action="add_pelicula_to_library", extra="findvideos",
+                             contentTitle=item.contentTitle))
+
     return itemlist
 
 
@@ -335,10 +368,22 @@ def play(item):
     logger.info()
     itemlist = list()
 
+    if not item.opt:
+        if host in item.url:
+            item.url = httptools.downloadpage(item.url, ignore_response_code=True).url
+        
+        itemlist.append(item.clone(url=item.url, server=""))
+        itemlist = servertools.get_servers_itemlist(itemlist)
+        
+        return itemlist
+
     soup = create_soup(item.url).find("div", class_="TPlayerTb", id=item.opt)
     url = scrapertools.find_single_match(str(soup), 'src="([^"]+)"')
     url = re.sub("amp;|#038;", "", url)
     url = create_soup(url).find("div", class_="Video").iframe["src"]
+    if 'Gdri.php' in url:
+        url = scrapertools.find_single_match(url, 'v=([A-z0-9-_=]+)')
+        url = 'https://drive.google.com/file/d/%s/preview' % url
     itemlist.append(item.clone(url=url, server=""))
     itemlist = servertools.get_servers_itemlist(itemlist)
 
@@ -363,3 +408,39 @@ def fix_title(title):
     title = re.sub(r'\((.*)', '', title)
     title = re.sub(r'\[(.*?)\]', '', title)
     return title
+
+def get_downlist(item, data):
+    import base64
+    logger.info()
+
+    downlist = list()
+    servers = {'drive': 'gvideo', '1fichier': 'onefichier'}
+    
+    soup = data.find("tbody").find_all("tr")
+    infoLabels = item.infoLabels
+    
+    for tr in soup:
+        burl = tr.a["href"].split('?l=')[1]
+        try:
+            for x in range(7):
+                durl = base64.b64decode(burl).decode('utf-8')
+                burl = durl
+        except:
+            url = burl
+
+        info = tr.span.findNext('span')
+        info1 = info.findNext('span')
+        
+        srv = info.text.strip().lower()
+        srv = servers.get(srv, srv)
+        
+        lang = info1.text.strip()
+        lang = IDIOMAS.get(lang, lang)
+        
+        quality = info1.findNext('span').text
+
+        downlist.append(Item(channel=item.channel, title=srv, url=url, action='play', server=srv,
+                            infoLabels=infoLabels, language=lang, quality=quality))
+
+    return downlist
+

@@ -36,6 +36,18 @@
       ]
     },
     {
+      "id": "show_users_links",
+      "type": "list",
+      "label": "Mostrar enlaces de usuarios...",
+      "default": 0,
+      "enabled": true,
+      "visible": true,
+      "lvalues": [
+        "Si",
+        "No"
+      ]
+    },
+    {
       "id": "include_in_newest_peliculas",
       "type": "bool",
       "label": "Incluir en Novedades - Peliculas",
