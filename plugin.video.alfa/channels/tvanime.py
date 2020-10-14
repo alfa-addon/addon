@@ -152,13 +152,17 @@ def list_all(item):
             lang = 'Castellano'
         else:
             lang = 'VOSE'
-        title = re.sub('Audio|Latino|Castellano', '', scrapedtitle)
+        title = re.sub(r'Audio|Latino|Castellano|\((.*?)\)', '', scrapedtitle)
+        stitle = title
+        if lang != 'VOSE' and not config.get_setting('unify'):
+            stitle += ' [COLOR gold][%s][/COLOR]' %  lang
+
         context = renumbertools.context(item)
         context2 = autoplay.context
         context.extend(context2)
         new_item= Item(channel=item.channel,
                        action='folders',
-                       title=title,
+                       title=stitle,
                        url=url,
                        thumbnail=thumbnail,
                        language = lang,
@@ -240,6 +244,8 @@ def new_episodes(item):
             lang = 'VOSE'
         scrapedtitle = re.sub('Audio|Latino|Castellano', '', scrapedtitle)
         title = '%s - Episodio %s' % (scrapedtitle, epi)
+        if lang != 'VOSE' and not config.get_setting('unify'):
+            title += ' [COLOR gold][%s][/COLOR]' %  lang
         itemlist.append(Item(channel=item.channel, title=title, url=url, thumbnail=scrapedthumbnail,
                              action='findvideos', language=lang))
 

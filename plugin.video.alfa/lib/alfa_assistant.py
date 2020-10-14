@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------------------------
-# alfa_assistant tools - Requiere al menos Assistant v. 1.0.489 (del 29/09/2020)
+# alfa_assistant tools - Requiere al menos Assistant v. 1.0.492 (del 02/10/2020)
 # ------------------------------------------------------------------------------
 
 import sys
@@ -28,10 +28,11 @@ from platformcode import platformtools
 EXTRA_TIMEOUT = 10
 
 ASSISTANT_SERVER = "http://127.0.0.1"
+ASSISTANT_MODE = config.get_setting("assistant_mode")
 
 isAlfaAssistantOpen = False
 
-if config.get_setting("assistant_mode") == "otro":
+if ASSISTANT_MODE == "otro":
     if config.get_setting("assistant_custom_address"):
         ASSISTANT_SERVER = "http://%s" % config.get_setting("assistant_custom_address")
 
@@ -352,7 +353,7 @@ def open_alfa_assistant(closeAfter=None, getWebViewInfo=False, retry=False):
     if not isAlfaAssistantOpen:
         res = False
         try:
-            if (ASSISTANT_SERVER == "http://127.0.0.1" or ASSISTANT_SERVER == "http://localhost"):
+            if ASSISTANT_MODE == 'este':
                 logger.info('##Assistant Open at ' + ASSISTANT_SERVER)
                 
                 if not is_alfa_installed():
@@ -493,13 +494,14 @@ def execute_in_alfa_assistant_with_cmd(cmd, dataURI='about:blank'):
     
     return False
 
-
+#
+## Instala o actualiza la app de Assitant ##################################################################################################################################
+#
 def install_alfa_assistant(update=False, remote='', verbose=False):
     if update:
         logger.info('update=%s' % str(update))
     # Si ya está instalada, devolvemos el control
     app_name = 'com.alfa.alfamobileassistant'
-    assistant_mode = config.get_setting("assistant_mode")
     if not verbose: verbose = config.get_setting('addon_update_message')        # Verbose en la actualización/instalación
     assistant_flag_install = config.get_setting('assistant_flag_install', default=True)
     addonid = 'alfa-mobile-assistant'
@@ -522,9 +524,9 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         if ANDROID_STORAGE.endswith('/'):
             ANDROID_STORAGE = ANDROID_STORAGE[:-1]
     apk_files = '%s/%s/%s/%s/%s/%s' % (ANDROID_STORAGE, 'emulated', '0', 'Android', 'data', app_name)
-    if not filetools.exists(filetools.dirname(apk_files)):
+    if ASSISTANT_MODE == 'este' and not filetools.exists(filetools.dirname(apk_files)):
         apk_files_alt = scrapertools.find_single_match(os.getenv('HOME'), '(.*?)\/\w*.\w*.\w*\/files')
-        logger.info(apk_files_alt)
+        logger.info('HOME: ' + apk_files_alt)
         if apk_files_alt and filetools.exists(apk_files_alt):
             apk_files = '%s/%s' % (apk_files_alt, app_name)
 
@@ -533,9 +535,9 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
     if not version_act: version_act = '0.0.0'
     
     # Averiguamos si es instalacción, update, o forzado desde el Menú de Ajustes
-    if not update and assistant_mode == 'este' and filetools.exists(apk_files):
+    if not update and ASSISTANT_MODE == 'este' and filetools.exists(apk_files):
         return version_act, app_name
-    if assistant_mode == 'este' and not update:
+    if ASSISTANT_MODE == 'este' and not update:
         check_permissions_alfa_assistant()                                      # activamos la app por si no se ha inicializado
         time.sleep(1)
         if filetools.exists(apk_files):
@@ -549,7 +551,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         app_active = True
     else:
         app_active = False
-        if assistant_mode == "este":
+        if ASSISTANT_MODE == "este":
             execute_in_alfa_assistant_with_cmd('open')                          # activamos la app por si no se ha inicializado
             time.sleep(1)
             version_app = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
@@ -561,7 +563,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
     elif not version_actual:
         version_actual = '0.0.0'
 
-    if assistant_mode != 'este':
+    if ASSISTANT_MODE != 'este':
         if not version_app:
             if verbose or (update and not isinstance(update, bool)):
                 platformtools.dialog_notification("Active Alfa Assistant", 
@@ -588,7 +590,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         return False, app_name
 
     logger.info('assistant_mode=%s, update=%s, forced_menu=%s, assistant_flag_install=%s, version_actual=%s, app_active=%s' \
-                % (assistant_mode, str(update), str(forced_menu), str(assistant_flag_install), version_actual, str(app_active)))
+                % (ASSISTANT_MODE, str(update), str(forced_menu), str(assistant_flag_install), version_actual, str(app_active)))
     
     # Si no está instalada, o se quiere actualizar, empezamos el proceso
     alfa_assistant_pwd = ''
@@ -633,7 +635,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
 
     # Comprobamos si el dispositivo está rooteado
     is_rooted = config.is_rooted(silent=True)                                   # ¡OJO! puede pedir permisos root en algunos dispositivos
-    if is_rooted == 'rooted' and assistant_mode == 'este':                      # El dispositivo esta rooteado?
+    if is_rooted == 'rooted' and ASSISTANT_MODE == 'este':                      # El dispositivo esta rooteado?
         update_install = 'py'                                                   # Se actualiza desde esta función
     else:
         update_install = 'app'                                                  # Se actualiza desde la app
@@ -721,7 +723,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
                     time.sleep(1)
 
             # Verificado si está el APK, y si está y es LOCAL lo instalamos
-            if assistant_mode == "este":
+            if ASSISTANT_MODE == "este":
                 res = filetools.copy(apk_apk, apk_install_SD, silent=True)
                 if not res or not filetools.exists(apk_install_SD):
                     if not update or verbose: platformtools.dialog_notification("Instalación Alfa Assistant", "Error de Extracción o Copia %s" % package)
@@ -815,7 +817,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         version_mod = version_actual
         if not isinstance(update, bool):
             version_mod = '9.9.999'                                             # Intenta forzar la actualización si viene desde el Menú
-        if assistant_mode == "este":
+        if ASSISTANT_MODE == "este":
             if not app_active:
                 execute_in_alfa_assistant_with_cmd('openAndQuit')               # activamos la app por si no se ha inicializado
                 time.sleep(1)
@@ -824,7 +826,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
             if app_active:
                 respuesta = get_generic_call(cmd, version=version_mod, alfa_s=alfa_s)
 
-        if not respuesta and assistant_mode != "este":
+        if not respuesta and ASSISTANT_MODE != "este":
             if verbose or not isinstance(update, bool):
                 platformtools.dialog_notification("Instalación Alfa Assistant", "Intente la actualización manualmente %s" % version_actual)
             logger.info("Instalación Alfa Assistant. Intente la actualización manualmente %s" % version_actual)
@@ -844,7 +846,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         try:
             #xbmc.executebuiltin('StartAndroidActivity("","android.intent.action.VIEW","application/vnd.android.package-archive","file:%s")' % apk_install_SD)
             
-            if assistant_mode == "este":
+            if ASSISTANT_MODE == "este":
                 from lib import generictools
                 assistant_rar = assistant_rar.replace('/raw/', '/tree/')            # Apuntar a la web de descargas
                 browser, res = generictools.call_browser(assistant_rar, lookup=True)
@@ -864,7 +866,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
                 logger.error('Error de Instalación: no se puede instalar en remoto: %s' % ASSISTANT_SERVER)
                 raise
         except:
-            if assistant_mode == "este":
+            if ASSISTANT_MODE == "este":
                 platformtools.dialog_ok("Alfa Assistant: Error", "Instale manualmente desde: [COLOR yellow]%s[/COLOR]" % apk_install_SD)
                 logger.error("Alfa Assistant: Error. Instale manualmente desde: [COLOR yellow]%s[/COLOR]" % apk_install_SD)
                 filetools.remove(apk_path)
@@ -889,7 +891,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
             time.sleep(1)
             check_permissions_alfa_assistant()
             time.sleep(1)
-        if app_active and assistant_mode == "este":
+        if app_active and ASSISTANT_MODE == "este":
             execute_in_alfa_assistant_with_cmd('open')                          # re-activamos la app para dejarla como estaba
         
     return respuesta, app_name

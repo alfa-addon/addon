@@ -321,7 +321,7 @@ def findvideos(item):
         video = scrapertools.find_single_match(js, "sources: \[\{src:(.*?), type")
         js = re.sub(' videojs\((.*?)\);', video+";", js)
         
-        import js2py
+        from lib import js2py
         js2py.disable_pyimport()
         context = js2py.EvalJs({'atob': atob})
         

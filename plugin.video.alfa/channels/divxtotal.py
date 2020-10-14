@@ -23,6 +23,7 @@ from core.item import Item
 from platformcode import config, logger
 from core import tmdb
 from lib import generictools
+from lib import js2py
 from channels import filtertools
 from channels import autoplay
 
@@ -924,7 +925,6 @@ def actualizar_titulos(item):
     
 def js2py_conversion(data, url, post=None, follow_redirects=True):
     logger.info()
-    import js2py
     import base64
     
     if not 'Javascript is required' in data:

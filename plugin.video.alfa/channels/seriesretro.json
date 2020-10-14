@@ -1,14 +1,14 @@
 {
-  "id": "pelisipad",
-  "name": "PelisIpad",
-  "language": ["cast"],
-  "active": false,
+  "id": "seriesretro",
+  "name": "SeriesRetro",
+  "active": true,
+  "force_unify": true,
   "adult": false,
-  "thumbnail": "http://i.imgur.com/FzLmGKK.png",
+  "language": ["lat"],
+  "thumbnail": "https://seriesretro.com/wp-content/uploads/2020/06/5ed8d22a4ac42_originalcursi1.png",
+  "banner": "",
   "categories": [
-    "movie",
-    "tvshow",
-    "direct"
+    "tvshow"
   ],
   "settings": [
     {
@@ -20,17 +20,14 @@
       "visible": false
     },
     {
-      "id": "perfil",
+      "id": "filter_languages",
       "type": "list",
-      "label": "Perfil de color",
-      "default": 2,
+      "label": "Mostrar enlaces en idioma...",
+      "default": 0,
       "enabled": true,
       "visible": true,
       "lvalues": [
-        "Perfil 3",
-        "Perfil 2",
-        "Perfil 1",
-        "Ninguno"
+        "No filtrar"
       ]
     }
   ]
