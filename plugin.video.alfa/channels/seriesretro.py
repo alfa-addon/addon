@@ -196,14 +196,17 @@ def episodesxseason(item):
         if elem.find("div", class_="AA-Season")["data-tab"] == str(season):
             epi_list = elem.find_all("tr")
             for epi in epi_list:
-                url = epi.a["href"]
-                epi_num = epi.find("span", class_="Num").text
-                epi_name = epi.find("td", class_="MvTbTtl").a.text
-                infoLabels["episode"] = epi_num
-                title = "%sx%s - %s" % (season, epi_num, epi_name)
+                try:
+                    url = epi.a["href"]
+                    epi_num = epi.find("span", class_="Num").text
+                    epi_name = epi.find("td", class_="MvTbTtl").a.text
+                    infoLabels["episode"] = epi_num
+                    title = "%sx%s - %s" % (season, epi_num, epi_name)
 
-                itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos",
-                                     infoLabels=infoLabels))
+                    itemlist.append(Item(channel=item.channel, title=title, url=url, action="findvideos",
+                                         infoLabels=infoLabels))
+                except:
+                    pass
             break
     tmdb.set_infoLabels_itemlist(itemlist, True)
 
