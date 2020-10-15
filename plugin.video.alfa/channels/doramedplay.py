@@ -75,30 +75,32 @@ def list_all(item):
 
         url = scrapedurl
         year = scrapedyear
+        filtro_tmdb = list({"first_air_date": year}.items())
         contentname = scrapedtitle
         title = '%s (%s) [%s]'%(contentname, scrapedrating, year)
         thumbnail = scrapedthumbnail
         new_item = Item(channel=item.channel,
                         title=title,
+                        contentSerieName=contentname,
                         plot=scrapedplot,
                         url=url,
                         thumbnail=thumbnail,
-                        infoLabels={'year':year}
+                        infoLabels={'year':year, 'filtro': filtro_tmdb}
                         )
 
-        new_item.contentSerieName = contentname
         if item.type == 'tvshows':
             new_item.action = 'seasons'
         else:
             new_item.action = 'findvideos'
             
         itemlist.append(new_item)
-    tmdb.set_infoLabels_itemlist(itemlist, False)
+
+    tmdb.set_infoLabels_itemlist(itemlist, True)
 
     #  Paginación
     url_next_page = scrapertools.find_single_match(data,"<span class=\"current\">.?<\/span>.*?<a href='([^']+)'")
     if url_next_page:
-        itemlist.append(Item(channel=item.channel, title="Siguiente >>", url=url_next_page, action='list_all'))
+        itemlist.append(Item(channel=item.channel, type=item.type, title="Siguiente >>", url=url_next_page, action='list_all'))
     return itemlist
 
 
