@@ -215,8 +215,9 @@ def findvideos(item):
                 video_matches = re.compile(patron, re.DOTALL).findall(metadata)
                 for video_resolution, video_url in video_matches:
                     final_url = "http" + video_url
+                    url_video = final_url + "|referer="+ final_url
                     logger.info(final_url)
-                    itemlist.append(Item(channel=item.channel, title='%s (' + video_resolution.strip() + ')', url=final_url, action='play'))
+                    itemlist.append(Item(channel=item.channel, title='%s (' + video_resolution.strip() + ')', url=url_video, action='play'))
                 # https://1/cdn/hls/9be120188fe6b91e70db037b674c686d/master.txt
             else:
                 itemlist.append(Item(channel=item.channel, title='%s', url=source_json['embed_url'], action='play'))
