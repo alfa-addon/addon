@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# -*- Debrider All-Debrid -*-
+# -*- Created for Alfa-addon -*-
+# -*- By the Alfa Develop Group -*-
 
 import sys
 import time
