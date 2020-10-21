@@ -13,17 +13,10 @@
       "visible": true
     },
     {
+      "default": "",
       "enabled": "eq(-1,true)",
-      "id": "user",
-      "label": "@30014",
-      "type": "text",
-      "visible": true
-    },
-    {
-      "enabled": "eq(-2,true)+!eq(-1,'')",
-      "hidden": true,
-      "id": "password",
-      "label": "@30015",
+      "id": "api_key",
+      "label": "ApiKey (autentificación alternativa)",
       "type": "text",
       "visible": true
     }
