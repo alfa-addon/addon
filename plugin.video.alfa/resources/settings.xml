@@ -7,6 +7,8 @@
         <setting id="autoplay" type="bool" label="70562" default="false" visible="true"/>
         <setting id="second_language" type="labelenum" values="No|CAST|LAT|VOSE|VOS|VO"
                  label="Idioma secundario para Autoplay/Filtro" default="No"/>
+        <setting id="autoplay_qlty" type="labelenum" label="Autoplay (forzar calidad)"
+                 values="Alta|Baja" default="Alta"/>
         <setting id="thumbnail_type" type="enum" lvalues="30011|30012|30200" label="30010" default="2"/>
         <setting id="channel_language" type="labelenum" values="all|cast|lat" label="30019" default="all"/>
         <setting id="trakt_sync" type="bool" label="70109" default="false"/>
@@ -144,7 +146,7 @@
 
         <setting type="sep"/>
         <setting label="70154" type="lsep"/>
-        <setting id="tmdb_lang" type="enum" lvalues="60436|70425|70422|70421|70420|70419" label="70418" default="0"/>
+        <setting id="tmdb_lang" type="enum" lvalues="60436|70423|70425|70422|70421|70420|70419" label="70418" default="0"/>
         <setting id="tmdb_threads" type="labelenum" values="5|10|15|20|25|30" label="70155" default="20"/>
         <setting id="tmdb_plus_info" type="bool" label="70156" default="false"/>
         <setting id="tmdb_cache" type="bool" label="70157" default="true"/>

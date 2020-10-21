@@ -352,7 +352,7 @@ def search_results(item):
 
     if json_data.get('results', ''):
         for elem in json_data['results']:
-            url = '%ssecure/titles/%s?titleId=%s' % (host, elem['id'], elem['id'])
+            url = '%ssecure/titles/%s?titleId=%s' % (item.host, elem['id'], elem['id'])
             if not 'videos' in elem:
                 continue
             try:
@@ -398,8 +398,10 @@ def search_results(item):
 def search(item, texto):
     logger.info()
     texto = texto.replace(" ", "+")
-    if not item.url:
-        item.url = host + 'secure/search/'
+    item.host = 'https://pepecine.tv/'
+    item.url =  item.host + 'secure/search/'
+    # if not item.url:
+    #     item.url = host + 'secure/search/'
 
     item.url = '%s%s?type=&limit=30' % (item.url, texto)
 

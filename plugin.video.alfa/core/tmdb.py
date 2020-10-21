@@ -85,7 +85,7 @@ from platformcode import logger
 
 otmdb_global = None
 fname = filetools.join(config.get_data_path(), "alfa_db.sqlite")
-tmdb_langs = ['es', 'en', 'it', 'pt', 'fr', 'de']
+tmdb_langs = ['es', 'es-MX', 'en', 'it', 'pt', 'fr', 'de']
 langs = config.get_setting('tmdb_lang', default=0)
 tmdb_lang = tmdb_langs[langs]
 

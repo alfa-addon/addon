@@ -42,7 +42,7 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Latino", url=host + "search/label/Latino", action="list_all",
                          thumbnail=get_thumb('latino', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Asiaticas", url=host + "search/label/Asiaticas", action="list_all",
+    itemlist.append(Item(channel=item.channel, title="Asiaticas", url=host + "search/label/Asi%C3%A1tico", action="list_all",
                          thumbnail=get_thumb('asiaticas', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Generos", action="section",
