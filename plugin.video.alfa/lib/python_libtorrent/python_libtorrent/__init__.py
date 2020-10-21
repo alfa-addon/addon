@@ -211,7 +211,7 @@ while VERSIONS:
                 
                 if not libtorrent:
                     dll_path = filetools.join(dest_path, 'liblibtorrent.so')
-                    log('CDLL path = ' + filetools.file_info(dll_path))
+                    log('CDLL path = ' + str(filetools.file_info(dll_path)))
                     liblibtorrent = CDLL(dll_path)
                     log('CDLL = ' + str(liblibtorrent))
                     path_list = [dest_path]
@@ -235,13 +235,13 @@ while VERSIONS:
                 if fp: log('fp = ' + str(fp))
                 if pathname: log('pathname = ' + str(pathname))
                 if description: log('description = ' + str(description))
-                log('Error importing libtorrent from "' + dest_path + '". Exception: ' + str(e))
+                log('Error importing libtorrent from "' + str(dest_path) + '". Exception: ' + str(e))
                 if fp: fp.close()
 
         if libtorrent:
-            config.set_setting("libtorrent_path", dest_path, server="torrent")      ### Alfa
+            config.set_setting("libtorrent_path", str(dest_path), server="torrent") ### Alfa
             config.set_setting("libtorrent_error", "", server="torrent")            ### Alfa
-            log('Imported libtorrent v' + libtorrent.version + ' from "' + dest_path + '"')
+            log('Imported libtorrent v' + libtorrent.version + ' from "' + str(dest_path) + '"')
             break
         elif platform['system'] in ['android_armv7', 'android_x86']:
             break
@@ -256,7 +256,7 @@ while VERSIONS:
             e = unicode(str(e), "utf8", errors="replace").encode("utf8")
         config.set_setting("libtorrent_path", "", server="torrent")                 ### Alfa
         config.set_setting("libtorrent_error", str(e), server="torrent")            ### Alfa
-        log('Error importing libtorrent from "' + dest_path + '". Exception: ' + str(e))
+        log('Error importing libtorrent from "' + str(dest_path) + '". Exception: ' + str(e))
         if fp: fp.close()
         if not LIBTORRENT_SAFE and platform['system'] not in ['android_armv7', 'android_x86']:
             LIBTORRENT_SAFE = True

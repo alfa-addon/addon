@@ -841,6 +841,7 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             item.videolibray_emergency_urls = True                          #... se marca como "lookup"
             channel_save = item.channel                 #... guarda el canal original por si hay fail-over en Newpct1
             category_save = item.category               #... guarda la categoría original por si hay fail-over o redirección en Newpct1
+            post_save = item.post                       #... guarda el post original
             if item.channel_redir:                      #... si hay un redir, se restaura temporamente el canal alternativo
                 item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
                 item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
@@ -867,6 +868,7 @@ def emergency_urls(item, channel=None, path=None, headers={}):
         try:
             referer = None
             post = None
+            subtitles_list =[]
             channel_bis = generictools.verify_channel(item.channel)
             if config.get_setting("emergency_urls_torrents", channel_bis) and item_res.emergency_urls and path != None:
                 videolibrary_path = config.get_videolibrary_path()              #detectamos el path absoluto del título
@@ -884,11 +886,13 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                     torrents_path = re.sub(r'(?:\.\w+$)', '_%s.torrent' % str(i).zfill(2), path)
                     path_real = ''
                     if magnet_caching_e or not url.startswith('magnet'):
-                        path_real = torrent.caching_torrents(url, referer, post, \
+                        path_real, subtitles_list = torrent.caching_torrents(url, referer, post, \
                                 torrents_path=torrents_path, headers=headers)   #...  para descargar los .torrents
                     if path_real:                                               #Si ha tenido éxito...
                         item_res.emergency_urls[0][i-1] = path_real.replace(videolibrary_path, '')  #se guarda el "path" relativo
                         if 'ERROR' in item.torrent_info: item.torrent_info = ''
+                    if subtitles_list and not item_res.subtitle:
+                        item_res.subtitle = subtitles_list[0].replace(videolibrary_path, '')  #se guarda el "path" relativo
                     i += 1
                     
                 #Restauramos variables originales
@@ -900,6 +904,8 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                     item_res.referer = item.referer
                 elif item_res.referer:
                     del item_res.referer
+                if post_save and not item_res.post:
+                    item_res.post = post_save
                 item_res.url = item.url
                 
         except:
