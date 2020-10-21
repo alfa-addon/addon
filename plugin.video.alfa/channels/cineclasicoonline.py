@@ -36,10 +36,16 @@ def mainlist(item):
     itemlist.append(Item(channel=item.channel, title="Todas", url=host+'pelicula', action="list_all",
                          thumbnail=get_thumb('all', auto=True), first=0))
 
-    itemlist.append(Item(channel=item.channel, title="Generos", action="section",
+    itemlist.append(Item(channel=item.channel, title="Generos", action="genres",
                          thumbnail=get_thumb('genres', auto=True)))
+    
+    itemlist.append(Item(channel=item.channel, title="Directores", action="section",
+                        thumbnail=get_thumb('colections', auto=True)))
+    
+    itemlist.append(Item(channel=item.channel, title="Actores", action="section",
+                        thumbnail=get_thumb('actors', auto=True)))
 
-    itemlist.append(Item(channel=item.channel, title="Años", action="section",
+    itemlist.append(Item(channel=item.channel, title="Años", action="year",
                         thumbnail=get_thumb('year', auto=True)))
 
     itemlist.append(Item(channel=item.channel, title="Buscar...",  url=host + '?s=',  action="search",
@@ -126,10 +132,27 @@ def section(item):
 
     soup = create_soup(host)
 
-    if item.title == "Generos":
-        matches = soup.find("ul", id="menu-generos")
-    elif item.title == "Años":
-        matches = soup.find("ul", class_="releases")
+    if item.title == "Directores":
+        matches = soup.find("aside", id="tag_cloud-6")
+
+    elif item.title == "Actores":
+        matches = soup.find("aside", id="tag_cloud-4")
+
+    for elem in matches.find_all("a"):
+        url = elem["href"]
+        title = elem["aria-label"]
+        itemlist.append(Item(channel=item.channel, title=title, action="list_all", url=url, first=0))
+
+    return itemlist
+
+def genres(item):
+    logger.info()
+
+    itemlist = list()
+
+    soup = create_soup(host)
+
+    matches = soup.find("ul", id="menu-generos")
 
     for elem in matches.find_all("li"):
         url = elem.a["href"]
@@ -138,6 +161,37 @@ def section(item):
 
     return itemlist
 
+def year(item):
+    logger.info()
+    import datetime
+    itemlist = list()
+
+    now = datetime.datetime.now()
+    c_year = now.year - 2
+    l_year = 1950
+    year_list = list(range(l_year, c_year))
+
+    for year in year_list:
+        year = str(year)
+        url = '%s/ano/%s/' % (host, year)
+        
+        itemlist.append(Item(channel=item.channel, title=year, url=url, thumbnail=item.thumbnail,
+                             action="list_all", type=item.type, first=0))
+    itemlist.reverse()
+    
+    itemlist.append(Item(channel=item.channel, title='Introduzca otro año...', url='',
+                                 action="year_cus", first=0, thumbnail=get_thumb("years.png")))
+
+    return itemlist
+
+def year_cus(item):
+    from platformcode import platformtools
+    heading = 'Introduzca Año (4 digitos)'
+    year = platformtools.dialog_numeric(0, heading, default="")
+    item.url = '%s/ano/%s/' % (host, year)
+    item.action = "list_all"
+    if year and len(year) == 4:
+        return list_all(item)
 
 def findvideos(item):
     logger.info()

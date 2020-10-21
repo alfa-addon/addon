@@ -20,7 +20,7 @@ from channels import filtertools
 from channels import autoplay
 from platformcode import config, logger
 
-unify = config.get_setting('unify')
+#unify = config.get_setting('unify')
 
 IDIOMAS = {'1':'CAST', '2':'LAT', '3':'VOSE', '4':'VO'}
 list_language = list(IDIOMAS.values())
@@ -53,6 +53,15 @@ def mainlist(item):
     
     itemlist.append(Item(channel=item.channel, title='Buscar...', action="search",
                          url=host + 'search?go=', thumbnail=get_thumb("search", auto=True)))
+
+    itemlist.append(Item(channel=item.channel,
+                             title="Configurar Canal...",
+                             text_color="turquoise",
+                             action="settingCanal",
+                             thumbnail=get_thumb('setting_0.png'),
+                             url='',
+                             fanart=get_thumb('setting_0.png')
+                             ))
 
     autoplay.show_option(item.channel, itemlist)
 
@@ -89,6 +98,12 @@ def sub_menu(item):
                          thumbnail=get_thumb('year', auto=True), type=item.type))
 
     return itemlist
+
+def settingCanal(item):
+    from platformcode import platformtools
+    platformtools.show_channel_settings()
+    platformtools.itemlist_refresh()
+    return
 
 def get_source(url, referer=None):
     logger.info()
@@ -163,10 +178,10 @@ def list_all(item):
 
         thumbnail = re.sub(r'p/w\d+', 'p/original', thumbnail)
         
-        if item.type == 'search':
-            s_title =  scrapertools.find_single_match(url, host+'(\w+)')
-            if not unify:
-                title += ' [COLOR grey][I](%s)[/I][/COLOR]' % s_title.capitalize()[:-1]
+        # if item.type == 'search':
+        #     s_title =  scrapertools.find_single_match(url, host+'(\w+)')
+        #     if not unify:
+        #         title += ' [COLOR grey][I](%s)[/I][/COLOR]' % s_title.capitalize()[:-1]
         
         new_item = Item(channel=item.channel,
                         title=title,
@@ -182,7 +197,7 @@ def list_all(item):
             calidad_baja = scrapertools.find_single_match(scrapedinfo, r'>(\w+\s\w+)</div>$')
             
             if calidad_baja:
-                new_item.title += '[COLOR tomato] (Calidad Baja)[/COLOR]'
+                new_item.quality = 'Baja'
         else:
             new_item.action = 'seasons'
             new_item.contentSerieName = scrapedtitle
@@ -301,8 +316,9 @@ def findvideos(item):
     itemlist = []
     itemlist2 = []
     headers = {'Referer': item.url}
+    users_links = config.get_setting('show_users_links', 'movidy')
 
-    server_l = {'waaw': 'netu', 'powvldeo': 'powvideo'
+    server_l = {'waaw': 'netu', 'powvldeo': 'powvideo', 'beta': 'directo'
                   }
 
     data = get_source(item.url)
@@ -316,7 +332,7 @@ def findvideos(item):
         session = requests.Session()
         page = session.post(url, data={'type': '1', 'id': s_id}, headers=header).json()
         
-        if page.get('status', '') == 200:
+        if page.get('status', 0) == 200:
             
             data2 = page['data']
             data2 = re.sub(r'\n|\r|\t|&nbsp;|<br>|\s{2,}', "", data2)
@@ -326,67 +342,79 @@ def findvideos(item):
             matches = re.compile(patron, re.DOTALL).findall(data2)
            
             for language, info in matches:
-            	
-            	lang = IDIOMAS.get(language, 'VO')
-            	matches1 = re.compile(patron1, re.DOTALL).findall(info)
-            	
-            	for url, serv in matches1:
+                
+                lang = IDIOMAS.get(language, 'VO')
+                matches1 = re.compile(patron1, re.DOTALL).findall(info)
+                
+                for url, serv in matches1:
 
-            		if 'google' in serv.lower():
-            			continue
-	                
-	                url = host2+url
+                    if 'google' in serv.lower():
+                        continue
+                    
+                    url = host2+url
 
-	                quality = 'Oficial'
 
-	                title = '%s [%s]' % (serv.capitalize(), lang)
+                    quality = 'Oficial'
 
-	                itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language=lang,
-	                                 quality=quality, headers=header, infoLabels=item.infoLabels,
-	                                 p_lang=language, server=serv))
-	data = scrapertools.find_single_match(data, '<div class="linksUsers">(.*?)</html>')
-    patron = '<li><a href="([^"]+)".*?<img.*?>([^<]+)<b>([^<]+)<.*?src="([^"]+)"'
-    matches = re.compile(patron, re.DOTALL).findall(data)
+                    title = '%s [%s]' % (serv.capitalize(), lang)
+                    serv = server_l.get(serv.lower(), serv.lower())
+                    p_quality = -2000
+
+                    itemlist.append(Item(channel=item.channel, title=title, url=url, action='play', language=lang,
+                                     quality=quality, headers=header, infoLabels=item.infoLabels,
+                                     p_lang=language, p_quality=p_quality, server=serv))
     
-    for url, server, quality, language in matches:
-        if '/sc_' in url:
-            continue
-        if url != '':
-    
-            try:
-                server = server.split(".")[0].replace('1', 'l')
-            except:
+    if users_links == 0:
+        
+        data = scrapertools.find_single_match(data, '<div class="linksUsers">(.*?)</html>')
+        patron = '<li><a href="([^"]+)".*?<img.*?>([^<]+)<b>([^<]+)<.*?src="([^"]+)"'
+        matches = re.compile(patron, re.DOTALL).findall(data)
+        
+        for url, server, quality, language in matches:
+
+            if '/sc_' in url:
                 continue
-    
-            # _id = scrapertools.find_single_match(url, r'link/\w+(.*)')
-    
-            server = server_l.get(server.lower(), server)
-    
-            # if not url.startswith(host):
-            #     url = url % _id
-    
-            language = scrapertools.find_single_match(language, r'/(\d+)\.png')
-            lang = IDIOMAS.get(language, 'VO')
-    
-            title = '%s [%s] [%s]' % (server.capitalize(), lang, quality)
-    
-            itemlist2.append(Item(channel=item.channel, title=title, url=url, action='play', language=lang,
-                                 quality=quality, server=server.lower(), headers=headers, infoLabels=item.infoLabels,
-                                 p_lang=language, _type="user"))
+            if url != '':
+        
+                try:
+                    server = server.split(".")[0].replace('1', 'l')
+                except:
+                    continue
+        
+                # _id = scrapertools.find_single_match(url, r'link/\w+(.*)')
+        
+                server = server_l.get(server.lower(), server)
+        
+                # if not url.startswith(host):
+                #     url = url % _id
+        
+                language = scrapertools.find_single_match(language, r'/(\d+)\.png')
+                lang = IDIOMAS.get(language, 'VO')
+        
+                title = '%s [%s] [%s]' % (server.capitalize(), lang, quality)
+                
+                try:
+                    p_quality = -int(quality.replace('p', ''))
+                except:
+                    p_quality = 0
+        
+                itemlist2.append(Item(channel=item.channel, title=title, url=url, action='play', language=lang,
+                                     quality=quality, server=server.lower(), headers=headers, infoLabels=item.infoLabels,
+                                     p_lang=language, p_quality=p_quality, _type="user"))
 
-    
-    #itemlist = servertools.get_servers_itemlist(itemlist, lambda i: i.title % (i.server, i.language))
+        
 
-    itemlist2.sort(key=lambda i: (i.p_lang, i.server))
+        
+        itemlist.extend(itemlist2)
     
-    itemlist.extend(itemlist2)
+    itemlist.sort(key=lambda i: (i.p_lang, i.p_quality, i.server))
 
     # if not itemlist:
     #     itemlist.append(Item(channel=item.channel, folder=False, text_color='tomato',
     #                         title='[I] Aún no hay enlaces disponibles [/I]'))
     #     return itemlist
     
-    #itemlist = filtertools.get_links(itemlist, item, list_language)
+    itemlist = filtertools.get_links(itemlist, item, list_language)
 
     # Requerido para AutoPlay
     autoplay.start(itemlist, item)

@@ -179,7 +179,7 @@ def findvideosbyserver(data, serverid):
         return []
 
     server_parameters = get_server_parameters(serverid)
-    if not server_parameters["active"]:
+    if not server_parameters.get("active", ""):
         return []
     devuelve = []
     if "find_videos" in server_parameters:
@@ -216,6 +216,45 @@ def get_server_from_url(url):
 
     return devuelve
 
+def parse_hls(video_urls, server):
+    from core import scrapertools
+
+    hs = ''
+    new_video_urls = list()
+    headers = dict()
+    
+    if (len(video_urls)) == 1 and config.get_setting("default_action") < 2:
+        url = video_urls[0][1]
+        if '|' in url:
+            part = url.split('|')
+            url = part[0]
+            if not url.endswith('master.m3u8'):
+                return video_urls
+            
+            khs = part[1]
+            hs = '|' + khs
+            matches = scrapertools.find_multiple_matches(khs, r'(\w+)=([^&]+)')
+            
+            for key, val in matches:
+                headers[key] = val
+
+        if not url.endswith('master.m3u8'):
+                return video_urls
+        
+        data = httptools.downloadpage(url, headers=headers).data
+        patron = r'#EXT-X-STREAM-INF.*?RESOLUTION=(\d+x\d+).*?\s(http.*?)\s'
+        matches = scrapertools.find_multiple_matches(data, patron)
+
+        if len(matches) > 1:
+            for res, video_url in matches:
+                video_url += hs
+                new_video_urls.append(['m3u8 (%s) [%s]' % (res, server), video_url])
+
+            return new_video_urls
+
+
+
+    return video_urls
 
 def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialogo=False):
     """
@@ -333,7 +372,8 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
                 # Muestra el progreso
                 if muestra_dialogo:
                     progreso.update((old_div(100, len(opciones))) * opciones.index(opcion), config.get_localized_string(70180) % server_name)
-
+                
+                
                 # Modo free
                 if opcion == "free":
                     try:
@@ -385,6 +425,7 @@ def resolve_video_urls_for_playing(server, url, video_password="", muestra_dialo
             elif not video_urls and not error_messages:
                 error_messages.append(config.get_localized_string(60006) % get_server_parameters(server)["name"])
 
+    video_urls = parse_hls(video_urls, server)
     return video_urls, len(video_urls) > 0, "<br/>".join(error_messages)
 
 
