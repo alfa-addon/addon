@@ -914,24 +914,32 @@ def get_tclient_data(folder, torr_client, elementum_port=65220, delete=False, fo
                     log('##### ERROR en BORRADO de %s: %s - ERROR Code: %s' % (str(torr_client).upper(), str(y), str(res.code)))
                 time.sleep(1)
                 if folder_new:
-                    for x in range(10):
-                        if not filetools.exists(folder_new):
-                            break
-                        if filetools.isdir(folder_new):
-                            filetools.rmdirtree(folder_new, silent=True)
-                        elif filetools.isfile(folder_new):
-                            filetools.remove(folder_new, silent=True)
-                        else:
-                            break
-                        time.sleep(1)
+                    delete_torrent_folder(folder_new)
             break
         else:
+            if delete and folder_new:
+                delete_torrent_folder(folder_new)
             return '', local_host[torr_client], -1
     except:
         log(traceback.format_exc(1))
         return '', local_host[torr_client], 0
 
     return torr, local_host[torr_client], y
+
+
+def delete_torrent_folder(folder_new):
+    logger.info(folder_new)
+
+    for x in range(10):
+        if not filetools.exists(folder_new):
+            break
+        if filetools.isdir(folder_new):
+            filetools.rmdirtree(folder_new, silent=True)
+        elif filetools.isfile(folder_new):
+            filetools.remove(folder_new, silent=True)
+        else:
+            break
+        time.sleep(1)
 
 
 def torrent_dirs():
@@ -1507,6 +1515,7 @@ def check_deleted_sessions(item, torrent_paths, DOWNLOAD_PATH, DOWNLOAD_LIST_PAT
             if torr_client in ['quasar', 'elementum'] and folder:
                 torr_data, deamon_url, index = get_tclient_data(folder, torr_client, \
                             torrent_paths['ELEMENTUM_port'], delete=True, folder_new=folder_new)
+
     except:
         logger.error(traceback.format_exc())
 
@@ -1667,6 +1676,13 @@ def wait_for_download(item, mediaurl, rar_files, torr_client, password='', size=
                 if rar_file and len(filetools.listdir(rar_control['download_path'], silent=True)) <= 1:
                     filetools.remove(filetools.join(rar_control['download_path'], '_rar_control.json'), silent=True)
                     filetools.rmdir(rar_control['download_path'], silent=True)
+                folder_srt = filetools.join(save_path_videos, folder)
+                if '.srt' in str(filetools.listdir(folder_srt)):
+                    for srt in filetools.listdir(folder_srt):
+                        if '.srt' in srt:
+                            filetools.remove(filetools.join(folder_srt, srt), silent=True)
+                if filetools.exists(folder_srt) and not filetools.listdir(folder_srt) and folder:
+                    filetools.rmdir(folder_srt, silent=True)
                 path = filetools.join(config.get_setting("downloadlistpath"), item.path)
                 if path.endswith('.json'):
                     filetools.remove(path, silent=True)
@@ -2035,6 +2051,7 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                     rar_control = update_rar_control(erase_file_path, error=True, error_msg=error_msg, status='ERROR')
                     dp.close()
                     return custom_code.reactivate_unrar(init=False, mute=False)
+                
                 else:
                     item.downloadFilename = video_list[0].replace(save_path_videos, '')
                     item.downloadFilename = filetools.join(item.downloadFilename, video_list[0])
@@ -2046,6 +2063,17 @@ def extract_files(rar_file, save_path_videos, password, dp, item=None, \
                     log("##### Archivo remove: %s" % file_path)
                     #rar_control = update_rar_control(erase_file_path, status='DONE')
                     ret = filetools.remove(filetools.join(erase_file_path, '_rar_control.json'), silent=True)
+
+                    # Copiamos los archivos de subtítulos junto a los vídeos
+                    subtitles = filetools.listdir(erase_file_path)
+                    subt_list = []
+                    if '.srt' in str(subtitles):
+                        for file in subtitles:
+                            if file.endswith('.srt'):
+                                subt_list += [file]
+                                filetools.copy(filetools.join(erase_file_path, file), filetools.join(save_path_videos, file), silent=True)
+                                log("##### Copiando archivos de Subtítulos: %s" % str(subt_list))
+                    
                     return str(video_list[0]), True, save_path_videos, erase_file_path
 
 
@@ -2071,13 +2099,14 @@ def rename_rar_dir(rar_file, save_path_videos, video_path, torr_client):
         if filetools.exists(dst):                                               # Si la carpeta ya existe de una descarga anterior, salimos
             return rename_status, rar_file
         
+        time.sleep(5)                                                           # Tiempo de seguridad para pausar el .torrent
         for x in range(20):
             if (monitor and monitor.abortRequested()) or (not monitor and xbmc.abortRequested):
                 return rename_status, rar_file
-            xbmc.sleep(1000)
+            time.sleep(1)
             
             # Se para la actividad para que libere los archivos descargados
-            if torr_client in ['quasar', 'elementum']:
+            if x == 0 and torr_client in ['quasar', 'elementum']:
                 torr_data, deamon_url, index = get_tclient_data(folders[0], torr_client)
                 if torr_data and deamon_url:
                     log("##### Client URL: %s" % '%spause/%s' % (deamon_url, index))

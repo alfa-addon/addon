@@ -274,6 +274,11 @@ def render_items(itemlist, parent_item):
             fanart = item.fanart
         else:
             fanart = config.get_fanart()
+            
+        # Ponemos el poster
+        poster = item.thumbnail
+        if item.action == 'play' and item.infoLabels['temporada_poster']:
+            poster = item.infoLabels['temporada_poster']
 
         # Creamos el listitem
         listitem = xbmcgui.ListItem(item.title)
@@ -281,7 +286,7 @@ def render_items(itemlist, parent_item):
         # values icon, thumb or poster are skin dependent.. so we set all to avoid problems
         # if not exists thumb it's used icon value
         if config.get_platform(True)['num_version'] >= 16.0:
-            listitem.setArt({'icon': icon_image, 'thumb': item.thumbnail, 'poster': item.thumbnail,
+            listitem.setArt({'icon': icon_image, 'thumb': item.thumbnail, 'poster': poster,
                              'fanart': fanart})
         else:
             listitem.setIconImage(icon_image)
@@ -1270,6 +1275,7 @@ def play_torrent(item, xlistitem, mediaurl):
     size_rar = 2
     rar_files = []
     rar_control = {}
+    rar_path = ''
     if item.password:
         size_rar = 3
     torr_client = scrapertoolsV2.find_single_match(torrent_options[seleccion][0], ':\s*(\w+)').lower()
@@ -1412,6 +1418,8 @@ def play_torrent(item, xlistitem, mediaurl):
                                                                             torrents_path=torrents_path, subtitles=True, 
                                                                             timeout=timeout, lookup=False,
                                                                             headers=headers, short_pad=True)
+            
+            if subtitles_list: log("##### Subtítulos encontrados en el torrent: %s" % str(subtitles_list))
             if not item.subtitle and subtitles_list:
                 item.subtitle = subtitles_list[0]
             if url:
@@ -1434,10 +1442,17 @@ def play_torrent(item, xlistitem, mediaurl):
         if url_local and not url_stat and videolibrary_path:            # .torrent alternativo local
             if filetools.copy(item.url, torrents_path, silent=True):    # se copia a la carpeta generíca para evitar problemas de encode
                 item.url = torrents_path
-            if subtitle_path:
-                for subt in filetools.dirname(item.url):
+
+            if not item.subtitle:
+                subtitles_list_vl = []
+                for subt in filetools.listdir(filetools.dirname(item.url)):
                     if subt.endswith('.srt'):
-                        filetools.copy(filetools.join(filetools.dirname(item.url), subt), filetools.join(subtitle_path, subt), silent=True)
+                        subtitles_list_vl += [filetools.join(filetools.dirname(item.url), subt)]
+                        subtitles_list += [filetools.join(filetools.dirname(item.url), subt)]
+                        #if subtitle_path:
+                        #    filetools.copy(filetools.join(filetools.dirname(item.url), subt), filetools.join(subtitle_path, subt), silent=True)
+                if subtitles_list_vl:
+                    item.subtitle = filetools.dirname(item.url)
                     
             size, url, torrent_f, rar_files = generictools.get_torrent_size(item.url, file_list=True, 
                                               lookup=False, torrents_path=torrents_path, short_pad=True)
@@ -1451,11 +1466,10 @@ def play_torrent(item, xlistitem, mediaurl):
         mediaurl = item.url
 
     if seleccion >= 0:
-        if not item.subtitle and subtitle_path:
-            item.subtitle = subtitle_path
         if item.subtitle:
-            if '\\' in item.subtitle or item.subtitle.startswith("/") and videolibrary_path not in item.subtitle:
+            if not filetools.exists(item.subtitle):
                 item.subtitle = filetools.join(videolibrary_path, folder, item.subtitle)
+            log("##### 'Subtítulos externos: %s" % item.subtitle)
             time.sleep(0.5)
             xbmc_player.setSubtitles(item.subtitle)                             # Activamos los subtítulos
         
@@ -1605,6 +1619,28 @@ def play_torrent(item, xlistitem, mediaurl):
                     time.sleep(3)                                               # Dejamos terminar la inicialización...
                 except:                                                         # Si hay problemas de threading, salimos
                     logger.error(traceback.format_exc())
+
+            # Si hay subtítulos, los copiamos a la carpeta de descarga del torrent, para que esté junto al vídeo, por si hay repro fuera de Alfa
+            for entry in rar_files:
+                for file, path in list(entry.items()):
+                    if file == '__name':
+                        rar_path = path
+                        rar_path = filetools.join(torrent_paths[torr_client.upper()], rar_path)
+                        for x in range(60):
+                            if filetools.exists(rar_path):
+                                break
+                            time.sleep(1)
+                        else:
+                            rar_path = ''
+                        break
+            if subtitles_list and rar_path:
+                for subtitle in subtitles_list:
+                    if filetools.exists(subtitle):
+                        filetools.copy(subtitle, filetools.join(rar_path, filetools.basename(subtitle)))
+                log("##### Subtítulos copiados junto a vídeo: %s" % str(subtitles_list))
+            if item.subtitle and filetools.isfile(item.subtitle) and rar_path:
+                filetools.copy(item.subtitle, filetools.join(rar_path, filetools.basename(item.subtitle)))
+                log("##### Subtítulo copiado junto a vídeo: %s" % str(item.subtitle))
 
         except Exception as e:
             config.set_setting("LIBTORRENT_in_use", False, server="torrent")    # Marcamos Libtorrent como disponible
