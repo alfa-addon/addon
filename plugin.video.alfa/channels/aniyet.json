@@ -1,7 +1,7 @@
 {
   "id": "aniyet",
   "name": "AniYet",
-  "active": true,
+  "active": false,
   "adult": false,
   "language": ["lat"],
   "thumbnail": "https://aniyet.com/wp-content/uploads/2019/09/aniyet.png",
