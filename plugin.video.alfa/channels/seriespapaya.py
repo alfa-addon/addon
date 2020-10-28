@@ -261,7 +261,7 @@ def seasons(item):
                              contentSeasonNumber=contentSeasonNumber, infoLabels=infoLabels, extra1=item.title))
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
 
-    if config.get_videolibrary_support() and len(itemlist) > 0 and not item.extra == "epìsodios":
+    if config.get_videolibrary_support() and len(itemlist) > 0:
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,
@@ -313,7 +313,7 @@ def episodesxseasons(item):
     tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
     
     # Opción "Añadir esta serie a la videoteca de KODI"
-    if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentSeasonNumber == '1' and not item.extra == "epìsodios":
+    if config.get_videolibrary_support() and len(itemlist) > 0 and item.contentSeasonNumber == '1':
         itemlist.append(
             Item(channel=item.channel, title='[COLOR yellow]Añadir esta serie a la videoteca[/COLOR]', url=item.url,
                  action="add_serie_to_library", extra="episodios", contentSerieName=item.contentSerieName,

@@ -658,6 +658,8 @@ def findvideos(item):
         for x, server in enumerate(list_servers):
             #if not server.action:  # Ignorar/PERMITIR las etiquetas
             #    continue
+            if server.action == "add_pelicula_to_library":
+                continue
             server.contentChannel = server.channel
             server.channel = "videolibrary"
             server.nfo = item.nfo

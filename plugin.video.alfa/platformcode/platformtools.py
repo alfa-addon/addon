@@ -157,9 +157,10 @@ def render_items(itemlist, parent_item):
     @type parent_item: item
     @param parent_item: elemento padre
     """
+    #logger.debug(parent_item.tostring('\n'))
     logger.info('INICIO render_items')
     from core import httptools
-
+    
     # Si el itemlist no es un list salimos
     if not isinstance(itemlist, list):
         return
@@ -174,23 +175,25 @@ def render_items(itemlist, parent_item):
     if not len(itemlist):
         itemlist.append(Item(title=config.get_localized_string(60347)))
 
+    if parent_item.channel == 'videolibrary':
+        channel_param = channeltools.get_channel_parameters(parent_item.contentChannel)
+    else:
+        channel_param = channeltools.get_channel_parameters(parent_item.channel)
+
     genre = False
     if 'nero' in parent_item.title:
         genre = True
         anime = False
-        if 'anime' in channeltools.get_channel_parameters(parent_item.channel)['categories']:
+        if 'anime' in channel_param.get('categories', ''):
             anime = True
-    try:
-        force_unify = channeltools.get_channel_parameters(parent_item.channel)['force_unify']
-    except:
-        force_unify = False
+    
+    force_unify = channel_param.get('force_unify', False)
 
     unify_enabled = config.get_setting('unify')
-    try:
-        if channeltools.get_channel_parameters(parent_item.channel)['adult']:
-            unify_enabled = False
-    except:
-        pass
+    
+    if channel_param.get('adult', ''):
+        unify_enabled = False
+    
     # logger.debug('unify_enabled: %s' % unify_enabled)
 
     # for adding extendedinfo to contextual menu, if it's used
