@@ -305,7 +305,10 @@ def get_environment():
                 if not cliente['D_load_Path_perm']: del cliente['D_load_Path_perm']
                 cliente['Buffer'] = str(config.get_setting("mct_buffer", server="torrent", default=50))
             elif xbmc.getCondVisibility('System.HasAddon("plugin.video.%s")' % cliente['Plug_in']):
-                __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % cliente['Plug_in'])
+                try:
+                    __settings__ = xbmcaddon.Addon(id="plugin.video.%s" % cliente['Plug_in'])
+                except:
+                    continue
                 cliente['Plug_in'] = cliente['Plug_in'].capitalize()
                 if cliente['Plug_in'] == 'Torrenter':
                     cliente['D_load_Path'] = str(filetools.translatePath(__settings__.getSetting('storage')))

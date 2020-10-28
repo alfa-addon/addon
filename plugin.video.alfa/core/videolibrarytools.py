@@ -753,7 +753,7 @@ def add_tvshow(item, channel=None):
 
     """
     logger.info("show=#" + item.show + "#")
-
+    logger.debug("item en videolibrary add tvshow: %s" % item)
     if item.channel == "downloads":
         itemlist = [item.clone()]
 
@@ -766,6 +766,9 @@ def add_tvshow(item, channel=None):
 
         if item.from_action:
             item.__dict__["action"] = item.__dict__.pop("from_action")
+            item.__dict__["extra"] = item.__dict__["action"]
+
+
         if item.from_channel:
             item.__dict__["channel"] = item.__dict__.pop("from_channel")
 
@@ -849,6 +852,8 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             channel_save = item.channel                 #... guarda el canal original por si hay fail-over en Newpct1
             category_save = item.category               #... guarda la categoría original por si hay fail-over o redirección en Newpct1
             post_save = item.post                       #... guarda el post original
+            referer_save = item.referer                 #... guarda el referer original
+            headers_save = item.headers                 #... guarda el headers original
             if item.channel_redir:                      #... si hay un redir, se restaura temporamente el canal alternativo
                 item.channel = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').lower()
                 item.category = scrapertools.find_single_match(item.url, 'http.?\:\/\/(?:www.)?(\w+)\.\w+\/').capitalize()
@@ -869,6 +874,9 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             del item_res.videolibray_emergency_urls                         #... y se borra la marca de lookup
         if item.videolibray_emergency_urls:
             del item.videolibray_emergency_urls                             #... y se borra la marca de lookup original
+        item_res.referer = referer_save
+        item_res.headers = headers_save
+        item_res.post = post_save
     
     #Si el usuario ha activado la opción "emergency_urls_torrents", se descargarán los archivos .torrent de cada título
     else:                                                                   #Si se han cacheado con éxito los enlaces...
@@ -903,14 +911,10 @@ def emergency_urls(item, channel=None, path=None, headers={}):
                     i += 1
                     
                 #Restauramos variables originales
-                if item.referer:
-                    item_res.referer = item.referer
-                elif item_res.referer:
-                    del item_res.referer
-                if item.referer:
-                    item_res.referer = item.referer
-                elif item_res.referer:
-                    del item_res.referer
+                if referer_save and not item_res.referer:
+                    item_res.referer = referer_save
+                if headers_save and not item_res.headers:
+                    item_res.headers = headers_save
                 if post_save and not item_res.post:
                     item_res.post = post_save
                 item_res.url = item.url
@@ -919,6 +923,15 @@ def emergency_urls(item, channel=None, path=None, headers={}):
             logger.error('ERROR al cachear el .torrent de: ' + item.channel + ' / ' + item.title)
             logger.error(traceback.format_exc())
             item_res = item.clone()                                             #Si ha habido un error, se devuelve el Item original
+            item_res.channel = channel_save                     #... restaura el canal original por si hay fail-over o redirección en Newpct1
+            item_res.category = category_save                   #... restaura la categoría original por si hay fail-over o redirección en Newpct1
+            if item_res.videolibray_emergency_urls:
+                del item_res.videolibray_emergency_urls                         #... y se borra la marca de lookup
+            if item.videolibray_emergency_urls:
+                del item.videolibray_emergency_urls                             #... y se borra la marca de lookup original
+            item_res.referer = referer_save
+            item_res.headers = headers_save
+            item_res.post = post_save
 
     #logger.debug(item_res.emergency_urls)
     return item_res                                                             #Devolvemos el Item actualizado con los enlaces de emergencia

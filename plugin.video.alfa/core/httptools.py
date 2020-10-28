@@ -519,7 +519,7 @@ def downloadpage(url, **opt):
 
         domain = urlparse.urlparse(url)[1]
         global CS_stat
-        if domain in CF_LIST or opt.get('CF', False):                           #Está en la lista de CF o viene en la llamada
+        if (domain in CF_LIST or opt.get('CF', False)) and opt.get('CF_test', True):    #Está en la lista de CF o viene en la llamada
             from lib import cloudscraper
             session = cloudscraper.create_scraper()                             #El dominio necesita CloudScraper
             session.verify = True
@@ -633,7 +633,8 @@ def downloadpage(url, **opt):
         
         response_code = req.status_code
 
-        if req.headers.get('Server', '').startswith('cloudflare') and response_code in [429, 503, 403] and not opt.get('CF', False):
+        if req.headers.get('Server', '').startswith('cloudflare') and response_code in [429, 503, 403] \
+                        and not opt.get('CF', False) and opt.get('CF_test', True):
             domain = urlparse.urlparse(url)[1]
             if domain not in CF_LIST:
                 opt["CF"] = True
@@ -642,7 +643,8 @@ def downloadpage(url, **opt):
                 logger.debug("CF retry... for domain: %s" % domain)
                 return downloadpage(url, **opt)
         
-        if req.headers.get('Server', '') == 'Alfa' and response_code in [429, 503, 403] and not opt.get('cf_v2', False):
+        if req.headers.get('Server', '') == 'Alfa' and response_code in [429, 503, 403] \
+                        and not opt.get('cf_v2', False) and opt.get('CF_test', True):
             opt["cf_v2"] = True
             logger.debug("CF Assistant retry... for domain: %s" % urlparse.urlparse(url)[1])
             return downloadpage(url, **opt)
@@ -736,6 +738,8 @@ def fill_fields_pre(url, opt, proxy_data, file_name):
         info_dict.append(('Dominio', urlparse.urlparse(url)[1]))
         if CS_stat:
             info_dict.append(('Dominio_CF', True))
+        if not opt.get('CF_test', True):
+            info_dict.append(('CF_test', False))
         if not opt.get('keep_alive', True):
             info_dict.append(('Keep Alive', opt.get('keep_alive', True)))
         if opt.get('cf_v2', False):

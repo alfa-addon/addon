@@ -418,7 +418,7 @@ if __name__ == "__main__":
     if config.get_setting("adult_mode") == 2:
         config.set_setting("adult_mode", 0)
 
-    update_wait = [0, 10000, 20000, 30000, 60000]
+    update_wait = [0, 10000, 20000, 30000, 60000, 120000, 300000]
     wait = update_wait[int(config.get_setting("update_wait", "videolibrary"))]
     if wait > 0:
         xbmc.sleep(wait)

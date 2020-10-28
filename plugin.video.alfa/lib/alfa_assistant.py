@@ -562,8 +562,8 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
     else:
         app_active = False
         if ASSISTANT_MODE == "este":
-            execute_in_alfa_assistant_with_cmd('openAndQuit')                   # activamos la app por si no se ha inicializado
-            time.sleep(2)
+            execute_in_alfa_assistant_with_cmd('open')                          # activamos la app por si no se ha inicializado
+            time.sleep(5)
             version_dict = get_generic_call('getWebViewInfo', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
             if isinstance(version_dict, dict):
                 version_app = version_dict.get('assistantVersion', '')
@@ -607,8 +607,9 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         logger.info('El sistema local no es Android: %s' % app_name)
         return False, app_name
 
-    logger.info('assistant_mode=%s, update=%s, forced_menu=%s, assistant_flag_install=%s, version_actual=%s, android=%s, app_active=%s' \
-            % (ASSISTANT_MODE, str(update), str(forced_menu), str(assistant_flag_install), version_actual, str(android_version), str(app_active)))
+    logger.info('assistant_mode=%s, update=%s, forced_menu=%s, assistant_flag_install=%s, version_actual=%s, version_app=%s, android=%s, app_active=%s' \
+            % (ASSISTANT_MODE, str(update), str(forced_menu), str(assistant_flag_install), version_actual, \
+            version_app, str(android_version), str(app_active)))
     
     # Si no está instalada, o se quiere actualizar, empezamos el proceso
     alfa_assistant_pwd = ''
@@ -683,6 +684,8 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
         if version_actual == response.data:
             if verbose: platformtools.dialog_notification("Instalación Alfa Assistant", "Ya está actualizado a version %s" % response.data)
             logger.info("Alfa Assistant ya actualizado a versión: %s" % response.data)
+            if not app_active and ASSISTANT_MODE == "este":
+                execute_in_alfa_assistant_with_cmd('quit')                      # desactivamos la app si no estaba iniciada
             return version_actual, app_name
 
     # Guardamos archivo de versión
@@ -801,7 +804,7 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
                                         ver_upd = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
                                         if not ver_upd:
                                             execute_in_alfa_assistant_with_cmd('open')  # activamos la app por si no se ha inicializado
-                                            time.sleep(1)
+                                            time.sleep(5)
                                             ver_upd = get_generic_call('ping', timeout=2-EXTRA_TIMEOUT, alfa_s=True)
                                             execute_in_alfa_assistant_with_cmd('quit')
                                         if ver_upd == version_actual:
@@ -841,8 +844,8 @@ def install_alfa_assistant(update=False, remote='', verbose=False):
                 respuesta = execute_in_alfa_assistant_with_cmd(cmd, dataURI=dataURI % version_mod)
             else:
                 if not app_active:
-                    execute_in_alfa_assistant_with_cmd('openAndQuit')               # activamos la app por si no se ha inicializado
-                    time.sleep(1)
+                    execute_in_alfa_assistant_with_cmd('openAndQuit')           # activamos la app por si no se ha inicializado
+                    time.sleep(5)
                 app_active = False
                 respuesta = get_generic_call(cmd, version=version_mod, alfa_s=alfa_s)
         else:
