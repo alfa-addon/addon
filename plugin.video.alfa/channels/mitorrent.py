@@ -663,7 +663,7 @@ def findvideos(item):
     #logger.debug(item)
 
     #Bajamos los datos de la página y seleccionamos el bloque
-    patron = '<div\s*id="mobile-movie-info"\s*class=.*?(<div class="modal-torrent">.*?)<\/div><\/div><\/div>'
+    patron = '<div\s*id="mobile-movie-info"\s*class=.*?(<div\s*class="modal-torrent">.*?)\s*<\/div>\s*<\/div\s*><\/div>'
     
     if not item.matches:
         data, success, code, item, itemlist = generictools.downloadpage(item.url, timeout=timeout, 
