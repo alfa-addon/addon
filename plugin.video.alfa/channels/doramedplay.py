@@ -214,7 +214,7 @@ def findvideos(item):
                 patron = "RESOLUTION=(.*?)http([^#]+)"
                 video_matches = re.compile(patron, re.DOTALL).findall(metadata)
                 for video_resolution, video_url in video_matches:
-                    final_url = "http" + video_url
+                    final_url = "http" + video_url.strip()
                     url_video = final_url + "|referer="+ final_url
                     logger.info(final_url)
                     itemlist.append(Item(channel=item.channel, title='%s (' + video_resolution.strip() + ')', url=url_video, action='play'))
