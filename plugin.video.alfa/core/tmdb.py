@@ -1589,7 +1589,7 @@ class Tmdb(object):
             elif k == 'name' or k == 'title':
                 ret_infoLabels['title'] = v
 
-            elif k == 'production_companies':
+            elif k == 'networks':
                 ret_infoLabels['studio'] = ", ".join(i['name'] for i in v)
 
             elif k == 'credits_cast' or k == 'temporada_cast' or k == 'episodio_guest_stars':
